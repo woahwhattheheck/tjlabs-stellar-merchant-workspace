@@ -554,8 +554,11 @@ Open **Merchant handover** in the receiving product. Upload the complete file,
 inspect its source and merchant histories, choose receiving names, save and
 review that exact mapping, then receive and reopen the native merchants.
 **Drafts**, **Operations**, **Files** and **Received** retain the original server
-work across browser and product restarts. The browser keeps newer working edits
-separate from every accepted original request.
+work across browser and product restarts. The browser keeps working forms by
+draft and saved base, preserving them when navigating to another draft or viewing
+history. The edition selector identifies retained working edits; reopen the
+working form to continue it. Every accepted original request keeps its own
+selected edition.
 
 The complete [browser walkthrough](HANDOVER.md#complete-the-handover-in-the-browser)
 covers source selection, package/environment review, resumable chunk upload,

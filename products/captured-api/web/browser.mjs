@@ -11,7 +11,7 @@ const make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==und
 const notice=(message,error=false)=>{$('notice').textContent=message;$('notice').classList.toggle('error',error);};
 let info,storagePrefix,tab,editor,form,job,inventory,upload,pollTimer,busy=false;
 let libraryKind='drafts',libraryOffset=0,inventoryOffset=0,documentView='summary',documentOffset=0;
-let libraryGeneration=0,documentGeneration=0;
+let libraryGeneration=0,documentGeneration=0,editorMode='WORKING';
 const local=(key,value)=>{
   if(value===undefined) {const text=localStorage.getItem(storagePrefix+key);return text?JSON.parse(text):null;}
   try{localStorage.setItem(storagePrefix+key,JSON.stringify(value));}
@@ -28,8 +28,24 @@ function pendingRows() {
   }
   return rows.sort((a,b)=>a.createdAt.localeCompare(b.createdAt));
 }
+const workingKey=(id,revision)=>'working:'+tab+':'+id+':'+revision;
+const workingPointer=id=>'working:'+tab+':'+id;
+function retainWorking(value) {
+  local(workingKey(value.id,value.revision),value);
+  local(workingPointer(value.id),{revision:value.revision});
+}
+function workingForm(id,revision) {
+  revision??=local(workingPointer(id))?.revision;
+  return revision?local(workingKey(id,revision)):null;
+}
 function persistEditor() {
-  if(editor&&form)local('editor:'+tab,{id:editor.id,revision:editor.revision,form,jobId:job?.id??null});
+  if(!editor||!form)return;
+  const value={id:editor.id,revision:editor.revision,form:clone(form),
+    jobId:job?.id??null,mode:editorMode,dirty:!savedForm()};
+  // Every selected base owns its working form. Saved history views never
+  // replace that edit, even when another draft becomes the current page.
+  if(editorMode==='WORKING')retainWorking(value);
+  local('editor:'+tab,value);
 }
 function setLocation() {
   const url=new URL(location.href);url.searchParams.delete('draft');url.searchParams.delete('job');
@@ -75,14 +91,15 @@ function paging(target,{offset,total,limit},move) {
 function lock(id,condition) {$(id).dataset.locked=String(condition);}
 function savedForm() {return editor?.edition&&form&&canonical(form)===canonical(editor.edition.form);}
 function controls() {
-  lock('save-draft',!editor||savedForm());
+  lock('save-draft',!editor||editorMode==='HISTORY'||savedForm());
   lock('prepare',!editor||editor.kind!=='OUTGOING'||!savedForm()||!form.packages.length&&!form.sources.length);
   lock('inspect',!editor||editor.kind!=='RECEIVING'||!savedForm()||!form.bundle);
   lock('review-receiving',!editor||editor.kind!=='RECEIVING'||!savedForm()||!form.bundle||!HASH.test(form.manifestSha256));
   lock('upload',!$('archive-file').files[0]);
   lock('import-upload',upload?.state!=='COMPLETE');
   for(const node of document.querySelectorAll('button'))node.disabled=busy||node.dataset.locked==='true';
-  for(const node of document.querySelectorAll('input,select'))node.disabled=busy||node.dataset.locked==='true';
+  for(const node of document.querySelectorAll('input,select'))node.disabled=busy||node.dataset.locked==='true'||
+    editorMode==='HISTORY'&&(node.dataset.editField==='true'||['draft-label','bundle-directory','bundle-sha'].includes(node.id));
   document.body.classList.toggle('busy',busy);
 }
 async function act(work) {
@@ -141,14 +158,21 @@ function renderPending() {
     card.append(actions,lazyDetails('Selected original fields',request));$('pending-list').append(card);
   }
 }
-function adoptEditor(value,preservedForm) {
-  editor=value;form=preservedForm??clone(value.edition.form);inventoryOffset=0;
+function adoptEditor(value,preservedForm,{historical=false}={}) {
+  if(!value.edition)throw new Error('Reopen this original draft to complete its retained first edition.');
+  persistEditor();
+  const retained=historical?null:workingForm(value.id,value.revision);
+  editor=value;editorMode=historical?'HISTORY':'WORKING';
+  form=preservedForm??(retained?clone(retained.form):clone(value.edition.form));inventoryOffset=0;
   persistEditor();setLocation();renderEditor();
 }
-async function openDraft(id,revision,{keepLocal=false}={}) {
-  const value=await api('draft?'+new URLSearchParams({id,...(revision?{revision}:{})}));
-  const retained=keepLocal?local('editor:'+tab):null;
-  adoptEditor(value,retained?.id===id&&retained.revision===value.revision?retained.form:null);
+async function openDraft(id,revision,{keepLocal=true,historical=Boolean(revision)}={}) {
+  persistEditor();
+  const working=!historical&&keepLocal?workingForm(id,revision):null;
+  const selectedRevision=revision??(working?.dirty?working.revision:undefined);
+  const value=await api('draft?'+new URLSearchParams({id,...(selectedRevision?{revision:selectedRevision}:{})}));
+  const retained=!historical&&keepLocal?workingForm(id,value.revision):null;
+  adoptEditor(value,retained?.form,{historical});
   if(value.kind==='OUTGOING'&&!inventory)await loadInventory();
 }
 async function newDraft(kind,initial) {
@@ -163,6 +187,7 @@ async function newDraft(kind,initial) {
 }
 async function saveDraft() {
   if(!editor)throw new Error('Open a draft first.');
+  if(editorMode==='HISTORY')throw new Error('Open the retained working form before saving an edit.');
   const originalForm=clone(form);
   const prior=pendingRows().filter(row=>row.path==='draft/save')
     .map(row=>JSON.parse(row.bodyText)).find(row=>row.id===editor.id&&row.expectedRevision===editor.revision);
@@ -186,7 +211,7 @@ async function showCurrentDraft() {
     make('p','Your working form is still here. Compare the saved edition, then open it or make a new save from your current form.'),
     lazyDetails('Current saved edition '+current.edition.sequence,current.edition.form));
   const actions=make('div',undefined,'actions');
-  actions.append(button('Open current saved edition',()=>adoptEditor(current)));
+  actions.append(button('Open current saved edition',()=>adoptEditor(current,undefined,{historical:true})));
   actions.append(button('Keep my form for a new save',()=>{
     const uncertain=pendingRows().filter(row=>row.path==='draft/save'&&JSON.parse(row.bodyText).id===selectedId);
     if(uncertain.some(row=>row.error?.code!=='CAPTURED_DESK_DRAFT_CHANGED'))
@@ -197,12 +222,12 @@ async function showCurrentDraft() {
   }));area.append(actions);
 }
 function updateForm(key,value) {
-  if(!form)return;form[key]=value;persistEditor();renderDraftMeta();controls();
+  if(!form||editorMode==='HISTORY')return;form[key]=value;persistEditor();renderDraftMeta();controls();
 }
 function renderDraftMeta() {
   if(!editor)return;
   $('draft-meta').textContent='Draft '+editor.id+' · selected edition '+editor.edition.sequence+
-    ' · '+(savedForm()?'Saved selected fields':'Working form has unsaved changes')+
+    ' · '+(editorMode==='HISTORY'?'Viewing original saved fields':savedForm()?'Saved selected fields':'Working form has unsaved changes')+
     ' · SHA-256 '+editor.revision;
   $('draft-heading').textContent=form.label;
   if(editor.kind==='OUTGOING')$('selection-summary').textContent=amount(form.packages.length)+' merchants and '+
@@ -215,12 +240,20 @@ function renderEditor() {
   $('draft-label').value=form.label;$('outgoing-form').hidden=editor.kind!=='OUTGOING';$('receiving-form').hidden=editor.kind!=='RECEIVING';
   $('draft-history').replaceChildren();
   for(const row of [...editor.history].reverse()) {
-    const option=make('option','Edition '+row.sequence+' · '+row.createdAt);option.value=row.revision;
+    const retained=workingForm(editor.id,row.revision);
+    const option=make('option','Edition '+row.sequence+' · '+row.createdAt+
+      (retained?.dirty?' · retained working edit':''));option.value=row.revision;
     option.selected=row.revision===editor.revision;$('draft-history').append(option);
   }
-  $('draft-conflict').hidden=editor.revision===editor.currentRevision;
-  if(editor.revision!==editor.currentRevision) {
-    $('draft-conflict').replaceChildren(make('p','This is an earlier saved edition. Its source selection remains available.'));
+  $('draft-conflict').hidden=editorMode!=='HISTORY'&&editor.revision===editor.currentRevision;
+  if(editorMode==='HISTORY') {
+    const selected=editor;
+    $('draft-conflict').replaceChildren(make('p','Viewing an original saved edition. Each working form is retained separately with its selected base.'));
+    $('draft-conflict').append(button('Open retained working form',()=>openDraft(selected.id,undefined,{historical:false})),
+      button('Work from this edition',()=>adoptEditor(selected)));
+    if(editor.revision!==editor.currentRevision)$('draft-conflict').append(button('Compare current edition',showCurrentDraft));
+  } else if(editor.revision!==editor.currentRevision) {
+    $('draft-conflict').replaceChildren(make('p','This working form keeps its original saved base. Compare the current edition before making a new save.'));
     $('draft-conflict').append(button('Compare current edition',showCurrentDraft));
   }
   if(editor.kind==='OUTGOING')renderInventory();
@@ -247,7 +280,7 @@ function renderInventory() {
   const page=rows.slice(inventoryOffset,inventoryOffset+25),grid=table(['Select','Original member','Identity and retained scope']);
   for(const row of page) {
     const tr=make('tr'),checkCell=make('td'),labelCell=make('td'),detailCell=make('td'),check=make('input');
-    check.type='checkbox';
+    check.type='checkbox';check.dataset.editField='true';
     const selected=row.kind==='package'?form.packages.find(value=>(typeof value==='string'?value:value.name)===row.name):
       form.sources.find(value=>sourceKey(value)===sourceKey(row.selection));
     check.checked=Boolean(selected);check.dataset.locked=String(row.available===false);check.disabled=busy||row.available===false;
@@ -276,7 +309,7 @@ function renderInventory() {
       if(row.sourceBytes!==undefined)detailCell.append(make('span',size(row.sourceBytes),'small'));
       if(row.available===false)detailCell.append(make('span',row.error,'small'));
       if(kind==='selected') {
-        const revision=make('input');revision.value=row.selection.revision??'';revision.maxLength=64;
+        const revision=make('input');revision.dataset.editField='true';revision.value=row.selection.revision??'';revision.maxLength=64;
         revision.placeholder='Optional required original review SHA-256';revision.setAttribute('aria-label','Required review for '+row.selection.id);
         revision.addEventListener('change',()=>{
           const index=form.sources.findIndex(value=>sourceKey(value)===sourceKey(row.selection));
@@ -298,7 +331,7 @@ function renderMapping() {
   if(!entries.length){target.append(make('p','No merchant names have been selected from an inspected collection. Source-only collections need no name mapping.','empty'));return;}
   const grid=table(['Original merchant','Receiving name']);
   for(const [name,targetName] of entries) {
-    const tr=make('tr'),cell=make('td'),input=make('input');input.value=targetName;input.maxLength=64;
+    const tr=make('tr'),cell=make('td'),input=make('input');input.dataset.editField='true';input.value=targetName;input.maxLength=64;
     input.setAttribute('aria-label','Receiving name for '+name);
     input.addEventListener('input',()=>{form.names[name]=input.value;persistEditor();renderDraftMeta();controls();});
     tr.append(make('td',name));cell.append(input);tr.append(cell);grid.body.append(tr);
@@ -453,7 +486,7 @@ async function useCollection(original) {
     offset=value.nextOffset;
   }while(true);
   const initial={label:summary.label,bundle:summary.directory,manifestSha256:summary.sha256,names};
-  if(editor?.kind==='RECEIVING'&&form.bundle===summary.directory) {
+  if(editorMode==='WORKING'&&editor?.kind==='RECEIVING'&&form.bundle===summary.directory) {
     initial.names=Object.fromEntries(Object.keys(names).map(name=>[name,form.names[name]??name]));
     form={...form,...initial};persistEditor();renderEditor();
   } else await newDraft('RECEIVING',initial);
@@ -482,9 +515,9 @@ async function refreshLibrary() {
       card.append(button(row.label??row.command,()=>openJob(row.id)),make('p',row.command+' · '+row.state,'small'));
       if(row.error)card.append(make('p',row.error.message,'small'));
     } else if(kind==='uploads') {
-      card.append(button(row.name??'Retained file',()=>{
-        upload=row;renderUpload();$('upload-section').scrollIntoView({block:'start',behavior:'smooth'});
-        notice(row.state==='COMPLETE'?'The complete original file is retained. Inspect it to create a receiving collection.':'Choose the same original file to continue its retained upload.');
+      card.append(button(row.name??'Retained file',async()=>{
+        upload=await api('uploads/status?'+new URLSearchParams({id:row.id}));renderUpload();$('upload-section').scrollIntoView({block:'start',behavior:'smooth'});
+        notice(upload.state==='COMPLETE'?'The complete original file is retained. Inspect it to create a receiving collection.':'Choose the same original file to continue its retained upload.');
       }),make('p',row.state+' · '+size(row.receivedBytes)+' / '+size(row.totalBytes),'small'));
     } else {
       card.append(button((row.names??[]).map(value=>value.targetName).join(', ')||'Captured source collection',
@@ -591,8 +624,12 @@ await act(async()=>{
   $('product-label').textContent=info.product;$('product-directory').textContent=info.directory;
   await refreshLibrary();renderPending();
   const retained=local('editor:'+tab),query=new URL(location.href).searchParams;
+  if(retained?.form&&retained.mode!=='HISTORY'&&!workingForm(retained.id,retained.revision))
+    retainWorking({...retained,mode:'WORKING',dirty:true});
   const draftId=query.get('draft')??retained?.id,jobId=query.get('job')??retained?.jobId;
-  if(draftId)await openDraft(draftId,retained?.id===draftId?retained.revision:undefined,{keepLocal:true});
+  if(draftId)await openDraft(draftId,retained?.id===draftId?retained.revision:undefined,{
+    keepLocal:true,historical:retained?.id===draftId&&retained.mode==='HISTORY',
+  });
   if(jobId)await openJob(jobId);
   renderUpload();notice('The original product is ready. Choose saved work or open a complete handover file.');
 });

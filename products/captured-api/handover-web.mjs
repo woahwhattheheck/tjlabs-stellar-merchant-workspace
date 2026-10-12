@@ -12,7 +12,7 @@ import {
 import { HASH, exact } from './handover-files.mjs';
 
 const PREFIX='/api/captured-handover',PUBLIC='/captured-handover/';
-const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const MAX_BODY=1024*1024,DOWNLOAD_COOKIE='sf_captured_handover';
 const STATIC=new Map([
   [PUBLIC,{file:'index.html',type:'text/html; charset=utf-8'}],

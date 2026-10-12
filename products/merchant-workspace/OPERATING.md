@@ -17,6 +17,7 @@ They retain its original dependency manifests and lock.
 | Captured API authoring and native merchant compiler | `schema`, `openapi`; add `mcp` for the agent and native Stellar packages for the selected payment runtime |
 | GraphQL authoring and generated merchant | `graphql`, `schema`, `openapi`; add native Stellar packages for the merchant's configured payment runtime |
 | Purchased API customer and original payment lifecycle | Native Stellar packages, `mcp`, Python 3.11 or later, and the original selected Buyer/Inbox directories |
+| Native MPP merchant, governed customer and private agent | The original `mpp-workspace runtime-template` and `runtime-receive` selection (`@stellar/mpp` 0.7.1, `mppx` 0.6.29, Stellar SDK 15.1.0), Python 3 and the original SF36 controlling terminal |
 | Merchant MCP interface | Add `mcp` and the features used by the selected workspace |
 | STAC catalog and local retained explorer | Original Node source and local file-lock support |
 | STAC merchant/customer receiving | Native Stellar packages, `schema`, and `openapi`, as specified by the original GIS receiving guide |
@@ -742,3 +743,9 @@ The [complete grant reviewer guide](../grant-reviewer/OPERATING.md) connects
 installation, private access, source review, full result reading, closed export,
 independent receiving and managed recovery. These operations reuse the retained
 purchase and do not add a transaction or provider data acquisition.
+
+## Native MPP merchant and customer
+
+Use `starforge mpp-workspace` or **Applications → Native MPP merchant and customer** to create or attach one original native workspace. Its retained product opens the original merchant/customer browser and merchant agent together. Configure the merchant’s exact resources and prices, receive its customer contract, review the payer limits and governor settings, prepare one stable purchase ID, and continue the original consent, payment and recovery workflow.
+
+The [native MPP operating guide](../mpp-workspace/OPERATING.md) gives the exact runtime selection, private setup, browser and typed client commands, managed terminal and original purchase recovery. Its [receiving guide](../mpp-workspace/RECEIVING.md) carries all twelve generated customer files and the original response bytes, including interrupted transfer and reopen. Existing purchases retain their accepted profile and request while current customer inputs move to a later revision.

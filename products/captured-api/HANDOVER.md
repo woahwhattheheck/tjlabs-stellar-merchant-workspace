@@ -98,9 +98,19 @@ merchant names before saving and reviewing receiving.
 
 ### Continue a saved browser operation
 
-The browser keeps working forms separate from saved draft editions and accepted
-requests. Editing a form does not change a preparation, publication or receiving
-operation that already selected an earlier saved edition.
+The browser retains each working form by draft and selected base edition.
+Switching drafts or opening saved history keeps those edits available. History
+is a view of the original saved fields; **Open retained working form** returns
+to the edit, and **Work from this edition** restores that edition's retained
+form or starts from its saved fields. The edition selector marks bases with a
+retained working edit. A saved draft's server history remains available when the
+browser uses a different local port.
+
+Accepted requests remain bound to their selected saved edition. Editing a form
+does not change a preparation, publication or receiving operation already in
+progress. Reopening an inactive draft or job finishes its own interrupted
+whole-file publication before reading it. A draft whose first edition was
+interrupted completes that original edition from its retained creation fields.
 
 | Interrupted work | Continue in the same product |
 | --- | --- |

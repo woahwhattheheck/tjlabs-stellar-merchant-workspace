@@ -8,7 +8,7 @@ import {
 } from './handover-files.mjs';
 import {
   openHandoverFile, handoverFileIdentity, readHandoverRange,
-  writeHandoverBytes, hashHandoverFile,
+  writeHandoverBytes, hashHandoverFile, syncAndCloseHandoverFile,
 } from './handover-archive.mjs';
 
 export const CAPTURED_HANDOVER_UPLOAD_SCHEMA = 'stellar-forge.captured-api-handover-upload.v1';
@@ -66,7 +66,7 @@ async function payload(root,metadata,{create=false,writable=false}={}) {
     if (retained || !create)
       fail('CAPTURED_HANDOVER_CHANGED', 'The original retained upload payload is absent.');
     const created = await open(path,C.O_CREAT|C.O_EXCL|C.O_RDWR|C.O_NOFOLLOW,0o600);
-    await created.sync(); await created.close(); await syncDirectory(root);
+    await syncAndCloseHandoverFile(created); await syncDirectory(root);
   }
   const held = await openHandoverFile(path,{writable});
   try {
@@ -155,7 +155,7 @@ export async function initializeCapturedHandoverUpload({root,id,name,bytes,expec
 export async function inspectCapturedHandoverUpload({root,id}) {
   return inUpload(root,id,async selected => {
     const metadata = inputFromRecord(await readJSON(selected,'operation.json'),id);
-    const held = await payload(selected,metadata);
+    const held = await payload(selected,metadata,{create:true});
     try {
       const complete = await readJSON(selected,'received.json',true);
       const pending = complete ? null : await pendingChunk(selected,metadata,held);

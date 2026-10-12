@@ -15,7 +15,7 @@ import {
   directory, present, bytes, readJSON, publishJSON, operation, requireEmptyOperation,
 } from './handover-files.mjs';
 
-const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const DRAFT = 'stellar-forge.captured-handover-draft.v1';
 const EDITION = 'stellar-forge.captured-handover-draft-edition.v1';
 const JOB = 'stellar-forge.captured-handover-browser-job.v1';
@@ -96,7 +96,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
   const roots={};
   for(const key of ['drafts','jobs','uploads','collections'])
     roots[key]=await directory(join(root,key),true);
-  const requests=new Set(),activeJobs=new Map();
+  const requests=new Set(),activeJobs=new Map(),draftWriters=new Map(),jobWriters=new Map();
   let stopping=false,closing,launching=Promise.resolve();
   const backgroundErrors=new Map();
   function launch(work) {
@@ -115,12 +115,49 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
   }
   const draftRoot = async (value,create=false) => directory(join(roots.drafts,id(value)),create);
   const jobRoot = async (value,create=false) => directory(join(roots.jobs,id(value)),create);
-
+  function serialize(owners,value,work) {
+    const previous=owners.get(value)??Promise.resolve();
+    const promise=previous.catch(()=>{}).then(work);
+    owners.set(value,promise);
+    void promise.finally(()=>{if(owners.get(value)===promise)owners.delete(value);}).catch(()=>{});
+    return promise;
+  }
+  const inDraft = (value,work,{create=false}={}) => serialize(draftWriters,id(value),
+    async()=>operation(await draftRoot(value,create),work));
+  const inJob = (value,work,{create=false}={}) => serialize(jobWriters,id(value),
+    async()=>operation(await jobRoot(value,create),work));
+  async function draftMetadata(selected,value,{optional=false}={}) {
+    const meta=await readJSON(selected,'operation.json',optional);
+    if(!meta)return null;
+    need(meta.schema===DRAFT&&meta.id===value&&bound(meta.product,profile)&&
+      ['OUTGOING','RECEIVING'].includes(meta.kind)&&title(meta.label)===meta.label&&
+      typeof meta.createdAt==='string',
+      'CAPTURED_DESK_IDENTITY','This draft belongs to another original product.',409);
+    return meta;
+  }
+  async function finishInitialDraft(selected,meta) {
+    // The first edition is determined entirely by the already retained creation.
+    // Reentry only completes that original whole-file publication.
+    await directory(join(selected,'records'),true);
+    if(await present(join(selected,'records',meta.id+'.json')))return;
+    await publishJSON(selected,'records/'+meta.id+'.json',{
+      schema:EDITION,draftId:meta.id,requestId:meta.id,kind:meta.kind,sequence:1,
+      previousRevision:null,createdAt:meta.createdAt,
+      form:form(meta.kind,{label:meta.label,...(meta.kind==='OUTGOING'
+        ?{packages:[],sources:[]}:{bundle:'',manifestSha256:'',names:{}})}),
+    });
+  }
   async function readDraft(value) {
     exact(value,['id','revision'],['id']);
-    const selected=await draftRoot(value.id),meta=await readJSON(selected,'operation.json');
-    need(meta.schema===DRAFT&&meta.id===value.id&&bound(meta.product,profile),
-      'CAPTURED_DESK_IDENTITY','This draft belongs to another original product.',409);
+    return inDraft(value.id,async selected=>{
+      const meta=await draftMetadata(selected,value.id);
+      await finishInitialDraft(selected,meta);
+      return readDraftRaw(value);
+    });
+  }
+  async function readDraftRaw(value) {
+    exact(value,['id','revision'],['id']);
+    const selected=await draftRoot(value.id),meta=await draftMetadata(selected,value.id);
     const records=await directory(join(selected,'records'));
     const editions=[];
     for(const name of (await readdir(records)).filter(name=>UUID.test(name.slice(0,-5))&&name.endsWith('.json'))) {
@@ -145,8 +182,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
     exact(value,['id','kind','label'],['id','kind']);
     id(value.id);need(['OUTGOING','RECEIVING'].includes(value.kind),'CAPTURED_DESK_KIND','Choose outgoing or receiving.');
     const label=title(value.label,value.kind==='OUTGOING'?'Merchant collection':'Received merchant collection');
-    const selected=await draftRoot(value.id,true);
-    await operation(selected,async root=>{
+    return inDraft(value.id,async root=>{
       await requireEmptyOperation(root,'operation.json');
       let original=await readJSON(root,'operation.json',true);
       if(original)need(original.schema===DRAFT&&original.id===value.id&&original.kind===value.kind&&
@@ -154,26 +190,22 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
         'Continue this draft with its original identity and creation fields.',409);
       else {original={schema:DRAFT,id:value.id,kind:value.kind,label,product,createdAt:new Date().toISOString()};
         await publishJSON(root,'operation.json',original);}
-      await directory(join(root,'records'),true);
-      const initial={schema:EDITION,draftId:value.id,requestId:value.id,kind:value.kind,sequence:1,
-        previousRevision:null,createdAt:original.createdAt,
-        form:form(value.kind,{label,...(value.kind==='OUTGOING'?{packages:[],sources:[]}:{bundle:'',manifestSha256:'',names:{}})})};
-      await publishJSON(root,'records/'+value.id+'.json',initial);
-    });
-    return readDraft({id:value.id});
+      await finishInitialDraft(root,original);
+      return readDraftRaw({id:value.id});
+    },{create:true});
   }
   async function saveDraft(value) {
     exact(value,['id','requestId','expectedRevision','form'],['id','requestId','expectedRevision','form']);
     id(value.id);id(value.requestId);hash(value.expectedRevision);
-    const selected=await draftRoot(value.id);
-    return operation(selected,async root=>{
-      const current=await readDraft({id:value.id}),selectedForm=form(current.kind,value.form);
+    return inDraft(value.id,async root=>{
+      await finishInitialDraft(root,await draftMetadata(root,value.id));
+      const current=await readDraftRaw({id:value.id}),selectedForm=form(current.kind,value.form);
       const old=await readJSON(root,'records/'+value.requestId+'.json',true);
       if(old) {
         need(old.schema===EDITION&&old.draftId===value.id&&old.previousRevision===value.expectedRevision&&
           canonical(old.form)===canonical(selectedForm),'CAPTURED_DESK_REQUEST_CHANGED',
           'This save identifier already belongs to another complete draft edit.',409);
-        return readDraft({id:value.id,revision:digest(encode(old))});
+        return readDraftRaw({id:value.id,revision:digest(encode(old))});
       }
       need(current.currentRevision===value.expectedRevision,'CAPTURED_DESK_DRAFT_CHANGED',
         'Another draft edit is saved. Compare that edition while keeping this form.',409);
@@ -181,37 +213,44 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
         sequence:current.edition.sequence+1,previousRevision:value.expectedRevision,
         createdAt:new Date().toISOString(),form:selectedForm};
       await publishJSON(root,'records/'+value.requestId+'.json',edition);
-      return readDraft({id:value.id,revision:digest(encode(edition))});
+      return readDraftRaw({id:value.id,revision:digest(encode(edition))});
     });
   }
   async function listDrafts(value={}) {
     const rows=[];
-    for(const value of await identifiers(roots.drafts)) {
-      const selected=await draftRoot(value),meta=await readJSON(selected,'operation.json',true);
+    for(const value of await identifiers(roots.drafts))await inDraft(value,async selected=>{
+      const meta=await draftMetadata(selected,value,{optional:true});
       if(meta) {
-        need(meta.schema===DRAFT&&bound(meta.product,profile),'CAPTURED_DESK_IDENTITY','A draft belongs to another product.',409);
+        await finishInitialDraft(selected,meta);
         rows.push({id:meta.id,kind:meta.kind,label:meta.label,createdAt:meta.createdAt});
       }
-    }
+    });
     rows.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||a.id.localeCompare(b.id));
     return page(value.kind?rows.filter(row=>row.kind===value.kind):rows,value);
   }
   async function readJob(value) {
+    id(value);
+    // A live writer already owns its original immutable request. Its staged
+    // result becomes public only after that writer has released the lease.
+    if(activeJobs.has(value))return readJobRaw(value,{running:true});
+    return inJob(value,()=>readJobRaw(value));
+  }
+  async function readJobRaw(value,{running=false}={}) {
     const selected=await jobRoot(value),record=await readJSON(selected,'operation.json');
     need(record.schema===JOB&&record.request.id===value&&bound(record.product,profile)&&
       record.requestSha256===inputHash(record.request),'CAPTURED_DESK_IDENTITY',
       'Open the original product and saved handover operation.',409);
-    const received=await readJSON(selected,'received.json',true);
+    const received=running?null:await readJSON(selected,'received.json',true);
     if(received)need(received.schema===RESULT&&received.id===value&&received.requestSha256===record.requestSha256,
       'CAPTURED_DESK_RESULT','The original saved operation result changed.',409);
     const attempts=[];
-    if(await present(join(selected,'records')))
+    if(!running&&await present(join(selected,'records')))
       for(const name of (await readdir(join(selected,'records'))).filter(name=>name.endsWith('.json')))
         attempts.push(await readJSON(selected,'records/'+name));
     attempts.sort((a,b)=>a.at.localeCompare(b.at)||a.id.localeCompare(b.id));
     return {id:value,command:record.request.command,requestSha256:record.requestSha256,
       createdAt:record.createdAt,request:record.request,selected:record.selected ?? null,
-      state:received?'COMPLETE':activeJobs.has(value)?'RUNNING':attempts.length?'INTERRUPTED':'PENDING',
+      state:received?'COMPLETE':running||activeJobs.has(value)?'RUNNING':attempts.length?'INTERRUPTED':'PENDING',
       result:received?.result ?? null,completedAt:received?.completedAt ?? null,
       error:attempts.at(-1)?.error ?? backgroundErrors.get(value) ?? null,attempts:attempts.length};
   }
@@ -264,16 +303,16 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
         expectedBytes:uploaded.totalBytes});
       return documentSummary(imported);
     }
-    return inspectCapturedHandoverReceive({directory:profile.directory,operationId:request.operationId});
+    return operation(join(profile.receivingDirectory,'handovers',request.operationId),()=>
+      inspectCapturedHandoverReceive({directory:profile.directory,operationId:request.operationId}));
   }
   function runJob(value) {
     if(activeJobs.has(value))return activeJobs.get(value);
     backgroundErrors.delete(value);
     // The complete accepted promise is registered before any native call starts.
     const promise=track(async()=>{
-      const selected=await jobRoot(value);
-      await operation(selected,async root=>{
-        const job=await readJob(value);
+      await inJob(value,async root=>{
+        const job=await readJobRaw(value);
         if(job.state==='COMPLETE')return;
         const record=await readJSON(root,'operation.json');
         try {
@@ -298,7 +337,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
     return launch(()=>startOriginalJob(value));
   }
   async function startOriginalJob(value) {
-    const request=jobInput(value),selected=await jobRoot(request.id,true);
+    const request=jobInput(value);
     // The accepted original job holds its native writer lease until completion.
     // A repeated HTTP request resolves that owner without reacquiring its lease.
     if(activeJobs.has(request.id)) {
@@ -308,7 +347,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
       return current;
     }
     let completed=false;
-    await operation(selected,async root=>{
+    await inJob(request.id,async root=>{
       await requireEmptyOperation(root,'operation.json');
       const old=await readJSON(root,'operation.json',true);
       if(old) {
@@ -334,7 +373,7 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
       }
       await publishJSON(root,'operation.json',{schema:JOB,request,requestSha256:inputHash(request),
         product,createdAt:new Date().toISOString(),...(selection?{selected:selection}:{})});
-    });
+    },{create:true});
     if(!completed) {
       need(!activeJobs.size||activeJobs.has(request.id),'CAPTURED_DESK_BUSY',
         'This request is retained. Continue it after the original active operation finishes.',409);
@@ -422,12 +461,19 @@ export async function createCapturedHandoverDesk({directory:productDirectory}) {
     const rows=[];
     for(const entry of await readdir(await directory(parent),{withFileTypes:true})) {
       if(!entry.isDirectory()||!HASH.test(entry.name))continue;
-      const path=await directory(join(parent,entry.name)),request=await readJSON(path,'operation.json',true);
-      if(!request)continue;
-      need(nativeBound(request.product,profile),'CAPTURED_DESK_IDENTITY','A receiving operation belongs to another product.',409);
-      const result=await readJSON(path,'received.json',true);
-      rows.push({operationId:entry.name,handoverId:request.handoverId,manifestSha256:request.manifestSha256,
-        names:request.names,state:result?'RECEIVED':'PENDING'});
+      try {
+        await operation(join(parent,entry.name),async path=>{
+          const request=await readJSON(path,'operation.json',true);
+          if(!request)return;
+          need(nativeBound(request.product,profile),'CAPTURED_DESK_IDENTITY','A receiving operation belongs to another product.',409);
+          const result=await readJSON(path,'received.json',true);
+          rows.push({operationId:entry.name,handoverId:request.handoverId,manifestSha256:request.manifestSha256,
+            names:request.names,state:result?'RECEIVED':'PENDING'});
+        });
+      } catch(error) {
+        if(error.code!=='DATASET_WRITER_RUNNING')throw error;
+        rows.push({operationId:entry.name,names:[],state:'RUNNING'});
+      }
     }
     rows.sort((a,b)=>a.operationId.localeCompare(b.operationId));
     return page(rows,value);

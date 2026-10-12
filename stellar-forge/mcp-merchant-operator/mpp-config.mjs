@@ -72,8 +72,8 @@ export async function readMppConfiguration(path) {
     const metadata=decode(await regular(join(workspace,'workspace.json'),4096));
     need(metadata.schema==='stellar-forge.mpp-workspace.v1' && typeof metadata.createdAt==='string' &&
       Number.isFinite(Date.parse(metadata.createdAt)),'CONFIGURATION_ERROR','Select the original retained native MPP workspace.');
-    need(plain(input.customers) && Object.keys(input.customers).length>0 && Object.keys(input.customers).length<=32,
-      'CONFIGURATION_ERROR','Declare one to thirty-two customer configuration files.');
+    need(plain(input.customers) && Object.keys(input.customers).length<=32,
+      'CONFIGURATION_ERROR','Declare up to thirty-two customer configuration files; an empty map opens merchant-only operations.');
     const customers=Object.create(null);
     for(const [customer,row] of Object.entries(input.customers)) {
       alias(customer,'Customer alias');

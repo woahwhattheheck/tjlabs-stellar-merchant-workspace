@@ -70,6 +70,18 @@ export async function openHandoverFile(path, { writable = false, expectedBytes }
     return { path, handle, bytes:identity.bytes, identity, assertHeld, close };
   } catch (error) { await handle.close(); throw error; }
 }
+/** Close the original creation handle even when its first fsync fails. */
+export async function syncAndCloseHandoverFile(handle) {
+  let failure = null;
+  try { await handle.sync(); } catch (error) { failure = error; }
+  try { await handle.close(); }
+  catch (error) {
+    if (failure) failure.closeError = error;
+    else failure = error;
+    failure.close = () => handle.close();
+  }
+  if (failure) throw failure;
+}
 export async function writeHandoverBytes(handle, content, offset) {
   let written = 0;
   while (written < content.length) {
@@ -135,7 +147,7 @@ async function publishStream(root, name, source, { expectedBytes, expectedSha256
   const exists = await present(paths.target);
   if (!exists && !await present(paths.stage)) {
     const created = await open(paths.stage,C.O_CREAT|C.O_EXCL|C.O_RDWR|C.O_NOFOLLOW,0o600);
-    await created.sync(); await created.close(); await syncDirectory(paths.parent);
+    await syncAndCloseHandoverFile(created); await syncDirectory(paths.parent);
   }
   const held = await openHandoverFile(exists ? paths.target : paths.stage,{writable:!exists});
   const prefixBytes = held.bytes, hash = createHash('sha256'); let size = 0;
@@ -373,7 +385,7 @@ export async function receiveCapturedHandoverArchive({ path,directory:output,exp
       return {...inspected,archive:{...retained.archive},reused:true};
     }
     await directory(bundle,true);
-    const held = await openHandoverFile(path,{expectedBytes});
+    const held = await openCapturedHandoverArchive({path,expectedBytes,expectedSha256});
     try {
       const received = await consumeArchive(held,{expectedSha256,
         onManifest:async value => {
@@ -404,10 +416,28 @@ export async function openCapturedHandoverArchive({path,expectedBytes,expectedSh
   const held = await openHandoverFile(path,{expectedBytes});
   try {
     if (basename(path) === ARCHIVE_NAME && record?.schema === RESULT_SCHEMA && record.mode === 'export') {
-      if (record.file?.name !== ARCHIVE_NAME || record.file.bytes !== expectedBytes ||
+      const original = await readJSON(root,'operation.json');
+      if (original.schema !== OPERATION_SCHEMA || original.mode !== 'export' ||
+          original.manifestSha256 !== record.manifestSha256 || !HASH.test(record.handoverId ?? '') ||
+          record.file?.name !== ARCHIVE_NAME || record.file.bytes !== expectedBytes ||
           record.file.sha256 !== expectedSha256 ||
           canonical(record.file.identity) !== canonical(held.identity))
         fail('CAPTURED_HANDOVER_CHANGED', 'The retained downloadable archive changed.');
+    } else if (basename(path) === 'payload.sfhandover' &&
+        record?.schema === 'stellar-forge.captured-api-handover-upload-complete.v1') {
+      const original = await readJSON(root,'operation.json');
+      const payload = await readJSON(root,'records/payload.json');
+      if (original.schema !== 'stellar-forge.captured-api-handover-upload.v1' ||
+          !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(original.id ?? '') ||
+          original.id !== record.id || original.id !== basename(root) ||
+          original.totalBytes !== expectedBytes || record.bytes !== expectedBytes ||
+          original.expectedSha256 !== undefined && original.expectedSha256 !== expectedSha256 ||
+          record.sha256 !== expectedSha256 ||
+          record.inputSha256 !== digest(Buffer.from(canonical(original))) ||
+          canonical(record.identity) !== canonical(held.identity) ||
+          payload.schema !== 'stellar-forge.captured-api-handover-upload-payload.v1' ||
+          payload.device !== held.identity.device || payload.inode !== held.identity.inode)
+        fail('CAPTURED_HANDOVER_CHANGED', 'The original completed upload or its payload identity changed.');
     } else if (await hashHandoverFile(held) !== expectedSha256)
       fail('CAPTURED_HANDOVER_CHANGED', 'The complete selected archive SHA-256 changed.');
     return {...held,sha256:expectedSha256};
