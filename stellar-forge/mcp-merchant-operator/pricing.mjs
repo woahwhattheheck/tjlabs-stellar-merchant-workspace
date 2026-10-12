@@ -5,7 +5,7 @@ import { constants } from 'node:fs';
 import { open, realpath } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { exact, failure, identifier, line, plain, privateSupportDirectory } from './config.mjs';
+import { exact, failure, identifier, line, plain, privateSupportDirectory } from './host-files.mjs';
 import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
 import { costToolDefinitions, normalizePricingCostSources, MerchantPricingCosts, PricingCostArchiveReads } from './pricing-costs.mjs';
 import { MerchantPricingTariffs } from './pricing-tariffs.mjs';
