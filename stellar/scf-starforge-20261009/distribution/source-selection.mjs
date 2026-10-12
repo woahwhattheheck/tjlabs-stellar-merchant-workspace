@@ -55,11 +55,28 @@ export function sourceSelectionPath(id) {
   return sourceSelectionDirectory + '/' + identifier(id, 'ID') + '.json';
 }
 
+/** Original serialized data keeps its published path, including .js references. */
+export function validateSourceFormats(value) {
+  need(plain(value) && Object.keys(value).length <= 2048, 'Expected original source formats');
+  for (const [path, format] of Object.entries(value)) {
+    sourcePath(path, 'source format');
+    need(format === 'json', 'Unsupported original source format: ' + path);
+  }
+  return copy(value);
+}
+
+/** Validate original serialized bytes without rewriting or evaluating them. */
+export function parseOriginalSourceData(path, format, bytes) {
+  validateSourceFormats({ [path]: format });
+  try { return JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)); }
+  catch (cause) { throw new TypeError('Original JSON source is invalid: ' + path, { cause }); }
+}
+
 /** The recipe is original committed source, never an unbound generated manifest. */
 export function validateSourceSelection(value, path) {
   need(plain(value) && value.schema === sourceSelectionSchema &&
     Object.keys(value).every(key => ['schema', 'id', 'title', 'description', 'base',
-      'contributions', 'components', 'supportFiles', 'moduleTemplates', 'excludeFiles', 'product'].includes(key)),
+      'contributions', 'components', 'supportFiles', 'moduleTemplates', 'sourceFormats', 'excludeFiles', 'product'].includes(key)),
   'Unsupported distribution source selection');
   identifier(value.id, 'ID');
   if (path !== undefined) need(path === sourceSelectionPath(value.id),
@@ -85,6 +102,7 @@ export function validateSourceSelection(value, path) {
     sourcePath(entry, 'module template');
     need(/\.(?:mjs|js)$/.test(entry), 'A module template must name original JavaScript source');
   });
+  if (value.sourceFormats !== undefined) validateSourceFormats(value.sourceFormats);
   if (value.excludeFiles !== undefined) list(value.excludeFiles, 'excluded file', sourcePath);
   need(value.components.length > 0, 'A source selection needs at least one complete original component');
   if (value.product !== undefined) productPackageMetadata(value.product);
@@ -166,6 +184,11 @@ export function selectDistributionSources({ base, contributions, selection }) {
   selected.moduleTemplates = [...new Set([...(recipe.moduleTemplates ?? []),
     ...(base.moduleTemplates ?? []).filter(path => selected.supportFiles.includes(path) ||
       selected.components.some(root => path.startsWith(root + '/')))])];
+  selected.sourceFormats = Object.create(null);
+  for (const [path, format] of Object.entries(validateSourceFormats(base.sourceFormats ?? {})))
+    if (selected.supportFiles.includes(path) || selected.components.some(root => path.startsWith(root + '/')))
+      put(selected.sourceFormats, path, format);
+  for (const [path, format] of Object.entries(recipe.sourceFormats ?? {})) put(selected.sourceFormats, path, format);
   const browser = new Map((base.browserAssets ?? []).map(entry => [entry.server, entry]));
   // Complete selected components include their original HTTP servers and pages.
   // Carry those servers' maintained route maps too, so browser-relative imports
