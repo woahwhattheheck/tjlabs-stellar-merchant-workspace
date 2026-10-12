@@ -990,6 +990,10 @@ class Operations:
         with self._snapshot():
             return installation_returns.preview(self, self._context(program_id), body)
 
+    def seed_installation_return_review(self, program_id, body):
+        with self._snapshot():
+            return installation_returns.review_seed(self, self._context(program_id), body)
+
     def preview_installation_return_review(self, program_id, body):
         with self._snapshot():
             return installation_returns.review_preview(self, self._context(program_id), body)
@@ -1429,7 +1433,8 @@ class Operations:
         cash_accounts.validate_received(cash_account, document)
         account_reconciliation.validate_received(reconciliation_account, document, files)
         implementation.validate_import(context, reviews, events, saved_installations, files)
-        installation_returns.validate_import(context, reviews, events, saved_installations, files)
+        installation_returns.validate_import(context, reviews, events, saved_installations, files,
+                                              plan_for_version=selected_plan_at)
         selected_installation_return = installation_returns.selection_from_files(document, files)
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:

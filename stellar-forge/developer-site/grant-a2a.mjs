@@ -265,6 +265,19 @@ function sourceUrl(value) {
   return typeof value === 'string' ? value.split('#')[0] : value;
 }
 
+// The public reader omits private URLs but keeps their exact source identity.
+// Reconstruct only that known projection; an absent arbitrary URL is not a match.
+function sourceIdentityUrl(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (typeof value.url === 'string') return sourceUrl(value.url);
+  if (value.url === undefined && value.access === 'authenticated-source' &&
+      typeof value.repository === 'string' && typeof value.path === 'string' &&
+      /^[a-f0-9]{40}$/.test(value.commit || '')) {
+    return 'https://github.com/' + value.repository + '/blob/' + value.commit + '/' + value.path;
+  }
+  return null;
+}
+
 function chapterSelection(text, spec) {
   const start = 'https://github.com/' + spec.repository + '/' + spec.kind + '/';
   const tail = spec.path ? '/' + spec.path : '';
@@ -282,8 +295,8 @@ function chapterSelection(text, spec) {
 /** Remove only this helper's stale byte witness when its original URL changes. */
 function reconcileBytes(source) {
   const witness = source.a2a_byte_identity;
-  const url = sourceUrl(source.url);
-  if (witness && witness.url !== url) {
+  const url = sourceIdentityUrl(source);
+  if (witness && sourceIdentityUrl(witness) !== url) {
     // A later owner may already have supplied different measured bytes.
     // Preserve those; remove only values still equal to our old witness.
     if (source.sha256 === witness.sha256) {
@@ -309,21 +322,11 @@ function replaceSource(sources, selected, { immutable = false } = {}) {
   const at = positions.length ? positions[0] : -1;
   const previous = at < 0 ? {} : sources[at];
   if (immutable && at >= 0) {
-    const previousUrl = sourceUrl(previous.url);
-    const exactProjectedIdentity = previousUrl == null &&
-      previous.repository === selected.repository && previous.commit === selected.commit &&
-      previous.path === selected.path;
-    need(previousUrl === selected.url || exactProjectedIdentity,
+    need(sourceIdentityUrl(previous) === selected.url,
       'A dated original A2A evidence ID cannot be rebound to another source.');
   }
   const next = reconcileBytes({ ...previous, ...selected, kind: 'published-source',
     label: previous.label || selected.label });
-  // The original public projector omits a restricted URL but retains its
-  // repository/commit/path. An explicit selected source restores that URL.
-  if (next.access === 'authenticated-source') {
-    delete next.access;
-    delete next.reader_url;
-  }
   if (at < 0) sources.push(next); else sources[at] = next;
   return next;
 }
@@ -351,21 +354,20 @@ export function receiveGrantA2ASources(index, sectionText) {
   const observations = clone(original.observations || []);
   need(Array.isArray(observations), 'Keep retained A2A catalogue observations as an array.');
   const existing = observations.filter(item => item.id === SOURCE_OBSERVATION.id);
-  const projectedObservation = clone(SOURCE_OBSERVATION);
-  delete projectedObservation.source_url;
-  const exactObservation = existing.length === 1 &&
-    stable(existing[0]) === stable(SOURCE_OBSERVATION);
-  const exactProjectedObservation = existing.length === 1 &&
-    !Object.hasOwn(existing[0], 'source_url') &&
-    stable(existing[0]) === stable(projectedObservation);
-  need(existing.length <= 1 && (!existing.length || exactObservation || exactProjectedObservation),
+  const observedOriginal = existing.length ? clone(existing[0]) : null;
+  // Restore only the omitted private URL of this exact retained receipt.
+  // All other historical fields must still match, and later observations stay.
+  if (observedOriginal && !Object.hasOwn(observedOriginal, 'source_url')) {
+    const retained = sources.find(item => item.id === SOURCE_OBSERVATION.id);
+    if (retained?.url === SOURCE_OBSERVATION.source_url &&
+        retained?.sha256 === SOURCE_OBSERVATION.source_sha256) {
+      observedOriginal.source_url = SOURCE_OBSERVATION.source_url;
+    }
+  }
+  need(existing.length <= 1 && (!existing.length || stable(observedOriginal) === stable(SOURCE_OBSERVATION)),
     'The original dated A2A source-transfer observation must retain its exact content.');
   if (!existing.length) observations.push(clone(SOURCE_OBSERVATION));
-  else if (exactProjectedObservation) {
-    // Restore only the one known URL omitted by the original public projector.
-    // Every retained field must still equal this exact original observation.
-    observations[observations.indexOf(existing[0])] = clone(SOURCE_OBSERVATION);
-  }
+  else observations[observations.indexOf(existing[0])] = clone(SOURCE_OBSERVATION);
   const catalogue = { ...original, schema: 'stellar-forge.a2a-grant-source-catalogue.v1',
     selected_chapter_source_ids: selected.map(item => item.id),
     retained_source_ids: [...new Set([...(original.retained_source_ids || []), ...RETAINED_SOURCES.map(item => item.id)])],

@@ -1,57 +1,107 @@
-# A2A sources in the maintained grant reader
+# A2A sources in the maintained SCF reader
 
-This contribution completes the existing grant customer-source projector and supplies a concrete prospective customer commissioning calendar. It retains the original manuscript parser, full composer, reviewer entry and source index.
+The existing customer-source mapper carries the adopted A2A chapter and its selected URLs into the normal reviewer source index. This addition completes that same catalogue with exact file identities, the remaining original command/SDK sources, and one individually dated source-transfer observation.
 
-## Source changes
+## Existing interfaces
 
-- `grant-a2a.mjs` receives the existing parser's selected A2A H2. It maps exact repository/commit/path URLs, adds a measured byte witness only for a retained exact file, preserves dated evidence identities, and keeps later observations.
-- `grant-customers.mjs` adds one static import and one call after its existing A2A source mapping. All other customer sections and source mappings remain the current maintained implementation.
-- `grant-compose.mjs` reads the helper's complete source and records `a2a_catalogue_git_blob` alongside its original renderer, customer projector and delivery-plan source identities.
-- `A2A_CUSTOMER_COMMISSIONING.md` and `a2a-customer-commissioning.json` specify thirty prospective useful jobs. They are complete, pinned source inputs; no customer runtime, payment or scheduled sender is added.
-- `A2A_APPLICATION_INSERTION.md` is the exact H3 addition for the existing A2A chapter. The current manuscript owner receives it through the original serial writing process.
-- `grant-a2a-receiving.json` records the focused source/selection receiving for this integration and its exact input identities.
+`grant-customers.mjs` remains the owner of chapter selection and public source projection. Its existing A2A block still receives the same seven source IDs. Immediately after that block it calls:
 
-The complete job specification is pinned at [33dfb64798f5316a586c165d4d7591de972ca4e2](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33dfb64798f5316a586c165d4d7591de972ca4e2/stellar-forge/developer-site/A2A_CUSTOMER_COMMISSIONING.md). Its two file hashes and Git blob identities are retained in the helper. If a later chapter selects another exact commit, an old byte witness is removed rather than carried over to different content.
-
-## Manuscript and reader receiving
-
-The canonical manuscript remains [the existing shared grant document](https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF). Its current writer inserts `A2A_APPLICATION_INSERTION.md` below the existing heading:
-
-```text
-## A2A analytical services: complete agent work, merchant delivery and customer receiving
+```js
+receiveGrantA2ASources(index, analytical);
 ```
 
-Keep the rest of that chapter, its historical source observations and all other chapters. The insertion is an H3, so the current H2 receiver carries it with the same A2A section. Do not create another front-page answer, replace the current grant reader with an earlier file, or overwrite another owner's generated reader edition.
+The helper receives the H2 text already selected by the original customer parser. It adds no manuscript parser or publication command. The original `grant-compose.mjs` still emits the four linked reader files and their source pins. It now records the helper's actual Git blob alongside its existing renderer/projector identities.
 
-Use the original composer's existing invocation with the freshly saved complete manuscript and the current full reader directory:
+## Complete selected source catalogue
+
+| Source ID | Selected source |
+| --- | --- |
+| a2a-analysis-installed-product | Product README |
+| a2a-analysis-operating | Installation and operating guide |
+| a2a-analysis-customer-receiving | Complete output and workspace receiving guide |
+| a2a-analysis-native-service | Original analytical A2A service guide |
+| a2a-merchant-operator | Merchant, SF30 terms and SF82 release operation |
+| a2a-merchant-commissioning | Complete merchant/browser/portable commissioning source |
+| a2a-complete-native-programme | The exact native programme edition linked by the adopted chapter |
+| a2a-analysis-command | Installed original command dispatcher |
+| a2a-analysis-python-owner | Original Python environment and owner/shutdown wrapper |
+| a2a-merchant-workspace | Merchant workspace source and API guide |
+| a2a-original-sdk | Original selected A2A SDK source tree |
+| a2a-customer-commissioning-calendar | Prospective customer calendar and remaining adaptation |
+| a2a-customer-commissioning-job-register | Thirty distinct prospective jobs and original receiving bindings |
+| a2a-native-programme-eb203234 | The separately retained complete native programme edition |
+| a2a-source-transfer-89178 | Actual source-transfer attempt and its original terminal receipt |
+| a2a-source-population-9106f038 | Complete frozen source-packet descriptor |
+
+The nine product source files are from the [selected installed product commit](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/9106f038471ba9435f9600ccf5a090d97b6c84f4). The official SDK selection is [A2A JavaScript SDK commit 29417a5b](https://github.com/a2aproject/a2a-js/tree/29417a5bb4038f804f310ce4fffd267a9375aa90), the retained 1.3.0 selection.
+
+The chapter's historical programme link remains at its original commit. The later [programme guide](https://github.com/woahwhattheheck/commons/blob/eb203234c01bc9044f7efc7570ccefecba0efc63/operations/scf-a2a-native-analysis-0c7a-20261012/RUN_NATIVE.md), [source-transfer receipt](https://github.com/woahwhattheheck/commons/blob/eb203234c01bc9044f7efc7570ccefecba0efc63/operations/scf-a2a-native-analysis-0c7a-20261012/SOURCE_TRANSFER_RECEIPT.json), and [complete source population](https://github.com/woahwhattheheck/commons/blob/eb203234c01bc9044f7efc7570ccefecba0efc63/operations/scf-a2a-native-analysis-0c7a-20261012/SOURCE_PACKET.json) have distinct immutable source IDs.
+
+The original catalogue's twelve source files and the two added prospective commissioning files have verified SHA-256 and byte counts from retained complete bytes. Original Git blob IDs are included where supplied by the selected source. The SDK entry is a source tree, so it does not receive a fabricated file byte count or file hash. The chapter's older programme link is preserved as the original URL selection without borrowing the later programme's file identity.
+
+## File identities and later source changes
+
+Every attached file identity records its exact repository, commit, path and URL under `a2a_byte_identity`. The common `git_blob`, `bytes` and `sha256` fields are populated from that same retained source witness.
+
+If the chapter selects another commit or path, the original mapper continues to select that URL. The helper removes its old byte witness and any flat values still equal to that old witness. It does not attach the previous file's digest to a different source. A later owner who has already supplied different measured file bytes keeps those values.
+
+An updated URL without a retained matching observation remains a valid selected URL, with no claimed byte observation from this helper. Multiple selected commits for the same chapter source are rejected so the writer can assign one current selection or distinct historical source IDs. Anchors in links do not create duplicate file identities.
+
+Same-input composition is idempotent. Original non-A2A source IDs and labels remain under their existing owners. The helper changes only its source entries and the additive `narrative_source.composition.a2a_source_catalogue` object.
+
+## Dated receiving evidence
+
+The source-transfer observation is bound to operation `SCF-A2A-NATIVE-ANALYSIS-0C7A-20261012`, original session 89178, terminal receipt 9c4eb8, and the complete published receipt bytes. That attempt verified all 51 packet frames, the original 48 bootstrap frames, 493 initial product files and 875 cached source files. It then ended with ENOSPC at the original control-write boundary, before `native.start`, installation, application execution or output upload. The full original receipt is linked above.
+
+This is a dated source-transfer result. A later control probe, native attempt, installed runtime, customer purchase or settlement has its own original evidence. Later observations already present in the catalogue are preserved. This helper does not turn source publication or source transfer into a purchase, execution, or settlement outcome.
+
+## Receive into the current four-file reader
+
+Use the current serial reader owner's complete source and current canonical manuscript. Keep the existing customer mapper, answer aliases, financial adapters, submission/review state and all concurrent chapters.
+
+Run the existing composition command against the owner's complete current reader directory:
 
 ```sh
 node stellar-forge/developer-site/grant-compose.mjs \
-  --directory stellar-forge/developer-site/dist \
-  --manuscript /ABSOLUTE/PATH/current-complete-manuscript.md \
-  --source-pins-output /ABSOLUTE/PATH/current-source-pins.json
+  --directory /ABS/CURRENT/reader-dist \
+  --manuscript /ABS/CURRENT/canonical-manuscript.md \
+  --source-pins-output /ABS/OWNED/current-reader-source-pins.json
 ```
 
-The original composer produces its normal complete output set. The writer reviews those outputs and publishes them through its existing source/reader route. This source PR does not independently mutate the canonical manuscript or its generated edition.
+The existing economic, coastal, financial and Datasette selections remain in that reader's original index or its explicitly selected existing command flags. The normal composer emits `grant.html`, `grant-data/application.md`, `grant-data/product-and-finance.md`, and `grant-data/source-index.json` together. Publish those files through the original reader owner's existing receiving/writeback process.
 
-## Exact source identity
+This source contribution does not publish a standalone replacement source index. Its retained receiving record documents the complete original mapper/projector applied to the actual selected companion and index, plus an explicitly labeled changed-source recovery example.
 
-A chapter URL must select a complete forty-character commit and the exact repository/path for its known source. Two different selected commits for the same chapter source are rejected; historical evidence stays under its original dated ID. Fragment links select the same original file. A link to a newer unmeasured file can be catalogued without inventing its byte count or SHA-256.
+## Observed source receiving
 
-A measured witness is attached only when the complete URL and repository/commit/path agree with retained full-file evidence. If the selected URL changes, only this helper's still-matching old witness fields are removed. Independently supplied later measurements remain intact. The SDK is an original source tree and has no fabricated file digest.
+The receiving input is the actual maintained reader at commit `6af69d04fcf138a2649ce7c38b44c65704855c26`: mapper `575243bf73cf745129818ac27f7c4bb448a556d4`, companion `e74c170bde1ad87d274a0eb533a41be5fd5a9977`, and source index `7f61ccb6a418c4b2e8a99a05211896a9c30bd455`.
 
-The original public projector omits restricted URLs recursively. Receiving its published index restores an immutable evidence URL only when the retained repository, commit and path are exact. It restores the original dated observation's omitted source URL only when every other field still equals the retained observation. A different URL, source tuple or observation field remains a conflict.
+The complete existing mapper/projector accepted 14 A2A sources with 12 exact file identities. All 64 other source entries and the original application, request, baseline, milestones, capacity, cash, submission and financial-operation values were preserved. Repeating the same source preserved the output. An explicit alternate-commit receiving example removed the old file witness; a later observation remained retained; conflicting selected chapter URLs were rejected.
 
-The original programme, source-transfer attempt and source-population descriptor retain separate IDs. The recorded 89178 result is the dated outcome of that exact source-only attempt, which ended at the original ENOSPC control-write boundary before native start. It does not assert the state of later native attempts. The joint A2A operation continues under its original controller and receiving programme.
+The receiving record is `grant-a2a-receiving.json`. These are source projection results. The original full native A2A operation remains responsible for its own application and output-custody results.
 
-## Prospective activity and funded work
+## Receiving the current cumulative reader
 
-The calendar assumes ten business days inside an illustrative fourteen-calendar-day Monday-start window. Each of two prospective buyers has ten period extracts and five independently useful extra tasks. M1 handles twenty extracts; M2 handles ten comparison/report tasks; both serve both buyers. Customer selection supplies actual dates, independence, licensed populations, prices, payment authority and receiving people.
+R24C joined this source contribution to the serial publisher's current complete reader at commit `57706ed86c8a51fd1f4f29bac0fbd56357fe8c99` on 12 October 2026. The join preserves the current customer-source mapper, finance-section receiving, current nine answers, funded delivery plan, submission and review state, and the complete companion.
 
-The output register distinguishes complete useful jobs, priced requests, actual native settlements and complete received tasks. Original task/request replay does not create another purchase. The current $38,000/400-hour/150-day request, baseline and milestones remain unchanged. Completed reusable source is recorded as the starting component; actual remaining adaptation is assigned once to the original funded package or a separate workorder.
+The public source projector removes private URLs while retaining their exact repository, commit and path. The A2A receiver now recognizes that retained identity when it receives the already-projected reader. Its original dated observation uses the immutable receipt identity, so that observation survives public projection and subsequent composition. An attempt to rebind an immutable dated source to a different commit still fails. A later source selection continues to retire only the old matching byte witness and preserves separately measured current values.
 
-## Receiving scope
+Receiving used all 15 current source files. The ordinary pre-join composition established the current four-file baseline, including the latest bank and institutional-repository source receiver. After this additive join, normal composition receives 99 sources: the original 85 non-A2A entries plus 14 A2A entries. All 85 other entries and every original application/request/baseline/milestone/capacity/cash/submission value remain exact. The current application, rendered reader and complete companion remain byte-identical. A second complete composition reproduces all four output files byte-for-byte, including the enriched source index and all current module identities.
 
-The focused record uses the actual retained current grant source index and companion plus the fresh maintained customer mapper. It compares the new projection with the original current mapper on identical inputs; checks the selected A2A additions; preserves all non-A2A source records, grant figures, other chapter content and later native observations; and verifies same-input replay and changed-URL witness removal.
+`grant-a2a-receiving.json` retains the original contributor's earlier dated source receiving. The current complete composition above uses the existing command and the entire later source edition. Read the source catalogue through the current serial publisher's original reader operation.
 
-These are source and pure projection checks, not a native customer run, a payment receipt or approval of the prospective workload. Published source and reader adoption remain separately reported.
+## Prospective customer commissioning calendar
+
+The complete [commissioning guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33dfb64798f5316a586c165d4d7591de972ca4e2/stellar-forge/developer-site/A2A_CUSTOMER_COMMISSIONING.md) and [machine-readable job register](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33dfb64798f5316a586c165d4d7591de972ca4e2/stellar-forge/developer-site/a2a-customer-commissioning.json) extend this same catalogue. Their full file hashes and Git blob identities bind those exact URLs. The current mapper, companion-navigation correction and composer's existing `a2a_projector_git_blob` remain unchanged.
+
+The calendar has thirty distinct useful jobs across an illustrative fourteen-calendar-day Monday-start window. Each of two prospective buyers has ten period extracts and five separate comparison or report tasks. Ten business days have three jobs each; actual customer dates, source periods, identities, independence, prices, payment authority, receiving people and procedure selections remain to be commissioned. M1 serves twenty complete extracts; M2 serves five complete comparison queries and five reports. Multiple file formats, retries and resubscriptions remain parts of one original task.
+
+The register separates useful tasks, priced requests, native settlements and received outputs. It records no customer outcomes. The existing $38,000, 400-hour, 150-day request, six funded packages and original adoption milestones remain intact. Completed reusable source is the starting component; remaining customer-specific adaptation belongs once to its funded package or a separate workorder.
+
+### Receive the exact application addition
+
+`A2A_APPLICATION_INSERTION.md` supplies the complete H3 for the existing chapter `## A2A analytical services: complete agent work, merchant delivery and customer receiving`. The canonical manuscript remains [the existing shared grant document](https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF). Its serial writer inserts that H3 while retaining the rest of the chapter, all concurrent chapters, nine answers and submission/review state, then uses the existing full composition command above. This source contribution does not independently replace the current manuscript or generated four-file reader.
+
+### Cumulative source receiving
+
+The earlier `grant-a2a-receiving.json` record remains intact. Its `continuations` array retains the separately dated customer-commissioning source receiving, including the exact current mapper, companion-link helper and catalogue preimages. The same twenty-eight focused checks exercise the full pure mapper/projector, exact source witnesses, immutable and changed-source recovery, later-observation preservation, all non-A2A fields and the prospective calendar arithmetic. This is source/projection receiving; the original native A2A programme and each actual customer purchase retain their separate evidence.
