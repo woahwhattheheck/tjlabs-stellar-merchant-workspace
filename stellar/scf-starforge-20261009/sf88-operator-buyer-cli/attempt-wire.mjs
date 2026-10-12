@@ -319,6 +319,7 @@ export async function readAttemptWireCheckpoint({cfg, body, includeWire = false}
 
 
 const PREAPPROVAL_WIRE = 'stellar-forge.sf88.preapproval-wire.v1';
+const DATASET_UNPAID_WIRE = 'stellar-forge.sf88.dataset-unpaid-wire.v1';
 const HASH = /^[a-f0-9]{64}$/;
 const HISTORY_LIMIT = 262144;
 const wireCheck = signal => {
@@ -441,22 +442,23 @@ export async function inspectPreapprovalWireCheckpoint({cfg,body}) {
   const selected=await acquireWire(frozen,originalBody);
   try{return selected.checkpoint;}finally{await selected.held?.close();}
 }
-function historyOptions({cfg,body,historyDirectory,planSha256,sourceAttemptSha256,expectedCheckpoint}) {
+function historyOptions({cfg,body,historyDirectory,planSha256,sourceAttemptSha256,expectedCheckpoint},kind='node') {
   const frozen=JSON.parse(JSON.stringify(cfg)),originalBody=requestBody(body);
   const directory=absolute(historyDirectory);
-  need(HASH.test(planSha256??'') && HASH.test(sourceAttemptSha256??'') &&
-    directory.endsWith('/preapproval-history/'+sourceAttemptSha256),
+  need(['node','dataset'].includes(kind) && HASH.test(planSha256??'') && HASH.test(sourceAttemptSha256??'') &&
+    directory.endsWith((kind==='dataset'?'/unpaid-history/':'/preapproval-history/')+sourceAttemptSha256),
     'PREAPPROVAL_WIRE_PLAN_REQUIRED');
   const expected=expectedCheckpoint===undefined?undefined:JSON.parse(jsonBytes(expectedCheckpoint));
   if(expected)need(expected.schema===PREAPPROVAL_WIRE+'.checkpoint' &&
     expected.sha256===checkpointHash(expected) && same(expected.binding,bindingFor(frozen,originalBody)) &&
     expected.directory===wirePath(frozen),'PREAPPROVAL_WIRE_SELECTION_CHANGED');
-  return {cfg:frozen,body:originalBody,directory,planSha256,sourceAttemptSha256,expected,
+  return {cfg:frozen,body:originalBody,directory,planSha256,sourceAttemptSha256,expected,kind,
+    schema:kind==='dataset'?DATASET_UNPAID_WIRE:PREAPPROVAL_WIRE,
     selectionPath:join(directory,'wire-selection.json'),receiptPath:join(directory,'wire-retirement.json'),
     archiveDirectory:join(directory,'original-wire')};
 }
 function validateSelection(value,options) {
-  need(value?.schema===PREAPPROVAL_WIRE+'.selection' &&
+  need(value?.schema===options.schema+'.selection' &&
     value.intentId===options.cfg.operation.intentId && value.planSha256===options.planSha256 &&
     value.sourceAttemptSha256===options.sourceAttemptSha256 &&
     value.directory===options.directory && value.archiveDirectory===options.archiveDirectory &&
@@ -466,17 +468,52 @@ function validateSelection(value,options) {
     (!options.expected || matchingCheckpoint(options.expected,value.checkpoint,{allowCreatedLock:true})),
     'PREAPPROVAL_WIRE_SELECTION_CHANGED');
   const check=value.originalVerification;
-  need(check?.schema==='stellar-forge.node-preapproval-recovery.v1' &&
-    check.intentId===value.intentId && check.planSha256===value.planSha256 &&
-    check.processProof?.schema==='stellar-forge.node-preapproval-process-proof.v1' &&
-    check.processProof.outcome==='ORIGINAL_ATTEMPT_PROCESS_ABSENT' &&
-    check.processProof.intentId===value.intentId &&
-    check.processProof.attemptSha256===value.sourceAttemptSha256 &&
-    check.originalLedgerCheck?.outcome==='ABSENT_FROM_AUTHENTICATED_ORIGINAL_LEDGER' &&
-    check.originalLedgerCheck.intentId===value.intentId &&
-    check.originalLedgerCheck.ledger===options.cfg.operator.ledger &&
-    check.originalLedgerCheck.reservationsForIntent===0,
-    'PREAPPROVAL_WIRE_ORIGINAL_AUDIT_REQUIRED');
+  if(options.kind==='dataset') {
+    // The Dataset caller retains its original run lock across archive and the
+    // next native admission. Its complete original files and authenticated
+    // SF36 absence are checked again; no Node-process proof is manufactured.
+    need(check?.schema==='stellar-forge.sf88.unpaid-continuation.v1' &&
+      check.intentId===value.intentId && check.planSha256===value.planSha256 &&
+      check.attemptSha256===value.sourceAttemptSha256 &&
+      check.configurationSha256===valueHash(options.cfg) &&
+      HASH.test(check.checkoutSelectionSha256??'') &&
+      check.originalLedgerCheck?.schema==='stellar-forge.sf88.unpaid-ledger-check.v1' &&
+      check.originalLedgerCheck.outcome==='ABSENT_FROM_AUTHENTICATED_ORIGINAL_LEDGER' &&
+      check.originalLedgerCheck.intentId===value.intentId &&
+      check.originalLedgerCheck.ledger===options.cfg.operator.ledger &&
+      check.originalLedgerCheck.reservationsForIntent===0,
+      'DATASET_UNPAID_WIRE_ORIGINAL_AUDIT_REQUIRED');
+    const original=check.originalWire;
+    if(original===null) need(!value.checkpoint.exists,'DATASET_UNPAID_UNSELECTED_WIRE');
+    else {
+      need(original?.schema===SCHEMA && original.intentId===value.intentId &&
+        original.directory===value.checkpoint.directory && original.writerActive===false &&
+        original.signingEntered===false && original.signedDispatchRecorded===false &&
+        original.signedResponseRecorded===false &&
+        original.configValueSha256===check.configurationSha256 &&
+        original.sourceSha256===value.checkpoint.sourceSha256 &&
+        original.state===value.checkpoint.state &&
+        same(Object.keys(original.records??{}).sort(),value.checkpoint.files
+          .filter(file=>EVENTS.some(event=>file.name===event+'.json'))
+          .map(file=>file.name.slice(0,-5)).sort()) &&
+        Object.entries(original.records??{}).every(([name,record])=>
+          value.checkpoint.files.some(file=>file.name===name+'.json' &&
+            file.sha256===record.sha256 && file.bytes===record.bytes)),
+        'DATASET_UNPAID_ORIGINAL_WIRE_CHANGED');
+    }
+  } else {
+    need(check?.schema==='stellar-forge.node-preapproval-recovery.v1' &&
+      check.intentId===value.intentId && check.planSha256===value.planSha256 &&
+      check.processProof?.schema==='stellar-forge.node-preapproval-process-proof.v1' &&
+      check.processProof.outcome==='ORIGINAL_ATTEMPT_PROCESS_ABSENT' &&
+      check.processProof.intentId===value.intentId &&
+      check.processProof.attemptSha256===value.sourceAttemptSha256 &&
+      check.originalLedgerCheck?.outcome==='ABSENT_FROM_AUTHENTICATED_ORIGINAL_LEDGER' &&
+      check.originalLedgerCheck.intentId===value.intentId &&
+      check.originalLedgerCheck.ledger===options.cfg.operator.ledger &&
+      check.originalLedgerCheck.reservationsForIntent===0,
+      'PREAPPROVAL_WIRE_ORIGINAL_AUDIT_REQUIRED');
+  }
   return value;
 }
 async function readSelection(options) {
@@ -504,7 +541,7 @@ async function archivedCheckpoint(options,selected,{releaseOrphans=false}={}) {
   } finally {await held.close();}
 }
 function retirementReceipt(options,selected) {
-  return {schema:PREAPPROVAL_WIRE+'.retirement',intentId:options.cfg.operation.intentId,
+  return {schema:options.schema+'.retirement',intentId:options.cfg.operation.intentId,
     planSha256:options.planSha256,sourceAttemptSha256:options.sourceAttemptSha256,
     selectionSha256:selected.sha256,checkpointSha256:selected.value.checkpoint.sha256,
     archiveDirectory:selected.value.checkpoint.exists?options.archiveDirectory:null,
@@ -513,11 +550,14 @@ function retirementReceipt(options,selected) {
 /** Reopen only the selected archive. A later wire at the canonical evidence
  * pathname is a different attempt and is never moved or altered by this read. */
 export async function readPreapprovalWireHistory(options) {
-  const selectedOptions=historyOptions(options),selected=await readSelection(selectedOptions);
+  return readWireHistory(historyOptions(options));
+}
+async function readWireHistory(selectedOptions) {
+  const selected=await readSelection(selectedOptions);
   if(!selected)return null;
   if(!await exists(selectedOptions.receiptPath)) {
     if(await exists(selectedOptions.archiveDirectory))await archivedCheckpoint(selectedOptions,selected);
-    return {schema:PREAPPROVAL_WIRE,intentId:selectedOptions.cfg.operation.intentId,status:'PREPARING',
+    return {schema:selectedOptions.schema,intentId:selectedOptions.cfg.operation.intentId,status:'PREPARING',
       planSha256:selectedOptions.planSha256,selectionSha256:selected.sha256,
       checkpointSha256:selected.value.checkpoint.sha256,
       archiveDirectory:await exists(selectedOptions.archiveDirectory)?selectedOptions.archiveDirectory:null};
@@ -526,7 +566,7 @@ export async function readPreapprovalWireHistory(options) {
   need(same(receipt.value,retirementReceipt(selectedOptions,selected)),
     'PREAPPROVAL_WIRE_RETIREMENT_CHANGED');
   await archivedCheckpoint(selectedOptions,selected);
-  return {schema:PREAPPROVAL_WIRE,intentId:selectedOptions.cfg.operation.intentId,status:'RETAINED',
+  return {schema:selectedOptions.schema,intentId:selectedOptions.cfg.operation.intentId,status:'RETAINED',
     planSha256:selectedOptions.planSha256,selectionSha256:selected.sha256,
     retirementSha256:receipt.sha256,checkpointSha256:selected.value.checkpoint.sha256,
     sourceSha256:selected.value.checkpoint.sourceSha256??null,
@@ -539,7 +579,16 @@ export async function readPreapprovalWireHistory(options) {
  * directory is retired. The selected plan remains locked through attempt
  * admission, so repeated callers cannot retire the new attempt's wire. */
 export async function withPreapprovalWireHistory(options,work) {
-  const selectedOptions=historyOptions(options);
+  return withWireHistory(options,work,'node');
+}
+/** Used only by the original Dataset unpaid continuation while its existing
+ * run lock is held. All old source/event bytes and publication inodes move
+ * together; a signed or active attempt remains ineligible. */
+export async function withDatasetUnpaidWireHistory(options,work) {
+  return withWireHistory(options,work,'dataset');
+}
+async function withWireHistory(options,work,kind) {
+  const selectedOptions=historyOptions(options,kind);
   const {cfg,body,directory,selectionPath,receiptPath,archiveDirectory}=selectedOptions;
   const {verifyOriginal,reserveFile,signal}=options;
   need(typeof verifyOriginal==='function' && typeof work==='function',
@@ -563,7 +612,7 @@ export async function withPreapprovalWireHistory(options,work) {
       else {
         if(selectedOptions.expected)need(matchingCheckpoint(selectedOptions.expected,actual.checkpoint,
           {allowCreatedLock:true}),'PREAPPROVAL_WIRE_SOURCE_CHANGED');
-        const value=validateSelection({schema:PREAPPROVAL_WIRE+'.selection',
+        const value=validateSelection({schema:selectedOptions.schema+'.selection',
           intentId:cfg.operation.intentId,planSha256:selectedOptions.planSha256,
           sourceAttemptSha256:selectedOptions.sourceAttemptSha256,directory,archiveDirectory,
           checkpoint:actual.checkpoint,originalVerification},selectedOptions);
@@ -614,7 +663,7 @@ export async function withPreapprovalWireHistory(options,work) {
     // Transition publication is completed even if cancellation follows rename.
     // Cancellation still prevents entry into the new original buyer below.
     wireCheck(signal);
-    const history=await readPreapprovalWireHistory({...options,cfg,body:body.present?body.bytes:undefined});
+    const history=await readWireHistory(selectedOptions);
     return await work({history,originalVerification});
   } finally {
     try{await reservations?.close();}
