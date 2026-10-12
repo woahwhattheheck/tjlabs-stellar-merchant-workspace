@@ -8,6 +8,7 @@ import { publicURL, merchantConfig, profileKey, streamKey, channel, draftTask, M
 import { saveTask, authorizeTask, resumeTaskAuthority, stopTask } from './authority.mjs';
 import { preparePurchase, executePurchase, refreshChallenge, responseFor, cancelPurchase } from './buyer.mjs';
 import { createMerchant, merchantContract } from './merchant.mjs';
+import { registerLocalMerchant } from './transport.mjs';
 import { prepareClose, executeClose, reconcileClose, cancelUnsignedClose } from './settlement.mjs';
 import { exportChannel, receiveChannel, parseBundle, assertOperating } from './receiving.mjs';
 import { groups, snapshot, drainChannels, serialChannel, readTask, purchaseView } from './state.mjs';
@@ -57,8 +58,10 @@ async function serveMerchant({workspace,profile,port,environment}) {
   server.requestTimeout=360000;server.headersTimeout=30000;
   await new Promise((done,reject)=>{server.once('error',reject);server.listen(actualPort,'127.0.0.1',done);});
   actualPort=server.address().port;
+  let unregister;
+  try{unregister=registerLocalMerchant(workspace,merchant);}catch(error){await new Promise(done=>server.close(done));throw error;}
   return {merchant,port:actualPort,close:async()=>{
-    await new Promise(done=>server.close(done));await merchant.drain();
+    unregister();await new Promise(done=>server.close(done));await merchant.drain();await drainChannels(workspace);
   }};
 }
 export function taskFromOffer(contract,offerId) {

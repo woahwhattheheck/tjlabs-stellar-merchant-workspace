@@ -1,4 +1,5 @@
 // MIT. One leased original workspace serializes each complete channel operation.
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { requireValue as need, hash, stable, now } from '../mpp-charge/storage.mjs';
 import { streamKey, channelIdentity, amount } from './config.mjs';
 import { nativeStore, clientCumulativeKey } from './runtime.mjs';
@@ -6,12 +7,16 @@ export const groups=Object.freeze({
   tasks:'channel-tasks', streams:'channel-streams', purchases:'channel-purchases',
   deliveries:'channel-deliveries', settlements:'channel-settlements', receiving:'channel-receiving', settings:'channel-settings'
 });
-const operations=new WeakMap();
+const operations=new WeakMap(),operationContext=new AsyncLocalStorage();
 export function serialChannel(workspace, terms, operation) {
   let active=operations.get(workspace);
   if(!active) { active=new Map(); operations.set(workspace,active); }
-  const key=streamKey(terms), prior=active.get(key) ?? Promise.resolve();
-  const pending=prior.catch(()=>{}).then(operation);
+  const key=streamKey(terms),parent=operationContext.getStore();
+  // A directly selected same-workspace merchant belongs to its buyer's existing operation.
+  if(parent?.active && parent.workspace===workspace && parent.key===key)return Promise.resolve().then(operation);
+  const prior=active.get(key) ?? Promise.resolve(),context={workspace,key,active:true};
+  const pending=prior.catch(()=>{}).then(()=>operationContext.run(context,operation))
+    .finally(()=>{context.active=false;});
   active.set(key,pending);
   pending.finally(()=>{if(active.get(key)===pending)active.delete(key);}).catch(()=>{});
   return pending;

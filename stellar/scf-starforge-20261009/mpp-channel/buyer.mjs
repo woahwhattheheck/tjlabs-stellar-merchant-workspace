@@ -1,24 +1,21 @@
 import { dependencyRootFor } from './runtime.mjs';
 import { assertOperating } from './receiving.mjs';
 // MIT. One task reservation, one cumulative commitment and the original response across retries.
-import { createPublicHttpsFetch } from '../sf31-buyer-client/public-transport.mjs';
+import { channelFetch } from './transport.mjs';
 import { requestBytes, bindingFacts } from '../mpp-charge/config.mjs';
 import { responseRecord, storedResponse } from '../mpp-charge/merchant.mjs';
 import { requireValue as need, hash, stable, now, id } from '../mpp-charge/storage.mjs';
 import { taskConfig, taskRequest, reviewChallenge, amount, profileKey } from './config.mjs';
 import { loadChannelNative, observeChannel, nativeStore, clientCumulativeKey } from './runtime.mjs';
 import { groups, readTask, serialChannel, reservePurchase, markSigned, completePurchase, purchaseView } from './state.mjs';
-function transport(config) {
-  return createPublicHttpsFetch({timeoutMs:300000,paymentAuthorization:true,trustedProxy:config.transport ?? null});
-}
 function options(request,credential) {
   const body=requestBytes(request), headers={};
   if(body !== null) headers['content-type']='application/json';
   if(credential) headers.authorization=credential;
   return {method:request.method,headers,...(body===null?{}:{body}),redirect:'manual'};
 }
-async function challengeFor(native,config,request) {
-  const response=await transport(config)(request.url,options(request));
+async function challengeFor(native,config,request,workspace) {
+  const response=await channelFetch(workspace,config,request.url,options(request));
   need(response.status===402, 'MPP_CHANNEL_NATIVE_CHALLENGE_REQUIRED',409);
   const candidates=native.Challenge.fromResponseList(response).filter(item=>{
     try { reviewChallenge(item,config); return true; } catch { return false; }
@@ -45,7 +42,7 @@ export async function preparePurchase({workspace,taskId,purchaseId,request}) {
       return purchaseView(existing);
     }
     const native=await loadChannelNative(await dependencyRootFor(workspace,current.config));
-    const captured=await challengeFor(native,current.config,selected);
+    const captured=await challengeFor(native,current.config,selected,workspace);
     const facts=bindingFacts(selected);
     const row={schema:'stellar-forge.mpp-channel-purchase.v1',id:purchaseId,taskId,
       phase:'READY',profileId:current.profileId,config:current.config,request:selected,
@@ -110,7 +107,7 @@ export async function executePurchase({workspace,purchaseId,environment=process.
         retained.payload.amount===row.reservation.cumulativeAtomic, 'MPP_CHANNEL_RETAINED_CREDENTIAL_CHANGED');
       await markSigned(workspace,config.channel,row.reservation);
       await save({phase:'SENDING',attempts:(row.attempts ?? 0)+1});
-      const response=await transport(config)(row.request.url,options(row.request,row.credentialHeader));
+      const response=await channelFetch(workspace,config,row.request.url,options(row.request,row.credentialHeader));
       const saved=await responseRecord(response);
       let receipt=null;
       try { receipt=native.Receipt.fromResponse(storedResponse(saved)); } catch {}
@@ -146,7 +143,7 @@ export async function refreshChallenge({workspace,purchaseId}) {
     await assertOperating(workspace,row.config.channel);
     need(!['CANCELLING','CANCELLED','COMPLETE'].includes(row.phase) && (row.phase==='CHALLENGE_REJECTED' || !row.credentialHeader), 'MPP_CHANNEL_RESUME_ORIGINAL_RESPONSE',409);
     const native=await loadChannelNative(await dependencyRootFor(workspace,row.config));
-    const captured=await challengeFor(native,row.config,row.request);
+    const captured=await challengeFor(native,row.config,row.request,workspace);
     need(captured.challenge.request.amount===row.challenge.request.amount,
       'MPP_CHANNEL_ORIGINAL_RESERVED_UNIT_CHANGED',409);
     if(row.reservation) {
