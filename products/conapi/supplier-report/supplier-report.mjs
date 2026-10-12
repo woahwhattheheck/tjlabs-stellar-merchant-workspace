@@ -538,9 +538,19 @@ function freeze(value) {
   }
   return value;
 }
+function validUnicode(value) {
+  for (let index = 0; index < value.length; index++) {
+    const unit = value.charCodeAt(index);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const low = value.charCodeAt(++index);
+      need(low >= 0xdc00 && low <= 0xdfff,'INVALID_UNICODE','Text contains an unpaired UTF-16 surrogate.');
+    } else need(unit < 0xdc00 || unit > 0xdfff,'INVALID_UNICODE','Text contains an unpaired UTF-16 surrogate.');
+  }
+  return value;
+}
 function text(value, name, required = true) {
   need(typeof value === 'string' && (!required || value.trim().length > 0), 'INVALID_INPUT', name + ' must be ' + (required ? 'nonempty ' : '') + 'text.');
-  HASH.sha256Utf8(value);
+  validUnicode(value);
   return value;
 }
 function id(value, name) {
@@ -567,7 +577,7 @@ export function canonicalJSON(value) {
   const seen = new Set();
   function encode(v) {
     if (v === null) return 'null';
-    if (typeof v === 'string') { HASH.sha256Utf8(v); return JSON.stringify(v); }
+    if (typeof v === 'string') { validUnicode(v); return JSON.stringify(v); }
     if (typeof v === 'boolean') return v ? 'true' : 'false';
     if (typeof v === 'number') { need(Number.isFinite(v), 'INVALID_JSON', 'JSON numbers must be finite.'); return JSON.stringify(v); }
     need(Array.isArray(v) || plain(v), 'INVALID_JSON', 'Use only complete JSON values.');
@@ -1078,15 +1088,27 @@ export function finalize(input) {
 function restoreReport(value) {
   need(plain(value) && value.schemaVersion === 1 && Array.isArray(value.history),'INVALID_WORKSPACE','The saved report must use schema version 1 and contain decision history.');
   const baseline = checkedEdition(value.baseline), candidate = checkedEdition(value.candidate);
-  let report = reconcile({requestId:value.requestId,baseline,candidate,rules:value.rules,
+  const initial = reconcile({requestId:value.requestId,baseline,candidate,rules:value.rules,
     ...(value.predecessor === undefined ? {} : {predecessor:value.predecessor})});
+  const index = new Map(initial.items.map(item => [item.id,item]));
+  const decisions = {}, history = [];
+  let revision = 0;
   for (const event of value.history) {
-    need(plain(event) && event.beforeRevision === report.revision && event.revision === report.revision + 1 &&
-      plain(event.input) && event.itemId === event.input.itemId,'HISTORY_INTEGRITY','Decision history revisions must form a complete ordered chain.');
-    report = applyDecisions(report,[event.input],{reviewer:event.reviewer,at:event.at,expectedRevision:report.revision},true);
-    need(canonicalJSON(report.history[report.history.length-1]) === canonicalJSON(event),
+    need(plain(event) && event.beforeRevision === revision && event.revision === revision + 1 &&
+      plain(event.input) && event.itemId === event.input.itemId && index.has(event.itemId),
+      'HISTORY_INTEGRITY','Decision history revisions and original item IDs must form a complete ordered chain.');
+    const reviewer = id(event.reviewer,'Historical reviewer');
+    const at = instant(event.at,'Historical decision timestamp');
+    const input = decisionInput(index.get(event.itemId),event.input,initial.rules);
+    const previousDecision = own(decisions,input.itemId) ? decisions[input.itemId] : null;
+    const beforeRevision = revision++;
+    const expectedEvent = {revision,beforeRevision,itemId:input.itemId,reviewer,at,input:clone(input),previousDecision};
+    need(canonicalJSON(expectedEvent) === canonicalJSON(event),
       'HISTORY_INTEGRITY','A saved decision event differs from its reconstructed event.');
+    decisions[input.itemId] = {...input,reviewer,at,revision};
+    history.push(expectedEvent);
   }
+  const report = trustedReport(refreshed({...initial,revision,decisions,history}));
   need(canonicalJSON(report) === canonicalJSON(value),'WORKSPACE_INTEGRITY','Saved derived data differs from the original sources, rules, or decision history.');
   return report;
 }
@@ -1248,6 +1270,9 @@ export function exportSQL(input,{tableName = 'supplier_feed_accepted'} = {}) {
   const result = finalize(input);
   need(typeof tableName === 'string' && /^[A-Za-z_][A-Za-z0-9_]{0,62}$/.test(tableName),
     'INVALID_TABLE_NAME','Use a SQLite table name of 1–63 ASCII letters, digits, or underscores, starting with a letter or underscore.');
+  const sqlNames = result.columns.map(column => column.replace(/[A-Z]/g, letter => letter.toLowerCase()));
+  need(new Set(sqlNames).size === result.columns.length,
+    'SQL_COLUMN_COLLISION','SQLite column identifiers must be unique without ASCII case differences. Rename the conflicting canonical columns before exporting SQL.');
   const table = sqlIdentifier(tableName), lineage = sqlIdentifier(tableName+'__lineage'), metadata = sqlIdentifier(tableName+'__metadata');
   const columnList = result.columns.map(sqlIdentifier).join(', ');
   const statements = [
