@@ -199,29 +199,77 @@ def result_success(value):
         selected = selected[key]
     return selected == PAYLOAD["receiving"]["successValue"]
 
+def configure_library_save():
+    """Use the exercised file tool with exact staged bytes and its original reply."""
+    bridge = ROOT / "programme" / "official_library_save_bridge.py"
+    raw = pin(bridge.read_bytes(), PAYLOAD["libraryBridgePin"], "Supported Library transport")
+    shared = Path(PAYLOAD["sharedDirectory"]) / TASK
+    shared.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if not shared.is_absolute() or shared.is_symlink():
+        raise RuntimeError("The owned artifact staging directory differs")
+
+    def require(value, message):
+        if not value:
+            raise RuntimeError(message)
+
+    def same(expected, path):
+        found = record(Path(path))
+        require(found["bytes"] == expected["bytes"] and found["sha256"] == expected["sha256"],
+                "The retained artifact bytes differ: " + str(path))
+
+    def copy_exact(source, destination, expected):
+        source, destination = Path(source), Path(destination)
+        require(destination.parent == shared / "official-save-source",
+                "The selected artifact stage differs")
+        same(expected, source)
+        destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        require(not destination.parent.is_symlink(), "The artifact stage is a link")
+        if not destination.exists():
+            fd, temporary = tempfile.mkstemp(prefix=".canadabuys-save-", dir=str(destination.parent))
+            try:
+                with source.open("rb") as original, os.fdopen(fd, "wb") as output:
+                    shutil.copyfileobj(original, output, 262144)
+                    output.flush()
+                    os.fsync(output.fileno())
+                same(expected, Path(temporary))
+                try:
+                    os.link(temporary, destination)
+                except FileExistsError:
+                    same(expected, destination)
+            finally:
+                try:
+                    os.unlink(temporary)
+                except FileNotFoundError:
+                    pass
+        same(expected, source)
+        same(expected, destination)
+
+    def historical_finish(path, kept, reused):
+        raise RuntimeError("A saved artifact selected a different retained transport")
+
+    namespace = {"__name__": "canadabuys_official_library_transport"}
+    exec(compile(raw, str(bridge), "exec"), namespace)
+    adapter = {"ROOT": ROOT, "SHARED": shared, "OP": OPERATION,
+               "finish_saved_artifact": historical_finish, "record": record, "require": require,
+               "readjson": lambda path: json.loads(Path(path).read_bytes()),
+               "encoded": encoded, "sha": digest, "publish": write_once,
+               "pubjson": lambda path, value: write_once(Path(path), encoded(value)),
+               "same": same, "copy_exact": copy_exact,
+               "now": lambda: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+               "emit": event}
+    namespace["install_original_library_tool_bridge"](adapter)
+    event("CANADABUYS_SUPPORTED_LIBRARY_SELECTED", source=record(bridge), stagingRoot=str(shared),
+          tool="library_create_library_file")
+    return adapter["save_artifact"]
+
 def save_delivery(paths):
-    caller = ROOT / "programme" / "library_upload_private_state.py"
-    request = {"uploads": [{"local_path": str(path), "purpose": "create_library_file",
-                           "library_artifact_type": "other"} for path in paths]}
-    environment = dict(os.environ)
-    environment["AZCOPY_CONCURRENCY_VALUE"] = "1"
-    if PAYLOAD["runtime"].get("libraryHelper"):
-        environment["COMMONS_CANONICAL_LIBRARY_UPLOAD_HELPER"] = PAYLOAD["runtime"]["libraryHelper"]
-    environment["COMMONS_LIBRARY_UPLOAD_STATE_PARENT"] = str(ROOT / "library-state")
-    environment["TMPDIR"] = str(ROOT / "library-state" / "tmp")
-    Path(environment["TMPDIR"]).mkdir(parents=True, exist_ok=True, mode=0o700)
-    completed = subprocess.run([sys.executable, "-B", str(caller)], input=encoded(request),
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=str(ROOT), env=environment, check=False)
-    write_once(ROOT / "library-save.stdout", completed.stdout)
-    write_once(ROOT / "library-save.stderr", completed.stderr)
-    if completed.returncode != 0:
-        raise RuntimeError("Complete delivery save failed: " + completed.stderr.decode("utf-8", "replace")[-1600:])
-    value = json.loads(completed.stdout)
+    save = configure_library_save()
+    receipts = [save(Path(path)) for path in paths]
+    value = {"schema": "commons.canadabuys.finalized-delivery-saves.v1",
+             "operationId": OPERATION, "results": [item["result"] for item in receipts],
+             "receipts": receipts}
     write_once(ROOT / "library-save-result.json", encoded(value))
-    results = value.get("results", value.get("uploads"))
-    if not isinstance(results, list) or len(results) != len(paths) or any(x.get("status") != "succeeded" for x in results):
-        raise RuntimeError("The complete delivery save did not finalize every artifact: " + json.dumps(value))
-    event("CANADABUYS_LIBRARY_SAVED", results=results)
+    event("CANADABUYS_LIBRARY_SAVED", results=value["results"])
     return value
 
 def preserve(status):
