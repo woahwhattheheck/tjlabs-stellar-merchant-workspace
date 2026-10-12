@@ -12,14 +12,14 @@ function title(value) {
   return value.trim();
 }
 function sourceHandles(bytes, base) {
-  if (!bytes) return { captures: {}, files: {}, reflections: {} };
+  if (!bytes) return { captures: {}, files: {}, reflections: {}, destinations: {} };
   const raw = decode(bytes);
   need(plain(raw) && raw.schema === 'stellar-forge.grpc-product-handles.v1' &&
-    Object.keys(raw).every(key => ['schema', 'captures', 'files', 'reflections'].includes(key)),
+    Object.keys(raw).every(key => ['schema', 'captures', 'files', 'reflections', 'destinations'].includes(key)),
   'Select original capture, reflection and receiving file handles.');
   const result = {};
   for (const [kind, paths] of Object.entries({
-    captures: ['directory', 'sourceFile', 'planFile'], files: ['path'], reflections: ['sourceFile'],
+    captures: ['directory', 'sourceFile', 'planFile'], files: ['path'], reflections: ['sourceFile'], destinations: ['directory'],
   })) {
     need(raw[kind] === undefined || plain(raw[kind]), 'Supply a native handle map.');
     result[kind] = Object.fromEntries(Object.entries(raw[kind] ?? {}).map(([alias, value]) => {
@@ -97,7 +97,7 @@ export async function initializeGrpcProduct(input = {}) {
     return { state: 'INITIALIZED', profile, owner: 'ORIGINAL_GRPC_WORKSPACE',
       handles: { captures: Object.keys(configured.workspaces[workspace].captures),
         reflections: Object.keys(configured.workspaces[workspace].reflections),
-        files: Object.keys(configured.workspaces[workspace].files) } };
+        files: Object.keys(configured.workspaces[workspace].files), destinations: Object.keys(configured.workspaces[workspace].destinations ?? {}) } };
   } finally { await lease.close(); }
 }
 
@@ -128,7 +128,7 @@ export async function inspectGrpcProduct(directory) {
   const saved = await privateBytes(profile.connectionFile, true, 65536);
   const session = saved ? decode(saved) : null;
   return { schema: 'stellar-forge.grpc-product-inspection.v1', profile, workspace: binding,
-    handles: { captures: Object.keys(selected.captures), reflections: Object.keys(selected.reflections), files: Object.keys(selected.files) },
+    handles: { captures: Object.keys(selected.captures), reflections: Object.keys(selected.reflections), files: Object.keys(selected.files), destinations: Object.keys(selected.destinations ?? {}) },
     session: session ? { state: session.state, instanceId: session.instanceId, startedAt: session.startedAt,
       endedAt: session.endedAt, nativeInstanceId: session.nativeInstanceId,
       operatorUrl: session.operatorUrl ?? null, operatorDirectory: session.operatorDirectory ?? null,

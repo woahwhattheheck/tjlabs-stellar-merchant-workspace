@@ -138,6 +138,15 @@ Add those two IDs to the ordinary preview selection, then use the retained
 operation below to prepare, execute and recover that exact review. Cumulative
 selections omit usageOpeningId and retain their existing normalized request identity.
 
+## Close several customer statements together
+
+The existing operations entry also provides complete [customer closing cycles](./ACCOUNTING_STATEMENT_CYCLES.md).
+Prepare a set of original customer/run/capture selections, preserve every full
+preview, then execute with one stable native retention request per customer row.
+The cycle recovers partial completion and delivers complete customer folders,
+current native status snapshots and a readable operator register. Installed
+commands are cycle-prepare, cycle-execute, cycle-reconcile and cycle-status.
+
 ## Durable review and recovery
 
 ~~~js

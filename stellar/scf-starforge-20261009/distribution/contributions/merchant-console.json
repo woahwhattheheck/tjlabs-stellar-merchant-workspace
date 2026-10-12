@@ -4,11 +4,13 @@
   "description": "Saved merchant operator requests, native returns and complete customer receiving",
   "commands": {
     "merchant-console-application-receive": "stellar-forge/mcp-merchant-operator/receiving/console-applications.mjs",
-    "merchant-workflow-series": "stellar-forge/mcp-merchant-operator/console/workflow-series-cli.mjs"
+    "merchant-workflow-series": "stellar-forge/mcp-merchant-operator/console/workflow-series-cli.mjs",
+    "merchant-workflow-reports": "stellar-forge/mcp-merchant-operator/console/workflow-report-cli.mjs"
   },
   "commandDescriptions": {
     "merchant-console-application-receive": "Continue the original merchant customer through saved Applications, private console Open, Stop and reopen",
-    "merchant-workflow-series": "Operate recurring customer tasks, retain original period runs, receive complete customer files and prepare the saved Installation handover"
+    "merchant-workflow-series": "Operate recurring customer tasks, retain original period runs, receive complete customer files and prepare the saved Installation handover",
+    "merchant-workflow-reports": "Compare original workflow runs, retain complete reports and receive their saved native history"
   },
   "exports": {
     "./merchant/console/managed": "./source/stellar-forge/mcp-merchant-operator/console/managed.mjs",
@@ -16,6 +18,7 @@
     "./merchant/console/receiving": "./source/stellar-forge/mcp-merchant-operator/receiving/console-applications.mjs",
     "./merchant/console/series": "./source/stellar-forge/mcp-merchant-operator/console/workflow-series-client.mjs",
     "./merchant/console/series-handover": "./source/stellar-forge/mcp-merchant-operator/console/workflow-series-handover.mjs",
+    "./merchant/console/reports": "./source/stellar-forge/mcp-merchant-operator/console/workflow-report-client.mjs",
     "./merchant/console/installation-handover": {
       "types": "./source/stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.d.mts",
       "import": "./source/stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.mjs"
@@ -29,6 +32,8 @@
     "stellar-forge/mcp-merchant-operator/console/WORKFLOW_SERIES.md",
     "stellar-forge/mcp-merchant-operator/console/workflow-series-client.d.mts",
     "stellar-forge/mcp-merchant-operator/console/workflow-series-handover.d.mts",
+    "stellar-forge/mcp-merchant-operator/console/WORKFLOW_REPORTS.md",
+    "stellar-forge/mcp-merchant-operator/console/workflow-report-client.d.mts",
     "stellar-forge/mcp-merchant-operator/console/WORKFLOW_INSTALLATIONS.md",
     "stellar-forge/mcp-merchant-operator/console/workflow-installation-handover.d.mts",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_workflow_source.py",

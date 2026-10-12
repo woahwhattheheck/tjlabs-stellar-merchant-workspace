@@ -275,6 +275,7 @@ export interface AccountingStatementClient {
   closeWorkspace(options?: StatementCallOptions): Promise<NativeRecord | StatementReaderDrain>;
 }
 export interface ConnectedAccountingStatementClient extends AccountingStatementClient { readonly endpoint: string; }
+export function accountingStatementSelection(selection: StatementSelection): NormalizedStatementSelection;
 export function accountingStatementPreview<T extends AccountingStatementPreview>(preview: T): T;
 export function accountingStatementPreview(preview: unknown): AccountingStatementPreview;
 export function accountingStatementRetentionArguments(preview: AccountingStatementPreview, identity: StatementIdentity): StatementRetentionArguments;
