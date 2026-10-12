@@ -43,7 +43,10 @@ def remember_location(library, location):
 
 
 def remember_receipt(library, received, *, return_format=None):
-    return remember_location(library, receipt_location(received, return_format=return_format))
+    location = receipt_location(received, return_format=return_format)
+    if location.get("comparison_id"):
+        library.select_comparison(location["comparison_id"])
+    return remember_location(library, location)
 
 
 def _resolve(library, location):
@@ -80,6 +83,8 @@ def _resolve(library, location):
 def resolve_location(library, args, *, received=None, return_format=None):
     if received:
         location = _resolve(library, receipt_location(received, return_format=return_format))
+        if location.get("comparison_id"):
+            library.select_comparison(location["comparison_id"])
         return remember_location(library, location)
     selectors = {key: getattr(args, key, None) for key in ("comparison_id", "return_id", "plan_id")}
     selectors = {key: value for key, value in selectors.items() if value is not None}
