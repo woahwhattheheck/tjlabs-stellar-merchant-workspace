@@ -140,7 +140,40 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
   --out ../stellar-merchant-package
 ```
 
-The command returns the completed archive path and its source identity. Install that exact archive into your chosen runtime with ordinary npm package installation. The package's README, executable and repository metadata come from the committed product declaration.
+The command returns the completed archive path, SHA-256 and source identity. The package's README, executables and repository metadata come from the committed product declaration.
+
+Prepare the catalog runtime with the maintained installer and the returned archive. Select the `schema` feature for the local catalog, operator workspace and generated schema validation. Use a new runtime directory whose parent already exists:
+
+```sh
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs prepare \
+  --dir /srv/starforge/runtimes/materials \
+  --archive /srv/starforge/releases/RETURNED_ARCHIVE.tgz \
+  --sha256 RETURNED_ARCHIVE_SHA256 \
+  --feature schema
+
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs install \
+  --dir /srv/starforge/runtimes/materials
+```
+
+Preparation retains the exact archive and chooses its declared dependency versions. Installation uses npm's normal registry or the selected cache. The source package and dependencies live inside that private runtime; the catalog workspace remains in its existing state directory.
+
+Launch the installed command against the same saved catalog:
+
+```sh
+node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run \
+  --dir /srv/starforge/runtimes/materials -- \
+  opensearch-workspace \
+  --source /srv/starforge/config/materials-source.json \
+  --plan /srv/starforge/config/materials-plan.json \
+  --workspace /srv/starforge/state/materials \
+  --port 8447
+```
+
+Use absolute configuration and workspace paths when launching through the runtime installer. Its child process runs from the selected runtime directory. Replace `opensearch-workspace` with any catalog command and its arguments for batch operation. A conventional npm installation of the completed archive also exposes the declared `starforge` and `starforge-materials` executables.
+
+For paid merchant execution, include `--native` and the required features when preparing a new runtime, then keep the merchant's configured payment terms and endpoint environment with that runtime. Run `runtime-install --help` for the complete installer options.
+
+If an installation is interrupted, use `runtime-install resume --dir DIRECTORY` for its retained operation. Use `runtime-install inspect --dir DIRECTORY --load --source` to inspect that installed source and selected dependencies. The generated runtime runbook names its source and dependency roots.
 
 For an interrupted build, repeat the same output and source with `--resume`. The maintained operation reuses its original source and completed work. `--out DIRECTORY --status` reopens the retained build state. Building uses the original Git, Node, npm and Python tools and performs no application work or payment.
 
