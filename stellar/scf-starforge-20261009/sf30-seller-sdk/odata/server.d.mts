@@ -16,4 +16,6 @@ export declare function startODataServer(options: {
   liveOperations?: ODataLiveOperations;
   /** Default true. Set false when the caller owns the original workspace. */
   closeWorkspace?: boolean;
+  /** Attach the original configured collection subscriptions at /subscriptions/. */
+  subscriptionConnection?: string;
 }): Promise<ODataOperatorServer>;
