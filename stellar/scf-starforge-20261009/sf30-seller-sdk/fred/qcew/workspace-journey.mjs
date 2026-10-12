@@ -115,6 +115,39 @@ export async function runQcewWorkspaceJourney({ directory, chromium, playwrightM
         'The browser download differs from its complete original report member.');
       return { filename: file.suggestedFilename(), path, bytes: bytes.length, sha256: sha256(bytes) };
     };
+    const waitForReceiving = async (page, { id = null, prior = null, transport = null } = {}) => {
+      for (;;) {
+        const host = await optionalJson(join(projectDirectory, 'qcew-workspace', 'operation.json'), 65536);
+        const ownHost = host?.action === 'qcew.receive' && host.selection?.targetDirectory === receiver &&
+          (!id || host.id === id) ? host : null;
+        const state = await readFredProject(projectDirectory);
+        const matches = state.operations.filter(item => item.kind === 'qcew.receive' &&
+          (id ? item.id === id : item.result.directory === receiver));
+        need(matches.length <= 1, 'Continue the one original browser receiving operation.');
+        if (matches.length) {
+          const completed = matches[0];
+          need(completed.result.directory === receiver && completed.result.projectId === sourceState.id &&
+            (!ownHost || ownHost.id === completed.id),
+            'The browser receiving completed another original selection.');
+          return { id: completed.id, value: completed.result, host: ownHost };
+        }
+        if (transport?.error) throw transport.error;
+        need(browserErrors.length === 0,
+          'The receiving browser encountered JavaScript errors: ' + browserErrors.join('; '));
+        const visible = await page.locator('#message').evaluate(element => ({
+          error: element.classList.contains('error'), text: element.textContent
+        }));
+        need(!visible.error, visible.text || 'The browser could not retain or continue its original receiving selection.');
+        if (ownHost?.phase === 'failed' &&
+            (prior?.id !== ownHost.id || canonical(prior.lastError) !== canonical(ownHost.lastError)))
+          throw Object.assign(new Error(ownHost.lastError?.message ?? 'The original receiving operation failed.'),
+            { code: ownHost.lastError?.code ?? 'QCEW_WORKSPACE_RECEIVING_FAILED' });
+        need(ownHost?.phase !== 'cleared', 'The original receiving selection was cleared before completion.');
+        // Full original input can take time to retain and validate. Follow the actual operation
+        // and browser result, including failures before any HTTP request has been sent.
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    };
     try {
       const runtime = await import(pathToFileURL(resolve(playwrightModule)).href);
       const installed = runtime.chromium ?? runtime.default?.chromium;
@@ -203,12 +236,11 @@ export async function runQcewWorkspaceJourney({ directory, chromium, playwrightM
         const completed = state.operations.find(item => item.id === known.id && item.kind === 'qcew.receive');
         if (completed) receivingResult = completed.result;
         else {
-          const pending = page.waitForResponse(response =>
-            new URL(response.url()).pathname === '/api/qcew/action', { timeout: 0 });
+          const prior = await optionalJson(join(projectDirectory, 'qcew-workspace', 'operation.json'), 65536);
           await page.locator('#qcew-resume').click();
-          const response = await pending, result = await response.json();
-          need(response.ok(), result.message ?? 'Continue the original retained receiving operation.');
-          receivingResult = result;
+          // The UI may find the completed original operation without sending another request.
+          const completed = await waitForReceiving(page, { id: known.id, prior });
+          receivingResult = completed.value;
         }
       } else {
         const exportResult = await step('download_complete_project', () =>
@@ -219,31 +251,32 @@ export async function runQcewWorkspaceJourney({ directory, chromium, playwrightM
           'The browser handover must contain the full original project and reports.');
         await page.locator('#qcew-receive-file').setInputFiles(bundleFile);
         await page.locator('#qcew-receive-directory').fill(receiver);
-        let returnResult, returnError, releaseReturn;
-        const resultReady = new Promise((resolve, reject) => { returnResult = resolve; returnError = reject; });
+        const prior = await optionalJson(join(projectDirectory, 'qcew-workspace', 'operation.json'), 65536);
+        const transport = { intercepted: false, error: null };
+        let releaseReturn;
         const holdReturn = new Promise(resolve => { releaseReturn = resolve; });
         await page.route('**/api/qcew/action', async route => {
+          transport.intercepted = true;
           try {
             const actual = await route.fetch({ timeout: 0 });
             const value = await actual.json();
             need(actual.ok() && value.receiving, value.message ?? 'The full original project receiving failed.');
-            const operation = await readPrivateJson(join(projectDirectory, 'qcew-workspace', 'operation.json'), 65536);
-            need(operation.action === 'qcew.receive' && operation.phase === 'completed',
-              'The original receiving did not reach its completed host operation.');
-            await atomicJson(root, 'receiving-selection.json', {
-              id: operation.id, projectId: sourceState.id, directory: receiver,
-              requestSha256: operation.requestSha256, bundleSha256: bundle.bundleSha256,
-              exportedFileSha256: exportResult.sha256
-            });
-            returnResult({ value, operation });
+            // Preserve the real host request while preventing its response from reaching this page.
             await holdReturn;
             await route.abort().catch(() => {});
-          } catch (error) { returnError(error); await route.abort().catch(() => {}); }
+          } catch (error) { transport.error = error; await route.abort().catch(() => {}); }
         });
-        await page.locator('#qcew-receive').click();
         try {
-          const completed = await resultReady;
-          receivingResult = completed.value; originalRequestId = completed.operation.id;
+          await page.locator('#qcew-receive').click();
+          const completed = await waitForReceiving(page, { prior, transport });
+          need(transport.intercepted && completed.host,
+            'The browser programme must receive through its original retained host request.');
+          receivingResult = completed.value; originalRequestId = completed.id;
+          await atomicJson(root, 'receiving-selection.json', {
+            id: completed.id, projectId: sourceState.id, directory: receiver,
+            requestSha256: completed.host.requestSha256, bundleSha256: bundle.bundleSha256,
+            exportedFileSha256: exportResult.sha256
+          });
           // The original server commits. Its actual response never reaches this browser.
           await context.close(); context = null;
         } finally { releaseReturn(); }
