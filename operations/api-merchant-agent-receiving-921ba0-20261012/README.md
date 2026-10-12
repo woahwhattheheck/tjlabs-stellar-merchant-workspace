@@ -70,6 +70,8 @@ python3 receive.py \
   --package-builder build-delivery.py
 ```
 
+Before dispatch, the receiver verifies or restores the two exact original schema dependencies in the retained merchant source overlay: `stellar-forge/payment-auto-catalog/schema-validation.mjs` and `schema-pattern.mjs`. Their bytes come from the already-verified 671-file packet. Existing matching files are reused; a different existing named file is preserved and reported. This closes the missing-module failure observed before the original agent journal was created.
+
 The entry needs the original Node and Python already used by the completed merchant. It materializes its own reproducible source under one invocation-private `/dev` directory, keeps that foreground lifetime through the native operation and complete packaging, and writes all private journals and final user files to persistent original paths. The original 671-file source input was independently read back exactly; its Git blob is `0c1df5bf8c20b8b534060d67399d9b0a9b751bc7`.
 
 The receiving owner should accept this same original operation before dispatch. The existing merchant journal and its original lease determine whether any work remains. A successful invocation reports the complete delivered ZIP path and SHA-256. The original claimant then preserves that user file and posts the completion in the original product thread.
@@ -81,6 +83,7 @@ These source objects are stored in the same standalone Git repository:
 | Source object | Exact Git blob |
 | --- | --- |
 | Original eight-stage agent driver | `d541bb3490172b5654c6a20d7c9d631e123cd179` |
+| Complete ordinary receiver with original schema closure | `74e0470063b3e6e1b5d965d2509f9b44cdc80040` |
 | Complete selected 671-file manifest | `226d56bd3eb5def6ba55d685dd9800c93a62b28d` |
 | Direct source/driver/package process carrier | `e121667de06580dc50269248456a206e4a3462b2` |
 | Complete delivery builder | `02ebbcc02d348837c7449cbb0c29dbc2a16f2d71` |

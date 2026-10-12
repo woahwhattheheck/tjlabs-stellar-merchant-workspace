@@ -30,6 +30,55 @@ def read_exact(path,expected,maximum):
 def report(value):
     print(json.dumps(value),flush=True)
 
+
+# The original merchant overlay is retained separately from this complete
+# ephemeral agent source. Reconcile only these two source dependencies exposed
+# by the actual native import, preserving any different existing named file.
+ORIGINAL_SCHEMA={
+    'stellar-forge/payment-auto-catalog/schema-validation.mjs':'ca655b81ab92ba81ac5209912543452955313b10',
+    'stellar-forge/payment-auto-catalog/schema-pattern.mjs':'cbd80107c5718667939ef4dfe3a5ec5c53166611',
+}
+def restore_original_schema(files):
+    root=Path('/dev/shm/921ba0-api-merchant-source')
+    info=root.lstat()
+    need(stat.S_ISDIR(info.st_mode) and not root.is_symlink() and info.st_uid==os.getuid()
+         and root.resolve()==root,'ORIGINAL_SOURCE_DIRECTORY_CHANGED')
+    restored=[]
+    for name,expected in ORIGINAL_SCHEMA.items():
+        item=files.get(name)
+        need(item is not None and item['gitBlob']==expected,'ORIGINAL_SCHEMA_SELECTION_CHANGED')
+        body=item['content'].encode('utf-8')
+        need(blob(body)==expected,'ORIGINAL_SCHEMA_BLOB_CHANGED')
+        target=root/name
+        parent=root
+        for part in Path(name).parts[:-1]:
+            parent=parent/part
+            try:parent.mkdir(mode=0o700)
+            except FileExistsError:pass
+            info=parent.lstat()
+            need(stat.S_ISDIR(info.st_mode) and not parent.is_symlink()
+                 and info.st_uid==os.getuid(),'ORIGINAL_SCHEMA_PARENT_CHANGED')
+        state='MATCHED'
+        if os.path.lexists(target):
+            read_exact(target,expected,1024*1024)
+        else:
+            fd,temp=tempfile.mkstemp(prefix='.921ba0-schema-',dir=target.parent)
+            try:
+                with os.fdopen(fd,'wb') as stream:
+                    stream.write(body);stream.flush();os.fsync(stream.fileno())
+                try:
+                    os.link(temp,target)
+                    state='RESTORED'
+                except FileExistsError:
+                    read_exact(target,expected,1024*1024)
+                directory=os.open(target.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+                try:os.fsync(directory)
+                finally:os.close(directory)
+            finally:os.unlink(temp)
+            read_exact(target,expected,1024*1024)
+        restored.append({'path':name,'gitBlob':expected,'bytes':len(body),'state':state})
+    return restored
+
 def main():
     parser=argparse.ArgumentParser(description='Continue the original paid merchant through its complete agent client and delivery.')
     parser.add_argument('--inputs',required=True,type=Path)
@@ -86,6 +135,9 @@ def main():
             if active.poll() is None: active.wait()
             active=None
     try:
+        need(requested_signal is None,'ORIGINAL_RECEIVING_STOP_REQUESTED')
+        dependencies=restore_original_schema(files)
+        report({'state':'ORIGINAL_SCHEMA_READY','files':dependencies})
         for name,item in files.items():
             need(requested_signal is None,'ORIGINAL_RECEIVING_STOP_REQUESTED')
             target=source/name;target.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
