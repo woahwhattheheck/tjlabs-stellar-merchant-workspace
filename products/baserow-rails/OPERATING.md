@@ -342,3 +342,42 @@ receipt and every current target value after a directory move.
 
 The [full source contracts](../../stellar/scf-starforge-20261009/sf30-seller-sdk/baserow/customer/README.md#api-reference)
 identify exact manifests, file limits, logical membership and error codes.
+
+## Commission the original source through one customer desk
+
+Open the installed **Ruby customer commissioning** Applications card, or use the
+same private runtime directly:
+
+~~~sh
+starforge ruby-customer-workspace serve \
+  --directory /absolute/private/ruby-runtime --create --port 8475 --startup-json
+~~~
+
+The Customers view reviews an original finalized native room or completed
+Baserow publication. Inspect the original manifest and semantics, choose its
+actual native key or Baserow customer selection, and retain the exact source
+hash, original source/runtime paths and output directory. The selected Ruby
+environment and complete bundle remain in the Environments view.
+
+If the customer program already ran, choose **Open existing customer** and its
+original output directory. The desk reads the saved lifecycle input and pins its
+exact file hash. It reuses the original matching customer operation and
+application registration, including their literal arguments and UUIDs.
+
+**Commission and receive application** continues the original native program and
+receives its complete application. The final receipt is retained before the
+customer becomes Ready. The original result, selected metadata and source files
+are available as complete downloads. Applications, Operations and Receive expose
+the same native launch, stop, full log, export and archive receiving controls.
+
+The native receiving source includes CKAN, OData, Superset and Directus semantics.
+Provider protocol/base/query identity stays in the original logical stream;
+capture and snapshot identities stay with their original edition. The installed
+client uses C271's maintained native reader and common source-meaning receiver.
+
+The [complete customer workspace guide](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/customer/README.md)
+contains both source forms, exact JavaScript/HTTP/CLI interfaces, all restart
+phases and full-file receiving. Its executable customer-workspace continuation
+adopts the existing completed managed journey, reads the real authenticated desk
+and original result files, and reopens the same customer. Use that continuation
+with the original managed receiving directory and existing owner.
