@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { constants } from 'node:fs';
 import { mkdir, lstat, open, readFile, readdir, rename, rm, realpath, link } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
+import { bindProjectPaths } from './paths.mjs';
 
 const SCHEMA = 'stellar-forge.graphql-workspace-draft.v1';
 const NAME = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
@@ -76,7 +77,7 @@ async function replacePrivate(path, value) {
   }
   finally { await rm(temporary, { force: true }); }
 }
-function validateVersion(value, id) {
+export function validateVersion(value, id) {
   if (!plain(value) || value.schema !== SCHEMA || value.id !== id || !Number.isSafeInteger(value.revision) || value.revision < 1 ||
       value.inputDigest !== inputDigest(value.input) || !Array.isArray(value.exports) ||
       value.deployments !== undefined && !Array.isArray(value.deployments) ||
@@ -120,7 +121,7 @@ const root = await privateDir(resolve(directory)), projects = join(root, 'projec
   const value = validateVersion(text, id);
   if (value.revision !== selected || selected === head.revision && head.inputDigest !== value.inputDigest)
     fail('Saved project revision is inconsistent.');
-  return { ...value, currentRevision: head.revision };
+  return bindProjectPaths(root, { ...value, currentRevision: head.revision });
 }
 
 /** One process owns the local writer; readers never load partial version files. */
@@ -201,7 +202,7 @@ export async function openWorkspaceStore(directory) {
         value = orphan;
       }
       await replacePrivate(join(folder, 'head.json'), { id, revision, inputDigest: value.inputDigest });
-      return { ...value, currentRevision: revision };
+      return bindProjectPaths(root, { ...value, currentRevision: revision });
     });
   }
   async function close() {
@@ -211,5 +212,5 @@ export async function openWorkspaceStore(directory) {
     // different inode while an existing writer still owns the previous one.
     await writer.close();
   }
-  return { root, packages, deployments, releaseStores, previews, read, list, history, save, close };
+  return { root, packages, deployments, releaseStores, previews, read, list, history, save, exclusive: mutate, close };
 }

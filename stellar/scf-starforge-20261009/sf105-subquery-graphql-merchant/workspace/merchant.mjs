@@ -9,6 +9,7 @@ import { readSubQueryMerchantBundle, compareSubQueryMerchantSchemas, prepareSubQ
 import { createSubQueryMerchantHandlers } from '../adapter.mjs';
 import { startSellerService } from '../../sf30-seller-sdk/serve.mjs';
 import { digest, draftInput, inputDigest, plain } from './store.mjs';
+import { referenceDirectory, localExportRecord } from './paths.mjs';
 
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
@@ -89,19 +90,20 @@ export async function exportDraft(store, saved) {
   return retainExport({ exportId: frozen.exportId, saved, prepared, reviewed });
 }
 export async function readExport(reference) {
-  const path = join(dirname(reference.directory), 'workspace-export.json'), stat = await lstat(path);
+  const path = join(dirname(referenceDirectory(reference)), 'workspace-export.json'), stat = await lstat(path);
   if (!stat.isFile() || stat.size > 8 * 1024 * 1024) throw new TypeError('Saved export record is unavailable.');
   const bytes = await readFile(path);
   if (digest(bytes) !== reference.recordSha256) throw new TypeError('Saved export record changed.');
   const record = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
   if (record.id !== reference.id || record.directory !== reference.directory || record.inputDigest !== reference.inputDigest)
     throw new TypeError('Saved export does not match this project.');
-  return record;
+  return localExportRecord(record, reference, launcher);
 }
 export function exportView(record) {
   return { id: record.id, createdAt: record.createdAt, draftRevision: record.draftRevision,
     inputDigest: record.inputDigest, directory: record.directory, files: record.files,
     prepared: record.prepared, review: record.review, ...(record.evolution ? { evolution: record.evolution } : {}),
+    ...(record.handover ? { handover: record.handover } : {}),
     command: `node ${quote(record.prepared.launcher ?? launcher)} --seller ${quote(record.prepared.service)} --queries ${quote(record.prepared.queries)}` };
 }
 export async function verifyFiles(directory, files) {
@@ -140,12 +142,12 @@ export async function reviseDraft(store, saved, baselineReference, expectedCompa
   if (!compared.review.ready) throw new TypeError(compared.review.candidateValidation.error.message);
   const frozen = await freezeDraft(store, saved);
   const revision = await prepareSubQueryRevision({ ...frozen,
-    previousDirectory: baselineReference.directory, directory: join(frozen.task, 'revised') });
+    previousDirectory: referenceDirectory(baselineReference), directory: join(frozen.task, 'revised') });
   const report = JSON.parse(await readFile(revision.report, 'utf8'));
   if (json(report) !== json(compared.review)) conflict('Prepared revision differs from its reviewed inputs. Compare again.');
   const evolution = { schema: 'stellar-forge.graphql-workspace-evolution.v1',
     baselineExportId: baselineReference.id, baselineDraftRevision: baselineReference.draftRevision,
-    baselineDirectory: baselineReference.directory, comparisonDigest: compared.comparisonDigest,
+    baselineDirectory: referenceDirectory(baselineReference), comparisonDigest: compared.comparisonDigest,
     directory: revision.directory, previousDirectory: revision.previousDirectory,
     review: revision.review, report: revision.report, manifest: revision.manifest,
     summary: revision.summary, previous: report.previous, candidate: report.candidate,

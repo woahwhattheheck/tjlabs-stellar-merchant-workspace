@@ -6,10 +6,11 @@ import { digest, projectName, plain, readWorkspaceRevision } from './store.mjs';
 import { readExport, verifyExport, verifyFiles } from './merchant.mjs';
 import { readDeployment } from './deployment.mjs';
 import { readPreview } from './authoring.mjs';
+import { describeProjectHandover, PROJECT_HANDOVER_FILE } from './handover.mjs';
 
 export const GRAPHQL_FILE_SET_SCHEMA = 'stellar-forge.graphql-workspace-files.v1';
 export const GRAPHQL_FILE_SET_MANIFEST = 'workspace-files.json';
-export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host'];
+export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover'];
 const json = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
@@ -29,7 +30,7 @@ function selectionOf(input) {
   projectName(selection.project);
   if (!Number.isSafeInteger(selection.revision) || selection.revision < 1) fail('Select a saved project revision.');
   if (!GRAPHQL_FILE_KINDS.includes(selection.kind)) fail('Choose a supported retained file kind.');
-  const fields = { draft: [], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
+  const fields = { draft: [], handover: [], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
     deployment: ['deploymentId'], host: ['deploymentId', 'hostId'] }[selection.kind];
   for (const key of ['exportId', 'deploymentId', 'hostId', 'previewId']) {
     if (fields.includes(key)) {
@@ -45,7 +46,7 @@ async function diskBytes(directory, name, expected) {
   const within = relative(root, actual);
   if (!within || isAbsolute(within) || within === '..' || within.startsWith('..' + sep) || actual !== resolve(root, name))
     fail('The retained file left its original directory.');
-  const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const info = await handle.stat();
     if (!info.isFile() || info.size > 8 * 1024 * 1024)
@@ -78,7 +79,14 @@ export function createWorkspaceFiles(store) {
           load: () => diskBytes(directory, item.name, item) });
       }
     };
-    if (selection.kind === 'draft') {
+    if (selection.kind === 'handover') {
+      const handover = await describeProjectHandover(store, selection);
+      addBytes(PROJECT_HANDOVER_FILE, handover.bytes);
+      for (const [name, item] of handover.loaders) loaders.set(name,
+        { file: { ...item.file, contentType: typeOf(name) }, load: item.load });
+      source = { ...source, handoverSha256: handover.sha256, counts: handover.index.counts,
+        deploymentBinding: handover.index.deploymentBinding };
+    } else if (selection.kind === 'draft') {
       addBytes(saved.input.schemaText.trimStart().startsWith('{') ? 'schema-source.json' : 'schema-source.graphql', Buffer.from(saved.input.schemaText));
       addBytes('queries.json', Buffer.from(saved.input.queriesText));
       addBytes('plan.json', Buffer.from(saved.input.planText));

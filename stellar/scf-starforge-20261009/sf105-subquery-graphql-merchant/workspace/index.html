@@ -121,6 +121,21 @@
         <div id="deployment-hosts"></div>
         <div id="host-runbook"></div>
       </section>
+      <section class="panel" id="handover-panel">
+        <h2>Project handover</h2>
+        <p>Continue a saved project in another private workspace. The handover keeps every committed revision through the selection, completed previews, merchant and schema-baseline files, and the original deployment and host packets.</p>
+        <button id="prepare-handover" type="button">Prepare complete saved project</button>
+        <div id="handover-prepared"></div>
+        <h3>Reopen a received project</h3>
+        <p>Use the private folder returned by the original agent file transfer or a complete copied handover folder. Receiving preserves later local revisions when the original history matches. The existing deployment compiler prepares the packet for this installation.</p>
+        <label>Received handover directory<input id="handover-directory" autocomplete="off" placeholder="/PRIVATE/received-project"></label>
+        <div class="toolbar"><button id="inspect-handover" type="button" class="secondary">Inspect handover</button><button id="receive-handover" type="button">Reopen original project</button></div>
+        <div id="handover-inspected"></div><div id="handover-received"></div>
+        <h3>Receiving history</h3>
+        <p>These are the original native requests and receipts. Continue a retained request after restart with its same identity; the input directory is needed only for files that have not yet arrived.</p>
+        <div class="toolbar"><button id="handover-history-refresh" type="button" class="secondary">Refresh receiving history</button><button id="handover-history-next" type="button" class="secondary">Next receiving page</button></div>
+        <div id="handover-history"></div>
+      </section>
       <section class="panel"><div class="panel-heading"><h2>Project revisions</h2><button id="history-refresh" type="button" class="secondary">Refresh history</button></div><div id="history"></div></section>
     </main>
   </div>

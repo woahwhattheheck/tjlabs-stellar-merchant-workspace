@@ -160,7 +160,35 @@ upgrading the installed runtime.
 
 ## 4. Author a GraphQL data product
 
-Start the original saved browser workspace:
+Choose **Applications → GraphQL merchant workspace** for the installed product,
+or configure it once with the original source aliases:
+
+~~~sh
+starforge graphql-product init \
+  --dir /srv/starforge/state/graphql-product \
+  --name "Query merchant" \
+  --sources /srv/starforge/private/graphql-sources.json \
+  --workspace indexer
+
+starforge graphql-product open \
+  --dir /srv/starforge/state/graphql-product
+~~~
+
+The [product configuration guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/graphql-workspace/README.md)
+defines the private sources file and original token environment reference. This
+entry owns one original GraphQL workspace and merchant operator; the browser,
+CLI and connected agent select the same saved project.
+
+To continue a project on another installation, prepare its **Project handover**
+at the selected saved revision. Receive the complete file set, inspect the
+original project ID and target revision, and reopen it using the retained
+receiving request. The [complete handover guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/graphql-workspace/HANDOVER.md)
+covers local folders, agent transport, interrupted receiving and the original
+merchant-to-local-deployment action. The receiver keeps the original history
+and completed results available while continuing authoring in that same project.
+
+The original direct browser entry remains available for an existing native
+workspace:
 
 ~~~sh
 starforge graphql-workspace \

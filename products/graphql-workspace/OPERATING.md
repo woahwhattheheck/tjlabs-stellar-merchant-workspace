@@ -108,6 +108,7 @@ Use the actual IDs returned by your original project in place of the example val
 | evolution | Project/revision and merchantExportId; original revision wrapper and report |
 | deployment | Project/revision and deploymentId; retained native generation |
 | host | Project/revision, deploymentId and hostId; selected original host packet |
+| handover | Project and revision; all original revisions through that selection and every referenced merchant, preview, evolution, deployment and host file |
 
 Every transfer includes the unchanged workspace-files.json plus the original graphql-export.json transfer manifest. The native parser and transport retain the exact selection, source references, file SHA-256s, lengths and nested names. They resume verified byte prefixes in the same receiving directory after interruption. A new live read snapshot can continue the same expected file after server restart.
 
@@ -123,7 +124,7 @@ starforge graphql-product inspect-received --dir /srv/private/received-merchant-
 
 An existing transfer does not need --selection again. The same completed destination is verified and reused. Offline inspection hashes each file against the native manifest without starting a writer, contacting the source, or running generated code. The original merchant/deployment/host README in the received packet remains the executable handoff.
 
-This delivers the complete selected native file set. The original server has no whole-private-workspace import API, and the receiver does not invent one or rewrite saved private history. To reopen ongoing authoring on the same host, retain its original workspace directory and product setup.
+For continued authoring on another host, select kind handover. It delivers every committed revision through the selected revision and all referenced original artifacts. The native inspect-handover / reopen-handover commands and browser Project handover panel receive that selection through the same SF105 writer, preserve the original bytes and IDs, resolve paths locally and recover the original receiving UUID without replacing later matching edits. The [complete handover guide](HANDOVER.md) includes receiving-history discovery, private source setup and target deployment preparation.
 
 ## Host requirements and source
 

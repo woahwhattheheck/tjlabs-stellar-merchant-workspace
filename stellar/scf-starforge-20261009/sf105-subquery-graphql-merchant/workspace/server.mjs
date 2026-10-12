@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openWorkspaceStore, plain } from './store.mjs';
 import { createWorkspaceFiles } from './files.mjs';
+import { inspectProjectHandover, prepareProjectHandover, receiveProjectHandover, listProjectReceivings } from './handover.mjs';
 import { inspectDraftSchema, reviewDraft, exportDraft, readExport, exportView, startDraftMerchant,
   compareDraft, reviseDraft, readRevisionReport } from './merchant.mjs';
 import { prepareDeployment, readDeployment, deploymentView, inspectDeployment, stageDeployment,
@@ -17,6 +18,7 @@ import { authoringCatalog, captureAuthoringSchema, describeAuthoredOperation, co
 
 const STATIC = new Map([['/', ['index.html', 'text/html']], ['/app.mjs', ['app.mjs', 'text/javascript']],
   ['/authoring-ui.mjs', ['authoring-ui.mjs', 'text/javascript']],
+  ['/handover-ui.mjs', ['handover-ui.mjs', 'text/javascript']],
   ['/style.css', ['style.css', 'text/css']]]);
 const HELP = 'node workspace/server.mjs --workspace PRIVATE_DIRECTORY [--port 0]';
 const equal = (a, b) => typeof a === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -111,6 +113,9 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (!url.pathname.startsWith('/api/')) return send(404, { error: 'Not found.' });
       if (!equal(req.headers['x-workspace-token'], token)) return send(401, { error: 'Open the complete private URL printed by the launcher.' });
       if (req.method === 'GET') {
+        if (url.pathname === '/api/handover/receivings') return send(200, await listProjectReceivings(store, {
+          offset: Number(url.searchParams.get('offset') ?? 0), limit: Number(url.searchParams.get('limit') ?? 20),
+          ...(url.searchParams.has('expectedSnapshotSha256') ? { expectedSnapshotSha256: url.searchParams.get('expectedSnapshotSha256') } : {}) }));
         if (url.pathname === '/api/projects') return send(200, { projects: await store.list(), directory: store.root, runtime: runtime() });
         if (url.pathname === '/api/runtime') return send(200, runtime());
         if (url.pathname === '/api/project') {
@@ -141,6 +146,11 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (req.method !== 'POST') return send(405, { error: 'Use GET or POST.' });
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) return send(415, { error: 'Use application/json.' });
       const body = await bodyOf(req);
+      if (url.pathname === '/api/handover/inspect') return send(200, await inspectProjectHandover(store, body));
+      if (url.pathname === '/api/handover/prepare')
+        return send(201, await mutate(() => prepareProjectHandover(store, body)));
+      if (url.pathname === '/api/handover/receive')
+        return send(201, await mutate(() => receiveProjectHandover(store, body)));
       if (url.pathname === '/api/schema') return send(200, await inspectDraftSchema(body.schemaText));
       if (url.pathname === '/api/authoring/catalog') return send(200, authoringCatalog(body.schemaText));
       if (url.pathname === '/api/authoring/open') return send(200, describeAuthoredOperation(body));
@@ -193,7 +203,8 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (url.pathname === '/api/deployment/console') {
         return send(200, await mutate(async () => {
           const saved = await current(body), reference = savedDeployment(saved, body.deploymentId);
-          await inspectDeployment(reference);
+          const inspected = await inspectDeployment(reference);
+          if (inspected.requiresPreparation) fail(inspected.handover.next, 409);
           const record = await readDeployment(reference); await ensureDeploymentStore(record);
           let session = releaseConsoles.get(record.releaseStore);
           if (!session) {

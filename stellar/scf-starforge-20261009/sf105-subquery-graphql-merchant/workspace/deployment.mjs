@@ -8,6 +8,7 @@ import { initReleaseStore, readReleaseState, inspectRelease, releaseStatus } fro
 import { checkBundle } from '../../sf99-merchant-deploy/host.mjs';
 import { readExport, verifyExport, fingerprints, verifyFiles } from './merchant.mjs';
 import { digest, plain } from './store.mjs';
+import { referenceDirectory, localDeploymentRecord } from './paths.mjs';
 
 const SCHEMA = 'stellar-forge.graphql-workspace-deployment.v1';
 const json = value => JSON.stringify(value, null, 2) + '\n';
@@ -38,11 +39,11 @@ async function writeRecord(record) {
 export async function readDeployment(reference) {
   if (!plain(reference) || !isAbsolute(reference.directory) || !Number.isSafeInteger(reference.generation) || reference.generation < 1)
     fail('Choose a deployment retained in this project.');
-  const { bytes, record } = await privateJson(recordPath(reference.directory, reference.generation));
+  const { bytes, record } = await privateJson(recordPath(referenceDirectory(reference), reference.generation));
   if (digest(bytes) !== reference.recordSha256 || record.schema !== SCHEMA || record.id !== reference.id ||
       record.exportId !== reference.exportId || record.generation !== reference.generation || record.directory !== reference.directory ||
       !Array.isArray(record.files) || !Array.isArray(record.hosts)) fail('Deployment record no longer matches this project.');
-  return record;
+  return localDeploymentRecord(record, reference);
 }
 async function verifyDeployment(record) {
   await verifyFiles(record.directory, record.files);
@@ -53,20 +54,22 @@ export function deploymentView(record) {
     updatedAt: record.updatedAt, draftRevision: record.draftRevision, inputDigest: record.inputDigest,
     directory: record.directory, prepared: record.prepared, files: record.files, source: record.source,
     releaseStore: record.releaseStore, suggestedReleaseId: record.suggestedReleaseId,
-    release: record.release ?? null, hosts: record.hosts };
+    release: record.release ?? null, hosts: record.hosts,
+    ...(record.handover ? { handover: record.handover } : {}) };
 }
 async function pendingRecord(reference) {
   let next;
-  try { next = await privateJson(recordPath(reference.directory, reference.generation + 1)); }
+  try { next = await privateJson(recordPath(referenceDirectory(reference), reference.generation + 1)); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
   const nextReference = referenceFor(next.record, next.bytes), record = await readDeployment(nextReference);
   if (record.previousRecordSha256 !== reference.recordSha256 || record.id !== reference.id || record.exportId !== reference.exportId ||
-      record.directory !== reference.directory || record.generation !== reference.generation + 1)
+      record.directory !== referenceDirectory(reference) || record.generation !== reference.generation + 1)
     fail('An interrupted operation does not continue this saved deployment.', 409);
   return { record, reference: nextReference };
 }
 async function updateDeployment(reference, action, work) {
   const record = await readDeployment(reference);
+  if (record.handover) fail(record.handover.next, 409);
   const inspection = await verifyDeployment(record);
   const actionDigest = digest(json(action)), pending = await pendingRecord(reference);
   if (pending) {
@@ -184,12 +187,25 @@ async function hostReadiness(host) {
   catch (error) { return { ready: false, error: error.message }; }
 }
 export async function recoverDeployment(reference) {
+  const original = await readDeployment(reference);
+  if (original.handover) fail(original.handover.next, 409);
   const pending = await pendingRecord(reference);
   if (!pending) fail('No finished deployment operation needs recovery.', 404);
   await verifyRetainedOperations(pending.record); return pending;
 }
 export async function inspectDeployment(reference) {
-  const record = await readDeployment(reference), inspection = await verifyDeployment(record);
+  const record = await readDeployment(reference);
+  await verifyFiles(record.directory, record.files);
+  if (record.handover) {
+    const hosts = await Promise.all(record.hosts.map(async host => {
+      await verifyFiles(host.directory, host.files);
+      return { ...host, verified: true, readiness: { ready: false, error: record.handover.next } };
+    }));
+    return { ...deploymentView(record), hosts, inspection: { ...record.prepared, ready: false,
+      requiresPreparation: true, error: record.handover.next }, requiresPreparation: true,
+      releaseStatus: null, pending: null };
+  }
+  const inspection = await verifyDeployment(record);
   let status;
   try { status = await releaseStatus(record.releaseStore); }
   catch (error) { status = error.code === 'ENOENT' ? null : { unavailable: true, error: error.message }; }
@@ -203,10 +219,10 @@ export async function inspectDeployment(reference) {
       releaseId: pending.record.release?.id ?? null, hosts: pending.record.hosts.length } : null };
 }
 export async function readHostRunbook(reference, hostId) {
-  const record = await readDeployment(reference); await verifyDeployment(record);
+  const record = await readDeployment(reference); await verifyFiles(record.directory, record.files);
   const host = record.hosts.find(item => item.id === hostId);
   if (!host) fail('Choose a host packet retained in this deployment.', 404);
   await verifyFiles(host.directory, host.files);
   return { id: host.id, path: host.runbook, text: await readFile(host.runbook, 'utf8'), identity: host.identity,
-    readiness: await hostReadiness(host) };
+    readiness: record.handover ? { ready: false, error: record.handover.next } : await hostReadiness(host) };
 }

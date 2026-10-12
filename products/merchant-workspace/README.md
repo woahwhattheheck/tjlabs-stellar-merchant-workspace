@@ -15,7 +15,7 @@ original saved records from source selection through delivery and reopening.
 | --- | --- | --- |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
-| Turn an existing GraphQL query service into a merchant | `starforge graphql-workspace` or the merchant MCP tools | Reviewed operations, actual source previews, buyer clients, versioned merchant packages and deployment releases |
+| Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
@@ -168,7 +168,7 @@ For an existing query service:
 The browser and merchant MCP tools operate the same saved project, revisions,
 preview UUIDs, exports, and deployment records. A completed source preview can be
 opened again without making another provider request. The
-[GraphQL guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
+[GraphQL product guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/graphql-workspace/OPERATING.md)
 and
 [MCP operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/mcp-merchant-operator/GRAPHQL_WORKSPACES.md)
 give the exact configuration and action contracts.
@@ -183,8 +183,10 @@ retain their reference names.
 Use the product's original export and receiving commands for a handover. Imagery
 deliveries include a local scene explorer and retained selected assets. Captured API
 handoffs keep the native capture or refresh directory, immutable reviews, full
-merchant package and pricing worksheet. GraphQL exports include the generated
-client and exact deployment files. Pricing and supplier-cost handoffs use the
+merchant package and pricing worksheet. GraphQL project handovers retain every
+committed revision through the selected revision, completed source previews,
+generated clients and original deployment files. The receiving operator reopens
+the same project and prepares a deployment for the receiving installation. Pricing and supplier-cost handoffs use the
 original complete workspace backup to retain supplier originals, cost editions,
 pricing reviews, scenario comparisons and price decisions together. Support
 handoffs carry the original captures and saved case. Accounting operations keep
@@ -201,6 +203,7 @@ the replacement is operating as intended.
 - [Captured API merchant, pricing and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
 - [Purchased API access and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 - [GraphQL authoring and revisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
+- [GraphQL product setup and complete project handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/graphql-workspace/HANDOVER.md)
 - [Imagery, processing, Applications and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/stac-workspace/OPERATING.md)
 - [Imagery operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/README.md)
 - [Cirrus and FilmDrop processing](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/processing/PROCESSING.md)

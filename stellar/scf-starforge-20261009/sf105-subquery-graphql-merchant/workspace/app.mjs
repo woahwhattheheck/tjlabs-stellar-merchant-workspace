@@ -1,5 +1,6 @@
 // MIT. Editable original documents; the maintained onboarding compiler owns review.
 import { createAuthoringWorkspace } from './authoring-ui.mjs';
+import { createHandoverWorkspace } from './handover-ui.mjs';
 const $ = id => document.getElementById(id);
 const tokenKey = 'sf105-workspace:' + location.origin;
 const fragment = location.hash.slice(1);
@@ -8,7 +9,7 @@ const token = fragment || sessionStorage.getItem(tokenKey) || '';
 const state = { saved: null, revision: 0, dirty: false, review: null, operation: 0, exportId: null,
   queries: null, plan: null, busy: false, baselineId: null, evolution: null,
   deploymentId: null, deploymentExportId: null, deploymentInspection: null };
-let authoring = null;
+let authoring = null, handover = null;
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 function node(tag, text, className) {
@@ -78,12 +79,12 @@ function buttons() {
   $('deployment-export').disabled = state.busy || !state.deploymentExportId;
   $('deployment-select').disabled = state.busy || !deployment;
   $('inspect-deployment').disabled = state.busy || !deployment;
-  $('stage-deployment').disabled = !saved || !deployment || Boolean(deployment.release) || Boolean(state.deploymentInspection?.pending);
-  $('prepare-host').disabled = !saved || !deployment || Boolean(state.deploymentInspection?.pending);
+  $('stage-deployment').disabled = !saved || !deployment || Boolean(deployment.handover) || Boolean(deployment.release) || Boolean(state.deploymentInspection?.pending);
+  $('prepare-host').disabled = !saved || !deployment || Boolean(deployment.handover) || Boolean(state.deploymentInspection?.pending);
   $('recover-deployment').disabled = !saved || !state.deploymentInspection?.pending;
-  $('deployment-console').disabled = state.busy || !deployment;
+  $('deployment-console').disabled = state.busy || !deployment || Boolean(deployment.handover);
   $('host-facilitator').disabled = state.busy || $('host-mode').value !== 'native';
-  authoring?.buttons();
+  authoring?.buttons(); handover?.buttons();
 }
 function changed() {
   state.dirty = true; state.review = null;
@@ -386,6 +387,15 @@ function renderDeployment() {
     ['Deployment package', record.directory], ['Project release store', record.releaseStore],
     ['Saved operation', 'Generation ' + record.generation + ' · ' + new Date(record.updatedAt).toLocaleString()]]));
   target.append(detail('Original deployment inputs and paths', record.prepared), detail('Original merchant lineage', record.source));
+  if (record.handover) {
+    target.append(node('p', record.handover.next, 'subtle'));
+    target.append(button('Prepare this merchant for this installation', () => action('Preparing the received merchant for this installation…', async () => {
+      if (state.dirty || authoring?.pending()) throw new Error('Save the current editor before preparing the local deployment.');
+      const result = await api('/api/deployment/prepare', { id: state.saved.id, expectedRevision: state.revision,
+        exportId: record.exportId, allowLoopbackUpstream: $('deployment-loopback').checked });
+      await acceptDeployment(result); notice('Original deployment prepared for this installed source.');
+    })));
+  }
   if (value.inspection) target.append(detail('Current original deployment inspection', value.inspection));
   if (value.pending) target.append(node('p', 'A completed operation is retained outside the current project pointer. Recover generation ' + value.pending.generation + ' to attach its existing files and identities.', 'subtle'));
   $('deployment-release-id').value = record.release?.id ?? record.suggestedReleaseId;
@@ -764,8 +774,17 @@ authoring = createAuthoringWorkspace({ $, node, button, control, selectControl, 
     return { examplesRetained: Boolean(state.plan) };
   }
 });
+handover = createHandoverWorkspace({
+  api, action, notice, refreshProjects: projects,
+  current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
+  openProject: async id => {
+    if (state.dirty || authoring?.pending()) return false;
+    const saved = await api('/api/project?id=' + encodeURIComponent(id));
+    loadDraft(saved); await projects(); await historyList(); return true;
+  },
+});
 fresh();
 action('Opening private workspace…', async () => {
   if (!token) throw new Error('Open the complete private URL printed by the workspace launcher.');
-  await projects(); $('connection').textContent = 'Private local workspace'; notice('Workspace ready. Load your original schema, queries and merchant plan.');
+  await projects(); await handover.refresh(); $('connection').textContent = 'Private local workspace'; notice('Workspace ready. Load your original schema, queries and merchant plan.');
 });
