@@ -45,7 +45,7 @@ def stage_rows(rows, directory, require_git):
         if row.get("encoding", "utf-8") == "utf-8":
             body = row["content"].encode("utf-8")
         elif row["encoding"] == "base64":
-            body = base64.b64decode(row["content"], validate=True)
+            body = base64.b64decode("".join(row["content"].split()), validate=True)
         else:
             raise ValueError("Unsupported source encoding")
         if len(body) != row["bytes"] or digest(body) != row["sha256"]:
@@ -85,21 +85,36 @@ def save_outputs(runtime, output_paths, private, replacement):
         if index == 0 and replacement:
             item = {"local_path": str(path), "purpose": "replace_library_file",
                     "library_file_id": replacement[0], "expected_current_version": replacement[1],
-                    "version_reason": "Complete current SCF application, retained original review and native desktop/phone receiving"}
+                    "version_reason": "Complete current SCF application, retained original review and independent receiving"}
         else:
             item = {"local_path": str(path), "purpose": "create_library_file",
                     "library_artifact_type": "image" if path.suffix.lower() == ".png" else "other"}
         uploads.append(item)
     request = {"uploads": uploads}
-    adapter = (
-        "import json,sys; from pathlib import Path; "
-        "sys.path.insert(0,sys.argv[1]); "
-        "from library_upload import LibraryUploadWorkflow,HostedAppsClient,LibraryFileMaterializer,SignedUrlUploader; "
-        "result=LibraryUploadWorkflow(apps_client=HostedAppsClient(),"
-        "materializer=LibraryFileMaterializer(),uploader=SignedUrlUploader(),"
-        "state_parent=Path(sys.argv[2])).run(json.load(sys.stdin)); "
-        "print(json.dumps(result,separators=(',',':')))"
-    )
+    adapter = """
+import json,sys,time,traceback,urllib.error
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from library_upload import LibraryUploadWorkflow,HostedAppsClient,LibraryFileMaterializer,SignedUrlUploader
+request=json.load(sys.stdin)
+private=Path(sys.argv[2])
+for attempt in range(3):
+    try:
+        result=LibraryUploadWorkflow(apps_client=HostedAppsClient(),
+            materializer=LibraryFileMaterializer(),uploader=SignedUrlUploader(),
+            state_parent=private).run(request)
+        print(json.dumps(result,separators=(',',':')))
+        break
+    except Exception as error:
+        frames={frame.name for frame in traceback.extract_tb(error.__traceback__)}
+        cause=error.__cause__
+        retry=('_prepare' in frames and isinstance(cause,urllib.error.HTTPError) and cause.code==502)
+        (private/('library-prepare-attempt-'+str(attempt+1)+'.txt')).write_text(traceback.format_exc(),encoding='utf-8')
+        if not retry or attempt==2:
+            raise
+        print('SCF_LIBRARY_PREPARE_RETRY '+str(attempt+1),file=sys.stderr,flush=True)
+        time.sleep(1)
+"""
     upload = subprocess.run([sys.executable, "-B", "-c", adapter, str(runtime), str(private)],
                             input=json.dumps(request), capture_output=True, text=True, timeout=300)
     (private / "library-upload-result.json").write_text(upload.stdout, encoding="utf-8")
@@ -237,6 +252,9 @@ def main():
                 if file.is_symlink():
                     raise ValueError("Receiving output must retain ordinary files: " + str(file))
                 if file.is_file():
+                    # Browser captures remain available for internal inspection.
+                    if file.is_relative_to(output) and file.suffix.lower() == ".png":
+                        continue
                     bundle.write(file, file.relative_to(root).as_posix())
         for file in (root / "source-selection.json", root / "complete-source-packet.json",
                      root / "config.json", root / "native-result.json"):
@@ -245,12 +263,10 @@ def main():
                     "sha256": digest(archive.read_bytes())}
     json_file(root / "archive.json", archive_meta)
     print("SCF_NATIVE_RESULT " + json.dumps({**native_summary, "archive": archive_meta}), flush=True)
-    captures = sorted(path for path in output.rglob("*.png") if path.is_file())
-    pdfs = sorted(path for path in output.rglob("*.pdf") if path.is_file())
     replacement = ((args.replace_library_file_id, args.expected_library_version)
                    if args.replace_library_file_id else None)
     try:
-        saved = save_outputs(runtime, [archive, *captures, *pdfs], private, replacement)
+        saved = save_outputs(runtime, [archive], private, replacement)
         if not saved["all_saved"] and state == "COMPLETE":
             return 2
     except Exception as error:

@@ -1,6 +1,6 @@
 # Current SCF application and retained technical review
 
-This programme runs the complete current application on an existing Linux host. It opens the real grant reader, economic briefing, complete product-and-financing companion, submission editor and original technical-review workbench. The output is the full source, current editable submission, complete retained review, browser downloads, desktop/phone images and independent receiving records.
+This programme runs the complete current application on an existing Linux host. It opens the real grant reader, economic briefing, complete product-and-financing companion, submission editor and original technical-review workbench. The output is the full source, current editable submission, complete retained review, browser downloads and independent receiving records. Desktop and phone captures are used for internal inspection.
 
 ## Selected application
 
@@ -40,7 +40,7 @@ The packet carries every complete source file, all receiving-runtime files, thei
 5. Import the full original 81-action reopened review. Retain every original edition, named participant, decision, author reply and resolution. Add the named current reviewer and receive the actual full draft downloaded by the editor.
 6. Carry unchanged decisions through the existing comparison controls. Record the substantive current application decisions and five renewed request resolutions against their exact visible targets, complete the current editorial review, and export its whole history and the exact selected original draft bytes.
 7. Import and save both real UI exports in a second independent browser store. Verify the retained complete review and the full submission content, source history and notes.
-8. Preserve source, runtime, full receiving output and process log in the case archive. Save that archive, all actual screenshots and the browser PDF from the same originating producer.
+8. Preserve source, runtime, full receiving output and process log in the case archive. Save the complete case, including both browser PDFs, from the same originating producer. Keep new browser captures in the local internal review directory.
 
 The review judgments are source-specific editorial work. A change to application.md requires a new review selection. The producer checks those selected source identities before recording any decision.
 
@@ -51,3 +51,46 @@ SCF_NATIVE_START prints the actual private run directory. SCF_NATIVE_RESULT prin
 On a browser failure, the same run retains its full progress, actual failure image/HTML, complete saved records from each owned browser store and all completed output, then preserves the partial case. Continue from the concrete failure and original full case. An output save failure retains all local bytes and reports the unsaved paths.
 
 To replace an existing case after a corrected receiving run, pass its actual --replace-library-file-id and --expected-library-version together. Browser/runtime paths are explicit inputs. The run uses the maintained application server and browser UI throughout.
+
+## Continue a saved complete case
+
+The review continuation uses the full saved case, including its completed reader and companion journeys, exact saved submission and original review history. It imports `Current_Review_Checkpoint.json` when present. Existing matching decisions and request resolutions are retained; the remaining actual UI work is completed and downloaded, and both full review and submission are received in a fresh browser store. This avoids repeating the completed source reading and authored draft work after a receiving interruption.
+
+~~~sh
+python3 receive_review.py \
+  --case /absolute/path/SCF-Current-Application-and-Review-Partial.zip \
+  --expected-case-sha256 ACTUAL_SAVED_CASE_SHA256 \
+  --node /absolute/path/to/node \
+  --node-modules /absolute/path/to/node_modules \
+  --chromium /absolute/path/to/chromium \
+  --parent /absolute/writable/receiving-parent \
+  --replace-library-file-id ORIGINAL_LIBRARY_FILE_ID \
+  --expected-library-version ACTUAL_CURRENT_VERSION
+~~~
+
+Keep `receive_review.py`, `receive-review-continuation.cjs`, `receive-prepared-review.mjs`, `receive_current.py` and this `README.md` together from this complete operation directory. The continuation selects these full runtime files and preserves the case's preceding runtime whenever one changes. The archive supplies the original source, current draft, review decisions and unchanged save helpers. For local use without a Library write, omit both replacement options. Use `--save-library` only when creating the first saved case. A continuation preserves the original Library identity and requires its current version for replacement.
+
+The case keeps all original members and previous continuation logs. Newly captured browser images remain local for internal inspection. The producer streams actual stages, retains each process return code, stops only its own process group at the selected timeout, and saves the completed or partial case through the original official workflow. The resume driver selects the resolution control within each original request form, so option text in its enclosing label does not prevent a reviewer from completing a request.
+
+## Complete the prepared review with the native model
+
+A saved case whose reader, companion and editable draft are already complete can use the same maintained review model directly. This records the case's nineteen authored decisions and five request resolutions against their selected current source. It carries unchanged decisions, retains the original review identity and every preceding action, and continues the complete existing checkpoint. It does not create or revise the editorial judgments.
+
+~~~sh
+python3 receive_review.py \
+  --engine native \
+  --case /absolute/path/SCF-Current-Application-and-Review-Partial.zip \
+  --expected-case-sha256 ACTUAL_SAVED_CASE_SHA256 \
+  --node /absolute/path/to/node \
+  --parent /absolute/writable/receiving-parent \
+  --replace-library-file-id ORIGINAL_LIBRARY_FILE_ID \
+  --expected-library-version ACTUAL_CURRENT_VERSION
+~~~
+
+The first Node process applies each prepared action through `applyReviewAction`, checks the original history, and exports the complete review and readable report. A separate Node process imports those exports and the full saved submission, checks every selected judgment and resolution, and receives both complete files again. The case becomes `COMPLETE` only when both processes succeed and the independent receiving result is complete. This engine needs Node; Chromium and Playwright are used only by the browser engine.
+
+Both native processes use a 256 MiB V8 heap limit and report their own actual resident memory. The finished case retains the reader and companion browser results, source files, full draft, original review history, new native output and prior continuation attempts. `REVIEW_COMPLETE` is the intermediate model result; `COMPLETE` includes independent receiving.
+
+If the official save workflow raises a definite HTTP 502 from its preparation call, the owning producer retries that same save before it exits. The native exception stack and HTTP cause must both identify preparation. Other failures retain their actual result and the full local case for continuation.
+
+The native continuation materializes the complete selected source, saved draft, original review and required runtime. Completed PDFs, old receiving editions and the other existing case members stay in the original archive during execution. Saving streams every unchanged member into the whole continued case and replaces only the current full files, then verifies that every original member is retained once. This reduces working memory and temporary disk use while preserving the complete delivery history.

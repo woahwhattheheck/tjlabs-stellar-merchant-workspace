@@ -149,7 +149,7 @@ function retainedReader(entries){
   return {map,get,read,json,bind};
 }
 /** Pure inspection of the complete original source files. No network or workbench owner. */
-function selectedContent(selected,reader){
+function selectedContent(selected,reader,selection){
   const captures=new Map();
   for(const edition of selected.editions){
     need(edition.state==='COMPLETE'&&HASH.test(edition.manifestSha256??''),'CKAN_CAPTURE_MANIFEST_INVALID');
@@ -229,12 +229,27 @@ function selectedContent(selected,reader){
       const location=base+'runs/'+record.runId+'/',raw=reader.read(location+'candidate.json');candidate=parseCkanJson(raw);
       const {candidateDigest,...body}=candidate;
       need(candidate.schema==='stellar-forge.ckan-dataset-candidate.v1'&&candidate.run===record.runId&&
-        candidateDigest===identity(body)&&isDeepStrictEqual(candidate,declared),'CKAN_PUBLICATION_CANDIDATE_CHANGED');
+        candidateDigest===identity(body),'CKAN_PUBLICATION_CANDIDATE_CHANGED');
       reader.bind(location+'dataset.json',{sha256:candidate.configHash});
       const csv=reader.bind(location+'data.csv',{sha256:candidate.csvHash,bytes:candidate.csvBytes});
       const plans=[...reader.map.values()].filter(row=>row.role==='publication-plan'&&row.path.startsWith(base));
       need(plans.length===1,'CKAN_PUBLICATION_PLAN_INVALID');
       const plan=parseCkanJson(plans[0].buffer),{digest,...planBody}=plan,folder=posix.dirname(plans[0].path)+'/';
+      // Archive receiving rebases the workbench's local capture path while the
+      // original candidate remains byte-for-byte bound to its recorded digest.
+      // Only that exact selected capture location may differ from the record.
+      let comparableCandidate=candidate;
+      if(!isDeepStrictEqual(candidate,declared)){
+        const capture=candidate.extraction?.observation?.capture,
+          receivedCapture=declared?.extraction?.observation?.capture,
+          relative=folder+'capture/capture.json';
+        need(typeof capture?.file==='string'&&isAbsolute(capture.file)&&resolve(capture.file)===capture.file&&
+          capture.file.endsWith('/'+relative)&&capture.file.length>relative.length+1&&
+          receivedCapture?.file===resolve(selection.directory,relative),'CKAN_PUBLICATION_CANDIDATE_CHANGED');
+        comparableCandidate={...candidate,extraction:{...candidate.extraction,
+          observation:{...candidate.extraction.observation,capture:{...capture,file:receivedCapture.file}}}};
+      }
+      need(isDeepStrictEqual(comparableCandidate,declared),'CKAN_PUBLICATION_CANDIDATE_CHANGED');
       need(plan.schema==='stellar-forge.ckan-dataset-plan.v1'&&digest===identity(planBody)&&digest===candidate.planDigest&&
         plan.sourceHash===candidate.sourceHash&&plan.queryHash===candidate.queryHash,'CKAN_PUBLICATION_PLAN_CHANGED');
       reader.bind(folder+'original-source.json',{sha256:plan.sourceHash,bytes:plan.sourceBytes});
@@ -299,7 +314,7 @@ export function analyzeCkanObservation(meta,snapshots,retained){
         publicationId:selected.publication?.id??null,effectiveSourceId:selected.effectiveSource?.id??null});
       summary.source=selected.source;summary.effectiveSource=selected.effectiveSource;summary.editions=selected.editions;
       summary.operation=before.operation?{...before.operation,ageSeconds:age(Date.parse(meta.generatedAt),before.operation.startedAt)}:null;
-      Object.assign(summary,selectedContent(selected,retainedReader(entries)));
+      Object.assign(summary,selectedContent(selected,retainedReader(entries),selection));
       if(summary.refresh){
         summary.refresh.reviewAgeSeconds=age(Date.parse(meta.generatedAt),summary.refresh.record.completedAt??summary.refresh.record.createdAt);
         summary.pending.review=summary.refresh.reviewPending;

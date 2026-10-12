@@ -4,10 +4,14 @@ import {
   planningBookFromNative, addPlanningTable, addReviewedPlanningDocument, receivePlanningEdition,
   retainPlanningTableReview, sourceTableRows, sourceEditionComparison, rebasePlanningBook,
   requireWorkingBaseline, preparePlanningImport, completeNativePreview, acceptPlanningPreview,
-  planningRoleCsv, tableImportGuide,
+  planningRoleCsv, tableImportGuide, retainPlanningWorkbookSource, receivePlanningWorkbook,
+  selectPlanningWorkbook, selectPlanningSourceEdition,
 } from './source-tables-core.mjs';
 import {initialMapping, TYPES, EMPTY_POLICIES, importProject}
   from '../../../../stellar-forge/developer-site/dist/source-table-workspace.mjs';
+
+import {createPlanningWorkbookIntake, planningWorkbookRows} from './source-workbooks.mjs';
+import {createPlanningWorkbookExport} from './source-workbook-export.mjs';
 
 const copy = value => JSON.parse(JSON.stringify(value));
 const $ = (name, text, className) => {
@@ -167,10 +171,21 @@ export function mountPlanningSourceTables(context) {
   function section(title, text) {
     const node = $('section', undefined, 'pt-panel'); node.append($('h3', title)); if (text) node.append($('p', text, 'pt-help')); return node;
   }
+  const workbookIntake = createPlanningWorkbookIntake({
+    getBook:()=>book, getRole:()=>role, roleLabel:()=>ROLES[role].label, getDocument:currentDocument,
+    retainSource:retainPlanningWorkbookSource, receive:receivePlanningWorkbook, chooseSelection:selectPlanningWorkbook,
+    api:context.api, alive, redraw:render, store, status, work, button, field, select, checkbox,
+    section, table, details, download, fileChooser,
+  });
+  const workbookExport = createPlanningWorkbookExport({
+    getPlan:context.getPlan, getBook:()=>book, api:context.api, alive, redraw:render,
+    store, status, button, field, select, checkbox, section, table, details, download, fileChooser,
+  });
   function rowsPanel(result) {
     const panel = section('Complete source rows', result.rows.length + ' data rows. Included rows become planning inputs. Every excluded row retains its original position and your reason.');
     const start = rowPage * PAGE, shown = result.rows.slice(start, start + PAGE);
     const sourceFields = result.fields.map(x => x.name);
+    const workbookRows = planningWorkbookRows(book, result.doc.id, result.edition.id);
     const rows = shown.map((row, offset) => {
       const position = result.records[start + offset], excluded = result.binding.excludedRows.find(x => x.editionId === result.edition.id && x.record === position.record);
       const decision = $('div', undefined, 'pt-row-decision');
@@ -181,10 +196,12 @@ export function mountPlanningSourceTables(context) {
       if (excluded) decision.append(field('Reason', excluded.note, value => editBinding(binding => {
         binding.excludedRows.find(x => x.editionId === result.edition.id && x.record === position.record).note = value;
       }), {area: true, maximum: 2000}));
-      return [decision, position.record + ' · line ' + position.line,
+      const workbook = workbookRows?.get(position.record);
+      return [decision, 'CSV record ' + position.record + ' · line ' + position.line +
+        (workbook ? ' · ' + workbook.sheet + ' · worksheet row ' + workbook.row : ''),
         ...sourceFields.map(key => Object.hasOwn(row, key) ? sourceValue(row[key]) : 'Not provided')];
     });
-    panel.append(table(['Use','Original record', ...sourceFields], rows));
+    panel.append(table(['Use','Original source position', ...sourceFields], rows));
     const pages = Math.max(1, Math.ceil(result.rows.length / PAGE)), nav = $('div', undefined, 'pt-actions');
     const previous = button('Previous rows', () => { rowPage--; render(); }); previous.disabled = rowPage <= 0;
     const next = button('Next rows', () => { rowPage++; render(); }); next.disabled = rowPage + 1 >= pages;
@@ -300,7 +317,7 @@ export function mountPlanningSourceTables(context) {
     const panel = section(ROLES[role].label + ' source editions', 'Every received edition and reviewed mapping stays with this plan. A new source file keeps the earlier rows and mapping available for comparison.');
     panel.append(select('Selected source edition', doc.selectedEditionId,
       doc.editions.map(x => [x.id, x.filename + ' · ' + sourceDate(x.receivedAt) + ' · ' + fileSize(x.bytes)]), value => {
-        editBook(next => { next.project.documents.find(x => x.id === doc.id).selectedEditionId = value; }, true);
+        store(selectPlanningSourceEdition(book, role, value), {redraw:true});
       }));
     const actions = $('div', undefined, 'pt-actions');
     actions.append(button('Receive next source edition', () => fileChooser('.csv,.tsv,.txt', async file => {
@@ -441,6 +458,7 @@ export function mountPlanningSourceTables(context) {
       if (name === role) choose.setAttribute('aria-current','page'); choices.append(choose);
     }
     root.append(choices);
+    root.append(workbookExport.render(),workbookIntake.render());
     sourcePanel(); settingsPanel(); nativePreviewPanel();
     if (book.reviews.length) {
       const reviews=book.reviews.map(review=>details(sourceDate(review.reviewedAt || review.preparedAt) + ' · ' +
@@ -467,5 +485,5 @@ export function mountPlanningSourceTables(context) {
     if (!alive()) return;
     role = book.bindings[0]?.role || 'packages'; render();
   })();
-  return {root, ready, setHostBusy, dispose() { disposed = true; preview = null; projectChoice = null; }};
+  return {root, ready, setHostBusy, dispose() { disposed = true; preview = null; projectChoice = null; workbookIntake.dispose(); workbookExport.dispose(); }};
 }

@@ -1,0 +1,14 @@
+{
+  "workspaceId": "REPLACE_WITH_ACTUAL_WORKSPACE_ID",
+  "requestId": "capture:original-period",
+  "expectedRevision": 2,
+  "actor": "Selected operator",
+  "command": "capture.payments",
+  "payload": {
+    "id": "capture-original-period",
+    "profileId": "merchant",
+    "fromDate": "2026-10-01T00:00:00.000Z",
+    "toDate": "2026-11-01T00:00:00.000Z",
+    "limit": 100
+  }
+}

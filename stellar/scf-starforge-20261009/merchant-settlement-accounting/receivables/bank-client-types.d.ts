@@ -37,10 +37,31 @@ export interface BankAccountInput extends MutationContext {
   id?: string; expectedVersion?: number; reference: string; name: string; currency: Currency;
   method?: string; bankId?: string; accountReference?: string; csvLayout?: BankCsvLayout | null; status?: BankAccountStatus;
 }
+/** Original account identity chosen when a statement is bound to the receipt-intake account. */
+export interface BankStatementAccountIdentity {
+  kind: string; institution: string; branchId: string | null; accountId: string;
+}
+export interface BankStatementPostingAdjustment {
+  kind: 'REFUND' | 'FEE' | 'EXPENSE' | 'INCOME' | 'INTEREST' | 'TRANSFER' | 'CAPITAL';
+  targetId: string | null; amount: Money; minorAmount: string;
+  note: string; ledgerCode: string | null; target: Record<string, unknown> | null; reference: string | null;
+}
+export interface BankStatementReceiptCoverage {
+  receiptId: string; amount: Money; coverageKey: string | null;
+}
+export interface BankStatementReconciliation {
+  origin: string; statementAccountId: string; transactionId: string;
+  matchId: string | null; matchSha256: string | null;
+  bankAmount: Money; adjustmentAmount: Money; adjustments: BankStatementPostingAdjustment[];
+  receiptIds: string[]; receipts: BankStatementReceiptCoverage[];
+}
+
 export interface BankAccount {
   id: string; reference: string; name: string; currency: Currency; method: string;
   bankId: string | null; accountReference: string | null; csvLayout: BankCsvNormalizedLayout | null;
   status: BankAccountStatus; version: number; createdAt: string; updatedAt: string;
+  statementSourceIdentitySha256?: string | null;
+  statementSourceIdentity?: BankStatementAccountIdentity | null;
 }
 export interface BankAccountsQuery {status?: BankAccountStatus; search?: string; offset?: number; limit?: number}
 export interface BankAccountsPage {
@@ -94,12 +115,20 @@ export interface BankSourceRow {
   sourceIdentity: Record<string, unknown> | null; originalDates: Record<string, unknown> | null;
   originalEntryMonthDay: string | null; sourcePageSha256: string | null; originalSourceOccurrences: unknown[];
   replacesTransactionKeys: string[]; transactionKey: string | null;
+  /** Stable identity of this exact original statement occurrence. */
+  sourceOccurrenceKey: string | null;
+  sourceOrigin?: 'BANK_STATEMENT_RECONCILIATION' | string;
+  statementReconciliation?: BankStatementReconciliation | null;
   transactionIdentity: 'BANK_TRANSACTION_ID' | 'STATEMENT_POSITION' | 'NONE'; economicKey: string;
   [key: string]: unknown;
 }
 export interface BankSourceMatch {
-  bankImportId: string; sourceName: string; rowId: string; match: 'TRANSACTION_ID' | 'SAME_PAYMENT_FIELDS';
+  bankImportId: string; sourceName: string; rowId: string; match: 'TRANSACTION_ID' | 'SAME_PAYMENT_FIELDS' | 'SOURCE_LINE';
   amount: Money; bookedDate: DateOnly; kind: BankDirection; sameFacts: boolean; status: BankRowStatus; receiptIds: string[];
+  replacesTransactionKeys: string[]; sourceIdentity: Record<string, unknown> | null;
+  statementAccountId?: string | null; statementTransactionId?: string | null;
+  sourceOrigin?: 'BANK_STATEMENT_RECONCILIATION' | string;
+  statementReconciliation?: BankStatementReconciliation | null;
   [key: string]: unknown;
 }
 export interface BankRowDecision {
@@ -176,6 +205,10 @@ export interface BankReceiptSourceBinding {
   sourceSha256?: string; sourceRowSha256?: string; sourceName?: string; bookedDate?: DateOnly;
   transactionId?: string | null; transactionKey?: string | null; transactionAliases?: string[];
   bankReference?: string; reference?: string; coverageKey?: string; sourceAmount?: Money; splitAmount?: Money;
+  sourceOccurrenceKey?: string | null; sourceOccurrenceKeys?: string[];
+  sourceOrigin?: 'BANK_STATEMENT_RECONCILIATION' | string;
+  statementAccountId?: string; statementImportId?: string; statementTransactionId?: string;
+  statementMatchId?: string | null; statementMatchSha256?: string | null;
   [key: string]: unknown;
 }
 export interface BankSourceCoverage {
@@ -204,6 +237,7 @@ export interface BankPostingSplit {
 export interface BankPostingSelection {
   rowId: string; sourceRow: Omit<BankSourceRow, 'raw'>; distinctPaymentReason: string; sourceResolutionReason: string;
   sourceMatches: BankSourceMatch[]; splits: BankPostingSplit[];
+  statementReconciliation?: BankStatementReconciliation | null;
 }
 export interface BankPostingProposal {
   schema: 'stellar-forge.merchant-bank-posting-proposal.v1'; id: string; createdAt: string; bankImportId: string;
@@ -225,6 +259,8 @@ export interface BankBalanceEffect<T> extends BankBalancePeriod<T> {
 export interface BankPostingTotals {
   currency: Currency; sourceCredits: Money; createdReceiptAmount: Money; linkedReceiptAmount: Money;
   correctedReceiptAmount: Money; allocatedAmount: Money;
+  /** Signed retained non-receipt parts: customer receipt amounts plus this value equal sourceCredits. */
+  statementAdjustmentAmount: Money;
 }
 export interface BankPostingBalanceEffects {
   asOf: DateOnly; receipts: Array<BankBalanceEffect<BankReceiptBalance>>;

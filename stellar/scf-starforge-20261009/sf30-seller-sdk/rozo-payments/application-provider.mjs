@@ -73,7 +73,7 @@ export async function prepareRozoPaymentsApplication(settings, { inputPath, runt
   'APPLICATION_ROZO_SOURCE_CHANGED', 'The original ROZO source selection differs from its installed manifest.');
   for (const row of source.files) {
     const input = await inputPath(join(sourceRoot, row.path), 'file');
-    need(input.sha256 === row.sha256,
+    need(input.bytes === row.bytes && (input.sha256 === undefined || input.sha256 === row.sha256),
       'APPLICATION_ROZO_SOURCE_CHANGED', 'A selected ROZO source file changed: ' + row.path);
     inputs.push(input);
   }

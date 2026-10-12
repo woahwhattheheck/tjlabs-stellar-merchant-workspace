@@ -164,10 +164,17 @@ async function busyApplication(root, id) {
 async function selectedRelease(root, saved, homes = null) {
   // This map belongs to one overview request, never to a lifecycle action.
   if (homes && !homes.has(saved.homeId)) homes.set(saved.homeId, managedHome(root, saved.homeId));
-  const home = await (homes ? homes.get(saved.homeId) : managedHome(root, saved.homeId));
-  const release = home?.releases.find(item => item.runtime &&
-    bindingKeys.every(key => item.runtime[key] === saved.runtime[key]));
-  return { home, release };
+  const [home, adoption] = await Promise.all([
+    homes ? homes.get(saved.homeId) : managedHome(root, saved.homeId),
+    saved.adoption ? operationView(root, saved.adoption.requestId) : null,
+  ]);
+  // The installer publishes release metadata before attaching the original
+  // runtime. Keep the original connection recoverable until that operation
+  // has completed, including a failure after copying the release files.
+  const release = (!adoption || adoption.phase === 'SUCCEEDED') ?
+    home?.releases.find(item => item.runtime &&
+      bindingKeys.every(key => item.runtime[key] === saved.runtime[key])) : null;
+  return { home, release, adoption };
 }
 async function runViews(root, applicationId, history) {
   return Promise.all(history.map(async run => {
@@ -181,13 +188,13 @@ async function runViews(root, applicationId, history) {
   }));
 }
 async function view(root, saved, { homes = null, historyLimit = 30 } = {}) {
-  const [{ home, release }, page] = await Promise.all([
+  const [{ home, release, adoption: connection }, page] = await Promise.all([
     selectedRelease(root, saved, homes),
     applicationRunPage(root, { applicationId: saved.id, limit: historyLimit }),
   ]);
   const rows = await runViews(root, saved.id, page.runs);
   const current = rows[0] ?? null;
-  const adoption = !release && saved.adoption ? await operationView(root, saved.adoption.requestId) : null;
+  const adoption = release ? null : connection;
   const phase = !release ? 'CONNECTING' : !current ? 'READY' :
     current.active ? current.stop ? 'STOPPING' : current.url ? 'RUNNING' : 'STARTING' :
       ['SUCCEEDED', 'CANCELLED'].includes(current.phase) ? current.result?.state === 'EXITED' || current.result?.state === 'LAUNCH_FAILED' ? 'FAILED' : 'STOPPED' :

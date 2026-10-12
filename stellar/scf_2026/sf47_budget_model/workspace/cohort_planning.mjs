@@ -261,8 +261,13 @@ function economics(raw, label) {
 }
 function payment(raw, label) {
   const value = object(raw, label);
-  const kind = enumValue(value.kind, ["PER_REQUEST", "PREPAID", "UNPAID"], label + ".kind");
+  const kind = enumValue(value.kind, ["PER_REQUEST", "PREPAID", "UNPAID", "FUNDED"], label + ".kind");
   fields(value, ["kind", "atomicUnitPrice", "network", "asset", ...(kind === "PREPAID" ? ["passCapacity", "openingUnits", "allowanceUnitsPerRequest", "passGroupId"] : [])], label);
+  if (kind === "FUNDED") {
+    if (value.atomicUnitPrice != null || (value.network ?? "") !== "" || (value.asset ?? "") !== "")
+      fail("EXPLICIT_FUNDING_TERMS", "Enter commercial terms on the named funding groups.", label);
+    return { kind, atomicUnitPrice: null, network: "", asset: "" };
+  }
   const result = {
     kind, atomicUnitPrice: atomic(value.atomicUnitPrice ?? (kind === "UNPAID" ? "0" : undefined), label + ".atomicUnitPrice"),
     network: optionalText(value.network, label + ".network", 500),
@@ -280,6 +285,47 @@ function payment(raw, label) {
   }
   return result;
 }
+
+function fundingOrigin(raw, label) {
+  if (raw === undefined || raw === null) return null;
+  const row = fields(object(raw, label), ["installationId", "revision", "sha256", "taskId", "fundingId", "entryId", "mode", "state"], label);
+  const hash = textValue(row.sha256, label + ".sha256", true, 64);
+  if (!/^[0-9a-f]{64}$/.test(hash)) fail("INVALID_PLAN_SOURCE", "Retain the selected Installation edition SHA-256.", label);
+  const result = { installationId: id(row.installationId, label + ".installationId"), revision: integer(row.revision, label + ".revision", 1), sha256: hash };
+  for (const key of ["taskId", "fundingId", "entryId"]) if (row[key] !== undefined) result[key] = id(row[key], label + "." + key);
+  if (row.mode !== undefined) result.mode = enumValue(row.mode, ["PURCHASE", "ALLOWANCE_USE", "REOPEN", "FREE_USE"], label + ".mode");
+  if (row.state !== undefined) result.state = enumValue(row.state, ["PLANNED", "CANCELLED"], label + ".state");
+  return result;
+}
+function explicitFunding(raw, label) {
+  const row = fields(object(raw, label), ["id", "label", "kind", "date", "buyerId", "operationId", "facilitatorId", "atomicUnitPrice", "network", "asset", "economics", "origin", "sourceIds", "sourceNote"], label);
+  let estimate = null;
+  if (row.economics != null) {
+    const value = fields(object(row.economics, label + ".economics"), ["currency", "unitRevenue", "feePerPayment"], label + ".economics");
+    estimate = { currency: moneyCurrency(value.currency, label + ".economics.currency"),
+      unitRevenue: nullableDecimal(value.unitRevenue, label + ".economics.unitRevenue"),
+      feePerPayment: nullableDecimal(value.feePerPayment, label + ".economics.feePerPayment") };
+  }
+  return { id: id(row.id, label + ".id"), label: textValue(row.label, label + ".label", true, 500),
+    kind: enumValue(row.kind, ["DIRECT", "PREPAID"], label + ".kind"), date: dateValue(row.date, label + ".date"),
+    buyerId: id(row.buyerId, label + ".buyerId"), operationId: id(row.operationId, label + ".operationId"),
+    facilitatorId: row.facilitatorId ? id(row.facilitatorId, label + ".facilitatorId") : null,
+    atomicUnitPrice: row.atomicUnitPrice == null || row.atomicUnitPrice === "" ? null : atomic(row.atomicUnitPrice, label + ".atomicUnitPrice"),
+    network: optionalText(row.network, label + ".network", 500), asset: optionalText(row.asset, label + ".asset", 500),
+    economics: estimate, origin: fundingOrigin(row.origin, label + ".origin"), ...evidence(row, label) };
+}
+function calendarSource(raw) {
+  if (raw === undefined || raw === null) return null;
+  const row = fields(object(raw, "calendarSource"), ["schema", "groupId", "selection", "cohortSeed"], "calendarSource");
+  if (row.schema !== "stellar-forge.sf47-cohort-plan-calendar-source.v1" ||
+      row.selection?.schema !== "stellar-forge.sf47-customer-use-calendar.v1.selection" ||
+      row.cohortSeed?.customerUse?.groupId !== row.groupId)
+    fail("INVALID_PLAN_SOURCE", "Retain the complete original calendar selection and matching native Cohort seed.", "calendarSource");
+  id(row.groupId, "calendarSource.groupId");
+  object(row.selection, "calendarSource.selection"); object(row.cohortSeed, "calendarSource.cohortSeed");
+  return clone(row);
+}
+
 function capacityPool(raw, label) {
   const row = fields(object(raw, label), ["id", "label", "hoursByWeekday", "dateOverrides", "sourceIds", "sourceNote"], label);
   const weekly = fields(object(row.hoursByWeekday ?? {}, label + ".hoursByWeekday"), ["1", "2", "3", "4", "5", "6", "7"], label + ".hoursByWeekday");
@@ -310,9 +356,48 @@ function cadence(raw, label, globalWeekdays) {
     kind, dates: [...new Set(array(value.dates, label + ".dates").map(x => dateValue(x, label + ".dates")))].sort()
   };
 }
+
+export const COHORT_SCHEDULING_SCHEMA = "stellar-forge.sf47-delivery-scheduling.v1";
+export function normalizeCohortScheduling(raw, schedules) {
+  const value = fields(object(raw, "deliveryScheduling"), ["schema", "strategy", "schedules", "note"], "deliveryScheduling");
+  if (value.schema !== COHORT_SCHEDULING_SCHEMA) fail("INVALID_SCHEDULING_SCHEMA", "Use " + COHORT_SCHEDULING_SCHEMA + ".", "deliveryScheduling.schema");
+  const scheduleIds = new Set(schedules.map(row => row.id)), seen = new Set();
+  const policies = array(value.schedules, "deliveryScheduling.schedules", 1000).map((rawPolicy, index) => {
+    const path = "deliveryScheduling.schedules[" + index + "]";
+    const row = fields(object(rawPolicy, path), ["scheduleId", "flexible", "advanceDays", "delayDays", "releaseDate", "dueDate", "weekdays", "minimumGapDays", "priority", "note"], path);
+    const scheduleId = id(row.scheduleId, path + ".scheduleId");
+    if (!scheduleIds.has(scheduleId) || seen.has(scheduleId)) fail("SCHEDULING_REFERENCE", "Select each original schedule at most once.", path);
+    seen.add(scheduleId);
+    if (typeof row.flexible !== "boolean") fail("SCHEDULING_FLEXIBILITY", "Choose fixed or flexible service dates.", path + ".flexible");
+    const releaseDate = row.releaseDate == null || row.releaseDate === "" ? null : dateValue(row.releaseDate, path + ".releaseDate");
+    const dueDate = row.dueDate == null || row.dueDate === "" ? null : dateValue(row.dueDate, path + ".dueDate");
+    if (releaseDate && dueDate && releaseDate > dueDate) fail("SCHEDULING_WINDOW", "The release date must not follow the completion deadline.", path);
+    return { scheduleId, flexible: row.flexible,
+      advanceDays: integer(row.advanceDays ?? 0, path + ".advanceDays", 0, 366000),
+      delayDays: integer(row.delayDays ?? 0, path + ".delayDays", 0, 366000), releaseDate, dueDate,
+      weekdays: weekdays(row.weekdays, path + ".weekdays", [1, 2, 3, 4, 5, 6, 7]),
+      minimumGapDays: integer(row.minimumGapDays ?? 0, path + ".minimumGapDays", 0, 366000),
+      priority: integer(row.priority ?? 0, path + ".priority", 0, 1000000),
+      note: optionalText(row.note, path + ".note") };
+  });
+  return { schema: COHORT_SCHEDULING_SCHEMA,
+    strategy: enumValue(value.strategy ?? "NEAREST", ["NEAREST", "EARLIEST"], "deliveryScheduling.strategy"),
+    schedules: policies, note: optionalText(value.note, "deliveryScheduling.note") };
+}
+function dateAllocations(raw, label) {
+  const seen = new Set();
+  return array(raw, label, MAX_DAILY_ROWS).map((value, index) => {
+    const path = label + "[" + index + "]", row = fields(object(value, path), ["sourceDate", "date"], path);
+    const sourceDate = dateValue(row.sourceDate, path + ".sourceDate");
+    if (seen.has(sourceDate)) fail("DUPLICATE_DATE_ALLOCATION", "Allocate each original occurrence once.", path);
+    seen.add(sourceDate);
+    return { sourceDate, date: dateValue(row.date, path + ".date") };
+  }).sort((a, b) => a.sourceDate.localeCompare(b.sourceDate));
+}
+
 export function normalizeCohortPlan(raw) {
   const value = fields(object(raw, "plan"), ["schema", "draftId", "name", "source", "rule", "asOfAt", "windowStart", "calendar",
-    "buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "capacityPools", "sensitivity", "note"], "plan");
+    "buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "capacityPools", "fundingGroups", "calendarSource", "deliveryScheduling", "sensitivity", "note"], "plan");
   if (value.schema !== COHORT_PLAN_SCHEMA) fail("INVALID_PLAN_SCHEMA", "Use " + COHORT_PLAN_SCHEMA + ".", "schema");
   const rule = validateRule(value.rule), source = sourceValue(value.source);
   const cal = fields(object(value.calendar ?? {}, "calendar"), ["timezone", "weekdays", "excludedDates"], "calendar");
@@ -334,23 +419,46 @@ export function normalizeCohortPlan(raw) {
   const operationIds = new Set(operations.map(x => x.id));
   const capacityPools = distinct(array(value.capacityPools ?? [], "capacityPools", 1000).map((x, i) => capacityPool(x, "capacityPools[" + i + "]")), "capacityPools");
   const capacityPoolIds = new Set(capacityPools.map(x => x.id));
+  const fundingGroups = distinct(array(value.fundingGroups ?? [], "fundingGroups").map((row, i) => explicitFunding(row, "fundingGroups[" + i + "]")), "fundingGroups");
+  const fundingById = new Map(fundingGroups.map(row => [row.id, row]));
+  const fundingOrigins = new Set();
+  for (const row of fundingGroups) {
+    if (!buyerIds.has(row.buyerId) || !operationIds.has(row.operationId) || (row.facilitatorId && !facilitatorIds.has(row.facilitatorId)))
+      fail("UNKNOWN_PLAN_REFERENCE", "Select the explicit funding group's original buyer, operation and facilitator.", "fundingGroups." + row.id);
+    if (row.origin?.fundingId) {
+      const key = canonical([row.origin.installationId, row.origin.revision, row.origin.fundingId]);
+      if (fundingOrigins.has(key)) fail("DUPLICATE_FUNDING_ORIGIN", "One saved funding group can occur only once in this plan.", "fundingGroups." + row.id);
+      fundingOrigins.add(key);
+    }
+  }
+  const operationsById = new Map(operations.map(row => [row.id, row]));
   const schedules = distinct(array(value.schedules ?? [], "schedules", 1000).map((rawSchedule, i) => {
-    const label = "schedules[" + i + "]", row = fields(object(rawSchedule, label), ["id", "label", "operationId", "buyerId", "facilitatorId", "cadence", "tasksPerDate", "requestsPerTask", "timeUtc", "deliveryDelayMinutes", "excludedDates", "payment", "economics", "capacityPoolId", "note"], label);
+    const label = "schedules[" + i + "]", row = fields(object(rawSchedule, label), ["id", "label", "operationId", "buyerId", "facilitatorId", "cadence", "tasksPerDate", "requestsPerTask", "timeUtc", "deliveryDelayMinutes", "excludedDates", "payment", "economics", "capacityPoolId", "fundingGroupIds", "origin", "dateAllocations", "note"], label);
     const operationId = id(row.operationId, label + ".operationId"), buyerId = id(row.buyerId, label + ".buyerId");
     const facilitatorId = row.facilitatorId ? id(row.facilitatorId, label + ".facilitatorId") : null;
     if (!operationIds.has(operationId) || !buyerIds.has(buyerId) || (facilitatorId && !facilitatorIds.has(facilitatorId)))
       fail("UNKNOWN_PLAN_REFERENCE", "Select existing plan operation, buyer and facilitator identities.", label);
     const capacityPoolId = row.capacityPoolId ? id(row.capacityPoolId, label + ".capacityPoolId") : null;
     if (capacityPoolId && !capacityPoolIds.has(capacityPoolId)) fail("UNKNOWN_PLAN_REFERENCE", "Select an existing delivery capacity pool.", label + ".capacityPoolId");
+    const paymentValue = payment(row.payment, label + ".payment"), fundingGroupIds = references(row.fundingGroupIds, label + ".fundingGroupIds");
+    if ((paymentValue.kind === "FUNDED") !== (fundingGroupIds.length > 0))
+      fail("EXPLICIT_FUNDING_REFERENCE", "A funded use needs its named funding groups; other payment modes carry no explicit funding references.", label);
+    for (const key of fundingGroupIds) {
+      const funding = fundingById.get(key);
+      if (!funding || funding.buyerId !== buyerId || operationsById.get(funding.operationId).merchantId !== operationsById.get(operationId).merchantId)
+        fail("EXPLICIT_FUNDING_REFERENCE", "A useful result and its funding must select the same buyer and merchant.", label);
+    }
     return {
       id: id(row.id, label + ".id"), label: optionalText(row.label, label + ".label", 500), operationId, buyerId, facilitatorId, capacityPoolId,
+      fundingGroupIds, origin: fundingOrigin(row.origin, label + ".origin"),
       cadence: cadence(row.cadence, label + ".cadence", calendar.weekdays),
+      ...(row.dateAllocations === undefined ? {} : { dateAllocations: dateAllocations(row.dateAllocations, label + ".dateAllocations") }),
       tasksPerDate: integer(row.tasksPerDate, label + ".tasksPerDate", 0),
       requestsPerTask: integer(row.requestsPerTask, label + ".requestsPerTask", 1),
       timeUtc: timeValue(row.timeUtc, label + ".timeUtc"),
       deliveryDelayMinutes: integer(row.deliveryDelayMinutes ?? 0, label + ".deliveryDelayMinutes", 0, 527040),
       excludedDates: exclusionDates(row.excludedDates, label + ".excludedDates"),
-      payment: payment(row.payment, label + ".payment"), economics: economics(row.economics, label + ".economics"),
+      payment: paymentValue, economics: economics(row.economics, label + ".economics"),
       note: optionalText(row.note, label + ".note")
     };
   }), "schedules");
@@ -366,7 +474,8 @@ export function normalizeCohortPlan(raw) {
   return {
     schema: COHORT_PLAN_SCHEMA, draftId: id(value.draftId, "draftId"), name: textValue(value.name, "name", true, 500), source, rule,
     asOfAt: stamp(value.asOfAt, "asOfAt"), windowStart: dateValue(value.windowStart, "windowStart"), calendar,
-    buyers, merchants, facilitators, operations, schedules, workshares, capacityPools,
+    buyers, merchants, facilitators, operations, schedules, workshares, capacityPools, fundingGroups, calendarSource: calendarSource(value.calendarSource),
+    ...(value.deliveryScheduling === undefined ? {} : { deliveryScheduling: normalizeCohortScheduling(value.deliveryScheduling, schedules) }),
     sensitivity: {
       minimumMarginPct,
       effortIncreasesPct: [...new Set(array(sensitivity.effortIncreasesPct ?? ["0", "20", "25"], "sensitivity.effortIncreasesPct", 30).map(x => decimalText(decimal(x, "Effort increase"))))],
@@ -581,10 +690,11 @@ function planDeliveryCapacity(input, days, occurrences, finding) {
     })
   };
 }
-function planServicePricing(input, occurrences, finding) {
+function planServicePricing(input, occurrences, finding, explicitGroups = []) {
   const schedules = new Map(input.schedules.map(row => [row.id, row])), groups = new Map();
   for (const occurrence of occurrences) {
     const schedule = schedules.get(occurrence.scheduleId), terms = schedule.payment;
+    if (terms.kind === "FUNDED") continue;
     const key = terms.kind === "PREPAID" && terms.passGroupId ? "shared:" + terms.passGroupId : "schedule:" + schedule.id;
     if (!groups.has(key)) groups.set(key, {
       id: key, label: terms.kind === "PREPAID" && terms.passGroupId ? terms.passGroupId : schedule.label || schedule.id,
@@ -600,6 +710,56 @@ function planServicePricing(input, occurrences, finding) {
       if (value === null) group.unknown[name]++; else group.known[name] = decimalAdd(group.known[name], computedDecimal(value, name));
     }
   }
+
+  // Connected funding/use components keep one useful result's costs once when
+  // several explicit groups fund it. We never divide a shared cost arbitrarily.
+  const parents = new Map(explicitGroups.map(row => [row.id, row.id]));
+  const parent = id => { let current = id; while (parents.get(current) !== current) current = parents.get(current); return current; };
+  for (const schedule of input.schedules.filter(row => row.payment.kind === "FUNDED"))
+    for (const id of schedule.fundingGroupIds.slice(1)) parents.set(parent(id), parent(schedule.fundingGroupIds[0]));
+  const components = new Map();
+  for (const occurrence of occurrences.filter(row => row.paymentKind === "FUNDED")) {
+    const schedule = schedules.get(occurrence.scheduleId), key = "funded:" + parent(schedule.fundingGroupIds[0]);
+    if (!components.has(key)) components.set(key, { id: key, scheduleIds: new Set(), occurrences: [], fundingGroups: [], currencies: new Set(), missingCurrency: false });
+    const component = components.get(key); component.scheduleIds.add(schedule.id); component.occurrences.push(occurrence);
+    if (schedule.economics) component.currencies.add(schedule.economics.currency); else if (occurrence.scheduledTasks) component.missingCurrency = true;
+  }
+  for (const funding of explicitGroups) {
+    const component = components.get("funded:" + parent(funding.id)); if (!component) continue;
+    component.fundingGroups.push(funding);
+    if (funding.plannedPaymentRequests) {
+      if (funding.economics) component.currencies.add(funding.economics.currency); else component.missingCurrency = true;
+    }
+  }
+  for (const component of components.values()) {
+    const currencies = [...component.currencies].sort(), compatible = currencies.length === 1 && !component.missingCurrency;
+    const charged = component.fundingGroups.filter(row => row.plannedPaymentRequests);
+    const prices = new Set(charged.map(row => row.sourceEconomics?.unitRevenue ?? null));
+    const group = { id: component.id, label: component.fundingGroups.map(row => row.label).join(" + "),
+      scheduleIds: component.scheduleIds, currency: compatible ? currencies[0] : null, currencies,
+      fundingGroupIds: component.fundingGroups.map(row => row.id), paymentKind: "FUNDED",
+      unitRevenue: compatible && prices.size === 1 ? [...prices][0] : null,
+      chargeUnits: charged.length, scheduledTasks: 0,
+      known: { revenue: ZERO, supplierCost: ZERO, paymentFees: ZERO, laborCost: ZERO },
+      unknown: { revenue: 0, supplierCost: 0, paymentFees: 0, laborCost: 0 } };
+    for (const occurrence of component.occurrences) {
+      group.scheduledTasks = addCount(group.scheduledTasks, occurrence.scheduledTasks);
+      for (const key of ["supplierCost", "laborCost"]) {
+        const value = occurrence.economics?.[key] ?? (occurrence.scheduledTasks ? null : "0");
+        if (value === null || !compatible) group.unknown[key]++; else group.known[key] = decimalAdd(group.known[key], computedDecimal(value, key));
+      }
+    }
+    for (const funding of component.fundingGroups) for (const key of ["revenue", "paymentFees"]) {
+      const value = funding.plannedPaymentRequests ? funding.economics?.[key] ?? null : "0";
+      if (value === null || !compatible) group.unknown[key]++; else group.known[key] = decimalAdd(group.known[key], computedDecimal(value, key));
+    }
+    if (!compatible) {
+      group.unknown.supplierCost++; group.unknown.laborCost++;
+      finding("FUNDING_COST_CURRENCY", "Complete the named funding and delivery estimate currencies for " + group.label + ". Differing currencies remain separate and require an explicit priced basis before a combined service floor.", "servicePricing", group.id, "info");
+    }
+    groups.set(group.id, group);
+  }
+
   return [...groups.values()].map(group => {
     const costsKnown = !["supplierCost", "paymentFees", "laborCost"].some(key => group.unknown[key]);
     const cost = costsKnown ? decimalAdd(decimalAdd(group.known.supplierCost, group.known.paymentFees), group.known.laborCost) : null;
@@ -621,7 +781,10 @@ function planServicePricing(input, occurrences, finding) {
       breakEvenUnitRevenue: breakEven === null ? null : decimalText(breakEven), targetUnitRevenue: targetPrice === null ? null : decimalText(targetPrice),
       unitRevenueIncrease: group.unitRevenue === null || (targetPrice ?? breakEven) === null ? null : decimalText(positive(decimalSubtract(targetPrice ?? breakEven, decimal(group.unitRevenue, "Unit revenue")))),
       unknownRecordCounts: group.unknown, status,
-      priceBasis: "Currency value per newly charged request or acquired prepaid pass over this complete selected service group; ceiling rounded to 12 decimal places."
+      ...(group.fundingGroupIds ? { fundingGroupIds: group.fundingGroupIds, currencies: group.currencies } : {}),
+      priceBasis: group.fundingGroupIds ?
+        "Average currency value per new explicit funding group across the complete linked useful results. Shared result costs enter once; individual group prices remain separately editable. Ceiling rounded to 12 decimal places." :
+        "Currency value per newly charged request or acquired prepaid pass over this complete selected service group; ceiling rounded to 12 decimal places."
     };
   });
 }
@@ -667,30 +830,44 @@ export function evaluateCohortPlan(raw, options = {}) {
   const dayMap = new Map(days.map(x => [x.date, x])), prepared = [], excluded = [];
   for (const schedule of input.schedules) {
     const ownExclusions = new Map(schedule.excludedDates.map(x => [x.date, x.label]));
+    const allocated = new Map((schedule.dateAllocations || []).map(row => [row.sourceDate, row.date])), usedAllocations = new Set();
     if (!schedule.economics) finding("ECONOMICS_UNSPECIFIED", "Add this schedule's explicit revenue, supplier cost, payment fee and effort assumptions to compare its contribution.", "schedule", schedule.id, "info");
-    if (schedule.payment.kind !== "UNPAID" && schedule.payment.atomicUnitPrice === "0")
+    if (!["UNPAID", "FUNDED"].includes(schedule.payment.kind) && schedule.payment.atomicUnitPrice === "0")
       finding("ZERO_PAYMENT_PRICE", "A zero atomic price contributes tasks and payment requests, with zero paid purchase opportunities.", "schedule", schedule.id);
-    for (const dateRow of days) {
+    for (const sourceDay of days) {
+      let dateRow = sourceDay;
       if (!cadenceMatches(schedule.cadence, dateRow.date, dateRow.weekday)) continue;
       const reasons = [];
       if (!input.calendar.weekdays.includes(dateRow.weekday)) reasons.push("Closed calendar weekday");
       if (globalExclusions.has(dateRow.date)) reasons.push(globalExclusions.get(dateRow.date) || "Calendar exclusion");
       if (ownExclusions.has(dateRow.date)) reasons.push(ownExclusions.get(dateRow.date) || "Schedule exclusion");
       if (reasons.length) { excluded.push({ scheduleId: schedule.id, date: dateRow.date, reasons }); continue; }
+      if (allocated.has(sourceDay.date)) {
+        const selected = allocated.get(sourceDay.date);
+        dateRow = dayMap.get(selected);
+        if (!dateRow) fail("ALLOCATION_OUTSIDE_WINDOW", "Keep allocated work inside its original complete rule window.", "schedules." + schedule.id);
+        if (!dateRow.isWorkingDay || ownExclusions.has(selected))
+          fail("ALLOCATION_CLOSED_DATE", "Allocated date " + selected + " is closed by the plan or service calendar.", "schedules." + schedule.id);
+        usedAllocations.add(sourceDay.date);
+      }
       if (prepared.length >= MAX_DAILY_ROWS) fail("PLAN_TOO_LARGE", "The selected plan exceeds " + MAX_DAILY_ROWS + " schedule-date rows. Keep the complete selected cohort in a smaller set of aggregate schedules.", "schedules");
       const scheduledAt = dateRow.date + "T" + schedule.timeUtc + ":00.000Z";
       const completeEpoch = Date.parse(scheduledAt) + schedule.deliveryDelayMinutes * 60000;
       if (!Number.isFinite(completeEpoch) || new Date(completeEpoch).toISOString().length > 24)
         fail("INVALID_PLAN_CLOCK", "The planned completion exceeds the supported calendar.", "schedules." + schedule.id);
-      prepared.push({ schedule, dateRow, scheduledAt, plannedCompleteAt: new Date(completeEpoch).toISOString(), completeEpoch });
+      prepared.push({ schedule, dateRow, sourceDay, allocated: allocated.has(sourceDay.date),
+        scheduledAt, plannedCompleteAt: new Date(completeEpoch).toISOString(), completeEpoch });
     }
+    if (usedAllocations.size !== allocated.size)
+      fail("ALLOCATION_SOURCE_MISSING", "Every date allocation must name an active occurrence in the retained original cadence and calendar.", "schedules." + schedule.id);
   }
-  prepared.sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt) || a.schedule.id.localeCompare(b.schedule.id));
+  prepared.sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt) || a.schedule.id.localeCompare(b.schedule.id) || a.sourceDay.date.localeCompare(b.sourceDay.date));
   const passGroups = new Map(), occurrences = [], summary = makeMetrics(), assetMap = new Map(), currencyMap = new Map();
+  const explicitFundingUses = new Map(input.fundingGroups.map(row => [row.id, []])), fundingGroups = [];
   const buyerGroups = new Map(), merchantGroups = new Map(), operationGroups = new Map(), facilitatorGroups = new Map(), seenSlots = new Map();
   function group(map, key, seed) { if (!map.has(key)) map.set(key, { ...seed, ...makeMetrics() }); return map.get(key); }
   for (const preparedRow of prepared) {
-    const { schedule, dateRow, scheduledAt, plannedCompleteAt, completeEpoch } = preparedRow;
+    const { schedule, dateRow, sourceDay, scheduledAt, plannedCompleteAt, completeEpoch } = preparedRow;
     const operation = operationsById.get(schedule.operationId), buyer = buyersById.get(schedule.buyerId), merchant = merchantsById.get(operation.merchantId);
     const facilitator = facilitatorsById.get(schedule.facilitatorId), terms = schedule.payment;
     const requests = multiplyCount(schedule.tasksPerDate, schedule.requestsPerTask, "Scheduled requests");
@@ -726,7 +903,7 @@ export function evaluateCohortPlan(raw, options = {}) {
       allowance = { groupId, openingActiveUnits: before, consumedUnits: consumed, plannedNewPasses: paymentRequests, retainedUnusedPreviousUnits: unused, remainingActiveUnits: balance };
     }
     const withinWindow = completeEpoch < endExclusive;
-    const paid = terms.kind !== "UNPAID" && BigInt(terms.atomicUnitPrice) > 0n ? paymentRequests : 0;
+    const paid = !["UNPAID", "FUNDED"].includes(terms.kind) && BigInt(terms.atomicUnitPrice) > 0n ? paymentRequests : 0;
     const gaps = [];
     if (!isExternal(buyer, expectedEnvironment)) gaps.push("BUYER_OPERATOR_OR_ENVIRONMENT");
     if (!isExternal(merchant, expectedEnvironment)) gaps.push("MERCHANT_OPERATOR_OR_ENVIRONMENT");
@@ -742,7 +919,8 @@ export function evaluateCohortPlan(raw, options = {}) {
       finding("OVERLAPPING_TASK_SLOT", "This buyer and operation also appear at the same planned time in schedule " + seenSlots.get(slot) + ". Review the separate useful task before retaining both schedules.", "schedule", schedule.id);
     if (schedule.tasksPerDate) seenSlots.set(slot, schedule.id);
     const row = {
-      id: schedule.id + ":" + dateRow.date, scheduleId: schedule.id, label: schedule.label || operation.label,
+      id: schedule.id + ":" + sourceDay.date, scheduleId: schedule.id, label: schedule.label || operation.label,
+      ...(preparedRow.allocated ? { sourceDate: sourceDay.date, originalScheduledAt: sourceDay.date + "T" + schedule.timeUtc + ":00.000Z" } : {}),
       operationId: operation.id, buyerId: buyer.id, merchantId: merchant.id, facilitatorId: facilitator?.id ?? null,
       buyerOperatorId: buyer.operatorId, merchantOperatorId: merchant.operatorId, facilitatorOperatorId: facilitator?.operatorId ?? null,
       date: dateRow.date, scheduledAt, plannedCompleteAt, completionDate: plannedCompleteAt.slice(0, 10), withinWindow,
@@ -751,11 +929,15 @@ export function evaluateCohortPlan(raw, options = {}) {
       plannedPaidPurchases: paid, plannedCompleteTasks: withinWindow ? schedule.tasksPerDate : 0,
       plannedCompletePurchases: withinWindow ? paid : 0, independentPurchaseOpportunities: potential,
       allowanceUnits: allowance?.consumedUnits ?? 0, allowance, qualificationGaps: gaps,
-      atomicAmount: (BigInt(terms.atomicUnitPrice) * BigInt(paymentRequests)).toString()
+      atomicAmount: (BigInt(terms.atomicUnitPrice ?? "0") * BigInt(paymentRequests)).toString()
     };
     row.economics = moneyForOccurrence(row, schedule.economics);
+    if (terms.kind === "FUNDED") {
+      row.fundingGroupIds = [...schedule.fundingGroupIds];
+      if (row.scheduledTasks) for (const id of schedule.fundingGroupIds) explicitFundingUses.get(id).push(row);
+    }
     occurrences.push(row); sumMetrics(summary, row); sumMetrics(dateRow, row);
-    if (terms.kind !== "UNPAID") {
+    if (!["UNPAID", "FUNDED"].includes(terms.kind)) {
       const key = canonical([terms.network, terms.asset]);
       if (!assetMap.has(key)) assetMap.set(key, { network: terms.network, asset: terms.asset, atomicAmount: 0n, plannedPaymentRequests: 0, plannedPaidPurchases: 0 });
       const asset = assetMap.get(key); asset.atomicAmount += BigInt(row.atomicAmount);
@@ -788,6 +970,90 @@ export function evaluateCohortPlan(raw, options = {}) {
       if (potential && isExternal(facilitator)) facilitatorGroup.operationIds.add(operation.id);
     }
   }
+
+  // A saved settlement is a separate commercial unit. Its useful results carry
+  // workload only; this pass contributes the funding once, at its first result.
+  for (const funding of input.fundingGroups) {
+    const uses = explicitFundingUses.get(funding.id);
+    if (uses.some(row => row.date < funding.date))
+      fail("FUNDING_AFTER_USE", "Funding " + funding.id + " is later than one of its selected useful tasks.", "fundingGroups." + funding.id);
+    const first = uses.slice().sort((a, b) => a.plannedCompleteAt.localeCompare(b.plannedCompleteAt) || a.id.localeCompare(b.id))[0] ?? null;
+    const operation = operationsById.get(funding.operationId), buyer = buyersById.get(funding.buyerId), merchant = merchantsById.get(operation.merchantId);
+    const facilitator = facilitatorsById.get(funding.facilitatorId);
+    const newCharge = first && funding.date >= input.windowStart && funding.date <= windowEnd ? 1 : 0;
+    const zeroPrice = funding.atomicUnitPrice === "0";
+    const priced = funding.atomicUnitPrice !== null && funding.network.trim() && funding.asset.trim();
+    const paid = newCharge && priced && !zeroPrice ? 1 : 0;
+    const unpriced = newCharge && !zeroPrice && !priced ? 1 : 0;
+    const gaps = [];
+    if (!isExternal(buyer, expectedEnvironment)) gaps.push("BUYER_OPERATOR_OR_ENVIRONMENT");
+    if (!isExternal(merchant, expectedEnvironment)) gaps.push("MERCHANT_OPERATOR_OR_ENVIRONMENT");
+    if (!operation.scope.trim() || !operation.expectedOutput.trim() || first?.qualificationGaps.includes("USEFUL_TASK_DEFINITION")) gaps.push("USEFUL_TASK_DEFINITION");
+    if (first && !first.withinWindow) gaps.push("COMPLETION_AFTER_WINDOW");
+    const potential = first && !gaps.length ? paid : 0;
+    const metrics = { ...makeMetrics(), plannedPaymentRequests: newCharge, plannedPaidPurchases: paid,
+      plannedCompletePurchases: first?.withinWindow ? paid : 0, independentPurchaseOpportunities: potential };
+    const row = { ...clone(funding), ...metrics, merchantId: merchant.id, buyerOperatorId: buyer.operatorId,
+      merchantOperatorId: merchant.operatorId, facilitatorOperatorId: facilitator?.operatorId ?? null,
+      scheduleIds: [...new Set(uses.map(use => use.scheduleId))].sort(), useOccurrenceIds: uses.map(use => use.id),
+      scheduledTasks: uses.reduce((count, use) => addCount(count, use.scheduledTasks), 0),
+      firstUsefulResultAt: first?.plannedCompleteAt ?? null, firstUsefulResultDate: first?.completionDate ?? null,
+      firstUseOccurrenceId: first?.id ?? null, withinWindow: first?.withinWindow ?? null,
+      unpricedPaymentRequests: unpriced, unpricedIndependentOpportunities: first && !gaps.length ? unpriced : 0,
+      qualificationGaps: gaps, atomicAmount: !newCharge ? "0" : funding.atomicUnitPrice,
+      status: !first ? "UNUSED" : !newCharge ? "EXISTING_FUNDING" : unpriced ? "UNPRICED" : zeroPrice ? "ZERO_PRICE" : "PLANNED",
+      sourceEconomics: clone(funding.economics) };
+    if (unpriced) finding("FUNDING_PRICE_UNSPECIFIED", funding.label + " is one planned settlement with commercial terms still unpriced. Enter its original asset, network and atomic price in Funding groups.", "fundingGroups", funding.id);
+    if (!first) finding("FUNDING_WITHOUT_USE", funding.label + " has no active useful result in the selected calendar and contributes no new payment.", "fundingGroups", funding.id, "info");
+    if (first && !first.withinWindow) finding("COMPLETION_AFTER_WINDOW", funding.label + "'s first whole useful result completes after the original cohort window.", "fundingGroups", funding.id);
+    if (newCharge && !funding.economics) finding("FUNDING_ECONOMICS_UNSPECIFIED", funding.label + " has no currency revenue or payment-fee estimate.", "fundingGroups", funding.id, "info");
+    row.economics = funding.economics ? moneyForOccurrence({ ...makeMetrics(), plannedPaymentRequests: newCharge },
+      { ...funding.economics, unitCost: "0", activeHoursPerTask: "0", hourlyCost: "0" }) : null;
+    fundingGroups.push(row);
+    sumMetrics(summary, metrics);
+    if (first) sumMetrics(dayMap.get(first.date), metrics);
+    if (funding.network.trim() && funding.asset.trim() && newCharge) {
+      const key = canonical([funding.network, funding.asset]);
+      if (!assetMap.has(key)) assetMap.set(key, { network: funding.network, asset: funding.asset, atomicAmount: 0n, plannedPaymentRequests: 0, plannedPaidPurchases: 0 });
+      const asset = assetMap.get(key); asset.atomicAmount += BigInt(funding.atomicUnitPrice ?? "0");
+      asset.plannedPaymentRequests = addCount(asset.plannedPaymentRequests, newCharge); asset.plannedPaidPurchases = addCount(asset.plannedPaidPurchases, paid);
+      if (funding.atomicUnitPrice === null) asset.unpricedPaymentRequests = addCount(asset.unpricedPaymentRequests ?? 0, 1);
+    }
+    if (row.economics) {
+      const currency = row.economics.currency;
+      if (!currencyMap.has(currency)) currencyMap.set(currency, { currency, records: 0, known: Object.fromEntries(["revenue", "supplierCost", "paymentFees", "activeHours", "laborCost"].map(k => [k, ZERO])), unknown: { revenue: 0, supplierCost: 0, paymentFees: 0, activeHours: 0, laborCost: 0 } });
+      sumMoney(currencyMap.get(currency), row.economics);
+    }
+    if (newCharge && !funding.economics) for (const currency of new Set(uses.map(use => use.economics?.currency).filter(Boolean))) {
+      const amounts = currencyMap.get(currency);
+      amounts.unallocatedFundingIds ??= new Set(); amounts.unallocatedFundingIds.add(funding.id);
+    }
+    if (funding.economics) {
+      const amounts = currencyMap.get(funding.economics.currency);
+      amounts.unallocatedDeliveryIds ??= new Set();
+      for (const use of uses) if (use.scheduledTasks && !use.economics) amounts.unallocatedDeliveryIds.add(use.id);
+    }
+    if (!first) continue;
+    const buyerKey = buyer.operatorId.trim() ? buyer.operatorId : "unassigned:" + buyer.id;
+    const buyerGroup = group(buyerGroups, buyerKey, { operatorId: buyer.operatorId || null, label: buyer.label, buyerIds: new Set(), completionDates: new Set() });
+    buyerGroup.buyerIds.add(buyer.id); sumMetrics(buyerGroup, metrics); if (potential) buyerGroup.completionDates.add(first.completionDate);
+    const merchantKey = merchant.operatorId.trim() ? merchant.operatorId : "unassigned:" + merchant.id;
+    const merchantGroup = group(merchantGroups, merchantKey, { operatorId: merchant.operatorId || null, label: merchant.label, merchantIds: new Set(), buyerOperatorIds: new Set() });
+    merchantGroup.merchantIds.add(merchant.id); sumMetrics(merchantGroup, metrics); if (potential) merchantGroup.buyerOperatorIds.add(buyer.operatorId);
+    const operationGroup = group(operationGroups, operation.id, { id: operation.id, label: operation.label, merchantId: merchant.id, facilitatorOperatorIds: new Set(), buyerOperatorIds: new Set() });
+    sumMetrics(operationGroup, metrics);
+    if (potential) {
+      operationGroup.buyerOperatorIds.add(buyer.operatorId);
+      if (facilitator && isExternal(facilitator)) operationGroup.facilitatorOperatorIds.add(facilitator.operatorId);
+    }
+    if (facilitator) {
+      const facilitatorKey = facilitator.operatorId.trim() ? facilitator.operatorId : "unassigned:" + facilitator.id;
+      const facilitatorGroup = group(facilitatorGroups, facilitatorKey, { operatorId: facilitator.operatorId || null, label: facilitator.label, serviceIds: new Set(), operationIds: new Set() });
+      facilitatorGroup.serviceIds.add(facilitator.id); sumMetrics(facilitatorGroup, metrics);
+      if (potential && isExternal(facilitator)) facilitatorGroup.operationIds.add(operation.id);
+    }
+  }
+
   const buyerRows = [...buyerGroups.values()].map(row => ({ ...row, buyerIds: [...row.buyerIds].sort(), completionDates: [...row.completionDates].sort(),
     returningPotential: row.independentPurchaseOpportunities >= 2 && row.completionDates.size >= 2 }));
   const merchantRows = [...merchantGroups.values()].map(row => ({ ...row, merchantIds: [...row.merchantIds].sort(), buyerOperatorIds: [...row.buyerOperatorIds].sort() }));
@@ -798,7 +1064,7 @@ export function evaluateCohortPlan(raw, options = {}) {
   summary.returningBuyerOperators = buyerRows.filter(x => x.returningPotential).length;
   summary.sameOperationFacilitatorOperators = Math.max(0, ...operationRows.map(x => x.independentFacilitatorCount));
   summary.excludedScheduleDates = excluded.length;
-  summary.completionOutsideWindow = occurrences.filter(x => !x.withinWindow).reduce((sum, x) => addCount(sum, x.plannedPaidPurchases), 0);
+  summary.completionOutsideWindow = [...occurrences, ...fundingGroups].filter(x => x.withinWindow === false).reduce((sum, x) => addCount(sum, x.plannedPaidPurchases), 0);
   summary.elapsedScheduledDates = new Set(occurrences.filter(x => x.asOfPosition === "PAST" && x.scheduledTasks).map(x => x.date)).size;
   const availableTargets = {
     external_buyer_operators: summary.independentBuyerOperators,
@@ -808,11 +1074,39 @@ export function evaluateCohortPlan(raw, options = {}) {
     external_mainnet_merchant_operators: tranche === 3 ? summary.independentMerchantOperators : 0,
     repeat_external_buyer_operators: summary.returningBuyerOperators
   };
+
+  const unpriced = fundingGroups.filter(row => row.unpricedIndependentOpportunities > 0);
+  const maximumBuyers = new Set(buyerRows.filter(row => row.independentPurchaseOpportunities > 0).map(row => row.operatorId));
+  const maximumMerchants = new Set(merchantRows.filter(row => row.independentPurchaseOpportunities > 0).map(row => row.operatorId));
+  const maximumReturns = new Map(buyerRows.map(row => [row.operatorId, { count: row.independentPurchaseOpportunities, dates: new Set(row.completionDates) }]));
+  const maximumFacilitators = new Map(operationRows.map(row => [row.id, new Set(row.facilitatorOperatorIds)]));
+  for (const row of unpriced) {
+    maximumBuyers.add(row.buyerOperatorId); maximumMerchants.add(row.merchantOperatorId);
+    if (!maximumReturns.has(row.buyerOperatorId)) maximumReturns.set(row.buyerOperatorId, { count: 0, dates: new Set() });
+    const buyer = maximumReturns.get(row.buyerOperatorId); buyer.count++; buyer.dates.add(row.firstUsefulResultDate);
+    if (!maximumFacilitators.has(row.operationId)) maximumFacilitators.set(row.operationId, new Set());
+    if (row.facilitatorId && isExternal(facilitatorsById.get(row.facilitatorId))) maximumFacilitators.get(row.operationId).add(row.facilitatorOperatorId);
+  }
+  const unpricedAdditional = {
+    external_buyer_operators: maximumBuyers.size - summary.independentBuyerOperators,
+    completed_testnet_purchases: tranche === 2 ? unpriced.length : 0,
+    completed_mainnet_purchases: tranche === 3 ? unpriced.length : 0,
+    same_operation_facilitator_operators: Math.max(0, ...[...maximumFacilitators.values()].map(values => values.size)) - summary.sameOperationFacilitatorOperators,
+    external_mainnet_merchant_operators: tranche === 3 ? maximumMerchants.size - summary.independentMerchantOperators : 0,
+    repeat_external_buyer_operators: [...maximumReturns.values()].filter(row => row.count >= 2 && row.dates.size >= 2).length - summary.returningBuyerOperators
+  };
+  if (fundingGroups.length) {
+    summary.unpricedPaymentRequests = fundingGroups.reduce((total, row) => addCount(total, row.unpricedPaymentRequests), 0);
+    summary.unpricedIndependentOpportunities = unpriced.length;
+  }
+
   const targets = Object.entries(rule.target.target_counts).map(([key, expected]) => {
     const planned = Object.prototype.hasOwnProperty.call(availableTargets, key) ? availableTargets[key] : null;
-    const status = planned === null ? "OUTSIDE_SCHEDULE_SCOPE" : planned >= expected ? "PLANNED_CAPACITY" : "SHORTFALL";
+    const additional = unpricedAdditional[key] ?? 0;
+    const status = planned === null ? "OUTSIDE_SCHEDULE_SCOPE" : planned >= expected ? "PLANNED_CAPACITY" : planned + additional >= expected ? "PRICE_UNSPECIFIED" : "SHORTFALL";
     if (status === "SHORTFALL") finding("PLANNED_TARGET_SHORTFALL", key + " needs " + expected + "; the selected normal-use calendar provides " + planned + " planned opportunities.", "target", key);
-    return { key, expected, planned, gap: planned === null ? null : Math.max(0, expected - planned), status };
+    return { key, expected, planned, gap: planned === null || status === "PRICE_UNSPECIFIED" ? null : Math.max(0, expected - planned), status,
+      ...(additional ? { unpricedAdditional: additional } : {}) };
   });
   const purchaseKey = tranche === 2 ? "completed_testnet_purchases" : "completed_mainnet_purchases";
   const purchaseTarget = rule.target.target_counts[purchaseKey] ?? null;
@@ -828,7 +1122,16 @@ export function evaluateCohortPlan(raw, options = {}) {
       requiredOpportunities: required === null ? null : integer(required, "Required opportunities"),
       shortfall: purchaseTarget === null ? null : Math.max(0, purchaseTarget - potential) };
   });
-  const currencies = [...currencyMap.values()].map(finishMoney).sort((a, b) => a.currency.localeCompare(b.currency));
+  for (const amounts of currencyMap.values()) {
+    const fundingUnknown = amounts.unallocatedFundingIds?.size ?? 0, deliveryUnknown = amounts.unallocatedDeliveryIds?.size ?? 0;
+    amounts.records += fundingUnknown + deliveryUnknown;
+    amounts.unknown.revenue += fundingUnknown; amounts.unknown.paymentFees += fundingUnknown;
+    amounts.unknown.supplierCost += deliveryUnknown; amounts.unknown.activeHours += deliveryUnknown; amounts.unknown.laborCost += deliveryUnknown;
+  }
+  const currencies = [...currencyMap.values()].map(amounts => ({ ...finishMoney(amounts),
+    ...(amounts.unallocatedFundingIds?.size ? { unallocatedFundingIds: [...amounts.unallocatedFundingIds].sort() } : {}),
+    ...(amounts.unallocatedDeliveryIds?.size ? { unallocatedDeliveryIds: [...amounts.unallocatedDeliveryIds].sort() } : {})
+  })).sort((a, b) => a.currency.localeCompare(b.currency));
   const effortSensitivity = [];
   for (const currency of currencies) for (const increase of input.sensitivity.effortIncreasesPct) {
     const pct = decimal(increase, "effort increase"), factor = decimalAdd(ONE, { n: pct.n, s: pct.s + 2 });
@@ -842,13 +1145,13 @@ export function evaluateCohortPlan(raw, options = {}) {
       contribution: contribution === null ? null : decimalText(contribution) });
   }
   const capacity = planDeliveryCapacity(input, days, occurrences, finding);
-  const servicePricing = planServicePricing(input, occurrences, finding);
+  const servicePricing = planServicePricing(input, occurrences, finding, fundingGroups);
   const result = {
-    capacity, servicePricing,
+    capacity, servicePricing, fundingGroups,
     schema: COHORT_PLAN_REPORT_SCHEMA, kind: "PLAN", source: clone(input.source), rule: clone(rule), input, sourceComparison,
     window: { start: input.windowStart, end: windowEnd, calendarDays, requiredCalendarDays: calendarDays, tranche, expectedEnvironment, asOfAt: input.asOfAt, asOfDay },
     summary, days, occurrences, excluded, buyers: buyerRows, merchants: merchantRows, operations: operationRows, facilitators: facilitatorRows,
-    targets, currencies, assets: [...assetMap.values()].map(x => ({ ...x, atomicAmount: x.atomicAmount.toString() })),
+    targets, currencies, assets: [...assetMap.values()].map(x => ({ ...x, atomicAmount: x.unpricedPaymentRequests ? null : x.atomicAmount.toString(), ...(x.unpricedPaymentRequests ? { knownAtomicAmount: x.atomicAmount.toString() } : {}) })),
     passGroups: [...passGroups.values()].map(({ signature, ...row }) => ({ ...row, scheduleIds: [...row.scheduleIds].sort() })),
     workshares: input.workshares.map(x => workshareResult(x, input.sensitivity.effortIncreasesPct)),
     sensitivity: { completion: completionSensitivity, effort: effortSensitivity }, findings
@@ -869,10 +1172,12 @@ export function exportCohortPlanCsv(report) {
     output.push([type, ref, date, metric, value, currency, network, asset, detail]);
   add("PLAN", report.input.draftId, "", "name", report.input.name, JSON.stringify(report.source));
   add("PLAN", report.input.draftId, "", "sourceComparison", report.sourceComparison.status, JSON.stringify(report.sourceComparison.fields));
+  if (report.input.deliveryScheduling) add("SCHEDULING", report.input.draftId, "", "constraints", report.input.deliveryScheduling.strategy, JSON.stringify(report.input.deliveryScheduling));
   for (const [key, value] of Object.entries(report.summary)) add("SUMMARY", report.source.programId, "", key, value);
-  for (const row of report.targets) add("TARGET", row.key, "", "planned", row.planned, JSON.stringify({ expected: row.expected, gap: row.gap, status: row.status }));
+  for (const row of report.targets) add("TARGET", row.key, "", "planned", row.planned, JSON.stringify({ expected: row.expected, gap: row.gap, status: row.status, ...(row.unpricedAdditional ? { unpricedAdditional: row.unpricedAdditional } : {}) }));
   for (const row of report.days) for (const key of Object.keys(makeMetrics())) add("DAY", "", row.date, key, row[key], row.asOfPosition);
   for (const row of report.occurrences) {
+    if (row.sourceDate) add("DATE_ALLOCATION", row.id, row.date, "sourceDate", row.sourceDate, row.originalScheduledAt);
     for (const key of Object.keys(makeMetrics())) add("SCHEDULE_DATE", row.scheduleId, row.date, key, row[key], row.operationId);
     add("SCHEDULE_DATE", row.scheduleId, row.date, "plannedCompleteAt", row.plannedCompleteAt, row.qualificationGaps.join("; "));
     add("SCHEDULE_DATE", row.scheduleId, row.date, "atomicAmount", row.atomicAmount, row.paymentKind, "", row.network, row.asset);
@@ -891,6 +1196,12 @@ export function exportCohortPlanCsv(report) {
     add("CURRENCY", "", "", key, row[key], JSON.stringify(row.unknownRecordCounts), row.currency);
   for (const row of report.workshares) for (const item of row.cases)
     add("WORKSHARE", row.id, "", "contribution", item.contribution, JSON.stringify(item), row.currency);
+  for (const row of report.fundingGroups || []) {
+    for (const key of ["status", "plannedPaymentRequests", "plannedPaidPurchases", "unpricedPaymentRequests", "firstUsefulResultAt", "atomicAmount"])
+      add("EXPLICIT_FUNDING", row.id, row.date, key, row[key], JSON.stringify({ kind: row.kind, origin: row.origin, scheduleIds: row.scheduleIds, operationId: row.operationId, buyerId: row.buyerId }), "", row.network, row.asset);
+    if (row.economics) for (const key of ["revenue", "paymentFees"])
+      add("FUNDING_ECONOMICS", row.id, row.date, key, row.economics[key], "", row.economics.currency);
+  }
   for (const row of report.passGroups) for (const key of ["openingUnits", "consumedUnits", "plannedNewPasses", "remainingActiveUnits", "retainedUnusedPreviousUnits"])
     add("PREPAID", row.id, "", key, row[key], "", "", row.network, row.asset);
   for (const row of report.sensitivity.completion) add("COMPLETION_SENSITIVITY", row.completionSharePct, "", "potentialCompletedWholePurchases", row.potentialCompletedWholePurchases, JSON.stringify(row));
@@ -907,7 +1218,289 @@ export function exportCohortPlanCsv(report) {
     for (const row of report.capacity.sensitivity) add("CAPACITY_SENSITIVITY", row.poolId, "", "additionalHoursKnownMinimum", row.additionalHoursKnownMinimum, JSON.stringify(row));
   }
   for (const row of report.servicePricing || []) for (const key of ["chargeUnits", "totalCost", "revenue", "uncoveredCost", "breakEvenUnitRevenue", "targetUnitRevenue", "unitRevenueIncrease", "status"])
-    add("SERVICE_PRICING", row.id, "", key, row[key], JSON.stringify({ scheduleIds: row.scheduleIds, minimumMarginPct: row.minimumMarginPct, priceBasis: row.priceBasis, unknownRecordCounts: row.unknownRecordCounts }), row.currency || "");
+    add("SERVICE_PRICING", row.id, "", key, row[key], JSON.stringify({ scheduleIds: row.scheduleIds, minimumMarginPct: row.minimumMarginPct, priceBasis: row.priceBasis, unknownRecordCounts: row.unknownRecordCounts, ...(row.fundingGroupIds ? { fundingGroupIds: row.fundingGroupIds, currencies: row.currencies } : {}) }), row.currency || "");
   for (const row of report.findings) add("FINDING", row.id, "", row.code, row.severity, row.message);
   return output.map(row => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
+}
+
+
+/** Complete alternatives retain both source documents and use the same original-rule evaluator. */
+export const COHORT_PLAN_COMPARISON_SCHEMA = "stellar-forge.sf47-cohort-plan-comparison.v1";
+const COMPARISON_COLLECTIONS = ["buyers", "merchants", "facilitators", "operations", "schedules", "workshares", "capacityPools", "fundingGroups"];
+const COMPARISON_MONEY_FIELDS = ["revenue", "supplierCost", "paymentFees", "activeHours", "laborCost", "totalCost", "contribution", "marginPercent"];
+const COMPARISON_WORKSHARE_FIELDS = ["fee", "hours", "otherCosts", "laborCost", "totalCost", "contribution"];
+
+function comparisonPlan(document, label) {
+  object(document, label);
+  if (document.schema === COHORT_PLAN_SCHEMA) return document;
+  if (document.schema === COHORT_PLAN_REPORT_SCHEMA && document.kind === "PLAN") return document.input;
+  if (document.schema === "stellar-forge.sf47-cohort-plan-edition.v1") return document.plan;
+  fail("INVALID_COMPARISON_SOURCE", label + " must be a complete plan, planning report or saved edition.", label);
+}
+function comparisonNumber(before, after) {
+  return { before: before ?? null, after: after ?? null,
+    delta: before === null || before === undefined || after === null || after === undefined ? null : after - before };
+}
+function comparisonDecimal(before, after, comparable = true) {
+  return { before: before ?? null, after: after ?? null,
+    delta: !comparable || before === null || before === undefined || after === null || after === undefined ? null :
+      decimalText(decimalSubtract(computedDecimal(after, "Candidate amount", true), computedDecimal(before, "Baseline amount", true))) };
+}
+function comparisonFields(before, after) {
+  const left = before ?? {}, right = after ?? {};
+  return [...new Set([...Object.keys(left), ...Object.keys(right)])].sort().flatMap(key => {
+    const beforePresent = Object.prototype.hasOwnProperty.call(left, key), afterPresent = Object.prototype.hasOwnProperty.call(right, key);
+    return beforePresent === afterPresent && canonical(left[key]) === canonical(right[key]) ? [] :
+      [{ key, beforePresent, afterPresent, before: beforePresent ? clone(left[key]) : null, after: afterPresent ? clone(right[key]) : null }];
+  });
+}
+function comparisonRows(before, after, keyOf = row => row.id) {
+  const left = new Map(before.map((row, index) => [keyOf(row), { row, index }]));
+  const right = new Map(after.map((row, index) => [keyOf(row), { row, index }]));
+  return [...new Set([...left.keys(), ...right.keys()])].flatMap(id => {
+    const a = left.get(id), b = right.get(id);
+    const changes = comparisonFields(a?.row, b?.row);
+    const status = !a ? "ADDED" : !b ? "REMOVED" : changes.length ? "CHANGED" : a.index !== b.index ? "MOVED" : "UNCHANGED";
+    return status === "UNCHANGED" ? [] : [{ id, status, beforeIndex: a?.index ?? null, afterIndex: b?.index ?? null,
+      before: a ? clone(a.row) : null, after: b ? clone(b.row) : null, changes }];
+  });
+}
+function comparisonAmounts(before, after, keys) {
+  return Object.fromEntries(keys.map(key => [key, comparisonDecimal(before?.[key], after?.[key])]));
+}
+function comparisonWorkshareTotals(input) {
+  const totals = new Map();
+  for (const workshare of input.workshares) {
+    const calculated = workshareResult(workshare, ["0"]), base = calculated.cases[0];
+    const amounts = { fee: workshare.fee, hours: workshare.hours, otherCosts: workshare.otherCosts,
+      laborCost: base.laborCost, totalCost: base.totalCost, contribution: base.contribution };
+    if (!totals.has(workshare.currency)) totals.set(workshare.currency, { currency: workshare.currency, records: 0,
+      known: Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, ZERO])),
+      unknownRecordCounts: Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, 0])) });
+    const group = totals.get(workshare.currency); group.records++;
+    for (const key of COMPARISON_WORKSHARE_FIELDS) {
+      if (amounts[key] === null) group.unknownRecordCounts[key]++;
+      else group.known[key] = decimalAdd(group.known[key], computedDecimal(amounts[key], key, true));
+    }
+  }
+  return [...totals.values()].map(({ known, ...group }) => {
+    const knownSubtotals = Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, decimalText(known[key])]));
+    return { ...group, knownSubtotals, complete: !Object.values(group.unknownRecordCounts).some(Boolean),
+      ...Object.fromEntries(COMPARISON_WORKSHARE_FIELDS.map(key => [key, group.unknownRecordCounts[key] ? null : knownSubtotals[key]])) };
+  }).sort((a, b) => a.currency.localeCompare(b.currency));
+}
+function comparisonCurrencyRows(before, after, keys) {
+  const left = new Map(before.map(row => [row.currency, row])), right = new Map(after.map(row => [row.currency, row]));
+  return [...new Set([...left.keys(), ...right.keys()])].sort().map(currency => {
+    const a = left.get(currency) ?? null, b = right.get(currency) ?? null;
+    return { currency, before: a, after: b, amounts: comparisonAmounts(a, b, keys) };
+  });
+}
+
+const COMPARISON_CAPACITY_FIELDS = ["availableHours", "knownAvailableHours", "requiredHours", "knownRequiredHours", "headroomHours", "additionalHoursKnownMinimum"];
+const COMPARISON_PRICE_FIELDS = ["unitRevenue", "totalCost", "revenue", "uncoveredCost", "breakEvenUnitRevenue", "targetUnitRevenue", "unitRevenueIncrease"];
+function comparisonNamedAmounts(before, after, keys, keyOf = row => row.id, comparable = () => true) {
+  const left = new Map(before.map(row => [keyOf(row), row])), right = new Map(after.map(row => [keyOf(row), row]));
+  return [...new Set([...left.keys(), ...right.keys()])].map(id => {
+    const a = left.get(id) ?? null, b = right.get(id) ?? null;
+    return { id, before: a, after: b, amounts: Object.fromEntries(keys.map(key => [key, comparisonDecimal(a?.[key], b?.[key], comparable(a, b))])) };
+  });
+}
+function comparisonDelivery(before, after) {
+  const a = before.capacity, b = after.capacity, dayKey = row => canonical([row.poolId, row.date]), weekKey = row => canonical([row.poolId, row.weekStart]);
+  const leftDays = a.pools.flatMap(pool => pool.days), rightDays = b.pools.flatMap(pool => pool.days);
+  const leftWeeks = a.pools.flatMap(pool => pool.weeks), rightWeeks = b.pools.flatMap(pool => pool.weeks);
+  return {
+    status: { before: a.status, after: b.status },
+    pools: comparisonNamedAmounts(a.pools, b.pools, COMPARISON_CAPACITY_FIELDS),
+    days: comparisonNamedAmounts(leftDays, rightDays, ["availableHours", "requiredHours", "knownRequiredHours", "headroomHours", "additionalHoursKnownMinimum", "utilizationPercent"], dayKey),
+    weeks: comparisonNamedAmounts(leftWeeks, rightWeeks, COMPARISON_CAPACITY_FIELDS, weekKey),
+    dayChanges: comparisonRows(leftDays, rightDays, dayKey),
+    weekChanges: comparisonRows(leftWeeks, rightWeeks, weekKey),
+    unassigned: comparisonRows(a.unassigned, b.unassigned, row => canonical([row.scheduleId, row.date])),
+    sensitivity: comparisonRows(a.sensitivity, b.sensitivity, row => canonical([row.poolId, row.effortIncreasePct]))
+  };
+}
+function comparisonPrices(before, after) {
+  return comparisonNamedAmounts(before.servicePricing, after.servicePricing, COMPARISON_PRICE_FIELDS, row => row.id,
+    (a, b) => !!a?.currency && a.currency === b?.currency).map(row => ({
+      ...row, counts: Object.fromEntries(["chargeUnits", "scheduledTasks"].map(key => [key, comparisonNumber(row.before?.[key], row.after?.[key])])),
+      minimumMarginPct: comparisonDecimal(row.before?.minimumMarginPct, row.after?.minimumMarginPct)
+    }));
+}
+
+function comparisonReview(raw, before, after) {
+  const value = fields(object(raw, "comparison review"), ["title", "note", "origins"], "comparison review");
+  const origins = fields(object(value.origins ?? {}, "comparison origins"), ["before", "after"], "comparison origins");
+  const origin = (entry, label) => {
+    if (entry === null || entry === undefined) return null;
+    fields(object(entry, label), ["label", "caseId", "sourceId", "filename", "sha256", "bytes", "capturedAt"], label);
+    const result = {};
+    for (const key of ["label", "filename"]) if (entry[key] !== undefined) result[key] = textValue(entry[key], label + "." + key, false, 500);
+    for (const key of ["caseId", "sourceId"]) if (entry[key] !== undefined && entry[key] !== null) result[key] = id(entry[key], label + "." + key);
+    if (entry.sha256 !== undefined) {
+      if (typeof entry.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(entry.sha256)) fail("INVALID_COMPARISON_SOURCE", "Retain the original source SHA-256.", label + ".sha256");
+      result.sha256 = entry.sha256;
+    }
+    if (entry.bytes !== undefined) result.bytes = integer(entry.bytes, label + ".bytes");
+    if (entry.capturedAt !== undefined) result.capturedAt = stamp(entry.capturedAt, label + ".capturedAt");
+    return result;
+  };
+  return {
+    title: textValue(value.title ?? (after.input.name + " compared with " + before.input.name), "comparison title", true, 1100),
+    note: optionalText(value.note, "comparison note"),
+    origins: { before: origin(origins.before, "baseline origin"), after: origin(origins.after, "candidate origin") }
+  };
+}
+
+/**
+ * Compare complete alternatives without changing either input or selecting a winner.
+ * Deltas mean candidate minus baseline; unvalued amounts and absent currency/window
+ * groups have null deltas. Schedule costs and one-time workshares remain separate.
+ */
+export function compareCohortPlans(beforeDocument, afterDocument, options = {}) {
+  const before = evaluateCohortPlan(comparisonPlan(beforeDocument, "baseline"));
+  const after = evaluateCohortPlan(comparisonPlan(afterDocument, "candidate"));
+  const basis = [
+    ["programId", before.source.programId, after.source.programId],
+    ["planId", before.source.planId ?? null, after.source.planId ?? null],
+    ["sourceVersion", before.source.version, after.source.version],
+    ["planContentSha256", before.source.planContentSha256, after.source.planContentSha256],
+    ["tranche", before.window.tranche, after.window.tranche],
+    ["environment", before.window.expectedEnvironment, after.window.expectedEnvironment],
+    ["windowStart", before.window.start, after.window.start],
+    ["windowEnd", before.window.end, after.window.end],
+    ["calendarDays", before.window.calendarDays, after.window.calendarDays],
+    ["asOfAt", before.window.asOfAt, after.window.asOfAt],
+    ["rule", before.rule, after.rule]
+  ].map(([key, a, b]) => ({ key, before: clone(a), after: clone(b), match: canonical(a) === canonical(b) }));
+  const leftTargets = new Map(before.targets.map(row => [row.key, row])), rightTargets = new Map(after.targets.map(row => [row.key, row]));
+  const targets = [...new Set([...leftTargets.keys(), ...rightTargets.keys()])].map(key => {
+    const a = leftTargets.get(key) ?? null, b = rightTargets.get(key) ?? null;
+    return { key, before: a, after: b, expected: comparisonNumber(a?.expected, b?.expected),
+      planned: comparisonNumber(a?.planned, b?.planned), gap: comparisonNumber(a?.gap, b?.gap) };
+  });
+  const leftDays = new Map(before.days.map(row => [row.date, row])), rightDays = new Map(after.days.map(row => [row.date, row]));
+  const days = [...new Set([...leftDays.keys(), ...rightDays.keys()])].sort().map(date => {
+    const a = leftDays.get(date) ?? null, b = rightDays.get(date) ?? null;
+    return { date, before: a, after: b, metrics: Object.fromEntries(Object.keys(makeMetrics()).map(key => [key, comparisonNumber(a?.[key], b?.[key])])) };
+  });
+  const settings = input => Object.fromEntries(Object.entries(input).filter(([key]) => !COMPARISON_COLLECTIONS.includes(key)));
+  const inputChanges = {
+    settings: comparisonFields(settings(before.input), settings(after.input)),
+    collections: COMPARISON_COLLECTIONS.map(kind => ({ kind,
+      beforeOrder: before.input[kind].map(row => row.id), afterOrder: after.input[kind].map(row => row.id),
+      rows: comparisonRows(before.input[kind], after.input[kind]) }))
+  };
+  const currencies = comparisonCurrencyRows(before.currencies, after.currencies, COMPARISON_MONEY_FIELDS);
+  const workshareTotals = comparisonCurrencyRows(comparisonWorkshareTotals(before.input), comparisonWorkshareTotals(after.input), COMPARISON_WORKSHARE_FIELDS);
+  const assetKey = row => canonical([row.network, row.asset]), leftAssets = new Map(before.assets.map(row => [assetKey(row), row])), rightAssets = new Map(after.assets.map(row => [assetKey(row), row]));
+  const assets = [...new Set([...leftAssets.keys(), ...rightAssets.keys()])].map(key => {
+    const a = leftAssets.get(key) ?? null, b = rightAssets.get(key) ?? null, row = a || b;
+    return { network: row.network, asset: row.asset, before: a, after: b,
+      atomicAmount: comparisonDecimal(a?.atomicAmount, b?.atomicAmount),
+      plannedPaymentRequests: comparisonNumber(a?.plannedPaymentRequests, b?.plannedPaymentRequests),
+      plannedPaidPurchases: comparisonNumber(a?.plannedPaidPurchases, b?.plannedPaidPurchases) };
+  });
+  const reportGroups = ["buyers", "merchants", "operations", "facilitators"].map(kind => ({
+    kind, rows: comparisonRows(before[kind], after[kind], row => row.id || row.operatorId || canonical(row.buyerIds || row.merchantIds || row.serviceIds))
+  }));
+  const findingKey = row => canonical([row.code, row.scope, row.id, row.message]);
+  const leftFindings = new Set(before.findings.map(findingKey)), rightFindings = new Set(after.findings.map(findingKey));
+  return {
+    schema: COHORT_PLAN_COMPARISON_SCHEMA, kind: "PLAN_COMPARISON",
+    documents: { before: clone(beforeDocument), after: clone(afterDocument) }, before, after, basis,
+    review: comparisonReview(options, before, after),
+    summary: [...new Set([...Object.keys(before.summary), ...Object.keys(after.summary)])].map(key => ({ key, ...comparisonNumber(before.summary[key] ?? (key.startsWith("unpriced") ? 0 : undefined), after.summary[key] ?? (key.startsWith("unpriced") ? 0 : undefined)) })),
+    targets, currencies, workshareTotals, assets, days, inputChanges,
+    capacity: comparisonDelivery(before, after), servicePricing: comparisonPrices(before, after),
+    economicsCoverage: Object.fromEntries([["before", before], ["after", after]].map(([side, report]) => [side, {
+      occurrences: report.occurrences.length,
+      withEconomics: report.occurrences.filter(row => row.economics !== null).length,
+      withoutEconomics: report.occurrences.filter(row => row.economics === null).length,
+      schedulesWithoutEconomics: report.input.schedules.filter(row => row.economics === null).map(row => row.id)
+    }])),
+    occurrences: comparisonRows(before.occurrences, after.occurrences),
+    participants: reportGroups,
+    passGroups: comparisonRows(before.passGroups, after.passGroups),
+    fundingGroups: comparisonRows(before.fundingGroups, after.fundingGroups),
+    workshares: comparisonRows(before.workshares, after.workshares),
+    sensitivity: {
+      completion: comparisonRows(before.sensitivity.completion, after.sensitivity.completion, row => row.completionSharePct),
+      effort: comparisonRows(before.sensitivity.effort, after.sensitivity.effort, row => canonical([row.currency, row.effortIncreasePct]))
+    },
+    findings: {
+      added: after.findings.filter(row => !leftFindings.has(findingKey(row))),
+      removed: before.findings.filter(row => !rightFindings.has(findingKey(row)))
+    }
+  };
+}
+
+/** Recalculate carried sources before displaying or exporting an imported comparison. */
+export function reopenCohortPlanComparison(document) {
+  fields(object(document, "comparison"), ["schema", "kind", "documents", "before", "after", "basis", "review",
+    "summary", "targets", "currencies", "workshareTotals", "assets", "days", "inputChanges", "economicsCoverage",
+    "occurrences", "participants", "passGroups", "fundingGroups", "workshares", "sensitivity", "findings", "capacity", "servicePricing"], "comparison");
+  if (document.schema !== COHORT_PLAN_COMPARISON_SCHEMA || document.kind !== "PLAN_COMPARISON" || !document.documents)
+    fail("INVALID_PLAN_COMPARISON", "Open a complete cohort plan comparison with both original documents.", "comparison");
+  fields(object(document.documents, "comparison documents"), ["before", "after"], "comparison documents");
+  return compareCohortPlans(document.documents.before, document.documents.after, document.review ?? {});
+}
+
+/** Complete comparison rows; full editable source documents travel in comparison JSON. */
+export function exportCohortPlanComparisonCsv(comparison) {
+  const report = reopenCohortPlanComparison(comparison);
+  const rows = [["section", "identity", "field", "baseline", "candidate", "change", "units", "detail"]];
+  const cell = value => value && typeof value === "object" ? JSON.stringify(value) : value;
+  const add = (section, identity, field, value, units = "", detail = "") =>
+    rows.push([section, identity, field, cell(value.before), cell(value.after), value.delta ?? "", units, cell(detail)]);
+  add("REVIEW", "", "title", { before: null, after: report.review.title });
+  add("REVIEW", "", "note", { before: null, after: report.review.note });
+  add("REVIEW", "", "origins", report.review.origins);
+  for (const row of report.basis) add("BASIS", "", row.key, row, "", row.match ? "Same" : "Changed");
+  for (const row of report.summary) add("SUMMARY", "", row.key, row, "count");
+  for (const key of ["occurrences", "withEconomics", "withoutEconomics"]) add("ECONOMICS_COVERAGE", "", key, comparisonNumber(report.economicsCoverage.before[key], report.economicsCoverage.after[key]), "schedule-date rows");
+  for (const row of report.targets) for (const key of ["expected", "planned", "gap"])
+    add("TARGET", row.key, key, row[key], "count", { baselineStatus: row.before?.status ?? null, candidateStatus: row.after?.status ?? null });
+  for (const [section, groups] of [["SCHEDULE_ECONOMICS", report.currencies], ["ONE_TIME_WORKSHARES", report.workshareTotals]])
+    for (const group of groups) for (const [key, amounts] of Object.entries(group.amounts))
+      add(section, group.currency, key, amounts, key === "hours" || key === "activeHours" ? "hours" : key === "marginPercent" ? "percentage points" : group.currency,
+        { baselineUnknown: group.before?.unknownRecordCounts ?? null, candidateUnknown: group.after?.unknownRecordCounts ?? null });
+  for (const row of report.assets) for (const key of ["atomicAmount", "plannedPaymentRequests", "plannedPaidPurchases"])
+    add("ASSET", row.network + " / " + row.asset, key, row[key], key === "atomicAmount" ? "atomic units" : "count");
+  for (const day of report.days) for (const [key, values] of Object.entries(day.metrics))
+    add("DAY", day.date, key, values, "count", { baselineInWindow: !!day.before, candidateInWindow: !!day.after });
+
+  add("CAPACITY_STATUS", "", "status", report.capacity.status);
+  for (const [section, groups] of [["CAPACITY_POOL", report.capacity.pools], ["CAPACITY_DAY", report.capacity.days], ["CAPACITY_WEEK", report.capacity.weeks]])
+    for (const group of groups) for (const [key, values] of Object.entries(group.amounts))
+      add(section, group.id, key, values, key === "utilizationPercent" ? "percentage points" : "hours",
+        { baselineStatus: group.before?.status ?? null, candidateStatus: group.after?.status ?? null,
+          baselineUnknownEffort: group.before?.unknownEffortOccurrences ?? null, candidateUnknownEffort: group.after?.unknownEffortOccurrences ?? null });
+  for (const group of report.servicePricing) {
+    const detail = { baselineCurrency: group.before?.currency ?? null, candidateCurrency: group.after?.currency ?? null,
+      baselineStatus: group.before?.status ?? null, candidateStatus: group.after?.status ?? null,
+      baseline: group.before, candidate: group.after };
+    for (const [key, values] of Object.entries(group.amounts)) add("SERVICE_PRICING", group.id, key, values, group.before?.currency === group.after?.currency ? group.before?.currency || "" : "different currencies", detail);
+    for (const [key, values] of Object.entries(group.counts)) add("SERVICE_PRICING", group.id, key, values, "count", detail);
+    add("SERVICE_PRICING", group.id, "minimumMarginPct", group.minimumMarginPct, "percentage points", detail);
+  }
+
+  for (const row of report.inputChanges.settings) add("PLAN_INPUT", "", row.key, row, "", { beforePresent: row.beforePresent, afterPresent: row.afterPresent });
+  const changes = (section, values) => {
+    for (const row of values) {
+      add(section, row.id, "position", comparisonNumber(row.beforeIndex, row.afterIndex), "zero-based index", row.status);
+      for (const change of row.changes) add(section, row.id, change.key, change, "", row.status);
+    }
+  };
+  for (const group of report.inputChanges.collections) changes("INPUT_" + group.kind.toUpperCase(), group.rows);
+  changes("SCHEDULE_OCCURRENCE", report.occurrences);
+  for (const group of report.participants) changes("RESULT_" + group.kind.toUpperCase(), group.rows);
+  changes("PREPAID", report.passGroups); changes("EXPLICIT_FUNDING", report.fundingGroups); changes("WORKSHARE", report.workshares);
+  changes("CAPACITY_DAY_CHANGE", report.capacity.dayChanges); changes("CAPACITY_WEEK_CHANGE", report.capacity.weekChanges);
+  changes("CAPACITY_UNASSIGNED", report.capacity.unassigned); changes("CAPACITY_SENSITIVITY", report.capacity.sensitivity);
+  changes("COMPLETION_SENSITIVITY", report.sensitivity.completion); changes("EFFORT_SENSITIVITY", report.sensitivity.effort);
+  for (const [kind, findings] of Object.entries(report.findings)) for (const row of findings)
+    add("FINDING_" + kind.toUpperCase(), row.id ?? "", row.code, { before: kind === "removed" ? row.message : null, after: kind === "added" ? row.message : null }, "", row.scope);
+  return rows.map(row => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }

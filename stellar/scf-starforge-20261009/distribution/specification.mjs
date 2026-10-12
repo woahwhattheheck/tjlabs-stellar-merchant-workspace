@@ -11,8 +11,8 @@ export const contributionDirectory = 'stellar/scf-starforge-20261009/distributio
 export const contributionSchema = 'stellar-forge.merchant-distribution-contribution.v1';
 const ownRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const baseSchema = 'stellar-forge.merchant-distribution.v1';
-const fields = ["components","supportFiles","excludeFiles","commands","commandDescriptions","exports","nativePeers","featurePeers","runtimePackageManifests","browserAssets","applicationProviders","merchantProviders"];
-const lists = ['components', 'supportFiles', 'excludeFiles'];
+const fields = ["components","supportFiles","moduleTemplates","excludeFiles","commands","commandDescriptions","exports","nativePeers","featurePeers","runtimePackageManifests","browserAssets","applicationProviders","merchantProviders"];
+const lists = ['components', 'supportFiles', 'moduleTemplates', 'excludeFiles'];
 const maps = ["commands","commandDescriptions","exports","nativePeers","runtimePackageManifests","applicationProviders","merchantProviders"];
 const idPattern = /^[a-z][a-z0-9-]{0,63}$/;
 const packagePattern = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
@@ -77,7 +77,11 @@ function validateRegistrations(data, owner) {
   for (const field of lists) {
     if (data[field] === undefined) continue;
     if (!Array.isArray(data[field])) throw new TypeError(owner + ': ' + field + ' must be a source path array');
-    for (const value of data[field]) filePath(value, field);
+    for (const value of data[field]) {
+      filePath(value, field);
+      if (field === 'moduleTemplates' && !/\.(?:mjs|js)$/.test(value))
+        throw new TypeError(owner + ': a module template must name original JavaScript source');
+    }
   }
   for (const field of maps) {
     if (data[field] === undefined) continue;

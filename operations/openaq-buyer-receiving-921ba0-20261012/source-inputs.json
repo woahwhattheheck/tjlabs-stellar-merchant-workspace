@@ -6,7 +6,7 @@
   "parentSellerCommit": "3c9063c0872e835c25cb1e95c00ab27bd30326a2",
   "productPullRequest": 593,
   "originalSellerPullRequest": 517,
-  "sourceAcquisition": "original configured git fetch --no-tags --depth=1, exact HEAD and clean tracked source",
+  "sourceAcquisition": "Exact selected 808-file source stream plus 19 original runtime assets, all Git blob/SHA256 verified; compressed base source and retained assets reopen under the original operation lock. The original base capsule is preserved; its single native-signer import correction is bound to exact before/after Git and SHA256 identities.",
   "dependencyProfile": {
     "package": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
     "lockfile": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package-lock.json",
@@ -32,15 +32,58 @@
     },
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/receive.py",
-      "gitBlob": "705d187e497b671063f324867bb6015443878f93",
-      "bytes": 14052,
-      "sha256": "22fedb78f5b7568dbf9f39ca62f2067d3f1dd91463feb5a75fac8d6196906004"
+      "gitBlob": "fd563bb73db58eac2f6870fe5e5a7ff5bb3f0717",
+      "bytes": 27941,
+      "sha256": "84c5a6076449e43fd465937d5142cf69873c97ab925a5674e239d5e54fd4b5f0"
     }
   ],
   "nativeContinuation": {
     "previousJourneySha256": "43bc5e869bbc5f5e3cfe9506512b0f8b36915cecac974012dad67eabed6013ba",
     "reason": "The original host denied Unix broker sockets and did not allocate a controlling terminal with its tty stream. The receiver explicitly selects the original supported terminal channel, retains the Node Popen/process group and its actual controlling PTY, and supplies no approval response.",
     "mutableJournalDirectory": "/dev/shm/921ba0-openaq-buyer-native-20261012/native",
-    "reproducibleSourceDirectory": "/dev/921ba0-openaq-runtime-20261012/source"
+    "reproducibleSourceDirectory": "/dev/921ba0-openaq-runtime-20261012/source",
+    "sourceRecovery": "The original operation lock remains held during source intake and is inherited by each original child; exact complete files are reopened and the source selection marker is always checked. The canonical compressed capsule restores invocation-private source without moving or replacing native session journals."
+  },
+  "sourceStream": {
+    "manifest": "source-manifest.json",
+    "manifestGitBlob": "4f0754e3ee0e46e6e112817e777da1765d210370",
+    "manifestBytes": 183390,
+    "manifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c",
+    "stream": "source-stream.jsonl",
+    "streamGitBlob": "0cba11e99778b0601c5e5e443a4db28d043565fd",
+    "streamBytes": 11069796,
+    "streamSha256": "1a69bcbea0bd3d9dce53cc692e5513c40ac429fbc0ea1316477c562d7de309e3",
+    "files": 808,
+    "sourceBytes": 10510654,
+    "canonicalCapsule": "/dev/shm/921ba0-openaq-buyer-native-20261012/source-capsule.gz",
+    "mode": "python3 receive.py --source-stdin < source-stream.jsonl"
+  },
+  "runtimeAssets": {
+    "path": "source-assets.json",
+    "gitBlob": "96a79df978ba07fc4298f6be8dd5a34903d1bbb5",
+    "bytes": 263175,
+    "sha256": "6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc",
+    "files": 19,
+    "sourceBytes": 253313,
+    "completeSourceFiles": 827,
+    "baseManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c"
+  },
+  "sourceRepair": {
+    "schema": "stellar-forge.openaq-buyer-source-repair.v1",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+    "reason": "Import the original native signing diagnostic validator from its actual diagnostics module; preserve the original signer adapter and all request/payment behavior.",
+    "before": {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs",
+      "gitBlob": "053825b1862f3a5b3fc42aaa248f6b8aa6401254",
+      "bytes": 13420,
+      "sha256": "66d744c89f3e23157ba895f228729d6b294893260202cfdfe830cb7a8215461c"
+    },
+    "after": {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs",
+      "gitBlob": "c12720ce4f432e24f4972523021d71fa9d85e2ce",
+      "bytes": 13483,
+      "sha256": "b30f43740c9d0a7f99439ac8e6876aea6284d15efad71cf5168bed9d8c705cc0"
+    }
   }
 }

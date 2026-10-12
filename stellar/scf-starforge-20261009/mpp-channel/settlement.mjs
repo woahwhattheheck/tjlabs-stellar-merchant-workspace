@@ -1,12 +1,17 @@
 import { dependencyRootFor } from './runtime.mjs';
 import { assertOperating } from './receiving.mjs';
-// MIT. Close the retained native channel commitment with one persisted signed Stellar transaction.
+// MIT. Collect or close the retained native commitment with one persisted signed Stellar transaction.
 import { requireValue as need, hash, stable, now, id } from '../mpp-charge/storage.mjs';
-import { merchantConfig, profileKey, streamKey, amount, publicURL } from './config.mjs';
-import { groups, serialChannel } from './state.mjs';
+import { merchantConfig, profileKey, streamKey } from './config.mjs';
+import { groups, serialChannel, rememberObservation } from './state.mjs';
 import { loadChannelNative, observeChannel, nativeStore, merchantCumulativeKey, settlingKey, closedKey,
-  networkPassphrase, channelRpc } from './runtime.mjs';
+  outstandingAtomic } from './runtime.mjs';
 import { terminalConsent } from './authority.mjs';
+import { prepareChannelCall, transactionFinality, broadcastRetained,
+  acquireFinancialMarker, clearFinancialMarker } from './transaction.mjs';
+const actionOf=row=>row.action ?? 'close';
+const terminal=new Set(['SETTLED','COLLECTED','FAILED','EXPIRED']);
+const owner=row=>({kind:'merchant',id:row.id});
 async function highest(workspace,config,store) {
   const cumulative=await store.get(merchantCumulativeKey(config.channel));
   need(cumulative?.merchantDeliveryId && BigInt(cumulative.amount)>0n, 'MPP_CHANNEL_ACCEPTED_COMMITMENT_REQUIRED',409);
@@ -17,13 +22,13 @@ async function highest(workspace,config,store) {
     'MPP_CHANNEL_ORIGINAL_COMMITMENT_REQUIRED');
   return delivery;
 }
-export async function prepareClose({workspace,profile,settlementId}) {
+async function prepareMerchantTransaction({workspace,profile,settlementId},action) {
   id(settlementId); const config=merchantConfig(profile);
   need(config.settlement, 'MPP_CHANNEL_SETTLEMENT_ACCOUNT_REQUIRED');
   return serialChannel(workspace,config.channel,async()=>{
     await assertOperating(workspace,config.channel);
     const previous=await workspace.read(groups.settlements,settlementId);
-    need(!previous || previous.streamKey===streamKey(config.channel), 'MPP_CHANNEL_CLOSE_ID_ALREADY_USED',409);
+    need(!previous || previous.streamKey===streamKey(config.channel) && actionOf(previous)===action, 'MPP_CHANNEL_CLOSE_ID_ALREADY_USED',409);
     if(previous?.signedXdr) return closeView(previous);
     need(!previous || ['DRAFT','CANCELLED'].includes(previous.phase), 'MPP_CHANNEL_RESUME_ORIGINAL_CLOSE',409);
     const native=await loadChannelNative(await dependencyRootFor(workspace,config)), store=nativeStore(workspace,config.channel);
@@ -32,57 +37,31 @@ export async function prepareClose({workspace,profile,settlementId}) {
     const other=await store.get(settlingKey(config.channel));
     need(!other || other.settlementId===settlementId, 'MPP_CHANNEL_RESUME_ORIGINAL_CLOSE',409);
     const delivery=await highest(workspace,config,store), observation=await observeChannel(native,config.channel);
-    const row={schema:'stellar-forge.mpp-channel-close.v1',id:settlementId,phase:'DRAFT',
+    if(action==='settle') need(BigInt(outstandingAtomic(observation,delivery.amountAtomic))>0n,
+      'MPP_CHANNEL_NO_UNCOLLECTED_COMMITMENT',409);
+    const row={schema:action==='close'?'stellar-forge.mpp-channel-close.v1':'stellar-forge.mpp-channel-collection.v1',
+      id:settlementId,action,phase:'DRAFT',
       streamKey:streamKey(config.channel),config,profileId:profileKey(config),deliveryId:delivery.id,
       cumulativeAtomic:delivery.amountAtomic,signature:delivery.signature,credentialSha256:hash(delivery.credentialHeader),
-      observation,createdAt:previous?.createdAt ?? now(),updatedAt:now(),
+      observation,expectedCollectionAtomic:outstandingAtomic(observation,delivery.amountAtomic),createdAt:previous?.createdAt ?? now(),updatedAt:now(),
       unsignedHistory:[...(previous?.unsignedHistory ?? []),...(previous?[{phase:previous.phase,
         cumulativeAtomic:previous.cumulativeAtomic,profileId:previous.profileId,updatedAt:previous.updatedAt}]:[])]};
     await workspace.put('profiles',row.profileId,config);
     await workspace.put(groups.settlements,settlementId,row); return closeView(row);
   });
 }
-function assertClose(native,transaction,row,{signed=false}={}) {
-  const sdk=native.sdk, config=row.config, terms=config.channel, account=config.settlement.account;
-  need(transaction instanceof sdk.Transaction && transaction.source===account &&
-    transaction.operations.length===1 && transaction.operations[0].type==='invokeHostFunction' &&
-    (!transaction.operations[0].source || transaction.operations[0].source===account) &&
-    BigInt(transaction.fee)<=BigInt(config.settlement.maximumFeeStroops) &&
-    transaction.memo.type==='none', 'MPP_CHANNEL_CLOSE_TRANSACTION_CHANGED');
-  const operation=transaction.toEnvelope().v1().tx().operations()[0].body().invokeHostFunctionOp();
-  const host=operation.hostFunction();
-  need(host.switch().value===sdk.xdr.HostFunctionType.hostFunctionTypeInvokeContract().value,
-    'MPP_CHANNEL_CLOSE_INVOKE_REQUIRED');
-  const call=host.invokeContract(), args=call.args();
-  need(sdk.Address.fromScAddress(call.contractAddress()).toString()===terms.address &&
-    call.functionName().toString()==='close' && args.length===2 &&
-    BigInt(sdk.scValToNative(args[0])).toString()===row.cumulativeAtomic &&
-    Buffer.from(args[1].bytes()).toString('hex')===row.signature,
-    'MPP_CHANNEL_CLOSE_COMMITMENT_CHANGED');
-  for(const authorization of operation.auth()) {
-    need(authorization.credentials().switch().value===
-      sdk.xdr.SorobanCredentialsType.sorobanCredentialsSourceAccount().value &&
-      authorization.rootInvocation().subInvocations().length===0,
-      'MPP_CHANNEL_CLOSE_UNEXPECTED_AUTHORIZATION');
-    const fn=authorization.rootInvocation().function().contractFn();
-    need(Buffer.from(fn.toXDR()).equals(Buffer.from(call.toXDR())), 'MPP_CHANNEL_CLOSE_AUTHORIZATION_CHANGED');
-  }
-  need(transaction.timeBounds && BigInt(transaction.timeBounds.minTime)===0n &&
-    BigInt(transaction.timeBounds.maxTime)>0n, 'MPP_CHANNEL_CLOSE_TIMEBOUND_REQUIRED');
-  if(signed) {
-    need(transaction.signatures.length===1 && sdk.Keypair.fromPublicKey(account).verify(
-      transaction.hash(),transaction.signatures[0].signature()), 'MPP_CHANNEL_ORIGINAL_CLOSE_SIGNATURE_REQUIRED');
-  } else need(transaction.signatures.length===0, 'MPP_CHANNEL_UNSIGNED_CLOSE_REQUIRED');
+function specification(native,row) {
+  const config=merchantConfig(row.config);
+  need(config.settlement && profileKey(config)===row.profileId,'MPP_CHANNEL_ORIGINAL_CLOSE_PROFILE_CHANGED');
+  need(['close','settle'].includes(actionOf(row)),'MPP_CHANNEL_SETTLEMENT_ACTION_CHANGED');
+  return {channel:config.channel,account:config.settlement.account,method:actionOf(row),
+    maximumFeeStroops:config.settlement.maximumFeeStroops,
+    args:[native.sdk.nativeToScVal(BigInt(row.cumulativeAtomic),{type:'i128'}),
+      native.sdk.nativeToScVal(Buffer.from(row.signature,'hex'),{type:'bytes'})]};
 }
 async function updateClose(workspace,row,change) {
   const next={...row,...change,updatedAt:now()};
   await workspace.put(groups.settlements,row.id,next); return next;
-}
-async function clearMarker(store,terms,settlementId) {
-  await store.update(settlingKey(terms),current=>{
-    need(!current || current.settlementId===settlementId, 'MPP_CHANNEL_CLOSE_OWNER_CHANGED');
-    return current?{op:'delete',result:undefined}:{op:'noop',result:undefined};
-  });
 }
 async function finishTerminal(workspace,row,store) {
   if(row.phase==='SETTLED') {
@@ -96,77 +75,41 @@ async function finishTerminal(workspace,row,store) {
         amount:row.cumulativeAtomic,settlementId:row.id},result:undefined};
     });
   }
-  if(['SETTLED','FAILED','EXPIRED'].includes(row.phase)) {
-    await store.update(settlingKey(row.config.channel),current=>
-      current?.settlementId===row.id?{op:'delete',result:undefined}:{op:'noop',result:undefined});
+  if(terminal.has(row.phase)) {
+    if(row.settlementObservation)await rememberObservation(workspace,row.config.channel,row.settlementObservation,
+      {settlementId:row.id,transaction:row.transaction,action:actionOf(row)});
+    await clearFinancialMarker(store,row.config.channel,owner(row));
     if(!row.finalizedAt) row=await updateClose(workspace,row,{finalizedAt:now()});
   }
   return row;
 }
-function rpcInteger(value) {
-  if(typeof value==='number' && Number.isSafeInteger(value) && value>=0) return BigInt(value);
-  if(typeof value==='string' && /^(0|[1-9][0-9]*)$/.test(value)) return BigInt(value);
-  return null;
-}
-const encodedXdr=value=>typeof value==='string'?value:value?.toXDR('base64') ?? null;
-async function reconcile(workspace,row,native,store,rpcUrl=row.config.channel.rpcUrl) {
-  need(row.signedXdr && /^[a-f0-9]{64}$/.test(row.transaction), 'MPP_CHANNEL_SIGNED_CLOSE_REQUIRED');
-  if(['SETTLED','FAILED','EXPIRED'].includes(row.phase)) return finishTerminal(workspace,row,store);
-  const selectedRpc=publicURL(rpcUrl).href;
-  const rpc=await channelRpc(native,row.config.channel,selectedRpc);
-  const result=await rpc.getTransaction(row.transaction);
-  const returned={
-    status:result.status,network:row.config.channel.network,observedAt:now(),ledger:result.ledger ?? null,createdAt:result.createdAt ?? null,
-    latestLedger:result.latestLedger ?? null,oldestLedger:result.oldestLedger ?? null,
-    latestLedgerCloseTime:result.latestLedgerCloseTime ?? null,
-    oldestLedgerCloseTime:result.oldestLedgerCloseTime ?? null,rpcUrl:selectedRpc,
-    envelopeXdr:encodedXdr(result.envelopeXdr),resultXdr:encodedXdr(result.resultXdr),
-    resultMetaXdr:encodedXdr(result.resultMetaXdr)
-  };
-  need(!result.txHash || result.txHash===row.transaction, 'MPP_CHANNEL_FINALITY_IDENTITY_CHANGED');
-  if(['SUCCESS','FAILED'].includes(result.status)) {
-    const transaction=native.sdk.TransactionBuilder.fromXDR(returned.envelopeXdr,
-      networkPassphrase(native,row.config.channel.network));
-    assertClose(native,transaction,row,{signed:true});
-    need(transaction.hash().toString('hex')===row.transaction, 'MPP_CHANNEL_CLOSE_FINALITY_TRANSACTION_CHANGED');
-  }
-  if(result.status==='SUCCESS') {
+async function reconcile(workspace,row,native,store,rpcUrl) {
+  const spec=specification(native,row);
+  if(terminal.has(row.phase))return finishTerminal(workspace,row,store);
+  const result=await transactionFinality(native,row,spec,rpcUrl);
+  if(result.phase==='SUCCESS') {
     const observation=await observeChannel(native,row.config.channel);
-    need(observation.closeEffectiveAtLedger!==null &&
-      BigInt(observation.withdrawnAtomic)>=BigInt(row.cumulativeAtomic), 'MPP_CHANNEL_CLOSE_STATE_NOT_RECEIVED',409);
-    row=await updateClose(workspace,row,{phase:'SETTLED',finality:returned,settlementObservation:observation,
-      settledAt:now(),receipt:{model:'channel-close',network:row.config.channel.network,
-        transaction:row.transaction,cumulativeAtomic:row.cumulativeAtomic,
+    need((actionOf(row)==='settle' || observation.closeEffectiveAtLedger!==null) &&
+      BigInt(observation.withdrawnAtomic)>=BigInt(row.cumulativeAtomic),
+      'MPP_CHANNEL_SETTLEMENT_STATE_NOT_RECEIVED',409);
+    row=await updateClose(workspace,row,{phase:actionOf(row)==='settle'?'COLLECTED':'SETTLED',
+      finality:result.finality,settlementObservation:observation,settledAt:now(),
+      receipt:{model:actionOf(row)==='settle'?'channel-collection':'channel-close',
+        network:row.config.channel.network,transaction:row.transaction,cumulativeAtomic:row.cumulativeAtomic,
         recipient:row.config.channel.recipient,token:row.config.channel.token}});
-  } else if(result.status==='FAILED') {
-    row=await updateClose(workspace,row,{phase:'FAILED',finality:returned});
-  } else {
-    need(result.status==='NOT_FOUND', 'MPP_CHANNEL_RPC_STATUS_UNSUPPORTED');
-    const latest=rpcInteger(result.latestLedger),oldest=rpcInteger(result.oldestLedger);
-    const closedAt=rpcInteger(result.latestLedgerCloseTime);
-    const beforeSigning=rpcInteger(row.observation?.instanceLedger);
-    const envelope=native.sdk.TransactionBuilder.fromXDR(row.signedXdr,
-      networkPassphrase(native,row.config.channel.network));
-    const expires=BigInt(envelope.timeBounds.maxTime);
-    const ledgerExpired=closedAt!==null && closedAt>expires;
-    const completeWindow=oldest!==null && latest!==null && beforeSigning!==null &&
-      oldest<=beforeSigning && latest>beforeSigning;
-    row=await updateClose(workspace,row,{phase:ledgerExpired?(completeWindow?'EXPIRED':'HISTORY_REQUIRED'):'PENDING',
-      finality:returned,...(ledgerExpired?{expiry:{maximumTime:expires.toString(),
-        signedAfterLedger:row.observation?.instanceLedger ?? null,completeWindow,observedAt:now()}}:{})});
-  }
+  } else row=await updateClose(workspace,row,result);
   return finishTerminal(workspace,row,store);
 }
-export async function executeClose({workspace,settlementId,environment=process.env}) {
+async function executeMerchantTransaction({workspace,settlementId,environment=process.env},action) {
   const original=await workspace.read(groups.settlements,id(settlementId));
-  need(original, 'MPP_CHANNEL_CLOSE_NOT_FOUND',404);
+  need(original && actionOf(original)===action, 'MPP_CHANNEL_SETTLEMENT_NOT_FOUND',404);
   return serialChannel(workspace,original.config.channel,async()=>{
     let row=await workspace.read(groups.settlements,settlementId);
     await assertOperating(workspace,row.config.channel);
     const config=merchantConfig(row.config);
     need(profileKey(config)===row.profileId, 'MPP_CHANNEL_ORIGINAL_CLOSE_PROFILE_CHANGED');
     const native=await loadChannelNative(await dependencyRootFor(workspace,config)), store=nativeStore(workspace,config.channel);
-    if(['SETTLED','FAILED','EXPIRED'].includes(row.phase)) return closeView(await finishTerminal(workspace,row,store));
+    if(terminal.has(row.phase)) return closeView(await finishTerminal(workspace,row,store));
     need(row.phase!=='CANCELLED', 'MPP_CHANNEL_CLOSE_CANCELLED',409);
     if(!row.signedXdr) {
       const delivery=await highest(workspace,config,store);
@@ -176,61 +119,43 @@ export async function executeClose({workspace,settlementId,environment=process.e
       if(row.phase==='DRAFT') {
         const pending=(await workspace.list(groups.deliveries)).filter(item=>
           item.streamKey===row.streamKey && item.state!=='COMPLETE').map(item=>({id:item.id,state:item.state}));
-        const review={schema:'stellar-forge.mpp-channel-close-authority.v1',settlementId,
+        const observation=await observeChannel(native,config.channel);
+        const expectedCollectionAtomic=outstandingAtomic(observation,row.cumulativeAtomic);
+        if(action==='settle')need(BigInt(expectedCollectionAtomic)>0n,'MPP_CHANNEL_NO_UNCOLLECTED_COMMITMENT',409);
+        const review={schema:'stellar-forge.mpp-channel-close-authority.v1',settlementId,action,observation,expectedCollectionAtomic,
           profileId:row.profileId,operator:config.settlement.operator,channel:config.channel,
           deliveryId:row.deliveryId,cumulativeAtomic:row.cumulativeAtomic,credentialSha256:row.credentialSha256,
           feeAccount:config.settlement.account,maximumFeeStroops:config.settlement.maximumFeeStroops,
           pendingDeliveries:pending};
-        const authority=await terminalConsent('Close the selected channel commitment',review,
-          'CLOSE '+settlementId+' '+row.cumulativeAtomic);
+        const authority=await terminalConsent(action==='settle'?'Collect the earned channel commitment':'Close the selected channel commitment',
+          review,(action==='settle'?'COLLECT':'CLOSE')+' '+settlementId+' '+row.cumulativeAtomic);
         row=await updateClose(workspace,row,{phase:'AUTHORIZED',authority:{...authority,review}});
       }
       need(row.authority?.reviewSha256===hash(stable(row.authority.review)) &&
-        row.authority.review.profileId===row.profileId && row.authority.review.cumulativeAtomic===row.cumulativeAtomic,
+        row.authority.review.profileId===row.profileId && row.authority.review.cumulativeAtomic===row.cumulativeAtomic &&
+        (row.authority.review.action ?? 'close')===action,
         'MPP_CHANNEL_ORIGINAL_CLOSE_AUTHORITY_REQUIRED');
-      await store.update(settlingKey(config.channel),current=>{
-        need(!current || current.settlementId===row.id, 'MPP_CHANNEL_RESUME_ORIGINAL_CLOSE',409);
-        return {op:'set',value:{settlementId:row.id,settlingAmount:row.cumulativeAtomic,
-          authoritySha256:row.authority.reviewSha256,settledAt:now()},result:undefined};
-      });
+      await acquireFinancialMarker(store,config.channel,owner(row),{settlingAmount:row.cumulativeAtomic,
+        action,authoritySha256:row.authority.reviewSha256});
       const observation=await observeChannel(native,config.channel);
-      const remaining=BigInt(row.cumulativeAtomic)-BigInt(observation.withdrawnAtomic);
-      need(remaining<=BigInt(observation.balanceAtomic), 'MPP_CHANNEL_CLOSE_BALANCE_CHANGED',409);
+      const remaining=BigInt(outstandingAtomic(observation,row.cumulativeAtomic));
+      need(remaining<=BigInt(observation.balanceAtomic),'MPP_CHANNEL_CLOSE_BALANCE_CHANGED',409);
+      if(action==='settle')need(remaining>0n,'MPP_CHANNEL_NO_UNCOLLECTED_COMMITMENT',409);
       const key=native.sdk.Keypair.fromSecret(environment[config.settlement.keyEnv] ?? '');
-      need(key.publicKey()===config.settlement.account, 'MPP_CHANNEL_RECIPIENT_SIGNER_MISMATCH');
-      const rpc=await channelRpc(native,config.channel), account=await rpc.getAccount(key.publicKey());
-      const operation=new native.sdk.Contract(config.channel.address).call('close',
-        native.sdk.nativeToScVal(BigInt(row.cumulativeAtomic),{type:'i128'}),
-        native.sdk.nativeToScVal(Buffer.from(row.signature,'hex'),{type:'bytes'}));
-      const unsigned=new native.sdk.TransactionBuilder(account,{fee:'100',
-        networkPassphrase:networkPassphrase(native,config.channel.network)})
-        .addOperation(operation).setTimeout(180).build();
-      const prepared=await rpc.prepareTransaction(unsigned);
-      assertClose(native,prepared,row);
-      need(prepared.sequence===unsigned.sequence && stable(prepared.timeBounds)===stable(unsigned.timeBounds),
-        'MPP_CHANNEL_CLOSE_ENVELOPE_CHANGED');
-      prepared.sign(key); assertClose(native,prepared,row,{signed:true});
+      const prepared=await prepareChannelCall(native,specification(native,row),key);
       row=await updateClose(workspace,row,{phase:'SIGNED',signedXdr:prepared.toXDR(),
         transaction:prepared.hash().toString('hex'),feeStroops:prepared.fee,
-        expiresAt:new Date(Number(prepared.timeBounds.maxTime)*1000).toISOString(),observation});
+        expiresAt:new Date(Number(prepared.timeBounds.maxTime)*1000).toISOString(),observation,
+        expectedCollectionAtomic:remaining.toString()});
     }
-    const transaction=native.sdk.TransactionBuilder.fromXDR(row.signedXdr,networkPassphrase(native,config.channel.network));
-    assertClose(native,transaction,row,{signed:true});
-    need(transaction.hash().toString('hex')===row.transaction, 'MPP_CHANNEL_RETAINED_CLOSE_CHANGED');
-    const rpc=await channelRpc(native,config.channel), before=await rpc.getTransaction(row.transaction);
-    if(['SUCCESS','FAILED'].includes(before.status)) return closeView(await reconcile(workspace,row,native,store));
-    if(Date.parse(row.expiresAt)<=Date.now()) return closeView(await reconcile(workspace,row,native,store));
-    row=await updateClose(workspace,row,{phase:'SUBMITTING',submissionAttempts:(row.submissionAttempts ?? 0)+1});
-    const submitted=await rpc.sendTransaction(transaction);
-    need(!submitted.hash || submitted.hash===row.transaction, 'MPP_CHANNEL_SUBMISSION_IDENTITY_CHANGED');
-    row=await updateClose(workspace,row,{phase:'PENDING',submission:{status:submitted.status,
-      hash:submitted.hash ?? row.transaction,errorResultXdr:submitted.errorResult?.toXDR('base64') ?? null,observedAt:now()}});
+    row=await broadcastRetained(native,row,specification(native,row),
+      (current,change)=>updateClose(workspace,current,change));
     return closeView(await reconcile(workspace,row,native,store));
   });
 }
-export async function reconcileClose({workspace,settlementId,rpcUrl}) {
+async function reconcileMerchantTransaction({workspace,settlementId,rpcUrl},action) {
   const original=await workspace.read(groups.settlements,id(settlementId));
-  need(original, 'MPP_CHANNEL_CLOSE_NOT_FOUND',404);
+  need(original && actionOf(original)===action, 'MPP_CHANNEL_SETTLEMENT_NOT_FOUND',404);
   return serialChannel(workspace,original.config.channel,async()=>{
     const row=await workspace.read(groups.settlements,settlementId);
     await assertOperating(workspace,row.config.channel);
@@ -238,18 +163,27 @@ export async function reconcileClose({workspace,settlementId,rpcUrl}) {
     return closeView(await reconcile(workspace,row,native,store,rpcUrl));
   });
 }
-export async function cancelUnsignedClose({workspace,settlementId}) {
+async function cancelUnsignedMerchantTransaction({workspace,settlementId},action) {
   const row=await workspace.read(groups.settlements,id(settlementId));
-  need(row, 'MPP_CHANNEL_CLOSE_NOT_FOUND',404);
+  need(row && actionOf(row)===action, 'MPP_CHANNEL_SETTLEMENT_NOT_FOUND',404);
   return serialChannel(workspace,row.config.channel,async()=>{
     const current=await workspace.read(groups.settlements,settlementId);
     await assertOperating(workspace,current.config.channel);
     need(!current.signedXdr && ['DRAFT','AUTHORIZED','CANCELLED'].includes(current.phase),
       'MPP_CHANNEL_SIGNED_CLOSE_REQUIRES_RECONCILIATION',409);
-    await clearMarker(nativeStore(workspace,row.config.channel),row.config.channel,row.id);
+    await clearFinancialMarker(nativeStore(workspace,row.config.channel),row.config.channel,owner(row));
     return closeView(await updateClose(workspace,current,{phase:'CANCELLED'}));
   });
 }
 export function closeView(row) {
-  const {signedXdr,signature,...rest}=row; return rest;
+  const {signedXdr,signature,...rest}=row; return {...rest,action:actionOf(row)};
 }
+
+export const prepareClose=input=>prepareMerchantTransaction(input,'close');
+export const executeClose=input=>executeMerchantTransaction(input,'close');
+export const reconcileClose=input=>reconcileMerchantTransaction(input,'close');
+export const cancelUnsignedClose=input=>cancelUnsignedMerchantTransaction(input,'close');
+export const prepareCollection=input=>prepareMerchantTransaction(input,'settle');
+export const executeCollection=input=>executeMerchantTransaction(input,'settle');
+export const reconcileCollection=input=>reconcileMerchantTransaction(input,'settle');
+export const cancelUnsignedCollection=input=>cancelUnsignedMerchantTransaction(input,'settle');

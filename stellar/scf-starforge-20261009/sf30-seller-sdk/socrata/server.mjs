@@ -105,7 +105,7 @@ export async function openSocrataOperator({directory, workspace: suppliedWorkspa
     }),
     readExport: (exportId, filename) => run(() => base.readExport(exportId, filename)),
     readPublisherExport: (kind, id) => run(async () => {
-      if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review', 'facilitator-review'].includes(kind))
+      if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review', 'facilitator-review', 'facilitator-response'].includes(kind))
         throw Object.assign(new TypeError('Choose an original publisher export kind.'), {code: 'INVALID_DOWNLOAD'});
       return (await getPublisher()).readExport(kind, id);
     }),

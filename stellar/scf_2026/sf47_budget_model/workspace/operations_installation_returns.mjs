@@ -38,7 +38,7 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
   for(const [key,value] of Object.entries({mode:'receiver',receiver:null,owner:null,selectedReview:null,
     pending:null,accepted:null,rejected:[],stage:null,notice:'',inflight:null}))if(!Object.hasOwn(session,key))session[key]=value;
   let active=true,busy=false,hostBusy=false,generation=0,caseValue=current,reviewList=[],cases=[],savedRow=null,returnedRow=null,
-    draftPreview=null,previewInput=null,installationPreview=null,installationInput=null,error='',storageNotice='';
+    draftPreview=null,previewInput=null,installationPreview=null,installationInput=null,stageSeed=null,error='',storageNotice='';
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
   const currentDraft=()=>session.mode==='receiver'?session.receiver:session.mode==='owner'?session.owner:null;
   const writable=()=>caseValue.program.state==='OPEN';
@@ -69,8 +69,9 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
       const action=el.dataset.returnAction;
       let disabled=el.dataset.returnFixed==='true'||hostBusy||busy||!!session.inflight;
       if(el.matches('[data-return-field],[data-return-save-note]'))disabled=locked||!writable();
-      if(['new-receiver','load-return','preview','save','stage-preview','stage-save'].includes(action))disabled=disabled||!!session.pending||!!session.accepted||!writable();
+      if(['new-receiver','load-return','load-retained-return','regenerate-stage','preview','save','stage-preview','stage-save'].includes(action))disabled=disabled||!!session.pending||!!session.accepted||!writable();
       if(action==='save')disabled=disabled||!draftPreview||!same(previewInput,currentDraft()?.inputs);
+      if(action==='stage-preview')disabled=disabled||stageSeed?.savedInstallations?.length>0||stageSeed?.application?.canSave===false;
       if(action==='stage-save')disabled=disabled||!installationPreview||!same(installationInput,session.stage?.document);
       el.disabled=disabled;
     }
@@ -124,8 +125,11 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
       '<div class="ir-fields"><label><span>Imported receiving case</span><select data-return-owner-case>'+cases.map(x=>'<option value="'+x.id+'"'+((session.returnCase||draft?.inputs.returnedCaseId)===x.id?' selected':'')+'>'+esc(x.name)+' · version '+x.version+'</option>').join('')+'</select></label>'+
       '<label><span>Returned report</span><select data-return-owner-report>'+(session.returnOptions||[]).map(x=>'<option value="'+x.id+'"'+(draft?.inputs.reviewId===x.id?' selected':'')+'>'+esc(x.name)+' · '+esc(x.actor)+'</option>').join('')+'</select></label></div>'+
       '<div class="ir-actions">'+button('Read returned reports','list-return')+button('Open selected return','load-return','',!(session.returnOptions||[]).length)+'</div></section>';
+    const retained=reviewList.filter(row=>row.purpose==='INSTALLATION_RETURN_REVIEW');
+    html+='<section class="ir-card"><h3>Continue a review retained in this case</h3><p>A complete owner case includes its original returned files, report and source mappings. Select that saved review to compare the current Installation and prepare a new set of explicit decisions.</p><label><span>Retained owner review</span><select data-return-retained-review>'+retained.map(row=>'<option value="'+row.id+'">'+esc(row.name)+' · case version '+row.version+'</option>').join('')+'</select></label>'+button('Reopen retained owner review','load-retained-return','',!retained.length)+'</section>';
     if(!draft)return html+'<p>The owner will see changed definitions and keep or apply each original observation explicitly.</p>';
     const native=draft.returned.installationReturn;
+    if(draft.inputs.retainedReview)html+='<aside class="ir-notice"><strong>Original retained return</strong><p>Reopened from review <code>'+esc(draft.inputs.retainedReview.id)+'</code>. Every proposed decision starts with Keep current owner observation. Select Apply only after reviewing this current comparison.</p><details><summary>Earlier owner decisions</summary><pre>'+pretty(draft.previousChoices||[])+'</pre></details></aside>';
     html+='<form data-return-form class="ir-card"><h3>'+esc(native.inputs.name)+'</h3><p>From '+esc(draft.returned.actor)+' · original edition '+native.baseline.revision+' · owner edition '+draft.inputs.expectedRevision+'</p>'+
       '<p>'+esc(native.inputs.environment)+'</p><p>'+esc(native.inputs.note)+'</p><div class="ir-fields">'+
       field('Owner review name','name',draft.inputs.name,{required:true})+
@@ -164,7 +168,13 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     if(!receiving){
       html+='<section class="ir-card"><h3>Confirm the next Installation edition</h3><p>The owner review and full source files are saved. Preview the complete proposed document with the original Installation model, then confirm its next edition.</p>'+
         '<label><span>Reason for the new Installation edition</span><textarea data-return-installation-note rows="3">'+esc(session.stage?.note||'')+'</textarea></label>'+
-        '<div class="ir-actions">'+button('Preview next Installation edition','stage-preview')+button('Save next Installation edition','stage-save')+button('Open Customer installations','installations')+'</div>';
+        '<div class="ir-actions">'+button('Compare staged and current case','stage-compare')+button('Regenerate owner review','regenerate-stage')+button('Preview next Installation edition','stage-preview')+button('Save next Installation edition','stage-save')+button('Open Customer installations','installations')+'</div>';
+      if(stageSeed){
+        const state=stageSeed.application,changes=[...state.selectedBasisChanges,...state.installationChanges,...state.documentChanges];
+        if(stageSeed.savedInstallations.length)html+='<aside class="ir-notice"><strong>This original owner review is saved in an Installation edition.</strong><p>'+stageSeed.savedInstallations.map(item=>'Edition '+item.revision+' · '+esc(item.sha256)).join('<br>')+'</p></aside>';
+        else html+='<aside class="'+(state.canSave?'ir-notice':'ir-warning')+'" data-return-stage-state="'+(state.canSave?'current':'changed')+'"><strong>'+(state.canSave?'The staged selection matches the current case.':'The staged selection and current case differ.')+'</strong><p>Staged Installation edition '+state.stagedInstallation.revision+'; current edition '+(state.currentInstallation?.revision??'unavailable')+'. Current case version '+state.source.version+'.</p>'+(state.unavailable?'<p>'+esc(state.unavailable)+'</p>':'')+(!state.canSave?'<p>Regenerate the owner review to compare this current selection. The earlier report and files remain available; changed criteria need fresh receiving before their observations can be applied.</p>':'')+'</aside>';
+        if(changes.length)html+='<h4>Staged and current differences</h4>'+table(['Selection','Staged value','Current value'],changes.map(item=>[esc(item.field),'<pre>'+pretty(item.before)+'</pre>','<pre>'+pretty(item.after)+'</pre>']));
+      }
       if(installationPreview)html+='<h4>Original Installation preview</h4><p>Current edition '+installationPreview.expectedRevision+' → '+(installationPreview.expectedRevision+1)+'</p><pre>'+pretty({changes:installationPreview.changes,report:installationPreview.report})+'</pre>';
       html+='</section>';
     }
@@ -228,9 +238,10 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     const result=accepted.result;
     if(accepted.body.action==='installation.save'){
       const [row,next]=await Promise.all([api(prefix+'/installations/'+result.recordId+'?revision='+result.revision),api(prefix)]);
-      if(row.sha256!==result.sha256||!same(row.preview.document,accepted.body.data.document))throw new Error('The saved Installation differs from the original confirmed input.');
+      if(row.sha256!==result.sha256||!same(row.preview.document,accepted.body.data.document)||!same(row.preview.returnReview,accepted.body.data.returnReview))throw new Error('The saved Installation differs from the original confirmed input.');
       if(!available())return;
       session.accepted=null;installationPreview=null;installationInput=null;
+      if(session.stage?.reviewId===row.preview.returnReview?.id)session.stage.savedInstallation={id:row.id,revision:row.revision,sha256:row.sha256,version:row.version};
       session.notice='Saved Installation edition '+row.revision+' with the selected original receiving observations and full files.';persist();
       await onCase?.(next,result);return;
     }
@@ -240,7 +251,7 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     savedRow=row;session.selectedReview=row.id;session.mode='saved';caseValue=next;
     if(row.purpose==='INSTALLATION_RETURN_REVIEW'){
       const value=row.installationReturnReview;
-      session.stage={reviewId:row.id,document:copy(value.document),installationId:value.currentInstallation.id,
+      session.stage={reviewId:row.id,returnReview:{id:row.id,sha256:row.sha256},document:copy(value.document),installationId:value.currentInstallation.id,
         expectedRevision:value.currentInstallation.revision,note:''};
     }
     session.accepted=null;draftPreview=null;previewInput=null;
@@ -285,17 +296,46 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     savedRow=row;session.selectedReview=id;session.mode='saved';
     if(row.purpose==='INSTALLATION_RETURN_REVIEW'){
       const value=row.installationReturnReview;
-      if(session.stage?.reviewId!==id)session.stage={reviewId:id,document:copy(value.document),
+      if(session.stage?.reviewId!==id)session.stage={reviewId:id,returnReview:{id:row.id,sha256:row.sha256},document:copy(value.document),
         installationId:value.currentInstallation.id,expectedRevision:value.currentInstallation.revision,note:''};
+      else session.stage.returnReview={id:row.id,sha256:row.sha256};
     }
-    installationPreview=null;installationInput=null;persist();
+    installationPreview=null;installationInput=null;stageSeed=null;persist();
+    if(row.purpose==='INSTALLATION_RETURN_REVIEW')await compareStage();
+  }
+  async function selectedRetainedSeed(id){
+    const epoch=generation,row=await api(prefix+'/reviews/'+id),next=await api(prefix);
+    if(row.purpose!=='INSTALLATION_RETURN_REVIEW')throw new Error('Select an original owner receiving review in this same case.');
+    const selected={id:row.id,sha256:row.sha256},seed=await api(prefix+'/installation-return-review-seed',{expectedVersion:next.program.version,retainedReview:selected});
+    if(!guard(epoch))return null;
+    if(seed.retainedReview.id!==selected.id||seed.retainedReview.sha256!==selected.sha256)throw new Error('The retained source selection changed.');
+    caseValue=next;return{row,seed};
+  }
+  async function compareStage(){
+    if(!savedRow||savedRow.purpose!=='INSTALLATION_RETURN_REVIEW')throw new Error('Open the saved owner review first.');
+    const id=savedRow.id,selected=await selectedRetainedSeed(id);
+    if(!selected||savedRow?.id!==id)return;
+    stageSeed=selected.seed;installationPreview=null;installationInput=null;
+  }
+  async function regenerateStage(id=savedRow?.id){
+    if(session.pending||session.accepted)throw new Error('Finish the retained request before opening a new review draft.');
+    if(!id)throw new Error('Select the original retained owner review.');
+    const selected=await selectedRetainedSeed(id);if(!selected)return;
+    if(session.owner){session.previousDrafts??=[];session.previousDrafts.push(copy(session.owner));}
+    session.owner={inputs:copy(selected.seed.inputs),returned:copy(selected.seed.returned),previousChoices:copy(selected.seed.previousChoices),note:''};
+    session.mode='owner';draftPreview=null;previewInput=null;installationPreview=null;installationInput=null;
+    session.notice='Reopened the complete original return from this case. Compare and explicitly select current owner decisions before staging a new edition.';persist();
   }
   async function previewInstallation(){
     if(!session.stage)throw new Error('Open the original staged owner review.');
     const note=$('[data-return-installation-note]')?.value;if(note!==undefined)session.stage.note=note;
     const original=copy(session.stage),epoch=generation,next=await api(prefix);
+    const seed=await api(prefix+'/installation-return-review-seed',{expectedVersion:next.program.version,retainedReview:original.returnReview});
+    if(!guard(epoch)||session.stage.reviewId!==original.reviewId)return;
+    stageSeed=seed;caseValue=next;
+    if(!seed.application.canSave)throw new Error('The staged selection and current case differ. Review the comparison and regenerate the owner review.');
     const value=await api(prefix+'/installation-preview',{expectedVersion:next.program.version,
-      installationId:original.installationId,expectedRevision:original.expectedRevision,document:original.document});
+      installationId:original.installationId,expectedRevision:original.expectedRevision,document:original.document,returnReview:original.returnReview});
     if(!guard(epoch)||session.stage.reviewId!==original.reviewId)return;
     caseValue=next;installationPreview=value;installationInput=copy(original.document);persist();
   }
@@ -305,7 +345,7 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
     if(!session.stage.note.trim())throw new Error('Enter the reason for this next Installation edition.');
     const original=copy(session.stage),body={expectedVersion:installationPreview.source.version,actor:recordingActor(),note:original.note,
       action:'installation.save',data:{installationId:original.installationId,expectedRevision:original.expectedRevision,
-        document:original.document,expectedPreviewSha256:installationPreview.previewSha256}};
+        document:original.document,returnReview:original.returnReview,expectedPreviewSha256:installationPreview.previewSha256}};
     body.requestId=await mutationId('operations:installation.save:'+caseId,body);
     if(!available())return;
     session.pending={caseId,body};persist(true);await sendPending();
@@ -331,8 +371,14 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
              input.observations.some((x,i)=>x.id!==draft.checks[i].id))throw new Error('Retain every original check in its saved order.');
           draft.baselineName=row.preview.document.name;
         }else{
-          const input=draft.inputs,row=await api('/api/operations/'+input.returnedCaseId+'/reviews/'+input.reviewId);
-          if(row.purpose!=='INSTALLATION_RETURN'||row.sha256!==input.reviewSha256)throw new Error('The draft selected a different complete receiving report.');
+          const input=draft.inputs;
+          let row;
+          if(input.retainedReview){
+            const selected=await selectedRetainedSeed(input.retainedReview.id);if(!selected)return;
+            if(selected.seed.retainedReview.sha256!==input.retainedReview.sha256)throw new Error('The draft selected a different retained owner review.');
+            row=selected.seed.returned;draft.previousChoices=copy(selected.seed.previousChoices);
+          }else row=await api('/api/operations/'+input.returnedCaseId+'/reviews/'+input.reviewId);
+          if(row.purpose!=='INSTALLATION_RETURN'||row.id!==input.reviewId||row.sha256!==input.reviewSha256)throw new Error('The draft selected a different complete receiving report.');
           draft.returned=row;session.returnCase=input.returnedCaseId;
         }
         if(!guard(epoch))return;
@@ -356,6 +402,9 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
       if(action==='installations')return onInstallations?.();
       if(action==='list-return')return listReturned();
       if(action==='load-return')return loadReturned();
+      if(action==='load-retained-return')return regenerateStage($('[data-return-retained-review]')?.value);
+      if(action==='regenerate-stage')return regenerateStage();
+      if(action==='stage-compare')return compareStage();
       if(action==='preview')return previewDraft();
       if(action==='save')return prepareSave();
       if(action==='resume')return sendPending();
