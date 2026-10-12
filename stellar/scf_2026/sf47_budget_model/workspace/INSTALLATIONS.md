@@ -8,6 +8,14 @@ Each save appends an immutable edition. A later source observation or installati
 
 Each saved installation may carry `document.coordination`: its delivery assignee, target date, priority and note, plus per-check overrides and prerequisites. This metadata travels with the complete installation document through the existing preview/save and receiving workflow. [Installation delivery queue](DELIVERY_QUEUE.md) explains the fields, current-edition work view, typed client, CLI, MCP and complete dated handover.
 
+## Allocate installation phases in Portfolio
+
+Open **Delivery and cash operations → Portfolio**, choose the original saved Forecast and select **Use installation phases**. Select the exact saved Installation edition for its matching commercial task. The original phase owners, dependencies, quoted effort, delivery terms and support terms remain visible with their source.
+
+Enter explicit remaining phase work and resource availability, then review the delivery boundary. The boundary phases and their ancestors determine the commercial work dates; later support still consumes the same shared resources. Recorded check acceptance and remaining effort stay separate. Preview the complete allocation and cash, save the reviewed Portfolio, and use **Open dated cash forecast draft** to open the original Forecast draft.
+
+The [Portfolio guide](PORTFOLIO.md#allocate-saved-installation-phases) covers the full operator workflow. The original Portfolio seed API, CLI and SDK accept optional exact edition selections and a complete existing draft. Saved phase allocations retain their source editions and travel with the full original case export, so a receiving operator can reopen both the installation history and its allocation.
+
 ## Operate the complete workflow
 
 1. Open the existing **Grant planning and delivery** application and select its retained operating case. Use the existing Merchant support, Native buyer receiving and Sources controls to receive original files and records. The native source owner keeps the original workorder and commercial terms.

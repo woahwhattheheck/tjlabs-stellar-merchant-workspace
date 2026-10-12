@@ -20,6 +20,7 @@ from model import canonical, csv_bytes, digest, text, short_id, Problem
 import operations_domain as domain
 import forecast as forecasts
 import portfolio_schedule as allocation
+import portfolio_installations as installation_plans
 
 SCHEMA = "stellar-forge.sf47-portfolio.v1"
 ENGINE_VERSION = 1
@@ -28,7 +29,8 @@ MAX_ALTERNATIVES = 23
 MAX_RESOURCES = 100
 MAX_DAYS = forecasts.MAX_DAYS
 ZERO = Decimal(0)
-FIELDS = {"calendar", "resources", "tasks"}
+BASE_FIELDS = {"calendar", "resources", "tasks"}
+FIELDS = BASE_FIELDS | {installation_plans.FIELD}
 
 
 def fail(message, code="INVALID_PORTFOLIO", status=422):
@@ -205,13 +207,32 @@ def normalize_tasks(raw, sources, resources):
     return result
 
 
-def normalize_fields(raw, saved, sources, base=None):
+def normalize_fields(raw, saved, sources, base=None, context=None):
     merged = deepcopy(base or {})
     merged.update({k: deepcopy(v) for k, v in raw.items() if k in FIELDS})
     calendar = normalize_calendar(merged.get("calendar"), saved)
     resources = normalize_resources(merged.get("resources"))
     tasks = normalize_tasks(merged.get("tasks"), sources, resources)
-    return {"calendar": calendar, "resources": resources, "tasks": tasks}
+    result = {"calendar": calendar, "resources": resources, "tasks": tasks}
+    if installation_plans.FIELD in merged:
+        result[installation_plans.FIELD] = installation_plans.normalize(
+            context, sources, resources, merged[installation_plans.FIELD])
+    return result
+
+
+def allocation_fields(raw, base=None):
+    base = base or {}
+    result = {key: raw.get(key, base.get(key)) for key in BASE_FIELDS}
+    if installation_plans.FIELD in raw or installation_plans.FIELD in base:
+        result[installation_plans.FIELD] = raw.get(installation_plans.FIELD, base.get(installation_plans.FIELD, []))
+    return result
+
+
+def effort_size(fields):
+    groups = fields.get(installation_plans.FIELD, [])
+    bound = {row["taskId"] for row in groups}
+    return (sum(max(1, len(row["effortHours"])) for row in fields["tasks"] if row["id"] not in bound)
+            + sum(max(1, len(phase["effortHours"])) for row in groups for phase in row["phases"]))
 
 
 def normalize(context, saved, raw):
@@ -223,29 +244,29 @@ def normalize(context, saved, raw):
     sources = source_tasks(saved)
     if not sources:
         fail("This forecast has no retained work packages or selected commercial work.")
-    fields = normalize_fields(raw, saved, sources)
+    fields = normalize_fields(raw, saved, sources, context=context)
     alternatives = []
     for item in array(raw.get("alternatives", []), "Alternatives", MAX_ALTERNATIVES):
         item = obj(item, {"id", "name", "note", *FIELDS}, "Alternative")
         ident = short_id(item.get("id"), "Alternative ID")
         if ident == "base":
             fail("The base alternative ID is reserved for the entered base allocation.")
-        authored = normalize_fields(item, saved, sources, fields)
+        authored = normalize_fields(item, saved, sources, fields, context=context)
         alternatives.append({"id": ident, "name": text(item.get("name"), "Alternative name", 300, True),
             "note": text(item.get("note", ""), "Alternative basis", 12000, True),
             **{key: authored[key] for key in FIELDS if key in item}})
     unique(alternatives, "id", "Alternatives")
-    all_fields = [fields] + [{key: row.get(key, fields[key]) for key in FIELDS} for row in alternatives]
+    all_fields = [fields] + [allocation_fields(row, fields) for row in alternatives]
     if sum(row["calendar"]["horizonDays"] * len(row["resources"]) for row in all_fields) > 300000:
         fail("The complete comparison exceeds 300,000 resource dates. Shorten its horizon or reduce the alternatives.")
-    if sum(row["calendar"]["horizonDays"] * sum(max(1, len(task["effortHours"])) for task in row["tasks"]) for row in all_fields) > 3000000:
+    if sum(row["calendar"]["horizonDays"] * effort_size(row) for row in all_fields) > 3000000:
         fail("The complete comparison exceeds 3,000,000 task-resource dates. Shorten its horizon or reduce the alternatives.")
     return {"schema": SCHEMA, "name": text(raw.get("name"), "Portfolio name", 300, True),
             "forecastId": saved["id"], "forecastSha256": saved["sha256"], **fields,
             "alternatives": alternatives, "note": text(raw.get("note", ""), "Portfolio basis", 12000)}
 
 
-def seed(context, saved):
+def seed(context, saved, installation_selections=None, draft_inputs=None, include_inventory=False):
     saved = check_source(context, saved)
     sources = source_tasks(saved)
     people = saved["snapshot"]["plan"]["planning"]["contributors"]
@@ -270,9 +291,18 @@ def seed(context, saved):
         "calendar": {"startDate": saved["report"]["firstForecastDate"], "horizonDays": min(730, MAX_DAYS),
                      "weekdays": [0, 1, 2, 3, 4, 5, 6], "holidays": [], "extraWorkingDates": []},
         "resources": resources, "tasks": tasks, "alternatives": [], "note": ""}
-    return {"inputs": inputs, "baseForecast": base_reference(saved), "sourceTasks": sources,
+    if draft_inputs is not None:
+        inputs = normalize(context, saved, draft_inputs)
+    if installation_selections is not None:
+        inputs = installation_plans.seed(context, saved, sources, inputs, installation_selections)
+    result = {"inputs": inputs, "baseForecast": base_reference(saved), "sourceTasks": sources,
         "originalCapacity": deepcopy(saved["report"]["capacity"]),
         "originalAssignments": deepcopy(assignments)}
+    if include_inventory:
+        result["installationCandidates"] = installation_plans.candidates(context, sources, current=True)
+    if installation_plans.has_plans_field(inputs):
+        result["installationSource"] = installation_plans.source_identity(context, inputs)
+    return result
 
 
 def finding(code, field, message):
@@ -415,6 +445,7 @@ def date_inputs(saved, chosen, name, event_deadlines=()):
 def calculate(context, saved, sources, fields, ident, name, note):
     index = {row["id"]: row for row in sources}
     findings = []
+    bound = {row["taskId"] for row in fields.get(installation_plans.FIELD, [])}
     for resource in fields["resources"]:
         if any(x is None for x in resource["hoursByWeekday"]):
             findings.append(finding("CAPACITY_REQUIRED", "resources." + resource["id"],
@@ -429,6 +460,8 @@ def calculate(context, saved, sources, fields, ident, name, note):
             elif retained_release and task["releaseDate"] and task["releaseDate"] < retained_release:
                 findings.append(finding("ORIGINAL_EVENT_RELEASE", "tasks." + task["id"] + ".releaseDate",
                     "Work cannot be released before the retained original reviewed trigger on " + retained_release + "."))
+        if task["id"] in bound:
+            continue
         values = task["effortHours"]
         if any(value is None for value in values.values()):
             findings.append(finding("EFFORT_REQUIRED", "tasks." + task["id"], "Enter every selected resource's remaining effort."))
@@ -438,8 +471,11 @@ def calculate(context, saved, sources, fields, ident, name, note):
             if total != expected:
                 findings.append(finding("EFFORT_TOTAL_REQUIRED", "tasks." + task["id"],
                     "Assign exactly " + forecasts.hours(expected) + " original remaining hours; currently assigned " + forecasts.hours(total) + "."))
+    findings.extend(installation_plans.allocation_findings(context, sources, fields))
     common = {"id": ident, "name": name, "note": note, "findings": findings, "summary": None,
               "schedule": None, "chosenDates": [], "forecast": None}
+    if installation_plans.FIELD in fields:
+        common[installation_plans.FIELD] = installation_plans.report_groups(context, sources, fields)
     if findings:
         return {**common, "status": "INCOMPLETE"}
     calendar = fields["calendar"]
@@ -484,7 +520,8 @@ def calculate(context, saved, sources, fields, ident, name, note):
                     "deliveryBusinessDays": duration, "contractDueDate": deadline, "selectedDueDate": task["due_date"],
                     "startCondition": terms["startCondition"]})
             common["eventDeadlines"] = deadlines
-        schedule = allocation.plan_programme(pure)
+        expanded = installation_plans.expand(context, sources, fields, pure)
+        schedule = allocation.plan_programme(expanded)
     except allocation.PlanningError as exc:
         return {**common, "status": "INCOMPLETE", "findings": [finding(exc.code, exc.field, str(exc))]}
     # Staffing rates do not replace the original forecast's complete quoted costs.
@@ -501,18 +538,39 @@ def calculate(context, saved, sources, fields, ident, name, note):
         "scheduledTasks": schedule["summary"]["scheduled_tasks"], "tasks": schedule["summary"]["tasks"],
         "totalHours": schedule["summary"]["effort_hours"], "lateTasks": schedule["summary"]["deadline_exceptions"],
         "maxLatenessDays": max((r["late_calendar_days"] or 0 for r in schedule["tasks"]), default=0)}
+    if installation_plans.FIELD in fields:
+        common[installation_plans.FIELD] = installation_plans.report_groups(context, sources, fields, schedule)
+        native = {row["id"]: row for row in schedule["tasks"]}
+        group_rows = {row["taskId"]: row for row in common[installation_plans.FIELD]}
+        # Compare original source tasks across aggregate and phase alternatives.
+        # Every detailed phase exception remains available in the native schedule.
+        late_sources = 0
+        for source in sources:
+            if source["id"] in group_rows:
+                group = group_rows[source["id"]]
+                late = any((native[phase["scheduleTaskId"]]["late_calendar_days"] or 0) > 0 for phase in group["phases"])
+            else:
+                late = (native[source["id"]]["late_calendar_days"] or 0) > 0
+            late_sources += int(late)
+        brief["lateTasks"] = late_sources
+        brief["phaseLateTasks"] = sum((row["late_calendar_days"] or 0) > 0 for row in schedule["tasks"]
+                                      if row["id"].startswith("installation-phase/"))
+        brief["sourceTasks"] = len(sources)
     if not schedule["summary"]["all_tasks_scheduled"]:
         unresolved = [r["id"] for r in schedule["tasks"] if r["finish_date"] is None]
         return {**common, "status": "HORIZON_EXCEEDED", "schedule": schedule, "summary": brief,
                 "findings": [finding("UNSCHEDULED_WORK", ",".join(unresolved), "Increase entered capacity or extend the calendar to allocate all remaining work.")]}
-    chosen = []
-    for row in schedule["tasks"]:
-        source = index[row["id"]]
-        start = row["first_work_date"] or row["ready_date"]
-        end = row["finish_date"]
-        chosen.append({"taskId": row["id"], "sourceKind": source["sourceKind"], "sourceId": source["sourceId"],
-            "oldStartDate": source["startDate"], "oldEndDate": source["endDate"], "startDate": start, "endDate": end,
-            "startShiftDays": date_delta(start, source["startDate"]), "endShiftDays": date_delta(end, source["endDate"])})
+    if bound:
+        chosen = installation_plans.chosen_dates(context, sources, fields, schedule)
+    else:
+        chosen = []
+        for row in schedule["tasks"]:
+            source = index[row["id"]]
+            start = row["first_work_date"] or row["ready_date"]
+            end = row["finish_date"]
+            chosen.append({"taskId": row["id"], "sourceKind": source["sourceKind"], "sourceId": source["sourceId"],
+                "oldStartDate": source["startDate"], "oldEndDate": source["endDate"], "startDate": start, "endDate": end,
+                "startShiftDays": date_delta(start, source["startDate"]), "endShiftDays": date_delta(end, source["endDate"])})
     chosen_index = {r["taskId"]: r for r in chosen}
     for quote in saved["report"]["commercial"]:
         if not quote["selected"]:
@@ -543,10 +601,10 @@ def calculate(context, saved, sources, fields, ident, name, note):
 
 def build(context, saved, inputs):
     sources = source_tasks(saved)
-    base = {key: inputs[key] for key in FIELDS}
+    base = allocation_fields(inputs)
     alternatives = [calculate(context, saved, sources, base, "base", "Base allocation", inputs["note"])]
     for row in inputs["alternatives"]:
-        fields = {key: row.get(key, base[key]) for key in FIELDS}
+        fields = allocation_fields(row, base)
         alternatives.append(calculate(context, saved, sources, fields, row["id"], row["name"], row["note"]))
     original_end = max((row["endDate"] for row in sources if row["endDate"] is not None), default=saved["inputs"]["asOfDate"])
     baseline = {"name": saved["inputs"]["name"], "finishDate": original_end,
@@ -593,6 +651,10 @@ def build(context, saved, inputs):
     result = {"sourceTasks": sources, "baseline": baseline, "alternatives": alternatives, "comparison": comparison,
         "comparisonBasis": "Entered alternatives compared by finish date, late-task count and original cash funding need.",
         "paymentTimingBasis": "Quoted receipts, grant receipts, invoice dates, amounts and original installment schedules retain their entered dates. Original completion and accrual expense rules use the selected work window."}
+    if installation_plans.has_plans_field(inputs):
+        result["installationCandidates"] = installation_plans.candidates(context, sources, inputs)
+        result["paymentTimingBasis"] += (" Explicitly selected Installation delivery boundaries set commercial work windows; "
+            "all retained later support still consumes native resource capacity. Original full quoted costs remain in the commercial forecast.")
     if currency_mode:
         result["comparisonBasis"] = (
             "Operationally ready alternatives keep their delivery dates. The financial frontier compares only alternatives with complete selected scope and dated cash valuation. "
@@ -610,6 +672,8 @@ def preview(context, saved, raw):
     inputs = normalize(context, saved, raw)
     value = {"schema": SCHEMA, "engineVersion": ENGINE_VERSION, "source": forecasts.source_identity(context),
              "baseForecast": base_reference(saved), "inputs": inputs, "report": build(context, saved, inputs)}
+    if installation_plans.has_plans_field(inputs):
+        value["installationSource"] = installation_plans.source_identity(context, inputs)
     value["previewSha256"] = digest(value)
     return value
 
@@ -629,7 +693,8 @@ def validate_saved(value, pinned_plan=None):
                             or context["plan"]["source"]["sha256"] != pinned_plan["source"]["sha256"]):
             fail("The portfolio belongs to another pinned plan.", "PORTFOLIO_SOURCE_CONFLICT", 409)
         rebuilt = preview(context, saved, value["inputs"])
-        if any(rebuilt[key] != value.get(key) for key in ("source", "baseForecast", "inputs", "report", "previewSha256")):
+        if (any(rebuilt[key] != value.get(key) for key in ("source", "baseForecast", "inputs", "report", "previewSha256"))
+                or rebuilt.get("installationSource") != value.get("installationSource")):
             fail("The saved portfolio differs from its complete source calculation.", "PORTFOLIO_CHANGED", 409)
         return value
     except (KeyError, TypeError, ValueError, AttributeError, ArithmeticError) as exc:
@@ -657,10 +722,20 @@ def select(context, value, alternative_id):
         fail("The selected saved alternative is unavailable.", "PORTFOLIO_ALTERNATIVE_NOT_FOUND", 404)
     if row["status"] != "READY":
         fail("Complete this alternative's availability, effort and event release dates before selecting its dates.")
+    selected_input = next((item for item in value["inputs"]["alternatives"] if item["id"] == alternative_id), {})
+    selected_fields = allocation_fields(selected_input, value["inputs"])
+    selected_source = None
+    if installation_plans.FIELD in selected_fields:
+        selected_source = installation_plans.source_identity(context, selected_fields)
+        if selected_source != installation_plans.source_identity(value["snapshot"], selected_fields):
+            fail("The selected Installation edition changed. Reselect its current source before applying these dates.",
+                 "PORTFOLIO_INSTALLATION_CHANGED", 409)
     candidate = forecasts.preview(context, row["forecast"]["inputs"])
     return {"inputs": candidate["inputs"], "selection": {"portfolioId": value["id"], "portfolioSha256": value["sha256"],
         "alternativeId": row["id"], "baseForecast": value["baseForecast"], "source": forecasts.source_identity(context),
-        "previewSha256": candidate["previewSha256"], "chosenDates": deepcopy(row["chosenDates"])}}
+        "previewSha256": candidate["previewSha256"], "chosenDates": deepcopy(row["chosenDates"]),
+        **({"installationSource": selected_source, "installationPlans": deepcopy(row.get(installation_plans.FIELD, []))}
+           if selected_source is not None else {})}}
 
 
 def report_html(value):
@@ -710,6 +785,8 @@ def report_html(value):
             ("reviewedReleaseDate","Original reviewed trigger"),("deliveryBusinessDays","Quoted delivery working days"),("collectionConditions","Original collections")], timing_rows))
         parts.append("<p>Undated work stays in the complete source scope. The original forecast lists its undated cash and hours separately until a reviewed release and work window are selected.</p>")
     parts.append("<h2>Original remaining scope</h2>" + table([("title","Work"),("sourceKind","Source"),("remainingHours","Hours"),("remainingCostUsd","Remaining cash USD"),("scope","Scope")], report["sourceTasks"]))
+    if installation_plans.has_plans_field(value["inputs"]):
+        parts.append(installation_plans.report_html(value))
     parts.append("<p>Complete inputs, original forecast snapshot, dated cash calculations and source identities are in portfolio.json. Receive the complete original operations ZIP to reopen this allocation in the workspace.</p></body></html>")
     return "\n".join(parts).encode()
 
@@ -791,6 +868,7 @@ def export(value):
                 "remainingWorkHours","weeklyEquivalentHours"] +
                 (["knownCommercialDeltaUsd","knownCommercialBalanceUsd"] if "currencyValuation" in report else []), report["days"])
             files[prefix + "cash-events.csv"] = csv_bytes(["date","kind","id","title","amountUsd","conditional","commercialId"], report["events"])
+    files.update(installation_plans.export_files(value))
     manifest = {"schema": SCHEMA + ".bundle", "portfolioId": value["id"], "portfolioSha256": value["sha256"],
         "files": [{"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()} for name, raw in sorted(files.items())]}
     files["MANIFEST.json"] = (canonical(manifest) + "\n").encode()

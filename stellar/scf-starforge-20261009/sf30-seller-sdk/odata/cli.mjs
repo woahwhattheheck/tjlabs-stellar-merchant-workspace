@@ -72,8 +72,10 @@ export async function main(args=process.argv.slice(2)){
       case 'serve':{
         const [{startODataServer},{prepareODataLaunch,announceODataWorkspace}]=await Promise.all([import('./server.mjs'),import('./live/startup.mjs')]);
         const launch=await prepareODataLaunch({workspace,expectedIdentity:o['expected-workspace-identity'],
-          liveId:o['live-service'],expectedLive:o['expected-live-identity']});
-        const server=await startODataServer({workspace,port:o.port===undefined?8797:Number(o.port),liveServiceId:o['live-service'],subscriptionConnection:o.subscriptions?resolve(o.subscriptions):undefined});
+          liveId:o['live-service'],expectedLive:o['expected-live-identity'],
+          subscriptionConnection:o.subscriptions?resolve(o.subscriptions):undefined,
+          expectedSubscriptionsSha256:o['expected-subscriptions-sha256']});
+        const server=await startODataServer({workspace,port:o.port===undefined?8797:Number(o.port),liveServiceId:o['live-service'],subscriptionConnection:launch.subscriptions?.path,expectedSubscriptionsSha256:launch.subscriptions?.sha256});
         try{console.log(JSON.stringify(await announceODataWorkspace({workspace,server,launch,liveRuntime:server.liveRuntime??null})));}
         catch(error){await server.close();throw error;}
         persistent=true;let closing=false;

@@ -16,12 +16,14 @@ export function odataApplication(common) {
   return {
     id: 'odata', command: 'dataset', title: 'OData source and live merchant', terminal: false,
     requiredSource: SOURCE + 'live/startup.mjs',
-    description: 'Reopen source metadata, saved queries, retained editions, live paid pages, buyer handoffs and received records in the original OData workspace.',
+    description: 'Reopen source metadata, saved queries, retained editions, live paid pages, buyer handoffs, received records and configured collection subscriptions in the original OData workspace.',
     fields: [
       field('workspaceDirectory', 'Private OData workspace', 'path', true,
         'Use the original or received workspace, or create one directory in an existing private parent.'),
       field('liveServiceId', 'Saved live service to reopen', 'text', false,
         'Optional service ID already prepared in this workspace. It starts with the workspace and stops with the managed application.'),
+      field('subscriptionConnection', 'Private subscription connection', 'path', false,
+        'Optional original connection file. Review its named publishers, customers, complete collections, receiving inputs and export directory; reopen them with this application.'),
       ...common,
     ],
   };
@@ -44,8 +46,35 @@ export async function prepareODataApplication(settings, { inputPath, runtimeDire
       inputs.push(await inputPath(path, kind, false, true));
     args.push('--live-service', live.id, '--expected-live-identity', live.sha256);
   }
+  let subscriptions = null;
+  if (settings.subscriptionConnection) {
+    const { odataSubscriptionSelection } = await import('./subscriptions/managed.mjs');
+    const selected = await odataSubscriptionSelection(absolute(settings.subscriptionConnection));
+    subscriptions = selected.identity;
+    const connectionInput = await inputPath(subscriptions.path, 'file', false, true);
+    need(connectionInput.sha256 === subscriptions.sha256 && connectionInput.bytes === subscriptions.bytes,
+      'APPLICATION_ODATA_SUBSCRIPTIONS_CHANGED');
+    inputs.push(connectionInput);
+    const paths = new Set(inputs.map(value => value.path));
+    for (const group of ['publishers', 'customers', 'collections', 'inputs']) {
+      for (const value of Object.values(selected.configuration[group])) {
+        if (paths.has(value.directory)) continue;
+        inputs.push(await inputPath(value.directory, 'directory',
+          group === 'publishers' || group === 'customers', true));
+        paths.add(value.directory);
+      }
+    }
+    if (!paths.has(selected.configuration.exportsDirectory))
+      inputs.push(await inputPath(selected.configuration.exportsDirectory, 'directory', true, true));
+    for (const name of ['live/subscriptions/managed.mjs', 'live/subscriptions/operator.mjs',
+      'live/subscriptions/server.mjs', 'live/subscriptions/browser-assets.json']) {
+      const path = join(runtime.sourceRoot, SOURCE, name);
+      if (!paths.has(path)) inputs.push(await inputPath(path, 'file'));
+    }
+    args.push('--subscriptions', subscriptions.path, '--expected-subscriptions-sha256', subscriptions.sha256);
+  }
   return { args, inputs, createDirectories: folder.exists ? [] : [directory],
-    identity: { workspace: identity, live } };
+    identity: { workspace: identity, live, subscriptions } };
 }
 
 function selected(request, name, optional = false) {
@@ -91,6 +120,16 @@ export async function odataStartup(request, operationDirectory, text, context = 
   need(live ? live.sha256 === expectedLive && plain(value.live) &&
     Object.entries(live).every(([key, item]) => same(value.live[key], item)) : value.live === null,
   'APPLICATION_ODATA_LIVE_CHANGED');
+  const connection = selected(request, '--subscriptions', true);
+  const expectedSubscriptions = selected(request, '--expected-subscriptions-sha256', true);
+  need(Boolean(connection) === Boolean(expectedSubscriptions), 'APPLICATION_ODATA_SUBSCRIPTIONS_CHANGED');
+  let subscriptions = null;
+  if (connection) {
+    const { odataSubscriptionSelection } = await import('./subscriptions/managed.mjs');
+    subscriptions = (await odataSubscriptionSelection(absolute(connection),
+      { expectedSha256: expectedSubscriptions })).identity;
+  }
+  need(same(value.subscriptions ?? null, subscriptions), 'APPLICATION_ODATA_SUBSCRIPTIONS_CHANGED');
   need(Number.isSafeInteger(context.pid) && context.pid > 0 && plain(value.process),
     'APPLICATION_ODATA_CHILD_REQUIRED');
   const original = value.process;
@@ -103,12 +142,15 @@ export async function odataStartup(request, operationDirectory, text, context = 
   const url = odataLoopback(value.url, selectedPort), observed = await listener(url);
   need(observed.schema === ODATA_PROBE && same(observed.workspace, identity) && same(observed.process, original),
     'APPLICATION_ODATA_LISTENER_CHANGED');
+  need(same(observed.subscriptions ?? null, subscriptions), 'APPLICATION_ODATA_SUBSCRIPTIONS_CHANGED');
   const links = [];
   if (live) {
     const merchant = odataLoopback(value.live.url), operations = odataLoopback(value.live.operationsUrl);
     links.push({ id: 'odata-merchant', label: 'Open live merchant', url: new URL('/_seller/docs', merchant).href },
       { id: 'odata-operations', label: 'Open merchant operations', url: operations });
   }
+  if (subscriptions) links.push({ id: 'odata-subscriptions', label: 'Open subscriptions',
+    url: new URL('/subscriptions/', url).href });
   return { url, links, original: { schema: ODATA_STARTUP, launchId: value.launchId,
-    workspace: identity, process: original, live: value.live } };
+    workspace: identity, process: original, live: value.live, subscriptions } };
 }
