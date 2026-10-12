@@ -126,7 +126,7 @@ def enroll(value):
 def inspect_order(value):
     root, _ = context(value)
     ref = value["orderReference"]
-    native = access.show_order(str(root), ref)
+    native = access.show_order(root, ref)
     result = {"order": checkout.describe(str(root), ref), "native": native, "pass": None,
               "calls": {"calls": [], "nextAfter": None}}
     try:
@@ -336,12 +336,14 @@ def execute(action, value):
     if action == "order":
         return inspect_order(value)
     if action == "orders":
-        return access.list_orders(value["state"], after=value.get("after"), limit=value.get("limit", 100))
+        root = receiver.require_private_dir(value["state"])
+        return access.list_orders(root, after=value.get("after"), limit=value.get("limit", 100))
     if action == "attach":
         return pass_store.attach_pass(value["state"], value["orderReference"])
     if action == "access":
         need(value["action"] in {"suspend", "resume", "expire", "clear-expiry"}, "INVALID_ACTION")
-        return access.change_access(value["state"], ref=value["orderReference"],
+        root = receiver.require_private_dir(value["state"])
+        return access.change_access(root, ref=value["orderReference"],
             expected_revision=value["accessRevision"], operation_id=value["operationId"],
             actor=value["actor"], reason=value["reason"], action=value["action"],
             expires_at=value.get("expiresAt"))

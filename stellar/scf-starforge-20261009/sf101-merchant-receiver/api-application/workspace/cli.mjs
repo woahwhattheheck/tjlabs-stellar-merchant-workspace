@@ -270,9 +270,18 @@ async function requestJson(launch,path,{body}={}){
  }
  const bytes=body===undefined?undefined:JSON.stringify(body);
  need(bytes===undefined||Buffer.byteLength(bytes)<=256*1024,'API_MERCHANT_REQUEST_TOO_LARGE',413);
- const response=await fetch(launch.origin+path,{method:body===undefined?'GET':'POST',headers,body:bytes,
-  redirect:'error',signal:AbortSignal.timeout(30000)});
- return responseJson(response);
+ let response;
+ try{
+  response=await fetch(launch.origin+path,{method:body===undefined?'GET':'POST',headers,body:bytes,
+   redirect:'error',signal:AbortSignal.timeout(30000)});
+  const value=await responseJson(response);
+  need(value!==null&&typeof value==='object'&&!Array.isArray(value),'API_MERCHANT_RESPONSE_ENVELOPE_REQUIRED',502);
+  return value;
+ }catch(error){
+  if(body!==undefined&&path!=='/api/preview')
+   Object.assign(error,{outcomeUnknown:error.outcomeUnknown===true||response===undefined||response.ok||response.status>=500});
+  throw error;
+ }
 }
 async function connected(launchFile){
  const launch=await readMerchantWorkspaceLaunch(launchFile),view=await requestJson(launch,'/api/state');
@@ -380,6 +389,7 @@ export async function restoreMerchantWorkspaceBundle({bundle,metadataFile,out,pa
  return {...restored,backupId:metadata.id,originalOfferId:metadata.offerId,
   backupMetadata:{path:metadataFile,bytes:bytes.length,sha256:metadataSha256}};
 }
+export {requestJson as requestMerchantWorkspaceJson};
 export async function main(argv=process.argv.slice(2)){
  const {command,action,values}=argumentsOf([...argv]);
  if(command==='help'){process.stdout.write(HELP+'\n');return;}
@@ -474,5 +484,6 @@ export async function main(argv=process.argv.slice(2)){
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)
  main().catch(error=>{
   report(error,{...(error.operationId?{operationId:error.operationId}:{}),
-   ...(error.destinationPublished?{destinationPublished:true}:{})});process.exitCode=1;
+   ...(error.destinationPublished?{destinationPublished:true}:{}),
+   ...(typeof error.outcomeUnknown==='boolean'?{outcomeUnknown:error.outcomeUnknown}:{})});process.exitCode=1;
  });

@@ -14,7 +14,7 @@ import {need,UUID,HASH,REF,REQUEST,text,integer,absolute,ownedDirectory,ownedByt
 
 const FIELDS={
  source_refresh:[],offer_prepare:['expectedSourceSha256','title','allowanceUnits','routes','workerPort','apiPort'],
- offer_publish:['offerId'],offer_adopt:['label','profilePath','planFile'],
+ offer_publish:['offerId'],offer_adopt:['label','profilePath','planFile','profileFileSha256','planFileSha256'],
  order_prepare:['offerId','orderReference','label'],order_adopt:['offerId','orderReference','label'],
  start:['offerId'],stop:[],attach_pass:['orderReference'],
  access:['orderReference','accessRevision','action','reason','expiresAt'],
@@ -45,9 +45,13 @@ export function validateAction(kind,body){
    'INVALID_EXPIRY');
  }
  if(kind==='offer_prepare')need(HASH.test(body.expectedSourceSha256),'API_MERCHANT_SOURCE_ID_REQUIRED');
- if(kind==='offer_adopt'){absolute(body.profilePath);absolute(body.planFile);}
+ if(kind==='offer_adopt'){
+  absolute(body.profilePath);absolute(body.planFile);
+  for(const name of ['profileFileSha256','planFileSha256'])if(body[name]!==undefined)
+   need(HASH.test(body[name]),'API_MERCHANT_ADOPTION_FILE_SHA_REQUIRED');
+ }
  if(kind==='backup')need(typeof body.resumeService==='boolean','API_MERCHANT_RESUME_SELECTION_REQUIRED');
- const optional={access:['expiresAt']};
+ const optional={access:['expiresAt'],offer_adopt:['profileFileSha256','planFileSha256']};
  for(const field of FIELDS[kind])if(!(optional[kind]??[]).includes(field))
   need(body[field]!==undefined,'API_MERCHANT_ACTION_FIELD_REQUIRED');
  return structuredClone(body);
@@ -233,13 +237,21 @@ async function retainOrder(workspace,operation,request,directory,adopt){
  });
  return {orderReference:request.orderReference,order:row,pass:result.attached,export:exportView(manifest)};
 }
+function adoptionProfile(runtime,request){
+ if(request.profileFileSha256!==undefined)need(
+  (runtime.executionBinding?.restorationSha256??runtime.profileSha256)===request.profileFileSha256,
+  'API_MERCHANT_ADOPTION_PROFILE_CHANGED',409);
+}
 async function adoptOffer(workspace,operation,request,directory){
  const prepared=await retainJson(join(directory,'adopted-offer.json'),async()=>{
   const runtime=await readApplicationRuntime(request.profilePath);
+  adoptionProfile(runtime,request);
   const source=await readSelectedSource(workspace.configuration);
   need(runtime.gateway.state===source.checkout.state,'API_MERCHANT_ADOPT_CHECKOUT_STATE_CHANGED',409);
-  const bytes=await ownedBytes(request.planFile,1048576),plan=await native(workspace.configuration,'plan',
-   {plan:parse(bytes)},{environment:workspace.environment});
+  const bytes=await ownedBytes(request.planFile,1048576);
+  if(request.planFileSha256!==undefined)need(digest(bytes)===request.planFileSha256,
+   'API_MERCHANT_ADOPTION_PLAN_CHANGED',409);
+  const plan=await native(workspace.configuration,'plan',{plan:parse(bytes)},{environment:workspace.environment});
   const routes=new Map(runtime.gateway.routes.map(route=>[route.id,route]));
   need(plan.routes.every(route=>{
    const actual=routes.get(route.id);return actual&&route.method===actual.method&&route.path===actual.path;
@@ -254,7 +266,10 @@ async function adoptOffer(workspace,operation,request,directory){
    plan,planFile:request.planFile,planSha256:digest(bytes),planBytes:bytes.length,checkoutFile,
    checkoutSha256:digest(checkoutBytes),ports:{worker:runtime.profile.port,api:selectedApiPort(0,workspace.configuration.gatewayBaseUrl)},adopted:true};
  });
- await ensureOfferRuntime(workspace,prepared);
+ const current=await ensureOfferRuntime(workspace,prepared);
+ adoptionProfile(current,request);
+ if(request.planFileSha256!==undefined)need(prepared.planSha256===request.planFileSha256,
+  'API_MERCHANT_ADOPTION_PLAN_CHANGED',409);
  await workspace.addOffer(prepared);
  const exported=await offerExport(workspace,operation,prepared);
  return {offerId:prepared.id,offer:offerView(workspace.offer(prepared.id)),export:exported};
