@@ -8,6 +8,10 @@ function publicUrl(value) {
   catch { return ''; }
 }
 export async function readSource(config) {
+  if (config.kind === 'research-project') {
+    const {readProjectSource} = await import('./content-search/project-source.mjs');
+    return readProjectSource(config);
+  }
   if (config.kind === 'paid-jobs') {
     const {readJobLibrarySource} = await import('../job-workspace/library-source.mjs');
     return readJobLibrarySource(config);
