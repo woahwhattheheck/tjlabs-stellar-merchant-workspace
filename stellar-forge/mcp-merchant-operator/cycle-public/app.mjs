@@ -1,7 +1,9 @@
 // MIT. Customer closing interface; all statement operations use the original local server.
 import {createCustomerSetup} from './setup.mjs';
+import {createCustomerDossierUi} from './customer-dossiers.mjs';
+import {createServicePlannerUi} from './service-planner.mjs';
 const $=id=>document.getElementById(id);
-let customerSetup;
+let customerSetup,customerDossiers,servicePlanner;
 const state={context:null,inventory:null,selected:new Set(),selections:[],requestId:crypto.randomUUID(),cycles:[],key:null,current:null,poll:null,inventoryBusy:false,review:null};
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const pretty=value=>JSON.stringify(value,null,2);
@@ -19,7 +21,7 @@ function clearError(){$('error').hidden=true;$('error').textContent='';}
 async function api(path,body){
   const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Workbench-Token':state.context.csrfToken},body:body===undefined?undefined:JSON.stringify(body)});
   let result;try{result=await response.json();}catch{throw new Error('The workbench returned an unreadable response. Refresh this page.');}
-  if(!response.ok){const error=new Error(result.error?.message??'The operation could not be completed.');error.code=result.error?.code;throw error;}
+  if(!response.ok){const error=new Error(result.error?.message??'The operation could not be completed.');error.code=result.error?.code;error.status=response.status;throw error;}
   return result;
 }
 function draftKey(){return 'customer-closing-draft:'+state.context.draftScope;}
@@ -51,7 +53,7 @@ function renderInventory(){
   preserveOptions('default-opening',inventory.usage,usageLabel,'Cumulative statement');
   if(!inventory.customers.length)$('inventory-state').textContent='No customer records';
   else $('inventory-state').textContent=inventory.customers.length+' customers · '+inventory.runs.length+' completed runs · refreshed '+date(inventory.observedAt);
-  renderCustomers();renderSelections();customerSetup?.inventoryChanged();
+  renderCustomers();renderSelections();customerSetup?.inventoryChanged();servicePlanner?.inventoryChanged();
 }
 function visibleCustomers(){
   const query=$('customer-search').value.trim().toLowerCase();
@@ -90,7 +92,7 @@ function renderSelections(){
   }).join('');
 }
 function view(name){
-  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';$('setup-view').hidden=name!=='setup';
+  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';$('setup-view').hidden=name!=='setup';$('service-planner-view').hidden=name!=='service-planner';
   document.querySelectorAll('[data-view]').forEach(button=>{if(button.dataset.view===name)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
 }
 async function refreshInventory(){
@@ -123,6 +125,7 @@ function renderCycle(cycle){
     if(cycle.rows.some(row=>row.phase==='REVIEW_REQUIRED'))content+='<div class="problem">Some source records changed after review. Existing statements keep their original identities. Prepare new reviews for the changed rows.</div><button type="button" data-revise>Prepare changed rows</button>';
   }
   if(cycle.rows?.length){
+    content+='<section class="detail-section customer-dossiers" id="customer-dossiers" aria-label="Customer handover"></section>';
     content+='<div class="detail-section table-wrap"><table><thead><tr><th>Customer</th><th>Service period</th><th>Progress</th><th>Files</th></tr></thead><tbody>';
     content+=cycle.rows.map((row,index)=>{
       const period=row.servicePeriod,capture=period?date(period.from)+' → '+date(period.until):row.usageSource?date(row.usageSource.createdAt):'Purchase statement';
@@ -131,7 +134,9 @@ function renderCycle(cycle){
   }
   content+='<details class="source-details"><summary>Original cycle and source references</summary><pre>'+escape(pretty({cycleId:cycle.cycleId,workspace:cycle.workspace,requestSha256:cycle.requestSha256,manifestSha256:cycle.manifestSha256,observedAt:cycle.observedAt}))+'</pre></details>';
   if(!active(cycle)&&cycle.phase!=='UNPREPARED'&&cycle.phase!=='UNREADABLE')content+='<details class="source-details" id="cycle-files"><summary>All saved files</summary><div class="file-list" id="file-list">Open to load the complete file list.</div></details>';
+  const dossierFocus=customerDossiers?.captureFocus();
   $('cycle-detail').innerHTML=content;
+  customerDossiers?.mount(cycle,{focus:dossierFocus});
   $('cycle-files')?.addEventListener('toggle',async event=>{
     if(!event.target.open||event.target.dataset.loaded)return;
     try{const result=await api('/api/cycles/'+encodeURIComponent(cycle.key)+'/files');if(state.key!==cycle.key||$('cycle-files')!==event.target)return;$('file-list').innerHTML=result.items.map(file=>'<div><a href="'+escape(file.href)+'">'+escape(file.name)+'</a><small>'+escape(file.bytes.toLocaleString())+' bytes</small></div>').join('');event.target.dataset.loaded='true';}catch(error){showError(error);}
@@ -241,12 +246,12 @@ $('selections').addEventListener('click',async event=>{
 $('prepare').addEventListener('click',prepareCycle);
 $('close-review').addEventListener('click',()=>$('review-dialog').close());
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',async()=>{
-  view(button.dataset.view);if(button.dataset.view==='setup')try{await customerSetup.show();}catch(error){showError(error);}if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
+  view(button.dataset.view);if(button.dataset.view==='service-planner')try{await servicePlanner.show();}catch(error){showError(error);}if(button.dataset.view==='setup')try{await customerSetup.show();}catch(error){showError(error);}if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
 }));
 $('reload-cycles').addEventListener('click',async()=>{try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}});
 $('cycle-list').addEventListener('click',event=>{const button=event.target.closest('[data-cycle]');if(button)loadCycle(button.dataset.cycle);});
 $('cycle-detail').addEventListener('click',async event=>{
-  const button=event.target.closest('button');if(!button)return;clearError();button.disabled=true;
+  const button=event.target.closest('button');if(!button||button.closest('#customer-dossiers'))return;clearError();button.disabled=true;
   try{
     if(button.hasAttribute('data-run')){await api(cycleLink('run'),{execute:true});await loadCycle(state.key);}
     else if(button.hasAttribute('data-resume-prepare')){await api(cycleLink('prepare'),{});await loadCycle(state.key);}
@@ -259,6 +264,7 @@ $('cycle-detail').addEventListener('click',async event=>{
   }catch(error){showError(error);}finally{button.disabled=false;}
 });
 window.addEventListener('pagehide',()=>clearTimeout(state.poll));
+customerDossiers=createCustomerDossierUi({api,notice,showError,clearError});
 customerSetup=createCustomerSetup({getState:()=>state,api,notice,showError,clearError,refreshInventory,
   async addCorrection(original){
     if(await refreshInventory()===false)throw new Error('Refresh the workspace before preparing this correction.');
@@ -271,6 +277,10 @@ customerSetup=createCustomerSetup({getState:()=>state,api,notice,showError,clear
     saveDraft();renderSelections();view('compose');$('selections').scrollIntoView({block:'start'});
     notice('The original statement was added for correction. Choose its current sources and review the complete replacement.');
   }
+});
+servicePlanner=createServicePlannerUi({getState:()=>state,api,notice,showError,clearError,openReview,
+  async openCycle(key){state.key=key;view('cycles');await refreshCycles();await loadCycle(key);},
+  async showSetup(){view('setup');await customerSetup.show();}
 });
 async function start(){
   try{

@@ -11,6 +11,9 @@ import {identity,json,stable,sha,plain,fault,WORKSPACE_SCHEMA,sourceDocument,poi
 import {validateSourceEdition,openPrivateFile,hashHeldFile,inspectRetainedFile,TRANSFER_LIMITS} from '../portable.mjs';
 import {ANALYSIS_SCHEMA,ANALYSIS_LIMITS} from './schema.mjs';
 import {safeFile,retainedPath,retainStream} from './artifacts.mjs';
+import {normalizeComponentSelection,validateComponentBindings} from './components.mjs';
+import {inspectMerchantHistory} from './merchant/common.mjs';
+import {validateHistoryExtension} from './merchant/history.mjs';
 
 export const PROJECT_TRANSFER_SCHEMA='stellar-forge.sensorthings-analysis-project-transfer.v1';
 export const PROJECT_SNAPSHOT_SCHEMA='stellar-forge.sensorthings-analysis-project-snapshot.v1';
@@ -100,9 +103,17 @@ export function inspectProjectSnapshot(store,snapshot){
     if(s.editionId!==v.editionId||stable(s.selection)!==stable(selection)||!['events','map','numeric'].includes(selection.view)||
       !Array.isArray(selection.streamKeys)||!selection.streamKeys.length||selection.streamKeys.length>ANALYSIS_LIMITS.streams||
       new Set(selection.streamKeys).size!==selection.streamKeys.length||
-      selection.streamKeys.some(k=>!e.plan.streams.some(x=>x.key===k&&x.kind==='Datastreams'))||
+      selection.streamKeys.some(k=>!e.plan.streams.some(x=>x.key===k&&x.kind===(Object.hasOwn(selection,'componentSelections')?'MultiDatastreams':'Datastreams')))||
       selection.viewerId!==null&&!viewers.has(selection.viewerId))
       fail('TRANSFER_SELECTION','The saved source/stream/view/summary binding is incomplete.');
+    if(Object.hasOwn(selection,'componentSelections')){
+      const normalized=normalizeComponentSelection({streamKeys:selection.streamKeys,componentSelections:selection.componentSelections,
+        period:selection.period?{start:selection.period.start,end:selection.period.end}:null,
+        view:selection.view,timeBasis:selection.timeBasis,viewerId:selection.viewerId},e);
+      if(stable(normalized)!==stable(selection)||s.analysisKind!=='explicit-multidatastream-components')
+        fail('TRANSFER_COMPONENT_SELECTION','The saved component selection or summary has another positional contract.');
+    }
+
     if(selection.timeBasis!=='phenomenonTime'||selection.intervalPolicy!=='source-explicit-only'||
       selection.instantPolicy!=='events-only'||selection.unresolvedTimePolicy!=='retain-unplaced')
       fail('TRANSFER_MEANING','The saved time/interval meaning is not this original analysis contract.');
@@ -155,6 +166,8 @@ export function inspectProjectSnapshot(store,snapshot){
     if(r.projectId!==project.id||!p||r.versionId!==p.versionId)fail('TRANSFER_RECEIPT','The original receipt is not bound to the included publication/version.');
     addFile(r.file);
   }
+  for(const file of inspectMerchantHistory(snapshot.merchant,{projectId:project.id,versions,publications}))addFile(file);
+  for(const file of validateHistoryExtension(snapshot.merchant,{projectId:project.id}))addFile(file);
   if(files.size>PROJECT_TRANSFER_LIMITS.files||objects.size+files.size>PROJECT_TRANSFER_LIMITS.members)
     fail('TRANSFER_CAPACITY','The full project exceeds the declared receiving member capacity.',413);
   const sortedObjects=[...objects.values()].sort((a,b)=>a.sha256.localeCompare(b.sha256)),
@@ -205,6 +218,30 @@ async function verifyCitations(closure,readObject){
     if(pointer(last,r.jsonPointer)===undefined)fail('TRANSFER_CITATION','A cited pointer is absent from the exact original source bytes.');
   }
 }
+
+async function verifyComponentSelections(snapshot,readObject){
+  const editions=new Map(snapshot.editions.map(x=>[x.edition.id,x.edition]));
+  for(const {version,summary}of snapshot.versions){
+    if(!Array.isArray(version.selection.componentSelections))continue;
+    const original=editions.get(version.editionId),known=new Map(original.sourceFiles.map(x=>[x.sha256,x])),
+      source={object:async hash=>{
+        const declared=known.get(hash);if(!declared)fail('TRANSFER_COMPONENT_SOURCE','The component metadata references a source object outside the retained edition.');
+        const body=await readObject(hash);
+        if(body.length!==declared.bytes||sha(body)!==hash)fail('TRANSFER_COMPONENT_SOURCE','The exact component source bytes differ from the original edition.');
+        return body;
+      }},bound=await validateComponentBindings(source,original,version.selection);
+    if(!Array.isArray(summary.streams)||summary.streams.length!==bound.bound.length)
+      fail('TRANSFER_COMPONENT_SUMMARY','The saved summary omits selected component positions.');
+    for(const {choice,descriptor}of bound.bound){
+      const matches=summary.streams.filter(s=>s.key===descriptor.seriesKey);
+      if(matches.length!==1||matches[0].sourceStreamKey!==choice.streamKey||matches[0].componentIndex!==choice.index||
+        matches[0].componentBindingId!==descriptor.bindingId||matches[0].componentMeaningId!==descriptor.meaningId||
+        stable(matches[0].interpretation)!==stable(choice.interpretation)||stable(matches[0].component)!==stable(descriptor))
+        fail('TRANSFER_COMPONENT_SUMMARY','A saved component summary differs from the exact original ordered metadata and interpretation.');
+    }
+  }
+}
+
 async function* heldChunks(handle,length,chunkSize=PROJECT_TRANSFER_LIMITS.chunkBytes){
   const buffer=Buffer.alloc(chunkSize);let offset=0;
   while(offset<length){const n=Math.min(buffer.length,length-offset),r=await handle.read(buffer,0,n,offset);
@@ -240,6 +277,7 @@ async function* boundedArchiveRecords(store,manifest,closure){
 export async function exportProject(store,{snapshot,id,createdAt}){
   operation(store,id,createdAt);const {manifest,closure}=manifestFor(store,snapshot,id,createdAt);
   await verifyCitations(closure,h=>store.object(h));
+  await verifyComponentSelections(snapshot,h=>store.object(h));
   const input=Readable.from(boundedArchiveRecords(store,manifest,closure)),gzip=createGzip({level:6});
   input.on('error',e=>gzip.destroy(e));gzip.on('error',()=>input.destroy());input.pipe(gzip);
   let file;
@@ -289,6 +327,7 @@ async function verifyPublished(store,manifest,closure){
   for(const {edition}of manifest.snapshot.editions)if(stable(await store.edition(edition.id))!==stable(edition))
     fail('TRANSFER_EDITION','The restored original edition differs from its complete manifest.');
   await verifyCitations(closure,h=>store.object(h));
+  await verifyComponentSelections(manifest.snapshot,h=>store.object(h));
 }
 export async function importProject(store,{inboxDirectory,filename,expectedSha256,expectedBytes,id,createdAt}){
   const receivingWorkspaceId=operation(store,id,createdAt);
@@ -364,6 +403,7 @@ export async function importProject(store,{inboxDirectory,filename,expectedSha25
     await hashHeldFile(held.handle,{expectedBytes,expectedSha256,maximum:PROJECT_TRANSFER_LIMITS.archiveBytes});
     const objectIndexes=new Map(inventory.map((m,i)=>[m.key,i]));
     await verifyCitations(closure,h=>readOwned(join(attempt,String(objectIndexes.get('object:'+h)).padStart(8,'0')+'.member'),PROJECT_TRANSFER_LIMITS.objectBytes));
+    await verifyComponentSelections(manifest.snapshot,h=>readOwned(join(attempt,String(objectIndexes.get('object:'+h)).padStart(8,'0')+'.member'),PROJECT_TRANSFER_LIMITS.objectBytes));
     // All member bytes and cited-source positions are verified before publishing
     // create-only objects/files. The core alone adopts source/history state.
     for(let i=0;i<inventory.length;i++)await publishMember(store,inventory[i],join(attempt,String(i).padStart(8,'0')+'.member'));
@@ -385,4 +425,27 @@ export async function importProject(store,{inboxDirectory,filename,expectedSha25
       completedMembers:index,error:{code:e.code??'ANALYSIS_PROJECT_IMPORT_FAILED',message:e.message}}).catch(()=>{});
     throw e;
   }finally{await held.handle.close();}
+}
+
+
+/** Read-only original-format manifest inspection. The complete compressed file
+ * is hash-verified; importProject remains the full member/citation verifier and
+ * the only publisher/adopter. This preview never claims completed receiving. */
+export async function inspectProjectManifest(store,{path,expectedSha256,expectedBytes}){
+  hash(expectedSha256,'input archive');bytes(expectedBytes,PROJECT_TRANSFER_LIMITS.archiveBytes,'input archive');
+  const held=await openPrivateFile(path,{expectedBytes,maximum:PROJECT_TRANSFER_LIMITS.archiveBytes});
+  let lines;
+  try{
+    await hashHeldFile(held.handle,{expectedBytes,expectedSha256,maximum:PROJECT_TRANSFER_LIMITS.archiveBytes});
+    lines=readLines(held.handle);const first=await lines.next();
+    if(first.done)fail('TRANSFER_INCOMPLETE','The original project archive has no manifest.');
+    exactFields(first.value,['kind','manifest']);
+    if(first.value.kind!=='manifest')fail('TRANSFER_ORDER','The project must start with its complete original manifest.');
+    const manifest=first.value.manifest,closure=validateManifest(store,manifest);
+    await lines.return();lines=null;
+    await hashHeldFile(held.handle,{expectedBytes,expectedSha256,maximum:PROJECT_TRANSFER_LIMITS.archiveBytes});
+    return {manifest:copy(manifest),objects:closure.objects.length,files:closure.files.length,
+      inspection:{archiveBytesVerified:true,manifestIdentityVerified:true,memberReceivingVerified:false,
+        meaning:'Read-only archive hash and complete manifest/metadata closure. The original import verifies every member and citation before receiving.'}};
+  }finally{if(lines)await lines.return();await held.handle.close();}
 }

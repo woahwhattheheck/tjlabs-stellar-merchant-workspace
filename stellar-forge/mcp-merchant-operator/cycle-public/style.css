@@ -15,3 +15,80 @@ textarea{font:inherit;resize:vertical;min-height:70px;border:1px solid #999;bord
 textarea:focus-visible{outline:3px solid #555;outline-offset:3px}nav{flex-wrap:wrap}.setup-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}.setup-tabs [aria-pressed=true]{background:#ddd;border-color:#555}.setup-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.setup-inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.setup-inline select{min-width:180px}.setup-field{margin-top:15px}.setup-check{display:flex;align-items:flex-start;gap:10px;margin:17px 0;font-weight:400}.setup-check input{flex:none;margin-top:2px}.setup-align-end{display:flex;align-items:flex-end}.setup-definition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 22px;margin:20px 0}.setup-definition div{min-width:0}.setup-definition dt{font-size:12px;color:#666;margin-bottom:4px}.setup-definition dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.setup-dialog-content{padding:22px 24px}.setup-dialog-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:18px 24px;border-top:1px solid #ccc;position:sticky;bottom:0;background:#fff}.setup-operation-status{display:flex;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:20px}.setup-withdraw{padding:14px;border:1px solid #ccc;margin:20px 0}.setup-withdraw form{display:grid;gap:14px;margin-top:14px}.setup-withdraw button{justify-self:start}#setup-source-preview p{padding:15px}#setup-assign-orders{font-family:Consolas,monospace;font-size:13px}
 @media(max-width:1050px){.setup-columns{grid-template-columns:1fr}.setup-columns .form-grid{grid-template-columns:1fr 1fr}.setup-columns .form-grid label:first-child{grid-column:auto}}
 @media(max-width:760px){.setup-tabs button{flex:1;min-width:130px}.setup-inline{width:100%}.setup-inline>*{flex:1}.setup-inline select{min-width:0}.setup-columns .form-grid{grid-template-columns:1fr}.setup-definition{grid-template-columns:1fr}.setup-dialog-content{padding:16px}.setup-dialog-actions{padding:13px 16px}.setup-dialog-actions button{flex:1;min-width:130px}}
+
+/* One complete saved handover for each original customer. */
+.customer-dossiers{border-top:1px solid #bbb;padding-top:20px}
+.customer-dossiers .section-heading{margin-bottom:12px}
+.customer-dossiers h3{margin-bottom:5px}
+.dossier-controls{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:14px 0}
+.dossier-controls label{flex:1;max-width:480px}
+.dossier-controls p{padding-bottom:10px;white-space:nowrap}
+.dossier-message:empty{display:none}
+.dossier-message{margin:10px 0}
+.customer-dossier{border:1px solid #bbb;background:#fff;margin:14px 0;padding:15px;min-width:0}
+.customer-dossier-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
+.customer-dossier-heading>div:first-child{min-width:0}
+.customer-dossier h4{font-size:15px;line-height:1.4;margin:0 0 3px;overflow-wrap:anywhere}
+.customer-dossier .hint,.dossier-counts{overflow-wrap:anywhere}
+.dossier-counts{font-size:12px;margin-top:7px}
+.customer-dossier .row-actions{flex-shrink:0;max-width:55%;justify-content:flex-end}
+.dossier-pending,.dossier-prepared{margin-top:10px}
+.customer-dossier details{border-top:1px solid #ddd;margin-top:12px;padding-top:10px}
+.customer-dossier summary{min-height:30px;padding:2px 0}
+.dossier-rows{margin-top:7px}
+.dossier-rows th{white-space:normal}
+.dossier-rows td{overflow-wrap:anywhere;min-width:135px}
+.customer-dossiers .pagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:14px 0}
+@media(max-width:850px){
+  .customer-dossier-heading{display:block}
+  .customer-dossier .row-actions{max-width:none;justify-content:flex-start;margin-top:12px}
+}
+@media(max-width:540px){
+  .dossier-controls{display:block}
+  .dossier-controls label{max-width:none}
+  .dossier-controls p{padding:0;margin-top:10px;white-space:normal}
+  .customer-dossier{padding:12px}
+  .customer-dossier .row-actions{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
+  .customer-dossier .row-actions>a,.customer-dossier .row-actions>button{width:100%;justify-content:center;text-align:center}
+}
+.customer-dossiers .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.customer-dossier .row-actions button,.customer-dossier .row-actions a{min-height:40px}
+.dossier-rows details.dossier-passes{border:0;margin:0;padding:0}
+.dossier-passes ul{padding-left:18px;margin:6px 0 0}
+.dossier-passes li+li{margin-top:6px}
+
+/* Explicit customer/pass source periods and portable closing plans. */
+.service-toolbar{display:grid;grid-template-columns:minmax(210px,1.2fr) minmax(180px,.8fr) minmax(250px,1.2fr);gap:16px;margin:12px 0 16px}
+.service-choice{padding:20px 0;border-top:1px solid #c9c9c9;margin-top:20px}
+.service-choice .selection-heading{align-items:flex-start}
+.service-choice .selection-heading p{margin-top:5px}
+.service-choice .actions{flex-wrap:wrap}
+.service-choice .source-details pre,#service-source-classifications pre,.service-history-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;font-size:12px}
+.service-balances{display:grid;grid-template-columns:1fr 1fr;gap:16px;border:1px solid #c9c9c9;background:#f7f7f7;padding:13px}
+.service-balances>div{display:grid;gap:4px;min-width:0;overflow-wrap:anywhere;font-size:13px}
+.service-balances strong{font-size:12px}
+.service-notes{padding:12px 14px;border-left:3px solid #777;background:#f5f5f5;margin:16px 0;font-size:13px}
+.service-notes p+p{margin-top:9px}
+#service-source-classifications{margin-top:18px}
+#service-source-classifications>div{padding:14px 0}
+#service-source-classifications p,#service-source-classifications button{margin-bottom:10px}
+#service-draft-state{margin-top:14px}
+#service-last-cycle h2{margin-bottom:10px}
+#service-last-cycle button{margin-top:14px}
+#service-plan-rows td p{font-size:13px;margin-bottom:8px}
+#service-source-page,#service-choice-page,#service-plan-page,#service-history-page{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#service-choice-page,#service-plan-page{margin-top:16px}
+.service-history-dialog{width:min(1260px,96vw);max-height:92vh;padding:22px;border:1px solid #777;border-radius:3px}
+.service-history-dialog .dialog-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:18px}
+.service-history-dialog>label{margin:18px 0;max-width:420px}
+.service-history-dialog p+p{margin-top:7px}
+.service-history-dialog .table-wrap{max-height:48vh;overflow:auto;margin:16px 0}
+.service-history-dialog .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.service-history-dialog .actions a{display:inline-flex;align-items:center;min-height:40px;padding:6px 8px;border:1px solid #999;border-radius:3px;font-size:13px}
+.service-history-dialog td details{margin-top:10px}
+.service-history-dialog #service-history-coverage{margin-top:20px}
+.service-history-dialog li{margin-bottom:12px}
+#service-planner-view .table-wrap td,#service-planner-view .table-wrap th{vertical-align:top}
+#service-planner-view [hidden]{display:none!important}
+@media(max-width:960px){.service-toolbar{grid-template-columns:1fr 1fr}.service-toolbar>label:last-child{grid-column:1/-1}.service-choice .selection-heading{display:block}.service-choice .selection-heading>.actions{margin-top:12px}}
+@media(max-width:620px){nav{flex-wrap:wrap}.service-toolbar,.service-balances{grid-template-columns:1fr}.service-toolbar>label:last-child{grid-column:auto}.service-choice .actions>button{flex:1 1 130px;min-height:42px}.service-history-dialog{padding:15px}.service-history-dialog .actions>button,.service-history-dialog .actions>a{min-height:42px}.service-history-dialog .dialog-heading h2{font-size:18px}}

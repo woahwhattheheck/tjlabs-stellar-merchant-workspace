@@ -23,7 +23,7 @@ starforge customer-closing \
 
 Use port 0 to let the operating system choose a listener. The command prints the selected local address. Its structured startup also binds that address to the same directory, merchant connection, workspace, operator and requested port for Applications.
 
-The maintained merchant receivables source selection includes this workbench and the same browser manifest consumed by its HTTP server. The original source builder packages the declared HTML, styles and both browser modules together. Typed package interfaces are available under merchant/customer-closing, merchant/customer-closing/cycles, merchant/customer-closing/operations and merchant/customer-closing/client.
+The maintained merchant receivables source selection includes this workbench and the same browser manifest consumed by its HTTP server. The original source builder packages the declared HTML, styles and all three browser modules together. Typed package interfaces are available under merchant/customer-closing, merchant/customer-closing/cycles, merchant/customer-closing/customer-dossiers, merchant/customer-closing/operations and merchant/customer-closing/client.
 
 ## Start the workbench
 
@@ -161,13 +161,36 @@ The workbench does not close the merchant accounting workspace when it stops. It
 
 ## Retrieve and hand over the files
 
-Each completed customer row provides Open packet and Download. The customer download is a gzip-compressed tar archive with its index at the archive root. Extract it and open index.html. It contains the complete original statement files, original service-period captures when selected, and the current statement-status snapshot.
+### One packet for a customer with several passes or periods
 
-Download complete cycle preserves the full operator folder: frozen request and manifest, every saved review, customer state, register, and available complete or partial delivery files. Extract it as a private child directory under the workbench's saved-cycle directory to continue the same work. Open register.html for the customer delivery register.
+Open a saved cycle and use **Customer handover**. This section groups every original statement row by its customer identity. Find a customer by name or reference, or search for a saved pass or statement number. The list shows 25 customers per page; opening a customer's details shows every one of that customer's original rows.
 
-All saved files also provides individual downloads. Archives and files are read while holding the original cycle lease; customer files with recorded identities are checked during streaming. If a customer file needs recovery, resume its original cycle and retrieve the completed packet again.
+Choose **Download customer packet** to prepare and download one archive for that customer. **Prepare preview** makes the same saved packet available through **Open customer packet** and its download link. The packet includes:
 
-Use the individual customer packet for that customer's delivery. The complete-cycle download is the operator's collection across all selected customers.
+- A readable index with the customer's pass, period and statement register.
+- `statements.csv`, `periods.csv` and `dossier.json` for the same original rows.
+- Each completed statement's original customer delivery files in its own `statements/<statement UUID>/` folder.
+- The saved statement lifecycle, including corrections, superseded statements and withdrawals.
+
+Extract the archive and open `index.html`. The links stay relative to that extracted folder, so the complete packet can be reopened on another computer. Each statement keeps its own service period, purchase amounts and source files. The customer register does not combine separate statement periods into a new accounting statement.
+
+A customer with unfinished rows has **Download available statements**. Its register lists both the included packets and the rows that still need completion. Resume the original closing cycle to finish those rows, then prepare the customer's completed packet. A customer with no completed delivery files shows its current progress until a statement packet becomes available.
+
+The handover reflects the original cycle's saved status files. **Refresh delivered statements** retrieves later corrections and withdrawals through the existing statement engine. After that refresh, prepare the customer packet again to include the new saved status. Earlier customer packets remain reopenable with the status they contained when prepared.
+
+Repeated preparation of unchanged statement and status files reuses the same saved packet. Concurrent requests for that customer share the in-progress export. Customer exports in one cycle run in sequence under the original cycle lease; a queued closing operation continues after an existing export finishes. The saved packet has its own immutable source identity and can be read after a workbench restart without rewriting the cycle.
+
+The workbench retains these customer packets under its private `.customer-dossiers/` directory. The downloadable archive contains only that customer's register and listed statement delivery files. The original cycle request, merchant connection settings, other customers, operator states and private export ownership file stay in the operator's saved-work directory.
+
+### Individual statement and operator downloads
+
+Each completed statement row still provides **Open packet** and **Download**. This download contains that one statement's complete original customer files, its service-period captures when selected, and its saved statement-status snapshot. The gzip-compressed tar archive has its index at the archive root.
+
+**Download complete cycle** preserves the full operator folder: frozen request and manifest, every saved review, customer state, register, and available complete or partial delivery files. Extract it as a private child directory under the workbench's saved-cycle directory to continue the same work. Open `register.html` for the cycle's delivery register.
+
+**All saved files** also provides individual operator downloads. The original cycle archives and files are read while holding the cycle lease. Saved customer handover downloads read their immutable snapshot and check each file's recorded size and content hash during streaming. If an original customer file needs recovery, resume its cycle and prepare the customer packet again.
+
+Use the grouped customer packet for delivery across that customer's passes and periods. Use the individual statement packet when delivering one statement. The complete-cycle download is the operator's collection across all selected customers.
 
 ## Original engine and client
 
@@ -181,8 +204,15 @@ The workbench imports:
 - prepareAccountingStatementCycle
 - runAccountingStatementCycle
 - observeAccountingStatementCycle
+- inspectAccountingStatementCustomerDossiers
+- exportAccountingStatementCustomerDossier
+- readAccountingStatementCustomerDossier
 - connectAccountingStatementClient
 - accountingStatementSelection
 - accountingStatementPreview
 
 The server exports startAccountingStatementCycleWorkbench for installed local applications. It accepts the existing client when the application already owns one and leaves that supplied connection under its caller's control.
+
+## Plan the next service close
+
+Open **Plan service close** to group original native captures by customer and purchased pass, inspect current periods, gaps and corrections, and select exact opening and closing captures across many customers. Review or download the complete plan, then prepare the original saved cycle and continue its existing review, issuing, recovery and handover workflow. See [Plan customer service close](ACCOUNTING_STATEMENT_SERVICE_PLANNER.md) for the complete operator guide and native, typed and command-line contracts.

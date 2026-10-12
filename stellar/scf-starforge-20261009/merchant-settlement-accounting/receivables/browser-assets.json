@@ -66,9 +66,37 @@
       ]
     ],
     [
+      "/receivables/bank-statements.mjs",
+      [
+        "bank-statements.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/receivables/collections.mjs",
       [
         "collections.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/cash-planning.mjs",
+      [
+        "cash-planning.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/cash-planning-display.mjs",
+      [
+        "cash-planning-display.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/receivables/credit-control.mjs",
+      [
+        "credit-control.mjs",
         "text/javascript; charset=utf-8"
       ]
     ]

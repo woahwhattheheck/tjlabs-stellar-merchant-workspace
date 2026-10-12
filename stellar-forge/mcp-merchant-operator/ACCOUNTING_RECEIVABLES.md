@@ -7,7 +7,7 @@ The interfaces are:
 - Installed command: `starforge merchant-accounting-receivables`.
 - Typed JavaScript client: `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables`.
 - Durable operation and download helpers: `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables/operations`.
-- MCP tools: the 35 names beginning with `merchant_accounting_receivables_`, plus the existing accounting owner, customer and file tools.
+- MCP tools: the 46 names beginning with `merchant_accounting_receivables_`, plus the existing accounting owner, customer and file tools.
 
 The selected distribution's package name is `@tokenjunkielabs/starforge-merchant`. Check the installed package manifest if consuming a differently named distribution; the export suffixes above remain the integration points. From a source checkout, the equivalent command is:
 
@@ -412,9 +412,42 @@ All tool names in this table have the prefix `merchant_accounting_receivables_`.
 | `refund_receive` | `receiveRefund` | Retained return, native transaction proof and actual customer cash entry. |
 | `credit_disposition_preview` | `previewCreditDisposition` | Original credited payment releases, residual replacements and target invoice amounts. |
 | `credit_disposition_apply` | `applyCreditDisposition` | Complete reviewed allocation plan and original journal recovery. |
+| `bank_accounts` | `bankAccounts` | Paged original bank account identities, currencies and saved source layouts. |
+| `bank_account_save` | `saveBankAccount` | Original account identity and currency; id and expectedVersion for editing. |
+| `bank_source_inspect` | `inspectBankSource` | Complete original file bytes, actual source sections, columns, parser findings and row sample. |
+| `bank_source_import` | `importBankSource` | Exact account, file, selected section and original CSV/MT940 interpretation. |
+| `bank_import_list` | `bankImports` | Paged statement summaries, source identities and original disposition counts. |
+| `bank_import_detail` | `bankImport` | Original metadata and files, or paged rows, postings and history. |
+| `bank_posting_preview` | `previewBankPosting` | Complete customer CREATE/LINK/CORRECT splits and exact dated cash/invoice effects. |
+| `bank_receipts_post` | `postBankReceipts` | Complete reviewed proposal, review SHA and original journal context. |
+| `bank_rows_ignore` | `ignoreBankRows` | Original row identities and retained exclusion reason. |
+| `bank_rows_restore` | `restoreBankRows` | Original ignored rows and reason; an empty selection reopens a closed statement. |
+| `bank_import_close` | `closeBankImport` | Close after every original cash credit has a retained disposition. |
 | `request_lookup` | `lookupOperation` | Stable request ID and original mutation record/result. |
 
 Direct mutation commands use `--request` with exact native arguments. `invoice-preview`, `payment-preview`, `refund-preview` and `credit-disposition-preview` can save complete previews with `--out`. `status` and `payment-list` can use their default selections without a request file.
+
+
+## Original bank statement workflow
+
+Use the bank operations in the same declared accounting workspace. They extend the original invoice/receipt journal and file reader. The native source limit is 1,000,000 bytes and 5,000 rows.
+
+1. Save the actual bank account and currency with bank_account_save. Existing accounts retain id and expectedVersion.
+2. Inspect the complete original file through bank_source_inspect. Send format, file.name and file.dataBase64, and the selected account when known. CSV inspection accepts an incomplete csvLayout to reveal its actual headers; import requires a complete column mapping. MT940 requires statementOptions with the original profile, encoding, debitCreditProfile, yearWindowStart and VALUE_DATE basis.
+3. Retain that exact account, original file, sectionId and interpretation through bank_source_import at the current revision.
+4. Page bank_import_detail with view:rows. Apply rowStatus, direction and search to the complete original source. Each row retains actual bank and source identities, conflicts, receipt candidates, invoice candidates and customer matching reasons.
+5. Preview complete source credits through bank_posting_preview. Each selection has its original rowId and exact customer splits. CREATE records a receipt; LINK binds all or part of an existing receipt to the source; CORRECT retains the original receipt, released allocations and its explicitly dated replacement.
+6. Retain the complete proposal, balanceEffects, reviewSha256 and revision. Post that original review through bank_receipts_post. The native owner checks all affected cash, invoice and refund dates together.
+7. Read the original bank files and customer receipt advice through merchant_accounting_file with kind:receivables-bank and bankImportId. Every response preserves the original file inventory and selection.
+8. Ignore noncustomer credit rows with their retained reason, restore selected ignored rows when appropriate, and close a fully resolved statement. Reopen preserves previous postings for explicit correction.
+
+A shared original transaction ID cannot create another copy of the same cash. A changed original amount or date needs an authoritative source-resolution reason; distinct-payment reasons apply to separate coincident payments without that shared original ID. Receipt corrections preserve actual bank/received dates separately from accounting dates.
+
+The typed helpers accountingBankPostingPreview and accountingBankPostingArguments retain the original combined proposal and balance-effects seal. Durable prepare/execute/reconcile uses the existing native request ID and revision, including recovery of the original bank posting and all of its receipts, invoices and allocations after a lost response.
+
+Bank account/import/detail reads support up to 500 rows. The complete client reader preserves the native accounts or imports arrays, total, revision and source selections across pages. Source inspection carries its original sample and complete section metadata; the complete parser report is a retained original file.
+
+See [BANK_STATEMENTS.md](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/BANK_STATEMENTS.md) for original source formats, customer splits, dated correction behavior and every HTTP/native route.
 
 ## Complete inventory and dated views
 
@@ -433,7 +466,7 @@ The CLI's `--all true` consumes a complete paged selection. Choose a non-summary
 
 `asOf` selects the native accounting date for invoice, receipt, allocation, customer and aging amounts. Payment summary also retains the actual observation timing. A dated balance is interpreted alongside the original saved request and transaction observations.
 
-Status history pages the complete original receivables request journal, newest first. Customer-scoped history follows the original resulting invoice, receipt and payment request identities. Aging currency totals state their customer/date scope; text and row-status filters select displayed rows without silently changing that totals scope.
+Status history pages the complete original receivables request journal, newest first. Customer-scoped history follows the original resulting invoice, receipt, payment request, refund and credit-disposition identities, including every receipt/invoice identity in a multi-customer bank posting. Aging currency totals state their customer/date scope; text and row-status filters select displayed rows without silently changing that totals scope.
 
 ## Original files and proof retention
 
@@ -446,6 +479,7 @@ All files use the existing `merchant_accounting_file` reader. Select one kind an
 | `receivables-preview` | `invoiceId` | `preview.json`, `preview.csv`, `preview.html`. |
 | `receivables-payment` | `paymentRequestId`; `returnId` for `proof.json` | `payment-request.json`, `payment-request.html`, `payment-request.uri`, `status.json`, `receiving.json`, `proof.json`. |
 | `receivables-refund` | `refundId` | Original `request.json/html/csv`, `refund.json/html/csv`, `reversal.json/html/csv`, `status.json`, `receiving.json`, and each retained `proof-<observationId>.json` from its file inventory. For a credit disposition, select its disposition ID as `refundId` and read `disposition.json/html/csv`. |
+| `receivables-bank` | `bankImportId` | Original `source.csv/ofx/mt940`, `import.json`, `rows.json/csv`, `parser-report.json`, `status.json`, `reconciliation.json`, and exact `posting-UUID.json/html/csv` or `receipt-UUID.json/html/csv` members from the returned inventory. |
 | `receivables-customer` | `customerId`, optional `asOf` | `account.json`, `invoices.csv`, `account.html`, `manifest.json`, `documents/<original filename>`, `account.tar`. |
 
 Use the original member names from the document or customer inventory. The generic `proof.json` selection maps the selected return to its native `proof-<returnId>.json` export.
@@ -455,3 +489,9 @@ The first read retains a file snapshot and reports its `readId`, byte count and 
 Full native transaction proofs live in the original workspace's `exports/<observationId>/transfer-proof.json` files. The compact observation and receipt source retain the proof artifact's directory, name, size and SHA. The receiving and per-return downloads hydrate those original proof bytes and verify their identity.
 
 Preserve the complete original accounting workspace, including `exports`, through the existing backup workflow. That keeps invoice and credit documents, original quotation files, customer packets and transaction proofs with their native accounting history.
+
+### Partial source links and receipt corrections
+
+A bank LINK may cover part of an existing receipt, and several actual source credits may cover it within the original receipt amount. Repeated original statement evidence reuses its existing coverage. The link preserves the receipt’s actual received date and accounting date.
+
+For CORRECT, residualAllocations optionally applies remaining original-customer cash to original invoices. The complete reviewed split returns correctedOriginalAmount, replacementReceiptIds and, when needed, residualReceipt with its customer, amount, dates, bank sources and allocations. A receipt covered by 40 and 60 therefore retains the original customer’s 60 when only the 40 is corrected. The native result includes all original, replacement and remaining-cash receipt IDs, and the customer file reader retains their complete advice.

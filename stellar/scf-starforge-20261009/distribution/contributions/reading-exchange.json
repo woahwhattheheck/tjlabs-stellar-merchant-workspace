@@ -1,0 +1,45 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "reading-exchange",
+  "description": "Saved research, original collection delivery, editable source-range reading and complete return",
+  "commands": {
+    "reading-exchange": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/reading-exchange-command.mjs"
+  },
+  "commandDescriptions": {
+    "reading-exchange": "Prepare original research selections, receive an editable reading project and return all source files and reports"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_selections.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/exchange.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_exchange.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/review_reading_exchange.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_exchange_cli.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/review-reading.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/server.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/client.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/exchange.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/client.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/server.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/ui.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_workspace.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_delivery.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_server.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_ui.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/reading_cli.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/READING_EXCHANGE.md"
+  ],
+  "exports": {
+    "./buyer/reading-exchange": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/exchange.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/exchange.mjs"
+    },
+    "./buyer/reading-exchange/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/client.mjs"
+    },
+    "./buyer/reading-exchange/server": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/server.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/reading-exchange/server.mjs"
+    }
+  }
+}

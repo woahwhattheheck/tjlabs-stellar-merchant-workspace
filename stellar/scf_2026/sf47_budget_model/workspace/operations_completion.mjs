@@ -153,6 +153,38 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     if(session.preview?.source.version!==caseValue.program.version)session.preview=null;
     await loadDraft(number);chooseReceipt();
   }
+  async function openCalendarSelection(){
+    const retained=session.requestCalendar;
+    const requested=retained||([1,2,3].includes(session.requestTranche)?{tranche:session.requestTranche}:null);
+    if(!requested||session.pending||session.inflight||session.accepted)return '';
+    const stillSelected=()=>available()&&(retained?session.requestCalendar===retained:
+      !session.requestCalendar&&session.requestTranche===requested.tranche);
+    const number=[1,2,3].includes(requested.tranche)?requested.tranche:session.tranche;
+    let selectedCalendar=calendar,selectedReview=null;
+    if(requested.asOfDate&&requested.asOfDate!==calendar.asOfDate)
+      selectedCalendar=await saveApi(prefix+'/completion?asOfDate='+encodeURIComponent(requested.asOfDate));
+    const selectedReceipt=requested.receiptId?
+      selectedCalendar.clocks.find(row=>row.receiptId===requested.receiptId&&row.tranche===number):null;
+    if(requested.receiptId&&!selectedReceipt)
+      throw new Error('The linked payment is no longer attached to this tranche. Refresh the delivery calendar.');
+    if(requested.reviewId){
+      selectedReview=await saveApi(prefix+'/reviews/'+encodeURIComponent(requested.reviewId));
+      if(selectedReview.purpose!=='TRANCHE_COMPLETION')
+        throw new Error('Select an original tranche completion preparation.');
+    }
+    await loadDraft(number);
+    if(!stillSelected())return '';
+    if(number!==session.tranche)await selectTranche(number);
+    if(!stillSelected())return '';
+    const changed=session.asOfDate!==selectedCalendar.asOfDate||
+      selectedReceipt&&session.receiptId!==selectedReceipt.receiptId;
+    session.asOfDate=selectedCalendar.asOfDate;calendar=selectedCalendar;
+    if(selectedReceipt)session.receiptId=selectedReceipt.receiptId;
+    if(changed)clearPreview();
+    if(selectedReview){session.reviewId=selectedReview.id;session.review=selectedReview;}
+    delete session.requestCalendar;delete session.requestTranche;
+    return requested.costId||'';
+  }
   function chooseReceipt(){
     if(session.receiptId)return;
     session.receiptId=calendar.clocks.find(row=>row.tranche===session.tranche&&row.active)?.receiptId||'';
@@ -427,12 +459,22 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
   },true);
   render();
   const ready=(async()=>{
-    if(session.inflight){try{await session.inflight;}catch{}}
-    if(session.accepted||session.rejected){const next=await reloadCase();reconcileAccepted(next);session.rejected=null;}
-    else if(session.asOfDate!==calendar.asOfDate)calendar=await saveApi(prefix+'/completion?asOfDate='+encodeURIComponent(session.asOfDate));
-    await loadDraft(session.tranche);chooseReceipt();
-    if(session.reviewId)await openReview(session.reviewId);
-    render();
+    let selectedCost='';
+    busy=true;updateControls();
+    try{
+      if(session.inflight){try{await session.inflight;}catch{}}
+      if(session.accepted||session.rejected){const next=await reloadCase();reconcileAccepted(next);session.rejected=null;}
+      else if(session.asOfDate!==calendar.asOfDate)calendar=await saveApi(prefix+'/completion?asOfDate='+encodeURIComponent(session.asOfDate));
+      selectedCost=await openCalendarSelection();
+      await loadDraft(session.tranche);chooseReceipt();
+      if(session.reviewId&&session.review?.id!==session.reviewId)await openReview(session.reviewId);
+    }finally{
+      busy=false;render();
+      if(selectedCost&&available()){
+        const item=[...root.querySelectorAll('[data-completion-item]')].find(row=>row.dataset.completionItem===selectedCost);
+        if(item){item.open=true;item.scrollIntoView({block:'start'});const title=item.querySelector('summary');if(title){title.tabIndex=-1;title.focus({preventScroll:true});}}
+      }
+    }
   })();
   return {ready,root,setHostBusy(value){hostBusy=!!value;updateControls();},
     dispose(){active=false;$('dialog.completion-dialog')?.close();}};

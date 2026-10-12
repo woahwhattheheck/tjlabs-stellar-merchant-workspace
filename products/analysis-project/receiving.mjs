@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // MIT. One installed continuation of the retained 7DE2 Analysis project.
 import { createHash, randomUUID } from 'node:crypto';
-import { open, readFile, writeFile, mkdir, lstat } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { open, readFile, readdir, mkdir, lstat, link, unlink } from 'node:fs/promises';
 import { join, resolve, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -17,14 +18,16 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const need=(condition,message)=>{if(!condition)throw new Error(message);};
 const pause=ms=>new Promise(done=>setTimeout(done,ms));
 const {values}=parseArgs({options:{
-  runtime:{type:'string'},workspace:{type:'string'},installation:{type:'string'},
+  runtime:{type:'string'},workspace:{type:'string'},installation:{type:'string'},python:{type:'string'},
   project:{type:'string'},out:{type:'string'},'source-commit':{type:'string'},
 }});
-for(const name of ['runtime','workspace','installation','project','out','source-commit'])
+for(const name of ['runtime','workspace','project','out','source-commit'])
   need(values[name],'Supply --'+name+' with its actual original selection.');
 for(const name of ['runtime','workspace','project','out'])
   need(resolve(values[name])===values[name],'Select absolute canonical '+name+'.');
-need(/^[a-f0-9]{64}$/.test(values.installation),'Select the original installed Python environment ID.');
+need(Boolean(values.installation)!==Boolean(values.python),'Select exactly one of --installation or --python.');
+if(values.installation)need(/^[a-f0-9]{64}$/.test(values.installation),'Select the original installed Python environment ID.');
+if(values.python)need(resolve(values.python)===values.python,'Select the actual absolute Python executable.');
 need(/^[a-f0-9]{40}$/.test(values['source-commit']),'Select the installed source commit.');
 const root=values.out;
 await mkdir(root,{recursive:true,mode:0o700});
@@ -42,12 +45,42 @@ const model=await openRuntimeWorkspace({directory:values.workspace});
 const config={operation:OPERATION,...values,sourceManifestSha256:plan.source.manifestSha256,original:ORIGINAL};
 const pathFor=name=>join(root,name+'.json');
 async function read(name){try{return JSON.parse(await readFile(pathFor(name),'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;return null;}}
+async function syncDirectory(path){
+  const handle=await open(path,constants.O_RDONLY|constants.O_DIRECTORY);
+  try{await handle.sync();}finally{await handle.close();}
+}
+async function retainedReceipt(path,raw,name){
+  const handle=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);
+  try{
+    const before=await handle.stat();
+    need(before.isFile() && before.size===raw.length &&
+      before.uid===process.getuid() && !(before.mode&0o077),
+      'Preserve the original '+name+' receipt.');
+    const bytes=await handle.readFile(),after=await handle.stat();
+    need(bytes.equals(raw) && before.dev===after.dev && before.ino===after.ino &&
+      before.size===after.size && before.mtimeMs===after.mtimeMs &&
+      before.ctimeMs===after.ctimeMs,'Preserve the original '+name+' selection.');
+    await handle.sync();
+  }finally{await handle.close();}
+  await syncDirectory(dirname(path));
+}
 async function keep(name,value){
-  const path=pathFor(name),raw=json(value);
-  try {await writeFile(path,raw,{flag:'wx',mode:0o600});}
-  catch(error){if(error.code!=='EEXIST')throw error;need(await readFile(path,'utf8')===raw,'Preserve the original '+name+' selection.');}
-  const handle=await open(path,'r');try{await handle.sync();}finally{await handle.close();}
-  const parent=await open(dirname(path),'r');try{await parent.sync();}finally{await parent.close();}
+  const path=pathFor(name),raw=Buffer.from(json(value),'utf8');
+  try{await retainedReceipt(path,raw,name);return value;}
+  catch(error){if(error.code!=='ENOENT')throw error;}
+  const temporary=path+'.'+randomUUID()+'.partial';
+  let handle;
+  try{
+    handle=await open(temporary,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
+    await handle.writeFile(raw);await handle.sync();await handle.close();handle=null;
+    try{await link(temporary,path);}
+    catch(error){if(error.code!=='EEXIST')throw error;}
+    await retainedReceipt(path,raw,name);
+  }finally{
+    if(handle)await handle.close();
+    try{await unlink(temporary);}catch(error){if(error.code!=='ENOENT')throw error;}
+    await syncDirectory(dirname(path));
+  }
   return value;
 }
 async function once(name,work){const old=await read(name);return old??keep(name,await work());}
@@ -67,8 +100,65 @@ async function identity(path){
 async function waitFor(label,readValue,ready,seconds=120){
   const until=Date.now()+seconds*1000;let last;
   while(Date.now()<until){last=await readValue();if(ready(last))return last;await pause(250);}
-  await keep('waiting-'+label,{operation:OPERATION,label,last});
+  await keep('waiting-'+label+'-'+randomUUID(),{operation:OPERATION,label,last});
   throw new Error('Continue the retained '+label+' operation; its final state is saved.');
+}
+async function pythonOperation(name,operation,selection){
+  const request=await once(name+'-request',async()=>({
+    requestId:randomUUID(),operation,runtimeId:attached.runtimeId,...selection,
+  }));
+  const view=async()=>(await model.pythonState({runtimeId:attached.runtimeId}))
+    .operations.find(item=>item.id===request.requestId)??null;
+  const previous=await view();
+  await once(name+'-accepted',()=>model.begin(request));
+  if(previous && !previous.workerActive &&
+    (['QUEUED','FAILED'].includes(previous.phase) || previous.displayPhase==='INTERRUPTED')){
+    const recovered=await model.recoverPythonOperation(request.requestId);
+    await keep(name+'-recovery-'+randomUUID(),recovered);
+  }
+  const completed=await waitFor(name,view,row=>Boolean(row &&
+    (['SUCCEEDED','FAILED'].includes(row.phase) || row.displayPhase==='INTERRUPTED')),900);
+  need(completed.phase==='SUCCEEDED',
+    'Continue the original Python operation '+request.requestId+': '+JSON.stringify(completed.error??completed.displayPhase));
+  const receipt=completed.result;
+  need(receipt?.schema==='stellar-forge.python-operation-result.v1' && receipt.operation===operation &&
+    receipt.binding?.runtimeId===attached.runtimeId &&
+    receipt.binding.sourceCommit===values['source-commit'] &&
+    receipt.binding.sourceManifestSha256===plan.source.manifestSha256,
+    'Retain the actual Python operation result from this selected source release.');
+  await keep(name+'-result',receipt);
+  return receipt.result;
+}
+async function selectPython(){
+  if(values.installation)return values.installation;
+  const review=await once('python-source-review',()=>model.pythonReview({
+    runtimeId:attached.runtimeId,python:values.python,extras:[],
+  }));
+  const version=review.interpreter?.version;
+  need(Array.isArray(version) && (version[0]>3 || version[0]===3 && version[1]>=12),
+    'The original Analysis project requires Python 3.12 or newer.');
+  need(review.binding?.sourceCommit===values['source-commit'] &&
+    review.binding.sourceManifestSha256===plan.source.manifestSha256 &&
+    review.project?.scripts?.['stellar-forge-analysis-project']==='stellar_forge_buyer.analysis_projects:main',
+    'Review the original selected package containing the Analysis project command.');
+  const candidate=await pythonOperation('python-resolve','python-resolve',{reviewId:review.reviewId});
+  need(/^[a-f0-9]{64}$/.test(candidate?.id??''),'Read the exact original resolved Python cohort.');
+  const installation=await pythonOperation('python-install','python-install',{
+    candidateId:candidate.id,reviewId:review.reviewId,
+  });
+  need(/^[a-f0-9]{64}$/.test(installation?.id??'') &&
+    installation.entrypoints?.['stellar-forge-analysis-project']?.target==='stellar_forge_buyer.analysis_projects:main',
+    'Read the actual original installed Analysis project command.');
+  const activation=await once('python-activation-selection',async()=>{
+    const current=await model.pythonState({runtimeId:attached.runtimeId});
+    return {installationId:installation.id,expectedInstallationId:current.active?.installation??null,python:review.python};
+  });
+  const active=await pythonOperation('python-activate','python-activate',activation);
+  need(active.installation===installation.id,'Retain the exact activated Python installation.');
+  await keep('python-selection',{mode:'commissioned',installationId:installation.id,python:review.python,
+    reviewId:review.reviewId,candidateId:candidate.id,sourceCommit:values['source-commit'],
+    sourceManifestSha256:plan.source.manifestSha256});
+  return installation.id;
 }
 async function app(id){
   const state=await model.applicationsState({historyLimit:30});
@@ -82,10 +172,44 @@ async function ensureApp(name,kind,settings){
   }));
   const input=await once(name+'-save-request',async()=>({requestId:randomUUID(),reviewId:reviewed.id}));
   const saved=await once(name+'-saved',()=>model.applicationsSave(input));
-  need(saved.saved && !saved.connectionError,'The original application connection must complete.');
+  need(saved.saved && typeof saved.applicationId==='string','Retain the original saved application.');
+  const current=await app(saved.applicationId);
+  if(!current.release){
+    const attempt=name+'-connect-'+randomUUID();
+    await keep(attempt+'-request',{applicationId:saved.applicationId});
+    try{
+      const connected=await model.applicationsConnect({applicationId:saved.applicationId});
+      await keep(attempt+'-result',connected);
+    }catch(error){
+      await keep(attempt+'-error',{name:error.name,code:error.code??null,message:error.message});
+      const reconciled=await app(saved.applicationId);
+      if(!reconciled.release)throw error;
+    }
+  }
   const ready=await waitFor(name+'-connection',()=>app(saved.applicationId),value=>Boolean(value.release));
   need(ready.release.sourceCommit===values['source-commit'],'Keep the same installed release.');
   return {id:saved.applicationId,review:reviewed,saved};
+}
+const runStages=new Map();
+const sameRun=(a,b)=>a?.applicationId===b?.applicationId && a?.operationId===b?.operationId;
+const commandOutcome=row=>row?.result??row?.state?.result??null;
+async function selectedRun(original){
+  let run={applicationId:original.applicationId,operationId:original.operationId};
+  const seen=new Set();
+  while(true){
+    need(!seen.has(run.operationId),'Keep the original acyclic application continuation history.');
+    seen.add(run.operationId);
+    const link=await read('application-continuation-'+run.operationId);
+    if(!link)return run;
+    need(link.operation===OPERATION && sameRun(link.previous,run) &&
+      link.next?.applicationId===run.applicationId &&
+      /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(link.next?.operationId??''),
+      'Preserve the original application continuation selection.');
+    const stage=runStages.get(run.operationId);
+    need(stage && link.stage===stage.name,'Keep the original customer stage for this application.');
+    runStages.set(link.next.operationId,stage);
+    run={...link.next};
+  }
 }
 async function start(name,application){
   const reviewed=await once(name+'-start-review',()=>model.applicationsStartReview({applicationId:application.id}));
@@ -93,15 +217,88 @@ async function start(name,application){
     applicationId:application.id,requestId:randomUUID(),reviewId:reviewed.id,
   }));
   await once(name+'-accepted',()=>model.applicationsStart(input));
-  return {applicationId:application.id,operationId:input.requestId};
+  runStages.set(input.requestId,{name,review:reviewed});
+  return selectedRun({applicationId:application.id,operationId:input.requestId});
 }
 async function runView(run){
-  const selected=await app(run.applicationId);
-  return selected.runs.find(item=>item.id===run.operationId)??null;
+  let cursor=null;
+  const seen=new Set();
+  while(true){
+    const page=await model.applicationsHistory({applicationId:run.applicationId,limit:30,cursor});
+    need(page.applicationId===run.applicationId,'Read the original application history.');
+    const row=page.runs.find(item=>item.id===run.operationId);
+    if(row)return row;
+    if(page.nextCursor===null)return null;
+    need(typeof page.nextCursor==='string' && !seen.has(page.nextCursor),
+      'Continue the original returned application-history cursor.');
+    seen.add(page.nextCursor);cursor=page.nextCursor;
+  }
+}
+async function recoverRun(run,row){
+  let result,error,failure;
+  try{result=await model.applicationsRecover(run);}
+  catch(caught){
+    failure=caught;error={code:caught.code??null,message:String(caught.message??caught)};
+  }
+  await keep('application-recovery-'+run.operationId+'-'+randomUUID(),{
+    operation:OPERATION,run,previous:row,result:result??null,error:error??null,
+  });
+  if(failure && failure.code!=='RUNTIME_WORKSPACE_OPERATION_RUNNING')throw failure;
+  return runView(run);
+}
+function endedForContinuation(row){
+  if(!row || row.active || !['SUCCEEDED','FAILED','CANCELLED'].includes(row.phase))return false;
+  const outcome=commandOutcome(row);
+  if(outcome?.state==='OUTCOME_UNAVAILABLE')return false;
+  if(outcome?.state==='RECONCILED')return Boolean(row.state?.commandProcess);
+  return ['STOPPED','EXITED','LAUNCH_FAILED','COMPLETED','CANCELLED'].includes(outcome?.state);
+}
+async function nextRun(run,row){
+  const stage=runStages.get(run.operationId);
+  need(stage && endedForContinuation(row),'Retain and reconcile the original command outcome before another application run.');
+  const selection=await once('application-continuation-request-'+run.operationId,async()=>{
+    const reviewed=await model.applicationsStartReview({applicationId:run.applicationId});
+    need(reviewed.applicationId===run.applicationId &&
+      reviewed.applicationRevision===stage.review.applicationRevision &&
+      reviewed.releaseId===stage.review.releaseId && reviewed.releaseDigest===stage.review.releaseDigest &&
+      json(storage.canonical(reviewed.runtime))===json(storage.canonical(stage.review.runtime)) &&
+      reviewed.command.command===stage.review.command.command &&
+      json(reviewed.command.args)===json(stage.review.command.args),
+      'Review the same original application, source, Python command and customer database.');
+    return {schema:'stellar-forge.analysis-application-continuation.v1',operation:OPERATION,
+      stage:stage.name,previous:run,previousOutcome:row,review:reviewed,
+      request:{applicationId:run.applicationId,requestId:randomUUID(),reviewId:reviewed.id}};
+  });
+  need(selection.operation===OPERATION && selection.stage===stage.name && sameRun(selection.previous,run) &&
+    selection.request?.applicationId===run.applicationId,
+    'Keep the retained next run of this original application.');
+  const accepted=await model.applicationsStart(selection.request);
+  const next={applicationId:run.applicationId,operationId:selection.request.requestId};
+  await keep('application-continuation-'+run.operationId,{
+    operation:OPERATION,stage:stage.name,previous:run,next,selection,accepted,
+  });
+  runStages.set(next.operationId,stage);
+  return next;
+}
+async function continueRun(original,{completed=null}={}){
+  let run=await selectedRun(original),row=await runView(run);
+  if(row?.active)return run;
+  if(!row || ['PENDING','QUEUED','RUNNING','INTERRUPTED','FAILED'].includes(row.phase))
+    row=await recoverRun(run,row);
+  if(row?.active || ['PENDING','QUEUED','RUNNING'].includes(row?.phase))return run;
+  // Native output may be complete even when its command-result journal was lost.
+  if(completed && await completed())return run;
+  need(commandOutcome(row)?.state!=='OUTCOME_UNAVAILABLE',
+    'The original command has no retained process outcome; reconcile its host and output before continuing '+run.operationId+'.');
+  return nextRun(run,row);
 }
 async function listener(run){
-  const selected=await waitFor('listener-'+run.operationId,()=>runView(run),
-    row=>Boolean(row?.active && row.privateUrl));
+  const current=await continueRun(run);
+  const selected=await waitFor('listener-'+current.operationId,()=>runView(current),
+    row=>Boolean(row?.active && row.privateUrl) ||
+      Boolean(row && !row.active && ['SUCCEEDED','FAILED','CANCELLED','INTERRUPTED'].includes(row.phase)));
+  need(selected?.active && selected.privateUrl,
+    'The retained listener ended before becoming ready; continue its original application '+current.operationId+'.');
   const url=new URL(selected.privateUrl);
   need(url.protocol==='http:' && url.hostname==='127.0.0.1' && url.hash.length>1,
     'Use the actual private original loopback listener.');
@@ -121,43 +318,83 @@ async function api(run,path,body){
   need(response.ok,'Original Analysis request failed: '+response.status+' '+JSON.stringify(value));
   return value;
 }
-async function stop(name,run){
+async function stop(name,original){
+  const run=await selectedRun(original);
   const input=await once(name+'-stop-request',async()=>run);
-  const current=await runView(run);
-  if(current?.active)await model.applicationsStop(input);
+  need(sameRun(input,run),'Preserve the original selected application stop.');
+  let current=await runView(run);
+  if(current?.active || ['PENDING','QUEUED','RUNNING','INTERRUPTED'].includes(current?.phase)){
+    await model.applicationsStop(input);
+    current=await runView(run);
+  }
+  // Reconcile an ended recorded child or a returned command result. A stop
+  // does not launch an uncreated command merely to make a receipt terminal.
+  if(current && !current.active && current.phase!=='SUCCEEDED' &&
+    (current.result || current.state?.commandProcess))
+    current=await recoverRun(run,current);
   const stopped=await waitFor(name+'-stopped',()=>runView(run),
     row=>row && !row.active && ['SUCCEEDED','CANCELLED','FAILED'].includes(row.phase));
-  need(stopped.phase!=='FAILED','The original managed application stop failed.');
+  need(stopped.phase!=='FAILED' && commandOutcome(stopped)?.state!=='OUTCOME_UNAVAILABLE',
+    'Reconcile the retained original managed application stop before exporting its database.');
   return keep(name+'-stopped',stopped);
 }
 async function cli(name,args){
-  const bound=await model.pythonCommand({runtimeId:attached.runtimeId,installationId:values.installation,
+  const bound=await model.pythonCommand({runtimeId:attached.runtimeId,installationId,
     command:'stellar-forge-analysis-project',args});
   const attempt=join(root,name+'-'+randomUUID());
-  await mkdir(attempt,{mode:0o700});
-  await writeFile(join(attempt,'command.json'),json(bound),{flag:'wx',mode:0o600});
-  const stdout=await open(join(attempt,'stdout'),'wx',0o600),stderr=await open(join(attempt,'stderr'),'wx',0o600);
-  let child,interrupt=null;
-  const stopChild=signal=>{interrupt=signal;if(child)child.kill('SIGINT');};
+  await mkdir(attempt,{mode:0o700});await syncDirectory(root);
+  await storage.saveJSON(join(attempt,'command.json'),bound);
+  let stdout,stderr,child,closed,ended,spawnError=null,interrupt=null,signalError=null;
+  const stopChild=signal=>{
+    interrupt??=signal;
+    if(child && child.exitCode===null && child.signalCode===null){
+      try{child.kill('SIGINT');}catch(error){signalError??={code:error.code??null,message:String(error.message??error)};}
+    }
+  };
   const onInt=()=>stopChild('SIGINT'),onTerm=()=>stopChild('SIGTERM');
-  process.on('SIGINT',onInt);process.on('SIGTERM',onTerm);
+  let listening=false,failure=null,value;
   try{
+    stdout=await open(join(attempt,'stdout'),'wx',0o600);
+    stderr=await open(join(attempt,'stderr'),'wx',0o600);
+    await stdout.sync();await stderr.sync();await syncDirectory(attempt);
+    process.on('SIGINT',onInt);process.on('SIGTERM',onTerm);listening=true;
     need(!interrupt,'The original command was stopped before dispatch.');
     child=spawn(bound.executable,bound.argv,{cwd:bound.cwd,env:process.env,
       stdio:['ignore',stdout.fd,stderr.fd]});
-    if(interrupt)child.kill('SIGINT');
-    const ended=await new Promise((done,fail)=>{
-      child.once('error',fail);child.once('close',(code,signal)=>done({code,signal}));
+    // A spawn error still reaches close. Keep one settled native outcome and
+    // the original output handles until that exact child is positively reaped.
+    closed=new Promise(done=>{
+      child.once('error',error=>{spawnError={code:error.code??null,message:String(error.message??error)};});
+      child.once('close',(code,signal)=>done({code,signal}));
     });
-    await writeFile(join(attempt,'exit.json'),json({...ended,exitObserved:true,interrupt}),{flag:'wx',mode:0o600});
-    need(ended.code===0 && !interrupt,'The original installed command ended; retain its complete output at '+attempt);
+    if(interrupt)stopChild(interrupt);
+    ended=await closed;
+    need(!spawnError && ended.code===0 && !interrupt,
+      'The original installed command ended; retain its complete output at '+attempt);
     const raw=await readFile(join(attempt,'stdout'),'utf8');
-    return JSON.parse(raw);
-  }finally{
-    if(child && child.exitCode===null && child.signalCode===null)child.kill('SIGINT');
-    process.off('SIGINT',onInt);process.off('SIGTERM',onTerm);
-    await stdout.close();await stderr.close();
+    value=JSON.parse(raw);
+  }catch(error){failure=error;}
+  finally{
+    if(child && !ended){
+      stopChild(interrupt??'SIGINT');
+      ended=await closed;
+    }
+    try{
+      if(stdout)await stdout.sync();
+      if(stderr)await stderr.sync();
+      if(ended)await storage.saveJSON(join(attempt,'exit.json'),{
+        ...ended,exitObserved:true,interrupt,spawnError,signalError,
+      });
+    }catch(error){failure??=error;}
+    finally{
+      const closing=await Promise.allSettled([stdout?.close(),stderr?.close()]);
+      if(listening){process.off('SIGINT',onInt);process.off('SIGTERM',onTerm);}
+      const rejected=closing.find(result=>result.status==='rejected');
+      if(rejected)failure??=rejected.reason;
+    }
   }
+  if(failure)throw failure;
+  return value;
 }
 function redact(value){
   if(Array.isArray(value))return value.map(redact);
@@ -166,7 +403,7 @@ function redact(value){
   if(typeof value==='string' && /^https?:\/\//.test(value)){try{const url=new URL(value);url.hash='';return url.href;}catch{}}
   return value;
 }
-let attached;
+let attached,installationId;
 try{
   await keep('operation',config);
   const existing=await read('complete');
@@ -178,13 +415,14 @@ try{
     const input=await identity(values.project);
     need(input.bytes===ORIGINAL.bytes && input.sha256===ORIGINAL.sha256,'Select the exact original 7DE2 complete project.');
     attached=await once('runtime-attachment',()=>model.attach({directory:values.runtime,label:'Analysis project installed continuation'}));
+    installationId=await selectPython();
     await once('python-installation',()=>model.pythonState({runtimeId:attached.runtimeId}));
     const inspected=await once('original-inspection',()=>cli('inspect-original',[
       '--checkout',sourceRoot,'--project',values.project,'--project-sha256',ORIGINAL.sha256,'inspect']));
     need(inspected.workspace_id===ORIGINAL.workspaceId && inspected.members===ORIGINAL.members,'Keep the complete original case.');
     const database=join(root,'customer','analysis'),cache=join(root,'retained-project');
     await mkdir(dirname(database),{recursive:true,mode:0o700});
-    const settings={installationId:values.installation,projectPath:values.project,databaseDirectory:database,
+    const settings={installationId,projectPath:values.project,databaseDirectory:database,
       projectCache:cache,projectSha256:ORIGINAL.sha256,nodeExecutable:process.execPath,port:0};
     const opening=await ensureApp('customer','python-analysis-project',settings);
     const run=await start('customer-first',opening);
@@ -242,7 +480,7 @@ try{
     await once('customer-reopen-stop',()=>stop('customer-reopen',restarted));
     const output=join(root,'following-delivery');
     const exporting=await ensureApp('handover','python-analysis-project-export',{
-      installationId:values.installation,projectPath:values.project,databaseDirectory:database,
+      installationId,projectPath:values.project,databaseDirectory:database,
       projectCache:cache,projectSha256:ORIGINAL.sha256,nodeExecutable:process.execPath,
       outputDirectory:output,title:'Retained source coverage and customer analysis',
     });
@@ -251,10 +489,20 @@ try{
     need(/^[a-f0-9]{32}$/.test(archiveId),'Retain the bound original archive ID.');
     const exportedRun=await start('handover-export',exporting);
     await once('handover-run-result',async()=>{
-      const result=await waitFor('complete-export',()=>runView(exportedRun),
-        row=>row && !row.active && ['SUCCEEDED','FAILED','CANCELLED'].includes(row.phase),600);
-      need(result.phase==='SUCCEEDED','Continue the original full project export from its actual result.');
-      return result;
+      const nativeOutput=async()=>{
+        let value;
+        try{value=JSON.parse(await storage.regular(join(output,'project-operation-result.json')));}
+        catch(error){if(error.code==='ENOENT')return null;throw error;}
+        need(value.operation?.operation_id===archiveId,'Preserve the original bound native archive operation.');
+        return value.state==='COMPLETE'?value:null;
+      };
+      const current=await continueRun(exportedRun,{completed:nativeOutput});
+      const result=await waitFor('complete-export',()=>runView(current),
+        row=>row && !row.active && ['SUCCEEDED','FAILED','CANCELLED','INTERRUPTED'].includes(row.phase),600);
+      const completed=await nativeOutput();
+      need(completed,'Continue the original full project export from its retained command and native output.');
+      return {...result,nativeOutput:{path:join(output,'project-operation-result.json'),
+        state:completed.state,operationId:archiveId}};
     });
     const delivered=await once('following-project',async()=>{
       const result=JSON.parse(await readFile(join(output,'project-operation-result.json'),'utf8'));
@@ -269,7 +517,7 @@ try{
     const secondDatabase=join(root,'independent-customer','analysis'),secondCache=join(root,'following-retained-project');
     await mkdir(dirname(secondDatabase),{recursive:true,mode:0o700});
     const second=await ensureApp('independent-customer','python-analysis-project',{
-      installationId:values.installation,projectPath:delivery.path,databaseDirectory:secondDatabase,
+      installationId,projectPath:delivery.path,databaseDirectory:secondDatabase,
       projectCache:secondCache,projectSha256:delivery.sha256,nodeExecutable:process.execPath,port:0,
     });
     const secondRun=await start('independent-open',second);
@@ -297,10 +545,29 @@ try{
     need(repeated.reused===true && repeated.delivery.archive.sha256===delivery.sha256,
       'The same complete export must return its exact original bytes.');
     const records={};
-    for(const name of ['runtime-attachment','python-installation','original-inspection','customer-source-review',
+    for(const name of ['runtime-attachment','python-source-review','python-resolve-result','python-install-result',
+      'python-activation-selection','python-activate-result','python-selection','python-installation','original-inspection','customer-source-review',
       'customer-query-decision','customer-query-saved','customer-query-result','customer-first-stop','customer-reopened',
       'customer-reopen-stop','handover-review','handover-run-result','following-project','following-inspection',
       'independent-receiving','independent-stop','repeated-export'])records[name]=await read(name);
+    records.applications={};
+    for(const name of ['customer','handover','independent-customer']){
+      records.applications[name]={};
+      for(const kind of ['review','save-request','saved'])
+        records.applications[name][kind]=await read(name+'-'+kind);
+    }
+    for(const name of ['customer-first','customer-reopen','handover-export','independent-open']){
+      records.applications[name]={};
+      for(const kind of ['start-review','start-request','accepted','stop-request','stopped'])
+        records.applications[name][kind]=await read(name+'-'+kind);
+    }
+    records.applicationRecovery=[];
+    for(const name of (await readdir(root)).sort()){
+      if(/^application-(?:recovery|continuation(?:-request)?)-[a-f0-9-]+\.json$/.test(name) ||
+        /^(?:customer|handover|independent-customer)-connection-recovery-[a-f0-9-]+\.json$/.test(name) ||
+        /^(?:customer|handover|independent-customer)-connect-[a-f0-9-]+-(?:request|result|error)\.json$/.test(name))
+        records.applicationRecovery.push({file:name,record:await read(name.slice(0,-5))});
+    }
     const complete=await keep('complete',redact({schema:'stellar-forge.analysis-project-installed-receiving.v1',
       operation:OPERATION,state:'COMPLETE',sourceCommit:values['source-commit'],sourceManifestSha256:plan.source.manifestSha256,
       original:ORIGINAL,delivery,records,completedAt:new Date().toISOString()}));

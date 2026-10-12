@@ -7,6 +7,7 @@ import {createCustomerUpdatesClient} from './customer-updates/client.mjs';
 import {createResearchCommerceClient} from './customer-commerce/client.mjs';
 import {createClinicalTrialsClient} from './clinical-trials-client.mjs';
 import {createStudyExtractionClient} from './study-extraction-client.mjs';
+import {createStudyFlowClient} from './study-flow/client.mjs';
 import {createStudyProtocolClient} from './study-protocol-client.mjs';
 import {createTemplateExchangeClient} from './template-exchange/client.mjs';
 import {createDocumentWorkspaceClient,createPipelineWorkspaceClient,sendPipelineFiles} from './document-workspace-client.mjs';
@@ -133,12 +134,13 @@ export class ResearchWorkspaceClient{
     return this.#run(async()=>{
       const bytes=body===undefined?undefined:JSON.stringify(body);
       const templateRoute=/^\/api\/research\/dossiers\/[^/]+\/template-exchange(?:\/|\?|$)/.test(route);
-      const maximum=route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
+      const studyFlowRoute=/^\/api\/dossiers\/[^/]+\/study-flow(?:\/|\?|$)/.test(route);
+      const maximum=studyFlowRoute?16*1024*1024:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
         /^\/api\/dossiers\/[^/]+\/source-bundles\/(?:preview|receive)(?:\?projection=metadata)?$/.test(route)
         ?128*1024*1024+65536:96*1024*1024+65536;
       need(bytes===undefined||Buffer.byteLength(bytes)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');
       return this.#request(route,{...options,body:bytes,headers:{...(options.headers??{}),
-        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,templateRoute?PORTABLE_LIMIT:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
+        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,templateRoute?PORTABLE_LIMIT:studyFlowRoute?64*1024*1024:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
     });
   }
   async status(options={}){
@@ -263,6 +265,16 @@ export class ResearchWorkspaceClient{
   stopCrossref(id,operationId){return this.#json(operationPath(id,operationId)+'/stop',{});}
   receiveCrossref(id,operationId,input){return this.#json(operationPath(id,operationId)+'/receive?projection=metadata',input);}
   studyProtocol(){return createStudyProtocolClient({client:this,run:work=>this.#run(work)});}
+  /** @returns {import('./study-flow/client.mjs').FlowClient} */
+  studyFlows(){return createStudyFlowClient({request:(route,body,options)=>this.#json(route,body,options),
+    download:(route,file,options)=>this.#download(route,file,options)});}
+  studyFlow(id,options={}){return this.studyFlows().studyFlow(id,options);}
+  studyFlowSources(id,options={}){return this.studyFlows().studyFlowSources(id,options);}
+  studyFlowReport(id,options={}){return this.studyFlows().studyFlowReport(id,options);}
+  previewStudyFlow(id,input,options={}){return this.studyFlows().previewStudyFlow(id,input,options);}
+  importStudyFlowCounts(id,input,options={}){return this.studyFlows().importStudyFlowCounts(id,input,options);}
+  reviewStudyFlow(id,input,options={}){return this.studyFlows().reviewStudyFlow(id,input,options);}
+  exportStudyFlow(id,options={}){return this.studyFlows().exportStudyFlow(id,options);}
   studyExtraction(){return createStudyExtractionClient({request:(route,body,options)=>this.#json(route,body,options),
     download:(route,file,options)=>this.#download(route,file,options)});}
   extraction(id,options={}){return this.studyExtraction().extraction(id,options);}

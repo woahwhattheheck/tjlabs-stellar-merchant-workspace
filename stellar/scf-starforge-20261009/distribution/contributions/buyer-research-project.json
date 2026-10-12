@@ -1,0 +1,28 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "buyer-research-project",
+  "description": "Complete editable original-file research project handover",
+  "components": [
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search"
+  ],
+  "commands": {
+    "buyer-research-project": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project-cli.mjs"
+  },
+  "commandDescriptions": {
+    "buyer-research-project": "Export, inspect and independently receive complete editable research projects"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project-archive.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project-source.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project-ui.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/PROJECTS.md"
+  ],
+  "exports": {
+    "./buyer/research/project": {
+      "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/resource-library/content-search/project.mjs"
+    }
+  }
+}

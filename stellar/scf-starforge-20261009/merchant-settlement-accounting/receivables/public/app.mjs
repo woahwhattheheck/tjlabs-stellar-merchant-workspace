@@ -2,6 +2,9 @@ import {createReceivablesClient} from './client.mjs';
 import {createPaymentRequestUi} from './payment-requests.mjs';
 import {createRefundUi} from './refunds.mjs';
 import {createCollectionsUi} from './collections.mjs';
+import {createCashPlanningUi} from './cash-planning.mjs';
+import {createCreditControlUi} from './credit-control.mjs';
+import {createBankUi} from './bank-statements.mjs';
 
 const $ = selector => document.querySelector(selector);
 const e = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -24,6 +27,16 @@ const refundUi = createRefundUi({api, openDialog, mutate, getState:()=>ui.state,
 const collectionsUi = createCollectionsUi({api,openDialog,mutate,getState:()=>ui.state,getAsOf:()=>ui.asOf,
   getCustomer:()=>ui.customer,getSearch:()=>ui.search,units,amount,saveBlob,setBusy,showError,readSession,saveSession,setMessage,render,
   isLocked:()=>ui.busy || Boolean(ui.pending)});
+const cashPlanningUi = createCashPlanningUi({api,openDialog,closeDialog,mutate,getState:()=>ui.state,
+  getAsOf:()=>ui.asOf,getCustomer:()=>ui.customer,getSearch:()=>ui.search,saveBlob,setBusy,showError,
+  readSession,saveSession,setMessage,render,isLocked:()=>ui.busy || Boolean(ui.pending)});
+const creditControlUi = createCreditControlUi({api,openDialog,closeDialog,mutate,getState:()=>ui.state,
+  getCustomer:()=>ui.customer,getSearch:()=>ui.search,saveBlob,setBusy,showError,readSession,saveSession,setMessage,render,
+  openInvoice:async invoiceId=>{if(ui.editor){ui.parkedEditor=ui.editor;persistEditor();ui.editor=null;}ui.view='invoices';await selectInvoice(invoiceId);},isLocked:()=>ui.busy || Boolean(ui.pending)});
+const bankUi = createBankUi({api, openDialog, mutate, getState:()=>ui.state, getAsOf:()=>ui.asOf, showBank:()=>{ui.view='bank';},
+  units, amount, render, saveBlob, showError, setBusy, readSession, saveSession, setMessage,
+  isLocked:()=>ui.busy || Boolean(ui.pending)});
+$('#dialog').addEventListener('close',()=>bankUi.close());
 $('#operator').value = readSession('actor','merchant-operator');
 $('#as-of').value = ui.asOf;
 function customerName(customerId) {
@@ -114,7 +127,7 @@ async function runPending() {
   if (!ui.pending || ui.busy) return;
   const current=ui.pending; setBusy(true); dialogMessage('');
   try {
-    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...collectionsUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
+    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...bankUi.methods,...collectionsUi.methods,...cashPlanningUi.methods,...creditControlUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
     const result=await api[current.method](...current.args);
     if (current.method === 'saveDraft' || current.method === 'importQuote') {
       ui.selected=result.invoice?.id || current.args.at(-1).id || ui.selected;
@@ -129,6 +142,9 @@ async function runPending() {
     await paymentUi.afterMutation(result,current);
     await refundUi.afterMutation(result,current);
     await collectionsUi.afterMutation(result,current);
+    await cashPlanningUi.afterMutation(result,current);
+    await creditControlUi.afterMutation(result,current);
+    await bankUi.afterMutation(result,current);
   } catch(error) {
     if (ui.pending?.requestId === current.requestId) {
       ui.pending.error=errorMessage(error);
@@ -151,6 +167,9 @@ async function refresh({quiet=false}={}) {
     $('#customer-filter').value=ui.customer;
     await refundUi.loadList({customerId:ui.customer,date:asOf});
     await collectionsUi.loadList();
+    await cashPlanningUi.loadList();
+    await creditControlUi.loadList();
+    if(ui.view==='bank')await bankUi.load({quiet:true});
     if(ui.refreshVersion!==version||ui.asOf!==asOf)return;
     render();
     if (ui.selected && !ui.editor) await selectInvoice(ui.selected);
@@ -172,8 +191,13 @@ function render() {
     if(button.dataset.view===ui.view)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
   });
   $('#status-filter').disabled=ui.view!=='invoices';
+  $('#as-of').disabled=ui.view==='credit-control';
+  $('#customer-filter').disabled=ui.view==='bank';
+  $('#search').disabled=ui.view==='bank';
+  $('#customer-filter').closest('.filters').hidden=ui.view==='bank';
   if(!ui.state)return;
-  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='collections'?collectionsUi.render():renderActivity();
+  $('#revision').textContent='Revision '+ui.state.revision+(ui.view==='bank'?'':' · As of '+ui.asOf);
+  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='bank'?bankUi.render():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():ui.view==='credit-control'?creditControlUi.render():renderActivity();
   renderPending(); setBusy(ui.busy);
 }
 function renderInvoices() {
@@ -274,7 +298,7 @@ function renderPerformanceBasis(binding, imported = null) {
 function renderInvoiceDetail() {
   const row=detailInvoice(),doc=row.document||row.draft||{},credits=row.credits||[],allocations=row.allocations||[];
   const active=allocations.filter(item=>!item.releasedDate);
-  const actions=row.status==='DRAFT'?btn('Edit draft','edit-invoice',' data-write') + btn('Review and issue','preview-invoice',' data-write',true):
+  const actions=row.status==='DRAFT'?btn('Edit draft','edit-invoice',' data-write') + btn('Review and issue','preview-invoice',' data-write',true)+creditControlUi.invoiceAction(row):
     row.status==='ISSUED'?btn('Allocate receipt','allocate-invoice',' data-write',true)+btn('Credit note','credit-invoice',' data-write'):'';
   return '<div class="panel-head"><div><h2>' + e(row.number||'Draft invoice') + '</h2><p class="small-text muted">' + e(row.customerName||customerName(row.customerId)) + '</p></div>' + badge(row) +
     '</div><div class="panel-body"><div class="row">' + actions + '</div><div class="stats"><div class="stat"><span>Total · ' + e(row.currency?.code) + '</span><strong>' + e(row.total) +
@@ -426,7 +450,7 @@ function openDialog(title,content) {
   if(!$('#dialog').open)$('#dialog').showModal();
   setBusy(ui.busy);
 }
-function closeDialog() { paymentUi.close(); refundUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
+function closeDialog() { paymentUi.close(); refundUi.close(); bankUi.close(); if($('#dialog').open)$('#dialog').close();dialogMessage(''); }
 function currencyFields(currency={code:'USD',scale:2}) {
   return '<label>Currency<input name="currencyCode" maxlength="3" pattern="[A-Za-z]{3}" value="' + e(currency.code) + '" required></label><label>Decimal places<select name="currencyScale">' +
     [0,1,2,3,4,5,6].map(scale=>'<option value="' + scale + '"' + (Number(currency.scale)===scale?' selected':'') + '>' + scale + '</option>').join('') + '</select></label>';
@@ -454,8 +478,11 @@ function renderDocument(doc) {
 async function previewInvoice() {
   const invoice=detailInvoice();
   const preview=await api.preview(invoice.id);
+  if(preview.creditReviewRequired&&!preview.creditDecisionId){await creditControlUi.assess(invoice.id);return;}
   ui.preview={...preview,invoiceId:invoice.id,expectedVersion:preview.expectedVersion};
-  openDialog('Review invoice before issue',renderDocument(preview.document) + '<p class="hint">Issuing assigns the next invoice number and retains this document with its current customer and merchant details.</p>' +
+  openDialog('Review invoice before issue',renderDocument(preview.document) +
+    (preview.creditDecisionId?'<p class="notice">The current saved credit approval will be retained with this invoice. '+
+      btn('View credit decision','credit-control-decision',' data-id="'+e(preview.creditDecisionId)+'"')+'</p>':'')+'<p class="hint">Issuing assigns the next invoice number and retains this document with its current customer and merchant details.</p>' +
     '<div class="dialog-actions">' + btn('Back','close-dialog') + btn('Issue invoice','issue-invoice',' data-write',true) + '</div>');
 }
 function settingsDialog() {
@@ -655,17 +682,29 @@ document.addEventListener('input',event=>{
   paymentUi.input(event.target);
   refundUi.input(event.target);
   collectionsUi.input(event.target);
+  cashPlanningUi.input(event.target);
+  bankUi.input(event.target);
+  creditControlUi.input(event.target);
   if(event.target.closest('#draft-form'))updateDraft(event.target);
   else if(event.target.id==='operator')saveSession('actor',event.target.value);
-  else if(event.target.id==='search'){ui.search=event.target.value;render();}
+  else if(event.target.id==='search'){
+    ui.search=event.target.value;
+    if(ui.view==='credit-control'){
+      clearTimeout(ui.creditSearchTimer);
+      ui.creditSearchTimer=setTimeout(()=>creditControlUi.loadList().then(()=>{if(ui.view==='credit-control')render();}),200);
+    } else render();
+  }
 });
 document.addEventListener('change',event=>{
   const target=event.target;
   paymentUi.change(target);
   refundUi.change(target);
+  bankUi.change(target);
   collectionsUi.change(target);
+  cashPlanningUi.change(target).catch(showError);
+  creditControlUi.change(target);
   if(target.closest('#draft-form'))updateDraft(target);
-  else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});collectionsUi.loadList().then(()=>{if(ui.view==='collections')render();});if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
+  else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});collectionsUi.loadList().then(()=>{if(ui.view==='collections')render();});creditControlUi.loadList().then(()=>{if(ui.view==='credit-control')render();});if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
   else if(target.id==='status-filter'){ui.status=target.value;render();}
   else if(target.id==='as-of'){ui.asOf=target.value||today();refresh({quiet:true});}
   else if(target.id==='quote-scope'){const recurring=target.value==='RECURRING';$('#quote-period-count').disabled=!recurring;$('#quote-period-label').disabled=!recurring;$('#quote-period-label').required=recurring;}
@@ -686,6 +725,9 @@ document.addEventListener('submit',async event=>{
     if(await paymentUi.submit(form,values))return;
     if(await refundUi.submit(form,values))return;
     if(await collectionsUi.submit(form,values))return;
+    if(await cashPlanningUi.submit(form,values))return;
+    if(await creditControlUi.submit(form,values))return;
+    if(await bankUi.submit(form,values))return;
     if(form.id==='draft-form'){
       if(!ui.editor.lines.length)throw new Error('Add an invoice line.');
       await mutate('saveDraft',[draftPayload()],'Save invoice draft');
@@ -722,7 +764,10 @@ document.addEventListener('click',async event=>{
     if(await paymentUi.click(button))return;
     if(await refundUi.click(button))return;
     if(await collectionsUi.click(button))return;
-    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
+    if(await cashPlanningUi.click(button))return;
+    if(await creditControlUi.click(button))return;
+    if(await bankUi.click(button))return;
+    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='bank')await bankUi.load();else if(ui.view==='credit-control'){await creditControlUi.loadList();render();}else if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
     else if(action==='refresh')await refresh();
     else if(action==='dismiss-message')setMessage('');
     else if(action==='new-invoice'){
@@ -744,7 +789,7 @@ document.addEventListener('click',async event=>{
     } else if(action==='preview-invoice')await previewInvoice();
     else if(action==='issue-invoice'){
       if(!ui.preview)throw new Error('Review the invoice before issuing.');
-      await mutate('issue',[ui.preview.invoiceId,{expectedVersion:ui.preview.expectedVersion,previewSha256:ui.preview.previewSha256}],'Issue invoice');
+      await mutate('issue',[ui.preview.invoiceId,{expectedVersion:ui.preview.expectedVersion,previewSha256:ui.preview.previewSha256,...(ui.preview.creditDecisionId?{creditDecisionId:ui.preview.creditDecisionId}:{})}],'Issue invoice');
     } else if(action==='close-dialog')closeDialog();
     else if(action==='manual-receipt')manualReceiptDialog();
     else if(action==='native-receipt')nativeReceiptDialog();

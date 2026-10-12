@@ -12,6 +12,7 @@ import {RISK_OF_BIAS_COMMANDS,main as riskOfBiasMain} from './risk-of-bias/cli.m
 import {CUSTOMER_UPDATE_COMMANDS,main as customerUpdateMain} from './customer-updates/cli.mjs';
 import {RESEARCH_COMMERCE_COMMANDS,main as researchCommerceMain} from './customer-commerce/cli.mjs';
 import {STUDY_EXTRACTION_COMMANDS,main as extractionMain} from './study-extraction-cli.mjs';
+import {STUDY_FLOW_COMMANDS,STUDY_FLOW_USAGE,main as studyFlowMain} from './study-flow/cli.mjs';
 import {TEMPLATE_EXCHANGE_COMMANDS,main as templateMain} from './template-exchange/template-workspace-cli.mjs';
 import {parseJson,need,safeCode} from '../node/store.mjs';
 
@@ -199,10 +200,11 @@ export async function main(argv=process.argv.slice(2),{output=process.stdout}={}
   if(DOCUMENT_COMMANDS.includes(argv[0]))return documentMain(argv,{output});
   if(ELIGIBILITY_COMMANDS.includes(argv[0]))return eligibilityMain(argv,{output});
   if(RISK_OF_BIAS_COMMANDS.includes(argv[0]))return riskOfBiasMain(argv,{output});
+  if(STUDY_FLOW_COMMANDS.includes(argv[0]))return studyFlowMain(argv,{output});
   if(STUDY_EXTRACTION_COMMANDS.includes(argv[0]))return extractionMain(argv,{output});
   if(TEMPLATE_EXCHANGE_COMMANDS.includes(argv[0]))return templateMain(argv,{output});
   const [command,...args]=argv;
-  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE);return;}
+  if(!command||['help','--help','-h'].includes(command)){output.write(usage+'\n'+RIS_USAGE+'\n'+STUDY_FLOW_USAGE);return;}
   need(Object.hasOwn(commandOptions,command),'COMMAND_UNKNOWN');
   const fields=['connection-file','directory','timeout-ms',...commandOptions[command]];
   const {values,tokens}=parseArgs({args,options:Object.fromEntries(fields.map(key=>[key,{type:'string'}])),strict:true,tokens:true});

@@ -1,5 +1,7 @@
 # Customer installation operations
 
+For the complete receiver-to-owner workflow, open **Delivery operations → Receiving returns** and follow [Installation receiving returns](INSTALLATION_RETURNS.md). It records named observations against one exact saved edition, returns every original file, compares the owner's current definition, and stages explicit choices before the original Installation save.
+
 The **Customer installations** desk completes the commissioning-to-receiving workflow inside the existing SF47 operating case. An installation describes the customer's whole task, original source and commercial terms, selected merchant and buyer deployments, receiving application, maintainer and assigned funded work. Its acceptance steps select the existing work, purchase, outcome and source records.
 
 Each save appends an immutable edition. A later source observation or installation edit leaves earlier editions readable. The complete original Operations ZIP carries every saved edition, the native planner history, the case event history and all retained attachments. **Export complete handover** also includes a selected-edition marker and a readable offline installation document. Importing that ZIP opens the selected edition in the receiving case.
@@ -7,6 +9,14 @@ Each save appends an immutable edition. A later source observation or installati
 ## Delivery assignments and queue
 
 Each saved installation may carry `document.coordination`: its delivery assignee, target date, priority and note, plus per-check overrides and prerequisites. This metadata travels with the complete installation document through the existing preview/save and receiving workflow. [Installation delivery queue](DELIVERY_QUEUE.md) explains the fields, current-edition work view, typed client, CLI, MCP and complete dated handover.
+
+## Allocate installation phases in Portfolio
+
+Open **Delivery and cash operations → Portfolio**, choose the original saved Forecast and select **Use installation phases**. Select the exact saved Installation edition for its matching commercial task. The original phase owners, dependencies, quoted effort, delivery terms and support terms remain visible with their source.
+
+Enter explicit remaining phase work and resource availability, then review the delivery boundary. The boundary phases and their ancestors determine the commercial work dates; later support still consumes the same shared resources. Recorded check acceptance and remaining effort stay separate. Preview the complete allocation and cash, save the reviewed Portfolio, and use **Open dated cash forecast draft** to open the original Forecast draft.
+
+The [Portfolio guide](PORTFOLIO.md#allocate-saved-installation-phases) covers the full operator workflow. The original Portfolio seed API, CLI and SDK accept optional exact edition selections and a complete existing draft. Saved phase allocations retain their source editions and travel with the full original case export, so a receiving operator can reopen both the installation history and its allocation.
 
 ## Operate the complete workflow
 

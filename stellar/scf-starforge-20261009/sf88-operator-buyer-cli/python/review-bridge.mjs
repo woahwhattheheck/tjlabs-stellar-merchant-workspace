@@ -2,17 +2,20 @@
 // MIT — Python operates the original SF88 library, worker and review writers.
 import {randomUUID} from 'node:crypto';
 import {createReviewBrowser} from './review-browser.mjs';
+import {createResearchBinding,researchActions} from './review-reading.mjs';
 import {openLibrary} from '../resource-library/library.mjs';
+import {collectionMembers, inspectOriginalCollection, receiveOriginalCollection, openOriginalCollection, collectionDownload} from './review-collections.mjs';
 import {readSnapshot, requireValue, digest} from '../resource-library/files.mjs';
 
 const SCHEMA='stellar-forge.sf88.python-review.v1';
 const MAX_FRAME=8*1024*1024, CHUNK=1024*1024;
 let reportDescriptor,verifyHandover,available=[];
-let library=null, browser=null, closing=false, input=Buffer.alloc(0), output=Promise.resolve();
+let library=null, browser=null, research=null, closing=false, input=Buffer.alloc(0), output=Promise.resolve();
 const active=new Map(), transfers=new Map();
-const ACTIONS=[
+const ACTIONS=[...researchActions,
   'library.status','library.scan','library.search','library.resource','library.preview','library.select',
   'annotation.save','annotation.history','collections.list','collections.show','collections.history','collections.save',
+  'collections.members','collections.inspectArchive','collections.receiveArchive',
   'comparisons.begin','comparisons.run','comparisons.inspect','comparisons.list','comparisons.select',
   'comparisons.resume','comparisons.cancel','comparisons.wait','comparisons.changes','comparisons.decide',
   'comparisons.history','comparisons.import','returns.stage','returns.list','returns.inspect','returns.targets',
@@ -45,7 +48,15 @@ async function dispatch(action,p,signal){
     requireValue(!library&&!closing,'REVIEW_ALREADY_OPEN',409);
     const [major,minor]=process.versions.node.split('.').map(Number);
     requireValue(major>22||(major===22&&minor>=16),'REVIEW_NODE_22_16_REQUIRED');
-    library=await openLibrary(p);browser=createReviewBrowser(library);
+    let collectionReceipt=null;
+    if(p.receivedDirectory!==undefined){
+      const opened=await openOriginalCollection(p,signal);library=opened.library;collectionReceipt=opened.receipt;
+    }else{
+      requireValue(p.collectionArchive===undefined&&p.collectionExpectedSha256===undefined&&
+        p.collectionMaxBytes===undefined&&!p.collectionResume,'COLLECTION_RECEIVED_DIRECTORY_REQUIRED');
+      library=await openLibrary(p);
+    }
+    browser=createReviewBrowser(library);research=createResearchBinding(library);
     // The existing source library remains usable while its optional edition
     // product is composed. Never install or synthesize a comparison engine.
     if(library.comparisons){
@@ -55,10 +66,12 @@ async function dispatch(action,p,signal){
     available=ACTIONS.filter(action=>action.startsWith('returns.')?Boolean(library.comparisons?.returns):
       action.startsWith('comparisons.')||action==='handover.verify'?Boolean(library.comparisons):true);
     return {schema:SCHEMA,node:process.versions.node,actions:available,
-      features:{resources:true,browser:true,comparisons:Boolean(library.comparisons),returns:Boolean(library.comparisons?.returns)},library:library.status()};
+      features:{resources:true,browser:true,collections:true,research:true,comparisons:Boolean(library.comparisons),returns:Boolean(library.comparisons?.returns)},
+      collectionReceipt,library:library.status()};
   }
   requireValue(library&&!closing,'REVIEW_NOT_OPEN',409);
   requireValue(available.includes(action),'REVIEW_CAPABILITY_UNAVAILABLE',409);
+  if(action.startsWith("research."))return research.dispatch(action,p,signal);
   const c=library.comparisons,r=c?.returns,{id,options={},input:body={}}=p;
   switch(action){
     case 'browser.start':return browser.start(p);
@@ -76,6 +89,9 @@ async function dispatch(action,p,signal){
     case 'collections.show':return library.collections.show(id,p.revision);
     case 'collections.history':return library.collections.history(id,options);
     case 'collections.save':return library.collections.save(p);
+    case 'collections.members':return collectionMembers(library,p);
+    case 'collections.inspectArchive':return inspectOriginalCollection(p,signal);
+    case 'collections.receiveArchive':return receiveOriginalCollection(p,signal);
     case 'comparisons.begin':return c.begin(p);
     case 'comparisons.run':{const started=c.begin(p);return c.wait(started.id,{signal});}
     case 'comparisons.inspect':return c.inspect(id);
@@ -103,9 +119,11 @@ async function dispatch(action,p,signal){
     }
     case 'transfer.open':{
       requireValue(transfers.size<8,'REVIEW_TRANSFER_CAPACITY',409);
-      requireValue(['resource','comparison','return','library-review'].includes(p.kind),'REVIEW_TRANSFER_KIND_INVALID');
+      requireValue(['resource','comparison','return','library-review','collection','reading-handover'].includes(p.kind),'REVIEW_TRANSFER_KIND_INVALID');
       let descriptor;
-      if(p.kind==='resource')descriptor=await library.download(id,{signal});
+      if(p.kind==='reading-handover')descriptor=await research.download(id,signal);
+      else if(p.kind==='resource')descriptor=await library.download(id,{signal});
+      else if(p.kind==='collection')descriptor=await collectionDownload(library,p,signal);
       else {
         requireValue(typeof reportDescriptor==='function','REVIEW_COMPARISON_RUNTIME_REQUIRED',409);
         const report=p.kind==='return'?r.handover(id,{format:p.format??'json'}):
@@ -113,8 +131,11 @@ async function dispatch(action,p,signal){
             chunks:(async function*(){yield JSON.stringify(library.exportReview(),null,2)+'\n';})()}:undefined;
         descriptor=await reportDescriptor(library,id??'resource-review',{format:p.format??'json',signal,report});
       }
-      const token=randomUUID(),metadata={token,kind:p.kind,id:id??null,format:p.format??'json',
+      const token=randomUUID(),metadata={token,kind:p.kind,id:id??null,format:p.format??(p.kind==='collection'?'tar':'json'),
         bytes:descriptor.bytes,sha256:descriptor.sha256,name:descriptor.resource.name};
+      if(p.kind==='collection')Object.assign(metadata,{revision:descriptor.revision,
+        collectionId:descriptor.collectionId,manifestSha256:descriptor.manifestSha256,
+        memberCount:descriptor.memberCount,objectCount:descriptor.objectCount});
       transfers.set(token,{descriptor,metadata});return metadata;
     }
     case 'transfer.read':{
@@ -131,7 +152,7 @@ async function dispatch(action,p,signal){
     case 'close':{
       closing=true;for(const controller of active.values())controller.abort();
       for(const token of [...transfers.keys()])await releaseTransfer(token);
-      await browser.close();await library.close();return {closed:true};
+      await browser.close();await research.close();await library.close();return {closed:true};
     }
     default:requireValue(false,'REVIEW_ACTION_INVALID');
   }
@@ -140,6 +161,7 @@ async function shutdown(){
   if(!closing){closing=true;for(const controller of active.values())controller.abort();
     for(const token of [...transfers.keys()])await releaseTransfer(token).catch(()=>{});
     if(browser)await browser.close().catch(()=>{});
+    if(research)await research.close().catch(()=>{});
     if(library)await library.close().catch(()=>{});}
   await output.catch(()=>{});
 }

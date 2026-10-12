@@ -54,6 +54,7 @@ function validateBasisReferences(definition,basis){
  };
  for(const v of [...definition.records,...definition.retrievals,...definition.reportedCounts,...definition.exclusionReasons])check(v.basis);
  check(definition.previous.basis);
+ for(const value of definition.previous.membership)check(value.basis);
  for(const row of definition.records){
  need(occurrences.has(row.occurrenceId),'FLOW_RECORD_OUTSIDE_SOURCE');
  if(row.duplicateOf)need(occurrences.has(row.duplicateOf),'FLOW_DUPLICATE_TARGET_OUTSIDE_SOURCE');
@@ -113,7 +114,8 @@ export function captureFlowBasis(state,projected,definition,{id,priorReport=null
  previous:priorReport?{editionId:priorReport.edition.id,flowId:priorReport.flowId,name:priorReport.definition.name,
  questionId:priorReport.definition.questionId,status:priorReport.status,reportSha256:priorReport.reportSha256,
  sourceRevision:priorReport.source.sourceRevision,counts:priorReport.counts.map(v=>({id:v.id,value:v.value})),
- studyIds:clone(priorReport.included.studyIds),reportKeys:clone(priorReport.included.reportKeys)}:null};
+ studyIds:clone(priorReport.included.studyIds),reportKeys:clone(priorReport.included.reportKeys),
+ reportStudyLinks:clone(priorReport.included.reportStudyLinks),linksComplete:priorReport.included.linksComplete}:null};
  if(priorReport)need(priorReport.definition.questionId===question.id,'FLOW_PREVIOUS_QUESTION_MISMATCH');
  validateBasisReferences(definition,basis);
  return{...basis,sha256:flowDigest(basis)};
@@ -307,6 +309,38 @@ function metricProjection(definition,basis,rows){
  const retainedPriorReports=priorReports.filter(id=>!definition.previous.reportKeysRemoved.includes(id));
  const effectiveStudyIds=distinct([...(update?retainedPriorStudies:[]),...studyIds.map(id=>mappedStudy.get(id)??id)]);
  const effectiveReportKeys=distinct([...(update?retainedPriorReports:[]),...reportKeys.map(id=>mappedReport.get(id)??id)]);
+ const priorLinks=previous?.reportStudyLinks??[];
+ const currentLinks=includedStudies.flatMap(study=>study.includedReportKeys.map(reportKey=>({
+ studyId:mappedStudy.get(study.id)??study.id,reportKey:mappedReport.get(reportKey)??reportKey,
+ mode:'derived',sourceStudyId:study.id,sourceReportKey:reportKey,basis:{sourceBasisId:basis.id}})));
+ const retainedLinks=update?priorLinks.filter(v=>effectiveStudyIds.includes(v.studyId)&&effectiveReportKeys.includes(v.reportKey)).map(v=>({
+ ...clone(v),mode:'retained-report',basis:{previousEditionId:previous.editionId,reportSha256:previous.reportSha256,
+ original:clone(v.basis??null)}})):[];
+ const overriddenReports=new Set(definition.previous.membership.map(v=>v.reportKey));
+ const reportedLinks=definition.previous.membership.map(v=>{
+ need(effectiveStudyIds.includes(v.studyId)&&effectiveReportKeys.includes(v.reportKey),'FLOW_PREVIOUS_MEMBERSHIP_ID_UNKNOWN');
+ return{...clone(v),mode:'reported'};
+ });
+ const reportStudyLinks=[...retainedLinks,...currentLinks].filter(v=>!overriddenReports.has(v.reportKey)).concat(reportedLinks);
+ const edgeMap=new Map();for(const edge of reportStudyLinks){
+ const key=edge.studyId+'\n'+edge.reportKey;if(!edgeMap.has(key))edgeMap.set(key,{studyId:edge.studyId,reportKey:edge.reportKey,provenance:[]});
+ edgeMap.get(key).provenance.push(clone(edge));
+ }
+ const membership=[...edgeMap.values()];
+ for(const reportKey of effectiveReportKeys.filter(id=>!membership.some(v=>v.reportKey===id))){
+ const priorEdges=priorLinks.filter(v=>v.reportKey===reportKey);
+ add('INCLUDED_REPORT_WITHOUT_SURVIVING_STUDY',
+ 'This included report has no surviving included study link. Retain an original study link or provide a source-attributed reporting correction.',
+ {level:priorEdges.length?'error':'warning',reportKey,previousStudyIds:priorEdges.map(v=>v.studyId)});
+ }
+ for(const studyId of effectiveStudyIds.filter(id=>!membership.some(v=>v.studyId===id))){
+ const priorEdges=priorLinks.filter(v=>v.studyId===studyId);
+ add('INCLUDED_STUDY_WITHOUT_RETAINED_REPORT',
+ 'This included study has no retained included report. Reconcile its original report linkage and carry-forward decision.',
+ {level:priorEdges.length?'error':'warning',studyId,previousReportKeys:priorEdges.map(v=>v.reportKey)});
+ }
+ const linksComplete=effectiveStudyIds.every(id=>membership.some(v=>v.studyId===id))&&
+ effectiveReportKeys.every(id=>membership.some(v=>v.reportKey===id))&&priorStudyIdentitiesComplete&&priorReportIdentitiesComplete;
  put('total_studies',effectiveStudyIds,{complete:studiesComplete&&priorStudyIdentitiesComplete});
  put('total_reports',effectiveReportKeys,{complete:includedComplete&&priorReportIdentitiesComplete});
  if(update&&previous&&(!priorStudyIdentitiesComplete||!priorReportIdentitiesComplete))add('PREVIOUS_IDENTITIES_PARTIAL',
@@ -314,7 +348,8 @@ function metricProjection(definition,basis,rows){
  if(update&&!previous)add('PREVIOUS_FLOW_NOT_SELECTED','Select the previous saved flow or attribute all previous and total counts to a documented source.');
  if(previous&&previous.status!=='reviewed')add('PREVIOUS_FLOW_WAS_NOT_REVIEWED','The selected previous edition had not been marked reviewed.',{editionId:previous.editionId});
  if(definition.previous.studyIdsRemoved.length||definition.previous.reportKeysRemoved.length)
- if(!definition.previous.reason.trim()||!definition.previous.basis.locator.trim())add('PREVIOUS_REMOVAL_BASIS_REQUIRED',
+ if(!definition.previous.reason.trim()||!definition.previous.basis.locator.trim()||
+ !(definition.previous.basis.reference.trim()||definition.previous.basis.editionIds.length||definition.previous.basis.occurrenceIds.length))add('PREVIOUS_REMOVAL_BASIS_REQUIRED',
  'Give the source and reason for omitting prior included studies or reports.',{level:'error'});
  for(const override of definition.reportedCounts){
  const metric=metrics.get(override.metric);metric.value=override.value;metric.mode='reported';
@@ -396,7 +431,8 @@ function metricProjection(definition,basis,rows){
  !v.id.startsWith('previous_')).map(v=>v.id);
  return{counts,exclusionReasons,included:{studyIds:effectiveStudyIds,reportKeys:effectiveReportKeys,
  originalStudyIds:studyIds,originalReportKeys:reportKeys,
- identityCoverage:{studies:effectiveStudyIds.length===value('total_studies'),reports:effectiveReportKeys.length===value('total_reports')}},activeMetricIds:activeIds};
+ identityCoverage:{studies:effectiveStudyIds.length===value('total_studies'),reports:effectiveReportKeys.length===value('total_reports')},
+ reportStudyLinks:membership,linksComplete},activeMetricIds:activeIds};
 }
 export function buildStudyFlowReport(definition,basis,{flowId=null,edition=null,status='draft',review=null}={}){
  definition=flowDefinition(definition);validateBasisReferences(definition,basis);
@@ -434,7 +470,7 @@ export function studyFlowReport(state,{flowId,editionId}={}){
  const status=editionState(model,edition);
  return buildStudyFlowReport(edition.definition,basis,{flowId:edition.flowId,edition,...status});
 }
-export function previewStudyFlow(state,projected,{expectedRevision,definition,flowId,sourceMode='current'}={}){
+export function previewStudyFlow(state,projected,{expectedRevision,definition,flowId,sourceMode='current',basisEditionId=null}={}){
  need(expectedRevision===state.revision,'REVISION_CONFLICT');
  const d=flowDefinition(definition),model=stateRecords(state),flow=flowId?byId(model.flows,flowId,'FLOW_NOT_FOUND'):null;
  const prior=d.previous.editionId?studyFlowReport(state,{editionId:d.previous.editionId}):null;
@@ -442,9 +478,11 @@ export function previewStudyFlow(state,projected,{expectedRevision,definition,fl
  let basis;
  if(sourceMode==='retained'){
  need(existing,'FLOW_RETAINED_SOURCE_REQUIRES_EDITION');
- basis=byId(model.bases,existing.sourceBasisId,'FLOW_SOURCE_BASIS_NOT_FOUND');
+ const sourceEdition=basisEditionId?byId(model.editions,basisEditionId,'FLOW_EDITION_NOT_FOUND'):existing;
+ need(sourceEdition.flowId===flow.id,'FLOW_EDITION_MISMATCH');
+ basis=byId(model.bases,sourceEdition.sourceBasisId,'FLOW_SOURCE_BASIS_NOT_FOUND');
  need(same(basis.selector,selectedKeys(d)),'FLOW_SOURCE_SELECTION_CHANGED_REFRESH_REQUIRED');
- }else{need(sourceMode==='current','FLOW_SOURCE_MODE_INVALID');basis=captureFlowBasis(state,projected,d,{priorReport:prior});}
+ }else{need(sourceMode==='current'&&basisEditionId===null,'FLOW_SOURCE_MODE_INVALID');basis=captureFlowBasis(state,projected,d,{priorReport:prior});}
  return buildStudyFlowReport(d,basis,{flowId:flow?.id??null});
 }
 export function studyFlowSource(state,projected,{questionId,reviewId,workSetId,offset=0,limit=30}={}){
@@ -505,7 +543,10 @@ export function recordStudyFlowOperation(state,projected,input,createdAt){
  const priorReport=definition.previous.editionId?studyFlowReport(state,{editionId:definition.previous.editionId}):null;
  let basis,newBasis=false;
  if(request.data.sourceMode==='retained'){
- need(previous,'FLOW_RETAINED_SOURCE_REQUIRES_EDITION');basis=byId(model.bases,previous.sourceBasisId,'FLOW_SOURCE_BASIS_NOT_FOUND');
+ need(previous,'FLOW_RETAINED_SOURCE_REQUIRES_EDITION');
+ const sourceEdition=request.data.basisEditionId?byId(model.editions,request.data.basisEditionId,'FLOW_EDITION_NOT_FOUND'):previous;
+ need(sourceEdition.flowId===flow.id,'FLOW_EDITION_MISMATCH');
+ basis=byId(model.bases,sourceEdition.sourceBasisId,'FLOW_SOURCE_BASIS_NOT_FOUND');
  need(same(basis.selector,selectedKeys(definition)),'FLOW_SOURCE_SELECTION_CHANGED_REFRESH_REQUIRED');
  }else{basis=captureFlowBasis(state,projected,definition,{id:entityId('fb',state,request),priorReport});newBasis=true;}
  validateBasisReferences(definition,basis);

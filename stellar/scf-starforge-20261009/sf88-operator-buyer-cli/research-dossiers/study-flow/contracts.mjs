@@ -137,7 +137,7 @@ export function flowDefinition(input){
  return{lane:value.lane,label:text(value.label,'FLOW_EXCLUSION_LABEL_REQUIRED',1000),value:count(value.value),
  reason:text(value.reason,'FLOW_EXCLUSION_REASON_REQUIRED'),basis:basisInput(value.basis,{required:value.value!==null})};
  });
- fields(input.previous??{},['editionId','studyIdsRemoved','reportKeysRemoved','studyLinks','reportLinks','reason','basis'],
+ fields(input.previous??{},['editionId','studyIdsRemoved','reportKeysRemoved','studyLinks','reportLinks','membership','reason','basis'],
  'FLOW_PREVIOUS_FIELDS_INVALID');
  const link=(value,kind)=>{fields(value,['current','previous','reason'],'FLOW_PREVIOUS_LINK_INVALID');
  return{current:text(value.current,'FLOW_PREVIOUS_CURRENT_REQUIRED',500),previous:text(value.previous,'FLOW_PREVIOUS_ID_REQUIRED',500),
@@ -146,6 +146,10 @@ export function flowDefinition(input){
  studyIdsRemoved:ids(input.previous?.studyIdsRemoved??[],'FLOW_PREVIOUS_STUDIES_INVALID'),
  reportKeysRemoved:optionalRows(input.previous?.reportKeysRemoved,'FLOW_PREVIOUS_REPORT_KEYS_REMOVED_ARRAY_REQUIRED').map(v=>text(v,'FLOW_PREVIOUS_REPORT_INVALID',500)),
  studyLinks:optionalRows(input.previous?.studyLinks,'FLOW_PREVIOUS_STUDY_LINKS_ARRAY_REQUIRED').map(v=>link(v,'study')),reportLinks:optionalRows(input.previous?.reportLinks,'FLOW_PREVIOUS_REPORT_LINKS_ARRAY_REQUIRED').map(v=>link(v,'report')),
+ membership:optionalRows(input.previous?.membership,'FLOW_PREVIOUS_MEMBERSHIP_ARRAY_REQUIRED').map(value=>{
+ fields(value,['reportKey','studyId','reason','basis'],'FLOW_PREVIOUS_MEMBERSHIP_FIELDS_INVALID');
+ return{reportKey:text(value.reportKey,'FLOW_REPORT_KEY_INVALID',500),studyId:identifier(value.studyId),
+ reason:text(value.reason,'FLOW_MEMBERSHIP_REASON_REQUIRED'),basis:basisInput(value.basis,{required:true})};}),
  reason:text(input.previous?.reason??'','FLOW_PREVIOUS_REASON_INVALID',20000,true),
  basis:basisInput(input.previous?.basis)};
  fields(input.coverage??{},['statement','completeSearch','screeningBy','screeningByHuman','screeningByAutomation'],'FLOW_COVERAGE_INVALID');
@@ -163,6 +167,7 @@ export function flowDefinition(input){
  [records,v=>v.occurrenceId,'FLOW_DUPLICATE_RECORD_RULE'],[retrievals,v=>v.reportKey,'FLOW_DUPLICATE_RETRIEVAL'],
  [reportAnchors,v=>v.reportKey,'FLOW_DUPLICATE_REPORT_ANCHOR'],[reportedCounts,v=>v.metric,'FLOW_DUPLICATE_METRIC'],
  [exclusionReasons,v=>v.lane+'\n'+v.label,'FLOW_DUPLICATE_EXCLUSION_REASON'],
+ [previous.membership,v=>v.reportKey+'\n'+v.studyId,'FLOW_DUPLICATE_PREVIOUS_MEMBERSHIP'],
  [previous.reportKeysRemoved,v=>v,'FLOW_DUPLICATE_PREVIOUS_REPORT_REMOVAL'],
  [previous.studyLinks,v=>v.current,'FLOW_DUPLICATE_PREVIOUS_STUDY'],[previous.reportLinks,v=>v.current,'FLOW_DUPLICATE_PREVIOUS_REPORT']])
  unique(rows,key,code);
@@ -170,7 +175,7 @@ export function flowDefinition(input){
  'FLOW_SOURCE_SELECTION_MISMATCH');
  need(v.reviewId||!v.workSetIds.length,'FLOW_REVIEW_REQUIRED');
  if(!v.template.startsWith('update-'))need(!previous.editionId&&!previous.studyIdsRemoved.length&&!previous.reportKeysRemoved.length&&
- !previous.studyLinks.length&&!previous.reportLinks.length,'FLOW_PREVIOUS_REQUIRES_UPDATE');
+ !previous.studyLinks.length&&!previous.reportLinks.length&&!previous.membership.length,'FLOW_PREVIOUS_REQUIRES_UPDATE');
  need(same(v,JSON.parse(JSON.stringify(v))),'FLOW_JSON_REQUIRED');return v;
 }
 export function flowInput(input){
@@ -181,10 +186,12 @@ export function flowInput(input){
  const request={requestId:input.requestId,expectedRevision:input.expectedRevision,actor:actorInput(input.actor),
  action:input.action,...(input.flowId!==undefined?{flowId:identifier(input.flowId)}:{}),data:clone(input.data)};
  if(input.action==='save'){
- fields(input.data,['definition','sourceMode','supersedes','reason','importFile'],'FLOW_SAVE_FIELDS_INVALID');
+ fields(input.data,['definition','sourceMode','basisEditionId','supersedes','reason','importFile'],'FLOW_SAVE_FIELDS_INVALID');
  request.data.definition=flowDefinition(input.data.definition);
  need(['current','retained'].includes(input.data.sourceMode??'current'),'FLOW_SOURCE_MODE_INVALID');
  request.data.sourceMode=input.data.sourceMode??'current';
+ request.data.basisEditionId=input.data.basisEditionId==null?null:identifier(input.data.basisEditionId);
+ need(request.data.sourceMode==='retained'||request.data.basisEditionId===null,'FLOW_RETAINED_EDITION_MODE_REQUIRED');
  request.data.reason=text(input.data.reason,'FLOW_SAVE_REASON_REQUIRED');
  request.data.supersedes=input.data.supersedes==null?null:identifier(input.data.supersedes);
  if(input.data.importFile!==undefined){
@@ -206,7 +213,7 @@ export function parseFlowCsv(body){
  const rows=[];let row=[],cell='',quoted=false,after=false;
  const finishCell=()=>{row.push(cell);cell='';after=false;};
  const finishRow=()=>{finishCell();rows.push(row);row=[];};
- for(let i=0;i<body.length;i++){
+ for(let i=body.charCodeAt(0)===0xfeff?1:0;i<body.length;i++){
  const c=body[i];
  if(quoted){if(c==='"'){if(body[i+1]==='"'){cell+='"';i++;}else{quoted=false;after=true;}}else cell+=c;continue;}
  if(c==='"'){need(!cell&&!after,'FLOW_CSV_QUOTE_INVALID');quoted=true;continue;}

@@ -1,5 +1,7 @@
 # OpenLineage operations workspace
 
+The [async Python producer](ASYNC_PYTHON_PRODUCER.md) operates the released 1.53.0 queue, ordering and retry worker through `cli.mjs native-python-async`. It retains each first native request and actual acknowledgement, resumes the same delivery after interruption, and exports the complete producer operation with the original workspace. The guide includes the full native customer receiving command.
+
 Native Python and Java OpenLineage 1.53.0 producers are included in the complete application. Use `cli.mjs native-python` or `cli.mjs native-java` to send retained original pipeline events and continue interrupted deliveries through the same workspace. The [producer guide](PRODUCERS.md), [Python guide](PYTHON_PRODUCER.md) and [Java guide](JAVA_PRODUCER.md) cover preparation, configuration, saved progress and customer receiving.
 
 The managed merchant producer desk prepares private Python or Java settings,
@@ -278,3 +280,11 @@ Open **Schema changes** to compare two named saved editions, inspect original fi
 ## Pipeline service levels
 
 Open **Service levels** from the workspace header to maintain per-job freshness, duration and failure policies; evaluate original events at a stated time; and assign, acknowledge, resolve or accept incidents with complete decision history. The same workflow is available through `scf-lineage service-levels`, the typed service-levels client and the original native/merchant tools. See [SERVICE_LEVELS.md](SERVICE_LEVELS.md) for policy semantics, complete customer reports and editable receiving, and [SERVICE_LEVELS_OPERATOR.md](SERVICE_LEVELS_OPERATOR.md) for the operator desk.
+
+## Dataset quality operations
+
+The original browser's **Quality** view provides original metric and assertion history, exact dataset/run selection, saved rules, immutable evaluations and reasoned finding dispositions. Original producer severity, assertion success and observed run state are visible independently. A reported zero remains a value and an omitted metric remains unreported.
+
+Use `QualityClient` from `./quality-client.mjs`, or the installed `@tokenjunkielabs/starforge-merchant/seller/openlineage/quality` export. Its seven methods call the existing `quality.*` actions through the original workspace HTTP owner. Rule, evaluation and disposition saves use the same operation IDs, revision checks and replay handling as the other application workflows.
+
+The [complete quality operator and client guide](QUALITY_OPERATOR.md) explains the four desk views, metric and assertion rules, reports, original request recovery and full editable receiving. Existing schema and service-level operations remain available in the same application.

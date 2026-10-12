@@ -6,10 +6,28 @@ import re
 
 from model import Problem
 from operations import Operations, decoded
+import operations_calendar as calendar_model
+from operations_commercial_http import handle as commercial_http
 
 
 def register_static(static):
-    static.update({"/operations_performance.mjs": ("operations_performance.mjs", "text/javascript; charset=utf-8"),
+    static.update({"/operations_cash_accounts.mjs": ("operations_cash_accounts.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_cash_accounts.css": ("operations_cash_accounts.css", "text/css; charset=utf-8")})
+    static.update({"/operations_amendments.mjs": ("operations_amendments.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_amendments.css": ("operations_amendments.css", "text/css; charset=utf-8")})
+    static.update({"/operations_installation_returns.mjs": ("operations_installation_returns.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_installation_returns.css": ("operations_installation_returns.css", "text/css; charset=utf-8")})
+    static.update({"/operations_work_intake.mjs": ("operations_work_intake.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_work_intake.css": ("operations_work_intake.css", "text/css; charset=utf-8")})
+    static.update({"/operations_commercial.mjs": ("operations_commercial.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_commercial.css": ("operations_commercial.css", "text/css; charset=utf-8")})
+    static.update({"/operations_statements.mjs": ("operations_statements.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_statements.css": ("operations_statements.css", "text/css; charset=utf-8")})
+    static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
+                   "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_ledger_intake.css": ("operations_ledger_intake.css", "text/css; charset=utf-8"),
+                   "/operations_performance.mjs": ("operations_performance.mjs", "text/javascript; charset=utf-8"),
                    "/operations_performance.css": ("operations_performance.css", "text/css; charset=utf-8"),
                    "/operations_dispatch.mjs": ("operations_dispatch.mjs", "text/javascript; charset=utf-8"),
                    "/operations_dispatch.css": ("operations_dispatch.css", "text/css; charset=utf-8"),
@@ -22,6 +40,8 @@ def register_static(static):
                    "/operations_installations.css": ("operations_installations.css", "text/css; charset=utf-8"),
                    "/operations_buyer.mjs": ("operations_buyer.mjs", "text/javascript; charset=utf-8"),
                    "/operations_buyer.css": ("operations_buyer.css", "text/css; charset=utf-8"),
+                   "/operations_calendar.mjs": ("operations_calendar.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_calendar.css": ("operations_calendar.css", "text/css; charset=utf-8"),
                    "/operations_completion.mjs": ("operations_completion.mjs", "text/javascript; charset=utf-8"),
                    "/operations_completion.css": ("operations_completion.css", "text/css; charset=utf-8"),
                    "/operations_support.mjs": ("operations_support.mjs", "text/javascript; charset=utf-8"),
@@ -31,6 +51,7 @@ def register_static(static):
                    "/forecast_currency.mjs": ("forecast_currency.mjs", "text/javascript; charset=utf-8"),
                    "/forecast.css": ("forecast.css", "text/css; charset=utf-8"),
                    "/portfolio.mjs": ("portfolio.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio_installation_plans.mjs": ("portfolio_installation_plans.mjs", "text/javascript; charset=utf-8"),
                    "/portfolio.css": ("portfolio.css", "text/css; charset=utf-8")})
 
 
@@ -45,11 +66,13 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if commercial_http(handler, parsed, ops, "GET"):
+        return True
     path = parsed.path
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
         return True
-    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|export.zip|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
+    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|amendments(?:/amendment-[a-f0-9]{32})?|installation-returns(?:/review-[a-f0-9]{32}/export.zip)?|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|cash-account(?:/export.zip)?|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
         raise Problem("Operations page not found.", 404, "NOT_FOUND")
     ident, action = match.groups()
@@ -57,10 +80,59 @@ def read(handler, parsed):
         handler.send(200, ops.read(ident))
     elif action == "report":
         handler.send(200, ops.report(ident))
+    elif action == "amendments":
+        handler.send(200, ops.amendments(ident))
+    elif action.startswith("amendments/"):
+        selected = query.get("revision", [None])[0]
+        try:
+            revision = int(selected) if selected is not None else None
+        except ValueError as exc:
+            raise Problem("Select the original amendment edition.", 422, "INVALID_AMENDMENT") from exc
+        handler.send(200, ops.amendment(ident, action.split("/")[1], revision))
+    elif action == "ledger-intake":
+        handler.send(200, ops.ledger_intake(ident))
+    elif action.startswith("ledger-intakes/"):
+        handler.send(200, ops.ledger_intake_original(ident, action.split("/")[1]))
+    elif action == "work-intakes":
+        handler.send(200, {"intakes": ops.list_work_intakes(ident)})
+    elif action.startswith("work-intakes/"):
+        revision = query.get("revision", [None])[0]
+        try:
+            revision = int(revision) if revision is not None else None
+        except ValueError as exc:
+            raise Problem("Use the saved intake edition number.", 422, "INVALID_WORK_INTAKE") from exc
+        handler.send(200, ops.work_intake(ident, action.split("/")[1], revision))
     elif action == "history":
         handler.send(200, ops.history(ident, int(query.get("after", ["0"])[0]), int(query.get("limit", ["100"])[0])))
     elif action == "export.zip":
         handler.send(200, ops.export(ident), "application/zip", ident + ".zip")
+    elif action in ("cash-account", "cash-account/export.zip"):
+        account_query = parse_qs(parsed.query, keep_blank_values=True)
+        selection = {key: account_query.get(key, [None])[0] for key in
+                     ("startDate", "endDate", "network", "currency", "asset")}
+        supplied = query.get("expectedVersion", [None])[0]
+        try:
+            expected = int(supplied) if supplied is not None else None
+        except ValueError as exc:
+            raise Problem("Use the original cash account case version.", 422, "INVALID_CASH_VERSION") from exc
+        if action.endswith("/export.zip"):
+            handler.send(200, ops.export_cash_account(ident, selection, expected,
+                query.get("expectedReportSha256", [None])[0]), "application/zip", ident + "-cash-account.zip")
+        else:
+            handler.send(200, ops.cash_account(ident, selection, expected))
+    elif action in ("supplier-account", "supplier-account/export.zip"):
+        supplied = query.get("expectedVersion", [None])[0]
+        try:
+            expected = int(supplied) if supplied is not None else None
+        except ValueError as exc:
+            raise Problem("Use the original supplier account case version.", 422, "INVALID_SUPPLIER_VERSION") from exc
+        contributor = query.get("contributorId", [None])[0]
+        start, end = query.get("startDate", [None])[0], query.get("endDate", [None])[0]
+        if action.endswith("/export.zip"):
+            handler.send(200, ops.export_supplier_account(ident, contributor, start, end, expected,
+                query.get("expectedReportSha256", [None])[0]), "application/zip", ident + "-supplier-account.zip")
+        else:
+            handler.send(200, ops.supplier_account(ident, contributor, start, end, expected))
     elif action == "performance":
         expected = query.get("expectedVersion", [None])[0]
         try:
@@ -82,6 +154,11 @@ def read(handler, parsed):
     elif action == "delivery-queue/export.zip":
         handler.send(200, ops.export_delivery_queue(ident, query.get("asOfDate", [None])[0]),
                      "application/zip", ident + "-delivery-queue.zip")
+    elif action == "installation-returns":
+        handler.send(200, ops.installation_returns(ident))
+    elif action.startswith("installation-returns/"):
+        review_id = action.split("/")[1]
+        handler.send(200, ops.export_installation_return(ident, review_id), "application/zip", review_id + "-installation-return.zip")
     elif action == "installations":
         handler.send(200, {"installations": ops.list_installations(ident)})
     elif action.startswith("installations/"):
@@ -99,6 +176,19 @@ def read(handler, parsed):
                          installation_id + "-edition-" + str(revision) + ".zip")
         else:
             handler.send(200, ops.installation(ident, installation_id, revision))
+    elif action == "delivery-calendar" or action.startswith("delivery-calendar/export."):
+        supplied = query.get("expectedVersion", [None])[0]
+        try:
+            expected = int(supplied) if supplied is not None else None
+        except ValueError as exc:
+            raise Problem("Use the selected calendar's case version.", 422, "INVALID_CALENDAR_VERSION") from exc
+        as_of = query.get("asOfDate", [None])[0]
+        if action == "delivery-calendar":
+            handler.send(200, ops.delivery_calendar(ident, as_of, expected))
+        else:
+            format = action.rsplit(".", 1)[1]
+            handler.send(200, ops.export_delivery_calendar(ident, as_of, format, expected),
+                         calendar_model.content_type(format), ident + "-delivery-calendar." + format)
     elif action == "completion":
         handler.send(200, ops.completion_calendar(ident, query.get("asOfDate", [None])[0]))
     elif action.startswith("implementation-reviews/"):
@@ -145,6 +235,8 @@ def write(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, path = store(handler), parsed.path
+    if commercial_http(handler, parsed, ops, "POST"):
+        return True
     if path == "/api/operations/import":
         query = parse_qs(parsed.query)
         result = ops.import_bundle(handler.raw_body(), query.get("name", ["Imported delivery operations"])[0],
@@ -157,11 +249,16 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|cash-correction-preview|cash-correction|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
-        methods = {"command": ops.command, "implementation-source": ops.seed_implementation,
+        methods = {"command": ops.command, "cash-correction-preview": ops.cash_correction_preview,
+                   "cash-correction": ops.cash_correction_apply, "amendment-preview": ops.preview_amendment, "installation-return-seed": ops.seed_installation_return,
+                   "installation-return-preview": ops.preview_installation_return,
+                   "installation-return-review-preview": ops.preview_installation_return_review, "work-intake-preview": ops.preview_work_intake, "ledger-intake-inspect": ops.inspect_ledger_intake,
+                   "ledger-intake-preview": ops.preview_ledger_intake, "ledger-intake-apply": ops.apply_ledger_intake,
+                   "statement-preview": ops.preview_statement, "implementation-source": ops.seed_implementation,
                    "implementation-preview": ops.preview_implementation, "cohort-seed": ops.seed_cohort, "cohort-preview": ops.preview_cohort, "installation-seed": ops.seed_installation,
                    "installation-workflows": ops.installation_workflows,
                    "installation-workflow-seed": ops.seed_workflow_installation,

@@ -3,6 +3,7 @@ export { statementFileNames, statementDefinitions } from './catalog/accounting-s
 // MIT. Customer statements through the original accounting host and native statement engine.
 import {CustomerStatementWorkspace,MAX_USAGE_BYTES} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/store.mjs';
 import {normalizeUsage,sha,json,need} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/core.mjs';
+import {servicePeriodCaptureIdentity} from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/customer-statements/period-usage.mjs';
 
 
 
@@ -91,6 +92,27 @@ export class MerchantCustomerStatements{
     return {bytes,content,summary:{source:alias,sha256:sha(bytes),bytes:bytes.length,sourceSchema:usage.sourceSchema,
       sourceCreatedAt:usage.createdAt,sourceRevision:usage.revision,orderCount:usage.orders.length}};
   }
+  async usageCaptures(args){
+    return this.workspace.serial(async()=>{
+      const page=paginate(this.native.data().imports,args,'usage-captures'),items=[];
+      for(const record of page.items){
+        const usage=await this.native._readUsage(record);let identity=null,unavailableCode=null;
+        try{identity=servicePeriodCaptureIdentity(usage);}
+        catch(error){
+          if(!['COMPLETE_NATIVE_PERIOD_SOURCE_REQUIRED','SERVICE_PERIOD_ENTITLEMENT_REQUIRED'].includes(error.code))throw error;
+          unavailableCode=error.code;
+        }
+        const order=identity?usage.orders[0]:null;
+        items.push({...record,schema:'stellar-forge.merchant-service-capture.v1',
+          sourceCreatedAt:usage.createdAt,sourceRevision:usage.revision,sourceSchema:usage.sourceSchema,
+          periodEligible:identity!==null,periodIdentity:identity,periodIdentitySha256:identity?sha(json(identity)):null,
+          pass:order?{...identity,planLabel:order.planLabel,
+            unitsUsed:order.unitsUsed,unitsReserved:order.unitsReserved,unitsRemaining:order.unitsRemaining,callCount:order.calls.length}:null,
+          unavailableCode});
+      }
+      return {revision:this.workspace.state.revision,page:{...page,items}};
+    });
+  }
   async prepared(args){
     const preview=await this.native.preview(own(args,SELECTION)),bytes=Buffer.from(json(preview));
     need(bytes.length<=128_000_000,'STATEMENT_EXPORT_LIMIT','The complete native preview exceeds the supported statement export size.');
@@ -168,6 +190,7 @@ export class MerchantCustomerStatements{
         need(source.summary.sha256===value.expectedSha256,'CUSTOMER_USAGE_SOURCE_CHANGED','The declared usage capture changed after review. Review its current original bytes.',409);
         return mappedResult(await this.native.importUsage({revision:value.revision,actor:value.actor,name:value.name??value.source,content:source.content}));
       }
+      case 'usage_captures':return this.usageCaptures(value);
       case 'usage_period':return this.usagePeriodResult(value);
       case 'statement_preview':return this.previewResult(value);
       case 'statement_retain':return mappedResult(await this.native.retain(value));

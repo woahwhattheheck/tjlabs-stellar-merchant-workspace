@@ -10,6 +10,9 @@ import { writePrivate, privateSupportDirectory } from './host-files.mjs';
 import { accountingStatementArguments, accountingStatementRetentionArguments, accountingStatementPreview, connectAccountingStatementClient } from './accounting-statement-client.mjs';
 import { downloadAccountingMaintenanceFile } from './accounting-maintenance-cli.mjs';
 
+import {inspectAccountingStatementCustomerDossiers,exportAccountingStatementCustomerDossier,readAccountingStatementCustomerDossier} from './accounting-statement-customer-dossier.mjs';
+export {inspectAccountingStatementCustomerDossiers,exportAccountingStatementCustomerDossier,readAccountingStatementCustomerDossier};
+
 const REQUEST = 'stellar-forge.accounting-statement-client-request.v1';
 const STATE = 'stellar-forge.accounting-statement-client-state.v1';
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
@@ -264,7 +267,14 @@ function cycleSummary(report){
     attention:rows.filter(row=>row.error).map(row=>({index:row.index,customer:row.customer.reference,phase:row.phase,error:row.error}))};
 }
 
-const HELP="Starforge customer statement client\n\n  open|close|status --url MCP_URL --workspace ALIAS [--token-env NAME]\n  status|bindings|order|statements|detail|lookup|usage-source ...\n      [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --request PRIVATE_SELECTION_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  usage-period-summary ... --request PRIVATE_PERIOD_QUERY_JSON\n  usage-period ... --request PRIVATE_PERIOD_SELECTION_JSON --out NEW_PRIVATE_PERIOD_JSON\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action retain --preview PRIVATE_PREVIEW_JSON --actor NAME [--request-id ID]\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action save|assign|usage_import|withdraw --request PRIVATE_NATIVE_ARGUMENTS_JSON\n  execute|reconcile|observe --dir PRIVATE_OPERATION\n  cycle-prepare --dir PRIVATE_CYCLE --url MCP_URL --workspace ALIAS\n      --actor NAME --label LABEL --request PRIVATE_SELECTIONS_ARRAY_JSON [--token-env NAME]\n  cycle-execute|cycle-reconcile|cycle-status|cycle-observe --dir PRIVATE_CYCLE\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE\n  export ... --statement-id UUID --dir PRIVATE_DELIVERY_DIRECTORY\n  status-snapshot ... --statement-id UUID --out NEW_PRIVATE_STATUS_JSON\n\nConnection commands accept --token-env NAME. Tokens remain in that process variable.\nstatus request: {\"view\":\"customers|runs|usage|history\",\"offset\":0,\"limit\":200}.\nbindings: {\"customerId\":\"UUID\",\"offset\":0,\"limit\":200}. order: {\"orderRef\":\"original\"}.\ndetail: {\"statementId\":\"UUID\",\"view\":\"summary|items|excluded|assets|calls|adjustments|period-routes|period-calls|history\"}.\nCalls and adjustments select orderRef; page all native items with offset and limit.\nlookup: {\"requestId\":\"original-retention-id\"}. usage-source: {\"source\":\"host-alias\"}.\nPreview selects customerId/runId, optional usageId/replacesId, and optional from/until.\nAdd usageOpeningId for the service period ending at usageId; from/until select purchases.\nusage-period selects {\"usageOpeningId\":\"UUID\",\"usageId\":\"UUID\"}; its summary\naccepts view:summary|routes|calls, offset and limit. It reads actual native captures.\nThe complete native preview is read through the original SHA-pinned file consumer.\nUsage import requires the source SHA returned by usage-source. Retention uses its\ncomplete reviewed preview and one durable requestId; corrections set replacesId.\nprepare retains exact normalized arguments in request.json and resumes matching\npreparation after interruption. observe reads its atomic saved state without a\nwriter lease or network request. execute reconciles\ncurrent original records before sending; reconcile reads them. Lost replies\nrecover through the native request ID, source SHA, profile, bindings or withdrawal\nhistory. Exact retries keep the original revision guard and operation identity.\nexport delivers statement.json, statement.csv, usage.csv, statement.html and\nmanifest.json. Period statements also deliver period.csv, period-summary.csv,\nusage-opening.json and usage-closing.json. Restart verifies and reuses every file,\ncompletes an earlier five-file delivery of that same period, and retains native hashes.\nstatus-snapshot reads the current status.json once through the original pinned\nreader and saves its exact bytes and SHA. All original files remain available\nthrough correction and withdrawal. Ordinary commands release this caller's reads.\nClosing cycles freeze complete customer previews before any retention. The same\nrequest and directory resume partial preparation. cycle-execute reconciles each\noriginal request, retains unchanged reviewed content, and exports every customer\npacket. cycle-reconcile recovers existing retained packets. cycle-status refreshes\nthe portable HTML/JSON register from saved progress without an MCP request.\ncycle-observe reads atomic customer progress during an active close without taking\nits writer lease or rewriting the register.\nclose explicitly closes the original accounting workspace.\nExit 0: complete, prepared or read. Exit 3: prepared effect not observed. Exit 2: error.\n";
+
+export async function readAccountingStatementServicePlanner(options){return (await import('./accounting-statement-service-planner.mjs')).readAccountingStatementServicePlanner(options);}
+export async function compileAccountingStatementServicePlan(options){return (await import('./accounting-statement-service-planner.mjs')).compileAccountingStatementServicePlan(options);}
+export async function prepareAccountingStatementServiceCycle(options){return (await import('./accounting-statement-service-planner.mjs')).prepareAccountingStatementServiceCycle(options);}
+export async function renderAccountingStatementServicePlanCsv(plan){return (await import('./accounting-statement-service-planner.mjs')).renderAccountingStatementServicePlanCsv(plan);}
+export async function renderAccountingStatementServicePlanHtml(plan){return (await import('./accounting-statement-service-planner.mjs')).renderAccountingStatementServicePlanHtml(plan);}
+
+const HELP="Starforge customer statement client\n\n  open|close|status --url MCP_URL --workspace ALIAS [--token-env NAME]\n  status|bindings|order|statements|detail|lookup|usage-source|usage-captures ...\n      [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --request PRIVATE_SELECTION_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  usage-period-summary ... --request PRIVATE_PERIOD_QUERY_JSON\n  usage-period ... --request PRIVATE_PERIOD_SELECTION_JSON --out NEW_PRIVATE_PERIOD_JSON\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action retain --preview PRIVATE_PREVIEW_JSON --actor NAME [--request-id ID]\n  prepare --dir NEW_PRIVATE_OPERATION --url MCP_URL --workspace ALIAS\n      --action save|assign|usage_import|withdraw --request PRIVATE_NATIVE_ARGUMENTS_JSON\n  execute|reconcile|observe --dir PRIVATE_OPERATION\n  service-planner --url MCP_URL --workspace ALIAS [--out NEW_PRIVATE_INVENTORY_JSON]\n  service-plan --url MCP_URL --workspace ALIAS --request PRIVATE_CHOICES_ARRAY_JSON\n      --out NEW_PRIVATE_PLAN_JSON [--token-env NAME]\n  service-plan-export --plan PRIVATE_PLAN_JSON --format html|csv --out NEW_PRIVATE_FILE\n  service-cycle-prepare --plan PRIVATE_PLAN_JSON --dir PRIVATE_CYCLE\n      --url MCP_URL --workspace ALIAS --actor NAME --label LABEL [--token-env NAME]\n  cycle-prepare --dir PRIVATE_CYCLE --url MCP_URL --workspace ALIAS\n      --actor NAME --label LABEL --request PRIVATE_SELECTIONS_ARRAY_JSON [--token-env NAME]\n  cycle-execute|cycle-reconcile|cycle-status|cycle-observe --dir PRIVATE_CYCLE\n  cycle-customers --dir PRIVATE_CYCLE\n  cycle-customer-export --dir PRIVATE_CYCLE --customer-id UUID --out PRIVATE_OUTPUT_ROOT\n  customer-dossier --dir PRIVATE_CUSTOMER_SNAPSHOT [--verify-files true|false]\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE\n  export ... --statement-id UUID --dir PRIVATE_DELIVERY_DIRECTORY\n  status-snapshot ... --statement-id UUID --out NEW_PRIVATE_STATUS_JSON\n\nConnection commands accept --token-env NAME. Tokens remain in that process variable.\nstatus request: {\"view\":\"customers|runs|usage|history\",\"offset\":0,\"limit\":200}.\nbindings: {\"customerId\":\"UUID\",\"offset\":0,\"limit\":200}. order: {\"orderRef\":\"original\"}.\ndetail: {\"statementId\":\"UUID\",\"view\":\"summary|items|excluded|assets|calls|adjustments|period-routes|period-calls|history\"}.\nCalls and adjustments select orderRef; page all native items with offset and limit.\nlookup: {\"requestId\":\"original-retention-id\"}. usage-source: {\"source\":\"host-alias\"}.\nPreview selects customerId/runId, optional usageId/replacesId, and optional from/until.\nAdd usageOpeningId for the service period ending at usageId; from/until select purchases.\nusage-period selects {\"usageOpeningId\":\"UUID\",\"usageId\":\"UUID\"}; its summary\naccepts view:summary|routes|calls, offset and limit. It reads actual native captures.\nThe complete native preview is read through the original SHA-pinned file consumer.\nUsage import requires the source SHA returned by usage-source. Retention uses its\ncomplete reviewed preview and one durable requestId; corrections set replacesId.\nprepare retains exact normalized arguments in request.json and resumes matching\npreparation after interruption. observe reads its atomic saved state without a\nwriter lease or network request. execute reconciles\ncurrent original records before sending; reconcile reads them. Lost replies\nrecover through the native request ID, source SHA, profile, bindings or withdrawal\nhistory. Exact retries keep the original revision guard and operation identity.\nexport delivers statement.json, statement.csv, usage.csv, statement.html and\nmanifest.json. Period statements also deliver period.csv, period-summary.csv,\nusage-opening.json and usage-closing.json. Restart verifies and reuses every file,\ncompletes an earlier five-file delivery of that same period, and retains native hashes.\nstatus-snapshot reads the current status.json once through the original pinned\nreader and saves its exact bytes and SHA. All original files remain available\nthrough correction and withdrawal. Ordinary commands release this caller's reads.\nClosing cycles freeze complete customer previews before any retention. The same\nrequest and directory resume partial preparation. cycle-execute reconciles each\noriginal request, retains unchanged reviewed content, and exports every customer\npacket. cycle-reconcile recovers existing retained packets. cycle-status refreshes\nthe portable HTML/JSON register from saved progress without an MCP request.\ncycle-observe reads atomic customer progress during an active close without taking\nits writer lease or rewriting the register.\ncycle-customers groups the same original rows by customer, including saved pass labels.\ncycle-customer-export creates one complete handover for that customer's original\nstatements and status/source files under --out/<snapshotSha256>. Unfinished rows\nremain visible in a partial handover; repeating unchanged input reuses its snapshot.\ncustomer-dossier opens a saved or copied handover independently of the cycle or MCP;\n--verify-files true also checks every original payload file. The snapshot includes\nindex.html, statement and period registers, dossier.json, and complete original packets.\nclose explicitly closes the original accounting workspace.\nExit 0: complete, prepared or read. Exit 3: prepared effect not observed. Exit 2: error.\n";
 
 function options(args,allowed){
   const values=new Map();
@@ -278,7 +288,22 @@ function required(values,name){need(values.has(name)&&values.get(name),'Supply '
 export async function main(args=process.argv.slice(2)){
   if(!args.length||args.length===1&&['--help','help'].includes(args[0])){process.stdout.write(HELP);return;}
   const [command,...rest]=args,connectionFields=['--url','--workspace','--token-env'];let result;
-  if(command==='cycle-prepare'){
+  if(command==='service-plan-export'){
+    const values=options(rest,['--plan','--format','--out']),format=required(values,'--format');
+    need(format==='html'||format==='csv','Choose --format html or csv.');
+    const plan=await readJson(resolve(required(values,'--plan')),20_000_000);
+    const output=resolve(required(values,'--out'));await privateDirectory(dirname(output));
+    const content=await (format==='csv'?renderAccountingStatementServicePlanCsv(plan):renderAccountingStatementServicePlanHtml(plan));
+    await writePrivate(output,content);await syncDirectory(dirname(output));
+    result={output,format,planSha256:plan.planSha256,counts:plan.counts};
+  }else if(command==='service-cycle-prepare'){
+    const values=options(rest,['--plan','--dir',...connectionFields,'--actor','--label']);
+    const report=await prepareAccountingStatementServiceCycle({
+      plan:await readJson(resolve(required(values,'--plan')),20_000_000),
+      directory:required(values,'--dir'),url:required(values,'--url'),workspace:required(values,'--workspace'),
+      actor:required(values,'--actor'),label:required(values,'--label'),tokenEnv:values.get('--token-env')??'MCP_ACCESS_TOKEN'});
+    result=cycleSummary(report);
+  }else if(command==='cycle-prepare'){
     const values=options(rest,['--dir',...connectionFields,'--actor','--label','--request']);
     const report=await prepareAccountingStatementCycle({directory:required(values,'--dir'),url:required(values,'--url'),
       workspace:required(values,'--workspace'),tokenEnv:values.get('--token-env')??'MCP_ACCESS_TOKEN',
@@ -290,6 +315,16 @@ export async function main(args=process.argv.slice(2)){
     result=cycleSummary(command==='cycle-status'?await inspectAccountingStatementCycle({directory}):
       command==='cycle-observe'?await observeAccountingStatementCycle({directory}):await runAccountingStatementCycle({directory,execute:command==='cycle-execute'}));
     if(['cycle-execute','cycle-reconcile'].includes(command)&&!result.complete)process.exitCode=3;
+  }else if(command==='cycle-customers'){
+    const values=options(rest,['--dir']);result=await inspectAccountingStatementCustomerDossiers({directory:required(values,'--dir')});
+  }else if(command==='cycle-customer-export'){
+    const values=options(rest,['--dir','--customer-id','--out']);
+    result=await exportAccountingStatementCustomerDossier({directory:required(values,'--dir'),customerId:required(values,'--customer-id'),outputDirectory:required(values,'--out')});
+    if(!result.complete)process.exitCode=3;
+  }else if(command==='customer-dossier'){
+    const values=options(rest,['--dir','--verify-files']),verify=values.get('--verify-files')??'false';
+    need(verify==='true'||verify==='false','Use --verify-files true or false.');
+    result=await readAccountingStatementCustomerDossier({directory:required(values,'--dir'),verifyFiles:verify==='true'});
   }else if(command==='prepare'){
     const values=options(rest,['--dir',...connectionFields,'--action','--preview','--request','--actor','--request-id']),kind=required(values,'--action');
     need(kind==='retain'?values.has('--preview')&&!values.has('--request'):values.has('--request')&&!values.has('--preview'),
@@ -304,7 +339,7 @@ export async function main(args=process.argv.slice(2)){
     const values=options(rest,['--dir']);result=await runAccountingStatementOperation({directory:required(values,'--dir'),execute:command==='execute'});
   }else{
     const extra={open:[],close:[],status:['--request'],bindings:['--request'],order:['--request'],statements:['--request'],detail:['--request'],
-      lookup:['--request'],'usage-source':['--request'],'usage-period-summary':['--request'],'usage-period':['--request','--out'],preview:['--request','--out'],download:['--selection','--sha256','--out'],
+      lookup:['--request'],'usage-source':['--request'],'usage-captures':['--request'],'service-planner':['--out'],'service-plan':['--request','--out'],'usage-period-summary':['--request'],'usage-period':['--request','--out'],preview:['--request','--out'],download:['--selection','--sha256','--out'],
       export:['--statement-id','--dir'],'status-snapshot':['--statement-id','--out']}[command];
     need(extra,'Choose a documented customer statement command.');
     const values=options(rest,[...connectionFields,...extra]),client=await connectAccountingStatementClient({url:required(values,'--url'),
@@ -321,6 +356,18 @@ export async function main(args=process.argv.slice(2)){
       else if(command==='detail')result=await client.detail(input);
       else if(command==='lookup')result=await client.lookup(input.requestId);
       else if(command==='usage-source')result=await client.usageSource(input.source);
+      else if(command==='usage-captures')result=await client.usageCaptures(input);
+      else if(command==='service-planner'||command==='service-plan'){
+        const inventory=await readAccountingStatementServicePlanner({client});
+        const document=command==='service-plan'?await compileAccountingStatementServicePlan({inventory,choices:input}):inventory;
+        if(command==='service-plan')required(values,'--request');
+        if(command==='service-plan'||values.has('--out')){
+          const output=resolve(required(values,'--out'));await privateDirectory(dirname(output));
+          await writePrivate(output,document);await syncDirectory(dirname(output));
+          result={output,workspace:document.workspace,counts:document.counts,
+            ...(command==='service-plan'?{planSha256:document.planSha256}:{inventorySha256:document.inventorySha256,revision:document.revision})};
+        }else result=document;
+      }
       else if(command==='usage-period-summary'){
         required(values,'--request');result=await client.usagePeriodSummary(input);
       }else if(command==='usage-period'){
@@ -342,4 +389,4 @@ export async function main(args=process.argv.slice(2)){
   process.stdout.write(JSON.stringify(result)+'\n');if(result?.found===false)process.exitCode=3;return result;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
-  main().catch(error=>{process.stderr.write(JSON.stringify({error:problem(error),operationDirectory:error.operationDirectory,cycleDirectory:error.cycleDirectory})+'\n');process.exitCode=2;});
+  main().catch(error=>{process.stderr.write(JSON.stringify({error:problem(error),operationDirectory:error.operationDirectory,cycleDirectory:error.cycleDirectory,dossierDirectory:error.dossierDirectory,customerId:error.customerId})+'\n');process.exitCode=2;});

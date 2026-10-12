@@ -15,6 +15,7 @@ import {openResearchCustomerCommerce} from './customer-commerce/controller.mjs';
 import {handleResearchCommerceRoute,readResearchCommerceAsset} from './customer-commerce/routes.mjs';
 import {handleRiskOfBiasRoute,readRiskOfBiasAsset,RISK_OF_BIAS_REQUEST_LIMIT} from './risk-of-bias/routes.mjs';
 import {handleStudyExtractionRoute,STUDY_EXTRACTION_REVIEW_LIMIT} from './study-extraction-routes.mjs';
+import {handleStudyFlowRoute,STUDY_FLOW_REQUEST_LIMIT} from './study-flow/routes.mjs';
 import {createTemplateExchangeDispatcher,TEMPLATE_POST_ACTIONS} from './template-exchange/http.mjs';
 import {MAX_WORKBOOK_BYTES} from './template-exchange/workbook.mjs';
 import {openZoteroResearchBridge} from './zotero-workspace.mjs';
@@ -47,6 +48,8 @@ const TYPES = Object.freeze({
   'study-extraction.js': 'text/javascript; charset=utf-8',
   'study-extraction-drafts.js': 'text/javascript; charset=utf-8',
   'study-extraction.css': 'text/css; charset=utf-8',
+  'study-flow.js':'text/javascript; charset=utf-8',
+  'study-flow.css':'text/css; charset=utf-8',
   'zotero-browser.mjs': 'text/javascript; charset=utf-8',
   'style.css': 'text/css; charset=utf-8',
   'crossref.js': 'text/javascript; charset=utf-8',
@@ -247,6 +250,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
   const workspaceId = researchWorkspaceId(store.directory), instanceId = randomUUID();
   const api = {schema:RESEARCH_WORKSPACE_API,metadata:true,revisionPages:true,streamedPortable:true,sourceBundles:true,sourceInspection:true,studyProtocolInspection:true,
     studyExtraction:true,studyExtractionRequestLimit:STUDY_EXTRACTION_REVIEW_LIMIT,extractionPublications:true,zoteroBridge:zotero!==null,
+    studyFlow:true,studyFlowRequestLimit:STUDY_FLOW_REQUEST_LIMIT,
     customerUpdates:true,customerUpdateRequestLimit:16*1024*1024,
     customerCommerce:true,customerCommerceConfigured:customerCommerceConfiguration!==null,customerCommerceRequestLimit:2*1024*1024,
     templateExchange:true,templateExchangeRequestLimit:MAX_TEMPLATE_REVIEW_BODY,templateWorkbookBytesLimit:MAX_WORKBOOK_BYTES,
@@ -447,6 +451,8 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       const id = pathId(match[1]), action = match[2] || '';
       if(await handleRisRoute({store,dossierId:id,action,req,url,readBody:readJson,send,
         setHeader:(name,value)=>res.setHeader(name,value)}))return;
+      if(await handleStudyFlowRoute({store,dossierId:id,action,req,url,projection,
+        readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleStudyExtractionRoute({store,dossierId:id,action,req,url,projection,
         readBody:(request,limit)=>readJson(request,limit),send,
         setHeader:(name,value)=>res.setHeader(name,value)}))return;

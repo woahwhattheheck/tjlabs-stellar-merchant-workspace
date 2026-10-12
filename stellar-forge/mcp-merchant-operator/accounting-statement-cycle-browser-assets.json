@@ -24,6 +24,20 @@
       ]
     ],
     [
+      "/customer-dossiers.mjs",
+      [
+        "customer-dossiers.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-planner.mjs",
+      [
+        "service-planner.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/style.css",
       [
         "style.css",

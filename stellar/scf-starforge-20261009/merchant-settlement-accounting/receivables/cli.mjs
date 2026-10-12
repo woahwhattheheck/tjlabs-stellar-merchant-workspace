@@ -3,7 +3,7 @@
 import {constants} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {open, mkdir, lstat} from 'node:fs/promises';
-import {isAbsolute, join, resolve, dirname} from 'node:path';
+import {isAbsolute, join, resolve, dirname, basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {openAccountingWorkspace} from '../workspace/store.mjs';
 import {accountingWorkspaceBinding} from '../workspace/binding.mjs';
@@ -28,6 +28,27 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables payment-receive --directory /private/accounting --id UUID --input /private/receive-payment.json\n' +
   'starforge receivables payment-cancel --directory /private/accounting --id UUID --input /private/withdrawal.json\n' +
   'starforge receivables payment-file --directory /private/accounting --id UUID --name payment-request.html --out /private/new-request.html\n\n' +
+  'Customer credit and order release:\n' +
+  'starforge receivables credit-control --directory /private/accounting [--customer UUID] [--search TEXT]\n' +
+  'starforge receivables credit-policy --directory /private/accounting --id UUID\n' +
+  'starforge receivables credit-policy-save --directory /private/accounting --input /private/policy.json\n' +
+  'starforge receivables credit-assess --directory /private/accounting --invoice UUID --input /private/workspace.json [--out /private/assessment.json]\n' +
+  'starforge receivables credit-decision-save --directory /private/accounting --invoice UUID --input /private/reviewed-decision.json\n' +
+  'starforge receivables credit-decision --directory /private/accounting --id UUID\n' +
+  'starforge receivables credit-withdraw --directory /private/accounting --id UUID --input /private/withdrawal.json\n' +
+  'starforge receivables credit-decision-file --directory /private/accounting --id UUID --name decision.html --out /private/new-decision.html\n' +
+  'starforge receivables credit-control-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n' +
+  'Issue through the original apply --action issue command with the reviewed invoice and creditDecisionId. Assessments use the current account date.\n\n' +
+  'Cash receipt planning:\n' +
+  'starforge receivables cash-plans --directory /private/accounting [--status ACTIVE] [--search TEXT]\n' +
+  'starforge receivables cash-plan --directory /private/accounting --id UUID [--edition UUID]\n' +
+  'starforge receivables cash-plan-preview --directory /private/accounting --input /private/assumptions.json [--out /private/review.json]\n' +
+  'starforge receivables cash-plan-save --directory /private/accounting --input /private/reviewed-plan.json\n' +
+  'starforge receivables cash-plan-archive|cash-plan-reopen --directory /private/accounting --id UUID --input /private/status.json\n' +
+  'starforge receivables cash-plan-file --directory /private/accounting --id UUID [--edition UUID] --name plan.html --out /private/new-plan.html\n' +
+  'starforge receivables cash-plan-compare --directory /private/accounting --input /private/compare.json\n' +
+  'starforge receivables cash-plan-comparison-file --directory /private/accounting --input /private/compare.json --name comparison.csv --out /private/new-comparison.csv\n' +
+  'starforge receivables cash-plan-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n\n' +
   'Collections casework:\n' +
   'starforge receivables collections --directory /private/accounting [--as-of YYYY-MM-DD] [--customer UUID] [--owner NAME] [--status OPEN]\n' +
   'starforge receivables collection --directory /private/accounting --id UUID [--as-of YYYY-MM-DD]\n' +
@@ -48,18 +69,30 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables refund-file --directory /private/accounting --id UUID --name refund.html --out /private/new-refund.html\n' +
   'starforge receivables credit-disposition-preview --directory /private/accounting --input /private/disposition.json [--out /private/disposition-review.json]\n' +
   'starforge receivables credit-disposition-apply --directory /private/accounting --input /private/reviewed-disposition.json\n\n' +
-  'Actions: settings, customer, draft, import-quote, issue, credit, void-invoice, receipt, import-settlement, allocate, release, void-receipt, payment-create, payment-cancel, payment-return, payment-receive, refund-commit, refund-cancel, refund-reverse, refund-return, refund-receive, credit-disposition-apply.\n' +
+  'Bank statements and remittances:\n' +
+  'starforge receivables bank-accounts --directory /private/accounting [--status ACTIVE] [--search TEXT] [--offset 0] [--limit 100]\n' +
+  'starforge receivables bank-account-save --directory /private/accounting --input /private/account.json\n' +
+  'starforge receivables bank-source-inspect|bank-source-import --directory /private/accounting --input /private/source-options.json [--source /private/original-statement.csv] [--out /private/inspection.json]\n' +
+  'starforge receivables bank-imports --directory /private/accounting [--account UUID] [--status OPEN] [--search TEXT] [--offset 0] [--limit 100]\n' +
+  'starforge receivables bank-import --directory /private/accounting --id UUID [--view rows] [--row-status UNASSIGNED] [--direction CREDIT] [--search TEXT] [--offset 0] [--limit 100]\n' +
+  'starforge receivables bank-posting-preview --directory /private/accounting --id UUID --input /private/row-splits.json [--out /private/posting-review.json]\n' +
+  'starforge receivables bank-receipts-post|bank-rows-ignore|bank-rows-restore|bank-import-close --directory /private/accounting --id UUID --input /private/operation.json\n' +
+  'starforge receivables bank-file --directory /private/accounting --id UUID --name source.csv --out /private/new-source.csv\n\n' +
+  'Actions: settings, customer, draft, import-quote, issue, credit, void-invoice, receipt, import-settlement, allocate, release, void-receipt, payment-create, payment-cancel, payment-return, payment-receive, refund-commit, refund-cancel, refund-reverse, refund-return, refund-receive, credit-disposition-apply, bank-account-save, bank-source-import, bank-receipts-post, bank-rows-ignore, bank-rows-restore, bank-import-close.\n' +
   'Mutation JSON supplies the current revision, operator actor and a stable requestId. Draft updates also supply expectedVersion; issue supplies the reviewed previewSha256.\n' +
   'Payment preview JSON holds the proposal and reviewSha256. To create it, retain those fields and its revision, and add actor and requestId. Payment command JSON uses the same mutation context as apply.\n' +
   'Payment files: payment-request.json, payment-request.html, payment-request.uri, status.json, receiving.json and proof-RETURN_UUID.json.\n' +
   'Refund and disposition previews save the exact proposal, reviewSha256 and revision. Commit JSON retains those fields and adds actor and a stable requestId.\n' +
   'Refund return JSON carries the wallet transaction; receiving verifies the reviewed source account, destination, network and exact amount.\n' +
   'Refund files include request/refund/reversal JSON, HTML and CSV, status.json, receiving.json and proof-OBSERVATION_UUID.json.\n' +
+  'Bank --source embeds the exact original file bytes, up to 1,000,000 bytes, into the request; omit file in the options JSON when using it. CSV needs its original layout; MT940 needs explicit statementOptions. OFX and MT940 use the packaged Python 3.10+ standard-library parser.\n' +
+  'Bank posting previews retain proposal, balanceEffects, reviewSha256 and revision. Commit retains the reviewed proposal/reviewSha256/revision and adds actor and stable requestId. Split amounts must total the original cash credit.\n' +
+  'bank-rows-restore with rowIds:[] reopens the original closed import. Bank files include original source, parser-report.json, import.json, rows.json/csv, status.json, reconciliation.json and posting/receipt documents.\n' +
   'Reopen the initialized accounting directory. To initialize merchant accounting, also pass --outbox /private/outbox --proof-dir /private/proofs --terms /private/terms.json.\n';
 
 export function parseReceivablesArguments(argv) {
   const [command = 'help', ...rest] = argv, flags = {};
-  const known = new Set(['directory','outbox','proof-dir','terms','recovered-dir','port','as-of','id','run','invoice','customer','receipt','status','offset','limit','action','input','name','out','expected-workspace-id','expected-sources-sha256','owner','search','request']);
+  const known = new Set(["directory","outbox","proof-dir","terms","recovered-dir","port","as-of","id","run","invoice","customer","receipt","status","account","view","row-status","direction","search","source","offset","limit","action","input","name","out","expected-workspace-id","expected-sources-sha256","owner","request",'edition']);
   for (let i = 0; i < rest.length; i += 2) {
     need(/^--[a-z-]+$/.test(rest[i]) && known.has(rest[i].slice(2)) && rest[i + 1] !== undefined && !rest[i + 1].startsWith('--'),
       'INVALID_RECEIVABLES_ARGUMENT', 'Use a documented option followed by its value.');
@@ -80,6 +113,20 @@ async function input(path) {
     const stat = await handle.stat();
     need(stat.isFile() && stat.size > 0 && stat.size <= RECEIVABLE_REQUEST_BYTES, 'INVALID_RECEIVABLE_INPUT', 'Select one regular request JSON file within the request limit.');
     return JSON.parse(await handle.readFile('utf8'));
+  } finally { await handle.close(); }
+}
+async function bankSourceInput(path, sourcePath) {
+  const value = await input(path);
+  need(value !== null && typeof value === 'object' && !Array.isArray(value), 'INVALID_BANK_SOURCE_INPUT', 'Use one original source options object.');
+  if (!sourcePath) return value;
+  need(!Object.hasOwn(value, 'file'), 'DUPLICATE_BANK_SOURCE', 'Choose the source file in JSON or --source.');
+  const handle = await open(absolute(sourcePath, 'bank source'), constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  try {
+    const stat = await handle.stat();
+    need(stat.isFile() && stat.size > 0 && stat.size <= 1_000_000, 'BANK_SOURCE_SIZE', 'Choose one original regular bank source file within 1,000,000 bytes.');
+    const bytes = await handle.readFile();
+    need(bytes.length > 0 && bytes.length <= 1_000_000, 'BANK_SOURCE_SIZE', 'The original bank source exceeds 1,000,000 bytes.');
+    return {...value, file: {name: basename(sourcePath), dataBase64: bytes.toString('base64')}};
   } finally { await handle.close(); }
 }
 async function newFile(path, bytes) {
@@ -115,6 +162,39 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     const receivables = await new ReceivablesWorkspace(workspace).init();
     let result;
     if (command === 'state') result = await receivables.state({asOf});
+    else if (command === 'credit-control') result=await receivables.creditControl({customerId:flags.customer,search:flags.search});
+    else if (command === 'credit-policy') result=await receivables.creditPolicy(flags.id);
+    else if (command === 'credit-policy-save') result=await receivables.saveCreditPolicy(await input(flags.input));
+    else if (command === 'credit-assess') {
+      result=await receivables.previewCreditAssessment(flags.invoice,await input(flags.input));
+      if(flags.out)await newFile(flags.out,Buffer.from(json(result)));
+    }
+    else if (command === 'credit-decision-save') result=await receivables.saveCreditDecision(flags.invoice,await input(flags.input));
+    else if (command === 'credit-decision') result=await receivables.creditDecision(flags.id);
+    else if (command === 'credit-withdraw') result=await receivables.withdrawCreditDecision(flags.id,await input(flags.input));
+    else if (command === 'credit-control-operation') result=await receivables.creditControlOperation(flags.request);
+    else if (command === 'credit-decision-file') {
+      const file=await receivables.creditDecisionFile(flags.id,flags.name);
+      await newFile(flags.out,file.bytes);
+      result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
+    }
+    else if (command === 'cash-plans') result=await receivables.cashPlans({status:flags.status,search:flags.search});
+    else if (command === 'cash-plan') result=await receivables.cashPlan(flags.id,{editionId:flags.edition});
+    else if (command === 'cash-plan-preview') {
+      result=await receivables.previewCashPlan(await input(flags.input));
+      if(flags.out)await newFile(flags.out,Buffer.from(json(result)));
+    }
+    else if (command === 'cash-plan-save') result=await receivables.saveCashPlan(await input(flags.input));
+    else if (command === 'cash-plan-archive') result=await receivables.archiveCashPlan(flags.id,await input(flags.input));
+    else if (command === 'cash-plan-reopen') result=await receivables.reopenCashPlan(flags.id,await input(flags.input));
+    else if (command === 'cash-plan-compare') result=await receivables.compareCashPlans(await input(flags.input));
+    else if (command === 'cash-plan-operation') result=await receivables.cashPlanOperation(flags.request);
+    else if (command === 'cash-plan-file' || command === 'cash-plan-comparison-file') {
+      const file=command==='cash-plan-file'?await receivables.cashPlanFile(flags.id,flags.name,{editionId:flags.edition}):
+        await receivables.cashPlanComparisonFile(flags.name,await input(flags.input));
+      await newFile(flags.out,file.bytes);
+      result={path:flags.out,name:file.name,bytes:file.bytes.length,type:file.type,sha256:createHash('sha256').update(file.bytes).digest('hex')};
+    }
     else if (command === 'collections') result = await receivables.collectionCases({asOf,customerId:flags.customer,owner:flags.owner,status:flags.status,search:flags.search});
     else if (command === 'collection') result = await receivables.collectionCase(flags.id,{asOf});
     else if (command === 'collection-save') result = await receivables.saveCollectionCase(await input(flags.input));
@@ -132,6 +212,31 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     else if (command === 'detail') result = await receivables.detail(flags.id, {asOf});
     else if (command === 'preview') result = await receivables.preview(flags.id);
     else if (command === 'ledger') result = await receivables.ledger({runId: flags.run, customerId: flags.customer, offset: flags.offset, limit: flags.limit});
+    else if (command === 'bank-accounts') result = await receivables.bankAccounts({
+      status: flags.status, search: flags.search, offset: flags.offset, limit: flags.limit});
+    else if (command === 'bank-account-save') result = await receivables.saveBankAccount(await input(flags.input));
+    else if (command === 'bank-source-inspect' || command === 'bank-source-import') {
+      const value = await bankSourceInput(flags.input, flags.source);
+      result = await receivables[command === 'bank-source-inspect' ? 'inspectBankSource' : 'importBankSource'](value);
+      if (flags.out) await newFile(flags.out, Buffer.from(json(result)));
+    } else if (command === 'bank-imports') result = await receivables.bankImports({
+      accountId: flags.account, status: flags.status, search: flags.search, offset: flags.offset, limit: flags.limit});
+    else if (command === 'bank-import') result = await receivables.bankImport(flags.id, {
+      view: flags.view, rowStatus: flags['row-status'], direction: flags.direction,
+      search: flags.search, offset: flags.offset, limit: flags.limit});
+    else if (command === 'bank-posting-preview') {
+      result = await receivables.previewBankPosting(flags.id, await input(flags.input));
+      if (flags.out) await newFile(flags.out, Buffer.from(json(result)));
+    } else if (command === 'bank-receipts-post') result = await receivables.postBankReceipts(flags.id, await input(flags.input));
+    else if (command === 'bank-rows-ignore') result = await receivables.ignoreBankRows(flags.id, await input(flags.input));
+    else if (command === 'bank-rows-restore') result = await receivables.restoreBankRows(flags.id, await input(flags.input));
+    else if (command === 'bank-import-close') result = await receivables.closeBankImport(flags.id, await input(flags.input));
+    else if (command === 'bank-file') {
+      const file = await receivables.bankImportFile(flags.id, flags.name);
+      await newFile(flags.out, file.bytes);
+      result = {path: flags.out, name: file.name, bytes: file.bytes.length, type: file.type,
+        sha256: createHash('sha256').update(file.bytes).digest('hex')};
+    }
     else if (command === 'funds') result = await receivables.customerFunds({customerId: flags.customer, asOf});
     else if (command === 'refunds') result = await receivables.refunds({
       customerId: flags.customer, receiptId: flags.receipt, status: flags.status, asOf,
@@ -171,15 +276,18 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
       result = {path: flags.out, name: file.name, bytes: file.bytes.length, type: file.type,
         sha256: createHash('sha256').update(file.bytes).digest('hex')};
     } else if (command === 'apply') {
-      const value = await input(flags.input);
+      const value = flags.action === 'bank-source-import' ? await bankSourceInput(flags.input, flags.source) : await input(flags.input);
       const direct = {settings: 'settings', customer: 'saveCustomer', draft: 'saveDraft', 'import-quote': 'importQuote',
         receipt: 'receipt', 'import-settlement': 'importSettlement', allocate: 'allocate',
-        'refund-commit': 'commitRefund', 'credit-disposition-apply': 'applyCreditDisposition'};
+        'refund-commit': 'commitRefund', 'credit-disposition-apply': 'applyCreditDisposition',
+        'bank-account-save': 'saveBankAccount', 'bank-source-import': 'importBankSource'};
       const selected = {issue: 'issue', credit: 'credit', 'void-invoice': 'voidInvoice', release: 'release', 'void-receipt': 'voidReceipt',
         'payment-create': 'createPaymentRequest', 'payment-cancel': 'cancelPaymentRequest',
         'payment-return': 'reportPaymentReturn', 'payment-receive': 'receivePaymentRequest',
         'refund-cancel': 'cancelRefund', 'refund-reverse': 'reverseRefund',
-        'refund-return': 'reportRefundReturn', 'refund-receive': 'receiveRefund'};
+        'refund-return': 'reportRefundReturn', 'refund-receive': 'receiveRefund',
+        'bank-receipts-post': 'postBankReceipts', 'bank-rows-ignore': 'ignoreBankRows',
+        'bank-rows-restore': 'restoreBankRows', 'bank-import-close': 'closeBankImport'};
       if (Object.hasOwn(direct, flags.action)) result = await receivables[direct[flags.action]](value);
       else if (Object.hasOwn(selected, flags.action)) result = await receivables[selected[flags.action]](flags.id, value);
       else need(false, 'UNKNOWN_RECEIVABLE_ACTION', 'Choose a documented mutation action.');
@@ -204,4 +312,4 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
   } finally { await workspace.close(); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
-  runReceivablesCli().catch(error => { process.stderr.write(json({error: {code: error.code ?? 'RECEIVABLES_FAILED', message: error.message}})); process.exitCode = 1; });
+  runReceivablesCli().catch(error => { process.stderr.write(json({error: {code: error.code ?? 'RECEIVABLES_FAILED', message: error.message,...(error.details?{details:error.details}:{})}})); process.exitCode = 1; });

@@ -48,3 +48,10 @@ export {runStudyProtocolCommand} from './study-protocol-cli.mjs';
 export {inspectStudyProtocolBundle,STUDY_PROTOCOL_INSPECTION} from './study-protocol-inspection.mjs';
 export {createStudyProtocolClient,inspectStudyProtocolReceiveRequest,STUDY_PROTOCOL_RECEIVE_REQUEST} from './study-protocol-client.mjs';
 export {runStudyProtocolReview,STUDY_PROTOCOL_PREPARED} from './study-protocol-operator.mjs';
+
+export {createStudyFlowClient} from './study-flow/client.mjs';
+export {FLOW_SCHEMA,FLOW_DEFINITION_SCHEMA,FLOW_OPERATION_SCHEMA,FLOW_TEMPLATES,FLOW_METRICS,
+  flowDefinition,flowInput,parseFlowCsv} from './study-flow/contracts.mjs';
+export {studyFlowModel,studyFlowPage,studyFlowSource,studyFlowReport,previewStudyFlow,
+  recordStudyFlowOperation,validateStudyFlowState,validateStudyFlowTransition} from './study-flow/model.mjs';
+export {studyFlowSvg,studyFlowHtml,exportStudyFlowReport} from './study-flow/render.mjs';

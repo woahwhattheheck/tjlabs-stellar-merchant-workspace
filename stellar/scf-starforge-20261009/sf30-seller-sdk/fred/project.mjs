@@ -18,7 +18,13 @@ import { normalizeFredReleaseSelection, inspectFredReleaseCapture } from './rele
 import { captureFredReleases, readFredReleaseCapture, storeFredReleaseCapture, inspectFredReleaseAcquisition } from './releases/source.mjs';
 import { createFredReleaseWatch, validateFredReleaseWatch } from './releases/watch.mjs';
 import { planFredReleaseCatchUp, validateFredReleasePlan, pageFredReleasePlan } from './releases/planner.mjs';
+import { createFredDdpProjectExtension } from './ddp/project-state.mjs';
+import { FRED_DDP_PROJECT_BUNDLE, FRED_DDP_PROJECT_KEYS, FRED_DDP_PROJECT_BUNDLE_MAX_BYTES,
+  fredDdpStatePresent, validateFredDdpProjectState, validateFredDdpProjectBundle } from './ddp/project-validation.mjs';
 
+import { validateQcewState, qcewStatePresent } from './qcew/state.mjs';
+import { exportQcewExtension, validateQcewExtension, receiveQcewExtension } from './qcew/bundle.mjs';
+const QCEW_BUNDLE = 'stellar-forge.fred-project-bundle.v6';
 const SCHEMA = 'stellar-forge.fred-project.v1';
 const BUNDLE = 'stellar-forge.fred-project-bundle.v1';
 const BRIEFING_BUNDLE = 'stellar-forge.fred-project-bundle.v2';
@@ -39,6 +45,8 @@ function projectState(state) {
     }
   }
   validateReleaseState(state);
+  validateFredDdpProjectState(state);
+  validateQcewState(state);
   return state;
 }
 export async function readFredProject(directory) {
@@ -872,7 +880,7 @@ export async function selectFredPublication(directory, publicationId) {
   need(state.publications.some(item => item.id === publicationId), 'Publication does not belong to this project.');
   return fredPublicationDirectory(directory, publicationId);
 }
-export async function exportFredProject({ directory } = {}) {
+export async function exportFredProject({ directory, qcewSourceContexts = null } = {}) {
   directory = resolve(directory);
   return withPrivateLock(directory, 'project.lock', async () => {
     const state = await readFredProject(directory);
@@ -896,35 +904,53 @@ export async function exportFredProject({ directory } = {}) {
         releasePlans.push(await retainedFredReleasePlan(directory, state, summary.id));
       await validateReleaseBundle(state, releaseCaptures, releasePlans, captures);
     }
-    const bundle = { schema: release ? RELEASE_BUNDLE : recurring ? RECURRING_BUNDLE : briefings.length ? BRIEFING_BUNDLE : BUNDLE,
-      state, captures, publicationPlans, ...(release || briefings.length ? { briefings } : {}),
-      ...(release ? { releaseCaptures, releasePlans } : {}) };
+    const ddp = fredDdpStatePresent(state);
+    const qcew = await exportQcewExtension(directory, state, captures, { sourceContexts: qcewSourceContexts });
+    const extended = ddp || Boolean(qcew);
+    const ddpValues = ddp ? await ddpProject.exportDdp(directory, state, captures) :
+      Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, []]));
+    const bundle = { schema: qcew ? QCEW_BUNDLE : ddp ? FRED_DDP_PROJECT_BUNDLE : release ? RELEASE_BUNDLE : recurring ? RECURRING_BUNDLE : briefings.length ? BRIEFING_BUNDLE : BUNDLE,
+      state, captures, publicationPlans, ...(extended || release || briefings.length ? { briefings } : {}),
+      ...(extended || release ? { releaseCaptures, releasePlans } : {}), ...(extended ? ddpValues : {}),
+      ...(qcew ? { qcew } : {}) };
     bundle.bundleSha256 = digest(bundle);
-    need(jsonBytes(bundle).length <= 256 * 1024 * 1024, 'Project bundle exceeds 256 MiB; export captures separately.');
+    need(jsonBytes(bundle).length <= (extended ? FRED_DDP_PROJECT_BUNDLE_MAX_BYTES : 256 * 1024 * 1024),
+      extended ? 'The complete project bundle exceeds the 480 MiB receiving capacity; export original sources separately.' :
+        'Project bundle exceeds 256 MiB; export captures separately.');
     return bundle;
   });
 }
-export async function receiveFredProject({ directory, bundle } = {}) {
+export async function receiveFredProject({ directory, bundle, qcewSourceContexts = null } = {}) {
+  const qcewContextOptions = { sourceContexts: qcewSourceContexts ?? new Map() };
   directory = await privateDirectory(resolve(directory));
-  need([BUNDLE, BRIEFING_BUNDLE, RECURRING_BUNDLE, RELEASE_BUNDLE].includes(bundle?.schema) && Array.isArray(bundle.captures) &&
+  const qcewBundle = bundle?.schema === QCEW_BUNDLE, ddpBundle = bundle?.schema === FRED_DDP_PROJECT_BUNDLE;
+  const extended = qcewBundle || ddpBundle;
+  need([BUNDLE, BRIEFING_BUNDLE, RECURRING_BUNDLE, RELEASE_BUNDLE, FRED_DDP_PROJECT_BUNDLE, QCEW_BUNDLE].includes(bundle?.schema) && Array.isArray(bundle.captures) &&
     Array.isArray(bundle.publicationPlans) &&
     (bundle.schema === BUNDLE ? bundle.briefings === undefined : Array.isArray(bundle.briefings) &&
-      (bundle.schema === RELEASE_BUNDLE || bundle.briefings.length > 0)) &&
-    (bundle.schema === RELEASE_BUNDLE ? Array.isArray(bundle.releaseCaptures) && Array.isArray(bundle.releasePlans) :
-      bundle.releaseCaptures === undefined && bundle.releasePlans === undefined),
+      (extended || bundle.schema === RELEASE_BUNDLE || bundle.briefings.length > 0)) &&
+    (extended || bundle.schema === RELEASE_BUNDLE ? Array.isArray(bundle.releaseCaptures) && Array.isArray(bundle.releasePlans) :
+      bundle.releaseCaptures === undefined && bundle.releasePlans === undefined) &&
+    FRED_DDP_PROJECT_KEYS.every(key => extended ? Array.isArray(bundle[key]) : bundle[key] === undefined) &&
+    (qcewBundle ? plain(bundle.qcew) : bundle.qcew === undefined),
     'Receive the complete original versioned project bundle.');
+  need(jsonBytes(bundle).length <= (extended ? FRED_DDP_PROJECT_BUNDLE_MAX_BYTES : 256 * 1024 * 1024),
+    'The complete project bundle exceeds this version’s receiving capacity.');
   const identity = { schema: bundle.schema, state: bundle.state, captures: bundle.captures, publicationPlans: bundle.publicationPlans,
     ...(bundle.schema !== BUNDLE ? { briefings: bundle.briefings } : {}),
-    ...(bundle.schema === RELEASE_BUNDLE ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}) };
+    ...(extended || bundle.schema === RELEASE_BUNDLE ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}),
+    ...(extended ? Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, bundle[key]])) : {}),
+    ...(qcewBundle ? { qcew: bundle.qcew } : {}) };
   need(bundle.bundleSha256 === digest(identity), 'Project bundle identity changed.');
   const original = projectState(clone(bundle.state));
   need(!original.pending, 'A receiving bundle must contain a completed project state.');
   const recurring = (original.briefingTemplates?.length ?? 0) > 0 ||
     (original.briefingSuccessors?.length ?? 0) > 0;
-  const release = releaseStatePresent(original);
-  need((bundle.schema === RELEASE_BUNDLE) === release &&
-    (release || (bundle.schema === RECURRING_BUNDLE) === recurring),
-    'Use the complete versioned bundle for this release and recurring briefing project.');
+  const release = releaseStatePresent(original), ddp = fredDdpStatePresent(original);
+  need(qcewBundle === qcewStatePresent(original) && (qcewBundle || ddpBundle === ddp) &&
+    (extended || (bundle.schema === RELEASE_BUNDLE) === release &&
+      (release || (bundle.schema === RECURRING_BUNDLE) === recurring)),
+    'Use the complete versioned bundle for this county-report, DDP, release and recurring briefing project.');
   const analystReviews = original.reviews.filter(review => review.briefing);
   need((bundle.briefings ?? []).length === analystReviews.length &&
     new Set((bundle.briefings ?? []).map(item => item.manifest?.reviewId)).size === analystReviews.length &&
@@ -936,7 +962,10 @@ export async function receiveFredProject({ directory, bundle } = {}) {
   need(bundle.captures.length === original.captures.length &&
     new Set(bundle.captures.map(item => item.captureSha256)).size === bundle.captures.length, 'Bundle source inventory differs.');
   await validateRecurringBundle(original, bundle.captures);
-  if (release) await validateReleaseBundle(original, bundle.releaseCaptures, bundle.releasePlans, bundle.captures);
+  if (release || extended) await validateReleaseBundle(original, bundle.releaseCaptures, bundle.releasePlans, bundle.captures);
+  if (extended) validateFredDdpProjectBundle({ state: original, captures: bundle.captures,
+    ...Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, bundle[key]])) });
+  validateQcewExtension(bundle.qcew, original, bundle.captures, qcewContextOptions);
   return withPrivateLock(directory, 'project.lock', async () => {
     const received = await optionalJson(join(directory, 'received.json'));
     if (received) {
@@ -971,6 +1000,8 @@ export async function receiveFredProject({ directory, bundle } = {}) {
         await storeFredReleaseCapture(fredReleaseCaptureDirectory(directory, capture.captureSha256), capture);
       for (const plan of bundle.releasePlans) await storeProjectReleasePlan(directory, plan);
     }
+    if (ddp) await ddpProject.receiveDdp(directory, original, bundle);
+    if (qcewBundle) await receiveQcewExtension(directory, bundle.qcew, original, bundle.captures, qcewContextOptions);
     // Reconstruct native merchant files with the original retained analyst bytes, source and payment inputs.
     for (const publication of original.publications) {
       const { prepareFredEdition, stageFredMerchant } = await import('./merchant.mjs');
@@ -1008,10 +1039,24 @@ export async function fredProjectView(directory) {
     const { directory: privatePath, ...progress } = await inspectFredReleaseAcquisition({
       directory: join(resolve(directory), 'release-acquisitions', state.pending.id) });
     acquisition = { ...progress, kind: state.pending.kind };
+  } else if (state.pending?.kind === 'ddp-migration-acquire') {
+    acquisition = await ddpProject.acquisitionView(directory, state);
   }
   return { ...state, briefingTemplates: clone(state.briefingTemplates ?? []),
     briefingSuccessors: clone(state.briefingSuccessors ?? []),
     releaseCaptures: clone(state.releaseCaptures ?? []), releaseWatches: clone(state.releaseWatches ?? []),
     releasePlans: clone(state.releasePlans ?? []), releaseCatchUps: clone(state.releaseCatchUps ?? []),
+    ...Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, clone(state[key] ?? [])])),
     operations: state.operations.map(({ id, kind, completedAt, result }) => ({ id, kind, completedAt, result })), acquisition };
 }
+
+// Additive DDP persistence shares the original transaction, source adoption and project history.
+const ddpProject = createFredDdpProjectExtension({ readProject: readFredProject, transact,
+  readCapture: getFredCapture, adoptCapture });
+export const { listFredDdpSources, getFredDdpCrosswalk, importFredDdpCrosswalk, acquireFredDdpCrosswalk,
+  getFredDdpPackage, importFredDdpPackage, previewFredDdpMigration, saveFredDdpMigration,
+  getFredDdpMigration, downloadFredDdpMigration, acquireFredDdpMigration, getFredDdpReceiving,
+  downloadFredDdpReceiving } = ddpProject;
+
+// County reports share the original lock, revision, pending operation and replay journal.
+export { transact as transactFredProject };
