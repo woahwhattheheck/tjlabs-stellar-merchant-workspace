@@ -9,6 +9,8 @@ import {reviewCkanSource,collectCkanObservation} from '../../stellar/scf-starfor
 import {readCkanObservationFiles,CKAN_FILES} from '../../stellar/scf-starforge-20261009/sf93-seller-support-bundle/ckan-observation.mjs';
 import {initializeIncidentStore,openIncidentStore} from '../../stellar/scf-starforge-20261009/sf93-seller-support-bundle/incident-store.mjs';
 import {openIncidentSources} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/incident-sources.mjs';
+import {openMerchantOperator} from '../../stellar-forge/mcp-merchant-operator/operator.mjs';
+import {runSupportMcpRecovery} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/examples/mcp_recovery.mjs';
 import {serializeWorkspace} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/workspace-file.mjs';
 import {openCaseStore} from '../../stellar/scf-starforge-20261009/sf74-merchant-support-console/case-store.mjs';
 import {inspectRuntimeFiles,exportRuntimeHandoff,importRuntimeHandoff,reviewRuntime,RUNTIME_SCHEMA}
@@ -51,10 +53,10 @@ function request(value){
 /** The original archive receiver, watcher and CaseStore own every product write. */
 export async function receiveCkanSupport(input,{onProgress=()=>{}}={}){
   const q=request(input),root=q.directory,project=join(root,'project'),parked=join(root,'project-unavailable');
-  const stateDirectory=join(root,'incidents'),sourceFile=join(root,'incident-sources.json');
+  const stateDirectory=join(root,'incidents'),sourceFile=join(root,'incident-sources.json'),recoveryDirectory=join(root,'recovery');
   const report={schema:'stellar-forge.ckan-support-receiving.v1',operationId:q.operationId,
     startedAt:stamp(),state:'RUNNING',archive:{path:q.archive,sha256:q.archiveSha256},phases:[]};
-  let desk=null,moved=false;
+  let desk=null,mcp=null,moved=false;
   async function phase(name,result){
     report.phases.push({name,completedAt:stamp(),result});
     await json(join(root,'receiving.json'),report);onProgress({phase:name,result});
@@ -82,8 +84,9 @@ export async function receiveCkanSupport(input,{onProgress=()=>{}}={}){
     await initializeIncidentStore({directory:stateDirectory,config:{
       schema:'stellar-forge.seller-watch-config.v1',pollMs:500,failurePolls:2,recoveryPolls:2,
       captureEveryMs:1000,merchants:[merchant],notification:null}});
+    await mkdir(recoveryDirectory,{mode:0o700});
     await json(sourceFile,{schema:'stellar-forge.support-incident-sources.v1',sources:[{
-      id:'received',label:q.label,directory:stateDirectory,
+      id:'received',label:q.label,directory:stateDirectory,recoveryDirectory,
       ckanWorkspaces:[{id:'original',label:q.label,directory:project}]}]});
     desk=await openIncidentSources({configPath:sourceFile});
     const profiles=desk.profiles(),listed=await desk.list('received');
@@ -167,6 +170,8 @@ export async function receiveCkanSupport(input,{onProgress=()=>{}}={}){
     assert(independent.supportText===reopened.supportText&&independent.workspaceText===reopened.workspaceText,
       'Independent case receiving changed the original workspace or Support bytes.');
     const runtime=reviewRuntime(independent.supportText,q.inputs),browser=JSON.parse(JSON.stringify(runtime));
+    if(q.exerciseAvailability)assert(runtime.comparison.state==='CKAN_COVERAGE_INCOMPLETE',
+      'A source-unavailable observation was misdiagnosed as a changed project identity.');
     for(const side of ['before','after']){
       const capture=runtime[side];
       if(!capture)continue;
@@ -190,6 +195,65 @@ export async function receiveCkanSupport(input,{onProgress=()=>{}}={}){
       handoffSha256:digest(exported.handoff),comparison:runtime.comparison,
       captureKinds:['before','after'].filter(side=>runtime[side]).map(side=>({side,kind:runtime[side].kind,
         coverage:runtime[side].ckan.coverage,publishedRows:runtime[side].ckan.publication?.verifiedOutput?.rowCount??null}))});
+    const exportsDirectory=join(root,'merchant-exports'),connection=join(root,'support-connection.json'),
+      hostConfiguration=join(root,'merchant-mcp.json');
+    await mkdir(exportsDirectory,{mode:0o700});
+    await json(connection,{schema:'stellar-forge.merchant-support-connection.v1',
+      casesDirectory:join(root,'cases'),incidentSourcesFile:sourceFile,defaultIncidentSource:'received',
+      workspaces:{original:{label:q.label,file:join(root,'Merchant_Workspace.json')}}});
+    await json(hostConfiguration,{schema:'stellar-forge.merchant-mcp.v1',name:q.label+' Support receiving',
+      releaseStore:join(project,'seller-releases'),exportsDirectory,sources:{},supportConnection:connection});
+    const openMcp=()=>openMerchantOperator(hostConfiguration,{environment:process.env});
+    mcp=await openMcp();
+    const recoveryTools=['merchant_support_recovery','merchant_support_recovery_snapshot',
+      'merchant_support_recovery_inspect','merchant_support_recovery_receive',
+      'merchant_support_recovery_open','merchant_support_recovery_reconcile','merchant_support_recovery_abandon'];
+    for(const name of recoveryTools)assert(mcp.tools.some(tool=>tool.name===name),
+      'The original configured merchant catalog omitted '+name);
+    const operationPrefix='ckan-'+digest(q.operationId).slice(0,24);
+    report.supportMcpRecovery={};
+    await runSupportMcpRecovery({
+      call:(name,args)=>mcp.call(name,args),
+      reopenOperator:async()=>{await mcp.close();mcp=await openMcp();return(name,args)=>mcp.call(name,args);},
+      incidentSource:'received',snapshotId:operationPrefix+'-snapshot',receiveId:operationPrefix+'-receive',
+      reconcileId:operationPrefix+'-reconcile',by:'CKAN Support receiving',
+      notes:'Received the complete original incident store and reviewed its saved queue and configuration.',
+      originalWriterStopped:true,record:report.supportMcpRecovery,
+      checkpoint:async(record,name)=>{await json(join(root,'receiving.json'),report);
+        onProgress({phase:'merchant-mcp-recovery',result:{state:record.state,step:name}});}
+    });
+    const recoveredSource=report.supportMcpRecovery.receivedSource.id;
+    const recoveredProfile=await mcp.call('merchant_support_profiles',{incidentSource:recoveredSource});
+    const recoveredCkan=await mcp.call('merchant_support_ckan_inspect',{
+      incidentSource:recoveredSource,ckanSourceId:q.merchantId,
+      expectedConfigRevision:recoveredProfile.current.configRevision,...selected});
+    assert(recoveredCkan.summary.coverage==='COMPLETE','The recovered MCP source lost its original CKAN workspace.');
+    if(q.expectedRows!==undefined)assert(recoveredCkan.summary.publication?.verifiedOutput?.rowCount===q.expectedRows,
+      'The recovered MCP source selected a different original publication.');
+    let recoveredCase=null;
+    if(incident){
+      const view=await mcp.call('merchant_incident_view',{incidentSource:recoveredSource,id:incident.id});
+      const template=await mcp.call('merchant_support_sources',{kind:'workspace',source:'original'});
+      const id=randomUUID();
+      const created=await mcp.call('merchant_incident_case',{incidentSource:recoveredSource,id,incidentId:incident.id,
+        expectedIncidentRevision:view.incident.revision,template:'original',
+        expectedTemplateSha256:template.sourceSha256,routeId:q.merchantId});
+      const read=await mcp.call('merchant_case_read',{id,revision:created.case.revision});
+      const record=await cases.read(id);
+      assert(record.workspaceText===independent.workspaceText&&record.supportText===independent.supportText,
+        'The original MCP incident-to-case path changed the retained workspace or capture bytes.');
+      assert(read.runtimeReview.comparison.state==='CKAN_COVERAGE_INCOMPLETE',
+        'The recovered MCP case lost the original coverage diagnosis.');
+      recoveredCase={id,revision:created.case.revision,workspaceSha256:digest(record.workspaceText),
+        supportSha256:digest(record.supportText),comparison:read.runtimeReview.comparison.state};
+    }
+    await mcp.close();mcp=null;
+    await phase('original-merchant-mcp-recovery-completed',{
+      tools:recoveryTools,snapshot:report.supportMcpRecovery.snapshot.manifestSha256,
+      incidentSource:recoveredSource,recoveryState:report.supportMcpRecovery.state,
+      reopenedRevision:report.supportMcpRecovery.reopened.revision,
+      reconciledOperation:report.supportMcpRecovery.reconciled.operationId,
+      ckanPublishedRows:recoveredCkan.summary.publication?.verifiedOutput?.rowCount??null,case:recoveredCase});
     const final=readCkanObservationFiles((await collectCkanObservation(merchant)).packet.files);
     assert(final.summary.coverage==='COMPLETE'&&final.summary.workbench.stable===true,
       'The original received project did not remain complete after the Support journey.');
@@ -206,6 +270,7 @@ export async function receiveCkanSupport(input,{onProgress=()=>{}}={}){
     report.state='FAILED';report.completedAt=stamp();report.error={code:error.code??null,message:error.message};
     await json(join(root,'receiving.json'),report).catch(()=>{});throw error;
   }finally{
+    if(mcp)await mcp.close();
     if(desk)await desk.close();
     if(moved)await rename(parked,project);
   }

@@ -56,8 +56,9 @@ export function compareCkanCaptures(before,after) {
     detail:'The after observation must be later than the before observation.',interval:null};
   const pair={before:progress(before),after:progress(after)};
   if(before.ckan.identityContradiction||after.ckan.identityContradiction||
-      before.ckan.project?.catalogOrigin!==after.ckan.project?.catalogOrigin||
-      before.ckan.project?.createdAt!==after.ckan.project?.createdAt)return {
+      before.ckan.project&&after.ckan.project&&(
+        before.ckan.project.catalogOrigin!==after.ckan.project.catalogOrigin||
+        before.ckan.project.createdAt!==after.ckan.project.createdAt))return {
     state:'CKAN_PROJECT_IDENTITY_CHANGED',detail:'The original project identity differs between these observations or its registered selection. The saved records remain attached for review.',interval:null,ckan:pair};
   if(before.ckan.coverage!=='COMPLETE'||after.ckan.coverage!=='COMPLETE'||
       before.ckan.workbench?.stable!==true||after.ckan.workbench?.stable!==true)return {
