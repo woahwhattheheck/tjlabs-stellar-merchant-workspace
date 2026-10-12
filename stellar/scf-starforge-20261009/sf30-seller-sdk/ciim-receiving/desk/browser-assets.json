@@ -29,6 +29,13 @@
         "style.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/operator-guide.md",
+      [
+        "DESK_OPERATOR_GUIDE.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }

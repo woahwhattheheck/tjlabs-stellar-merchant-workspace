@@ -4,7 +4,7 @@ The receiving desk turns completed metadata transformations into an editable rec
 
 The desk uses the original OAI and Proteus results already supplied with the input. Source XML, native conversion, mapped record, profile, source selection, and runtime identities remain attached to the original edition. Receiving decisions are additional records in the desk. They do not rewrite the source metadata.
 
-This guide covers the browser, command line, typed interface, managed Applications entry, and portable receiving workflow. The implementation is in [model.mjs](model.mjs), [portable.mjs](portable.mjs), [server.mjs](server.mjs), [browser.mjs](browser.mjs), [client.mjs](client.mjs), and [cli.mjs](cli.mjs). The original transformation and mapping guide is [../README.md](../README.md).
+This guide covers the browser, command line, typed interface, managed Applications entry, and portable receiving workflow. Use **Download operator guide** in the desk footer to save this complete guide from the installed application. The implementation is in [model.mjs](model.mjs), [portable.mjs](portable.mjs), [server.mjs](server.mjs), [browser.mjs](browser.mjs), [client.mjs](client.mjs), and [cli.mjs](cli.mjs). The original transformation and mapping guide is [../README.md](../README.md).
 
 ## What the receiving team delivers
 
