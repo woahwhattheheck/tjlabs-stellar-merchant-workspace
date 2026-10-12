@@ -33,7 +33,7 @@ The existing shared-host locations observed for this same operation are:
 | Original Python customer export | `/dev/shm/reidgardas-b710-tenderly/customer-journey/delivery-python` |
 | Existing installed dependencies | `/workspace/scratch/9b238a12a516/grpc-reflection/source/node_modules` |
 
-On the original operator's host, select its corresponding existing paths. The receiver freezes these original inputs before starting. The original `selected` and `env` initializers are read from the retained driver; their values are never replaced with new examples. Both original customer exports are received as complete regular-file trees and reopened through the original customer client.
+On the original operator's host, select its corresponding existing paths. The receiver freezes these original inputs before starting. The retained driver supplies the original `selected` initializer, its two explicit Tenderly environment assignments, the original merchant options and native factory, and its existing provider-call counters. The receiver reads those exact definitions, attaches the managed listener with that configuration and checks the original counters after the complete saved-response operation. Both original customer exports are received as complete regular-file trees and reopened through the original customer client.
 
 Original coordination: <https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791748442023179>.
 
