@@ -80,6 +80,7 @@
     "stellar-forge/mcp-merchant-operator/accounting.mjs",
     "stellar-forge/mcp-merchant-operator/client-exports.mjs",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING.md",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_RUNBOOKS.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_PORTFOLIO.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_CRYPTOWORTH.md",

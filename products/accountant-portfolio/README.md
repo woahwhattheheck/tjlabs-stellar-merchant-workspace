@@ -4,6 +4,8 @@ Operate weekly cash reviews and monthly closes from one saved procedure catalog,
 
 Use the **accountant-portfolio** source selection for a complete installed product. The **Client runbooks**, **Client portfolio**, **Merchant accounting** and **Cryptoworth accounting** Applications entries use the same native accounting engine, saved records and writer leases as the command line and merchant tools.
 
+An issued buyer expense period can also open its own original accountant workspace in this selection. The configured MCP host, typed accounting client and saved-operation CLI retain that source, its first handoff, accountant returns, Xero decisions and complete native recovery. Start with [buyer source review and initialization](OPERATING.md#review-an-issued-buyer-period), then use [complete buyer accountant receiving](RECEIVING.md#receive-the-original-buyer-accountant).
+
 ## Start here
 
 1. [Install the selected package](INSTALLING.md) from an exact repository commit and retain its original runtime profile and dependency graph.
@@ -29,6 +31,7 @@ A new period fixes its named set and catalog edition. Preparation, review, assig
 | Work | Saved result |
 | --- | --- |
 | Publish a client's procedures | Immutable editions with stable task identifiers, full instructions, reference links, notes, uploaded resources and optional named procedure sets. |
+| Review an issued buyer period | Exact source bytes, expense/credit allocations, named initialization, original first handoff and recoverable client requests. |
 | Select a close source | Exact original client files, or a selected accountant handoff and its original or returned revision. |
 | Prepare and review | Per-task work and supporting files, complete submitted rounds, returned corrections, reviewer decisions and explicit accepted open items. |
 | Hand over responsibility | The original preparer/reviewer/date assignment and every later handover with its full work snapshot and unresolved-item note. |
@@ -49,7 +52,7 @@ All work can be completed in the grayscale browser desk. The installed typed cli
 | Client browser | `/runbooks.html`, or the same desk mounted at `/portfolio/clients/ALIAS/runbooks.html`. |
 | Native CLI | `starforge client-close runbooks ...` and `starforge client-close portfolio ...`. |
 | Merchant tools | `merchant_accounting_runbooks_*`, `merchant_accounting_portfolio_*` and the existing accounting/file/maintenance tools. |
-| Typed clients | `@tokenjunkielabs/starforge-merchant/merchant/accounting-runbooks` and `.../merchant/accounting-portfolio`. |
+| Typed clients | `@tokenjunkielabs/starforge-merchant/merchant/accounting-runbooks`, `.../merchant/accounting-portfolio` and `.../merchant/accounting-platforms`. |
 | Managed operation | The original Runtime workspace, Applications review, complete resource selection, saved start/stop and recovery. |
 | Existing accounting | Accountant returns, adjustments, statements, QuickBooks/Xero receiving and Cryptoworth remain available through their original paths. |
 
@@ -61,6 +64,8 @@ The complete native guides remain part of the package:
 - [Firm portfolio, calendar, client commands and receiving](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/PORTFOLIO_GUIDE.md).
 - [Installed Runbooks client and tools](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_RUNBOOKS.md).
 - [Installed Portfolio client, tools and Applications](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_PORTFOLIO.md).
+- [Buyer-only configured host, original source and receiving](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md).
+- [Buyer, QuickBooks and Xero customer client and saved-operation CLI](../../stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md).
 
 ## Original source
 
