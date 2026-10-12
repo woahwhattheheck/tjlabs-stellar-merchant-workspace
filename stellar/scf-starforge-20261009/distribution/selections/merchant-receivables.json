@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-receivables",
   "title": "Merchant receivables and Stellar invoice collection",
-  "description": "Original service quotations and invoices, reviewed Stellar collection and customer refunds, native transfer receiving, paid-credit disposition, installment schedules, complete customer setup, statement closing and dated account delivery through the merchant desk and accounting MCP session.",
+  "description": "Original service quotations and invoices, bank statement intake and split customer receipts, reviewed Stellar collection and refunds, native transfer receiving, paid-credit disposition, installment schedules, complete customer setup, statement closing and dated account delivery through the merchant desk and accounting MCP session.",
   "base": {
     "commands": [
       "installation",
@@ -100,7 +100,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant receivables: complete invoicing, Stellar collection and refunds, customer setup and statement closing, customer payment and credit disposition, installment schedules and dated account delivery.",
+    "description": "Merchant receivables: complete invoicing, original bank statements and customer receipt matching, Stellar collection and refunds, customer setup and statement closing, paid-credit disposition, installment schedules and dated account delivery.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

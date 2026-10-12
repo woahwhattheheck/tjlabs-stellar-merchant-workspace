@@ -9,6 +9,7 @@ import { createOpenAQSource } from './source.mjs';
 import { decodeRows } from './projection.mjs';
 import { buildReport, reportFiles } from './reports.mjs';
 import { openOpenAQPublication } from './publisher.mjs';
+import { createOpenAQMerchant } from './merchant.mjs';
 import { exportOpenAQProject, receiveOpenAQProject } from './package.mjs';
 const MAX_RECORD=16*1024*1024;
 async function exists(p){try{await lstat(p);return true;}catch(e){if(e.code==='ENOENT')return false;throw e;}}
@@ -25,7 +26,7 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
  absolute(directory);
  if(create)need(!await exists(join(directory,'workspace.json')),'OPENAQ_WORKSPACE_EXISTS','Open this project without --create.',409);
  await privateDirectory(directory,create);
- const unlock=await acquireWorkspace(directory);let settings,source,closed=false,closing=null,admission=Promise.resolve(),active=null;
+ const unlock=await acquireWorkspace(directory);let settings,source,merchant,closed=false,closing=null,admission=Promise.resolve(),active=null;
  const pending=new Set(),publications=new Map(),publicationOpening=new Map();
  try{
   if(create){
@@ -37,6 +38,7 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
   if(config!==undefined)need(identity(configuration(config))===settings.configurationSha256,'OPENAQ_CONFIGURATION_CHANGED','Reopen with the original project declaration.',409);
   for(const name of ['captures','reviews','reports','operations','studies','publications','exports','imports'])await privateDirectory(join(directory,name));
   source=createOpenAQSource({configuration:settings.configuration,environment,fetchImpl});
+  merchant=createOpenAQMerchant({directory,workspaceId:settings.id,configurationSha256:settings.configurationSha256,readOperation:internalOperation,environment});
   const check=()=>need(!closed,'OPENAQ_WORKSPACE_CLOSING','The original project owner is closing.',409);
   const cp=id=>join(directory,'captures',uuid(id)),op=id=>join(directory,'operations',uuid(id)+'.json');
   function tracked(fn){check();const p=Promise.resolve().then(fn);pending.add(p);p.finally(()=>pending.delete(p)).catch(()=>{});return p;}
@@ -137,14 +139,17 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
    }
    if(record.action==='release.prepare'){
     const pub=await publisherFor(uuid(input.captureId),uuid(input.sourceReviewId));
-    const output=join(directory,'publications',input.captureId,input.sourceReviewId,'releases',record.id);
+    const output=join(directory,'release-packages',record.id);
     return pub.prepareRelease(uuid(input.runId),output,input.payment,input.origin,input.path??'/data');
    }
    if(record.action==='release.stage'){
     const prepared=await internalOperation(uuid(input.preparationId));need(prepared.action==='release.prepare'&&prepared.state==='COMPLETE','OPENAQ_RELEASE_PREPARATION_REQUIRED');
     const original=prepared.input,pub=await publisherFor(original.captureId,original.sourceReviewId);
-    const packageDirectory=join(directory,'publications',original.captureId,original.sourceReviewId,'releases',prepared.id);
-    // This application owns only its retained local release store. Deployment is the original SF82 command.
+    const packageDirectory=prepared.result?.directory;
+    need(packageDirectory===join(directory,'release-packages',prepared.id)||
+     packageDirectory===join(directory,'publications',original.captureId,original.sourceReviewId,'releases',prepared.id),
+    'OPENAQ_RELEASE_PREPARATION_CHANGED','Use the package retained by this original preparation.',409);
+    // The original SF82 console owns deployment from this project's retained store.
     return pub.stageRelease({packageDirectory,releaseDirectory:join(directory,'release-store'),id:text(input.id,'release ID',100),label:text(input.label,'release label',200),runtime:input.runtime??{port:0}});
    }
    if(record.action==='customer.start'||record.action==='customer.resume'){
@@ -236,6 +241,10 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
    if(action==='report')return report(uuid(input.id));
    if(action==='study')return study(uuid(input.id));
    if(action==='account')return source.account();
+   if(action==='merchant.status')return merchant.status(input);
+   if(action==='merchant.release')return merchant.inspect(input);
+   if(action==='merchant.open')return merchant.open(input);
+   if(action==='merchant.close')return merchant.stop(input);
    if(action==='publication'){const pub=await publisherFor(uuid(input.captureId),uuid(input.sourceReviewId));return{binding:pub.binding,directory:pub.directory,status:pub.status()};}
    if(action==='publication.inspect'){const pub=await publisherFor(uuid(input.captureId),uuid(input.sourceReviewId));return pub.inspect(uuid(input.runId),input.query??'limit=20');}
    if(action==='customer.status'||action==='customer.read'||action==='customer.operation'||action==='customer.browser'){
@@ -255,6 +264,7 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
    close(){
     if(closing)return closing;closed=true;if(active&&['capture','export'].includes(active.record.action))active.controller.abort();
     closing=(async()=>{const errors=[];await admission;await active?.promise?.catch(e=>errors.push(e));await Promise.allSettled([...pending]);await Promise.allSettled([...publicationOpening.values()]);
+     try{await merchant.close();}catch(e){errors.push(e);}
      try{await source.close();}catch(e){errors.push(e);}
      for(const[key,value]of publications)try{await value.close();publications.delete(key);}catch(e){errors.push(e);}
      if(errors.length){closing=null;throw new AggregateError(errors,'OpenAQ owned operations or original resources did not close.');}
@@ -262,5 +272,5 @@ export async function openOpenAQWorkspace({directory,create=false,config,environ
     })();return closing;
    }};
   return Object.freeze(api);
- }catch(e){await source?.close().catch(()=>{});await unlock();throw e;}
+ }catch(e){await merchant?.close().catch(()=>{});await source?.close().catch(()=>{});await unlock();throw e;}
 }

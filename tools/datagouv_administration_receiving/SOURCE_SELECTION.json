@@ -1,0 +1,132 @@
+{
+  "schema": "datagouv.administration-receiving-sources/v1",
+  "operation_id": "DATACTIVIST-LINUX-ADMIN-018A-20261012-01",
+  "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "original_sources": [
+    {
+      "kind": "before",
+      "blob": "92e172e5a53ebdbbd6e034464436553093b03ee7",
+      "bytes": 2573278,
+      "sha256": "ba850a51e756ba60a325d31d8dff9361b500fc16c673f71366711e654c551e76",
+      "source_ref": "7832cf880a8a9542404f7714c60957ee96bef1e3",
+      "count": 177
+    },
+    {
+      "kind": "after",
+      "blob": "16a7ee62500be5139704c18bb2d12eb846c207db",
+      "bytes": 2662699,
+      "sha256": "6eb8b41f71cb496b5d02497ffca53078876b756136fea3158dd040a7f7e1d5db",
+      "source_ref": "41dd88bc23fa28abd98d93f20b99be96403f85e0",
+      "count": 182
+    }
+  ],
+  "before_inventory": {
+    "bytes": 13383,
+    "sha256": "c82b2a74e95f1f95a2a38465b887141871a864ab948ceac373f4b9d00ccd03df"
+  },
+  "original_after_inventory": {
+    "bytes": 13657,
+    "sha256": "1533470b18bfd44ebf16b9d2e8a92f496f88a64196ddd6562e6c6e7fb746650d"
+  },
+  "administration_commit": "df1a07fe17e652003b30627a65694536747be201",
+  "administrator_sha256": "d36ef4130a7595064868890e953c76fc091020a42b1af5912954194b350af3ae",
+  "administration_guide_sha256": "d6ca96faed199e6df6551def52291f09eaa57ee04a6605756f7f3d15c3455992",
+  "administration_amendment": {
+    "schema": "datagouv.admin-preflight-source-amendment/v1",
+    "reason": "Selected passwd account was outside the actual Linux UID/GID mapping; detect it before installation and expose a read-only runtime preflight.",
+    "source": {
+      "path": "products/datagouv/admin/publisher_admin.py",
+      "preimage_sha256": "668402e66a7433b8129b46a4486c05c57d1d1bfb1346a01fcb1e681442487fdb",
+      "sha256": "d36ef4130a7595064868890e953c76fc091020a42b1af5912954194b350af3ae",
+      "bytes": 57181,
+      "replacements": [
+        {
+          "old": "def user_identity(name):\n    user=pwd.getpwnam(name) if name else pwd.getpwuid(os.geteuid())\n    require(os.geteuid()==0 or user.pw_uid==os.geteuid(),'Only root can select another service user')\n    return {'user':user.pw_name,'uid':user.pw_uid,'gid':user.pw_gid}\n",
+          "next": "def mapped_account_id(value,kind):\n    path=pathlib.Path('/proc/self')/(kind+'_map')\n    try:\n        with path.open('r',encoding='ascii') as stream:\n            raw=stream.read(65537)\n    except (OSError,UnicodeError) as error:\n        raise AdminError('SERVICE_ACCOUNT_MAPPING','Cannot inspect the current Linux '+kind+' mapping: '+str(error)) from error\n    require(len(raw)<=65536,'The current Linux account mapping is too large','SERVICE_ACCOUNT_MAPPING')\n    ranges=[]\n    for line in raw.splitlines():\n        fields=line.split()\n        require(len(fields)==3 and all(field.isdecimal() for field in fields),'The current Linux account mapping is malformed','SERVICE_ACCOUNT_MAPPING')\n        start,outer,count=map(int,fields)\n        require(count>0 and start+count<=2**32 and outer+count<=2**32,'The current Linux account mapping is malformed','SERVICE_ACCOUNT_MAPPING')\n        ranges.append((start,start+count))\n    require(bool(ranges),'The current Linux account mapping is empty','SERVICE_ACCOUNT_MAPPING')\n    return any(start<=value<end for start,end in ranges)\n\ndef user_identity(name):\n    user=pwd.getpwnam(name) if name else pwd.getpwuid(os.geteuid())\n    require(user.pw_uid!=0,'Select an existing unprivileged service account','SERVICE_ACCOUNT_ROOT')\n    require(os.geteuid()==0 or user.pw_uid==os.geteuid(),'Only root can select another service user')\n    require(mapped_account_id(user.pw_uid,'uid') and mapped_account_id(user.pw_gid,'gid'),\n            'The selected service UID/GID is not mapped in this Linux user namespace. Use an existing Linux host where this unprivileged account is mapped; no workspace was initialized.',\n            'SERVICE_ACCOUNT_UNMAPPED')\n    return {'user':user.pw_name,'uid':user.pw_uid,'gid':user.pw_gid}\n"
+        },
+        {
+          "old": "def install(args):\n    root=managed(args.root,True)\n    with administration(root):\n        current=state(root,optional=True)\n        user=user_identity(args.user)\n",
+          "next": "def install(args):\n    # Check the selected OS account before creating any installation directory.\n    user=user_identity(args.user)\n    root=managed(args.root,True)\n    with administration(root):\n        current=state(root,optional=True)\n"
+        },
+        {
+          "old": "def parser():\n",
+          "next": "def preflight(args):\n    runtime=runtime_probe(args.node,user_identity(args.user),args.port)\n    return {'schema':'datagouv.linux-administration-preflight/v1','ready':True,\n            'runtime':runtime,'workspace_created':False,'service_started':False}\n\ndef parser():\n"
+        },
+        {
+          "old": "    package=commands.add_parser('pack',help='Package exactly the native application inventory')",
+          "next": "    check=commands.add_parser('preflight',help='Check the selected Linux service account and runtime without creating an installation')\n    check.add_argument('--node',required=True);check.add_argument('--user');check.add_argument('--port',type=int,default=8429)\n    package=commands.add_parser('pack',help='Package exactly the native application inventory')"
+        },
+        {
+          "old": "    if args.command=='pack':\n        value=pack(args)",
+          "next": "    if args.command=='preflight':\n        value=preflight(args)\n    elif args.command=='pack':\n        value=pack(args)"
+        }
+      ]
+    },
+    "guide": {
+      "path": "products/datagouv/ADMINISTRATION.md",
+      "preimage_sha256": "d06143aa7a5fef6b7c903937e761cc74c520be04662dd58fe18cb56775ab2139",
+      "sha256": "d6ca96faed199e6df6551def52291f09eaa57ee04a6605756f7f3d15c3455992",
+      "bytes": 21647,
+      "replacements": [
+        {
+          "old": "If the account already exists, use it; do not create a second identity. The received source and the administrator's release input remain administrator-controlled.\n",
+          "next": "If the account already exists, use it; do not create a second identity. The received source and the administrator's release input remain administrator-controlled.\n\nCheck the account and selected runtime before creating an installation:\n\n~~~sh\nsudo python3 /opt/datagouv-source/products/datagouv/admin/publisher_admin.py preflight \\\n  --node /opt/node-v24/bin/node \\\n  --user datagouv \\\n  --port 8429\n~~~\n\nThis command verifies that the account's UID and primary GID are mapped by the current Linux kernel namespace, then runs the native Node/SQLite capability check as that account. It creates no installation, workspace or service. A successful result retains the selected runtime identity. An unmapped account returns `SERVICE_ACCOUNT_UNMAPPED` before initialization; a passwd entry alone does not establish usable ownership. Some restricted containers map only UID/GID 0. Continue the same selected deployment on an existing Linux host with the unprivileged account mapped; running the service as root does not complete this requirement. The install command performs the same account check before creating its managed directory.\n\n"
+        }
+      ]
+    }
+  },
+  "corrected_after_ref": "41dd88bc23fa28abd98d93f20b99be96403f85e0 + administration preflight df1a07fe17e652003b30627a65694536747be201",
+  "later_edition": {
+    "schema": "datactivist.customer-source.v1",
+    "caller_supplies": [
+      "absolute capsule path",
+      "complete byte length",
+      "whole SHA-256",
+      "source revision"
+    ],
+    "known_future_files": 189,
+    "known_future_capsule": null,
+    "original_members_retained": true,
+    "full_inventory_required": true,
+    "administration_source_preserved": true,
+    "inventory": {
+      "bytes": 14159,
+      "sha256": "a47c58cfb99aef819b370d7094d30b04b99c8a454c066d0661c62fb3cff8f002",
+      "git_blob": "27ee02132150dfa9a0cdac0f2b07cd4dbd98523b"
+    },
+    "source_pr": 499,
+    "source_head": "f21a832148266fca295e1113ba3be2c5b8c64b26",
+    "merge_commit": "451b114d7194e284586f05664392c015ab78e35f",
+    "administration_source_at_head": "668402e66a7433b8129b46a4486c05c57d1d1bfb1346a01fcb1e681442487fdb",
+    "selected_administration_amendment_required": true
+  },
+  "original_receiving_artifact": {
+    "bytes": 1296091,
+    "sha256": "b14bff25681e4108eac987b2bad18913733ca2ba952ea739e91af9f3e5577103",
+    "members": 10,
+    "version": 0
+  },
+  "optional_library_helpers": {
+    "library_upload.py": {
+      "bytes": 44876,
+      "sha256": "5bc473dadefe1f68ee8797baaed19d6662642d0ea4bcba128fa12938faa0d767"
+    },
+    "library_hosted_apps.py": {
+      "bytes": 12576,
+      "sha256": "97d029b097ace62b744c82dfde20ef6921ed543a33a771ecf6452bd655d11b59"
+    },
+    "library_file_transfer.py": {
+      "bytes": 11084,
+      "sha256": "5e1557817be17db06e2375f8c34ed83e948d520242e5ee4cb50a30c7a4c83378"
+    }
+  },
+  "required_complete_members": [
+    "stellar-forge/mcp-merchant-operator/host-profile.mjs",
+    "stellar-forge/mcp-merchant-operator/operation-error.mjs",
+    "stellar-forge/mcp-merchant-operator/service-agreements-errors.mjs",
+    "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+    "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+    "stellar/scf-starforge-20261009/sf103-native-buyer-signer/diagnostics.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-location.mjs"
+  ]
+}

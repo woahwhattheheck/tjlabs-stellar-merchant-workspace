@@ -465,6 +465,7 @@ export class MerchantAccounting {
       'receivables-preview': ['invoiceId', 'file'],
       'receivables-payment': ['paymentRequestId', 'returnId', 'file'],
       'receivables-refund': ['refundId', 'file'],
+      'receivables-bank': ['bankImportId', 'file'],
       'receivables-customer': ['customerId', 'asOf', 'file'],
       cryptoworth: ['profileId', 'planId', 'captureId', 'returnId', 'rollbackId', 'scope', 'file'],
       runbooks: ['cycleId', 'fileId', 'file'],

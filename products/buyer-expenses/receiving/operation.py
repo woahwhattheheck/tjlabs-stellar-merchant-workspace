@@ -6,8 +6,8 @@ signal.signal(signal.SIGTERM,interrupt_original_operation)
 root=pathlib.Path(tempfile.mkdtemp(prefix="buyer-finance-6200-",dir=_original_source["temporary_directory"]))
 tmp=root/"tmp";tmp.mkdir(mode=0o700);os.environ["TMPDIR"]=str(tmp);tempfile.tempdir=str(tmp)
 os.environ["AZCOPY_CONCURRENCY_VALUE"]="1";os.environ["PYTHONDONTWRITEBYTECODE"]="1"
-source="27347f1b1a9ae0f1ab7979803dd471f26c5185cf"
-operation={"schema":"stellar-forge.buyer-finance-selected-native.v1","operation":"BUYER-FINANCE-STANDALONE-6200-20261012","sourceCommit":source,"publishedMerge":"b86b7da8a72aed4ebd9f38aef7c2c37129940410","originalCase":"governed-buyer-expense-receiving-f232-20261012","directory":str(root),"pid":os.getpid(),"startedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"phases":[],"artifacts":[]}
+source="05d093bc81a6e65d0ada0a7b9eed77fcc3208d8b"
+operation={"schema":"stellar-forge.buyer-finance-selected-native.v1","operation":"BUYER-FINANCE-STANDALONE-6200-20261012","sourceCommit":source,"originalPublishedMerge":"b86b7da8a72aed4ebd9f38aef7c2c37129940410","sourceRefinement":"05d093bc81a6e65d0ada0a7b9eed77fcc3208d8b","originalCase":"governed-buyer-expense-receiving-f232-20261012","directory":str(root),"pid":os.getpid(),"startedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),"phases":[],"artifacts":[]}
 def save():
  p=root/"native-operation.json"
  with p.open("w") as f:json.dump(operation,f,indent=2);f.write("\n");f.flush();os.fsync(f.fileno())
@@ -227,7 +227,7 @@ finally:
    with zipfile.ZipFile(root/"retained-original-source-cache.zip","x",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as cachezip:
     for p in sorted(object_directory.rglob("*")):
      if p.is_file() and not p.is_symlink():cachezip.write(p,p.relative_to(root),compress_type=zipfile.ZIP_STORED if "/objects/" in str(p) else zipfile.ZIP_DEFLATED)
-  checkpoint=root/"BUYER_FINANCE_Selected_Receiving_27347f1b_20261012.zip"
+  checkpoint=root/"BUYER_FINANCE_Selected_Receiving_05d093bc_20261012.zip"
   selections=[]
   for p in root.iterdir():
    if p.is_file() and p!=checkpoint:selections.append(p)

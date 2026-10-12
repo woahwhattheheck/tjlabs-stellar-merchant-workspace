@@ -10,10 +10,14 @@ through export, a second receiving, and merchant restart.
 
 The operation is `BUYER-FINANCE-STANDALONE-6200-20261012`. Its selected product is
 `buyer-expenses` in `woahwhattheheck/tjlabs-stellar-merchant-workspace`, at commit
-`27347f1b1a9ae0f1ab7979803dd471f26c5185cf` and tree
-`ab96fa5fe8686f7f8461d18c0f65a5ebc33ff7df`. That source was integrated by merge
-`b86b7da8a72aed4ebd9f38aef7c2c37129940410`. The exact source selection stays
-fixed as the containing repository gains later product features.
+`05d093bc81a6e65d0ada0a7b9eed77fcc3208d8b` and tree
+`71a982cd9bf1eedac9b496fea5430b59962c1339`. This is the original application's source at
+`27347f1b1a9ae0f1ab7979803dd471f26c5185cf`, with the later selected-package boundary
+from `2b77bdf4a10bd65e7883e57a1bf62975ee38e8ef` and the original merchant release
+store explicitly included. The original application was integrated by merge
+`b86b7da8a72aed4ebd9f38aef7c2c37129940410`; the complete new Git commit and tree
+carry the actual selection correction. The source pin stays fixed as the
+containing repository gains later product features.
 
 Obtain the original receiving ZIP from the existing F232 financial handoff.
 Keep that financial input in the operator's private receiving directory.
@@ -76,7 +80,7 @@ browser, the 97 runtime dependencies requested by the selected builder's actual
 receiving, and the complete 814-path original reference cache. The packet retains
 1,130 original required paths and 814 additional exact paths, backed by all
 1,942 unique original Git objects. Two paths share existing object bytes. Every
-body retains its unchanged Git blob identity, and the original receiver verifies
+body matches its selected Git blob identity, and the original receiver verifies
 all objects before the selected builder starts.
 
 This broader cache includes the maintained accounting-provider and merchant-host
@@ -110,6 +114,32 @@ The selected customer package explicitly includes its product README and
 operating guide. This repository receiving directory carries the complete frozen
 source input and execution entrypoint; it stays outside that customer package's
 component selection, so the packet does not become a nested source dependency.
+
+## Original runtime result and source correction
+
+The original native operation `39111` on October 12 reached the maintained
+installer's `READY` state on Node 24.19.0 and Python 3.12.14. It verified the
+complete source and produced the selected distributable. Financial receiving
+then reached the original MCP configuration and found a required dynamic import:
+`sf82-seller-pilot/releases.mjs`.
+
+The corrected selection explicitly includes that original module and its
+maintained static dependency closure. The merchant uses it to initialize and
+read its release store even for the Buyer Expenses connection. The complete
+application source and original financial receiving driver are unchanged. The
+recipe also retains its later two exact customer guides and excludes this
+repository's large receiving packet from the customer package.
+
+The prior operation's complete source cache, installed-source receipts and
+failure output are retained in `libfile_bdb9252be7408191a9f29cb3a9173a16`
+(10,698,787 bytes; SHA-256
+`cb4b7d0a253bc9669dcc70e5ac05030d43bf71e5dcddcc8f4726dfb1454107a6`).
+Its selected package is retained in
+`libfile_46ca5c9c367481918f99355701137b35`
+(4,964,380 bytes; SHA-256
+`09ac46ed30a99341af6a29ece51b05eb12e582b7c34bdd775b6758167a22f279`).
+The corrected source receives and builds its own verified runtime before
+continuing the same complete financial programme.
 
 ## Run the complete operation
 
