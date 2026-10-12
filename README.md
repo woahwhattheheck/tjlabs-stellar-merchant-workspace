@@ -25,6 +25,7 @@ original saved records from source selection through delivery and reopening.
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
 | Review research sources and deliver cited analysis | `starforge research-workspace`, `starforge research-client` and the merchant Research tools | One saved question, original source editions, reviewed Crossref operations, analyst findings and complete report/portable receiving |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
+| Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
@@ -203,6 +204,7 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Timescale native operations, assigned work and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/timescale/OPERATING.md)
 - [Native MPP merchant, customer and managed receiving](products/mpp-workspace/README.md)
 
 - [Complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
