@@ -36,7 +36,8 @@ function completeResponse(value, name, args) {
   const responseBytes = Buffer.byteLength(JSON.stringify(value));
   if (responseBytes <= LINEAGE_MERCHANT_RESPONSE_BYTES) return value;
   const committed = Number.isSafeInteger(value?.revision) && typeof args.operationId === "string" &&
-    ["merchant_lineage_source_import", "merchant_lineage_edition_save", "merchant_lineage_review_save", "merchant_lineage_result_attach",
+    ["merchant_lineage_service_levels_policy_save", "merchant_lineage_service_levels_assessment_save", "merchant_lineage_service_levels_incident_review",
+      "merchant_lineage_schema_review_save", "merchant_lineage_source_import", "merchant_lineage_edition_save", "merchant_lineage_review_save", "merchant_lineage_result_attach",
       "merchant_lineage_import_file", "merchant_lineage_attach_file", "merchant_lineage_emit_file"].includes(name);
   if (committed) {
     return {
@@ -47,6 +48,9 @@ function completeResponse(value, name, args) {
         ...(value.source?.id ? { sourceId: value.source.id } : {}),
         ...(value.edition?.id ? { editionId: value.edition.id } : {}),
         ...(value.review?.id ? { reviewId: value.review.id } : {}),
+        ...(value.policy?.id ? { policyId: value.policy.id } : {}),
+        ...(value.assessment?.id ? { assessmentId: value.assessment.id } : {}),
+        ...(value.incident?.id ? { incidentId: value.incident.id } : {}),
         ...(value.result?.id ? { resultId: value.result.id, objectId: value.result.objectId } : {})
       },
       completeResponse: {

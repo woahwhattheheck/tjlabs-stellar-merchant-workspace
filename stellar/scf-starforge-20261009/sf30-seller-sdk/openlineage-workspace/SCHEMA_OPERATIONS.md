@@ -115,7 +115,7 @@ The HTML report is printable and includes all decisions, history and original co
 
 Complete workspace exports use application source edition **3**. They include schema comparisons, staff review history, original event/source/result bytes, the editable schema application modules, and the full receiving programme. Source reconstruction precedes complete comparison/history/evidence validation on receive.
 
-The receiver retains the exact original version-1 and version-2 application inventories. Existing version-2 gzip originals continue through their original decoded source verification. Saved schema decisions travel with version 3. An export can explicitly omit application source through the existing data-only API option; normal staff delivery includes the editable application.
+The receiver retains the exact original version-1 and version-2 application inventories. Existing version-2 gzip originals continue through their original decoded source verification. Saved schema decisions travel with complete version-3 and version-4 application editions. Version 4 also carries service-level policies, assessments and incident history while retaining both original version-3 source inventories. An export can explicitly omit application source through the existing data-only API option; normal staff delivery includes the editable application.
 
 The combined Python, Java, Merchant and schema release uses one application inventory maintained by the existing product owner. APPLICATION_FILES is the executable inventory; source packets can include additional application-provider or delivery files.
 
@@ -163,7 +163,7 @@ With this input, the programme reads the two untouched original upstream example
 
 These selections extend the full input above. The programme preserves every supplied original byte, saves two editions, inspects the comparison and all declared impacts, and attaches a complete original reference. It then operates the browser staff workflow: an interrupted committed response, page reopen and exact request recovery; a peer decision and a background refresh behind an open form; retained revision conflict and explicit reviewed application; staff resolution and all three report downloads.
 
-It exports the complete workspace, receives it into a separate directory, starts the included application, compares the complete restored review and source state, and re-exports the original editable application. Optional legacyPackages supplies paths to actual retained earlier archives for receiving alongside the version-3 work. Preserve those original archive bytes.
+It exports the complete workspace, receives it into a separate directory, starts the included application, compares the complete restored review and source state, and re-exports the original editable application. Optional legacyPackages supplies paths to actual retained earlier archives for receiving alongside the current work. Preserve those original archive bytes.
 
 The original output directory retains its operation input, exact request bodies, workspace identity, chosen local port, persistent browser profile, operating record, reports, screenshot and complete application export. Reuse the same input and directory to recover the original operation. The programme stops and closes its owned application and browser processes on error, preserving original state for continuation.
 

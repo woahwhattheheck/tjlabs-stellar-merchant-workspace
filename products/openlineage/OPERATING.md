@@ -338,3 +338,11 @@ Each journey retains its original operation files and continues from the same
 directory. The schema guide also accepts actual earlier workspace packages for
 version 1/version 2 receiving. Keep private credentials with the operator and
 transfer the complete project export to the recipient.
+
+## Operate pipeline service levels
+
+Open **Service levels** in the original OpenLineage workspace to save per-job timeliness, duration and failure expectations, review an assessment at an explicit time, and assign or resolve observed incidents with complete decision history. The desk shares the running application's original workspace and instance connection.
+
+Use `starforge openlineage service-levels --help` for the same local or HTTP workflow. The typed `./seller/openlineage/service-levels` export and six native/merchant tools call the original revisioned writer. Customer reports include policy versions, exact observed source/event references and complete incident history; the existing full workspace export retains these records and the editable service-level application.
+
+The [service-level guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS.md) defines completion freshness, observed duration, failure windows, historical selections and receiving. The [operator desk guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS_OPERATOR.md) covers ordinary operation and exact interrupted-request recovery.
