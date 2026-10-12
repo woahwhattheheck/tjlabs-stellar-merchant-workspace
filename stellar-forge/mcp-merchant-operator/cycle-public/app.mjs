@@ -1,8 +1,9 @@
 // MIT. Customer closing interface; all statement operations use the original local server.
 import {createCustomerSetup} from './setup.mjs';
 import {createCustomerDossierUi} from './customer-dossiers.mjs';
+import {createServicePlannerUi} from './service-planner.mjs';
 const $=id=>document.getElementById(id);
-let customerSetup,customerDossiers;
+let customerSetup,customerDossiers,servicePlanner;
 const state={context:null,inventory:null,selected:new Set(),selections:[],requestId:crypto.randomUUID(),cycles:[],key:null,current:null,poll:null,inventoryBusy:false,review:null};
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const pretty=value=>JSON.stringify(value,null,2);
@@ -20,7 +21,7 @@ function clearError(){$('error').hidden=true;$('error').textContent='';}
 async function api(path,body){
   const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Workbench-Token':state.context.csrfToken},body:body===undefined?undefined:JSON.stringify(body)});
   let result;try{result=await response.json();}catch{throw new Error('The workbench returned an unreadable response. Refresh this page.');}
-  if(!response.ok){const error=new Error(result.error?.message??'The operation could not be completed.');error.code=result.error?.code;throw error;}
+  if(!response.ok){const error=new Error(result.error?.message??'The operation could not be completed.');error.code=result.error?.code;error.status=response.status;throw error;}
   return result;
 }
 function draftKey(){return 'customer-closing-draft:'+state.context.draftScope;}
@@ -52,7 +53,7 @@ function renderInventory(){
   preserveOptions('default-opening',inventory.usage,usageLabel,'Cumulative statement');
   if(!inventory.customers.length)$('inventory-state').textContent='No customer records';
   else $('inventory-state').textContent=inventory.customers.length+' customers · '+inventory.runs.length+' completed runs · refreshed '+date(inventory.observedAt);
-  renderCustomers();renderSelections();customerSetup?.inventoryChanged();
+  renderCustomers();renderSelections();customerSetup?.inventoryChanged();servicePlanner?.inventoryChanged();
 }
 function visibleCustomers(){
   const query=$('customer-search').value.trim().toLowerCase();
@@ -91,7 +92,7 @@ function renderSelections(){
   }).join('');
 }
 function view(name){
-  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';$('setup-view').hidden=name!=='setup';
+  $('compose-view').hidden=name!=='compose';$('cycles-view').hidden=name!=='cycles';$('setup-view').hidden=name!=='setup';$('service-planner-view').hidden=name!=='service-planner';
   document.querySelectorAll('[data-view]').forEach(button=>{if(button.dataset.view===name)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
 }
 async function refreshInventory(){
@@ -245,7 +246,7 @@ $('selections').addEventListener('click',async event=>{
 $('prepare').addEventListener('click',prepareCycle);
 $('close-review').addEventListener('click',()=>$('review-dialog').close());
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',async()=>{
-  view(button.dataset.view);if(button.dataset.view==='setup')try{await customerSetup.show();}catch(error){showError(error);}if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
+  view(button.dataset.view);if(button.dataset.view==='service-planner')try{await servicePlanner.show();}catch(error){showError(error);}if(button.dataset.view==='setup')try{await customerSetup.show();}catch(error){showError(error);}if(button.dataset.view==='cycles')try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}
 }));
 $('reload-cycles').addEventListener('click',async()=>{try{await refreshCycles();if(state.key)await loadCycle(state.key);}catch(error){showError(error);}});
 $('cycle-list').addEventListener('click',event=>{const button=event.target.closest('[data-cycle]');if(button)loadCycle(button.dataset.cycle);});
@@ -276,6 +277,10 @@ customerSetup=createCustomerSetup({getState:()=>state,api,notice,showError,clear
     saveDraft();renderSelections();view('compose');$('selections').scrollIntoView({block:'start'});
     notice('The original statement was added for correction. Choose its current sources and review the complete replacement.');
   }
+});
+servicePlanner=createServicePlannerUi({getState:()=>state,api,notice,showError,clearError,openReview,
+  async openCycle(key){state.key=key;view('cycles');await refreshCycles();await loadCycle(key);},
+  async showSetup(){view('setup');await customerSetup.show();}
 });
 async function start(){
   try{
