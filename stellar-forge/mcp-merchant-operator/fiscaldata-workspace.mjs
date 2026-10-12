@@ -209,20 +209,26 @@ export class MerchantFiscalDataWorkspaces{
     if(handle.lifecycle)throw failure('FISCALDATA_WORKSPACE_DRAINING','The original workspace is draining for '+handle.lifecycle.state.toLowerCase()+'. Retry after its lifecycle completes.');
     const task=handle.tail.then(perform);handle.tail=task.then(()=>{},()=>{});return task;
   }
-  async #transition(handle,state,perform){
-    if(handle.closing)throw failure('FISCALDATA_WORKSPACE_CLOSING','The original workspace is closing.');
-    if(handle.lifecycle)throw failure('FISCALDATA_WORKSPACE_DRAINING','The original workspace already has an active lifecycle transition.');
-    // Reserve admission synchronously, before either browser or queued native work can yield.
-    handle.lifecycle={state,startedAt:new Date().toISOString()};
-    const closeBrowser=async()=>{const browser=handle.browser;handle.browser=null;if(browser)await browser.close();};
+  async #transition(handle,state,perform,key=state){
+    if(handle.closing&&state!=='CLOSING')throw failure('FISCALDATA_WORKSPACE_CLOSING','The original workspace is closing.');
+    const prior=handle.lifecycle;
+    if(prior&&(!prior.retryable||state!=='CLOSING'&&prior.key!==key))
+      throw failure('FISCALDATA_WORKSPACE_DRAINING','Finish the original retained lifecycle transition before accepting new work.');
+    // Failed cleanup retains admission and ownership. Only the same selected
+    // transition, or a complete close of this original instance, can continue it.
+    handle.lifecycle={state,key,startedAt:prior?.startedAt??new Date().toISOString(),retryable:false};
+    const closeBrowser=async()=>{
+      const browser=handle.browser;
+      if(browser){await browser.close();if(handle.browser===browser)handle.browser=null;}
+    };
     try{
       await closeBrowser();
       await handle.tail.catch(()=>{});
       // A browser-open accepted before the reservation may have completed in the old tail.
       // Its requests cannot enter #enqueue while reserved; drain it outside that tail too.
       await closeBrowser();
-      return await perform();
-    }finally{handle.lifecycle=null;}
+      const result=await perform();handle.lifecycle=null;return result;
+    }catch(error){handle.lifecycle.retryable=true;throw error;}
   }
   async #history(handle,offset,limit){
     let names=[];try{names=await readdir(join(handle.entry.directory,'operator-history'));}catch(error){if(error.code!=='ENOENT')throw error;}
@@ -251,29 +257,62 @@ export class MerchantFiscalDataWorkspaces{
       }});
   }
   async #borrowBrowser(name,handle,port){
-    if(handle.browser)return handle.browser;
+    if(handle.browser){
+      if(!handle.browser.ready)throw failure('FISCALDATA_BROWSER_DRAINING','Finish closing the retained browser before opening another.');
+      return handle.browser;
+    }
     const{createFiscalWorkspaceHandler}=await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/fiscaldata/workspace-server.mjs');
-    let handler,closing=false;const requests=new Set(),sockets=new Set();
+    let handler,closing=false,closePromise;const requests=new Set(),sockets=new Set();
     const server=createServer((req,res)=>{
       if(closing||!handler||handle.lifecycle||handle.closing){res.writeHead(503);res.end('Workspace is starting or draining.');return;}
-      const task=Promise.resolve(handler(req,res)).catch(error=>{if(!res.headersSent)res.writeHead(500);res.end('Workspace request failed.');});
+      const task=Promise.resolve().then(()=>handler(req,res)).catch(error=>{if(!res.headersSent&&!res.destroyed)res.writeHead(500);if(!res.destroyed)res.end('Workspace request failed.');});
       requests.add(task);task.finally(()=>requests.delete(task));
     });
     server.requestTimeout=30000;server.headersTimeout=10000;server.keepAliveTimeout=2000;
-    server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));});
-    await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(count(port??0,'Browser port',0,65535),'127.0.0.1',resolve);});
-    const origin='http://127.0.0.1:'+server.address().port,token=randomBytes(32).toString('hex');
+    server.on('connection',socket=>{sockets.add(socket);socket.once('close',()=>sockets.delete(socket));});
+    const browser={url:null,ready:false,close(){
+      closing=true;browser.ready=false;
+      if(closePromise)return closePromise;
+      closePromise=(async()=>{
+        const failures=[];
+        try{await handler?.close();}catch(error){failures.push(error);}
+        let stopped=Promise.resolve();
+        try{stopped=new Promise(done=>{
+          try{server.close(error=>{if(error&&error.code!=='ERR_SERVER_NOT_RUNNING')failures.push(error);done();});}
+          catch(error){if(error.code!=='ERR_SERVER_NOT_RUNNING')failures.push(error);done();}
+        });}catch(error){failures.push(error);}
+        try{server.closeIdleConnections?.();}catch(error){failures.push(error);}
+        // Handler cleanup failure never skips the accepted request/listener drain.
+        await Promise.allSettled([...requests]);
+        for(const socket of sockets)try{socket.destroy();}catch(error){failures.push(error);}
+        await stopped;
+        if(failures.length){
+          const error=new AggregateError(failures,'The original Fiscal browser could not finish closing.');
+          error.code='FISCALDATA_BROWSER_CLOSE_FAILED';throw error;
+        }
+      })().catch(error=>{closePromise=null;throw error;});
+      return closePromise;
+    }};
+    // Retain startup ownership before any listener or handler await.
+    handle.browser=browser;
     try{
+      await new Promise((done,fail)=>{
+        const failed=error=>{server.removeListener('listening',listening);fail(error);};
+        const listening=()=>{server.removeListener('error',failed);done();};
+        server.once('error',failed);server.once('listening',listening);
+        server.listen(count(port??0,'Browser port',0,65535),'127.0.0.1');
+      });
+      const origin='http://127.0.0.1:'+server.address().port,token=randomBytes(32).toString('hex');
       handler=await createFiscalWorkspaceHandler({origins:[origin],token,identity:handle.entry.managedIdentity??null,model:{
         snapshot:()=>handle.model.snapshot(),file:(...args)=>handle.model.file(...args),
         dispatch:(action,input)=>this.#enqueue(handle,()=>this.#native(handle,action,input,'browser'))
       }});
-    }catch(error){await new Promise(resolve=>server.close(resolve));throw error;}
-    return{url:origin+'/',async close(){
-      if(closing)return;closing=true;handler.close();server.closeIdleConnections?.();
-      const stopped=new Promise(resolve=>server.close(resolve));
-      await Promise.allSettled([...requests]);for(const socket of sockets)socket.destroy();await stopped;
-    }};
+      browser.url=origin+'/';browser.ready=true;return browser;
+    }catch(error){
+      try{await browser.close();if(handle.browser===browser)handle.browser=null;}
+      catch(cleanup){throw new AggregateError([error,cleanup],'Fiscal browser startup and retained cleanup failed.');}
+      throw error;
+    }
   }
   async #checkpoint(name,handle,operationId){
     await this.#reads.closeScope(name);handle.suspended=true;
@@ -357,10 +396,22 @@ export class MerchantFiscalDataWorkspaces{
     throw failure('INVALID_PARAMS','Choose an original Fiscal workspace operation.');
   }
   async #stop(name,handle){
-    handle.closing=true;
-    if(handle.browser){await handle.browser.close();handle.browser=null;}
-    await handle.tail.catch(()=>{});await this.#reads.closeScope(name);
-    await handle.model?.close();handle.model=null;this.#handles.delete(name);
+    handle.closing=true;const failures=[];
+    const closeBrowser=async()=>{
+      const browser=handle.browser;
+      if(browser)try{await browser.close();if(handle.browser===browser)handle.browser=null;}catch(error){failures.push(error);}
+    };
+    await closeBrowser();
+    await handle.tail.catch(()=>{});
+    // An already accepted open may have attached its listener while draining.
+    if(handle.browser&&!failures.length)await closeBrowser();
+    try{await this.#reads.closeScope(name);}catch(error){failures.push(error);}
+    if(handle.model)try{await handle.model.close();handle.model=null;}catch(error){failures.push(error);}
+    if(failures.length){
+      const error=new AggregateError(failures,'Original Fiscal resources remain owned; retry closing this same instance.');
+      error.code='FISCALDATA_CLOSE_FAILED';throw error;
+    }
+    this.#handles.delete(name);
     return{workspace:name,instanceId:handle.instanceId,state:'CLOSED'};
   }
   async #dispatch(name,args){
@@ -373,7 +424,7 @@ export class MerchantFiscalDataWorkspaces{
     const pending=this.#handles.get(args.workspace);if(!pending)throw failure('FISCALDATA_WORKSPACE_CLOSED','Open the original workspace first.');
     const handle=await pending;
     if(name==='merchant_fiscaldata_checkpoint')
-      return this.#transition(handle,'CHECKPOINTING',()=>this.#checkpoint(args.workspace,handle,args.operationId));
+      return this.#transition(handle,'CHECKPOINTING',()=>this.#checkpoint(args.workspace,handle,args.operationId),'CHECKPOINTING:'+args.operationId);
     if(name==='merchant_fiscaldata_browser'&&args.action==='close')
       return this.#transition(handle,'BROWSER_CLOSING',async()=>({workspace:args.workspace,browser:'CLOSED'}));
     if(name==='merchant_fiscaldata_close'){
@@ -392,9 +443,13 @@ export class MerchantFiscalDataWorkspaces{
     this.#close=(async()=>{
       await Promise.allSettled([...this.#pending]);
       const outcomes=await Promise.allSettled([...this.#handles].map(async([name,pending])=>this.#stop(name,await pending)));
-      await this.#reads.close();
-      if(outcomes.some(value=>value.status==='rejected'))throw failure('FISCALDATA_CLOSE_FAILED','An original Fiscal workspace could not finish draining.');
-    })();return this.#close;
+      const files=await Promise.allSettled([this.#reads.close()]);
+      const failed=[...outcomes,...files].filter(value=>value.status==='rejected');
+      if(failed.length){
+        const error=new AggregateError(failed.map(value=>value.reason),'Original Fiscal resources remain owned; retry the same adapter close.');
+        error.code='FISCALDATA_CLOSE_FAILED';throw error;
+      }
+    })().catch(error=>{this.#close=null;throw error;});return this.#close;
   }
 }
 

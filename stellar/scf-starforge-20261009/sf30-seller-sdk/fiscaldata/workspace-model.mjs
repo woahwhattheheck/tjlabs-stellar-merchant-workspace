@@ -1385,10 +1385,11 @@ export async function openFiscalWorkspace({ directory, buyerWorkspaces = [], lim
     if(closePromise)return closePromise;
     closing=true;workerEnabled=false;controller?.abort();
     closePromise=(async()=>{
-      try{
-        await workerPromise;await tail.catch(()=>{});await publisher.close();datasets.clear();
-      }finally{closed=true;await unlock();}
-    })();return closePromise;
+      await workerPromise;await tail.catch(()=>{});await publisher.close();datasets.clear();
+      // Preserve the original lease until every owning publisher has closed.
+      // A failed close keeps admission shut and can continue on this same model.
+      await unlock();closed=true;
+    })().catch(error=>{closePromise=null;throw error;});return closePromise;
   }
   return {snapshot,dispatch,file,startWorker,close};
 }

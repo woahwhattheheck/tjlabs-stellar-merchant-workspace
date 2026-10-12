@@ -66,13 +66,14 @@ export async function startFiscalAgent({
       let listenerClosed=Promise.resolve();
       if(server){
         listenerClosed=new Promise(done=>{
-          server.close(error=>{if(error&&error.code!=='ERR_SERVER_NOT_RUNNING')failures.push(error);done();});
+          try{server.close(error=>{if(error&&error.code!=='ERR_SERVER_NOT_RUNNING')failures.push(error);done();});}
+          catch(error){if(error.code!=='ERR_SERVER_NOT_RUNNING')failures.push(error);done();}
         });
-        server.closeIdleConnections?.();
+        try{server.closeIdleConnections?.();}catch(error){failures.push(error);}
       }
       // Admission closes before draining. Accepted original actions complete.
       await Promise.allSettled([...requests]);
-      for(const socket of sockets)socket.destroy();
+      for(const socket of sockets)try{socket.destroy();}catch(error){failures.push(error);}
       await listenerClosed;
       try{await adapter?.close();}catch(error){failures.push(error);}
       signal?.removeEventListener('abort',onAbort);
@@ -81,7 +82,7 @@ export async function startFiscalAgent({
         error.code='FISCAL_AGENT_CLOSE_FAILED';resolveClosed({status:'CLOSE_FAILED',code:error.code});throw error;
       }
       resolveClosed({status:'CLOSED'});
-    })();
+    })().catch(error=>{closing=null;throw error;});
     return closing;
   };
   // During startup, the current awaited original operation owns its cleanup.

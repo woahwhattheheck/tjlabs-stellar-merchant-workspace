@@ -26,7 +26,9 @@
       "path": "stellar-forge/mcp-merchant-operator/fiscaldata-workspace.mjs",
       "gitBlob": "8e46107e2d13870e4dd7b526ea2b9efead85665c",
       "originalDestinationPreimage": "b4418462891fa4c4564f2bf3bd9d01b340c35af2",
-      "originalRelease": "635d9376d25890294c6b6c687673a2adebbbecee"
+      "originalRelease": "635d9376d25890294c6b6c687673a2adebbbecee",
+      "adoptedGitBlob": "3feb1079364a0e3de3e81e838a2913a92d3b8878",
+      "correction": "Reviewed retained shutdown: failed cleanup keeps original resource ownership and closes admission, then resumes the same cleanup."
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/fiscaldata-refresh.json",
@@ -68,7 +70,9 @@
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fiscaldata/workspace-model.mjs",
       "gitBlob": "1000fc14a8f579bc65588168383d1b8118234105",
       "originalDestinationPreimage": "56cd817980fc4427350ef6d8fbfeefa287246553",
-      "originalRelease": "635d9376d25890294c6b6c687673a2adebbbecee"
+      "originalRelease": "635d9376d25890294c6b6c687673a2adebbbecee",
+      "adoptedGitBlob": "eca4437250e35bb056201083c6a17f763a0d7557",
+      "correction": "Reviewed retained shutdown: failed cleanup keeps original resource ownership and closes admission, then resumes the same cleanup."
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fiscaldata/workspace-server.mjs",
@@ -161,8 +165,15 @@
       "originalRelease": "e995349a956ff5490e359970c45f78ff44b7dd4c"
     }
   ],
-  "composition": "All existing destination paths matched their original public preimages; all original added paths were absent. The imported full bodies are unchanged.",
+  "composition": "All 24 original destination preimages matched. Twenty-two imported bodies are unchanged. The original Fiscal adapter and model carry the reviewed shutdown-recovery correction listed here; all other concurrent destination source is preserved.",
   "additionalSource": "The adjacent product guides/recipe and fiscaldata-agent compose original source selection, installation, Fiscal model/browser, tool catalogue and authenticated HTTP transport.",
   "execution": "Source adoption and a published recipe do not assert a new customer's READY installation or completed receiving. Record actual original operation results separately.",
-  "compositionBase": "8230bd6c6489e5e1be82fef439993688d1d50b36"
+  "compositionBase": "6bb02489fbb3360e609b7450a4378244eb9b07a9",
+  "lifecycleCorrection": {
+    "adapter": "3feb1079364a0e3de3e81e838a2913a92d3b8878",
+    "model": "eca4437250e35bb056201083c6a17f763a0d7557",
+    "host": "c5ff5701d479365284bc281fcc934c1a14d9eaaa",
+    "originalRetainedFileReader": "0cc3502779b193521cd1d177e8d23b76ab625df2",
+    "semantics": "New admission stays closed after failed cleanup. Retained browser, model and file descriptors are retried on their same owner. The original model lease is released only after publisher shutdown. Completed close remains idempotent."
+  }
 }

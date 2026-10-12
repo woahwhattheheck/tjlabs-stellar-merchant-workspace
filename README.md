@@ -64,7 +64,14 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review publisher finance and native data quality | **Applications → IATI aid finance and DQA** or `starforge dataset-iati` | Original XML and native DQA assessments, named finance/finding reviews, refreshed comparisons, browser/MCP/CLI operation and complete customer receiving |
 | Operate and receive a 360Giving publisher | **Applications → 360Giving publisher workspace**, `starforge dataset-360giving-workspace` and [typed agents](products/360giving-publisher/README.md) | Original package/reviews, complete native grants and changes, SDK/MCP operation, full customer handoffs and independent receiving |
 | Reconcile IATI and 360Giving grant portfolios | **Applications → Grant portfolio reconciliation**, `starforge grant-portfolio-workspace` and [operating guide](products/grant-portfolio/OPERATING.md) | Complete original source editions, reviewed portfolio history, exact financial rows, native merchant/customer files and saved workspace recovery |
+| Onboard and hand over a complete data-package source | **Applications → Frictionless source workbench**, `starforge frictionless-agent` and `starforge frictionless-source` | [Complete selected installation](products/frictionless-source/OPERATING.md), original captures, immutable query editions, full native review, publisher source selection and complete resumable source receiving |
 | Receive a reviewed local dataset and hand over the customer workspace | **Applications → Local dataset customer workspace** or `starforge local-dataset-agent` | [Complete selected installation](products/local-dataset/OPERATING.md), original Frictionless capture, full native pages, DuckDB editions and SQL, complete reports and portable receiving |
+
+The [Frictionless source workbench guide](products/frictionless-source/OPERATING.md)
+connects complete descriptor/archive intake, immutable source editions, native
+review, original publication planning and complete receiving. Build this selected
+product with `--selection frictionless-source`; the existing local dataset
+customer workflow and its complete Python/Parquet source remain included.
 
 The [Local dataset customer guide](products/local-dataset/OPERATING.md) connects
 reviewed Frictionless CSV, TSV, JSON and Parquet sources to complete native

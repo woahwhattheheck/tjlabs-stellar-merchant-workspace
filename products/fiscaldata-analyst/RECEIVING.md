@@ -63,7 +63,7 @@ Through the named host:
 ~~~sh
 starforge fiscaldata-remote checkpoint \
   --url "$MCP_URL" --workspace treasury --workspace-id "$FISCAL_WORKSPACE_ID" \
-  --operation fiscal-customer-checkpoint-01
+  --operation-id fiscal-customer-checkpoint-01
 ~~~
 
 The original adapter gates new writes, drains its borrowed browser and accepted

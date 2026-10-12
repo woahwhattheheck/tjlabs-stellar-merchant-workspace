@@ -4,6 +4,91 @@ The firm portfolio coordinates separately owned client workspaces. Procedures, c
 
 [Install and select the original workspaces](INSTALLING.md) first. Open the running firm at `/portfolio.html`; use **Open client desk** to work in that exact client's mounted Runbooks. All selections begin from the actual saved source.
 
+## Review an issued buyer period
+
+Use a separate configured buyer alias when the source is the original
+`stellar-forge.buyer-accountant-source.v1` document issued by Buyer Expenses.
+That document carries its frozen expense and credit allocations, source
+observations, period history and outstanding reservations. The original
+accountant validates the complete source and keeps its native amounts and
+financial context. A buyer alias uses source startup, accountant returns, Xero
+and operating recovery; firm Portfolio and Runbooks operations keep their
+merchant aliases.
+
+Save the host's accounting declaration with the real original file and chosen
+private directory. This example declares only the source needed for startup:
+
+~~~json
+{
+  "workspaces": {
+    "expenses": {
+      "label": "Buyer expense accounting",
+      "sourceMode": "buyer",
+      "directory": "./buyer-accounting",
+      "buyerSources": {
+        "issued-period": "../issued/period-accountant-source.json"
+      },
+      "recovery": {
+        "stateRoot": ".",
+        "backupRoot": "../accounting-backups",
+        "passEnv": "STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE"
+      }
+    }
+  }
+}
+~~~
+
+Resolve these paths relative to the actual host configuration. Add
+`accountantReturns` and `platformInputs` aliases only for the original return
+and Xero files being supplied. The complete [buyer host guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md)
+includes initialization of the existing MCP host and its original authentication.
+An existing host can add this declaration under `accounting`, preserving its
+other providers. Omit merchant outbox, proof, terms, Runbooks and Portfolio
+inputs from the buyer alias.
+
+The installed `merchant-accounting-platforms` command covers the whole buyer
+path. Set `ACCOUNTING_MCP_URL` to the actual running host and retain its existing
+authentication:
+
+~~~sh
+starforge merchant-accounting-platforms sources \
+  --url "$ACCOUNTING_MCP_URL" --workspace expenses --platform buyer
+
+starforge merchant-accounting-platforms source \
+  --url "$ACCOUNTING_MCP_URL" --workspace expenses --platform buyer \
+  --source issued-period --view summary
+~~~
+
+Source preview works before the buyer accountant directory exists. Read the
+returned period and totals, then page `allocations`, `outstanding` and
+`captures` with the returned SHA256. Keep that digest on every page; review is
+not a truncated substitute for the original file.
+
+The [complete client workflow](../../stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md#buyer-issued-source-startup-and-receiving)
+provides the exact JSON and commands for each retained operation:
+
+| Stage | Operator action | Original result |
+| --- | --- | --- |
+| Initialize | Preview `--action initialize` with the real source alias, name and operator; save the complete preview using `prepare`, then explicitly `execute`. | Native Store binding, complete retained source and the original first-handoff UUID. |
+| Recover initialization | `reconcile` the same saved operation after an uncertain response. | The accepted source/name/operator and original binding, even when the former import file is unavailable. |
+| Review retained source | Read `startup` and `retained-source` against the saved source digest. | Complete paged allocations and source observations with the current accountant revision. |
+| Create the first handoff | Preview `--action handoff`, save its full request, then explicitly execute it. | The startup's original handoff ID, named review and exact create-request identity. |
+| Recover a handoff | Reconcile the same operation directory and request. | Its accepted native handoff; a changed request under that ID remains a conflict. |
+| Continue bookkeeping | Select `--platform xero` on this alias and use the actual handoff, context, explicit fiat/chart decisions and original response. | Retained draft/posted observations, reviewed accountant return and the buyer-return file. |
+
+The existing original buyer source and accountant writers own these operations.
+Startup and handoff recovery do not create provider journals. A zero-native
+allocation keeps its explicit exclusion where a positive fiat line would be
+invalid. Source currency, native units, testnet/development provenance and
+bookkeeping status remain distinct fields.
+
+Before moving the same initialized directory to the browser or managed
+Applications, close its MCP owner. The existing Merchant accounting application
+reads the buyer binding, retains the original workspace/source identity and
+opens the buyer desk; it does not require manufactured merchant directories.
+Use the original buyer startup and [managed Connections guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/CONNECTIONS.md)
+for the chosen existing runtime and its normal start/stop controls.
+
 ## Commission the firm
 
 Save the firm's name, close standard, reporting standard and cadence, and the escalation instructions used by the practice. Add the real people with stable identifiers, names, available minutes per day, working weekdays, holidays and dated time off.
