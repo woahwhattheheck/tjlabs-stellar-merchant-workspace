@@ -1,0 +1,50 @@
+{
+  "schema": "commons.canadabuys.issuer-source-manifest.v1",
+  "operation_id": "SCF-CANADABUYS-PROCUREMENT-9FCD-20261012",
+  "captured_on": "2026-10-12",
+  "retrieval": "Public HTTPS file acquisition followed by complete UTF-8 attachment readback.",
+  "files": [
+    {
+      "path": "sources/awards-catalog.json",
+      "source_url": "https://open.canada.ca/data/api/action/package_show?id=a1acb126-9ce8-40a9-b889-5da2b1dd20cb",
+      "bytes": 34172,
+      "git_blob": "07cfd60717e96d6b2bf5ba1221a15349aee30d8f",
+      "sha256": "d40a2c3ec29aae9490cb34796bd2df4f8c55aaf597a344fb099dd7daf807a744"
+    },
+    {
+      "path": "sources/sosa-catalog.json",
+      "source_url": "https://open.canada.ca/data/api/action/package_show?id=f5c8a5a0-354d-455a-99ab-8276aa38032e",
+      "bytes": 7935,
+      "git_blob": "2e5e4e15be127dc01368fcd3fb299bb11482f0e0",
+      "sha256": "9138c426eba06e908df5c2c5aa3d0451ac06767b10ca46438fe4317c9fc98980"
+    },
+    {
+      "path": "sources/canadabuys-dictionary.xml",
+      "source_url": "https://donnees-data.tpsgc-pwgsc.gc.ca/ba2/ac-cb/achatscanada-canadabuys-dd.xml",
+      "bytes": 60478,
+      "git_blob": "8f6c5f8a028520c0857533ee8a573856fa762d95",
+      "sha256": "092071569300e3c58ddfd300a821dddfc8a73e9c519bf3a611d6de0deacba0fe"
+    },
+    {
+      "path": "sources/sosa-dictionary.xml",
+      "source_url": "https://donnees-data.tpsgc-pwgsc.gc.ca/ba2/ac-cb/ocama-sosa-dd.xml",
+      "bytes": 8064,
+      "git_blob": "115afe3a2e5a3ad4f7a75e9c9b249df9fbe0d138",
+      "sha256": "2375f9e9bf5e8d9a5ec16c63b00a7d501fbf9652997c3838de8f24f0cd1e7d8e"
+    },
+    {
+      "path": "sources/source-support.html",
+      "source_url": "https://donnees-data.tpsgc-pwgsc.gc.ca/ba2/ac-cb/soutien-support-eng.html",
+      "bytes": 23491,
+      "git_blob": "916b6a8020e29aaf28c9b137df57d21deb157370",
+      "sha256": "d97cc3b3d2f86aac166d1e8b0da21260ab7d16bb98d2283330b27614b775846a"
+    },
+    {
+      "path": "sources/implementation-notice-2026.html",
+      "source_url": "https://donnees-data.tpsgc-pwgsc.gc.ca/ba2/ac-cb/COsoutien-CHsupport-eng.html",
+      "bytes": 16855,
+      "git_blob": "8f17be0b64c98ba1d29bd1bd402e94a06c52654e",
+      "sha256": "a860e77549f8ef50d8edcfa210ccff6842e247d05d2e22a6c2ac8a6bc47c7c69"
+    }
+  ]
+}

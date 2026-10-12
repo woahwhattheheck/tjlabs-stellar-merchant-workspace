@@ -82,6 +82,8 @@ async function sourceClosure(store){
  // Preserve the complete maintained SensorThings operator, including its
  // original launch/core/Desk entry points and every literal dependency.
  await add(resolve(HERE,'..'),{directory:true});
+ // This directory contains the maintained source build programme, not generated output.
+ await add(join(HERE,'build'),{directory:true});
  for(const name of ['package.json','LICENSE','README.md'])try{await add(join(REPO,name));}catch(error){if(error.code!=='ENOENT')throw error;}
  for(let at=0;at<queue.length;at++){
   if(queue.length>10000)throw fail('SOURCE_CLOSURE','The complete editable source exceeds its declared member capacity.',413);

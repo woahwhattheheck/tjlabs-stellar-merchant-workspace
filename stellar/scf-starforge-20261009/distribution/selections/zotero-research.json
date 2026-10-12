@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "zotero-research",
   "title": "Zotero library and Research operator",
-  "description": "Exact Zotero library capture and original metadata, reviewed collection projects, complete Research source bundles, typed file clients and repeated independent receiving",
+  "description": "Exact Zotero libraries and complete Research sources, independent extraction, appraisal, reviewed publications and editable customer update receiving",
   "base": {
     "commands": [
       "installation",
@@ -170,7 +170,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Retained Zotero libraries, source-bound Research review and complete editable customer receiving",
+    "description": "Retained Zotero libraries with source-bound Research extraction, appraisal, publications and complete editable customer receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

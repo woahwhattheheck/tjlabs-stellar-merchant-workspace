@@ -183,3 +183,21 @@ try {
 ```
 
 Use `list`, paged `series`, `calendar`, `cycle`, `capture` and `receive` to operate the same records. The client uses the existing Console transport, token handling, native execution owner and atomic receiving writer.
+
+## Operate the complete native receiving journey
+
+The maintained native receiver continues the original merchant and recipe operation into two recurring customer periods. It retains the same private operation directory, original installation, seven-call merchant run, eight-call recipe run, both Console workspaces and the complete earlier customer archives.
+
+From the complete source, run:
+
+```sh
+node stellar-forge/mcp-merchant-operator/receiving/workflow-series-journey.mjs \
+  --directory ORIGINAL_PRIVATE_OPERATION_DIRECTORY \
+  --chromium ACTUAL_CHROMIUM_EXECUTABLE \
+  --playwright-module ACTUAL_INSTALLED_PLAYWRIGHT_MODULE \
+  --source-commit COMPLETE_SELECTED_SOURCE_COMMIT
+```
+
+The original programme completes first and reopens its completed outputs on a continuation. Recurring work then adds a complete second OpenAPI source edition, plans the first calendar period in the browser, recovers an accepted Start response under the original saved action, and commissions the next period through the typed client. Both periods use the installed original eight-step native workflow. Each produces and receives its complete six-file customer. The receiver captures the complete recurring profile and both customers, imports through the other original Console, and closes and reopens both workspaces with the same original run and customer identities.
+
+Continue an interrupted attempt with the same directory. The full frozen requests and current progress are in `workflow-series-receiving-checkpoint.json`; completion is retained in `workflow-series-native-run.json`. Native customer archives, all individual customer files, the full profile, desktop/mobile views and reopened receiving view stay alongside the original operation.

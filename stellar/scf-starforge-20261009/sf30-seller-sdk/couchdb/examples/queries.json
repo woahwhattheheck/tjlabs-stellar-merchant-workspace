@@ -1,0 +1,34 @@
+{
+  "invoices": {
+    "columns": {
+      "document_id": {
+        "pointer": "/_id",
+        "type": "string"
+      },
+      "revision": {
+        "pointer": "/_rev",
+        "type": "string"
+      },
+      "amount": {
+        "pointer": "/amount",
+        "type": "string",
+        "encoding": "decimal"
+      },
+      "customer": {
+        "pointer": "/customer",
+        "type": "string",
+        "nullable": true,
+        "missing": "null",
+        "empty": "null"
+      }
+    },
+    "review": {
+      "reviewer": "Assigned operator",
+      "note": "Replace with the review of the selected original documents.",
+      "allowConflicts": false,
+      "allowMissing": false,
+      "allowDeletions": false,
+      "allowConcurrentChanges": false
+    }
+  }
+}

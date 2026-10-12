@@ -82,11 +82,15 @@ Retain the exact original offer alongside the estimate:
 | Delivery invoices | Original invoices whose lines are outside the grant packages; each can belong to one scenario |
 | Source and assumptions | Original scope, prerequisites, estimate basis, date assumptions and relevant attachments |
 
-The milestone amounts must add to the quoted price exactly. Selected observed customer receipts reduce those milestones in order; over-receipts remain explicit. A milestone with no collection date is excluded from the cash curve and listed as a date decision.
+The milestone amounts must add to the quoted price exactly. Selected observed customer receipts reduce those milestones in order using original USD amounts in USD mode or retained native payment credits in native mode; over-receipts remain explicit. A milestone with no collection date is excluded from the cash curve and listed as a date decision.
 
-Customer-specific remaining uninvoiced cost equals its current total delivery estimate less the original linked invoice amounts and assigned direct payments, floored at zero. Included unpaid invoices remain separately due. Reusable product work completed before the proposed customer implementation belongs in its original scope; it must not be relabeled as work still needed for this customer.
+For USD delivery estimates, customer-specific remaining uninvoiced cost equals the current total estimate less the original linked invoice amounts and assigned direct payments, floored at zero. Foreign estimates use the retained native cost credits and explicit rate described in the currency guide. Included unpaid invoices remain separately due. Reusable product work completed before the proposed customer implementation belongs in its original scope; it must not be relabeled as work still needed for this customer.
 
 A new internal effort estimate is valid as a forecast assumption when its author, scope and basis are explicit. It is distinct from a quoted customer commitment, measured hours or an agreed supplier rate. Keep each concept in its original field and source note.
+
+## Native currencies and original payment credits
+
+Choose original USD entry or explicit native-currency entry for each commercial scenario. Native quotes, delivery estimates, source-dated exchange rates, original payment credits, exact milestone rounding and valuation coverage remain together through saved forecasts, Portfolio and complete-case receiving. See [Original currencies in operating forecasts](CURRENCY.md) for the full workflow and [loadable input example](examples/native-currency-forecast.json).
 
 ## Capacity
 
@@ -149,7 +153,7 @@ python3 workspace/cli.py operations --workspace /private/sf47 forecast-export \
 
 The browser and CLI use the same exclusive workspace owner. Close the browser server before opening that workspace in a separate CLI process. Output files use the existing private atomic publisher and must have new destination names.
 
-Input JSON can be downloaded from the browser and loaded back into its normal form. Unknown fields, repeated protected assignments, changed source versions, out-of-range dates and mismatched milestone amounts are rejected before saving. Money remains decimal strings with cent precision; remaining hours preserve four decimal places.
+Input JSON can be downloaded from the browser and loaded back into its normal form. Unknown fields, repeated protected assignments, changed source versions, out-of-range dates and mismatched milestone amounts are rejected before saving. USD money remains decimal strings with cent precision; explicit foreign-currency inputs preserve up to eight decimal places and retained rates up to eighteen. Remaining hours preserve four decimal places.
 
 Limits follow the original operating workspace: 100 saved forecasts per case, 50 customer scenarios per forecast, 30 receipt milestones per scenario, and the existing complete-case archive bound. Keep the complete original case export for portable receiving.
 

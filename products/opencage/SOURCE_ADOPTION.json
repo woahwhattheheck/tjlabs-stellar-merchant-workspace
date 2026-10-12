@@ -1,0 +1,313 @@
+{
+  "schema": "tjlabs.opencage-source-adoption.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "reviewedBase": "c42f2336fd0eccdae23411d73557507e83fb3439",
+  "upstreamRepository": "woahwhattheheck/public-commons-sprint-2026",
+  "selection": "stellar/scf-starforge-20261009/distribution/selections/opencage.json",
+  "authoredIntegration": [
+    "stellar/scf-starforge-20261009/distribution/contributions/opencage.json",
+    "stellar/scf-starforge-20261009/distribution/selections/opencage.json",
+    "products/opencage/OPERATING.md",
+    "products/opencage/RECEIVING.md",
+    "products/opencage/SOURCE_ADOPTION.json",
+    "README.md",
+    "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md"
+  ],
+  "upstreamFiles": [
+    {
+      "path": "stellar-forge/mcp-merchant-operator/catalog/opencage-workspace.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "7efe99a7f8998b21e5b0fb903099fbab5b42903e",
+      "previousGitBlob": "d2f7d94ef3dc4ec76ea54b754324597ac86e647c"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opencage-workspace.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "152c38507acc0b2c088e6039fe90c3b064756ecb",
+      "previousGitBlob": "1a3785f56358da3aada0155e8f01e1aa411f00d8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/BATCH.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "e1459980a2c8083f6d24175bb5bccd153eb99fc7",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/DEPLOYMENT.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "1e9d81951a1f4ab079a0eee04737b794a5f296b5",
+      "previousGitBlob": "e93a6cea5f4b754559d59023dd4e9f28cb1e1f55"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/README.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "2e61d2b9e6db019301ea9b74f1bf26758d833370",
+      "previousGitBlob": "ed8d7d03f8d2b3e5b076757db073fbe56a7aef7d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/batch-delivery.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "d5418610300c157f2983412dc9dc8c6c66b9ba49",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/batch.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "330afa2a7a26729baf91f9424b2b0ace4f33e234",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/cli.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "cf71b0eab98047a07555decae0b81a2543b8ffad",
+      "previousGitBlob": "004e24e9ee39c07e54265ee21cf8360d222555c9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/customer.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "2e3e9242c649b53cd06efd20bb66f5be0558b240",
+      "previousGitBlob": "a61867cd2c70777777dd627084df2d5c0a3d7b12"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/deployment.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "21db03424f12667287051031acfb527c424943b7",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/examples/locations.csv",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "d86b0c7f0394ec64851c6a1e1153d86b3aa2bc10",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/examples/reverse-columns.json",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "d7673d20f2df3a33c96bdcc3980cd5bbf714c824",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/fixtures/README.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "44361b704d8d775fb3c26d9b799477f37870295d",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/fixtures/native-reverse.json",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "83258ac83b66b47ac2c48447f8a7de995da2c563",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/index.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "0eaeb8b35540613e1311ec867491cdfdea702279",
+      "previousGitBlob": "62ef77875b0fd8f464cf374f1d5a8e98d3acbe4a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/launch.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "189c8c5521532cf58749c86d8a7644cb723d1a89",
+      "previousGitBlob": "48532d712b36958c8830dfadf8840a0d25133782"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/merchant.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "a0b493083281d90b2918d1ce929ece06d4b7fc78",
+      "previousGitBlob": "f2ceeb12976bc4c4b9c15f0e60d16dd7f8d6fbd7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/receiving/CSV_RECEIVING.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "4c7431c476eeea74e43ac7c817e65a37f6925e41",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/receiving/README.md",
+      "sourceCommit": "5583b42bc1cfab0e10e7ebfef75c638d1a606a51",
+      "gitBlob": "93b2044db6856073e450d9b4c8c87b97aed16019",
+      "previousGitBlob": "d07638e94cab7f62bb1744cadc3e9e6ea90bac6d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/receiving/csv-browser.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "505a186e83fdd233e3cd738298f4559f2653eaf9",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/receiving/launch-csv-native.py",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "bbde9adf365503590ca0387fc919c685c494aa65",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/receiving/launch-host-deployment.py",
+      "sourceCommit": "5583b42bc1cfab0e10e7ebfef75c638d1a606a51",
+      "gitBlob": "1afd0dc05c7bbd2ff1af4e77bf352600154b51a7",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/receiving/run-csv-workshare.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "3d2d1e056f890c7a47b9f5318f9ea9f19184b241",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/receiving/run-host-deployment.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "83249fc0730b880ac981b333931e8446eabc916c",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/server.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "d21b6b41e4a5f688cec370c3a6627287c9abc192",
+      "previousGitBlob": "bb036eb5a1d498699d6db3c74bbaefa19bde7206"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/ui/app.js",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "c244787cfb46c0d28b14cdeb7822da97f6f69fb1",
+      "previousGitBlob": "b276f878ee222ac4503ffa0eb165dbd9a1c2169b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/ui/batch.js",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "7a13c6deb5c6443118628a15479b4ac58c58ce68",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/ui/index.html",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "de14e17a8c41a508929eb040c38bd08b1e395ff6",
+      "previousGitBlob": "0600776707aa4aa0788af4a0d3bd860465be68a3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/ui/style.css",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "11276d062471024fbba8be8e6373f39a62afdbc5",
+      "previousGitBlob": "8028afff79880aa282cc0e9d21214fe8c7479010"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opencage/workspace.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "741bee1fdbb4074c5174f7cd50e5983906cf953e",
+      "previousGitBlob": "f5d6039b4f91f3b2ee2c2050ffdabb6ee9749b54"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/README.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "8b5360413825ebd81b51e0be870a12dea8235717",
+      "previousGitBlob": "ba942ed233019d57ac5f0b957f30f300335fa1b3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/WORKSPACE.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "285558661f4da52d43ce1bdc6ff19e3615edd6fa",
+      "previousGitBlob": "c4dc725de10052e6e728d62227d451625cfc8bfd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/client.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "8328677e758b650ce3890f6fbb97f0578e5db6e1",
+      "previousGitBlob": "c2ac430937ba3249747ef54bf13e17cf945c4f71"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/examples/operation_accounting.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "c82ceaff722469bd844c49b86410944e26157a27",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/index.d.mts",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "5b573deb7d87dcbb5e22fca7c76ff69ec13120dc",
+      "previousGitBlob": "4724c1942d7202a4da2737b9755fe36a38bc853d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/operation-accounting-worker.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "de6c1662ebe323a56d9177ffd9573feb9a034481",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/README.md",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "5195ebf1c3218b9f2d1aa9dcc97dab4d87a2e097",
+      "previousGitBlob": "af63a8792f34bb95580f05d2c6bd438549437286"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/cli.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "0267164d643bdaa12ab123d0d119d1966594feff",
+      "previousGitBlob": "af5d00232511b9b3c77e23fdf87b8a68fd413dc3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/generation.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "e6957189d200b7819d168add49db28f83daf02c6",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/host.mjs",
+      "sourceCommit": "0a42ce08bec4d5926d80cb7ca18671e20d1a97c7",
+      "gitBlob": "105968f8515a52e6cca3e6f74d86f9069d6edfce",
+      "previousGitBlob": "9e8f4a8a8349661ab19d4bbee77e9f951542c5de"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/receiving/OPENCAGE_ACCOUNTING.md",
+      "sourceCommit": "7cb35921a585a6c2157cafd4b2d2204ac47916df",
+      "gitBlob": "8cf158ec6f228da5938e91b9394ec8d478a387b4",
+      "previousGitBlob": null
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/receiving/launch-opencage-accounting.py",
+      "sourceCommit": "7cb35921a585a6c2157cafd4b2d2204ac47916df",
+      "gitBlob": "ccf7a2a996b185c4d73669507a45ee7d849eeb88",
+      "previousGitBlob": null
+    }
+  ],
+  "preservedRegistrations": [
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/opencage-workspaces.mjs",
+      "gitBlob": "fe397b3fde912618633b20781dace64d282251e1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-opencage.mjs",
+      "gitBlob": "71c0101af885278c1417a3423324500a8762e7ff"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/opencage.mjs",
+      "gitBlob": "d8d0bdff39485b66330dfab0249b91e4d539a2e9"
+    }
+  ],
+  "retainedEvidence": {
+    "merchantAndCustomer": {
+      "nativeRecord": "d3acc3c033763436402bb0c848f625258fff006106346964d2b965f026fc0db5",
+      "state": "completed",
+      "exitCode": 0,
+      "resultSha256": "3697475f31793477b71d0e69190fe7dfcd82e731d05693ca979bb1bf0514353f",
+      "artifactManifestSha256": "95120f29176c1c12d059721d8d1dadb69f16a40db257a1a5ac9e107b25424833"
+    },
+    "unsignedResponseAccounting": {
+      "nativeRecord": "ce79e07251f1a637be41421268824dd6fc27d2f5a627249da03f33e96bdb8203",
+      "state": "completed",
+      "exitCode": 0,
+      "commandId": "finalize-o4ICVV",
+      "resultSha256": "26a909693b61743748f053025e4e7d9a5f409eb47405137dfeac57d5918ac706",
+      "artifactManifestSha256": "67023612d2c670df5617d859a8dc802a32a78cebe915af6c4d192c6915731f62",
+      "exportSha256": "ce131cd54fa451222ece006ffae9c22a9139f2f9877ca91bc35450876b5b2297",
+      "outcome": "UNPAID_RESPONSE / NO_PAYMENT_REQUIRED / ORIGINAL_UNSIGNED_RESPONSE"
+    }
+  },
+  "receivingScope": "The original retained records above establish their producing workflows. This integration does not assert a standalone selected archive or a new CSV, host or paid receiving result.",
+  "preservedSource": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/operation-accounting.mjs",
+      "sourceCommit": "bfdeff2defad466d2098e7fa4b3a702563341e27",
+      "gitBlob": "60f89f5ae987c82e18c31b1e186853a1761474de",
+      "upstreamCoreGitBlob": "ce79c381577634398e44de427f982cfcb84453f5",
+      "retainedChange": "Existing Buyer Expenses export of accountingOutput; remaining module bytes match the released original core."
+    }
+  ]
+}

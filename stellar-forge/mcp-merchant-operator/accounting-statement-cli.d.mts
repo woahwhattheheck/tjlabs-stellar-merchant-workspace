@@ -62,3 +62,11 @@ export function downloadAccountingStatementStatus(options: {
   client: StatementDownloadClient; statementId: string; output: string; signal?: AbortSignal;
 }): Promise<{ output: string; workspace: string; statementId: string; file: StatementFileMetadata; complete: true }>;
 export function main(args?: string[]): Promise<unknown>;
+
+export type {
+  StatementCycleProblem, StatementCyclePhase, StatementCycleReview, StatementCycleManifest,
+  StatementCycleDelivery, StatementCycleRow, StatementCycleReport, StatementCycleClient, StatementCyclePrepareOptions, StatementCycleRunOptions,
+} from './accounting-statement-cycle.mjs';
+export {
+  prepareAccountingStatementCycle, runAccountingStatementCycle, inspectAccountingStatementCycle, observeAccountingStatementCycle,
+} from './accounting-statement-cycle.mjs';
