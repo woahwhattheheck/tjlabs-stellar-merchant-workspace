@@ -1,0 +1,8 @@
+{
+  "workspaceDirectory": "/absolute/private/merchant-cases",
+  "incidentSources": "/absolute/private/incident-sources.json",
+  "sourceDirectory": "/absolute/private/merchant-cases/source-bundles",
+  "packagesDirectory": "/absolute/private/merchant-packages",
+  "port": 0,
+  "allowLoopback": false
+}

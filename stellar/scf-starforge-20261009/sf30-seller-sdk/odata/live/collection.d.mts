@@ -1,5 +1,6 @@
 // MIT. Complete original live-page collection and Analysis receiving.
 import type { PreparedODataProduct, ODataLiveQuery, ODataLivePage } from '../live-sdk.mjs';
+import type { ODataCatalog,ODataEntitySet } from '../types.mjs';
 
 export declare const COLLECTION_SCHEMA: 'stellar-forge.odata-live-collection.v1';
 export declare const COLLECTION_INPUT_SCHEMA: 'stellar-forge.odata-live-collection-input.v1';
@@ -70,3 +71,9 @@ export declare function readCollectionRows(directory: string, options?: {offset?
 export declare function collectionAnalysisMapping(collection: ODataCollectionManifest, input: {
   source: string; sourceRevision: number;
 }): ODataCollectionAnalysisMapping;
+
+/** Original exact key canonicalization; lexical source values remain unchanged. */
+export declare function collectionKeyIdentity(row:Record<string,string|number|boolean|null>,entity:Pick<ODataEntitySet,'keyFields'|'fields'>,catalog:Pick<ODataCatalog,'typeDefinitions'>):string;
+/** Exhausting the iterator verifies the complete retained original row file. */
+export declare function iterateCollectionRows(collection:ODataCollection):AsyncGenerator<ODataLivePage['items'][number],void,unknown>;
+export declare function collectionRetainedFiles(collection:ODataCollection):Promise<ODataCollectionNamedFile[]>;

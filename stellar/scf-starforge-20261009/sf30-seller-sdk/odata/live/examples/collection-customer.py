@@ -139,7 +139,7 @@ def options():
     parser.add_argument("--packet", required=True, help="Original five-response retained receiving packet directory")
     parser.add_argument("--output", required=True, help="One private retained customer operation")
     parser.add_argument("--node", default="node")
-    parser.add_argument("--source-ref", required=True, help="Immutable public product commit selected by the operator")
+    parser.add_argument("--source-ref", required=True, help="Original immutable operation lineage; actual selected source files are retained in source-selection.json")
     parser.add_argument("--resume", action="store_true", help="Reconcile and continue this exact existing operation")
     parser.add_argument("--resume-source-from", help="Exact prior selection SHA for an original pre-Analysis identity or native lease correction")
     return parser.parse_args()
@@ -548,7 +548,7 @@ def main():
             "Value and null states remain separate. Original_Orders.json and Country_Summary.json carry the native "
             "query values; the CSV files are companion exports.\n\n"
             "## Continue the retained operation\n\n"
-            "The exact public product source selection is " + args.source_ref + ". The portable original runner is "
+            "The original operation source lineage is " + args.source_ref + ". The exact selected implementation files and their hashes are retained in source-selection.json. The portable original runner is "
             "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/examples/collection-customer.py. "
             "Its adjacent COLLECTION_CUSTOMER.md describes the source closure, input packet and full command. "
             "Reuse the same --checkout, --packet, --output, --node and --source-ref with --resume to continue its retained operation. "

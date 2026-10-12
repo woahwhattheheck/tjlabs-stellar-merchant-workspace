@@ -23,7 +23,8 @@ const explanations = {
 };
 
 /** Mount the original UI/controller on an existing authenticated operator host. */
-export async function createDestinationsHandler({ model, origins: allowed, basePath = '' } = {}) {
+export async function createDestinationsHandler({ model, origins: allowed, basePath = '', allowUserNavigation = false } = {}) {
+  if (typeof allowUserNavigation !== 'boolean') throw fault('INVALID_USER_NAVIGATION_POLICY');
   if (!model || !Array.isArray(allowed) || !allowed.length ||
       !/^(?:\/[A-Za-z0-9_-]+)*$/.test(basePath)) throw fault('EXPLICIT_WORKSPACE_ORIGIN_REQUIRED');
   const origins = new Set(allowed.map(value => new URL(value).origin));
@@ -51,10 +52,19 @@ export async function createDestinationsHandler({ model, origins: allowed, baseP
       };
       try {
         if (closing) throw fault('WORKSPACE_CLOSING', 503);
-        if (!hostnames.has(req.headers.host) || req.headers.origin && !origins.has(req.headers.origin) ||
-            ['cross-site', 'same-site'].includes(req.headers['sec-fetch-site'])) throw fault('WORKSPACE_ORIGIN_REQUIRED', 403);
+        if (!hostnames.has(req.headers.host) || req.headers.origin && !origins.has(req.headers.origin))
+          throw fault('WORKSPACE_ORIGIN_REQUIRED', 403);
         const url = new URL(req.url, 'http://' + req.headers.host);
         const pathname = url.pathname.slice(basePath.length) || '/';
+        // A managed Applications link can originate on another loopback port.
+        // Only its explicitly activated top-level shell navigation is admitted;
+        // assets, data and mutations keep the original site and session policy.
+        const userNavigation = allowUserNavigation && req.method === 'GET' && !url.search &&
+          (url.pathname === basePath || url.pathname === basePath + '/') &&
+          req.headers['sec-fetch-mode'] === 'navigate' &&
+          req.headers['sec-fetch-dest'] === 'document' && req.headers['sec-fetch-user'] === '?1';
+        if (['cross-site', 'same-site'].includes(req.headers['sec-fetch-site']) && !userNavigation)
+          throw fault('WORKSPACE_ORIGIN_REQUIRED', 403);
         if (basePath && url.pathname === basePath) {
           if (!['GET', 'HEAD'].includes(req.method)) throw fault('NOT_FOUND', 404);
           return reply(307, 'Open merchant delivery.', 'text/plain', { location: basePath + '/' });

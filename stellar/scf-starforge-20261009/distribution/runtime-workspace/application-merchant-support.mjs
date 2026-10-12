@@ -11,12 +11,18 @@ const field=(name,label,type='path',required=false,description='')=>({name,label
 export function merchantSupportApplication(common=[]) {
   return {id:'merchant-support',command:'support-console',requiredSource:SOURCE+'/managed-launch.mjs',
     title:'Merchant support',terminal:false,
-    description:'Operate original seller incidents, inspect retained captures, prepare merchant cases and reopen their saved remediation work.',
+    description:'Operate merchant cases, incidents, implementation work, service commitments, quotations and complete customer receiving.',
     fields:[
       field('workspaceDirectory','Private merchant case directory','path',true,
         'Reopen the original case directory, or create one folder in an existing private parent.'),
       field('incidentSources','Private incident source profiles','path',true,
         'Select the original support-incident-sources JSON with up to eight initialized SF93 stores.'),
+      field('sourceDirectory','Private source edition directory','path',false,
+        'Retain original commissioning files here. The default is source-bundles inside the case directory.'),
+      field('packagesDirectory','Private complete-package directory','path',false,
+        'Retain complete case deliveries and receiving operations. The default is a sibling named after the case directory with -packages.'),
+      field('handoffSources','Private handoff source profiles','path',false,
+        'Optional original support-handoff-sources JSON for remote case and complete-package receiving. Bearer values stay in the private environment.'),
       field('allowLoopback','Allow local seller captures','boolean',false,
         'Enable original capture support for an explicitly local seller.'),
       ...common,
@@ -32,6 +38,19 @@ export async function prepareMerchantSupportApplication(settings,{inputPath,runt
   if(!cases.exists)createDirectories.push(cases.path);
   const profiles=await inputPath(settings.incidentSources,'file');
   inputs.push(profiles);
+  const directories={};
+  for(const name of ['sourceDirectory','packagesDirectory']) {
+    if(settings[name]) {
+      const selected=await inputPath(settings[name],'directory',true,true);
+      inputs.push(selected);directories[name]=selected.path;
+      if(!selected.exists)createDirectories.push(selected.path);
+    }
+  }
+  let handoffs=null;
+  if(settings.handoffSources) {
+    handoffs=await inputPath(settings.handoffSources,'file');
+    inputs.push(handoffs);
+  }
   for(const name of ['managed-launch.mjs','server.mjs','incident-sources.mjs'])
     inputs.push(await inputPath(join(native,name),'file'));
   // Read the selected runtime's original parser. A copied profile document does
@@ -40,7 +59,11 @@ export async function prepareMerchantSupportApplication(settings,{inputPath,runt
   need(typeof original.inspectSupportSelection==='function'&&typeof original.supportSelectionSha256==='function',
     'APPLICATION_SUPPORT_SOURCE_REQUIRED','Choose a runtime containing the managed merchant support command.');
   const selection=await original.inspectSupportSelection({casesDir:cases.path,incidentSources:profiles.path,
+    sourceDir:directories.sourceDirectory??null,packageDir:directories.packagesDirectory??null,
+    handoffSources:handoffs?.path??null,
     allowLoopback:settings.allowLoopback??false,allowMissingCases:!cases.exists});
+  if(handoffs)need(selection.handoffs?.sha256===handoffs.sha256,'APPLICATION_SUPPORT_HANDOFFS_CHANGED',
+    'Review the current private handoff source configuration.');
   need(selection.incidents.sha256===profiles.sha256,'APPLICATION_SUPPORT_PROFILES_CHANGED',
     'Review the current private incident source configuration.');
   for(const source of selection.incidents.sources) {
@@ -51,13 +74,23 @@ export async function prepareMerchantSupportApplication(settings,{inputPath,runt
   }
   const args=['--cases-dir',cases.path,'--incident-sources',profiles.path,'--startup-format','json',
     '--expected-selection-sha256',original.supportSelectionSha256(selection)];
+  for(const [name,flag] of [['sourceDirectory','--source-dir'],['packagesDirectory','--package-dir']]) {
+    const selected=selection[name];
+    if(directories[name])need(typeof selected==='string'&&selected===directories[name],
+      'APPLICATION_SUPPORT_RUNTIME_REQUIRED','Choose a runtime containing complete Support source and package receiving.');
+    if(selected!==undefined) {
+      need(typeof selected==='string'&&selected,'APPLICATION_SUPPORT_STARTUP_CHANGED');
+      args.push(flag,selected);
+    }
+  }
+  if(handoffs)args.push('--handoff-sources',handoffs.path);
   if(settings.allowLoopback)args.push('--allow-loopback');
   return {args,inputs,createDirectories};
 }
 
 function launchArguments(request) {
   need(Array.isArray(request.args),'APPLICATION_SUPPORT_STARTUP_CHANGED');
-  const fields=new Map(),allowed=new Set(['--cases-dir','--incident-sources','--startup-format',
+  const fields=new Map(),allowed=new Set(['--cases-dir','--source-dir','--package-dir','--handoff-sources','--incident-sources','--startup-format',
     '--expected-selection-sha256','--port']);
   let allowLoopback=false;
   for(let index=0;index<request.args.length;index++) {

@@ -55,6 +55,7 @@
   "contributions": [
     "merchant-console",
     "merchant-delivery-product",
+    "merchant-delivery-receiving",
     "merchant-provider-client-exports",
     "merchant-provider-delivery",
     "merchant-provider-tools",

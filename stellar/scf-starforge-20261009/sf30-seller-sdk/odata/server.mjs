@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { fault } from './state.mjs';
 
 const assets=fileURLToPath(new URL('./public/',import.meta.url));
-const files=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/collection-view.mjs',['collection-view.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
+const files=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/collection-view.mjs',['collection-view.mjs','text/javascript; charset=utf-8']],['/comparison-view.mjs',['comparison-view.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
 export async function startODataServer({workspace,port=8797,liveServiceId,liveOperations,closeWorkspace=true}={}){
   if(!Number.isInteger(port)||port<0||port>65535)throw new TypeError('Choose a local TCP port.');
   if(typeof closeWorkspace!=='boolean')throw new TypeError('closeWorkspace must be a Boolean.');
@@ -62,6 +62,11 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
       if(req.method==='GET'&&url.pathname==='/api/live/collection/rows'){
         const input=Object.fromEntries(url.searchParams);input.offset=Number(input.offset??0);input.limit=Number(input.limit??100);
         return send(res,200,await(await getLive()).collectionRows(input));}
+      if(req.method==='GET'&&url.pathname==='/api/live/comparisons')return send(res,200,await(await getLive()).comparisons({id:url.searchParams.get('id')}));
+      if(req.method==='GET'&&url.pathname==='/api/live/comparison')return send(res,200,await(await getLive()).comparison(Object.fromEntries(url.searchParams)));
+      if(req.method==='GET'&&url.pathname==='/api/live/comparison/rows'){
+        const input=Object.fromEntries(url.searchParams);input.offset=Number(input.offset??0);input.limit=Number(input.limit??100);
+        return send(res,200,await(await getLive()).comparisonRows(input));}
       if(req.method==='GET'&&url.pathname==='/api/live/file'){
         const file=await(await getLive()).file(Object.fromEntries(url.searchParams));
         return send(res,200,file.bytes,{'Content-Type':file.name.endsWith('.csv')?'text/csv; charset=utf-8':file.name.endsWith('.jsonl')?'application/x-ndjson':file.name.endsWith('.json')?'application/json; charset=utf-8':'application/octet-stream',
@@ -97,6 +102,9 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
         case '/api/live/buyer':result=await(await getLive()).buyer(input);break;
         case '/api/live/receive':result=await(await getLive()).receive(input);break;
         case '/api/live/collection':result=await(await getLive()).collect(input);break;
+        case '/api/live/comparison':result=await(await getLive()).compareCollections(input);break;
+        case '/api/live/comparison/review':result=await(await getLive()).reviewComparison(input);break;
+        case '/api/live/comparison/publish':result=await(await getLive()).publishComparison(input);break;
         default:throw fault('ODATA_ROUTE','Workspace operation not found.',404);
       }
       return send(res,200,result);

@@ -246,26 +246,38 @@ its testnet transaction is
 ledger 5,145,195, completed October 11 at 20:12:58 UTC. Its native purchase and
 complete output were reopened in another directory.
 
-The current OData extension uses the original five retained live envelopes
-containing **830 Northwind Orders**. The complete collection/operator source
-is selected at **677ba67611b869daed454d689ddc0201ae7a4654**. The [full customer
-runner][odata-customer], merged at
-**e37a3b0649a16b9c5814097ef7b02c5893e4c327**, performs:
+The completed OData customer operation used the original five retained live envelopes
+containing **830 Northwind Orders**. It completed on October 12 at **12:45:14 UTC**
+through the original live-service collection, native Analysis import and saved SQL,
+the **21-country** summary, published report and two-sheet workbook, complete
+workspace transfer, independent workbook receiving, and reconstruction of the
+original collection from its analytical source. All twelve original native
+Analysis steps completed in the same customer operation.
 
-1. Receive the complete ordered collection through the original live-service
-   workspace and preserve its source/query identity.
-2. Register the original source document in native Analysis, import its table,
-   and save original-row and country-summary SQL.
-3. Publish a report and a two-sheet workbook using the existing result owners.
-4. Export and restore the complete OData and Analysis workspaces; receive the
-   original workbook and reconstruct the collection from its received source.
-5. Assemble the complete customer edition from the actual retained results and
-   reopen it through those original receivers.
+The accepted source closure contains 827 selected files, with canonical source
+**ab30feff66a1a38ab60fe86f21e2e50ea683d0bc** and the original reviewed caller
+corrections at upstream **f46a9797a2c5803072b8fdcb49c47615dbc8280b**. The
+original operation keeps **677ba67611b869daed454d689ddc0201ae7a4654** as its
+journal lineage; its retained source-selection record binds the actual complete
+corrected source bytes.
 
-**Operating state at this documentation baseline:** the full source and both
-runner phases are merged and independently reviewed; the whole new customer
-receiving operation is pending with its original equipped-host operation.
-Its eventual result updates this same artifact entry.
+The completed customer edition is **1,523,504 bytes / 16 members**, SHA-256
+`6e4fa8ba14bdcf28984be8d172fd3eb66982a698c2e8b97ef09098f691d12582`.
+It preserves all thirteen original native output members and includes the
+selected receiving source and opening instructions. The collection manifest is
+`f811529bf906eb890b6654839a5ec1d201f6c71fa79a752745675caf29cca994`;
+the Analysis source is
+`c680c6239f3109388a55ab3f75eb47674fd266199d576d445f9eb8817b72bd88`.
+The original [completed operation](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791809822934779?thread_ts=1791764617.053699)
+retains the full output identities and receiving results. These analytical
+results extend the completed customer capability; the eighteen-purchase
+testnet baseline above retains its original purchase accounting.
+
+The [complete live comparison](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTION_COMPARISONS.md)
+extends those original collections with declared-key before/after comparison,
+explicit source/null/selection/type changes, four review scopes, and complete
+reviewed analytical editions. It receives both original source collections with
+every saved review and uses the same native workspace backup/restore owner.
 
 The runner consumes the exact original packet described in its guide. The
 command below assumes that packet and the selected source closure have already
@@ -430,7 +442,7 @@ advance; its selected archive retains the exact version delivered to a customer.
 [providers]: ../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_PROVIDERS.md
 [runtime]: ../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md
 [building]: ../../stellar/scf-starforge-20261009/distribution/BUILDING.md
-[odata-collection]: https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/677ba67611b869daed454d689ddc0201ae7a4654/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md
+[odata-collection]: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/ab30feff66a1a38ab60fe86f21e2e50ea683d0bc/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md
 [odata-customer]: https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e37a3b0649a16b9c5814097ef7b02c5893e4c327/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/examples/COLLECTION_CUSTOMER.md
 [budget]: https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/2761cc9a44d511959e224dc7ee5998aa13df7e8e/stellar/scf_2026/sf47_budget_model/sf10_current_candidate.json
 [scf-open]: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/open-track

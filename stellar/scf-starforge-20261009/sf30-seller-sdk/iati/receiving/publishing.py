@@ -77,15 +77,32 @@ def materialize_original(config,out):
         target=out/"original-publisher.xml"
         if not target.exists():
             temporary=out/"original-publisher.xml.incomplete"
-            require(not temporary.exists(),"Reconcile the original incomplete source materialization first")
-            with gzip.open(selected,"rb")as source,os.fdopen(os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"wb")as destination:
-                count=0;digest=hashlib.sha256()
-                for block in iter(lambda:source.read(65536),b""):
-                    count+=len(block);require(count<=32*1024**2,"Complete publisher exceeds the correction capacity")
-                    digest.update(block);destination.write(block)
-                destination.flush();os.fsync(destination.fileno())
-            require(count==receipt["bytes"]and digest.hexdigest()==receipt["sha256"],"Compressed source does not reconstruct the complete original")
-            os.replace(temporary,target)
+            if temporary.exists():
+                previous=identity(temporary,32*1024**2)
+                attempts=directory(str(out/"source-attempts"))
+                attempt=uuid.uuid4().hex
+                complete=previous["bytes"]==receipt["bytes"]and previous["sha256"]==receipt["sha256"]
+                retained=target if complete else attempts/("original-publisher-"+attempt+".partial")
+                publish(attempts/(attempt+".json"),{"state":"COMPLETE_SOURCE_RECOVERED"if complete else "PARTIAL_SOURCE_RETAINED",
+                    "originalTemporary":previous,"retainedAs":str(retained),"selectedGzip":original,
+                    "expectedOriginal":{"bytes":receipt["bytes"],"sha256":receipt["sha256"]}},True)
+                os.replace(temporary,retained)
+                for folder in {out,attempts}:
+                    fd=os.open(folder,os.O_RDONLY)
+                    try:os.fsync(fd)
+                    finally:os.close(fd)
+            if not target.exists():
+                with gzip.open(selected,"rb")as source,os.fdopen(os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"wb")as destination:
+                    count=0;digest=hashlib.sha256()
+                    for block in iter(lambda:source.read(65536),b""):
+                        count+=len(block);require(count<=32*1024**2,"Complete publisher exceeds the correction capacity")
+                        digest.update(block);destination.write(block)
+                    destination.flush();os.fsync(destination.fileno())
+                require(count==receipt["bytes"]and digest.hexdigest()==receipt["sha256"],"Compressed source does not reconstruct the complete original")
+                os.replace(temporary,target)
+                fd=os.open(out,os.O_RDONLY)
+                try:os.fsync(fd)
+                finally:os.close(fd)
     else:target=selected
     observed=identity(target,32*1024**2)
     require(observed["bytes"]==receipt["bytes"]and observed["sha256"]==receipt["sha256"],"Selected publisher differs from its complete original receipt")
@@ -248,6 +265,8 @@ def run(config):
             publish(results/"reopened-project.json",reopened.publishing.project(original_project["id"],original_project["revision"]),True)
         files=[identity(path)for folder in (requests,results)for path in sorted(folder.glob("*.json"))]
         files.extend([packet_identity,identity(out/"publisher-receipt.json"),identity(out/"publisher-source.json")])
+        if (out/"source-attempts").exists():
+            files.extend(identity(path)for path in sorted((out/"source-attempts").iterdir()))
         result={"schema":SCHEMA,"state":"COMPLETE","operationId":operation,"selectionSha256":sha(encoded(selection)),
                 "source":source_identity,"project":original_project,"historyRevisions":len(original_history),
                 "baselineRevision":baseline["revision"],"correctedRevision":corrected["revision"],
@@ -267,14 +286,18 @@ def select_corrections(ws,p,choices):
         fields=ws.publishing.fields(p["id"],activity,p["revision"])
         patch=copy.deepcopy(selected)
         if patch.get("kind")=="add-document":
+            require("expectedSha256"not in patch or patch["expectedSha256"]==fields["activitySha256"],"The explicit original activity review hash differs")
             patch["expectedSha256"]=fields["activitySha256"]
         else:
             matches=[field for field in fields["fields"]if field["field"]==patch.get("field")and field["index"]==patch.get("index")]
             require(len(matches)==1,"Select one actual original publisher field")
-            field=matches[0];patch["expectedSha256"]=field["sha256"]
+            field=matches[0]
+            require("expectedSha256"not in patch or patch["expectedSha256"]==field["sha256"],"The explicit original field review hash differs")
+            patch["expectedSha256"]=field["sha256"]
             if patch.get("kind")=="narrative"and patch.get("narrativeIndex")is not None:
                 narratives=[row for row in field["narratives"]if row["index"]==patch["narrativeIndex"]]
                 require(len(narratives)==1,"Select one original narrative")
+                require("expectedNarrativeSha256"not in patch or patch["expectedNarrativeSha256"]==narratives[0]["sha256"],"The explicit original narrative review hash differs")
                 patch["expectedNarrativeSha256"]=narratives[0]["sha256"]
                 patch["language"]=narratives[0]["language"]
         output.append(patch)

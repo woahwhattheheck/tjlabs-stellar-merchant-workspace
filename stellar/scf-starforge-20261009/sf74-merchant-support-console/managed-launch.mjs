@@ -1,7 +1,7 @@
 // MIT. Native SF74 selection and listener identity for the original managed Applications runner.
 import {lstat,realpath,open} from 'node:fs/promises';
 import {constants} from 'node:fs';
-import {dirname,isAbsolute,resolve,join} from 'node:path';
+import {dirname,basename,isAbsolute,resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {request as httpRequest} from 'node:http';
@@ -66,12 +66,22 @@ async function sourceIdentity() {
 
 /** Selection excludes incident progress and case contents so ordinary work survives reopening. */
 export async function inspectSupportSelection({casesDir,incidentSources,allowLoopback=false,allowMissingCases=false,
-  incidentSelection=null}={}) {
+  incidentSelection=null,sourceDir=null,packageDir=null,handoffSources=null,handoffSelection=null}={}) {
   need(typeof allowLoopback==='boolean'&&typeof allowMissingCases==='boolean',
     'SUPPORT_APPLICATION_SELECTION_INVALID');
   const casesPath=pathValue(casesDir,'private case directory');
+  const sourceDirectory=pathValue(sourceDir??join(casesPath,'source-bundles'),'private source delivery directory');
+  const packagesDirectory=pathValue(packageDir??join(dirname(casesPath),basename(casesPath)+'-packages'),'private complete-package directory');
   const incidentPath=pathValue(incidentSources,'private incident source configuration');
   const cases=await privateDirectory(casesPath,{missing:allowMissingCases});
+  let handoffs=null;
+  if(handoffSources!==null) {
+    const selectedPath=pathValue(handoffSources,'private handoff source configuration');
+    const original=handoffSelection??await (await import('./handoff-store.mjs')).readHandoffSourcesIdentity(selectedPath);
+    need(plain(original)&&original.path===selectedPath&&HEX.test(original.sha256),
+      'SUPPORT_APPLICATION_HANDOFF_SELECTION_CHANGED','Reopen the original handoff source configuration.');
+    handoffs={path:selectedPath,sha256:original.sha256};
+  } else need(handoffSelection===null,'SUPPORT_APPLICATION_HANDOFF_SELECTION_CHANGED');
   // start() may pass the selection captured by its already-open original desk.
   // That binds this listener to the same parsed profile document and stores.
   const original=incidentSelection??await (await import('./incident-sources.mjs'))
@@ -88,8 +98,8 @@ export async function inspectSupportSelection({casesDir,incidentSources,allowLoo
     sources.push({id:source.id,label:source.label,store,
       configuration:{revision:source.configuration.revision,sha256:source.configuration.sha256}});
   }
-  return {schema:SUPPORT_SELECTION_SCHEMA,source:await sourceIdentity(),cases,
-    incidents:{path:incidentPath,sha256:original.sha256,sources},allowLoopback};
+  return {schema:SUPPORT_SELECTION_SCHEMA,source:await sourceIdentity(),cases,sourceDirectory,packagesDirectory,
+    ...(handoffs?{handoffs}:{}),incidents:{path:incidentPath,sha256:original.sha256,sources},allowLoopback};
 }
 function consoleUrl(value,port=0) {
   if(typeof value!=='string'||value.length>2048)return null;

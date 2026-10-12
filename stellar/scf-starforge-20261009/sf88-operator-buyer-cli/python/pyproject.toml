@@ -29,6 +29,7 @@ agents = [
 ]
 
 [project.scripts]
+stellar-forge-dbnomics-analysis = "stellar_forge_buyer.dbnomics:main"
 stellar-forge-vgi-results = "stellar_forge_buyer.vgi_service.cli:main"
 stellar-forge-duckdb = "stellar_forge_buyer.duckdb_cli:main"
 stellar-forge-postgres = "stellar_forge_buyer.postgres_cli:main"
