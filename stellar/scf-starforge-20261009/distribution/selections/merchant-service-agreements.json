@@ -53,11 +53,14 @@
     ],
     "applicationProviders": [],
     "merchantProviders": [],
-    "browserAssets": []
+    "browserAssets": [
+      "stellar-forge/mcp-merchant-operator/console/service.mjs"
+    ]
   },
   "contributions": [
     "merchant-service-agreements",
     "merchant-receivables",
+    "merchant-receivables-xero",
     "accounting-connections",
     "merchant-support",
     "merchant-commercial",

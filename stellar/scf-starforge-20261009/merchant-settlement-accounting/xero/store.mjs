@@ -3,8 +3,8 @@ import {randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
 import {open,mkdir,lstat} from 'node:fs/promises';
 import {join} from 'node:path';
-import {accountingWorkspaceBinding} from '../../workspace/binding.mjs';
-import {json,sha,need,plain,field,identifier,dateValue,today,customerExport,currencyKey} from '../core.mjs';
+import {accountingWorkspaceBinding} from '../workspace/binding.mjs';
+import {json,sha,need,plain,field,identifier,dateValue,today,customerExport,currencyKey} from '../receivables/core.mjs';
 import {XERO_SCHEMA,XERO_PACKAGE_SCHEMA,XERO_RESULT_SCHEMA,XERO_PACKAGE_BYTES,XERO_MAX_DOCUMENTS,
   normalizeXeroProfile,publicXeroProfile,compileXeroPackage,readXeroResults,xeroFileDescriptor,xeroInstant} from './domain.mjs';
 
