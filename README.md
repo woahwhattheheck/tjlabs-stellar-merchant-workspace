@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Review and publish an economic data edition | **Applications → Eurostat economic editions** or `starforge eurostat` | Exact official source captures, reviewed dimensions, complete economic briefings, native merchant publication and original customer receiving |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Operate and hand over buyer request collections | **Applications → Request collections** or `starforge buyer-collections-workspace` | Reviewed original requests, exact spending caps and outcomes, complete encrypted backup, receiving and reopening |
@@ -80,6 +81,11 @@ The [complete publisher workflow](https://github.com/woahwhattheheck/tjlabs-stel
 uses the same runtime and Applications to operate both included original
 AidData Nigeria and Transparency International editions and deliver each
 complete customer archive.
+
+The [Eurostat operating guide](products/eurostat/OPERATING.md) connects official
+source acquisition, exact economic reports, native publication and complete
+customer receiving. Build the complete selected product with
+`--selection eurostat` and open its original Applications entry.
 
 ## Open the source product
 
@@ -235,6 +241,7 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Eurostat economic editions and complete customer receiving](products/eurostat/OPERATING.md)
 - [IATI publisher review, finance and operator interfaces](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
 - [IATI complete installed publisher workflow and customer handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
 - [Complete OData collections, Analysis and customer receiving](stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md)
