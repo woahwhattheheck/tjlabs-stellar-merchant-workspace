@@ -68,6 +68,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `groundwater-reports` | Original groundwater sources, scenarios and native results, frozen report publication, buyer receiving, Operations association and complete scientific/desk handover | Groundwater scientific and Report Desk browsers; Buyer runbook; Merchant console | [Complete installation and operation](../../../products/groundwater/OPERATING.md) |
 | `source-tables` | Complete CSV and TSV source authoring, typed field meaning, retained editions and comparisons, native merchant resources and editable customer handover | Source Tables; Runtime management | [Complete installation and operation](../../../products/source-tables/OPERATING.md) |
 | `openlineage-operations` | Native Python and Java producer intake, original compressed/source bytes, job/run/dataset lineage, saved reviews and complete editable customer receiving | OpenLineage operations; Runtime management | [Complete installed operation and producer guide](../../../products/openlineage/OPERATING.md) |
 | `study-research` | Study source editions, Property field surveys and comparables, Census ACS, BLS labor and HUD releases with original publishing and complete customer receiving | Study Source Refresh; Buyer runbook; Merchant console; PostgreSQL publisher; PostgreSQL workspace | [Complete study operator and receiving guide](selections/STUDY_RESEARCH.md) |
