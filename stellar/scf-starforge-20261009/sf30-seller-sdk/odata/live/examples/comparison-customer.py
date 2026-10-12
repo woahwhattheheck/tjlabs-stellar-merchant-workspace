@@ -178,7 +178,7 @@ def main():
     from stellar_forge_buyer.analysis_workbooks import WorkbookDelivery
     from stellar_forge_buyer.response_documents import document_path
     from stellar_forge_buyer.workspace_archive_receive import restore_archive
-    from stellar_forge_buyer.storage import dump
+    from stellar_forge_buyer.storage import dump, write
 
     selection = {"operation_id": descriptor["operationId"], "input_sha256": sha(descriptor_raw),
                  "source_ref": args.source_ref, "source_selection_sha256": sha(source_raw)}
@@ -308,7 +308,7 @@ def main():
                  "Preserve the exact original runtime while completing its selected source continuation.")
             # The journal selects the successor before this atomic replacement.
             # A stopped process reopens the same retained old inventory above.
-            dump(source_file, source_inventory)
+            write(source_file, source_raw)
         immutable(source_file, source_raw)
         immutable(out / "customer-input.json", descriptor_raw)
         helper = checkout / EXAMPLES / "comparison-customer.mjs"
