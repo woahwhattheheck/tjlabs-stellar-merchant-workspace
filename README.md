@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, station and datum review, model-input conventions, coastal workbooks, native publication and complete customer files |
 | Receive scientific data and review a provider handoff | [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md) | Original grid/station-table capture, native dataset editions, reviewed provider profile, merchant delivery and complete customer receiving |
 | Review and publish an economic data edition | **Applications → Eurostat economic editions** or `starforge eurostat` | Exact official source captures, reviewed dimensions, complete economic briefings, native merchant publication and original customer receiving |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` or **Applications → Captured API merchant** | Original source review, exact route prices and policies, persistent workflows, native merchant packages, releases and complete customer receiving |
@@ -185,6 +186,11 @@ covers interruption, native prerequisites, upgrades, and reopening. The
 [runtime workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md)
 provides the corresponding browser workflow.
 
+The [Coastal source operations guide](products/coops/OPERATING.md) follows the
+original station and archive workflow through source review, receiving mappings,
+complete offline residual workbooks, native merchant publication and customer
+receiving. Build this installed product with `--selection coastal-operations`.
+
 ## Operate one saved merchant
 
 For a captured HTTP API, initialize and open its private product:
@@ -250,6 +256,7 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Coastal source review, complete workbooks and customer receiving](products/coops/OPERATING.md)
 - [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md): complete source, native editions, provider intake, merchant and customer receiving; [selected package recipe](stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md).
 
 - [GTFS Schedule merchant: selected installation, exact editions and complete receiving](products/gtfs-schedule/README.md)
