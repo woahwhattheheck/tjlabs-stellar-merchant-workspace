@@ -180,17 +180,19 @@ function restoreDraft(value){
 }
 async function openOperator({reload=false}={}){
   if(busy)return;
-  await recovery.queue.catch(()=>{});
-  const actor=$('qbo-operator').value.trim();requireLocal(actor&&actor.length<=1000,'Enter the original operator name before opening saved drafts.');
-  requireLocal(recovery.binding&&recovery.db,'Read the original workspace and browser store first.');
-  requireLocal(!recovery.mismatch,'This tab belongs to its original workspace. Download the retained record and reopen the matching workspace.');
-  requireLocal(!pending||actor===recovery.actor,'Reconcile the current operator’s pending request before switching records.');
-  if(recovery.dirty&&(reload||recovery.conflict)&&!window.confirm('Reload the last saved browser draft? Download any unsaved edits first.'))return;
-  if(recovery.cache&&recovery.dirty&&!reload){
-    $('qbo-operator').value=recovery.actor;try{await flushDraft();}finally{$('qbo-operator').value=actor;}
-  }
-  busy=true;recovery.hydrating=true;controls();
+  const actor=$('qbo-operator').value.trim();
+  busy=true;controls();
   try{
+    await recovery.queue.catch(()=>{});
+    requireLocal(actor&&actor.length<=1000,'Enter the original operator name before opening saved drafts.');
+    requireLocal(recovery.binding&&recovery.db,'Read the original workspace and browser store first.');
+    requireLocal(!recovery.mismatch,'This tab belongs to its original workspace. Download the retained record and reopen the matching workspace.');
+    requireLocal(!pending||actor===recovery.actor,'Reconcile the current operator’s pending request before switching records.');
+    if(recovery.dirty&&(reload||recovery.conflict)&&!window.confirm('Reload the last saved browser draft? Download any unsaved edits first.'))return;
+    if(recovery.cache&&recovery.dirty&&!reload){
+      $('qbo-operator').value=recovery.actor;try{await flushDraft();}finally{$('qbo-operator').value=actor;}
+    }
+    recovery.hydrating=true;controls();
     const key=contextKey(actor),saved=await localRead('contexts',key);
     recovery.key=key;recovery.actor=actor;recovery.cache=saved??blankContext(actor);recovery.gate=await localRead('gates',scopeKey());recovery.conflict=false;recovery.storageError='';recovery.dirty=false;
     requireLocal(recovery.cache.key===key&&recovery.cache.actor===actor&&same(recovery.cache.binding,recovery.binding),'The retained operator record changed.');
