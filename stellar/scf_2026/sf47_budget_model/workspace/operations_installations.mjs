@@ -13,7 +13,7 @@ const table=(heads,rows)=>'<div class="installation-table"><table><thead><tr>'+h
 const empty=text=>'<p class="installation-empty">'+esc(text)+'</p>';
 const note=text=>'<p class="installation-note">'+esc(text)+'</p>';
 const format=value=>Array.isArray(value)?value.join(', '):value===null||value===undefined||value===''?'Unentered':String(value);
-const definite=error=>[400,401,403,404,409,413,422].includes(error?.status)&&typeof error?.code==='string';
+const definite=error=>[400,409,413,415,422].includes(error?.status)&&typeof error?.code==='string';
 function saveDownload(blob,name){
   const url=URL.createObjectURL(blob instanceof Blob?blob:new Blob([blob],{type:'application/json'}));
   const link=document.createElement('a');link.href=url;link.download=name;link.click();
@@ -53,6 +53,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     try{stored=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
     if(stored?.schema==='sf47.installation-editor.v1'&&stored.caseId===caseId){
       for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen'])if(Object.hasOwn(stored,key))session[key]=stored[key];
+      if(!session.requestOpen&&stored.requestOpen)session.requestOpen=stored.requestOpen;
     }
     if(stored?.schema==='sf47.installation-editor.v1'&&stored.caseId===caseId&&stored.commercialIntake)session.commercialIntake=stored.commercialIntake;
     session.initialized=true;
@@ -71,7 +72,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   const recordOptions=kind=>(caseValue.records[kind]||[]).map(row=>[row.id,(row.name||row.description||row.number||row.operationId||row.id)+' · '+title(row.state)]);
   const deployments=roles=>caseValue.records.deployments.filter(row=>roles.includes(row.role)).map(row=>[row.id,row.name+' · '+row.operator]);
   function persist(){
-    const body={schema:'sf47.installation-editor.v1',caseId};
+    const body={schema:'sf47.installation-editor.v1',caseId,requestOpen:session.requestOpen??null};
     for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake','commercialOpen'])body[key]=session[key];
     body.commercialIntake=Object.fromEntries(['sourceId','quoteKey','acceptanceKey','installationId'].filter(key=>Object.hasOwn(session.commercialIntake,key)).map(key=>[key,session.commercialIntake[key]]));
     try{sessionStorage.setItem(storageKey,JSON.stringify(body));}
@@ -644,21 +645,34 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       document:seeded.document,note:'',dirty:false};
     session.draftKey=key;session.mode='edit';session.selected=null;selectedRow=null;preview=null;previewDraft=null;persist();
   }
-  async function editSaved(){
+  async function editSaved({exactEdition=false}={}){
     if(session.pending||session.accepted||session.inflight)
       throw new Error('Recover the original saved request before opening another installation draft.');
     if(!editable())throw new Error('Reopen the operating case to change its installation.');
     const row=selectedRow;if(!row)return;
     const epoch=++generation,existing=session.drafts[row.id];
     await reloadCase();if(!own(epoch))return;
-    if(existing){session.draftKey=row.id;session.mode='edit';preview=null;previewDraft=null;persist();return;}
     const latest=list().find(item=>item.id===row.id);
     if(!latest)throw new Error('The current saved installation is unavailable.');
-    session.drafts[row.id]={key:row.id,token:crypto.randomUUID(),installationId:row.id,expectedRevision:latest.revision,
-      document:copy(row.preview.document),note:'',dirty:false};
-    session.draftKey=row.id;session.mode='edit';preview=null;previewDraft=null;
-    session.notice=row.revision===latest.revision?'Opened the saved installation as an editable draft.':
-      'Opened historical edition '+row.revision+' as a draft for the current installation. Its next save appends edition '+(latest.revision+1)+'.';
+    if(exactEdition){
+      const retained=Object.entries(session.drafts).find(([,value])=>value.installationId===row.id&&
+        value.sourceEdition?.id===row.id&&value.sourceEdition.revision===row.revision&&value.sourceEdition.sha256===row.sha256);
+      if(retained){
+        session.draftKey=retained[0];session.mode='edit';preview=null;previewDraft=null;
+        session.notice='Reopened your retained draft from Installation edition '+row.revision+'. Its later edits remain available.'+
+          (retained[1].expectedRevision!==latest.revision?' The current saved head is edition '+latest.revision+'; review its history before saving the next edition.':'');
+        persist();return;
+      }
+    }else if(existing){session.draftKey=row.id;session.mode='edit';preview=null;previewDraft=null;persist();return;}
+    const key=existing?'calendar-'+crypto.randomUUID():row.id;
+    session.drafts[key]={key,token:crypto.randomUUID(),installationId:row.id,expectedRevision:latest.revision,
+      sourceEdition:{id:row.id,revision:row.revision,sha256:row.sha256},
+      document:copy(row.preview.document),note:'',dirty:false,
+      ...(exactEdition?{label:row.preview.document.name+' · source edition '+row.revision}:{})};
+    session.draftKey=key;session.mode='edit';preview=null;previewDraft=null;
+    session.notice=(row.revision===latest.revision?'Opened the saved installation as an editable draft.':
+      'Opened historical edition '+row.revision+' as a draft for the current installation. Its next save appends edition '+(latest.revision+1)+'.')+
+      (existing?' Your other edited Installation draft remains in Retained drafts.':'');
     persist();
   }
   async function previewDraftInput(){
@@ -780,7 +794,11 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(key==='sourceId'||key==='packetSourceId'){workshareInventory=null;session.workshareIntake.caseId='';}
       persist();render();return;
     }
-    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-use-field],[data-use-pattern]')){
+      capture();
+      if(event.target.dataset.usePattern==='buyerDeploymentIds'||event.target.dataset.usePattern==='mode')render();
+      else controls();
+    }
     if(event.target.matches('[data-installation-file]')&&event.target.files[0])run(()=>importDraft(event.target.files[0]));
   });
   root.addEventListener('click',event=>{
@@ -874,17 +892,17 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     await reloadCase();if(!available())return;
     const head=list().find(row=>row.id===request.id);
     if(!head)throw new Error('Refresh the delivery queue to reopen the current installation.');
-    await openEdition(request.id,request.edit?head.revision:request.revision);
-    if(!available()||session.requestOpen!==request||selectedRow?.id!==request.id||
-      selectedRow.revision!==(request.edit?head.revision:request.revision))return;
+    const exactCalendar=request.focusUseCalendar===true,revision=request.edit&&!exactCalendar?head.revision:request.revision;
+    await openEdition(request.id,revision);
+    if(!available()||session.requestOpen!==request||selectedRow?.id!==request.id||selectedRow.revision!==revision)return;
     if(request.edit&&caseValue.program.state==='OPEN'){
-      // Review the current head when a queue row has aged; retain any existing local draft.
-      await editSaved();if(!available())return;
-      session.notice=draft()?.expectedRevision!==head.revision?
+      // Calendar requests carry an explicit source edition; the delivery queue retains its current-head workflow.
+      await editSaved({exactEdition:exactCalendar});if(!available())return;
+      if(!exactCalendar)session.notice=draft()?.expectedRevision!==head.revision?
         'Reopened your retained draft. The installation has a newer saved edition; keep your edits and review the current edition before saving.':
         request.revision!==head.revision?'The installation changed after the queue was read. Opened current edition '+head.revision+' for delivery planning.':
         'Opened the installation delivery assignment. Review and save the complete edition when ready.';
-    }else if(request.edit)session.notice='This operating case is closed. Opened the saved edition for review.';
+    }else if(request.edit)session.notice='This operating case is closed. Opened the selected saved edition for review.';
     delete session.requestOpen;persist();render();
     if(request.focusUseCalendar){
       const target=$('[data-use-editor]')||$('[data-installation-editor]')||root;
