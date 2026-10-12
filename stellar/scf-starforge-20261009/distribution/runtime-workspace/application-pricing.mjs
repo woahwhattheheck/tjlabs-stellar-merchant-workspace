@@ -14,7 +14,7 @@ export function pricingApplication(common) {
   return {
     id: 'merchant-pricing', command: 'revenue-workspace', requiredSource: CLI,
     title: 'Merchant pricing and scenario planning', terminal: false,
-    description: 'Retain supplier bills and quotes, allocate costs to original usage, compare graduated and volume tariffs, save pricing and scenarios, receive complete workspace backups and prepare seller price changes.',
+    description: 'Retain supplier bills and quotes, allocate costs to original usage, compare graduated and volume tariffs and recorded usage, save pricing and scenarios, receive complete workspace backups and prepare seller price changes.',
     fields: [
       field('workspaceDirectory', 'Private pricing workspace', 'path', true,
         'Reopen the same saved reviews and plans, or create one directory in an existing private parent.'),
@@ -194,6 +194,14 @@ export function pricingStartup(request, text) {
       !tariffs.username && !tariffs.password && !tariffs.search && !tariffs.hash,
       'APPLICATION_PRICING_STARTUP_CHANGED');
     links.push({ label: 'Tariff planning', url: tariffs.href });
+  }
+  if (value.performanceUrl !== undefined) {
+    let performance;
+    try { performance = new URL(value.performanceUrl); } catch { need(false, 'APPLICATION_PRICING_STARTUP_CHANGED'); }
+    need(performance.origin === url.origin && performance.pathname === '/performance/' &&
+      !performance.username && !performance.password && !performance.search && !performance.hash,
+      'APPLICATION_PRICING_STARTUP_CHANGED');
+    links.push({ label: 'Recorded performance', url: performance.href });
   }
   let costRestore;
   if (request.args.includes('--restore-cost-workspace')) {

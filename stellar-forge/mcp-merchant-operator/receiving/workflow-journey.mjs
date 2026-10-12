@@ -2,13 +2,14 @@
 // MIT. One original merchant workflow, two named receiving workspaces and complete customer delivery.
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir, rename, rm } from 'node:fs/promises';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { initializeMerchant, readMerchantConfig } from '../config.mjs';
 import { startMerchantMcp } from '../serve.mjs';
+import { verifyNativeArtifacts, prepareNativeArtifactReport, retainNativeInspection, nativeReceivingAccessToken } from './workflow-native-artifacts.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
@@ -34,9 +35,10 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
   if(typeof openSession!=='function')throw new TypeError('Use the original native merchant session factory.');
   await mkdir(directory,{recursive:true,mode:0o700});
   const checkpoint=join(directory,'workflow-receiving-checkpoint.json'),completed=join(directory,'workflow-native-run.json');
+  const token=await nativeReceivingAccessToken(directory);
   const prior=await optionalJson(completed);
   if(prior?.result==='PASS'){
-    for(const file of prior.artifacts){const bytes=await readFile(join(directory,file.name));assert.equal(bytes.length,file.bytes);assert.equal(sha(bytes),file.sha256);}
+    await verifyNativeArtifacts(directory,prior);
     return {...prior,reused:true};
   }
   const suffix=sha(directory).slice(0,18),profileId='workflow-profile-'+suffix;
@@ -45,6 +47,7 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
     directory,sourceCommit,sourceSelections:[],startedAt:new Date().toISOString(),node:process.version,
     profileId,ports:{},workspaces:{},phases:{},stages:[],requests:{},artifacts:[],browserErrors:[],result:'RUNNING'
   };
+  prepareNativeArtifactReport(report);
   assert.equal(report.directory,directory);assert.equal(report.profileId,profileId);
   if(report.sourceSelections.at(-1)?.commit!==sourceCommit)report.sourceSelections.push({commit:sourceCommit,selectedAt:new Date().toISOString()});
   report.result='RUNNING';delete report.error;
@@ -57,15 +60,12 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
     process.stdout.write(JSON.stringify({stage,...detail})+'\n');
   };
   const artifact=async(name,bytes)=>{
+    await mkdir(dirname(join(directory,name)),{recursive:true,mode:0o700});
     await writeFile(join(directory,name),bytes,{mode:0o600});
     const value={name,bytes:bytes.length,sha256:sha(bytes)},index=report.artifacts.findIndex(file=>file.name===name);
     if(index<0)report.artifacts.push(value);else report.artifacts[index]=value;
     await save();return value;
   };
-  const tokenFile=join(directory,'native-access-token');
-  let token;
-  try{token=(await readFile(tokenFile,'utf8')).trim();}
-  catch(error){if(error.code!=='ENOENT')throw error;token=randomBytes(32).toString('hex');await writeFile(tokenFile,token+'\n',{mode:0o600,flag:'wx'});}
   const configuration=join(directory,'merchant','merchant-mcp.json');
   const open=async role=>{
     const host=await openSession({configPath:configuration,port:report.ports[role]??0,
@@ -126,7 +126,8 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
   const receiveProfile=async(host,packet)=>api(host,'import',{method:'POST',body:{archive:packet,expectedContentSha256:packet.contentSha256}});
   const screenshot=async(selected,name,viewport)=>{
     if(viewport)await selected.setViewportSize(viewport);
-    const bytes=await selected.screenshot({fullPage:true,animations:'disabled'});await artifact(name,bytes);
+    const bytes=await selected.screenshot({fullPage:true,animations:'disabled'});
+    await retainNativeInspection(directory,report,name,bytes);await save();
   };
   const handover=async(key,from,to,selected)=>{
     if(report.requests[key])return api(from,'workflow-handover',{method:'POST',body:report.requests[key]});
@@ -153,12 +154,14 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
     return waitRun(host,predicate,label);
   };
   try{
-    const inputs=[];
+    const inputs=[],inputBytes=[];
     for(const name of ['openapi.example.json','service-selections.example.json','service-bindings.example.json']){
       const bytes=await readFile(sourceFile(name));inputs.push({name,bytes:bytes.length,sha256:sha(bytes)});
+      inputBytes.push({name,bytes});
     }
     if(report.sourceInputs)assert.deepEqual(inputs,report.sourceInputs,'Continue with the original merchant source inputs');
     else{report.sourceInputs=inputs;await save();}
+    for(const input of inputBytes)await artifact('merchant-inputs/'+input.name,input.bytes);
     try{await readFile(configuration);await readMerchantConfig(configuration);}
     catch(error){
       if(error.code!=='ENOENT')throw error;
@@ -166,8 +169,8 @@ export async function receiveMerchantWorkflow({directory,chromiumPath,playwright
       assert.equal(Boolean(report.requests.definition),false,'Restore the original merchant before continuing saved work');
       await rm(join(directory,'merchant'),{recursive:true,force:true});
       await initializeMerchant({directory:join(directory,'merchant'),name:'Saved workflow receiving',
-        spec:sourceFile('openapi.example.json'),selections:sourceFile('service-selections.example.json'),
-        bindings:sourceFile('service-bindings.example.json'),runtime:{port:0}});
+        spec:join(directory,'merchant-inputs','openapi.example.json'),selections:join(directory,'merchant-inputs','service-selections.example.json'),
+        bindings:join(directory,'merchant-inputs','service-bindings.example.json'),runtime:{port:0}});
     }
     source=await open('source');receiver=await open('receiver');
     const sourceHost=await api(source,'host'),receiverHost=await api(receiver,'host');

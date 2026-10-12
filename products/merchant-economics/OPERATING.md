@@ -1,12 +1,12 @@
-# Operate supplier costs, tariffs, pricing and receiving
+# Operate supplier costs, tariffs, recorded usage and customer pricing
 
-Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, graduated and volume tariff comparisons, pricing decisions, customer quotation and receiving. The original customer case carries the selected price into accepted implementation, Service work and complete editable handover. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
+Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, graduated and volume tariff comparisons, recorded usage reviews, pricing proposals, customer quotation and receiving. The original customer case carries the selected price into accepted implementation, Service work and complete editable handover. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
 
-This workflow is included in the Stellar merchant product as `revenue-workspace`, `merchant-tariffs` and `merchant-mcp pricing`. Its source and browser use the existing SF97 engine. The MCP interface uses the original merchant MCP runtime. Select the merchant’s existing payment, database or provider runtime separately when starting that merchant.
+This workflow is included in the Stellar merchant product as `revenue-workspace`, `merchant-tariffs`, `merchant-performance` and `merchant-mcp pricing`. Its source and browser use the existing SF97 engine. The MCP interface uses the original merchant MCP runtime. Select the merchant’s existing payment, database or provider runtime separately when starting that merchant.
 
 ## Install the complete Merchant economics product
 
-In the maintained runtime workspace, choose **Build a product**, select the reviewed canonical source commit and **Merchant economics**, then use the resulting original archive in **Source & profile**. The committed `merchant-economics` recipe includes the original API merchant, supplier costs, Pricing and Merchant support applications, tariff operator, scenario/repricing modules, typed clients, customer quotations, accepted implementation, Service and buyer/accountant continuation, and seller releases. It retains the original OpenAPI merchant source and package dependencies used by release staging.
+In the maintained runtime workspace, choose **Build a product**, select the reviewed canonical source commit and **Merchant economics**, then use the resulting original archive in **Source & profile**. The committed `merchant-economics` recipe includes the original API merchant, supplier costs, Pricing and Merchant support applications, tariff and recorded-usage operators, scenario/repricing modules, typed clients, performance-backed customer quotations, accepted implementation, Service and buyer/accountant continuation, and seller releases. It retains the original OpenAPI merchant source and package dependencies used by release staging.
 
 The same existing builder accepts this selection:
 
@@ -365,6 +365,73 @@ const inspected = await client.inspect({
 The Pricing HTTP and MCP clients retain the original `bundle`/download methods with optional `selectionRequestId`, plus `inspectPortfolio`. The existing Pricing MCP CLI exposes `tariff-bundle`, `tariff-portfolio-download` and `tariff-inspect`. The existing Support provider exposes the nine `merchant_case_commercial_tariff_*` operations through the same case writer and retained file reader. Native Pricing inspection returns the complete original review; the MCP response presents its typed source and request summary after that same full preflight.
 
 The [Merchant Support product guide](../merchant-support/README.md) connects this quotation to accepted implementation, Service work, buyer/accountant continuation and complete customer receiving. The original [Tariff MCP guide](../../stellar-forge/mcp-merchant-operator/TARIFFS.md) defines selected export, full inspection, manifest and resume behavior.
+
+## 9. Use recorded activity to revise the customer price
+
+Open **Performance** from the original Pricing console. Use the same private Pricing directory and completed tariff selection. Choose the saved original usage version, exact count basis and, when applicable, the original payment-option or supplier-cost edition.
+
+The selected tariff request and observed usage version remain separate. Performance evaluates the original saved uniform price and its graduated or volume curve at that explicitly observed quantity. It retains the original period, counts, native payment source, selected cost basis and full source identities. Service allowance units remain distinct from consumed or successful inner-route requests.
+
+The installed native command opens that same workspace:
+
+~~~sh
+starforge merchant-performance \
+  --config /absolute/seller.json \
+  --state /absolute/pricing \
+  --history /absolute/observation-history.json
+~~~
+
+Use **Preview** to review the recorded comparison, then save it under one original request UUID and a nonempty label. The complete preview wrapper is `{ inputs, review }`; a native save supplies those normalized `inputs` and `review.performanceSha256`. Its saved `performanceId` is the original save request UUID.
+
+A service basis first captures the complete opening and closing original service snapshots. The native customer-statement compiler supplies the period and its route counts. Choose the retained service source ID when preparing the review.
+
+Use the retained review through the CLI as well:
+
+~~~sh
+starforge merchant-performance capture \
+  --config /absolute/seller.json --state /absolute/pricing \
+  --history /absolute/observation-history.json \
+  --performance EXACT_PERFORMANCE_UUID --output /absolute/performance-source.json
+
+starforge merchant-performance inspect \
+  --config /absolute/seller.json --state /absolute/pricing \
+  --history /absolute/observation-history.json \
+  --input /absolute/performance-source.json --output /absolute/performance-inspection.json
+~~~
+
+The complete performance envelope carries its original Pricing version files, selected tariff portfolio, scenario plans, selected cost-edition sources and any full paired service source. Its maximum is 48 MiB. Inspection returns the recomputed review and complete file descriptors; capture and `source.json` retain the original bodies. The other native downloads are `review.json`, `review.html` and `usage.csv`.
+
+### Prepare the explicit native monthly proposal
+
+Enter the proposed monthly request count as a positive canonical integer string. The proposal retains that horizon separately from the observed period. Its original source version is the saved tariff source used by the selection.
+
+Preview the proposal, save its exact `proposalSha256` and complete request under one UUID, then inspect the returned original Tariff plan and selection. A saved plan remains available when current Pricing state requires refreshing its selection. Replay the same proposal-save request to continue that retained plan.
+
+Commit the returned complete selection with its original `proposalRequestId` and distinct native scenario and Pricing request UUIDs. The existing owners retain the expected Pricing revision, original snapshot and both request bodies. Reopen the saved performance record's proposal and selection operations when resuming.
+
+For complete native receiving, capture a new original Pricing `WORKSPACE_BACKUP` after the performance review and its proposal requests have been saved, and retain the complete companion tariff portfolio. Restore the backup through the existing receiver, receive that portfolio through the original Tariff owner, then reopen Performance over the same restored Pricing directory. The backup retains the saved performance reviews, service sources and proposal/selection history; repeat an existing operation with its exact saved request and UUID. The immutable performance envelope also supports inspection, export and Commercial material on its own.
+
+### Carry the review into the saved customer case
+
+In **Merchant support → Commercial quotations → Usage and revisions**, select the original measured quote and full performance source. Preview the exact native source against the quote's selected tariff and saved uniform price, then save it as an original case material. Retain the original case revision, request UUID, source hash and reviewed binding after an interrupted response.
+
+Choose the saved usage review, the measured quote or a later edition in its history, and an explicit whole number of requests per month. Use the existing tariff, or choose a newer native pricing selection already received through **Tariff sources** for the same original route, method and path.
+
+**Prepare revision in quote editor** returns the ordinary quote draft with its original parent and saved performance binding. Review the customer's work, service, scope and payment terms in that editor, then use the original quote review/publish, customer-response and accepted-implementation workflow. The complete case package carries the retained performance material with its original quote history.
+
+The original commands are:
+
+~~~sh
+starforge merchant-commercial performance list --help
+starforge merchant-commercial performance preview --help
+starforge merchant-commercial performance receive --help
+starforge merchant-commercial performance revision --help
+starforge merchant-commercial performance file --help
+~~~
+
+Use the [complete Performance operator guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/README.md) for all sixteen native methods, typed HTTP calls, exact request files, service sources and proposal continuation. The [Commercial performance guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/PERFORMANCE.md) covers the original case commands, quote revision, full source downloads and customer receiving.
+
+The installed typed exports are `./merchant/performance-client` and `./merchant/commercial-performance-client`. The original Pricing and Support MCP providers expose the corresponding native operations through their existing registrations.
 
 ## Continue the original complete receiving operation
 

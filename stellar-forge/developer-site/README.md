@@ -164,6 +164,8 @@ original Applications workbench and `grant-demo` commands, described in the
 
 ### Maintain the application and its reader
 
+The [merchant financial application chapter](GRANT_FINANCIAL_OPERATIONS.md) connects the current manuscript to settlement accounting, invoices, payment plans and Xero handover. The same composer accepts **--finance-commit** to select the actual merged product and preserves it through later manuscript refreshes. The concise nine answers and complete companion remain the original reader's source, and its current application identity also flows into **Prepare submission**.
+
 The recurring economic-report and coastal model-input sections connect their
 shipped analyst products to the same six funded implementation packages. Its priced unit is one advertised
 complete HTML or JSON report. A later reporting period or reviewed source

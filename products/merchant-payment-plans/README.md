@@ -1,5 +1,7 @@
 # Merchant payment plans and collections
 
+The [complete merchant financial workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md) connects this desk to original settlement accounting, customer invoices and receipt allocation, Xero handover and complete operating recovery.
+
 Prepare customer installment schedules over the merchant's issued invoices, collect against the same recorded payments and credits, and retain every customer schedule edition. The payment-plan desk brings dated collections, invoice activity, schedule revisions and complete customer files into the existing private accounting workspace.
 
 The `merchant-payment-plans` selection installs the **Customer payment plans** application together with the receivables, customer, accounting and quotation workflows it uses. The `merchant-receivables` selection also includes this desk. Both products use the same source under [merchant-settlement-accounting/receivables/payment-plans](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/README.md), the same customer identities and the same accounting writer.

@@ -34,12 +34,15 @@
   },
   "sourceSelection": {
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "commit": "6c002872f315350ad4c342a640e3c36334bcd82d",
-    "status": "published candidate",
+    "commit": "ff82f6268ef778d0401912076e229f03ba9a8a18",
+    "status": "merged_all_44_files_verified",
     "pr": 248,
     "component": "stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning",
     "nativeReferenceState": "not_started_no_equipped_target",
-    "assetBuildState": "original_operation_queued_outcome_unconfirmed"
+    "assetBuildState": "same_original_operation_transferred_to_equipped_owner_without_acceptance_yet",
+    "selectedHead": "1199af74723bc6b0cbb837717dec5080cd1b5992",
+    "files": 44,
+    "mergedAt": "2026-10-12T17:06:39Z"
   },
   "deliverables": [
     {
@@ -75,7 +78,7 @@
     "tjlabs": "Defined implementation and commissioning; editable source and guides; two consolidated reviews; sixty-minute handoff; ten business days of accepted-scope defect correction."
   },
   "clockStart": "Accepted input scope, target/access and commissioning window, reviewers, receiving environment and kickoff payment.",
-  "implementationStatus": "Complete authored source with independent lifecycle review; final integrated publication and original reference runtime receiving continue. No completed reference target commissioning or customer acceptance is asserted.",
+  "implementationStatus": "Complete 44-file application is merged and independently read back. Native lifecycle and final receiver source reviews are closed. The original STAM asset operation and full FROST reference commissioning remain with their original operators; no completed reference target commissioning or customer acceptance is asserted.",
   "reference": {
     "operationId": "SCF_SENSORTHINGS_HAMBURG_NATIVE_1B40_20261012",
     "observations": 660,
@@ -85,14 +88,17 @@
     "meaning": "Original categorical observations and timestamp text. Retained connector text does not establish HTTP metadata, snapshot consistency, availability or scientific validation."
   },
   "links": {
-    "source": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/6c002872f315350ad4c342a640e3c36334bcd82d/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning",
+    "source": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning",
     "services": "https://datacove.eu/services/",
-    "contact": "https://datacove.eu/contact/"
+    "contact": "https://datacove.eu/contact/",
+    "operator": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning/OPERATOR.md",
+    "receiving": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning/RECEIVING.md",
+    "workshare": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning/WORKSHARE.md"
   },
   "firstContact": {
     "to": "Kathi@DataCove.EU",
     "subject": "DataCove SensorThings commissioning workshare | USD 7,800 fixed",
-    "body": "Katharina,\n\nYour data harmonization and provision services address the step from existing holdings to a usable shared data model. We have implemented an operating workflow for one practical part of that delivery: reviewed source-to-FROST commissioning with a complete receiving handoff.\n\nThe source joins retained CSV or SensorThings inputs, explicit entity/field/type/time mapping, approved create/bind/update plans, the original Fraunhofer FROST Python client, and your STAM map interface. It preserves native request/response bytes and target IDs, verifies the selected fields and relationships, and keeps correction, cancellation, same-job recovery and reviewed compensation in the original project history.\n\nWe can take one such workshare for a current DataCove customer or reference installation for USD 7,800 fixed, delivered in twelve business days after the agreed inputs and kickoff. Scope is one source family, an initial and corrected edition with up to twenty selected streams and twenty thousand observations each, one existing FROST target and one operator host, plus a separate receiving environment.\n\nThe handoff includes complete editable source and operating instructions, both reviewed editions, native results and recovery history, and a receiving engineer's full project reopen. Terms are USD 3,900 at kickoff and USD 3,900 at acceptance, two consolidated review rounds, a sixty-minute engineering handoff and ten business days of delivered-scope defect correction.\n\nDataCove retains the customer, data-model and interpretation decisions, service administration and production approval. We supply the implementation and commissioning work; existing hosting and service charges follow your chosen services.\n\nComplete source and operating contract:\nhttps://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/6c002872f315350ad4c342a640e3c36334bcd82d/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning\n\nIs there one current harmonization or SensorThings onboarding where this delivery workshare would help?\n\nBryce\nTokenJunkie Labs",
+    "body": "Katharina,\n\nYour data harmonization and provision services address the step from existing holdings to a usable shared data model. We have implemented an operating workflow for one practical part of that delivery: reviewed source-to-FROST commissioning with a complete receiving handoff.\n\nThe source joins retained CSV or SensorThings inputs, explicit entity/field/type/time mapping, approved create/bind/update plans, the original Fraunhofer FROST Python client, and your STAM map interface. It preserves native request/response bytes and target IDs, verifies the selected fields and relationships, and keeps correction, cancellation, same-job recovery and reviewed compensation in the original project history.\n\nWe can take one such workshare for a current DataCove customer or reference installation for USD 7,800 fixed, delivered in twelve business days after the agreed inputs and kickoff. Scope is one source family, an initial and corrected edition with up to twenty selected streams and twenty thousand observations each, one existing FROST target and one operator host, plus a separate receiving environment.\n\nThe handoff includes complete editable source and operating instructions, both reviewed editions, native results and recovery history, and a receiving engineer's full project reopen. Terms are USD 3,900 at kickoff and USD 3,900 at acceptance, two consolidated review rounds, a sixty-minute engineering handoff and ten business days of delivered-scope defect correction.\n\nDataCove retains the customer, data-model and interpretation decisions, service administration and production approval. We supply the implementation and commissioning work; existing hosting and service charges follow your chosen services.\n\nComplete source and operating contract:\nhttps://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/ff82f6268ef778d0401912076e229f03ba9a8a18/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/commissioning\n\nIs there one current harmonization or SensorThings onboarding where this delivery workshare would help?\n\nBryce\nTokenJunkie Labs",
     "state": "prepared_not_sent"
   }
 }

@@ -1,0 +1,30 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-performance",
+  "description": "Recorded usage and service periods against original tariff selections, complete portable performance source and native pricing proposals",
+  "components": [
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/README.md",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/client.d.mts"
+  ],
+  "commands": {
+    "merchant-performance": "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/cli.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-performance": "Review original saved usage against tariff selections, retain service periods and complete performance source, and prepare native pricing proposals"
+  },
+  "exports": {
+    "./merchant/performance": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/model.mjs",
+    "./merchant/performance-source": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/source.mjs",
+    "./merchant/performance-workspace": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/workspace.mjs",
+    "./merchant/performance-client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/client.mjs",
+      "default": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/client.mjs"
+    },
+    "./merchant/performance-server": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/server.mjs",
+    "./merchant/performance-cli": "./source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/cli.mjs"
+  }
+}

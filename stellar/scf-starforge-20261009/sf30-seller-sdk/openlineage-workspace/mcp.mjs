@@ -1,7 +1,7 @@
 // MIT. Merchant call/summary/close owner over one original native HTTP workspace.
 import { tools as nativeTools } from "./catalog.mjs";
 import { lineageWorkspaceTools, LINEAGE_MERCHANT_REQUEST_BYTES, LINEAGE_MERCHANT_RESPONSE_BYTES } from "./mcp-tools.mjs";
-import { LineageHostClient, lineageHostError, readLineageWorkspaceConfiguration, readLineageHostInput, lineageInputMetadata } from "./mcp-client.mjs";
+import { LineageHostClient, lineageHostError, readLineageWorkspaceConfiguration, readLineageHostInput, lineageInputMetadata, lineageProducerMetadata } from "./mcp-client.mjs";
 export { lineageWorkspaceTools, readLineageWorkspaceConfiguration };
 
 const definitions = new Map(lineageWorkspaceTools((name, description, properties, required) => ({
@@ -37,7 +37,7 @@ function completeResponse(value, name, args) {
   if (responseBytes <= LINEAGE_MERCHANT_RESPONSE_BYTES) return value;
   const committed = Number.isSafeInteger(value?.revision) && typeof args.operationId === "string" &&
     ["merchant_lineage_source_import", "merchant_lineage_edition_save", "merchant_lineage_review_save", "merchant_lineage_result_attach",
-      "merchant_lineage_import_file", "merchant_lineage_attach_file"].includes(name);
+      "merchant_lineage_import_file", "merchant_lineage_attach_file", "merchant_lineage_emit_file"].includes(name);
   if (committed) {
     return {
       outcome: "CONFIRMED", workspace: args.workspace, workspaceId: value.workspaceId,
@@ -83,6 +83,7 @@ export class MerchantOpenLineageWorkspaces {
     const entry = this.#entry(alias);
     return { workspace: alias, label: entry.label, workspaceId: entry.workspaceId, maxInputBytes: entry.maxInputBytes,
       inputs: Object.entries(entry.inputs).map(([name, input]) => lineageInputMetadata(name, input)),
+      producer: lineageProducerMetadata(entry),
       client: this.#clients.get(alias)?.metadata ?? { state: "UNATTACHED", workspaceId: entry.workspaceId } };
   }
   async #call(name, args) {
@@ -91,6 +92,15 @@ export class MerchantOpenLineageWorkspaces {
     if (name === "merchant_lineage_connection") return { workspace: alias, ...await client.connection() };
     if (name === "merchant_lineage_reconnect") return { workspace: alias, ...await client.reconnect(args.expectedInstanceId) };
     if (name === "merchant_lineage_cancel") return { workspace: alias, ...client.cancel(args.operationId) };
+    if (name === "merchant_lineage_producer_status") return { workspace: alias, ...await client.action("producer.status") };
+    if (name === "merchant_lineage_producer_profiles") return { workspace: alias, ...client.producerProfiles() };
+    if (name === "merchant_lineage_producer_configure") return { workspace: alias, ...await client.configureProducer(args.profile) };
+    if (name === "merchant_lineage_emit_file") {
+      return client.emitFile(args.input, args.expectedSha256, { operationId: args.operationId,
+        ...(args.expectedRevision === undefined ? {} : { expectedRevision: args.expectedRevision }),
+        ...(args.sourceUrl === undefined ? {} : { sourceUrl: args.sourceUrl }),
+        ...(args.contentEncoding === undefined ? {} : { contentEncoding: args.contentEncoding }) });
+    }
     if (name === "merchant_lineage_input") {
       const found = await readLineageHostInput(entry, args.input, args.expectedSha256);
       return { workspace: alias, ...lineageInputMetadata(args.input, found.input), bytes: found.bytes.length };
