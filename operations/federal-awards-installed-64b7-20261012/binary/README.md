@@ -18,6 +18,32 @@ source bytes were independently verified against their Git blob and tree IDs.
 The complete ZIP is 7,205,397 bytes. Whole ZIP SHA256:
 `54bcf6f2dad815e0559aad0ab78db9697ee8dbda11cbabf2fea85eb44c868216`.
 
+### Download on the receiving host
+
+Run the direct source receiver from this directory with Python 3.11+:
+
+```sh
+python3 receive-published-source.py --directory /ABSOLUTE/PRIVATE/CARRIER
+```
+
+The receiver downloads the published manifest, original assembler, and all nine
+binary parts from the immutable carrier commit
+`e72ce40bf9fcb0e6b6b7927d411c0b69c35db434`. It checks the original Git blob
+identities and part digests, then invokes the unchanged original assembler.
+Completed matching files are reused when the command is repeated. Keep the
+carrier directory on the receiving host's ordinary filesystem so an interrupted
+transfer can continue there.
+
+The complete ZIP is retained directly in `/ABSOLUTE/PRIVATE/CARRIER/`. The
+original installed receiver and packet are extracted under
+`/ABSOLUTE/PRIVATE/CARRIER/source/federal-awards-installed/`. Use that path as
+`NEW_PRIVATE_SOURCE_DIRECTORY/federal-awards-installed/` in the continuation
+command below. The Python `receive-installed.py` command validates the original
+ROOT, MCP, and source Applications outputs before running the original Node
+`receive-installed.mjs` driver.
+
+### Receive through Git file-content tools
+
 The nine binary parts are at most 850,000 bytes each so Git file content reads
 return every byte. Use the original filenames and order in
 `archive-transfer.json`. A Git content tool should request `encoding: "base64"`.
