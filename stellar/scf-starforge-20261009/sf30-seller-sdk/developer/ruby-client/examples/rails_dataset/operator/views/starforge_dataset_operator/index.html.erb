@@ -10,7 +10,7 @@
         <details>
           <summary>Original source and saved mapping</summary>
           <p class="mono"><%= candidate["manifest_sha256"] %></p>
-          <% if candidate["mapping"].is_a?(Hash) %>
+          <% if operator_mapping_configured?(candidate["mapping"]) %>
             <pre><%= JSON.pretty_generate(candidate["mapping"]) %></pre>
           <% else %>
             <p>Choose application fields after opening the complete source.</p>
@@ -23,7 +23,7 @@
             "candidate_id"=>candidate["id"],"selection_sha256"=>candidate["selection_sha256"]},"create_source") %>
           <%= submit_tag "Read source and configure fields",class: "primary" %>
         <% end %>
-        <% if candidate["mapping"].is_a?(Hash) %>
+        <% if operator_mapping_configured?(candidate["mapping"]) %>
           <%= form_with url: {action: :create},local: true do %>
             <%= hidden_field_tag :selection,operator_token({"review_id"=>SecureRandom.uuid,
               "candidate_id"=>candidate["id"],"selection_sha256"=>candidate["selection_sha256"]},"create") %>

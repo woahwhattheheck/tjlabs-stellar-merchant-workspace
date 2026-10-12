@@ -19,7 +19,7 @@ module Starforge
         helper_method :operator_token, :operator_values, :operator_text,
           :operator_data_unpack, :operator_data_value, :operator_data_label,
           :operator_data_time, :operator_data_column, :operator_data_type,
-          :operator_mapping_row, :operator_mapping_label, :operator_source_types
+          :operator_mapping_row, :operator_mapping_label, :operator_mapping_configured?, :operator_source_types
         rescue_from Starforge::Error, Starforge::RailsDataset::ImportError, with: :operator_error
         rescue_from ActiveRecord::RecordNotFound do
           head :not_found
@@ -354,6 +354,12 @@ module Starforge
         value = value.values if value.is_a?(Hash)
         return {} unless value.is_a?(Array)
         value.find { |row| row.is_a?(Hash) && row["column"] == name } || {}
+      end
+
+      def operator_mapping_configured?(definition)
+        definition.is_a?(Hash) && definition["columns"].is_a?(Hash) &&
+          !definition["columns"].empty? && definition["key_columns"].is_a?(Array) &&
+          !definition["key_columns"].empty?
       end
 
       def operator_mapping_label(value)

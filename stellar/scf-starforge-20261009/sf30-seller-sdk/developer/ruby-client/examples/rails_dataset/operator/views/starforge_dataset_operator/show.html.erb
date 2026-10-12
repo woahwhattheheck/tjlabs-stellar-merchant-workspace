@@ -43,7 +43,7 @@
     </section>
   <% end %>
 <% else %>
-  <% if @detail.dig("state","phase").to_s.start_with?("source_") || !candidate["mapping"].is_a?(Hash) %>
+  <% if @detail.dig("state","phase").to_s.start_with?("source_") || !operator_mapping_configured?(candidate["mapping"]) %>
     <section><h3>Read the complete source and choose application fields</h3>
       <p>Open the source and field mapping view to read or resume the complete source, browse every original row, and select the mapping for a new review.</p>
       <%= link_to "Open source and field mapping",action: :mapping,id: id %>

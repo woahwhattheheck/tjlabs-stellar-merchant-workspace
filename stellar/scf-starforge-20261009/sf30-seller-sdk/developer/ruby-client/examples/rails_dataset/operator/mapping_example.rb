@@ -269,7 +269,11 @@ module Starforge
           need(original["actor"] == Commission::ACTOR &&
             original["tenant"] == NativeDatasetLifecycle::TENANT &&
             original["payload"].is_a?(Hash),"DATASET_MAPPING_ORIGINAL_FORM")
-          token = Nokogiri::HTML.fragment(html).at_css('input[name="authenticity_token"]')&.[]("value")
+          document = Nokogiri::HTML.fragment(html)
+          target = document.css("form").find { |node| URI.parse(node["action"].to_s).path == action }
+          # A retained operation may already be complete and have no submit form.
+          # When it still exists, use that exact action's per-form CSRF token.
+          token = (target || document).at_css('input[name="authenticity_token"]')&.[]("value")
           need(token.is_a?(String) && !token.empty?,"DATASET_MAPPING_CSRF_FORM")
           values = {"authenticity_token"=>token,"selection"=>
             Rails.application.message_verifier("starforge-dataset-operator").
