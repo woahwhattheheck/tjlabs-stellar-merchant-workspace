@@ -406,7 +406,7 @@ export class MerchantGrantWorkspaces {
       case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
-      performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
+      supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {

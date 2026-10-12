@@ -434,6 +434,92 @@ export interface GrantPerformanceDownloadSelection extends GrantPerformanceSelec
   expectedReportSha256: string;
 }
 
+export interface GrantSupplierAccountSelection extends GrantPerformanceSelection {
+  contributorId?: string | null;
+}
+export interface GrantSupplierAccountPeriod extends GrantPerformancePeriod {
+  contributorId: string | null;
+}
+export interface GrantSupplierAccountAmounts {
+  invoicedUsd: string;
+  paidUsd: string;
+  openUsd: string;
+  creditUsd: string;
+  balanceUsd: string;
+}
+export interface GrantSupplierSummary {
+  id: string; name: string; kind: string; contact: string; state: string;
+  opening: GrantSupplierAccountAmounts;
+  period: GrantSupplierAccountAmounts;
+  closing: GrantSupplierAccountAmounts;
+  work: { recordedHours: string; acceptedHours: string; preawardHours: string };
+  workWithoutInvoiceLink: number;
+  invoiceCount: number;
+  disputedInvoices: number;
+}
+export interface GrantSupplierInvoiceLine {
+  id: string; costId: string | null; description: string; amountUsd: string; workIds: string[];
+}
+export interface GrantSupplierInvoice extends GrantObject {
+  id: string; contributorId: string; number: string; state: string;
+  issuedDate: GrantCivilDate; dueDate: GrantCivilDate | null;
+  totalUsd: string; lines: GrantSupplierInvoiceLine[];
+  openingInvoicedUsd: string; periodInvoicedUsd: string; closingInvoicedUsd: string;
+  openingPaidUsd: string; periodPaidUsd: string; closingPaidUsd: string;
+  openUsd: string; creditUsd: string; balanceUsd: string;
+  overdueDays: number; aging: string; future: boolean; inPeriod: boolean;
+  sourceIds: string[]; sourceNote: string;
+}
+export interface GrantSupplierCashAllocation {
+  invoiceId: string; amountUsd: string; invoiceNumber: string; invoiceState: string;
+  contributorId: string; contributor: string; onSelectedAccount: boolean;
+}
+export interface GrantSupplierCash extends GrantObject {
+  id: string; date: GrantCivilDate; state: string; direction: 'IN' | 'OUT'; category: string;
+  amount: string; currency: string; network: string; asset: string;
+  usdValue: string | null; externalRef: string; allocations: GrantSupplierCashAllocation[];
+  accountAllocatedUsd: string; signedAccountPaidUsd: string; recognizedAccountPaidUsd: string;
+  otherAllocatedUsd: string; unallocatedUsd: string | null;
+  inPeriod: boolean; future: boolean; includedInUsd: boolean;
+  usdBasis: 'VOID' | 'TESTNET' | 'UNVALUED' | 'RECORDED_USD';
+  sourceIds: string[]; valuationSourceIds: string[]; sourceNote: string;
+}
+export interface GrantSupplierWork extends GrantObject {
+  id: string; contributorId: string; description: string; state: string;
+  startDate: GrantCivilDate; endDate: GrantCivilDate; hours: string; costId: string | null;
+  fundingBasis: string; inPeriod: boolean; future: boolean; withoutInvoiceLink: boolean;
+  invoiceLinks: { invoiceId: string; number: string; state: string; issuedDate: GrantCivilDate; lineId: string; description: string; amountUsd: string }[];
+  sourceIds: string[]; sourceNote: string;
+}
+export interface GrantSupplierActivity {
+  date: GrantCivilDate; kind: 'INVOICE' | 'PAYMENT' | 'REFUND'; recordId: string; label: string;
+  invoicedUsd: string; paidUsd: string; balanceChangeUsd: string; runningBalanceUsd: string; sourceIds: string[];
+}
+export interface GrantSupplierAccountReport extends GrantObject {
+  schema: 'stellar-forge.sf47-supplier-account.v1';
+  selection: GrantSupplierAccountPeriod;
+  case: GrantPerformanceReport['case'];
+  plan: { id: string; revision: number; name: string; contentSha256: string };
+  account: GrantObject | null;
+  accounts: GrantSupplierSummary[];
+  balances: Record<'opening' | 'period' | 'closing', GrantSupplierAccountAmounts>;
+  workTotals: GrantPerformanceReport['work'];
+  invoices: GrantSupplierInvoice[];
+  work: GrantSupplierWork[];
+  cash: GrantSupplierCash[];
+  activity: GrantSupplierActivity[];
+  aging: { bucket: string; count: number; amountUsd: string }[];
+  sources: GrantObject[];
+  attention: Record<'receivedInvoiceIds' | 'disputedInvoiceIds' | 'overdueInvoiceIds' | 'creditInvoiceIds' | 'workWithoutInvoiceLinkIds' | 'excludedCashIds', string[]>;
+  recordsSha256: string; reportSha256: string; basis: string[];
+}
+export interface GrantSupplierAccountReceived extends GrantSupplierAccountPeriod {
+  reportSha256: string; sourceCaseId: string; sourceCaseVersion: number;
+}
+export interface GrantSupplierAccountDownloadSelection extends GrantSupplierAccountSelection {
+  endDate: GrantCivilDate; expectedVersion: number; expectedReportSha256: string;
+}
+
 export interface GrantDeliveryQueueSelection { caseId: string; asOfDate?: GrantCivilDate; }
 export interface GrantInstallationSelection {
   expectedVersion: number;
@@ -498,6 +584,7 @@ export interface GrantCaseImportReceipt extends GrantObject {
   /** Present when the imported file is a complete dated delivery queue handover. */
   deliveryQueue?: { asOfDate: GrantCivilDate; sha256: string };
   performance?: GrantPerformanceReceived;
+  supplierAccount?: GrantSupplierAccountReceived;
   selectedInstallation?: GrantInstallationRef;
 }
 export interface GrantWorkshareSourceSelection {
@@ -540,6 +627,7 @@ export interface GrantDownloadSelections {
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
   performance: GrantPerformanceDownloadSelection;
+  'supplier-account': GrantSupplierAccountDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
   source: { caseId: string; sourceId: string };
   completion: { caseId: string; reviewId: string };
@@ -560,6 +648,7 @@ export class GrantWorkspaceClient {
   read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;
+  read(view: 'supplier-account', selection: GrantSupplierAccountSelection): Promise<GrantJsonResponse<GrantSupplierAccountReport>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;

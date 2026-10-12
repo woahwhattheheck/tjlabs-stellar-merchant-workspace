@@ -23,6 +23,7 @@ import operations_installations as installations
 import operations_dispatch as dispatch
 import operations_performance as performance
 import operations_ledger_intake as ledger_intake
+import operations_payables as payables
 import operations_implementation as implementation
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
@@ -687,6 +688,22 @@ class Operations:
     def ledger_intake_original(self, program_id, source_id):
         return ledger_intake.original(self, identifier(program_id, "operation"), identifier(source_id, "source"))
 
+    def supplier_account(self, program_id, contributor_id=None, start_date=None, end_date=None, expected_version=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            if expected_version is not None and domain.integer(expected_version, "Reviewed case version", 1, 10000000) != context["program"]["version"]:
+                domain.fail("Refresh the original case before reading this supplier account.", "VERSION_CONFLICT", 409)
+            return payables.build(context, contributor_id, start_date, end_date)
+
+    def export_supplier_account(self, program_id, contributor_id, start_date, end_date, expected_version, expected_report_sha256):
+        with self._snapshot():
+            report = self.supplier_account(program_id, contributor_id, start_date, end_date,
+                domain.integer(expected_version, "Reviewed case version", 1, 10000000))
+            if domain.sha(expected_report_sha256, "Reviewed supplier account", False) != report["reportSha256"]:
+                domain.fail("Reopen the supplier and dates before exporting the complete account.",
+                            "SUPPLIER_ACCOUNT_SOURCE_CHANGED", 409)
+            return payables.export_bundle(report, self.export(program_id))
+
     def performance(self, program_id, start_date=None, end_date=None, expected_version=None):
         with self._snapshot():
             context = self._context(identifier(program_id, "operation"))
@@ -908,7 +925,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, performance_report = performance.unwrap_bundle(raw)
+        native_raw, supplier_account = payables.unwrap_bundle(raw)
+        native_raw, performance_report = performance.unwrap_bundle(native_raw)
         native_raw, delivery_queue = dispatch.unwrap_bundle(native_raw)
         document, files = self._unpack(native_raw)
         source_program, plan = document["program"], document["plan"]
@@ -986,6 +1004,7 @@ class Operations:
         installations.validate_import(context, saved_installations, events, source_program["version"], files)
         dispatch.validate_received(delivery_queue, document)
         performance.validate_received(performance_report, document)
+        payables.validate_received(supplier_account, document)
         implementation.validate_import(context, reviews, events, saved_installations, files)
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:
@@ -1065,6 +1084,8 @@ class Operations:
                       "archiveSha256": hashlib.sha256(raw).hexdigest(), "importedAt": stamp, "importedBy": actor}
             if performance_report:
                 origin["performance"] = performance.received_selection(performance_report)
+            if supplier_account:
+                origin["supplierAccount"] = payables.received_selection(supplier_account)
             self.db.execute("INSERT INTO ops_programs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (pid, imported["id"], plan["revision"], source_program["version"], source_program["state"],
                  name, source_program["mode"], source_program.get("calendarStart"), canonical(pinned),
@@ -1091,7 +1112,8 @@ class Operations:
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
                     **({"selectedInstallation": selected_installation} if selected_installation else {}),
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),
-                    **({"performance": performance.received_selection(performance_report)} if performance_report else {})}
+                    **({"performance": performance.received_selection(performance_report)} if performance_report else {}),
+                    **({"supplierAccount": payables.received_selection(supplier_account)} if supplier_account else {})}
         with self.workspace.mutex:
             # Reuse the original receipt table before the original plan import.
             # A rejected reuse or invalid request cannot create an extra plan.
