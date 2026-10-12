@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Exact native intake for the original E49 managed/direct/Applications operation.
-Git source primitives are reused from Commons d0b16bd, host/receiving/scf-source-workspace-7737/receive.py (MIT).
+Git source primitives (with optional donor HEAD observation for bare object stores) are reused from Commons d0b16bd, host/receiving/scf-source-workspace-7737/receive.py (MIT).
 The donor repositories are read-only; this operation owns its private Git and output directories.
 """
 import base64,hashlib,json,os,pathlib,re,stat,subprocess,sys,tempfile,time,traceback
@@ -117,7 +117,8 @@ def private_git(root, intent, env):
                 "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_WORK_TREE"):
         clean.pop(key, None)
     log = root / "source-fetch.log"
-    original_head = git(donor_repo, ["rev-parse", "--verify", "HEAD"], clean, log).decode().strip()
+    observed_head = git(donor_repo, ["rev-parse", "--verify", "HEAD"], clean, log, optional=True)
+    original_head = observed_head.decode().strip() if observed_head else None
     object_name = git(donor_repo, ["rev-parse", "--git-path", "objects"], clean, log).decode().strip()
     objects = pathlib.Path(object_name)
     if not objects.is_absolute():
@@ -269,10 +270,7 @@ def safe_diagnostics(path):
     value=re.sub(r"(?i)(authorization|password|token)[=: ]+[^\s]+",r"\1=<redacted>",value)
     return value
 
-def main():
-    global HEAD
-    os.umask(0o077)
-    selected={
+SELECTED={
         "host":"/workspace/scratch/dbc61db6310c/native-runtime-history-final-3f3ccea8/host/swarm_cloud_job.py",
         "node":"/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
         "python":"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
@@ -281,9 +279,8 @@ def main():
         "chrome":"/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell",
         "publicDonor":"/workspace/scratch/d1ccf784531e/scf-following-release/source.git",
         "standaloneDonor":"/workspace/scratch/7737a0699973/scf"}
-    for name,path in selected.items():
-        if not pathlib.Path(path).exists(): raise ValueError("Selected existing runtime is absent: "+name)
-    view=pathlib.Path(tempfile.mkdtemp(prefix="e49-managed-delivery-",dir="/dev"))
+def receive(view,selected):
+    global HEAD
     root=private_directory(view/"source",True)
     out=view/"run-native"
     emit({"phase":"original-native-source-intake","operation":OPERATION,"view":str(view),"pid":os.getpid(),"mountNamespace":os.readlink("/proc/self/ns/mnt")})
@@ -307,7 +304,8 @@ def main():
         repository,_,_=private_git(public_root,{"repository":selected["publicDonor"],"offlineSource":False},public_env)
         verify_selection(repository,public_env,public_root/"source-fetch.log",DIRECT,direct)
         state["direct"]=materialize(repository,public_env,public_root/"source-fetch.log",direct,private_directory(root/"direct-source",True),(root,managed))
-        after=git(selected["publicDonor"],["rev-parse","--verify","HEAD"],donor_env,public_root/"source-fetch.log").decode().strip()
+        after=git(selected["publicDonor"],["rev-parse","--verify","HEAD"],donor_env,public_root/"source-fetch.log",optional=True)
+        after=after.decode().strip() if after else None
         state["publicDonor"]={"headBefore":before,"headAfter":after,"writesPerformed":False}
         standalone_env=dict(env);HEAD=APPLICATIONS
         standalone,standalone_donor_env,sbefore=private_git(standalone_root,{"repository":selected["standaloneDonor"],"offlineSource":False},standalone_env)
@@ -319,7 +317,8 @@ def main():
         sequence_rows={p:r for p,r in others.items() if p not in application_rows}
         verify_selection(standalone,standalone_env,standalone_root/"source-fetch.log",CONTINUOUS,sequence_rows)
         state["controller"]=materialize(standalone,standalone_env,standalone_root/"source-fetch.log",sequence_rows,root)
-        safter=git(selected["standaloneDonor"],["rev-parse","--verify","HEAD"],standalone_donor_env,standalone_root/"source-fetch.log").decode().strip()
+        safter=git(selected["standaloneDonor"],["rev-parse","--verify","HEAD"],standalone_donor_env,standalone_root/"source-fetch.log",optional=True)
+        safter=safter.decode().strip() if safter else None
         state["standaloneDonor"]={"headBefore":sbefore,"headAfter":safter,"writesPerformed":False}
         for path in [root/"node_modules",root/"direct-source/node_modules"]: os.symlink(selected["modules"],path)
         tmp=private_directory(out/"tmp",True)
@@ -329,20 +328,12 @@ def main():
         emit({"phase":"source-complete","operation":OPERATION,"managedFiles":1425,"directFiles":1653,"applicationsAndControllerFiles":3,"source":str(root)})
         for path in sequence_rows:
             compile((root/path).read_text(),str(root/path),"exec")
-        command=[selected["python"],"-B",selected["host"],"run","e49-managed-sf98-delivery",
-            "--operation-id",OPERATION,"--project",str(view),"--memory-mib","768","--memory-reserve-mib","256",
-            "--memory-storage","included","--memory-reclaim","clean-cache",
-            "--disk-space",str(out)+"=30","--disk-space",str(view)+"=4","--disk-reserve-mib","64",
-            "--runtime-path",selected["modules"],"--runtime-path",selected["playwright"],"--runtime-path",selected["chrome"],
-            "--runtime-consumers-root","/workspace/shared/swarm/jobs/runtime-consumers",
-            "--worker-root",str(view/"worker"),"--temp-root",str(view/"worker-temp"),
-            "--artifact-on-success","run-native/receiving-summary.json","--retain-artifacts","--report-format","summary","--",
-            selected["python"],"-B",str(root/"experiments/managed-settlement-delivery-acceptance/continuous.py"),
+        command=[selected["python"],"-B",str(root/"experiments/managed-settlement-delivery-acceptance/continuous.py"),
             str(root),str(out),selected["node"],selected["python"],selected["playwright"],selected["chrome"]]
         env.update(TMPDIR=str(tmp),TMP=str(tmp),TEMP=str(tmp))
-        state["phase"]="original-native-admission";state["command"]=command
+        state["phase"]="admitted-native-receiving";state["command"]=command
         save(view/"source-intake.json",state)
-        emit({"phase":"original-native-admission","operation":OPERATION,"source":str(root),"output":str(out)})
+        emit({"phase":state["phase"],"operation":OPERATION,"source":str(root),"output":str(out)})
         result=subprocess.run(command,cwd=view,env=env)
         state["phase"]="original-native-returned";state["returncode"]=result.returncode
         save(view/"source-intake.json",state)
@@ -356,5 +347,54 @@ def main():
             "publicDiagnostics":safe_diagnostics(public_root/"source-fetch.log"),
             "standaloneDiagnostics":safe_diagnostics(standalone_root/"source-fetch.log")})
         return 1
+
+def own_source():
+    selected=globals().get("__file__")
+    if selected:
+        path=pathlib.Path(selected).resolve(strict=True)
+        raw=path.read_bytes()
+    else:
+        arguments=pathlib.Path("/proc/self/cmdline").read_bytes().split(b"\0")
+        index=arguments.index(b"-c")
+        raw=arguments[index+1]
+    if not raw or len(raw)>2*1024*1024 or b'SCF-MANAGED-SF98-DELIVERY-E49D-20261012' not in raw:
+        raise ValueError("Original receiving source identity unavailable")
+    return raw
+
+def main():
+    os.umask(0o077)
+    for name,path in SELECTED.items():
+        if not pathlib.Path(path).exists(): raise ValueError("Selected existing runtime is absent: "+name)
+    if len(sys.argv)==3 and sys.argv[1]=="--admitted-view":
+        view=private_directory(pathlib.Path(sys.argv[2]).resolve(strict=True))
+        intent=read(view/"intake-intent.json")
+        if intent.get("operation")!=OPERATION or intent.get("receiverSha256")!=bytes_sha(own_source()):
+            raise ValueError("Admitted receiving source changed")
+        return receive(view,SELECTED)
+    if len(sys.argv)!=1: raise ValueError("Use the original one-shot receiving invocation")
+    view=pathlib.Path(tempfile.mkdtemp(prefix="e49-managed-delivery-",dir="/dev"))
+    source_file=view/"native-source-receiver.py"
+    raw=own_source();exact_file(source_file,raw)
+    out=view/"run-native";tmp=private_directory(out/"tmp",True)
+    private_directory(view/"worker",True);private_directory(view/"worker-temp",True)
+    command=[SELECTED["python"],"-B",SELECTED["host"],"run","e49-managed-sf98-delivery",
+        "--operation-id",OPERATION,"--project",str(view),"--memory-mib","768","--memory-reserve-mib","256",
+        "--memory-storage","included","--memory-reclaim","clean-cache",
+        "--disk-space",str(out)+"=30","--disk-space",str(view)+"=48","--disk-reserve-mib","64",
+        "--runtime-path",SELECTED["modules"],"--runtime-path",SELECTED["playwright"],"--runtime-path",SELECTED["chrome"],
+        "--runtime-consumers-root","/workspace/shared/swarm/jobs/runtime-consumers",
+        "--worker-root",str(view/"worker"),"--temp-root",str(view/"worker-temp"),
+        "--artifact-on-success","run-native/receiving-summary.json","--retain-artifacts","--report-format","summary","--",
+        SELECTED["python"],"-B",str(source_file),"--admitted-view",str(view)]
+    save(view/"intake-intent.json",{"operation":OPERATION,"receiverSha256":bytes_sha(raw),
+        "managedSource":MANAGED,"directSource":DIRECT,"applicationsSource":APPLICATIONS,
+        "sourceMaterialization":"inside the original native admission",
+        "command":command,"createdAt":now()})
+    emit({"phase":"original-native-admission","operation":OPERATION,"view":str(view),"pid":os.getpid(),
+        "sourceBytes":len(raw),"sourceDiskMiB":48,"outputDiskMiB":30,"memoryMiB":768,"reserveMiB":256})
+    environment=dict(os.environ,PYTHONDONTWRITEBYTECODE="1",TMPDIR=str(tmp),TMP=str(tmp),TEMP=str(tmp))
+    result=subprocess.run(command,cwd=view,env=environment)
+    emit({"phase":"original-admission-returned","operation":OPERATION,"returncode":result.returncode})
+    return result.returncode
 if __name__=="__main__":
     raise SystemExit(main())
