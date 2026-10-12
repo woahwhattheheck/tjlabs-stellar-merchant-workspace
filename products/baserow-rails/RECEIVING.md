@@ -73,13 +73,51 @@ The maintained installer also supports an existing compatible dependency tree,
 offline cache and full runtime transfer; see the
 [runtime installation guide](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md).
 
-Ruby dependencies belong to the receiving application's existing toolchain.
-The direct customer requires Ruby 3.1 or later. The complete operator uses
-Rails/ActiveRecord 7.1 or later, SQLite, Nokogiri and the normal Rails/Rack
-dependencies. Running its local server also uses rackup and Puma. Select an
-existing compatible bundle or install it into the intended application
-environment before this same receiving operation. Retain its actual versions
-and executable path with the host operation.
+## Select and install the private Ruby environment
+
+The host supplies its actual Ruby 3.1-or-newer executable and the development
+tools needed by native gems. The managed environment retains that executable's
+identity, installs the selected Bundler privately, resolves and saves one exact
+Gemfile.lock, and installs the original client and Rails dependencies. It caches
+the full Bundler gem and dependency sources for later offline receiving.
+
+~~~sh
+starforge ruby-runtime probe --ruby "$RUBY"
+starforge ruby-runtime init --directory "$RUBY_RUNTIME"
+
+starforge ruby-runtime create --directory "$RUBY_RUNTIME" \
+  --id customer --title "Baserow customer" --ruby "$RUBY" \
+  --bundler-version "$BUNDLER_VERSION" --request-id "$ENVIRONMENT_REQUEST_UUID"
+
+starforge ruby-runtime install --directory "$RUBY_RUNTIME" \
+  --id customer --operation-id "$INSTALL_OPERATION_UUID" --wait
+
+starforge ruby-runtime serve --directory "$RUBY_RUNTIME" --port 0
+~~~
+
+Choose a Bundler version supported by the actual selected Ruby. The default
+project includes Rails/ActiveRecord/ActiveJob, SQLite, Nokogiri, BigDecimal,
+Rackup and Puma. An existing application can supply its complete project and
+Gemfile through create --project-directory and --gemfile. The original lock is
+retained when present. Read the complete selected Gemfile, lock and installation
+result in the environment desk.
+
+RUBY_RUNTIME is this customer's private managed Ruby directory; it is distinct
+from the source installation and the original source/customer directories.
+Retain one UUID for each selected create, installation and customer operation.
+The original runtime continues an interrupted operation through resume with
+that same UUID and preserves its complete output.
+
+The existing Runtime Applications catalog also opens this initialized
+directory through **Ruby environments**. Its second card opens a registered
+**Received Rails application**. Both use the original managed launcher and
+its retained startup/stop history. The [complete runtime
+guide](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/README.md)
+documents the current source, cache, lock and application APIs.
+
+An existing application may continue using its configured compatible bundle
+with the direct original baserow-rails commands below. Its selected versions and
+executable paths remain part of that original host operation.
 
 **RUBY**, **ORIGINAL_PYTHON** and **ORIGINAL_NODE** are absolute selected
 executables. Preserve a language environment's selected path. The product
@@ -129,8 +167,10 @@ versions and publisher candidate. The command continues that exact original
 public-catalog operation into a customer and complete Rails application:
 
 ~~~sh
-starforge baserow-rails commission --ruby "$RUBY" -- run \
-  --native-run "$ORIGINAL_COMPLETED_BASEROW_RUN" \
+starforge ruby-runtime run --directory "$RUBY_RUNTIME" \
+  --id customer --entry baserow-customer-lifecycle \
+  --operation-id "$CUSTOMER_EXECUTION_UUID" --wait -- \
+  run --native-run "$ORIGINAL_COMPLETED_BASEROW_RUN" \
   --out "$CUSTOMER_PHASE" \
   --source-ref "$SOURCE_COMMIT" \
   --checkout "$INSTALLED_SOURCE" \
@@ -170,14 +210,16 @@ application.
 Use the existing operation after an interruption:
 
 ~~~sh
-starforge baserow-rails commission --ruby "$RUBY" -- status \
-  --directory "$CUSTOMER_PHASE"
+starforge ruby-runtime operation --directory "$RUBY_RUNTIME" \
+  --operation-id "$CUSTOMER_EXECUTION_UUID"
 
-starforge baserow-rails commission --ruby "$RUBY" -- resume \
-  --directory "$CUSTOMER_PHASE"
+starforge ruby-runtime resume --directory "$RUBY_RUNTIME" \
+  --operation-id "$CUSTOMER_EXECUTION_UUID" --wait
 
-starforge baserow-rails commission --ruby "$RUBY" -- reopen \
-  --directory "$CUSTOMER_PHASE"
+starforge ruby-runtime run --directory "$RUBY_RUNTIME" \
+  --id customer --entry baserow-customer-lifecycle \
+  --operation-id "$CUSTOMER_REOPEN_UUID" --wait -- \
+  reopen --directory "$CUSTOMER_PHASE"
 ~~~
 
 Keep the returned result and the complete application handover together:
@@ -200,19 +242,43 @@ saved phase.
 
 ## Operate the received application
 
-Open the complete delivered application:
+Register the complete delivered application in the installed environment. For
+the original Baserow continuation, DELIVERED_APPLICATION is the retained
+CUSTOMER_PHASE/delivered-application directory.
+
+~~~sh
+starforge ruby-runtime register --directory "$RUBY_RUNTIME" \
+  --id customer-app --title "Customer data" --environment-id customer \
+  --application-directory "$DELIVERED_APPLICATION" \
+  --request-id "$APPLICATION_REQUEST_UUID" --wait
+
+starforge ruby-runtime launch --directory "$RUBY_RUNTIME" \
+  --id customer-app --operation-id "$APPLICATION_LAUNCH_UUID" --port 9292
+
+starforge ruby-runtime application --directory "$RUBY_RUNTIME" --id customer-app
+~~~
+
+Open the returned private application URL, or open the same saved application
+through the environment desk or the **Received Rails application** catalog card.
+Its URL appears after the actual Puma listener and authenticated HTTP response.
+The complete application lives in its own managed working directory; its
+original received source and database remain retained.
+
+The operator displays saved source reviews, every preview category, exact import
+jobs, committed editions and original files. Its existing Rails authentication
+and CSRF behavior remain active. A production Rails application installs these
+same controllers under its configured account scope and durable job queue.
+
+The direct original command remains available to a host with its own configured
+compatible Ruby bundle:
 
 ~~~sh
 starforge baserow-rails operator --ruby "$RUBY" -- \
   --directory "$DELIVERED_APPLICATION" --port 9292
 ~~~
 
-The local commissioner serves the original Rails operator on loopback. Its
-HTTP Basic username is **operator**; the password is the application's retained
-private access-key file. The operator displays saved source reviews, full
-preview categories, exact import jobs, committed editions and original files.
-Use the existing application's configured authentication and durable job queue
-when installing these same controllers in a production Rails application.
+That direct local server uses username **operator** and the application's
+retained private access-key file.
 
 For a customer with a complete delivery but no original public-catalog run,
 prepare the application directly through the original API:
@@ -241,6 +307,56 @@ For an independently copied application, call
 from the same source package. It verifies every retained application file and
 current target value, then reopens the original result.
 
+## Transfer the operating application and its bundle
+
+Stop the managed application, wait for that original launch to finish, and
+export its complete working state with the environment.
+
+~~~sh
+starforge ruby-runtime stop --directory "$RUBY_RUNTIME" --id customer-app
+starforge ruby-runtime operation --directory "$RUBY_RUNTIME" \
+  --operation-id "$APPLICATION_LAUNCH_UUID" --wait
+
+starforge ruby-runtime export --directory "$RUBY_RUNTIME" \
+  --id customer --application-id customer-app \
+  --operation-id "$APPLICATION_EXPORT_UUID" --wait
+
+starforge ruby-runtime file --directory "$RUBY_RUNTIME" \
+  --operation-id "$APPLICATION_EXPORT_UUID" \
+  --name ruby-runtime.tar --out "$RUBY_APPLICATION_ARCHIVE"
+~~~
+
+The full TAR contains the original source/client, exact Gemfile.lock, cached
+Bundler and dependency sources, and every file of the stopped application.
+Keep its returned complete archive SHA-256. On the receiving host, select the
+compatible actual Ruby executable, then use **Receive** in the Ruby desk or:
+
+~~~sh
+starforge ruby-runtime init --directory "$RECEIVED_RUBY_RUNTIME"
+
+starforge ruby-runtime receive --directory "$RECEIVED_RUBY_RUNTIME" \
+  --id received-customer --title "Received customer data" \
+  --ruby "$RECEIVING_RUBY" --archive "$RUBY_APPLICATION_ARCHIVE" \
+  --expected-sha256 "$RUBY_APPLICATION_ARCHIVE_SHA256" \
+  --operation-id "$RUNTIME_RECEIVING_UUID" --wait
+
+starforge ruby-runtime inspect --directory "$RECEIVED_RUBY_RUNTIME"
+~~~
+
+Receiving verifies the original archive and each member, installs the exact
+retained bundle offline, and checks the original dataset, mapped target rows,
+edition receipts and rendered Rails pages. Use the returned local application
+ID to launch the independent received working copy. The receiving host's Ruby
+engine, ABI and platform must match the archive; it supplies any native
+development tools needed to compile the cached gems.
+
+The browser supports a streamed archive upload with the same original receive
+UUID and complete byte/SHA binding. A completed transfer is reused on retry.
+The [whole native customer example](../../stellar/scf-starforge-20261009/distribution/ruby-runtime/examples/customer-runtime.mjs)
+performs installation, the existing source customer program, real Rails HTTP,
+stopped export, offline receiving while its producer is unavailable, full
+target/history verification and recipient reopening as one retained journey.
+
 ## Other existing finalized datasets
 
 The same selected product includes the original direct SF100 customer entry:
@@ -262,6 +378,8 @@ public product PRs [1952](https://github.com/woahwhattheheck/public-commons-spri
 [2019](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2019) and
 [2088](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2088),
 at original source **03baf7a1b9da6dff74c54fbbb9534e1545c488d4**.
+The managed Ruby environment and complete application receiving come from
+[PR2188](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2188).
 The standalone source selection, product command and guides compose those
 original modules. Original shared native APIs remain the selected standalone
 runtime's source.
