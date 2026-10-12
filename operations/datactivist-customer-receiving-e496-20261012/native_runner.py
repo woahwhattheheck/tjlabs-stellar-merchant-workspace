@@ -11,6 +11,7 @@ import runpy
 import subprocess
 import sys
 import time
+import tempfile
 import traceback
 import urllib.request
 import zipfile
@@ -39,23 +40,44 @@ def run_program(argv, cwd, logs, label, phase_file=None):
     stderr = logs / (label + ".stderr")
     environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUNBUFFERED="1")
     with stdout.open("wb") as out, stderr.open("wb") as err:
+        started_at = time.time()
         process = subprocess.Popen(argv, cwd=cwd, env=environment, stdout=out, stderr=err)
         emit({"state": "PROGRAM_STARTED", "operationId": OPERATION, "program": label, "pid": process.pid,
               "directory": str(cwd), "stdout": str(stdout), "stderr": str(stderr)})
         seen = set()
-        while process.poll() is None:
-            if phase_file and phase_file.is_file():
+        offset, pending = 0, ""
+        def observe_phases():
+            nonlocal offset, pending
+            with stdout.open("r", encoding="utf-8", errors="replace") as feed:
+                feed.seek(offset)
+                pending += feed.read()
+                offset = feed.tell()
+            while "\n" in pending:
+                line, pending = pending.split("\n", 1)
+                try:
+                    event = json.loads(line)
+                    name = event.get("stage") if isinstance(event, dict) else None
+                    if name and name not in seen:
+                        seen.add(name)
+                        emit({"state": "PROGRAM_PHASE", "program": label, "phase": name,
+                              **{k: event[k] for k in ("workspaceId", "publicationId", "snapshot", "rows", "pages") if k in event}})
+                except ValueError:
+                    pass
+            if phase_file and phase_file.is_file() and phase_file.stat().st_mtime >= started_at:
                 try:
                     current = read_json(phase_file)
                     for phase in current.get("stages", []):
-                        key = (phase.get("name"), phase.get("completedAt"))
-                        if key not in seen:
-                            seen.add(key)
-                            emit({"state": "PROGRAM_PHASE", "program": label, "phase": phase.get("name"),
+                        name = phase.get("name")
+                        if name and name not in seen:
+                            seen.add(name)
+                            emit({"state": "PROGRAM_PHASE", "program": label, "phase": name,
                                   "workspaceId": current.get("workspaceId"), "complete": current.get("complete", False)})
                 except (OSError, ValueError):
                     pass
+        while process.poll() is None:
+            observe_phases()
             time.sleep(1)
+        observe_phases()
         code = process.returncode
     record = {"program": label, "returncode": code, "stdout": str(stdout), "stderr": str(stderr),
               "stdoutBytes": stdout.stat().st_size, "stderrBytes": stderr.stat().st_size}
@@ -80,7 +102,7 @@ def identities(value):
     if isinstance(value, dict):
         if value.get("library_file_id"):
             found.append({k: value[k] for k in ("library_file_id", "file_id", "filename", "file_name", "name",
-                                               "path", "version_id", "current_version", "status") if k in value})
+                                               "path", "version_id", "version_number", "current_version_number", "current_version", "status") if k in value})
         for child in value.values():
             found.extend(identities(child))
     elif isinstance(value, list):
@@ -88,13 +110,17 @@ def identities(value):
             found.extend(identities(child))
     unique = {}
     for item in found:
-        key = (item.get("library_file_id"), str(item.get("version_id", item.get("current_version", ""))))
+        key = (item.get("library_file_id"), str(item.get("version_id", item.get("current_version_number", item.get("version_number", item.get("current_version", ""))))))
         unique[key] = item
     return list(unique.values())
 
 def run(config):
     root = Path(config["root"]).resolve()
     root.mkdir(parents=True, exist_ok=True)
+    task_temp = root / "runtime-tmp"
+    task_temp.mkdir(mode=0o700, exist_ok=True)
+    os.environ["TMPDIR"] = str(task_temp)
+    tempfile.tempdir = str(task_temp)
     source_file = root / "complete-application.json"
     application = root / "application"
     controller = root / "controller"
@@ -147,6 +173,7 @@ def run(config):
                 raise FileNotFoundError("Observed original runtime component is unavailable: " + str(path))
         result["runtime"] = {"python": sys.version.split()[0],
                              "node": subprocess.check_output([str(node), "--version"], text=True).strip(),
+                             "nodeOptions": os.environ.get("NODE_OPTIONS", ""),
                              "playwrightModule": str(playwright), "browserExecutable": str(browser)}
         for path in (application / SDK / "python_customer/install.py",
                      application / SDK / "python_customer/client.py",
@@ -252,6 +279,15 @@ def run(config):
                 uploads.append({"local_path": customer_package["path"], "purpose": "create_library_file", "library_artifact_type": "other"})
             uploads += [{"local_path": original_package["path"], "purpose": "create_library_file", "library_artifact_type": "other"},
                         {"local_path": str(result_file), "purpose": "create_library_file", "library_artifact_type": "other"}]
+            replacements = config.get("library_replacements", {})
+            for item in uploads:
+                retained = replacements.get(Path(item["local_path"]).name)
+                if retained:
+                    item.pop("library_artifact_type", None)
+                    item.update(purpose="replace_library_file",
+                                library_file_id=retained["library_file_id"],
+                                expected_current_version=retained["expected_current_version"],
+                                version_reason="Continue the original operating workspace and complete its customer handover")
             request = {"uploads": uploads}
             (root / "upload-state").mkdir(mode=0o700, exist_ok=True)
             saved = subprocess.run([sys.executable, "-B", str(helpers / "library_upload.py")],
