@@ -60,7 +60,19 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     caseValue=next;
     for(const [number,value] of Object.entries(session.drafts)){
       const saved=next.completionPlans?.find(row=>row.tranche===Number(number));
-      if(!value.dirty&&saved){value.inputs=clone(saved.inputs);value.baseVersion=next.program.version;}
+      const amended=(value.planContentSha256&&value.planContentSha256!==next.plan.contentSha256)||
+        Number(next.program.lastPlanAmendmentVersion||0)>value.baseVersion;
+      if(!value.dirty&&amended&&!value.retainedDraft){delete session.drafts[number];continue;}
+      if(amended){
+        value.reviewRequired=true;
+        if(!value.previousInputs&&saved)value.previousInputs=clone(saved.inputs);
+      }
+      const savedCurrent=saved&&(saved.planContentSha256===next.plan.contentSha256||
+        !saved.planContentSha256&&!next.program.lastPlanAmendmentVersion);
+      if(!value.dirty&&savedCurrent){
+        value.inputs=clone(saved.inputs);value.baseVersion=next.program.version;value.planContentSha256=next.plan.contentSha256;
+        value.reviewRequired=false;value.previousInputs=null;
+      }
     }
     if(session.preview?.source.version!==next.program.version)session.preview=null;
     calendar=next.completion;
@@ -70,14 +82,42 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     if(session.asOfDate!==next.completion.asOfDate)calendar=await saveApi(prefix+'/completion?asOfDate='+encodeURIComponent(session.asOfDate));
     return next;
   }
+  function downloadDraft(value=draft()){
+    if(!value)return;
+    const content={caseId:caseValue.program.id,tranche:session.tranche,...clone(value)};
+    saveDownload(new Blob([JSON.stringify(content,null,2)+'\n'],{type:'application/json'}),
+      caseValue.program.id+'-completion-tranche-'+session.tranche+'-draft.json');
+  }
+  async function reconcileDraft(next){
+    const value=draft();
+    if(!value)return loadDraft(session.tranche);
+    const amended=value.planContentSha256&&value.planContentSha256!==next.plan.contentSha256||
+      Number(next.program.lastPlanAmendmentVersion||0)>value.baseVersion;
+    if(!amended){value.baseVersion=next.program.version;return value;}
+    const number=session.tranche;
+    const seeded=await saveApi(prefix+'/completion-seed',{expectedVersion:next.program.version,tranche:number});
+    if(session.tranche!==number||session.drafts[String(number)]!==value||caseValue.program.version!==next.program.version)
+      throw new Error('The case or selected draft changed while its current assignments were opening. Reopen the retained draft.');
+    const earlier=clone(value),retained=new Map(value.inputs.items.map(item=>[item.costId,item]));
+    const inputs={...clone(seeded.inputs),note:value.inputs.note,
+      items:seeded.inputs.items.map(item=>clone(retained.get(item.costId)||item))};
+    const reconciled={inputs,baseVersion:next.program.version,dirty:true,planContentSha256:next.plan.contentSha256,
+      reviewRequired:true,previousInputs:seeded.previousInputs?clone(seeded.previousInputs):null,retainedDraft:earlier};
+    session.drafts[String(session.tranche)]=reconciled;
+    return reconciled;
+  }
   async function loadDraft(tranche){
     const key=String(tranche),existing=session.drafts[key];
     if(existing)return existing;
-    const seeded=await saveApi(prefix+'/completion-seed',{expectedVersion:caseValue.program.version,tranche});
-    const created={inputs:seeded.inputs,baseVersion:caseValue.program.version,dirty:false};
+    const version=caseValue.program.version,planContentSha256=caseValue.plan.contentSha256;
+    const seeded=await saveApi(prefix+'/completion-seed',{expectedVersion:version,tranche});
+    if(session.drafts[key])return session.drafts[key];
+    const created={inputs:seeded.inputs,baseVersion:version,dirty:false,
+      planContentSha256,reviewRequired:!!seeded.reviewRequired,
+      previousInputs:seeded.previousInputs?clone(seeded.previousInputs):null};
     session.drafts[key]=created;return created;
   }
-  function reconcileAccepted(next){
+  async function reconcileAccepted(next){
     const accepted=session.accepted;if(!accepted)return;
     const {payload,result}=accepted;
     if(next.program.id!==result.id||next.program.version<result.version)return;
@@ -86,7 +126,16 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
       const number=payload.data.inputs.tranche,saved=next.completionPlans?.find(row=>row.tranche===number);
       if(!saved||saved.id!==result.recordId||!result.unchanged&&saved.version<result.version)return;
       superseded=saved.version>result.version;
-      session.drafts[String(number)]={inputs:clone(saved.inputs),baseVersion:next.program.version,dirty:false};
+      const retainedDraft=session.drafts[String(number)]?.retainedDraft||null;
+      const currentBasis=saved.planContentSha256===next.plan.contentSha256||
+        !saved.planContentSha256&&!next.program.lastPlanAmendmentVersion;
+      if(currentBasis){
+        session.drafts[String(number)]={inputs:clone(saved.inputs),baseVersion:next.program.version,dirty:false,
+          planContentSha256:next.plan.contentSha256,reviewRequired:false,previousInputs:null,retainedDraft};
+      }else{
+        delete session.drafts[String(number)];
+        const selected=await loadDraft(number);selected.retainedDraft=retainedDraft;
+      }
     }else if(payload.action==='completion.prepare'){
       if(!next.reviews.some(row=>row.id===result.recordId))return;
       session.reviewId=result.recordId;session.review=null;
@@ -121,7 +170,7 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     let result;
     try{result=await work;}
     finally{if(session.inflight===work)session.inflight=null;}
-    const next=await reloadCase();reconcileAccepted(next);
+    const next=await reloadCase();await reconcileAccepted(next);
     if(available())await onCase(next,result);
     return result;
   }
@@ -202,9 +251,17 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     ]));
   }
   function itemFields(item,original){
+    if(!original)return '<details class="completion-item" open><summary><strong>'+esc(item.costId)+
+      '</strong> · earlier package retained in draft</summary><p>This package is absent from the selected tranche in the current plan. Open saved assignments to prepare the current package set. Its complete earlier assignment remains below and in case history.</p><pre>'+esc(JSON.stringify(item,null,2))+'</pre></details>';
     const attrs=key=>'data-completion-field="'+key+'" data-cost="'+esc(item.costId)+'" data-completion-write="true"';
     const work=caseValue.records.work.filter(row=>row.costId===item.costId).map(row=>[row.id,row.description+' · '+row.state]);
     const deployments=caseValue.records.deployments.filter(row=>(row.tranche===null||row.tranche===session.tranche)&&(!row.costIds.length||row.costIds.includes(item.costId))).map(row=>[row.id,row.name+' · '+row.state]);
+    for(const id of item.workIds)if(!work.some(row=>row[0]===id)){
+      const row=caseValue.records.work.find(value=>value.id===id);work.push([id,(row?.description||id)+' · association changed; review']);
+    }
+    for(const id of item.deploymentIds)if(!deployments.some(row=>row[0]===id)){
+      const row=caseValue.records.deployments.find(value=>value.id===id);deployments.push([id,(row?.name||id)+' · association changed; review']);
+    }
     return '<details class="completion-item" data-completion-item="'+esc(item.costId)+'" open><summary><strong>'+esc(item.costId)+'</strong> · '+esc(label(item.state))+'</summary>'+
       '<p>'+esc(original.remainingWork)+'</p><p><strong>Success criteria:</strong> '+esc(original.successCriteria)+'</p>'+
       '<p class="completion-small">Original award days '+original.awardStartDay+'–'+original.awardEndDay+
@@ -231,11 +288,15 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     const packages=new Map(row.packages.map(x=>[x.costId,x]));
     return '<section><div class="completion-heading"><h3>Tranche '+session.tranche+' deliverables</h3><div class="completion-actions">'+
       button('Save assignments','save','data-completion-write="true"',caseValue.program.state!=='OPEN'||stale)+
-      button('Open saved assignments','reset')+'</div></div>'+
+      button('Open saved assignments','reset')+button('Download assignment draft','download-draft')+'</div></div>'+
       '<p>'+esc(row.deliverable)+'</p><p class="completion-small">Award-relative submission: day '+row.awardSubmitDay+(row.awardSubmitDate?' · '+esc(row.awardSubmitDate):'')+'</p>'+
       '<p class="completion-note" data-completion-draft-status>'+esc(value.dirty?'Unsaved assignment changes':'Original assignment source version '+value.baseVersion)+'</p>'+
       (stale?'<div class="completion-note"><p>The case is now version '+caseValue.program.version+'. Review the saved source alongside your retained draft.</p>'+
         button('Keep draft against current case','rebase','data-completion-write="true"',caseValue.program.state!=='OPEN')+'</div>':'')+
+      (value.reviewRequired?'<div class="completion-note"><p>The case plan was amended. Review the current package scope, assignments and linked records, then save these assignments to retain this revision.</p>'+
+        (value.previousInputs?'<details><summary>Earlier saved assignments</summary><pre>'+esc(JSON.stringify(value.previousInputs,null,2))+'</pre></details>':'')+'</div>':'')+
+      (value.retainedDraft?'<details><summary>Retained draft before package reconciliation</summary><p>The complete earlier fields remain in the assignment-draft download.</p><pre>'+
+        esc(JSON.stringify(value.retainedDraft,null,2))+'</pre></details>':'')+
       value.inputs.items.map(item=>itemFields(item,packages.get(item.costId))).join('')+
       field('Completion plan note','completionPlanNote',value.inputs.note,{area:true,wide:true,attrs:'data-completion-plan-note data-completion-write="true"'})+
       '</section>';
@@ -398,7 +459,7 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
       if(action==='retry'){
         await sendPending();return;
       }
-      if(action==='readback'){const next=await reloadCase();reconcileAccepted(next);if(available())await onCase(next,session.accepted?.result||null);return;}
+      if(action==='readback'){const next=await reloadCase();await reconcileAccepted(next);if(available())await onCase(next,session.accepted?.result||null);return;}
       if(session.pending||session.accepted)return;
       if(action==='resume-dialog'){session.dialog=session.closedDialog;session.closedDialog=null;return;}
       if(action==='save'){
@@ -406,9 +467,15 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
         if(value.baseVersion!==caseValue.program.version)throw new Error('Review the current case before saving your retained draft.');
         await mutate('completion.save',{inputs:value.inputs},value.baseVersion);return;
       }
-      if(action==='reset'){delete session.drafts[String(session.tranche)];await loadDraft(session.tranche);clearPreview();return;}
+      if(action==='download-draft'){downloadDraft();return;}
+      if(action==='reset'){
+        const value=draft();if(value?.dirty||value?.retainedDraft)downloadDraft(value);
+        delete session.drafts[String(session.tranche)];await loadDraft(session.tranche);clearPreview();return;
+      }
       if(action==='rebase'){
-        const next=await reloadCase();draft().baseVersion=next.program.version;session.notice='Retained draft now targets the current case version.';clearPreview();if(available())await onCase(next,null);return;
+        const next=await reloadCase();await reconcileDraft(next);
+        session.notice='Retained edits are joined to the current package set. Review assignments and linked work before saving.';
+        clearPreview();if(available())await onCase(next,null);return;
       }
       if(action==='receipt'){
         const clock=calendar.clocks.find(row=>row.receiptId===target.dataset.receipt);
@@ -463,7 +530,8 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     busy=true;updateControls();
     try{
       if(session.inflight){try{await session.inflight;}catch{}}
-      if(session.accepted||session.rejected){const next=await reloadCase();reconcileAccepted(next);session.rejected=null;}
+      captureCurrent(caseValue);
+      if(session.accepted||session.rejected){const next=await reloadCase();await reconcileAccepted(next);session.rejected=null;}
       else if(session.asOfDate!==calendar.asOfDate)calendar=await saveApi(prefix+'/completion?asOfDate='+encodeURIComponent(session.asOfDate));
       selectedCost=await openCalendarSelection();
       await loadDraft(session.tranche);chooseReceipt();

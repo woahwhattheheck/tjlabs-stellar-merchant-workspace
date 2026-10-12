@@ -130,9 +130,13 @@ class Operations:
         row = self.db.execute("SELECT id,plan_id,plan_revision,version,state,name,mode,calendar_start,plan_json,created_at,updated_at,origin_json FROM ops_programs WHERE id=?", (program_id,)).fetchone()
         if not row:
             domain.fail("Delivery operations case not found.", "OPERATIONS_NOT_FOUND", 404)
-        return ({"id": row[0], "planId": row[1], "planRevision": row[2], "version": row[3], "state": row[4],
-                 "name": row[5], "mode": row[6], "calendarStart": row[7], "createdAt": row[9],
-                 "updatedAt": row[10], "origin": json.loads(row[11])}, json.loads(row[8]))
+        program = {"id": row[0], "planId": row[1], "planRevision": row[2], "version": row[3], "state": row[4],
+                   "name": row[5], "mode": row[6], "calendarStart": row[7], "createdAt": row[9],
+                   "updatedAt": row[10], "origin": json.loads(row[11])}
+        applied_version = amendments.last_applied_version(self, program_id)
+        if applied_version:
+            program["lastPlanAmendmentVersion"] = applied_version
+        return program, json.loads(row[8])
 
     def _context(self, program_id):
         program, plan = self._program(program_id)
@@ -1403,7 +1407,8 @@ class Operations:
         def selected_plan_at(version):
             return amendments.plan_at(saved_amendments, plan, version)
         cohort.validate_import(reviews, events)
-        completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"])
+        completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"],
+                                   plan_history=saved_amendments)
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files,
                                       plan_for_version=selected_plan_at)
