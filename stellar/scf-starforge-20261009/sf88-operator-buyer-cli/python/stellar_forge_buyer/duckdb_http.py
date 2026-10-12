@@ -338,11 +338,20 @@ class DuckDBOperator:
             yield stream, {"name": filename, "bytes": expected_size, "sha256": expected_hash, "mime": mime}
 
 
-def serve(workspace, *, port=0, export_root=None, handoff_root=None, spatial_extension=None):
+def serve(workspace, *, port=0, export_root=None, handoff_root=None,
+          spatial_extension=None, vgi=False, vgi_export_locations=None):
     """Return server, private launch record and browser URL on IPv4 loopback."""
     _integer(port, "port", 0, 65535)
     operator = DuckDBOperator(workspace, export_root=export_root, handoff_root=handoff_root, spatial_extension=spatial_extension)
     token = secrets.token_urlsafe(32)
+    vgi_operator = None
+    try:
+        if vgi:
+            from .vgi_service.operator import VgiOperator
+            vgi_operator = VgiOperator(operator, export_locations=vgi_export_locations)
+    except BaseException:
+        operator.close()
+        raise
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "StellarForgeDuckDB"
@@ -391,6 +400,8 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None, spatial_ext
                 "/spatial.js": (_spatial_ui.JS, "text/javascript;charset=utf-8"),
                 "/style.css": (_duckdb_ui.CSS, "text/css;charset=utf-8"),
             }
+            if vgi_operator is not None:
+                assets.update(vgi_operator.assets())
             if self.command in {"GET", "HEAD"} and url.path in assets and not url.query:
                 value, mime = assets[url.path]
                 return self._reply(200, value.encode(), mime)
@@ -406,6 +417,8 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None, spatial_ext
                 raise StateError("DUCKDB_OPERATOR_PARAMETERS_INVALID")
             parts = [unquote(part) for part in url.path.strip("/").split("/")]
             if self.command in {"GET", "HEAD"}:
+                if vgi_operator is not None and url.path.startswith("/api/vgi/"):
+                    return self._reply(200, vgi_operator.read(url.path, parameters))
                 if len(parts) == 4 and parts[:2] == ["api", "exports"] and parts[3] == "file":
                     if set(parameters) != {"name"}:
                         raise StateError("DUCKDB_OPERATOR_DOWNLOAD_NAME_REQUIRED")
@@ -467,6 +480,8 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None, spatial_ext
                 if len(raw) != length:
                     raise StateError("DUCKDB_OPERATOR_REQUEST_INCOMPLETE")
                 body = parse(raw)
+                if vgi_operator is not None and url.path.startswith("/api/vgi/"):
+                    return self._reply(200, vgi_operator.perform(url.path, body))
                 if len(parts) == 4 and parts[:2] == ["api", "requests"] and parts[3] == "resume":
                     _fields(body)
                     return self._reply(200, operator.resume(parts[2]))
@@ -509,11 +524,16 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None, spatial_ext
             try:
                 super().server_close()
             finally:
-                operator.close()
+                try:
+                    if vgi_operator is not None:
+                        vgi_operator.close()
+                finally:
+                    operator.close()
 
     try:
         server = Server(("127.0.0.1", port), Handler)
-        url = "http://127.0.0.1:" + str(server.server_port) + "/#" + token
+        route = "/vgi/" if vgi_operator is not None else "/"
+        url = "http://127.0.0.1:" + str(server.server_port) + route + "#" + token
         control = operator.directory / "duckdb-launch.json"
         dump(control, {"schema": "stellar-forge.duckdb-operator-launch.v1",
                        "workspace_id": workspace.identity()["workspace_id"],
@@ -523,6 +543,10 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None, spatial_ext
         if "server" in locals():
             server.server_close()
         else:
-            operator.close()
+            try:
+                if vgi_operator is not None:
+                    vgi_operator.close()
+            finally:
+                operator.close()
         raise
 

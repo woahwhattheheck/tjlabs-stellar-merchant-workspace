@@ -18,6 +18,10 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Review exact economic series and source revisions | **Applications → DBnomics economic workspace** or `starforge dbnomics` | Original provider responses, precise native periods and values, saved analyst reports, reviewed publication and complete editable/customer receiving |
+| Receive an official World Bank edition through customer analysis | `starforge worldbank-product` and the original `worldbank-agent` Applications entry | Complete retained source, reviewed merchant edition, reports, typed workbook and reopened customer workspace |
+| Publish retained SEC facts and filings, then reopen the entire operator workspace | [SEC EDGAR operating guide](products/sec-edgar/OPERATING.md) | Original public-source editions, every saved revision, customer delivery, and a complete portable receiving package |
+| Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, reviewed multi-station studies, complete source/model-input delivery, returned-file receiving, analytical workbooks and native customer files |
 | Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](products/baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
 | Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
@@ -41,10 +45,20 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review research sources, documents and processing jobs | **Applications → Research dossiers**, `starforge research-workspace` and `starforge research-client` | Saved questions, complete Documents and managed Pipelines operations, reviewed source editions, findings and full original-file/report receiving |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Plan grant work and operate delivery | **Applications → Grant planning and delivery** or `starforge grant-workspace` | Versioned budgets, staffing and cash forecasts, customer work, original buyer and support observations, cohort review, tranche completion and complete workspace receiving |
+| Operate a QuestDB time-series data product | **Applications → QuestDB source and dataset publishers** or `starforge questdb-workspace` | Native fixed-window, SAMPLE BY and keyed-ASOF reports, complete retained editions, versioned publication and full customer receiving |
+| Operate a SQL Server data product | **Applications → SQL Server data products** or `starforge mssql-agent` | Native catalog and typed-query review, retained sellers, 21 merchant tools, complete customer files and resumable merchant receiving; [selected installation and operating guide](products/mssql/README.md) |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
 | Operate complete transit schedules and merchant editions | **Applications → GTFS Schedule merchant** or `starforge gtfs` | Complete original feeds, exact dated schedules, retained comparisons, native dataset publication, merchant operation and whole-workspace receiving |
-| Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
+| Review publisher finance and native data quality | **Applications → IATI aid finance and DQA** or `starforge dataset-iati` | Original XML and native DQA assessments, named finance/finding reviews, refreshed comparisons, browser/MCP/CLI operation and complete customer receiving |
+| Operate and receive a 360Giving publisher | **Applications → 360Giving publisher workspace**, `starforge dataset-360giving-workspace` and [typed agents](products/360giving-publisher/README.md) | Original package/reviews, complete native grants and changes, SDK/MCP operation, full customer handoffs and independent receiving |
+| Receive a reviewed local dataset and hand over the customer workspace | **Applications → Local dataset customer workspace** or `starforge local-dataset-agent` | [Complete selected installation](products/local-dataset/OPERATING.md), original Frictionless capture, full native pages, DuckDB editions and SQL, complete reports and portable receiving |
+
+The [Local dataset customer guide](products/local-dataset/OPERATING.md) connects
+reviewed Frictionless CSV, TSV, JSON and Parquet sources to complete native
+receiving, original DuckDB customer editions, saved SQL and reports, managed
+Applications and whole-workspace handover. Build its complete installed product
+with `--selection local-dataset`.
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
@@ -98,6 +112,12 @@ uses the same runtime and Applications to operate both included original
 AidData Nigeria and Transparency International editions and deliver each
 complete customer archive.
 
+The [native DQA customer workflow](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DQA.md)
+adds original provider assessments, configuration observations, named finding
+review, full refreshed comparisons and portable case receiving to this same
+application. The complete installed receiving procedure includes the pinned
+original DQA service and full public IATI.cloud source exchanges.
+
 The [Eurostat operating guide](products/eurostat/OPERATING.md) connects official
 source acquisition, exact economic reports, native publication and complete
 customer receiving. Build the complete selected product with
@@ -137,6 +157,18 @@ attachments, exact mapping and transactional Rails editions. Its [installation
 and receiving guide](products/baserow-rails/RECEIVING.md) carries the complete original
 client and configured operator through independent application receiving.
 Build that product with `--selection baserow-rails`.
+
+The [QuestDB operating guide](products/questdb/OPERATING.md) connects native
+time-series discovery and report authoring to complete capture receiving,
+versioned publication and installed Applications. Build its committed source
+selection with `--selection questdb`; the package keeps the original native
+merchant, buyer, installer and release workflow.
+
+The [World Bank product guide](products/worldbank/README.md) connects official economic
+source review, managed browser/MCP operation, native dataset delivery and the
+original analytical/customer workflow. Build its complete installed edition with
+`--selection worldbank`; [receiving](products/worldbank/RECEIVING.md) continues the
+same installed source through reports, workbook and a reopened customer application.
 
 ## Open the source product
 
@@ -227,6 +259,17 @@ covers interruption, native prerequisites, upgrades, and reopening. The
 [runtime workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md)
 provides the corresponding browser workflow.
 
+The [Coastal source operations guide](products/coops/OPERATING.md) follows the
+original station and archive workflow through reviewed multi-station studies,
+complete model-input and source deliveries, returned-file comparison, offline
+analytical workbooks, native merchant publication and customer receiving.
+Build this installed product with `--selection coastal-operations`.
+
+The [DBnomics economic workspace guide](products/dbnomics/OPERATING.md) connects
+original source review, precise economic series, saved reports, native
+publication, complete editable exports and customer receiving. Build the full
+installed application with `--selection dbnomics`.
+
 ## Operate one saved merchant
 
 For a captured HTTP API, initialize and open its private product:
@@ -292,6 +335,11 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [DBnomics source revisions, saved economic reports and complete customer receiving](products/dbnomics/OPERATING.md)
+- [SEC EDGAR merchant](products/sec-edgar/README.md) and [complete operator guide](products/sec-edgar/OPERATING.md): retained company facts and filings, selected product installation, customer delivery, and whole-workspace export, receiving, and reopen.
+- [QuestDB reports, retained editions, publication and customer receiving](products/questdb/OPERATING.md)
+
+- [Coastal studies, original source delivery, returned-file receiving and complete workbooks](products/coops/OPERATING.md)
 - [WebDAV source, merchant operator and complete receiving](products/webdav/OPERATING.md)
 - [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md): complete source, native editions, provider intake, merchant and customer receiving; [selected package recipe](stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md).
 
@@ -302,6 +350,7 @@ the replacement is operating as intended.
 - [Eurostat economic editions and complete customer receiving](products/eurostat/OPERATING.md)
 - [IATI publisher review, finance and operator interfaces](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
 - [IATI complete installed publisher workflow and customer handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
+- [IATI native DQA assessment, customer review and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/DQA.md)
 - [Complete OData collections, Analysis and customer receiving](stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md)
 
 - [Timescale native operations, assigned work and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/timescale/OPERATING.md)

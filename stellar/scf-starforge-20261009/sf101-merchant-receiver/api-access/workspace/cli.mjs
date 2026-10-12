@@ -88,7 +88,13 @@ async function originalApprovals(config,{mode='auto',moduleFile,expectedSha256}=
    typeof broker.revoke==='function'&&typeof broker.close==='function'&&broker.environment&&
    typeof broker.environment.SF81_APPROVAL_SOCKET==='string'&&typeof broker.environment.SF81_APPROVAL_TOKEN==='string',
    'ORIGINAL_BROWSER_APPROVAL_CONTRACT_CHANGED',409);
- }catch(error){await Promise.resolve(broker?.close?.()).catch(()=>{});throw error;}
+ }catch(error){
+  if(typeof broker?.close==='function'){
+   try{await broker.close();}
+   catch(closeError){Object.defineProperty(error,'recovery',{value:{close:()=>broker.close(),error:closeError},enumerable:false});}
+  }
+  throw error;
+ }
  return {broker,source,mode:'ORIGINAL_BROWSER_BROKER',
   capability:{...capability,bridge:bridgeSource,operatorFile,operatorSha256:originalSha256}};
 }
@@ -106,13 +112,47 @@ export async function serveConfiguredWorkspace({configFile,port=0,environment=pr
   check(expectedAgentSetupSha256===undefined||selected.sha256===expectedAgentSetupSha256,'API_AGENT_REVIEWED_SETUP_CHANGED',409);
  }else check(expectedAgentSetupSha256===undefined,'API_AGENT_DIRECTORY_REQUIRED');
  await privateDirectory(config.directory);
- let model,app,approval,launch,closingPromise;
+ let model,app,approval,launch,closingPromise,failedOpenClose;
+ let closed=false,stoppedPublished=false,approvalRetired=false;
  const recordFile=join(config.directory,'api-pass-workspace-launch.json');
+ // One stable callback is retained by the original model/server. Nothing can
+ // write this launch after the callback has completed and the lease retires.
+ const beforeRelease=async()=>{
+  if(launch&&!stoppedPublished){
+   await writeJson(recordFile,{...launch,status:'STOPPED',stoppedAt:now()});
+   stoppedPublished=true;
+  }
+ };
+ const close=()=>{
+  if(closed)return Promise.resolve();
+  if(closingPromise)return closingPromise;
+  closingPromise=(async()=>{
+   if(launch&&!stoppedPublished)
+    await writeJson(recordFile,{...launch,status:'STOPPING',stoppingAt:now()}).catch(()=>{});
+   if(app)await app.close({beforeRelease});
+   else if(failedOpenClose)await failedOpenClose({beforeRelease});
+   else if(model)await model.close({beforeRelease});
+   else if(approval?.broker&&!approvalRetired){
+    await approval.broker.close();approvalRetired=true;
+   }
+   closed=true;
+  })().catch(async error=>{
+   if(launch&&!stoppedPublished&&model){
+    // The original raw lease owns whether a mutable launch write remains safe.
+    try{
+     model.lease.assertHeld();
+     await writeJson(recordFile,{...launch,status:'CLOSE_FAILED',failedAt:now(),error:shutdownCode(error)});
+    }catch{}
+   }
+   closingPromise=null;throw error;
+  });
+  return closingPromise;
+ };
  try{
   approval=await originalApprovals(config,{mode:approvalMode,moduleFile:approvalModule,expectedSha256:expectedApprovalSha256});
   model=await openApiPassWorkspace({config,environment,approvals:approval.broker,expectedWorkspaceSha256});
   check(digest(await readBytes(configFile,65536))===configSha256,'REVIEWED_CONFIGURATION_CHANGED',409);
-  app=await startApiPassWorkspace({model,port});
+  app=await startApiPassWorkspace({model,port,beforeRelease});
   const source=await codeFile(ENTRY);
   launch={schema:LAUNCH_SCHEMA,status:agentDirectory?'STARTING':'LISTENING',instanceId:randomUUID(),workspaceId:model.state.id,
    directory:config.directory,configFile,configSha256,expectedWorkspaceSha256:expectedWorkspaceSha256??null,
@@ -125,21 +165,68 @@ export async function serveConfiguredWorkspace({configFile,port=0,environment=pr
     workspaceId:model.state.id,expectedSetupSha256:expectedAgentSetupSha256,label:config.title});
    launch.status='LISTENING';await writeJson(recordFile,launch);
   }
-  const close=()=>{
-   if(closingPromise)return closingPromise;
-   closingPromise=(async()=>{
-    // Publish STOPPING while the original state lease is still held. A later
-    // process may publish its own launch only after this model drains/releases.
-    try{await writeJson(recordFile,{...launch,status:'STOPPING',stoppingAt:now()});}
-    finally{await app.close();}
-   })();return closingPromise;
-  };
   return {...app,close,launch,launchFile:recordFile};
  }catch(error){
-  if(launch&&app)await writeJson(recordFile,{...launch,status:'STARTUP_FAILED',failedAt:now()}).catch(()=>{});
-  if(app)await app.close().catch(()=>{});else if(model)await model.close().catch(()=>{});
-  else if(approval?.broker)await Promise.resolve(approval.broker.close()).catch(()=>{});
+  if(!app&&typeof error?.recovery?.close==='function')failedOpenClose=error.recovery.close;
+  try{await close();}
+  catch(closeError){
+   Object.defineProperty(error,'customerWorkspaceRecovery',{value:{close,launchFile:recordFile,
+    code:shutdownCode(closeError),phase:closeError.closePhase??null},enumerable:false});
+  }
   throw error;
+ }
+}
+
+function shutdownCode(error){
+ return typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{1,140}$/.test(error.code)?
+  error.code:'API_PASS_WORKSPACE_SHUTDOWN_FAILED';
+}
+
+/** Retain the exact original customer owner through startup, output and drain failures. */
+export async function runCustomerWorkspaceLifetime(start,{describe=app=>({
+ schema:LAUNCH_SCHEMA,status:'LISTENING',workspaceId:app.workspaceId,launchFile:app.launchFile,
+ url:app.url,processId:process.pid,instanceId:app.launch.instanceId,
+ ...(app.launch.agent?{agent:app.launch.agent}:{})})}={}){
+ check(typeof start==='function'&&typeof describe==='function','WORKSPACE_LIFETIME_CALLBACK_REQUIRED');
+ let app=null,owner=null,requested=false,pendingClose=null,retired=false,startupError=null,finish;
+ const ended=new Promise(resolve=>{finish=resolve;});
+ const reportClose=error=>{
+  process.exitCode=1;
+  try{process.stderr.write(JSON.stringify({error:shutdownCode(error),state:'CLOSE_FAILED',
+   phase:error.closePhase??null,action:'Retry Stop on this same process to continue its retained owner'})+'\n');}catch{}
+ };
+ const drain=()=>{
+  requested=true;
+  if(!owner||pendingClose||retired)return;
+  pendingClose=Promise.resolve().then(()=>owner.close()).then(()=>{
+   retired=true;finish();
+  },error=>{pendingClose=null;reportClose(error);});
+ };
+ const outputFailed=error=>{startupError??=error;drain();};
+ const stderrFailed=()=>{process.exitCode=1;};
+ process.on('SIGINT',drain);process.on('SIGTERM',drain);
+ process.stdout.on('error',outputFailed);process.stderr.on('error',stderrFailed);
+ // This only retains an unresolved native cleanup lifetime. It cannot dispatch
+ // work or retry a close; an explicit subsequent signal uses the same owner.
+ const keeper=setInterval(()=>{},1000);
+ try{
+  try{app=await start();owner=app;}
+  catch(error){
+   const recovery=error?.customerWorkspaceRecovery??error?.recovery;
+   if(typeof recovery?.close!=='function')throw error;
+   owner=recovery;startupError=error;drain();
+  }
+  if(app){
+   try{process.stdout.write(JSON.stringify({...describe(app),...(requested?{status:'STOPPING'}:{})})+'\n');}
+   catch(error){outputFailed(error);}
+  }
+  if(requested)drain();
+  await ended;
+  if(startupError)throw startupError;
+ }finally{
+  clearInterval(keeper);
+  process.removeListener('SIGINT',drain);process.removeListener('SIGTERM',drain);
+  process.stdout.removeListener('error',outputFailed);process.stderr.removeListener('error',stderrFailed);
  }
 }
 
@@ -160,21 +247,12 @@ export async function main(argv=process.argv.slice(2)){
  check(command==='serve','WORKSPACE_COMMAND_REQUIRED');
  only(values,['config','port','approval-mode','approval-module','expected-config-sha256','expected-workspace-sha256','expected-approval-sha256','agent-directory','expected-agent-setup-sha256']);
  const port=Number(selected(values,'port','0'));check(Number.isInteger(port)&&port>=0&&port<=65535,'INVALID_PORT');
- const app=await serveConfiguredWorkspace({configFile:selected(values,'config'),port,
+ return runCustomerWorkspaceLifetime(()=>serveConfiguredWorkspace({configFile:selected(values,'config'),port,
   expectedConfigSha256:selected(values,'expected-config-sha256'),expectedWorkspaceSha256:selected(values,'expected-workspace-sha256'),
   approvalMode:selected(values,'approval-mode','auto'),approvalModule:selected(values,'approval-module'),
   expectedApprovalSha256:selected(values,'expected-approval-sha256'),agentDirectory:selected(values,'agent-directory'),
-  expectedAgentSetupSha256:selected(values,'expected-agent-setup-sha256')});
- process.stdout.write(JSON.stringify({schema:LAUNCH_SCHEMA,status:'LISTENING',workspaceId:app.workspaceId,
-  launchFile:app.launchFile,url:app.url,processId:process.pid,instanceId:app.launch.instanceId,
-  ...(app.launch.agent?{agent:app.launch.agent}:{})})+'\n');
- let stopped=false;
- const stop=()=>{if(stopped)return;stopped=true;app.close().catch(error=>{
-  process.stderr.write(JSON.stringify({error:error.code??'WORKSPACE_SHUTDOWN_FAILED'})+'\n');process.exitCode=1;
- });};
- process.once('SIGINT',stop);process.once('SIGTERM',stop);
- await new Promise(resolve=>app.server.once('close',resolve));
- await app.close();process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);
+  expectedAgentSetupSha256:selected(values,'expected-agent-setup-sha256')}));
+
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)
  main().catch(error=>{process.stderr.write(JSON.stringify({error:typeof error?.code==='string'?error.code:'API_PASS_WORKSPACE_FAILED'})+'\n');process.exitCode=1;});

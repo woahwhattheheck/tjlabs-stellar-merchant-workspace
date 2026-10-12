@@ -561,7 +561,8 @@ export function createApplicationsWorkspaceView({ root, api, getState, refreshWo
         values.connectionEnvironment = option('--connection-env', 'SF_BUYER_POSTGRES_DSN');
         values.databaseSchema = option('--schema', 'sf_received');
         values.port = Number(option('--port', '0'));
-      } else if (descriptor.command === 'duckdb') {
+      } else if (['duckdb','vgi'].includes(descriptor.command)) {
+        if (descriptor.command==='vgi' && !descriptor.args.includes('workspace')) throw new Error('Prepare the VGI workspace command with its original private directory.');
         values.workspaceDirectory = value('--workspace');
         values.port = descriptor.args.includes('--port') ? Number(value('--port')) : 0;
         if (descriptor.args.includes('--export-root')) values.exportRoot = value('--export-root');

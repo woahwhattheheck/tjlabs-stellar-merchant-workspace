@@ -84,6 +84,7 @@ browser and seller. Retained operating files stay in place.
 | Hand over a complete merchant collection | Merchant handover browser: saved selection and full native review → complete file download/upload → receiving-name review → native receive and merchant reopen |
 | Compare and receive an incoming merchant edition | Saved installed/incoming comparison → complete receiving-name decision → native receive and reopen |
 | Recover an interrupted setup or session | Reopen the same private product, source identity, saved package and release |
+| Recover the complete operating workspace | Reviewed source selection → native encrypted snapshot → complete restore → original-path receiving → ordinary cold reopen |
 
 Choose **Merchant handover** in the original browser to prepare a complete
 collection or receive one. Draft editions, native operations, resumable uploads
@@ -136,3 +137,22 @@ comparison. The original terminal's edition-export command keeps the complete
 index and both native snapshots for every merchant, with interrupted
 publication recovery and offline reopening. The [incoming editions
 walkthrough](EDITIONS.md) follows the full comparison-to-received-merchant path.
+
+## Recover the complete operating workspace
+
+The recovery commands capture the complete retained product, source and review
+histories, release/export stores, operator procedures, handover drafts/jobs and
+original authorization files through SF101's native encrypted snapshot engine.
+Explicit additional roots include provider data outside the original configured
+source selection.
+
+Review and save a complete source plan, retain the encrypted capture and its
+manifest hash, restore into a private staging operation, then review and receive
+the original absolute paths. Exact saved requests resume interrupted capture,
+restore and receiving. Native completed archives and partial uploads keep their
+original records while explicit recovery bindings follow the restored files.
+Ordinary product and Applications opening continue from the same received state.
+
+The [operating recovery guide](RECOVERY.md) covers the full source selection,
+capture, authenticated restore, receiving and cold-reopen sequence, with the
+complete terminal commands and typed API.
