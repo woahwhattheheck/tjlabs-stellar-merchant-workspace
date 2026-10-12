@@ -53,7 +53,8 @@
     "stellar/scf-starforge-20261009/sf74-merchant-support-console",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
     "stellar/scf-starforge-20261009/distribution/python-runtime",
-    "stellar/scf-starforge-20261009/sf46-release"
+    "stellar/scf-starforge-20261009/sf46-release",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
   ],
   "supportFiles": [
     "stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md",
