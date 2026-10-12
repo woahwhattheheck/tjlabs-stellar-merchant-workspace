@@ -85,6 +85,15 @@
             </div>
           </form>
 
+          <form id="draft-form" class="subpanel" hidden>
+            <h3>Current Central draft</h3>
+            <p>Receive the current draft for an existing baseline’s Central form, including its original definition and attachments.</p>
+            <label for="draft-baseline">Retained baseline source</label>
+            <select id="draft-baseline" required></select>
+            <p id="draft-detail" class="muted"></p>
+            <button id="retain-draft" type="submit">Retain current Central draft</button>
+          </form>
+
           <form id="authoring-form" class="subpanel" hidden>
             <h3>Compiled authoring candidate</h3>
             <p>Choose the saved candidate prepared in the authoring workspace.</p>

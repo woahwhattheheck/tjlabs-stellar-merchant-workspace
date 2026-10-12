@@ -6,7 +6,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 const PAGE_SIZE = 20;
 const severityLabels = {incompatible: 'Requires revision', review: 'Needs review', compatible: 'Compatible', information: 'Information'};
-const actionLabels = {retainCapture: 'Retain published version', retainAuthoring: 'Retain compiled candidate', createReview: 'Create comparison'};
+const actionLabels = {retainCapture: 'Retain published version', retainDraft: 'Retain current Central draft', retainAuthoring: 'Retain compiled candidate', createReview: 'Create comparison'};
 const tokenKey = 'central-form-releases-token:' + location.origin;
 let token = '', state = null, review = null, draft = null, busy = false, page = 0;
 let selectedReviewId = '', storagePrefix = '', intents = {}, suggestedName = '', mustRefreshReview = false;
@@ -43,6 +43,7 @@ function dateLabel(value) {
 function originLabel(value) {
   const type = typeof value === 'string' ? value : value?.kind ?? value?.type ?? value?.source;
   if (type && /author|compil/i.test(type)) return 'Compiled candidate';
+  if (type && /draft/i.test(type)) return 'Retained Central draft';
   if (type && /captur|publish|central/i.test(type)) return 'Captured form version';
   return type ? human(type) : 'Retained original';
 }
@@ -57,6 +58,7 @@ function selectedGeneration() {
   const raw = $('version-select').value;
   return raw === '' ? null : list(selectedForm()?.generations)[Number(raw)] ?? null;
 }
+function selectedDraftBaseline() { return snapshot($('draft-baseline').value); }
 function selectedAuthoring() { return list(state?.authoringCandidates).find(item => item.id === $('authoring-select').value) ?? null; }
 function notice(message, error = false) {
   $('notice').textContent = String(message);
@@ -222,6 +224,8 @@ function updateControls() {
   $('form-select').disabled = !list(selectedCapture()?.forms).length;
   $('version-select').disabled = !list(selectedForm()?.generations).length;
   $('retain-capture').disabled = !selectedGeneration() || selectedGeneration()?.received === false;
+  $('draft-baseline').disabled = !list(state?.snapshots).length;
+  $('retain-draft').disabled = !selectedDraftBaseline();
   $('authoring-select').disabled = !list(state?.authoringCandidates).length;
   $('retain-authoring').disabled = !selectedAuthoring();
   $('baseline-select').disabled = !list(state?.snapshots).length;
@@ -285,6 +289,16 @@ function renderCaptureDetail() {
   ].filter(Boolean).join(' · ') : 'Choose a retained capture and its original form version.';
   updateControls();
 }
+function renderDraftSource() {
+  $('draft-form').hidden = state?.capabilities?.draft !== true;
+  fillOptions($('draft-baseline'),list(state?.snapshots).map(item => ({value:item.id,label:snapshotLabel(item)})),
+    'Choose a retained baseline', $('draft-baseline').value || $('baseline-select').value);
+  const selected = selectedDraftBaseline();
+  $('draft-detail').textContent = selected
+    ? 'Receive the current draft for Project ' + selected.form.projectId + ' · ' + selected.form.formId + '.'
+    : 'Retain a published source edition, then choose it as the baseline for the current draft.';
+  updateControls();
+}
 function renderAuthoring() {
   $('authoring-form').hidden = state.capabilities?.authoring !== true;
   fillOptions($('authoring-select'), list(state.authoringCandidates).map(item => ({
@@ -308,7 +322,9 @@ function selectionChanged() {
 }
 function chooseSnapshot(id, role) {
   $(role === 'baseline' ? 'baseline-select' : 'candidate-select').value = id;
+  if (role === 'baseline') $('draft-baseline').value = id;
   selectionChanged();
+  renderDraftSource();
 }
 function renderSnapshots() {
   fillOptions($('baseline-select'), list(state.snapshots).map(item => ({value: item.id, label: snapshotLabel(item)})), 'Choose baseline edition');
@@ -362,6 +378,7 @@ function renderState() {
   renderCaptureOptions();
   renderAuthoring();
   renderSnapshots();
+  renderDraftSource();
   renderReviewList();
   renderPublications();
   renderPending();
@@ -906,6 +923,16 @@ $('capture-form').addEventListener('submit', event => {
     await submitIntent(intent);
   });
 });
+$('draft-form').addEventListener('submit', event => {
+  event.preventDefault();
+  run(async () => {
+    const baseline = selectedDraftBaseline();
+    if (state.capabilities?.draft !== true || !baseline) throw new Error('Choose a retained baseline source for the current Central draft.');
+    const intent = createIntent('retainDraft',{baselineId:baseline.id},
+      (baseline.title || baseline.form.formId) + ' · Current Central draft','candidate');
+    await submitIntent(intent);
+  });
+});
 $('authoring-form').addEventListener('submit', event => {
   event.preventDefault();
   run(async () => {
@@ -935,7 +962,8 @@ $('capture-select').addEventListener('change', renderFormOptions);
 $('form-select').addEventListener('change', renderVersionOptions);
 $('version-select').addEventListener('change', renderCaptureDetail);
 $('authoring-select').addEventListener('change', () => { renderAuthoring(); updateControls(); });
-$('baseline-select').addEventListener('change', selectionChanged);
+$('baseline-select').addEventListener('change', () => { selectionChanged(); renderDraftSource(); });
+$('draft-baseline').addEventListener('change', renderDraftSource);
 $('candidate-select').addEventListener('change', selectionChanged);
 $('review-search').addEventListener('input', renderReviewList);
 $('change-search').addEventListener('input', filterChanges);

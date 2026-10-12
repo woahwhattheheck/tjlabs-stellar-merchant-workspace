@@ -76,8 +76,7 @@ main { max-width: 1452px; margin: 0 auto; padding: 1rem; }
 .small-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .small-metrics dd { font-size: 1.1rem; }
 .source-grid, .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-.source-grid:has(> [hidden]) { grid-template-columns: 1fr; }
-.source-grid:has(> [hidden]) > :first-child { max-width: 52rem; }
+.source-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
 .field-grid > div { min-width: 0; }
 .form-actions, .button-row { display: flex; flex-wrap: wrap; align-items: end; gap: .6rem; }
 .inline-label { font-weight: 400; margin: 0; min-width: 10rem; }
