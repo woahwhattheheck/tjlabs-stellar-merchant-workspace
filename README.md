@@ -19,6 +19,8 @@ roadmap, native acceptance and complete customer handover in one source.
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
 | Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, station and datum review, model-input conventions, coastal workbooks, native publication and complete customer files |
+| Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](products/baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
+| Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
 | Operate site weather and deliver original observations | **Applications → Site weather operations** or `starforge nws-product` | [Complete selected installation](products/nws-site-weather/README.md), retained NWS source and wire bytes, 30 merchant tools, original Applications reopen and customer receiving |
 | Receive scientific data and review a provider handoff | [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md) | Original grid/station-table capture, native dataset editions, reviewed provider profile, merchant delivery and complete customer receiving |
@@ -44,6 +46,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
 | Operate complete transit schedules and merchant editions | **Applications → GTFS Schedule merchant** or `starforge gtfs` | Complete original feeds, exact dated schedules, retained comparisons, native dataset publication, merchant operation and whole-workspace receiving |
 | Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
+| Operate and receive a 360Giving publisher | **Applications → 360Giving publisher workspace**, `starforge dataset-360giving-workspace` and [typed agents](products/360giving-publisher/README.md) | Original package/reviews, complete native grants and changes, SDK/MCP operation, full customer handoffs and independent receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
@@ -123,6 +126,19 @@ and support observations, cohort review, and tranche completion in one retained
 workspace. Build its complete installed application with
 `--selection grant-operations`; its browser, CLI and agent service share the same
 case versions, saved requests, review history and complete receiving workflow.
+
+The [CoCart merchant and customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/cocart/OPERATING.md)
+connects the local saved-file setup page, pinned native SDK, original Woo checkout,
+merchant agent connection, managed Applications and complete customer receiving.
+Build its complete installed product with `--selection cocart-merchant`; open
+`starforge cocart-setup --port 8787` to prepare the customer's original files.
+
+The [Baserow to Rails operating guide](products/baserow-rails/OPERATING.md) connects the
+original source workspace, retained publication, complete customer rows and
+attachments, exact mapping and transactional Rails editions. Its [installation
+and receiving guide](products/baserow-rails/RECEIVING.md) carries the complete original
+client and configured operator through independent application receiving.
+Build that product with `--selection baserow-rails`.
 
 ## Open the source product
 

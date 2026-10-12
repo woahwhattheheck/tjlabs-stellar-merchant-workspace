@@ -1244,3 +1244,57 @@ final portfolio/report, all three merchant datasets and operating guides.
 For the two included publishers, run two explicit inputs sequentially with
 separate operation IDs, workspaces and outputs. Retain each original input and
 result when continuing an interrupted operation.
+
+
+## 15. Receive Baserow source editions into Rails
+
+The [Baserow to Rails product](../baserow-rails/README.md) uses the original
+Baserow source browser, retained publisher, complete customer files and
+transactional Rails importer. Build the complete source with
+**--selection baserow-rails** and follow its
+[installed receiving guide](../baserow-rails/RECEIVING.md).
+
+Open **Applications → Baserow source authoring** with the original initialized
+private workspace. The source configuration retains the actual server, public
+slug or authorized table/view, original field IDs, filters and selected file
+origins. Use the native **$recordId** projection for the customer's stable key.
+
+The [complete operating guide](../baserow-rails/OPERATING.md) follows source
+discovery and capture, reviewed field types/aliases, original publication,
+customer packet, Ruby receiving, exact Rails mapping, full change preview,
+atomic import, history and original file downloads. The installed front door
+opens those same source commands:
+
+~~~sh
+starforge baserow-rails workspace --help
+starforge baserow-rails customer --help
+starforge baserow-rails client export --out "$PRIVATE_CLIENT_EXPORT"
+~~~
+
+Select the receiving application's existing absolute Ruby interpreter for its
+customer or operator:
+
+~~~sh
+starforge baserow-rails receive --ruby "$RUBY" -- --help
+starforge baserow-rails operator --ruby "$RUBY" -- \
+  --directory "$RECEIVED_APPLICATION" --port 9292
+~~~
+
+The complete client includes original native dataset receiving, the Rails
+migration/models/job, controller and every operator view. Application
+configuration declares the authenticated tenant, target model, source catalog,
+key mapping and import policy. Browser requests choose a declared source and
+the exact retained preview. The import transaction saves target rows, current
+source membership, immutable edition and original receipt together.
+
+Source refreshes keep their logical membership while retaining each original
+capture and query edition. A complete customer packet preserves every selected
+row, exact scalar/null representation, original attachment bytes and all
+row/output-column links. Complete application receiving carries the database,
+mapping, original customer source, review and receipt history. Reopening checks
+the actual saved target values and every received file from the new directory.
+
+For an existing completed Baserow source run, the same maintained customer
+continuation performs the native receive, complete Rails/Rack operator journey,
+full application copy and independent reopen. Continue that original receiving
+operation with **commission ... resume** and its original phase directory.
