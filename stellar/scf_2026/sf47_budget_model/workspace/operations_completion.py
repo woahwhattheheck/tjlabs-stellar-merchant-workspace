@@ -72,22 +72,38 @@ def receipt(context, receipt_id, *, active=False, as_of=None):
     return row
 
 
+def plan_review_required(context, saved):
+    if not saved:
+        return False
+    basis = saved.get("planContentSha256")
+    return (basis != context["plan"]["contentSha256"] if basis is not None
+            else bool(context["program"].get("lastPlanAmendmentVersion")))
+
+
 def seed(context, tranche):
     tranche = domain.integer(tranche, "Completion tranche", 1, 3)
     saved = selected_plan(context, tranche)
-    if saved:
+    review_required = plan_review_required(context, saved)
+    if saved and not review_required:
         return {"tranche": tranche, "savedId": saved["id"], "inputs": deepcopy(saved["inputs"]),
                 "packages": package_rows(context, tranche), "rule": deepcopy(RULE)}
     anchor = context["program"].get("calendarStart") or context["plan"]["planning"].get("calendarStart")
+    retained = {row["costId"]: row for row in saved["inputs"]["items"]} if saved else {}
     items = []
     for cost in native_costs(context, tranche):
-        items.append({"costId": cost["id"], "ownerIds": [],
-                      "startDate": plus_days(anchor, cost["start_day"]) if anchor else None,
-                      "endDate": plus_days(anchor, cost["end_day"]) if anchor else None,
-                      "state": "PLANNED", "completedOn": None, "workIds": [], "deploymentIds": [],
-                      "sourceIds": [], "note": "", "completionNote": ""})
-    return {"tranche": tranche, "savedId": None, "inputs": {"tranche": tranche, "items": items, "note": ""},
-            "packages": package_rows(context, tranche), "rule": deepcopy(RULE)}
+        items.append(deepcopy(retained[cost["id"]]) if cost["id"] in retained else {
+            "costId": cost["id"], "ownerIds": [],
+            "startDate": plus_days(anchor, cost["start_day"]) if anchor else None,
+            "endDate": plus_days(anchor, cost["end_day"]) if anchor else None,
+            "state": "PLANNED", "completedOn": None, "workIds": [], "deploymentIds": [],
+            "sourceIds": [], "note": "", "completionNote": ""})
+    result = {"tranche": tranche, "savedId": saved["id"] if saved else None,
+              "inputs": {"tranche": tranche, "items": items, "note": saved["inputs"]["note"] if saved else ""},
+              "packages": package_rows(context, tranche), "rule": deepcopy(RULE)}
+    if review_required:
+        result.update({"reviewRequired": True, "previousInputs": deepcopy(saved["inputs"]),
+                       "planContentSha256": context["plan"]["contentSha256"]})
+    return result
 
 
 def package_rows(context, tranche):
@@ -110,7 +126,7 @@ def normalize_inputs(context, value, *, check_bindings=True):
     tranche = domain.integer(value.get("tranche"), "Completion tranche", 1, 3)
     items = value.get("items")
     costs = {row["id"]: row for row in native_costs(context, tranche)}
-    if not isinstance(items, list) or not 1 <= len(items) <= MAX_ITEMS or len(items) != len(costs):
+    if not isinstance(items, list) or len(items) > MAX_ITEMS or len(items) != len(costs):
         domain.fail("Keep one deliverable row for every original work package in this tranche.", "INVALID_COMPLETION")
     available = maps(context)
     prepared, seen = [], set()
@@ -199,13 +215,15 @@ def normalize_extension(context, value, tranche, *, restoring=False):
 
 
 def validate_plan(context, row, maximum_version):
-    object_value(row, ("schema", "id", "tranche", "version", "createdAt", "updatedAt", "recordedBy", "inputs", "extensions", "sha256"), "retained completion plan")
+    object_value(row, ("schema", "id", "tranche", "version", "createdAt", "updatedAt", "recordedBy", "inputs", "extensions", "sha256", "planContentSha256"), "retained completion plan")
     if row.get("schema") != SCHEMA or not re.fullmatch(r"completion-[a-f0-9]{32}", str(row.get("id", ""))):
         domain.fail("The retained completion plan identity is invalid.", "INVALID_COMPLETION")
     domain.integer(row.get("version"), "Completion save version", 2, maximum_version)
     domain.timestamp(row.get("createdAt"), "Completion plan creation")
     domain.timestamp(row.get("updatedAt"), "Completion plan update")
     text(row.get("recordedBy"), "Original plan operator", 300, True)
+    if "planContentSha256" in row and row["planContentSha256"] != context["plan"]["contentSha256"]:
+        domain.fail("The saved deliverable assignments differ from their original plan revision.", "INVALID_COMPLETION")
     # Preserve the original saved assignment when a later native work or deployment correction
     # changes its live association. The original event binds this row; preview reviews current links.
     normalized = normalize_inputs(context, row.get("inputs"), check_bindings=False)
@@ -314,6 +332,12 @@ def preview(context, data, cohort_reviews=None, cohort_history=None, implementat
         issues.append({"code": "FUTURE_PREPARATION", "costId": None, "message": "Prepare from actual received work and the current calendar date."})
     if not saved:
         issues.append({"code": "PLAN_REQUIRED", "costId": None, "message": "Save the original tranche deliverable assignments before preparation."})
+    if saved and plan_review_required(context, saved):
+        issues.append({"code": "PLAN_AMENDMENT_REVIEW", "costId": None,
+                       "message": "Review and save this tranche's assignments against the amended plan before preparing its completion."})
+    if saved and {item["costId"] for item in saved["inputs"]["items"]} != {item["id"] for item in native_costs(context, clock["tranche"])}:
+        issues.append({"code": "PLAN_PACKAGES_CHANGED", "costId": None,
+                       "message": "Open saved assignments to reconcile the current tranche packages; the earlier assignments remain in case history."})
     if not summary_text.strip():
         issues.append({"code": "SUMMARY_REQUIRED", "costId": None, "message": "Enter the completed tranche result for the form."})
     available = maps(context)
@@ -432,12 +456,13 @@ def command(ops, context, name, data, actor, next_version):
         if context["program"]["mode"] != "WALKTHROUGH" and any(item["completedOn"] and item["completedOn"] > today() for item in inputs["items"]):
             domain.fail("Record actual completed work with its observed date.", "INVALID_COMPLETION")
         before = selected_plan(context, inputs["tranche"])
-        if before and before["inputs"] == inputs:
+        if before and before["inputs"] == inputs and not plan_review_required(context, before):
             return {"before": before, "after": before, "kind": "completion", "recordId": before["id"], "unchanged": True}
         after = seal({"schema": SCHEMA, "id": before["id"] if before else "completion-" + uuid.uuid4().hex,
                       "tranche": inputs["tranche"], "version": next_version,
                       "createdAt": before["createdAt"] if before else now(), "updatedAt": now(), "recordedBy": actor,
-                      "inputs": inputs, "extensions": deepcopy(before["extensions"]) if before else []})
+                      "inputs": inputs, "extensions": deepcopy(before["extensions"]) if before else [],
+                      "planContentSha256": context["plan"]["contentSha256"]})
         save_row(ops, program_id, after)
         return {"before": before, "after": after, "kind": "completion", "recordId": after["id"], "unchanged": False}
 
@@ -454,8 +479,14 @@ def command(ops, context, name, data, actor, next_version):
         identity = (extension["receiptId"], extension["reference"])
         if any((item["receiptId"], item["reference"]) == identity for item in before["extensions"]):
             domain.fail("That original issuer confirmation is already retained; reopen it or replay the original request.", "COMPLETION_EXTENSION_DUPLICATE", 409)
+        basis = before.get("planContentSha256")
+        if basis is None:
+            import operations_amendments as amendments
+            events = [json.loads(row[0]) for row in ops.db.execute(
+                "SELECT body_json FROM ops_events WHERE program_id=? ORDER BY version", (program_id,))]
+            basis = amendments.completion_basis(context["plan"], amendments.load(ops, program_id), events, before)["contentSha256"]
         after = seal({**before, "version": next_version, "updatedAt": now(), "recordedBy": actor,
-                      "extensions": [*before["extensions"], extension]})
+                      "extensions": [*before["extensions"], extension], "planContentSha256": basis})
         save_row(ops, program_id, after)
         return {"before": before, "after": after, "kind": "completion", "recordId": after["id"], "unchanged": False,
                 "extensionId": extension["id"]}
@@ -564,12 +595,14 @@ def validate_preparation(review):
         domain.fail("The original prepared completion differs from its complete frozen source.", "INVALID_COMPLETION")
 
 
-def validate_import(context, plans, reviews, events, maximum_version):
+def validate_import(context, plans, reviews, events, maximum_version, plan_history=()):
+    import operations_amendments as amendments
     if not isinstance(plans, list) or len(plans) > 3:
         domain.fail("Retain at most the three original completion plans.", "INVALID_COMPLETION")
     seen = set()
     for row in plans:
-        validate_plan(context, row, maximum_version)
+        selected_plan = amendments.completion_basis(context["plan"], plan_history, events, row)
+        validate_plan({**context, "plan": selected_plan}, row, maximum_version)
         if row["tranche"] in seen:
             domain.fail("The case repeats a completion plan.", "INVALID_COMPLETION")
         seen.add(row["tranche"])

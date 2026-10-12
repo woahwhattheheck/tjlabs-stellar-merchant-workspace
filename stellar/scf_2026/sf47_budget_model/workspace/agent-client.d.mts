@@ -373,6 +373,8 @@ export interface GrantCommercialCommandResult {
 }
 
 export interface GrantAmendmentInputs {
+  /** Explicit budget attribution; null leaves a retained observation unassigned. */
+  packageMappings?: Array<{ fromCostId: string; toCostId: string | null; note: string }>;
   selectedRevision: number;
   expectedContentSha256: string;
   asOfDate: GrantCivilDate;

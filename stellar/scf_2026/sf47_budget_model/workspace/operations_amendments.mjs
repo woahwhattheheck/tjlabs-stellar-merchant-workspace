@@ -71,6 +71,24 @@ function exposureTable(rows){
     esc(money(r.remainingBeforeRecordedPaymentsUsd)),esc(r.plannedHours??'Unknown'),esc(r.recordedHours),
     esc(r.recordedHoursOverPlan??'Unknown'),esc(r.remainingBeforeRecordedHours??'Unknown')]));
 }
+function attributionFields(kind,row){
+  if(kind==='work')return {costId:row.costId,hours:row.hours};
+  if(kind==='invoices')return row.lines.map(line=>({id:line.id,costId:line.costId,amountUsd:line.amountUsd,workIds:line.workIds}));
+  return {costIds:row.costIds};
+}
+function attributionPreview(p){
+  if(!Object.hasOwn(p.inputs,'packageMappings'))return '';
+  const changes=p.recordChanges||[],reviews=p.retainedSelectionReviews||[];
+  return '<h4>Reviewed package attribution</h4><p>'+changes.length+' original record'+(changes.length===1?'':'s')+' receive the selected budget attribution. Their identities, quantities, amounts, states and original source fields remain visible in the complete before and after records.</p>'+
+    (p.inputs.packageMappings.length?table(['Original package','Selected attribution','Reason'],p.inputs.packageMappings.map(row=>[esc(row.fromCostId),row.toCostId===null?'Unassigned':esc(row.toCostId),esc(row.note)])):'<p>Current record attribution stays unchanged.</p>')+
+    (changes.length?table(['Original record','Current attribution','Selected attribution','Complete retained record'],changes.map(row=>[
+      esc(row.kind)+'<br><code>'+esc(row.recordId)+'</code>','<pre>'+esc(pretty(attributionFields(row.kind,row.before)))+'</pre>',
+      '<pre>'+esc(pretty(attributionFields(row.kind,row.after)))+'</pre>',
+      '<details><summary>Before and selected record</summary><pre>'+esc(pretty({before:row.before,selected:row.after}))+'</pre></details>'])):'')+
+    (reviews.length?'<h4>Saved delivery selections</h4><p>Earlier assignments and installation editions keep their original plan. Review the current selections before continuing delivery under this revision.</p>'+
+      table(['Saved selection','Current revision review','Retained package detail'],reviews.map(row=>[
+        esc(row.kind)+'<br><code>'+esc(row.id)+'</code>',esc(row.message),'<pre>'+esc(pretty(row))+'</pre>'])):'');
+}
 function previewHtml(p){
   if(!p)return '<p>Preview the selected saved revision to read its complete changes and original record exposure.</p>';
   const conflicts=p.compatibility.blockers;
@@ -79,6 +97,7 @@ function previewHtml(p){
     +(conflicts.length?table(['Conflict','Original target','Explanation','Retained references'],conflicts.map(v=>[esc(v.code),esc(v.id??v.tranche??''),esc(v.message),'<pre>'+esc(pretty(v.references??{before:v.before,after:v.after}))+'</pre>'])):'')
     +'<p>Case calendar anchor: '+esc(p.compatibility.caseCalendarStart??'Undated')+'. Selected planner anchor: '+esc(p.compatibility.selectedPlanningCalendarStart??'Undated')+'. The existing case retains its own anchor.</p>'
     +'<details open><summary>All '+p.changes.length+' selected input changes</summary>'+table(['Original input','Before','Selected revision'],p.changes.map(v=>[esc(v.path),v.beforePresent?'<pre>'+esc(pretty(v.before))+'</pre>':'Absent',v.afterPresent?'<pre>'+esc(pretty(v.after))+'</pre>':'Absent']))+'</details>'
+    +attributionPreview(p)
     +'<h4>Recorded work and financial exposure</h4><p>These amounts compare the selected budget with recorded invoices, allocated payments and logged work. Remaining amounts do not establish unrecorded commitments or spendable cash. Paid-against-plan and invoiced-against-plan are separate comparisons.</p>'
     +'<details><summary>Original baseline</summary>'+exposureTable(p.exposure.before)+'</details>'
     +'<details open><summary>Selected baseline</summary>'+exposureTable(p.exposure.selected)+'</details>'
@@ -91,7 +110,7 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
   }
   const root=document.createElement('section');root.className='plan-amendments';root.setAttribute('aria-label','Plan amendments');container.replaceChildren(root);
   const caseId=current.program.id,planId=current.program.planId,base='/api/operations/'+caseId,sessionKey='sf47.amendments.'+caseId;
-  let active=true,hostBusy=false,busy=false,caseNow=current,index=null,desk=null,drafts=[],detail=null,preview=null,error='',storageFault=false,serial=Promise.resolve(),opening=0;
+  let active=true,hostBusy=false,busy=false,caseNow=current,index=null,desk=null,drafts=[],detail=null,preview=null,mappingPlan=null,error='',storageFault=false,serial=Promise.resolve(),opening=0;
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   function storageRecovery(){
@@ -126,7 +145,7 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     return {schema:SCHEMA,id:'amend-draft-'+crypto.randomUUID(),caseId,planId,sequence:1,
       createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
       draft:{token:crypto.randomUUID(),amendmentId:null,amendmentRevision:0,amendmentSha256:null,
-        inputs:inputs||{selectedRevision:null,expectedContentSha256:'',asOfDate:date(),reason:'',
+        inputs:inputs||{selectedRevision:null,expectedContentSha256:'',asOfDate:date(),reason:'',packageMappings:[],
           basis:{kind:caseNow.program.mode==='WALKTHROUGH'?'WALKTHROUGH':'INTERNAL_PLAN',reference:'',date:null,sourceIds:[],note:''}}},
       selection:null,review:{decision:'APPROVE',statement:'',sourceIds:[],note:''},applyNote:'',
       pending:null,receipts:[]};
@@ -136,11 +155,13 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     let next=blank(source?clone(source.preview.inputs):null);
     if(source){next.draft.amendmentId=source.id;next.draft.amendmentRevision=source.revision;next.draft.amendmentSha256=source.sha256;next.selection={id:source.id,revision:source.revision};}
     await writeDraft(next,0);desk=next;remember(next.id);preview=null;detail=source?{amendment:source,current:null,history:[]}:null;drafts=await listDrafts(caseId,planId);render();
+    await loadMappingPlan();
     if(next.selection)await openSaved(next.selection.id,next.selection.revision,false);
   }
   async function openDraft(id){
     await serial;if(desk?.pending&&desk.id!==id)throw new Error('Recover the retained request in this draft before changing local work.');
     desk=validDesk(await readDraft(id));remember(id);preview=null;detail=null;storageFault=false;serial=Promise.resolve();render();
+    await loadMappingPlan();
     if(desk.selection)await openSaved(desk.selection.id,desk.selection.revision,false);
   }
   async function refresh(){
@@ -156,11 +177,51 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     if(!available()||chosen!==opening||desk.selection?.id!==id||(revision&&desk.selection?.revision!==revision))return;
     detail=received;render();
   }
+  async function loadMappingPlan(){
+    const selected=desk?.draft,token=selected?.token,inputs=selected?.inputs;
+    mappingPlan=null;
+    if(!inputs?.selectedRevision)return;
+    const revision=inputs.selectedRevision,expected=inputs.expectedContentSha256;
+    const value=await saveApi('/api/plans/'+encodeURIComponent(planId)+'/revision/'+revision);
+    if(!desk||desk.draft.token!==token||desk.draft.inputs.selectedRevision!==revision||desk.draft.inputs.expectedContentSha256!==expected)return;
+    if(value.id!==planId||value.revision!==revision||value.contentSha256!==expected)
+      throw new Error('The selected native revision differs from this draft’s retained content. Choose the intended revision explicitly and preview it again.');
+    mappingPlan=value;
+    const panel=$('[data-amend-mappings]');if(panel){panel.innerHTML=mappingHtml();controls();}
+  }
+  function mappingHtml(){
+    if(!desk)return '';
+    const values=desk.draft.inputs.packageMappings;
+    if(!Array.isArray(values))return '<section><h4>Package attribution</h4><p>This saved proposal retains its original comparison format. Enable the reviewed package mapping editor to prepare a new proposal edition with explicit package reassignment and completion reconciliation.</p>'+
+      button('Enable reviewed package reassignment','enable-mappings')+'</section>';
+    const target=mappingPlan&&mappingPlan.revision===desk.draft.inputs.selectedRevision&&mappingPlan.contentSha256===desk.draft.inputs.expectedContentSha256?mappingPlan:null;
+    const after=new Map((target?.scenario.future_costs||[]).map(row=>[row.id,row]));
+    const mappings=new Map(values.map(row=>[row.fromCostId,row]));
+    const options=[['keep','Keep current attribution'],['unassigned','Explicitly unassigned'],...(target?.scenario.future_costs||[]).map(row=>['cost:'+row.id,row.id+' · tranche '+row.tranche])];
+    return '<section><h4>Package attribution in the selected revision</h4><p>Map each retired package used by actual work, invoice lines or deployments. A package moving to another tranche needs an explicit mapping; select the same ID to retain its identity. The reason accompanies the original review. Cash allocations remain on their original invoice and line IDs.</p>'+
+      (!target?'<p>Select the saved revision to load its exact available packages.</p>':'')+
+      table(['Original package','Selected plan','Attribution choice','Reason'],caseNow.plan.scenario.future_costs.map(row=>{
+        const saved=mappings.get(row.id),next=after.get(row.id),selected=saved?(saved.toCostId===null?'unassigned':'cost:'+saved.toCostId):'keep';
+        const choices=[...options];if(saved&&saved.toCostId!==null&&!choices.some(value=>value[0]===selected))choices.push([selected,saved.toCostId+' · retained selection; verify target revision']);
+        return [esc(row.id)+'<small>Tranche '+row.tranche+' · '+esc(money(row.amount_usd))+'</small>',
+          target?(next?'Tranche '+next.tranche+' · '+esc(money(next.amount_usd)):'Retired from selected plan'):'Revision not loaded',
+          input('Attribution for '+row.id,'mapTarget.'+row.id,selected,{options:choices}),
+          input('Reason for '+row.id,'mapNote.'+row.id,saved?.note??desk.mappingNotes?.[row.id]??'',{area:true})];
+      }))+'</section>';
+  }
   function fieldValue(target){return target.type==='checkbox'?target.checked:target.multiple?[...target.selectedOptions].map(o=>o.value):target.value;}
   function fieldInto(next,name,value){
     if(name==='selectedRevision'){
       const row=index?.revisions.find(v=>String(v.revision)===String(value));
       next.draft.inputs.selectedRevision=row?.revision??null;next.draft.inputs.expectedContentSha256=row?.sha256??'';
+    }else if(name.startsWith('mapTarget.')){
+      const id=name.slice(10),rows=next.draft.inputs.packageMappings||[],prior=rows.find(row=>row.fromCostId===id);
+      next.draft.inputs.packageMappings=rows.filter(row=>row.fromCostId!==id);
+      if(value!=='keep')next.draft.inputs.packageMappings.push({fromCostId:id,
+        toCostId:value==='unassigned'?null:value.slice(5),note:prior?.note??next.mappingNotes?.[id]??''});
+    }else if(name.startsWith('mapNote.')){
+      const id=name.slice(8),row=next.draft.inputs.packageMappings?.find(value=>value.fromCostId===id);
+      next.mappingNotes={...next.mappingNotes,[id]:value};if(row)row.note=value;
     }else if(name==='reason'||name==='asOfDate')next.draft.inputs[name]=value;
     else if(name.startsWith('basis.'))next.draft.inputs.basis[name.slice(6)]=value===''&&name==='basis.date'?null:value;
     else if(name.startsWith('review.'))next.review[name.slice(7)]=value;
@@ -178,7 +239,8 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     if(!desk||!name)return;
     preview=null;
     const changed=retain(next=>fieldInto(next,name,value));
-    changed.then(()=>{if(available()){const b=$('[data-amend-action="save"]');if(b)b.disabled=true;}}).catch(showError);
+    changed.then(async()=>{if(available()){const b=$('[data-amend-action="save"]');if(b)b.disabled=true;}
+      if(name==='selectedRevision')await loadMappingPlan();}).catch(showError);
   }
   function controls(){
     if(!available())return;
@@ -198,7 +260,7 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     const canApply=canReview&&row.state==='REVIEWED';
     const d=desk?.draft,items=index?.revisions||[],sourceOptions=(index?.sources||current.sources).map(s=>[s.id,s.filename+' · '+s.sha256.slice(0,12)]);
     const pending=desk?.pending;
-    root.innerHTML='<header><div><h3>Plan amendments</h3><p>Select an actual saved native planning revision for this existing Delivery case. Keep the original package identities, sources and recorded work while reviewing a changed budget or schedule.</p></div><div class="amend-actions">'+button('Refresh case and plans','refresh')+button('Sources','sources')+button('Export complete case','export-case')+'</div></header>'
+    root.innerHTML='<header><div><h3>Plan amendments</h3><p>Select an actual saved native planning revision for this existing Delivery case. Review the complete budget change and any explicit package reassignment while retaining original observations, sources and case history.</p></div><div class="amend-actions">'+button('Refresh case and plans','refresh')+button('Sources','sources')+button('Export complete case','export-case')+'</div></header>'
       +'<p>Case <code>'+esc(caseId)+'</code> · version '+caseNow.program.version+' · current baseline revision '+caseNow.program.planRevision+' · '+esc(caseNow.program.mode)+'</p>'
       +'<p role="alert" data-amend-error>'+esc(error)+'</p>'
       +'<section data-amend-storage-recovery hidden></section>'
@@ -212,7 +274,7 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
       +input('Original decision reference','basis.reference',d.inputs.basis.reference,{wide:true})
       +input('Retained decision attachments','basis.sourceIds',d.inputs.basis.sourceIds,{multiple:true,options:sourceOptions,wide:true})
       +input('Source and decision note','basis.note',d.inputs.basis.note,{area:true,wide:true})
-      +'</div><p>'+esc(d.amendmentId?'Editing original amendment '+d.amendmentId+' from edition '+d.amendmentRevision+'.':'This draft will create one new amendment identity.')+'</p><div class="amend-actions">'+button('Preview complete amendment','preview')+button('Save proposal','save','data-amend-mutation',!preview||caseNow.program.state!=='OPEN')+'</div></form>':'<p>Open a retained local draft or start a new one.</p>')
+      +'</div><div data-amend-mappings>'+mappingHtml()+'</div><p>'+esc(d.amendmentId?'Editing original amendment '+d.amendmentId+' from edition '+d.amendmentRevision+'.':'This draft will create one new amendment identity.')+'</p><div class="amend-actions">'+button('Preview complete amendment','preview')+button('Save proposal','save','data-amend-mutation',!preview||caseNow.program.state!=='OPEN')+'</div></form>':'<p>Open a retained local draft or start a new one.</p>')
       +previewHtml(preview)+calendarImpactHtml(preview?.calendarImpact,'draft')+'</section>'
       +'<section><h4>Saved proposals and applied baselines</h4>'+((index?.amendments||[]).length?table(['Original amendment','State / edition','Baseline change','Reason','Open'],index.amendments.map(a=>[
         '<code>'+esc(a.id)+'</code>',esc(a.state)+' / '+a.revision,a.fromPlan.revision+' → '+a.selectedPlan.revision,esc(a.reason),
@@ -332,8 +394,12 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
       if(action==='sources'){onSources?.();return;}
       if(action==='export-case'){const response=await saveApi(base+'/export.zip',undefined,{download:true});download(await response.blob(),caseId+'-complete.zip','application/zip');return;}
       await serial;
-      if(action==='refresh'){await refresh();if(desk?.selection)await openSaved(desk.selection.id,desk.selection.revision,false);render();return;}
+      if(action==='refresh'){await refresh();await loadMappingPlan();if(desk?.selection)await openSaved(desk.selection.id,desk.selection.revision,false);render();return;}
       if(action==='new'){await createDraft();return;}
+      if(action==='enable-mappings'){
+        await retain(next=>{next.draft.inputs.packageMappings=[];});preview=null;
+        await loadMappingPlan();render();return;
+      }
       if(action==='open'){if(!desk)await createDraft();await openSaved(target.dataset.id,Number(target.dataset.revision));return;}
       if(action==='revise'){await createDraft(detail.amendment);return;}
       if(action==='preview'){if(!$('[data-amend-form]').reportValidity())return;await previewDraft();return;}
