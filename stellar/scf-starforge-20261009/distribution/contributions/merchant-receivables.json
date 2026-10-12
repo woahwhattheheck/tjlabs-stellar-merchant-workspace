@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-receivables",
-  "description": "Customer invoicing, original service quotations, reviewed Stellar collection and refunds, native transfer receiving, paid-credit disposition, installment schedules and dated account delivery, invoice-linked collections casework and customer reminder preparation, saved cash receipt scenarios and dated edition comparisons",
+  "description": "Customer invoicing, original service quotations, reviewed Stellar collection and refunds, native transfer receiving, paid-credit disposition, installment schedules and dated account delivery, invoice-linked collections casework and customer reminder preparation, saved cash receipt scenarios and dated edition comparisons, customer credit policies and retained account decisions consumed by original invoice issue",
   "commands": {
     "receivables": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cli.mjs"
   },
   "commandDescriptions": {
-    "receivables": "Operate invoices, Stellar collection, customer refunds and credits in the original accounting workspace"
+    "receivables": "Operate invoices, customer credit decisions, collection, refunds and cash plans in the original accounting workspace"
   },
   "exports": {
     "./merchant/receivables": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/store.mjs",
@@ -34,7 +34,9 @@
     "./merchant/receivables/collections": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/collections.mjs",
     "./merchant/receivables/collections-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/collections-workspace.mjs",
     "./merchant/receivables/cash-planning": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-planning.mjs",
-    "./merchant/receivables/cash-planning-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-planning-workspace.mjs"
+    "./merchant/receivables/cash-planning-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-planning-workspace.mjs",
+    "./merchant/receivables/credit-control": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/credit-control.mjs",
+    "./merchant/receivables/credit-control-workspace": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/credit-control-workspace.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",
@@ -47,7 +49,9 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/collections-types.d.ts",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/COLLECTIONS.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-planning-types.d.ts",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CASH_PLANNING.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CASH_PLANNING.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/credit-control-types.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/CREDIT_CONTROL.md"
   ],
   "browserAssets": [
     {

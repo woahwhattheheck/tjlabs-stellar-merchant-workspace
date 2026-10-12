@@ -10,6 +10,7 @@ import tempfile
 
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
+import operations_commercial_cli as commercial_cli
 import operations_ledger_intake as ledger_intake
 
 
@@ -242,6 +243,14 @@ def register(subparsers, common):
     target.add_argument("--output", required=True)
     target = command("completion-calendar", "Read payment-derived completion clocks and original award dates", case=True, output=True)
     target.add_argument("--as-of", help="Explicit YYYY-MM-DD calendar date; defaults to current UTC date")
+    target = command("delivery-calendar", "Read the original grant deadlines and complete delivery agenda", case=True, output=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to current UTC date")
+    target.add_argument("--expected-version", type=int, help="Require the selected original case version")
+    target = command("delivery-calendar-export", "Export the complete grant delivery calendar as ICS, CSV or JSON", case=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to current UTC date")
+    target.add_argument("--format", dest="calendar_format", choices=("ics", "csv", "json"), default="ics")
+    target.add_argument("--expected-version", type=int, help="Require the selected original case version")
+    target.add_argument("--output", required=True, help="New destination for the complete calendar file")
     target = command("completion-seed", "Open the original tranche assignments without saving", case=True, output=True)
     target.add_argument("--tranche", type=int, choices=(1, 2, 3), required=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -306,6 +315,7 @@ def register(subparsers, common):
     selection(target); mutation(target)
     target.add_argument("--file", required=True)
 
+    commercial_cli.register(command)
 
 def read_bytes(filename, maximum=MAX_BUNDLE):
     path = Path(filename).expanduser().resolve()
@@ -386,6 +396,8 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if action.startswith("commercial-"):
+        return commercial_cli.operate(ops, args, read_bytes, publish)
     if action == "list":
         result = {"cases": ops.list(args.plan)}
     elif action in ("show", "report"):
@@ -620,6 +632,12 @@ def operate(workspace, args):
                 "data": {**selected, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action == "completion-calendar":
         result = ops.completion_calendar(args.case, args.as_of)
+    elif action == "delivery-calendar":
+        result = ops.delivery_calendar(args.case, args.as_of, args.expected_version)
+    elif action == "delivery-calendar-export":
+        return {"caseId": args.case, "format": args.calendar_format,
+                "output": publish(args.output, ops.export_delivery_calendar(
+                    args.case, args.as_of, args.calendar_format, args.expected_version))}
     elif action == "completion-seed":
         result = ops.seed_completion(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
     elif action == "completion-export":

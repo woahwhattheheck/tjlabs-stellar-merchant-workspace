@@ -402,9 +402,9 @@ export class MerchantGrantWorkspaces {
     if (verb === 'browser') return client.browser();
     if (verb === 'close') return client.detach(args.expectedInstanceId);
     const rest = Object.fromEntries(Object.entries(args).filter(([key]) => key !== 'workspace'));
-    const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', cases:'cases', case:'case',
+    const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
       case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
-      portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
+      portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion', delivery_calendar:'delivery-calendar',
       work_intakes:'work-intakes',work_intake:'work-intake',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
       supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
@@ -466,6 +466,23 @@ export class MerchantGrantWorkspaces {
       original=verb==='installation_preview'?await client.installationPreview(caseId,{...body,document}):
         await client.installationSave(caseId,{...body,document});
     }
+    else if (verb === 'commercial_connections') original=await client.commercialConnections();
+    else if (verb === 'commercial_connection_configure') original=await client.commercialConfigureConnection(rest);
+    else if (verb === 'commercial_customers') original=await client.commercialCustomers(args.endpointId);
+    else if (verb === 'commercial_list') original=await client.commercialList(args.caseId);
+    else if (verb === 'commercial') original=await client.commercialDetail(args.caseId,args.billingId);
+    else if (verb === 'commercial_schedule'||verb === 'commercial_prepare') {
+      const {caseId,...body}=rest;
+      original=verb==='commercial_schedule'?await client.commercialSchedule(caseId,body):
+        await client.commercialPrepare(caseId,body);
+    }
+    else if (verb === 'commercial_draft'||verb === 'commercial_issue') {
+      const {caseId,billingId,milestoneId,...body}=rest;
+      original=verb==='commercial_draft'?await client.commercialDraft(caseId,billingId,milestoneId,body):
+        await client.commercialIssue(caseId,billingId,milestoneId,body);
+    }
+    else if (verb === 'commercial_preview') original=await client.commercialPreview(args.caseId,args.billingId,args.milestoneId);
+    else if (verb === 'commercial_refresh') original=await client.commercialRefresh(args.caseId,args.billingId);
     else if (verb === 'cohort_seed') original=await client.cohortSeed(args.caseId,args.expectedVersion,args.tranche);
     else if (verb === 'cohort_preview') original=await client.cohortPreview(args.caseId,args.expectedVersion,
       await this.#modelInputs(alias,args,'Cohort',GRANT_MAX_BUNDLE_BYTES));
@@ -538,7 +555,7 @@ export class MerchantGrantWorkspaces {
       } else { const {caseId, ...fields} = body; original = await client.attach(caseId, selected.bytes, fields); }
     } else throw failure('GRANT_TOOL_UNKNOWN', 'Choose an original grant operation.');
     return this.#snapshot(alias, original, {tool:name, ...Object.fromEntries(Object.entries(rest).filter(([key]) =>
-      ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind',
+      ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind','format',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',

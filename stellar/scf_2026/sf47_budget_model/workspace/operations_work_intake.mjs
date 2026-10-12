@@ -113,11 +113,11 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     return copy({schema:'stellar-forge.sf47-work-intake-browser.v1',caseId,selectedId:s.selectedId,drafts:s.drafts,
       newSource:s.newSource,uploadFile:s.uploadFile,pending:s.pending,lastRequest:s.lastRequest,lastReceipt:s.lastReceipt});
   }
-  function persist() {
+  function persist(value=persistenceValue(),afterCommit=null) {
     if(retainTimer!==null){clearTimeout(retainTimer);retainTimer=null;}
-    const value=persistenceValue();
     s.persistQueue=s.persistQueue.catch(()=>{}).then(async()=>{
       s.storageVersion=await cacheWrite(caseId,value,s.storageVersion);s.storageConflict=null;
+      if(afterCommit)afterCommit();
     }).catch(error=>{if(error.code==='WORK_INTAKE_DRAFT_CONFLICT')s.storageConflict=error.message;throw error;});
     return s.persistQueue;
   }
@@ -254,7 +254,8 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
   async function openBrowserTransfer(file) {
     if(!file)return;if(file.size>64*1024*1024)throw new Error('Choose a complete browser draft within 64 MiB.');
     const desk=readBrowserTransfer(JSON.parse(await file.text()));
-    await persist();downloadBrowserDraft();restoreDesk(desk);await persist();
+    await persist();downloadBrowserDraft();
+    await persist(desk,()=>{restoreDesk(desk);cacheError=null;render();});
     await refreshCase();render();setMessage(s.pending?'Opened the complete draft. Resume its original request to read the native outcome.':'Opened the complete draft and retained every mapping and original selected file.');
   }
   async function reconcileBrowserDraft() {
@@ -262,7 +263,7 @@ export function mountWorkIntake({container,current,saveApi,session={},mutationId
     const saved=await cacheRead(caseId);
     if(saved?.caseId!==caseId||saved.schema!=='stellar-forge.sf47-work-intake-browser.v1')
       throw new Error('The saved complete draft could not be reopened. This tab’s downloaded draft is retained.');
-    const revision=cacheRevision(saved);restoreDesk(saved);s.storageVersion=revision;s.storageConflict=null;cacheError=null;
+    const revision=cacheRevision(saved);restoreDesk(saved);s.storageVersion=revision;s.storageConflict=null;cacheError=null;render();
     await refreshCase();render();setMessage('Downloaded this tab’s complete draft and opened the saved draft. Both original inputs remain available.');
   }
   function pendingPanel() {

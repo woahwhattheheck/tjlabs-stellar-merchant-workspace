@@ -19,6 +19,7 @@ import portfolio_installations as portfolio_installations
 import operations_support as support
 import operations_buyer as buyer
 import operations_completion as completion
+import operations_calendar as calendar_model
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
@@ -28,6 +29,7 @@ import operations_ledger_intake as ledger_intake
 import operations_payables as payables
 import operations_implementation as implementation
 import operations_work_intake as work_intake
+import operations_commercial_receivables as commercial_receivables
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -108,6 +110,7 @@ class Operations:
             if row and row[0] != SCHEMA:
                 domain.fail("This workspace uses a newer operations schema.", "OPERATIONS_SCHEMA", 409)
             workspace.db.execute("INSERT OR IGNORE INTO ops_metadata VALUES('schema',?)", (SCHEMA,))
+            self.commercial = commercial_receivables.CommercialReceivables(self)
 
     @property
     def db(self):
@@ -544,6 +547,20 @@ class Operations:
         with self.workspace.mutex:
             return completion.dashboard(self._context(identifier(program_id, "operation")), as_of)
 
+    def delivery_calendar(self, program_id, as_of=None, expected_version=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            if expected_version is not None:
+                expected = domain.integer(expected_version, "Selected calendar case version", 1, 10000000)
+                if context["program"]["version"] != expected:
+                    domain.fail("The grant case changed. Refresh the delivery calendar.", "OPERATIONS_CONFLICT", 409)
+            return calendar_model.calendar(context, as_of)
+
+    def export_delivery_calendar(self, program_id, as_of=None, format="ics", expected_version=None):
+        with self._snapshot():
+            report = self.delivery_calendar(program_id, as_of, expected_version)
+            return calendar_model.export_bytes(report, format)
+
     def _completion_context(self, program_id, body, keys):
         completion.object_value(body, ("expectedVersion", *keys), "completion operation")
         expected = domain.integer(body.get("expectedVersion"), "Reviewed operations version", 1, 10000000)
@@ -880,6 +897,9 @@ class Operations:
                 document["installations"] = saved_installations
             if saved_work_intakes:
                 document["workIntakes"] = saved_work_intakes
+            commercial_rows = self.commercial.export_rows(program_id)
+            if commercial_rows["prepared"]:
+                document["commercialReceivables"] = commercial_rows
             report = domain.report(**context)
             files = {"planning.zip": original,
                      "operations.json": (canonical(document) + "\n").encode(),
@@ -1076,6 +1096,10 @@ class Operations:
         completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"])
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files)
+        commercial_rows = document.get("commercialReceivables")
+        if commercial_rows is not None:
+            commercial_rows = commercial_receivables.validate_import(
+                commercial_rows, reader=lambda ident: files["sources/" + ident])
         dispatch.validate_received(delivery_queue, document)
         performance.validate_received(performance_report, document)
         payables.validate_received(supplier_account, document)
@@ -1186,6 +1210,8 @@ class Operations:
                                 (pid, value["id"], value["revision"], canonical(value)))
             for value in saved_work_intakes:
                 work_intake.save_row(self, pid, value)
+            if commercial_rows is not None:
+                self.commercial.restore_rows(pid, commercial_rows)
             for value in saved_forecasts:
                 self.db.execute("INSERT INTO ops_forecasts VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             for value in saved_portfolios:

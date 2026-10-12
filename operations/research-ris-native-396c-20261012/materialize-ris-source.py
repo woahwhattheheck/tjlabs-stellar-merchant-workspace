@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Receive the complete PR407 Research/RIS source and its original HTTP carrier.
+"""Receive the PR407 Research/RIS source with its exact PR438 identity correction.
 
 This installs exact selected files through the unchanged original Research
 receiver. It does not start the customer programme, acquire data or alter a
@@ -23,12 +23,12 @@ EXPECTED = {
     "operation": "SYMMETRON-RESEARCH-SOURCE-RECEIVING-20261012",
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
     "sourceMerge": "33b3375dc168304a5026be21bfb0d2b1c149f084",
-    "bytes": 22356044,
-    "sha256": "9d2f4d9154e4fc9d7060cd8861d609db192a6fc1416c4685fe33bba573504ce4",
+    "bytes": 22359198,
+    "sha256": "abbef0fb4fb3b7a6bbc05585b65e37a4cee283d26788cba987c7fff8578155bd",
     "sourceFiles": 1444,
-    "sourceBytes": 20803604,
-    "manifestBytes": 439463,
-    "manifestSha256": "6bdb7cfb12e6701a7341ec7dd0da4f5ef1d2318294fd41b7be82483b099d8d77",
+    "sourceBytes": 20803666,
+    "manifestBytes": 441132,
+    "manifestSha256": "eae819ab8d6cb7358c6870dfe0e103db5cd3208d67ce8c88b786a38ad88303d1",
 }
 INPUT_PATH = "original-inputs/original-ris-http-responses.json"
 INPUT_BYTES = 6578

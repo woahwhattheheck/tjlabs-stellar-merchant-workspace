@@ -367,6 +367,14 @@ The optional `implementationReviewIds` field composes with the cohort selection 
 
 Preparation retains the exact `receiptId`, calendar date, summary, preview SHA and selected frozen evidence. Submission uses the preparation's business SHA and the actual issuer form reference, submission date and source records. Read the new case version after every committed action, and recover a lost result with the unchanged request. The [Completion contract](../../stellar/scf_2026/sf47_budget_model/workspace/COMPLETION.md) and [typed-client guide](../../stellar/scf_2026/sf47_budget_model/workspace/AGENT.md) provide the exact field names and calendar behavior.
 
+## Read and export the grant delivery calendar
+
+Use `merchant_grant_delivery_calendar` with the original `workspace`, `caseId`, and optional `asOfDate`. The calendar combines the native payment-derived completion deadlines, confirmed extensions, saved deliverable assignments, planned submissions, and recorded form submissions. Entries with one known date retain the other bound as null; undated work remains in the returned `undated` array.
+
+Use `merchant_grant_export` with `kind: "delivery-calendar"` and `format: "ics"`, `"csv"`, or `"json"`. Include the calendar's `asOfDate` and `case.version` as `expectedVersion` to export the reviewed case version. ICS contains dated all-day events; CSV and JSON also retain undated work. The existing snapshot, row paging, file download and transfer tools carry these complete exports.
+
+The typed client exposes `read('delivery-calendar', selection)` and `download('delivery-calendar', {...selection, format})`. See [Calendar operation and date meanings](../../stellar/scf_2026/sf47_budget_model/workspace/CALENDAR.md).
+
 ## Export, transfer and receive the complete work
 
 merchant_grant_export supports original plan ZIP, operating-case ZIP, forecast ZIP, portfolio ZIP, customer installation ZIP, implementation-evidence ZIP or exact original member, cohort ZIP, completion-preparation ZIP, source file, scenario JSON and original daily/cost CSVs. It preserves the complete native response. A case ZIP includes the original source attachments, buyer/support associations, reviews, forecasts, portfolios, all immutable customer installation editions, implementation reviews and cohort/completion history.

@@ -47,7 +47,8 @@ The import path in the snippet assumes `application.mjs` is beside this module. 
 | `path` | Required | Fixed upstream path, optionally whole `:name` segments from native `pathParams`. It cannot be supplied as a buyer URL. |
 | `method` | `GET` | Exactly `GET`, `HEAD`, `DELETE` or JSON `POST`, `PUT`, `PATCH`; must equal the incoming operation. |
 | `query` | `[]` | Allowed input names, or an input-to-upstream-name object. Unknown names return 400; repeated values and their order survive. |
-| `headers` | `{}` | Trusted server headers or a **synchronous**, no-argument function returning them. The function can read rotated environment credentials. |
+| `headers` | `{}` | Trusted server headers or a server-owned factory receiving `{signal}`. It may be asynchronous and can read rotated environment credentials within the original request lifetime. |
+| `queryCredentials` | `{}` | Trusted server query values or a server-owned factory receiving `{signal}`. Resolves after admission; keys cannot overlap a public query source or target. Values never enter public URLs or operation hashes. See [private query credentials](UPSTREAM_QUERY_CREDENTIALS.md). |
 | `requestHeaders` | `[]` | Explicit noncredential request headers to forward. Server headers take precedence. |
 | `responseHeaders` | Content type/language | Explicit response header names. Payment, credential and hop-by-hop headers cannot be exposed. Connection-nominated fields are also stripped. |
 | `responseType` | `json` | `json` validates media type, UTF-8 and JSON, retaining decoded bytes. `bytes` permits binary content. |
