@@ -825,6 +825,59 @@ The ordinary Analysis archive contains the publication raw bytes, all protocol e
 
 The [source-native receiving programme](../../stellar/scf-starforge-20261009/distribution/receiving/synthesis/BROWSER_RECEIVING.md) owns the complete browser-created job, its typed/installed-CLI receiving, archive/restore, cold reopen and customer files. Continue its original configuration, run directory and retained outputs after interruption. The BCG reference programme requires the complete current Research extraction/publication source as recorded in its original source map; compose that selected source with this same Research package rather than a separate producer. Its native outcome must come from the original receiving result, independently of source publication or package installation.
 
+## 15. Receive the paid Research installation and editable customer result
+
+Receive the same complete selected Research or Zotero installation that includes the `research-customer-commerce` and original `buyer-runbook` contributions. Its source inventory must retain the complete Research paid-delivery directory, original SF101 receiver, whole Buyer Runbook application, browser assets, agent client/storage and original retained-file helpers. Static ESM helpers are resolved by the maintained distribution builder; the explicit whole Buyer component also preserves its dynamic report and browser source. Existing extraction, appraisal, template, Zotero, source and synthesis files remain part of that same installation.
+
+The installed managed provider is the original **Research dossiers** application. A receiving host can set `customerCommerceHost` to its own private original host configuration, select the actual merchant/Buyer aliases and review that file and its referenced native configurations. Existing startup and connection controls bind the same Research workspace and listener. Keep the actual native merchant and Buyer deployment settings supplied for this operation.
+
+### Preserve the publication-to-receiving chain
+
+Carry these complete selections and artifacts from the original operation:
+
+| Selection | Complete original result |
+| --- | --- |
+| Research source | Dossier ID, frozen delivery and work IDs, saved revision, selected source-workspace request and actor |
+| Merchant publication | Retained review SHA, publication request UUID, original SF101 order, exact public publication and merchant handoff |
+| Delivery promise | Actual network/asset/recipient/atomic amount, complete archive bytes/SHA-256 and every member's identity |
+| Buyer preparation | Original Buyer alias and selection digest, native paid-file revision, budgets, plan/run/operation and prepared SHA |
+| Original payment and retrieval | Existing approval/execution, entitlement/receipt and whole paid-resource export from that run |
+| Editable receiving | Complete original handover, received dossier/history/source IDs, saved customer work and four unchanged frozen reports |
+| Customer continuation | A later correction/work record in that received dossier, with the first received delivery still identifiable |
+| Recovery | Original operation/result directories and complete native workspace backups |
+
+The paid route accepts a complete compressed archive up to 32 MiB. Its full original manifest and member order are verified before extracted files are published. The source owner’s original per-file limits also apply. A report preview or publication metadata response is not the complete purchased content.
+
+### Receive or reopen the exact archive
+
+The ordinary whole customer flow is `commerce-receive-dossier` in **Paid delivery** or the original CLI. It consumes the existing purchase, captures and verifies its complete native paid resource, and uses the same dossier/source receiving engines. Keep its one `--run-directory` and retained request.
+
+For a separately transferred complete original archive, use the existing archive functions:
+
+~~~sh
+starforge research-client commerce-archive-inspect \
+  --file /absolute/private/research-customer.handover.gz \
+  --sha256 ACTUAL_ARCHIVE_SHA256 --bytes ACTUAL_ARCHIVE_BYTES
+
+starforge research-client commerce-archive-receive \
+  --file /absolute/private/research-customer.handover.gz \
+  --sha256 ACTUAL_ARCHIVE_SHA256 --bytes ACTUAL_ARCHIVE_BYTES \
+  --manifest-sha256 ACTUAL_HANDOVER_SHA256 \
+  --run-directory /absolute/private/received-archive
+~~~
+
+These operate the original archive reader and create-only receiving files. After the complete input has been retained, the same receive command can omit `--file` to reopen its existing directory. The returned `handover.directory` is the complete original handover consumed by the Research receiving workflow.
+
+A stopped or completed native acquisition retains its original payment intent. Reopen its actual state, reconcile an uncertain original request where reported, and continue that request/download. A subsequent customer correction or a moved donor does not require purchasing the original frozen package again.
+
+### Join the existing programme once
+
+Append the paid publication, Buyer approval/retrieval and editable receiving to the same retained NCT/source/extraction/appraisal/template/customer programme. Use its actual frozen delivery and original native merchant/Buyer configuration. The browser commissioner's inspection mode opens the receiving copy at the selected IDs; it does not recreate the independent author submissions or source acquisition.
+
+The complete receiving result records which installation source was selected, the original programme identity, actual publication/native Buyer IDs, the entire archived handover and the later customer correction. Preserve source syntax evidence and already accepted native phases from the original programme. Installed recipe/provider publication alone is not a new native payment or a completed receiving result.
+
+Use [Paid Research delivery](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-commerce/OPERATING.md) for the full source-owned form, CLI, typed-client, cancellation, replay and shutdown contracts. The original Buyer’s `AGENT.md`, `PAID_FILES.md`, `WORKSPACE.md` and `RECOVERY.md` remain inside the same whole component.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |
