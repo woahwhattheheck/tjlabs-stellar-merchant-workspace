@@ -113,7 +113,9 @@
     "operations/scf-leap-interval-receiving-20261012",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid",
     "operations/scf-gridfabric-plaid-receiving-20261012",
-    "operations/scf-gridfabric-plaid-managed-receiving-20261012"
+    "operations/scf-gridfabric-plaid-managed-receiving-20261012",
+    "stellar/scf_2026/sf47_budget_model",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -256,7 +258,30 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid/sdk/receiving-input.example.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid/sdk/receiving.mjs",
     "stellar/scf-starforge-20261009/distribution/selections/gridfabric-plaid.json",
-    "stellar/scf-starforge-20261009/distribution/selections/GRIDFABRIC_PLAID.md"
+    "stellar/scf-starforge-20261009/distribution/selections/GRIDFABRIC_PLAID.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/http-methods.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/multipart.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/native-factory.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/seller.mjs",
+    "stellar/scf-starforge-20261009/sf52-buyer-outcomes/outcomes.mjs",
+    "stellar/scf-starforge-20261009/sf82-chain-transfer-reconcile/record.mjs",
+    "stellar/scf-starforge-20261009/sf82-checkout-evidence/checkpoint.mjs",
+    "stellar/scf-starforge-20261009/sf82-checkout-evidence/evidence.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/cli.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/rpc-transport.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/terms.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/verify.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/native-reconcile.mjs",
+    "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs",
+    "stellar-forge/developer-site/dist/source-table-workspace.mjs",
+    "stellar-forge/developer-site/dist/onboarding.mjs",
+    "stellar-forge/developer-site/dist/offer.mjs",
+    "stellar-forge/developer-site/dist/grant-plan-core.mjs",
+    "stellar-forge/developer-site/dist/grant-plan-source.mjs",
+    "stellar/scf-starforge-20261009/sf43-agent-commerce/mcp-buyer-acceptance.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/catalog-acceptance.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
@@ -268,7 +293,7 @@
       "gridfabric-application": "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid/managed-launch.mjs"
     },
     "repository": {
-      "url": "https://github.com/woahwhattheheck/public-commons-sprint-2026",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": "stellar/scf-starforge-20261009/sf30-seller-sdk/gridfabric-plaid"
     }
   },

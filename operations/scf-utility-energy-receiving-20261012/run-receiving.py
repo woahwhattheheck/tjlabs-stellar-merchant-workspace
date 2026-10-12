@@ -157,6 +157,12 @@ def main():
     need(python == Path(sys.executable).resolve(), "Invoke this receiver with its selected original Python executable.")
     declaration_path = absolute(config.get("sourceManifest", str(HERE / "source-manifest.json")), "source declaration")
     declaration = read_json(declaration_path)
+    if declaration.get("schema") == "stellar-forge.merchant-distribution-manifest.v1":
+        selected_source = module_file("utility_receiving_source", HERE / "receiving_source.py")
+        declaration = selected_source.receiving_source(declaration, source, "utility")
+        if config.get("expectedSourceCommit"):
+            need(declaration["sourceCommit"] == config["expectedSourceCommit"],
+                 "The complete installed package source differs.")
     need(declaration.get("schema") == "stellar-forge.utility-receiving-source.v1",
          "Use the complete Utility receiving declaration.")
     original_report = absolute(config.get("originalReport"), "original completed operation report")

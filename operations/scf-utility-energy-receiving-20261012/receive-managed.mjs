@@ -1,5 +1,6 @@
 // MIT. Original Utility managed Applications and complete customer receiving.
 import { readFile, realpath, mkdir, open } from 'node:fs/promises';
+import {readUtilityReceivingSource,verifyUtilityReceivingSource} from './receiving-source.mjs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
@@ -37,12 +38,14 @@ export async function receiveUtilityEnergyApplications(config,{onProgress=()=>{}
     need(await fileHash(config.sourcePacket)===config.packetSha256,'The original complete customer packet changed.');
   }
   const sourceManifest=config.sourceManifest ?? fileURLToPath(new URL('./source-manifest.json',import.meta.url));
-  const declaration=typeof sourceManifest==='string' ? JSON.parse(await readFile(sourceManifest,'utf8')) : sourceManifest;
-  need(declaration?.schema==='stellar-forge.utility-receiving-source.v1','Choose the original receiving source declaration.');
   const workspaceDirectory=await realpath(config.workspaceDirectory);
   const bootstrap=config.bootstrapSourceRoot ?? join(config.runtimeDirectory,'package','source');
   const {inspectMerchantRuntime}=await moduleAt(bootstrap,'sf46-release/runtime-package.mjs');
   const runtime=await inspectMerchantRuntime(config.runtimeDirectory,{load:false});
+  const declaration=await readUtilityReceivingSource(sourceManifest,runtime.sourceRoot);
+  if(declaration.installedPackage)need(declaration.sourceCommit===runtime.sourceCommit,
+    'The complete package declaration belongs to a different installed source.');
+  await verifyUtilityReceivingSource(declaration,runtime.sourceRoot);
   if(config.expectedSourceCommit) need(runtime.sourceCommit===config.expectedSourceCommit,'The selected installed source changed.');
   const {createRuntimeWorkspace,openRuntimeWorkspace}=
     await moduleAt(runtime.sourceRoot,'distribution/runtime-workspace/model.mjs');

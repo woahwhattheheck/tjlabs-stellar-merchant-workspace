@@ -4,6 +4,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import http.client
+import importlib.util
 import json
 import os
 import re
@@ -79,6 +80,17 @@ def verify(path, declared):
         if field in declared:
             need(actual[field] == declared[field], "Original " + field + " mismatch: " + str(path))
     return actual
+
+
+def read_source_manifest(path, source_root, family="leap"):
+    manifest = read_json(path)
+    if manifest.get("schema") == "stellar-forge.merchant-distribution-manifest.v1":
+        helper = Path(source_root) / "operations/scf-utility-energy-receiving-20261012/receiving_source.py"
+        spec = importlib.util.spec_from_file_location("energy_receiving_source", helper)
+        selected = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(selected)
+        return selected.receiving_source(manifest, source_root, family)
+    return manifest
 
 
 def stamp():
@@ -206,7 +218,7 @@ class Receiving:
 
     def preflight(self, *, inspect_runtime=True):
         manifest_path = Path(self.config.get("sourceManifest", HERE / "source-manifest.json")).absolute()
-        manifest = read_json(manifest_path)
+        manifest = read_source_manifest(manifest_path, self.source)
         need(manifest.get("schema") == "stellar-forge.leap-receiving-source.v1" and isinstance(manifest.get("files"), list),
              "Use the original complete Leap source declaration.")
         members = []
@@ -216,9 +228,11 @@ class Receiving:
             members.append({"path": row["path"], **verify(self.source / relative, row)})
         for source in self.input["sources"]:
             verify(source["path"], source)
-        if not inspect_runtime:
+        if self.state.get("source"):
             need(members == self.state["source"]["members"], "The complete source changed after its original receiving.")
             verify(manifest_path, self.state["source"]["manifest"])
+        if not inspect_runtime:
+            need(self.state.get("source"), "Retain the original completed source selection.")
             return
         helper = self.source / BASE / "distribution/runtime-install.mjs"
         code = (

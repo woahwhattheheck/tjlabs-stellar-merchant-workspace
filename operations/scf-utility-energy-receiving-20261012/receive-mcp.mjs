@@ -1,5 +1,6 @@
 // MIT. Complete receiving through the original Utility console and merchant MCP.
 import { createServer, request as httpRequest } from 'node:http';
+import {readUtilityReceivingSource,verifyUtilityReceivingSource} from './receiving-source.mjs';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, open, rename, readdir, rmdir, lstat } from 'node:fs/promises';
 import { join, resolve, isAbsolute } from 'node:path';
@@ -71,17 +72,17 @@ export async function runUtilityEnergyMcpJourney({
   };
   let owned,originalClient,failure;
   try {
-    const declaration = typeof sourceManifest === 'string'
-      ? JSON.parse(await readFile(sourceManifest,'utf8')) : sourceManifest;
-    need(declaration?.schema === 'stellar-forge.utility-receiving-source.v1','Use the complete original Utility source declaration.');
-    report.source = {commit:declaration.sourceCommit,files:[]};
-    for (const file of declaration.files) {
-      const bytes = await readFile(join(sourceRoot,file.path));
-      const blob = createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
-      need(bytes.length === file.bytes && sha(bytes) === file.sha256 && blob === file.gitBlob,
-        'The selected original Utility source differs: '+file.path);
-      report.source.files.push({path:file.path,bytes:file.bytes,sha256:file.sha256,gitBlob:blob});
-    }
+    const declaration = await readUtilityReceivingSource(sourceManifest,sourceRoot);
+    const declarationHash=sha(canonical(declaration));
+    need(!report.sourceDeclarationSha256||report.sourceDeclarationSha256===declarationHash,
+      'Continue the original Utility receiving source declaration.');
+    const selectedSource={commit:declaration.sourceCommit,
+      files:await verifyUtilityReceivingSource(declaration,sourceRoot)};
+    if(report.source)need(report.source.commit===selectedSource.commit&&Array.isArray(report.source.files)&&
+      report.source.files.length<=selectedSource.files.length&&report.source.files.every((row,index)=>
+        canonical(row)===canonical(selectedSource.files[index])),
+      'Continue the original Utility receiving source and retained members.');
+    report.sourceDeclarationSha256=declarationHash;report.source=selectedSource;
     if (consoleUrl) {
       const target = new URL(consoleUrl);
       need(target.protocol === 'http:' && target.hostname === '127.0.0.1' && !target.search &&

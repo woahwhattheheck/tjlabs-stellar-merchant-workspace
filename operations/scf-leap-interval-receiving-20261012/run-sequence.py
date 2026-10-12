@@ -38,12 +38,19 @@ class Sequence:
         self.python = str(Path(config["pythonExecutable"]).absolute())
         self.release = Path(config.get("buildDirectory", self.output / "release")).absolute()
         self.runtime = Path(config.get("runtimeDirectory", self.output / "runtime")).absolute()
-        self.state = read_json(self.journal_path) if self.journal_path.exists() else {
+        continuing = self.journal_path.exists()
+        self.state = read_json(self.journal_path) if continuing else {
             "schema": "stellar-forge.utility-leap-sequential-receiving.v1",
             "operations": [UTILITY_OP, LEAP_OP], "sourceCommit": self.ref, "selection": "leap-intervals",
             "createdAt": support.stamp(), "phases": {}, "transfers": {}
         }
         need(self.state["sourceCommit"] == self.ref, "Continue the same selected source and original sequence journal.")
+        previous_mode = (self.state.get("sourceMode", "legacy") if continuing else
+                         config.get("sourceMode", "installed-package"))
+        self.source_mode = config.get("sourceMode", previous_mode)
+        need(self.source_mode in {"legacy", "installed-package"} and self.source_mode == previous_mode,
+             "Continue the original sequence source mode and journal.")
+        self.state["sourceMode"] = self.source_mode
         self.env = {**os.environ, "CODEX_PRIMARY_RUNTIME_PYTHON": self.python, "STARFORGE_PYTHON": self.python,
                     "SF30_XML_NODE": self.node, "PYTHONDONTWRITEBYTECODE": "1", "GIT_TERMINAL_PROMPT": "0"}
         self.save()
@@ -104,9 +111,12 @@ class Sequence:
         selected = read_json(self.source / BASE / "distribution/selections/leap-intervals.json")
         need(selected["id"] == "leap-intervals" and "utility-energy" in selected["contributions"],
              "Keep the original complete combined product recipe.")
-        manifest = read_json(self.source / "operations/scf-leap-interval-receiving-20261012/source-manifest.json")
-        members = [{"path": row["path"], **verify(self.source / row["path"], row)} for row in manifest["files"]]
+        members = []
+        if self.source_mode == "legacy":
+            manifest = read_json(self.source / "operations/scf-leap-interval-receiving-20261012/source-manifest.json")
+            members = [{"path": row["path"], **verify(self.source / row["path"], row)} for row in manifest["files"]]
         self.state["source"] = {"commit": self.ref, "selection": identity(self.source / BASE / "distribution/selections/leap-intervals.json"),
+                                "sourceMode": self.source_mode, "trackedCheckoutVerified": True,
                                 "verifiedMembers": members, "verifiedAt": support.stamp()}
         self.save()
 
@@ -214,7 +224,11 @@ class Sequence:
         source = Path(observed["sourceRoot"]).absolute()
         need(source.resolve() == (self.runtime / "package/source").resolve(),
              "Use the original installer-owned source directory.")
-        manifest = read_json(source / "operations/scf-leap-interval-receiving-20261012/source-manifest.json")
+        manifest_path = (source.parent / "manifest.json" if self.source_mode == "installed-package" else
+                         source / "operations/scf-leap-interval-receiving-20261012/source-manifest.json")
+        manifest = support.read_source_manifest(manifest_path, source)
+        if self.source_mode == "installed-package":
+            need(manifest["sourceCommit"] == self.ref, "The complete installed package source differs.")
         for row in manifest["files"]:
             verify(source / row["path"], row)
         self.state["phases"]["runtime"] = {"status": "COMPLETE", "result": observed}
@@ -234,6 +248,9 @@ class Sequence:
         else:
             selected["operationId"] = LEAP_OP
             selected["sourceManifest"] = str(source / "operations/scf-leap-interval-receiving-20261012/source-manifest.json")
+        if self.source_mode == "installed-package":
+            selected["sourceManifest"] = str(source.parent / "manifest.json")
+            selected["expectedSourceCommit"] = self.ref
         selected.setdefault("outputDirectory", str(self.output / (kind + "-receiving")))
         selected.setdefault("artifactDirectory", str(self.output / (kind + "-delivery")))
         path = self.output / "private-process" / (kind + "-receiving.json")

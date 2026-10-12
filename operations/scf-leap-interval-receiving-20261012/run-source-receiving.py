@@ -90,7 +90,7 @@ class SourceReceiving:
 
     def preflight(self):
         manifest_path = Path(self.config["sourceManifest"]).absolute()
-        manifest = read_json(manifest_path)
+        manifest = original.read_source_manifest(manifest_path, self.source, "leap-standalone")
         need(manifest.get("schema") == "stellar-forge.leap-standalone-source.v1"
              and manifest["sourceCommit"] == self.config["sourceCommit"],
              "Use the exact standalone source declaration.")
@@ -101,6 +101,7 @@ class SourceReceiving:
             rows.append({"path": row["path"], **verify(self.source / relative, row)})
         if self.state.get("source"):
             need(rows == self.state["source"]["members"], "The original application source changed during this run.")
+            verify(manifest_path, self.state["source"]["manifest"])
         self.state["source"] = {
             "sourceCommit": manifest["sourceCommit"], "executionKind": "standalone-source-application",
             "manifest": {"path": str(manifest_path), **identity(manifest_path)},

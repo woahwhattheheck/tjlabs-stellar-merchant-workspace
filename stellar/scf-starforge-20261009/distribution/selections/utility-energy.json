@@ -106,7 +106,9 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/xml",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/socrata",
-    "operations/scf-utility-energy-receiving-20261012"
+    "operations/scf-utility-energy-receiving-20261012",
+    "stellar/scf_2026/sf47_budget_model",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",
@@ -183,12 +185,39 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/server.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/workspace.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/xml_source.py",
-    "stellar/scf-starforge-20261009/sf33-failure-contract/contract.mjs"
+    "stellar/scf-starforge-20261009/sf33-failure-contract/contract.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/http-methods.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/multipart.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/native-factory.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/seller.mjs",
+    "stellar/scf-starforge-20261009/sf52-buyer-outcomes/outcomes.mjs",
+    "stellar/scf-starforge-20261009/sf82-chain-transfer-reconcile/record.mjs",
+    "stellar/scf-starforge-20261009/sf82-checkout-evidence/checkpoint.mjs",
+    "stellar/scf-starforge-20261009/sf82-checkout-evidence/evidence.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/cli.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/rpc-transport.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/terms.mjs",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/verify.mjs",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/native-reconcile.mjs",
+    "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs",
+    "stellar-forge/developer-site/dist/source-table-workspace.mjs",
+    "stellar-forge/developer-site/dist/onboarding.mjs",
+    "stellar-forge/developer-site/dist/offer.mjs",
+    "stellar-forge/developer-site/dist/grant-plan-core.mjs",
+    "stellar-forge/developer-site/dist/grant-plan-source.mjs",
+    "stellar/scf-starforge-20261009/sf43-agent-commerce/mcp-buyer-acceptance.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/catalog-acceptance.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
     "description": "Original UtilityAPI and Green Button workspace, reviewed interval editions, bill reconciliation, native publication, managed Applications and complete customer receiving",
-    "readme": "stellar/scf-starforge-20261009/distribution/selections/UTILITY_ENERGY.md"
+    "readme": "stellar/scf-starforge-20261009/distribution/selections/UTILITY_ENERGY.md",
+    "repository": {
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "directory": "stellar/scf-starforge-20261009/sf30-seller-sdk/utility-energy"
+    }
   },
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
