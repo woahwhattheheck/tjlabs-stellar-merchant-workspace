@@ -183,6 +183,17 @@ def decimal_text(value):
          "WORKBOOK_DECIMAL_TEXT", "Exact decimal expansion needs a finite original numeric token.")
     number = Decimal(value)
     need(number.is_finite(), "WORKBOOK_DECIMAL_TEXT", "Use finite decimal source values.")
+    sign, digits, exponent = number.as_tuple()
+    # Bound fixed-point output before formatting, including a future compatible
+    # reader that admits a wider exponent than the current five-digit grammar.
+    if exponent >= 0:
+        width = 1 if number.is_zero() else len(digits) + exponent
+    elif len(digits) + exponent > 0:
+        width = len(digits) + 1
+    else:
+        width = 2 - exponent
+    need(width + sign <= MAX_CELL_CHARS, "WORKBOOK_DECIMAL_TEXT",
+         "The expanded decimal exceeds the original source-cell allowance.")
     result = format(number, "f")
     need(len(result) <= MAX_CELL_CHARS, "WORKBOOK_DECIMAL_TEXT", "The expanded decimal exceeds the original source-cell allowance.")
     return result

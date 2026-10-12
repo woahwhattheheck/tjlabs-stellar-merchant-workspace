@@ -271,6 +271,8 @@ export function createPlanningWorkbookIntake(context) {
     context.status('Retained the original workbook. Choose the range and column policies, then prepare its selected values.');
   }
   async function receiveFile(file) {
+    need(file.size > 0 && file.size <= MAX_WORKBOOK_PROJECT_BYTES, 'WORKBOOK_CAPACITY',
+      'Choose a complete workbook within the original 32 MiB source allowance.');
     const upload = await workbookUpload(file.name, new Uint8Array(await file.arrayBuffer()));
     if (alive()) await inspect(upload, {reset:true});
   }

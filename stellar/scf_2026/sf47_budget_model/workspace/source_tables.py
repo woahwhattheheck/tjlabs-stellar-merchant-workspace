@@ -149,6 +149,10 @@ def register_static(routes):
     """Use the selected release's complete existing browser implementation."""
     routes.update({
         "/source-workbooks.mjs": ("source-workbooks.mjs", "text/javascript; charset=utf-8"),
+        "/source-workbook-export.mjs": ("source-workbook-export.mjs", "text/javascript; charset=utf-8"),
+        "/source-workbook-handover.md": ("WORKBOOK_HANDOVER.md", "text/markdown; charset=utf-8"),
+        "/stellar-forge/developer-site/dist/grant-plan-source.mjs": ("../../../../stellar-forge/developer-site/dist/grant-plan-source.mjs", "text/javascript; charset=utf-8"),
+        "/stellar-forge/developer-site/dist/grant-plan-core.mjs": ("../../../../stellar-forge/developer-site/dist/grant-plan-core.mjs", "text/javascript; charset=utf-8"),
         "/source-tables.mjs": ("source-tables.mjs", "text/javascript; charset=utf-8"),
         "/source-tables-core.mjs": ("source-tables-core.mjs", "text/javascript; charset=utf-8"),
         "/source-tables.css": ("source-tables.css", "text/css; charset=utf-8"),
