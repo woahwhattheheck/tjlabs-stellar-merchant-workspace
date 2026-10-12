@@ -142,6 +142,22 @@ Keep the original receiving request when retrying a lost reply. Repeating that e
 
 The portable catalog bundle covers the retained catalog workflow. Keep the receiver's private connection configuration and prepared merchant deployment in their own original operating paths.
 
+## Continue with supplier orders and fulfilment
+
+The [supplier order desk](../../stellar/scf-starforge-20261009/distribution/selections/SUPPLIER_ORDERS.md) carries original openTRANS 1.0 ORDER, ORDERRESPONSE, DISPATCHNOTIFICATION and INVOICE documents through a private order workspace. Use it when the supplier/customer handover proceeds to order confirmations, cancellations, dispatches and invoices. It retains complete XML, exact original order and line identifiers, numeric values, supplier and customer parties, prepared documents and the operator's selected revisions.
+
+Build the `supplier-orders` selection with the maintained distribution builder and install its returned archive. Open its browser with:
+
+```sh
+starforge supplier-orders serve --workspace /private/supplier-orders
+```
+
+Receive the actual original order, inspect the source review, and create the complete confirmation, dispatch or invoice draft from its selected order revisions. Save a reasoned draft, prepare its DTD-checked XML, then explicitly select the document that should contribute to current quantities. A revised dispatch replaces its own previous contribution; separately identified dispatches remain separate deliveries. Exact quantities, price quantities and the selected rounding policy drive the commercial review.
+
+Export the full order workspace ZIP to continue at the customer. Receiving preserves the customer's current selections and drafts while retaining incoming document history, including divergent branches. The same original import request reopens its retained result after interruption. The [supplier-order MCP guide](../../stellar-forge/mcp-merchant-operator/SUPPLIER_ORDERS.md) provides the complete 27-tool workflow, typed client, command line, host-declared input files and resumable original-file downloads.
+
+The [original supplier/customer receiving program](../../stellar/scf-starforge-20261009/sf30-seller-sdk/supplier-orders/receiving/SUPPLIER_ORDERS_NATIVE.md) completed 23 phases, producing 34 documents and 29 artifacts with all workspace lifetimes closed. The following [operator receiving program](../../stellar-forge/mcp-merchant-operator/receiving/supplier-orders-operator-native.mjs) is complete and independently source-reviewed; its combined installed/MCP continuation remains with the original execution operation.
+
 ## Material and supplier MCP client
 
 A configured merchant MCP host exposes the same retained material and supplier operations. In its original OpenSearch connection file, add `materialInputs` aliases for the actual complete input files and receiving bundles, using their byte counts and SHA-256 values. The workspace alias selects that private host configuration. The [material MCP guide](../../stellar-forge/mcp-merchant-operator/OPENSEARCH_MATERIALS.md) includes the complete host schema and every typed request field.
