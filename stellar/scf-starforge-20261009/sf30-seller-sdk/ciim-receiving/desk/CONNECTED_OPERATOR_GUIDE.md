@@ -180,3 +180,21 @@ try {
 ~~~
 
 Client close stops new client work and waits for its accepted operations and streams to finish. The original receiving server continues running. The browser, connected operator and managed application all use that same retained desk and its original revision checks.
+
+## Continue the completed original receiving case
+
+The complete [connected receiving programme](examples/connected_20261012.mjs) joins the original worked case after its native receiving checkpoint has been saved. It opens that same desk, reads all 569 retained records through the connected API, streams the original case and XML, records one receiving note, and demonstrates recovery of the unchanged original request after a deliberately interrupted accepted response. It inspects that request through the terminal while the listener is stopped, then reopens the original listener and recovers the same operation ID.
+
+The programme also replays the two original revision-zero restore requests in the already received historical and later workspaces. Those receiving decisions remain at their original revisions. It downloads the original immutable handback and a complete current workspace, preserving the named processing profile, authorities, receiving environment and original populations.
+
+Run it on the same retained root used by the native receiving programme, with the direct browser/Applications server closed:
+
+~~~sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/ciim-receiving/desk/examples/connected_20261012.mjs \
+  --root ABS_ORIGINAL_RECEIVING_ROOT \
+  --python ABS_EXISTING_PYTHON
+~~~
+
+The result and original requests are retained under connected-receiving/. Its files/ directory contains the complete current workspace, immutable first handback, original XML and served guide. A later invocation continues saved phases and exact original request bodies. The native-result.json reference is advanced to this complete current workspace so the following browser and Applications continuation opens the same edited desk.
+
+Keep the entire connected-receiving/ directory with the worked case. If an equipped receiving carrier relocates the complete case, the continuation retains the earlier physical request journal and opens a new journal bound to the actual restored directory. Its original request body and operation ID still replay against the same retained logical workspace.

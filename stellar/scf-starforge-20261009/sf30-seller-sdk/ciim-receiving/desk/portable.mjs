@@ -216,7 +216,9 @@ export async function readCompletedEdition({tree,manifestPath,sourcePath,label})
     if(mapped.length!==wanted.length)throw fault('NATIVE_PAGE_COVERAGE','A mapped page differs from its original selected population.');
     for(let index=0;index<mapped.length;index++){
       const row=mapped[index],record=row.value,observation=wanted[index];
-      ensureRecordValues(record);
+      // Mapped metadata uses the native lexical encoding; repository custody
+      // separately retains original fractional scheduler intervals/timestamps.
+      ensureRecordValues(record.resources);
       exact(record.observation,observation,'NATIVE_RECORD_BINDING','A mapped record changed its original observation.');
       if(record.schema!==expectedSchema||record.identifier!==observation.identifier||record.status!==observation.status||
           record.datestamp!==observation.datestamp||!Array.isArray(record.resources)||

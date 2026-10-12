@@ -213,6 +213,9 @@ def pack(request):
         temporary.unlink(missing_ok=True)
 
 def main():
+    # pathlib's parents=True uses the process umask for intermediate directories.
+    # This isolated archive process creates only private operator files.
+    os.umask(0o077)
     raw = sys.stdin.buffer.read(8 * 1024 * 1024 + 1)
     if len(raw) > 8 * 1024 * 1024:
         fail('ARCHIVE_REQUEST_LIMIT', 'Request exceeds 8 MiB')
