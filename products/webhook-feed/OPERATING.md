@@ -2,6 +2,8 @@
 
 Operate one original webhook event store from Applications, its private browser, terminal commands, a local JavaScript client, or the existing Merchant MCP connection. A single managed process owns the original signed receiver, optional paid merchant, browser, and store. Customer transfers use the original complete SQLite snapshot and preserve the received workspace on a later replay.
 
+For the complete customer workorder, page/task spending decisions, useful destination delivery, later-window operation and independent receiving, use [Commission a webhook customer installation](COMMISSIONING.md).
+
 The selected product is maintained at:
 
     stellar/scf-starforge-20261009/distribution/selections/webhook-event-operations.json
@@ -157,7 +159,9 @@ The original merchant pins the reviewed feed revision when it starts. After chan
 
 The SF88 event-feed Buyer continues to own purchase intents, paid responses, exact response retention and subscriber checkpoints. Each page has an immutable upper event boundary. Continue with nextCursor within that window and resumeCursor after the window is complete. A page cursor is retained only after the customer durably accepts that page.
 
-## Complete customer transfer
+## Complete operating-workspace transfer
+
+This is the privileged handover to an engineer authorized to operate the publisher's complete private state. Its SQLite snapshot includes retained raw source bodies and the private cursor key. A paid feed subscriber receives the reviewed public pages and the original SF88 NDJSON/manifest export; use that buyer's own subscription and operation journal for subscriber receiving. Keep publisher snapshots in the selected private operator transfer and backup destination.
 
 Create a named snapshot using the browser Continuity view or the snapshot action:
 

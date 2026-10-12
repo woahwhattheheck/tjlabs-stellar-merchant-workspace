@@ -174,6 +174,10 @@ The current source is the original [SF47 budget model](https://github.com/woahwh
 
 The earlier source integration [PR1167](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/1167) bound the deployment acceptance plan to the current scenario. Follow the current saved source digest and the workspace owner's current source release when comparing a received plan. The CLI calls the original model for every calculation and keeps the original imported scenario alongside subsequent edits.
 
+## Original-currency forecast inputs
+
+The existing forecast preview/save commands accept complete original-currency inputs through `--inputs`. See [Original currencies in operating forecasts](CURRENCY.md) and the [complete input example](examples/native-currency-forecast.json) for native prices and costs, retained rates, original payment credits, event timing and the conditional currency exports. Keep the whole normalized input from preview when saving or passing a selected Portfolio alternative back to Forecast.
+
 ## Operating forecasts
 
 The original `operations` command includes `forecast-preview`, `forecast-save`, `forecasts`, `forecast-show` and `forecast-export`. Use the same case ID, explicit expected version and stable request ID. Saving additionally requires the exact reviewed preview SHA-256 and complete input JSON. Full examples and source/receiving semantics are in [FORECAST.md](FORECAST.md). The ordinary case `export` and `import` commands carry all immutable saved forecasts with the original source and work/payment records.

@@ -47,9 +47,9 @@ npx --no-install starforge registrations --source open311-operations
 npx --no-install starforge merchant-providers inspect open311-workspaces
 ~~~
 
-The source-only install makes the Open311 browser, CLI and direct SDK available. Use the maintained runtime workspace to prepare the selected mcp feature when attaching an external MCP client. Its original runtime profile selects dependency versions from this source edition. The complete source build and runtime receiving procedures are documented in [BUILDING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/BUILDING.md) and [SOURCE_SELECTIONS.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md).
+The source-only install makes the Open311 browser, CLI and direct SDK available. For an external MCP client, complete the prepared runtime installation in [Attach the merchant tools](#attach-the-merchant-tools) below. Its source-selected dependencies install beside a separate retained copy of the same archive. The complete source build and runtime receiving procedures are documented in [BUILDING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/BUILDING.md), [RUNTIME_INSTALL.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) and [SOURCE_SELECTIONS.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md).
 
-In the remaining examples, run npx from that installation directory. All private workspace, host configuration and export paths are outside the source checkout.
+Run npx from /absolute/private/open311-install in the examples below. The MCP commands use runtime-install run to select the prepared runtime explicitly. Keep private workspaces, host configuration and exports outside both source and runtime directories.
 
 ## Create the desk and select a source
 
@@ -215,6 +215,37 @@ Compare field changes from the source. Treat missingFromCapture as an observatio
 
 ## Attach the merchant tools
 
+### Prepare the runtime for the selected source archive
+
+Use the same archive and SHA-256 retained from the selected package build. Replace ORIGINAL_OPEN311_ARCHIVE.tgz and ORIGINAL_ARCHIVE_SHA256 with those exact delivered values. The parent /absolute/private must exist; runtime-install prepare creates the new open311-runtime directory.
+
+~~~sh
+npx --no-install starforge runtime-install prepare \
+  --dir /absolute/private/open311-runtime \
+  --archive /absolute/private/open311-package/ORIGINAL_OPEN311_ARCHIVE.tgz \
+  --sha256 ORIGINAL_ARCHIVE_SHA256 \
+  --native --feature schema --feature openapi --feature mcp --operator
+
+npx --no-install starforge runtime-install install \
+  --dir /absolute/private/open311-runtime
+
+npx --no-install starforge runtime-install inspect \
+  --dir /absolute/private/open311-runtime --load --source
+~~~
+
+This selects the recipe's schema, openapi and mcp groups, plus the original native merchant peers. The archive's declarations determine their exact dependency versions. Preparation returns sourceRoot, dependencyRoot and entrypoint; installation must reach READY before launch. The source is retained in open311-runtime/package/source and dependencies in open311-runtime/node_modules. The desk and merchant configuration keep their own private paths.
+
+Install uses the normal npm registry/cache. For a populated existing cache, add --offline --cache /absolute/private/npm-cache to install or resume. If a selected native module needs offline preparation, supply a compiler and local Node headers matching the selected executable; --node-headers /absolute/local/node-prefix selects a prefix containing include/node. Resume an interrupted installation in the same directory:
+
+~~~sh
+npx --no-install starforge runtime-install resume \
+  --dir /absolute/private/open311-runtime
+~~~
+
+The existing installer retains its dependency lock and original attempt. Its [runtime guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) also covers receiving a complete retained dependency tree and recovering or upgrading into a new runtime directory.
+
+### Connect the saved desks
+
 The Open311 provider uses an existing merchant release store and the same desk directory. Prepare a private host file with mode 0600:
 
 ~~~json
@@ -252,20 +283,39 @@ Save /absolute/private/open311-setup.json with:
 Run the existing provider initializer:
 
 ~~~sh
-npx --no-install starforge merchant-providers init open311-workspaces \
+npx --no-install starforge runtime-install run \
+  --dir /absolute/private/open311-runtime -- \
+  merchant-providers init open311-workspaces \
   --options /absolute/private/open311-setup.json
 ~~~
 
 Setup returns the original merchant configuration path and retains its initialization operation. The same arguments resume the same setup. An existing merchant can supply its original releaseStore path in the setup options.
 
-The original MCP subprocess command uses the resulting configuration:
+### Register the installed merchant with the MCP client
+
+Generate the client configuration through the prepared runtime on the machine that will launch it:
 
 ~~~sh
-npx --no-install starforge merchant-mcp-stdio \
+npx --no-install starforge runtime-install run \
+  --dir /absolute/private/open311-runtime -- \
+  merchant-mcp-client-config \
+  --config /absolute/private/open311-merchant/merchant-mcp.json \
+  --name open311 \
+  --output /absolute/private/open311-mcp-client.json
+~~~
+
+The original generator validates the merchant configuration and writes a private JSON file containing the actual absolute Node executable and MCP stdio entry from this installed runtime. Apply its open311 server entry through the existing MCP client's configuration workflow. To combine it with an existing mcpServers file, add --merge /absolute/private/existing-mcp-client.json, choose an unused --name and keep --output as a new file.
+
+The equivalent terminal launch uses the same runtime and merchant configuration:
+
+~~~sh
+npx --no-install starforge runtime-install run \
+  --dir /absolute/private/open311-runtime -- \
+  merchant-mcp-stdio \
   --config /absolute/private/open311-merchant/merchant-mcp.json
 ~~~
 
-Register that command with the operator's existing MCP client. Its host environment supplies any apiKeyEnv values. The provider's sixteen tools cover desk discovery, status, complete records, source configuration, captures, catalogs, case search/detail, comparison, review, operation recovery, selected input receiving, complete file reading and reader release.
+The MCP client's host environment supplies any apiKeyEnv values. If the runtime is upgraded or recovered into a new directory, generate a new client configuration from that runtime and update the client's selected server entry; the previous generated entry continues to name its original absolute source path. The provider's sixteen tools cover desk discovery, status, complete records, source configuration, captures, catalogs, case search/detail, comparison, review, operation recovery, selected input receiving, complete file reading and reader release.
 
 The typed SDK is exported as:
 

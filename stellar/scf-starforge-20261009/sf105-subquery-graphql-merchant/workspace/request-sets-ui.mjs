@@ -107,8 +107,9 @@ export function createRequestSetsWorkspace(ctx) {
     else ctx.notice('The native run saved revision ' + value.revision + '. Your current editor text remains intact.');
   }
   function planHint(plan) {
-    return { kind: plan.path.endsWith('/compare') ? 'comparison' : plan.path.includes('/request-set/') ? 'set' : 'run',
-      id: plan.body.runId ?? plan.body.requestSetId ?? plan.body.id };
+    const kind = plan.path.endsWith('/compare') ? 'comparison' : plan.path.includes('/request-set/') ? 'set' : 'run';
+    return { kind, id: kind === 'set' ? plan.body.requestSetId ?? plan.body.id
+      : kind === 'run' ? plan.body.runId ?? plan.body.id : plan.body.id };
   }
   async function sendPlan(plan) {
     const ticket = epoch, identity = project;
