@@ -72,12 +72,12 @@ The query and publicColumns values are actual aliases from the provider's captur
 
 ## Prepare the exact private operation input
 
-Save an owned 0600 JSON selection in an existing owned 0700 directory. The following is a field template, not a fabricated service or data source. Replace paths, hashes, query/alias names, recipient, asset, origin and reviewer with the actual original values. The operating identity shown is the existing SeaTable project operation; keep the assigned identity unchanged.
+Save an owned 0600 JSON selection in an existing owned 0700 directory. The following is a field template, not a fabricated service or data source. Replace paths, hashes, query/alias names, recipient, asset, origin and reviewer with the actual original values. The operating identity shown is the existing SeaTable provider operation; keep that original assigned identity unchanged.
 
 ~~~json
 {
   "schema": "stellar-forge.seatable-receiving-selection.v1",
-  "operationId": "SCF-SEATABLE-MERCHANT-WORKSPACE-20261012",
+  "operationId": "SEATABLE-PROVIDER-OPERATOR-20261012-14F5",
   "sourceRoot": "/absolute/installed/runtime/package/source",
   "sourceManifest": {
     "file": "/absolute/installed/runtime/package/manifest.json",
