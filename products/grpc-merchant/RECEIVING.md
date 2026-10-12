@@ -222,3 +222,13 @@ health receiving operation:
 Its actual retained native result, installation source and later customer
 receiving are joined to that original operation, so installation adoption does
 not create a competing service-health run.
+
+## Join the equipped installation to the original operation
+
+The complete [installed receiving command](INSTALL_RECEIVING.md),
+`grpc-product-receive`, adopts the original health operation’s saved workspace
+with the installed product. It retains the original call, preparation and
+release generation, republishes the same customer and frozen health exports
+through the installed agent, receives both complete deliveries and opens them
+offline after closing the native owner. Its journal resumes the same receiving
+directory and original export descriptors.

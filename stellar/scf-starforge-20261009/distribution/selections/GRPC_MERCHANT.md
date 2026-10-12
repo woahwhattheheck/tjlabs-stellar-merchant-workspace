@@ -131,3 +131,12 @@ private product/native workspace. Select the new reviewed runtime through the
 same Applications flow. Open its original receiving directory with the retained
 manifest/export ID; its saved files and original operation histories remain
 authoritative across installation changes.
+
+## Original installed receiving
+
+The selected archive also provides `grpc-product-receive`. Use it on the same
+equipped worker with the original service-health work directory to complete
+installed browser/agent ownership, original call and release readback, all
+seven customer files, the frozen health prefix and offline receiving. The
+[complete continuation guide](../../../../products/grpc-merchant/INSTALL_RECEIVING.md)
+retains the original operation and its saved inputs through interruption.
