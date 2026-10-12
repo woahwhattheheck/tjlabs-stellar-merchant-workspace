@@ -385,6 +385,7 @@
     "./runtime-install": "./source/stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
     "./runtime-transfer": "./source/stellar/scf-starforge-20261009/distribution/runtime-transfer.mjs",
     "./runtime-workspace": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
+    "./runtime-workspace/application-setup": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-setup-operations.mjs",
     "./runtime-workspace/server": "./source/stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
     ".": "./source/stellar/scf-starforge-20261009/distribution/index.mjs",
     "./seller": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/serve.mjs",
