@@ -31,6 +31,11 @@ function define(name,description,properties={},required=[],annotations={readOnly
 define('workspaces','List configured original API-pass workspace aliases, pinned public identities and declared input/purchase handles. Private launch capabilities and host paths remain on the host.');
 define('open','Authenticate the existing private launch record and the original running workspace. Returns its current session and public launch identity.',{workspace:alias},['workspace']);
 define('status','Read the original workspace revision, pass counts, claim environment names and recent task/history windows; includes complete-history and retained-export availability.',{workspace:alias},['workspace']);
+define('portfolio','Page the original per-order allowance portfolio, purchased-route coverage, saved default and attention summary from one workspace revision. Amounts remain separate for each purchased pass; pin expectedRevision while paging.',{workspace:alias,...page},['workspace']);
+define('portfolio_requests','Page all original attention/recovery-ready requests with their immutable profile, order and request IDs. Use the returned revision and nextOffset for the next page; replacement passes do not move these requests.',{workspace:alias,...page},['workspace']);
+define('portfolio_configure','Save the selected default for future explicit request preparation and the low-allowance threshold through the original strict-revision mutation. Existing requests retain their original pass. Use null to clear the selection.',{workspace:alias,...mutation,selectedProfileId:{anyOf:[uuid,{type:'null'}]},lowUnitsThreshold:{type:'integer',minimum:0,maximum:1000000000}},['workspace','operationId','expectedRevision','selectedProfileId','lowUnitsThreshold'],{idempotent:true});
+define('portfolio_refresh','Retain one exact selected-pass refresh batch in the original customer journal. Returns the actual queued/reused tasks and archived or unavailable-claim skips. Keep this operationId, revision and selected list on every interrupted retry.',{workspace:alias,...mutation,profileIds:{type:'array',minItems:1,maxItems:200,uniqueItems:true,items:uuid}},['workspace','operationId','expectedRevision','profileIds'],{idempotent:true,openWorld:true});
+define('purchase_replenish','Prepare a separate original replacement purchase from a host-declared complete handoff and its reviewed SHA. The original model enforces the same gateway and a new order, retains the replacement lineage, and requires the ordinary Buyer/Inbox review and execution workflow. Saved requests stay on their original pass.',{workspace:alias,...mutation,profileId:uuid,label:text(),gatewayBaseUrl:text(2048),intentId:identity,claimEnv:text(65),handoff:alias,expectedHandoffSha256:sha},['workspace','operationId','expectedRevision','profileId','label','gatewayBaseUrl','intentId','claimEnv','handoff','expectedHandoffSha256'],{idempotent:true});
 define('passes','Page public pass summaries from one original workspace snapshot. Pin expectedRevision when continuing the same observed inventory.',{workspace:alias,...page},['workspace']);
 define('pass','Read one original pass, purchased routes, allowance and a real page of saved calls. Native detail includes its latest 100 tasks; history reads all retained tasks.',{workspace:alias,profileId:uuid,...page},['workspace','profileId']);
 define('call','Read an original saved request and retained result identity without dispatching it.',{workspace:alias,callId:uuid},['workspace','callId']);
@@ -81,6 +86,13 @@ export function apiPassArguments(name,input={}){
   else if(['label','gatewayBaseUrl','contentType','after','file'].includes(key))apiPassText(item,key==='gatewayBaseUrl'?2048:key==='contentType'?255:key==='after'?256:key==='file'?80:160,key);
   else if(key==='claimEnv')apiPassChecked(item,/^[A-Z][A-Z0-9_]{1,64}$/,key);
   else if(key==='archived')apiPassNeed(typeof item==='boolean','Supply the original archive choice.');
+  else if(key==='selectedProfileId'){if(item!==null)apiPassChecked(item,API_PASS_UUID,key);}
+  else if(key==='lowUnitsThreshold')apiPassInteger(item,0,1000000000,key);
+  else if(key==='profileIds'){
+   apiPassNeed(Array.isArray(item)&&item.length>=1&&item.length<=200,'Select one to 200 original pass IDs.');
+   for(const id of item)apiPassChecked(id,API_PASS_UUID,'selected profile ID');
+   apiPassNeed(new Set(item).size===item.length,'Select each original pass only once.');
+  }
  }
  if(kind==='prepare_request'){
   value.query??=[];apiPassNeed(Array.isArray(value.query)&&value.query.length<=100&&value.query.every(row=>Array.isArray(row)&&row.length===2&&row.every(s=>typeof s==='string'&&s.length<=4096&&!s.includes('\0'))),'Supply ordered original query pairs.');

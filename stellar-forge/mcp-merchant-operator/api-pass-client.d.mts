@@ -13,7 +13,53 @@ export interface PassSummary {
  id: string; label: string; archived: boolean; mode: 'access' | 'purchase'; createdAt: string; updatedAt: string;
  orderReference: string; gatewayBaseUrl: string; manifestSha256: string; claimEnv: string; claimAvailable: boolean;
  intentId: string | null; purchasePrepared: boolean; checkedAt: string | null; callCount: number;
+ replacesProfileId?: string | null; replacementProfileId?: string | null;
  error: { code: string; at: string } | null;
+}
+/** Original customer projection: every allowance belongs to one purchased order. */
+export interface PortfolioSettings { selectedProfileId: string | null; lowUnitsThreshold: number; }
+export interface PortfolioSummary {
+ passes: number; activePasses: number; availablePasses: number; lowPasses: number; exhaustedPasses: number;
+ requests: number; attentionRequests: number; activeOperations: number;
+}
+export interface PortfolioLineage { profileId: string; label: string; orderReference: string; }
+export interface PortfolioRequest {
+ id: string; profileId: string; passLabel: string; orderReference: string | null; requestId: string; label: string;
+ routeId: string; method: string; path: string; units: number; status: 'ATTENTION' | 'RECOVERY_READY';
+ updatedAt: string; recoveryOnly: boolean; error: { code: string; at: string } | null;
+ result: { status: number; bytes: number; sha256: string } | null;
+}
+export interface PortfolioPass {
+ id: string; label: string; orderReference: string; gatewayBaseUrl: string; manifestSha256: string;
+ mode: 'access' | 'purchase'; archived: boolean;
+ status: 'AVAILABLE' | 'LOW' | 'EXHAUSTED' | 'REFRESH_REQUIRED' | 'CLAIM_UNAVAILABLE' | 'ARCHIVED';
+ usage: (Allowance & { completedCalls?: number; consumedCallsWithoutResult?: number; reservedCalls?: number; releasedCalls?: number }) | null;
+ routes: { id: string; method: string; path: string; units: number; remainingCalls: number | null }[];
+ requests: { total: number; prepared: number; active: number; attention: number; completed: number };
+ activeTasks: number; checkedAt: string | null; selected: boolean; nativeState: string | null;
+ error: { code: string; at: string } | null; replaces: PortfolioLineage | null; replacement: PortfolioLineage | null;
+}
+export interface PortfolioSnapshot {
+ schema: 'stellar-forge.sf101.api-pass-portfolio.v1'; revision: number;
+ settings: PortfolioSettings; summary: PortfolioSummary; passes: PortfolioPass[];
+ attention: { items: PortfolioRequest[]; pagination: Omit<Page<PortfolioRequest>, 'items' | 'revision'> };
+}
+/** Passes is this page; summary/settings and first attention window are the same original snapshot. */
+export interface PortfolioPage extends PortfolioSnapshot { passPagination: Omit<Page<PortfolioPass>, 'items' | 'revision'>; }
+export interface ConfigurePortfolioArguments extends MutationIdentity { selectedProfileId: string | null; lowUnitsThreshold: number; }
+export interface RefreshPortfolioArguments extends MutationIdentity { profileIds: string[]; }
+export interface PrepareReplacementArguments extends PreparePurchaseArguments { profileId: string; }
+export interface PortfolioConfigurationResult extends MutationResult {
+ result: MutationResult['result'] & { selectedProfileId: string | null };
+}
+export interface PortfolioRefreshResult extends MutationResult {
+ result: MutationResult['result'] & {
+  tasks: { profileId: string; taskId: string; reused: boolean }[];
+  skipped: { profileId: string; reason: 'ARCHIVED' | 'CLAIM_UNAVAILABLE' }[];
+ };
+}
+export interface ReplacementPurchaseResult extends MutationResult {
+ result: MutationResult['result'] & { profileId: string; replacesProfileId: string; alreadyConnected?: boolean };
 }
 export interface ApiPass extends PassSummary {
  handoff: Json | null; detail: { plan: { routes: PurchasedRoute[]; [key: string]: unknown }; usage: Allowance; native: Json; [key: string]: unknown } | null;
@@ -80,6 +126,8 @@ export interface DownloadOptions {
 export interface DownloadResult { schema: 'stellar-forge.sf101.api-pass-mcp-download.v1'; state: 'COMPLETE' | 'REOPENED'; directory: string; exportId: string; workspace: ExportManifest['workspace']; selection: ExportSelection; source: ExportSource; manifestSha256: string; files: number; bytes: number; resumed?: boolean; resumedBytes?: number; }
 export interface ApiPassOperationArguments {
  open: Record<string, never>; status: Record<string, never>; passes: PageSelection;
+ portfolio: PageSelection; portfolio_requests: PageSelection; portfolio_configure: ConfigurePortfolioArguments;
+ portfolio_refresh: RefreshPortfolioArguments; purchase_replenish: PrepareReplacementArguments;
  pass: PageSelection & { profileId: string }; call: { callId: string }; call_preview: { callId: string }; body_preview: { callId: string };
  remote_calls: { profileId: string; after?: string; limit?: number }; history: PageSelection & { profileId: string; view: 'calls' | 'tasks' };
  task: { profileId: string; taskId: string }; approval: { profileId: string }; input: { file: string }; operation: { operationId: string };
@@ -93,6 +141,11 @@ export interface ApiPassWorkspaceClient {
  invoke<K extends keyof ApiPassOperationArguments>(kind: K, args: ApiPassOperationArguments[K], options?: RequestOptions): Promise<Record<string, unknown>>;
  open(args?: Record<string, never>, options?: RequestOptions): Promise<{ session: { schema: string; workspaceId: string; title: string; approvalMode: string; purchaseEnabled: boolean }; launch: Record<string, unknown> }>;
  status(args?: Record<string, never>, options?: RequestOptions): Promise<Record<string, unknown>>;
+ portfolio(args?: PageSelection, options?: RequestOptions): Promise<PortfolioPage>;
+ portfolioRequests(args?: PageSelection, options?: RequestOptions): Promise<Page<PortfolioRequest>>;
+ configurePortfolio(args: ConfigurePortfolioArguments, options?: RequestOptions): Promise<PortfolioConfigurationResult>;
+ refreshPortfolio(args: RefreshPortfolioArguments, options?: RequestOptions): Promise<PortfolioRefreshResult>;
+ prepareReplacement(args: PrepareReplacementArguments, options?: RequestOptions): Promise<ReplacementPurchaseResult>;
  passes(args?: PageSelection, options?: RequestOptions): Promise<Page<PassSummary>>;
  pass(args: PageSelection & { profileId: string }, options?: RequestOptions): Promise<{ revision: number; profile: ApiPass; calls: OriginalCall[]; callPagination: Omit<Page<OriginalCall>, 'items' | 'revision'>; tasks: NativeTask[] }>;
  callDetail(args: { callId: string }, options?: RequestOptions): Promise<{ revision: number; call: OriginalCall }>;
@@ -119,6 +172,8 @@ export interface ApiPassWorkspaceClient {
  readFileChunk(args: ReadFileArguments, options?: RequestOptions): Promise<RetainedChunk>;
  releaseFile(args: { exportId: string; readId: string }, options?: RequestOptions): Promise<{ exportId: string; readId: string; released: true }>;
  allPasses(options?: RequestOptions): Promise<{ revision: number; items: PassSummary[] }>;
+ allPortfolio(options?: RequestOptions): Promise<PortfolioSnapshot>;
+ allPortfolioRequests(options?: RequestOptions): Promise<{ revision: number; items: PortfolioRequest[] }>;
  allHistory(args: { profileId: string; view: 'calls' | 'tasks' }, options?: RequestOptions): Promise<{ profileId: string; view: 'calls' | 'tasks'; revision: number; items: (OriginalCall | NativeTask)[] }>;
  downloadExport(options: DownloadOptions): Promise<DownloadResult>;
  disconnect(): Promise<void>;

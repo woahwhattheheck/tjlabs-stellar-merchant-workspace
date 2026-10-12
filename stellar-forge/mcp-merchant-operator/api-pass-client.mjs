@@ -3,7 +3,7 @@ import {join} from 'node:path';
 import {openMerchantFileClient,createRetainedDownload} from './retained-download.mjs';
 import {API_PASS_PREFIX,API_PASS_ALIAS,API_PASS_UUID,API_PASS_SHA,API_PASS_EXPORT_MANIFEST,API_PASS_MAX_FILE_BYTES,
  apiPassPlain,apiPassNeed,apiPassChecked,apiPassArguments,apiPassHash,parseApiPassExport} from './api-pass-protocol.mjs';
-const METHODS={open:'open',status:'status',passes:'passes',pass:'pass',callDetail:'call',callPreview:'call_preview',bodyPreview:'body_preview',
+const METHODS={open:'open',status:'status',portfolio:'portfolio',portfolioRequests:'portfolio_requests',configurePortfolio:'portfolio_configure',refreshPortfolio:'portfolio_refresh',prepareReplacement:'purchase_replenish',passes:'passes',pass:'pass',callDetail:'call',callPreview:'call_preview',bodyPreview:'body_preview',
  remoteCalls:'remote_calls',history:'history',task:'task',approval:'approval',input:'input',operation:'operation',
  connectPass:'connect',preparePurchase:'purchase_prepare',attachPurchase:'purchase_attach',updatePass:'update',prepareRequest:'prepare_request',
  adoptRequest:'adopt_request',enqueue:'enqueue',cancel:'cancel',decide:'decide',capture:'capture',exports:'exports',manifest:'manifest',readFileChunk:'file',releaseFile:'file_release'};
@@ -58,6 +58,45 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
     items.push(...result.items);
     if(result.nextOffset===null){apiPassNeed(items.length===result.total,'The original pass inventory ended early.','API_PASS_CLIENT_PAGE_CHANGED');return {revision:observed,items};}
     apiPassNeed(result.nextOffset===offset+result.items.length&&result.nextOffset>offset&&result.nextOffset<result.total,'The original pass page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
+   }
+  }),
+  allPortfolio:(options={})=>tracked(async()=>{
+   const passes=[],seen=new Set();let offset=0,observed,head,total;
+   for(;;){
+    const result=await wire('portfolio',{offset,limit:20,...(observed===undefined?{}:{expectedRevision:observed})},options),selection=result.passPagination;
+    observed??=result.revision;total??=selection?.total;
+    apiPassNeed(result.schema==='stellar-forge.sf101.api-pass-portfolio.v1'&&Number.isSafeInteger(observed)&&observed>=1&&
+     result.revision===observed&&Array.isArray(result.passes)&&selection?.offset===offset&&selection.limit===20&&selection.total===total&&
+     Number.isSafeInteger(total)&&total>=0&&total<=200&&result.passes.length===Math.min(20,Math.max(0,total-offset))&&
+     apiPassPlain(result.settings)&&apiPassPlain(result.summary)&&Array.isArray(result.attention?.items),
+     'The complete original portfolio page changed.','API_PASS_CLIENT_PAGE_CHANGED');
+    head??={revision:observed,schema:result.schema,settings:result.settings,summary:result.summary,attention:result.attention};
+    apiPassNeed(JSON.stringify(head.settings)===JSON.stringify(result.settings)&&JSON.stringify(head.summary)===JSON.stringify(result.summary),
+     'The original portfolio settings changed within one observed revision.','API_PASS_CLIENT_PAGE_CHANGED');
+    for(const pass of result.passes){
+     apiPassNeed(API_PASS_UUID.test(pass.id??'')&&!seen.has(pass.id),'The complete original portfolio repeats a pass.','API_PASS_CLIENT_PAGE_CHANGED');
+     seen.add(pass.id);passes.push(pass);
+    }
+    if(selection.nextOffset===null){apiPassNeed(passes.length===total,'The original portfolio ended early.','API_PASS_CLIENT_PAGE_CHANGED');return {...head,passes};}
+    apiPassNeed(selection.nextOffset===offset+result.passes.length&&selection.nextOffset>offset&&selection.nextOffset<total,
+     'The original portfolio page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=selection.nextOffset;
+   }
+  }),
+  allPortfolioRequests:(options={})=>tracked(async()=>{
+   const items=[],seen=new Set();let offset=0,observed,total;
+   for(;;){
+    const result=await wire('portfolio_requests',{offset,limit:200,...(observed===undefined?{}:{expectedRevision:observed})},options);
+    observed??=result.revision;total??=result.total;
+    apiPassNeed(Array.isArray(result.items)&&Number.isSafeInteger(observed)&&observed>=1&&result.revision===observed&&result.offset===offset&&result.limit===200&&
+     result.total===total&&Number.isSafeInteger(total)&&total>=0&&total<=5000&&result.items.length===Math.min(200,Math.max(0,total-offset)),
+     'The complete original attention-request page changed.','API_PASS_CLIENT_PAGE_CHANGED');
+    for(const row of result.items){
+     apiPassNeed(API_PASS_UUID.test(row.id??'')&&API_PASS_UUID.test(row.profileId??'')&&!seen.has(row.id),
+      'The complete original attention inventory repeats a request.','API_PASS_CLIENT_PAGE_CHANGED');seen.add(row.id);items.push(row);
+    }
+    if(result.nextOffset===null){apiPassNeed(items.length===total,'The original attention inventory ended early.','API_PASS_CLIENT_PAGE_CHANGED');return {revision:observed,items};}
+    apiPassNeed(result.nextOffset===offset+result.items.length&&result.nextOffset>offset&&result.nextOffset<total,
+     'The original attention page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
    }
   }),
   allHistory:({profileId,view},options={})=>tracked(async()=>{
