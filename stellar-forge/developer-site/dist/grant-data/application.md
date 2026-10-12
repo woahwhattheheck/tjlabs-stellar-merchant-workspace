@@ -69,6 +69,8 @@ Node.js implements the browser, CLI, typed-client and MCP interfaces; source and
 
 ## Working product and demonstrated results
 
+**Installation and recurring buyer work.** The [Source Builds](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2f8ef50056b4bdfbd7fc1389f7a18edabaef9b22/stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md) browser searches named products and compares their commands, components, API exports, runtime packages and native requirements against one immutable source revision. Saved reviews continue into the existing build, archive and installation controls. The [Request Collections](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/68a2ded6c8e24b46bc016ec69b13e3b32927919f/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/AUTHORING.md) editor turns original saved provider listings, selected payment alternatives and existing buyer operators into reusable request plans and complete named periods. Operators can reopen the retained plan and prepared period, review the original requests and continue through the same collection workspace.
+
 The working implementation has completed **18 distinct team-operated development testnet purchases totaling 411,000 stroops / 0.0411 native XLM**, with fees recorded separately. The grant's independent customer and mainnet targets build on this baseline.
 
 |Completed example|Purchase or operating result|Open the work|
