@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Operate one complete named-staff Grant Operations case and receive its installation."""
 from __future__ import annotations
-import argparse, base64, concurrent.futures, hashlib, http.cookiejar, json, os
+import argparse, base64, concurrent.futures, hashlib, hmac, http.cookiejar, json, os
 from pathlib import Path
 import subprocess, sys, threading, time, traceback
 from urllib.error import HTTPError
@@ -13,6 +13,7 @@ sys.path.insert(0, str(HERE))
 from server import create_server, atomic_private as write_private
 from STAFF_INSTALLATION_RECEIVING import receive_workspace
 from staff_installation import export_installation, private_json as encode_private_json
+from staff_access import secret_hash
 
 def private_json(path, value):
     """Update the same retained output through the original private atomic writer."""
@@ -26,6 +27,12 @@ class Journey:
     def __init__(self, server, output):
         self.server, self.output, self.events = server, output, []
         self.lock = threading.Lock()
+        self.deliveries = output / "private-http-deliveries"
+        self.deliveries.mkdir(mode=0o700, exist_ok=True)
+
+    def delivery_path(self, path, request_id):
+        key = hashlib.sha256((path + "\0" + request_id).encode()).hexdigest()
+        return self.deliveries / (key + ".json")
 
     def event(self, value):
         with self.lock:
@@ -58,6 +65,16 @@ class Audience:
             if self.csrf and csrf:
                 supplied["X-CSRF-Token"] = self.csrf
             payload = json.dumps(body, ensure_ascii=False, allow_nan=False).encode()
+        delivery_path, delivery = None, None
+        if isinstance(body, dict) and isinstance(body.get("requestId"), str):
+            delivery_path = self.journey.delivery_path(path, body["requestId"])
+            request = {"audience": self.name, "path": path, "body": body}
+            if delivery_path.exists():
+                delivery = json.loads(delivery_path.read_bytes())
+                require(delivery["request"] == request, "The retained HTTP request changed before replay.")
+            else:
+                delivery = {"request": request, "responses": [], "dispatchedAt": time.time()}
+                private_json(delivery_path, delivery)
         try:
             response = self.opener.open(Request(self.journey.server.origin + path, data=payload, headers=supplied), timeout=25)
         except HTTPError as error:
@@ -65,6 +82,9 @@ class Audience:
         with response:
             data, status = response.read(), response.status
             value = json.loads(data) if response.headers.get("Content-Type", "").startswith("application/json") else data
+        if delivery_path is not None:
+            delivery["responses"].append({"at": time.time(), "status": status, "value": value})
+            private_json(delivery_path, delivery)
         event = {"at": time.time(), "audience": self.name, "method": "POST" if body is not None else "GET",
                  "path": path, "status": status}
         if isinstance(body, dict):
@@ -72,8 +92,9 @@ class Audience:
         if isinstance(value, dict):
             event.update({key: value[key] for key in ("id", "version", "recordId", "code") if key in value})
         self.journey.event(event)
+        diagnostic = value.get("error", {"responseKeys": sorted(value)}) if isinstance(value, dict) else {"responseBytes": len(data)}
         require(status == expect, self.name + " " + path + " expected " + str(expect) + " but received "
-                + str(status) + ": " + repr(value)[:1000])
+                + str(status) + ": " + repr(diagnostic)[:1000])
         return value
 
 def main():
@@ -84,7 +105,10 @@ def main():
     parser.add_argument("--skip-browser", action="store_true")
     parser.add_argument("--resume-browser", action="store_true",
                         help="Continue the same completed HTTP case using its private context.")
+    parser.add_argument("--resume-initial", type=Path,
+                        help="Continue a saved initial case, clone and lead from an explicit original-state binding.")
     args = parser.parse_args()
+    require(not (args.resume_browser and args.resume_initial), "Select the original HTTP or browser continuation.")
     output = args.output.resolve()
     output.mkdir(mode=0o700, parents=True, exist_ok=True)
     private_context = output / "private-browser-context.json"
@@ -99,9 +123,10 @@ def main():
             body = {"id": name, "displayName": display, "role": role, "caseIds": cases,
                     "contributorIds": bindings or {}, "administrator": admin, "requestId": str(uuid4())}
             result = owner.call("/api/staff/members/create", body)
+            context.setdefault("profiles", {})[name] = {"code": result["accessCode"], "member": result["member"]}
+            private_json(private_context, context)
             replay = owner.call("/api/staff/members/create", body)
             require(replay["replayed"] and "accessCode" not in replay, "A repeated enrollment reissued its private code.")
-            context.setdefault("profiles", {})[name] = {"code": result["accessCode"], "member": result["member"]}
             return journey.audience(name, result["accessCode"])
 
         if args.resume_browser:
@@ -112,8 +137,80 @@ def main():
             reviewer = journey.audience("case-reviewer", context["profiles"]["case-reviewer"]["code"])
             contributor = journey.audience("case-contributor", context["profiles"]["case-contributor"]["code"])
             case_id, other_case, plan_id = context["caseId"], context["otherCaseId"], context["planId"]
+        elif args.resume_initial:
+            binding = json.loads(args.resume_initial.read_bytes())
+            require(binding.get("schema") == "stellar-forge.sf47-staff-initial-receiving.v1",
+                    "Use the original initial-case receiving binding.")
+            case_id, plan_id = binding["caseId"], binding["planId"]
+            other_plan_id = binding["otherPlanId"]
+            context = json.loads(private_context.read_bytes()) if private_context.exists() else {}
+            require(not context.get("httpComplete"), "Continue the completed HTTP case with --resume-browser.")
+            with server.workspace.mutex:
+                selected = server.workspace.db.execute(
+                    "SELECT id,plan_id,version,name,mode FROM ops_programs WHERE id=?", (case_id,)).fetchone()
+                profiles = server.staff.members()
+                require(selected is not None and selected[1] == plan_id and selected[2] == 1
+                        and selected[3] == "Named staff delivery receiving" and selected[4] == "WALKTHROUGH",
+                        "The original initial case has advanced; continue its retained request journal.")
+                require(len(profiles) == 1 and profiles[0]["id"] == "delivery-lead"
+                        and profiles[0]["role"] == "lead" and profiles[0]["caseIds"] == ["*"]
+                        and profiles[0]["administrator"] and profiles[0]["state"] == "ACTIVE",
+                        "The original roster has advanced; continue its retained request journal.")
+                lead_row = server.staff.member("delivery-lead")
+            plan = owner.call("/api/plans/" + plan_id)
+            other_plan = owner.call("/api/plans/" + other_plan_id)
+            require(other_plan["name"] == "Separate staff receiving case",
+                    "The selected clone is not the original receiving plan.")
+            retained_code = context.get("profiles", {}).get("delivery-lead", {}).get("code")
+            rotation_path = "/api/staff/members/rotate"
+            if not retained_code and binding.get("leadRotationRequestId"):
+                saved_path = journey.delivery_path(rotation_path, binding["leadRotationRequestId"])
+                if saved_path.exists():
+                    saved = json.loads(saved_path.read_bytes())
+                    for response in reversed(saved["responses"]):
+                        if response["status"] == 200 and response["value"].get("accessCode"):
+                            retained_code = response["value"]["accessCode"]
+                            break
+            valid_code = isinstance(retained_code, str) and hmac.compare_digest(
+                secret_hash(retained_code, "staff-code:delivery-lead"), lead_row["credential_hash"] or "")
+            if not valid_code:
+                # A delivered code survives in the private response record. If its
+                # original response was lost, the owner reissues it through the
+                # existing rotation action and retains this new request first.
+                binding["leadRotationRequestId"] = str(uuid4())
+                private_json(args.resume_initial, binding)
+                rotated = owner.call(rotation_path, {"id": "delivery-lead",
+                    "expectedRevision": lead_row["revision"], "requestId": binding["leadRotationRequestId"]})
+                retained_code = rotated["accessCode"]
+                profiles[0] = rotated["member"]
+            context.setdefault("profiles", {})["delivery-lead"] = {"code": retained_code, "member": profiles[0]}
+            context.update(caseId=case_id, planId=plan_id, otherPlanId=other_plan_id,
+                           packageId=plan["scenario"]["future_costs"][0]["id"])
+            private_json(private_context, context)
+            lead = journey.audience("delivery-lead", retained_code)
+            # The first POST may have committed before its response failed. Reuse
+            # that case and create only the separate case that is actually absent.
+            with server.workspace.mutex:
+                matches = server.workspace.db.execute(
+                    "SELECT id,version FROM ops_programs WHERE plan_id=? AND name=?",
+                    (other_plan_id, "Separately assigned receiving case")).fetchall()
+            require(len(matches) <= 1, "The original secondary case is ambiguous.")
+            if matches:
+                require(matches[0][1] == 1, "The original secondary case has advanced.")
+                other_case = matches[0][0]
+            else:
+                binding.setdefault("secondaryCaseRequestId", str(uuid4()))
+                private_json(args.resume_initial, binding)
+                other_case = lead.call("/api/operations", {
+                    "name": "Separately assigned receiving case", "mode": "WALKTHROUGH",
+                    "calendarStart": "2026-10-12", "planId": other_plan_id,
+                    "selectedRevision": other_plan["revision"],
+                    "expectedContentSha256": other_plan["contentSha256"],
+                    "actor": "Editable caller label", "requestId": binding["secondaryCaseRequestId"]})["id"]
+            context["otherCaseId"] = other_case
+            private_json(private_context, context)
         else:
-            require(not private_context.exists(), "Use --resume-browser to continue the existing operated case.")
+            require(not private_context.exists(), "Continue the original retained receiving context.")
             lead = create_member("delivery-lead", "Delivery lead", "lead", ["*"], admin=True)
             plan = lead.call("/api/plans")["plans"][0]
             plan = lead.call("/api/plans/" + plan["id"])
@@ -303,7 +400,16 @@ def main():
         print(json.dumps({"result": "COMPLETE", "caseId": case_id, "version": summary["version"],
                           "invoiceTotalUsd": summary["invoiceTotalUsd"], "openInvoiceUsd": summary["openInvoiceUsd"]}), flush=True)
     except BaseException:
-        write_private(output / "interrupted-traceback.txt", traceback.format_exc().encode())
+        trace = traceback.format_exc()
+        # Preserve the original IDs and private code deliveries at the actual
+        # interruption, including a request whose response was not successful.
+        current = locals()
+        context["interruptedIds"] = {key: current[key] for key in
+            ("case_id", "other_case", "plan_id", "person", "teammate", "source",
+             "restricted", "work", "other_work", "invoice", "first_payment")
+            if isinstance(current.get(key), str)}
+        private_json(private_context, context)
+        write_private(output / "interrupted-traceback.txt", trace.encode())
         raise
     finally:
         try:
