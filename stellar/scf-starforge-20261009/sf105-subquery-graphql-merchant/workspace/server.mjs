@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // MIT. One private operator workspace using the original SF105 compiler/runtime.
 import { createServer } from 'node:http';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openWorkspaceStore, plain, digest } from './store.mjs';
 import { requestJson, normalizeRunStart, normalizeRunContinuation, readRequestSet, verifyRequestSetSources,
@@ -14,6 +14,7 @@ import { prepareResponseComparison, inspectResponseComparison, comparisonChanges
   recoverResponseComparison, inspectPendingResponseComparison } from './comparison.mjs';
 import { describeResponseComparisonFiles } from './comparison-report.mjs';
 import { createWorkspaceFiles } from './files.mjs';
+import { prepareSavedMerchant, recoverSavedMerchant, continueSavedMerchant, inspectSavedMerchant, listSavedMerchants } from './preparation.mjs';
 import { inspectProjectHandover, prepareProjectHandover, receiveProjectHandover, listProjectReceivings } from './handover.mjs';
 import { inspectDraftSchema, reviewDraft, exportDraft, readExport, exportView, startDraftMerchant,
   compareDraft, reviseDraft, readRevisionReport } from './merchant.mjs';
@@ -26,6 +27,7 @@ import { authoringCatalog, captureAuthoringSchema, describeAuthoredOperation, co
 const STATIC = new Map([['/', ['index.html', 'text/html']], ['/app.mjs', ['app.mjs', 'text/javascript']],
   ['/authoring-ui.mjs', ['authoring-ui.mjs', 'text/javascript']],
   ['/request-sets-ui.mjs', ['request-sets-ui.mjs', 'text/javascript']],
+  ['/preparation-ui.mjs', ['preparation-ui.mjs', 'text/javascript']],
   ['/comparison-values.mjs', ['comparison-values.mjs', 'text/javascript']],
   ['/comparison-ui.mjs', ['comparison-ui.mjs', 'text/javascript']],
   ['/handover-ui.mjs', ['handover-ui.mjs', 'text/javascript']],
@@ -90,6 +92,11 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
     const updated = await store.save({ id: saved.id, input: saved.input,
       expectedRevision: saved.revision, deploymentRecord: result.reference });
     return { project: await publicDraft(updated), deployment: deploymentView(result.record) };
+  }
+  async function preparationResult(result) {
+    const reference = result.record.output && result.project.exports.find(item => item.id === result.record.output.id);
+    return { ...result, project: await publicDraft(result.project),
+      exported: reference ? exportView(await readExport(reference)) : null };
   }
   async function attachPreview(saved, result) {
     const previous = (saved.previews ?? []).find(item => item.id === result.reference.id);
@@ -200,6 +207,26 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (!url.pathname.startsWith('/api/')) return send(404, { error: 'Not found.' });
       if (!equal(req.headers['x-workspace-token'], token)) return send(401, { error: 'Open the complete private URL printed by the launcher.' });
       if (req.method === 'GET') {
+        if (['/api/preparation', '/api/preparations', '/api/preparation/file'].includes(url.pathname)) {
+          const value = Object.fromEntries(url.searchParams);
+          for (const key of ['generation', 'revision', 'offset', 'limit']) if (value[key] !== undefined) {
+            if (!/^(0|[1-9]\d*)$/.test(value[key]) || !Number.isSafeInteger(Number(value[key])))
+              fail('Choose an original preparation history selector.');
+            value[key] = Number(value[key]);
+          }
+          if (url.pathname.endsWith('/file')) {
+            if (Object.keys(value).some(key => !['project', 'revision', 'preparationId', 'file', 'expectedManifestSha256'].includes(key)))
+              fail('Choose a file from the original preparation packet.');
+            const { file: name, expectedManifestSha256, ...selection } = value;
+            const file = await files.read({ ...selection, kind: 'preparation' }, name, expectedManifestSha256);
+            res.writeHead(200, { 'Content-Type': file.type,
+              'Content-Disposition': "attachment; filename*=UTF-8''" + encodeURIComponent(file.name.split('/').at(-1)) });
+            res.end(file.bytes); return;
+          }
+          if (url.pathname === '/api/preparations') return send(200, await listSavedMerchants(store, value));
+          const result = await inspectSavedMerchant(store, value);
+          return send(200, { ...result, project: await publicDraft(result.project) });
+        }
         if (url.pathname === '/api/requests/file') {
           const value = Object.fromEntries(url.searchParams);
           if (Object.keys(value).some(key => !['project', 'revision', 'requestSetId', 'runId', 'generation', 'file', 'expectedManifestSha256'].includes(key)))
@@ -283,6 +310,21 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) return send(415, { error: 'Use application/json.' });
       const body = await bodyOf(req);
 
+      if (['/api/preparation/prepare', '/api/preparation/recover', '/api/preparation/continue'].includes(url.pathname)) {
+        const operation = url.pathname.endsWith('/prepare') ? prepareSavedMerchant
+          : url.pathname.endsWith('/recover') ? recoverSavedMerchant : continueSavedMerchant;
+        return send(201, await mutate(async () => preparationResult(await operation(store, body))));
+      }
+      if (url.pathname === '/api/preparation/packet') {
+        if (Object.keys(body).some(key => !['project', 'revision', 'preparationId'].includes(key)))
+          fail('Choose a retained original preparation packet.');
+        return send(201, await mutate(async () => {
+          const selection = { ...body, kind: 'preparation' }, value = await files.manifest(selection);
+          return { state: 'PREPARED', selection: value.manifest.selection,
+            directory: join(store.root, 'preparation-packets', value.manifest.source.packetSha256),
+            ...value, manifestSha256: value.manifestFile.sha256 };
+        }));
+      }
       if (url.pathname === '/api/requests/packet') {
         if (Object.keys(body).some(key => !['project', 'revision', 'requestSetId', 'runId', 'generation'].includes(key)))
           fail('Choose the original saved request-set or run packet.');
@@ -363,16 +405,12 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
         return send(200, await publicDraft(await mutate(() => store.save({ id: body.id, input: body.input, expectedRevision: body.expectedRevision }))));
       }
       if (url.pathname === '/api/export' || url.pathname === '/api/evolution/prepare') {
-        const result = await mutate(async () => {
-          const saved = await current(body);
-          const { record, reference } = url.pathname === '/api/evolution/prepare'
-            ? await reviseDraft(store, saved, savedExport(saved, body.baselineExportId), body.comparisonDigest)
-            : await exportDraft(store, saved);
-          const updated = await store.save({ id: saved.id, input: saved.input,
-            expectedRevision: saved.revision, exportRecord: reference });
-          return { project: await publicDraft(updated), exported: exportView(record) };
-        });
-        return send(201, result);
+        const request = { id: body.preparationId ?? randomUUID(), project: body.id,
+          expectedRevision: body.expectedRevision, ...(body.inputDigest !== undefined ? { inputDigest: body.inputDigest } : {}),
+          kind: url.pathname === '/api/evolution/prepare' ? 'revision' : 'merchant',
+          ...(url.pathname === '/api/evolution/prepare' ? {
+            baselineExportId: body.baselineExportId, comparisonDigest: body.comparisonDigest } : {}) };
+        return send(201, await mutate(async () => preparationResult(await prepareSavedMerchant(store, request))));
       }
       if (['/api/deployment/prepare', '/api/deployment/stage', '/api/deployment/host', '/api/deployment/recover'].includes(url.pathname)) {
         const result = await mutate(async () => {
