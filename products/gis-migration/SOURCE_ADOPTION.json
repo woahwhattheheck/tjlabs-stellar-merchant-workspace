@@ -1,0 +1,319 @@
+{
+  "schema": "starforge.gis-migration-source-adoption.v1",
+  "sourceRepository": "woahwhattheheck/public-commons-sprint-2026",
+  "sourceCommit": "05cd13bd9fa737d91b8112912a0c748875e3ae85",
+  "nativeBaseline": "5bd3f3fb1898611cbae8e5e16bc238a442b54f9f",
+  "successor": {
+    "pullRequest": 2254,
+    "commit": "8f898bc7837ce685c3f429153ce88bb4de7dbcc9",
+    "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/public/index.html",
+    "blob": "3b010843e92865b6775d4ce1de1765852c51649e"
+  },
+  "targetRepository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "selection": "gis-migration",
+  "nativeProgramFilesIncludingManifest": 57,
+  "sourceFiles": [
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/migration-workspaces.json",
+      "sourceBlob": "a3c1e16e7fc20f1571e9bc1fb0fb3e8805a8ef8b",
+      "sourceCommit": "9008fe0194091912fc0d3554eb2c80347a7ccc57"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/CARTOGRAPHY.md",
+      "sourceBlob": "13070e674649f27588165c4d8b15430154a9e7cc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/CARTOGRAPHY_BROWSER.md",
+      "sourceBlob": "0de5668e7c8b0dcd4488a284a3f55fb261a9c629"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/README.md",
+      "sourceBlob": "136dd755600eb76fa16c9c5c0d2dd5e56d6da914"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/RECEIVING.md",
+      "sourceBlob": "38fc1a83a23e67259ff7279d80fbf011f04a6793"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/__init__.py",
+      "sourceBlob": "3f02a5be2907246fea257516950348a9a4c2c55f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/cartography.py",
+      "sourceBlob": "dd102cc97f50e67ad9889f1d6e5a24dd403b9500"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/cartography_native.py",
+      "sourceBlob": "2f8652b40017118c6638744f38fa0a2d54b417b0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/engine.py",
+      "sourceBlob": "f5d548589f68eda467fe7724304e6b4954bea204"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/examples/cartography_journey.py",
+      "sourceBlob": "3074197b88b65bb70946ee5dd2d7ace77507a528"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/examples/receiving_journey.py",
+      "sourceBlob": "1c5f5182d6efb0a45ecef2b39187c211a26128f5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/MERCHANT.md",
+      "sourceBlob": "c60297aad73ada6dbb49227e3a0900514c554667"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/client.mjs",
+      "sourceBlob": "21ee026096d81e516c91f99eb8e5d71b407f8fb2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/index.d.mts",
+      "sourceBlob": "3900dba67729fd8d62fd4c5cd4448b569607ada6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/provider.mjs",
+      "sourceBlob": "fb478f58871d8d97d557961a6ecfe7dd543112d7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/receiving.mjs",
+      "sourceBlob": "5db192dd7db16f23c3453f2364435ab7e16d81e4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/tools.mjs",
+      "sourceBlob": "ea1b672d292d720a7f79d0885848b07d22542252"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/native.py",
+      "sourceBlob": "9697f01bb189c0869cfc8b2b7e21d266c1f0a46d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/plan.py",
+      "sourceBlob": "c31f72c2dc91ef70b539dd57a36dfd5e062e845f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/public/app.mjs",
+      "sourceBlob": "fc21e7036f6889686f62f87131c172ca377a3eb9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/public/cartography.css",
+      "sourceBlob": "9e8e5065b2f908f4e0ac5734010a821c2effc162"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/public/cartography.mjs",
+      "sourceBlob": "161da562f56a645c9fe0dadd11900e6e427df28f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/public/index.html",
+      "sourceBlob": "3b010843e92865b6775d4ce1de1765852c51649e",
+      "sourceCommit": "8f898bc7837ce685c3f429153ce88bb4de7dbcc9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/public/styles.css",
+      "sourceBlob": "7eddcd9688db89c4871bd18d3207f94e2d651524"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/receiving.py",
+      "sourceBlob": "58ec82b5842edeaff22301acc4389d82a3482fcf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/server.py",
+      "sourceBlob": "5df9047c8542d60056a5741b99d1d05d26dd0db5",
+      "adapted": true
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/source-files.json",
+      "sourceBlob": "b7bccda88bd2e1534dbc7f2f48725ed129309738",
+      "sourceCommit": "9008fe0194091912fc0d3554eb2c80347a7ccc57"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/workspace.py",
+      "sourceBlob": "9c34931cbc97c6e991a72813966ec7a60a9cefb3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/OPERATIONS.md",
+      "sourceBlob": "72f0672b6afceb3c9cb556aa4a273ca136f40afb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/RECEIVING_RUN.md",
+      "sourceBlob": "30f7170b1d764a250e934beb331b12494d0f011b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/__init__.py",
+      "sourceBlob": "4ca10183bdc6bcc1892aaa9adb3b86cc4c90582f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/cli.py",
+      "sourceBlob": "e3335cf5669548368f42232b9e55dfc39c675274"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/connection.schema.json",
+      "sourceBlob": "d93879e4651b4eb0bca9a9dcc4bbcd7441804bfe"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/examples/receive_project.py",
+      "sourceBlob": "9b58a279d218d4e444402799a6278c6b2a6d3652"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/native.py",
+      "sourceBlob": "07c8d4f31e0868dd288980141e00d43a6a4ba56b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/operator.py",
+      "sourceBlob": "181d79a8149ef89bc8f94235155760029ccd1a9a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/package.py",
+      "sourceBlob": "421dd8b5d1babaa91969997c008976477b2bd9a8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/postgis/qgis/source.py",
+      "sourceBlob": "38b3f3ab08eed899cd94de8dbb74123ea9009841"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/FIELD_OPERATIONS.md",
+      "sourceBlob": "e8455ca15d769ef15ba32d1369fe80412b256c65"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/LICENSE",
+      "sourceBlob": "5520db554ebf1db98872085093f828185286d298"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/OPERATIONS.md",
+      "sourceBlob": "360d4e9b65ce9faf3dd98f6d7fe3fea2764a5b77"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/VECTOR_RECEIVING.md",
+      "sourceBlob": "0bc6cf00e6b43e3fa574b5c2f9918988f1a0515d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/cli.mjs",
+      "sourceBlob": "588a3b12089b9e59fda0027b683bdc09b8f2ba5d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/plugin-package.py",
+      "sourceBlob": "d9ca00d522ae72ac2525875dfd7d46a541fc29b9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/__init__.py",
+      "sourceBlob": "3548288cd81c046ae254c1b69787885106429100"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/cli.py",
+      "sourceBlob": "ceaa6f2fb732889fa0c5548d47b157e8f4d9e0f1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/field.py",
+      "sourceBlob": "8bb21537f7a34268e2073281f9a536f73f570a4d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/field_bridge.py",
+      "sourceBlob": "5876e466423e5d0c793081973d7c0072b63decae"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/field_native.py",
+      "sourceBlob": "0330ccc6fe098f2f88e02dae91c30c029491479e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/field_ui.py",
+      "sourceBlob": "fdebd6534545c26d4ac82072b4fd2223edfa846c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/metadata.txt",
+      "sourceBlob": "84e5641795e14daa0b8c1a84090f942d05a7c57f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/model.py",
+      "sourceBlob": "88221f99acef73dd78a5429f28360b4dc2baba29"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/plugin.py",
+      "sourceBlob": "f2adc8e7ed72507d2b5a3b291f053737845eadf4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/postgis/__init__.py",
+      "sourceBlob": "d21dd1767e93a69be8144b515afccf62eac47599"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/qgis_project.py",
+      "sourceBlob": "f657c477b226431e073221b804db83b49c650515"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/qgis/starforge_stac/vector_source.py",
+      "sourceBlob": "d437c723015a3f9940222d6289a5ef5e88281931"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/README.md",
+      "sourceBlob": "a38abbcb8e2ccf567f8aeff62cb877a89692bc17"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/__init__.py",
+      "sourceBlob": "62376a145e1ff0f65d97882edebe9be92aa9081b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/archive.py",
+      "sourceBlob": "c14e972a5a9238458bcf198c9a061514653ae501"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/capture.py",
+      "sourceBlob": "ba36d0e2027fea240a3e19c797b2b2eb20bce814"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/common.py",
+      "sourceBlob": "b2d7f02872519604db28af85b53710222acd4967"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/comparison.py",
+      "sourceBlob": "bb4ac328c248d748d3f7d7623b1ed81d1b9c16d9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/driver.py",
+      "sourceBlob": "477261573f9cbe1c7e74776ff95e1090f89e198a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/engine.py",
+      "sourceBlob": "1b7a9d58be7755b4154ac5deab87a98c77eaf33d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/json.mjs",
+      "sourceBlob": "0727c1cb113f6ebd9aca08a05b48a50bc0879d6a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/vector/materialize.py",
+      "sourceBlob": "c24476e28e2dbcdfa452eb04486a162d800feb80"
+    }
+  ],
+  "adaptations": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/server.py",
+      "reason": "Retain selected venv executables and reviewed workspace ID, pass identity to original engine calls, and drain this operator's native processes, accepted HTTP sockets and listener on managed Stop."
+    }
+  ],
+  "installedIntegration": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/managed.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/migration.mjs",
+    "stellar/scf-starforge-20261009/distribution/contributions/migration-operator.json",
+    "stellar/scf-starforge-20261009/distribution/selections/gis-migration.json",
+    "products/gis-migration/OPERATING.md",
+    "products/gis-migration/RECEIVING.md"
+  ],
+  "receiving": {
+    "originalNativeEntry": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/examples/receiving_journey.py",
+    "operationOwner": "Original F11 / BD9D GIS receiving",
+    "request": "https://tokenjunkielabs.slack.com/archives/C0C1F274SGH/p1791813724409539?thread_ts=1791742555.271459",
+    "productThread": "https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791813771788679?thread_ts=1791776843.871089"
+  },
+  "fieldClosure": {
+    "pullRequest": 2350,
+    "commit": "9008fe0194091912fc0d3554eb2c80347a7ccc57",
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/source-files.json",
+        "blob": "b7bccda88bd2e1534dbc7f2f48725ed129309738"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/migration-workspaces.json",
+        "blob": "a3c1e16e7fc20f1571e9bc1fb0fb3e8805a8ef8b"
+      }
+    ]
+  }
+}

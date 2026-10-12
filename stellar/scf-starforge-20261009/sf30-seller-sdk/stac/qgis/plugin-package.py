@@ -15,7 +15,8 @@ import zipfile
 def build(out, source=None):
     root = Path(source or __file__).resolve().parent
     plugin = root / "starforge_stac"
-    names = ["__init__.py", "model.py", "vector_source.py", "qgis_project.py", "plugin.py", "cli.py", "metadata.txt"]
+    names = ["__init__.py", "model.py", "vector_source.py", "qgis_project.py", "plugin.py", "cli.py",
+             "field.py", "field_native.py", "field_bridge.py", "field_ui.py", "metadata.txt"]
     files = {}
     for name in names:
         path = plugin / name
@@ -25,13 +26,27 @@ def build(out, source=None):
         if name.endswith(".py"):
             ast.parse(body, filename=str(path))
         files["starforge_stac/" + name] = body
-    for name in ("OPERATIONS.md", "VECTOR_RECEIVING.md", "LICENSE"):
+    for name in ("OPERATIONS.md", "VECTOR_RECEIVING.md", "FIELD_OPERATIONS.md", "LICENSE"):
         path = root / name
         if not path.is_file():
             path = plugin / name
         if not path.is_file() or path.is_symlink():
             raise ValueError("Missing complete receiving guide: " + name)
         files["starforge_stac/" + name] = path.read_bytes()
+    adapter_names = ("__init__.py","source.py","native.py","operator.py","cli.py","package.py",
+                     "OPERATIONS.md","connection.schema.json")
+    adapter = next((candidate for candidate in (plugin / "postgis", root.parent / "postgis" / "qgis")
+                    if all((candidate / name).is_file() for name in adapter_names)), None)
+    if adapter is None:
+        raise ValueError("Keep the complete canonical PostGIS QGIS receiving adapter.")
+    for name in adapter_names:
+        path = adapter / name
+        if path.is_symlink():
+            raise ValueError("The adapter source must remain an ordinary file: " + name)
+        body = path.read_bytes()
+        if name.endswith(".py"):
+            ast.parse(body, filename=str(path))
+        files["starforge_stac/postgis/" + name] = body
     manifest = {"schema": "starforge.stac-qgis-plugin-package.v1",
                 "files": [{"path": name, "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
                           for name, body in sorted(files.items())]}
