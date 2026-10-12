@@ -932,13 +932,15 @@ export class DataGouvPublisher {
     if (input.retryRejected !== undefined && typeof input.retryRejected !== 'boolean') fail('invalid_retry_selection', 'retryRejected must be an explicit boolean.');
     return this._serial(input.operationId, async () => {
       const record = await this._load(input.operationId);
-      this._respectRetainedBackoff(record);
       const review = record.reviews.find(r => r.id === input.reviewId);
       if (!review || review.decision !== 'approved') fail('approved_review_required', 'Select a retained approved review.');
       const retained = record.steps['dataset.publish'];
       if (retained && retained.baseline.review_id !== input.reviewId) fail('publication_review_conflict', 'The original publication already names another review.');
       if (!retained && record.reviews.at(-1)?.id !== input.reviewId) fail('review_superseded', 'A later explicit review supersedes this review.');
       if (!record.draft || record.draft.sha256 !== review.draft_sha256) fail('draft_review_stale', 'The selected review does not match the retained draft.');
+      if (retained?.state === 'verified' && record.publication?.visibility === 'public_verified'
+          && record.publication.public_readback?.matched === true) return this._finishPublication(record);
+      this._respectRetainedBackoff(record);
       let baseline, body;
       if (retained) {
         baseline = retained.baseline;
@@ -1047,13 +1049,16 @@ export class DataGouvPublisher {
     for (const value of Object.values(suppliedResources)) resourceId(value);
     return this._serial(input.operationId, async () => {
       const record = await this._load(input.operationId);
-      this._respectRetainedBackoff(record);
       for (const key of Object.keys(suppliedResources)) {
         if (!record.plan.resources.some(r => r.key === key)) fail('resource_not_selected', 'The supplied original resource ID has no selected key.', { key });
         const selected = record.resource_ids[key] ?? record.plan.resources.find(r => r.key === key).resource_id;
         if (selected && selected !== suppliedResources[key]) fail('resource_mismatch', 'The supplied ID differs from the retained original resource.', { key });
       }
       if (suppliedDataset && record.dataset_id && suppliedDataset !== record.dataset_id) fail('dataset_mismatch', 'The supplied dataset ID differs from the original retained ID.');
+      if (record.steps['dataset.publish']?.state === 'verified'
+          && record.publication?.visibility === 'public_verified'
+          && record.publication.public_readback?.matched === true) return this._finishPublication(record);
+      this._respectRetainedBackoff(record);
       const unresolved = [], reconciled = [];
       let saveStep = record.steps['dataset.save'];
       if (!saveStep) return { operation: record, unresolved: [{ step: 'dataset.save', reason: 'not_prepared_or_dispatched' }], reconciled };

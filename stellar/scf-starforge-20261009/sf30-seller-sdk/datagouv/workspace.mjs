@@ -101,7 +101,7 @@ export async function openDataGouvWorkspace({directory,create=false,title='Publi
     });}
     async function extract(id){return serialize('Building complete publication',async()=>{let p=publication(id);if(!p.planId)p=await planOriginal(p);
       return native(p,async n=>{let prior;try{prior=n.run(p.runId);}catch(e){if(e.code!=='RUN_NOT_FOUND')throw e;}
-        if(prior){if(['FAILED','CANCELLED','INTERRUPTED'].includes(prior.state)){try{prior=await n.recover(p.runId);}catch(e){return mirror(p,{...prior,data:{...prior.data,error:'Original incomplete extraction retained; inspect its complete outcome before creating an explicit new publication.'}},'EXTRACTION_INSPECTED');}}
+        if(prior){if(['FAILED','CANCELLED','INTERRUPTED'].includes(prior.state)){try{prior=await n.recover(p.runId);}catch(e){return mirror(p,{...prior,data:{...prior.data,error:'Original incomplete extraction retained; inspect the stopped run, then use retry-extraction to continue the same saved publication and plan.'}},'EXTRACTION_INSPECTED');}}
           return mirror(p,prior,'EXTRACTION_REOPENED');}
         savePublication({...p,state:'EXTRACTING'},'EXTRACTION_REQUESTED');
         const started=n.startExtraction(p.planId,{id:p.runId}),run=await started.completion;return mirror(p,run,'EXTRACTION_COMPLETED');});
@@ -186,9 +186,9 @@ export async function openDataGouvWorkspace({directory,create=false,title='Publi
       return {filename:'publisher-workspace.datawork',contentType:'application/octet-stream',bytes:encoded(file),manifest:{files:entries.length,bytes:total}};
     });}
     const loadOperation=async id=>{const row=db.prepare('SELECT revision,data FROM provider_operations WHERE id=?').get(id);return row?{...JSON.parse(row.data),revision:row.revision}:null;};
-    const saveOperation=async(id,next,expectedRevision)=>transaction(()=>{need(typeof id==='string'&&id.length>0&&id.length<=160,'Select the original provider operation');const row=db.prepare('SELECT revision FROM provider_operations WHERE id=?').get(id),previous=row?.revision??null;
+    const saveOperation=async(id,next,expectedRevision)=>serialize('Saving portal operation',()=>transaction(()=>{need(typeof id==='string'&&id.length>0&&id.length<=160,'Select the original provider operation');const row=db.prepare('SELECT revision FROM provider_operations WHERE id=?').get(id),previous=row?.revision??null;
       if(previous!==expectedRevision)return false;const newRevision=previous===null?0:previous+1;need(next&&typeof next==='object','Provider operation state is required');const data={...next,revision:newRevision};
-      db.prepare('INSERT INTO provider_operations(id,revision,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data').run(id,newRevision,JSON.stringify(data));event('PROVIDER_OPERATION_SAVED',id,{revision:newRevision,state:next.state??next.phase??null});return true;});
+      db.prepare('INSERT INTO provider_operations(id,revision,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data').run(id,newRevision,JSON.stringify(data));event('PROVIDER_OPERATION_SAVED',id,{revision:newRevision,state:next.state??next.phase??null});return true;}));
     async function history({offset=0,limit=100}={}){need(Number.isInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>0&&limit<=250,'Choose an operation history page');const total=db.prepare('SELECT COUNT(*) AS n FROM events').get().n;
       return {rows:db.prepare('SELECT * FROM events ORDER BY id ASC LIMIT ? OFFSET ?').all(limit,offset).map(x=>({...x,data:JSON.parse(x.data)})),page:{offset,limit,total,next:offset+limit<total?offset+limit:null}};}
     async function close(){if(closed)return;closed=true;await tail;db.close();await release();}
@@ -201,10 +201,21 @@ export async function receiveArchive({file,directory,expectedSha256}={}){
   need(packet.schema==='stellar-forge.datagouv-portable-workspace.v1'&&packet.complete===true&&Array.isArray(packet.files)&&packet.files.length>0&&packet.files.length<=20000,'A complete publisher workspace archive is required');
   const seen=new Set();let total=0;for(const entry of packet.files){need(!seen.has(entry.path)&&/^(workspace|application)\//.test(entry.path),'Invalid or repeated complete archive member');seen.add(entry.path);member(directory,entry.path);
     const bytes=Buffer.from(entry.contentBase64,'base64');need(bytes.toString('base64')===entry.contentBase64&&bytes.length===entry.bytes&&hash(bytes)===entry.sha256,'Complete archive member changed: '+entry.path);total+=bytes.length;need(total<=512*1024*1024,'Complete archive exceeds its receiving limit');}
-  need(seen.has('workspace/operations.sqlite'),'The original workspace database is missing');await mkdir(directory,{mode:0o700});
+  need(seen.has('workspace/operations.sqlite'),'The original workspace database is missing');
+  const members=new Map(packet.files.map(entry=>[entry.path,entry]));
+  const inventoryMember=members.get('application/products/datagouv/application-files.json');
+  need(inventoryMember&&seen.has('application/start-publisher.mjs'),'The complete receiving application is missing');
+  const inventory=JSON.parse(Buffer.from(inventoryMember.contentBase64,'base64'));
+  need(inventory.schema==='stellar-forge.datagouv-application-files.v1'&&Array.isArray(inventory.files)&&inventory.files.length>0&&inventory.files.length<=512,'The receiving application inventory is invalid');
+  need(new Set(inventory.files).size===inventory.files.length&&inventory.files.includes('start-publisher.mjs')&&inventory.files.includes('products/datagouv/application-files.json'),'The complete application entrypoint and inventory must be retained');
+  for(const rel of inventory.files){
+    need(typeof rel==='string'&&rel.length>0&&!rel.split('/').some(part=>part.startsWith('.')),'The receiving application inventory contains an invalid path');
+    member(directory,'application/'+rel);need(seen.has('application/'+rel),'A required receiving application file is missing: '+rel);
+  }
+  await mkdir(directory,{mode:0o700});
   for(const entry of packet.files)await putExact(member(directory,entry.path),Buffer.from(entry.contentBase64,'base64'));
   const workspace=await openDataGouvWorkspace({directory:join(directory,'workspace')});let result;
-  try{result=workspace.status();for(const c of result.captures)await workspace.inspectCapture(c.hash,{limit:1});
+  try{result=workspace.status();need(result.workspace.id===packet.workspace?.id&&identity(result.selection)===identity(packet.selection),'The received workspace identity or selected edition differs from its archive');for(const c of result.captures)await workspace.inspectCapture(c.hash,{limit:1});
     for(const p of result.publications.filter(x=>x.state==='PUBLISHED')){const response=await workspace.query({publicationId:p.id,query:'limit=1'});need(response.status===200&&response.body.dataset.snapshot===p.snapshot,'A received published edition did not reopen with its original snapshot');}}
   finally{await workspace.close();}
   await putExact(join(directory,'receiving.json'),encoded({schema:'stellar-forge.datagouv-receiving.v1',receivedAt:stamp(),archiveSha256:hash(raw),members:seen.size,bytes:total,workspaceId:result.workspace.id,selection:result.selection}));

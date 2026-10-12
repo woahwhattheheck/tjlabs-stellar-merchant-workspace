@@ -2,8 +2,8 @@
   "schema": "commons.datagouv.publication-source.v1",
   "files": {
     "datagouv-publication.mjs": {
-      "bytes": 69750,
-      "sha256": "4c60587f2b8ca679376425b5e84c923f7d7e5cef6ef589c7d840680ed27b2ee2"
+      "bytes": 70191,
+      "sha256": "cc2ebf4d8775a6b3578ccd941245aca18e78f8d1d8bc735ba4a827e745035e20"
     },
     "PUBLICATION.md": {
       "bytes": 19582,

@@ -2,6 +2,7 @@
 import {readFile,writeFile,mkdir,lstat} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {randomUUID,createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 const inputArgument=process.argv[2];
 if(!inputArgument)throw new Error('Choose the retained operation configuration JSON file');
@@ -89,7 +90,23 @@ try{
  const customer=await openDataGouvWorkspace({directory:join(receivingDir,'workspace')});
  try{need(customer.status().workspace.id===actual.workspace.id,'Independent receiving changed the workspace identity');const query=await customer.query({publicationId:publication.id,query:'limit=250'});need(query.status===200&&query.body.dataset.snapshot===publication.snapshot&&query.body.rows.length===250,'Independent customer query did not reopen its exact original snapshot');}
  finally{await customer.close();}
- stage('complete_archive_and_independent_receiving',{archivePath,archiveBytes:archive.bytes.length,archiveSha256:hash(archive.bytes),...receiving});
+ async function receivedCommand(argv){
+   return new Promise((done,reject)=>{
+     const child=spawn(process.execPath,[join(receivingDir,'application','start-publisher.mjs'),...argv],{cwd:join(receivingDir,'application'),shell:false,stdio:['ignore','pipe','pipe']});
+     let stdout='',stderr='',size=0;
+     child.stdout.on('data',chunk=>{size+=chunk.length;if(size>4*1024*1024){child.kill('SIGTERM');return;}stdout+=chunk;});
+     child.stderr.on('data',chunk=>{if(stderr.length<32768)stderr+=chunk;});
+     child.once('error',reject);child.once('close',code=>{
+       if(code!==0||size>4*1024*1024)return reject(new Error('Independent installed application failed: '+code+' '+stderr));
+       try{done(JSON.parse(stdout));}catch(e){reject(new Error('Independent installed application returned invalid JSON: '+e.message));}
+     });
+   });
+ }
+ const receivedStatus=await receivedCommand(['status','--directory',join(receivingDir,'workspace')]);
+ need(receivedStatus.workspace.id===actual.workspace.id&&receivedStatus.selection.publicationId===publication.id,'The fresh receiving application process lost its original workspace');
+ const receivedPage=await receivedCommand(['query','--directory',join(receivingDir,'workspace'),'--publication',publication.id,'--query','limit=250']);
+ need(receivedPage.status===200&&receivedPage.body.dataset.snapshot===publication.snapshot&&receivedPage.body.rows.length===250,'The fresh receiving application process did not execute its customer query');
+ stage('complete_archive_and_independent_receiving',{archivePath,archiveBytes:archive.bytes.length,archiveSha256:hash(archive.bytes),...receiving,independentApplicationProcesses:2,receivingSourceExecuted:true});
  result.complete=true;result.publicationId=publication.id;result.snapshot=publication.snapshot;result.captureSha256=retained.hash;
 }catch(e){result.error={name:e.name,code:e.code??null,message:e.message,stack:e.stack};process.stderr.write(JSON.stringify(result.error)+'\n');process.exitCode=1;}
 finally{await browser?.close();await service?.close();await workspace?.close();result.completedAt=new Date().toISOString();const file=join(ops,'operation-result.json');await writeFile(file,encoded(result),{mode:0o600});process.stdout.write(JSON.stringify({state:result.complete?'DATACTIVIST_OPERATING_COMPLETE':'DATACTIVIST_OPERATING_RETAINED',complete:result.complete,stages:result.stages.length,error:result.error?.message??null,result:file})+'\n');}

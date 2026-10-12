@@ -2,6 +2,8 @@
   "schema": "stellar-forge.datagouv-application-files.v1",
   "entrypoint": "start-publisher.mjs",
   "files": [
+    "products/datagouv/API.md",
+    "products/datagouv/OPERATING.md",
     "products/datagouv/application-files.json",
     "start-publisher.mjs",
     "stellar-forge/mcp-merchant-operator/catalog.mjs",
