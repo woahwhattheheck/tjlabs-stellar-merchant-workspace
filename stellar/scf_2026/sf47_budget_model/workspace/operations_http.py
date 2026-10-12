@@ -31,6 +31,8 @@ def register_static(static):
                    "/operations_implementation.css": ("operations_implementation.css", "text/css; charset=utf-8"),
                    "/operations_cohort.mjs": ("operations_cohort.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort.css": ("operations_cohort.css", "text/css; charset=utf-8"),
+                   "/operations_commercial_installations.mjs": ("operations_commercial_installations.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_commercial_installations.css": ("operations_commercial_installations.css", "text/css; charset=utf-8"),
                    "/operations_installations.mjs": ("operations_installations.mjs", "text/javascript; charset=utf-8"),
                    "/operations_installation_workflows.mjs": ("operations_installation_workflows.mjs", "text/javascript; charset=utf-8"),
                    "/operations_installations.css": ("operations_installations.css", "text/css; charset=utf-8"),
@@ -222,7 +224,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|installation-return-seed|installation-return-preview|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|installation-return-seed|installation-return-preview|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -234,6 +236,8 @@ def write(handler, parsed):
                    "implementation-preview": ops.preview_implementation, "cohort-seed": ops.seed_cohort, "cohort-preview": ops.preview_cohort, "installation-seed": ops.seed_installation,
                    "installation-workflows": ops.installation_workflows,
                    "installation-workflow-seed": ops.seed_workflow_installation,
+                   "installation-commercial": ops.installation_commercial,
+                   "installation-commercial-seed": ops.seed_commercial_installation,
                    "installation-workshares": ops.installation_workshares,
                    "installation-workshare-seed": ops.seed_workshare_installation,
                    "installation-preview": ops.preview_installation, "completion-seed": ops.seed_completion, "completion-preview": ops.preview_completion,

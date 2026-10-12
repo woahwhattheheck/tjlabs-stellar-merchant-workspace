@@ -740,6 +740,18 @@ class Operations:
             context = self._context(identifier(program_id, "operation"))
             return seed(self, context, body)
 
+    def installation_commercial(self, program_id, body):
+        from operations_commercial_installations import inventory
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return inventory(self, context, body)
+
+    def seed_commercial_installation(self, program_id, body):
+        from operations_commercial_installations import seed
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return seed(self, context, body)
+
     def installation_workshares(self, program_id, body):
         from operations_workshare_installations import case_inventory
         with self._snapshot():
