@@ -27,6 +27,8 @@ The integration cohort is the 1,444-file Research engine at standalone PR466 / 7
 
 The programme accepts that original receiving manifest or the maintained distribution builder's manifest.json (schema stellar-forge.merchant-distribution-manifest.v1). For a built release, --engine-root selects the release's source/ directory and --engine-manifest selects its original manifest.json. The complete original manifest bytes remain retained. The programme verifies every original member and hash, total files/bytes, required Research/Python components and the original licence. When the selected release already includes customer-programme, its files must match the executing implementation exactly; each source member is packaged once. A source cohort assembled before this feature receives the complete implementation alongside its original source.
 
+The selected engine also supplies the running command's native modules. Run from that same installed source tree, or assemble the complete customer-programme directory inside the retained original engine before invoking it. When --engine-root names a separate checkout, every selected original source member must also match the executing source tree byte for byte. This keeps native execution and the delivered engine on the same complete source selection.
+
 Install all files listed by IMPLEMENTATION_FILES in selection.mjs at:
 
     stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/

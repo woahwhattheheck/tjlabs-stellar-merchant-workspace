@@ -1317,7 +1317,7 @@ starforge research-customer-programme \
   --node /absolute/node
 ~~~
 
-Use the actual source root and original manifest of the installed release. A retained native receiving cohort can instead select its original ENGINE_SOURCE.json and corresponding complete source directory. Both forms retain all original file identities and source authority.
+Use the actual source root and original manifest of the installed release, and run the command from that same release. A retained native receiving cohort can instead select its original ENGINE_SOURCE.json and corresponding complete source directory, with the complete customer-programme directory installed inside that source tree. A separate selected checkout must match every original source member in the executing source tree. Both forms retain all original file identities and source authority.
 
 For an existing dossier, also pass --workspace /absolute/original/research-workspace and select its actual ID and expected revision in the input. This programme owns its original Research listeners through completion; continue its private operation directory when interrupted.
 
