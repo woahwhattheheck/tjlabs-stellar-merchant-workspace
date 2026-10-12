@@ -52,6 +52,13 @@ roadmap, native acceptance and complete customer handover in one source.
 | Operate complete transit schedules and merchant editions | **Applications → GTFS Schedule merchant** or `starforge gtfs` | Complete original feeds, exact dated schedules, retained comparisons, native dataset publication, merchant operation and whole-workspace receiving |
 | Review publisher finance and native data quality | **Applications → IATI aid finance and DQA** or `starforge dataset-iati` | Original XML and native DQA assessments, named finance/finding reviews, refreshed comparisons, browser/MCP/CLI operation and complete customer receiving |
 | Operate and receive a 360Giving publisher | **Applications → 360Giving publisher workspace**, `starforge dataset-360giving-workspace` and [typed agents](products/360giving-publisher/README.md) | Original package/reviews, complete native grants and changes, SDK/MCP operation, full customer handoffs and independent receiving |
+| Receive a reviewed local dataset and hand over the customer workspace | **Applications → Local dataset customer workspace** or `starforge local-dataset-agent` | [Complete selected installation](products/local-dataset/OPERATING.md), original Frictionless capture, full native pages, DuckDB editions and SQL, complete reports and portable receiving |
+
+The [Local dataset customer guide](products/local-dataset/OPERATING.md) connects
+reviewed Frictionless CSV, TSV, JSON and Parquet sources to complete native
+receiving, original DuckDB customer editions, saved SQL and reports, managed
+Applications and whole-workspace handover. Build its complete installed product
+with `--selection local-dataset`.
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
 connects these entry points to installation, source configuration, saved work,
