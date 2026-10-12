@@ -1,0 +1,41 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "gleif-research",
+  "description": "Official GLEIF company source editions, reviewed shortlists, full revision comparisons and native customer datasets",
+  "commands": {
+    "gleif": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/cli.mjs"
+  },
+  "commandDescriptions": {
+    "gleif": "Operate official company research, full source editions, saved shortlists, customer reports and native datasets."
+  },
+  "exports": {
+    "./seller/gleif": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/workspace.mjs",
+    "./seller/gleif/core": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/core.mjs",
+    "./seller/gleif/source": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/source.mjs",
+    "./seller/gleif/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/server.mjs",
+    "./seller/gleif/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/client.d.mts",
+      "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/client.mjs"
+    },
+    "./merchant/mcp/gleif": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/operator.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/client.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/SOURCE_CONTRACT.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/gleif-foundation-plan.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/name-plan.json",
+    "products/gleif/OPERATING.md"
+  ],
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/browser-assets.json"
+    }
+  ],
+  "applicationProviders": {
+    "gleif-research": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "gleif-research": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/operator-provider.mjs"
+  }
+}
