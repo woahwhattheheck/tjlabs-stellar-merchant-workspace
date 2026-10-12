@@ -1,0 +1,488 @@
+{
+  "schema": "tjlabs.openfema-product-source-adoption.v1",
+  "product": "OpenFEMA Public Assistance portfolios",
+  "selection": "openfema-portfolios",
+  "source": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "commit": "a5eaac406a60502246e45cf003761340bcf355e2",
+    "pullRequest": "https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2563"
+  },
+  "target": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "reviewedBase": "6ccf9f01147418338a0fee51b38b160fdcbacc5f"
+  },
+  "originalComponentFiles": 69,
+  "originalComponentBytes": 3761819,
+  "originalContribution": {
+    "path": "stellar/scf-starforge-20261009/distribution/contributions/openfema.json",
+    "gitBlob": "efc453fd2fcabfad5110d0a78a636afb83bc5c51",
+    "bytes": 6488,
+    "sha256": "38c57a5b687088fbf832f98b4d66831dcd289e7b7348506617d748cd66431467"
+  },
+  "interfaces": {
+    "commands": [
+      "openfema-workspace",
+      "openfema",
+      "openfema-mcp",
+      "openfema-merchant-exchange"
+    ],
+    "applicationKind": "openfema-public-assistance",
+    "applicationCommand": "openfema-workspace",
+    "merchantProvider": "openfema-workspaces",
+    "merchantConfigurationInput": "openFemaWorkspaceConnection",
+    "nativeActions": 29,
+    "merchantTools": 41,
+    "sourceRegistration": "openfema"
+  },
+  "implementation": "The complete original OpenFEMA source and contribution are preserved byte for byte. The named source recipe and product guides compose the maintained installation, Applications, merchant and original customer receiving engines.",
+  "runtime": "Linux, Node 24 and the maintained runtime installation prerequisites. The original workspace uses util-linux flock. Native merchant and MCP dependencies are selected from the original package manifests by runtime-install.",
+  "originalReceiving": {
+    "sourcePublication": "https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2563",
+    "programme": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs",
+    "operatorGuide": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/MCP.md",
+    "nativeOriginalCaseProgramme": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/native-portfolio-receiving.mjs",
+    "preservedOriginalOperation": "SCF-OPENFEMA-PORTFOLIO-3BDA-20261012"
+  },
+  "files": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/COMMISSIONING.md",
+      "gitBlob": "76ae2bde17a3a2694fb3ed6d41caa2dc9d9302f2",
+      "bytes": 21744,
+      "sha256": "a6747266c0a28c18f6c7d95f1249ab330e570da17d8969109b7610f69bc5fdda"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/DATA_INTEGRATION.md",
+      "gitBlob": "191012530b56c4dde61bd5fdcc986cc8ef8b41b9",
+      "bytes": 11337,
+      "sha256": "f3ad432568079821f994adde10e1a1dd84be65b3d7ebbf6abba42bd28bbe0774"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/MANAGED.md",
+      "gitBlob": "27415d4a34e2119b157e58239737706743f889db",
+      "bytes": 6178,
+      "sha256": "a5cf9418e764f5022e57a8216746557259702502476904667fa3cedb35f80b18"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/MCP.md",
+      "gitBlob": "ea2fb930b6245772d9b8c873d9563c8ec98c9636",
+      "bytes": 22417,
+      "sha256": "4068e4dbb86c30875f7c1e069b7c4db957fc26855765e403e528506f5941b13e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/README.md",
+      "gitBlob": "584f8540e6b82b2324857f811f6285f4fd763eb4",
+      "bytes": 20070,
+      "sha256": "95cae628c79a1fbb0ae3e978b30bb302ca88864c94b2eea450d290d6305568d7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/RECORDED_SOURCE.md",
+      "gitBlob": "1d80fb7eaf5359cc456bee89c4032e6b8ea41320",
+      "bytes": 11911,
+      "sha256": "730ca2272eb8a88e9034ad7752ce3e95e5074b2050e013d73478e5052881c43f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/SOURCE_CONTRACT.md",
+      "gitBlob": "faf56eda3af9bd55ad44665167808a2907d980f7",
+      "bytes": 17896,
+      "sha256": "afa57773e037186beec990ff3a7c6f0124300ebb24d5c46e56d381d04996b61b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/application-provider.mjs",
+      "gitBlob": "a2fd40adff2c3bcf9b2823630ff9f485511628de",
+      "bytes": 1104,
+      "sha256": "020875976375774602cbfa51a485a44a920d7410ce7b3f1c9fbdb0e3f67ea0ed"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/application.mjs",
+      "gitBlob": "56aeaee8c941d6cab86a7e58ad1dde16a9b4734c",
+      "bytes": 8276,
+      "sha256": "1b6852f9d088cd24f377f30c202c5d88af9fc969e96cc143a3aa354510687917"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/browser-assets.json",
+      "gitBlob": "fc714b61d33082e51b890e80796670760394d932",
+      "bytes": 404,
+      "sha256": "40b04e9955e2e51c2e2d10f0ee540cfd420977cfc3d3cf36c5ed9a63f7322e6a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/capture.mjs",
+      "gitBlob": "17d6aec11b04c6462a86946e40e301a1b4e0ce30",
+      "bytes": 45954,
+      "sha256": "63eb57f7f295a8eb2438511ad8fcc7cf94639657115ed71642c6670dd0d42b3a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/cli.mjs",
+      "gitBlob": "4bd3b3a7430eb00509b04bc4013524c567c2484d",
+      "bytes": 12812,
+      "sha256": "1010618f47a2beec5fd74ac5305ed582b78de41793885aaff03d68f00e509493"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/core.mjs",
+      "gitBlob": "f73f3b4b1ddb43606d4b3e4aeac0b33164c7c609",
+      "bytes": 35519,
+      "sha256": "1c5107b388808785ff1f6199b6d8bb4948f5ae95375f75f919c5be7f66c6c2d8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/dataset.mjs",
+      "gitBlob": "55d7a4e16dc99a2040f6f8d9aa2007a105a90947",
+      "bytes": 4432,
+      "sha256": "d13be8c9089557fb4e260648c0985b15401e1fc54b036a8cd12f47344e22f80b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/delivery.mjs",
+      "gitBlob": "9cb0ef9f3438ab62b08a2ef261c2fc9b1a616084",
+      "bytes": 27904,
+      "sha256": "c0efb26c9e6fe80bd564bf3cdc02b1aeb5d50f5a4f6cd02480e72fd646765dcb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/domain.mjs",
+      "gitBlob": "67b99d3d9601145681738488f7525f724bd4cc0a",
+      "bytes": 34147,
+      "sha256": "aeec394e61f989b709cda5b532a9eb524a72a6d8398f8b0e251570f571167ccd"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/exports.mjs",
+      "gitBlob": "47186cf00230f253f34bc28adad64499a62628b8",
+      "bytes": 16043,
+      "sha256": "b7abbb90eabc81ae74324577a4ca3da67ed5fcd41c800d4eaf1a1e02c4a1560a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/mcp-archive.mjs",
+      "gitBlob": "912f31952710b7348424234aa569c82f8451fd7a",
+      "bytes": 10441,
+      "sha256": "76755660c6498d9313d8b46a2e3ff4e455443c65e34c1d614945a8a605ebc3e7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/mcp-client.d.mts",
+      "gitBlob": "c8f453c38c38d7882f9625bbbaace7d202980864",
+      "bytes": 13756,
+      "sha256": "8014b3940d2c92e7e3c6920d9c1069ba69129eed7cba651914eb425c1f245d54"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/mcp-client.mjs",
+      "gitBlob": "1024e46691786d9511905fa6ca029ace271620d2",
+      "bytes": 21316,
+      "sha256": "6b620d05e28f55fae4b93a09f27cfcf70ea8c002d867a9e6574b1cb0e37a5470"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/mcp-protocol.mjs",
+      "gitBlob": "ee98e8b8fcab872853464a1a9cd0dea01c6a32af",
+      "bytes": 15294,
+      "sha256": "5c42034ddbce91eee7d21a92660340b1895b8d0679620e95c19a29b7e347e441"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/mcp.mjs",
+      "gitBlob": "e83bd4c7c254b83830087b7894bbef2fa89b32a6",
+      "bytes": 37376,
+      "sha256": "1d2cf399b40f8211cfe5eba2870a9fc1d32ab07baeb96239fb7b14370cc419de"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/merchant-provider.mjs",
+      "gitBlob": "00cdbdb3bb32a953819782928a9b46a2fbe9f863",
+      "bytes": 2640,
+      "sha256": "9f283b010bbe5d3afc1c3d1d5513dbc964ac4173fb95a5ee62bc0de77a9cf5ba"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/merchant-setup.mjs",
+      "gitBlob": "84619aaa860617d5d9d1a3577cbb7bc3764733b9",
+      "bytes": 2104,
+      "sha256": "ed6a3e2481c07657948cff96973b7aa6f712a26468fd7882802d008fc1e65520"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recorded-source.mjs",
+      "gitBlob": "60cbbfde671e91afe7b09a98b9c9069c5c5dcd24",
+      "bytes": 13464,
+      "sha256": "98df291a10c5aaa791d278dd1ca38397e3eac0063e54acf0b57ab064082c1a48"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/relocation.mjs",
+      "gitBlob": "a087e3e8091f1fc71095cb586df11b91191fc951",
+      "bytes": 18629,
+      "sha256": "c7dc673335b332cc881ecf443edee619e7c72a4b7f923a9405ae9c404e3a3ad6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/schema.mjs",
+      "gitBlob": "1de8d2bb507931390fb7287a5661502c56337940",
+      "bytes": 4929,
+      "sha256": "741114036fca6fd33c326a609610b52023516938231fbc664056f2fdc11d62b2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/source-contract.json",
+      "gitBlob": "e9511f2cd33f409ad676b1ca697705840a620bd7",
+      "bytes": 34237,
+      "sha256": "61d0140387f9a05b0db9111b5c787c2ffaffc2cb71f17348209548234c7737e4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/workspace.mjs",
+      "gitBlob": "8f9769ff6d3f9c3a2adabcec4ec5d220f7c74e75",
+      "bytes": 14494,
+      "sha256": "d5902cb7a7884ab5138d9e9da20e14b8e2b62295f3da0f3f700d8abdc578e448"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/zip.mjs",
+      "gitBlob": "6c4fd5fb3e6076f04edbb1f79561e3b70718668d",
+      "bytes": 5333,
+      "sha256": "e18f785a16727adef5c90c979b24f098d00ae4bc7d180a454103afd1a12d4fe3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/TESTNET.md",
+      "gitBlob": "8799924ef22a9ccb2189e26d6f0c5b1ad8a40e3d",
+      "bytes": 6708,
+      "sha256": "a4bfc66abda52b25897b4d8eeee8baca6a581878e9ce91a7afe19db095944af6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/commissioning-dr4724.json",
+      "gitBlob": "bbc2649d4ff01bed0423986aa2cbab97af99ebec",
+      "bytes": 664,
+      "sha256": "0615973f8dddee471aee83f16b48008a5a1dec17a57d61e8c443bff6743824b1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/commissioning-workorder.md",
+      "gitBlob": "df867b4fe2178a83596fcbca6e3368790fd9e324",
+      "bytes": 6953,
+      "sha256": "d0fcb1d7a4af4c0eb7ec50397cc1537cfc8259132fd9d39aa4c5099927d3890d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs",
+      "gitBlob": "132110727b408f8704710b4b78a90f0485055ce9",
+      "bytes": 10124,
+      "sha256": "3215e33d887e66cd9e5d45ffaa30cb140ab57fa2a04805b0a25a8c21c97b0079"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/native-portfolio-receiving.mjs",
+      "gitBlob": "84cd5e525926673b33694ccd5a46d8d7e1b1f844",
+      "bytes": 41239,
+      "sha256": "5d1769f027431698533efe4311b36d7db9e04080430bd592d3d37fca72096f20"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/project-staging-mapping.json",
+      "gitBlob": "1a0fef1ab178da7d9f3d79627569073d969c7daa",
+      "bytes": 7544,
+      "sha256": "218a19eaca272517d69006a15291bc1a6b41879593b559bb51890f155dffc4e5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/testnet-commissioning.mjs",
+      "gitBlob": "6f392ec64152ad705565321e0b1f63cdc8bc0590",
+      "bytes": 45562,
+      "sha256": "b63960258bba55efab81e9f45c2703d16aac3e7ae581953987a0ae87685cbca2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/testnet-input.example.json",
+      "gitBlob": "7d594f37deea6e2ad8ce7e93a7b8fa2de5851a67",
+      "bytes": 724,
+      "sha256": "8e3109345a9fe2af4db4a79de72e4fc1aad624bd905695a2f2a1e0a28d0b0564"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/testnet-runtime-package.json",
+      "gitBlob": "f9f666aa044b6db1b4689ea1381b59ff8f4e4240",
+      "bytes": 283,
+      "sha256": "64ae242b1dbec60dcb72d1572fd73d8057fdf51fe37682dbdb74533b50bf79f2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/web/app.js",
+      "gitBlob": "371e9684cdb8b14c2527e61861e05e6efaf1dde6",
+      "bytes": 82925,
+      "sha256": "397e913d58f1fd39f53bdbb2eb7df783b9c14fd1d61f6a1c25fbbb99852a1536"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/web/index.html",
+      "gitBlob": "8034559cd684b8d183c291e2179b180fd1f85c51",
+      "bytes": 1339,
+      "sha256": "86c712255202df46f48efadb6664aef4cb82bbae8c10b242f94bdd9050b67531"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/web/style.css",
+      "gitBlob": "b57b5213b332fa641ec4a03a4197909a9ac2d305",
+      "bytes": 9191,
+      "sha256": "1fdbc4ca70cbc80bc46edcd84f978166c7e31f4c5d94389332f5ae17c90e29e4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/README.md",
+      "gitBlob": "9e9fb7e87c77d1f854df31dd4f12fd6dcc1e9b6a",
+      "bytes": 6544,
+      "sha256": "a293ffcba5623f275f2222e9f97e29008e3fe2ce6b19b5e097e4ec9e1c65b06d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/SOURCE.md",
+      "gitBlob": "acbcbe26440113ee6fdd897b8c6916df340a5fb4",
+      "bytes": 2390,
+      "sha256": "d764c376595a0adbc8148ba1db7b627d886f4ccd0c6a4f91b1b13d445c881655"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/build.mjs",
+      "gitBlob": "305b26d9d0ba678b7c50a3389b7fd441ec8afd4b",
+      "bytes": 1169,
+      "sha256": "ee36a9396e040e0315975808255bba7ee7dfcc7cc7bacc138049fc82b70acab7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/cli.mjs",
+      "gitBlob": "6e37184ac5e6b65cf9c34be3cf75013139971985",
+      "bytes": 4215,
+      "sha256": "145ddb4b1b4bef3b397e05fc44921dd99ada66542e6c83e067b2336b0c411701"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/engineering-context.json",
+      "gitBlob": "2f1637a23174c87ab54431bd0921ab6079286e22",
+      "bytes": 25619,
+      "sha256": "c34a3445cdfd1ba244611dd1a53b7aca85d8fd14341a6283cfa25ee41cf9d54b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/locations.csv",
+      "gitBlob": "cacb842acd001ccf7d045134c30d1b60e92e191c",
+      "bytes": 25992,
+      "sha256": "90becae27a8ffab35a56053a4e831d215c4c927dffdd50dbf0bf4026fa60adf5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/portfolio.json",
+      "gitBlob": "8f6d15eb6aa9c29c4a3f4d556d7c3783c84ae3f9",
+      "bytes": 126274,
+      "sha256": "728e4fb785c42e13680cb8716fc608c64bb97f638697bc8b5238c5374d09f769"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/prepared-workspace.json",
+      "gitBlob": "3b020ea20b636dcb1224dbbae81faee35695a9ee",
+      "bytes": 823861,
+      "sha256": "9a83f4cf85c379e07135ee3726074231df1f29db3f366f25c087f688fed37d77"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/projects.csv",
+      "gitBlob": "3152cfb494e62f9fbf2f37f14daf88fcbcd7e4cc",
+      "bytes": 2376,
+      "sha256": "d299634960318eaf5075a8b26045f60adf8092ad298a1ef6ca57fa4592c3c710"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/sha256.mjs",
+      "gitBlob": "c8de7a88216c245f1292ca3f54880b371745d3a7",
+      "bytes": 2151,
+      "sha256": "5c91833e252fea4200bb2f29606b77386ceddca4e24ec547ac94ee56363bbad9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/source-index.json",
+      "gitBlob": "1e511fc63c6a7bb0a32fb91ca0401b26de83a245",
+      "bytes": 11466,
+      "sha256": "795885f3d484edfcac46f54dbccb268ce7fb28e3b93aafc542936647f1ec1371"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/source-register.json",
+      "gitBlob": "581bafeed4ddd78f8340f034353413f5df4f290e",
+      "bytes": 8975,
+      "sha256": "01db099aba8f4c07182584c505e6a0efc1a2bf589095b5e5f94c6d416ef85928"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/source-review.html",
+      "gitBlob": "7cbeb944572823fa08ec5d4326ad5e9793034c5d",
+      "bytes": 23617,
+      "sha256": "c4b02142b72b7c38df9020d04ff29257fee6da5bd196743f2e09e4d9ee9661e0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/ui.js",
+      "gitBlob": "52e4ff43f94773501a3c63c0872864edacef7917",
+      "bytes": 21173,
+      "sha256": "e24c023fc2171d0dbebebf323b4d0ec8bdfaa106f2acfff2c95e2c92dcfedd18"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/workspace.html",
+      "gitBlob": "7664d1e869ef60079283959df0a9b4fdec5f8fd2",
+      "bytes": 950732,
+      "sha256": "d023b0fe7d1299ed6ffc701cd947beae72d4474dd76b197b312beebfe0e3b10b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/workspace.mjs",
+      "gitBlob": "9fb4ef06eaa3ad5da12a074bc91bb64c6a50df61",
+      "bytes": 27402,
+      "sha256": "83769c3aee23473d8940f70caf16e247659b0bfea45e9eb39c8857665033ca57"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/orange-ida/workspace.template.html",
+      "gitBlob": "b19c6d62c2596018c3b8a83f4570a7cbef5039c2",
+      "bytes": 4154,
+      "sha256": "0f92fe4bd27e9b1502d45f7d01e0d3ea7f848543066faac7f3f46e149936e5db"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/README.md",
+      "gitBlob": "c35d4591d00041a6608045d75de61b7acb7c9329",
+      "bytes": 1995,
+      "sha256": "bedf8e75a20ac83d65b45c9c8e2601fa06cf1fb8289389cd020b7e0b5575193f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/applicants.csv",
+      "gitBlob": "c06590e6bb99dbb2988e1fe05740f75eb0bddc09",
+      "bytes": 7896,
+      "sha256": "51ff64b464df952d5ffd96445a0219a1e138090e1e49eb418dbe02d3b317bacc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/categories.csv",
+      "gitBlob": "0a1a2032c0b68b7555c93ccbe58e3187ef9c49e7",
+      "bytes": 384,
+      "sha256": "8c6034f4d3f76407a4ec5d86208e1914045ebfe1dc916595ea68ac2400be0534"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/declarations.csv",
+      "gitBlob": "f9ce28d98813d8bb980ab437c0e2b9577e8cafb4",
+      "bytes": 763,
+      "sha256": "9cf5af1e7f6f435226625a9546da90d33db57fcf8b9f3fd3324cbc6f0c8a7464"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/disasters.csv",
+      "gitBlob": "6ad9ee009d1f3e3b7800d630c24d1cc8d252b173",
+      "bytes": 293,
+      "sha256": "ef7f6d43687a228ad20cd1e001b8b0dcbeba2d939d9aecee2c4918b711455890"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/issues.csv",
+      "gitBlob": "f8985dd625e2801d799307b1095f9ddc409dc24d",
+      "bytes": 35,
+      "sha256": "9811cdfff73195e65ee638163c61cf5962b8118263b0272eed26a9cae5f64d71"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/manifest.json",
+      "gitBlob": "704c50c03661f6302577e4cb05dc99c6145b9dd5",
+      "bytes": 6048,
+      "sha256": "937558bbf405f40ce035660e4bfe9fb5bcbfc26bf432836e40d40d503e38e0b6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/portfolio.html",
+      "gitBlob": "9542d97288c2140c5721ada0296a93249eb1d6e4",
+      "bytes": 148287,
+      "sha256": "759fe6b57f3e19efa39aa6b027e86d158d09d562bd38c3907809892c85968afe"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/portfolio.json",
+      "gitBlob": "1fc9d57546d26b05e1ab20883c34b8d3f8727403",
+      "bytes": 740440,
+      "sha256": "60bbfa6befdf93a332bf7c4c818fc8f6a85c50eb9f15a1ca59825542db0d3c7b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recorded-dr4724/projects.csv",
+      "gitBlob": "8e23fc5fcb0e0a382e1912a631a0e8fff3538505",
+      "bytes": 82151,
+      "sha256": "270176c27dbdccb9321234e4215b7f2c8f0edf6960fc0d6c23e033a86d3a038a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/openfema.json",
+      "gitBlob": "efc453fd2fcabfad5110d0a78a636afb83bc5c51",
+      "bytes": 6488,
+      "sha256": "38c57a5b687088fbf832f98b4d66831dcd289e7b7348506617d748cd66431467"
+    }
+  ],
+  "productFiles": [
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/selections/openfema-portfolios.json",
+      "gitBlob": "bca564790dff445d83f53b4e48c958c8e0ff8576",
+      "bytes": 5731,
+      "sha256": "9404e2b91581cba655e2d9ae00c0d7a8d512320ff87bb7da5ba31be7490482a7"
+    },
+    {
+      "path": "products/openfema/OPERATING.md",
+      "gitBlob": "5c8359a794d3057b366289dddab5124ea21e0c75",
+      "bytes": 17252,
+      "sha256": "0a1fa7e84c6fbcb1c293b9b910d875cb6533e4f546256a7492a54b33829f512b"
+    },
+    {
+      "path": "products/openfema/RECEIVING.md",
+      "gitBlob": "91d2bb7b20bbe522ac7c340fc969fb2b46839bc4",
+      "bytes": 17256,
+      "sha256": "9b27c6c9c654676398988a878114d5d1d829470e1ecb03fb922f4362ce45e54d"
+    }
+  ]
+}
