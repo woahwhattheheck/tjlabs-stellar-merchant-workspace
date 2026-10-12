@@ -10,34 +10,46 @@ export function decodeCsv(input) {
 export function parseCsv(rawText) {
   if (typeof rawText !== 'string') throw failure('INVALID_CSV', 'CSV source must be text');
   const source = rawText.replace(/^\uFEFF/, '');
-  const records = [];
-  let record = [], field = '', quoted = false, endedQuote = false, touched = false, line = 1;
-  const finishField = () => { record.push(field); field = ''; endedQuote = false; };
-  const finishRecord = () => { finishField(); records.push(record); record = []; touched = false; };
-  for (let index = 0; index < source.length; index++) {
-    const char = source[index];
-    if (quoted) {
-      if (char === '"') {
-        if (source[index + 1] === '"') { field += '"'; index++; }
-        else { quoted = false; endedQuote = true; }
-      } else { field += char; if (char === '\n') line++; }
-      touched = true;
-      continue;
+  if (!source.length) throw failure('CSV_HEADER_REQUIRED', 'Source needs the complete CanadaBuys header row', 422);
+  const records = [], delimiter = /[",\r\n]/g;
+  let index = 0;
+  const location = position => ({ physicalLine: 1 + (source.slice(0, position).match(/\n/g) || []).length,
+    recordNumber: records.length + 1 });
+  while (index < source.length) {
+    const record = [];
+    for (;;) {
+      let field;
+      if (source[index] === '"') {
+        let start = ++index, pieces = null;
+        for (;;) {
+          const quote = source.indexOf('"', index);
+          if (quote < 0) throw failure('INCOMPLETE_CSV', 'Source ended inside a quoted field', 422, location(source.length));
+          if (source[quote + 1] === '"') {
+            if (!pieces) pieces = [];
+            pieces.push(source.slice(start, quote), '"');
+            index = quote + 2; start = index;
+          } else {
+            field = pieces ? pieces.concat(source.slice(start, quote)).join('') : source.slice(start, quote);
+            index = quote + 1;
+            if (index < source.length && ![',','\r','\n'].includes(source[index]))
+              throw failure('INVALID_CSV', 'Unexpected text after a quoted field', 422, location(index));
+            break;
+          }
+        }
+      } else {
+        delimiter.lastIndex = index;
+        const match = delimiter.exec(source), end = match ? match.index : source.length;
+        if (match?.[0] === '"') throw failure('INVALID_CSV', 'A quote inside an unquoted field must be escaped', 422, location(end));
+        field = source.slice(index, end); index = end;
+      }
+      record.push(field);
+      if (source[index] === ',') { index++; continue; }
+      records.push(record);
+      if (source[index] === '\r' && source[index + 1] === '\n') index += 2;
+      else if (index < source.length) index++;
+      break;
     }
-    if (endedQuote && char !== ',' && char !== '\r' && char !== '\n')
-      throw failure('INVALID_CSV', 'Unexpected text after a quoted field', 422, { physicalLine: line, recordNumber: records.length + 1 });
-    if (char === '"') {
-      if (field.length) throw failure('INVALID_CSV', 'A quote inside an unquoted field must be escaped', 422, { physicalLine: line });
-      quoted = true; touched = true;
-    } else if (char === ',') { finishField(); touched = true; }
-    else if (char === '\r' || char === '\n') {
-      if (char === '\r' && source[index + 1] === '\n') index++;
-      finishRecord(); line++;
-    } else { field += char; touched = true; }
   }
-  if (quoted) throw failure('INCOMPLETE_CSV', 'Source ended inside a quoted field', 422, { physicalLine: line });
-  if (touched || record.length || field.length || endedQuote) finishRecord();
-  if (!records.length) throw failure('CSV_HEADER_REQUIRED', 'Source needs the complete CanadaBuys header row', 422);
   const columns = records.shift();
   if (columns.some(column => !column) || new Set(columns).size !== columns.length)
     throw failure('INVALID_CSV_HEADER', 'CSV headers must be nonempty and unique', 422);
