@@ -260,6 +260,8 @@ def register(subparsers, common):
         target.add_argument("--document", required=True, help="UTF-8 JSON installation document from seed or an edited saved edition")
         target.add_argument("--installation", help="Original installation ID; omit for the first edition")
         target.add_argument("--expected-revision", type=int, required=True, help="Zero for a new installation; current saved edition otherwise")
+        target.add_argument("--return-review", help="Original staged owner review ID, paired with --return-review-sha256")
+        target.add_argument("--return-review-sha256", help="Exact staged owner review digest")
         if verb == "installation-save":
             mutation(target, version=True)
             target.add_argument("--expected-preview-sha256", required=True)
@@ -757,6 +759,10 @@ def operate(workspace, args):
         except (UnicodeError, ValueError) as exc:
             raise Problem("Installation input must be a complete UTF-8 JSON document.", 422, "INVALID_JSON") from exc
         selected = {"installationId": args.installation, "expectedRevision": args.expected_revision, "document": document}
+        if bool(args.return_review) != bool(args.return_review_sha256):
+            raise Problem("Select both the original return review ID and its exact SHA-256.", 422, "INVALID_INSTALLATION_RETURN")
+        if args.return_review:
+            selected["returnReview"] = {"id": args.return_review, "sha256": args.return_review_sha256}
         if action == "installation-preview":
             result = ops.preview_installation(args.case, {"expectedVersion": args.expected_version, **selected})
         else:

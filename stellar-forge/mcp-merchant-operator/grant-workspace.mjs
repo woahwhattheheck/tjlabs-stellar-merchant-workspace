@@ -443,6 +443,9 @@ export class MerchantGrantWorkspaces {
       const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
       original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
     }
+    else if (verb === 'installation_return_review_seed') {
+      const {caseId,...body}=rest; original=await client.installationReturnReviewSeed(caseId,body);
+    }
     else if (verb === 'installation_return_seed') {
       const {caseId,...body}=rest; original=await client.installationReturnSeed(caseId,body);
     }
