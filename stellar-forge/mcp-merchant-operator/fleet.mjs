@@ -109,7 +109,12 @@ export class MerchantFleet {
           }
         }
         default: {
-          const methods = { merchant_fleet_catalog: 'catalog', merchant_fleet_stage: 'stage',
+          const methods = { merchant_fleet_campaign_list: 'campaignList', merchant_fleet_campaign_inspect: 'campaignInspect',
+            merchant_fleet_campaign_save: 'campaignSave', merchant_fleet_campaign_review: 'campaignReview',
+            merchant_fleet_campaign_advance: 'campaignAdvance', merchant_fleet_campaign_pause: 'campaignPause',
+            merchant_fleet_campaign_rollback_review: 'campaignRollbackReview', merchant_fleet_campaign_rollback: 'campaignRollback',
+            merchant_fleet_campaign_retire: 'campaignRetire', merchant_fleet_campaign_export: 'campaignExport',
+            merchant_fleet_catalog: 'catalog', merchant_fleet_stage: 'stage',
             merchant_fleet_review: 'review', merchant_fleet_prepare: 'prepare', merchant_fleet_activate: 'activate',
             merchant_fleet_rollback_review: 'reviewRollback', merchant_fleet_rollback: 'rollback', merchant_fleet_retire: 'retire',
             merchant_fleet_operations: 'operations', merchant_fleet_client_list: 'clientList',
@@ -130,7 +135,8 @@ export class MerchantFleet {
           if (!method) throw error('TOOL_NOT_FOUND', 'Unknown fleet operation.');
           const held = this.#owned();
           const result = await held.operator[method](args);
-          if (!['catalog', 'operations', 'clientList', 'clientInspect', 'clientManifest', 'clientFile', 'clientFileRelease',
+          if (!['campaignList', 'campaignInspect', 'campaignExport', 'campaignReview', 'campaignRollbackReview',
+            'catalog', 'operations', 'clientList', 'clientInspect', 'clientManifest', 'clientFile', 'clientFileRelease',
             'deliveryStatus', 'deliveryEvents', 'deliveryTransfers', 'deliveryTransferManifest', 'deliveryFile', 'deliveryFileRelease',
             'discoveryStatus', 'discoveryEnrollment', 'discoverySource', 'discoveryHistory', 'discoveryConsume',
             'discoveryReviewEnrollment', 'discoveryReview'].includes(method))
@@ -141,6 +147,7 @@ export class MerchantFleet {
     } catch (cause) { throw publicFailure(cause); }
   }
   cancelStaging() { return this.#held?.operator.cancelStaging() ?? false; }
+  cancelCampaigns() { return this.#held?.operator.cancelCampaigns() ?? false; }
   cancelClientTransfers() { return this.#held?.operator.cancelClientTransfers() ?? false; }
   cancelDeliveryOperations() { return this.#held?.operator.cancelDeliveryOperations() ?? false; }
   async close() {
