@@ -32,6 +32,14 @@ starforge client-close runbooks download \
 
 Use a standalone client's running URL without `--client`, or its stopped `--workspace` selector. Download destinations must be new or already hold the same complete bytes.
 
+## Receive the selected procedure set
+
+A named-set period's packet keeps the complete original catalog and all its named set definitions, together with only that period's selected work and review history. The printable handover names the set; its task CSV includes the selected procedures and the set ID/name alongside the stable Runbook/Edition/Period/Task identity.
+
+Use the complete profile-capable selected runtime at the receiver. Native receiving verifies the frozen choice against the original edition and creation record, each selected work entry and the assignment/review history. An existing all-procedure period retains its original digest and CSV shape.
+
+After receiving the reviewed period, start the next local weekly or monthly period from the carried edition and the receiver's actual new files. Review the named set in that new draft before creating it. The full catalog remains available for choosing another saved set; receiving a weekly period does not turn the entire catalog into completed work.
+
 ## Capture the firm portfolio
 
 Select the actual clients and the original period IDs to deliver. Include a period using each client's commissioned procedure edition. Read and retain each current client workspace identity/revision before capture.
@@ -140,8 +148,8 @@ A complete installed continuation should retain the following original outcomes:
 | --- | --- |
 | Package | Actual source commit and `accountant-portfolio` recipe; complete archive/manifest and exact source inventory. |
 | Runtime | Original native + MCP + operator profile, complete dependency graph/lock, ready runtime and installed source check. |
-| Commands | `client-close` and original workspace forwarding; typed Runbooks/Portfolio exports. |
-| Client observations | The same original workspace IDs, periods, commissions, plans and incoming packet identities. |
+| Commands | `client-close` and original workspace forwarding; typed Runbooks/Portfolio exports; complete named-set paging and original prepared create requests. |
+| Client observations | The same original workspace IDs, periods, frozen procedure sets, commissions, plans and incoming packet identities. |
 | File receiving | Complete existing period/portfolio bytes through the installed native reader, with matching size and SHA256. |
 | Managed application | Reviewed original source configuration, complete coordinator/client resource set, saved start, client desk and normal stop. |
 | Reopen | The same stopped-owner CLI and client records, without rebuilding the original merchant source or repeating committed work. |

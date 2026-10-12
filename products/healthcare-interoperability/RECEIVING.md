@@ -94,6 +94,8 @@ Its [complete guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_e
 
 For a receiving host with different local paths, restore the original complete editable archive through the native `workspace-receive` command. Run the same connected driver with `--workspace /absolute/restored/original-workspace` and `--original-bundle /absolute/received/original-published-bundle.json`. It retains the unchanged native result and original UUID, records the received paths, and checks the complete original source and saved records before continuing.
 
+The browser and installed Applications receiving programs accept that same explicit `--workspace /absolute/restored/original-workspace`. Start the browser's operator at the restored directory and select its actual emitted startup record. Both journeys verify the original UUID and retained source/edition/review/assessment/dataset/handoff records; the original receiving JSON stays unchanged. Their default invocations continue the original host's existing journals. The [portable browser instructions](../../stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/BROWSER_RECEIVING.md#receive-the-same-workspace-on-another-host) include the full native restoration command.
+
 The installed Applications entry uses:
 
 ~~~sh

@@ -8,7 +8,8 @@
       "FHIR source and Applications 2016/2049",
       "FHIR49 connected actions2096",
       "eLTSS native/browser/Applications2204",
-      "eLTSS77 connected actions2206"
+      "eLTSS77 connected actions2206",
+      "Complete portable eLTSS browser and installed Applications receiving PR2251"
     ],
     "supplementalSource": [
       {
@@ -22,6 +23,34 @@
         "gitBlob": "7e12d84cf403c5eb7d06f49c45d4a85a8f1b9cc2",
         "bytes": 29081,
         "reason": "Complete portable receiving of original saved native result and editable workspace"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/operate_browser.mjs",
+        "gitBlob": "085d445fc6d6402ee59eeedca61450b1cfd68ed9",
+        "bytes": 19523,
+        "commit": "074252b2e690728ba845e6744cfa663d5729e090",
+        "reason": "Complete original browser and Applications receiving at an explicit restored workspace"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/operate_installed_applications.mjs",
+        "gitBlob": "65b44da5f3319b3af29196245536bb8ccf4eb242",
+        "bytes": 21011,
+        "commit": "074252b2e690728ba845e6744cfa663d5729e090",
+        "reason": "Complete original browser and Applications receiving at an explicit restored workspace"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/BROWSER_RECEIVING.md",
+        "gitBlob": "25ca75a07399b3063bafd7c1ed34199c7d5a7227",
+        "bytes": 4766,
+        "commit": "074252b2e690728ba845e6744cfa663d5729e090",
+        "reason": "Complete original browser and Applications receiving at an explicit restored workspace"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/APPLICATIONS.md",
+        "gitBlob": "291772d7374eda49e444baa8388407415ec38f77",
+        "bytes": 10325,
+        "commit": "074252b2e690728ba845e6744cfa663d5729e090",
+        "reason": "Complete original browser and Applications receiving at an explicit restored workspace"
       }
     ]
   },
@@ -821,6 +850,34 @@
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
       "beforeGitBlob": "515f71265c3c55d8044561f042329798ce19c63e",
       "change": "Successful source_file routes preserve complete original JSON file bytes and original member naming through the existing declared file transport."
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/operate_browser.mjs",
+      "beforeGitBlob": "a1b5fda2c2639e58d315be642ba7bdd149477493",
+      "afterGitBlob": "085d445fc6d6402ee59eeedca61450b1cfd68ed9",
+      "upstreamCommit": "074252b2e690728ba845e6744cfa663d5729e090",
+      "change": "Explicit portable workspace with original UUID, complete record lineage and unchanged default journal binding"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/operate_installed_applications.mjs",
+      "beforeGitBlob": "f28eff69038f9d61980ff0368ff2c7860dbe3cd4",
+      "afterGitBlob": "65b44da5f3319b3af29196245536bb8ccf4eb242",
+      "upstreamCommit": "074252b2e690728ba845e6744cfa663d5729e090",
+      "change": "Explicit portable workspace with original UUID, complete record lineage and unchanged default journal binding"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/BROWSER_RECEIVING.md",
+      "beforeGitBlob": "22d34f397e5ba5525b884addf916960c1b0db4f2",
+      "afterGitBlob": "25ca75a07399b3063bafd7c1ed34199c7d5a7227",
+      "upstreamCommit": "074252b2e690728ba845e6744cfa663d5729e090",
+      "change": "Explicit portable workspace with original UUID, complete record lineage and unchanged default journal binding"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/APPLICATIONS.md",
+      "beforeGitBlob": "c6d684da0e0cb654da654d4ad218c306dae7c977",
+      "afterGitBlob": "291772d7374eda49e444baa8388407415ec38f77",
+      "upstreamCommit": "074252b2e690728ba845e6744cfa663d5729e090",
+      "change": "Explicit portable workspace with original UUID, complete record lineage and unchanged default journal binding"
     }
   ],
   "connectedDependencyComparison": {
