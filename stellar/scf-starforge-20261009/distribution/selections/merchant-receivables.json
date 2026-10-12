@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-receivables",
-  "title": "Merchant receivables and service billing",
-  "description": "Original merchant accounting and customers, service quotations, issued invoices, customer payments and credits, retained installment schedules, dated collections and complete customer account files.",
+  "title": "Merchant receivables and Stellar invoice collection",
+  "description": "Original merchant accounting, service quotations and issued invoices, reviewed Stellar wallet requests and native transfer receiving, installment schedules, customer allocations, credits and complete dated account delivery.",
   "base": {
     "commands": [
       "installation",
@@ -75,14 +75,16 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+    "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant receivables: original quotations, reviewed invoices, exact customer payment allocation, credit notes, retained installment schedules and dated account delivery.",
+    "description": "Merchant receivables: reviewed invoices and Stellar collection requests, verified native transfers, installment schedules, customer payment allocation, credit notes and dated account delivery.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
