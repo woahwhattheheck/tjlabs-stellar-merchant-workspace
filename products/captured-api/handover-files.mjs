@@ -58,6 +58,11 @@ export async function directory(path, create = false) {
   if (!entry.isDirectory() || entry.isSymbolicLink() || (entry.mode & 0o077) ||
       await realpath(path) !== path)
     fail('CAPTURED_HANDOVER_DIRECTORY', 'Use the original canonical private directory: ' + path);
+  if (create) {
+    // Reentry also completes a prior successful mkdir whose directory flush
+    // was interrupted before its original publication became durable.
+    await syncDirectory(path); await syncDirectory(dirname(path));
+  }
   return path;
 }
 export async function parents(root, name) {
@@ -86,6 +91,9 @@ export async function publishBytes(root, name, content) {
   if (await present(path)) {
     const old = await bytes(root, name, Math.max(content.length, METADATA_LIMIT));
     if (!old.equals(content)) fail('CAPTURED_HANDOVER_CONFLICT', 'This retained file has different original bytes: ' + name);
+    // A previous link/unlink may have completed before its parent sync failed.
+    // Reusing the exact original file finishes that pending publication.
+    await syncDirectory(dirname(path));
     return;
   }
   const temporary = path + '.' + randomUUID() + '.partial';
