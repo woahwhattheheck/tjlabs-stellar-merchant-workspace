@@ -3,15 +3,17 @@
 Build and operate a data service with Stellar payment access, native customer
 clients, retained source results, deployment releases, and an operator workspace.
 
-The product brings together GraphQL service authoring, satellite imagery and
-processing history, searchable material catalogs, merchant incident work, and
-QuickBooks or Xero accounting operations. Each workflow keeps its original saved
-records from source selection through delivery and reopening.
+The product brings together captured HTTP API and GraphQL service authoring,
+satellite imagery and processing history, searchable material catalogs, merchant
+incident work, and QuickBooks or Xero accounting operations. Each workflow keeps
+its original saved records from source selection through delivery and reopening.
 
 ## Choose a workflow
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
+| Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Turn an existing GraphQL query service into a merchant | `starforge graphql-workspace` or the merchant MCP tools | Reviewed operations, actual source previews, buyer clients, versioned merchant packages and deployment releases |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
@@ -22,7 +24,13 @@ The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-
 connects these entry points to installation, source configuration, saved work,
 deployment, receiving, and recovery. The
 [material catalog guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/material-catalog/README.md)
-covers its own complete catalog workflow.
+covers its own complete catalog workflow. The
+[captured API guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
+follows capture intake, operation decisions, the route worksheet, merchant
+compilation, agent operation and receiving in one retained product. The
+[purchased API customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
+opens existing access or a saved purchase through the browser, generated agent
+settings and exact request client.
 
 ## Open the source product
 
@@ -115,6 +123,22 @@ provides the corresponding browser workflow.
 
 ## Operate one saved merchant
 
+For a captured HTTP API, initialize and open its private product:
+
+~~~sh
+starforge captured-api init --dir /absolute/private/captured-api \
+  --name 'Supplier API'
+starforge captured-api open --dir /absolute/private/captured-api --browser-only
+~~~
+
+Upload the original HAR, review operations in the browser, and save the immutable
+source decisions. Use that approved source in the native merchant form, set the
+payment and upstream choices, and review exact route prices in its worksheet.
+Compile and save the complete merchant, then reopen its original package for
+release and customer receiving. Opening the same product with its MCP token
+enables the HAR and OpenAPI agent workflows against that same browser and state.
+The captured API guide gives the full runtime selection and commands.
+
 For an existing query service:
 
 1. Open the GraphQL workspace and capture the actual served schema.
@@ -144,8 +168,10 @@ through the host's environment or existing secret manager; configuration files
 retain their reference names.
 
 Use the product's original export and receiving commands for a handover. Imagery
-deliveries include a local scene explorer and retained selected assets. GraphQL
-exports include the generated client and exact deployment files. Support
+deliveries include a local scene explorer and retained selected assets. Captured API
+handoffs keep the native capture or refresh directory, immutable reviews, full
+merchant package and pricing worksheet. GraphQL exports include the generated
+client and exact deployment files. Support
 handoffs carry the original captures and saved case. Accounting operations keep
 their original request and response identities through reconciliation.
 
@@ -157,6 +183,8 @@ the replacement is operating as intended.
 ## Product source and guides
 
 - [Complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
+- [Captured API merchant, pricing and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
+- [Purchased API access and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 - [GraphQL authoring and revisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
 - [Imagery operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/README.md)
 - [Cirrus and FilmDrop processing](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/processing/PROCESSING.md)

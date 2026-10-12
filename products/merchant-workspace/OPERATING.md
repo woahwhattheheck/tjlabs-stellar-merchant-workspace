@@ -14,7 +14,9 @@ They retain its original dependency manifests and lock.
 
 | Workflow | Dependency selection |
 | --- | --- |
+| Captured API authoring and native merchant compiler | `schema`, `openapi`; add `mcp` for the agent and native Stellar packages for the selected payment runtime |
 | GraphQL authoring and generated merchant | `graphql`, `schema`, `openapi`; add native Stellar packages for the merchant's configured payment runtime |
+| Purchased API customer and original payment lifecycle | Native Stellar packages, `mcp`, Python 3.11 or later, and the original selected Buyer/Inbox directories |
 | Merchant MCP interface | Add `mcp` and the features used by the selected workspace |
 | STAC catalog and local retained explorer | Original Node source and local file-lock support |
 | STAC merchant/customer receiving | Native Stellar packages, `schema`, and `openapi`, as specified by the original GIS receiving guide |
@@ -36,7 +38,123 @@ starforge runtime-install run --dir /srv/starforge/runtimes/merchant -- COMMAND 
 The runtime installer must have completed for that directory. Use its original
 inspect/recovery actions after an interrupted installation.
 
-## 2. Author a GraphQL data product
+## 2. Turn a captured API into a merchant
+
+Initialize one private product and open its original browser:
+
+~~~sh
+starforge captured-api init --dir /srv/starforge/state/captured-api \
+  --name 'Supplier API'
+
+starforge captured-api open --dir /srv/starforge/state/captured-api --browser-only
+~~~
+
+Use the full private URL returned by the command. An existing source and merchant
+library can be selected with `--projects` during initialization. An
+Applications-managed browser can be selected with its original private
+`--console-url-file`; both agent providers then attach to that same console.
+
+In **Captured API sources**, upload the original HAR. Review its source origins,
+methods, paths, request and response observations. Choose **Review operations
+here** and author path templates, safe examples, request and response contracts,
+credential environment references, and query/header decisions. Acknowledge the
+selected operations and save the immutable review. **Use approved source** then
+opens that source in the original merchant form.
+
+Set the seller address, service name, network, asset, recipient and payment
+flow. Keep complete upstream, authorization, transport, cache and concurrency
+settings with their original routes. Use the source-bound route worksheet to
+review the inventory, search selected operations and edit exact atomic prices.
+Bulk adjustments require an explicit rounding choice. Importing a retained
+worksheet reconciles the original base, current plan and incoming edits; choose
+conflicting values explicitly.
+
+Preview through the original compiler, save a new merchant package and reopen it.
+The package preserves its approved source, complete plan, compiled merchant and
+native receiving files. Continue through the original release workflow to
+prepare, stage, select and run the merchant, using the intended backend and
+payment configuration.
+
+To open the same product with its agent, close the browser-only product process,
+supply the incoming bearer token in the named environment variable and reopen:
+
+~~~sh
+starforge captured-api open --dir /srv/starforge/state/captured-api \
+  --token-env MCP_ACCESS_TOKEN --mcp-port 3211
+~~~
+
+The HAR and OpenAPI providers share workspace alias `merchant`. They operate the
+same original source library, review revisions, complete merchant plans, route
+worksheets and saved packages. Use the original returned source/plan/review
+identities when saving or continuing a downloaded file.
+
+For a later capture, select the prior immutable review as the baseline. The
+native refresh retains both captures and the original decisions; changed and
+returning routes remain explicit review work. Save the revised source, carry
+the intended complete merchant settings, and compile another package. A source
+handover includes the complete native capture or refresh directory and saved
+reviews. The merchant handover includes the full native package and any retained
+worksheet. Receiving merges valid missing reviews while preserving reviews
+already authored in that destination.
+
+The [captured API operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
+contains the exact runtime installer, file intake, offline review, agent,
+release, transfer and recovery commands. Keep its private product and project
+directories outside the source checkout and reuse them after an upgrade.
+
+## 3. Open purchased API access for its customer
+
+The API-pass customer keeps purchased access, request history, original payment
+records and responses in one retained workspace. Open **Applications → API-pass
+customer**, or configure and launch the same native customer directly:
+
+~~~sh
+starforge api-pass-workspace configure \
+  --directory /srv/starforge/state/api-customer \
+  --out /srv/starforge/config/api-customer.json \
+  --claim-env SF101_CLAIM_TOKEN
+
+starforge api-pass-workspace serve \
+  --config /srv/starforge/config/api-customer.json \
+  --agent-directory /srv/starforge/state/api-customer-agent --port 0
+~~~
+
+Create the private customer and configuration parent directories first. Supply
+the selected claim credential through its declared environment name. For
+purchase execution, select the original Buyer workspace, Buyer state, Inbox,
+Python executable and installed source runtime in that same customer
+configuration. The product guide supplies their complete setup command.
+
+Connect existing access using its actual order, purchased-plan hash and selected
+merchant origin, or open the full original saved purchase. Read the merchant's
+current routes, unit costs and allowance. Prepare a request with its stable
+request ID, exact body and ordered query before execution. A repeated request
+continues that same intended call; retain its original ID after a lost response.
+
+The optional agent directory contains the original `client-settings.json` for
+the local MCP host. Browser and agent share customer alias `customer`, workspace
+UUID, profiles, saved calls, purchase reviews and native tasks. Managed
+Applications keeps this customer under its original process owner and drains
+its queue through **Stop**.
+
+The installed `merchant-api-pass` client prepares exact commands into retained
+operation directories, then dispatches or reconciles those saved operations.
+Read the returned task until its original work completes. Keep the original
+purchase review and approval channel when executing or recovering payment.
+
+Capture the selected complete response, purchase review, payment record, Buyer
+report or customer history. Inspect its original export manifest, download the
+same immutable files, and reopen the received bytes. Interrupted transfers
+continue from their retained verified prefix. A later history capture uses
+another export ID.
+
+The [purchased API customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
+contains the full source installation, native purchase configuration, generated
+agent settings, command preparation/replay and download commands. Preserve the
+customer, configuration, agent directory and original Buyer/Inbox state when
+upgrading the installed runtime.
+
+## 4. Author a GraphQL data product
 
 Start the original saved browser workspace:
 
@@ -107,7 +225,7 @@ Reopening the browser uses its retained records. The full
 defines the host plan, native runtime files, credentials, process lifecycle and
 receiving commands.
 
-## 3. Operate that same project through MCP
+## 5. Operate that same project through MCP
 
 Declare the existing GraphQL workspace and fixed source aliases in a private
 connection file. The
@@ -156,7 +274,7 @@ Close the GraphQL instance through its returned instance ID. This drains its
 owned mutation and native processes. Another operator can then open that same
 directory normally.
 
-## 4. Prepare imagery, processing history and customer receiving
+## 6. Prepare imagery, processing history and customer receiving
 
 Create and open the original imagery workspace:
 
@@ -233,7 +351,7 @@ The original
 specifies the exact receive/export APIs, runtime dependencies and reopening
 behavior.
 
-## 5. Operate incidents and merchant follow-up
+## 7. Operate incidents and merchant follow-up
 
 Initialize the original incident store from the selected private watcher
 configuration. It binds the actual seller/operations listeners, merchant
@@ -277,7 +395,7 @@ method and original before/follow-up files. Save the case and export its complet
 support handoff. The receiving operator opens the original handoff in the same
 case desk and retains its route, source observations, notes and follow-up.
 
-## 6. Complete accounting work in its original destination
+## 8. Complete accounting work in its original destination
 
 The installed accounting customer uses the existing merchant MCP connection and
 the selected QuickBooks or Xero workspace alias:
@@ -303,11 +421,15 @@ reopening. Keep the full prepared operation directory with the accounting
 workspace. A new process can reconcile that same request without recreating the
 financial operation.
 
-## 7. Recover and upgrade from retained state
+## 9. Recover and upgrade from retained state
 
 | Situation | Continue from |
 | --- | --- |
 | Browser closes during editing | The same saved project/case and latest returned revision |
+| Purchased API or agent response is interrupted | Original customer, profile/call/task IDs and retained client operation directory |
+| Captured API setup or session stops | The original private product setup, source library, reviews and merchant packages |
+| Captured source changes | Prior immutable review, exact later HAR and retained native refresh |
+| Pricing work moves between operators | Complete base/proposed worksheet and current original source/plan |
 | Source preview reply is lost | Original preview UUID, retained status and completed response |
 | Schema or merchant terms change | The existing export baseline and new saved candidate revision |
 | Deployment action reply is lost | Original deployment ID, release generation and saved action recovery |
