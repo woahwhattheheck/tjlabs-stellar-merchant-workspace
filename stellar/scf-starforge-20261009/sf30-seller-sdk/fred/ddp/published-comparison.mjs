@@ -98,6 +98,10 @@ async function completedReport(outputDirectory,context){
     need(saved.sourceObservationCount===item.sourceIndices.length&&saved.targetOriginalObservationCount===capture.observationCount&&
       uint(saved.targetSelectedObservationCount)&&saved.targetSelectedObservationCount<=capture.observationCount&&plain(saved.counts)&&
       plain(saved.sourceMissingCodes),'The retained original per-series observation counts changed.');
+    need(saved.title===series.title&&same(saved.sourceFrequency,series.frequency)&&same(saved.sourceUnits,series.unit)&&
+      same(saved.sourceMultiplier,series.multiplier)&&saved.targetFrequency===capture.metadata.Frequency&&saved.targetUnits===capture.metadata.Units&&
+      saved.targetPeriodRule===inferredFredDdpPeriodRule({label:capture.metadata.Frequency}),
+      'The retained comparison frequency, units or calendar conventions changed.');
     let local=0;for(const status of statuses){need(uint(saved.counts[status]),'The completed comparison status counts changed.');totals[status]+=saved.counts[status];local+=saved.counts[status];}
     need(local-saved.counts.TARGET_ONLY===saved.sourceObservationCount&&
       local-saved.counts.SOURCE_ONLY===saved.targetSelectedObservationCount&&

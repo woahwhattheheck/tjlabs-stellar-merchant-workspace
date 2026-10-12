@@ -78,6 +78,9 @@ source and target scale factors before computing FRED minus Board. Original
 member locations use UTF-8 byte offsets with an exclusive end. Weekly and
 biweekly dates retain their actual publication convention. Whole source rows and
 original target bytes remain recoverable from every reported location.
+The optional `expectedFredUnits`, `expectedFredFrequency` and
+`expectedFredSeasonalAdjustment` bindings are enforced against each retained
+target's original metadata during construction and completed-report reuse.
 
 | Row status | Meaning |
 | --- | --- |
@@ -143,6 +146,7 @@ All 263 targets were collected from the full official FRED publications:
 | Target-only records | 0 |
 
 The Board's unavailable rows consisted of 151,575 ND, 4,426 NA and 397 NC periods.
+The 100,709 source-only unavailable periods consisted of 100,694 ND and 15 NA rows.
 All 767,971 available Board observations matched exactly. The complete original
 v5 project carried 27 public captures and recovered all 526 original HTML/CSV
 transports, totalling 65,617,257 bytes, after independent receiving. Its export
