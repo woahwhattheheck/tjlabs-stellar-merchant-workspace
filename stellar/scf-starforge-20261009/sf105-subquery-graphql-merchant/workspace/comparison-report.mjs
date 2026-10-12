@@ -201,7 +201,7 @@ export async function describeResponseComparisonFiles(store, selection) {
     const valuesSource = await readFile(new URL('comparison-values.mjs', import.meta.url), 'utf8');
     const reportSource = await readFile(new URL('comparison-report.mjs', import.meta.url), 'utf8');
     const renderer = { version: 1, valuesSha256: digest(valuesSource), reportSha256: digest(reportSource) };
-    const shared = join(store.root, 'comparison-pages', digest(json({ definitionSha256: record.definitionSha256, renderer })));
+    const shared = join(store.root, 'comparison-pages', digest(json({ comparisonId: record.id, definitionSha256: record.definitionSha256, renderer })));
     await directory(shared, true);
     const files = new Map(), previews = new Map(), drafts = new Map();
     const rememberDraft = (revision, sha256) => {
