@@ -1,0 +1,40 @@
+{
+  "schema": "stellar-forge.seller-upstreams.v1",
+  "supplierAccounts": {
+    "routescan": {
+      "directory": "/workspace/scratch/39daa82f3fbd/routescan_native_39da/project/quota",
+      "account": "routescan-keyless-39da-native",
+      "requestsPerSecond": 2,
+      "callsPerDay": 10000
+    }
+  },
+  "bindings": {
+    "gasSeries": {
+      "origin": "https://api.routescan.io",
+      "path": "/v2/network/mainnet/evm/1/aggregations/avg-gas-price",
+      "method": "GET",
+      "query": [
+        "dateFrom",
+        "dateTo",
+        "unit",
+        "ecosystem",
+        "includedChainIds",
+        "excludedChainIds"
+      ],
+      "timeoutMs": 45000,
+      "maxResponseBytes": 1048576,
+      "maxInFlight": 1,
+      "supplierAccount": "routescan",
+      "cache": {
+        "shareAcrossBuyers": true,
+        "ttlMs": 60000,
+        "maxEntries": 4,
+        "maxBytes": 4194304,
+        "maxEntryBytes": 1048576,
+        "maxSourceInFlight": 1,
+        "maxWaiters": 4,
+        "sourceTimeoutMs": 45000
+      }
+    }
+  }
+}
