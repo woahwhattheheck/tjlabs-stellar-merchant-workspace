@@ -77,10 +77,10 @@ function responseIdentity(response,productId) {
   need(response.headers.get('x-captured-product-id')===productId,'SF61_CAPTURED_HANDOVER_IDENTITY',
     'The response belongs to a different captured product. Reopen the original configured workspace.');
 }
-async function jsonResponse(response,productId,method) {
+async function jsonResponse(response,productId,method,maximum=MAX_JSON_RESPONSE) {
   try {
     if(productId!==undefined)responseIdentity(response,productId);
-    return JSON.parse(decode(await readSf61Response(response,MAX_JSON_RESPONSE)));
+    return JSON.parse(decode(await readSf61Response(response,maximum)));
   } catch(error) {
     await cancel(response);
     if(method==='POST'&&error&&typeof error==='object')error.outcomeUnknown=true;
@@ -156,16 +156,24 @@ class CapturedHandoverClient {
   async #json(path,body,options={}) {
     options=requestOptions(options);interrupted(options);
     const text=body===undefined?undefined:JSON.stringify(body),method=body===undefined?'GET':'POST';
-    if(body!==undefined)need(typeof text==='string'&&Buffer.byteLength(text)<=MAX_JSON_REQUEST,
-      'INVALID_PARAMS','Send a complete native handover request of at most 1 MiB.');
+    const selectedRoute=route(path).split('?')[0];
+    const collaboration=['draft/merge-review','draft/merge-save','draft/working-export'].map(name=>PREFIX+name).includes(selectedRoute);
+    const maximum=selectedRoute===PREFIX+'draft/working-import'?8*MAX_JSON_REQUEST:collaboration?4*MAX_JSON_REQUEST:MAX_JSON_REQUEST;
+    if(body!==undefined)need(typeof text==='string'&&Buffer.byteLength(text)<=maximum,
+      'INVALID_PARAMS','Send a complete native request within this operation’s '+String(maximum/1048576)+' MiB limit.');
     return this.#transport.request(route(path),{...options,method,body:text,
       headers:{'x-captured-product-id':this.#info.productId,...(text===undefined?{}:{'Content-Type':'application/json'})}},
-      response=>jsonResponse(response,this.#info.productId,method));
+      response=>jsonResponse(response,this.#info.productId,method,
+        selectedRoute===PREFIX+'draft/merge-review'?64*1024*1024:MAX_JSON_RESPONSE));
   }
   json(path,body,options={}) {
     route(path);const input=body===undefined?undefined:JSON.parse(JSON.stringify(body)),settings=requestOptions(options);
     return this.#work(()=>this.#json(path,input,settings));
   }
+  reviewDraftMerge(value,options={}) {return this.json('/draft/merge-review',value,options);}
+  saveDraftMerge(value,options={}) {return this.json('/draft/merge-save',value,options);}
+  exportWorkingEdit(value,options={}) {return this.json('/draft/working-export',value,options);}
+  importWorkingEdit(value,options={}) {return this.json('/draft/working-import',value,options);}
   async #archive(value,options) {
     const selected=selection(value);
     const job=await this.#json(query('job',{id:selected.id}),undefined,options),saved=job?.result?.archive;

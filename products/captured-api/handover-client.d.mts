@@ -1,4 +1,5 @@
 import type { Buffer } from 'node:buffer';
+import type { CapturedDraftForm, CapturedDraftKind, CapturedDraftResolutions, CapturedDraftMergeReview } from './draft-reconciliation.mjs';
 
 /** The existing parsed HAR connection definition; all other native fields remain owned by its parser. */
 export type CapturedHandoverWorkspaceDefinition = {
@@ -138,6 +139,42 @@ export interface CapturedHandoverDownloadResult {
   download: CapturedHandoverCompleteUpload;
 }
 
+
+export interface CapturedDraftMergeInput {
+  id:string;baseRevision:string;working:CapturedDraftForm;resolutions?:CapturedDraftResolutions;
+  expectedCurrentRevision?:string;
+}
+export interface CapturedDraftMergeSaveInput {
+  id:string;requestId:string;baseRevision:string;expectedRevision:string;
+  working:CapturedDraftForm;resolutions?:CapturedDraftResolutions;reviewSha256:string;
+}
+export interface CapturedWorkingEditInput {id:string;baseRevision:string;working:CapturedDraftForm}
+export interface CapturedWorkingImportInput {content:string;expectedSha256?:string}
+export interface CapturedDraftNativeReview {
+  schema:'stellar-forge.captured-draft-review.v1';productId:string;id:string;kind:CapturedDraftKind;
+  baseRevision:string;currentRevision:string;baseSequence:number;currentSequence:number;
+  base:CapturedDraftForm;current:CapturedDraftForm;working:CapturedDraftForm;
+  resolutions:CapturedDraftResolutions;merge:CapturedDraftMergeReview;reviewSha256:string;
+}
+export interface CapturedDraftEdition {
+  schema:'stellar-forge.captured-handover-draft-edition.v1';draftId:string;requestId:string;
+  kind:CapturedDraftKind;sequence:number;previousRevision:string|null;createdAt:string;
+  form:CapturedDraftForm;revision:string;
+  reconciliation?:{schema:'stellar-forge.captured-draft-save.v1';baseRevision:string;reviewSha256:string;requestSha256:string};
+}
+export interface CapturedDraftNative {
+  id:string;kind:CapturedDraftKind;label:string;createdAt:string;revision:string;currentRevision:string;
+  edition:CapturedDraftEdition;history:Array<Omit<CapturedDraftEdition,'form'>>;
+}
+export interface CapturedWorkingExport {
+  schema:'stellar-forge.captured-working-export.v1';productId:string;id:string;baseRevision:string;
+  name:string;bytes:number;sha256:string;content:string;
+}
+export interface CapturedWorkingImport {
+  schema:'stellar-forge.captured-working-import.v1';productId:string;id:string;kind:CapturedDraftKind;
+  baseRevision:string;bytes:number;sha256:string;working:CapturedDraftForm;draft:CapturedDraftNative;
+}
+
 /**
  * The original product URL, token and identity are pinned once per client.
  * Every accepted operation uses that same connection. Tokens are never returned.
@@ -147,14 +184,24 @@ export interface CapturedHandoverClient {
 
   /**
    * Read a relative native handover route, or POST its complete JSON body.
-   * Input is captured before asynchronous work. Requests are limited to 1 MiB;
-   * use the original archive methods for whole files.
+   * Input is captured before asynchronous work. Ordinary requests are limited
+   * to 1 MiB; collaboration requests use 4 MiB and working-import uses an 8 MiB
+   * JSON wrapper for the complete 4 MiB edit file. Whole archives stream below.
    */
   json<T = unknown>(
     path: string,
     body?: unknown,
     options?: CapturedHandoverRequestOptions,
   ): Promise<T>;
+
+  /** Read exact original base/current editions and reconcile the complete working form. */
+  reviewDraftMerge(input:CapturedDraftMergeInput,options?:CapturedHandoverRequestOptions):Promise<CapturedDraftNativeReview>;
+  /** Repeat the original request ID to reopen its first saved edition after later edits. */
+  saveDraftMerge(input:CapturedDraftMergeSaveInput,options?:CapturedHandoverRequestOptions):Promise<CapturedDraftNative>;
+  /** Export the complete original working-edit JSON bytes, source identity and saved base. */
+  exportWorkingEdit(input:CapturedWorkingEditInput,options?:CapturedHandoverRequestOptions):Promise<CapturedWorkingExport>;
+  /** Verify exact file bytes and their native product/draft/base without replacing the working editor. */
+  importWorkingEdit(input:CapturedWorkingImportInput,options?:CapturedHandoverRequestOptions):Promise<CapturedWorkingImport>;
 
   /** Reopen the exact COMPLETE PUBLISH result and verify its native archive identity. */
   archive(

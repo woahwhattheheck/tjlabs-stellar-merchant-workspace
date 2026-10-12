@@ -7,7 +7,7 @@ export default defineMerchantProvider({
   title:'Captured merchant handover',order:445,catalogOrder:435,
   // Reuse the original host-declared harWorkspaces configuration without rewriting
   // existing operators. This companion owns only its connected client calls.
-  configKey:null,summary:false,dependencies:[],maxRequestBytes:1024*1024,
+  configKey:null,summary:false,dependencies:[],maxRequestBytes:8*1024*1024,
   concurrency:'provider',shutdown:'drain',
   tools:capturedHandoverTools,
   instructions:[{order:435,prefix:'merchant_handover_',text:
@@ -17,6 +17,8 @@ export default defineMerchantProvider({
     'Stream a published file to the receiving workspace with merchant_handover_transfer, preserving both product IDs, file bytes/SHA and uploadId on retries. '+
     'After COMPLETE upload, start IMPORT, retain its job and manifest, create a RECEIVING draft and save its complete names with merchant_handover_receiving_save. '+
     'REVIEW that exact draft revision, inspect native source/package conflicts, then RECEIVE its exact review SHA. '+
+    'For concurrent draft edits, use merge_review against the original base, page conflicts with the same current revision and review snapshot, and choose CURRENT or WORKING explicitly. '+
+    'Save the exact READY review with merge_save and retain its original request ID; portable working_export/working_import files keep the same native product, draft and saved base. '+
     'Every mutation keeps its original request UUID; lost replies replay the same request, and interrupted jobs resume with their original request SHA. '+
     'REOPEN the saved receiving operation after restart and use merchant_har_load for the original saved merchant/source. '+
     'Whole files travel through the original stream/upload engines; small archive_read chunks are for explicit file consumers. '+
