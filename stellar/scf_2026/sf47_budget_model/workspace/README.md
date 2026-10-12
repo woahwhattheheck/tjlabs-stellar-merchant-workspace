@@ -210,6 +210,10 @@ Python callers can import `Workspace` from `model.py` or use `create_server(work
 
 Use the saved plan's source digest, revision number, change note and complete exported source when coordinating the next staffing, milestone or application decision.
 
+## Original currencies, customer payment credits and portfolio cash
+
+Use [Original currencies in operating forecasts](CURRENCY.md) to keep quoted amounts, delivery estimates, explicit dated exchange rates and native payment credits through Forecast and Portfolio. The complete [loadable input example](examples/native-currency-forecast.json) demonstrates a foreign quote, a USD estimate, event-dependent terms and exact milestone rounding. Original cash records retain their recorded USD values; the cash and allocation views expose incomplete financial coverage alongside operational scheduling.
+
 ## Reforecast remaining cash and delivery work
 
 The original **Delivery operations → Operating forecast** workspace now saves dated forecasts from actual case records: unpaid invoice balances, uninvoiced package obligations, remaining hours, conditional grant dates and customer-specific implementation scenarios. It includes native UI, HTTP and CLI preview/save, exact source snapshots, complete exports and reopen/receiving. Use [FORECAST.md](FORECAST.md) for the complete operator guide. The original application budget and recorded financial observations remain their existing source of truth.

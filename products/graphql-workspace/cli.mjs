@@ -19,6 +19,16 @@ const HELP = [
   'starforge graphql-product inspect-files --dir PRIVATE_DIR --export-id RETAINED_TRANSFER_ALIAS',
   'starforge graphql-product receive --dir PRIVATE_DIR --export-id TRANSFER_ALIAS --out PRIVATE_DELIVERY [--selection NATIVE_SELECTION.json] [--manifest-sha256 SHA256]',
   'starforge graphql-product inspect-received --dir PRIVATE_DELIVERY',
+  'starforge graphql-product prepare-request-set --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product request-set --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product recover-request-set --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product start-request-run --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product request-run --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product continue-request-run --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product control-request-run --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product recover-request-run --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product compare-request-runs --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product request-packet --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
   'starforge graphql-product prepare-comparison --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
   'starforge graphql-product comparison --dir PRIVATE_PRODUCT --request EXACT_SELECTION.json',
   'starforge graphql-product comparison-changes --dir PRIVATE_PRODUCT --request EXACT_CASE_SELECTION.json',
@@ -92,6 +102,27 @@ export async function main(args = process.argv.slice(2)) {
     }).catch(error => { closing = null; process.stderr.write(error.code + ': ' + error.message + '\n'); process.exitCode = 1; });
     for (const name of ['SIGINT', 'SIGTERM']) process.on(name, stop);
     return active;
+  }
+  const requestCommands = {
+    "prepare-request-set": "prepareRequestSet",
+    "request-set": "inspectRequestSet",
+    "recover-request-set": "recoverRequestSet",
+    "start-request-run": "startRequestRun",
+    "request-run": "inspectRequestRun",
+    "continue-request-run": "continueRequestRun",
+    "control-request-run": "controlRequestRun",
+    "recover-request-run": "recoverRequestRun",
+    "compare-request-runs": "compareRequestRuns",
+    "request-packet": "prepareRequestPacket"
+};
+  if (Object.hasOwn(requestCommands, command)) {
+    const values = parse(rest, ['--dir', '--request']), client = new GraphqlProductClient({
+      connectionFile: join(resolve(required(values, '--dir')), 'connection.json') });
+    // Caller retains the exact UUID/revision/source selection in this input file.
+    // Admission or a lost reply never causes an automatic second invocation.
+    const request = decode(await privateBytes(resolve(required(values, '--request')), false, 4 * 1024 * 1024));
+    const result = await client[requestCommands[command]](request);
+    output(result); return result;
   }
   const comparisonCommands = { 'prepare-comparison': 'prepareComparison', comparison: 'inspectComparison',
     'comparison-changes': 'comparisonChanges', 'review-comparison': 'reviewComparison',

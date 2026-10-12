@@ -4,6 +4,10 @@ This operator turns complete IATI 2.03 activity XML into retained activity, tran
 
 It uses the existing XML source parser, retained Workspace, original SF30 immutable dataset engine, private operator server, Merchant Source Workspaces and installed Applications lifecycle. The IATI-specific code supplies domain projection and portfolio decisions to those components.
 
+## Saved publisher refresh
+
+[REFRESH.md](REFRESH.md) provides the complete saved baseline → explicit publisher/selection preview → original native run → named review → baseline promotion workflow. It retains every source, request and decision, resumes the original operation after interruption, and exports or receives the complete journal together with the original native portfolio. The same workflow is available in the browser, CLI, typed client and Merchant Source Workspaces.
+
 ## Operator workflow
 
 1. Retain the publisher's complete XML file. Source identity is the SHA-256 of its exact bytes.

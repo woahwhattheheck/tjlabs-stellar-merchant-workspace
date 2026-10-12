@@ -506,7 +506,7 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
         package_rows.append(item)
     grants = sorted(records["awards"], key=lambda row: (row["date"], row["updatedAt"], row["id"]))
     stages = grants[-1]["stage"] if grants else "NOT_RECORDED"
-    return {"schema": "stellar-forge.sf47-operations-report.v1", "mode": program["mode"],
+    result = {"schema": "stellar-forge.sf47-operations-report.v1", "mode": program["mode"],
         "programId": program["id"], "version": program["version"], "applicationStage": stages,
         "originalApplicationState": plan["scenario"].get("application_state"),
         "plan": {"id": plan["id"], "revision": plan["revision"], "contentSha256": plan["contentSha256"],
@@ -533,3 +533,9 @@ def report(program, plan, records, sources, completionPlans=None, installationRe
         "sourceCoverage": {"attachments": len(sources),
             "operatorEntryRecords": sum(row.get("sourceBasis") == "OPERATOR_ENTRY" for values in records.values() for row in values)},
         "unresolved": unresolved}
+
+    from operations_buyer import node_report
+    original_node = node_report({"sources": sources})
+    if original_node is not None:
+        result["delivery"]["nodeAccounting"] = original_node
+    return result

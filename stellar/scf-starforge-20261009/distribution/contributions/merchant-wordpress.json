@@ -31,6 +31,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/setup.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/cli.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/merchant/CLIENT.md",
-    "products/wordpress-merchant/OPERATING.md"
+    "products/wordpress-merchant/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/wordpress/REFRESH.md"
   ]
 }

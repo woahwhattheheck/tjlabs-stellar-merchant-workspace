@@ -1,6 +1,6 @@
 # Research workspace
 
-Operate saved research questions, original source editions, citation update decisions, completed Documents, managed Pipelines, analyst findings, typed analytical exports/workbooks and complete customer delivery through one browser, CLI and merchant attachment.
+Operate saved research questions, original source editions, citation and eligibility decisions, independent study extraction, appraisal, reviewed publications, customer updates, Zotero libraries, completed Documents, managed Pipelines, analytical workbooks and complete receiving through the original browser, CLI and merchant attachment.
 
 The [operating guide](OPERATING.md) covers source and citation review, original processing jobs, retained Crossref and ClinicalTrials acquisition, authenticated agent tools, complete files/report/portable delivery and reopening.
 
@@ -9,3 +9,10 @@ Use the maintained `research-workspace` source selection for the complete instal
 The [direct Analysis browser and native agent intake](OPERATING.md#use-the-original-analysis-browser-and-native-agent) selects an actual saved document or managed output, retains its complete source and capture history, and continues through the existing mapping, immutable import, full typed exports, workbook and source-local restore. The [complete interactive receiver](RECEIVING.md#11-receive-the-interactive-analysis-and-native-agent-workflow) preserves the original browser, job, source and delivery identities.
 
 The [complete eligibility programme](OPERATING.md#operate-a-complete-eligibility-programme) adds source-bound protocols, named decisions, resolutions, study/report links and impact review to the same dossier. Its [customer receiver](RECEIVING.md#12-receive-the-complete-eligibility-programme) delivers all twelve original files, the exact ZIP, complete source/history and independently reopened editable workspaces through the installed Python, typed-client and Merchant interfaces.
+
+
+The [installed extraction and Zotero configuration](OPERATING.md#configure-the-installed-extraction-and-zotero-application) uses the existing Applications entry, selected Python interpreter, private original library and authenticated listener identity. Both maintained Research recipes retain the complete Zotero source and browser assets.
+
+[Independent extraction and reviewed tables](OPERATING.md#extract-study-results-with-independent-reviewers), [source-bound appraisal](OPERATING.md#appraise-the-same-original-study-and-result), and [customer baseline/update/correction delivery](OPERATING.md#deliver-a-customer-baseline-update-and-correction) work in the same dossier. The [complete receiving continuation](RECEIVING.md#13-receive-extraction-appraisal-publications-and-customer-updates) preserves original submissions, resolutions, publications, work reviews and portable history through the existing typed, Python and Merchant interfaces. Original source and commissioning owners continue their retained programme; installation adoption attaches to its actual completed inputs and outputs.
+
+The [complete Evidence synthesis product](SYNTHESIS.md) continues a reviewed original Research publication in the existing Analysis workspace: full source inspection, explicit study/field selection, immutable method protocols, native jobs, full reports/figures and the original workspace archive. [Operating the synthesis continuation](OPERATING.md#synthesize-the-reviewed-study-publication) and [receiving that same job and archive](RECEIVING.md#14-receive-the-complete-synthesis-continuation) keep the original publication and independent source/programme owners.

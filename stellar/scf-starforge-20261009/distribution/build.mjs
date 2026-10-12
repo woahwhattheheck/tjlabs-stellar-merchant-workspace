@@ -29,7 +29,7 @@ function isRuntimeFile(path, explicitRuntime = false) {
   return !parts.some(part => part.startsWith('.') ||
     (excludedDirs.has(part) && !(part === 'fixtures' && declaredData))) &&
     (explicitRuntime || !excludedName.test(parts.at(-1))) &&
-    (supported.test(path) || (explicitRuntime && /\.(?:zip|parquet)$/i.test(path)) ||
+    (supported.test(path) || (explicitRuntime && /\.(?:zip|parquet|gz|rst|conf)$/i.test(path)) ||
       ['LICENSE', 'go.mod', 'Cargo.lock'].includes(parts.at(-1)) ||
       (explicitRuntime && (['COPYING', 'DESCRIPTION'].includes(parts.at(-1)) ||
         /^(?:LICENSE|NOTICE)[.-][A-Za-z0-9][A-Za-z0-9._-]*$/i.test(parts.at(-1)))));
@@ -110,7 +110,8 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   for (const path of [...specificationPaths, 'LICENSE'])
     if (!byPath.has(path)) throw new TypeError('Missing original distribution input: ' + path);
   const initial = source.readFiles([...specificationPaths.map(path => byPath.get(path)), byPath.get('LICENSE')]);
-  const distribution = composeDistribution({ base: JSON.parse(initial.get(distributionPath)),
+  const base = JSON.parse(initial.get(distributionPath));
+  const distribution = composeDistribution({ base,
     contributions: selectedPaths.map(path => ({ path, data: JSON.parse(initial.get(path)) })), selection: recipe });
   const spec = distribution.spec;
   const product = productPackageMetadata(spec.product);
@@ -123,13 +124,17 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     ...Object.values(spec.applicationProviders ?? {}), ...Object.values(spec.merchantProviders ?? {}),
     ...(recipe ? [...required, ...Object.values(spec.runtimePackageManifests ?? {}),
       ...(spec.browserAssets ?? []).flatMap(entry => [entry.server, entry.manifest])] : [])]);
+  // A production helper may have an acceptance-like name. The original base
+  // declaration authorizes that file only when an actual selected import needs
+  // it; it does not add unrelated support files to the selected archive.
+  const declaredRuntime = new Set(base.supportFiles ?? []);
   const originalInputs = new Set([...specificationPaths, product.readme]);
   const selectionIncludes = path => !recipe || !(
     path.startsWith(contributionDirectory + '/') || path.startsWith(sourceSelectionDirectory + '/')) ||
     originalInputs.has(path);
   // A selected archive carries only its original declarations, even when its
   // complete distribution component contains other product contribution files.
-  // Explicit support files include maintained ZIP data and can override a
+  // Explicit support files include maintained ZIP data and text .conf files, and can override a
   // test-like filename. Undeclared archives remain outside source selection;
   // directory, explicit exclusion and regular-file checks still apply.
   const selected = tree.filter(item => selectionIncludes(item.path) &&
@@ -167,7 +172,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   const enqueue = (target, importer, discovered) => {
     if (names.has(target)) return;
     const item = byPath.get(target);
-    if (!item || excluded.has(target) || !selectionIncludes(target) || !isRuntimeFile(target, explicitRuntime.has(target))) {
+    if (!item || excluded.has(target) || !selectionIncludes(target) || !isRuntimeFile(target, explicitRuntime.has(target) || declaredRuntime.has(target))) {
       missingModules.push(importer + ' -> ' + target);
       return;
     }

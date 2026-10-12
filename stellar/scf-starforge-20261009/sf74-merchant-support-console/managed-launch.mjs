@@ -96,8 +96,24 @@ export async function inspectSupportSelection({casesDir,incidentSources,allowLoo
       plain(source.configuration)&&Number.isSafeInteger(source.configuration.revision)&&source.configuration.revision>=1&&
       HEX.test(source.configuration.sha256),'SUPPORT_APPLICATION_INCIDENT_SELECTION_CHANGED');
     const store=await privateDirectory(pathValue(source.directory,'original incident store'));
+    let objectSessions;
+    if(source.objectSessions!==undefined) {
+      need(Array.isArray(source.objectSessions)&&source.objectSessions.length<=16,
+        'SUPPORT_APPLICATION_OBJECT_SELECTION_CHANGED');
+      const ids=new Set();
+      objectSessions=source.objectSessions.map(row=>{
+        need(plain(row)&&typeof row.id==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(row.id)&&
+          !ids.has(row.id)&&typeof row.label==='string'&&row.label.length<=120,
+          'SUPPORT_APPLICATION_OBJECT_SELECTION_CHANGED');
+        ids.add(row.id);
+        // A missing or changed original session must remain monitorable. Bind the
+        // private reviewed path; the original inspector reports its current state.
+        return {id:row.id,label:row.label,directory:pathValue(row.directory,'original Object session')};
+      });
+    }
     sources.push({id:source.id,label:source.label,store,
-      configuration:{revision:source.configuration.revision,sha256:source.configuration.sha256}});
+      configuration:{revision:source.configuration.revision,sha256:source.configuration.sha256},
+      ...(objectSessions?.length?{objectSessions}:{})});
   }
   const connections=serviceConnectionSelection??(accountingConfig!==null||buyerExpenseConnection!==null
     ?(await (await import('./service-connections.mjs')).inspectServiceConnections({accountingConfig,buyerExpenseConnection})).selected:null);

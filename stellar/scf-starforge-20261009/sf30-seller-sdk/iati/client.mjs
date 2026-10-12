@@ -138,6 +138,34 @@ export class IatiWorkspaceClient{
  publishingReceive({body,bytes},options={}){if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose a complete original participant release up to 4 GiB.');
   return this.#request('/api/iati/publishing/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});}
 
+ #refreshPost(action,input,options){return this.#post('/api/iati/refresh/'+action,input,{...options,maximum:64*1024*1024});}
+ #refreshPage(route,selected,{offset=0,limit=50,snapshot,...options}={}){
+  if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>250)
+   throw problem('PAGE','Choose a saved refresh offset and a limit from 1 to 250.');
+  if(offset>0&&snapshot===undefined)throw problem('PAGE','Continue the original refresh page snapshot.');
+  if(snapshot!==undefined)hash(snapshot);
+  return this.#request('/api/iati/refresh/'+route+'?'+query({...selected,offset,limit,snapshot}),{...options,maximum:64*1024*1024});
+ }
+ refreshContext(options){return this.#request('/api/iati/refresh/context',options);}
+ refreshStatus(plan,options){return this.#request('/api/iati/refresh/status?'+query({plan:hash(plan)}),{...options,maximum:64*1024*1024});}
+ refreshPlans(options){return this.#refreshPage('plans',{},options);}
+ refreshPlan(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/refresh/plan?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ refreshHistory(plan,options){return this.#refreshPage('history',{plan:hash(plan)},options);}
+ refreshRuns(plan,options){return this.#refreshPage('runs',{plan:hash(plan)},options);}
+ refreshRun(plan,id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/refresh/run?'+query({plan:hash(plan),id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ refreshRunHistory(plan,id,options){return this.#refreshPage('run-history',{plan:hash(plan),id:hash(id)},options);}
+ refreshRequest(requestId,options){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('REQUEST','Use the original refresh request ID.');
+  return this.#request('/api/iati/refresh/request?'+query({requestId}),{...options,maximum:64*1024*1024});}
+ refreshPreview(input,options){return this.#refreshPost('preview',input,options);}
+ refreshSave(action,input,options){if(!['plan-save','start','review','promote','cancel','abandon'].includes(action))throw problem('ACTION','Choose an original saved publisher-refresh action.');
+  return this.#refreshPost(action,input,options);}
+ refreshResume(requestId,options){if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId))throw problem('REQUEST','Use the exact saved refresh request ID.');
+  return this.#refreshPost('resume',{requestId},options);}
+ refreshExport(plan,{snapshot,...options}={}){if(snapshot!==undefined)hash(snapshot);
+  return this.#request('/api/iati/refresh/export?'+query({plan:hash(plan),snapshot}),{...options,raw:true});}
+ refreshReceive({body,bytes},options={}){if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Select the complete original refresh ZIP, up to 4 GiB.');
+  return this.#request('/api/iati/refresh/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});}
+
  // Results reuse this exact borrowed console and its original request journal.
  #resultsPost(route,value,options={}){if(!object(value))throw problem('INPUT','Use a complete results definition.');
   const data=JSON.stringify(value);if(Buffer.byteLength(data)>64*1024*1024)throw problem('INPUT_LIMIT','The complete results selection exceeds 64 MiB.');

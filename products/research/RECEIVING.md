@@ -706,6 +706,125 @@ Original runtime and workspace cleanup then join active children before the
 outer command returns interrupted. A later invocation uses the same operation
 directory and retained selected revision.
 
+## 13. Receive extraction, appraisal, publications and customer updates
+
+Use the complete current selected archive returned by the original maintained builder. The source selection includes its current `research-client` and `research-dossiers` contributions, whole Research/Python components, complete Zotero contribution and assets, original Merchant attachments and these operating guides. Keep the archive's actual source commit, selection, contribution identities and installed source manifest with the receiving record. A merged source package and a READY installed runtime are separate retained states.
+
+This receiving continuation uses the customer's existing dossier and source operation. If another operator already owns its original source creation, full programme or installation, attach to that retained operation and its current listener. Reuse completed original captures and review stages. The maintained builder can resume its saved output, and the runtime installer can adopt its supported existing dependency tree.
+
+### Configure the same Applications entry
+
+After selecting the READY runtime, use **Applications → Research dossiers**. Review and save the original private Research directory and current source inputs. Optional `zoteroStateDirectory` selects the original separate library; optional `extractionPython` selects the absolute installed interpreter. The common original preparation records the interpreter target and selected environment, source paths and private directories. A replaced interpreter or changed reviewed input requires reviewing the current configuration.
+
+With Object, Zotero or an explicit extraction interpreter, an omitted `connectionFile` uses `research-connection.json` in the Research directory. The original host writes that connection; the Applications observer checks its current workspace/instance identity and authenticated feature status before exposing Open. A configured Zotero bridge starts only after the operator selects Open Zotero.
+
+Start, Open, Stop and reopen through that same Applications operation. On restart, use the new current connection record while retaining the same stores and source IDs. Do not copy an earlier bearer URL into a new runtime's source or handover. The host owns its optional Zotero child and drains its admitted operations before closing; client detachment leaves the host with its original owner.
+
+The complete source-selected startup checks cover the original extraction reader, client and selected Zotero server, store, contract and all three browser assets. They establish usable original inputs and startup identity; the retained original source/review/customer operation establishes the complete workflow.
+
+### Carry the full saved study and review
+
+Before export, record the actual dossier and question IDs, selected source occurrences, study ID/version, form and form-edition IDs, result-set ID, independent extraction submissions, resolutions, publication identity and appraisal assessment edition. Retain the selected dossier revision and every accepted original request file. The receiving programme must use those actual returned identifiers.
+
+Inspect all required pages at that explicit revision. The original extraction API provides form editions, result sets, drafts, submissions, results, resolutions, impacts and operations. The publication API provides tables, editions, rows, publications, comparisons, impacts, reviews and withdrawals. Appraisal pages preserve its protocol, selected assessment edition, independently submitted judgments, comparison and adjudication. Keep the complete reports and actual source pointers beside the portable export.
+
+Export the full dossier through its original streaming client:
+
+~~~sh
+starforge research-client export \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research --id DOSSIER_ID \
+  --revision SAVED_REVISION --format json.gz \
+  --out /srv/starforge/delivery/study.research.json.gz
+
+starforge research-client reopen \
+  --connection-file /srv/starforge/private/receiving-research-connection.json \
+  --directory /srv/starforge/receiving-research \
+  --source-file /srv/starforge/delivery/study.research.json.gz \
+  --sha256 RETURNED_COMPLETE_SHA256
+~~~
+
+The explicit revision selects the complete original history through that saved point. Preserve the actual response's byte count, SHA-256 and revision rather than inferring them from the filename. The original importer validates full history and source objects before committing the received dossier.
+
+On the existing receiving listener, inspect the same forms, result sets, submissions, resolutions, appraisal and publications at the transferred revision. Open their original browser views without replaying authoring steps. Replaying an accepted exact request through the native client/CLI/Merchant path recovers the same original operation. A new correction is a distinct reviewed operation with the current revision, and it preserves inherited history.
+
+The original [extraction commissioning driver](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-EXTRACTION-BROWSER.md) attaches to the listener supplied by the existing dossier/source programme. Its author mode belongs to that original creator; inspect mode reviews the received IDs and retained reports. Keep the supplied AbortSignal and programme directory for an interrupted continuation. It closes only the browser/context it owns. The [appraisal receiver](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/risk-of-bias/BROWSER.md) continues the same received study and assessment. Use the complete current programme delivered with the selected source, including its template/customer/cancellation successors.
+
+### Receive the exact customer package
+
+Prepare the handover from the already-frozen native customer delivery and inspect its original manifest:
+
+~~~sh
+starforge research-client customer-updates-inspect \
+  --source-directory /srv/starforge/delivery/customer-handover \
+  --manifest-sha256 RETURNED_HANDOVER_MANIFEST_SHA256
+
+starforge research-client customer-updates-receive \
+  --connection-file /srv/starforge/private/receiving-research-connection.json \
+  --directory /srv/starforge/receiving-research \
+  --source-directory /srv/starforge/delivery/customer-handover \
+  --manifest-sha256 RETURNED_HANDOVER_MANIFEST_SHA256 \
+  --run-directory /srv/starforge/receiving/customer-operation
+~~~
+
+The exact handover contains six content files: JSON, Markdown, HTML and CSV reports, the original `work.review.json`, and the complete `dossier.research.json.gz`. `handover.json` binds their byte counts and SHA-256 values to the selected native delivery. Optional original Europe PMC source-workspace transfer adds its declared source file and uses the required source actor. Select it only when included by the sender's original handover.
+
+An interrupted receive continues the same source directory, manifest hash, receiving workspace and `--run-directory`. The original receiving marker and request receipts determine which work has committed. The receiving report preserves the inherited delivery and review identities. Record the actual receipt before beginning a correction; the correction references that original delivery and the actual customer's requested change.
+
+The same complete receiving is available through original typed and Python client entrypoints and Merchant file readers. Use those installed source exports and their complete guide rather than constructing a second importer. Transfer every file returned by the original manifest, following the native resumable offsets. Check the final complete length and SHA-256 once. Preserve accepted exported bytes after a restart even if the source dossier later changes.
+
+### Carry the complete original Zotero library when required
+
+A dossier-only archive includes that dossier's received Zotero sources and reviews. For the complete library, project/request history and all linked Research dossiers, use the original Zotero export:
+
+~~~sh
+starforge zotero export \
+  --connection /srv/starforge/private/zotero-connection.json \
+  --request-id ORIGINAL_EXPORT_UUID \
+  --out /srv/starforge/delivery/zotero-research.json
+
+starforge zotero receive \
+  --state /srv/starforge/receiving-zotero \
+  --file /srv/starforge/delivery/zotero-research.json \
+  --request-id ORIGINAL_RECEIVE_UUID
+~~~
+
+These direct Zotero CLI examples use the original Zotero connection created by its standalone serve command. When opened through Research, the original bridge returns its private child URL to that operator; retain the bridge's native API/typed-client export path or deliberately use the existing standalone serve lifecycle after its owner closes the bridge. The Research connection and Zotero connection describe different listeners and are not interchangeable.
+
+Receive into a new private directory or resume the directory already owned by the exact same packet/request. The original import verifies source objects, native history, heads, linked dossier exports and inherited receiving bindings. Normal reopen discovers the received Research store. A later export includes subsequent edits made through that same received Research operator.
+
+The source-owned Zotero contribution carries the native server, public assets and upstream COPYING file. Selecting it in both Research recipes makes the dynamically served UI files part of the actual package. Static ESM import discovery alone does not identify those file reads.
+
+### Preserve the complete receiving boundary
+
+| Boundary | Retain and continue |
+| --- | --- |
+| Application review/start | Selected READY runtime, configuration revision, original interpreter/source identities and current connection. |
+| Source or template processing | Complete original source file, selected occurrence and request; same original process signal. |
+| Reviewer save or submission | Full saved request and original actor, form/result/assessment IDs and expected revision. |
+| Resolution or publication | Actual comparison/submissions, reason, table edition and accepted operation. |
+| Export | Original selected revision, full file manifest, complete bytes and SHA-256. |
+| Customer receiving | Source handover manifest, same receiving run directory, native receipt and inherited dossier history. |
+| Zotero receiving | Same complete packet, destination, source history and receiving UUID. |
+| Correction after receipt | New explicit request against the current received history, referencing the actual prior delivery. |
+| Browser cancellation | Retained drafts/requests and programme directory; close only the browser owned by that continuation. |
+
+These controls are the original application's operating behavior. The handover record should distinguish completed source preparation, package installation, browser authoring, native review, report generation and actual receiving. Preserve the original creator's completed evidence and continue only the remaining substantive stages.
+
+## 14. Receive the complete synthesis continuation
+
+The maintained Research selection includes the original complete Analysis and Python source, the synthesis store/engine/report/browser/SDK/CLI and its [full operating guide](SYNTHESIS.md). The source-owned [adoption map](SYNTHESIS_ADOPTION.json) retains all original synthesis leaves and complete BCG reference/programme files. Their source owner continues the one original publication-to-browser-to-SDK/CLI-to-archive receiving operation.
+
+Select the actual Python Runtime environment and its complete buyer package with the declared `synthesis` extra; include `workbooks` when that same selected environment needs the existing workbook product. Reuse a matching installed source/dependency tree. The [exact setup](SYNTHESIS.md#receive-the-complete-synthesis-product) gives the supported package/extra command and original engine-version read. The native engine reports its actual statistics and plotting dependencies; the Research host's extraction setting does not install them.
+
+Use the original complete reviewed publication, selected Analysis directory and retained receiving programme. The first synthesis run is created through the original operator's browser against its saved, reviewed protocol. Keep the actual publication and protocol revisions/digest and 32-hex job ID. The installed SDK and CLI then inspect and receive that same job. They do not recreate the publication, protocol or accepted calculation merely to demonstrate another entrypoint.
+
+The full delivered manifest binds every report, figure, numerical file, source publication, protocol, complete JSON and ZIP to its filename, media type, length and SHA-256. Resume an interrupted native download at its retained Range/If-Range identity and verify the completed file. An identical completed output reopens without another download.
+
+The ordinary Analysis archive contains the publication raw bytes, all protocol editions, the original native result and complete output BLOBs in `datasets.sqlite3`. Restore through the original Analysis archive receiver, then reopen its publication, protocol and job identities. Keep the upstream complete Research portable with its source, reviewer and publication history; the two original workspace formats serve their respective stores.
+
+The [source-native receiving programme](../../stellar/scf-starforge-20261009/distribution/receiving/synthesis/BROWSER_RECEIVING.md) owns the complete browser-created job, its typed/installed-CLI receiving, archive/restore, cold reopen and customer files. Continue its original configuration, run directory and retained outputs after interruption. The BCG reference programme requires the complete current Research extraction/publication source as recorded in its original source map; compose that selected source with this same Research package rather than a separate producer. Its native outcome must come from the original receiving result, independently of source publication or package installation.
+
 ## Continue an interrupted handover
 
 | Interrupted step | Continue the original work |

@@ -5,6 +5,8 @@ import {isDeepStrictEqual} from 'node:util';
 import {reconcile} from '../sf97-merchant-revenue-ops/native-reconcile.mjs';
 import {normalizeTrafficHistoryReport} from '../sf30-seller-sdk/operations/history.mjs';
 import {parseWorkspace,MAX_WORKSPACE_BYTES} from './workspace-file.mjs';
+import {OBJECT_FILES,readObjectObservationFiles} from '../sf93-seller-support-bundle/object-observation.mjs';
+import {objectCaptureView,compareObjectCaptures,objectRepairQueue,objectCaptureHtml} from './object-runtime.mjs';
 
 export const RUNTIME_SCHEMA = 'stellar-forge.merchant-runtime-case.v1';
 export const HANDOFF_SCHEMA = 'stellar-forge.merchant-support-handoff.v1';
@@ -15,7 +17,7 @@ const MAX_FILE = 2_000_000;
 const PACKET_FILES = ['bundle.json','operator-brief.md','metrics.prom','manifest.json'];
 const NATIVE_FILES = ['report.json','events.ndjson','deliveries.ndjson'];
 const PERIOD_FILES = ['history.json',...NATIVE_FILES];
-const FILES = [...PACKET_FILES,...PERIOD_FILES];
+const FILES = [...PACKET_FILES,...PERIOD_FILES,...OBJECT_FILES];
 const INPUTS = ['resource','catalog','origin','network','payTo','method','credentialed'];
 const COUNTERS = ['started','completed','responses','inFlight','success','challenge','clientError','serverError','other','disconnected'];
 const CUMULATIVE = COUNTERS.filter(key=>key!=='inFlight');
@@ -170,6 +172,12 @@ function periodPacket(bytes) {
 }
 function readCaptureFiles(files) {
   fields(files,FILES,'runtime files');
+  if(own(files,'object-observation.json')) {
+    if(Object.keys(files).length!==OBJECT_FILES.length||OBJECT_FILES.some(name=>!own(files,name)))
+      fail('An Object observation needs all three original files without another runtime capture mixed into them');
+    const bytes=Object.fromEntries(OBJECT_FILES.map(name=>[name,source(files[name],name)]));
+    return {kind:'OBJECT_SESSION',bytes,original:readObjectObservationFiles(bytes)};
+  }
   const period=own(files,'history.json'),bytes={};
   if(period) {
     if(Object.keys(files).some(name=>!PERIOD_FILES.includes(name))||!own(files,'report.json'))
@@ -196,6 +204,12 @@ function sample(value) {
   fields(value.scope,['inputs','routeId','path'],'runtime route mapping');
   const inputs=inputScope(value.scope.inputs),routeId=text(value.scope.routeId,80,'selected runtime route',false);
   const {kind,bytes,original,nativeCount}=readCaptureFiles(value.files);
+  if(kind==='OBJECT_SESSION') {
+    if(own(value.scope,'path')||inputs.method!=='GET'||routeId!==original.meta.registration.id)
+      fail('Select the registered original Object source and the GET case method');
+    return {kind,scope:{inputs,routeId},files:value.files,original,
+      route:{id:routeId,method:'GET'},native:null};
+  }
   if(kind==='DURABLE_PERIOD') {
     const path=text(value.scope.path,2048,'selected retained route path',false);
     const route=original.routes.find(row=>row.id===routeId&&row.method===inputs.method&&row.path===path);
@@ -234,6 +248,8 @@ export function parseRuntime(textValue) {
     nativeCaptures:Number(Boolean(before?.native))+Number(Boolean(after?.native)),
     files:[before,after].filter(Boolean).reduce((n,s)=>n+Object.keys(s.files).length,0),
     sourceBytes:[before,after].filter(Boolean).reduce((n,s)=>n+Object.values(s.files).reduce((k,f)=>k+f.bytes,0),0),
+    ...([before,after].some(c=>c?.kind==='OBJECT_SESSION')?
+      {objectCaptures:[before,after].filter(c=>c?.kind==='OBJECT_SESSION').length}: {}),
     ...([before,after].some(c=>c?.kind==='DURABLE_PERIOD')?
       {periodCaptures:[before,after].filter(c=>c?.kind==='DURABLE_PERIOD').length}: {})}};
 }
@@ -250,6 +266,9 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
   // mapping for attachment. The packet itself does not claim an external origin.
   if(routeId===undefined) {
     const {kind,original}=readCaptureFiles(wrapped);
+    if(kind==='OBJECT_SESSION')return {kind,routes:[{id:original.meta.registration.id,method:'GET'}],
+      sessionId:original.meta.selection.sessionId,capturedAt:original.meta.generatedAt,
+      mode:'ORIGINAL_READ_ONLY_BUYER',object:original.summary};
     if(kind==='DURABLE_PERIOD')return {kind,routes:original.routes,sessionId:null,
       sessionIds:original.report.sessionIds,capturedAt:original.history.generatedAt,
       mode:original.report.originalSellerMode,range:original.history.range,days:original.history.days.length};
@@ -261,6 +280,7 @@ export function inspectRuntimeFiles({files,inputs,routeId,path}) {
 }
 function captureView(capture,currentInputs) {
   if(!capture)return null;
+  if(capture.kind==='OBJECT_SESSION')return objectCaptureView(capture,inputScope(currentInputs));
   if(capture.kind==='DURABLE_PERIOD')return periodCaptureView(capture,currentInputs);
   const o=capture.original.observation;
   const native=capture.native;
@@ -340,6 +360,7 @@ function compareRuntime(before,after) {
   if(!isDeepStrictEqual(before.scope.inputs,after.scope.inputs)||before.scope.routeId!==after.scope.routeId||
     !before.caseMatches||!after.caseMatches)
     return {state:'SCOPE_DIFFERS',detail:'The case inputs or selected runtime route changed. Review each capture under its saved scope.',interval:null};
+  if(before.kind==='OBJECT_SESSION'||after.kind==='OBJECT_SESSION')return compareObjectCaptures(before,after);
   if(before.kind==='DURABLE_PERIOD'||after.kind==='DURABLE_PERIOD') {
     if(before.kind!==after.kind)return {state:'DIFFERENT_OBSERVATION_KINDS',
       detail:'A process packet and a retained period have different aggregation scopes. Review the original captures separately.',interval:null};
@@ -367,6 +388,7 @@ export function reviewRuntime(supportText,inputs) {
   const parsed=parseRuntime(supportText),before=captureView(parsed.before,inputs),after=captureView(parsed.after,inputs);
   const comparison=compareRuntime(before,after),queue=[];
   for(const [side,capture] of [['before',before],['after',after]])if(capture) {
+    if(capture.kind==='OBJECT_SESSION')queue.push(...objectRepairQueue(capture,side));
     if(!capture.caseMatches)queue.push({source:side,routeId:capture.scope.routeId,kind:'scope',action:'Review the saved case mapping before using this capture for the current route.'});
     if(capture.observerAttached===false||capture.observerErrors)queue.push({source:side,routeId:capture.scope.routeId,kind:'observer',action:'Inspect the original observer lifecycle and errors before relying on complete traffic counts.'});
     if(capture.period) {
@@ -444,9 +466,9 @@ export function runtimeHtml(report,{name='Merchant case',metadata={}}={}) {
   const sections=['before','after'].filter(side=>report[side]).map(side=>{
     const c=report[side],r=c.route;
     return `<section><h2>${side==='before'?'Before':'After'} · ${escape(r.id)}</h2><p>${escape(c.scope.inputs.resource)} · ${escape(r.method)}</p><p>${escape(c.startedAt)} → ${escape(c.capturedAt)} · ${escape(c.mode)} · ${c.period?c.sessionIds.length+' original sessions':'Session '+escape(c.sessionId)}</p>
-      <table><tr><th>Started</th><th>Completed</th><th>2xx</th><th>402</th><th>5xx</th><th>Disconnected</th></tr><tr>${['started','completed','success','challenge','serverError','disconnected'].map(k=>'<td>'+r[k]+'</td>').join('')}</tr></table>
+      ${c.kind==='OBJECT_SESSION'?objectCaptureHtml(c):`<table><tr><th>Started</th><th>Completed</th><th>2xx</th><th>402</th><th>5xx</th><th>Disconnected</th></tr><tr>${['started','completed','success','challenge','serverError','disconnected'].map(k=>'<td>'+r[k]+'</td>').join('')}</tr></table>`}
       <p>${c.caseMatches?'Mapped to the current case inputs.':'Saved mapping differs from the current case.'}</p>
-      ${periodHtml(c)}${nativeHtml(c)}
+      ${c.kind==='OBJECT_SESSION'?'':periodHtml(c)+nativeHtml(c)}
       <details><summary>Original runtime alerts</summary><ul>${c.alerts.map(a=>'<li>'+escape(a)+'</li>').join('')}</ul></details>
       <details><summary>Original source files</summary><table><tr><th>File</th><th>Bytes</th><th>SHA-256</th></tr>${c.files.map(f=>`<tr><td>${escape(f.name)}</td><td>${f.bytes}</td><td><code>${f.sha256}</code></td></tr>`).join('')}</table></details></section>`;
   }).join('');

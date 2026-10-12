@@ -10,7 +10,10 @@ const RESULT_SCHEMA='stellar-forge.wordpress-merchant-result.v1';
 const RECEIPT_SCHEMA='stellar-forge.wordpress-merchant-file-receipt.v1';
 const camel=name=>name.replace(/_([a-z])/g,(_,letter)=>letter.toUpperCase());
 
-/** Initialize the existing authenticated merchant MCP transport. */
+/** Initialize the existing authenticated merchant MCP transport.
+ * Named refreshPlan/refreshRun/refreshChanges/refreshRecord methods derive from
+ * the original catalog. callValue retains and reads their complete JSON value.
+ */
 export async function openWordPressMerchantClient(options={}){
   const original=await openMerchantFileClient({...options,errorPrefix:'WORDPRESS_MERCHANT',
     clientName:'starforge-wordpress-merchant-client',maximumResponseBytes:3*1024*1024});

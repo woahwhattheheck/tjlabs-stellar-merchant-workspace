@@ -1,6 +1,7 @@
 // MIT. Editable original documents; the maintained onboarding compiler owns review.
 import { createAuthoringWorkspace } from './authoring-ui.mjs';
 import { createComparisonWorkspace } from './comparison-ui.mjs';
+import { createRequestSetsWorkspace } from './request-sets-ui.mjs';
 import { createHandoverWorkspace } from './handover-ui.mjs';
 const $ = id => document.getElementById(id);
 const tokenKey = 'sf105-workspace:' + location.origin;
@@ -10,7 +11,7 @@ const token = fragment || sessionStorage.getItem(tokenKey) || '';
 const state = { saved: null, revision: 0, dirty: false, review: null, operation: 0, exportId: null,
   queries: null, plan: null, busy: false, baselineId: null, evolution: null,
   deploymentId: null, deploymentExportId: null, deploymentInspection: null };
-let authoring = null, handover = null, comparison = null;
+let authoring = null, handover = null, comparison = null, requests = null;
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 function node(tag, text, className) {
@@ -85,7 +86,7 @@ function buttons() {
   $('recover-deployment').disabled = !saved || !state.deploymentInspection?.pending;
   $('deployment-console').disabled = state.busy || !deployment || Boolean(deployment.handover);
   $('host-facilitator').disabled = state.busy || $('host-mode').value !== 'native';
-  authoring?.buttons(); handover?.buttons(); comparison?.buttons();
+  authoring?.buttons(); handover?.buttons(); comparison?.buttons(); requests?.buttons();
 }
 function changed() {
   state.dirty = true; state.review = null;
@@ -255,7 +256,7 @@ function loadDraft(saved) {
   $('review-summary').replaceChildren(); $('review-status').textContent = 'Review this saved project against its retained schema and current compiler.';
   state.baselineId = null; resetEvolution();
   if (saved.revision !== saved.currentRevision) { state.dirty = true; state.exportId = null; }
-  loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); comparison?.reset(); buttons();
+  loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); comparison?.reset(); requests?.reset(); buttons();
 }
 function fresh() {
   state.saved = null; state.revision = 0; state.dirty = false; state.review = null; state.operation = 0; state.exportId = null;
@@ -268,7 +269,7 @@ function fresh() {
   $('review-status').textContent = 'Review the complete draft using its original schema and merchant compiler.';
   state.baselineId = null; resetEvolution();
   state.deploymentId = null; state.deploymentExportId = null; state.deploymentInspection = null;
-  $('history').replaceChildren(); loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); comparison?.reset(); buttons();
+  $('history').replaceChildren(); loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); comparison?.reset(); requests?.reset(); buttons();
 }
 function discard() { return !(state.dirty || authoring?.pending()) || confirm('Open another project and discard these unsaved edits?'); }
 async function projects() {
@@ -775,11 +776,7 @@ authoring = createAuthoringWorkspace({ $, node, button, control, selectControl, 
     return { examplesRetained: Boolean(state.plan) };
   }
 });
-comparison = createComparisonWorkspace({
-  api, action, notice, acceptProject,
-  directory: () => $('directory').textContent,
-  current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
-  async download(path, filename) {
+async function downloadNativeFile(path, filename) {
     const response = await fetch(path, { headers: { 'X-Workspace-Token': token } });
     if (!response.ok) {
       const value = await response.json();
@@ -788,7 +785,22 @@ comparison = createComparisonWorkspace({
     const href = URL.createObjectURL(await response.blob()), anchor = node('a');
     anchor.href = href; anchor.download = filename; anchor.click();
     setTimeout(() => URL.revokeObjectURL(href), 1000);
-  },
+  
+}
+comparison = createComparisonWorkspace({
+  api, action, notice, acceptProject,
+  directory: () => $('directory').textContent,
+  current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
+  download: downloadNativeFile,
+});
+requests = createRequestSetsWorkspace({
+  api, action, notice, acceptProject,
+  directory: () => $('directory').textContent,
+  current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
+  openPreview: (id, project) => authoring.openRetained(id, project),
+  openComparison: (id, generation) => comparison.open(id, generation),
+  inspectComparison: (id, generation) => comparison.inspectPending(id, generation),
+  download: downloadNativeFile,
 });
 handover = createHandoverWorkspace({
   api, action, notice, refreshProjects: projects,

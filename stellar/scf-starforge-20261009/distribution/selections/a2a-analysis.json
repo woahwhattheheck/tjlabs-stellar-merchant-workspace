@@ -1,0 +1,92 @@
+{
+  "schema": "stellar-forge.distribution-source-selection.v1",
+  "id": "a2a-analysis",
+  "title": "A2A analytical services and merchant delivery",
+  "description": "Original analytical workspace, saved query/report service, complete native A2A tasks and artifacts, reviewed merchant publication and editable customer receiving.",
+  "base": {
+    "commands": [
+      "installation",
+      "runtime-profile",
+      "runtime-install",
+      "runtime-workspace",
+      "runtime-transfer",
+      "dataset",
+      "releases"
+    ],
+    "exports": [
+      "./runtime-profile",
+      "./installation",
+      "./installation/cli",
+      "./installation/product",
+      "./installation/runtime",
+      "./runtime-install",
+      "./runtime-transfer",
+      "./runtime-workspace",
+      "./runtime-workspace/server",
+      "./package.json",
+      "./manifest.json"
+    ],
+    "features": [],
+    "applicationProviders": [],
+    "merchantProviders": [],
+    "browserAssets": []
+  },
+  "contributions": [
+    "a2a",
+    "a2a-product"
+  ],
+  "components": [
+    "products/a2a-analysis",
+    "stellar-forge/a2a-analysis-agent",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/a2a",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python",
+    "stellar/scf-starforge-20261009/sf46-release",
+    "stellar/scf-starforge-20261009/sf82-seller-pilot",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/public",
+    "stellar/scf-starforge-20261009/distribution/python-runtime",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings"
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/distribution/cli.mjs",
+    "stellar/scf-starforge-20261009/distribution/build.mjs",
+    "stellar/scf-starforge-20261009/distribution/git-source.mjs",
+    "stellar/scf-starforge-20261009/distribution/build-state.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-terminal.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/worker.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_PROVIDERS.md",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md",
+    "stellar/scf-starforge-20261009/distribution/RUNTIME.md",
+    "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
+    "stellar/scf-starforge-20261009/distribution/BUILDING.md",
+    "stellar-forge/a2a-analysis-agent/deploy/nginx.conf",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/sqlite/example-service.json",
+    "stellar-forge/a2a-analysis-agent/cli.mjs",
+    "stellar-forge/a2a-analysis-agent/receive.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/a2a/cli.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs",
+    "stellar/scf-starforge-20261009/sf43-agent-commerce/mcp-buyer-acceptance.mjs"
+  ],
+  "excludeFiles": [
+    "stellar/scf-starforge-20261009/distribution/index.mjs"
+  ],
+  "product": {
+    "schema": "stellar-forge.merchant-product-package.v1",
+    "description": "Complete A2A analytical workspace, native saved-query/report service and merchant delivery.",
+    "readme": "products/a2a-analysis/README.md",
+    "repository": {
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "directory": ""
+    },
+    "bin": {
+      "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs",
+      "a2a-product": "products/a2a-analysis/cli.mjs",
+      "a2a-analysis-workspace": "products/a2a-analysis/analysis-cli.mjs",
+      "a2a-analysis-archive": "products/a2a-analysis/archive-cli.mjs"
+    }
+  }
+}

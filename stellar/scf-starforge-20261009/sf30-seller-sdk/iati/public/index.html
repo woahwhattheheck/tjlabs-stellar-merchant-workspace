@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><link rel="stylesheet" href="/publishing.css"><script src="/publishing.js" defer></script><link rel="stylesheet" href="/results.css"><script src="/results.js" defer></script><script src="/app.js" defer></script></head>
+<title>IATI · Aid finance workspace</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/dqa.css"><script src="/dqa.js" defer></script><link rel="stylesheet" href="/publishing.css"><script src="/publishing.js" defer></script><link rel="stylesheet" href="/refresh.css"><script src="/refresh.js" defer></script><link rel="stylesheet" href="/results.css"><script src="/results.js" defer></script><script src="/app.js" defer></script></head>
 <body>
 <header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">IA</span><div><strong>IATI</strong><span>Aid finance workspace</span></div></div>
 <div class="top-actions"><span class="connection" id="connection">Opening source workspace</span><button id="reload" type="button">Refresh saved work</button></div></header>
 <div class="layout">
 <aside class="sidebar"><p class="eyebrow">Original publisher data</p><nav aria-label="Workspace">
 <button data-view="overview" class="active">Overview</button><button data-view="sources">Publisher sources</button>
-<button data-view="portfolios">Portfolio review</button><button data-view="query">Explore data</button>
+<button data-view="portfolios">Portfolio review</button><button id="rf-open-view" data-view="refresh">Publisher refresh</button><button data-view="query">Explore data</button>
 <button id="dqa-open" data-view="dqa">Data quality</button><button id="pub-open-view" data-view="publishing">Participant publishing</button><button data-view="compare">Compare editions</button><button data-view="transfer">Receive and export</button></nav>
 <div class="sidebar-note"><strong>Source first</strong><p>Keep reported values, currencies, dates and transaction types together. Each saved portfolio retains its original XML and dataset lineage.</p></div></aside>
 <main id="main" aria-busy="true">
@@ -283,6 +283,55 @@
    <p>Includes all source editions, original feedback and evidence, full correction and review history, schema sources and results, complete native finance portfolios, activity census and the printable handover.</p>
   </article></div>
   <form id="pub-receive-form" class="card"><h2>Receive and reopen a complete release</h2><p>Use the original ZIP in an independent IATI workspace, or reconcile an existing saved delivery. Every selected byte and referenced native finance edition is checked.</p><label>Complete participant ZIP<input id="pub-receive-file" type="file" accept=".zip,application/zip" required></label><button type="submit" class="primary">Receive complete saved work</button><div id="pub-receive-result"></div></form>
+ </div>
+</section>
+
+
+<section data-panel="refresh" hidden class="rf-workspace">
+ <div class="heading"><div><p class="eyebrow">Publisher editions · Saved review</p><h1>Publisher refresh</h1><p class="lede">Carry a reviewed portfolio forward when new publisher files arrive. Inspect the source changes, review the resulting finance edition and choose when it becomes your baseline.</p></div></div>
+ <div class="rf-toolbar"><label>Named operator<input id="rf-actor" maxlength="160" autocomplete="name" placeholder="Person responsible for this action"></label><div class="row"><button type="button" data-go="sources">Retain publisher XML</button><button type="button" data-go="portfolios">Review portfolios</button><button id="rf-reload" type="button">Refresh saved plans</button></div></div>
+ <article id="rf-pending" class="card rf-notice" hidden><h2>Continue the saved action</h2><p id="rf-pending-text"></p><div id="rf-pending-details"></div><div class="row"><button id="rf-reconcile" type="button">Read original request</button><button id="rf-resume" type="button" class="primary">Continue original request</button><button id="rf-revise" type="button" hidden>Revise rejected input</button></div>
+  <details id="rf-abandon-box" hidden><summary>Ask the original workflow to close this preparation</summary><label>Reason<textarea id="rf-abandon-note" rows="2" maxlength="16000"></textarea></label><button id="rf-abandon" type="button">Close this original preparation</button></details>
+ </article>
+ <div id="rf-action-receipt" class="rf-preview" aria-live="polite"></div>
+ <div class="rf-grid">
+  <article class="card"><h2>Saved refresh plan</h2><label>Plan<select id="rf-plan-select"></select></label><div class="row"><button id="rf-plan-open" type="button">Open plan</button><button id="rf-plan-new" type="button">New plan</button></div><div id="rf-plan-summary" class="rf-summary empty">Create a plan from a reviewed portfolio.</div></article>
+  <article class="card"><h2>Current baseline and portfolio</h2><div id="rf-baseline" class="empty">Open a saved plan to see its retained baseline.</div><div class="row"><button id="rf-baseline-open" type="button">Open baseline portfolio</button><button id="rf-current-open" type="button">Open current portfolio</button></div></article>
+ </div>
+ <nav class="rf-tabs" aria-label="Publisher refresh stages"><button type="button" data-rf-tab="plan" aria-selected="true">Plan</button><button type="button" data-rf-tab="prepare" aria-selected="false">Prepare refresh</button><button type="button" data-rf-tab="review" aria-selected="false">Review and promote</button><button type="button" data-rf-tab="handover" aria-selected="false">History and handover</button></nav>
+ <div data-rf-panel="plan">
+  <form id="rf-plan-form" class="card"><div class="card-title"><h2 id="rf-plan-title">Create a saved refresh plan</h2><span id="rf-plan-mode" class="badge">New plan</span></div>
+   <div class="rf-grid"><label>Plan name<input id="rf-plan-name" maxlength="160" required data-rf-edit></label><label>Plan state<select id="rf-plan-state" data-rf-edit><option value="ACTIVE">Active</option><option value="PAUSED">Paused</option><option value="ARCHIVED">Archived</option></select></label></div>
+   <label>Purpose and operating notes<textarea id="rf-plan-note" rows="3" maxlength="16000" data-rf-edit></textarea></label>
+   <div id="rf-create-baseline"><h3>Select the reviewed starting edition</h3><div class="rf-grid"><label>Native portfolio<select id="rf-create-portfolio" data-rf-edit></select></label><label>Revision to inspect<input id="rf-create-revision" type="number" min="1" step="1" placeholder="Latest revision" data-rf-edit></label></div><div class="row"><button id="rf-load-baseline" type="button" data-rf-edit>Inspect selected baseline</button><button id="rf-review-baseline" type="button">Open this portfolio for review</button></div><div id="rf-create-summary" class="empty">Choose a saved portfolio, then inspect its named review.</div></div>
+   <p class="fine">The named operator becomes the plan owner. Editing the plan keeps its retained baseline; promotion advances that baseline after review.</p><button id="rf-plan-save" type="submit" class="primary" data-rf-edit>Save refresh plan</button>
+  </form>
+ </div>
+ <div data-rf-panel="prepare" hidden>
+  <form id="rf-prepare-form" class="card"><h2>Select the next publisher editions</h2><p>First retain the complete new XML in Publisher sources. Pair each replacement with its original baseline source, and identify any additions or removals explicitly.</p>
+   <div id="rf-pairs" class="empty">Open an active plan to prepare its next edition.</div><fieldset><legend>Additional publisher sources</legend><div id="rf-additions" class="source-choices"></div></fieldset>
+   <label>Reason for unpaired source additions or removals<textarea id="rf-source-note" rows="2" maxlength="16000" data-rf-edit placeholder="Explain the change in publisher coverage"></textarea></label>
+   <details class="selection-details"><summary>Review the retained activity and finance selection</summary><div id="rf-selection-baseline"></div><label class="rf-check"><input id="rf-change-selection" type="checkbox" data-rf-edit><span>Change the retained selection for this refresh</span></label>
+    <div id="rf-selection-fields" hidden><p class="fine">An empty field includes that dimension's full reported coverage. A changed selection is identified separately in the resulting comparison.</p><div class="grid three">
+     <label>Activity IDs, one per line<textarea id="rf-activity-ids" rows="3" data-rf-edit></textarea></label><label>Currencies, one per line<textarea id="rf-currencies" rows="3" data-rf-edit></textarea></label><label>Transaction type codes, one per line<textarea id="rf-transaction-types" rows="3" data-rf-edit></textarea></label><label>Budget type codes, one per line<textarea id="rf-budget-types" rows="3" data-rf-edit></textarea></label><label>From date<input id="rf-date-from" type="date" data-rf-edit></label><label>Through date<input id="rf-date-to" type="date" data-rf-edit></label>
+    </div><label>Reason for the changed selection<textarea id="rf-selection-note" rows="3" maxlength="16000" data-rf-edit></textarea></label></div>
+   </details>
+   <button id="rf-preview" type="submit" data-rf-edit>Preview the complete source selection</button><div id="rf-preview-result" class="rf-preview"></div>
+   <div class="rf-grid"><label>Refresh label<input id="rf-run-label" maxlength="160" data-rf-edit placeholder="Publisher edition or reporting period"></label><label>Refresh note<textarea id="rf-run-note" rows="2" maxlength="16000" data-rf-edit></textarea></label></div>
+   <p id="rf-start-context" class="fine">Preview the selection before creating its native portfolio edition.</p><button id="rf-start" type="button" class="primary" data-rf-edit>Create candidate portfolio</button>
+  </form>
+ </div>
+ <div data-rf-panel="review" hidden>
+  <article class="card"><div class="card-title"><h2>Retained refresh runs</h2><button id="rf-runs-reload" type="button">Refresh runs</button></div><label>Run<select id="rf-run-select"></select></label><div class="row"><button id="rf-run-open" type="button">Open run</button><label>Saved run revision<input id="rf-run-revision" type="number" min="1" step="1" placeholder="Current"></label><button id="rf-run-history" type="button">Read complete run history</button></div><div id="rf-run-summary"></div><div id="rf-run-history-result"></div></article>
+  <article class="card"><h2>Complete native comparison</h2><p id="rf-comparison-note">Open a run to review the retained source and portfolio changes.</p><div id="rf-run-counts"></div><div id="rf-run-comparison"></div><div class="row"><button id="rf-run-baseline-open" type="button">Open this run's baseline</button><button id="rf-run-candidate-open" type="button">Open the complete candidate</button></div></article>
+  <form id="rf-review-form" class="card"><h2>Named candidate review</h2><p>Review the complete candidate portfolio, its original financial dimensions and source changes. The named operator above is retained as the reviewer.</p><label>Decision<select id="rf-review-status" data-rf-edit><option value="reviewed">Reviewed and ready for promotion</option><option value="needs-correction">Needs correction</option></select></label><label>Review note<textarea id="rf-review-note" rows="4" maxlength="16000" data-rf-edit required></textarea></label><button id="rf-review-save" type="submit" data-rf-edit>Save the named review</button></form>
+  <div class="rf-grid"><form id="rf-promote-form" class="card"><h2>Promote the reviewed baseline</h2><p>The selected run must be reviewed. Promotion changes the saved plan's baseline to this exact candidate and retains every earlier edition.</p><label>Promotion note<textarea id="rf-promote-note" rows="3" maxlength="16000" data-rf-edit required></textarea></label><button id="rf-promote" type="submit" class="primary" data-rf-edit>Promote this reviewed candidate</button></form>
+   <form id="rf-cancel-form" class="card"><h2>Close this run</h2><p>Cancel a run that will not become the baseline. Its candidate, source files and review history stay available.</p><label>Cancellation note<textarea id="rf-cancel-note" rows="3" maxlength="16000" data-rf-edit required></textarea></label><button id="rf-cancel" type="submit" data-rf-edit>Cancel the selected run</button></form></div>
+ </div>
+ <div data-rf-panel="handover" hidden>
+  <article class="card"><div class="card-title"><h2>Full plan and run history</h2><button id="rf-history-load" type="button">Read complete saved history</button></div><div id="rf-history"></div><div id="rf-history-runs"></div><div id="rf-history-detail"></div></article>
+  <div class="rf-grid"><article class="card"><h2>Complete editable handover</h2><p>Export the saved plan, every run and action, original publisher files, complete native portfolio history and the reader's receiving instructions.</p><p id="rf-export-context" class="fine">Open a saved plan to export its current complete journal.</p><button id="rf-export" type="button" class="primary">Download the complete refresh workspace</button></article>
+   <form id="rf-receive-form" class="card"><h2>Receive a complete refresh workspace</h2><p>Open the full exported ZIP in the receiving IATI workspace. Its retained sources, original portfolio editions and saved refresh history are received together.</p><label>Complete refresh ZIP<input id="rf-receive-file" type="file" accept=".zip,application/zip" required data-rf-edit></label><button id="rf-receive" type="submit" data-rf-edit>Receive and reopen saved work</button><div id="rf-receive-result"></div></form></div>
  </div>
 </section>
 

@@ -13,15 +13,34 @@
       "Gravity-compatible shared eLTSS source and original receiving continuation PR2275/2289/2295",
       "Complete original loopback response and upload transport PR2311",
       "Complete original FHIR response and upload transport PR2318",
-      "Portable original FHIR connected receiving PR2326"
+      "Portable original FHIR connected receiving PR2326",
+      "Native startup diagnostics after owned child output closes PR2347",
+      "Complete eLTSS export download routes and preserved original failed descriptors PR2365",
+      "Selected complete component browser maps and imported declared production helpers"
     ],
     "supplementalSource": [
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
-        "gitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
-        "bytes": 47554,
-        "reason": "Retain stable sequence and exact request identity for interrupted original eLTSS receiving actions.",
-        "commit": "078b172f40f5bc37c81cce58ecf473b31bc6f86b"
+        "gitBlob": "39fa53844eb0b5323bf13351120503f8afc8a025",
+        "bytes": 48569,
+        "reason": "Retain stable sequence and exact request identity for interrupted original eLTSS receiving actions. Record each original export action, exact arguments and complete returned failed descriptor in the existing receiving journal before validating the result.",
+        "commit": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+        "adoptionHistory": [
+          {
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
+            "gitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+            "bytes": 47554,
+            "reason": "Retain stable sequence and exact request identity for interrupted original eLTSS receiving actions.",
+            "commit": "078b172f40f5bc37c81cce58ecf473b31bc6f86b"
+          }
+        ],
+        "previousAdoptedGitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2365,
+          "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+          "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
+        }
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/README.md",
@@ -73,10 +92,26 @@
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
-        "gitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
-        "bytes": 19671,
-        "reason": "Compose the original operator lifecycle with the selected Gravity native descriptor and outer receiving identity. Use the original Node HTTP response stream for authenticated loopback requests, preserving native early error replies, complete upload delivery and workspace reconciliation.",
-        "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+        "gitBlob": "77a4dc8fc7cd42711bb4fa61c30c12b1d27931fa",
+        "bytes": 20567,
+        "reason": "Compose the original operator lifecycle with the selected Gravity native descriptor and outer receiving identity. Use the original Node HTTP response stream for authenticated loopback requests, preserving native early error replies, complete upload delivery and workspace reconciliation. Preserve the original native startup failure and bounded parsed error detail after owned child output closes; retain the original HTTP transport, workspace identity and lifecycle.",
+        "commit": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+        "adoptionHistory": [
+          {
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
+            "gitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+            "bytes": 19671,
+            "reason": "Compose the original operator lifecycle with the selected Gravity native descriptor and outer receiving identity. Use the original Node HTTP response stream for authenticated loopback requests, preserving native early error replies, complete upload delivery and workspace reconciliation.",
+            "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+          }
+        ],
+        "previousAdoptedGitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2347,
+          "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+          "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+        }
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/runtime.mjs",
@@ -94,10 +129,26 @@
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
-        "gitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
-        "bytes": 19190,
-        "reason": "Preserve complete original FHIR loopback responses and uploads, including early native error replies and original workspace import reconciliation.",
-        "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+        "gitBlob": "a2111bc147a02cb87008e812ff181b25bd3c3cb1",
+        "bytes": 20086,
+        "reason": "Preserve complete original FHIR loopback responses and uploads, including early native error replies and original workspace import reconciliation. Preserve the original native startup failure and bounded parsed error detail after owned child output closes; retain the original HTTP transport, workspace identity and lifecycle.",
+        "commit": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+        "adoptionHistory": [
+          {
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
+            "gitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+            "bytes": 19190,
+            "reason": "Preserve complete original FHIR loopback responses and uploads, including early native error replies and original workspace import reconciliation.",
+            "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+          }
+        ],
+        "previousAdoptedGitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2347,
+          "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+          "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+        }
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/files.mjs",
@@ -119,6 +170,21 @@
         "bytes": 17530,
         "reason": "Continue the original FHIR connected receiving at an explicitly restored workspace and existing Playwright module, preserving native result bytes, source identity and the original default journal binding.",
         "commit": "29d1028c8b02939480dc025bb661166f1e4f500b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/eltss_server.py",
+        "beforeGitBlob": "daf05c8e5d3db0bbff8df9ce00a1a534b5d1c96e",
+        "gitBlob": "2bb725b361b3f7f5f8958b5246b27000f96252ea",
+        "bytes": 21768,
+        "change": "Route all eight existing complete export downloads through the original XML handler's _download method, retaining exact artifact bytes and filenames.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2365,
+          "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+          "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
+        },
+        "reason": "Route all eight existing complete export downloads through the original XML handler's _download method, retaining exact artifact bytes and filenames.",
+        "commit": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff"
       }
     ],
     "connectedTransportPublication": {
@@ -141,16 +207,93 @@
       "completeSourceDelta": "73682fae8e7a1e9372eb7e818ed1aeac08f2f4c4"
     },
     "completeReceivingClosure": {
-      "gitBlob": "e1cb1073942a082d343efa9f64e78824154e61f0",
+      "gitBlob": "d6e726b664c6f74962dec2c34280a2031f22e29a",
       "files": 181,
-      "bytes": 3420989
-    }
+      "bytes": 3427405,
+      "sha256": "08a6929eb0eb2092dcd16d66aff2d282e83f4ae806e08c2aae7ca40f1f7d220a"
+    },
+    "previousCompleteReceivingClosures": [
+      {
+        "gitBlob": "e1cb1073942a082d343efa9f64e78824154e61f0",
+        "files": 181,
+        "bytes": 3420989
+      }
+    ],
+    "nativeStartupPublication": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2347,
+      "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+      "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+    },
+    "eltssDownloadPublication": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2365,
+      "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+      "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
+    },
+    "currentRuntimeFiles": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
+        "beforeGitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+        "gitBlob": "a2111bc147a02cb87008e812ff181b25bd3c3cb1",
+        "bytes": 20086,
+        "change": "Preserve the original native startup failure and bounded parsed error detail after owned child output closes; retain the original HTTP transport, workspace identity and lifecycle.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2347,
+          "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+          "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+        }
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
+        "beforeGitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+        "gitBlob": "77a4dc8fc7cd42711bb4fa61c30c12b1d27931fa",
+        "bytes": 20567,
+        "change": "Preserve the original native startup failure and bounded parsed error detail after owned child output closes; retain the original HTTP transport, workspace identity and lifecycle.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2347,
+          "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+          "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+        }
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/eltss_server.py",
+        "beforeGitBlob": "daf05c8e5d3db0bbff8df9ce00a1a534b5d1c96e",
+        "gitBlob": "2bb725b361b3f7f5f8958b5246b27000f96252ea",
+        "bytes": 21768,
+        "change": "Route all eight existing complete export downloads through the original XML handler's _download method, retaining exact artifact bytes and filenames.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2365,
+          "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+          "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
+        }
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
+        "beforeGitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+        "gitBlob": "39fa53844eb0b5323bf13351120503f8afc8a025",
+        "bytes": 48569,
+        "change": "Record each original export action, exact arguments and complete returned failed descriptor in the existing receiving journal before validating the result.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2365,
+          "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+          "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
+        }
+      }
+    ]
   },
   "destination": {
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "reviewedBaseCommit": "866079d7efa4af5bea5cb94dceb9c0c50efbc2d7",
+    "reviewedBaseCommit": "7af3ac3a857ae9acfdd18ce36696dd19e5b7c04a",
     "selection": "healthcare-interoperability",
-    "recipe": "stellar/scf-starforge-20261009/distribution/selections/healthcare-interoperability.json"
+    "recipe": "stellar/scf-starforge-20261009/distribution/selections/healthcare-interoperability.json",
+    "previousReviewedBases": [
+      "866079d7efa4af5bea5cb94dceb9c0c50efbc2d7"
+    ]
   },
   "originalFiles": [
     {
@@ -902,7 +1045,7 @@
     },
     "fhir": {
       "operation": "SCF-FHIR-BULK-DATA-WORKBENCH-450E-20261012",
-      "workspaceId": "748d93a7-b50e-4bb4-8aca-c0272b70d760",
+      "workspaceId": "d04e02f1-5e04-4be7-8708-00d660a8f829",
       "selectedGroupId": "FallonHealth",
       "transactionTime": "2026-10-12T10:00:37+00:00",
       "manifest": {
@@ -920,7 +1063,17 @@
           "resourceCount": 316,
           "bytes": 236507
         }
-      ]
+      ],
+      "originalAcquisitionOperationId": "748d93a7-b50e-4bb4-8aca-c0272b70d760",
+      "reservedDeltaOperationId": "2077a6c5-b200-4a94-af35-a0e21358eba1",
+      "identityCorrection": {
+        "previousWorkspaceId": "748d93a7-b50e-4bb4-8aca-c0272b70d760",
+        "reason": "The original workspace journal identifies this value as the base acquisition operation ID; the workspace UUID is recorded separately.",
+        "originalEditableWorkspace": {
+          "bytes": 36753,
+          "sha256": "5ff6a7c77de1c517a43f56fc3aff41d6af9f7c47c05eb68bccc1fde497db81c6"
+        }
+      }
     }
   },
   "sourceNotices": [
@@ -1053,9 +1206,25 @@
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
-        "gitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
-        "bytes": 19671,
-        "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+        "gitBlob": "77a4dc8fc7cd42711bb4fa61c30c12b1d27931fa",
+        "bytes": 20567,
+        "commit": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+        "adoptionHistory": [
+          {
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/connection.mjs",
+            "gitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+            "bytes": 19671,
+            "commit": "31a7b7e7efae5f5256f8e490280db49c96c57509"
+          }
+        ],
+        "previousAdoptedGitBlob": "030268fb54142c6bc3907a06147520f2a2c42f47",
+        "change": "Preserve the original native startup failure and bounded parsed error detail after owned child output closes; retain the original HTTP transport, workspace identity and lifecycle.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2347,
+          "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+          "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+        }
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/runtime.mjs",
@@ -1065,9 +1234,25 @@
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
-        "gitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
-        "bytes": 47554,
-        "commit": "078b172f40f5bc37c81cce58ecf473b31bc6f86b"
+        "gitBlob": "39fa53844eb0b5323bf13351120503f8afc8a025",
+        "bytes": 48569,
+        "commit": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+        "adoptionHistory": [
+          {
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/RECEIVING.mjs",
+            "gitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+            "bytes": 47554,
+            "commit": "078b172f40f5bc37c81cce58ecf473b31bc6f86b"
+          }
+        ],
+        "previousAdoptedGitBlob": "48f65d924d547f0121ccd3d69adc5eae4d0170a0",
+        "change": "Record each original export action, exact arguments and complete returned failed descriptor in the existing receiving journal before validating the result.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2365,
+          "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+          "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
+        }
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/connected/files.mjs",
@@ -1077,9 +1262,25 @@
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
-        "gitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
-        "bytes": 19190,
-        "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+        "gitBlob": "a2111bc147a02cb87008e812ff181b25bd3c3cb1",
+        "bytes": 20086,
+        "commit": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+        "adoptionHistory": [
+          {
+            "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/connection.mjs",
+            "gitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+            "bytes": 19190,
+            "commit": "7244656f2fe1a3fb1a569a888b03b034ff471080"
+          }
+        ],
+        "previousAdoptedGitBlob": "b0fe5679be139cab6e8a066ddc86e569d3584340",
+        "change": "Preserve the original native startup failure and bounded parsed error detail after owned child output closes; retain the original HTTP transport, workspace identity and lifecycle.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2347,
+          "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+          "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+        }
       },
       {
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_bulk/connected/files.mjs",
@@ -1098,6 +1299,20 @@
         "gitBlob": "0a5b5742c99a592896569f727b37a4bd92e02798",
         "bytes": 17530,
         "commit": "29d1028c8b02939480dc025bb661166f1e4f500b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/fhir_eltss/eltss_server.py",
+        "beforeGitBlob": "daf05c8e5d3db0bbff8df9ce00a1a534b5d1c96e",
+        "gitBlob": "2bb725b361b3f7f5f8958b5246b27000f96252ea",
+        "bytes": 21768,
+        "change": "Route all eight existing complete export downloads through the original XML handler's _download method, retaining exact artifact bytes and filenames.",
+        "publication": {
+          "repository": "woahwhattheheck/public-commons-sprint-2026",
+          "pullRequest": 2365,
+          "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+          "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
+        },
+        "commit": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff"
       }
     ],
     "fhirTransport": {
@@ -1111,6 +1326,59 @@
       "pullRequest": 2326,
       "merge": "29d1028c8b02939480dc025bb661166f1e4f500b",
       "completeSourceDelta": "73682fae8e7a1e9372eb7e818ed1aeac08f2f4c4"
+    },
+    "nativeStartup": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2347,
+      "merge": "9707f6bbad19313499b51e0cbf93e703694a8b69",
+      "completeSourceDelta": "e5d0dff7f80e4eda50198826572cdee23483f698"
+    },
+    "eltssDownloads": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "pullRequest": 2365,
+      "merge": "3690898ae5cdba45dac3a5a752e9cd741cf4e2ff",
+      "completeSourceDelta": "4f0b2ccc1a177fe1de960855db220294fe3ddf58"
     }
+  },
+  "selectedPackageRepair": {
+    "operation": "SCF-GRAVITY-INSTALLED-PRODUCT-450E-20261012",
+    "reviewedBaseCommit": "7af3ac3a857ae9acfdd18ce36696dd19e5b7c04a",
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+        "beforeGitBlob": "9908805558a56a3457c28ed9fb6d16935d0c0286",
+        "gitBlob": "a2d8bcd92494bb1ecc65096e5669d07807025123"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+        "beforeGitBlob": "8b046fc9e3aee8c316bdb4b72c90215265d0dc2e",
+        "gitBlob": "4f1e18e25e7bfd2858e9891a5cd170e6f9d8c65b"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/distribution.json",
+        "beforeGitBlob": "816323e44397b4d389fc7472156f415ca51caf9d",
+        "gitBlob": "9a80f92936ddb0fc4398feaa4aab4091bbde2dce"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
+        "beforeGitBlob": "cb94a46039c6b3690919e657d401d5fefee0f9ad",
+        "gitBlob": "521f5f70986ec3c9fd8ae8bd3817f785847a451e"
+      }
+    ],
+    "browserRegistrations": [
+      {
+        "server": "stellar-forge/mcp-merchant-operator/console/service.mjs",
+        "manifest": "stellar-forge/mcp-merchant-operator/console/browser-assets.json"
+      },
+      {
+        "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/server.mjs",
+        "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/browser-assets.json"
+      },
+      {
+        "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/server.mjs",
+        "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/browser-assets.json"
+      }
+    ],
+    "behavior": "Preserve the selected commands, exports, native features and providers; include maintained browser route maps for complete selected components and declared production helpers reached by actual selected imports."
   }
 }

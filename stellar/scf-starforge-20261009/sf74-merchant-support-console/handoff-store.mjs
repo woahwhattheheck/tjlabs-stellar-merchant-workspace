@@ -5,7 +5,7 @@ import {resolve, dirname, join, sep} from 'node:path';
 import {createHash} from 'node:crypto';
 import * as transfer from '../../../stellar-forge/mcp-merchant-operator/support-download.mjs';
 import {parseSupportExportManifest} from '../../../stellar-forge/mcp-merchant-operator/support.mjs';
-import {privateSupportDirectory} from '../../../stellar-forge/mcp-merchant-operator/config.mjs';
+import {privateSupportDirectory} from '../../../stellar-forge/mcp-merchant-operator/host-files.mjs';
 import {MAX_HANDOFF_BYTES} from './runtime-support.mjs';
 
 const ALIAS = /^[a-z0-9][a-z0-9_-]{0,63}$/;
