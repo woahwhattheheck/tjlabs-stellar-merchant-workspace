@@ -11,6 +11,7 @@ from operations_commercial_http import handle as commercial_http
 
 
 def register_static(static):
+    static["/operations_amendment_calendar.mjs"] = ("operations_amendment_calendar.mjs", "text/javascript; charset=utf-8")
     static.update({"/operations_cash_accounts.mjs": ("operations_cash_accounts.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cash_accounts.css": ("operations_cash_accounts.css", "text/css; charset=utf-8")})
     static.update({"/operations_amendments.mjs": ("operations_amendments.mjs", "text/javascript; charset=utf-8"),
@@ -47,6 +48,8 @@ def register_static(static):
                    "/operations_completion.mjs": ("operations_completion.mjs", "text/javascript; charset=utf-8"),
                    "/operations_completion.css": ("operations_completion.css", "text/css; charset=utf-8"),
                    "/operations_support.mjs": ("operations_support.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_engagements.mjs": ("operations_engagements.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_engagements.css": ("operations_engagements.css", "text/css; charset=utf-8"),
                    "/operations.mjs": ("operations.mjs", "text/javascript; charset=utf-8"),
                    "/operations.css": ("operations.css", "text/css; charset=utf-8"),
                    "/forecast.mjs": ("forecast.mjs", "text/javascript; charset=utf-8"),
@@ -74,7 +77,7 @@ def read(handler, parsed):
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
         return True
-    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|amendments(?:/amendment-[a-f0-9]{32})?|installation-returns(?:/review-[a-f0-9]{32}/export.zip)?|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|cash-account(?:/export.zip)?|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
+    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|engagements(?:/review-[a-f0-9]{32}(?:/export.zip)?)?|amendments(?:/amendment-[a-f0-9]{32})?|installation-returns(?:/review-[a-f0-9]{32}/export.zip)?|work-intakes(?:/intake-[a-f0-9]{32})?|export.zip|ledger-intake|ledger-intakes/source-[a-f0-9]{32}|cash-account(?:/export.zip)?|supplier-account(?:/export.zip)?|performance(?:/export.zip)?|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|delivery-calendar(?:/export\.(?:ics|csv|json))?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
         raise Problem("Operations page not found.", 404, "NOT_FOUND")
     ident, action = match.groups()
@@ -207,6 +210,14 @@ def read(handler, parsed):
     elif action.startswith("completion-reviews/"):
         review_id = action.split("/")[1]
         handler.send(200, ops.export_completion(ident, review_id), "application/zip", review_id + "-completion.zip")
+    elif action == "engagements":
+        handler.send(200, ops.list_engagements(ident))
+    elif action.startswith("engagements/"):
+        review_id = action.split("/")[1]
+        if action.endswith("/export.zip"):
+            handler.send(200, ops.export_engagement(ident, review_id), "application/zip", review_id + "-engagements.zip")
+        else:
+            handler.send(200, ops.engagement(ident, review_id))
     elif action == "forecasts":
         handler.send(200, {"forecasts": ops.list_forecasts(ident)})
     elif action.startswith("forecasts/"):
@@ -251,11 +262,18 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|cash-correction-preview|cash-correction|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
-        methods = {"command": ops.command, "cash-correction-preview": ops.cash_correction_preview,
+        if match.group(2) == "amendment-calendar-export":
+            handler.send(200, ops.export_amendment_calendar(match.group(1), body),
+                         "application/zip", match.group(1) + "-amendment-calendars.zip")
+            return True
+        methods = {"command": ops.command,
+                   "engagement-seed": ops.seed_engagement, "engagement-preview": ops.preview_engagement,
+                   "engagement-forecast": ops.preview_engagement_forecast, "engagement-portfolio": ops.preview_engagement_portfolio,
+                   "cash-correction-preview": ops.cash_correction_preview,
                    "cash-correction": ops.cash_correction_apply, "amendment-preview": ops.preview_amendment, "installation-return-seed": ops.seed_installation_return,
                    "installation-return-preview": ops.preview_installation_return,
                    "installation-return-review-preview": ops.preview_installation_return_review, "work-intake-preview": ops.preview_work_intake, "ledger-intake-inspect": ops.inspect_ledger_intake,

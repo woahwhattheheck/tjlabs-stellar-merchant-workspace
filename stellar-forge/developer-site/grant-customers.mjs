@@ -9,6 +9,7 @@ const A2A = '## A2A analytical services: complete agent work, merchant delivery 
 const CUSTOMER_WORKSHARES = '## External buyer onboarding and study-operations commissioning';
 const AIR_QUALITY = '## Air-quality reporting and complete customer receiving';
 const MUNICIPAL = '## Municipal source operations, service reporting and reviewed GIS delivery';
+const IATI = '## IATI publishing, programme finance and complete customer receiving';
 const JOURNEY = '# 9A. Current demonstration and operator journey';
 const BILLING = '## Merchant settlement, customer billing and accountant receiving';
 const DEDICATED = new Set(['## Recurring economic-report installation', '## Coastal model-input installation', '## Datasette editions and customer analysis']);
@@ -309,6 +310,13 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/open311\/gis\/INSTALL\.md)/, municipal);
   receive('municipal-native-format-interchange', 'Municipal GIS original format interchange result',
     /https:\/\/github\.com\/woahwhattheheck\/public-commons-sprint-2026\/blob\/([a-f0-9]{40})\/(operations\/open311-gis-8e5f-\d{8}\/format-interchange-result\.json)/, municipal);
+  const iati = section(companion, IATI)?.text || '';
+  receive('iati-organisation-financial-workspace', 'IATI organisation and programme financial review',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/ORGANISATION_RECONCILIATION\.md)/, iati);
+  receive('iati-complete-financial-receiving', 'IATI complete source and financial customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/reconciliation_receiving\.py)/, iati);
+  receive('iati-fcdo-wadi-original-source', 'Original FCDO organisation and WADI activity publication',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf30-seller-sdk\/iati\/examples\/fcdo-wadi-2026\/SOURCE\.md)/, iati);
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
     retained_product_sections: headings(clean(companion)).filter(item => item.level === 2).map(item => item.text.slice(3)),

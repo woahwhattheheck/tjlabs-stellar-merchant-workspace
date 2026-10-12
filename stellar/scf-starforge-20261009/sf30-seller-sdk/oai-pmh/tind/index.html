@@ -35,7 +35,8 @@
     <h2>Create a migration from a reviewed repository edition</h2>
     <p>Choose an edition retained by the original repository workspace. Its identifiers, metadata, original response pages and review history stay connected to the migration.</p>
     <form id="create-form">
-      <div class="grid two"><label>Migration title<input name="title" required maxlength="256"></label><label>Selected TIND institution<input name="instance" type="url" placeholder="https://your-institution.tind.io" required></label></div>
+      <p>Open the complete original source edition now. The institution URL can be selected later in Mapping before preparing or receiving its native batches.</p>
+      <div class="grid two"><label>Migration title<input name="title" required maxlength="256"></label><label>TIND institution, when selected<input name="instance" type="url" placeholder="https://your-institution.tind.io"></label></div>
       <label>Reviewed original edition<select name="editionId" id="edition-select" required></select></label>
       <details><summary>Complete initial mapping profile</summary><p>Review exact XML selectors and target MARC fields. You can edit this profile again in Destination mapping.</p><label>Profile JSON<textarea name="profile" id="create-profile" rows="16" spellcheck="false"></textarea></label></details>
       <button type="submit">Create complete migration</button>

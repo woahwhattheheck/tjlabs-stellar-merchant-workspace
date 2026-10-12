@@ -14,6 +14,14 @@ This product supports a complete working sequence:
 8. Write the source-linked analysis, then deliver the complete report, original files and portable dossier.
 9. Reopen the exported dossier on the receiving workspace with its original history.
 
+
+## Customer quotations and Applications commissioning
+
+Use the complete [Research commissioning workflow](COMMISSIONING.md) to select the original customer case store, observed pricing profiles, paid-delivery host and existing source connections. Preparation retains the full native configuration and source review; save produces the original Applications settings/request and same-source direct launch arguments. The existing Applications desk reviews, starts, stops and reopens that Research listener.
+
+The quotation product carries the original customer case and published quote through a reviewed Research brief, source-linked work, frozen delivery, native paid publication, Buyer receiving and realized pricing/cost report. The [quotation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md) contains the complete browser, terminal and Merchant journey.
+
+
 ## Open the original workspace
 
 Use the existing Linux and Node 22.16+ runtime described in the [product README](../../README.md). The Research client uses Node's built-in modules. Its optional source connections use their existing host configuration.
@@ -1293,6 +1301,37 @@ Use the actual connection file and owned store directory from the original liste
 For application code, use `ResearchWorkspaceClient.risSources()`; its methods retain the original connection identity and source/revision bindings. The installed `./buyer/research-dossiers/ris/client` entry exports the original client factory. The Merchant Research attachment provides seven RIS tools and eleven export forms through its existing retained-file API. It preserves the original Research Commerce, extraction, appraisal, citation and eligibility tools.
 
 A later review may retain or deselect earlier selections according to its explicit reviewed choice. Compare the two received editions and save JSON, HTML or Markdown comparison exports. Original document and record downloads retain their exact bytes; selected RIS is a declared derived UTF-8 representation. Export a specific dossier revision when a report must retain its before, reviewed or later state. The complete portable dossier carries these editions and review histories.
+
+## Complete a selected customer Research programme
+
+The installed **research-customer-programme** command carries one explicit customer selection through original source intake, citation review, chronology, Europe PMC, analyst workbooks and complete editable delivery. Select the original documents and reviewer decisions using the [complete customer input contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md). The [Europe PMC contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/EUROPE_PMC.md) covers the complete selected library, linked search continuations, comparisons and independent restoration.
+
+A selection identifies the actual dossier or new dossier description; selected questions; exact document bytes, SHA256 values, source declarations and licences; source editions and citation occurrences; affected finding decisions; and the chronology's original date facts and explicit interpretations. It also contains the complete Europe PMC query/operation/review selection and the delivery volume. The receiver retains those full original inputs before native mutations.
+
+Use the installed entry on an equipped Node24+/Python3.11+ host with the original workbook extra, selected Playwright module and compatible Chromium:
+
+~~~sh
+starforge registrations --command research-customer-programme
+starforge research-customer-programme \
+  --selection /absolute/customer/selection.json \
+  --selection-sha256 ACTUAL_SELECTION_SHA256 \
+  --directory /absolute/private/customer-programme \
+  --engine-root /absolute/research-package/source \
+  --engine-manifest /absolute/research-package/manifest.json \
+  --engine-manifest-sha256 ACTUAL_MANIFEST_SHA256 \
+  --playwright-module /absolute/node_modules/playwright/index.mjs \
+  --chromium /absolute/chromium \
+  --python /absolute/python3 \
+  --node /absolute/node
+~~~
+
+Use the actual source root and original manifest of the installed release, and run the command from that same release. A retained native receiving cohort can instead select its original ENGINE_SOURCE.json and corresponding complete source directory, with the complete customer-programme directory installed inside that source tree. A separate selected checkout must match every original source member in the executing source tree. Both forms retain all original file identities and source authority.
+
+For an existing dossier, also pass --workspace /absolute/original/research-workspace and select its actual ID and expected revision in the input. This programme owns its original Research listeners through completion; continue its private operation directory when interrupted.
+
+Original Europe PMC editions are received before citation decisions so the citation fingerprint sees the complete selected source set. The programme then saves citation reviews, attaches the complete chronology/source bundle, runs original Python/Analysis workbook receiving, and reopens saved reviews through Merchant and the browser. It exports the complete dossier and history, packages all input/source/output members, and opens the actual extracted archive with the included engine in a separate editable workspace.
+
+Open **delivery/START_HERE.html** for the readable handover. **COMPLETE.json** records the actual dossier revision, final archive and independent receiving result. Deliver the selected ZIP with its complete original inputs, reports, source and operating guides. See [the installed customer receiving chapter](RECEIVING.md#20-receive-the-complete-customer-selected-programme) for extraction and ongoing edits.
 
 ## Operating source
 

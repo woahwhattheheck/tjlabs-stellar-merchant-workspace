@@ -50,7 +50,7 @@ starforge runtime-workspace attach \
   --runtime /absolute/private/datasette-runtime --label "Datasette"
 ~~~
 
-The product contains both the Datasette source/publisher application and original Datasette customer Analysis application. Reopen each against its retained original directory. In **Python & workbooks**, resolve and retain the original workbooks extra, install it offline and select that Python installation in customer Analysis. Follow the [installed customer guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/INSTALLATION.md) for the full source, interpreter and receiving settings.
+The product contains the Datasette source/publisher, original Datasette customer Analysis and Datasette source workflow Applications entries. Reopen each against its retained original directory. In **Python & workbooks**, resolve and retain the original workbooks extra, install it offline and select that Python installation in customer Analysis. Follow the [installed customer guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/INSTALLATION.md) for the full source, interpreter and receiving settings.
 
 ## Deliver a reviewed source edition
 
@@ -131,6 +131,133 @@ The browser can perform the same receiving workflow: choose **Complete workspace
 The receiver preserves the original source, editions, publisher history and customer work while recording the actual receiving directory and relocations. Retain its result and reopened workspace identity. Further customer work continues in the received original store.
 
 For analytical work, use the installed Datasette customer Analysis application. Supply the returned editionFile and editionSha256 in the [native-edition handover](OPERATING.md#receive-the-publishers-named-edition); the original customer reader imports that complete reviewed source into its own Analysis database. Export the complete editable customer workspace after substantive customer changes and use that application's original receiving workflow on the next host. Reopen the restored database with its original customer Analysis operation ID. The source/publisher ZIP and customer Analysis ZIP preserve the original stores they came from.
+
+## Receive a complete report project
+
+The source workflow's complete project ZIP carries the original business
+request and history, selected configuration, all native query/report/workbook
+files and Analysis archive, original supplier review/coverage package and the
+complete built application source. Use this project export when the receiving
+operator must reopen and continue the full request-to-report delivery.
+
+Receive the matching complete merchant runtime and workbooks Python
+installation through the existing transfer and Python controls above. Use the
+receiving runtime ID, runtime directory and original Python installation from
+that host. Select new canonical private workflow and Analysis directories:
+
+~~~sh
+starforge datasette-analysis \
+  --runtime-workspace /srv/starforge/receiving-operator \
+  --runtime-directory /srv/starforge/receiving-runtime \
+  --runtime-id RECEIVING_24_HEX_RUNTIME_ID \
+  --installation-id RECEIVING_64_HEX_PYTHON_INSTALLATION_ID \
+  -- workflow receive \
+  --archive /srv/starforge/transfers/Complete_Supplier_Project.zip \
+  --sha256 ACTUAL_COMPLETE_PROJECT_SHA256 \
+  --workspace /srv/starforge/received/workflow \
+  --analysis-workspace /srv/starforge/received/analysis
+~~~
+
+The original receiver retains the business request, result, selected source and
+native operation identities and records the actual received paths. It runs the
+maintained Analysis archive receiver for the selected native destination.
+Repeating the same receive selection continues that original receiving
+operation.
+
+The received workflow contains:
+
+| Relative location | Original contents |
+| --- | --- |
+| received/delivery | Source editions, complete native query/report/workbook files and original Analysis archive |
+| received/delivery/supplier | Unchanged native supplier manifest, all declared files under their original basenames, complete coverage inputs and outputs, original reviewed workspace and workflow link |
+| received/application | Entire original built application source archive |
+| received/workflow | Selected workflow source, guides, example profiles and native Kestra source |
+| received/intake | Complete original request intake |
+| received/deployment | Actual rendered native flow delivery when configured |
+
+The outer result's Supplier_Report_ labels identify portable file descriptors.
+The supplier directory preserves each original filename beside its unchanged
+manifest. Start the complete original supplier editor from its received directory:
+
+~~~sh
+node /srv/starforge/received/workflow/received/delivery/supplier/supplier-report-cli.mjs serve --port 8765
+~~~
+
+Open its localhost URL and the adjacent workspace.json. Its report, rules,
+complete baseline and candidate, changes and any accepted output keep their
+original identities. The original input review is separately retained as
+original-supplier-workspace.json. The same directory includes the original
+editor, CLI, helper and guide source declared by its complete manifest.
+
+### Open both received applications
+
+In **Applications**, create or reopen these original entries:
+
+| Application | Receiving selection |
+| --- | --- |
+| Datasette customer Analysis | The restored Analysis directory, its original 32-character operation ID and the receiving workbooks installation |
+| Datasette source workflow | The received workflow directory and the same installed Python environment |
+
+Open the workflow without a configuration to inspect its retained request,
+source/report files, supplier status, history and complete project export.
+Start the restored Analysis owner when continuing native report work. Its
+source editions, saved queries, workbook and operation history remain available
+through **Original Analysis**.
+
+The source workflow has its own private listener and resource lease for its
+request directory. Startup verifies the original process, workspace and private
+launch record and checks its authenticated health response. The health result
+also reports the configured Analysis operation's readiness. Use the current
+Applications Open link after reopening; each listener has a fresh capability.
+
+### Continue the actual customer project
+
+Build a successor configuration with workflow configure using the real
+receiving paths. The full supplier example binds:
+
+| Configuration input | Original received file |
+| --- | --- |
+| Primary prices and coverage pricing | received/delivery/supplier/coverage-pricing-source.csv |
+| Related catalog and coverage catalogue | received/delivery/supplier/coverage-catalogue-source.csv |
+| Both source metadata and coverage metadata | received/delivery/supplier/coverage-publisher-metadata.json |
+| Native supplier review workspace | received/delivery/supplier/original-supplier-workspace.json |
+| Complete source archive | The actual received/application archive filename |
+| Analysis selection | Restored Analysis directory and its original operation ID |
+| Supplier component | The complete products/conapi/supplier-report in the receiving installed sourceRoot |
+
+Preserve the profile's prices-to-candidate sourceBindings and coverage
+prices/catalog aliases. Configure verifies the actual complete files and
+source-owned parser. The original supplier review retains its own request ID,
+comparison, revision and actual status. A changed supplier candidate uses its
+corresponding native reviewed workspace and complete source together.
+
+Use a new business request for the intended report change. For example, the
+same original monthly pricing report can have an explicitly linked successor
+selecting the published free period:
+
+~~~json
+{
+  "schema": "stellar-forge.source-workflow-request.v1",
+  "requestId": "conapi-supplier-received-successor-20261012",
+  "parentRequestId": "conapi-supplier-a-20261012",
+  "correlationId": "conapi-supplier-receiving-20261012",
+  "profile": "elite-supplier-review",
+  "parameters": {"period": "free"}
+}
+~~~
+
+Review the new configuration in the saved workflow application, open it, and
+accept and run this original successor. Its six report sections run against
+the retained complete source pair with the actual changed parameter.
+Source/baseline reports and workbooks retain the original CSV columns and
+publisher metadata. Re-export the completed project to a new destination;
+the received original delivery and successor relation remain in that project.
+
+[The complete native receiving programme](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/WORKFLOW_RECEIVING.md)
+includes every source-binding command, selected native Analysis operation,
+full query/report review, interruption continuation and successor export.
+[The installed Applications guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/INSTALLATION.md)
+contains the exact managed mode, four-field wrapper and readiness contract.
 
 ## Complete remote customer receiving
 
