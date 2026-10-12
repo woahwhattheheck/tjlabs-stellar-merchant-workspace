@@ -1,6 +1,6 @@
 # Complete customer installation workorders
 
-This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained CoCart or Blockscout product. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
+This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained CoCart, Blockscout, Query.Farm or ARS air-quality programme. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
 
 The profiles describe the whole useful customer task, the actual source contract, merchant-priced unit, receiving application, maintenance and interruption recovery. Customer selections stay in local bindings: original merchant/buyer IDs, approved source edition and rights, actual receiving host/engineer and original payment terms.
 
@@ -15,8 +15,11 @@ The maintained commercial importer remains the entry for an original customer Wo
 | prepare-core.mjs | Pure preparation functions, selected-source checks and complete workorder rendering |
 | cocart.json | Whole headless cart → native Woo checkout/order → payment/fulfilment → original receiving task |
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
+| queryfarm.json | Complete result acquisition → retained VGI/SQL use → deliberate next edition → original receiving task |
+| ars-air-quality.json | Complete source intake → named air-quality review → client report/delivery → correction and original receiving task |
+| CUSTOMER_PROGRAMMES.md | Customer task selection, source semantics, recurring-use cadence and original-case commissioning for Query.Farm and ARS |
 
-The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. Both complete profiles are included in its selected source.
+The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. All four complete profiles and their operating guide are included in its selected source.
 
 Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library and makes no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
@@ -47,7 +50,7 @@ The [original Installation guide](../../sf47_budget_model/workspace/INSTALLATION
 
 ## 2. Prepare customer bindings
 
-Choose cocart or blockscout for the selected actual product.
+Choose cocart, blockscout, queryfarm or ars-air-quality for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys.
 
 ~~~sh
 node prepare.mjs template --profile cocart \
@@ -85,7 +88,7 @@ node prepare.mjs prepare --profile cocart \
   --out "$PRIVATE_OUTPUT/cocart-installation"
 ~~~
 
-The same command with --profile blockscout prepares the other product from its own original commercial seed and bindings.
+The same command with --profile blockscout, --profile queryfarm or --profile ars-air-quality prepares that product from its own original commercial seed and bindings.
 
 | Output | Native use |
 | --- | --- |
@@ -144,6 +147,12 @@ Use the existing **Blockscout connection setup** and **Blockscout token merchant
 
 The receiving journey includes the agreed actual API response, testnet purchase, exact response download/recovery, applicable limit behavior and same-state stop/reopen. Receive source, pinned dependencies, reviewed connection/deployment package, both consumers and full original state. The customer/prime's chosen operator controls production rollout and ongoing accounts.
 
+### Query.Farm and ARS air-quality
+
+Query.Farm covers the complete acquired data result, original VGI catalog/worker, typed SQL use, retained-edition recovery and an explicitly selected next edition. ARS covers authorized client source intake, the named air-quality review, complete client reporting and delivery, linked correction and independent reopening. Its default is the original monthly reporting scope; a daily-review programme uses explicit customer task bindings.
+
+Use [Customer programmes](CUSTOMER_PROGRAMMES.md) for the full operating journeys, first-installation commands, existing-installation updates and a recurring-use calendar grounded in the actual source cadence.
+
 ## Funding and meaningful cohort work
 
 Installation assignments reference the pinned original funded packages. They do not add hours or alter the application request. Retain separately priced commercial work in its original Workshare. Record each actual engineering hour once, with its real funding basis; commercial implementation and grant-funded future development use their original respective work records.
@@ -152,7 +161,7 @@ Use the independent cohort's actual participating operators, useful customer tas
 
 ## Maintained source
 
-The two profile files name their exact observed Git blobs. The implementation is built against:
+The profile files name their exact observed Git blobs. The implementation is built against:
 
 - workspace/operations_installations.py: d1215083000905d8df2669e26173609f7a5d6282.
 - workspace/operations_workshare_installations.py: 887ed17e1aeb71c02ef646653748ba819a363a7c.
@@ -162,9 +171,9 @@ The tool uses the existing native schema. Its complete output continues through 
 
 ## Complete native receiving in one operation
 
-The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and both complete profiles.
+The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and all four complete profiles.
 
-Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. The private CoCart/Zeeve commissioning package supplies the filled input and all four original files.
+Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. The private CoCart/Zeeve commissioning package supplies its filled input and all four original files. Query.Farm and ARS use their own complete original commissioning sources and receiving packets with their matching profile IDs.
 
 ~~~sh
 starforge grant-installation-receive \
@@ -178,7 +187,7 @@ starforge grant-installation-receive \
 
 The selected original case and plan are required. The receiving workspace is a separate operator-selected workspace. Node 22 and the original Python Operations application execute the operation; the driver uses the same native preview, save and complete-case importer as the browser.
 
-The driver retains the four complete files privately, reuses matching original attached bytes, and reads the actual case version for each mutation. It receives the complete native Workshare seed, composes the customer workorder, obtains the original preview and saves that edition. An existing installation is found by its original Workshare case. Native source refresh preserves its current task, payment, deployment, receiving fields and observed checks; changed original phases follow the native source-refresh rules. If its complete native document already matches, the existing saved edition is reopened.
+The driver retains all selected complete files privately, reuses matching original attached bytes, and reads the actual case version for each mutation. It receives the complete native Workshare seed, composes the customer workorder, obtains the original preview and saves that edition. An existing installation is found by its original Workshare case. Native source refresh preserves its current task, payment, deployment, receiving fields and observed checks; changed original phases follow the native source-refresh rules. If its complete native document already matches, the existing saved edition is reopened.
 
 The input's optional customer **bindings** object edits only **merchantDeploymentId**, **buyerDeploymentIds**, **task**, **source**, **payment** and **receiving**. A first PLANNED edition can retain pending customer selections. Existing operated installations retain their stage and native observations while the original preview resolves supplied edits and source changes.
 
