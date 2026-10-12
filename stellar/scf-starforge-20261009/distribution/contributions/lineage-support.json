@@ -1,0 +1,25 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "lineage-support",
+  "description": "Complete original Lineage incident source, Support case, reviewed native decision return and customer receiving",
+  "components": [
+    "stellar-forge/mcp-merchant-operator/lineage-support"
+  ],
+  "commands": {
+    "lineage-support": "stellar-forge/mcp-merchant-operator/lineage-support/cli.mjs",
+    "lineage-support-receive": "stellar-forge/mcp-merchant-operator/lineage-support/receiving.mjs"
+  },
+  "commandDescriptions": {
+    "lineage-support": "Review original Lineage incidents, retain them in Support cases, return saved native decisions and download complete customer files",
+    "lineage-support-receive": "Operate the original incident-to-case decision recovery and receive complete Support and Lineage customer projects"
+  },
+  "exports": {
+    "./lineage-support": "./source/stellar-forge/mcp-merchant-operator/lineage-support/controller.mjs",
+    "./lineage-support/model": "./source/stellar-forge/mcp-merchant-operator/lineage-support/model.mjs",
+    "./lineage-support/receiving": "./source/stellar-forge/mcp-merchant-operator/lineage-support/receiving.mjs",
+    "./lineage-support/guide": "./source/stellar-forge/mcp-merchant-operator/lineage-support/OPERATING.md"
+  },
+  "merchantProviders": {
+    "lineage-support": "stellar-forge/mcp-merchant-operator/lineage-support/provider.mjs"
+  }
+}
