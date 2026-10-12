@@ -31,7 +31,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
-| Review research sources and deliver cited analysis | `starforge research-workspace`, `starforge research-client` and the merchant Research tools | One saved question, original source editions, reviewed Crossref operations, analyst findings and complete report/portable receiving |
+| Review research sources, documents and processing jobs | **Applications → Research dossiers**, `starforge research-workspace` and `starforge research-client` | Saved questions, complete Documents and managed Pipelines operations, reviewed source editions, findings and full original-file/report receiving |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
 | Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
@@ -86,6 +86,13 @@ The [Eurostat operating guide](products/eurostat/OPERATING.md) connects official
 source acquisition, exact economic reports, native publication and complete
 customer receiving. Build the complete selected product with
 `--selection eurostat` and open its original Applications entry.
+
+The [Research Documents and Pipelines guide](products/research/OPERATING.md) and
+[installation and receiving guide](products/research/RECEIVING.md) connect saved
+questions, completed documents and managed processing jobs, reviewed source
+editions and findings, and complete report, original-file and portable delivery
+through the same browser, CLI and merchant attachment. Build its complete
+selected product with `--selection research-workspace`.
 
 ## Open the source product
 
@@ -241,6 +248,7 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Research Documents, managed Pipelines and full receiving](products/research/RECEIVING.md)
 - [Eurostat economic editions and complete customer receiving](products/eurostat/OPERATING.md)
 - [IATI publisher review, finance and operator interfaces](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/OPERATIONS.md)
 - [IATI complete installed publisher workflow and customer handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/receiving/COMPLETE.md)
