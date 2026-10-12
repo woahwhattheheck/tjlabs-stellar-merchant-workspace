@@ -28,6 +28,7 @@ import operations_statements as statements
 import operations_performance as performance
 import operations_ledger_intake as ledger_intake
 import operations_payables as payables
+import operations_task_outcomes as task_outcomes
 import operations_cash_accounts as cash_accounts
 import operations_implementation as implementation
 import operations_engagements as engagements
@@ -291,6 +292,10 @@ class Operations:
             if command == "source.add":
                 after = self._source_add(program_id, data)
                 kind, record_id = "source", after["id"]
+            elif command == "task-outcomes.save":
+                result = task_outcomes.save(self, context, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                extra_receipt = {"taskOutcomes": result["taskOutcomes"]}
             elif command == "statement.receive":
                 context["cashCorrections"] = cash_accounts.statement_successors(self, context)
                 result = statements.receive(self, context, data, actor, next_version)
@@ -485,6 +490,36 @@ class Operations:
             return action()
         return self.workspace._transaction(body.get("requestId"), payload, action)
 
+
+    def seed_task_outcomes(self, program_id, body):
+        with self.workspace.mutex:
+            context = self._context(identifier(program_id, "operation"))
+            task_outcomes.obj(body, ("expectedVersion",), "Customer task seed")
+            if domain.integer(body.get("expectedVersion"), "Reviewed case version", 1, 10000000) != context["program"]["version"]:
+                task_outcomes.fail("The case changed. Reopen its current selection.", "OPERATIONS_CONFLICT", 409)
+            return task_outcomes.seed(context)
+
+    def list_task_outcomes(self, program_id):
+        with self.workspace.mutex:
+            self._program(identifier(program_id, "operation"))
+            return [task_outcomes.summary(row) for row in task_outcomes.heads(task_outcomes.records(self, program_id))]
+
+    def task_outcomes(self, program_id, study_id, revision=None):
+        with self.workspace.mutex:
+            context = self._context(identifier(program_id, "operation"))
+            return {**task_outcomes.get(self, program_id, study_id, revision),
+                    "case": {"id": program_id, "version": context["program"]["version"], "state": context["program"]["state"]}}
+
+    def preview_task_outcomes(self, program_id, body):
+        with self.workspace.mutex:
+            return task_outcomes.preview(self, self._context(identifier(program_id, "operation")), body)
+
+    def export_task_outcomes(self, program_id, study_id, revision, expected_version):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            if domain.integer(expected_version, "Reviewed export case version", 1, 10000000) != context["program"]["version"]:
+                task_outcomes.fail("The case changed. Review its current version before exporting the complete case.", "OPERATIONS_CONFLICT", 409)
+            return self.export(program_id, task_outcome_id=study_id, task_outcome_revision=revision)
 
     def list_work_intakes(self, program_id):
         with self.workspace.mutex:
@@ -1056,7 +1091,7 @@ class Operations:
                 if own:
                     self.db.execute("ROLLBACK")
 
-    def export(self, program_id, installation_id=None, installation_revision=None, installation_return_review_id=None, engagement_id=None):
+    def export(self, program_id, installation_id=None, installation_revision=None, installation_return_review_id=None, engagement_id=None, task_outcome_id=None, task_outcome_revision=None):
         with self._snapshot():
             context = self._context(program_id)
             program = context["program"]
@@ -1108,6 +1143,8 @@ class Operations:
                 files.update(installations.selected_files(context, saved_installations, installation_id, installation_revision, files))
             if engagement_id is not None:
                 files.update(engagements.selected_files(context, reviews, engagement_id))
+            if task_outcome_id is not None or task_outcome_revision is not None:
+                files.update(task_outcomes.selected_files(self, program_id, task_outcome_id, task_outcome_revision))
         if sum(len(raw) for raw in files.values()) > MAX_BUNDLE:
             domain.fail("The complete operations bundle exceeds 32 MiB.", status=413)
         manifest = {"schema": SCHEMA + ".bundle", "files": [{"path": name, "bytes": len(raw),
@@ -1170,6 +1207,8 @@ class Operations:
         selected_names = {"installation-selection.json", "installation.html"}
         if selected_names.intersection(files):
             expected.update(selected_names)
+        if task_outcomes.SELECTION_FILES.intersection(files):
+            expected.update(task_outcomes.SELECTION_FILES)
         engagement_names = {"engagement-selection.json", "engagement.html"}
         if engagement_names.intersection(files):
             expected.update(engagement_names)
@@ -1195,6 +1234,7 @@ class Operations:
             if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"] or len(content) > MAX_SOURCE:
                 domain.fail("An original attachment differs from its source record.")
         installations.selection_from_files(document, files)
+        task_outcomes.selection_from_files(document, files)
         installation_returns.selection_from_files(document, files)
         engagements.validate_selection(document, files)
         return document, files
@@ -1300,6 +1340,8 @@ class Operations:
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files,
                                       plan_for_version=selected_plan_at)
+        task_outcomes.validate_import(context, events, files, saved_installations, plan_for_version=selected_plan_at)
+        selected_task_outcomes = task_outcomes.selection_from_files(document, files)
         commercial_rows = document.get("commercialReceivables")
         if commercial_rows is not None:
             commercial_rows = commercial_receivables.validate_import(
@@ -1433,6 +1475,7 @@ class Operations:
                 self.db.execute("INSERT INTO ops_portfolios VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
                     **({"selectedInstallation": selected_installation} if selected_installation else {}),
+                    **({"selectedTaskOutcomes": selected_task_outcomes} if selected_task_outcomes else {}),
                     **({"selectedEngagement": selected_engagement} if selected_engagement else {}),
                     **({"selectedInstallationReturn": selected_installation_return} if selected_installation_return else {}),
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),

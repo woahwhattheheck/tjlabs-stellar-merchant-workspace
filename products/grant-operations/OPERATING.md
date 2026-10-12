@@ -646,6 +646,24 @@ The command line exposes the same workflow under `operations`: `commercial-conne
 
 The planning workspace includes **Compare saved plans** for two explicit saved revisions, including named alternatives. It connects work-package and payment changes, milestone and delivery scope, staffing allocation, exact funding and capacity deltas, and complete daily cash outputs. A complete receiving package carries the selected snapshots and each original native plan ZIP. Browser, CLI and Merchant MCP use the same comparison engine. See the [saved plan comparison guide](../../stellar/scf_2026/sf47_budget_model/workspace/COMPARISON.md) for the full workflow.
 
+## Customer task outcomes
+
+Open **Delivery operations → Customer task outcomes** to compare the complete
+prior and installed customer methods. Retain the source population, period,
+useful output, quality, active person-time, corrections, receiving effort and
+one-currency cost. An explicit scope review controls total and per-task
+comparisons, while missing measurements remain visible.
+
+The complete editor saves immutable Draft or Reviewed editions through the
+original case transaction. Browser, CLI, typed client and five Merchant tools
+share the same model and request recovery. The complete customer ZIP includes
+the original operating case, all comparison revisions, selected sources,
+offline HTML and full effort/cost CSVs; importing it reopens the chosen
+comparison for the receiving operator.
+
+See the [Customer task outcomes guide](../../stellar/scf_2026/sf47_budget_model/workspace/TASK_OUTCOMES.md)
+for the complete input, calculation, review and receiving workflow.
+
 ## Complete cash accounts and original corrections
 
 Open **Delivery operations → Cash / issuer** for the complete cash account. Choose original dates and exact network/currency/asset, inspect full payments and refund allocations, and retain the original source documents. The Accounts section keeps unspecified native values distinct from an all-account selection.

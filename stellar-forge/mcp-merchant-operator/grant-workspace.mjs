@@ -406,7 +406,7 @@ export class MerchantGrantWorkspaces {
       case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
-      work_intakes:'work-intakes',work_intake:'work-intake',
+      work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
       cash_account:'cash-account',supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
@@ -463,6 +463,13 @@ export class MerchantGrantWorkspaces {
         body.document=await this.#modelInputs(alias,args,'Work intake',GRANT_MAX_BUNDLE_BYTES);
       const method={work_intake_preview:'workIntakePreview',work_intake_save:'workIntakeSave',work_intake_apply:'workIntakeApply'}[verb];
       original=await client[method](caseId,body);
+    }
+    else if (verb === 'task_outcomes_seed') original=await client.taskOutcomesSeed(args.caseId,args.expectedVersion);
+    else if (verb === 'task_outcomes_preview'||verb === 'task_outcomes_save') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      const complete=await this.#modelInputs(alias,args,'Customer task outcomes');
+      original=verb==='task_outcomes_preview'?await client.taskOutcomesPreview(caseId,{...body,inputs:complete}):
+        await client.taskOutcomesSave(caseId,{...body,inputs:complete});
     }
     else if (verb === 'engagement_seed') original = await client.engagementSeed(args.caseId, args.expectedVersion, args.reviewId);
     else if (verb === 'engagement_preview') original = await client.engagementPreview(args.caseId, args.expectedVersion,
