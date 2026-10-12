@@ -5,11 +5,10 @@ import {open,lstat,realpath,mkdir,readdir,rename,link,unlink} from 'node:fs/prom
 import {join,isAbsolute,basename} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {fault,identity,json} from '../contract.mjs';
-import {privateDirectory,readOwned,atomicJSON,syncDir} from '../../stellar-expert/store.mjs';
+import {privateDirectory,readOwned,atomicJSON,syncDir,acquireWorkspaceLease} from '../../stellar-expert/store.mjs';
 
 const MAX_FILE=2*1024*1024*1024,CHUNK=4*1024*1024,NOFOLLOW=constants.O_NOFOLLOW??0;
 const HASH=/^[a-f0-9]{64}$/;
-const locks=new Map();
 function scalar(url,name){const values=url.searchParams.getAll(name);if(values.length!==1)throw fault('DESK_INBOX_INPUT','Supply one '+name+'.');return values[0];}
 function selected(url){
   const filename=scalar(url,'filename'),sha256=scalar(url,'sha256'),raw=scalar(url,'bytes');
@@ -37,21 +36,34 @@ async function jsonFile(path){return JSON.parse((await readOwned(path,1024*1024)
 const syncDirectory=syncDir;
 const save=atomicJSON;
 function response(res,status,value){const b=json(value);res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Content-Length':b.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(b);}
-async function exclusive(id,run){
-  if(locks.has(id))throw fault('DESK_UPLOAD_ACTIVE','This exact source upload already has a writer; reopen its saved status.',409);
-  const p=run();locks.set(id,p);try{return await p;}finally{if(locks.get(id)===p)locks.delete(id);}
-}
 export function createDeskInbox({sourceInboxDirectory=null,instanceId=null}={}){
-  let closing=false;
-  const pending=new Set();
-  async function roots(){if(!sourceInboxDirectory)throw fault('DESK_INBOX_NOT_CONFIGURED','The host must bind the original source inbox in Applications before browser receiving.',409);
-    const root=await directory(sourceInboxDirectory),staging=await directory(join(root,'.sensorthings-desk-incoming'),{create:true});return {root,staging};}
+  let closing=false,closePromise=null,rootPromise=null,lease=null;
+  const pending=new Set(),locks=new Map();
+  const assertLease=()=>{if(!lease)throw fault('DESK_INBOX_LEASE','The original source inbox writer is not open.',503);lease.assert();};
+  async function exclusive(id,run){
+    if(locks.has(id))throw fault('DESK_UPLOAD_ACTIVE','This exact source upload already has a writer; reopen its saved status.',409);
+    const p=run();locks.set(id,p);try{return await p;}finally{if(locks.get(id)===p)locks.delete(id);}
+  }
+  async function roots(){
+    if(!sourceInboxDirectory)throw fault('DESK_INBOX_NOT_CONFIGURED','The host must bind the original source inbox in Applications before browser receiving.',409);
+    if(closing)throw fault('DESK_INBOX_CLOSING','The original source receiving transport is closing.',503);
+    if(!rootPromise)rootPromise=(async()=>{
+      const root=await directory(sourceInboxDirectory),staging=await directory(join(root,'.sensorthings-desk-incoming'),{create:true}),
+        lockPath=join(staging,'inbox.lock');
+      const lockFile=await ownedFile(lockPath,constants.O_RDWR|constants.O_CREAT);await lockFile.close();
+      // Reuse the original kernel lease for the complete canonical inbox.
+      // Another Desk may use a different inbox, while this one remains owned
+      // through original status reconciliation, chunk commit and publication.
+      lease=await acquireWorkspaceLease(lockPath);return {root,staging};
+    })();
+    const result=await rootPromise;assertLease();return result;
+  }
   async function uploadState(input){
     const {root,staging}=await roots(),target=join(root,input.filename),metadata=join(staging,input.id+'.json'),part=join(staging,input.id+'.part');
     try{const current=await hashed(target);if(current.bytes!==input.bytes||current.sha256!==input.sha256)throw fault('DESK_INBOX_CONFLICT','This original filename already contains different bytes; preserve it and choose the actual source filename.',409);
       return {root,staging,target,metadata,part,complete:true,offset:input.bytes,record:null};}catch(e){if(e.code!=='ENOENT')throw e;}
     let record;try{record=await jsonFile(metadata);if(record.schema!=='stellar-forge.sensorthings-desk-upload.v1'||identity(record.selection)!==identity(input))throw fault('DESK_UPLOAD_IDENTITY','The retained original upload belongs to another source.',409);}
-    catch(e){if(e.code!=='ENOENT')throw e;record={schema:'stellar-forge.sensorthings-desk-upload.v1',selection:input,createdAt:new Date().toISOString(),chunks:[],offset:0};await save(metadata,record);}
+    catch(e){if(e.code!=='ENOENT')throw e;record={schema:'stellar-forge.sensorthings-desk-upload.v1',selection:input,createdAt:new Date().toISOString(),chunks:[],offset:0};assertLease();await save(metadata,record);}
     let offset=0;try{const fd=await ownedFile(part);try{offset=(await fd.stat()).size;}finally{await fd.close();}}catch(e){if(e.code!=='ENOENT')throw e;}
     if(offset<record.offset||offset>input.bytes)throw fault('DESK_UPLOAD_PREFIX_CHANGED','The retained upload prefix differs from its original receipt.',409);
     // A crash after data fsync but before metadata commit leaves an uncommitted
@@ -60,10 +72,11 @@ export function createDeskInbox({sourceInboxDirectory=null,instanceId=null}={}){
     return {root,staging,target,metadata,part,record,complete:false,offset:record.offset,uncommittedBytes:offset-record.offset};
   }
   async function finish(input,s){
+    assertLease();
     const complete=await hashed(s.part);if(complete.bytes!==input.bytes||complete.sha256!==input.sha256)throw fault('DESK_UPLOAD_HASH','The complete upload differs from the selected original source; its retained prefix remains available for inspection.',409,{bytes:complete.bytes,sha256:complete.sha256});
-    try{await link(s.part,s.target);}catch(e){if(e.code!=='EEXIST')throw e;const prior=await hashed(s.target);if(prior.bytes!==input.bytes||prior.sha256!==input.sha256)throw fault('DESK_INBOX_CONFLICT','The original destination changed before publication.',409);}
+    assertLease();try{await link(s.part,s.target);}catch(e){if(e.code!=='EEXIST')throw e;const prior=await hashed(s.target);if(prior.bytes!==input.bytes||prior.sha256!==input.sha256)throw fault('DESK_INBOX_CONFLICT','The original destination changed before publication.',409);}
     await syncDirectory(s.root);
-    await save(s.metadata,{...s.record,offset:input.bytes,completedAt:s.record.completedAt??new Date().toISOString(),state:'COMPLETE'});
+    assertLease();await save(s.metadata,{...s.record,offset:input.bytes,completedAt:s.record.completedAt??new Date().toISOString(),state:'COMPLETE'});
     await unlink(s.part).catch(e=>{if(e.code!=='ENOENT')throw e;});
     return {schema:'stellar-forge.sensorthings-desk-upload-result.v1',complete:true,filename:input.filename,bytes:input.bytes,sha256:input.sha256,offset:input.bytes,chunkBytes:CHUNK,
       receiving:{action:'edition.import',payload:{filename:input.filename,expectedBytes:input.bytes,expectedSha256:input.sha256}}};
@@ -71,7 +84,7 @@ export function createDeskInbox({sourceInboxDirectory=null,instanceId=null}={}){
   async function route(req,res,{url,workspaceId}){
     if(!url.pathname.startsWith('/api/desk/'))return false;
     if(closing)throw fault('DESK_INBOX_CLOSING','The original source receiving transport is closing.',503);
-    if(url.pathname==='/api/desk/info'&&req.method==='GET'){response(res,200,{schema:'stellar-forge.sensorthings-desk-info.v1',workspaceId,instanceId,sourceInboxConfigured:Boolean(sourceInboxDirectory),uploadMaxBytes:MAX_FILE,uploadChunkBytes:CHUNK});return true;}
+    if(url.pathname==='/api/desk/info'&&req.method==='GET'){if(sourceInboxDirectory)await roots();response(res,200,{schema:'stellar-forge.sensorthings-desk-info.v1',workspaceId,instanceId,sourceInboxConfigured:Boolean(sourceInboxDirectory),uploadMaxBytes:MAX_FILE,uploadChunkBytes:CHUNK});return true;}
     if(url.pathname==='/api/desk/inbox'&&req.method==='GET'){
       const {root}=await roots(),wanted=url.searchParams.get('filename');
       if(wanted!==null){if(!wanted||wanted!==basename(wanted)||wanted.startsWith('.')||/[\\/\u0000-\u001f\u007f]/.test(wanted))throw fault('DESK_INBOX_FILENAME','Choose one listed inbox filename.');
@@ -102,21 +115,22 @@ export function createDeskInbox({sourceInboxDirectory=null,instanceId=null}={}){
       if(offset<s.offset){const previous=s.record.chunks.find(c=>c.offset===offset);if(!previous||previous.bytes!==count||previous.sha256!==chunkSha)throw fault('DESK_UPLOAD_REPLAY_CHANGED','The repeated original chunk differs from its retained receipt.',409);
         return {complete:false,filename:input.filename,bytes:input.bytes,sha256:input.sha256,offset:s.offset,chunkBytes:CHUNK,reused:true};}
       if(offset!==s.offset)throw fault('DESK_UPLOAD_OFFSET','Resume the committed original upload prefix.',409,{offset:s.offset});
-      const f=await ownedFile(s.part,constants.O_RDWR|constants.O_CREAT);
+      assertLease();const f=await ownedFile(s.part,constants.O_RDWR|constants.O_CREAT);
       try{const before=await f.stat();if(before.size<offset)throw fault('DESK_UPLOAD_PREFIX_CHANGED','The retained original prefix ended before its receipt.',409);
         if(before.size>offset){if(before.size>offset+count)throw fault('DESK_UPLOAD_PREFIX_CHANGED','The uncommitted tail exceeds this exact replay.',409);
           const previous=Buffer.alloc(before.size-offset);await f.read(previous,0,previous.length,offset);if(!previous.equals(bytes.subarray(0,previous.length)))throw fault('DESK_UPLOAD_REPLAY_CHANGED','The retained uncommitted original tail differs from this selected replay.',409);}
-        let written=0;while(written<bytes.length){const r=await f.write(bytes,written,bytes.length-written,offset+written);if(!r.bytesWritten)throw fault('DESK_UPLOAD_WRITE','The original upload write made no progress.',507);written+=r.bytesWritten;}
+        let written=0;while(written<bytes.length){assertLease();const r=await f.write(bytes,written,bytes.length-written,offset+written);if(!r.bytesWritten)throw fault('DESK_UPLOAD_WRITE','The original upload write made no progress.',507);written+=r.bytesWritten;}
         await f.sync();
       }finally{await f.close();}
       s.record={...s.record,offset:offset+count,chunks:[...s.record.chunks,{offset,bytes:count,sha256:chunkSha}]};
-      await save(s.metadata,s.record);
+      assertLease();await save(s.metadata,s.record);
       if(s.record.offset===input.bytes)return finish(input,s);
       return {complete:false,filename:input.filename,bytes:input.bytes,sha256:input.sha256,offset:s.record.offset,chunkBytes:CHUNK};
     });
     response(res,200,result);return true;
   }
   function handleApi(req,res,context){const p=route(req,res,context);pending.add(p);void p.finally(()=>pending.delete(p)).catch(()=>{});return p;}
-  async function close(){closing=true;await Promise.allSettled([...pending]);}
+  function close(){if(!closePromise)closePromise=(async()=>{closing=true;await Promise.allSettled([...pending]);
+    if(rootPromise)await rootPromise.catch(()=>{});if(lease)await lease.close();})();return closePromise;}
   return {handleApi,close};
 }
