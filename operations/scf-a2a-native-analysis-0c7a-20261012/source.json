@@ -1,0 +1,126 @@
+{
+  "schema": "commons.original-source-capsule.v1",
+  "operationId": "SCF-A2A-NATIVE-ANALYSIS-0C7A-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceCommit": "94103c14db10bdcae41b9e51b58644ca8e30cf23",
+  "agentCommit": "972674beb1673608654308886d367741f479327a",
+  "format": "multipart-exact-utf8-source",
+  "entrypoint": "stellar-forge/a2a-analysis-agent/commission.mjs",
+  "merchantEntrypoint": "stellar/scf-starforge-20261009/sf30-seller-sdk/a2a/receiving/commission.mjs",
+  "files": 709,
+  "sourceBytes": 9694431,
+  "parts": [
+    {
+      "part": 1,
+      "blob": "06077febbdadccd312d7310e13e1d0caf41b6868",
+      "bytes": 847742,
+      "sha256": "b170613d68f790eccb96bfe08389c68435f5c84ddf0bf943a7215a99130df2d0",
+      "files": 69,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-01.json"
+    },
+    {
+      "part": 2,
+      "blob": "fb2d5389c39bf6e2918fc86e54f8473ecf63c112",
+      "bytes": 826670,
+      "sha256": "ef0270d445e40d1dfa6d103737ed1d3c8f3c744a0c053b56df0b670658e52129",
+      "files": 62,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-02.json"
+    },
+    {
+      "part": 3,
+      "blob": "1f23e7abd778ae0379269272ea83001d7a5af3fe",
+      "bytes": 844688,
+      "sha256": "e2be816f24fb97c88e3509a355bb0addc9c95a1dbb38e43eb2959154f7a81b8c",
+      "files": 64,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-03.json"
+    },
+    {
+      "part": 4,
+      "blob": "f554564d4c5f920109ba6c6e61591922b6b9e96b",
+      "bytes": 809003,
+      "sha256": "3a6db0c7976243cbb8ec207d8d46ce32ada7d518c289b528cbd04aa0f5841300",
+      "files": 65,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-04.json"
+    },
+    {
+      "part": 5,
+      "blob": "68cb32fa7be36f3c4652504eda516019a0bd0bfa",
+      "bytes": 806461,
+      "sha256": "9cc375f53d4732f8f0eef6b96e950700d8a17893adcc52e19dff2a5bbbbcbb1e",
+      "files": 69,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-05.json"
+    },
+    {
+      "part": 6,
+      "blob": "f3a7844318d749147d7e7e3981a1feb856998208",
+      "bytes": 848136,
+      "sha256": "9d2b3fd874f9e8358ccff782e14f0a21ab27d126adbd277a2cd4bb3c38afea16",
+      "files": 64,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-06.json"
+    },
+    {
+      "part": 7,
+      "blob": "47d74d26e96e5923681ca76aebecb0e3bc4263aa",
+      "bytes": 840588,
+      "sha256": "f211dad9459579732c67eca0527a550e1b73ed9da6f0effadd75c83fdc779a30",
+      "files": 64,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-07.json"
+    },
+    {
+      "part": 8,
+      "blob": "dd26c454be7b67992869a9da9a6a65e2059a7c9f",
+      "bytes": 847055,
+      "sha256": "eaf8a8e1e2a63c848cdd88af8e24b937796e160c5cafdd2eab47a6a747967d53",
+      "files": 58,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-08.json"
+    },
+    {
+      "part": 9,
+      "blob": "a1a109dee3a612ee8d3f4730e9199d08ee1ef0a8",
+      "bytes": 828467,
+      "sha256": "09302883a36999d09b7bdeff759d0b3d9117e5b795c5604f74500747fc33dccb",
+      "files": 51,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-09.json"
+    },
+    {
+      "part": 10,
+      "blob": "8577148838df21f4dd0d1b5f79c8a5d7e2fd4d4e",
+      "bytes": 779158,
+      "sha256": "930aeaecfb9617d27545a372a6ff7b78e18b69a16ad7a35a0f94d8d513e9ad50",
+      "files": 25,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-10.json"
+    },
+    {
+      "part": 11,
+      "blob": "04928680ce994055efa781866f21a492e050728f",
+      "bytes": 842412,
+      "sha256": "d28fee8fd6d16060bbcf290d90047e284d70235ab0e292a15369f3caea2271a2",
+      "files": 42,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-11.json"
+    },
+    {
+      "part": 12,
+      "blob": "f3c228b80ce38f205b6eacb53b668f2d0cbb2162",
+      "bytes": 835795,
+      "sha256": "ea7c7352f125ea6285ed57022ee5acf75b0482714eb83c4962ada369e8b62593",
+      "files": 68,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-12.json"
+    },
+    {
+      "part": 13,
+      "blob": "0aa89ab2828b27e7012d8cbb6beff1ae816d379f",
+      "bytes": 147231,
+      "sha256": "2202cd966541b7ea92149f47acf635a0f1d0efdd30f71c852bae878097504cab",
+      "files": 8,
+      "path": "operations/scf-a2a-native-analysis-0c7a-20261012/source-part-13.json"
+    }
+  ],
+  "nativeDatasetRecording": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "commit": "b602d5b5e220f8c9d06b82bcd55decbc9d013e1c",
+    "path": "stellar/scf-starforge-20261009/operations/sensorthings-hamburg-native-20261012/native-recording.json",
+    "gitBlob": "4b9e8382f140101fc2279ce4b18f00826382fb61",
+    "bytes": 2965230,
+    "sha256": "34fb0322092a51525e94beda0d6c3b21548b7261d65d80909b27eb6fa6a2d466"
+  }
+}
