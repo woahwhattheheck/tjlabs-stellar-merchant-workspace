@@ -236,6 +236,8 @@ def register(subparsers, common):
     target = command("portfolio-seed", "Prepare allocation inputs from one original saved forecast", case=True, output=True)
     target.add_argument("--forecast", required=True)
     target.add_argument("--expected-version", type=int, required=True)
+    target.add_argument("--installation-selections", help="JSON array of exact saved installation editions for original commercial task IDs")
+    target.add_argument("--inputs", help="Complete existing Portfolio draft JSON to retain while selecting installation phases")
     for verb in ("portfolio-preview", "portfolio-save"):
         target = command(verb, "Calculate or retain source-bound delivery alternatives", case=True, output=True)
         target.add_argument("--inputs", required=True)
@@ -531,7 +533,22 @@ def operate(workspace, args):
                 "requestId": args.request_id, "note": args.note, "action": "forecast.save",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action == "portfolio-seed":
-        result = ops.seed_portfolio(args.case, {"expectedVersion": args.expected_version, "forecastId": args.forecast})
+        body = {"expectedVersion": args.expected_version, "forecastId": args.forecast}
+        for filename, field, expected_type in (
+            (args.installation_selections, "installationSelections", list),
+            (args.inputs, "inputs", dict),
+        ):
+            if filename is None:
+                continue
+            try:
+                value = json.loads(read_bytes(filename, MAX_SOURCE))
+            except (UnicodeError, ValueError) as exc:
+                raise Problem("Portfolio " + field + " must be valid JSON.", 422, "INVALID_JSON") from exc
+            if not isinstance(value, expected_type):
+                kind = "array" if expected_type is list else "object"
+                raise Problem("Portfolio " + field + " must be a JSON " + kind + ".", 422, "INVALID_JSON")
+            body[field] = value
+        result = ops.seed_portfolio(args.case, body)
     elif action == "portfolios":
         result = {"portfolios": ops.list_portfolios(args.case)}
     elif action == "portfolio-show":

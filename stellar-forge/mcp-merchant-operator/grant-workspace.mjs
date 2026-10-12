@@ -481,8 +481,14 @@ export class MerchantGrantWorkspaces {
     else if (verb === 'forecast_save') {
       const {caseId, input, inputPointer, expectedInputSha256, ...body} = rest;
       original = await client.forecastSave(caseId, {...body, inputs:await this.#modelInputs(alias, args, 'Forecast')});
-    } else if (verb === 'portfolio_seed') original = await client.portfolioSeed(args.caseId, args.expectedVersion, args.forecastId);
-    else if (verb === 'portfolio_preview') original = await client.portfolioPreview(args.caseId, args.expectedVersion,
+    } else if (verb === 'portfolio_seed') {
+      const options = {};
+      if (args.installationSelections !== undefined) options.installationSelections = args.installationSelections;
+      if (['inputs','input','inputPointer','expectedInputSha256'].some(key => args[key] !== undefined)) {
+        options.inputs = await this.#modelInputs(alias, args, 'Portfolio');
+      }
+      original = await client.portfolioSeed(args.caseId, args.expectedVersion, args.forecastId, options);
+    } else if (verb === 'portfolio_preview') original = await client.portfolioPreview(args.caseId, args.expectedVersion,
       await this.#modelInputs(alias, args, 'Portfolio'));
     else if (verb === 'portfolio_save') {
       const {caseId, input, inputPointer, expectedInputSha256, ...body} = rest;

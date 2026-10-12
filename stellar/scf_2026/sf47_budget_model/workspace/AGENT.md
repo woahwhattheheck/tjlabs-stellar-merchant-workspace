@@ -25,7 +25,7 @@ First call inspectGrantAgentBinding with directory and optional scenarioFile, py
 | command(caseId, body) | Original record/review lifecycle command with current version, actor and request ID. |
 | forecastPreview(caseId, expectedVersion, inputs) | Pure original remaining-work and dated cash preview. |
 | forecastSave(caseId, body) | Original save against the same input and reviewed preview SHA. |
-| portfolioSeed(caseId, expectedVersion, forecastId) | Original editable allocation input from the selected current saved forecast. |
+| portfolioSeed(caseId, expectedVersion, forecastId, options?) | Original editable allocation from a saved forecast, with optional exact Installation editions and a complete existing draft. |
 | portfolioPreview(caseId, expectedVersion, inputs) | Original complete resource/day alternatives and cash preview. |
 | portfolioSave(caseId, body) | Native portfolio.save with the reviewed input, preview SHA, case version, actor and request ID. |
 | portfolioSelection(caseId, expectedVersion, portfolioId, alternativeId) | Native selected dates returned as an original forecast input. |
@@ -55,33 +55,170 @@ A borrowed Applications instance keeps its existing lifetime. A client-started s
 
 ## Portfolio allocation and original cash handoff
 
-Read views portfolios and portfolio use caseId and, for the saved result, portfolioId. Portfolio exports use kind portfolio and those same IDs. The native complete case ZIP remains the receiving carrier for all saved portfolios, sources, forecasts and original history.
+The client uses the same saved Forecast, Portfolio, Installation editions and original case requests as the browser. Read `portfolios` or `portfolio` with the original `caseId`; the saved read also requires `portfolioId`. Download a saved calculation with `download('portfolio', {caseId, portfolioId})`. The complete case ZIP carries the receiving workspace, sources, Installation history, saved Forecasts and saved Portfolios.
 
-portfolioSeed returns value.inputs with the complete original task set. Edit the actual resource availability and effort, then preview and save through the original implementation. Save body is {expectedVersion, requestId, actor, note?, inputs, expectedPreviewSha256}. It uses the same original command journal and after-dispatch uncertainty handling as forecastSave.
+### Select the original phase source
 
-After a portfolio save, read the case's new version before selecting an alternative. Selection is read-only and returns value.inputs plus its exact original source/date selection:
+The original three-argument `portfolioSeed(caseId, expectedVersion, forecastId)` call remains supported. An optional fourth argument selects exact Installation editions and can retain a complete current draft:
 
-~~~js
-const current = await client.read('case', {caseId});
-const selected = await client.portfolioSelection(
-  caseId, current.value.program.version, portfolioId, alternativeId
+```ts
+import type {
+  GrantPortfolioInputs,
+  GrantPortfolioInstallationSelection
+} from './agent-client.mjs';
+
+const current = await client.read('case', { caseId });
+const originalSeed = await client.portfolioSeed(
+  caseId, current.value.program.version, forecastId
 );
-const preview = await client.forecastPreview(
-  caseId, current.value.program.version, selected.value.inputs
+// Review the complete candidates and original commercial task IDs.
+const installationSelections: GrantPortfolioInstallationSelection[] =
+  reviewedEditionSelections;
+const draft: GrantPortfolioInputs = existingDraft ?? originalSeed.value.inputs;
+const phased = await client.portfolioSeed(
+  caseId, current.value.program.version, forecastId,
+  { installationSelections, inputs: draft }
 );
-// After the operator reviews the original cash result:
-const saved = await client.forecastSave(caseId, {
-  expectedVersion: current.value.program.version,
-  inputs: selected.value.inputs,
+```
+
+`reviewedEditionSelections` contains the caller's actual `taskId`, `installationId`, `installationRevision` and `installationSha256` selections. `existingDraft` is the complete editable input if work is already in progress. The returned `value.inputs` retains the original task set, resources and alternatives while joining the selected phase source into the base plans. Seed preserves every explicit alternative override, including `installationPlans: []`. Retain the full returned JSON; candidate metadata includes the original owners, quoted hours, dependencies and delivery/support terms.
+
+Enter each phase's explicit remaining hours and resource effort, retain all original phases and dependencies, and select `deliveryPhaseIds` with a `deliveryBoundaryNote`. Phase remainders must equal the original parent remainder; each effort map must equal its phase remainder. The parent's original aggregate effort stays retained while phase effort drives the shared schedule. Set the bound parent's minimum working duration to zero. A phase priority of `null` inherits the aggregate task priority; every integer is explicit, including `100`. Newly seeded phases use `null`. Support after the delivery boundary continues to consume capacity.
+
+The seed copies original quoted phase effort and stated durations when the parent remainder equals the full original quote. Otherwise, remaining effort starts unentered. A current observation/coordination successor keeps the entered base phase draft when its original plan and effort are unchanged. Review a newly revised plan's complete preparation before saving. An explicitly overridden alternative retains its own source edition until it is deliberately refreshed.
+
+An alternative's `installationPlans` is a complete field override. Omission inherits the base array. Each included phase plan retains all its original phases; an explicit `[]` uses the original aggregate tasks and their entered resource effort. Original acceptance observations remain source information; explicit remaining hours are separate inputs.
+
+### Prepare one explicit phase alternative
+
+Source selection updates the base phase plans. To prepare or refresh a named alternative, compose its complete inherited fields as a temporary base, then use the returned phase plans as only that alternative's explicit override. Start with `editedPortfolioInputs`, the full current input after source selection and editing. The empty array is preserved when it is the authored starting point.
+
+```ts
+const alternativeDraft: GrantPortfolioInputs = editedPortfolioInputs;
+const alternative = alternativeDraft.alternatives.find(item => item.id === alternativeId);
+if (!alternative) throw new Error('Select an existing named Portfolio alternative.');
+const effective: GrantPortfolioInputs = {
+  ...structuredClone(alternativeDraft),
+  calendar: structuredClone(alternative.calendar ?? alternativeDraft.calendar),
+  resources: structuredClone(alternative.resources ?? alternativeDraft.resources),
+  tasks: structuredClone(alternative.tasks ?? alternativeDraft.tasks),
+  installationPlans: structuredClone(
+    alternative.installationPlans ?? alternativeDraft.installationPlans ?? []
+  ),
+  alternatives: []
+};
+const forAlternative = await client.read('case', { caseId });
+const preparedAlternative = await client.portfolioSeed(
+  caseId, forAlternative.value.program.version, forecastId,
+  { installationSelections: reviewedAlternativeSelections, inputs: effective }
+);
+const refreshedDraft: GrantPortfolioInputs = {
+  ...structuredClone(alternativeDraft),
+  alternatives: alternativeDraft.alternatives.map(item =>
+    item.id === alternativeId
+      ? {
+          ...structuredClone(item),
+          installationPlans: structuredClone(
+            preparedAlternative.value.inputs.installationPlans ?? []
+          )
+        }
+      : structuredClone(item)
+  )
+};
+```
+
+`reviewedAlternativeSelections` is the complete set of exact edition selections the caller is applying to that alternative. Review its returned source metadata, phase effort and delivery boundary, then preview `refreshedDraft` as the whole comparison. Every other field and alternative stays in that complete draft.
+
+### Preview, retain the request and reopen the saved result
+
+The following sequence starts after `reviewedInputs` contains the complete authored allocation and the complete preview has been reviewed. The path and request ID are the caller's actual private selections. Save the request before dispatch so an interrupted response can be recovered exactly.
+
+```ts
+import { writeFile } from 'node:fs/promises';
+import type { GrantModelSaveInput } from './agent-client.mjs';
+
+const beforeSave = await client.read('case', { caseId });
+const preview = await client.portfolioPreview(
+  caseId, beforeSave.value.program.version, reviewedInputs
+);
+// Present preview.value, including phase results, findings and original cash.
+const request: GrantModelSaveInput = {
+  expectedVersion: beforeSave.value.program.version,
+  inputs: preview.value.inputs,
   expectedPreviewSha256: preview.value.previewSha256,
   actor,
-  requestId
+  note: reviewNote,
+  requestId: portfolioRequestId
+};
+await writeFile(portfolioRequestFile, JSON.stringify({ caseId, request }) + '\n', {
+  flag: 'wx', mode: 0o600
 });
-~~~
+const saved = await client.portfolioSave(caseId, request);
+const portfolioId = saved.value.recordId;
+const retained = await client.read('portfolio', { caseId, portfolioId });
+await writeFile(portfolioRecordFile, retained.bytes, {
+  flag: 'wx', mode: 0o600
+});
+```
 
-A concurrent case change is rejected by the original version check. Source-stale forecasts and allocations keep the original service's specific validation result. Quoted collection amounts and dates retain their native forecast semantics when resource dates change.
+A Portfolio save receipt contains the case `id`, new `version`, `action: 'portfolio.save'`, `kind: 'portfolio'` and saved `recordId`. Reopen `recordId` for the native record's `sha256` and `previewSha256`. The response's outer `sha256` identifies HTTP bytes. Keep these identities with their respective objects.
 
-Merchant MCP can use a retained native response directly: input plus expectedInputSha256 verifies the full file, and inputPointer selects its original /inputs object. The native snapshot keeps the complete file and selection lineage. That avoids reconstructing large arrays from a compact tool reply while preserving the full original JSON values.
+After an interrupted save, read the retained request file and call `portfolioSave` with the identical case ID and payload. Retain the original request ID, version, input and preview digest even if the case now has a later version. The existing transaction resolves an accepted replay. A definite original stale-source or version conflict requires reopening and reviewing current state before authoring a new request.
+
+### Select dates and save the original Forecast
+
+A saved `READY` alternative can be opened in the original Forecast. The selected delivery boundary governs the commercial work dates; later support remains part of the Portfolio's shared-resource schedule. Read the current case version, select the original saved alternative, then preview the complete returned Forecast input:
+
+```ts
+const forSelection = await client.read('case', { caseId });
+const selected = await client.portfolioSelection(
+  caseId, forSelection.value.program.version, portfolioId, alternativeId
+);
+const cashPreview = await client.forecastPreview(
+  caseId, forSelection.value.program.version, selected.value.inputs
+);
+// Review the complete original Forecast, including cash and collection timing.
+const forecastRequest: GrantModelSaveInput = {
+  expectedVersion: forSelection.value.program.version,
+  inputs: selected.value.inputs,
+  expectedPreviewSha256: cashPreview.value.previewSha256,
+  actor,
+  note: forecastReviewNote,
+  requestId: forecastRequestId
+};
+await writeFile(forecastRequestFile,
+  JSON.stringify({ caseId, request: forecastRequest }) + '\n',
+  { flag: 'wx', mode: 0o600 });
+const forecastSaved = await client.forecastSave(caseId, forecastRequest);
+const forecastRecord = await client.read('forecast', {
+  caseId, forecastId: forecastSaved.value.recordId
+});
+```
+
+Selection is a calculation; `forecastSave` performs the existing original save. Its receipt has the same five fields, with `action: 'forecast.save'` and `kind: 'forecast'`. Native prices, costs, rates, credits, receipt dates and event-dependent terms remain in the complete selected input. Review financial coverage separately from operational readiness. A concurrent case change returns the original service's version/source result.
+
+### Deliver and receive the complete work
+
+Download both the calculation and the whole case as exact native bytes:
+
+```ts
+const allocation = await client.download('portfolio', { caseId, portfolioId });
+await writeFile(portfolioZipFile, allocation.bytes, { flag: 'wx', mode: 0o600 });
+const completeCase = await client.download('case', { caseId });
+await writeFile(caseZipFile, completeCase.bytes, { flag: 'wx', mode: 0o600 });
+```
+
+Use the existing client binding and managed launch on the receiving host. Retain the full case ZIP and the receiving request before `receiver.importBundle('case', completeCase.bytes, {name, actor, requestId})`. On success, reopen the returned `value.id`, list its saved Portfolios and select the retained saved ID. Read the received case's version for any new operation. Continue from a new editable draft when changing a saved allocation.
+
+The full case receiver restores saved Installation editions, exact attachments, Forecasts, Portfolios and event history. The Portfolio ZIP supplies the complete calculation and source handoff. Preserve the full case bytes and original import request ID for exact receiving replay. Always close an owned client in `finally`; a borrowed application keeps its existing process lifetime.
+
+### Merchant MCP
+
+Use the existing `merchant_grant_portfolio_seed` with `workspace`, `caseId`, `expectedVersion`, `forecastId` and optional `installationSelections`. An existing complete draft may be supplied inline as `inputs`, or by `input` plus `expectedInputSha256` and optional `inputPointer`. The provider uses the original verified model-input reader for both routes.
+
+For a retained complete seed or preview file, `inputPointer: '/inputs'` selects the actual editable input after the full file's SHA is verified. Read large source candidate, phase or result arrays through the existing retained snapshot/page tools while preserving the same snapshot ID and digest. A compact tool response is an index into that full retained response.
+
+Preview and save use `merchant_grant_portfolio_preview` and `merchant_grant_portfolio_save`. Saved date selection uses `merchant_grant_portfolio_selection`, and its returned `/inputs` goes through the original Forecast preview/save tools. Export and import continue through the original complete-case tools. [Portfolio delivery allocation](PORTFOLIO.md) explains the operator decisions and source terms.
 
 ## Receive the original merchant support handoff
 
