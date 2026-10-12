@@ -660,7 +660,8 @@ caseDesk = mountCaseDesk({root:caseRoot,readState:readCase,
   applySupport:(text,review)=>{runtimeDesk.apply(text,review);syncSources();},
   onDraftChange:()=>{runtimeDesk.inputsChanged();invalidateWorkorder();},
   onNameChange:name=>portable.setName(name),
-  onCurrentCaseChange:()=>{void sourceBundlePanel?.caseChanged().catch(()=>{});casePackageDesk?.refreshCase();}});
+  onCurrentCaseChange:()=>{void sourceBundlePanel?.caseChanged().catch(()=>{});casePackageDesk?.refreshCase();
+    const selected=caseDesk.currentCase();$('service-renewals-link').href=selected?'/renewals?case='+selected.id:'/renewals';}});
 sourceBundlePanel=mountSourceBundlePanel({root:commissioningDesk.sourceRoot,
   getCase:()=>{
     const selected=caseDesk.deliveryContext();
@@ -707,7 +708,7 @@ async function openLinkedCase() {
   const opened = await caseDesk.openSavedCase(id);
   if (!opened || caseDesk.currentCase()?.id !== id) return;
   const destination = url.hash === '#implementation' ? commissioningRoot :
-    url.hash === '#case-packages' ? casePackageRoot : null;
+    url.hash === '#case-packages' ? casePackageRoot : url.hash === '#service-operations' ? serviceRoot : null;
   if (destination) destination.scrollIntoView({block: 'start'});
 }
 void openLinkedCase().catch(error => {
