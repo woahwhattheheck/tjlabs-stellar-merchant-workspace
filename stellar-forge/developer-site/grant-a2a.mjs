@@ -78,6 +78,20 @@ const CHAPTER_SOURCES = [
     "repository": "a2aproject/a2a-js",
     "kind": "tree",
     "path": ""
+  },
+  {
+    "id": "a2a-customer-commissioning-calendar",
+    "label": "Prospective customer commissioning calendar",
+    "path": "stellar-forge/developer-site/A2A_CUSTOMER_COMMISSIONING.md",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "kind": "blob"
+  },
+  {
+    "id": "a2a-customer-commissioning-job-register",
+    "label": "Prospective thirty-job customer register and original receiving bindings",
+    "path": "stellar-forge/developer-site/a2a-customer-commissioning.json",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "kind": "blob"
   }
 ];
 const VERIFIED_FILES = {
@@ -173,6 +187,22 @@ const VERIFIED_FILES = {
     "bytes": 1197,
     "sha256": "e9f23eb3bf1b357d1e59396ec4a61a7cafd091d1b60bca7ca35c1eac0f0eeb79",
     "git_blob": "ca18abac6bd9e2d1f918335e5f19dde663293d93"
+  },
+  "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33dfb64798f5316a586c165d4d7591de972ca4e2/stellar-forge/developer-site/A2A_CUSTOMER_COMMISSIONING.md": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "33dfb64798f5316a586c165d4d7591de972ca4e2",
+    "path": "stellar-forge/developer-site/A2A_CUSTOMER_COMMISSIONING.md",
+    "bytes": 18446,
+    "sha256": "9ab9d30a24ee5837bc41d37ae0aa6c4c796bab9e02b14932d3db59170e343e2f",
+    "git_blob": "d96a45554a926a23409bbe4b6902b2559749c130"
+  },
+  "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33dfb64798f5316a586c165d4d7591de972ca4e2/stellar-forge/developer-site/a2a-customer-commissioning.json": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "33dfb64798f5316a586c165d4d7591de972ca4e2",
+    "path": "stellar-forge/developer-site/a2a-customer-commissioning.json",
+    "bytes": 58559,
+    "sha256": "d41c2de3b6624bff4b73521baae77b217879413504b7b4514343e96318e34fd7",
+    "git_blob": "ef8e382b15d32890fd1d37810344ba4ba92c3964"
   }
 };
 const RETAINED_SOURCES = [
