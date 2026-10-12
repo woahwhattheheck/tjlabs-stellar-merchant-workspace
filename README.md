@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Operate a coastal source study | **Applications → Coastal source operations**, `starforge coops` and `starforge coops-mcp` | Original NOAA editions, station and datum review, model-input conventions, coastal workbooks, native publication and complete customer files |
 | Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](products/baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
 | Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Investigate Stellar assets and receive the original merchant data | **Applications → Stellar asset investigation** or `starforge stellar-expert-product` | [Complete selected installation](products/stellar-expert/README.md), exact provider editions, native publications, 27 merchant tools and original customer files |
@@ -228,6 +229,11 @@ covers interruption, native prerequisites, upgrades, and reopening. The
 [runtime workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md)
 provides the corresponding browser workflow.
 
+The [Coastal source operations guide](products/coops/OPERATING.md) follows the
+original station and archive workflow through source review, receiving mappings,
+complete offline residual workbooks, native merchant publication and customer
+receiving. Build this installed product with `--selection coastal-operations`.
+
 ## Operate one saved merchant
 
 For a captured HTTP API, initialize and open its private product:
@@ -293,6 +299,7 @@ the replacement is operating as intended.
 
 ## Product source and guides
 
+- [Coastal source review, complete workbooks and customer receiving](products/coops/OPERATING.md)
 - [WebDAV source, merchant operator and complete receiving](products/webdav/OPERATING.md)
 - [ERDDAP source and provider workspace](products/erddap-provider/OPERATING.md): complete source, native editions, provider intake, merchant and customer receiving; [selected package recipe](stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md).
 

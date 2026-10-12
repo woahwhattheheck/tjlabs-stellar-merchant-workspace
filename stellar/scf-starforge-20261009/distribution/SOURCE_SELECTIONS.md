@@ -40,6 +40,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `coastal-operations` | Original NOAA source study, reviewed receiving conventions, complete coastal workbooks, native merchant and customer files | Coastal source operations; Runtime management | [Operating guide](../../../products/coops/OPERATING.md) |
 | `baserow-rails` | Original Baserow source editions, complete customer rows and attachments, Ruby receiving and transactional Rails applications | Baserow source authoring; Runtime management | [Complete installation and receiving](../../../products/baserow-rails/RECEIVING.md) |
 | `research-workspace` | Research questions, original Documents and managed Pipelines, source review, merchant operation and complete customer files | Research dossiers; Runtime management | [Operating and receiving guide](../../../products/research/RECEIVING.md) |
 | `webdav-operator` | WebDAV or Nextcloud file editions, native merchant and customer, complete remote operator and source receiving | WebDAV source and merchant workspace; Runtime management | [Operating guide](../../../products/webdav/OPERATING.md) |
@@ -68,6 +69,8 @@ For Research, use `--selection research-workspace` and the [complete receiving g
 For WebDAV, use `--selection webdav-operator` and the [complete operating guide](../../../products/webdav/OPERATING.md). The selected source includes the original source browser and managed Applications, full typed client and reviewed operations, complete export/source-packet transfers, native publisher, release and buyer, and the installed `merchant-webdav-edition` workflow.
 
 For Baserow and Rails, use `--selection baserow-rails` and the [complete operating guide](../../../products/baserow-rails/OPERATING.md). The selected source retains the original Baserow source/browser/publisher, native SF100 and Python receiving, complete Ruby client, all Rails importer/operator files and templates, and exact customer/application receiving. The installed `baserow-rails` command opens these original entrypoints with the selected host interpreter and private workspace.
+
+For Coastal source operations, use `--selection coastal-operations` and the [complete operating guide](../../../products/coops/OPERATING.md). The selected source includes original station and archive operations, receiving-mapping intake and history, full offline analysis/workbooks, native query and releases, all 39 coastal merchant tools and complete customer receiving.
 
 ## Continue the same build
 
@@ -98,7 +101,7 @@ its dependency profile from the complete installed workflow linked above:
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
-| `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails` | `--native --feature schema --feature openapi --feature mcp --operator` |
+| `openapi-merchant`, `huwise`, `water-operations`, `woo-merchant`, `eurostat`, `research-workspace`, `baserow-rails`, `coastal-operations` | `--native --feature schema --feature openapi --feature mcp --operator` |
 | `redis-applications` | `--native --feature redis --feature schema --feature openapi --feature mcp --operator` |
 | `grant-reviewer` | `--native --feature mcp --operator` |
 | `publisher-360giving` | `--feature mcp --operator` |
