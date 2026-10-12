@@ -119,6 +119,7 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/native-factory.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/seller.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/query-parameters.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",

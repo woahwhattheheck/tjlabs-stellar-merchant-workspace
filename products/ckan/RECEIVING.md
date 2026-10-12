@@ -14,6 +14,13 @@ handover.
 ## Select the original source and runtime
 
 Build and install `ckan-merchant` using [the operating guide](OPERATING.md).
+For a new receiving shell, bind the commands to that same installed application:
+
+~~~sh
+CKAN_PRODUCT_DIR=/absolute/private/apps/ckan-merchant
+starforge() { (cd "$CKAN_PRODUCT_DIR" && npx --no-install starforge "$@"); }
+~~~
+
 Select the resulting complete source archive and its original runtime profile.
 The original receiving programmes use Node 24 on Linux, the project locks and
 the declared native/MCP dependencies.

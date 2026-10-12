@@ -32,8 +32,12 @@ application directory using the ordinary package manager, then prepare its
 selected native runtime:
 
 ~~~sh
+CKAN_PRODUCT_DIR=/absolute/private/apps/ckan-merchant
+install -d -m 700 "$CKAN_PRODUCT_DIR"
+cd "$CKAN_PRODUCT_DIR"
 npm install --ignore-scripts --offline --omit=optional /absolute/path/to/package.tgz
-npx --no-install starforge doctor
+starforge() { (cd "$CKAN_PRODUCT_DIR" && npx --no-install starforge "$@"); }
+starforge doctor
 
 starforge runtime-install prepare \
   --dir /absolute/private/runtimes/ckan-merchant \
@@ -45,8 +49,11 @@ starforge runtime-install install \
   --dir /absolute/private/runtimes/ckan-merchant
 ~~~
 
-Use the archive path and complete SHA returned by the actual build. The original
-installer retains the selected dependencies and the same installation journal.
+Use the archive path and complete SHA returned by the actual build. The shell
+helper keeps every `starforge` invocation bound to this installed product even
+when you change directory. In a new shell, set `CKAN_PRODUCT_DIR` to this same
+application directory and define the helper again. The installer retains the
+selected dependencies and the same installation journal.
 The [runtime installation guide](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md)
 covers its host requirements and continuation.
 
