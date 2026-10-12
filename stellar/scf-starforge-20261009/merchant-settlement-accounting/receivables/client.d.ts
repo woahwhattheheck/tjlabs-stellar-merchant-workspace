@@ -22,6 +22,22 @@ export type {
   CustomerFundsFunding, CustomerFundsAdjustment, CustomerFundsRefundReturn, CustomerFunds
 } from './refund-client-types.d.ts';
 
+import type {CollectionsQuery, CollectionsReport, CollectionDetail, SaveCollectionCase, CollectionActivityInput,
+  CollectionTransitionInput, CollectionMutationResult, CollectionReminder, CollectionFileName, CollectionOperationResult} from './collections-types.d.ts';
+export type {CollectionPriority, CollectionStatus, CollectionActivityKind, CollectionTerms, CollectionEvent, CollectionRecord,
+  CollectionSummary, CollectionsQuery, CollectionsReport, CollectionDetail, CollectionContext, SaveCollectionCase, CollectionActivityInput,
+  CollectionTransitionInput, CollectionMutationResult, CollectionReminder, CollectionFileName, CollectionOperationResult} from './collections-types.d.ts';
+
+import type {CashPlanListQuery,CashPlanList,CashPlanPreviewInput,CashPlanPreview,CashPlanDetail,SaveCashPlanInput,
+  CashPlanStatusInput,CashPlanMutationResult,CashPlanFileName,CashPlanCompareQuery,CashPlanComparison,CashPlanOperationResult} from './cash-planning-types.d.ts';
+export type {
+  CashPlanOverride, CashPlanInput, CashPlanTerms, CashPlanSourceIssue, CashPlanLine,
+  CashPlanCurrency, CashPlanInvoice, CashPlanProjection, CashPlanPreviewInput, CashPlanPreview,
+  CashPlanEdition, CashPlanSummary, CashPlanListQuery, CashPlanList, CashPlanDetail,
+  SaveCashPlanInput, CashPlanStatusInput, CashPlanMutationResult, CashPlanCompareQuery, CashPlanDifference,
+  CashPlanComparison, CashPlanFileName, CashPlanOperationResult
+} from './cash-planning-types.d.ts';
+
 export type Money = string;
 export type DateOnly = string;
 export type Revision = number;
@@ -280,6 +296,26 @@ export class ReceivablesClient {
   constructor(options?: ClientOptions);
   identity(): Promise<{schema: string; workspaceId: string; sourcesSha256: string}>;
   state(query?: {asOf?: DateOnly}): Promise<ReceivablesState>;
+  cashPlans(query?:CashPlanListQuery, options?:RequestOptions):Promise<CashPlanList>;
+  previewCashPlan(value:CashPlanPreviewInput, options?:RequestOptions):Promise<CashPlanPreview>;
+  cashPlan(id:string, query?:{editionId?:string}, options?:RequestOptions):Promise<CashPlanDetail>;
+  saveCashPlan(value:SaveCashPlanInput, options?:RequestOptions):Promise<CashPlanMutationResult>;
+  archiveCashPlan(id:string, value:CashPlanStatusInput, options?:RequestOptions):Promise<CashPlanMutationResult>;
+  reopenCashPlan(id:string, value:CashPlanStatusInput, options?:RequestOptions):Promise<CashPlanMutationResult>;
+  cashPlanFile(id:string, name:CashPlanFileName, query?:{editionId?:string}, options?:RequestOptions):Promise<Response>;
+  compareCashPlans(query:CashPlanCompareQuery, options?:RequestOptions):Promise<CashPlanComparison>;
+  cashPlanComparisonFile(name:'comparison.json'|'comparison.csv', query:CashPlanCompareQuery, options?:RequestOptions):Promise<Response>;
+  cashPlanOperation(requestId:string, options?:RequestOptions):Promise<CashPlanOperationResult>;
+  collectionCases(query?: CollectionsQuery, options?: RequestOptions): Promise<CollectionsReport>;
+  collectionCase(id:string, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<CollectionDetail>;
+  saveCollectionCase(value:SaveCollectionCase, options?:RequestOptions):Promise<CollectionMutationResult>;
+  recordCollectionActivity(id:string, value:CollectionActivityInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  closeCollectionCase(id:string, value:CollectionTransitionInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  reopenCollectionCase(id:string, value:CollectionTransitionInput, options?:RequestOptions):Promise<CollectionMutationResult>;
+  collectionReminder(id:string, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<CollectionReminder>;
+  collectionFile(id:string, name:CollectionFileName, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<Response>;
+  collectionsFile(name:'collections.json'|'collections.csv', query?:CollectionsQuery, options?:RequestOptions):Promise<Response>;
+  collectionOperation(requestId:string, options?:RequestOptions):Promise<CollectionOperationResult>;
   settings(value: Issuer & MutationContext): Promise<MutationResult & {issuer: Issuer}>;
   saveDraft(value: SaveDraft): Promise<MutationResult & {invoice: InvoiceSummary}>;
   importQuote(value: QuoteImportInput): Promise<MutationResult & {invoice: InvoiceSummary}>;

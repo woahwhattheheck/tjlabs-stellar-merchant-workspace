@@ -15,3 +15,44 @@ textarea{font:inherit;resize:vertical;min-height:70px;border:1px solid #999;bord
 textarea:focus-visible{outline:3px solid #555;outline-offset:3px}nav{flex-wrap:wrap}.setup-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}.setup-tabs [aria-pressed=true]{background:#ddd;border-color:#555}.setup-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.setup-inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.setup-inline select{min-width:180px}.setup-field{margin-top:15px}.setup-check{display:flex;align-items:flex-start;gap:10px;margin:17px 0;font-weight:400}.setup-check input{flex:none;margin-top:2px}.setup-align-end{display:flex;align-items:flex-end}.setup-definition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 22px;margin:20px 0}.setup-definition div{min-width:0}.setup-definition dt{font-size:12px;color:#666;margin-bottom:4px}.setup-definition dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.setup-dialog-content{padding:22px 24px}.setup-dialog-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:18px 24px;border-top:1px solid #ccc;position:sticky;bottom:0;background:#fff}.setup-operation-status{display:flex;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:20px}.setup-withdraw{padding:14px;border:1px solid #ccc;margin:20px 0}.setup-withdraw form{display:grid;gap:14px;margin-top:14px}.setup-withdraw button{justify-self:start}#setup-source-preview p{padding:15px}#setup-assign-orders{font-family:Consolas,monospace;font-size:13px}
 @media(max-width:1050px){.setup-columns{grid-template-columns:1fr}.setup-columns .form-grid{grid-template-columns:1fr 1fr}.setup-columns .form-grid label:first-child{grid-column:auto}}
 @media(max-width:760px){.setup-tabs button{flex:1;min-width:130px}.setup-inline{width:100%}.setup-inline>*{flex:1}.setup-inline select{min-width:0}.setup-columns .form-grid{grid-template-columns:1fr}.setup-definition{grid-template-columns:1fr}.setup-dialog-content{padding:16px}.setup-dialog-actions{padding:13px 16px}.setup-dialog-actions button{flex:1;min-width:130px}}
+
+/* One complete saved handover for each original customer. */
+.customer-dossiers{border-top:1px solid #bbb;padding-top:20px}
+.customer-dossiers .section-heading{margin-bottom:12px}
+.customer-dossiers h3{margin-bottom:5px}
+.dossier-controls{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:14px 0}
+.dossier-controls label{flex:1;max-width:480px}
+.dossier-controls p{padding-bottom:10px;white-space:nowrap}
+.dossier-message:empty{display:none}
+.dossier-message{margin:10px 0}
+.customer-dossier{border:1px solid #bbb;background:#fff;margin:14px 0;padding:15px;min-width:0}
+.customer-dossier-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
+.customer-dossier-heading>div:first-child{min-width:0}
+.customer-dossier h4{font-size:15px;line-height:1.4;margin:0 0 3px;overflow-wrap:anywhere}
+.customer-dossier .hint,.dossier-counts{overflow-wrap:anywhere}
+.dossier-counts{font-size:12px;margin-top:7px}
+.customer-dossier .row-actions{flex-shrink:0;max-width:55%;justify-content:flex-end}
+.dossier-pending,.dossier-prepared{margin-top:10px}
+.customer-dossier details{border-top:1px solid #ddd;margin-top:12px;padding-top:10px}
+.customer-dossier summary{min-height:30px;padding:2px 0}
+.dossier-rows{margin-top:7px}
+.dossier-rows th{white-space:normal}
+.dossier-rows td{overflow-wrap:anywhere;min-width:135px}
+.customer-dossiers .pagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:14px 0}
+@media(max-width:850px){
+  .customer-dossier-heading{display:block}
+  .customer-dossier .row-actions{max-width:none;justify-content:flex-start;margin-top:12px}
+}
+@media(max-width:540px){
+  .dossier-controls{display:block}
+  .dossier-controls label{max-width:none}
+  .dossier-controls p{padding:0;margin-top:10px;white-space:normal}
+  .customer-dossier{padding:12px}
+  .customer-dossier .row-actions{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
+  .customer-dossier .row-actions>a,.customer-dossier .row-actions>button{width:100%;justify-content:center;text-align:center}
+}
+.customer-dossiers .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.customer-dossier .row-actions button,.customer-dossier .row-actions a{min-height:40px}
+.dossier-rows details.dossier-passes{border:0;margin:0;padding:0}
+.dossier-passes ul{padding-left:18px;margin:6px 0 0}
+.dossier-passes li+li{margin-top:6px}

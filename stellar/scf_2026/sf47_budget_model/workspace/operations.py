@@ -22,6 +22,7 @@ import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
 import operations_performance as performance
+import operations_ledger_intake as ledger_intake
 import operations_implementation as implementation
 import operations_commercial_receivables as commercial_receivables
 
@@ -244,7 +245,7 @@ class Operations:
         self.db.execute("INSERT INTO ops_sources VALUES(?,?,?,?)", (program_id, row["id"], canonical(row), content))
         return row
 
-    def command(self, program_id, body):
+    def command(self, program_id, body, *, _within_transaction=False):
         program_id = identifier(program_id, "operation")
         if not isinstance(body, dict) or not isinstance(body.get("data", {}), dict):
             domain.fail("Use an operations command object.")
@@ -411,6 +412,10 @@ class Operations:
                         source_change=source_change)
             return {"id": program_id, "version": next_version, "action": command, "kind": kind, "recordId": record_id,
                     **extra_receipt, **({"businessSha256": after["businessSha256"]} if command == "review" else {})}
+        if _within_transaction:
+            if not self.db.in_transaction:
+                raise RuntimeError("Bulk operations require the original active workspace transaction.")
+            return action()
         return self.workspace._transaction(body.get("requestId"), payload, action)
 
 
@@ -664,6 +669,25 @@ class Operations:
         with self._snapshot():
             context = self._context(identifier(program_id, "operation"))
             return installations.preview(self, context, body)
+
+    def ledger_intake(self, program_id):
+        return ledger_intake.describe(self, identifier(program_id, "operation"))
+
+    def inspect_ledger_intake(self, program_id, body):
+        with self._snapshot():
+            self._program(identifier(program_id, "operation"))
+            if not isinstance(body, dict) or set(body) != {"file"}:
+                domain.fail("Select one original source file for inspection.", "INVALID_LEDGER_INTAKE")
+            return ledger_intake.inspect(body["file"])
+
+    def preview_ledger_intake(self, program_id, body):
+        return ledger_intake.preview(self, identifier(program_id, "operation"), body)
+
+    def apply_ledger_intake(self, program_id, body):
+        return ledger_intake.apply(self, program_id, body)
+
+    def ledger_intake_original(self, program_id, source_id):
+        return ledger_intake.original(self, identifier(program_id, "operation"), identifier(source_id, "source"))
 
     def performance(self, program_id, start_date=None, end_date=None, expected_version=None):
         with self._snapshot():

@@ -75,7 +75,18 @@ The SAM registration includes `samgov`, `samgov-workspace`, twelve paired SDK ex
 
 When using an already prepared runtime, continue its existing installer operation and dependency adoption or offline transfer flow. The [installation guide](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) documents those options.
 
-Commands below use `starforge`. If its installed executable is outside PATH, use the same `runtime-install-cli.mjs run --dir /absolute/samgov-runtime --` prefix and pass the command shown after `starforge`.
+Inspection returns the READY installation's actual sourceRoot. Bind every following command to that private runtime:
+
+~~~sh
+SAMGOV_RUNTIME=/absolute/samgov-runtime
+SAMGOV_SOURCE_ROOT=/ACTUAL_SOURCE_ROOT_RETURNED_BY_INSPECT
+starforge() {
+  node "$SAMGOV_SOURCE_ROOT/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs" \
+    run --dir "$SAMGOV_RUNTIME" -- "$@"
+}
+~~~
+
+The local function selects the same READY installation from any working directory.
 
 ## Open the original SAM application
 

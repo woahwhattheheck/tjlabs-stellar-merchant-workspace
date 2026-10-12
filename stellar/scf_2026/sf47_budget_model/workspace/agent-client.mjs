@@ -54,7 +54,6 @@ const sha = value => {
   need(typeof value === 'string' && HASH.test(value), 'GRANT_INVALID_INPUT', 'Use the exact SHA256.'); return value;
 };
 
-
 const commercialIdentifier = (value, label = 'Saved commercial identifier') => {
   need(typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value),
     'GRANT_INVALID_INPUT', label + ' must be the original saved identifier.');
@@ -279,7 +278,7 @@ function originalSource(connection) {
     executionSourceDirectory:record.execution.sourceDirectory};
 }
 function transport(connection, route, {body, contentType = 'application/json', headers = {},
-  originalRequestId, recovery, timeoutMs = 30000, mutation = body !== undefined} = {}) {
+  originalRequestId, timeoutMs = 30000, mutation = body !== undefined} = {}) {
   const target = new URL(route, connection.original.url), authorization = new URL(connection.url).hash.slice('#access='.length);
   need(target.origin === new URL(connection.original.url).origin && route.startsWith('/api/'),
     'GRANT_ROUTE_INVALID', 'Use an original declared grant API route.');
@@ -293,11 +292,10 @@ function transport(connection, route, {body, contentType = 'application/json', h
       settled = true;
       if (mutation && dispatched && failure.definite !== true) {
         reject(error('GRANT_RESULT_UNCERTAIN',
-          'The original request may have committed. ' + (recovery ??
-          ('Original request ID: ' + (originalRequestId ?? '(none)') +
-          '. Reopen the original case or plan and repeat this identical request ID and payload to recover its saved result.')),
+          'The original request may have committed. Original request ID: ' + (originalRequestId ?? '(none)') +
+          '. Reopen the original case or plan and repeat this identical request ID and payload to recover its saved result.',
           {requestId:originalRequestId ?? null, originalCode:failure.code ?? null, originalStatus:failure.status ?? null,
-            source:originalSource(connection), route, uncertain:true, ...(recovery ? {recovery} : {})}));
+            source:originalSource(connection), route, uncertain:true}));
       } else reject(failure);
     };
     const req = httpRequest(target, {method:bytes === undefined ? 'GET' : 'POST', agent:false, maxHeaderSize:32768,
@@ -458,6 +456,8 @@ export class GrantWorkspaceClient {
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
+      'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
@@ -506,6 +506,25 @@ export class GrantWorkspaceClient {
     need(GRANT_CASE_ACTIONS.includes(body.action), 'GRANT_INVALID_ACTION', 'Choose the original case action.');
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
+  }
+  ledgerIntakeInspect(caseId, file) {
+    id(caseId, 'operation'); object(file, 'Original intake file');
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-inspect', {body:{file}, mutation:false});
+  }
+  ledgerIntakePreview(caseId, body) {
+    id(caseId, 'operation'); exact(body, ['document', 'expectedVersion'], ['document']);
+    object(body.document, 'Complete ledger intake');
+    if (body.expectedVersion !== undefined) integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-preview', {body, mutation:false});
+  }
+  ledgerIntakeApply(caseId, body) {
+    id(caseId, 'operation');
+    exact(body, ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor', 'note'],
+      ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor']);
+    object(body.document, 'Complete ledger intake');
+    integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    sha(body.expectedPreviewSha256); requestId(body.requestId);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
   }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');

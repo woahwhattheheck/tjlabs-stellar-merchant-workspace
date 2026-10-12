@@ -427,6 +427,143 @@ export interface GrantDeliveryQueue {
   /** Native digest of the queue object before this field is added. */
   sha256: string;
 }
+export type GrantLedgerKind = 'contributors' | 'work' | 'invoices' | 'cash';
+export interface GrantLedgerFile {
+  id: string;
+  filename: string;
+  kind: GrantLedgerKind | 'source';
+  format: 'csv' | 'tsv' | 'json' | 'binary';
+  contentBase64: string;
+  /** Native field to original column; null explicitly ignores that native field. */
+  mapping?: Record<string, string | null>;
+  defaults?: GrantObject;
+  sourceUrl?: string;
+  observedAt?: string | null;
+  mediaType?: string;
+}
+export interface GrantLedgerDocument {
+  schema: 'stellar-forge.sf47-ledger-intake.v1';
+  title: string;
+  files: GrantLedgerFile[];
+}
+export interface GrantLedgerFileMetadata extends Omit<GrantLedgerFile, 'contentBase64' | 'mapping' | 'defaults' | 'sourceUrl' | 'observedAt' | 'mediaType'> {
+  mapping: Record<string, string | null>;
+  defaults: GrantObject;
+  sourceUrl: string;
+  observedAt: string | null;
+  mediaType: string;
+  bytes: number;
+  sha256: string;
+}
+export interface GrantLedgerFileView extends GrantLedgerFileMetadata {
+  headers: string[];
+  rowCount: number;
+  unmappedColumns: string[];
+}
+export interface GrantLedgerInspection extends GrantLedgerFileView {
+  sample: { row: number; data: GrantObject }[];
+}
+export interface GrantLedgerSummary {
+  records: number;
+  created: number;
+  replaced: number;
+  files: number;
+  sourceBytes: number;
+  byKind: Record<GrantLedgerKind, { create: number; replace: number }>;
+}
+export interface GrantLedgerHistoryEntry {
+  sourceId: string;
+  title: string;
+  recordedAt: string;
+  actor: string;
+  documentSha256: string;
+  originalCaseId: string;
+  fromVersion: number;
+  version: number;
+  summary: GrantLedgerSummary;
+  requestId: string;
+}
+export interface GrantLedgerRecordPreview {
+  key: string;
+  kind: GrantLedgerKind;
+  action: 'contributor.save' | 'work.save' | 'invoice.save' | 'cash.record';
+  mode: 'create' | 'replace';
+  recordId: string | null;
+  fileId: string;
+  /** CSV/TSV positions include the header as row one; JSON starts at one. */
+  rows: number[];
+  before: GrantObject | null;
+  after: GrantObject;
+}
+export interface GrantLedgerPreview {
+  schema: 'stellar-forge.sf47-ledger-preview.v1';
+  title: string;
+  case: { id: string; version: number; name: string; state: string; mode: 'OPERATIONS' | 'WALKTHROUGH' };
+  documentSha256: string;
+  canApply: boolean;
+  files: GrantLedgerFileView[];
+  records: GrantLedgerRecordPreview[];
+  errors: { code: string; message: string; file?: number; fileId?: string | null; key?: string; rows?: number[] }[];
+  summary: GrantLedgerSummary;
+  alreadyRecorded: GrantLedgerHistoryEntry | null;
+  previewSha256: string;
+}
+export interface GrantLedgerPreviewInput { document: GrantLedgerDocument; expectedVersion?: number; }
+export interface GrantLedgerApplyInput extends GrantOperationRequest {
+  document: GrantLedgerDocument;
+  expectedPreviewSha256: string;
+}
+export interface GrantLedgerRecordedRow {
+  key: string;
+  kind: GrantLedgerKind;
+  fileId: string;
+  rows: number[];
+  recordId: string;
+  version: number;
+  mode: 'create' | 'replace';
+}
+export interface GrantLedgerReceipt {
+  id: string;
+  version: number;
+  action: 'ledger.intake';
+  requestId: string;
+  documentSha256: string;
+  sourceId: string;
+  summary: GrantLedgerSummary;
+  files: (GrantLedgerFileMetadata & { sourceId: string })[];
+  records: GrantLedgerRecordedRow[];
+}
+export interface GrantLedgerRecorded {
+  schema: 'stellar-forge.sf47-ledger-recorded.v1';
+  title: string;
+  recordedAt: string;
+  actor: string;
+  note: string;
+  requestId: string;
+  caseId: string;
+  fromVersion: number;
+  version: number;
+  documentSha256: string;
+  previewSha256: string;
+  summary: GrantLedgerSummary;
+  files: (GrantLedgerFileMetadata & { sourceId: string })[];
+  records: GrantLedgerRecordedRow[];
+  document: Omit<GrantLedgerDocument, 'files'> & { files: Omit<GrantLedgerFile, 'contentBase64'>[] };
+}
+export interface GrantLedgerOriginal {
+  source: GrantObject;
+  recorded: GrantLedgerRecorded;
+  document: GrantLedgerDocument;
+}
+export interface GrantLedgerContract {
+  schema: 'stellar-forge.sf47-ledger-intake.v1';
+  case: GrantLedgerPreview['case'];
+  limits: { files: number; sourceBytes: number; sourceRows: number; records: number };
+  fields: Record<GrantLedgerKind, string[]>;
+  templates: Record<GrantLedgerKind, Record<'csv' | 'tsv', string>>;
+  intakes: GrantLedgerHistoryEntry[];
+}
+
 export interface GrantPerformanceSelection {
   caseId: string;
   startDate?: GrantCivilDate | null;
@@ -606,6 +743,8 @@ export class GrantWorkspaceClient {
   inspect(): Promise<GrantInspection>;
   open(selection?: { expectedSelectionSha256?: string }): Promise<GrantInspection>;
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
+  read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
+  read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;
   read(view: 'delivery-queue', selection: GrantDeliveryQueueSelection): Promise<GrantJsonResponse<GrantDeliveryQueue>>;
   read(view: 'case', selection: { caseId: string }): Promise<GrantJsonResponse<GrantCaseView>>;
@@ -616,6 +755,9 @@ export class GrantWorkspaceClient {
   plan<T = GrantObject>(action: 'estimate' | 'save' | 'restore' | 'clone', planId: string, body: GrantObject): Promise<GrantJsonResponse<T>>;
   createCase<T = GrantObject>(body: { planId: string; selectedRevision: number; expectedContentSha256: string; name: string; mode: 'OPERATIONS' | 'WALKTHROUGH'; calendarStart?: GrantCivilDate; actor: string; requestId: string }): Promise<GrantJsonResponse<T>>;
   command<T = GrantObject>(caseId: string, body: GrantOperationRequest & { action: GrantCaseAction; data: GrantObject }): Promise<GrantJsonResponse<T>>;
+  ledgerIntakeInspect(caseId: string, file: GrantLedgerFile): Promise<GrantJsonResponse<GrantLedgerInspection>>;
+  ledgerIntakePreview(caseId: string, body: GrantLedgerPreviewInput): Promise<GrantJsonResponse<GrantLedgerPreview>>;
+  ledgerIntakeApply(caseId: string, body: GrantLedgerApplyInput): Promise<GrantJsonResponse<GrantLedgerReceipt>>;
   forecastPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   forecastSave<T = GrantObject>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSeed<T = GrantObject>(caseId: string, expectedVersion: number, forecastId: string): Promise<GrantJsonResponse<T>>;

@@ -1,8 +1,32 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "tenderly",
-  "description": "tenderly original Applications",
+  "description": "Tenderly shared Applications operator, typed live attachment and complete simulation customer",
   "applicationProviders": {
     "tenderly": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/tenderly.mjs"
-  }
+  },
+  "exports": {
+    "./partners/tenderly/workspace/connection": {
+      "types": "./source/stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace/connection.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace/connection.mjs"
+    },
+    "./partners/tenderly/workspace/mcp": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/tenderly-workspace.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/tenderly-workspace.mjs"
+    },
+    "./partners/tenderly/customer/selection": "./source/stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/customer/selection.mjs"
+  },
+  "components": [
+    "stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace"
+  ],
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace/browser-assets.json"
+    },
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/tenderly-analysis/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/tenderly-analysis/browser-assets.json"
+    }
+  ]
 }
