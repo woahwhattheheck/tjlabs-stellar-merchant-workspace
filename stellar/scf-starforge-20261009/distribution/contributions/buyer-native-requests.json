@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "buyer-native-requests",
-  "description": "Complete catalog-to-native intent workflow, request console, typed saved-response client and source-native journey",
+  "description": "Complete catalog-to-native intent workflow with concrete path binding, request console, typed saved-response client and source-native journey",
   "supportFiles": [
     "stellar-forge/mcp-paid-agent/NATIVE_REQUESTS.md",
     "stellar-forge/mcp-paid-agent/NATIVE_WORKSPACE.md",
@@ -9,7 +9,9 @@
     "stellar-forge/mcp-paid-agent/native-request-schema.mjs",
     "stellar-forge/mcp-paid-agent/operator-ui/native-request.mjs",
     "stellar-forge/mcp-paid-agent/catalog-native-journey.mjs",
-    "stellar-forge/mcp-paid-agent/CATALOG_JOURNEY.md"
+    "stellar-forge/mcp-paid-agent/CATALOG_JOURNEY.md",
+    "stellar-forge/route-identity/http-path.mjs",
+    "stellar-forge/route-identity/identity.mjs"
   ],
   "exports": {
     "./buyer/mcp/native-requests": {
