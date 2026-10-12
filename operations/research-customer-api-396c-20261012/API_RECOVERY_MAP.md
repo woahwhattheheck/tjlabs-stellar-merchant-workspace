@@ -24,7 +24,7 @@ Original listing and history reads:
 
 | Read | Actual client/store contract | Stable selection |
 |---|---|---|
-| Workspace status | client.status() | Validates API, workspaceId and instanceId. |
+| Workspace status | client.status() | Validates the Research API schema and workspaceId. The original server separately exposes its instanceId for listener-lifetime reconciliation. |
 | Dossier inventory | client.list({offset,limit,snapshot}) | First reply returns snapshot; later pages carry it. Inventory change is explicit. |
 | Saved metadata | client.metadata(dossierId,{revision}) / store.getMetadata(id,{revision}) | Contains original question, edition, selection and finding IDs without fetching retained bodies. |
 | Sections | client.section(id,{section,revision,offset,limit,questionId,query,selected}) | sections are questions, editions, selections, findings, sources and revisions. Keep revision on later pages. |
