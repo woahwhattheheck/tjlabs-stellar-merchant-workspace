@@ -196,16 +196,17 @@ export async function discoverGristDocument(config,options={}) {
 export async function discoverGristTable(config,options={}) {
   const reader=createGristReader(config,{...options,allowUnordered:true}),s=reader.selected;
   const document=inspectDocumentBytes((await reader.read(documentRequest(s))).content,s);
-  const tableList=json((await reader.read(tablesRequest(s))).content);
-  if(!object(tableList)||!Array.isArray(tableList.tables)||tableList.tables.some(t=>!object(t)||typeof t.id!=='string')||
-      tableList.tables.filter(t=>t.id===s.tableId).length!==1)throw fault('GRIST_TABLE_NOT_FOUND');
+  const tablesResponse=await reader.read(tablesRequest(s)),tableList=inspectGristTablesBytes(tablesResponse.content);
+  const selectedTable=tableList.tables.find(table=>table.id===s.tableId);
+  if(!selectedTable)throw fault('GRIST_TABLE_NOT_FOUND');
   const observed=await reader.read(metadataRequest(s)),native=inspectTableBytes(observed.content,s);
   return{schema:'stellar-forge.grist-discovery.v1',source:s,receivedAt:observed.receivedAt,requestUrl:observed.request.url,
     schemaSha256:native.schemaSha256,title:document.name+' / '+s.tableId,document,
+    tableRef:selectedTable.tableRef,tableCatalogSha256:digest(tablesResponse.content),
     fields:[{id:'id',title:'Native row identity',type:'identity',scalarProjectionSupported:true,generatedRecordIdentity:true},
       ...native.table.fields.map(f=>({...f,scalarProjectionSupported:SCALAR_TYPES.has(f.type),generatedRecordIdentity:false,
         suggestedEncoding:['Date','DateTime'].includes(typeBase(f.type))?'epoch-seconds-text':typeBase(f.type)==='Ref'?'reference-id-text':
           ['Any','ChoiceList','RefList','Attachments'].includes(typeBase(f.type))?'typed-json':['Int','Numeric'].includes(typeBase(f.type))?'number-text':'native'}))],
-    tables:tableList.tables.filter(t=>!t.id.startsWith('_grist')).map(t=>({id:t.id,title:t.id})),views:[],
+    tables:tableList.tables,views:[],
     scope:'The selected account’s native document/table metadata. Capture reads the complete typed table result twice and compares document history and schema before/after; saved UI views and linked display values are not reconstructed.'};
 }

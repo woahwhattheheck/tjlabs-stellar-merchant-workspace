@@ -331,6 +331,9 @@ export async function openGristAuthoring({ directory, create = false, connection
         result = await discoverGristTable(input.config, { env: environment, signal: lifetime.signal });
         await createOrVerify(file, bytes(result), 16777216);
       }
+      if (catalog && (result.tableRef !== input.catalogSelection.tableRef ||
+          result.document?.id !== catalog.checked.catalog.document.id))
+        throw fault('GRIST_DOCUMENT_TABLE_IDENTITY_CHANGED', 'The native document or table reference changed since this catalog. Retain this observation and list the current document before choosing its table again.', 409);
       const expectedBinding = binding(input.config);
       if (identity(result.source) !== identity(expectedBinding)) throw fault('GRIST_DISCOVERY_CHANGED');
       const record = { ...result, id: request, connectionAlias: input.connectionAlias,
