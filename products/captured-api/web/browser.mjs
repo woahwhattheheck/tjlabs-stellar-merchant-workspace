@@ -1,4 +1,5 @@
 // MIT. Saved original handover drafts, complete transfer and receiving browser.
+import { createCapturedDraftCollaboration } from './collaboration.mjs';
 const $=id=>document.getElementById(id);
 const token=location.hash.slice(1),API='/api/captured-handover/';
 const UUID=()=>crypto.randomUUID(),HASH=/^[a-f0-9]{64}$/;
@@ -11,7 +12,7 @@ const make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==und
 const notice=(message,error=false)=>{$('notice').textContent=message;$('notice').classList.toggle('error',error);};
 let info,storagePrefix,tab,editor,form,job,inventory,upload,pollTimer,busy=false;
 let libraryKind='drafts',libraryOffset=0,inventoryOffset=0,documentView='summary',documentOffset=0;
-let libraryGeneration=0,documentGeneration=0,editorMode='WORKING';
+let libraryGeneration=0,documentGeneration=0,editorMode='WORKING',collaboration;
 const local=(key,value)=>{
   if(value===undefined) {const text=localStorage.getItem(storagePrefix+key);return text?JSON.parse(text):null;}
   try{localStorage.setItem(storagePrefix+key,JSON.stringify(value));}
@@ -133,6 +134,8 @@ async function replayPending(row) {
         const keep=editor&&form?clone(form):null;
         adoptEditor(result,keep&&canonical(keep)!==canonical(request.form)?keep:null);
       }
+    } else if(row.path==='draft/merge-save') {
+      await collaboration.acceptSaved(result,request);
     } else if(row.path==='jobs/start'||row.path==='jobs/resume')await adoptJob(result);
     else if(row.path.startsWith('uploads/')){upload=result;renderUpload();}
     await refreshLibrary();notice('The original saved request has been continued.');
@@ -143,7 +146,7 @@ function renderPending() {
   const rows=pendingRows();$('pending-section').hidden=!rows.length;$('pending-list').replaceChildren();
   for(const row of rows) {
     const card=make('div',undefined,'row-card'),request=JSON.parse(row.bodyText);
-    card.append(make('strong',row.path.startsWith('draft/')?'Draft '+(request.form?.label??request.kind??'save'):
+    card.append(make('strong',row.path.startsWith('draft/')?'Draft '+(request.form?.label??request.working?.label??request.kind??'save'):
       row.path.startsWith('uploads/')?'File '+(request.name??request.id):request.command??'Continue original operation'));
     card.append(make('p',row.error?.message??'The original request is retained while its reply completes.','small'));
     const actions=make('div',undefined,'actions');
@@ -188,6 +191,9 @@ async function newDraft(kind,initial) {
 async function saveDraft() {
   if(!editor)throw new Error('Open a draft first.');
   if(editorMode==='HISTORY')throw new Error('Open the retained working form before saving an edit.');
+  if(pendingRows().some(row=>row.path==='draft/merge-save'&&JSON.parse(row.bodyText).id===editor.id&&
+    (!row.error?.status||row.error.outcomeUnknown||!['CAPTURED_DESK_DRAFT_CHANGED','CAPTURED_DESK_REVIEW_CHANGED','CAPTURED_DESK_MERGE_CONFLICTS'].includes(row.error.code))))
+    throw new Error('Continue the retained original reconciled save before sending another draft edition.');
   const originalForm=clone(form);
   const prior=pendingRows().filter(row=>row.path==='draft/save')
     .map(row=>JSON.parse(row.bodyText)).find(row=>row.id===editor.id&&row.expectedRevision===editor.revision);
@@ -204,22 +210,19 @@ async function saveDraft() {
 }
 async function showCurrentDraft() {
   if(!editor)return;
-  const selectedId=editor.id,current=await api('draft?'+new URLSearchParams({id:selectedId}));
-  if(editor?.id!==selectedId)return;
-  const area=$('draft-conflict');area.hidden=false;area.replaceChildren(
-    make('strong','A different saved edition is current.'),
-    make('p','Your working form is still here. Compare the saved edition, then open it or make a new save from your current form.'),
-    lazyDetails('Current saved edition '+current.edition.sequence,current.edition.form));
-  const actions=make('div',undefined,'actions');
-  actions.append(button('Open current saved edition',()=>adoptEditor(current,undefined,{historical:true})));
-  if(editorMode==='WORKING')actions.append(button('Keep my form for a new save',()=>{
-    const uncertain=pendingRows().filter(row=>row.path==='draft/save'&&JSON.parse(row.bodyText).id===selectedId);
-    if(uncertain.some(row=>row.error?.code!=='CAPTURED_DESK_DRAFT_CHANGED'))
-      throw new Error('Continue the retained original save before changing its selected base.');
-    for(const row of uncertain){local('rejected:'+row.key,{...row,releasedAt:new Date().toISOString()});forget(row.key);}
-    adoptEditor(current,clone(form));renderPending();
-    notice('Your form now has the displayed current edition as its base. Save it as a new edition.');
-  }));area.append(actions);
+  if(editorMode==='HISTORY') {
+    const selected=editor,current=await api('draft?'+new URLSearchParams({id:editor.id}));
+    if(editor?.id!==selected.id||editor.revision!==selected.revision)return;
+    const area=$('draft-conflict');area.hidden=false;area.replaceChildren(
+      make('p','This original edition and the current saved edition are available. Open a working form to combine edits.'),
+      lazyDetails('Selected original edition '+selected.edition.sequence,selected.edition.form),
+      lazyDetails('Current saved edition '+current.edition.sequence,current.edition.form),
+      button('Work from this original edition',async()=>{adoptEditor(selected);await collaboration.reviewWorking();}),
+      button('Open current saved edition',()=>adoptEditor(current,undefined,{historical:true})));
+    return;
+  }
+  await collaboration.reviewWorking();
+  $('draft-collaboration').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function updateForm(key,value) {
   if(!form||editorMode==='HISTORY')return;form[key]=value;persistEditor();renderDraftMeta();controls();
@@ -258,7 +261,7 @@ function renderEditor() {
   }
   if(editor.kind==='OUTGOING')renderInventory();
   else {$('bundle-directory').value=form.bundle;$('bundle-sha').value=form.manifestSha256;renderMapping();}
-  renderDraftMeta();controls();
+  renderDraftMeta();collaboration?.refresh();controls();
 }
 async function loadInventory() {
   const original=await api('inventory');inventory=original;renderInventory();
@@ -621,6 +624,17 @@ await act(async()=>{
   info=await api('info');storagePrefix='captured-handover:'+info.productId+':';
   tab=sessionStorage.getItem('captured-handover-tab');
   if(!tab){tab=UUID();sessionStorage.setItem('captured-handover-tab',tab);}
+  collaboration=createCapturedDraftCollaboration({
+    root:$('draft-collaboration'),api,act,retain,local,forget,pendingRows,notice,controls,
+    context:()=>({info,tab,editor,form,editorMode,busy}),
+    onSaved:async(saved,{keepWorking=false,foreground=false}={})=>{
+      if(foreground||!editor||editor.id===saved.id&&editorMode==='WORKING') {
+        const preserved=keepWorking&&editor?.id===saved.id&&editorMode==='WORKING'?clone(form):undefined;
+        adoptEditor(saved,preserved);
+      }
+      await refreshLibrary();
+    },
+  });
   $('product-label').textContent=info.product;$('product-directory').textContent=info.directory;
   await refreshLibrary();renderPending();
   const retained=local('editor:'+tab),query=new URL(location.href).searchParams;

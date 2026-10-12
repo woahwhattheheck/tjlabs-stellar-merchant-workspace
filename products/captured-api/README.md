@@ -108,3 +108,17 @@ received merchants and source histories. The same operation is available with
 
 The [agent and terminal walkthrough](AGENT.md) carries the complete selection
 through publication, full-file transfer, native receiving and merchant reopen.
+
+## Collaborate on a handover draft
+
+**Combine saved and working edits** compares a retained working form with the
+current saved draft. Independent merchant, source-review and receiving-name
+changes combine; conflicting values receive explicit current or working
+choices. The exact reviewed result saves through the original edition writer
+and continues into the existing package and receiving operations.
+
+Complete working-edit files retain the original product, draft and saved base.
+The same reconciliation is available through four merchant tools, the typed
+client and the original terminal’s working-export/import commands. The
+[collaboration walkthrough](COLLABORATION.md) covers two operators, full file
+exchange, conflict choices, saved-request recovery and native receiving.

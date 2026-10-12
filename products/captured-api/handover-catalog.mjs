@@ -28,6 +28,17 @@ const jobRequest={oneOf:[
   object({id:uuid,command:{type:'string',enum:['IMPORT']},uploadId:uuid}),
   object({id:uuid,command:{type:'string',enum:['REOPEN']},operationId:sha}),
 ]};
+const draftText={type:'string',maxLength:64};
+const draftSource=object({kind:{type:'string'},id:{type:'string'},revision:{type:'string'}},['kind','id']);
+const draftPackage={oneOf:[draftText,object({name:draftText,manifestSha256:{type:'string'}},['name'])]};
+const workingForm={oneOf:[
+  object({label,packages:{type:'array',items:draftPackage,maxItems:1000},
+    sources:{type:'array',items:draftSource,maxItems:1000}}),
+  object({label,bundle:{type:'string',maxLength:4096},manifestSha256:{type:'string'},
+    names:{type:'object',propertyNames:draftText,additionalProperties:draftText,maxProperties:1000}}),
+]};
+const resolutions={type:'object',additionalProperties:{type:'string',enum:['CURRENT','WORKING']},maxProperties:3002};
+const merge={id:uuid,baseRevision:sha,working:workingForm,resolutions};
 const archive={id:uuid,expectedSha256:sha,expectedBytes:{type:'integer',minimum:1,maximum:Number.MAX_SAFE_INTEGER}};
 const requiredArchive=['id','expectedSha256','expectedBytes'];
 
@@ -46,6 +57,19 @@ export function capturedHandoverTools(tool) {
     [...requiredScope,'id','requestId','expectedRevision','label','packages','sources'],write),
     tool('merchant_handover_receiving_save','Save a complete receiving form from this workspace’s completed original IMPORT job and exact handover manifest. Uses the retained native collection directory and complete receiving-name map.',{...scope,id:uuid,requestId:uuid,expectedRevision:sha,label,importJob:uuid,expectedManifestSha256:sha,names},
     [...requiredScope,'id','requestId','expectedRevision','label','importJob','expectedManifestSha256','names'],write),
+    tool('merchant_handover_merge_review','Reconcile the complete working form with the current saved edition using its original immutable base. Independent edits combine; page every conflict and explicitly choose CURRENT or WORKING. Repeat expectedCurrentRevision and expectedSnapshot while paging the same review.',{
+      ...scope,...merge,expectedCurrentRevision:sha,
+      view:{type:'string',enum:['summary','conflicts','changes','form']},...snapshot},
+    [...requiredScope,'id','baseRevision','working'],read),
+    tool('merchant_handover_merge_save','Save the exact READY reconciliation through the original draft edition writer. Bind base/current revisions, complete working form, conflict choices and review SHA; retain requestId so an interrupted reply returns its original saved edition after later edits.',{
+      ...scope,...merge,requestId:uuid,expectedRevision:sha,reviewSha256:sha},
+    [...requiredScope,'id','baseRevision','working','requestId','expectedRevision','reviewSha256'],write),
+    tool('merchant_handover_working_export','Export a complete portable working edit with its native product, draft, original saved base and working form. Returns exact UTF-8 JSON content, bytes and SHA; the original terminal can publish the complete file.',{
+      ...scope,id:uuid,baseRevision:sha,working:workingForm},
+    [...requiredScope,'id','baseRevision','working'],read),
+    tool('merchant_handover_working_import','Read the exact complete portable working edit JSON content and optional SHA. The original host verifies product, draft and immutable base before returning its complete working form for merge_review; keep the returned source SHA and base revision.',{
+      ...scope,content:{type:'string',minLength:1,maxLength:4*1024*1024},expectedSha256:sha},
+    [...requiredScope,'content'],read),
     tool('merchant_handover_jobs','Page retained original handover jobs, exact request hashes and current native completion after restart.',{...scope,...page},requiredScope,read),
     tool('merchant_handover_job','Read the original job request/status or page native receiving package/source/name results. Selection shows its complete retained draft form; document pages show the published collection.',{...scope,id:uuid,view:{type:'string',enum:['summary','selection','packages','sources','names']},...snapshot},[...requiredScope,'id'],read),
     tool('merchant_handover_job_start','Start or replay the exact native PREPARE, INSPECT, REVIEW, PUBLISH, IMPORT, RECEIVE or REOPEN request. Review before PUBLISH/RECEIVE and carry the returned exact review SHA; poll the saved ID.',{...scope,request:jobRequest},[...requiredScope,'request'],write),

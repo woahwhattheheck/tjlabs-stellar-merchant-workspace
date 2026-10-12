@@ -702,3 +702,19 @@ job wait, whole-file transfer and local download/upload from an ordinary termina
 Original request IDs, byte hashes, source revisions and receiving records carry
 through restart. The [agent and terminal guide](AGENT.md) includes the full
 selection/review/transfer/receive/reopen sequence and typed client API.
+
+## Collaborate through the retained handover
+
+Open **Merchant handover → Combine saved and working edits** to reconcile a
+complete working selection with a peer’s saved edition. Review independent
+changes, choose current or working values for conflicts, and save the exact
+result through the same original draft writer. PREPARE, publication, streamed
+archive transfer, receiving-name review and native receive/reopen consume that
+ordinary saved edition.
+
+[COLLABORATION.md](COLLABORATION.md) provides the complete browser,
+merchant-tool, typed-client and terminal workflow. Portable working edits bind
+the original product, draft and saved base. Retained reviews and pending
+request bodies keep their own selected forms across navigation and restart.
+The selected Applications source binding includes the shared model and
+collaboration controller with the original handover host.

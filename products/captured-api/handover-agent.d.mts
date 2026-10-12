@@ -1,3 +1,4 @@
+import type { CapturedDraftForm, CapturedDraftResolutions } from './draft-reconciliation.mjs';
 /** Typed commands for the original merchant handover companion. */
 export type SHA256=string;
 export type UUID=string;
@@ -24,6 +25,13 @@ export interface HandoverToolArguments {
     label:string;packages:PackageSelection[];sources:SourceSelection[]};
   merchant_handover_receiving_save:HandoverScope & {id:UUID;requestId:UUID;expectedRevision:SHA256;
     label:string;importJob:UUID;expectedManifestSha256:SHA256;names:Record<string,string>};
+  merchant_handover_merge_review:HandoverScope & SnapshotPage & {id:UUID;baseRevision:SHA256;
+    working:CapturedDraftForm;resolutions?:CapturedDraftResolutions;expectedCurrentRevision?:SHA256;
+    view?:'summary'|'conflicts'|'changes'|'form'};
+  merchant_handover_merge_save:HandoverScope & {id:UUID;requestId:UUID;baseRevision:SHA256;
+    expectedRevision:SHA256;working:CapturedDraftForm;resolutions?:CapturedDraftResolutions;reviewSha256:SHA256};
+  merchant_handover_working_export:HandoverScope & {id:UUID;baseRevision:SHA256;working:CapturedDraftForm};
+  merchant_handover_working_import:HandoverScope & {content:string;expectedSha256?:SHA256};
   merchant_handover_jobs:HandoverScope & Page;
   merchant_handover_job:HandoverScope & SnapshotPage & {id:UUID;
     view?:'summary'|'selection'|'packages'|'sources'|'names'};

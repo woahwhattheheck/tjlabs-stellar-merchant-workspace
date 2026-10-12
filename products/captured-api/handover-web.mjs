@@ -19,6 +19,8 @@ const STATIC=new Map([
   [PUBLIC,{file:'index.html',type:'text/html; charset=utf-8'}],
   [PUBLIC+'browser.mjs',{file:'browser.mjs',type:'text/javascript; charset=utf-8'}],
   [PUBLIC+'style.css',{file:'style.css',type:'text/css; charset=utf-8'}],
+  [PUBLIC+'collaboration.mjs',{file:'collaboration.mjs',type:'text/javascript; charset=utf-8'}],
+  [PUBLIC+'draft-reconciliation.mjs',{file:'../draft-reconciliation.mjs',type:'text/javascript; charset=utf-8'}],
 ]);
 const fail=(code,message,status=400)=>Object.assign(new Error(message),{code,status});
 const query=url=>Object.fromEntries(url.searchParams);
@@ -32,17 +34,17 @@ function equal(left,right) {
   return typeof left==='string'&&typeof right==='string'&&left.length===right.length&&
     timingSafeEqual(Buffer.from(left),Buffer.from(right));
 }
-async function body(req,{raw=false}={}) {
+async function body(req,{raw=false,limit=MAX_BODY}={}) {
   const type=String(req.headers['content-type']??'').split(';')[0].trim().toLowerCase();
   if(type!==(raw?'application/octet-stream':'application/json'))
     throw fail('CAPTURED_DESK_CONTENT_TYPE',raw?'Send the original file bytes.':'Send the original JSON request.',415);
   const declared=Number(req.headers['content-length']??0);
-  if(!Number.isSafeInteger(declared)||declared<0||declared>MAX_BODY)
-    throw fail('CAPTURED_DESK_BODY_LIMIT','Send one file chunk or a complete draft of at most 1 MiB.',413);
+  if(!Number.isSafeInteger(declared)||declared<0||declared>limit)
+    throw fail('CAPTURED_DESK_BODY_LIMIT','Send one complete request within the selected '+String(limit/1048576)+' MiB limit.',413);
   const chunks=[];let size=0;
   for await(const chunk of req) {
     size+=chunk.length;
-    if(size>MAX_BODY)throw fail('CAPTURED_DESK_BODY_LIMIT','Send one file chunk or a complete draft of at most 1 MiB.',413);
+    if(size>limit)throw fail('CAPTURED_DESK_BODY_LIMIT','Send one complete request within the selected '+String(limit/1048576)+' MiB limit.',413);
     chunks.push(chunk);
   }
   const value=Buffer.concat(chunks,size);
@@ -203,9 +205,15 @@ export async function createCapturedHandoverWeb({directory}) {
         return send(res,200,await appendCapturedHandoverUpload({root:desk.roots.uploads,id:params.id,
           offset:Number(params.offset),bytes:value,sha256:params.sha256}));
       }
-      const value=await body(req);
+      const limit=path==='/draft/working-import'?8*MAX_BODY:
+        ['/draft/merge-review','/draft/merge-save','/draft/working-export'].includes(path)?4*MAX_BODY:MAX_BODY;
+      const value=await body(req,{limit});
       if(path==='/draft/create')return send(res,200,await desk.createDraft(value));
       if(path==='/draft/save')return send(res,200,await desk.saveDraft(value));
+      if(path==='/draft/merge-review')return send(res,200,await desk.reviewDraftMerge(value));
+      if(path==='/draft/merge-save')return send(res,200,await desk.saveDraftMerge(value));
+      if(path==='/draft/working-export')return send(res,200,await desk.exportWorkingEdit(value));
+      if(path==='/draft/working-import')return send(res,200,await desk.importWorkingEdit(value));
       if(path==='/jobs/start') {
         const job=await desk.startJob(value);return send(res,job.state==='COMPLETE'?200:202,job);
       }

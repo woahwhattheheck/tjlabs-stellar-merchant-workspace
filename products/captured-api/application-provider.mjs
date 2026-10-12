@@ -15,8 +15,8 @@ const sourceFiles = [
   'handover.mjs', 'handover-files.mjs', 'handover-desk.mjs', 'handover-web.mjs',
   'handover-archive.mjs', 'handover-upload.mjs',
   'handover-client.mjs', 'handover-agent.mjs', 'handover-catalog.mjs',
-  'handover-provider.mjs', 'handover-views.mjs',
-  'web/index.html', 'web/browser.mjs', 'web/style.css',
+  'handover-provider.mjs', 'handover-views.mjs', 'draft-reconciliation.mjs',
+  'web/index.html', 'web/browser.mjs', 'web/style.css', 'web/collaboration.mjs',
 ].map(name => PRODUCT + name).concat([
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/server.mjs',
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/browser.mjs',

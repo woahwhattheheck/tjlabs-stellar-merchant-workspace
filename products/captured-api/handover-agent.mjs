@@ -2,7 +2,7 @@
 import { sf61Exact, sf61Hash } from '../../stellar-forge/mcp-merchant-operator/sf61-connection.mjs';
 import { openCapturedHandoverClient } from './handover-client.mjs';
 import { capturedHandoverTools, HANDOVER_ALIAS, HANDOVER_SHA, HANDOVER_UUID, HANDOVER_NAME } from './handover-catalog.mjs';
-import { capturedHandoverDraftPage, capturedHandoverJobPage } from './handover-views.mjs';
+import { capturedHandoverDraftPage, capturedHandoverJobPage, capturedDraftReviewPage } from './handover-views.mjs';
 
 const definitions=new Map(capturedHandoverTools((name,description,properties,required)=>({name,properties,required}))
   .map(value=>[value.name,value]));
@@ -127,6 +127,28 @@ export class MerchantCapturedHandovers {
           });
           return result(capturedHandoverDraftPage(saved));
         }
+        case 'merchant_handover_merge_review': {
+          identity(input.id);digest(input.baseRevision);
+          if(input.expectedCurrentRevision!==undefined)digest(input.expectedCurrentRevision);
+          const {view,offset,limit,expectedSnapshot,...request}=input;
+          const reviewed=await client.json('/draft/merge-review',request);
+          return result(capturedDraftReviewPage(reviewed,{
+            ...(view===undefined?{}:{view}),...(offset===undefined?{}:{offset}),
+            ...(limit===undefined?{}:{limit}),...(expectedSnapshot===undefined?{}:{expectedSnapshot}),
+          }));
+        }
+        case 'merchant_handover_merge_save':
+          identity(input.id);identity(input.requestId);digest(input.baseRevision);
+          digest(input.expectedRevision);digest(input.reviewSha256);
+          return result(capturedHandoverDraftPage(await client.json('/draft/merge-save',input)));
+        case 'merchant_handover_working_export':
+          identity(input.id);digest(input.baseRevision);
+          return result(await client.json('/draft/working-export',input));
+        case 'merchant_handover_working_import':
+          if(typeof input.content!=='string'||Buffer.byteLength(input.content)>4*1024*1024)
+            fail('INVALID_PARAMS','Supply the complete original working edit JSON file within its 4 MiB limit.');
+          if(input.expectedSha256!==undefined)digest(input.expectedSha256);
+          return result(await client.json('/draft/working-import',input));
         case 'merchant_handover_jobs':return result(await client.json('/jobs?'+query(input)));
         case 'merchant_handover_job':
           identity(input.id);return result(await client.json('/job-page?'+query(input)));
@@ -173,8 +195,10 @@ export class MerchantCapturedHandovers {
     if(!definition)fail('TOOL_NOT_FOUND','Choose an original captured handover tool.');
     sf61Exact(args,Object.keys(definition.properties),definition.required);
     const serialized=JSON.stringify(args);
-    if(Buffer.byteLength(serialized)>1024*1024)
-      fail('INVALID_PARAMS','Keep the complete handover request within its original 1 MiB limit.');
+    const maximum=name==='merchant_handover_working_import'?8*1024*1024:
+      ['merchant_handover_merge_review','merchant_handover_merge_save','merchant_handover_working_export'].includes(name)?4*1024*1024:1024*1024;
+    if(Buffer.byteLength(serialized)>maximum)
+      fail('INVALID_PARAMS','Keep the complete request within this original operation’s '+String(maximum/1048576)+' MiB limit.');
     // Capture the actual wire request before its first asynchronous operation.
     // Required fields must survive serialization, including the product binding.
     const input=JSON.parse(serialized);
