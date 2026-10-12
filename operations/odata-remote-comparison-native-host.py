@@ -137,7 +137,7 @@ def checkpoint_verify(path,label=None):
             if member.filename==marker:continue
             name=member.filename;parts=PurePosixPath(name).parts
             need((len(parts)>1 and parts[0] in {"SOURCE","INPUT","CUSTOMER","provider"}) or
-                 (len(parts)==1 and (name in {"remote-host.json","remote-customer-native-host.py"} or
+                 (len(parts)==1 and (name in {"remote-host.json","remote-customer-native-host.py","OData_Remote_Comparison_Customer_Edition.zip","OData_Remote_Comparison_Customer_Result.json","remote-customer-files.json","START.md"} or
                   name.endswith((".stdout.ndjson",".stderr.log")))),"The checkpoint selected a foreign path.")
             need("node_modules" not in parts and ".git" not in parts,"Restore the original source without mutable installations.")
             expected=declared[name]
@@ -199,7 +199,7 @@ def checkpoint(label):
                         need(p.is_file() and not p.is_symlink(),"Preserve non-regular original checkpoint input: "+str(p))
                         selected[str(p.relative_to(PRIVATE))]=p
             for p in PRIVATE.iterdir():
-                if p.name in {"remote-host.json","remote-customer-native-host.py"} or p.name.endswith((".stdout.ndjson",".stderr.log")):
+                if p.name in {"remote-host.json","remote-customer-native-host.py","OData_Remote_Comparison_Customer_Edition.zip","OData_Remote_Comparison_Customer_Result.json","remote-customer-files.json","START.md"} or p.name.endswith((".stdout.ndjson",".stderr.log")):
                     need(p.is_file() and not p.is_symlink(),"Preserve a foreign original host file.");selected[p.name]=p
             files=[{"path":name,"bytes":p.stat().st_size,"sha256":digest(p)} for name,p in sorted(selected.items())]
             manifest={"schema":"stellar-forge.odata-remote-customer-checkpoint.v1","operation_id":OPERATION,
@@ -228,35 +228,55 @@ def library_return_success(body,paths):
     if len(rows)!=len(paths) or len({r.get("local_path") for r in rows if isinstance(r,dict)})!=len(paths):return False
     by_path={r.get("local_path"):r for r in rows if isinstance(r,dict)}
     return set(by_path)==set(paths) and all(r.get("status")=="succeeded" and r.get("file_id") and r.get("library_file_id") for r in rows)
+def reconcile_library_return(record,request,stdout,stderr,files):
+    request_path=Path(record["request"]["path"])
+    need(identity(request_path)==record["request"] and json.loads(request_path.read_bytes())==request,
+         "Preserve the exact original Library request.")
+    expected=[{"local_path":item["path"],"purpose":"create_library_file","library_artifact_type":"other"} for item in files]
+    need(request=={"uploads":expected} and record.get("files")==files,"Preserve the original selected upload files.")
+    for item in files:
+        path=Path(item["path"])
+        if path.exists():need(identity(path)==item,"A selected original upload changed before provider reconciliation.")
+    if not stdout.exists():return False
+    if record.get("stdout"):need(identity(stdout)==record["stdout"],"The original provider return changed.")
+    try:body=json.loads(stdout.read_bytes())
+    except (ValueError,UnicodeError):return False
+    if not library_return_success(body,[item["path"] for item in files]):return False
+    record["stdout"]=identity(stdout)
+    if stderr.exists():record["stderr"]=identity(stderr)
+    record["state"]="SUCCEEDED";record["success_evidence"]="complete_original_provider_results"
+    record["provider_results"]=body["results"]
+    save(receipt_path,receipt)
+    return True
 def save_checkpoint(label):
     global child
-    book=checkpoint(label)
-    if book.get("received"):return book
     records=receipt.setdefault("checkpoint_saves",{})
+    provider=private(PRIVATE/"provider"/("checkpoint-"+label))
     prior=records.get(label)
     if prior:
-        need(prior.get("state")=="SUCCEEDED","Reconcile the original checkpoint save before another provider invocation: "+label)
+        request_path=Path(prior["request"]["path"])
+        need(reconcile_library_return(prior,json.loads(request_path.read_bytes()),provider/"stdout.json",provider/"stderr.log",prior["files"]),
+             "Reconcile the original checkpoint provider outcome before another invocation: "+label)
+        print_status("original-checkpoint-save-reconciled",label=label,returncode=prior.get("returncode"),results=prior["provider_results"])
         return prior
-    provider=private(PRIVATE/"provider"/("checkpoint-"+label))
-    request={"uploads":[{"local_path":book["archive"]["path"],"purpose":"create_library_file","library_artifact_type":"other"}]}
+    book=checkpoint(label)
+    if book.get("received"):return book
+    files=[book["archive"]]
+    request={"uploads":[{"local_path":item["path"],"purpose":"create_library_file","library_artifact_type":"other"} for item in files]}
     immutable(provider/"request.json",request)
-    record={"state":"SELECTED","request":identity(provider/"request.json"),"archive":book["archive"]}
+    record={"state":"SELECTED","request":identity(provider/"request.json"),"archive":book["archive"],"files":files}
     records[label]=record;save(receipt_path,receipt)
     with (provider/"stdout.json").open("xb",buffering=0) as out,(provider/"stderr.log").open("xb",buffering=0) as err:
-        process=subprocess.Popen([sys.executable,"-B",str(HELPER)],stdin=subprocess.PIPE,stdout=out,stderr=err,
+        child=subprocess.Popen([sys.executable,"-B",str(HELPER)],stdin=subprocess.PIPE,stdout=out,stderr=err,
             cwd=provider,env={**os.environ,"TMPDIR":str(PRIVATE/"temporary")},pass_fds=(lease,),start_new_session=True)
-        child=process
-        record["pid"]=process.pid;save(receipt_path,receipt)
-        process.communicate(json.dumps(request).encode())
-        record["returncode"]=process.returncode;child=None
-    record["stdout"]=identity(provider/"stdout.json");record["stderr"]=identity(provider/"stderr.log")
-    try:body=json.loads((provider/"stdout.json").read_bytes())
-    except (ValueError,UnicodeError):body=None
-    record["state"]="SUCCEEDED" if record["returncode"]==0 and library_return_success(body,[book["archive"]["path"]]) else "RETURNED"
+        record["pid"]=child.pid;save(receipt_path,receipt)
+        child.communicate(json.dumps(request).encode());record["returncode"]=child.returncode;child=None
+    record["stdout"]=identity(provider/"stdout.json");record["stderr"]=identity(provider/"stderr.log");record["state"]="RETURNED"
     save(receipt_path,receipt)
-    print_status("remote-checkpoint-library-return",label=label,state=record["state"],returncode=record["returncode"],
+    succeeded=reconcile_library_return(record,request,provider/"stdout.json",provider/"stderr.log",files)
+    print_status("remote-checkpoint-library-return",label=label,state=record["state"],returncode=record.get("returncode"),
                  result=(provider/"stdout.json").read_text(errors="replace"),stderr=(provider/"stderr.log").read_text(errors="replace")[-4000:])
-    need(record["state"]=="SUCCEEDED","The complete original checkpoint save needs its actual provider result reconciled.")
+    need(succeeded,"The complete original checkpoint save needs its actual provider result reconciled.")
     return record
 
 receiving=receive_checkpoint(_remote_checkpoint) if globals().get("_remote_checkpoint") else None
@@ -482,28 +502,32 @@ remote-customer-files.json binds every delivered file by complete bytes and SHA-
     return [final,PRIVATE/"OData_Remote_Comparison_Customer_Result.json"]
 def save_completed_customer(files):
     global child
-    existing=receipt.get("library_save")
-    if existing:
-        print_status("original-library-save-already-selected",returncode=existing["returncode"],result_path=existing["stdout"]["path"])
-        return existing
-    need(not receipt.get("library_intent"),"Reconcile the original selected final save before another provider invocation.")
-    request={"uploads":[{"local_path":str(path),"purpose":"create_library_file","library_artifact_type":"other"} for path in files]}
-    immutable(PRIVATE/"provider/library-request.json",request)
-    receipt["library_intent"]={"request":identity(PRIVATE/"provider/library-request.json"),"state":"SELECTED"};save(receipt_path,receipt)
+    selected=[identity(path) for path in files]
+    request={"uploads":[{"local_path":item["path"],"purpose":"create_library_file","library_artifact_type":"other"} for item in selected]}
     stdout=PRIVATE/"provider/library-stdout.json";stderr=PRIVATE/"provider/library-stderr.log"
+    intent=receipt.get("library_intent")
+    if intent:
+        record=receipt.setdefault("library_save",{"state":"SELECTED","request":intent["request"],"files":intent["files"]})
+        need(reconcile_library_return(record,request,stdout,stderr,selected),
+             "Reconcile the original selected final provider outcome before another invocation.")
+        print_status("original-library-save-reconciled",returncode=record.get("returncode"),results=record["provider_results"])
+        return record
+    immutable(PRIVATE/"provider/library-request.json",request)
+    intent={"request":identity(PRIVATE/"provider/library-request.json"),"state":"SELECTED","files":selected}
+    receipt["library_intent"]=intent
+    record={"state":"SELECTED","request":intent["request"],"files":selected};receipt["library_save"]=record
+    save(receipt_path,receipt)
     with stdout.open("xb",buffering=0) as out,stderr.open("xb",buffering=0) as err:
         child=subprocess.Popen([sys.executable,"-B",str(HELPER)],stdin=subprocess.PIPE,stdout=out,stderr=err,
             cwd=PRIVATE/"provider",env={**os.environ,"TMPDIR":str(PRIVATE/"temporary")},pass_fds=(lease,),start_new_session=True)
-        receipt["library_intent"]["pid"]=child.pid;save(receipt_path,receipt)
-        child.communicate(json.dumps(request).encode());code=child.returncode;child=None
-    raw=stdout.read_text(errors="replace")
-    try:body=json.loads(raw)
-    except ValueError:body=None
-    succeeded=code==0 and library_return_success(body,[str(path) for path in files])
-    receipt["library_save"]={"state":"SUCCEEDED" if succeeded else "RETURNED","returncode":code,"stdout":identity(stdout),"stderr":identity(stderr)}
-    save(receipt_path,receipt)
-    print_status("remote-customer-library-return",state=receipt["library_save"]["state"],returncode=code,result=raw,stderr=stderr.read_text(errors="replace")[-4000:])
-    return receipt["library_save"]
+        intent["pid"]=child.pid;record["pid"]=child.pid;save(receipt_path,receipt)
+        child.communicate(json.dumps(request).encode());record["returncode"]=child.returncode;child=None
+    record["stdout"]=identity(stdout);record["stderr"]=identity(stderr);record["state"]="RETURNED";save(receipt_path,receipt)
+    succeeded=reconcile_library_return(record,request,stdout,stderr,selected)
+    print_status("remote-customer-library-return",state=record["state"],returncode=record.get("returncode"),
+        result=stdout.read_text(errors="replace"),stderr=stderr.read_text(errors="replace")[-4000:])
+    need(succeeded,"The completed customer edition retains an unresolved original provider outcome.")
+    return record
 _active=False
 def run_original_remote_customer():
     global _active,child
@@ -514,7 +538,7 @@ def run_original_remote_customer():
         if receipt.get("customer_archive"):
             saved=receipt["customer_archive"];path=Path(saved["path"])
             need(identity(path)==saved,"Preserve the already completed original customer archive.")
-            save_completed_customer([path,PRIVATE/"OData_Remote_Comparison_Customer_Result.json"]);return
+            save_completed_customer(package_customer());return
         run_command("remote-customer",[str(NODE),str(SOURCE/"stellar-forge/mcp-merchant-operator/examples/remote-comparison-customer.mjs"),
             str(INPUT/"remote-customer-input.json")])
         receipt["state"]="NATIVE_COMPLETE";save(receipt_path,receipt)

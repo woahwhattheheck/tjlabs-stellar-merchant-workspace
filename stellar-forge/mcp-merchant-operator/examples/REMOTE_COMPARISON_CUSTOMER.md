@@ -80,13 +80,16 @@ The Analysis journal preserves the original requests and job IDs. Completed jobs
 
 Inside the attached reference host, `run_original_remote_customer()` continues the selected directories after the concrete failure has been corrected. It reloads the original host receipt and keeps the original descriptor, source inventory, requests, selected port and completed result identities.
 
-The host saves a complete `native-complete` checkpoint after the merchant/client/independent receiving phase has closed, before starting Analysis. A caught failure first closes the owned child process group and preserves the full selected source, input, customer state and logs in a separate failure checkpoint. Checkpoint and final-edition saves have separate retained request and result records. The host advances only after the unchanged file helper returns one successful result for the exact checkpoint path. A selected save with no complete provider return keeps its original identity for reconciliation.
+The host saves a complete `native-complete` checkpoint after the merchant/client/independent receiving phase has closed, before starting Analysis. A caught failure first closes the owned child process group and preserves the full selected source, input, customer state and logs in a separate failure checkpoint. Checkpoint and final-edition saves have separate retained request and result records. The host advances only after the unchanged file helper returns one successful result for the exact checkpoint path. A selected save keeps its original identity for reconciliation. If the helper completed before its parent recorded success, the host adopts the retained complete provider results by matching the original immutable request, every selected path and returned file identity; it does not invoke the helper again or invent a process exit code. An incomplete or failed return stays explicitly unresolved.
+
+A failure after final packaging also retains the finished root customer ZIP, result, file manifest and opening instructions. Receiving reopens that same final artifact and reconciles its original save.
 
 The checkpoint ZIP is a private operation continuation. It includes the original worker's private connection and provider state. The customer edition has its separate, narrower file manifest and opening instructions.
 
 To receive a saved checkpoint in the same original private root, provide its exact selected file before executing this host:
 
 ```python
+from pathlib import Path
 _remote_checkpoint = {
     "path": "/absolute/retained/OData_Remote_Comparison_native-complete_Checkpoint.zip",
     "bytes": 123456,
