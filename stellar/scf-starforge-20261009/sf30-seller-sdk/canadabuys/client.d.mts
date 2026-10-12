@@ -1,5 +1,8 @@
+import type { BidderKind, BidderRecordMap, BidderCreate, BidderPatch, BidderMutation, BidderPage, BidderDeskStatus, DecisionSelection, BidderFitResult, BidderAssessResult, BidderCompareResult } from './bidder-desk-workspace.mjs';
+import type { DecisionReportFormat } from './bidder-desk-reports.mjs';
 import type { Stream, SourceInput, WorkspaceView, WorkspacePackage, SourceEdition, OriginalSource, Notice, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, ReviewPatch, Profile, ProfileMatch, Selection, Comparison, CaptureRecord, Receiving, Ingestion, ReceiveResult } from './workspace.mjs';
 export interface RequestOptions { signal?:AbortSignal;timeoutMs?:number }
+export interface BinaryResponse { mime:string;filename:string|null;body:Uint8Array;bytes:number }
 export interface RawResponse { mime:string;filename:string|null;body:string;bytes:number }
 export interface MutationView extends WorkspaceView { workshare?:Workshare;capture?:CaptureRecord;receiving?:Receiving;ingestion?:Ingestion;alreadyReceived?:boolean;alreadyComplete?:boolean }
 export type CaptureSelection={stream:Stream;expectedRevision:number;url?:string;label?:string}|{captureId:string;expectedRevision:number};
@@ -7,8 +10,19 @@ export declare class CanadaBuysClientError extends Error { code:string;status:nu
 export declare class CanadaBuysClient {
  constructor(baseUrl:string,options?:{fetch?:typeof fetch;headers?:Record<string,string>;timeoutMs?:number;maxResponseBytes?:number});
  readonly baseUrl:string;readonly timeoutMs:number;readonly maxResponseBytes:number;
- request<T=unknown>(path:string,options?:RequestOptions&{method?:string;body?:unknown;raw?:false}):Promise<T>;
+ request<T=unknown>(path:string,options?:RequestOptions&{method?:string;body?:unknown;raw?:false;binary?:false}):Promise<T>;
  request(path:string,options:RequestOptions&{method?:string;body?:unknown;raw:true}):Promise<RawResponse>;
+ request(path:string,options:RequestOptions&{method?:string;body?:unknown;binary:true}):Promise<BinaryResponse>;
+ bidderStatus(options?:RequestOptions):Promise<BidderDeskStatus>;
+ bidderList<K extends BidderKind>(kind:K,options?:RequestOptions&{noticeId?:string;offset?:number;limit?:number}):Promise<BidderPage<K>>;
+ bidderRecord<K extends BidderKind>(kind:K,id:string,options?:RequestOptions&{revision?:number;history?:boolean}):Promise<BidderRecordMap[K]&{history?:BidderRecordMap[K][]}>;
+ bidderCreate<K extends BidderKind>(kind:K,record:Omit<BidderCreate<K>,'expectedRevision'>,expectedRevision:number,options?:RequestOptions):Promise<BidderMutation<K>>;
+ bidderUpdate<K extends BidderKind>(kind:K,id:string,patch:BidderPatch<K>,options?:RequestOptions):Promise<BidderMutation<K>>;
+ bidderFit(profileId:string,options?:RequestOptions&{profileRevision?:number;noticeIds?:string[];now?:number|string}):Promise<BidderFitResult>;
+ bidderAssess(selection:DecisionSelection,options?:RequestOptions):Promise<BidderAssessResult>;
+ bidderComparison(id:string,options?:RequestOptions):Promise<BidderCompareResult>;
+ bidderReport(id:string,options?:RequestOptions&{revision?:number;format?:DecisionReportFormat}):Promise<RawResponse>;
+ bidderEvidence(id:string,options?:RequestOptions&{revision?:number}):Promise<BinaryResponse>;
  workspace(options?:RequestOptions):Promise<WorkspaceView>;
  notice(id:string,options?:RequestOptions):Promise<Notice>;
  workshare(id:string,options?:RequestOptions):Promise<WorkshareHistory>;

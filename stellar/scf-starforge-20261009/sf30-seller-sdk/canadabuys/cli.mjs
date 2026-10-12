@@ -2,7 +2,7 @@
 // MIT. Source-owned CanadaBuys operation from the same model as browser and MCP.
 import { parseArgs } from 'node:util';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CanadaBuysWorkspace, failure, sha256 } from './workspace.mjs';
 import { captureCanadaBuys, OFFICIAL_FEEDS } from './capture.mjs';
@@ -34,12 +34,25 @@ const HELP = [
   'package                             Export a complete receiving package',
   'receive --file JSON                 Receive source, reviews and workshares',
   'receiving --package-id ID           Read the exact saved receiving result',
+  'bidder-status                      Read saved bidder desk record counts',
+  'bidder-list --kind KIND             List profiles, evidence, requirements or decisions',
+  'bidder-record --kind KIND --record-id ID [--revision N] [--history]',
+  'bidder-create --kind KIND --file JSON   Save a complete record against workspace revision',
+  'bidder-update --kind KIND --record-id ID --file JSON   Save the next record edition',
+  'bidder-fit --profile-id ID --profile-revision N   Explain current notice fit',
+  'bidder-assess --file JSON           Review exact notice/profile/evidence context',
+  'bidder-compare --record-id ID       Compare a saved decision to current context',
+  'bidder-report --record-id ID --format html|json|csv [--revision N]',
+  'bidder-evidence --record-id ID --out FILE [--revision N]   Recover original document bytes',
   'merchant-prepare                    Prepare a complete SF30 dataset/merchant',
   'merchant-preview --merchant DIR     Query the original immutable dataset',
   'merchant-serve --merchant DIR       Start its configured native merchant',
   'delivery-receive --delivery DIR     Receive an original finalized SF100 delivery',
   '',
-  'Mutations: --expected-revision N (workspace; review/workshare update use own revision)',
+  'Mutations: --expected-revision N (workspace; review/workshare/bidder update use own revision)',
+  'Bidder kind: profile|evidence|requirement|decision; --command-id ID makes a save repeatable',
+  'Evidence intake: --attachment FILE retains the actual bytes with your JSON description',
+  'Bidder list: --notice-id ID --offset N --limit N; all record editions remain retrievable',
   'Common: --operator NAME --title TITLE --out FILE',
   'Selection: --scope all|shortlist|selected --notice-id ID (repeat)',
   'Source: --label LABEL --url ORIGINAL_URL --retrieved-at ISO --expected-sha256 SHA',
@@ -56,9 +69,11 @@ const options = Object.fromEntries([
   'workspace','operator','title','file','out','label','url','retrieved-at','expected-sha256',
   'stream','capture-id','entry-id','source-id','workshare-id','package-id','scope','format',
   'expected-revision','before','after','host','port','merchant','delivery','payment','origin','path','name',
-  'default-limit','max-limit','query','facilitator','expected-bundle-sha256','availability-directory'
+  'default-limit','max-limit','query','facilitator','expected-bundle-sha256','availability-directory',
+  'kind','record-id','profile-id','profile-revision','revision','command-id','attachment','offset','limit'
 ].map(name => [name,{type:'string'}]));
 options['allow-local-facilitator']={type:'boolean'};
+options.history={type:'boolean'};
 options['notice-id']={type:'string',multiple:true}; options.help={type:'boolean',short:'h'};
 function required(value,name) { if(value===undefined||value==='') throw failure('ARGUMENT_REQUIRED',name+' is required'); return value; }
 function integer(value,name,fallback) {
@@ -157,6 +172,37 @@ export async function main(args=process.argv.slice(2)) {
         result=workspace.receivePackage(original.document,{expectedRevision});break;
       }
       case 'receiving':result=workspace.getReceiving(required(value['package-id'],'--package-id'));break;
+      case 'bidder-status':result=workspace.bidderDesk.status();break;
+      case 'bidder-list':result=workspace.bidderDesk.list(required(value.kind,'--kind'),{
+        noticeId:value['notice-id']?one(value['notice-id'],'bidder-list'):undefined,
+        offset:integer(value.offset,'--offset',0),limit:integer(value.limit,'--limit',100)});break;
+      case 'bidder-record':result=workspace.bidderDesk.get(required(value.kind,'--kind'),required(value['record-id'],'--record-id'),{
+        revision:integer(value.revision,'--revision'),history:value.history||false});break;
+      case 'bidder-create':case 'bidder-update':{
+        const record={...(await jsonInput(value.file)).document,expectedRevision,
+          ...(value['command-id']?{commandId:value['command-id']}:{})};
+        if(value['notice-id'])record.noticeId=one(value['notice-id'],command);
+        if(value.attachment){
+          if(value.kind!=='evidence')throw failure('EVIDENCE_KIND_REQUIRED','Use --attachment with --kind evidence');
+          const body=await readFile(resolve(value.attachment));
+          record.bodyBase64=body.toString('base64');
+          record.localOrigin=record.localOrigin||basename(value.attachment);
+          record.title=record.title||basename(value.attachment);
+        }
+        result=command==='bidder-create'?workspace.bidderDesk.create(required(value.kind,'--kind'),record)
+          :workspace.bidderDesk.update(required(value.kind,'--kind'),required(value['record-id'],'--record-id'),record);break;
+      }
+      case 'bidder-fit':result=workspace.bidderDesk.fit(required(value['profile-id'],'--profile-id'),{
+        profileRevision:integer(value['profile-revision'],'--profile-revision'),noticeIds:value['notice-id']||[]});break;
+      case 'bidder-assess':result=workspace.bidderDesk.assess((await jsonInput(value.file)).document);break;
+      case 'bidder-compare':result=workspace.bidderDesk.compareCurrent(required(value['record-id'],'--record-id'));break;
+      case 'bidder-report':return output(workspace.bidderDesk.report(required(value['record-id'],'--record-id'),{
+        format:value.format||'html',revision:integer(value.revision,'--revision')}).body,value.out,true);
+      case 'bidder-evidence':{
+        required(value.out,'--out');
+        return output(workspace.bidderDesk.evidenceFile(required(value['record-id'],'--record-id'),{
+          revision:integer(value.revision,'--revision')}).body,value.out,true);
+      }
       case 'merchant-prepare': {
         const merchant=await import('./merchant.mjs');
         result=await merchant.prepareMerchant(workspace,{...selection,scope:value.scope||'shortlist',expectedRevision,

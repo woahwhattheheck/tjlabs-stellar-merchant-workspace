@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { CanadaBuysWorkspace, failure } from './workspace.mjs';
 import { captureCanadaBuys } from './capture.mjs';
+import { routeBidderDesk } from './bidder-desk-http.mjs';
 
 const loopback = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
 function sendJSON(response, status, value) {
@@ -47,8 +48,8 @@ export async function startCanadaBuysServer({ directory, operator = 'operator', 
   port = Number(port);
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw failure('INVALID_PORT', 'Port must be an integer between 0 and 65535');
   const workspace = new CanadaBuysWorkspace(directory, { operator, title });
-  let html;
-  try { html = await readFile(new URL('./operator/index.html', import.meta.url)); }
+  let html, bidderHtml;
+  try { [html, bidderHtml] = await Promise.all([readFile(new URL('./operator/index.html', import.meta.url)), readFile(new URL('./operator/bidder-desk.html', import.meta.url))]); }
   catch (error) { workspace.close(); throw error; }
   let origin = '', closing = false;
   const activeCaptures = new Set();
@@ -62,11 +63,13 @@ export async function startCanadaBuysServer({ directory, operator = 'operator', 
       const url = new URL(request.url, origin);
       if (url.origin !== origin) throw failure('PATH_REJECTED', 'Invalid request path', 400);
       if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) writeAllowed(request, origin);
-      if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/operator/')) {
-        response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': html.length, 'Cache-Control': 'no-cache',
+      if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/operator/' || url.pathname === '/bidder-desk' || url.pathname === '/bidder-desk/')) {
+        const page = url.pathname.startsWith('/bidder-desk') ? bidderHtml : html;
+        response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': page.length, 'Cache-Control': 'no-cache',
           'Content-Security-Policy': "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
-          'X-Content-Type-Options': 'nosniff' }); response.end(html); return;
+          'X-Content-Type-Options': 'nosniff' }); response.end(page); return;
       }
+      if (await routeBidderDesk({ workspace, request, response, url, requestJSON, sendJSON, attachment, maxRequestBytes })) return;
       if (request.method === 'GET' && url.pathname === '/health') { sendJSON(response, 200, { schema: 'stellar-forge.canadabuys-health.v1', workspace: workspace.metadata() }); return; }
       if (request.method === 'GET' && url.pathname === '/api/workspace') { sendJSON(response, 200, workspace.view()); return; }
       if (request.method === 'GET' && url.pathname.startsWith('/api/notices/')) {

@@ -1,5 +1,7 @@
 # CanadaBuys procurement workspace
 
+The **Bidder desk** adds saved company profiles, original evidence documents, clause assessments and versioned Bid / No bid / Investigate / Park decisions to this same workspace. Open it from the procurement navigation. See [the complete bidder desk operating and integration guide](BIDDER_DESK.md) for its browser, CLI, client, merchant and package-receiving workflow.
+
 Operate federal tender, award and standing-offer/supply-arrangement sources in one saved workspace. The browser, CLI, JavaScript client, Applications entry and merchant MCP provider use the same SQLite model. The working product covers source intake, bilingual notice review, exact edition comparison, qualification, supplier research, partner workshare planning, complete handover and merchant delivery.
 
 ## Open the application

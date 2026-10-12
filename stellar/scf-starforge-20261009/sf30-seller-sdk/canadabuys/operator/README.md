@@ -1,8 +1,10 @@
 # CanadaBuys desk — operator guide
 
+Use **Bidder desk** in the navigation for saved company capabilities, original evidence documents, clause assessments, reviewed decisions and revision-specific reports. Its [complete operating guide](../BIDDER_DESK.md) describes how this page shares the original source and workspace below.
+
 The desk joins an original CanadaBuys source edition to a usable procurement review and partner workshare. It opens the full bilingual notice, retains its original CSV fields and attachments, records the requirements and delivery fit, and carries the scope, production capacity, partner responsibilities and milestone cash into a saved handover.
 
-The browser uses the same local application and native workspace as the command-line client and provider. Its source is one complete, dependency-free HTML file. The application server serves it at the workspace address; open the URL printed by that server. Source acquisition, storage, revisions, reports and package receiving remain with the original CanadaBuys domain.
+The browser uses the same local application and native workspace as the command-line client and provider. Its procurement page and bidder desk are complete, dependency-free HTML files. The application server serves it at the workspace address; open the URL printed by that server. Source acquisition, storage, revisions, reports and package receiving remain with the original CanadaBuys domain.
 
 ## 1. Bring in the original source
 

@@ -9,7 +9,8 @@ import { scan as scanDelivery } from '../../sf100-buyer-dataset-delivery/deliver
 import { canonical, sha256 as hash } from './workspace.mjs';
 
 export const CANADABUYS_MERCHANT_SCHEMA = 'starforge.canadabuys.merchant.v1';
-const PACKAGE_SCHEMA = 'starforge.canadabuys.package.v1';
+import { PACKAGE_SCHEMA, LEGACY_PACKAGE_SCHEMA } from './core.mjs';
+import { validateDeskEnvelope, mergeBidderDeskPackages } from './bidder-desk-workspace.mjs';
 const CHUNK_BYTES = 24 * 1024;
 const MAX_BYTES = 256 * 1024 * 1024;
 const HASH = /^[a-f0-9]{64}$/;
@@ -51,9 +52,11 @@ async function readExact(path, max = MAX_BYTES) {
 function parse(bytes) { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
 function same(a, b) { return canonical(a) === canonical(b); }
 function checkPackage(pkg) {
-  requireThat(object(pkg) && pkg.schema === PACKAGE_SCHEMA && HASH.test(pkg.packageId ?? '')
+  requireThat(object(pkg) && [PACKAGE_SCHEMA, LEGACY_PACKAGE_SCHEMA].includes(pkg.schema) && HASH.test(pkg.packageId ?? '')
     && Array.isArray(pkg.sources) && object(pkg.selection) && Array.isArray(pkg.selection.noticeIds)
     && Array.isArray(pkg.reviews) && Array.isArray(pkg.workshares), 'CANADABUYS_PACKAGE_INVALID', 'Expected a complete original CANADABUYS workspace package.');
+  if (pkg.schema === PACKAGE_SCHEMA) validateDeskEnvelope(pkg.bidderDesk);
+  else requireThat(pkg.bidderDesk === undefined, 'CANADABUYS_PACKAGE_VERSION_MISMATCH');
   const { packageId, ...body } = pkg;
   requireThat(hash(canonical(body)) === packageId, 'CANADABUYS_PACKAGE_CHANGED', 'The original package digest does not match its content.');
   for (const source of pkg.sources) {
@@ -300,7 +303,10 @@ export async function adoptDelivery(workspace, directory, { expectedRevision } =
     for (const observation of pkg.sourceObservations || []) mergeRecord(observations, observation.id, observation, 'OBSERVATION');
     for (const capture of pkg.captures || []) mergeRecord(captures, capture.id, capture, 'CAPTURE');
   }
-  const body = { schema: PACKAGE_SCHEMA, exportedAt: packets.map(pkg => pkg.exportedAt).sort().at(-1), workspace: packets[0].workspace,
+  const bidderPackets = packets.filter(pkg => pkg.schema === PACKAGE_SCHEMA).map(pkg => pkg.bidderDesk);
+  const body = { schema: bidderPackets.length ? PACKAGE_SCHEMA : LEGACY_PACKAGE_SCHEMA,
+    ...(bidderPackets.length ? { bidderDesk: mergeBidderDeskPackages(bidderPackets) } : {}),
+    exportedAt: packets.map(pkg => pkg.exportedAt).sort().at(-1), workspace: packets[0].workspace,
     sources: [...sources.values()].sort((a,b) => a.id.localeCompare(b.id)),
     selection: { scope: 'selected', noticeIds: [...noticeIds].sort() },
     sourceObservations: [...observations.values()], reviews: [...reviews.values()], workshares: [...workshares.values()],

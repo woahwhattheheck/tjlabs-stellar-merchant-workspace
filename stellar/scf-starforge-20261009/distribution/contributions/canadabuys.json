@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "canadabuys",
-  "description": "Federal CanadaBuys source, qualification and partner workshare workspace",
+  "description": "Federal CanadaBuys source, saved bidder decisions and partner workshare workspace",
   "commands": {
     "canadabuys": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/cli.mjs"
   },
   "commandDescriptions": {
-    "canadabuys": "Capture official CanadaBuys CSVs, review original notices, plan partner delivery and receive complete workspaces"
+    "canadabuys": "Capture official CanadaBuys CSVs, retain bidder capabilities/evidence/decisions, plan partner delivery and receive complete workspaces"
   },
   "exports": {
     "./seller/canadabuys": {
@@ -22,7 +22,19 @@
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/domain.mjs"
     },
     "./seller/canadabuys/capture": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/capture.mjs",
-    "./seller/canadabuys/merchant": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/merchant.mjs"
+    "./seller/canadabuys/merchant": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/merchant.mjs",
+    "./seller/canadabuys/bidder-desk": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/bidder-desk-workspace.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/bidder-desk-workspace.mjs"
+    },
+    "./seller/canadabuys/bidder-domain": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/bidder-desk-domain.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/bidder-desk-domain.mjs"
+    },
+    "./seller/canadabuys/bidder-reports": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/bidder-desk-reports.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/bidder-desk-reports.mjs"
+    }
   },
   "applicationProviders": {
     "canadabuys": "stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/application-provider.mjs"

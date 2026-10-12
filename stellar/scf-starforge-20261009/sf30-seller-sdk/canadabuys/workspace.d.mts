@@ -1,3 +1,5 @@
+import type { CanadaBuysBidderDesk, BidderDeskPackage, BidderReceiveResult } from './bidder-desk-workspace.mjs';
+export type { BidderKind, BidderRecordMap, BidderDeskPackage, BidderReceiveResult } from './bidder-desk-workspace.mjs';
 import type { Stream, SourceMetadata, SourceObservation, OriginalSource, SourceEdition, Review, ReviewPatch, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, NoticeIndex, Notice, Profile, ProfileMatch } from './domain.mjs';
 export type { Stream, SourceMetadata, SourceObservation, OriginalSource, SourceEdition, Review, ReviewPatch, Workshare, WorkshareHistory, WorkshareInput, WorksharePatch, NoticeIndex, Notice, Profile, ProfileMatch } from './domain.mjs';
 export interface WorkspaceMetadata { schema:string;id:string;title:string;revision:number;createdAt:string;updatedAt:string }
@@ -9,6 +11,7 @@ export interface CaptureRecord {
 }
 export interface Ingestion { sourceId:string;sourceAdded:boolean;entriesAdded:number;rowCount:number;observationId?:string }
 export interface Receiving {
+ bidderDesk?:BidderReceiveResult|{status:'LEGACY_SOURCE_PACKAGE';importedRecords:number;conflicts:unknown[]};
  packageId:string;receivedAt:string;operator:string;sourceWorkspace:WorkspaceMetadata;ingestion:Ingestion[];
  reviewConflicts:Array<{noticeId:string;retained:Review;incoming:Review}>;
  workshareConflicts:Array<{workshareId:string;retained:Workshare;incoming:Workshare;incomingHistory:Workshare[]}>;
@@ -29,6 +32,8 @@ export interface WorkspacePackage {
  sources:Array<Omit<OriginalSource,'observations'>>;sourceObservations:SourceObservation[];
  reviews:Array<{noticeId:string;review:Review}>;workshares:WorkshareHistory[];captures:CaptureRecord[];
  publications:Publication[];receivingHistory:unknown[];provenance:Record<string,unknown>;
+ /** Present in v2 packages. Legacy v1 packages contain the original procurement records. */
+ bidderDesk?:BidderDeskPackage;
 }
 export interface Comparison { before:Omit<SourceEdition,'row'>;after:Omit<SourceEdition,'row'>;sameNotice:boolean;
  changes:Array<{field:string;beforePresent:boolean;afterPresent:boolean;before:unknown;after:unknown}> }
@@ -42,7 +47,7 @@ export declare function canonical(value:unknown):string;
 export declare function failure(code:string,message:string,status?:number,details?:unknown):Error&{code:string;status:number;details?:unknown};
 export declare class CanadaBuysWorkspace {
  constructor(directory:string,options?:{operator?:string;title?:string});
- readonly directory:string;readonly databasePath:string;readonly operator:string;
+ readonly directory:string;readonly databasePath:string;readonly operator:string;readonly bidderDesk:CanadaBuysBidderDesk;
  metadata():WorkspaceMetadata;
  view():WorkspaceView;
  importCsv(input:string|Uint8Array,metadata:SourceInput,expectedRevision:number):WorkspaceView&{ingestion:Ingestion};
