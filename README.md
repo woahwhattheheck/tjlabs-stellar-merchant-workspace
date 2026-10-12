@@ -19,6 +19,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | --- | --- | --- |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
+| Operate and hand over buyer request collections | **Applications → Request collections** or `starforge buyer-collections-workspace` | Reviewed original requests, exact spending caps and outcomes, complete encrypted backup, receiving and reopening |
 | Operate native MPP merchant and customer | **Applications → Native MPP merchant and customer** or `starforge mpp-workspace` | One retained native workspace, original 402 purchase and consent/recovery flow, browser/agent operation, twelve-file customer delivery and exact paid-response receiving |
 | Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
 | Receive a complete OData query into customer analysis | **Applications → OData source and live merchant** or `starforge dataset odata --workspace DIRECTORY serve` | Retained source/query, complete ordered live-page collection, original Analysis/report/workbook and full workspace receiving |
@@ -44,6 +45,11 @@ compilation, agent operation and receiving in one retained product. The
 [purchased API customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 opens existing access or a saved purchase through the browser, generated agent
 settings and exact request client. The
+[Request Collections guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/request-collections/OPERATING.md)
+connects grouped request review, exact spending caps, original outcomes, complete
+encrypted backup and independent receiving. Its installed
+`buyer-collections-setup` command prepares the explicit host profiles for that
+same workflow. The
 [merchant economics guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-economics/OPERATING.md)
 follows original seller observations, supplier-source review, route allocation,
 pricing decisions and complete workspace receiving. The
@@ -228,6 +234,7 @@ the replacement is operating as intended.
 - [Research questions, source review and complete delivery](products/research/OPERATING.md)
 - [Captured API merchant, pricing and receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/captured-api/OPERATING.md)
 - [Purchased API access and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
+- [Request Collections, encrypted backup and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/request-collections/OPERATING.md)
 - [GraphQL authoring and revisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/README.md)
 - [GraphQL product setup and complete project handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/graphql-workspace/HANDOVER.md)
 - [Imagery, processing, Applications and customer receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/stac-workspace/OPERATING.md)

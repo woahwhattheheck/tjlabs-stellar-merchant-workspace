@@ -1,0 +1,14 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "request-collections-product",
+  "description": "Request Collections operating setup and complete recovery handoff",
+  "components": [
+    "products/request-collections"
+  ],
+  "commands": {
+    "buyer-collections-setup": "products/request-collections/examples/configure.mjs"
+  },
+  "commandDescriptions": {
+    "buyer-collections-setup": "Prepare explicit original collection and recovery configuration for the operator workflow"
+  }
+}

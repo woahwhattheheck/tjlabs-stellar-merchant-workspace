@@ -161,6 +161,54 @@ agent settings, command preparation/replay and download commands. Preserve the
 customer, configuration, agent directory and original Buyer/Inbox state when
 upgrading the installed runtime.
 
+## 3A. Operate and receive complete request collections
+
+Request Collections retains groups of original buyer requests in one workspace.
+Open **Applications → Request collections** or the installed
+`starforge buyer-collections-workspace` command. Select the existing collection
+store and its original SF88 inbox; retain the same original buyer configurations,
+source files and result destinations when returning to this work.
+
+Review each concrete request and the collection's exact spending caps before
+operating selected intents. The browser, terminal and MCP client use the same
+saved collection, approvals, inbox attempts and original outcomes. Read a
+member's saved outcome and response when assessing delivery. A collection's
+`FINISHED` state alone does not establish a successful paid response for every
+member.
+
+The [complete operating guide](../request-collections/OPERATING.md) follows that
+workflow through source configuration, execution, result receiving and recovery.
+Begin with its [explicit layout](../request-collections/examples/layout.example.json)
+and the installed setup command:
+
+~~~sh
+starforge buyer-collections-setup \
+  --selection /ABS/actual-layout.json \
+  --out /ABS/NEW_PRIVATE_CONFIGURATION_DIRECTORY
+~~~
+
+The setup writes private configuration files from the selected original paths.
+The native tools then inspect and register the actual listener, profiles and
+state. Attach `starforge mcp-collection-receiver` to that existing listener for
+agent operation; the standalone MCP host does not need a substitute buyer or a
+discovery URL.
+
+For a complete handover, use **Backup and receiving** to retain the original
+encrypted SF88/SF101 workspace and every encrypted member. Receive those exact
+bytes through `starforge mcp-collection-recovery-download` and preserve its
+download directory and checkpoints across interruptions. An authenticated native
+VERIFY establishes the selected archive's contents. Restore through the separate
+receiving journal at its exact original state root, then explicitly **Open
+restored collections**. Receiving Applications mode keeps that journal separate
+from an ordinary collection store. Reopening preserves original collection,
+customer, intent and attempt identities.
+
+The five-file collection result index is a separate customer deliverable. It
+retains JSON, CSV and HTML projections; original purchased response bodies keep
+their own retained file identities. The guide covers both that result delivery
+and the complete operating-state handover, including interrupted replies,
+original operation UUIDs, explicit recovery and orderly listener shutdown.
+
 ## 4. Author a GraphQL data product
 
 Choose **Applications → GraphQL merchant workspace** for the installed product,
