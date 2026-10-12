@@ -49,7 +49,7 @@ Use the actual archive path and digest. The selected source supplies the existin
 x402/Stellar peers and schema package declaration; the original installer
 resolves and retains the dependency lock. Continue an interrupted installation
 in that same runtime directory. The complete
-[runtime installation guide](../RUNTIME_INSTALL.md) covers its existing cache,
+[runtime installation guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) covers its existing cache,
 offline receiving and recovery commands.
 
 The selected command inventory includes:
@@ -114,7 +114,7 @@ a new session URL and instance ID.
 
 ## Operate the original profiles and catalog
 
-The [complete operator guide](../../native-facilitator/workspace/README.md)
+The [complete operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/native-facilitator/workspace/README.md)
 covers native network/RPC selection, public signing-account references,
 recipient and asset policy, payment timing, atomic amount and fee limits,
 readiness, native start and drain. The profile form also retains the original
@@ -125,12 +125,12 @@ A configured catalog reads the original successful settlement receipts into its
 guarded durable journal. Its operator reports resources, revisions, operations,
 journal head, queued metadata and batch commits. Search, list pages and complete
 downloads use that same native discovery engine. The
-[native catalog guide](../../native-facilitator/CATALOG.md) supplies deployment,
+[native catalog guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/native-facilitator/CATALOG.md) supplies deployment,
 gateway and receipt reconciliation details.
 
 The original `facilitator-host` remains the service-oriented commissioning and
 receiving command. Its source is retained under
-[native-facilitator/host](../../native-facilitator/host). Keep that host operation,
+[native-facilitator/host](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/main/stellar/scf-starforge-20261009/native-facilitator/host). Keep that host operation,
 its service records and selected signing accounts when using it alongside the
 interactive operator.
 
@@ -229,7 +229,7 @@ directory, register it in the existing Runtime Workspace, and review the saved
 Application against that intended release and the original host directories.
 Keep the profile directory, signer ownership, network-specific journal and
 service operation at their established locations. The original
-[runtime transfer guide](../RUNTIME_TRANSFER.md) carries the selected archive and
+[runtime transfer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md) carries the selected archive and
 locked dependencies through its existing receiving operation.
 
 Profile and catalog downloads are ready for the receiving merchant or research
