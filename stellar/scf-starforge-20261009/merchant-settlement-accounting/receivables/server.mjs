@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {openAccountingWorkspace} from '../workspace/store.mjs';
+import {accountingWorkspaceBinding, assertAccountingWorkspaceBinding} from '../workspace/binding.mjs';
 import {ReceivablesWorkspace, RECEIVABLE_REQUEST_BYTES} from './store.mjs';
 import {renderCustomerTar} from './core.mjs';
 import {PaymentPlanWorkspace} from './payment-plans/store.mjs';
@@ -125,15 +126,22 @@ export async function receivablesAsset(path, {apiPath = '/api/receivables', uiPa
 }
 
 /** Original-style pure route adapter: the parent keeps its request/auth/lifecycle boundary. */
-export async function handleReceivablesRequest(receivables, {method, path, query = {}, value, apiPath = '/api/receivables'}) {
+export async function handleReceivablesRequest(receivables, {method, path, query = {}, value, apiPath = '/api/receivables', expectedWorkspaceId, expectedSourcesSha256}) {
   apiPath = basePath(apiPath, '/api/receivables');
   if (path !== apiPath && !path.startsWith(apiPath + '/')) return null;
+  const workspace = receivables.workspace;
+  if (expectedWorkspaceId !== undefined || expectedSourcesSha256 !== undefined)
+    assertAccountingWorkspaceBinding(workspace.directory, workspace.state, {expectedWorkspaceId, expectedSourcesSha256});
   const parts = path.slice(apiPath.length).split('/').filter(Boolean).map(identifier);
   const route = parts.join('/');
   const search = query instanceof URLSearchParams ? query : new URLSearchParams(Object.entries(query).filter(([, value]) => value !== undefined && value !== null));
   let result;
   if (method === 'GET') {
-    if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    if (route === 'identity') {
+      const {schema, workspaceId, sourcesSha256} = accountingWorkspaceBinding(workspace.directory, workspace.state);
+      result = {schema, workspaceId, sourcesSha256};
+    }
+    else if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
     else if (route === 'funds') result = await receivables.customerFunds({
       customerId: search.get('customerId') || undefined, asOf: search.get('asOf') || undefined,
     });
@@ -256,7 +264,9 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
       }
       if (request.method !== 'GET' && request.method !== 'POST') throw problem('METHOD_NOT_ALLOWED', 'Use a supported workspace operation.', 405);
       const value = mutation ? await body(request, planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
-      const parameters = {method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams), value, apiPath};
+      const parameters = {method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams), value, apiPath,
+        expectedWorkspaceId: request.headers['x-accounting-workspace-id'],
+        expectedSourcesSha256: request.headers['x-accounting-sources-sha256']};
       const result = planRequest ? await handlePaymentPlansRequest(paymentPlans, {...parameters, apiPath: planApiPath}) :
         customer ? await handleCustomerStatementRequest(statements, parameters) : await handleReceivablesRequest(receivables, parameters);
       if (!result) throw problem('NOT_FOUND', 'This workspace route does not exist.', 404);

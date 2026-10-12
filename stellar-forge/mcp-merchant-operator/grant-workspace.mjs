@@ -437,6 +437,23 @@ export class MerchantGrantWorkspaces {
       original=verb==='installation_preview'?await client.installationPreview(caseId,{...body,document}):
         await client.installationSave(caseId,{...body,document});
     }
+    else if (verb === 'commercial_connections') original=await client.commercialConnections();
+    else if (verb === 'commercial_connection_configure') original=await client.commercialConfigureConnection(rest);
+    else if (verb === 'commercial_customers') original=await client.commercialCustomers(args.endpointId);
+    else if (verb === 'commercial_list') original=await client.commercialList(args.caseId);
+    else if (verb === 'commercial') original=await client.commercialDetail(args.caseId,args.billingId);
+    else if (verb === 'commercial_schedule'||verb === 'commercial_prepare') {
+      const {caseId,...body}=rest;
+      original=verb==='commercial_schedule'?await client.commercialSchedule(caseId,body):
+        await client.commercialPrepare(caseId,body);
+    }
+    else if (verb === 'commercial_draft'||verb === 'commercial_issue') {
+      const {caseId,billingId,milestoneId,...body}=rest;
+      original=verb==='commercial_draft'?await client.commercialDraft(caseId,billingId,milestoneId,body):
+        await client.commercialIssue(caseId,billingId,milestoneId,body);
+    }
+    else if (verb === 'commercial_preview') original=await client.commercialPreview(args.caseId,args.billingId,args.milestoneId);
+    else if (verb === 'commercial_refresh') original=await client.commercialRefresh(args.caseId,args.billingId);
     else if (verb === 'cohort_seed') original=await client.cohortSeed(args.caseId,args.expectedVersion,args.tranche);
     else if (verb === 'cohort_preview') original=await client.cohortPreview(args.caseId,args.expectedVersion,
       await this.#modelInputs(alias,args,'Cohort',GRANT_MAX_BUNDLE_BYTES));
@@ -506,6 +523,8 @@ export class MerchantGrantWorkspaces {
       ['planId','caseId','forecastId','portfolioId','alternativeId','sourceId','reviewId','installationId','revision','after','before','limit','kind',
         'requestId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256',
+        'billingId','milestoneId','endpointId','customerId','installationRevision','expectedInstallationSha256',
+        'currencyScale','expectedScheduleSha256','expectedIssuePreviewSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',
         'expectedReviewSha256','confirmedOn','deadlineOn','submittedOn','formReference','outcomeId','state','date'].includes(key)))});
   }

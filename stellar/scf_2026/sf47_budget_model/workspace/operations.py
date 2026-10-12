@@ -22,6 +22,7 @@ import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
 import operations_implementation as implementation
+import operations_commercial_receivables as commercial_receivables
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -101,6 +102,7 @@ class Operations:
             if row and row[0] != SCHEMA:
                 domain.fail("This workspace uses a newer operations schema.", "OPERATIONS_SCHEMA", 409)
             workspace.db.execute("INSERT OR IGNORE INTO ops_metadata VALUES('schema',?)", (SCHEMA,))
+            self.commercial = commercial_receivables.CommercialReceivables(self)
 
     @property
     def db(self):
@@ -750,6 +752,9 @@ class Operations:
                         "reviews": reviews, "events": events, "forecasts": saved_forecasts, "portfolios": saved_portfolios}
             if saved_installations:
                 document["installations"] = saved_installations
+            commercial_rows = self.commercial.export_rows(program_id)
+            if commercial_rows["prepared"]:
+                document["commercialReceivables"] = commercial_rows
             report = domain.report(**context)
             files = {"planning.zip": original,
                      "operations.json": (canonical(document) + "\n").encode(),
@@ -943,6 +948,10 @@ class Operations:
         completion.validate_import(context, document.get("completionPlans", []), reviews, events, source_program["version"])
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files)
+        commercial_rows = document.get("commercialReceivables")
+        if commercial_rows is not None:
+            commercial_rows = commercial_receivables.validate_import(
+                commercial_rows, reader=lambda ident: files["sources/" + ident])
         dispatch.validate_received(delivery_queue, document)
         implementation.validate_import(context, reviews, events, saved_installations, files)
         refs = installations.latest_refs(saved_installations)
@@ -1040,6 +1049,8 @@ class Operations:
             for value in saved_installations:
                 self.db.execute("INSERT INTO ops_installations VALUES(?,?,?,?)",
                                 (pid, value["id"], value["revision"], canonical(value)))
+            if commercial_rows is not None:
+                self.commercial.restore_rows(pid, commercial_rows)
             for value in saved_forecasts:
                 self.db.execute("INSERT INTO ops_forecasts VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             for value in saved_portfolios:

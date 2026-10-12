@@ -1,6 +1,6 @@
 # Grant Operations — installed operating and receiving guide
 
-Grant Operations carries one retained grant plan through contributor delivery, invoices and cash, dated forecasts, resource allocation, original buyer and merchant-support evidence, complete customer installations, original implementation reviews, measured cohort reviews, tranche preparation and a complete receiving handoff. The browser, command line and Merchant MCP client operate the same original SF47 workspace and its revisioned records.
+Grant Operations carries one retained grant plan through contributor delivery, invoices and cash, dated forecasts, resource allocation, original buyer and merchant-support evidence, complete customer installations, commercial milestone billing, original implementation reviews, measured cohort reviews, tranche preparation and a complete receiving handoff. The browser, command line and Merchant MCP client operate the same original SF47 workspace and its revisioned records.
 
 The maintained source selection is **grant-operations**. Open **Applications → Grant planning and delivery**, or use **starforge grant-workspace**. The selection includes the complete SF47 model and operator, the original Node and Python buyer receiving sources, merchant-support readers, the Grant Application, its Merchant MCP provider, and the existing installation and transfer controls. It uses the canonical [Stellar merchant workspace repository](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace).
 
@@ -440,6 +440,23 @@ One completed installed handover should establish:
 Retain the actual case and plan IDs, versions, original operation/request IDs, source/preview/measurement hashes, export paths and digests, reviewed findings and final receiving outputs. Record any unfinished step explicitly. Preserve prior attempts and their actual outcomes beside the successful continuation.
 
 The delivered set consists of the selected TGZ and manifest, installation/profile receipts, this guide and original source/API guides, the complete authorized case export, any separately requested frozen evidence, and the actual installed receiving report. Its report distinguishes prepared source, executed native work, buyer payment observations, issuer submission and customer acceptance.
+
+
+## Customer milestone billing
+
+Open an Operations case and choose **Customer billing** to move its original Workshare commercial agreement into the existing customer receivables workspace.
+
+1. Start the original customer receivables server for the accounting workspace that holds the invoice customer. Expand **Accounting connection** and save its local API address, for example `http://127.0.0.1:8448/api/receivables`. The saved connection retains the original accounting workspace and source selection.
+2. Select a saved Workshare customer installation, choose the commercial currency precision, and load its terms. The screen shows the original customer, total, milestone amounts, and trigger wording.
+3. Select the actual accounting customer, enter each milestone's invoice and due dates, and map its billing basis. **Accepted delivery checks** uses the installation's recorded checks. **Commercial authorization** records the retained source and explanation for a deposit or other contractually authorized billing event.
+4. Save the reviewed schedule. Use **Create or reopen draft** on a milestone, then **Review invoice**. The preview shows the original issuer, customer, dates, line amount, and invoice total.
+5. Confirm the reviewed invoice to issue it through the original receivables service. Refresh invoices and payments to see the original invoice number, amount due, paid amount, and credits. Payment collection, allocation, credits, and refunds continue through the existing accounting controls.
+6. Export customer billing for the commercial source files, retained billing selection, and original customer account archive. Export the complete Operations case to carry every billing selection and recoverable operation into a receiving workspace.
+
+An interrupted draft or issue keeps its original request. Reopen the saved billing schedule and retry that operation; the native service returns its existing result. Changes to the original commercial obligation or a previously reviewed invoice are surfaced for reconciliation. Updating a connection's address keeps its accounting identity; another accounting workspace receives its own connection.
+
+The command line exposes the same workflow under `operations`: `commercial-connect`, `commercial-customers`, `commercial-schedule`, `commercial-prepare`, `commercial-draft`, `commercial-preview`, `commercial-issue`, `commercial-refresh`, and `commercial-export`. Commands that accept an operator request read it from `--file`; readbacks can be written with `--output`. The Merchant grant client exposes these through its separate commercial methods. Browser, CLI, and managed client all use the same retained workflow.
+
 
 ## Original source references
 

@@ -267,12 +267,18 @@ export type PaymentRequestFileName = 'payment-request.json' | 'payment-request.h
 export interface PaymentRequestDownload { name: PaymentRequestFileName; type: string; bytes: Uint8Array }
 export interface RequestOptions { signal?: AbortSignal }
 
-export interface ClientOptions { baseUrl?: string; fetch?: typeof fetch }
+export interface ClientOptions {
+  baseUrl?: string;
+  fetch?: typeof fetch;
+  expectedWorkspaceId?: string;
+  expectedSourcesSha256?: string;
+}
 export class ReceivablesApiError extends Error {
   status: number; code: string; details: unknown; requestId: string | null; response: unknown;
 }
 export class ReceivablesClient {
   constructor(options?: ClientOptions);
+  identity(): Promise<{schema: string; workspaceId: string; sourcesSha256: string}>;
   state(query?: {asOf?: DateOnly}): Promise<ReceivablesState>;
   settings(value: Issuer & MutationContext): Promise<MutationResult & {issuer: Issuer}>;
   saveDraft(value: SaveDraft): Promise<MutationResult & {invoice: InvoiceSummary}>;

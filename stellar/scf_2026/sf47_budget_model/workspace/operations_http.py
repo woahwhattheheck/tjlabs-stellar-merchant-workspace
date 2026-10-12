@@ -6,10 +6,13 @@ import re
 
 from model import Problem
 from operations import Operations, decoded
+from operations_commercial_http import handle as commercial_http
 
 
 def register_static(static):
-    static.update({"/operations_dispatch.mjs": ("operations_dispatch.mjs", "text/javascript; charset=utf-8"),
+    static.update({"/operations_commercial.mjs": ("operations_commercial.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_commercial.css": ("operations_commercial.css", "text/css; charset=utf-8"),
+                   "/operations_dispatch.mjs": ("operations_dispatch.mjs", "text/javascript; charset=utf-8"),
                    "/operations_dispatch.css": ("operations_dispatch.css", "text/css; charset=utf-8"),
                    "/operations_implementation.mjs": ("operations_implementation.mjs", "text/javascript; charset=utf-8"),
                    "/operations_implementation.css": ("operations_implementation.css", "text/css; charset=utf-8"),
@@ -43,6 +46,8 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if commercial_http(handler, parsed, ops, "GET"):
+        return True
     path = parsed.path
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
@@ -127,6 +132,8 @@ def write(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, path = store(handler), parsed.path
+    if commercial_http(handler, parsed, ops, "POST"):
+        return True
     if path == "/api/operations/import":
         query = parse_qs(parsed.query)
         result = ops.import_bundle(handler.raw_body(), query.get("name", ["Imported delivery operations"])[0],
