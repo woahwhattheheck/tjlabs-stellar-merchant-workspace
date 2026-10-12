@@ -1,0 +1,20 @@
+{
+  "schema": "stellar-forge.couchdb-connection.v1",
+  "baseUrl": "http://127.0.0.1:5984",
+  "database": "documents",
+  "auth": {
+    "kind": "basic",
+    "usernameEnv": "COUCHDB_USER",
+    "passwordEnv": "COUCHDB_PASSWORD"
+  },
+  "selection": {
+    "kind": "ids",
+    "ids": [
+      "invoice:1001",
+      "invoice:1002"
+    ]
+  },
+  "attachments": {
+    "mode": "all"
+  }
+}

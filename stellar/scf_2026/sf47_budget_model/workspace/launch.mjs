@@ -31,6 +31,7 @@ const BOOT_FILES = [
   'operations_installations.py',
   'operations_workshare_installations.py',
   'forecast.py',
+  'forecast_currency.py',
   'portfolio.py',
   'portfolio_schedule.py',
   'index.html',
@@ -48,11 +49,13 @@ const BOOT_FILES = [
   'operations_installations.mjs',
   'operations_installations.css',
   'forecast.mjs',
+  'forecast_currency.mjs',
   'forecast.css',
   'portfolio.mjs',
   'portfolio.css',
   'support_handoff.mjs','implementation_handoff.mjs',
   'buyer_handoff.mjs',
+  'node_buyer_handoff.mjs',
   'agent-client.mjs',
   'agent-contracts.mjs'
 ];

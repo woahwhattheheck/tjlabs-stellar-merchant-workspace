@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-receivables",
   "title": "Merchant receivables and Stellar invoice collection",
-  "description": "Original service quotations, reviewed invoices, native Stellar wallet requests, exact transaction receiving and customer allocations, credits, historical aging and complete account files.",
+  "description": "Original merchant accounting, service quotations and issued invoices, reviewed Stellar wallet requests and native transfer receiving, installment schedules, customer allocations, credits and complete dated account delivery.",
   "base": {
     "commands": [
       "installation",
@@ -49,6 +49,7 @@
   },
   "contributions": [
     "merchant-receivables",
+    "merchant-payment-plans",
     "accounting-connections",
     "merchant-support",
     "merchant-commercial",
@@ -65,7 +66,8 @@
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops",
     "stellar/scf-starforge-20261009/sf77-merchant-workorder",
     "stellar/scf-starforge-20261009/sf70-merchant-intake",
-    "products/merchant-receivables"
+    "products/merchant-receivables",
+    "products/merchant-payment-plans"
   ],
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
@@ -82,7 +84,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant receivables: reviewed invoice and Stellar collection requests, verified transaction receiving, exact customer payment allocation, credit notes and dated account delivery.",
+    "description": "Merchant receivables: reviewed invoices and Stellar collection requests, verified native transfers, installment schedules, customer payment allocation, credit notes and dated account delivery.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""
