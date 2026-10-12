@@ -18,6 +18,7 @@ import uuid
 
 from model import Problem, canonical, digest, now, text
 import operations_domain as domain
+import operations_statement_formats as bank_formats
 
 SCHEMA = "stellar-forge.sf47-statements.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -86,7 +87,7 @@ def number(value, fmt, label, empty=False):
     return -result if negative else result
 
 
-def source_input(value):
+def source_input(value, decode_csv=True):
     object_value(value, ("filename", "contentBase64", "sourceUrl", "observedAt"),
                  "Statement source", ("filename", "contentBase64", "observedAt"))
     filename = text(value["filename"], "Original statement filename", 240, True)
@@ -94,20 +95,22 @@ def source_input(value):
         fail("Use a plain original statement filename.")
     encoded = value["contentBase64"]
     if not isinstance(encoded, str) or len(encoded) > (MAX_SOURCE + 2) * 4 // 3 + 16:
-        fail("Attach the original CSV up to 8 MiB.", "STATEMENT_SOURCE_LIMIT", 413)
+        fail("Attach the original statement file up to 8 MiB.", "STATEMENT_SOURCE_LIMIT", 413)
     try:
         raw = base64.b64decode(encoded, validate=True)
     except (ValueError, TypeError) as exc:
         raise Problem("The original statement encoding is invalid.", 422, "INVALID_STATEMENT_SOURCE") from exc
     if not raw or len(raw) > MAX_SOURCE:
-        fail("Attach a nonempty original CSV up to 8 MiB.", "STATEMENT_SOURCE_LIMIT", 413)
-    try:
-        decoded = raw.decode("utf-8-sig")
-    except UnicodeError as exc:
-        raise Problem("Use an original UTF-8 CSV, including an optional UTF-8 BOM.",
-                      422, "STATEMENT_ENCODING") from exc
-    if "\x00" in decoded:
-        fail("The statement contains a NUL character; select its original UTF-8 CSV export.")
+        fail("Attach a nonempty original statement file up to 8 MiB.", "STATEMENT_SOURCE_LIMIT", 413)
+    decoded = None
+    if decode_csv:
+        try:
+            decoded = raw.decode("utf-8-sig")
+        except UnicodeError as exc:
+            raise Problem("Use an original UTF-8 CSV, including an optional UTF-8 BOM.",
+                          422, "STATEMENT_ENCODING") from exc
+        if "\x00" in decoded:
+            fail("The statement contains a NUL character; select its original UTF-8 CSV export.")
     metadata = {"filename": filename, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
                 "sourceUrl": domain.url(value.get("sourceUrl", ""), "Statement source URL"),
                 "observedAt": domain.timestamp(value["observedAt"], "Statement observation")}
@@ -116,7 +119,8 @@ def source_input(value):
 
 def configuration(inputs):
     object_value(inputs, ("source", "accountId", "accountLabel", "currency", "format", "columns",
-                         "defaultCategory", "openingBalance", "closingBalance", "decisions", "valuationNote"),
+                         "defaultCategory", "openingBalance", "closingBalance", "decisions", "valuationNote",
+                         "sourceFormat", "statementId", "statementOptions", "sourceReviewNote"),
                  "Statement inputs", ("source", "accountId", "currency", "format", "columns"))
     account = text(inputs["accountId"], "Stable statement account ID", 100, True)
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", account):
@@ -173,6 +177,7 @@ def configuration(inputs):
     return {"accountId": account, "accountLabel": text(inputs.get("accountLabel", ""), "Account label", 300),
             "currency": currency, "format": fmt, "columns": columns, "defaultCategory": category,
             "valuationNote": text(inputs.get("valuationNote", ""), "Statement USD valuation basis", 4000),
+            "sourceReviewNote": text(inputs.get("sourceReviewNote", ""), "Original source review note", 4000),
             "decisions": mapped}
 
 
@@ -230,11 +235,44 @@ def reference_key(account, currency, reference):
     return digest({"network": "statement/" + account, "asset": currency, "reference": original})
 
 
+def inspect(context, inputs):
+    object_value(inputs, ("sourceFormat", "source", "statementOptions"), "Original statement inspection",
+                 ("sourceFormat", "source"))
+    raw, _, metadata = source_input(inputs["source"], False)
+    return bank_formats.inspect(raw, metadata, inputs, context)
+
+
 def preview(context, inputs):
-    config = configuration(inputs)
-    raw, decoded, source = source_input(inputs["source"])
+    return _preview(context, inputs)[0]
+
+
+def _preview(context, inputs):
+    if not isinstance(inputs, dict):
+        fail("Use one complete original statement input object.")
+    source_format = domain.enum(inputs.get("sourceFormat", "CSV"), ("CSV", "OFX", "MT940"), "Original statement format")
+    bank = None
+    if source_format == "CSV":
+        if inputs.get("statementId") or inputs.get("statementOptions"):
+            fail("Choose the original bank source format for its account selection and native format options.")
+        effective = inputs
+    else:
+        if "format" in inputs or "columns" in inputs:
+            fail("Original bank formats use their native fields. Omit the CSV format and column mapping.")
+        effective = {**inputs, "format": bank_formats.FORMAT, "columns": bank_formats.COLUMNS}
+    config = configuration(effective)
+    raw, decoded, source = source_input(inputs["source"], source_format == "CSV")
     source.update({key: config[key] for key in ("accountId", "accountLabel", "currency")})
-    headers, original_rows = read_csv(decoded, config)
+    if source_format == "CSV":
+        headers, original_rows = read_csv(decoded, config)
+        bank_controls = {}
+    else:
+        bank = bank_formats.select(raw, source, {**inputs, "currency": config["currency"]})
+        headers, original_rows = bank["headers"], bank["rows"]
+        source["sourceFormat"] = source_format
+        unknown = set(config["decisions"]) - set(bank["details"])
+        if unknown:
+            fail("A bank decision names an absent original movement: " + ", ".join(map(str, sorted(unknown))))
+        bank_controls = bank_formats.row_controls(config, context, bank["details"], reference_key)
     fmt, columns = config["format"], config["columns"]
     edition = digest({"sourceSha256": source["sha256"],
                       "inputs": {key: value for key, value in inputs.items() if key != "source"}})
@@ -242,7 +280,7 @@ def preview(context, inputs):
     previous_sources = [row for row in context["sources"].values()
                         if isinstance(row.get("statement"), dict)
                         and row["statement"].get("schema") == SCHEMA
-                        and row["statement"].get("role") == "CSV"
+                        and row["statement"].get("role") in ("CSV", "ORIGINAL")
                         and row["statement"].get("editionSha256") == edition]
     staged = deepcopy(context)
     placeholder = "source-" + source["sha256"][:32]
@@ -253,6 +291,30 @@ def preview(context, inputs):
     for cash in context["records"]["cash"]:
         by_reference.setdefault(cash.get("referenceKey"), []).append(cash)
     result_rows, findings, seen_references = [], [], {}
+    if bank:
+        findings.extend({"code": row["code"], "message": row["message"]}
+                        for row in bank["summary"]["findings"] if row["severity"] == "ERROR")
+        native = bank["summary"]
+        active_sources = {ident for cash in context["records"]["cash"] if cash["state"] != "VOID"
+                          for ident in cash.get("sourceIds", [])}
+        for retained_source in context["sources"].values():
+            marker = retained_source.get("statement")
+            if not isinstance(marker, dict) or not isinstance(marker.get("nativeAccount"), dict):
+                continue
+            original = marker["nativeAccount"]
+            same_alias = marker.get("accountId") == config["accountId"] and original.get("currency") == config["currency"]
+            if same_alias and (original.get("accountReference") != native["accountReference"]
+                    or original.get("bankId") and native.get("bankId") and original["bankId"] != native["bankId"]):
+                findings.append({"code": "BANK_ACCOUNT_BINDING_CONFLICT",
+                    "message": "Account ID " + config["accountId"] + " already retains a different original bank account. Select its stable account ID."})
+            if retained_source["id"] not in active_sources or retained_source["sha256"] != source["sha256"]:
+                continue
+            if marker.get("statementId") == native["statementId"] and not same_alias:
+                findings.append({"code": "BANK_SOURCE_ACCOUNT_ALIAS_CONFLICT",
+                    "message": "This original bank section already has active cash under account ID " + str(marker.get("accountId")) + "."})
+            if same_alias and marker.get("statementOptionsSha256") != digest(bank_formats.options(inputs)[1]):
+                findings.append({"code": "BANK_SOURCE_INTERPRETATION_CONFLICT",
+                    "message": "This original bank file already has active cash under different native format options. Retain the original Cash corrections before changing its interpretation."})
     inflow, outflow, import_in, import_out = ZERO, ZERO, ZERO, ZERO
     complete_amounts = True
     for line, cells, original in original_rows:
@@ -264,6 +326,10 @@ def preview(context, inputs):
                "action": decision["action"], "reason": decision.get("reason", ""),
                "status": "EXCLUDED" if decision["action"] == "EXCLUDE" else "NEW",
                "recordId": None, "problems": [], "original": original}
+        if bank:
+            detail = bank["details"][line]
+            row.update({key: deepcopy(detail[key]) for key in ("sourceLine", "identityBasis", "providerReference", "nativeIdentity")})
+            row["problems"].extend(bank_controls.get(line, []))
         value = None
         try:
             if len(cells) != len(headers):
@@ -418,6 +484,8 @@ def preview(context, inputs):
                           "importOutflow": amount_string(import_out), "completeAmounts": complete_amounts},
               "balance": balance, "findings": findings, "canImport": not findings,
               "unchanged": unchanged, "retainedSourceId": known_edition["id"] if known_edition else None}
+    if bank:
+        result["bank"] = bank["summary"]
     # Account for the retained complete interpretation, not just the CSV bytes.
     estimated_envelope = {
         "schema": SCHEMA + ".review", "caseId": context["program"]["id"], "caseVersion": context["program"]["version"] + 1,
@@ -429,12 +497,14 @@ def preview(context, inputs):
         "cashRows": [{"rowNumber": row["rowNumber"], "cashId": "cash-" + "0" * 32}
                      for row in result_rows if row["status"] == "NEW"],
         "existingCashIds": [row["recordId"] for row in result_rows if row["status"] == "EXISTING"]}
+    if bank:
+        estimated_envelope["bankParserReport"] = bank["parserReport"]
     estimated_review = len((canonical(estimated_envelope) + "\n").encode())
     if not unchanged and (estimated_review > MAX_SOURCE or retained_bytes + len(raw) + estimated_review > 24 * 1024 * 1024):
         result["findings"].append({"code": "STATEMENT_REVIEW_LIMIT", "message": "The complete statement review and original source exceed the original case's source capacity."})
         result["canImport"] = False
     result["previewSha256"] = digest(result)
-    return result
+    return result, bank
 
 
 def annotate_source(ops, program_id, metadata, statement):
@@ -448,7 +518,7 @@ def receive(ops, context, data, actor, version):
     object_value(data, ("inputs", "expectedPreviewSha256"), "Statement receiving",
                  ("inputs", "expectedPreviewSha256"))
     inputs = data["inputs"]
-    candidate = preview(context, inputs)
+    candidate, bank = _preview(context, inputs)
     if candidate["previewSha256"] != domain.sha(data["expectedPreviewSha256"], "Reviewed statement preview", False):
         fail("The original statement, mapping, decisions or case changed after review.", "STATEMENT_PREVIEW_CONFLICT", 409)
     if not candidate["canImport"]:
@@ -463,7 +533,8 @@ def receive(ops, context, data, actor, version):
                 "sourceIds": [csv_source["id"], csv_source["statement"]["reviewSourceId"]],
                 "cashIds": [], "existingCashIds": existing, "unchanged": True,
                 "statementSha256": source["sha256"], "previewSha256": candidate["previewSha256"]}
-    csv_source = ops._source_add(program_id, {**inputs["source"], "kind": "payment", "mediaType": "text/csv"})
+    media_type = "text/csv" if not bank else "application/x-ofx" if inputs["sourceFormat"] == "OFX" else "text/plain"
+    csv_source = ops._source_add(program_id, {**inputs["source"], "kind": "payment", "mediaType": media_type})
     created = [{"rowNumber": row["rowNumber"], "cashId": "cash-" + uuid.uuid4().hex}
                for row in candidate["rows"] if row["status"] == "NEW"]
     review = {"schema": SCHEMA + ".review", "caseId": program_id, "caseVersion": version,
@@ -472,13 +543,21 @@ def receive(ops, context, data, actor, version):
               "inputs": {key: value for key, value in inputs.items() if key != "source"},
               "sourceObservation": {key: value for key, value in inputs["source"].items() if key != "contentBase64"},
               "preview": candidate, "cashRows": created, "existingCashIds": existing}
+    if bank:
+        review["bankParserReport"] = bank["parserReport"]
     review_bytes = (canonical(review) + "\n").encode()
     review_source = ops._source_add(program_id, {"filename": "statement-review-" + source["editionSha256"][:16] + ".json",
         "kind": "payment", "mediaType": "application/json", "observedAt": source["observedAt"],
         "sourceUrl": source["sourceUrl"], "contentBase64": base64.b64encode(review_bytes).decode("ascii")})
-    csv_source = annotate_source(ops, program_id, csv_source, {"schema": SCHEMA, "role": "CSV",
+    marker = {"schema": SCHEMA, "role": "ORIGINAL" if bank else "CSV",
         "accountId": source["accountId"], "editionSha256": source["editionSha256"],
-        "reviewSourceId": review_source["id"]})
+        "reviewSourceId": review_source["id"]}
+    if bank:
+        marker.update({"sourceFormat": inputs["sourceFormat"], "statementId": bank["summary"]["statementId"],
+            "statementOptionsSha256": digest(bank_formats.options(inputs)[1]),
+            "nativeAccount": {**{key: bank["summary"].get(key) for key in ("accountReference", "bankId", "kind")},
+                              "currency": candidate["source"]["currency"]}})
+    csv_source = annotate_source(ops, program_id, csv_source, marker)
     review_source = annotate_source(ops, program_id, review_source, {"schema": SCHEMA, "role": "REVIEW",
         "accountId": source["accountId"], "editionSha256": source["editionSha256"], "csvSourceId": csv_source["id"]})
     staged = deepcopy(context)
@@ -512,7 +591,7 @@ def validate_import(context, events, files):
     sources = context["sources"]
     for metadata in sources.values():
         marker = metadata.get("statement")
-        if not isinstance(marker, dict) or marker.get("schema") != SCHEMA or marker.get("role") != "CSV":
+        if not isinstance(marker, dict) or marker.get("schema") != SCHEMA or marker.get("role") not in ("CSV", "ORIGINAL"):
             continue
         review_id = marker.get("reviewSourceId")
         if not isinstance(review_id, str) or not review_id:
@@ -543,6 +622,10 @@ def validate_import(context, events, files):
                or row.get("status") not in ("NEW", "EXISTING", "EXCLUDED", "CONFLICT")
                for row in candidate["rows"]):
             fail("The retained preview has an invalid original row selection.", "STATEMENT_IMPORT_REVIEW")
+        if marker.get("sourceFormat") in ("OFX", "MT940"):
+            bank_formats.validate_review(metadata, review, candidate, files["sources/" + metadata["id"]])
+        elif "bank" in candidate or "bankParserReport" in review:
+            fail("The bank review differs from its original source format.", "BANK_IMPORT_REVIEW")
         rows = {row["rowNumber"]: row for row in candidate["rows"]}
         selected_rows = review["cashRows"]
         if (len(rows) != len(candidate["rows"])
