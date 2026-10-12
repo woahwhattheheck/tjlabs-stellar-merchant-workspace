@@ -12,7 +12,7 @@ import tempfile
 import zipfile
 from bridge import xml, storage, InputError
 from protocol import Q, unpacked
-from harvest import HarvestWorkspace, plain, page_values, jbytes, decode, sha, stamp
+from harvest import HarvestWorkspace, IDENTIFIER, plain, page_values, jbytes, decode, sha, stamp
 
 def member(name):
     p=PurePosixPath(name) if isinstance(name,str) else None
@@ -31,17 +31,124 @@ class Workspace(HarvestWorkspace):
     def edition(self,identity):
         with self.mutex: return self._get("oai_editions",identity)
 
+    def _selection_members(self,op):
+        rows=self.db.execute("""SELECT o.id,o.request_id,o.identifier,o.datestamp,o.status,o.semantic_hash,
+            o.operation_id,o.attempt FROM oai_selection_members m
+            JOIN oai_observations o ON o.id=m.observation_id WHERE m.selection_id=? ORDER BY o.id""",(op["id"],)).fetchall()
+        members=[dict(row) for row in rows]
+        if len(members)!=op["observationCount"] or sha(jbytes(members))!=op["selectionMembersSha256"]:
+            raise InputError("The original record selection membership changed in this workspace")
+        return members
+
+    def select_records(self,source_operations,operation_id,baseline=None,label=None):
+        """Review a selected group of completed original GetRecord operations as one edition."""
+        if not isinstance(operation_id,str) or not IDENTIFIER.fullmatch(operation_id):
+            raise InputError("Use a stable operation ID of 1-128 letters, numbers, dots, colons, dashes or underscores")
+        if not isinstance(source_operations,list) or not 1<=len(source_operations)<=10000 or any(
+                not isinstance(value,str) or not IDENTIFIER.fullmatch(value) for value in source_operations):
+            raise InputError("Select 1-10000 complete original GetRecord operation IDs")
+        source_ids=sorted(set(source_operations))
+        if len(source_ids)!=len(source_operations):
+            raise InputError("Each original source operation occurs once in the record selection")
+        if operation_id in source_ids:
+            raise InputError("Give the record selection its own stable operation ID")
+        if baseline is not None:plain(baseline,"the reviewed record selection baseline",128)
+        label=plain(label or "Selected original records","a record selection name",256)
+        request={"sourceOperationIds":source_ids,"baseline":baseline,"label":label}
+        with self.mutex,self.db:
+            existing=self.db.execute("SELECT body FROM oai_operations WHERE id=?",(operation_id,)).fetchone()
+            if existing:
+                op=decode(existing[0])
+                if op.get("kind")!="record-selection" or any(op.get(k)!=v for k,v in request.items()):
+                    raise InputError("This operation ID already belongs to a different record selection")
+                self._selection_members(op)
+                return op
+            repository_id=metadata_prefix=None
+            members=[];sources=[];identifiers=set()
+            for source_id in source_ids:
+                source=self.operation(source_id)
+                if source["verb"]!="GetRecord" or source.get("kind")=="record-selection" or source["status"]!="COMPLETE":
+                    raise InputError("Complete the original GetRecord operation before selecting it: "+source_id)
+                if repository_id is None:
+                    repository_id=source["repositoryId"];metadata_prefix=source["selection"]["metadataPrefix"]
+                if source["repositoryId"]!=repository_id or source["selection"].get("metadataPrefix")!=metadata_prefix:
+                    raise InputError("A record selection uses one exact repository and metadata format")
+                rows=self.db.execute("""SELECT id,request_id,identifier,datestamp,status,semantic_hash,operation_id,attempt
+                    FROM oai_observations WHERE operation_id=? AND attempt=? ORDER BY id""",(source_id,source["attempt"])).fetchall()
+                if len(rows)!=1 or rows[0]["identifier"]!=source["selection"]["identifier"]:
+                    raise InputError("The original GetRecord header must match its requested identifier: "+source_id)
+                row=rows[0]
+                observed=self.observation(row["id"])
+                if observed["repositoryId"]!=repository_id or observed["metadataPrefix"]!=metadata_prefix:
+                    raise InputError("The original observation belongs to a different repository or format")
+                exchange=self._get("oai_requests",row["request_id"])
+                if exchange.get("state")!="PARSED" or not exchange.get("response"):
+                    raise InputError("Retain the complete parsed original response before selecting its record")
+                members.append(dict(row));identifiers.add(row["identifier"])
+                sources.append({"operationId":source_id,"attempt":source["attempt"],"operationRevision":source["revision"],
+                    "requestId":row["request_id"],"observationId":row["id"],"identifier":row["identifier"],
+                    "responseSha256":exchange["response"]["sha256"]})
+            repo=self.repository(repository_id)
+            if baseline:
+                previous=self.edition(baseline)
+                if previous["repository"]["id"]!=repository_id or previous["selection"].get("metadataPrefix")!=metadata_prefix or previous["selection"].get("kind")!="explicit-identifiers":
+                    raise InputError("Choose an explicit record selection baseline for this repository and metadata format")
+                identifiers.update(previous["selection"]["identifiers"])
+            members.sort(key=lambda row:row["id"])
+            value={"schema":"stellar-forge.oai-pmh-operation.v1","id":operation_id,
+                "kind":"record-selection","verb":"RecordSelection",**request,"repositoryId":repository_id,
+                "repositorySnapshot":repo,"selection":{"kind":"explicit-identifiers","metadataPrefix":metadata_prefix,
+                    "identifiers":sorted(identifiers)},"sourceOperations":sources,
+                "selectionMembersSha256":sha(jbytes(members)),"observationCount":len(members),
+                "recordCount":len(identifiers),"createdAt":stamp(),"completedAt":stamp(),"status":"COMPLETE",
+                "attempt":1,"pageCount":0,"nextArguments":None,"token":None,"revision":1,
+                "cooldownUntil":0,"lastError":None}
+            self.db.executemany("INSERT INTO oai_selection_members VALUES(?,?,?)",
+                [(operation_id,row["id"],row["identifier"]) for row in members])
+            return self._put("oai_operations",value)
+
+    def requests(self,operation_id,offset=0,limit=50):
+        page_values(offset,limit)
+        with self.mutex:
+            op=self.operation(operation_id)
+            if op.get("kind")!="record-selection":return super().requests(operation_id,offset,limit)
+            self._selection_members(op)
+            where="""operation_id IN (SELECT DISTINCT o.operation_id FROM oai_selection_members m
+                JOIN oai_observations o ON o.id=m.observation_id WHERE m.selection_id=?)"""
+            total=self.db.execute("SELECT COUNT(*) FROM oai_requests WHERE "+where,(operation_id,)).fetchone()[0]
+            rows=self.db.execute("SELECT body FROM oai_requests WHERE "+where+
+                " ORDER BY operation_id,attempt,ordinal LIMIT ? OFFSET ?",(operation_id,limit,offset)).fetchall()
+            return {"items":[decode(row[0]) for row in rows],"total":total,"offset":offset,
+                "selectionId":operation_id,"next":offset+len(rows) if offset+len(rows)<total else None}
+
+    def record_path(self,edition):
+        operation=self.operation(edition["operationId"])
+        return [Q("OAI-PMH"),Q("GetRecord" if operation.get("kind")=="record-selection" else "ListRecords"),Q("record")]
+
     def preview(self,operation_id,choices=None):
         choices=choices or {}
         if not isinstance(choices,dict): raise InputError("Conflict choices must map exact identifiers to observations and review notes")
         with self.mutex,self.db:
             op=self.operation(operation_id)
-            if op["verb"]!="ListRecords" or op["status"]!="COMPLETE":
-                raise InputError("Complete every ListRecords continuation before reviewing its edition")
+            selected=op.get("kind")=="record-selection"
+            if op["verb"] not in {"ListRecords","RecordSelection"} or op["status"]!="COMPLETE" or op["verb"]=="RecordSelection" and not selected:
+                raise InputError("Complete the original ListRecords operation or explicit GetRecord selection before reviewing it")
+            if selected:
+                self._selection_members(op)
+                population="SELECT identifier FROM oai_selection_members WHERE selection_id=?"
+                population_args=(operation_id,)
+                observed="FROM oai_observations o JOIN oai_selection_members m ON m.observation_id=o.id WHERE m.selection_id=?"
+                observed_args=(operation_id,)
+            else:
+                population="SELECT identifier FROM oai_observations WHERE operation_id=? AND attempt=?"
+                population_args=(operation_id,op["attempt"])
+                observed="FROM oai_observations o WHERE o.operation_id=? AND o.attempt=?"
+                observed_args=(operation_id,op["attempt"])
             baseline=self.edition(op["baseline"]) if op.get("baseline") else None
             if baseline and (baseline["repository"]["id"]!=op["repositoryId"] or
                              baseline["selection"].get("metadataPrefix")!=op["selection"].get("metadataPrefix") or
-                             baseline["selection"].get("set")!=op["selection"].get("set")):
+                             baseline["selection"].get("set")!=op["selection"].get("set") or
+                             baseline["selection"].get("kind")!=op["selection"].get("kind")):
                 raise InputError("The baseline must use this exact repository, metadata format and set selection")
             temp=sha(os.urandom(32))
             binding={"operationId":operation_id,"attempt":op["attempt"],"operationRevision":op["revision"],
@@ -49,20 +156,19 @@ class Workspace(HarvestWorkspace):
             h=hashlib.sha256(jbytes(binding))
             counts={x:0 for x in ("added","updated","deleted","reinstated","unchanged","retained","older","conflict")}
             seen_choices=set()
-            sql="""SELECT identifier FROM oai_observations WHERE operation_id=? AND attempt=?
-                   UNION SELECT identifier FROM oai_edition_records WHERE edition_id=? ORDER BY identifier"""
-            for ident_row in self.db.execute(sql,(operation_id,op["attempt"],op.get("baseline",""))):
+            sql=population+" UNION SELECT identifier FROM oai_edition_records WHERE edition_id=? ORDER BY identifier"
+            for ident_row in self.db.execute(sql,population_args+(op.get("baseline") or "",)):
                 identifier=ident_row[0]
                 old=self.db.execute("""SELECT o.id,o.datestamp,o.status,o.semantic_hash FROM oai_edition_records e
                     JOIN oai_observations o ON o.id=e.observation_id WHERE e.edition_id=? AND e.identifier=?""",
                     (op.get("baseline",""),identifier)).fetchone()
-                newest=self.db.execute("SELECT MAX(datestamp) FROM oai_observations WHERE operation_id=? AND attempt=? AND identifier=?",
-                                       (operation_id,op["attempt"],identifier)).fetchone()[0]
+                newest=self.db.execute("SELECT MAX(o.datestamp) "+observed+" AND o.identifier=?",
+                                       observed_args+(identifier,)).fetchone()[0]
                 incoming=[]
                 if newest:
-                    incoming=self.db.execute("""SELECT id,datestamp,status,semantic_hash FROM oai_observations
-                        WHERE operation_id=? AND attempt=? AND identifier=? AND datestamp=? ORDER BY id""",
-                        (operation_id,op["attempt"],identifier,newest)).fetchall()
+                    incoming=self.db.execute("SELECT o.id,o.datestamp,o.status,o.semantic_hash "+observed+
+                        " AND o.identifier=? AND o.datestamp=? ORDER BY o.id",
+                        observed_args+(identifier,newest)).fetchall()
                 options=list(incoming)
                 if old and (newest is None or old["datestamp"]>=newest):
                     options=([old]+incoming) if old["datestamp"]==newest else [old]
@@ -142,6 +248,11 @@ class Workspace(HarvestWorkspace):
                 "selection":op["selection"],"operationId":op["id"],"attempt":op["attempt"],
                 "baseline":preview["baseline"],"activeRecords":preview["activeRecords"],"deletedRecords":preview["deletedRecords"],
                 "counts":preview["counts"],"review":{"reviewer":reviewer,"note":note,"recordedAt":stamp(),"digest":preview_id}}
+            if op.get("kind")=="record-selection":
+                value["recordSource"]={"kind":"original-getrecord-selection",
+                    "recordPath":[Q("OAI-PMH"),Q("GetRecord"),Q("record")],
+                    "sourceOperationIds":op["sourceOperationIds"],
+                    "selectionMembersSha256":op["selectionMembersSha256"]}
             return self._put("oai_editions",value)
 
     def records(self,edition_id,offset=0,limit=100,query=""):
@@ -161,13 +272,17 @@ class Workspace(HarvestWorkspace):
 
     def save_mapping(self,plan):
         normalized=xml.validate_plan(plan)
-        if normalized["recordPath"]!=[Q("OAI-PMH"),Q("ListRecords"),Q("record")]:
-            raise InputError("OAI mappings select the original OAI-PMH/ListRecords/record element")
+        if normalized["recordPath"] not in ([Q("OAI-PMH"),Q("ListRecords"),Q("record")],[Q("OAI-PMH"),Q("GetRecord"),Q("record")]):
+            raise InputError("OAI mappings select the original OAI-PMH ListRecords or GetRecord record element")
         return self.xml.save_plan(normalized)
 
-    def default_mapping(self,name="repository_records"):
+    def default_mapping(self,name="repository_records",record_verb="ListRecords",edition_id=None):
+        if edition_id is not None:
+            edition=self.edition(edition_id)
+            record_verb="GetRecord" if self.operation(edition["operationId"]).get("kind")=="record-selection" else "ListRecords"
+        if record_verb not in {"ListRecords","GetRecord"}:raise InputError("Choose the original ListRecords or GetRecord source")
         return {"schema":"stellar-forge.xml-mapping.v1","name":name,
-            "recordPath":[Q("OAI-PMH"),Q("ListRecords"),Q("record")],
+            "recordPath":[Q("OAI-PMH"),Q(record_verb),Q("record")],
             "columns":[{"name":"identifier","path":[Q("header"),Q("identifier")],"type":"string"},
                        {"name":"datestamp","path":[Q("header"),Q("datestamp")],"type":"string"},
                        {"name":"set_specs","path":[Q("header"),Q("setSpec")],"type":"string",
@@ -179,7 +294,7 @@ class Workspace(HarvestWorkspace):
     def metadata_mapping(self,edition_id,name="repository_metadata"):
         """Offer an explicit editable mapping from this edition's actual metadata namespace."""
         with self.mutex:
-            self.edition(edition_id)
+            edition=self.edition(edition_id)
             row=self.db.execute("""SELECT o.body FROM oai_edition_records e JOIN oai_observations o
                 ON o.id=e.observation_id WHERE e.edition_id=? AND o.status='active'
                 ORDER BY e.identifier LIMIT 1""",(edition_id,)).fetchone()
@@ -188,7 +303,7 @@ class Workspace(HarvestWorkspace):
             metadata=next((n for n in record.children if n.name==Q("metadata")),None)
             if metadata is None or len(metadata.children)!=1: raise InputError("This record has no single original metadata payload")
             payload=metadata.children[0]
-            plan=self.default_mapping(name)
+            plan=self.default_mapping(name,edition_id=edition_id)
             def array(column,path,attribute=None):
                 value={"name":column,"path":path,"type":"string","mode":"json",
                        "missing":"default","default":"[]","text":"descendant"}
@@ -267,8 +382,8 @@ class Workspace(HarvestWorkspace):
         with self.mutex:
             edition=self.edition(edition_id)
             plan=self.xml.plan(plan_id)
-            if plan["recordPath"]!=[Q("OAI-PMH"),Q("ListRecords"),Q("record")]:
-                raise InputError("Select an OAI record mapping")
+            if plan["recordPath"]!=self.record_path(edition):
+                raise InputError("Select the mapping for this edition's original ListRecords or GetRecord wrapper")
             ident=sha(jbytes(["stellar-forge.oai-pmh-build.v1",edition_id,plan_id]))
             old=self.db.execute("SELECT body FROM oai_builds WHERE id=?", (ident,)).fetchone()
             if old:
@@ -369,15 +484,22 @@ class Workspace(HarvestWorkspace):
                         value=decode(row[0]);value.pop("node",None);out.write(jbytes(value))
                     out.flush();os.fsync(out.fileno())
                 files.append({"file":"records.jsonl","bytes":rows_path.stat().st_size,"sha256":storage.file_digest(rows_path,4*xml.MAX_SOURCE)})
-                requests={}
+                requests={};operations={}
                 for item in lineage:
-                    for row in self.db.execute("SELECT body FROM oai_requests WHERE operation_id=? ORDER BY attempt,ordinal",(item["operationId"],)):
-                        req=decode(row[0]);requests[req["id"]]=req
+                    operation=self.operation(item["operationId"])
+                    if operation.get("kind")=="record-selection":self._selection_members(operation)
+                    for operation_id in [operation["id"]]+operation.get("sourceOperationIds",[]):
+                        original=self.operation(operation_id);operations[operation_id]=original
+                        for row in self.db.execute("SELECT body FROM oai_requests WHERE operation_id=? ORDER BY attempt,ordinal",(operation_id,)):
+                            req=decode(row[0]);requests[req["id"]]=req
                     repo=item["repository"]
                     if repo.get("identifyRequestId"):
                         req=self._get("oai_requests",repo["identifyRequestId"]);requests[req["id"]]=req
                     for request_id in repo.get("formatsRequestIds",[])+repo.get("setsRequestIds",[]):
                         req=self._get("oai_requests",request_id);requests[req["id"]]=req
+                write("operations.json",jbytes({"schema":"stellar-forge.oai-source-operations.v1",
+                    "operations":[operations[key] for key in sorted(operations)],
+                    "selectionRule":"Record selections reference completed original GetRecord operations and unchanged observations"}))
                 exchanges=[]
                 retained=set()
                 for request in requests.values():
@@ -409,7 +531,9 @@ class Workspace(HarvestWorkspace):
                     "edition":{k:edition[k] for k in ("id","review","activeRecords","deletedRecords")},
                     "build":{k:build[k] for k in ("id","planId","datasetSnapshot","rowCount")},
                     "dataFile":"data.csv","datasetFile":"dataset.json","mappingFile":"mapping.json","lineageFile":"lineage.json",
-                    "recordsFile":"records.jsonl","requestsFile":"requests.jsonl",
+                    "recordsFile":"records.jsonl","requestsFile":"requests.jsonl","operationsFile":"operations.json",
+                    "recordSource":edition.get("recordSource",{"kind":"original-listrecords",
+                        "recordPath":self.record_path(edition)}),
                     "transportDisclosure":{"omittedHeaders":["authorization","proxy-authorization","cookie","set-cookie","set-cookie2"],
                         "originals":"Complete transport remains in the private workspace and its full backup",
                         "relayReceipts":"The exact original provider receipt remains in acquisition.receipt; acquisition.kind distinguishes relay retrieval from observed HTTP",

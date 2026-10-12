@@ -400,6 +400,14 @@ preview and save, whole export/reopen and later installation editions. The
 installed Grant Operations source includes both profiles and their preparation
 module, alongside the existing native Installation implementation.
 
+### Stellarcarbon and CFCE / GiveCredit reporting workorders
+
+The same installed preparation and complete receiving commands accept **stellarcarbon** and **cfce-givecredit**. Their full profiles carry the original customer task, source semantics, reporting periods, complete file set, correction flow and independent editable handover into the existing Customer installations desk. The selected original Workshare retains the actual commercial terms, fee milestones, phase criteria and funding assignments.
+
+Use `starforge grant-installation-workorder template|prepare --profile stellarcarbon` or `--profile cfce-givecredit` against the original native seed. The whole receiving driver accepts either profile in its current customer input. Both complete reporting products remain their own Merchant Applications entries.
+
+The [complete carbon reporting installation guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/CARBON_REPORTING.md) supplies the exact source bindings, outputs, native save/receiving sequence and reporting operations.
+
 ### Review original implementation evidence
 
 Open **Implementation evidence** in the same operating case. Attach the complete original commissioning JSON, merchant workspace or Merchant Support handoff through the existing Sources intake. Select it by its actual filename, byte count and SHA-256, then **Read original implementation**. The installed SF74 producer supplies the original tasks, measurements, receiving records, comparisons and readable report.
@@ -664,6 +672,7 @@ Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model
 | Builder and immutable source | [source selection](../../stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md), [build](../../stellar/scf-starforge-20261009/distribution/BUILDING.md), [Git object receiving](../../stellar/scf-starforge-20261009/distribution/GIT_OBJECT_RECEIVING.md) |
 | Planning | [workspace](../../stellar/scf_2026/sf47_budget_model/workspace/README.md), [CLI](../../stellar/scf_2026/sf47_budget_model/workspace/CLI.md) |
 | Delivery, API and intake | [Operations](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS.md), [API](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-API.md), [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) |
+| Original account reconciliation | [Statement comparison, cash resolutions, dated closes and complete receiving](../../stellar/scf_2026/sf47_budget_model/workspace/ACCOUNT_RECONCILIATION.md) |
 | Resource and cash assumptions | [Forecast](../../stellar/scf_2026/sf47_budget_model/workspace/FORECAST.md), [Portfolio](../../stellar/scf_2026/sf47_budget_model/workspace/PORTFOLIO.md) |
 | Contributor agreements and receiving | [Complete engagements workflow](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS.md), [native receiving](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS_RECEIVING.md) |
 | Customer installation | [Commissioning, editions and complete handover](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md) |

@@ -320,7 +320,28 @@ def dashboard(context, as_of=None):
     }
 
 
-def preview(context, data, cohort_reviews=None, cohort_history=None, implementation_reviews=None):
+def business_snapshot(context, *, legacy=False, implementation_evidence=False):
+    """Use one complete source for preview and preparation.
+
+    Earlier previews selected installation references only with implementation
+    evidence and omitted work-intake references. Reproduce that exact projection
+    only when validating a frozen preparation created by that earlier reader.
+    """
+    business = {
+        "program": {key: context["program"][key] for key in ("id", "name", "mode", "calendarStart")},
+        "plan": deepcopy(context["plan"]), "records": deepcopy(context["records"]),
+        "sources": sorted(deepcopy(list(context["sources"].values())), key=lambda row: row["id"]),
+    }
+    if context.get("completionPlans"):
+        business["completionPlans"] = deepcopy(context["completionPlans"])
+    if context.get("installationRefs") and (not legacy or implementation_evidence):
+        business["installationRefs"] = deepcopy(context["installationRefs"])
+    if not legacy and context.get("workIntakeRefs"):
+        business["workIntakeRefs"] = deepcopy(context["workIntakeRefs"])
+    return business
+
+
+def preview(context, data, cohort_reviews=None, cohort_history=None, implementation_reviews=None, *, legacy_source=False):
     data = object_value(data, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds"), "completion preview")
     as_of = day(data.get("asOfDate") or today(), "Completion calendar date")
     original = receipt(context, data.get("receiptId"), active=True, as_of=as_of)
@@ -363,15 +384,8 @@ def preview(context, data, cohort_reviews=None, cohort_history=None, implementat
                 reasons.append("A linked work observation ends after this preparation date.")
             for reason in reasons:
                 issues.append({"code": "DELIVERABLE_REVIEW", "costId": item["costId"], "message": reason})
-    business = {
-        "program": {key: context["program"][key] for key in ("id", "name", "mode", "calendarStart")},
-        "plan": context["plan"], "records": context["records"],
-        "sources": sorted(context["sources"].values(), key=lambda row: row["id"]),
-    }
-    if context.get("completionPlans"):
-        business["completionPlans"] = context["completionPlans"]
-    if "implementationReviewIds" in data and context.get("installationRefs"):
-        business["installationRefs"] = deepcopy(context["installationRefs"])
+    business = business_snapshot(context, legacy=legacy_source,
+                                 implementation_evidence="implementationReviewIds" in data)
     source = {"programId": context["program"]["id"], "version": context["program"]["version"],
               "planContentSha256": context["plan"]["contentSha256"], "businessSha256": digest(business)}
     result = {"schema": PREVIEW_SCHEMA, "source": source, "rule": deepcopy(RULE), "asOfDate": as_of,
@@ -501,7 +515,7 @@ def command(ops, context, name, data, actor, next_version):
             domain.fail("The completion source changed after preview. Reopen and preview the current case.", "COMPLETION_PREVIEW_CONFLICT", 409)
         if not candidate["ready"]:
             domain.fail("Finish the listed deliverable and form fields before preparing this completion.", "COMPLETION_NOT_READY", 409)
-        snapshot = ops._business(context)
+        snapshot = business_snapshot(context)
         after = {"id": "review-" + uuid.uuid4().hex, "version": next_version, "createdAt": now(),
                  "actor": actor, "note": "Prepared tranche " + str(candidate["clock"]["tranche"]) + " completion.",
                  "businessSha256": digest(snapshot), "snapshot": snapshot, "report": domain.report(**context),
@@ -577,6 +591,14 @@ def validate_preparation(review):
         domain.fail("The retained prepared completion is incomplete.", "INVALID_COMPLETION")
     context = {**snapshot, "program": {**snapshot["program"], "version": candidate["source"]["version"]},
                "sources": {row["id"]: row for row in snapshot["sources"]}}
+    complete_source = business_snapshot(context)
+    if complete_source != snapshot or digest(snapshot) != review.get("businessSha256"):
+        domain.fail("The complete prepared snapshot differs from its retained source.", "INVALID_COMPLETION")
+    original_source_sha = candidate["source"].get("businessSha256")
+    legacy_source = original_source_sha != digest(complete_source)
+    if legacy_source and original_source_sha != digest(business_snapshot(
+            context, legacy=True, implementation_evidence="implementationEvidence" in candidate)):
+        domain.fail("The prepared source differs from its complete or original legacy projection.", "INVALID_COMPLETION")
     values = {"receiptId": candidate["receipt"]["id"], "asOfDate": candidate["asOfDate"], "summary": candidate["summary"]}
     cohorts = None
     if "cohortEvidence" in candidate:
@@ -590,8 +612,9 @@ def validate_preparation(review):
             domain.fail("The retained implementation evidence is invalid.", "INVALID_COMPLETION")
         implementation_reviews = [x["review"] for x in candidate["implementationEvidence"]]
         values["implementationReviewIds"] = [x["id"] for x in implementation_reviews]
-    recalculated = preview(context, values, cohorts, candidate.get("cohortHistory"), implementation_reviews)
-    if recalculated != candidate or candidate["source"]["businessSha256"] != review["businessSha256"]:
+    recalculated = preview(context, values, cohorts, candidate.get("cohortHistory"), implementation_reviews,
+                           legacy_source=legacy_source)
+    if recalculated != candidate:
         domain.fail("The original prepared completion differs from its complete frozen source.", "INVALID_COMPLETION")
 
 

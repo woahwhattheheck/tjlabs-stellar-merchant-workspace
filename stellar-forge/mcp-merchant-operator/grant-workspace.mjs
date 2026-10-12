@@ -408,6 +408,7 @@ export class MerchantGrantWorkspaces {
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
       work_intakes:'work-intakes',work_intake:'work-intake',
       ledger_intake:'ledger-intake',ledger_intake_original:'ledger-intake-original',
+      account_reconciliation:'account-reconciliation',account_reconciliation_statement_inputs:'account-reconciliation-statement-inputs',
       cash_account:'cash-account',supplier_account:'supplier-account',performance:'performance',delivery_queue:'delivery-queue',installation_returns:'installation-returns',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
@@ -415,6 +416,17 @@ export class MerchantGrantWorkspaces {
       const {planId, ...body} = rest; original = await client.plan(verb.slice(5), planId, body);
     } else if (verb === 'case_create') original = await client.createCase(rest);
     else if (verb === 'case_command') { const {caseId, ...body} = rest; original = await client.command(caseId, body); }
+    else if (verb === 'account_reconciliation_preview' || verb === 'account_reconciliation_apply') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...selected}=rest;
+      const document=await this.#modelInputs(alias,args,'Account reconciliation',GRANT_MAX_BUNDLE_BYTES);
+      for (const [key,value] of Object.entries(selected))
+        need(!Object.hasOwn(document,key) || document[key] === value,'GRANT_INPUT_CONFLICT',
+          'The supplied '+key+' differs from the complete retained reconciliation request.');
+      const body={...document,...selected};
+      original=verb === 'account_reconciliation_preview'
+        ? await client.accountReconciliationPreview(caseId,body)
+        : await client.accountReconciliationApply(caseId,body);
+    }
     else if (verb === 'cash_correction_preview' || verb === 'cash_correction_apply') {
       const {caseId,inputs,input,inputPointer,expectedInputSha256,...selected}=rest;
       const document=await this.#modelInputs(alias,args,'Cash correction',GRANT_MAX_BUNDLE_BYTES);

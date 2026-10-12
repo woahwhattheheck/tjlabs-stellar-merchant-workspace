@@ -45,6 +45,8 @@ An issuer-confirmed deadline extension keeps the assignment plan basis from the 
 
 The complete operating-case export retains these assignments, their source events, the complete amendment history and all saved native planning revisions. Import resolves each completion row against the planning baseline at its original assignment save, including legacy rows saved before the plan-basis field was added. Historical preparations are validated against their original snapshots; current assignments are opened against the case's current selected plan.
 
+New completion previews and prepared forms retain the same complete case source, including selected installation editions and work/invoice intake references. Earlier prepared forms keep their original bytes and preview hashes; import reproduces their original reference selection and independently checks the complete frozen snapshot before reopening them.
+
 ## Concurrent edits and interrupted requests
 
 The original native case version is checked inside the same Workspace transaction used by other operations. Saving and reviewing a proposal advance the case version. An unchanged business snapshot keeps the same amendment preview identity across those own workflow events. New work, sources, invoices, cash, completion assignments or other business changes require a fresh comparison and a newly saved proposal edition.
