@@ -4,7 +4,7 @@ This application gives a publication team one local workspace for complete sourc
 
 ## Start the workspace
 
-Use Node.js 24 on Linux, with the system `flock` command available. Python 3 is needed only when acquiring a new public source capture. The application does not need a package installation or a paid CI runner.
+Use Node.js 24 on Linux, with the system `flock` command available. Python 3 is used for source capture, customer installation and Linux service administration. The application does not need a package installation or a paid CI runner.
 
 From the application root:
 
@@ -27,6 +27,16 @@ The default browser has six sections:
 | Handover | Download the complete application/workspace archive and inspect operation history. |
 
 Local publication creates a customer-queryable edition on this computer. Portal delivery uses a separately selected organisation and the native provider API.
+
+## Install for a customer or an operations team
+
+The application includes two complete installation paths.
+
+Use the [customer installation and Python guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datagouv/CUSTOMER.md) to receive a native `.datawork` archive with its embedded application, continue an interrupted installation, serve the received workspace and query complete saved editions. The Python client supports the maintained HTTP and native dataset contracts, complete cursor receiving, edition comparisons and recorded adoption decisions. Retain the original archive, source and installation state when continuing a delivery.
+
+Use [Linux administration](ADMINISTRATION.md) for an unattended service managed by an operations team. It covers verified source packages, immutable installed releases, the unprivileged publisher service, reviewed application updates, stopped-service backup and restore, and rollback. Administrative installation records and retains its original workspace attempt before activation, so an interruption can be resumed without replacing another workspace. The administrator and running publisher coordinate through the same service and workspace locks.
+
+The service remains on loopback. Organisation credentials are supplied only to an explicitly selected portal operation; the service unit and portable source package do not contain those credentials.
 
 ## Retain a complete source
 
