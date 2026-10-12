@@ -35,6 +35,10 @@ export function migrationWorkspaceTools(t) {
  add("document","Read one complete original source document with exact native JSON numbers.",{kind:text("Original document kind."),id},["kind","id"]);
  add("draft","Draft mappings from the actual original capture and optional preceding plan.",
    {captureId:id,predecessorPlanId:id},["captureId"]);
+ add("mapping_register","Export the complete mapping register and original saved plan, source inspection and review bytes.",
+   {planId:id},["planId"]);
+ add("workbook_propose","Read the edited XLSX and original register as a complete native plan proposal with every changed choice.",
+   {sourceJson:text("Complete starforge.gis-migration-workbook-source.v1 JSON with registerBase64, workbookBase64 and filename.")},["sourceJson"]);
  add("source_rows","Page original native source rows and preserve exact numeric lexemes.",
    {captureId:id,layerId:id,...paging},["captureId","layerId"]);
  add("issues","Page the actual original mapping review findings.",
@@ -50,7 +54,8 @@ export function migrationWorkspaceTools(t) {
  add("receive_capture","Receive the declared complete original native capture and exact manifest.",
    {input:text("Original native capture alias."),expectedSha256:sha,...write},["input","expectedSha256","revision","requestId","actor"]);
  add("save_plan","Save the complete reviewed native mapping document without converting its JSON numbers.",
-   {planJson:text("Complete original plan JSON; decimal and large-integer tokens are retained."),...write},["planJson","revision","requestId","actor"]);
+   {planJson:text("Complete original plan JSON; decimal and large-integer tokens are retained."),
+    workbookSourceJson:text("Optional complete workbook source JSON; retains original XLSX/register, proposed plan and later native edits with this save."),...write},["planJson","revision","requestId","actor"]);
  add("review_plan","Record the original mapping acceptance or required correction.",
    {planId:id,outcome:choice(["accepted","changes-requested"],"Original review decision."),note:text("Complete operator review note."),...write},
    ["planId","outcome","note","revision","requestId","actor"]);
