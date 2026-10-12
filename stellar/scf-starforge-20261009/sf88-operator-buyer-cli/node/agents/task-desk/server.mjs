@@ -160,7 +160,7 @@ async function packetMetadataBytes(packet, name) {
 }
 
 export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
-  workspaceDirectory, existingTaskDirectory, existingOutputDirectory,
+  workspaceDirectory, commerceDirectory, existingTaskDirectory, existingOutputDirectory,
   port = 0, hostname = '127.0.0.1' } = {}) {
   need(inbox && typeof inbox.list === 'function' && typeof inbox.directory === 'string',
     'DESK_INBOX_REQUIRED', 'Select the existing native Inbox.');
@@ -175,6 +175,17 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
     !beneath(outputsRoot, tasksRoot) && !beneath(outputsRoot, inboxRoot),
     'DESK_OUTPUT_DIRECTORY', 'Keep complete results outside the Inbox and saved-task directories.');
   if (workspaceDirectory !== undefined) workspaceDirectory = resolve(workspaceDirectory);
+  async function commercePath(value = commerceDirectory) {
+    need(typeof value === 'string' && isAbsolute(value), 'DESK_RPC_COMMERCE_REQUIRED',
+      'Select the original absolute commerce session directory for these saved RPC reads.');
+    const directory = resolve(value), actual = await realpath(directory);
+    need(actual === directory && (await stat(actual)).isDirectory(),
+      'DESK_RPC_COMMERCE_CHANGED', 'Use the original commerce session directory.');
+    need(join(directory, 'inbox') === inboxRoot, 'DESK_RPC_COMMERCE_INBOX_CHANGED',
+      'Choose the original commerce session that contains this Inbox.');
+    return directory;
+  }
+  if (commerceDirectory !== undefined) commerceDirectory = await commercePath(commerceDirectory);
   const retained = await selectRetainedTask({ inbox,
     taskDirectory: existingTaskDirectory, outputDirectory: existingOutputDirectory });
   const retainedId = await validateRetainedTaskStorage({ selection: retained, inbox,
@@ -425,11 +436,46 @@ export async function startTaskDesk({ inbox, tasksDirectory, outputsDirectory,
       if (request.method === 'GET' && url.pathname === '/api/status')
         return json(response, 200, { schema: SCHEMA, title: 'Task desk', instanceId, csrfToken: token,
           roots: { tasks: tasksRoot, outputs: outputsRoot, inbox: inbox.directory,
+            ...(commerceDirectory === undefined ? {} : { commerce: commerceDirectory }),
             ...(retained ? { existingTask: retained.taskDirectory, existingOutput: retained.outputDirectory } : {}) },
           runningOperations: running.size });
       if (request.method === 'GET' && url.pathname === '/api/jobs') {
         const result = await inbox.list();
         return json(response, 200, { jobs: result.native?.jobs ?? [], process: result.process });
+      }
+      const rpc = /^\/api\/jobs\/([^/]+)\/rpc-results(?:\/([^/]+)(\/download)?)?$/.exec(url.pathname);
+      if (request.method === 'GET' && rpc) {
+        const intentId = decodeURIComponent(rpc[1]);
+        const directory = await commercePath(url.searchParams.get('commerceDirectory') ?? commerceDirectory);
+        need(typeof inbox.rpcResponses === 'function' && typeof inbox.rpcResponse === 'function',
+          'DESK_RPC_RUNTIME_REQUIRED', 'Open the maintained Inbox runtime with saved RPC result support.');
+        if (!rpc[2]) return json(response, 200, await inbox.rpcResponses(intentId, { commerceDirectory: directory }));
+        const received = await inbox.rpcResponse(intentId, {
+          commerceDirectory: directory, readId: decodeURIComponent(rpc[2]),
+          expectedResponseSha256: url.searchParams.get('responseSha256'),
+        });
+        need(received, 'DESK_RPC_RESULT_NOT_FOUND', 'Select a completed original RPC read.', 404);
+        if (!rpc[3]) return json(response, 200, {
+          intentId, job: received.job, recovery: received.recovery,
+          delivery: received.delivery, verified: await received.verify(),
+        });
+        // Keep the full original byte stream in the native verified-file path.
+        const chunks = received.chunks()[Symbol.asyncIterator]();
+        try {
+          const first = await chunks.next();
+          response.writeHead(200, { 'Content-Type': 'application/octet-stream',
+            'Content-Length': received.delivery.bytes,
+            'Content-Disposition': 'attachment; filename="rpc-result-' + received.recovery.readId + '.json"',
+            'Cache-Control': 'no-store' });
+          if (!first.done) await writeChunk(response, first.value);
+          for (;;) {
+            const part = await chunks.next();
+            if (part.done) break;
+            await writeChunk(response, part.value);
+          }
+          response.end();
+        } finally { await chunks.return?.(); }
+        return;
       }
       if (request.method === 'GET' && url.pathname === '/api/tasks') {
         const tasks = [], issues = [];

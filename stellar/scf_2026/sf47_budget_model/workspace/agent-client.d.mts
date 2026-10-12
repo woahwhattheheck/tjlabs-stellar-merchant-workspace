@@ -20,7 +20,7 @@ export type GrantCaseAction =
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
   | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
-  | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'implementation.prepare'
+  | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
   | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision';
 
 
@@ -1007,6 +1007,67 @@ export interface GrantInstallationSaveReceipt extends GrantObject {
   revision: number;
   sha256: string;
 }
+
+/** Original named observations against one immutable Installation edition. */
+export interface GrantInstallationReturnInput {
+  installationId: string;
+  revision: number;
+  sha256: string;
+  name: string;
+  recipient: string;
+  environment: string;
+  note: string;
+  observations: Array<Pick<GrantInstallationCheck, 'id' | 'state' | 'operator' | 'observedAt' | 'note' |
+    'sourceIds' | 'workIds' | 'purchaseIds' | 'outcomeIds'>>;
+}
+export interface GrantInstallationReturnOwnerInput {
+  returnedCaseId: string;
+  reviewId: string;
+  reviewSha256: string;
+  installationId: string;
+  expectedRevision: number;
+  name: string;
+  note: string;
+  choices: Array<{id: string; action: 'KEEP' | 'APPLY'; note: string}>;
+}
+export interface GrantInstallationReturnSummary {
+  id: string; version: number; purpose: 'INSTALLATION_RETURN' | 'INSTALLATION_RETURN_REVIEW';
+  businessSha256: string; sha256: string; previewSha256: string;
+  installationId: string; revision: number; name: string; createdAt: string; actor: string;
+}
+export interface GrantInstallationReturnSeed {
+  schema: 'stellar-forge.sf47-installation-return.v1.seed';
+  source: GrantObject; baseline: GrantInstallationRef; inputs: GrantInstallationReturnInput;
+  checks: Array<Pick<GrantInstallationCheck, 'id' | 'title' | 'criterion' | 'tranche' | 'required'>>;
+}
+export interface GrantInstallationReturnPreview {
+  schema: 'stellar-forge.sf47-installation-return.v1';
+  source: GrantObject; inputs: GrantInstallationReturnInput;
+  baseline: Omit<GrantInstallationEdition,'current'>;
+  document: GrantInstallationDocument; snapshot: GrantObject; report: GrantObject;
+  receivingBasisChanges: GrantObject[]; basisUnchanged: boolean; previewSha256: string;
+}
+export interface GrantInstallationReturnOwnerPreview {
+  schema: 'stellar-forge.sf47-installation-return.v1.owner-preview';
+  source: GrantObject; inputs: GrantInstallationReturnOwnerInput;
+  baseline: Omit<GrantInstallationEdition,'current'>; currentInstallation: Omit<GrantInstallationEdition,'current'>;
+  returnedProof: GrantObject; basisChanges: GrantObject[]; receivingBasisChanges: GrantObject[];
+  checks: Array<{id: string; title: string; eligible: boolean; definitionChanges: GrantObject[];
+    ownerObservation: GrantInstallationCheck | null; returnedObservation: GrantInstallationCheck;
+    decision: {id: string; action:'KEEP'|'APPLY'; note:string};
+    recordLinks: Record<'workIds'|'purchaseIds'|'outcomeIds', {sameOwnerRecordIds:string[];retainedAsEvidenceIds:string[]}>}>;
+  newOwnerChecks: GrantInstallationCheck[]; sources: GrantObject[]; appliedChecks: number; previewSha256: string;
+}
+export interface GrantInstallationReturnReceipt {
+  id: string; version: number; action: 'installation.return'; kind: 'review'; recordId: string;
+  reviewSha256: string; previewSha256: string; unchanged: false;
+}
+export interface GrantInstallationReturnStageReceipt extends Omit<GrantInstallationReturnReceipt, 'action'> {
+  action: 'installation.return-stage';
+  installationId: string; expectedRevision: number; document: GrantInstallationDocument;
+}
+export type GrantInstallationReturnSave<T> = GrantOperationRequest & {note:string; inputs:T; expectedPreviewSha256:string};
+
 export interface GrantCaseView extends GrantObject {
   workIntakes: GrantWorkIntakeSummary[];
   workIntakeRefs?: {id: string; revision: number; sha256: string; state: 'DRAFT' | 'APPLIED'}[];
@@ -1024,6 +1085,7 @@ export interface GrantCaseImportReceipt extends GrantObject {
   supplierAccount?: GrantSupplierAccountReceived;
   cashAccount?: GrantCashAccountReceived;
   selectedInstallation?: GrantInstallationRef;
+  selectedInstallationReturn?: GrantInstallationReturnSummary;
 }
 export interface GrantWorkshareSourceSelection {
   expectedVersion: number;
@@ -1569,6 +1631,7 @@ export interface GrantDownloadSelections {
   'supplier-account': GrantSupplierAccountDownloadSelection;
   'cash-account': GrantCashAccountDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
+  'installation-return': { caseId: string; reviewId: string };
   commercial: { caseId: string; billingId: string };
   source: { caseId: string; sourceId: string };
   completion: { caseId: string; reviewId: string };
@@ -1623,6 +1686,12 @@ export class GrantWorkspaceClient {
   portfolioPreview<T = GrantPortfolioPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   portfolioSave<T = GrantPortfolioSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSelection<T = GrantPortfolioSelection>(caseId: string, expectedVersion: number, portfolioId: string, alternativeId: string): Promise<GrantJsonResponse<T>>;
+  read(view: 'installation-returns', selection: {caseId:string}): Promise<GrantJsonResponse<{schema:string;caseId:string;version:number;reviews:GrantInstallationReturnSummary[]}>>;
+  installationReturnSeed(caseId:string, body:{expectedVersion:number;installationId:string;revision:number;sha256:string}): Promise<GrantJsonResponse<GrantInstallationReturnSeed>>;
+  installationReturnPreview(caseId:string, body:{expectedVersion:number;inputs:GrantInstallationReturnInput}): Promise<GrantJsonResponse<GrantInstallationReturnPreview>>;
+  installationReturnReviewPreview(caseId:string, body:{expectedVersion:number;inputs:GrantInstallationReturnOwnerInput}): Promise<GrantJsonResponse<GrantInstallationReturnOwnerPreview>>;
+  installationReturn(caseId:string, body:GrantInstallationReturnSave<GrantInstallationReturnInput>): Promise<GrantJsonResponse<GrantInstallationReturnReceipt>>;
+  installationReturnStage(caseId:string, body:GrantInstallationReturnSave<GrantInstallationReturnOwnerInput>): Promise<GrantJsonResponse<GrantInstallationReturnStageReceipt>>;
   installationSeed(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<GrantInstallationSeed>>;
   installationWorkshares<T = GrantObject>(caseId: string, body: GrantWorkshareSourceSelection): Promise<GrantJsonResponse<T>>;
   installationWorkshareSeed(caseId: string, body: GrantWorkshareSourceSelection & GrantInstallationSelection & { workshareCaseId: string; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;

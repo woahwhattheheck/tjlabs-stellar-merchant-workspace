@@ -22,6 +22,7 @@ import operations_completion as completion
 import operations_calendar as calendar_model
 import operations_cohort as cohort
 import operations_installations as installations
+import operations_installation_returns as installation_returns
 import operations_dispatch as dispatch
 import operations_statements as statements
 import operations_performance as performance
@@ -339,6 +340,13 @@ class Operations:
                 if result["unchanged"]:
                     return {"id": program_id, "version": expected, "action": command, "kind": kind,
                             "recordId": record_id, **extra_receipt}
+            elif command in ("installation.return", "installation.return-stage"):
+                method = installation_returns.record if command == "installation.return" else installation_returns.stage
+                result = method(self, context, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                source_change = result.get("sourceChange")
+                extra_receipt = {key: value for key, value in result.items()
+                                 if key not in ("before", "after", "kind", "recordId", "sourceChange")}
             elif command == "installation.save":
                 result = installations.save(self, context, data, actor, next_version, note)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -759,6 +767,25 @@ class Operations:
             context = self._context(identifier(program_id, "operation"))
             return installations.preview(self, context, body)
 
+    def installation_returns(self, program_id):
+        with self._snapshot():
+            return installation_returns.list_reviews(self, self._context(program_id))
+
+    def seed_installation_return(self, program_id, body):
+        with self._snapshot():
+            return installation_returns.seed(self, self._context(program_id), body)
+
+    def preview_installation_return(self, program_id, body):
+        with self._snapshot():
+            return installation_returns.preview(self, self._context(program_id), body)
+
+    def preview_installation_return_review(self, program_id, body):
+        with self._snapshot():
+            return installation_returns.review_preview(self, self._context(program_id), body)
+
+    def export_installation_return(self, program_id, review_id):
+        return self.export(program_id, installation_return_review_id=review_id)
+
     def ledger_intake(self, program_id):
         return ledger_intake.describe(self, identifier(program_id, "operation"))
 
@@ -902,7 +929,7 @@ class Operations:
                 if own:
                     self.db.execute("ROLLBACK")
 
-    def export(self, program_id, installation_id=None, installation_revision=None):
+    def export(self, program_id, installation_id=None, installation_revision=None, installation_return_review_id=None):
         with self._snapshot():
             context = self._context(program_id)
             program = context["program"]
@@ -944,6 +971,8 @@ class Operations:
             for metadata in context["sources"].values():
                 _, raw = self.source(program_id, metadata["id"])
                 files["sources/" + metadata["id"]] = raw
+            if installation_return_review_id is not None:
+                files.update(installation_returns.selected_files(context, reviews, installation_return_review_id))
             if installation_id is not None or installation_revision is not None:
                 files.update(installations.selected_files(context, saved_installations, installation_id, installation_revision, files))
         if sum(len(raw) for raw in files.values()) > MAX_BUNDLE:
@@ -1008,6 +1037,9 @@ class Operations:
         selected_names = {"installation-selection.json", "installation.html"}
         if selected_names.intersection(files):
             expected.update(selected_names)
+        return_names = {"installation-return-selection.json", "installation-return.html"}
+        if return_names.intersection(files):
+            expected.update(return_names)
         if set(files) != expected or len(source_ids) != len(document["sources"]):
             domain.fail("The operations source set is not exact.")
         for item in document["sources"]:
@@ -1025,6 +1057,7 @@ class Operations:
             if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"] or len(content) > MAX_SOURCE:
                 domain.fail("An original attachment differs from its source record.")
         installations.selection_from_files(document, files)
+        installation_returns.selection_from_files(document, files)
         return document, files
 
     def import_bundle(self, raw, name, request_id, actor):
@@ -1131,6 +1164,8 @@ class Operations:
         payables.validate_received(supplier_account, document)
         cash_accounts.validate_received(cash_account, document)
         implementation.validate_import(context, reviews, events, saved_installations, files)
+        installation_returns.validate_import(context, reviews, events, saved_installations, files)
+        selected_installation_return = installation_returns.selection_from_files(document, files)
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:
             domain.fail("The selected installation heads differ from their complete retained editions.")
@@ -1247,6 +1282,7 @@ class Operations:
                 self.db.execute("INSERT INTO ops_portfolios VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
                     **({"selectedInstallation": selected_installation} if selected_installation else {}),
+                    **({"selectedInstallationReturn": selected_installation_return} if selected_installation_return else {}),
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),
                     **({"performance": performance.received_selection(performance_report)} if performance_report else {}),
                     **({"supplierAccount": payables.received_selection(supplier_account)} if supplier_account else {}),

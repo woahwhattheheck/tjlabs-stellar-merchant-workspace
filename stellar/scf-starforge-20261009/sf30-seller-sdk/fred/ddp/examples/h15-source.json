@@ -1,0 +1,7 @@
+{
+  "kind": "package",
+  "url": "https://www.federalreserve.gov/releases/h15/data/FRB_h15_xml.zip",
+  "release": "H15",
+  "format": "board-sdmx-zip",
+  "supplementalUrls": []
+}

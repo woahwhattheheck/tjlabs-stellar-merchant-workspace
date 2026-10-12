@@ -67,6 +67,10 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     bytes: await readFile(new URL('../product-catalog/catalog.mjs', import.meta.url)),
     type: 'text/javascript; charset=utf-8',
   });
+  assets.set('/product-requirements.mjs', {
+    bytes: await readFile(new URL('../discovery/product-requirements.mjs', import.meta.url)),
+    type: 'text/javascript; charset=utf-8',
+  });
   assets.set('/source-catalog.css', {
     bytes: await readFile(new URL('./public/source-catalog.css', import.meta.url)),
     type: 'text/css; charset=utf-8',

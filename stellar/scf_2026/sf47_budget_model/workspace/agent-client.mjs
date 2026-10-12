@@ -521,6 +521,7 @@ export class GrantWorkspaceClient {
       review:() => '/api/operations/' + cid() + '/reviews/' + id(args.reviewId, 'review'),
       'delivery-queue':() => '/api/operations/' + cid() + '/delivery-queue' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
+      'installation-returns':() => '/api/operations/' + cid() + '/installation-returns',
       installations:() => '/api/operations/' + cid() + '/installations',
       installation:() => '/api/operations/' + cid() + '/installations/' + id(args.installationId,'installation') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Installation edition',1,500)),
@@ -681,6 +682,39 @@ export class GrantWorkspaceClient {
       'GRANT_INVALID_INPUT', 'Use the original saved alternative ID, including base for the base allocation.');
     return this.#request('/api/operations/' + caseId + '/portfolio-selection',
       {body:{expectedVersion, portfolioId, alternativeId}, mutation:false});
+  }
+  installationReturnSeed(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','installationId','revision','sha256'],['expectedVersion','installationId','revision','sha256']);
+    integer(body.expectedVersion,'Current case version'); id(body.installationId,'installation');
+    integer(body.revision,'Original Installation edition',1,500); sha(body.sha256);
+    return this.#request('/api/operations/'+caseId+'/installation-return-seed',{body,mutation:false});
+  }
+  installationReturnPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current receiving case version'); object(body.inputs,'Complete receiving observations');
+    return this.#request('/api/operations/'+caseId+'/installation-return-preview',{body,mutation:false});
+  }
+  installationReturnReviewPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current owner case version'); object(body.inputs,'Complete explicit owner decisions');
+    return this.#request('/api/operations/'+caseId+'/installation-return-review-preview',{body,mutation:false});
+  }
+  installationReturn(caseId, body) {
+    exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete receiving observations');
+    text(body.note,'Receiving save reason',12000);
+    const {inputs,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'installation.return',data:{inputs,expectedPreviewSha256}});
+  }
+  installationReturnStage(caseId, body) {
+    exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete explicit owner decisions');
+    text(body.note,'Owner receiving reason',12000);
+    const {inputs,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'installation.return-stage',data:{inputs,expectedPreviewSha256}});
   }
   installationSeed(caseId, expectedVersion) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
@@ -950,6 +984,7 @@ export class GrantWorkspaceClient {
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
       installation:() => '/api/operations/' + id(args.caseId,'operation') + '/installations/' + id(args.installationId,'installation') +
         '/export.zip?revision=' + integer(args.revision,'Selected installation edition',1,500),
+      'installation-return':() => '/api/operations/' + id(args.caseId,'operation') + '/installation-returns/' + id(args.reviewId,'review') + '/export.zip',
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
       'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +

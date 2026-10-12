@@ -1,5 +1,7 @@
 # Customer installation operations
 
+For the complete receiver-to-owner workflow, open **Delivery operations → Receiving returns** and follow [Installation receiving returns](INSTALLATION_RETURNS.md). It records named observations against one exact saved edition, returns every original file, compares the owner's current definition, and stages explicit choices before the original Installation save.
+
 The **Customer installations** desk completes the commissioning-to-receiving workflow inside the existing SF47 operating case. An installation describes the customer's whole task, original source and commercial terms, selected merchant and buyer deployments, receiving application, maintainer and assigned funded work. Its acceptance steps select the existing work, purchase, outcome and source records.
 
 Each save appends an immutable edition. A later source observation or installation edit leaves earlier editions readable. The complete original Operations ZIP carries every saved edition, the native planner history, the case event history and all retained attachments. **Export complete handover** also includes a selected-edition marker and a readable offline installation document. Importing that ZIP opens the selected edition in the receiving case.

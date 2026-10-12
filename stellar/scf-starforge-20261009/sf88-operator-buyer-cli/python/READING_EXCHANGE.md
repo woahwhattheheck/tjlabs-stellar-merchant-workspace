@@ -173,7 +173,7 @@ node /absolute/package/source/stellar/scf-starforge-20261009/distribution/cli.mj
 The resulting `forge.mjs` is the stable launcher. Its original command map contains `buyer-research`, `reading` and `reading-exchange`; arguments pass unchanged to each operator:
 
 ```sh
-node /absolute/reading-home/forge.mjs run buyer-research -- --help
+node /absolute/reading-home/forge.mjs run buyer-research -- help
 node /absolute/reading-home/forge.mjs run reading -- --help
 node /absolute/reading-home/forge.mjs run reading-exchange -- --help
 node /absolute/reading-home/forge.mjs run reading-exchange -- \
