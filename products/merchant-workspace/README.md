@@ -22,6 +22,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
+| Operate a Huwise data product | `starforge huwise`, `starforge merchant-huwise` and `starforge merchant-huwise-receive` | Complete portal editions, analyst review, tenant ingestion and publication, native merchant operation and full customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
@@ -49,6 +50,12 @@ delivery. Its [complete client](https://github.com/woahwhattheheck/tjlabs-stella
 and [customer download](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/MERCHANT-DOWNLOAD.md)
 guides cover the same saved workspace and receiving an original export across
 an interrupted transfer.
+
+The [Huwise operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/huwise/OPERATING.md)
+connects complete source review, the tenant Automation API, native publication,
+merchant operation and delivery of every original customer file. Build its
+selected source with `--selection huwise`; its package retains the original
+publisher, buyer, host and runtime installation workflow.
 
 ## Open the source product
 
