@@ -211,9 +211,30 @@ def run(args):
         require(model.record("reports", report["report_id"])["workbook_revision"] == workbook2["revision"],
                 "Published report followed a subsequent workbook edit")
         query = result["query"]
-        current_query = workspace.save_query(query["name"], "SELECT 1 AS current_draft", parameters=[], expected_revision=query["revision"])
+        current_query = request("/api/queries/" + quote(query["query_id"], safe=""))
+        require(current_query["query_id"] == query["query_id"] and current_query["name"] == query["name"],
+                "Original saved-query identity changed")
+        retained_publication = record["steps"].get("published_report")
+        if retained_publication is not None:
+            require(retained_publication["report"]["report_id"] == report["report_id"],
+                    "Continue the same retained publication")
+            later_revision = retained_publication["later_original_query_revision"]
+            require(type(later_revision) is int and later_revision > query["revision"]
+                    and current_query["revision"] >= later_revision,
+                    "Retained later-query revision is unavailable")
+        elif current_query["revision"] == query["revision"]:
+            current_query = workspace.save_query(query["name"], "SELECT 1 AS current_draft",
+                parameters=[], expected_revision=query["revision"])
+            later_revision = current_query["revision"]
+        else:
+            require(current_query["revision"] == query["revision"] + 1
+                    and current_query["sql"] == "SELECT 1 AS current_draft"
+                    and current_query["parameters"] == [],
+                    "Reconcile the existing later query before continuing this original publication")
+            later_revision = current_query["revision"]
         keep("published_report", {"workbook": workbook2, "later_workbook": later, "report": report,
-                                  "later_original_query_revision": current_query["revision"]})
+                                  "later_original_query_revision": later_revision,
+                                  "current_original_query_revision": current_query["revision"]})
         export_body = {"request_id": request_id("report-export"), "report_id": report["report_id"]}
         exported = request("/api/analytics/exports", export_body)
         require(request("/api/analytics/exports", export_body) == exported, "Original complete export did not resume identically")
