@@ -86,6 +86,17 @@ SOURCE_FILES = (
     "iati/public/refresh.css",
     "xml/xml_source.py", "xml/workspace.py", "xml/server.py", "xml/native.mjs",
     "dataset-handler.mjs",
+    "iati/ORGANISATION_RECONCILIATION.md",
+    "iati/RECONCILIATION_RECEIVING.md",
+    "iati/organisation_reconciliation.py",
+    "iati/organisation_reconciliation_cli.py",
+    "iati/organisation_reconciliation_client.d.mts",
+    "iati/organisation_reconciliation_client.mjs",
+    "iati/organisation_reconciliation_http.py",
+    "iati/organisation_reconciliation_mcp.mjs",
+    "iati/public/organisation_reconciliation.css",
+    "iati/public/organisation_reconciliation_ui.mjs",
+    "iati/reconciliation_receiving.py",
 )
 
 

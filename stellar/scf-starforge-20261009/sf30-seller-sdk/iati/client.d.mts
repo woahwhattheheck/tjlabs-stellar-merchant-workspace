@@ -1,3 +1,4 @@
+import type { OrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
 import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
 export type * from './organisation_client.mjs';
 /** MIT. Typed access to the original IATI console. Financial and identifier values remain strings. */
@@ -440,6 +441,7 @@ export interface RefreshReceiving {
 }
 
 export declare class IatiWorkspaceClient {
+  readonly organisationReconciliation: OrganisationReconciliationClient;
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
   state(options?: RequestOptions): Promise<WorkspaceState>;

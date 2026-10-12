@@ -1,3 +1,4 @@
+import { organisationReconciliationTools } from '../organisation_reconciliation_mcp.mjs';
 // MIT. Original tool metadata; provider runtimes load only when selected.
 import { MAX_RETAINED_CHUNK_BYTES } from '../retained-file-contracts.mjs';
 import { iatiOrganisationTools } from './source-iati-organisation.mjs';
@@ -20,6 +21,7 @@ const read = { readOnly: true, idempotent: true };
 
 function sourceWorkspaceTools(tool) {
   return [
+    ...organisationReconciliationTools(tool),
     tool('merchant_source_workspaces', 'List configured original XML/NDJSON/IATI consoles, source-file handles and retained download sessions.', {}, [], read),
     tool('merchant_source_status', 'Read original saved source, mapping, build and comparison counts. Recover completed work here and through inventory after an interrupted reply.', selection, ['workspace'], read),
     tool('merchant_source_inventory', 'Page saved sources, plans, builds or comparisons from the original workspace. Continue its snapshot with expectedSnapshot.', { ...selection, kind: { type: 'string', enum: ['sources', 'plans', 'builds', 'comparisons', 'portfolios'] }, ...page }, ['workspace', 'kind'], read),

@@ -282,6 +282,8 @@ class IatiWorkspace(Workspace):
         self.organisation = OrganisationPlanner(self)
         from refresh import IatiRefresh
         self.refresh = IatiRefresh(self)
+        from organisation_reconciliation import OrganisationReconciliation
+        self.reconciliation = OrganisationReconciliation(self)
 
     def presets(self):
         return source_presets()
@@ -810,4 +812,7 @@ class IatiWorkspace(Workspace):
         from organisation.portable import PACKET as ORGANISATION_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == ORGANISATION_PACKET:
             return self.organisation.receive({"path": path})
+        from organisation_reconciliation import PACKET as RECONCILIATION_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RECONCILIATION_PACKET:
+            return self.reconciliation.receive({"path": path})
         return super().import_packet(path)

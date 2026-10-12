@@ -1,3 +1,4 @@
+import { isOrganisationReconciliationTool, executeOrganisationReconciliation } from './organisation_reconciliation_mcp.mjs';
 import { sourceWorkspaceTools, read, selection, page, digest, alias, UUID, SHA, ALIAS } from './catalog/source-workspace.mjs';
 export { sourceWorkspaceTools } from './catalog/source-workspace.mjs';
 import { IATI_ORGANISATION_TOOL_PREFIX } from './catalog/source-iati-organisation.mjs';
@@ -17,9 +18,9 @@ const EXPORT_SCHEMA = 'stellar-forge.source-console-export.v1';
 
 const MAX_EXPORT = 256000000;
 const MAX_IATI_PACKET = 4 * 1024 * 1024 * 1024;
-const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report', 'dqa', 'publishing', 'refresh', 'organisation'].includes(kind) ? MAX_IATI_PACKET : ['dqa-file', 'organisation-file'].includes(kind) ? 64 * 1024 * 1024 : MAX_EXPORT;
-const packetRoute = route => route === '/api/import' || route === IATI_ORGANISATION_ROUTE + 'receive';
-const extendedIatiRoute = route => route.startsWith('/api/iati/dqa/') || route.startsWith('/api/iati/publishing/') || route.startsWith('/api/iati/refresh/') || route.startsWith(IATI_ORGANISATION_ROUTE);
+const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report', 'dqa', 'publishing', 'refresh', 'organisation', 'reconciliation'].includes(kind) ? MAX_IATI_PACKET : ['dqa-file', 'organisation-file', 'reconciliation-file'].includes(kind) ? 64 * 1024 * 1024 : MAX_EXPORT;
+const packetRoute = route => route === '/api/import' || route === IATI_ORGANISATION_ROUTE + 'receive' || route === '/api/iati/reconciliation/receive';
+const extendedIatiRoute = route => route.startsWith('/api/iati/dqa/') || route.startsWith('/api/iati/publishing/') || route.startsWith('/api/iati/refresh/') || route.startsWith(IATI_ORGANISATION_ROUTE) || route.startsWith('/api/iati/reconciliation/');
 const MAX_SOURCE = 256 * 1024 * 1024;
 const MAX_JSON = 16 * 1024 * 1024;
 const fail = (code, message) => Object.assign(new Error(message), { code });
@@ -232,8 +233,8 @@ export class MerchantSourceWorkspaces {
     const directory = await this.#directory(workspace);
     const metadata = JSON.parse((await bytes(join(directory, id + '.json'), 65536, true)).toString('utf8'));
     if (metadata.schema !== EXPORT_SCHEMA || metadata.workspace !== workspace || metadata.exportId !== id ||
-        !['project','dataset','changes','merchant','portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file'].includes(metadata.kind) ||
-        ['portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file'].includes(metadata.kind) && metadata.format !== 'iati' ||
+        !['project','dataset','changes','merchant','portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file','reconciliation','reconciliation-file'].includes(metadata.kind) ||
+        ['portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file','reconciliation','reconciliation-file'].includes(metadata.kind) && metadata.format !== 'iati' ||
         !Number.isSafeInteger(metadata.bytes) || metadata.bytes < 0 || metadata.bytes > exportLimit(metadata.format, metadata.kind))
       throw fail('SOURCE_EXPORT_INVALID', 'Retained export metadata changed.');
     return { directory, metadata };
@@ -341,6 +342,12 @@ export class MerchantSourceWorkspaces {
       retain: (route, kind, selected, fileInfo) => this.#retain(workspace, definition, route, kind, selected, undefined, fileInfo),
       receive: (selected, route, kinds) => this.#receivePackage(workspace, definition, selected, route, kinds)
     });
+    if (isOrganisationReconciliationTool(name)) return executeOrganisationReconciliation(name, input, {
+      workspace, page: paged,
+      json: (route, body) => this.#json(definition, route, body),
+      retain: (route, kind, selected, fileInfo) => this.#retain(workspace, definition, route, kind, selected, undefined, fileInfo),
+      receive: (selected, route, kinds) => this.#receivePackage(workspace, definition, selected, route, kinds)
+    });
     switch (name) {
       case 'merchant_source_status': {
         const state = await this.#state(definition);
@@ -419,7 +426,7 @@ export class MerchantSourceWorkspaces {
         await this.#reads.release(workspace, checked(input.readId, UUID, 'original file read'));
         return { workspace, readId: input.readId, state: 'RELEASED' };
       case 'merchant_source_import':
-        return result(await this.#receivePackage(workspace, definition, input, '/api/import', ['project','portfolio','dqa','publishing','refresh','organisation']));
+        return result(await this.#receivePackage(workspace, definition, input, '/api/import', ['project','portfolio','dqa','publishing','refresh','organisation','reconciliation']));
       case 'merchant_source_iati_presets': return result(await this.#json(definition, '/api/iati/presets'));
       case 'merchant_source_iati_profile': return result(await this.#json(definition, '/api/iati/profile?source=' + input.source));
       case 'merchant_source_iati_portfolios':

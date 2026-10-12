@@ -1,4 +1,5 @@
 // MIT. Original IATI console client. All values and native query parameters retain their source strings.
+import { createOrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
 import { open, lstat, realpath } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { isAbsolute, resolve, dirname } from 'node:path';
@@ -25,6 +26,8 @@ export class IatiWorkspaceClient{
     throw problem('CONNECTION','Use the complete loopback console URL without altering its private fragment.');
   if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>900000)throw problem('TIMEOUT','Choose a request timeout from 1 to 900000 milliseconds.');
   this.#origin=selected.origin;this.#token=selected.hash.slice(1);this.#timeout=timeoutMs;
+  Object.defineProperty(this, 'organisationReconciliation', { enumerable: true, value:
+   createOrganisationReconciliationClient((path, options) => this.#request(path, options)) });
  }
  get origin(){return this.#origin;}
  async #request(path,{body,headers={},signal,raw=false,maximum=16*1024*1024}={}){
