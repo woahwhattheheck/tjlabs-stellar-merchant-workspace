@@ -625,6 +625,18 @@ class Operations:
             value.pop("current")
             return portfolios.select(context, value, short_id(body.get("alternativeId"), "Alternative ID"))
 
+    def installation_workflows(self, program_id, body):
+        from operations_installation_workflows import inventory
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return inventory(self, context, body)
+
+    def seed_workflow_installation(self, program_id, body):
+        from operations_installation_workflows import seed
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return seed(self, context, body)
+
     def installation_workshares(self, program_id, body):
         from operations_workshare_installations import case_inventory
         with self._snapshot():

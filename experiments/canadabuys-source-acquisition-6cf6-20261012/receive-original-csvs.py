@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Receive the two original CanadaBuys CSV sources into the existing source operation."""
+"""Receive the three original CanadaBuys CSV sources into the existing source operation."""
 import argparse
 import csv
 import gzip

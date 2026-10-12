@@ -6,6 +6,7 @@ import {readOwned} from '../stellar-expert/store.mjs';
 import {openSensorThingsWorkspace} from './core.mjs';
 import {createFileAccess} from './files.mjs';
 import {createAnalysisHttp} from './analysis/http.mjs';
+import {createCommissioningHttp} from './commissioning/http.mjs';
 import {createAnalysisDeployment} from './analysis/deployment/server.mjs';
 import {plain,fields,integer,text,json,sha,identity,fault} from './contract.mjs';
 const JSON_LIMIT=2*1024*1024,RESPONSE_LIMIT=24*1024*1024;
@@ -117,7 +118,11 @@ export function createSensorThingsHandler({workspace,token,origin,staticHandler=
   if(extraApiHandler!==null&&typeof extraApiHandler!=='function')throw fault('API_EXTENSION','Use the host-selected API handler function.');
   if(typeof token!=='string'||!/^[A-Za-z0-9_-]{32,200}$/.test(token))throw fault('API_TOKEN','Use the original host-selected private session token.');
   const allowed=new URL(origin),workspaceId=workspace.schema().workspaceId,pending=new Set();let closing=false,closePromise=null;
-  const analysisHttp=createAnalysisHttp({workspace}),deployment=createAnalysisDeployment({workspace,origin:allowed.origin});
+  const analysisHttp=createAnalysisHttp({workspace}),deployment=createAnalysisDeployment({workspace,origin:allowed.origin}),
+    commissioningReady=createCommissioningHttp({workspace,origin:allowed.origin});
+  // Preserve the synchronous original handler factory. Native listener startup
+  // awaits this exact async source/asset initialization before reporting ready.
+  void commissioningReady.catch(()=>{});
   async function route(req,res){
     if(closing)throw fault('API_CLOSING','The original workspace API is closing.',503);
     if(req.headers.host!==allowed.host)throw fault('API_HOST','Use the original selected workspace origin.',403);
@@ -125,8 +130,10 @@ export function createSensorThingsHandler({workspace,token,origin,staticHandler=
     if(typeof req.url!=='string'||req.url.length>16384||!req.url.startsWith('/'))throw fault('API_PATH','Use a native relative request path.');
     const url=new URL(req.url,allowed);
     if(url.origin!==allowed.origin)throw fault('API_ORIGIN','Use this original workspace URL.',403);
+    const commissioningHttp=await commissioningReady;
     if(!url.pathname.startsWith('/api/')){
       if(req.method!=='GET'&&req.method!=='HEAD')throw fault('API_METHOD','Use the advertised application route.',405);
+      if(await commissioningHttp.staticHandler(req,res,{url,workspaceId}))return;
       if(await deployment.staticHandler(req,res,{url,workspaceId}))return;
       if(await analysisHttp.staticHandler(req,res,{url,workspaceId}))return;
       if(staticHandler&&await staticHandler(req,res,{url,workspaceId}))return;
@@ -141,6 +148,7 @@ export function createSensorThingsHandler({workspace,token,origin,staticHandler=
       if(await deployment.handleApi(req,res,{url,workspaceId}))return;
       if(await analysisHttp.handleApi(req,res,{url,workspaceId}))return;
     }
+    if(url.pathname.startsWith('/api/commissioning')&&await commissioningHttp.handleApi(req,res,{url,workspaceId}))return;
     // Host-selected extensions run after the original session/UUID checks and
     // before the JSON parser, so a bounded inbox can stream its original bytes.
     // Schema retains the sole existing pre-UUID discovery exception.
@@ -203,10 +211,10 @@ export function createSensorThingsHandler({workspace,token,origin,staticHandler=
   }
   function close(){
     if(closePromise)return closePromise;closing=true;
-    closePromise=(async()=>{await Promise.allSettled([...pending]);await deployment.close();await analysisHttp.close();await files.close();})();
+    closePromise=(async()=>{await Promise.allSettled([...pending]);const commissioningHttp=await commissioningReady.catch(()=>null);if(commissioningHttp)await commissioningHttp.close();await deployment.close();await analysisHttp.close();await files.close();})();
     void closePromise.catch(()=>{closePromise=null;});return closePromise;
   }
-  return {handle,close,workspaceId,origin:allowed.origin};
+  return {handle,close,workspaceId,origin:allowed.origin,ready:()=>commissioningReady};
 }
 async function sessionToken(workspace,supplied){
   const path=join(workspace.directory,'operator-session.json');
@@ -234,7 +242,7 @@ export async function serveSensorThingsWorkspace({host='127.0.0.1',port=0,token,
     server.requestTimeout=30000;server.headersTimeout=15000;server.keepAliveTimeout=5000;
     await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.off('error',reject);resolve();});});
     const address=server.address(),origin='http://'+(host==='::1'?'[::1]':host)+':'+address.port;
-    api=createSensorThingsHandler({workspace,token:selectedToken,origin,staticHandler,extraApiHandler});
+    api=createSensorThingsHandler({workspace,token:selectedToken,origin,staticHandler,extraApiHandler});await api.ready();
     function close(){
       if(closePromise)return closePromise;
       closePromise=(async()=>{const stopped=new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()));

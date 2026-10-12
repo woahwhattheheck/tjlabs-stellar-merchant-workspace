@@ -226,21 +226,39 @@ export async function listPreviewOperations(store, saved) {
   return operations.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
 }
 
-/** Retain before/after source context; an interrupted request is never replayed automatically. */
-export async function previewAuthoredOperation(store, saved, { id, operation, variables, allowLoopback = false, signal } = {}) {
-  previewFile(store, id); projectName(saved.id);
-  if (typeof allowLoopback !== 'boolean' || !plain(variables)) fail('Choose preview variables and the local development option.');
-  const { compiled, queries } = sources(saved.input);
+function admitPreviewSource(context, operation, variables) {
+  if (!plain(variables)) fail('Choose preview variables as an object.');
+  const { compiled, queries } = context;
   const raw = queries.operations?.find(item => item.name === operation);
   if (!raw) fail('Choose a saved operation.');
   const checked = validateApprovedQueries(compiled, { ...queries, operations: [raw] }, { examples: { [operation]: variables } });
   const native = compileSubQueryMerchant(checked.queries).operations[0];
   const bound = bindSubQueryVariables({ variables }, native), request = { query: native.query, variables: bound };
-  const requestSha256 = digest(Buffer.from(JSON.stringify(request)));
-  const intent = { schema: PREVIEW, id, project: saved.id, draftRevision: saved.revision, inputDigest: saved.inputDigest,
-    operation, createdAt: new Date().toISOString(), state: 'STARTED', requestSha256,
+  return { checked, native, request, requestSha256: digest(Buffer.from(JSON.stringify(request))),
     source: { origin: queries.origin, path: queries.path, schemaSha256: compiled.schemaSha256,
-      sourceSha256: compiled.sourceSha256, provenance: compiled.provenance }, request };
+      sourceSha256: compiled.sourceSha256, provenance: compiled.provenance },
+    connection: { origin: queries.origin, path: queries.path,
+      ...(queries.authorizationEnv ? { authorizationEnv: queries.authorizationEnv } : {}),
+      ...(queries.timeoutMs !== undefined ? { timeoutMs: queries.timeoutMs } : {}) } };
+}
+/** Validate a selected set with the same native admission, without making source requests. */
+export function describePreviewRequests(saved, cases) {
+  if (!Array.isArray(cases) || !cases.length || cases.length > 32) fail('Choose 1–32 original request cases.');
+  const context = sources(saved.input);
+  return cases.map(item => {
+    const admitted = admitPreviewSource(context, item.operation, item.variables);
+    return { operation: item.operation, request: admitted.request, requestSha256: admitted.requestSha256,
+      source: admitted.source, connection: admitted.connection };
+  });
+}
+
+/** Retain before/after source context; an interrupted request is never replayed automatically. */
+export async function previewAuthoredOperation(store, saved, { id, operation, variables, allowLoopback = false, signal } = {}) {
+  previewFile(store, id); projectName(saved.id);
+  if (typeof allowLoopback !== 'boolean' || !plain(variables)) fail('Choose preview variables and the local development option.');
+  const { checked, native, request, requestSha256, source } = admitPreviewSource(sources(saved.input), operation, variables);
+  const intent = { schema: PREVIEW, id, project: saved.id, draftRevision: saved.revision, inputDigest: saved.inputDigest,
+    operation, createdAt: new Date().toISOString(), state: 'STARTED', requestSha256, source, request };
   try {
     const existing = await readPreview(store, { id });
     if (existing.project !== saved.id || existing.inputDigest !== saved.inputDigest || existing.operation !== operation ||
@@ -255,7 +273,7 @@ export async function previewAuthoredOperation(store, saved, { id, operation, va
     throw error;
   }
   let result;
-  try { result = await handlers[native.handler]({ method: 'POST', url: new URL(queries.origin + queries.path),
+  try { result = await handlers[native.handler]({ method: 'POST', url: new URL(source.origin + source.path),
     pathParams: {}, headers: {}, body: { variables }, ...(signal ? { signal } : {}) }); }
   catch (error) { result = { status: signal?.aborted ? 499 : 502, body: { error: signal?.aborted ? 'PREVIEW_CANCELLED' : 'PREVIEW_SOURCE_REQUEST_FAILED' } }; }
   const bytes = Buffer.isBuffer(result.body) ? result.body : Buffer.from(JSON.stringify(result.body ?? null));

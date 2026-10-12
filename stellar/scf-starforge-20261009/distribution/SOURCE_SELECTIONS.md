@@ -6,6 +6,25 @@ whole source-owned contributions, component directories and explicit support
 files. The existing Git reader, source manifest, runtime profile, installer,
 Applications launcher and recovery commands remain the distribution workflow.
 
+## Complete runtime and browser source
+
+A selected component carries the maintained browser route maps for its included
+HTTP servers. The builder uses the same JSON manifests as those servers, so a
+browser import such as `./operations.mjs` resolves through its served URL to
+the original shared module. Console, job intake and job resolution maps are
+included when their original server components are selected. Every map and
+mapped file appears in the package's ordinary source manifest.
+
+Static Node imports continue to use normalized repository paths. If an
+imported production helper has an acceptance-like filename, its explicit
+declaration in the original base support inventory permits that exact file.
+The builder adds it only when a selected module imports it. Original file and
+directory exclusions still apply to imported modules and browser assets.
+
+These source dependencies leave the recipe's command, package-export, provider
+and runtime-feature choices intact. Explicitly selecting an excluded browser
+server remains an invalid package and reports the missing packaged entry.
+
 ## Build through the runtime workspace
 
 The private runtime workspace's **Build a product** view discovers the recipes

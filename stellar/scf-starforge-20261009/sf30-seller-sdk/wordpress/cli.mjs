@@ -23,12 +23,19 @@ const HELP=`WordPress source operator
   node wordpress/cli.mjs edition --dir /absolute/workspace --id <UUID>
   node wordpress/cli.mjs compare --dir /absolute/workspace --before <UUID> --after <UUID>
       [--offset 0] [--limit 50]
+  node wordpress/cli.mjs refresh-plan --dir /absolute/workspace --id <UUID>
+  node wordpress/cli.mjs refresh-run --dir /absolute/workspace --id <UUID>
+  node wordpress/cli.mjs refresh-changes --dir /absolute/workspace --id <UUID> [--offset 0] [--limit 50] [--kind all]
+  node wordpress/cli.mjs refresh-record --dir /absolute/workspace --id <UUID> --key <original-record-key>
   node wordpress/cli.mjs preview --dir /absolute/workspace --input request.json
   node wordpress/cli.mjs dataset-preview --dir /absolute/workspace --id <UUID> [--query limit=20]
   node wordpress/cli.mjs packet-inspect --input /absolute/source.zip [--python python3]
   node wordpress/cli.mjs receive --input /absolute/source.zip --dir /absolute/new-workspace [--python python3]
 
-Source capture actions wait for their original background job before closing.
+Source capture and refresh start/advance actions wait for their original background job before closing.
+Refresh advances retain the same run; each newly requested advance has its own operation UUID.
+Approval names the complete review SHA-256 and original capture SHA-256. Review/export recovery
+replays the full retained operation envelope from refresh-run. Complete source packets reopen these plans and decisions.
 A seller started with publisher.release.start needs --stay to retain its owner.
 The local browser keeps source captures, seller runtimes and customer sessions together.
 Use the same operation UUID and unchanged input to recover an uncertain action result.
@@ -94,6 +101,8 @@ export async function main(argv=process.argv.slice(2)) {
     init:[],inspect:[],act:['--action','--input','--operation','--expected-revision','--stay'],operation:['--id'],
     source:['--id'],job:['--source-id','--id'],records:['--source-id','--id','--offset','--limit','--collection'],
     mapping:['--id'],edition:['--id'],compare:['--before','--after','--offset','--limit'],
+    'refresh-plan':['--id'],'refresh-run':['--id'],
+    'refresh-changes':['--id','--offset','--limit','--kind'],'refresh-record':['--id','--key'],
     preview:['--input'],'dataset-preview':['--id','--query']
   };
   if(!Object.hasOwn(permitted,command))fail('WORDPRESS_CLI_COMMAND','Choose a command shown by help.');
@@ -109,7 +118,7 @@ export async function main(argv=process.argv.slice(2)) {
       const action=required(value,'--action');
       result=await workspace.act(action,{operationId:required(value,'--operation'),
         expectedRevision:integer(value,'--expected-revision',NaN),input:await input(value)});
-      if(['source.discover','capture.start','capture.resume'].includes(action)&&result.result?.jobId)
+      if(['source.discover','capture.start','capture.resume','refresh.run.start','refresh.run.advance'].includes(action)&&result.result?.jobId)
         result={...result,job:await workspace.wait(result.result.sourceId,result.result.jobId),state:await workspace.inspect()};
       print(result);
       if(value['--stay']){held=true;await stay(workspace.close);}
@@ -123,6 +132,11 @@ export async function main(argv=process.argv.slice(2)) {
     else if(command==='edition')result=await workspace.edition(required(value,'--id'));
     else if(command==='compare')result=await workspace.compare(required(value,'--before'),required(value,'--after'),{
       offset:integer(value,'--offset',0),limit:integer(value,'--limit',50)});
+    else if(command==='refresh-plan')result=await workspace.refreshPlan(required(value,'--id'));
+    else if(command==='refresh-run')result=await workspace.refreshRun(required(value,'--id'));
+    else if(command==='refresh-changes')result=await workspace.refreshChanges(required(value,'--id'),{
+      offset:integer(value,'--offset',0),limit:integer(value,'--limit',50),kind:value['--kind']??'all'});
+    else if(command==='refresh-record')result=await workspace.refreshRecord(required(value,'--id'),required(value,'--key'));
     else if(command==='preview')result=await workspace.preview(await input(value));
     else if(command==='dataset-preview')result=await workspace.datasetPreview({editionId:required(value,'--id'),query:value['--query']??''});
     print(result);

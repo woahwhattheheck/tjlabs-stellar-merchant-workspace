@@ -2,7 +2,7 @@
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { privateDirectory, atomicJson, readPrivateJson, withPrivateLock } from '../routescan/quota.mjs';
-import { canonical, clone, need, operationId, normalizeSelection, projectionPolicy, compareCaptures, MAX_CAPTURE_BYTES, PUBLIC_CAPTURE, PUBLIC_SET_CAPTURE, FRED_NOTICE, FRED_TERMS } from './model.mjs';
+import { canonical, clone, need, plain, date, operationId, normalizeSelection, projectionPolicy, compareCaptures, MAX_CAPTURE_BYTES, PUBLIC_CAPTURE, PUBLIC_SET_CAPTURE, FRED_NOTICE, FRED_TERMS } from './model.mjs';
 import { hash, digest, jsonBytes, optionalJson, validateCapture, captureFred, storeFredCapture, sealFredPublicTable, sealFredPublicTables } from './source.mjs';
 
 import { fredReviewIdentity, validateFredReview } from './review.mjs';
@@ -13,6 +13,10 @@ import { createFredBriefingTemplate, validateFredBriefingTemplate, materializeFr
   compareFredBriefingSuccessor, pageFredBriefingChanges, createFredBriefingSuccessorRecord,
   validateFredBriefingSuccessorRecord } from './briefing/templates.mjs';
 import { renderFredBriefingSuccessor, fredBriefingSuccessorCsv } from './briefing/template-report.mjs';
+import { normalizeFredReleaseSelection, inspectFredReleaseCapture } from './releases/model.mjs';
+import { captureFredReleases, readFredReleaseCapture, storeFredReleaseCapture, inspectFredReleaseAcquisition } from './releases/source.mjs';
+import { createFredReleaseWatch, validateFredReleaseWatch } from './releases/watch.mjs';
+import { planFredReleaseCatchUp, validateFredReleasePlan, pageFredReleasePlan } from './releases/planner.mjs';
 
 const SCHEMA = 'stellar-forge.fred-project.v1';
 const BUNDLE = 'stellar-forge.fred-project-bundle.v1';
@@ -33,6 +37,7 @@ function projectState(state) {
       for (const item of state[key]) validate(item);
     }
   }
+  validateReleaseState(state);
   return state;
 }
 export async function readFredProject(directory) {
@@ -444,6 +449,384 @@ async function validateRecurringBundle(state, captures) {
   }
 }
 
+
+/** Release calendars, immutable watches and explicit original-vintage acquisitions. */
+const RELEASE_BUNDLE = 'stellar-forge.fred-project-bundle.v4';
+const releaseSourceId = value => {
+  need(typeof value === 'string' && /^[a-f0-9]{64}$/.test(value), 'Select an original release capture ID.');
+  return value;
+};
+const releasePlanId = value => {
+  need(typeof value === 'string' && /^fred-release-plan-[a-f0-9]{64}$/.test(value), 'Select an original release plan ID.');
+  return value;
+};
+function releaseStatePresent(state) {
+  return ['releaseCaptures', 'releaseWatches', 'releasePlans', 'releaseCatchUps'].some(key => (state[key]?.length ?? 0) > 0);
+}
+function validateReleaseState(state) {
+  for (const key of ['releaseCaptures', 'releaseWatches', 'releasePlans', 'releaseCatchUps'])
+    if (state[key] !== undefined) need(Array.isArray(state[key]), 'Retain the complete ' + key + ' inventory.');
+  for (const key of ['releaseCaptures', 'releaseWatches', 'releasePlans'])
+    need(new Set((state[key] ?? []).map(item => item?.id)).size === (state[key]?.length ?? 0),
+      'Release inventory identities must be distinct.');
+  const sources = new Map((state.releaseCaptures ?? []).map(item => [item.id, item]));
+  const watches = new Map((state.releaseWatches ?? []).map(item => [item.id, item]));
+  const plans = new Map((state.releasePlans ?? []).map(item => [item.id, item]));
+  for (const item of sources.values()) {
+    releaseSourceId(item.id);
+    need(canonical(normalizeFredReleaseSelection(item.selection)) === canonical(item.selection) &&
+      Array.isArray(item.series) && item.series.length === item.selection.series.length &&
+      canonical(item.series.map(row => row.id).sort()) === canonical(item.selection.series),
+      'The release capture index differs from its selected series.');
+    for (const field of ['rowCount', 'releaseCount', 'calendarRows', 'vintageRows', 'recordCount'])
+      need(Number.isSafeInteger(item[field]) && item[field] >= 0, 'Retain valid release capture source counts.');
+    need(item.rowCount === item.calendarRows + item.vintageRows, 'The release source row counts changed.');
+  }
+  for (const watch of watches.values()) {
+    validateFredReleaseWatch(watch);
+    if (watch.template !== null) {
+      const original = (state.briefingTemplates ?? []).find(item => item.id === watch.template.id);
+      need(original && canonical(original) === canonical(watch.template),
+        'The release watch lost its original recurring briefing template.');
+    }
+  }
+  for (const plan of plans.values()) {
+    releasePlanId(plan.id); releaseSourceId(plan.afterCaptureSha256);
+    if (plan.beforeCaptureSha256 !== null) releaseSourceId(plan.beforeCaptureSha256);
+    need(watches.has(plan.watchId) && sources.has(plan.afterCaptureSha256) &&
+      (plan.beforeCaptureSha256 === null || sources.has(plan.beforeCaptureSha256)),
+      'The release plan lost its original watch or source snapshot.');
+    date(plan.metadataAsOf, 'Release plan metadata date');
+    need(Array.isArray(plan.completedAsOf) && new Set(plan.completedAsOf).size === plan.completedAsOf.length &&
+      canonical([...plan.completedAsOf].sort()) === canonical(plan.completedAsOf) &&
+      plain(plan.summary) && plain(plan.coverage), 'Retain the original plan completion snapshot and summary.');
+    for (const asOf of plan.completedAsOf)
+      need(date(asOf, 'Completed source date') <= plan.metadataAsOf, 'Completed source dates exceed this plan snapshot.');
+  }
+  const caught = new Set();
+  for (const item of state.releaseCatchUps ?? []) {
+    need(plain(item) && Object.keys(item).every(key => ['watchId', 'planId', 'asOf', 'captureId', 'selection'].includes(key)),
+      'Retain an original release acquisition record.');
+    const plan = plans.get(item.planId), key = item.planId + '|' + item.asOf;
+    need(plan && plan.watchId === item.watchId && !caught.has(key) &&
+      state.captures.some(capture => capture.id === item.captureId),
+      'A release acquisition lost its original plan, watch or economic source.');
+    caught.add(key); releaseSourceId(item.captureId); date(item.asOf, 'Acquired source date');
+    need(canonical(normalizeSelection(item.selection)) === canonical(item.selection) &&
+      item.asOf === item.selection.asOf, 'The acquired vintage selection changed.');
+  }
+}
+export function fredReleaseCaptureDirectory(directory, releaseCaptureId) {
+  return join(resolve(directory), 'release-sources', releaseSourceId(releaseCaptureId));
+}
+function fredReleasePlanPath(directory, planId) {
+  return join(resolve(directory), 'release-plans', releasePlanId(planId) + '.json');
+}
+function releaseCaptureSummary(capture, model = inspectFredReleaseCapture(capture)) {
+  return { id: capture.captureSha256, selection: clone(model.selection), rowCount: model.rowCount,
+    series: model.series.map(({ vintageDates, originalMetadata, ...item }) => ({
+      ...clone(item), vintageCount: vintageDates.length, latestVintageDate: vintageDates.at(-1) ?? null })),
+    releaseCount: model.releases.length, calendarRows: model.calendar.length,
+    vintageRows: model.vintages.length, recordCount: capture.records.length };
+}
+function releasePlanSummary(plan) {
+  return { id: plan.id, watchId: plan.watchId, beforeCaptureSha256: plan.beforeCaptureSha256,
+    afterCaptureSha256: plan.afterCaptureSha256, metadataAsOf: plan.metadataAsOf,
+    completedAsOf: clone(plan.completedAsOf), summary: clone(plan.summary), coverage: clone(plan.coverage) };
+}
+function releaseWatchFromState(state, watchId) {
+  const watch = (state.releaseWatches ?? []).find(item => item.id === watchId);
+  need(watch, 'Choose a saved release watch from this project.', 'FRED_RELEASE_WATCH_NOT_FOUND', 404);
+  return validateFredReleaseWatch(watch);
+}
+function releasePlanFromState(state, planId) {
+  releasePlanId(planId);
+  const plan = (state.releasePlans ?? []).find(item => item.id === planId);
+  need(plan, 'Choose a saved release plan from this project.', 'FRED_RELEASE_PLAN_NOT_FOUND', 404);
+  return plan;
+}
+async function projectReleaseCapture(directory, state, releaseCaptureId) {
+  releaseSourceId(releaseCaptureId);
+  const summary = (state.releaseCaptures ?? []).find(item => item.id === releaseCaptureId);
+  need(summary, 'Choose a retained release source from this project.', 'FRED_RELEASE_CAPTURE_NOT_FOUND', 404);
+  const { capture, model } = await readFredReleaseCapture(join(fredReleaseCaptureDirectory(directory, releaseCaptureId), 'capture.json'));
+  need(capture.captureSha256 === releaseCaptureId && canonical(summary) === canonical(releaseCaptureSummary(capture, model)),
+    'The retained release source differs from its project index.');
+  return capture;
+}
+export async function listFredReleaseCaptures({ directory } = {}) {
+  const state = await readFredProject(directory);
+  return { projectId: state.id, revision: state.revision, captures: clone(state.releaseCaptures ?? []) };
+}
+export async function getFredReleaseCapture({ directory, releaseCaptureId } = {}) {
+  return projectReleaseCapture(directory, await readFredProject(directory), releaseCaptureId);
+}
+function adoptFredReleaseSummary(state, capture, model) {
+  const summary = releaseCaptureSummary(capture, model);
+  state.releaseCaptures ??= [];
+  const previous = state.releaseCaptures.find(item => item.id === summary.id);
+  need(!previous || canonical(previous) === canonical(summary), 'The original release source summary changed.');
+  if (!previous) state.releaseCaptures.push(summary);
+  return { releaseCaptureId: summary.id, capture: clone(summary) };
+}
+export async function importFredReleaseCapture({ directory, id, expectedRevision, capture, releaseCaptureId } = {}) {
+  operationId(id);
+  const state = await readFredProject(directory);
+  let staged;
+  if (capture !== undefined && capture !== null) {
+    capture = clone(capture);
+    inspectFredReleaseCapture(capture);
+    if (releaseCaptureId !== undefined && releaseCaptureId !== null)
+      need(releaseSourceId(releaseCaptureId) === capture.captureSha256, 'The supplied release capture and ID differ.');
+    releaseCaptureId = capture.captureSha256;
+    // Retain the complete source before beginning the small, resumable project mutation.
+    staged = await storeFredReleaseCapture(fredReleaseCaptureDirectory(directory, releaseCaptureId), capture);
+  } else {
+    releaseSourceId(releaseCaptureId);
+    const previous = state.operations.find(item => item.id === id);
+    const pending = state.pending;
+    need((previous?.kind === 'release-import' && previous.result.releaseCaptureId === releaseCaptureId) ||
+      (pending?.id === id && pending.kind === 'release-import' && pending.payload.releaseCaptureId === releaseCaptureId),
+      'Continue the original release import operation or supply its complete source.',
+      'FRED_RELEASE_IMPORT_CONTINUATION_REQUIRED', 409);
+    staged = await readFredReleaseCapture(join(fredReleaseCaptureDirectory(directory, releaseCaptureId), 'capture.json'));
+    need(staged.capture.captureSha256 === releaseCaptureId, 'The staged original release source changed.');
+  }
+  return transact(directory, { id, expectedRevision, kind: 'release-import', payload: { releaseCaptureId } },
+    state => adoptFredReleaseSummary(state, staged.capture, staged.model));
+}
+export async function acquireFredReleaseCapture({ directory, id, expectedRevision, selection,
+  signal, environment, fetchImpl } = {}) {
+  const original = await readFredProject(directory);
+  if (selection === undefined && original.pending?.id === id && original.pending.kind === 'release-capture')
+    selection = original.pending.payload.selection;
+  selection = normalizeFredReleaseSelection(selection);
+  return transact(directory, { id, expectedRevision, kind: 'release-capture', payload: { selection } }, async (state, root) => {
+    const acquired = await captureFredReleases({ directory: join(root, 'release-acquisitions', id), selection,
+      apiKeyEnv: state.apiKeyEnv, signal, environment, fetchImpl });
+    const retained = await storeFredReleaseCapture(fredReleaseCaptureDirectory(root, acquired.capture.captureSha256), acquired.capture);
+    return { ...adoptFredReleaseSummary(state, retained.capture, retained.model), acquisitionId: id };
+  });
+}
+export async function listFredReleaseWatches({ directory } = {}) {
+  const state = await readFredProject(directory);
+  return { projectId: state.id, revision: state.revision, watches: clone(state.releaseWatches ?? []),
+    plans: clone(state.releasePlans ?? []), catchUps: clone(state.releaseCatchUps ?? []) };
+}
+async function releaseWatchTemplate(directory, state, templateId) {
+  if (templateId === null) return null;
+  const template = templateFromState(state, templateId);
+  const review = state.reviews.find(item => item.id === template.origin.reviewId);
+  need(review?.briefing && review.captureId === template.origin.captureId,
+    'The release watch template lost its original analyst review.');
+  const rebuilt = createFredBriefingTemplate({ name: template.name, review,
+    model: validateCapture(await getFredCapture(directory, review.captureId)),
+    window: template.window, previousTemplateId: template.previousTemplateId });
+  need(canonical(rebuilt) === canonical(template), 'The watched template differs from its original analyst source.');
+  return template;
+}
+export async function saveFredReleaseWatch({ directory, id, expectedRevision, name, series, templateId = null,
+  observationStart, observationEnd = 'as_of', baselineAsOf, catchUp = 'all_vintages',
+  pageSize = 1000, maxRows = 1000000 } = {}) {
+  const original = await readFredProject(directory);
+  const template = await releaseWatchTemplate(directory, original, templateId);
+  const watch = createFredReleaseWatch({ name, ...(series === undefined ? {} : { series }), template,
+    observationStart, observationEnd, baselineAsOf, catchUp, pageSize, maxRows });
+  const payload = { name: watch.name, series: watch.series, templateId, observationStart: watch.observationStart,
+    observationEnd: watch.observationEnd, baselineAsOf: watch.baselineAsOf, catchUp: watch.catchUp,
+    pageSize: watch.pageSize, maxRows: watch.maxRows, watchId: watch.id };
+  return transact(directory, { id, expectedRevision, kind: 'release-watch-save', payload }, async (state, root) => {
+    const retainedTemplate = await releaseWatchTemplate(root, state, templateId);
+    need(canonical(retainedTemplate) === canonical(watch.template), 'The original watched template changed.');
+    state.releaseWatches ??= [];
+    if (!state.releaseWatches.some(item => item.id === watch.id)) state.releaseWatches.push(watch);
+    return { watchId: watch.id, watch };
+  });
+}
+function releaseHistory(state) {
+  const plans = new Map((state.releasePlans ?? []).map(plan => [plan.id, plan]));
+  const saved = new Map(), completed = new Map();
+  state.operations.forEach((operation, index) => {
+    if (operation.kind === 'release-plan-save' && !saved.has(operation.result?.planId))
+      saved.set(operation.result?.planId, { index, operation });
+    if (operation.kind === 'release-vintage-capture' && operation.result?.catchUp) {
+      const item = operation.result.catchUp, key = item.planId + '|' + item.asOf;
+      if (!completed.has(key)) completed.set(key, { index, operation });
+    }
+  });
+  return { plans, saved, completed };
+}
+function releaseCompletedDates(state, watchId, afterCaptureSha256, beforeIndex = Infinity, history = releaseHistory(state)) {
+  const values = new Set();
+  for (const item of state.releaseCatchUps ?? []) {
+    const plan = history.plans.get(item.planId), operation = history.completed.get(item.planId + '|' + item.asOf);
+    if (item.watchId === watchId && plan?.afterCaptureSha256 === afterCaptureSha256 &&
+      operation && operation.index < beforeIndex) values.add(item.asOf);
+  }
+  return [...values].sort();
+}
+function validateReleasePlanHistory(state, plan, history = releaseHistory(state)) {
+  const saved = history.saved.get(plan.id);
+  need(saved && canonical(saved.operation.result.plan) === canonical(releasePlanSummary(plan)),
+    'The release plan lost its original completed project operation.');
+  const completed = releaseCompletedDates(state, plan.watchId, plan.afterCaptureSha256, saved.index, history);
+  need(canonical(completed) === canonical(plan.completedAsOf),
+    'The saved plan completion snapshot differs from the original same-watch, same-source acquisition history.');
+}
+function releasePlanInput({ watchId, beforeCaptureId = null, afterCaptureId } = {}) {
+  need(typeof watchId === 'string' && /^fred-release-watch-[a-f0-9]{64}$/.test(watchId),
+    'Choose the original saved release watch.');
+  if (beforeCaptureId !== null) releaseSourceId(beforeCaptureId);
+  releaseSourceId(afterCaptureId);
+  return { watchId, beforeCaptureId, afterCaptureId };
+}
+async function releasePlanContext(directory, state, input) {
+  const watch = releaseWatchFromState(state, input.watchId);
+  const before = input.beforeCaptureId === null ? null : await projectReleaseCapture(directory, state, input.beforeCaptureId);
+  const after = await projectReleaseCapture(directory, state, input.afterCaptureId);
+  const plan = planFredReleaseCatchUp({ watch, before, after,
+    completedAsOf: releaseCompletedDates(state, watch.id, after.captureSha256) });
+  const previewId = digest({ schema: 'stellar-forge.fred-release-preview.v1', projectId: state.id, planId: plan.id });
+  return { plan, previewId };
+}
+export async function previewFredReleasePlan({ directory, section = 'acquisitions', offset = 0, limit = 100, ...request } = {}) {
+  const state = await readFredProject(directory), input = releasePlanInput(request);
+  const { plan, previewId } = await releasePlanContext(directory, state, input);
+  return { projectId: state.id, revision: state.revision, previewId, plan: pageFredReleasePlan(plan, { section, offset, limit }) };
+}
+async function storeProjectReleasePlan(directory, plan) {
+  validateFredReleasePlan(plan);
+  const parent = await privateDirectory(join(resolve(directory), 'release-plans'));
+  const path = fredReleasePlanPath(directory, plan.id);
+  const previous = await optionalJson(path, MAX_CAPTURE_BYTES);
+  if (previous) need(canonical(previous) === canonical(plan), 'This release plan ID retains another original descriptor.');
+  else await atomicJson(parent, plan.id + '.json', plan, { exclusive: true });
+  return plan;
+}
+export async function saveFredReleasePlan({ directory, id, expectedRevision, previewId, ...request } = {}) {
+  const input = releasePlanInput(request);
+  need(typeof previewId === 'string' && /^[a-f0-9]{64}$/.test(previewId),
+    'Preview the complete release selection before saving the plan.');
+  const original = await readFredProject(directory);
+  if (!original.operations.some(item => item.id === id)) {
+    const value = await releasePlanContext(directory, original, input);
+    need(value.previewId === previewId, 'The release plan changed; review its current source and completion history.',
+      'FRED_RELEASE_PREVIEW_CHANGED', 409);
+  }
+  return transact(directory, { id, expectedRevision, kind: 'release-plan-save', payload: { ...input, previewId } },
+    async (state, root) => {
+      const value = await releasePlanContext(root, state, input);
+      need(value.previewId === previewId, 'The release plan changed; review its current source and completion history.',
+        'FRED_RELEASE_PREVIEW_CHANGED', 409);
+      await storeProjectReleasePlan(root, value.plan);
+      const summary = releasePlanSummary(value.plan);
+      state.releasePlans ??= [];
+      const existing = state.releasePlans.find(item => item.id === summary.id);
+      need(!existing || canonical(existing) === canonical(summary), 'The original saved release plan summary changed.');
+      if (!existing) state.releasePlans.push(summary);
+      return { planId: summary.id, plan: summary };
+    });
+}
+async function retainedFredReleasePlan(directory, state, planId) {
+  const summary = releasePlanFromState(state, planId);
+  const plan = await readPrivateJson(fredReleasePlanPath(directory, planId), MAX_CAPTURE_BYTES);
+  const before = plan.beforeCaptureSha256 === null ? null : await projectReleaseCapture(directory, state, plan.beforeCaptureSha256);
+  const after = await projectReleaseCapture(directory, state, plan.afterCaptureSha256);
+  validateFredReleasePlan(plan, { before, after });
+  need(canonical(releasePlanSummary(plan)) === canonical(summary) &&
+    canonical(releaseWatchFromState(state, plan.watchId)) === canonical(plan.watch),
+    'The original saved release plan source or watch changed.');
+  validateReleasePlanHistory(state, plan);
+  return plan;
+}
+export async function getFredReleasePlan({ directory, planId, section = 'acquisitions', offset = 0, limit = 100 } = {}) {
+  const state = await readFredProject(directory), plan = await retainedFredReleasePlan(directory, state, planId);
+  return { projectId: state.id, revision: state.revision, plan: pageFredReleasePlan(plan, { section, offset, limit }),
+    catchUps: clone((state.releaseCatchUps ?? []).filter(item => item.planId === planId)) };
+}
+export async function downloadFredReleasePlan({ directory, planId } = {}) {
+  const state = await readFredProject(directory), plan = await retainedFredReleasePlan(directory, state, planId);
+  const body = jsonBytes(plan);
+  need(body.length <= MAX_CAPTURE_BYTES, 'The complete release plan exceeds 64 MiB.', 'FRED_CAPTURE_TOO_LARGE', 413);
+  return { body, bytes: body.length, sha256: hash(body), contentType: 'application/json',
+    path: 'fred-release-plan.json', planId: plan.id, watchId: plan.watchId };
+}
+export async function acquireFredPlannedVintage({ directory, id, expectedRevision, planId, asOf,
+  signal, environment, fetchImpl } = {}) {
+  const original = await readFredProject(directory), plan = await retainedFredReleasePlan(directory, original, planId);
+  date(asOf, 'Planned source date');
+  const acquisition = plan.acquisitions.find(item => item.asOf === asOf);
+  need(acquisition, 'Choose an explicit observation acquisition from the saved release plan.');
+  const payload = { planId: plan.id, asOf, watchId: plan.watchId,
+    afterCaptureSha256: plan.afterCaptureSha256, selection: clone(acquisition.selection) };
+  return transact(directory, { id, expectedRevision, kind: 'release-vintage-capture', payload }, async (state, root) => {
+    const savedPlan = await retainedFredReleasePlan(root, state, plan.id);
+    const selected = savedPlan.acquisitions.find(item => item.asOf === asOf);
+    need(selected && canonical(selected.selection) === canonical(payload.selection),
+      'The selected planned observation acquisition changed.');
+    const previous = (state.releaseCatchUps ?? []).find(item => item.planId === plan.id && item.asOf === asOf);
+    let captured;
+    if (previous) {
+      need(canonical(previous.selection) === canonical(selected.selection), 'The original completed vintage selection changed.');
+      captured = await getFredCapture(root, previous.captureId);
+    } else {
+      const acquired = await captureFred({ directory: join(root, 'release-vintage-acquisitions', id),
+        selection: selected.selection, apiKeyEnv: state.apiKeyEnv, signal, environment, fetchImpl });
+      captured = acquired.capture;
+    }
+    const model = validateCapture(captured);
+    need(canonical(model.selection) === canonical(selected.selection),
+      'The acquired observation edition differs from its original planned selection.');
+    const adopted = await adoptCapture(state, root, captured);
+    const catchUp = { watchId: plan.watchId, planId: plan.id, asOf, captureId: adopted.captureId,
+      selection: clone(selected.selection) };
+    state.releaseCatchUps ??= [];
+    if (!previous) state.releaseCatchUps.push(catchUp);
+    else need(canonical(previous) === canonical(catchUp), 'The original completed vintage record changed.');
+    return { ...adopted, watchId: plan.watchId, planId: plan.id, asOf, selection: clone(selected.selection),
+      catchUp, acquisitionId: id, reusedCapture: Boolean(previous) };
+  });
+}
+async function validateReleaseBundle(state, releaseCaptures, releasePlans, captures) {
+  validateReleaseState(state);
+  need(Array.isArray(releaseCaptures) && Array.isArray(releasePlans) &&
+    releaseCaptures.length === (state.releaseCaptures?.length ?? 0) &&
+    new Set(releaseCaptures.map(item => item?.captureSha256)).size === releaseCaptures.length &&
+    releasePlans.length === (state.releasePlans?.length ?? 0) &&
+    new Set(releasePlans.map(item => item?.id)).size === releasePlans.length,
+    'The complete release bundle must retain every original source snapshot and saved plan.');
+  const sourceMap = new Map(), planMap = new Map(), captureMap = new Map(), history = releaseHistory(state);
+  for (const capture of releaseCaptures) {
+    const summary = releaseCaptureSummary(capture);
+    const original = (state.releaseCaptures ?? []).find(item => item.id === summary.id);
+    need(original && canonical(original) === canonical(summary), 'A portable release source differs from its original project index.');
+    sourceMap.set(summary.id, capture);
+  }
+  for (const capture of captures) captureMap.set(capture.captureSha256, capture);
+  for (const plan of releasePlans) {
+    const summary = releasePlanFromState(state, plan.id);
+    const before = plan.beforeCaptureSha256 === null ? null : sourceMap.get(plan.beforeCaptureSha256);
+    const after = sourceMap.get(plan.afterCaptureSha256);
+    need(after && (plan.beforeCaptureSha256 === null || before), 'The portable release plan lost an original source snapshot.');
+    validateFredReleasePlan(plan, { before, after });
+    need(canonical(releasePlanSummary(plan)) === canonical(summary) &&
+      canonical(releaseWatchFromState(state, plan.watchId)) === canonical(plan.watch),
+      'The portable release plan differs from its saved watch or completion snapshot.');
+    validateReleasePlanHistory(state, plan, history);
+    planMap.set(plan.id, plan);
+  }
+  for (const item of state.releaseCatchUps ?? []) {
+    const plan = planMap.get(item.planId), capture = captureMap.get(item.captureId);
+    const planned = plan?.acquisitions.find(value => value.asOf === item.asOf);
+    const completed = history.completed.get(item.planId + '|' + item.asOf), saved = history.saved.get(item.planId);
+    need(plan?.watchId === item.watchId && planned && capture && completed && saved &&
+      completed.index > saved.index && canonical(completed.operation.result.catchUp) === canonical(item) &&
+      canonical(planned.selection) === canonical(item.selection) &&
+      canonical(validateCapture(capture).selection) === canonical(item.selection),
+      'A portable catch-up lost its exact original plan, acquired source or completed operation.');
+  }
+}
+
 export async function compareFredCaptures({ directory, before, after } = {}) {
   const [first, second] = await Promise.all([getFredCapture(directory, before), getFredCapture(directory, after)]);
   return { ...compareCaptures(first, second), beforeCapture: before, afterCapture: after };
@@ -497,8 +880,17 @@ export async function exportFredProject({ directory } = {}) {
     for (const review of analystReviews) briefings.push(exportFredBriefingFiles(await getFredBriefing(directory, review.id, { includeFiles: true })));
     const recurring = (state.briefingTemplates?.length ?? 0) > 0;
     await validateRecurringBundle(state, captures);
-    const bundle = { schema: recurring ? RECURRING_BUNDLE : briefings.length ? BRIEFING_BUNDLE : BUNDLE,
-      state, captures, publicationPlans, ...(briefings.length ? { briefings } : {}) };
+    const release = releaseStatePresent(state), releaseCaptures = [], releasePlans = [];
+    if (release) {
+      for (const summary of state.releaseCaptures ?? [])
+        releaseCaptures.push(await projectReleaseCapture(directory, state, summary.id));
+      for (const summary of state.releasePlans ?? [])
+        releasePlans.push(await retainedFredReleasePlan(directory, state, summary.id));
+      await validateReleaseBundle(state, releaseCaptures, releasePlans, captures);
+    }
+    const bundle = { schema: release ? RELEASE_BUNDLE : recurring ? RECURRING_BUNDLE : briefings.length ? BRIEFING_BUNDLE : BUNDLE,
+      state, captures, publicationPlans, ...(release || briefings.length ? { briefings } : {}),
+      ...(release ? { releaseCaptures, releasePlans } : {}) };
     bundle.bundleSha256 = digest(bundle);
     need(jsonBytes(bundle).length <= 256 * 1024 * 1024, 'Project bundle exceeds 256 MiB; export captures separately.');
     return bundle;
@@ -506,19 +898,25 @@ export async function exportFredProject({ directory } = {}) {
 }
 export async function receiveFredProject({ directory, bundle } = {}) {
   directory = await privateDirectory(resolve(directory));
-  need([BUNDLE, BRIEFING_BUNDLE, RECURRING_BUNDLE].includes(bundle?.schema) && Array.isArray(bundle.captures) &&
+  need([BUNDLE, BRIEFING_BUNDLE, RECURRING_BUNDLE, RELEASE_BUNDLE].includes(bundle?.schema) && Array.isArray(bundle.captures) &&
     Array.isArray(bundle.publicationPlans) &&
-    (bundle.schema === BUNDLE ? bundle.briefings === undefined : Array.isArray(bundle.briefings) && bundle.briefings.length > 0),
+    (bundle.schema === BUNDLE ? bundle.briefings === undefined : Array.isArray(bundle.briefings) &&
+      (bundle.schema === RELEASE_BUNDLE || bundle.briefings.length > 0)) &&
+    (bundle.schema === RELEASE_BUNDLE ? Array.isArray(bundle.releaseCaptures) && Array.isArray(bundle.releasePlans) :
+      bundle.releaseCaptures === undefined && bundle.releasePlans === undefined),
     'Receive the complete original versioned project bundle.');
   const identity = { schema: bundle.schema, state: bundle.state, captures: bundle.captures, publicationPlans: bundle.publicationPlans,
-    ...(bundle.schema !== BUNDLE ? { briefings: bundle.briefings } : {}) };
+    ...(bundle.schema !== BUNDLE ? { briefings: bundle.briefings } : {}),
+    ...(bundle.schema === RELEASE_BUNDLE ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}) };
   need(bundle.bundleSha256 === digest(identity), 'Project bundle identity changed.');
   const original = projectState(clone(bundle.state));
   need(!original.pending, 'A receiving bundle must contain a completed project state.');
   const recurring = (original.briefingTemplates?.length ?? 0) > 0 ||
     (original.briefingSuccessors?.length ?? 0) > 0;
-  need((bundle.schema === RECURRING_BUNDLE) === recurring,
-    'Use the complete versioned bundle for this recurring briefing project.');
+  const release = releaseStatePresent(original);
+  need((bundle.schema === RELEASE_BUNDLE) === release &&
+    (release || (bundle.schema === RECURRING_BUNDLE) === recurring),
+    'Use the complete versioned bundle for this release and recurring briefing project.');
   const analystReviews = original.reviews.filter(review => review.briefing);
   need((bundle.briefings ?? []).length === analystReviews.length &&
     new Set((bundle.briefings ?? []).map(item => item.manifest?.reviewId)).size === analystReviews.length &&
@@ -530,6 +928,7 @@ export async function receiveFredProject({ directory, bundle } = {}) {
   need(bundle.captures.length === original.captures.length &&
     new Set(bundle.captures.map(item => item.captureSha256)).size === bundle.captures.length, 'Bundle source inventory differs.');
   await validateRecurringBundle(original, bundle.captures);
+  if (release) await validateReleaseBundle(original, bundle.releaseCaptures, bundle.releasePlans, bundle.captures);
   return withPrivateLock(directory, 'project.lock', async () => {
     const received = await optionalJson(join(directory, 'received.json'));
     if (received) {
@@ -559,6 +958,11 @@ export async function receiveFredProject({ directory, bundle } = {}) {
       const transfer = bundle.briefings.find(item => item.manifest.reviewId === review.id);
       await receiveFredBriefingFiles({ directory: fredBriefingDirectory(directory, review.id), transfer, capture, review });
     }
+    if (release) {
+      for (const capture of bundle.releaseCaptures)
+        await storeFredReleaseCapture(fredReleaseCaptureDirectory(directory, capture.captureSha256), capture);
+      for (const plan of bundle.releasePlans) await storeProjectReleasePlan(directory, plan);
+    }
     // Reconstruct native merchant files with the original retained analyst bytes, source and payment inputs.
     for (const publication of original.publications) {
       const { prepareFredEdition, stageFredMerchant } = await import('./merchant.mjs');
@@ -586,11 +990,20 @@ export async function receiveFredProject({ directory, bundle } = {}) {
 export async function fredProjectView(directory) {
   const state = await readFredProject(directory);
   let acquisition = null;
-  if (state.pending?.kind === 'capture') {
-    const value = await optionalJson(join(resolve(directory), 'acquisitions', state.pending.id, 'progress.json'));
+  if (['capture', 'release-vintage-capture'].includes(state.pending?.kind)) {
+    const path = state.pending.kind === 'capture' ? 'acquisitions' : 'release-vintage-acquisitions';
+    const value = await optionalJson(join(resolve(directory), path, state.pending.id, 'progress.json'));
     if (value) acquisition = { state: value.state, responses: value.records.length, lastError: value.lastError,
-      startedAt: value.startedAt, selection: value.selection };
+      startedAt: value.startedAt, selection: value.selection,
+      ...(state.pending.kind === 'release-vintage-capture' ? { kind: state.pending.kind } : {}) };
+  } else if (state.pending?.kind === 'release-capture') {
+    const { directory: privatePath, ...progress } = await inspectFredReleaseAcquisition({
+      directory: join(resolve(directory), 'release-acquisitions', state.pending.id) });
+    acquisition = { ...progress, kind: state.pending.kind };
   }
   return { ...state, briefingTemplates: clone(state.briefingTemplates ?? []),
-    briefingSuccessors: clone(state.briefingSuccessors ?? []), operations: state.operations.map(({ id, kind, completedAt, result }) => ({ id, kind, completedAt, result })), acquisition };
+    briefingSuccessors: clone(state.briefingSuccessors ?? []),
+    releaseCaptures: clone(state.releaseCaptures ?? []), releaseWatches: clone(state.releaseWatches ?? []),
+    releasePlans: clone(state.releasePlans ?? []), releaseCatchUps: clone(state.releaseCatchUps ?? []),
+    operations: state.operations.map(({ id, kind, completedAt, result }) => ({ id, kind, completedAt, result })), acquisition };
 }

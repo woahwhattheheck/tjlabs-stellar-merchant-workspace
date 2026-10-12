@@ -17,7 +17,10 @@ const reads=Object.freeze({
   records:['/api/records',['sourceId','id','offset','limit','collection']],
   response:['/api/response',['sourceId','id','sequence']],mapping:['/api/mapping',['id']],
   edition:['/api/edition',['id']],projection:['/api/projection',['sourceId','id']],
-  compare:['/api/compare',['before','after','offset','limit']]
+  compare:['/api/compare',['before','after','offset','limit']],
+  refresh_plan:['/api/refresh-plan',['id']],refresh_run:['/api/refresh-run',['id']],
+  refresh_changes:['/api/refresh-changes',['id','offset','limit','kind']],
+  refresh_record:['/api/refresh-record',['id','key']]
 });
 export class MerchantWordPressWorkspaces{
   #config;#exports;#clients=new Map();#pending=new Set();

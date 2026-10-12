@@ -86,7 +86,7 @@ export function createComparisonWorkspace(ctx) {
         || gate === 'retained' && (!opened || !references().some(row => row.id === opened.record.id && row.generation >= opened.record.generation))
         || gate === 'packet' && !isLatest()
         || gate === 'recover' && (!writable || !recovery || recovery.retained)
-        || gate === 'add' && view.definition.pairs.length >= 16
+        || gate === 'add' && view.definition.pairs.length >= 32
         || gate === 'previous' && (!changes || changes.offset === 0)
         || gate === 'next' && changes?.nextOffset == null);
     }
@@ -412,5 +412,5 @@ export function createComparisonWorkspace(ctx) {
     }
     renderDefinition(); renderList(); renderOpened(); renderPending(); renderRecovery(); renderPacket(); buttons();
   }
-  return { reset, buttons, pending: () => view.pending.length > 0 || Object.values(view.reviewDrafts).some(row => row.dirty) };
+  return { reset, buttons, open: openComparison, inspectPending: inspectRecovery, pending: () => view.pending.length > 0 || Object.values(view.reviewDrafts).some(row => row.dirty) };
 }

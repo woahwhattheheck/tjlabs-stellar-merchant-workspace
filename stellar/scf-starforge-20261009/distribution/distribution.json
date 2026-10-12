@@ -98,6 +98,18 @@
     {
       "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/baserow/workspace/server.mjs",
       "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/baserow/workspace/browser-assets.json"
+    },
+    {
+      "server": "stellar-forge/mcp-merchant-operator/console/service.mjs",
+      "manifest": "stellar-forge/mcp-merchant-operator/console/browser-assets.json"
+    },
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/browser-assets.json"
+    },
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/browser-assets.json"
     }
   ],
   "supportFiles": [

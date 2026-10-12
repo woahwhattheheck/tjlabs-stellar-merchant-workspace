@@ -12,7 +12,7 @@ export const RESPONSE_REVIEW_DECISIONS = ['UNREVIEWED', 'ACCEPTED', 'CHANGES_REQ
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const SHA = /^[a-f0-9]{64}$/;
 const CASE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
-const MAX_GENERATION = 256, MAX_PAIRS = 16, MAX_RECORD = 2 * 1024 * 1024;
+const MAX_GENERATION = 256, MAX_PAIRS = 32, MAX_RECORD = 2 * 1024 * 1024;
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const decode = bytes => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
@@ -36,7 +36,7 @@ function prepareRequest(input) {
   shape(input, ['id', 'project', 'expectedRevision', 'title', 'pairs'], 'comparison request');
   const ids = new Set();
   if (!Array.isArray(input.pairs) || !input.pairs.length || input.pairs.length > MAX_PAIRS)
-    fail('Select 1–16 retained baseline/candidate cases.');
+    fail('Select 1–32 retained baseline/candidate cases.');
   return { kind: 'prepare', id: uuid(input.id), project: projectName(input.project),
     expectedRevision: positive(input.expectedRevision, 'project revision'), title: text(input.title, 'Comparison title', 160, true),
     pairs: input.pairs.map(pair => {
