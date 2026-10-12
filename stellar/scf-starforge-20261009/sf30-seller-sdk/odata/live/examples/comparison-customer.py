@@ -331,7 +331,7 @@ def main():
         need(len(expected_rows) == expected_count and all(len(row) == len(COLUMNS) for row in expected_rows),
              "The native comparison CSV is incomplete.")
         need(0 < expected_count <= 100000, "This customer operation selects at most 100,000 changed cells.")
-        need(all(row[1] == "matched" and row[3] == "selection_changed" and row[5] == "field_not_selected" for row in expected_rows),
+        need(all(row[1] == "changed" and row[3] == "selection_changed" and row[5] == "field_not_selected" for row in expected_rows),
              "The original customer selection changed its source meaning.")
         expected_summary = Counter((row[2], row[3], row[4], row[5]) for row in expected_rows)
         expected_summary_rows = [[*key, value] for key, value in sorted(expected_summary.items())]
