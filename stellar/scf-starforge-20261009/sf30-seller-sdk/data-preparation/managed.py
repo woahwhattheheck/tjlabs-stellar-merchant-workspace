@@ -506,8 +506,8 @@ def open_managed_listener(args):
 
 def serve_managed(args):
     previous = {}
-    with open_managed_listener(args) as (server, announcement):
-        try:
+    try:
+        with open_managed_listener(args) as (server, announcement):
             print(dumps(announcement), flush=True)
             def stop(_signum, _frame):
                 if not server.closing:
@@ -516,9 +516,11 @@ def serve_managed(args):
             for signum in (signal.SIGINT, signal.SIGTERM):
                 previous[signum] = signal.signal(signum, stop)
             server.serve_forever(poll_interval=0.2)
-        finally:
-            for signum, handler in previous.items():
-                signal.signal(signum, handler)
+    finally:
+        # Keep repeated stop signals cooperative until the original listener,
+        # active transfers and all received-project jobs have completely drained.
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
 
 def main():
     os.umask(0o077)

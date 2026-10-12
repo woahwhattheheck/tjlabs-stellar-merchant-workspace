@@ -224,30 +224,47 @@ async function handover() {
   $('#content').innerHTML=head('Customer handover','Receive complete results or reopen the whole editable preparation project.')+`<div class="panel"><h3>Select the execution</h3><div class="field"><label for="handover-run">Saved execution</label><select id="handover-run">${options(items,selected?.id,runLabel)}</select></div>${more('executions')}<div id="handover-actions"></div></div><div class="panel"><h3>Editable project</h3><p>Includes every retained original, saved recipe and pipeline edition, intermediate and final dataset, result review, and execution history.</p><button id="export-project" class="primary">Download complete project</button><div class="delivery-links" id="project-link"></div><div class="help"><h3>Independent receiving</h3><p>Use the pipeline source package and a new destination directory:</p><pre>python3 cli.py --workspace ./received receive ./project.zip
 python3 cli.py --workspace ./received serve --port 8777</pre><p>The receiver reconstructs the original source tables and result indexes, keeps all saved editions, and opens the same pipeline editor. It does not execute saved queries during import.</p></div></div>`;
   $('#content').insertAdjacentHTML('beforeend', `<div class="panel"><h3>Receive an editable project</h3><p>Upload a current pipeline project or an earlier saved pipeline project. The receiver preserves its complete original records and opens a separate workspace; this workspace and any running jobs remain unchanged.</p><form id="receive-form"><div class="field"><label for="project-file">Complete project ZIP</label><input id="project-file" type="file" accept=".zip" required></div><button class="primary" type="submit">Receive independent project</button></form><div id="receive-info" class="delivery-links"></div><h3>Previously received projects</h3><div id="received-projects"></div></div>`);
-  async function receivedList() {
-    const data=await request('/api/received');
-    $('#received-projects').innerHTML=data.items.length?data.items.map(p=>`<div class="run-card"><div><strong>${esc(p.label)}</strong><p class="hint">${count(p.executions)} executions · ${count(p.sources)} retained source editions</p></div><button data-open-received="${esc(p.id)}">Open independent workspace</button></div>`).join(''):'<p class="hint">No projects have been received here.</p>';
-    document.querySelectorAll('[data-open-received]').forEach(b=>b.onclick=()=>action(async()=>{const value=await request('/api/open-received',{id:b.dataset.openReceived});$('#receive-info').innerHTML=`<a href="${esc(value.origin)}" target="_blank" rel="noopener">Open received project: ${esc(value.label)}</a>`;}));
+  const receiveForm=$('#receive-form'), projectFile=$('#project-file'), receiveInfo=$('#receive-info');
+  const receivedProjects=$('#received-projects'), handoverRun=$('#handover-run'), handoverActions=$('#handover-actions');
+  const exportButton=$('#export-project'), projectLink=$('#project-link');
+  function completedDownload(container, value, description) {
+    const link=document.createElement('a');
+    link.href=value.download;link.textContent=description+' ('+count(value.bytes)+' bytes)';
+    const current=container.isConnected;
+    if(current)container.replaceChildren(link);
+    else{link.hidden=true;document.body.append(link);}
+    link.click();
+    if(!current)link.remove();
   }
-  $('#receive-form').onsubmit=event=>{event.preventDefault();action(async()=>{
-    const file=$('#project-file').files[0];if(!file)return;
+  async function receivedList() {
+    if(!receivedProjects.isConnected)return;
+    const data=await request('/api/received');
+    if(!receivedProjects.isConnected)return;
+    receivedProjects.innerHTML=data.items.length?data.items.map(p=>`<div class="run-card"><div><strong>${esc(p.label)}</strong><p class="hint">${count(p.executions)} executions · ${count(p.sources)} retained source editions</p></div><button data-open-received="${esc(p.id)}">Open independent workspace</button></div>`).join(''):'<p class="hint">No projects have been received here.</p>';
+    receivedProjects.querySelectorAll('[data-open-received]').forEach(b=>b.onclick=()=>action(async()=>{const value=await request('/api/open-received',{id:b.dataset.openReceived});if(receiveInfo.isConnected)receiveInfo.innerHTML=`<a href="${esc(value.origin)}" target="_blank" rel="noopener">Open received project: ${esc(value.label)}</a>`;}));
+  }
+  receiveForm.onsubmit=event=>{event.preventDefault();action(async()=>{
+    const file=projectFile.files[0];if(!file)return;
     const fingerprint=JSON.stringify([file.name,file.size,file.lastModified]);
     if(!receivingRequest||receivingRequest.file!==fingerprint)receivingRequest={file:fingerprint,key:unique()};
     try{sessionStorage.setItem('pipeline-receiving-request',JSON.stringify(receivingRequest));}catch{}
-    const button=$('#receive-form button');button.disabled=true;
-    try{const value=await request('/api/receive?'+new URLSearchParams({requestKey:receivingRequest.key}),file,true);
-      $('#receive-info').innerHTML=`<p>Received ${count(value.executions)} executions with their complete original results.</p><a href="${esc(value.origin)}" target="_blank" rel="noopener">Open received project: ${esc(value.label)}</a>`;
-      receivingRequest=null;try{sessionStorage.removeItem('pipeline-receiving-request');}catch{}
+    const pendingRequest=receivingRequest,button=receiveForm.querySelector('button');button.disabled=true;
+    try{const value=await request('/api/receive?'+new URLSearchParams({requestKey:pendingRequest.key}),file,true);
+      if(receiveInfo.isConnected)receiveInfo.innerHTML=`<p>Received ${count(value.executions)} executions with their complete original results.</p><a href="${esc(value.origin)}" target="_blank" rel="noopener">Open received project: ${esc(value.label)}</a>`;
+      if(receivingRequest?.key===pendingRequest.key){receivingRequest=null;try{sessionStorage.removeItem('pipeline-receiving-request');}catch{}}
       await receivedList();notice('The independent project is ready. This workspace is unchanged.');
     }finally{button.disabled=false;}
   });};
-  await receivedList();
   const renderActions=()=>{
-    const run=items.find(r=>r.id===$('#handover-run').value);if(!run){$('#handover-actions').innerHTML='<p>No saved execution yet.</p>';return;}
-    ui.execution=run.id;$('#handover-actions').innerHTML=`<p>${status(run.status)} · ${run.definition.outputs.length} final output selections</p><div class="toolbar"><button data-delivery="report">Download operating report</button><button data-delivery="deliver" ${run.status==='COMPLETE'?'':'disabled'}>Download all customer results</button></div><div class="field"><label for="merchant-stage">Original merchant dataset</label><select id="merchant-stage">${run.definition.stages.filter(s=>run.stages[s.id].status==='COMPLETE').map(s=>`<option value="${esc(s.id)}" ${run.definition.outputs.includes(s.id)?'selected':''}>${esc(s.label)} · ${count(run.stages[s.id].rows)} ${run.stages[s.id].rows===1?'row':'rows'}</option>`).join('')}</select></div><button data-delivery="merchant" ${Object.values(run.stages).some(s=>s.status==='COMPLETE')?'':'disabled'}>Download merchant dataset package</button><div class="delivery-links" id="result-link"></div>`;
-    document.querySelectorAll('[data-delivery]').forEach(b=>b.onclick=()=>action(async()=>{b.disabled=true;try{const value=await request('/api/'+b.dataset.delivery,{execution_id:run.id,stage_id:$('#merchant-stage').value});$('#result-link').innerHTML=`<a href="${esc(value.download)}">Open completed ${b.dataset.delivery==='report'?'report':'download'} (${count(value.bytes)} bytes)</a>`;$('#result-link a').click();}finally{b.disabled=false;}}));
+    const run=items.find(r=>r.id===handoverRun.value);if(!run){handoverActions.innerHTML='<p>No saved execution yet.</p>';return;}
+    const completed=run.definition.stages.filter(s=>run.stages[s.id].status==='COMPLETE');
+    const preferred=run.definition.outputs.find(id=>completed.some(s=>s.id===id))??completed[0]?.id;
+    ui.execution=run.id;handoverActions.innerHTML=`<p>${status(run.status)} · ${run.definition.outputs.length} final output selections</p><div class="toolbar"><button data-delivery="report">Download operating report</button><button data-delivery="deliver" ${run.status==='COMPLETE'?'':'disabled'}>Download all customer results</button></div><div class="field"><label for="merchant-stage">Original merchant dataset</label><select id="merchant-stage">${completed.map(s=>`<option value="${esc(s.id)}" ${s.id===preferred?'selected':''}>${esc(s.label)} · ${count(run.stages[s.id].rows)} ${run.stages[s.id].rows===1?'row':'rows'}</option>`).join('')}</select></div><button data-delivery="merchant" ${Object.values(run.stages).some(s=>s.status==='COMPLETE')?'':'disabled'}>Download merchant dataset package</button><div class="delivery-links" id="result-link"></div>`;
+    const merchantStage=handoverActions.querySelector('#merchant-stage'),resultLink=handoverActions.querySelector('#result-link');
+    handoverActions.querySelectorAll('[data-delivery]').forEach(b=>b.onclick=()=>action(async()=>{b.disabled=true;try{const value=await request('/api/'+b.dataset.delivery,{execution_id:run.id,stage_id:merchantStage.value});completedDownload(resultLink,value,'Open completed '+(b.dataset.delivery==='report'?'report':'download'));}finally{b.disabled=false;}}));
   };
-  $('#handover-run').onchange=renderActions;renderActions();$('#export-project').onclick=()=>action(async()=>{const b=$('#export-project');b.disabled=true;try{const value=await request('/api/export',{});$('#project-link').innerHTML=`<a href="${esc(value.download)}">Open complete editable project (${count(value.bytes)} bytes)</a>`;$('#project-link a').click();}finally{b.disabled=false;}});
+  handoverRun.onchange=renderActions;renderActions();exportButton.onclick=()=>action(async()=>{const b=exportButton;b.disabled=true;try{const value=await request('/api/export',{});completedDownload(projectLink,value,'Open complete editable project');}finally{b.disabled=false;}});
+  await receivedList();
 }
 document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>action(async()=>{if(ui.view==='pipelines'&&ui.draft&&$('#editor'))readEditor();await show(button.dataset.view);}));
 $('#refresh').onclick=()=>action(async()=>{if(ui.view==='pipelines'&&ui.draft&&$('#editor'))readEditor();await refresh();});
