@@ -228,3 +228,21 @@ The browser never retries a mutation automatically. A failed or uncertain save k
 - Standing offers and supply arrangements: https://sosa.canadabuys.canada.ca/cds/opendata/tpsgc-pwgsc_ocama-sosa.csv
 - Supplier instrument dictionary: https://donnees-data.tpsgc-pwgsc.gc.ca/ba2/ac-cb/ocama-sosa-dd.xml
 - GSIN/UNSPSC mapping catalog: https://open.canada.ca/data/en/dataset/588eab5b-7b16-4a26-b996-23b955965ffa
+
+## Continue the saved case through Applications and merchant tools
+
+`OPERATING_TOOLS.mjs` continues the completed original browser case using its `case-result.json`, original operator and receiving SQLite files, source identity, saved workshare, and prepared merchant publication. It opens the existing operator workspace through the source-owned Applications provider and the registered CanadaBuys MCP provider.
+
+```sh
+node stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/operator/OPERATING_TOOLS.mjs \
+  --source-root /absolute/path/to/merchant-workspace \
+  --case-root /absolute/path/to/original-case
+```
+
+The source root is the complete maintained checkout. The case root contains the full operating driver's saved `case-result.json`, `operator-workspace/`, and `receiving-workspace/`. Run this continuation after that original case reaches `status: complete`.
+
+The continuation runs the actual registered application command against the existing database, reads its original startup announcement and health response, then closes that command. It loads the declared merchant provider, follows every notice page, reads the saved source and workshare, exports the complete original CSV, and receives every hash-pinned Base64 file chunk. It then follows the original prepared SF30 dataset's cursor through every transport part and reconstructs the whole source/workshare package. Its package digest, complete original CSV and saved workshare are checked against the same customer case.
+
+The output directory contains the actual application startup record and logs, the full CSV delivered through merchant tools, the complete package reconstructed from dataset pages, and `result.json` with source identity, page/chunk counts, preserved workshare, and owned-service closure. The complete source download uses one immutable descriptor. Publication lookup reads its indexed native row directly, keeping file transfers independent of notice-view reconstruction.
+
+For programmatic use, import `operateCanadaBuysTools({sourceDirectory, caseDirectory, outputDirectory})`. The function keeps its output directory on an error and includes that path in `error.operatorToolsDirectory`, so a correction can continue the same saved case.

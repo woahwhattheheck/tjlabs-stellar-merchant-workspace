@@ -248,7 +248,7 @@ export class MerchantCanadaBuysWorkspaces {
     return input;
   }
   #publication(entry, id) {
-    const item = (entry.model.view().publications ?? []).find(value => value.id === id);
+    const item = entry.model.getPublication(id);
     if (!item) throw failure('CANADABUYS_PUBLICATION_NOT_FOUND', 'Choose a retained publication from merchant_canadabuys_status.');
     return item;
   }

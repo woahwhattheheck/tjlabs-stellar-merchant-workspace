@@ -61,6 +61,7 @@ export declare class CanadaBuysWorkspace {
  receivePackage(packet:WorkspacePackage,options:{expectedRevision:number}):ReceiveResult;
  getReceiving(id:string):Receiving;
  getCapture(id:string):CaptureRecord;
+ getPublication(id:string):Publication|null;
  recordPublication(record:Omit<Publication,'id'|'at'|'operator'>&{id?:string},expectedRevision?:number|null):WorkspaceResult&{publication:Publication};
  close():void;
 }

@@ -626,6 +626,10 @@ export class CanadaBuysWorkspace {
     const record = JSON.parse(row.data);
     return { ...record, canResume: record.canResume || record.status === 'downloading' && Date.parse(record.leaseUntil || '') <= Date.now() };
   }
+  getPublication(id) {
+    const row = this.db.prepare('SELECT data FROM publications WHERE id=?').get(id);
+    return row ? JSON.parse(row.data) : null;
+  }
   recordPublication(record, expectedRevision = null) {
     const publication = { ...record, id: record.id || randomUUID(), at: new Date().toISOString(), operator: this.operator };
     return this._change('publication.saved', expectedRevision, () => {
