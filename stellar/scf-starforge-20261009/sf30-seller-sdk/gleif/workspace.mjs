@@ -41,10 +41,12 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
     need(metadata.schema===SCHEMA&&state.schema===SCHEMA+'.state'&&state.workspaceId===metadata.id,'GLEIF_WORKSPACE_IDENTITY','The saved project identity differs.',409);
     for(const folder of ['objects','datasets'])await privateDirectory(join(directory,folder));
     const check=()=>{need(!closed,'GLEIF_CLOSED','This project is closing.',409);if(persistenceFailure)throw persistenceFailure;};
-    async function save() {
+    async function save(completion=null) {
       if(persistenceFailure)throw persistenceFailure;
       state.revision++;
-      try{need(bytes(state).length<=MAX,'GLEIF_PROJECT_SIZE','The complete project state exceeds 256 MiB. Reopen its last retained state and select a source operation that fits the project.',413);await atomicJson(directory,'state.json',state);}catch(error){persistenceFailure=Object.assign(new Error('The project write could not be confirmed: '+error.message+'. Reopen this same project to reconcile its retained state.'),{code:error.code??'GLEIF_PROJECT_WRITE',status:error.status??503});throw persistenceFailure;}
+      // Keep the live operation RUNNING until its terminal snapshot is durable.
+      const snapshot=completion?{...state,operations:state.operations.map(record=>record===completion.record?{...record,...completion.value}:record)}:state;
+      try{need(bytes(snapshot).length<=MAX,'GLEIF_PROJECT_SIZE','The complete project state exceeds 256 MiB. Reopen its last retained state and select a source operation that fits the project.',413);await atomicJson(directory,'state.json',snapshot);}catch(error){persistenceFailure=Object.assign(new Error('The project write could not be confirmed: '+error.message+'. Reopen this same project to reconcile its retained state.'),{code:error.code??'GLEIF_PROJECT_WRITE',status:error.status??503});throw persistenceFailure;}
     }
     function serial(fn) {const pending=queue.then(()=>{check();return fn();});queue=pending.catch(()=>{});return pending;}
     async function put(raw) {
@@ -197,15 +199,16 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
         record.state='RUNNING';record.attempts++;record.updatedAt=now();record.error=null;await save();
         const controller=new AbortController(),item={record,controller,promise:null};active=item;
         item.promise=(async()=>{
-          try{record.result=await perform(record,controller.signal);record.state='COMPLETE';}
-          catch(error){record.error=publicError(error);record.state='INTERRUPTED';
-            if(record.action==='capture'||record.action==='capture.resume'){const captured=state.captures.find(c=>c.id===(record.action==='capture.resume'?record.input.captureId:record.id));if(captured&&captured.state!=='COMPLETE'){captured.state='INTERRUPTED';captured.error=record.error;}}}
-          finally{record.updatedAt=now();try{await save();}finally{if(active===item)active=null;}}
+          let completion;
+          try{completion={result:await perform(record,controller.signal),error:null,state:'COMPLETE'};}
+          catch(error){completion={result:null,error:publicError(error),state:'INTERRUPTED'};
+            if(record.action==='capture'||record.action==='capture.resume'){const captured=state.captures.find(c=>c.id===(record.action==='capture.resume'?record.input.captureId:record.id));if(captured&&captured.state!=='COMPLETE'){captured.state='INTERRUPTED';captured.error=completion.error;}}}
+          finally{try{const value={...completion,updatedAt:now()};await save({record,value});Object.assign(record,value);}finally{if(active===item)active=null;}}
           return entry(record);
         })();item.promise.catch(()=>{});return entry(record);
       });
     }
-    const operation=id=>{const r=state.operations.find(v=>v.id===key(id));need(r,'GLEIF_OPERATION_NOT_FOUND','Choose a saved operation.',404);return clone(r);};
+    const operation=id=>{check();const r=state.operations.find(v=>v.id===key(id));need(r,'GLEIF_OPERATION_NOT_FOUND','Choose a saved operation.',404);return clone(r);};
     async function wait(id) {const record=operation(id);if(active?.record.id===id)await active.promise;return entry(operation(id));}
     async function pause(id) {need(active?.record.id===id,'GLEIF_NOT_RUNNING','This operation is not running.',409);active.controller.abort(new Error('Operator paused source acquisition.'));return wait(id);}
     function status() {
