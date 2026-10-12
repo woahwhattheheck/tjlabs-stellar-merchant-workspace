@@ -100,6 +100,28 @@ def child_identity(path,pid):
         raise ValueError("The original child did not start its own process session")
     return value
 
+def retire_unrecorded_group(child):
+    """Drain only the original inner group when its namespace report was interrupted."""
+    def exists():
+        child.poll()
+        try:
+            os.killpg(child.pid, 0)
+            return True
+        except ProcessLookupError:
+            return False
+    existed = exists()
+    for requested, seconds in [(signal.SIGTERM, 5), (signal.SIGKILL, 5)]:
+        if not exists():
+            break
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(child.pid, requested)
+        until = time.monotonic()+seconds
+        while exists() and time.monotonic() < until:
+            time.sleep(.1)
+    return {'ownedProcessGroup': child.pid, 'namespaceRecorded': False,
+        'innerGroupPresentBeforeDrain': existed, 'innerGroupPresentAfterDrain': exists(),
+        'activeBeforeDrain': None, 'activeAfterDrain': None}
+
 def verify_customer_output(directory, original, source, environment, node, source_manifest):
     result_path = directory/'receiving-result.json'
     received = json.loads(result_path.read_text())
@@ -241,7 +263,26 @@ def main():
         process_result['returncode'] = None
     finally:
         if child:
-            process_result.update(retire_group(child.pid, child_identity(identity_path, child.pid)))
+            identity = None
+            try:
+                identity = child_identity(identity_path, child.pid)
+            except Exception as failure:
+                process_result['identityError'] = {'type': type(failure).__name__, 'message': str(failure)}
+                error = error or process_result['identityError']
+            try:
+                if identity is None:
+                    process_result.update(retire_unrecorded_group(child))
+                else:
+                    process_result.update(retire_group(child.pid, identity))
+            except Exception as failure:
+                process_result['drainError'] = {'type': type(failure).__name__, 'message': str(failure)}
+                process_result['namespaceRecorded'] = False
+                error = error or process_result['drainError']
+                try:
+                    process_result.update(retire_unrecorded_group(child))
+                except Exception as cleanup_failure:
+                    process_result['fallbackDrainError'] = {
+                        'type': type(cleanup_failure).__name__, 'message': str(cleanup_failure)}
             if child.poll() is None:
                 try:
                     child.wait(timeout=5)
@@ -253,7 +294,15 @@ def main():
         write(directory/'native-process.json', (json.dumps(process_result, indent=2)+'\n').encode())
         print(json.dumps({'stage': 'MANAGED_RECEIVING_PROCESS_EXIT', **process_result}), flush=True)
     result_path = directory/'receiving-result.json'
-    completed = (process_result.get('returncode') == 0 and result_path.is_file()
+    saved_result = None
+    if result_path.is_file():
+        try:
+            saved_result = json.loads(result_path.read_text())
+        except Exception as failure:
+            process_result['resultReadError'] = {'type': type(failure).__name__, 'message': str(failure)}
+            error = error or process_result['resultReadError']
+    completed = (process_result.get('returncode') == 0 and isinstance(saved_result, dict)
+        and process_result.get('timedOut') is False and error is None
         and process_result.get('namespaceRecorded') is True and not process_result.get('activeAfterDrain'))
     description = None
     received = {'schema': 'stellar-forge.data-preparation-managed-receiving-checkpoint.v1',
@@ -266,10 +315,10 @@ def main():
         except Exception as failure:
             completed = False
             error = {'type': type(failure).__name__, 'message': str(failure)}
-            if result_path.is_file():
-                received['completedPhases'] = json.loads(result_path.read_text())
-    elif result_path.is_file():
-        received['completedPhases'] = json.loads(result_path.read_text())
+            if saved_result is not None:
+                received['completedPhases'] = saved_result
+    elif saved_result is not None:
+        received['completedPhases'] = saved_result
     received.update({'completed': completed, 'nativeProcess': process_result, 'error': error,
         'sourceFiles': len(source_manifest['files']), 'receivingDriverSha256': digest(driver)})
     title = 'Starforge_Data_Preparation_Managed_2026-10-12'
