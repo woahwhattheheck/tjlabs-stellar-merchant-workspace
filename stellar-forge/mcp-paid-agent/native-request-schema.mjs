@@ -11,6 +11,8 @@ export const nativeRequestSchema = {
     handle:{type:'string',minLength:1,maxLength:128,
       description:'Original cached Bazaar handle selected in this connected buyer workspace.'},
     input:{type:'object',additionalProperties:false,properties:{
+      path:{type:'object',maxProperties:30,additionalProperties:{type:'string',minLength:1,maxLength:1024},
+        description:'Explicit raw path-segment values for the selected seller routeTemplate; the buyer encodes each value once and retains the concrete URL.'},
       query:{type:'object',maxProperties:30,additionalProperties:{anyOf:[
         {type:'string',maxLength:1024},
         {type:'array',minItems:1,maxItems:1024,items:{type:'string',maxLength:1024}},

@@ -1,4 +1,5 @@
 // MIT — Offline saved-catalog selection for the existing SF88 review command.
+import { bindHttpPath } from '../../../stellar-forge/route-identity/http-path.mjs';
 import { createHash } from 'node:crypto';
 import { open, unlink } from 'node:fs/promises';
 import { abs, bytes, InputError, need, operation, preparedFrom, responseFile } from './config.mjs';
@@ -63,12 +64,11 @@ export function prepareReview(raw, selection) {
   need(row.type === undefined || row.type === 'http', 'HTTP_RESOURCE_REQUIRED');
   const advertised = https(typeof row.resource === 'string' ? row.resource : row.resource?.url);
   const requested = https(url);
-  // The operator supplies concrete query values. Selecting another host/path is
-  // a different offer; templates must first be resolved in its source workflow.
-  need(!/[{}]|%7[bd]/i.test(advertised.pathname) &&
-    requested.origin === advertised.origin && requested.pathname === advertised.pathname,
-    'CONCRETE_URL_MUST_MATCH_SELECTED_RESOURCE_PATH');
   const input = row.extensions?.bazaar?.info?.input;
+  // The original listing remains intact. Its published template must bind the
+  // exact concrete request that the native approval and signer will receive.
+  const pathBinding = bindHttpPath({resource:{url:advertised.href},
+    input:{...input, method:input?.method ?? method}, bazaar:row.extensions?.bazaar}, requested.href);
   need(input?.type === undefined || input.type === 'http', 'HTTP_RESOURCE_REQUIRED');
   need(input?.method === undefined || input.method === method, 'DISCOVERED_METHOD_MISMATCH');
   const accepted = row.accepts[acceptIndex];
@@ -107,7 +107,7 @@ export function prepareReview(raw, selection) {
   }
   const data = Buffer.from(JSON.stringify(draft, null, 2) + '\n');
   need(data.length <= 65536, 'PREPARED_CONFIG_EXCEEDS_CONFIG_LIMIT');
-  return {draft, data, configSha256:createHash('sha256').update(data).digest('hex')};
+  return {draft, data, configSha256:createHash('sha256').update(data).digest('hex'), pathBinding};
 }
 
 /** Original file-based CLI; output remains private, create-only and fsynced. */
@@ -142,7 +142,7 @@ export async function prepare(args) {
     request={bodyFile:flags.get('--body-file')};
     Object.assign(request,requestBodyPin(await readRequestBody(request)));
   }
-  const {draft, data, configSha256} = prepareReview(raw, {rowIndex,acceptIndex,
+  const {draft, data, configSha256, pathBinding} = prepareReview(raw, {rowIndex,acceptIndex,
     intentId:flags.get('--intent-id'),url:flags.get('--url'),method:flags.get('--method'),
     ...request,
     ...(Object.keys(headers).length ? {headers} : {}),
@@ -164,7 +164,7 @@ export async function prepare(args) {
   return {mode:'OFFLINE_CONFIG_PREPARED', configPath:destination,
     configSha256,
     sourceFileSha256:origin.discoveryFileSha256, rowIndex, acceptIndex,
-    intentId:op.intentId, sellerUrl:op.url, method:op.method, acceptedTerms:op.expect,
+    intentId:op.intentId, sellerUrl:op.url, method:op.method, acceptedTerms:op.expect, pathBinding,
     requestHeaderNames:Object.keys(op.headers),
     operationTicket:operationTicketView(ticket),
     ...(draft.responseFile ? {responseFile:draft.responseFile} : {}),
