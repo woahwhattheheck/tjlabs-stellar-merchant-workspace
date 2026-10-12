@@ -256,6 +256,13 @@ and merchant state stay under the original home during release changes.
 See [Managed release operations](MANAGED_OPERATIONS.md) for the complete browser
 and headless workflow, retained selection guards, configuration saves and recovery.
 
+## Application setup snapshots and receiving
+
+The Applications editor can save named complete setup snapshots, export and
+receive all retained tool variants, and reconcile concurrent edits against the
+current saved application. See [Application setup and receiving](APPLICATION_SETUP.md)
+for the browser workflow and complete document format.
+
 ## Application API and retained records
 
 The workspace model and server can be embedded in another local operator tool:

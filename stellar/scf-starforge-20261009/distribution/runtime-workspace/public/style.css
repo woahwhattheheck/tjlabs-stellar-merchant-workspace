@@ -11,3 +11,13 @@
 #application-library .application-library-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
 #application-library .application-library-row .runtime-entry{min-width:0}
 #application-library .application-library-row>button[aria-pressed=true]{background:var(--soft);border-color:var(--ink)}
+
+
+/* Complete setup receiving uses the workspace's existing industrial controls. */
+.application-setup-library{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.application-setup-library .application-setup-table{max-width:100%;overflow:auto}
+.application-setup-library table{width:100%;min-width:680px;table-layout:fixed}
+.application-setup-library th,.application-setup-library td{vertical-align:top;overflow-wrap:anywhere}
+.application-setup-library td pre{margin:0;padding:0;background:transparent;white-space:pre-wrap;overflow-wrap:anywhere}
+.application-setup-library td select{width:100%;min-width:0}
+.application-setup-library .application-setup-comparison{margin:16px 0}
