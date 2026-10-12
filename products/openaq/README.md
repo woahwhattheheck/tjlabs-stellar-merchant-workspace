@@ -5,6 +5,25 @@ source review, attributed reports, native dataset publication, customer analysis
 and portable delivery. The installed product preserves the source and operator
 decisions throughout this workflow.
 
+## Open the completed worked study
+
+The installed application includes the actual Del Norte May 3, 2022 study:
+140 original observations, six sensor series, a named source review, complete
+HTML/JSON report and the original 13,807-byte customer package.
+
+On **Overview** or **Delivery**, choose **Receive the completed study**. The
+existing receiver adds its original source, review and report to your current
+project. If they are already present, the same button opens them. This uses
+the bundled complete delivery and makes no provider request.
+
+The [complete worked-study guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/READING_GUIDE.md)
+covers report interpretation, the actual source edition, browser/CLI receiving,
+interruption, reopen and applying the same workflow to an agreed client source.
+The [original report](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/report.html)
+and [customer package](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/study.tgz)
+are included unchanged. The historical engineering review remains attached;
+your own client conclusion has its own named review.
+
 ## Install the selected product
 
 Use Linux, Node.js 22.16 or newer, Python 3.11 or newer, Git, npm and util-linux
