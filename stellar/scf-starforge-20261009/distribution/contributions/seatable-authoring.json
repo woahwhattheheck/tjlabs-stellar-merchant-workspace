@@ -6,6 +6,10 @@
     "seatable-workspace": {
       "component": "sf30-seller-sdk",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/cli.mjs"
+    },
+    "seatable-receive": {
+      "component": "sf30-seller-sdk",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/receiving.mjs"
     }
   },
   "exports": {
