@@ -21,7 +21,7 @@ const paymentUi = createPaymentRequestUi({api, openDialog, mutate, getState:()=>
 const refundUi = createRefundUi({api, openDialog, mutate, getState:()=>ui.state, getInvoice:detailInvoice,
   getAsOf:()=>ui.asOf, getCustomer:()=>ui.customer, units, amount, render,
   saveBlob, showError, setBusy, readSession, saveSession, setMessage, isLocked:()=>ui.busy || Boolean(ui.pending)});
-const bankUi = createBankUi({api, openDialog, mutate, getState:()=>ui.state, getAsOf:()=>ui.asOf,
+const bankUi = createBankUi({api, openDialog, mutate, getState:()=>ui.state, getAsOf:()=>ui.asOf, showBank:()=>{ui.view='bank';},
   units, amount, render, saveBlob, showError, setBusy, readSession, saveSession, setMessage,
   isLocked:()=>ui.busy || Boolean(ui.pending)});
 $('#dialog').addEventListener('close',()=>bankUi.close());
@@ -175,7 +175,9 @@ function render() {
   $('#status-filter').disabled=ui.view!=='invoices';
   $('#customer-filter').disabled=ui.view==='bank';
   $('#search').disabled=ui.view==='bank';
+  $('#customer-filter').closest('.filters').hidden=ui.view==='bank';
   if(!ui.state)return;
+  $('#revision').textContent='Revision '+ui.state.revision+(ui.view==='bank'?'':' · As of '+ui.asOf);
   $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='bank'?bankUi.render():renderActivity();
   renderPending(); setBusy(ui.busy);
 }
@@ -206,6 +208,74 @@ async function selectInvoice(invoiceId) {
     if(ui.view==='invoices')render();
   } catch(error) { if(selectedVersion===ui.selectionVersion){ui.detailLoading=false;if(ui.view==='invoices')render();showError(error);} }
 }
+
+function renderImportedTariff(review) {
+  const imported=review?.tariff,tariff=imported?.binding,basis=tariff?.basis;
+  if(!basis)return '';
+  const usd=value=>'USD '+e(value??'—');
+  return '<section class="section"><h3>Tariff at quote import</h3><p class="small-text">'+e(basis.text)+'</p>'+
+    '<dl class="definition"><dt>Tariff / schedule</dt><dd>'+e(basis.tariffLabel)+' / '+e(basis.mode)+
+    '</dd><dt>Saved requests / month</dt><dd>'+e(basis.selectedQuantity)+
+    '</dd><dt>Quoted requests / month</dt><dd>'+e(basis.quotedQuantity)+
+    '</dd><dt>Quoted uniform rate / request</dt><dd>'+usd(basis.uniformUnitUsd)+
+    '</dd><dt>Original quoted route / month</dt><dd>'+usd(imported.originalMonthlyAmountUsd)+
+    '</dd><dt>Original tariff total at selected volume</dt><dd>'+usd(basis.originalTariffGrossUsd)+
+    '</dd><dt>Original upward unit rounding</dt><dd>'+usd(basis.originalRoundingDeltaUsd)+'</dd>'+
+    (imported.includedInScope?'<dt>Imported route charge</dt><dd>'+usd(imported.invoiceAmount)+' for '+
+      e(imported.periodCount)+' complete month'+(imported.periodCount===1?'':'s')+'</dd>':'')+'</dl>'+
+    (basis.changedQuantity?'<p class="small-text">At the quoted volume, the original tier comparison totals '+
+      usd(basis.tariffGrossAtQuotedQuantityUsd)+'. '+(basis.derivedUnitAtQuotedQuantityUsd===null?
+      'The zero-request comparison has no per-request rate.':'Its comparison rate is '+usd(basis.derivedUnitAtQuotedQuantityUsd)+
+      ' per request.')+' The accepted quotation uses its saved uniform rate of '+usd(basis.uniformUnitUsd)+' per request.</p>':'')+
+    '<details class="section"><summary>Original tariff tiers and source</summary><div class="table-wrap"><table><thead><tr>'+
+    '<th>Request quantity</th><th class="num">USD / request</th></tr></thead><tbody>'+
+    (tariff.tiers||[]).map(tier=>'<tr><td>'+(tier.upTo===null?'Remaining requests':'Through '+e(tier.upTo))+
+      '</td><td class="num">'+e(tier.unitPriceUsd)+'</td></tr>').join('')+'</tbody></table></div>'+
+    '<p class="small-text">Original selection '+e(tariff.selectionRequestId)+'</p><p class="small-text">Source '+e(tariff.id)+
+    '</p></details></section>';
+}
+
+
+function renderPerformanceBasis(binding, imported = null) {
+  if (!binding) return '';
+  const period = binding.period || {}, measured = binding.measuredQuote || {}, proposed = binding.proposed || {};
+  const date = value => String(value || '').replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  const observed = [period.observedFrom, period.observedUntil].filter(Boolean).map(date).join(' → ');
+  const amount = value => value === null || value === undefined ? '—' : 'USD ' + e(value);
+  const row = (name, value) => '<tr><th scope="row">' + e(name) + '</th><td>' + value + '</td></tr>';
+  const counts = Object.entries(binding.basis?.counts || {});
+  const notes = Array.isArray(binding.issues) ? binding.issues : [];
+  return '<section class="section"><h3>Recorded usage and this quotation revision</h3>' +
+    '<p class="small-text">The saved review describes its measured period. This quotation records the proposed monthly requests and accepted price separately.</p>' +
+    '<div class="table-wrap"><table><tbody>' +
+    row('Measured quotation', e(measured.title || measured.id)) +
+    row('Observed period', e(observed || 'Saved observation period')) +
+    row('Recorded quantity', e(binding.basis?.quantity ?? '—') + ' ' + e(binding.basis?.label || '')) +
+    row('Measured route', e(binding.route?.method) + ' ' + e(binding.route?.path)) +
+    row('Earlier quoted uniform rate / request', amount(binding.quoted?.savedUnitUsd)) +
+    row('Earlier quote value at recorded quantity', amount(binding.quoted?.valueAtObservedQuantityUsd)) +
+    row('Original tariff total at recorded quantity', amount(binding.tariff?.quote?.totalUsd)) +
+    row('Proposed requests / month', e(proposed.monthlyRequests)) +
+    row('Revised quoted rate / request', amount(proposed.unitUsd)) +
+    row('Revised quoted route / month', amount(proposed.amountUsd)) +
+    (imported?.includedInScope ? row('Imported route charge', amount(imported.invoiceAmount) + ' · ' +
+      e(imported.periodCount) + ' complete month' + (imported.periodCount === 1 ? '' : 's')) : '') +
+    '</tbody></table></div><details class="section"><summary>Saved cost view, source counts and identities</summary>' +
+    '<div class="table-wrap"><table><tbody>' +
+    row('Estimated cost at recorded quantity', amount(binding.costs?.estimated?.valueAtBasisQuantityUsd)) +
+    row('Contribution using estimated unit cost', amount(binding.costs?.contributionUsingEstimatedUnitCostUsd)) +
+    (binding.costs?.recorded ? row('Recorded cost edition', e(binding.costs.recorded.edition)) +
+      row('Cost period alignment', e(typeof binding.costs.recorded.periodAlignment === 'object' ?
+        JSON.stringify(binding.costs.recorded.periodAlignment) : binding.costs.recorded.periodAlignment)) : '') +
+    counts.map(([key, value]) => row(key, e(value ?? '—'))).join('') +
+    '</tbody></table></div>' +
+    (notes.length ? '<ul>' + notes.map(note => '<li>' + e(note.message || note.code || '') + '</li>').join('') + '</ul>' : '') +
+    '<p class="small-text">Measured quote ' + e(measured.id) + ' · ' + e(measured.sha256) +
+    '</p><p class="small-text">Native source ' + e(binding.nativeSourceId) +
+    '</p><p class="small-text">Usage version ' + e(binding.usageVersion) + ' · revision ' + e(binding.usageRevision) +
+    '</p><p class="small-text">Recorded-usage source ' + e(binding.id) + '</p></details></section>';
+}
+
 function renderInvoiceDetail() {
   const row=detailInvoice(),doc=row.document||row.draft||{},credits=row.credits||[],allocations=row.allocations||[];
   const active=allocations.filter(item=>!item.releasedDate);
@@ -233,7 +303,7 @@ function renderInvoiceDetail() {
         money(credit.totals?.total||item.total,row.currency) + '</span><span class="subline">' + e(credit.reason) + '</span></div><div class="row">' +
         btn('Print','download',' data-id="' + e(item.id) + '" data-name="credit.html"') + btn('JSON','download',' data-id="' + e(item.id) + '" data-name="credit.json"') + '</div></div>';
     }).join(''):'<p class="muted small-text">No credit notes have been issued.</p>') + '</section>' +
-    (row.sourceQuote?'<section class="section"><h3>Source quote</h3><p class="small-text">' + e(row.quoteDraftChanged?'The invoice draft has been edited since quote import. Review these changes before issuing.':'This invoice was prepared from a retained merchant quote.') + '</p><div class="row">' + ['quote.json','response.json','source.json','review.json'].filter(name=>Object.hasOwn(row.sourceQuote.files||{},name)).map(name=>btn(name.replace('.json',''),'quote-download',' data-id="' + e(row.id) + '" data-name="' + name + '"')).join('') + '</div></section>':'') + '<section class="section"><h3>Activity</h3>' + historyTable(row.history) + '</section>' +
+    (row.sourceQuote?'<section class="section"><h3>Source quote</h3><p class="small-text">' + e(row.quoteDraftChanged?'The invoice draft has been edited since quote import. Review these changes before issuing.':'This invoice was prepared from a retained merchant quote.') + '</p><div class="row">' + ['quote.json','response.json','source.json','review.json'].filter(name=>Object.hasOwn(row.sourceQuote.files||{},name)).map(name=>btn(name.replace('.json',''),'quote-download',' data-id="' + e(row.id) + '" data-name="' + name + '"')).join('') + '</div>' + renderImportedTariff(row.sourceQuote.review) + renderPerformanceBasis(row.sourceQuote.review?.performance?.binding, row.sourceQuote.review?.performance) + '</section>':'') + '<section class="section"><h3>Activity</h3>' + historyTable(row.history) + '</section>' +
     (row.status!=='VOID'?'<section class="section"><div class="row">' + btn('Void invoice','void-invoice',' data-write') + '</div></section>':'') + '</div>';
 }
 function newDraft() {

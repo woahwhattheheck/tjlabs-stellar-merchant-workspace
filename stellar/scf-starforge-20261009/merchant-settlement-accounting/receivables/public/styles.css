@@ -142,3 +142,5 @@ dialog::backdrop{background:#0006}
 .bank-split input,.bank-split select{min-width:120px}
 .bank-split td:first-child{min-width:280px}
 @media(max-width:700px){.bank-workbench .panel-head,.bank-detail .panel-head,.bank-selection .panel-head{align-items:flex-start;flex-direction:column}.bank-search{align-items:flex-end}.bank-split td:first-child{min-width:210px}}
+
+.filters[hidden]{display:none}

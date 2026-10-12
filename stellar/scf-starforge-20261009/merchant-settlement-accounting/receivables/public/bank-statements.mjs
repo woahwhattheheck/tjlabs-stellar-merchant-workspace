@@ -99,7 +99,8 @@ export function createBankUi(host) {
         imports.map(row=>'<tr'+(row.id===state.selectedId?' class="selected"':'')+'><td>' +
           button(row.sourceName,'open-import',' class="link" data-id="'+e(row.id)+'"') +
           '<span class="subline">'+e(row.format)+' · '+e(row.createdAt)+'</span></td><td>'+e(row.accountReference||row.accountName) +
-          '<span class="subline">'+e(row.currency?.code)+'</span></td><td>'+status(row.status)+'</td><td class="num">'+e(row.unassignedCount) +
+          '<span class="subline">'+e(row.currency?.code)+'</span></td><td>'+status(row.status)+'</td><td class="num">'+e(row.unassignedCount+row.duplicateCount+row.conflictCount) +
+          (row.duplicateCount?'<span class="subline">'+e(row.duplicateCount)+' existing payments to link</span>':'')+
           (row.conflictCount?'<span class="subline">'+e(row.conflictCount)+' conflicts</span>':'')+'</td><td class="num">'+
           e(row.postingCount)+'<span class="subline">'+e(row.postedCount)+' posted · '+e(row.linkedCount)+' linked</span></td></tr>').join('') +
         '</tbody></table></div>':'<div class="panel-body"><p>No statements match this selection. Add an account and import its original bank file.</p></div>') +
@@ -200,10 +201,6 @@ export function createBankUi(host) {
   function emptyLayout() {
     return {delimiter:',',dateFormat:'YYYY-MM-DD',decimalMark:'.',groupSeparator:'',amountMode:'SIGNED',creditSign:'POSITIVE',columns:{}};
   }
-  function hasLayout(layout) {
-    return Boolean(layout?.columns?.date && (layout.amountMode==='CREDIT_DEBIT'
-      ? layout.columns.credit&&layout.columns.debit : layout.columns.amount));
-  }
   function readLayout(form) {
     const get=name=>form.elements.namedItem(name)?.value;
     const layout={delimiter:get('csvDelimiter')||',',dateFormat:get('csvDateFormat')||'YYYY-MM-DD',
@@ -275,14 +272,16 @@ export function createBankUi(host) {
       (inspection?(state.inspectionCurrent?'':'<p class="notice bank-original" data-bank-source-stale>The source selection or layout changed. Inspect it again before retaining the statement.</p>')+renderInspection(inspection):'<p class="hint bank-original">Inspection reads the selected original statement. Save the import after checking its source, account, dates, currency and layout.</p>')+
       actions(inspection&&state.inspectionCurrent&&!inspection.requiresLayout&&draft.accountId&&draft.sectionId?'Retain statement':null)+'</form>');
   }
+  function statementBalance(value) { return value?e(value.amount)+' · '+e(value.date):'Not supplied'; }
   function renderInspection(value) {
     const section=value.sections.find(row=>row.id===value.sectionId);
     return '<section class="section"><h3>Original statement review</h3><dl class="definition"><dt>Source file</dt><dd>'+e(value.source.name)+'</dd>'+
       '<dt>File size</dt><dd>'+e(value.source.bytes)+' bytes</dd><dt>Source format</dt><dd>'+e(value.source.format)+'</dd>'+
       (section?'<dt>Statement dates</dt><dd>'+e(section.from)+'–'+e(section.until)+'</dd><dt>Source currency</dt><dd>'+e(section.currencyCode)+
         '</dd><dt>Bank account</dt><dd>'+e(section.bankId)+' · '+e(section.accountReference)+'</dd><dt>Rows</dt><dd>'+e(section.rowCount)+
-        ' · '+e(section.creditCount)+' credits · '+e(section.debitCount)+' debits</dd><dt>Opening / closing</dt><dd>'+e(section.openingBalance)+
-        ' / '+e(section.closingBalance)+'</dd>':'')+'</dl>'+
+        ' · '+e(section.creditCount)+' credits · '+e(section.debitCount)+' debits</dd><dt>Opening balance</dt><dd>'+statementBalance(section.openingBalance)+
+        '</dd><dt>Closing balance</dt><dd>'+statementBalance(section.closingBalance)+'</dd>':'')+'</dl>'+
+      (section?.balanceSnapshots?.length?'<details class="bank-original"><summary>All original balance snapshots</summary>'+renderRecords(section.balanceSnapshots,'Balance snapshot')+'</details>':'')+
       (value.requiresLayout?'<p class="notice bank-original">Select the original CSV date and amount columns, then inspect the complete layout.</p>':'')+
       (value.issues?.length?'<div class="bank-original"><h4>Source observations</h4><ul>'+value.issues.map(issue=>'<li>'+
         e(typeof issue==='string'?issue.message||issue:String(issue.message||issue.code||JSON.stringify(issue)))+'</li>').join('')+'</ul></div>':'')+
@@ -332,7 +331,6 @@ export function createBankUi(host) {
 
 
   function newSplit(row,{action='CREATE',receipt=null,customerId=''}={}) {
-    const currency=row.currency;
     return {key:crypto.randomUUID(),action,customerId:customerId||receipt?.customerId||'',receiptId:receipt?.id||'',
       amount:receipt?.amount||row.amount,allocations:[],effectiveDate:action==='CORRECT'?getAsOf():row.bookedDate,
       reason:'',dateDifferenceReason:'',funds:null};
@@ -632,7 +630,8 @@ export function createBankUi(host) {
   function balanceTable(before,after,currency,kind) {
     const fields=kind==='receipt'?[['status','Status'],['receivedDate','Received date'],['accountingDate','Accounting date'],
       ['amount','Receipt amount'],['allocated','Invoice allocations'],['reserved','Reserved for refund'],['refunded','Refunded'],
-      ['unreconciledRefundAmount','Received refund proof awaiting reconciliation'],['available','Available to customer']]:
+      ['netAmount','Receipt net of refunds'],['availableBeforeUnreconciledRefunds','Available before unresolved payouts'],
+      ['unreconciledRefundAmount','Refund payout awaiting reconciliation'],['refundDeficit','Cash shortfall'],['available','Available to customer']]:
       [['paymentStatus','Payment status'],['total','Invoice total'],['paid','Paid'],['credited','Credit notes'],
        ['balance','Net invoice balance'],['amountDue','Amount due'],['creditBalance','Credit balance']];
     return '<div class="table-wrap"><table><thead><tr><th>Customer balance</th><th class="num">Before</th><th class="num">After</th></tr></thead><tbody>'+
@@ -669,17 +668,22 @@ export function createBankUi(host) {
     const value=await api.bankImport(bankImportId,{view:'summary'});
     if(generation!==state.filesGeneration||state.dialog!=='files-loading')return;
     if(!Array.isArray(value.files))throw new Error('The original statement file list could not be read.');
-    state.fileList={bankImportId,files:value.files};state.dialog='files';
+    state.fileList={bankImportId,sourceName:value.bankImport.sourceName,files:value.files};state.dialog='files';
     openDialog('Original files · '+value.bankImport.sourceName,'<div class="table-wrap"><table><thead><tr><th>Original file</th><th class="num">Bytes</th><th></th></tr></thead><tbody>'+
       value.files.map(file=>'<tr><td>'+e(file.name)+(file.accountingDate?'<span class="subline">Accounting date '+e(file.accountingDate)+'</span>':'')+
         '</td><td class="num">'+e(file.bytes)+'</td><td>'+button('Download','download-file',' data-id="'+e(bankImportId)+'" data-name="'+e(file.name)+'"')+
-        '</td></tr>').join('')+'</tbody></table></div>'+actions(null));
+        '</td></tr>').join('')+'</tbody></table></div>'+
+      '<section class="section"><h3>Current reconciliation</h3><p class="hint">Download the current statement status or complete receipt reconciliation from the original accounting workspace.</p><div class="toolbar">'+
+      button('Statement status','download-file',' data-id="'+e(bankImportId)+'" data-name="status.json"')+
+      button('Receipt reconciliation','download-file',' data-id="'+e(bankImportId)+'" data-name="reconciliation.json"')+'</div></section>'+actions(null));
   }
   async function downloadBankFile(bankImportId,name) {
-    if(state.fileList?.bankImportId!==bankImportId||!state.fileList.files.some(file=>file.name===name))
+    if(state.fileList?.bankImportId!==bankImportId||
+      (!state.fileList.files.some(file=>file.name===name)&&!['status.json','reconciliation.json'].includes(name)))
       throw new Error('Reload the original statement file list before downloading this file.');
+    const downloadName=/^source\.(csv|ofx|mt940)$/.test(name)?state.fileList.sourceName:name;
     const response=await api.bankImportFile(bankImportId,name);
-    saveBlob(await response.blob(),name);
+    saveBlob(await response.blob(),downloadName);
   }
   function reasonDialog(kind,rowId='') {
     if(lock())return;
@@ -769,7 +773,7 @@ export function createBankUi(host) {
   }
   async function afterMutation(result,operation) {
     if(!methods.includes(operation.method))return;
-    state.review=null;
+    host.showBank?.();state.review=null;
     if(operation.method==='saveBankAccount') {
       const returning=state.returnToSource;state.returnToSource=false;
       if(returning&&result.bankAccount?.id){state.sourceDraft ||= {format:'CSV',file:null,csvLayout:emptyLayout(),sectionId:''};state.sourceDraft.accountId=result.bankAccount.id;invalidateInspection();}
