@@ -49,6 +49,8 @@ GUIDES = {
     "provider/source.json": HERE / "dqa-provider" / "source.json",
     "receiving/DQA.md": HERE / "receiving" / "DQA.md",
     "receiving/dqa-source/README.md": HERE / "receiving" / "dqa-source" / "README.md",
+    "receiving/dqa-source/SETUP.md": HERE / "receiving" / "dqa-source" / "SETUP.md",
+    "receiving/dqa-source/complete.example.json": HERE / "receiving" / "dqa-source" / "complete.example.json",
 }
 
 

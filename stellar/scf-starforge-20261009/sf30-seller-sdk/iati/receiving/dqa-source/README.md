@@ -1,5 +1,12 @@
 # Original DQA service and source receiving
 
+For the complete installation and customer workflow, use [SETUP.md](SETUP.md)
+and [complete.example.json](complete.example.json). The `complete.py` entry
+acquires the pinned original engine, installs its frozen dependencies, prepares
+the selected customer runtime, runs both full assessments and the complete
+analyst/receiving workflow, then closes its owned services. Run it through the
+existing native resource admission with the selected private operation paths.
+
 This directory runs the unchanged Zimmerman DQA engine against the real public IATI.cloud activity source and retains the complete source exchanges used by each assessment. It supplies the provider for the surrounding IATI customer workflow. The original provider remains alive while that workflow creates assessments, reviews findings, compares editions and receives its complete customer package.
 
 ## Selected source

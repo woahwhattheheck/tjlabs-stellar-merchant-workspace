@@ -16,12 +16,15 @@ const sourceFiles = [
   'handover-archive.mjs', 'handover-upload.mjs',
   'handover-client.mjs', 'handover-agent.mjs', 'handover-catalog.mjs',
   'handover-provider.mjs', 'handover-views.mjs', 'draft-reconciliation.mjs',
+  'handover-editions.mjs', 'edition-comparison.mjs', 'web/editions.mjs',
   'web/index.html', 'web/browser.mjs', 'web/style.css', 'web/collaboration.mjs',
 ].map(name => PRODUCT + name).concat([
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/server.mjs',
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/browser.mjs',
   'stellar/scf-starforge-20261009/sf61-openapi-seller-import/workspace/index.html',
   'stellar-forge/mcp-merchant-operator/serve.mjs',
+  'stellar-forge/mcp-merchant-operator/retained-file-reads.mjs',
+  'stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs',
   'stellar-forge/mcp-merchant-operator/operator.mjs',
   'stellar-forge/mcp-merchant-operator/host-profile.mjs',
   'stellar-forge/mcp-merchant-operator/console/service.mjs',
@@ -72,7 +75,7 @@ function launchReview(selected) {
   return {
     schema: 'stellar-forge.application-review-content.v1',
     title: 'Captured API merchant',
-    summary: 'Continue API sources, route prices and policies, reusable workflows, seller releases and complete customer receiving in the retained product.',
+    summary: 'Continue API sources, route prices and policies, reusable workflows, seller releases, installed/incoming edition comparisons and complete customer receiving in the retained product.',
     sections: [
       { title: 'Selected product and sessions', rows },
       { title: 'Configuration files', collapsed: true, rows: selected.files.map(item => ({
