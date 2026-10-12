@@ -93,3 +93,18 @@ python3 preserve-original-csvs.py \
 ```
 
 Inspect each saved result. The archive contains the raw CSV, its exact source record and the original HTTP body when that body differs from the decoded CSV. A retained successful save is reused; an explicit failed transfer resumes only its failed paths.
+
+
+## Complete records for revenue qualification
+
+`prepare-revenue-source.py` consumes the two complete original tender and award CSVs in the same source operation. It produces the requested original tender records 34, 35, 550, 900 and 851 with all 67 columns, the complete APM2 source row, and complete software/data award records with all 80 columns. Every JSON record carries its original CSV SHA256 and record number; the original CSV archives remain available alongside the indexes.
+
+```sh
+python3 prepare-revenue-source.py \
+  --source-directory /absolute/original/canadabuys-source-operation \
+  --output-directory /absolute/new/revenue-source-output
+```
+
+The output also includes the complete 908-record source projection for reopening and a compact source index. The award selection uses explicit bilingual terms in the original titles, classifications and descriptions. Its full selection expressions and each matching field are retained. This helps the existing commercial reviewer find a record without treating a text match as supplier eligibility or an awarded amount as a proposed subcontract price.
+
+All monetary amounts, dates, amendment numbers, references and supplier names remain their original strings. The program reads every CSV record, preserves quoted multiline descriptions and exact column sets, verifies the complete source identity, and creates compressed original-byte archives. It does not aggregate repeated award/amendment values. The requested record numbers refer to the pinned 12 October 2026 tender edition recorded above; its original source hash accompanies each complete record.

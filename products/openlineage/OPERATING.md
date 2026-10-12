@@ -8,6 +8,7 @@ The `openlineage-operations` selection delivers the complete lineage workspace t
 | --- | --- |
 | Browser | **OpenLineage operations** in the existing Applications view |
 | Operator CLI | `starforge openlineage` |
+| Native pipeline producers | `starforge openlineage native-python` and `starforge openlineage native-java` |
 | Native API and typed client | The original HTTP server and `./seller/openlineage` package export |
 | Direct MCP | `starforge openlineage mcp --workspace DIR` |
 | Managed merchant agent | The source-owned OpenLineage workspace provider |
@@ -151,6 +152,112 @@ body and operation identity after retryable backpressure. Original wire and
 decoded identities, client-specific setup, capacity and complete continuation
 are documented in the [producer guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/PRODUCERS.md).
 
+## Operate the included Python and Java producers
+
+The installed product and each complete workspace export include the native OpenLineage SDK 1.53.0 producers. They retain complete input files, stable event delivery identities, actual SDK request bodies and matching saved workspace acknowledgements. Resume the same operation directory after an interrupted delivery; use the current connection of the same original workspace after a restart.
+
+The [Python operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/PYTHON_PRODUCER.md) covers the pinned Python runtime, retained input delivery, local status and continuation:
+
+```sh
+starforge openlineage native-python emit \
+  --python /absolute/private/openlineage-python/bin/python \
+  --directory /absolute/private/pipeline-delivery \
+  --connection /absolute/private/lineage/connection.json \
+  --token-file /absolute/private/producer-token \
+  --input /absolute/original/events.ndjson \
+  --operation-id original-pipeline-delivery
+```
+
+The [Java operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_PRODUCER.md) covers JDK/Maven preparation, the saved dependency classpath and original Run, Job and Dataset event delivery. Use `starforge openlineage native-java prepare` and `native-java emit` with the same original source files and owned runtime.
+
+The receiver continues to use Node builtins. Each producer's selected Python or Java runtime is prepared separately and stays reusable across deliveries. Version 3 project exports carry both producer implementations and guides; receiving also accepts complete earlier version 1 and version 2 application packages.
+
+## Manage producer delivery through the merchant host
+
+The managed producer desk uses the configured workspace and file aliases in the
+private host JSON. Add the producer token, configuration directory and named
+Python or Java profiles using the [merchant guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/MERCHANT.md).
+The host prepares complete upstream settings and sends retained source files to
+the same native intake used by the included SDK producers.
+
+```sh
+starforge openlineage producer profiles \
+  --connection /absolute/private/openlineage-host.json --workspace operations
+
+starforge openlineage producer status \
+  --connection /absolute/private/openlineage-host.json --workspace operations
+
+starforge openlineage producer configure \
+  --connection /absolute/private/openlineage-host.json --workspace operations \
+  --profile python
+
+starforge openlineage producer emit \
+  --connection /absolute/private/openlineage-host.json --workspace operations \
+  --input production-events --sha COMPLETE_ORIGINAL_FILE_SHA256 \
+  --operation-id original-production-delivery --content-encoding identity
+```
+
+A file alias selects the complete original on the merchant computer. Its hash
+covers all transmitted bytes; a gzip input uses its compressed hash and
+`--content-encoding gzip`. Each profile produces a private immutable
+configuration file. The returned path, environment setting and hash identify
+the complete configuration to use in the producer process.
+
+Keep the operation ID, file alias, hash, encoding and any expected revision when
+continuing an interrupted send. A persistent merchant session retains a captured
+pending body and can recover it after the original input has moved. After
+reopening the merchant owner, restore that same input file and continue its
+original request. When the server restarts, the persistent merchant connection
+provides explicit instance inspection and reconnect; the operation still belongs
+to the same saved workspace.
+
+## Review schema changes and assign the work
+
+Save an edition before a pipeline change and another after its original events
+arrive. Open **Schema changes** in the workspace, select those two editions, and
+compare the original dataset fields, nested structures, types and declared
+column relationships. The impact view follows the producer's declared
+relationships and shows unresolved field references alongside the affected
+records.
+
+Use a staff review to record the selected changes, reviewer and reason.
+**Needs work** requires an owner and a concrete action; **Resolved** requires
+the completed resolution. Update an existing review as the work progresses so
+its original selection, earlier decisions and supporting source/result
+references remain together. A separate selection starts a separate review.
+
+The same comparison and reports are available through the installed CLI:
+
+```sh
+starforge openlineage schema-compare \
+  --workspace /absolute/private/lineage \
+  --from BEFORE_EDITION_ID --to AFTER_EDITION_ID
+
+starforge openlineage schema-impact \
+  --workspace /absolute/private/lineage \
+  --input /absolute/private/schema-impact-selection.json
+
+starforge openlineage schema-review \
+  --workspace /absolute/private/lineage \
+  --input /absolute/private/schema-review.json
+
+starforge openlineage schema-report \
+  --workspace /absolute/private/lineage \
+  --from BEFORE_EDITION_ID --to AFTER_EDITION_ID \
+  --format html --out /absolute/delivery/schema-review.html
+```
+
+Use the comparison's returned ID and change IDs in the selection and review
+files. A saved review also carries its original operation ID and expected
+workspace revision. JSON, CSV and HTML reports include the comparison, staff
+decisions and follow-up state. The [schema operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SCHEMA_OPERATIONS.md)
+provides complete argument files and the receiving journey.
+
+Native HTTP, the typed client, direct MCP and the managed merchant catalog
+expose `schema.compare`, `schema.impact`, `schema.review.save` and
+`schema.report`. Managed tools retain the same pending-mutation and revision
+handling as the other saved workspace actions.
+
 ## Native agents share the same owner
 
 The direct CLI, browser, typed client and MCP interfaces call the same revisioned workspace. Managed merchant access connects to the running application's original connection file and binds the selected workspace and instance. File-input aliases can name complete original event or result files with their SHA-256, so the operator can transfer actual retained files through the existing private configuration.
@@ -173,7 +280,7 @@ starforge openlineage report \
   --format html --out /absolute/delivery/openlineage-report.html
 ```
 
-The workspace package includes all retained source and result objects, saved state, editions, review history, original operation outcomes, and every portable application file. Each original object and application file has a byte length and SHA-256. Receiving derives event attribution and edition membership from the original source bytes.
+The workspace package includes all retained source and result objects, saved state, editions, review history, schema comparisons and staff resolutions, original operation outcomes, and every portable application file. Each original object and application file has a byte length and SHA-256. Receiving derives event attribution and edition membership from the original source bytes.
 
 Receive into a new directory and reopen the original workspace identity:
 
@@ -218,3 +325,30 @@ node PRODUCER_RECEIVING.mjs /absolute/new-openlineage-producer-receiving
 Its saved operation file retains the original workspace and stage identities.
 An interrupted stage continues through the same directory. The complete
 producer guide explains the generated files and continuation.
+
+The same complete application includes these additional operating journeys:
+
+| Programme | Input and operation |
+| --- | --- |
+| `MERCHANT_PRODUCER_RECEIVING.mjs` | A new private operation directory; managed configuration, complete file delivery, writer recovery, token rotation and reopened export. |
+| `JAVA_RECEIVING.mjs` | An original private operation directory and `--runtime` directory; native SDK plain/gzip delivery, workspace pin, writer recovery, restart replay and Java delivery from the received application. Select the existing JDK and Maven with `--java` and `--maven` when needed. |
+| `SCHEMA_RECEIVING.mjs` | The complete input JSON described in `SCHEMA_OPERATIONS.md`; original before/after sources, concurrent staff decisions, request recovery, full reports and independent receiving. |
+
+Each journey retains its original operation files and continues from the same
+directory. The schema guide also accepts actual earlier workspace packages for
+version 1/version 2 receiving. Keep private credentials with the operator and
+transfer the complete project export to the recipient.
+
+## Operate pipeline service levels
+
+Open **Service levels** in the original OpenLineage workspace to save per-job timeliness, duration and failure expectations, review an assessment at an explicit time, and assign or resolve observed incidents with complete decision history. The desk shares the running application's original workspace and instance connection.
+
+Use `starforge openlineage service-levels --help` for the same local or HTTP workflow. The typed `./seller/openlineage/service-levels` export and six native/merchant tools call the original revisioned writer. Customer reports include policy versions, exact observed source/event references and complete incident history; the existing full workspace export retains these records and the editable service-level application.
+
+The [service-level guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS.md) defines completion freshness, observed duration, failure windows, historical selections and receiving. The [operator desk guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_LEVELS_OPERATOR.md) covers ordinary operation and exact interrupted-request recovery.
+
+## Google catalog commissioning
+
+The companion `starforge openlineage-google` carries a saved original source edition through Google project/quota-project review, explicit event approval, Data Lineage import, stable request recovery, exact table-edge receiving and a complete editable package. Its wrapper retains both the original source application and the current receiver; the original workspace format and application version remain intact.
+
+Use the [Google catalog operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/DATAPLEX.md) for preparation, customer credentials, genuine OpenLineage 1.x requirements, expected catalog identities and independent reopening. Source editions retain every original event and facet, including event kinds outside Google's importer contract. Receiving preserves all API attempts and distinguishes field edges from table edges.

@@ -106,6 +106,22 @@ export async function receiveOriginalExamples(outputDirectory) {
       operationId: "receiving-attach-original-contract", expectedRevision: current.revision };
     const attached = await merchantCall("attach_file", { ...attachmentArgs, input: "contract", expectedSha256: attachment.sha256 });
     record("attach-complete-original-reference", attached);
+    const schemaSelection = { from: editionOne.edition.id, to: editionTwo.edition.id };
+    const schemaComparison = await merchantCall("schema.compare", schemaSelection);
+    assert.ok(schemaComparison.changes.length, "The original second example reports schema observations");
+    record("compare-original-schema-observations", schemaComparison);
+    const firstSchemaChange = schemaComparison.changes[0];
+    record("read-declared-schema-impact", await merchantCall("schema.impact", { ...schemaSelection,
+      comparisonId: schemaComparison.comparisonId, changeId: firstSchemaChange.id }));
+    const schemaReviewArgs = { ...schemaSelection, comparisonId: schemaComparison.comparisonId,
+      changeIds: [firstSchemaChange.id], reviewer: "Original receiving operator", decision: "observed",
+      reason: "Inspected the schema observation in the retained upstream example and its declared relationships.",
+      evidence: [{ kind: "source", id: second.sha256 }], operationId: "receiving-schema-review",
+      expectedRevision: (await client.metadata()).revision };
+    record("save-original-schema-review", await merchantCall("schema.review.save", schemaReviewArgs));
+    const schemaReport = await merchantCall("schema.report", { ...schemaSelection, format: "json" });
+    await fs.writeFile(join(root, "schema-report.json"), schemaReport.text, { flag: "wx", mode: 0o600 });
+    record("complete-original-schema-report", { bytes: Buffer.byteLength(schemaReport.text) });
     const beforeReplay = (await client.read()).revision;
     const previousInstance = original.identity.instanceId;
     await original.close();
@@ -123,6 +139,10 @@ export async function receiveOriginalExamples(outputDirectory) {
       mediaType: "application/json", base64: attachment.bytes.toString("base64") });
     assert.equal(attachedReplay.replayed, true);
     assert.equal(attachedReplay.result.id, attached.result.id);
+    const recoveredSchemaReview = await merchantCall("schema.review.save", schemaReviewArgs);
+    assert.equal(recoveredSchemaReview.replayed, true);
+    assert.equal((await client.read()).revision, beforeReplay);
+    record("recover-original-schema-review", recoveredSchemaReview);
     const metadata = await merchantCall("workspace.metadata");
     assert.equal(metadata.revision, beforeReplay);
     const journal = [];
@@ -188,6 +208,8 @@ export async function receiveOriginalExamples(outputDirectory) {
     assert.equal(reopened.revision, beforeReplay);
     assert.deepEqual(reopened.editions, (await client.read()).editions);
     assert.deepEqual(reopened.reviews, (await client.read()).reviews);
+    assert.deepEqual(reopened.schemaReviews, (await client.read()).schemaReviews);
+    assert.deepEqual(reopened.schemaComparisons, (await client.read()).schemaComparisons);
     assert.equal(Buffer.from((await receivedClient.action("source.read", { id: attachment.sha256 })).base64, "base64").equals(attachment.bytes), true);
     record("reopen-received-original-application", { workspaceId: reopened.workspaceId, revision: reopened.revision,
       events: reopened.eventCount, jobs: reopened.jobs.length, datasets: reopened.datasets.length, runs: reopened.runs.length,

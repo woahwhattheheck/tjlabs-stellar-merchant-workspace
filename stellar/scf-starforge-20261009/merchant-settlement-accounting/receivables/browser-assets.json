@@ -57,6 +57,13 @@
         "payment-requests.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/refunds.mjs",
+      [
+        "refunds.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

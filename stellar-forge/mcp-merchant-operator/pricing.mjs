@@ -9,6 +9,7 @@ import { exact, failure, identifier, line, plain, privateSupportDirectory } from
 import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
 import { costToolDefinitions, normalizePricingCostSources, MerchantPricingCosts, PricingCostArchiveReads } from './pricing-costs.mjs';
 import { MerchantPricingTariffs } from './pricing-tariffs.mjs';
+import { MerchantPricingPerformance } from './pricing-performance.mjs';
 import { normalizeReleaseRuntime, readReleaseState } from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
 
 export const PRICING_CONNECTION_SCHEMA = 'stellar-forge.pricing-workspace-connection.v1';
@@ -272,7 +273,7 @@ export class MerchantPricing {
       await this.#files.closeScope(name);
       await this.#costArchives.closeScope(name);
       if (this.#entries.get(name) === entry) this.#entries.delete(name);
-      entry.source = null; entry.model = null; entry.planning = null; entry.costs = null; entry.tariffs = null;
+      entry.source = null; entry.model = null; entry.planning = null; entry.costs = null; entry.tariffs = null; entry.performance = null;
       return { workspace: name, state: 'CLOSED' };
     })();
     return entry.closing;
@@ -299,6 +300,10 @@ export class MerchantPricing {
     return {bytes,manifest:JSON.parse(bytes.toString('utf8')),manifestFile:{name:'manifest.json',bytes:bytes.length,sha256:sha(bytes)}};
   }
   async #execute(name, args, entry) {
+    if (name.startsWith('merchant_pricing_performance_')) {
+      entry.performance ??= new MerchantPricingPerformance({settings:this.#declared(args.workspace),model:()=>entry.model,files:this.#files});
+      return entry.performance.call(name,args);
+    }
     if (name.startsWith('merchant_pricing_tariff_')) {
       entry.tariffs ??= new MerchantPricingTariffs({settings:this.#declared(args.workspace),model:()=>entry.model,
         files:this.#files,operatorReleaseStore:this.#config.releaseStore,releaseView});

@@ -5,7 +5,7 @@ import {open, mkdir, lstat} from 'node:fs/promises';
 import {join} from 'node:path';
 import {identifier, need, json, sha} from '../receivables/core.mjs';
 import {RECEIVABLE_REQUEST_BYTES} from '../receivables/store.mjs';
-export const SOURCE_NAMES = new Set(['quote.json', 'response.json', 'source.json', 'review.json']);
+export const SOURCE_NAMES = new Set(['quote.json', 'response.json', 'source.json', 'review.json', 'renewal.json']);
 async function syncDirectory(path) {
   const file = await open(path, constants.O_RDONLY | (constants.O_DIRECTORY ?? 0) | (constants.O_NOFOLLOW ?? 0));
   try { await file.sync(); } finally { await file.close(); }
@@ -22,8 +22,11 @@ async function sourceDirectory(workspace, id) {
 }
 export function validateSourceBodies(value) {
   need(typeof value.quoteContent === 'string' && typeof value.responseContent === 'string' &&
-    Buffer.byteLength(value.quoteContent, 'utf8') + Buffer.byteLength(value.responseContent, 'utf8') <= RECEIVABLE_REQUEST_BYTES,
-    'AGREEMENT_SOURCE_REQUIRED', 'Choose the original quote and its accepted response within the two-megabyte request limit.');
+    (value.renewalJson === undefined || typeof value.renewalJson === 'string') &&
+    Buffer.byteLength(value.quoteContent, 'utf8') + Buffer.byteLength(value.responseContent, 'utf8') +
+      (value.renewalJson === undefined ? 0 : Buffer.byteLength(value.renewalJson, 'utf8')) <= RECEIVABLE_REQUEST_BYTES,
+    'AGREEMENT_SOURCE_REQUIRED',
+    'Choose the original quote, its accepted response and any complete renewal handover within the two-megabyte request limit.');
 }
 export async function retainSource(workspace, value, compiled) {
   workspace.lease.assertHeld(); validateSourceBodies(value);
@@ -34,6 +37,7 @@ export async function retainSource(workspace, value, compiled) {
   await mkdir(directory, {mode: 0o700});
   const originals = {'quote.json': Buffer.from(value.quoteContent), 'response.json': Buffer.from(value.responseContent),
     'source.json': Buffer.from(json(compiled.source)), 'review.json': Buffer.from(json(compiled.review))};
+  if (value.renewalJson !== undefined) originals['renewal.json'] = Buffer.from(value.renewalJson, 'utf8');
   const files = {};
   for (const [name, bytes] of Object.entries(originals)) {
     const handle = await open(join(directory, name),

@@ -4,6 +4,10 @@ The command-line operator opens the same private planning workspace as the brows
 
 Use this interface to prepare a grant delivery plan on a Linux worker, revise the staffing and payment assumptions in a saved plan, retain the complete history for another operator, and reopen the result in the browser. The maintained Starforge distribution includes the original scenario, calculator, browser workspace and this operator under their repository paths.
 
+## Installation delivery queue
+
+Use `operations delivery-queue --case ID --as-of YYYY-MM-DD [--output FILE]` for the complete dated JSON view, and `operations delivery-queue-export --case ID --as-of YYYY-MM-DD --output FILE` for the full handover ZIP. Add `--workspace PATH` to the operations group. [Installation delivery queue](DELIVERY_QUEUE.md) provides complete commands, assignment editing and import/reopen instructions.
+
 ## Start from the installed release or original source
 
 Python 3.10 or newer on Linux is required. The model uses the Python standard library, including SQLite and `fcntl`; the installed command uses the existing Node launcher to start Python. Select another Python executable with `SF47_PYTHON=/absolute/path/to/python3`. No shell command is evaluated by the launcher.

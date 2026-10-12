@@ -31,7 +31,12 @@ REPORT = "stellar-forge.iati-report.v1"
 PACKET = "stellar-forge.iati-portfolio-packet.v1"
 REPORT_PACKET = "stellar-forge.iati-report-packet.v1"
 COMPARE = "stellar-forge.iati-portfolio-comparison.v1"
-IATI_FORMAT = SourceFormat("iati", "IATI", inventory, validate_plan, extract, dataset_spec)
+def retained_iati_inventory(stream, cancel=None):
+    # The package is loaded after the original workspace classes are initialized.
+    from organisation.xml import source_inventory
+    return source_inventory(stream, cancel)
+
+IATI_FORMAT = SourceFormat("iati", "IATI", retained_iati_inventory, validate_plan, extract, dataset_spec)
 COLLECTIONS = ("activities", "transactions", "budgets")
 MAX_PACKET = 4 * 1024 * 1024 * 1024
 MAX_METADATA = 64 * 1024 * 1024
@@ -273,6 +278,8 @@ class IatiWorkspace(Workspace):
         self.dqa = IatiDqa(self)
         from publishing import IatiPublishing
         self.publishing = IatiPublishing(self)
+        from organisation import OrganisationPlanner
+        self.organisation = OrganisationPlanner(self)
         from refresh import IatiRefresh
         self.refresh = IatiRefresh(self)
 
@@ -800,4 +807,7 @@ class IatiWorkspace(Workspace):
         from refresh import PACKET as REFRESH_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == REFRESH_PACKET:
             return self.refresh.receive(path)
+        from organisation.portable import PACKET as ORGANISATION_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == ORGANISATION_PACKET:
+            return self.organisation.receive({"path": path})
         return super().import_packet(path)

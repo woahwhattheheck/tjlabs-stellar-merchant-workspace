@@ -1,5 +1,11 @@
 # OpenLineage operations workspace
 
+Native Python and Java OpenLineage 1.53.0 producers are included in the complete application. Use `cli.mjs native-python` or `cli.mjs native-java` to send retained original pipeline events and continue interrupted deliveries through the same workspace. The [producer guide](PRODUCERS.md), [Python guide](PYTHON_PRODUCER.md) and [Java guide](JAVA_PRODUCER.md) cover preparation, configuration, saved progress and customer receiving.
+
+The managed merchant producer desk prepares private Python or Java settings,
+sends complete host-pinned event files and continues their original delivery.
+Use `cli.mjs producer` and the [merchant guide](MERCHANT.md) to operate it.
+
 A private, editable operations workspace for original OpenLineage events.
 Receive a producer's HTTP events or import original JSON, NDJSON or gzip files,
 inspect their jobs, runs and datasets, follow
@@ -264,3 +270,11 @@ reader without an external package dependency.
 
 The application is MIT licensed. Upstream event fixtures retain their
 OpenLineage provenance and upstream license information in SOURCE_CONTRACT.md.
+
+## Schema change review and staff resolution
+
+Open **Schema changes** to compare two named saved editions, inspect original field observations and declared downstream paths, assign follow-up and retain complete staff decision history. Reviews use the existing workspace writer and saved-request recovery. HTML, CSV and JSON reports and editable workspace receiving carry the complete comparison, original sources and evidence. See [SCHEMA_OPERATIONS.md](SCHEMA_OPERATIONS.md) for the full UI, SDK, CLI, receiving and operating programme.
+
+## Pipeline service levels
+
+Open **Service levels** from the workspace header to maintain per-job freshness, duration and failure policies; evaluate original events at a stated time; and assign, acknowledge, resolve or accept incidents with complete decision history. The same workflow is available through `scf-lineage service-levels`, the typed service-levels client and the original native/merchant tools. See [SERVICE_LEVELS.md](SERVICE_LEVELS.md) for policy semantics, complete customer reports and editable receiving, and [SERVICE_LEVELS_OPERATOR.md](SERVICE_LEVELS_OPERATOR.md) for the operator desk.

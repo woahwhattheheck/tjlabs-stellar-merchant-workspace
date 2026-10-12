@@ -123,6 +123,11 @@ def register(subparsers, common):
     target = command("cohort-export", "Export the complete frozen cohort and its original sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
+    target = command("delivery-queue", "Read current Installation work, assignments and civil-calendar due dates", case=True, output=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to the current UTC date")
+    target = command("delivery-queue-export", "Export the dated delivery report and complete original operating case", case=True)
+    target.add_argument("--as-of", help="Complete YYYY-MM-DD calendar date; defaults to the current UTC date")
+    target.add_argument("--output", required=True)
     command("installations", "List current saved customer installation editions", case=True, output=True)
     target = command("installation-seed", "Prepare a complete installation from the original funded work packages", case=True, output=True)
     target.add_argument("--expected-version", type=int, required=True)
@@ -339,6 +344,10 @@ def operate(workspace, args):
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
                 "requestId": args.request_id, "note": args.note, "action": "cohort.prepare",
                 "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
+    elif action == "delivery-queue":
+        result = ops.delivery_queue(args.case, args.as_of)
+    elif action == "delivery-queue-export":
+        return {"caseId": args.case, "output": publish(args.output, ops.export_delivery_queue(args.case, args.as_of))}
     elif action == "installations":
         result = {"installations": ops.list_installations(args.case)}
     elif action == "installation-seed":

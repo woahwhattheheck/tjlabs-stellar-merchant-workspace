@@ -6,10 +6,17 @@ import { FORMAT, sha256, canonical, digest, clone, parseSource, project, entity,
 
 import { projectReport, reportCsv, reportHtml } from "./reports.mjs";
 import { parseRetainedSource, decodeSource, SourceEncodingError } from "./source-encoding.mjs";
+import { SchemaError, validateSchemaCollections } from "./schema-domain.mjs";
+import { dispatchSchema } from "./schema-workflow.mjs";
+import { serviceLevelAction, validateServiceLevels, ServiceLevelError } from "./service-levels.mjs";
 
 const APP_ROOT = dirname(fileURLToPath(import.meta.url));
 const LEGACY_APPLICATION_FILES = ["LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","package.json","protocol.mjs","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","store.mjs","style.css"];
-export const APPLICATION_FILES = ["LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","PRODUCERS.md","PRODUCER_RECEIVING.mjs","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","package.json","producer.d.mts","producer.mjs","protocol.mjs","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","source-encoding.mjs","store.mjs","style.css"];
+export const VERSION_2_APPLICATION_FILES = ["LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","PRODUCERS.md","PRODUCER_RECEIVING.mjs","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","package.json","producer.d.mts","producer.mjs","protocol.mjs","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","source-encoding.mjs","store.mjs","style.css"];
+export const VERSION_3_NATIVE_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","LICENSE","MERCHANT.md","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","server.mjs","source-encoding.mjs","store.mjs","style.css"];
+export const VERSION_3_APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","source-encoding.mjs","store.mjs","style.css"];
+export const APPLICATION_VERSION = 4;
+export const APPLICATION_FILES = ["JAVA_PRODUCER.md","JAVA_PRODUCER.mjs","JAVA_RECEIVING.mjs","LICENSE","MERCHANT.md","MERCHANT_PRODUCER_RECEIVING.mjs","OPENLINEAGE_LICENSE","OpenLineageNativeProducer.java","PRODUCERS.md","PRODUCER_RECEIVING.mjs","PYTHON_PRODUCER.md","README.md","RECEIVING.mjs","SCHEMA_OPERATIONS.md","SCHEMA_RECEIVING.mjs","SERVICE_LEVELS.md","SERVICE_LEVELS_OPERATOR.md","SOURCE_CONTRACT.md","app.js","browser-assets-loader.mjs","browser-assets.json","catalog.mjs","cli.mjs","client.d.ts","client.mjs","contribution.json","fixture-event-full.json","fixture-event-simple.json","fixture-lineage-dataset.json","fixture-lineage-implicit-job.json","fixture-lineage-mixed-sources.json","fixtures.json","index.html","java-producer-pom.xml","mcp-client.mjs","mcp-setup.mjs","mcp-tools.mjs","mcp.mjs","merchant-provider.mjs","model.mjs","native-producer.mjs","native_python_producer.py","package.json","producer.d.mts","producer.mjs","protocol.mjs","python-producer-requirements.txt","reports.mjs","schema-core-1-0-1.json","schema-core-1-0-5.json","schema-domain.mjs","schema-ui.js","schema-workflow.mjs","server.mjs","service-levels-browser.js","service-levels-catalog.mjs","service-levels-cli.mjs","service-levels-client.d.mts","service-levels-client.mjs","service-levels-example.json","service-levels.css","service-levels.html","service-levels.mjs","source-encoding.mjs","store.mjs","style.css"];
 const HASH = /^[0-9a-f]{64}$/;
 export class WorkspaceError extends Error {
   constructor(message, status = 400, details = undefined) { super(message); this.status = status; this.details = details; }
@@ -45,6 +52,14 @@ async function plainRead(path) {
     return await handle.readFile();
   } finally { await handle.close(); }
 }
+function validateSchemas(state, complete = false) {
+  try { return validateSchemaCollections(state, { complete }); }
+  catch (error) { if (error instanceof SchemaError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+}
+function validateServices(state, deep = false) {
+  try { validateServiceLevels(state, { deep }); return state; }
+  catch (error) { if (error instanceof ServiceLevelError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+}
 function validateState(state) {
   if (!state || state.schema !== FORMAT || typeof state.workspaceId !== "string" || (!Number.isSafeInteger(state.revision) || state.revision < 0)) throw new WorkspaceError("Invalid workspace state");
   for (const name of ["sources", "events", "editions", "reviews", "results", "operations"]) if (!Array.isArray(state[name])) throw new WorkspaceError("Invalid workspace " + name);
@@ -54,7 +69,8 @@ function validateState(state) {
     events.add(item.id);
   }
   for (const edition of state.editions) if (!Array.isArray(edition.eventIds) || edition.eventIds.some(id => !events.has(id))) throw new WorkspaceError("Edition references an absent event");
-  return state;
+  validateServices(state);
+  return validateSchemas(state);
 }
 export class LineageWorkspace {
   constructor(directory) { this.directory = resolve(directory); this.statePath = join(this.directory, "workspace.json"); }
@@ -64,7 +80,7 @@ export class LineageWorkspace {
     return this.lock(async () => {
       if (await exists(this.statePath)) return this.read();
       const at = new Date().toISOString();
-      const state = { schema: FORMAT, workspaceId: randomUUID(), title, revision: 0, createdAt: at, updatedAt: at, sources: [], events: [], editions: [], reviews: [], results: [], operations: [] };
+      const state = { schema: FORMAT, workspaceId: randomUUID(), title, revision: 0, createdAt: at, updatedAt: at, sources: [], events: [], editions: [], reviews: [], results: [], operations: [], schemaComparisons: [], schemaReviews: [] };
       await atomic(this.statePath, JSON.stringify(state));
       return clone(state);
     });
@@ -94,7 +110,7 @@ export class LineageWorkspace {
   async read() { return validateState(JSON.parse(await plainRead(this.statePath))); }
   async view(options = {}) {
     const state = await this.read(), projection = project(state, options);
-    return { ...projection, title: state.title, sources: state.sources, editions: state.editions, reviews: state.reviews, results: state.results, updatedAt: state.updatedAt };
+    return { ...projection, title: state.title, sources: state.sources, editions: state.editions, reviews: state.reviews, results: state.results, schemaComparisons: state.schemaComparisons ?? [], schemaReviews: state.schemaReviews ?? [], updatedAt: state.updatedAt };
   }
   async readObject(id) {
     if (!HASH.test(id)) throw new WorkspaceError("Invalid object identity");
@@ -229,7 +245,7 @@ export class LineageWorkspace {
         application.push({ path: name, sha256: sha256(bytes), bytes: bytes.length, base64: bytes.toString("base64") });
       }
     }
-    const payload = { schema: "commons.openlineage.package.v1", applicationVersion: 2, state, objects, application };
+    const payload = { schema: "commons.openlineage.package.v1", applicationVersion: APPLICATION_VERSION, state, objects, application };
     const body = Buffer.from(JSON.stringify({ ...payload, payloadSha256: digest(payload) }));
     const id = sha256(body);
     const path = join(this.directory, "exports", id + ".json");
@@ -251,9 +267,11 @@ export class LineageWorkspace {
       throw new WorkspaceError("Use a non-negative offset and a record count from 1 to 1000");
     const state = await this.read();
     if (state.revision !== revision) throw new WorkspaceError("Workspace revision changed; restart this selection from its current revision", 409, { expectedRevision: revision, actualRevision: state.revision });
-    if (collection === "operations" && edition !== null) throw new WorkspaceError("Operation history belongs to the complete workspace; omit edition");
-    const report = collection === "operations" ? { operations: state.operations } : projectReport(state, { edition });
-    const collections = new Set(["jobs", "datasets", "runs", "edges", "observedEdges", "sources", "events", "editions", "reviews", "results", "diagnostics", "operations"]);
+    const globalCollections = ["operations", "schemaComparisons", "schemaReviews"];
+    if (globalCollections.includes(collection) && edition !== null)
+      throw new WorkspaceError("Operation and schema review history belong to the complete workspace; omit edition");
+    const report = globalCollections.includes(collection) ? { [collection]: state[collection] ?? [] } : projectReport(state, { edition });
+    const collections = new Set(["jobs", "datasets", "runs", "edges", "observedEdges", "sources", "events", "editions", "reviews", "results", "diagnostics", "operations", "schemaComparisons", "schemaReviews"]);
     if (!collections.has(collection)) throw new WorkspaceError("Choose a declared original record collection");
     const records = report[collection] ?? [];
     if (offset > records.length) throw new WorkspaceError("Record offset exceeds the selected collection", 416);
@@ -277,10 +295,18 @@ export class LineageWorkspace {
     const state = await this.read(), view = project(state);
     return { workspaceId: state.workspaceId, title: state.title, revision: state.revision, createdAt: state.createdAt, updatedAt: state.updatedAt,
       counts: Object.fromEntries(["jobs", "datasets", "runs", "edges", "observedEdges", "diagnostics"].map(name => [name, (view[name] ?? []).length])),
-      retained: Object.fromEntries(["sources", "events", "editions", "reviews", "results", "operations"].map(name => [name, state[name].length])) };
+      retained: Object.fromEntries(["sources", "events", "editions", "reviews", "results", "operations", "schemaComparisons", "schemaReviews"].map(name => [name, (state[name] ?? []).length])) };
   }
   async dispatch(action, args = {}) {
     if (args === null || typeof args !== "object" || Array.isArray(args)) throw new WorkspaceError("Action arguments must be an object");
+    if (action.startsWith("schema.")) {
+      try { return await dispatchSchema(this, action, args); }
+      catch (error) { if (error instanceof SchemaError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+    }
+    if (typeof action === "string" && action.startsWith("service-levels.")) {
+      try { return await serviceLevelAction(this, action, args); }
+      catch (error) { if (error instanceof ServiceLevelError) throw new WorkspaceError(error.message, error.status, error.details); throw error; }
+    }
     if (action === "workspace.metadata") return this.metadata();
     if (action === "records.read") return this.readRecords(args);
     if (action === "object.read") return this.readObjectRange(args.id, args);
@@ -377,6 +403,7 @@ export function verifyBundle(bytes) {
     objects.set(item.id, data);
   }
   reconstructSources(state, objects);
+  validateServices(state, true);
   const resultIds = new Set();
   for (const result of state.results) {
     if (typeof result.id !== "string" || resultIds.has(result.id)) throw new WorkspaceError("Invalid or duplicate result identity");
@@ -394,12 +421,30 @@ export function verifyBundle(bytes) {
     if (review.editionId !== null && !state.editions.some(item => item.id === review.editionId)) throw new WorkspaceError("Review edition is absent");
     for (const key of review.entityKeys) entity(state, key, { edition: review.editionId });
   }
+  validateSchemas(state, true);
   const application = new Map();
-  if (payload.applicationVersion !== undefined && payload.applicationVersion !== 2) throw new WorkspaceError("Unsupported application source edition");
+  if (payload.applicationVersion !== undefined && ![2, 3, 4].includes(payload.applicationVersion)) throw new WorkspaceError("Unsupported application source edition");
   if (payload.applicationVersion === undefined && state.sources.some(source => source.contentEncoding === "gzip"))
     throw new WorkspaceError("Compressed sources require their complete version 2 application edition");
-  const expectedApplication = payload.applicationVersion === 2 ? APPLICATION_FILES : LEGACY_APPLICATION_FILES;
-  for (const item of payload.application ?? []) {
+  const hasSchemaRecords = Boolean((state.schemaComparisons ?? []).length || (state.schemaReviews ?? []).length);
+  if (![3, 4].includes(payload.applicationVersion) && hasSchemaRecords)
+    throw new WorkspaceError("Saved schema comparisons and decisions require a complete schema-capable application edition");
+  const hasServiceRecords = Boolean((state.serviceLevels?.policies ?? []).length ||
+    (state.serviceLevels?.assessments ?? []).length || (state.serviceLevels?.incidents ?? []).length);
+  if (payload.applicationVersion !== 4 && hasServiceRecords)
+    throw new WorkspaceError("Saved service-level policies, assessments and decisions require their complete version 4 application edition");
+  const applicationEntries = payload.application ?? [];
+  if (!Array.isArray(applicationEntries)) throw new WorkspaceError("Application source must be a complete file list");
+  const nativeVersion3 = payload.applicationVersion === 3 &&
+    applicationEntries.length === VERSION_3_NATIVE_APPLICATION_FILES.length &&
+    applicationEntries.every(item => item && VERSION_3_NATIVE_APPLICATION_FILES.includes(item.path));
+  if (nativeVersion3 && hasSchemaRecords)
+    throw new WorkspaceError("Saved schema comparisons and decisions require the complete schema-capable application");
+  const expectedApplication = nativeVersion3 ? VERSION_3_NATIVE_APPLICATION_FILES :
+    payload.applicationVersion === 4 ? APPLICATION_FILES :
+    payload.applicationVersion === 3 ? VERSION_3_APPLICATION_FILES :
+    payload.applicationVersion === 2 ? VERSION_2_APPLICATION_FILES : LEGACY_APPLICATION_FILES;
+  for (const item of applicationEntries) {
     if (!expectedApplication.includes(item.path) || application.has(item.path)) throw new WorkspaceError("Unexpected application path");
     const data = Buffer.from(item.base64, "base64");
     if (sha256(data) !== item.sha256 || data.length !== item.bytes) throw new WorkspaceError("Application source hash mismatch");

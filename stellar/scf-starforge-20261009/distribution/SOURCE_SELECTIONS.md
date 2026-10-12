@@ -68,6 +68,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `source-tables` | Complete CSV and TSV source authoring, typed field meaning, retained editions and comparisons, native merchant resources and editable customer handover | Source Tables; Runtime management | [Complete installation and operation](../../../products/source-tables/OPERATING.md) |
 | `openlineage-operations` | Native Python and Java producer intake, original compressed/source bytes, job/run/dataset lineage, saved reviews and complete editable customer receiving | OpenLineage operations; Runtime management | [Complete installed operation and producer guide](../../../products/openlineage/OPERATING.md) |
 | `study-research` | Study source editions, Property field surveys and comparables, Census ACS, BLS labor and HUD releases with original publishing and complete customer receiving | Study Source Refresh; Buyer runbook; Merchant console; PostgreSQL publisher; PostgreSQL workspace | [Complete study operator and receiving guide](selections/STUDY_RESEARCH.md) |
 | `merchant-support` | Merchant cases, original tariff quotations, accepted implementation, Service adjustments, buyer/accountant handover and complete customer receiving | Merchant support; Merchant pricing and scenario planning; Runtime management; original merchant agent | [Complete installation, receiving and handover](../../../products/merchant-support/RECEIVING.md) |
@@ -200,6 +201,36 @@ existing application. Installed source is separate from the existing customer
 project, WordPress site, merchant state, outbox, buyer operation and downloaded
 files. Use those original paths and operation identities through upgrades.
 
+## Recorded usage and customer pricing revisions
+
+The `merchant-performance` contribution selects the original SF97 recorded-usage workspace, complete portable source, native proposal workflow, browser, typed HTTP client and direct operator. Both `merchant-economics` and `merchant-support` retain this contribution alongside `merchant-tariffs`, the original Pricing provider, and the complete Commercial contribution.
+
+The installed command is `merchant-performance`. Its original source is `stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/cli.mjs`. It opens the original Pricing and Tariff owners with the same private state directory and saved source settings. The existing `revenue-workspace` launcher and managed Pricing Application retain their original owner and expose the same Performance page.
+
+| Source-owned export | Original member |
+| --- | --- |
+| `./merchant/performance` | `performance/model.mjs` |
+| `./merchant/performance-source` | `performance/source.mjs` |
+| `./merchant/performance-workspace` | `performance/workspace.mjs` |
+| `./merchant/performance-client` | Conditional `client.d.mts` and `client.mjs` |
+| `./merchant/performance-server` | `performance/server.mjs` |
+| `./merchant/performance-cli` | `performance/cli.mjs` |
+
+The maintained `merchant-commercial` contribution also includes the original customer performance source, typed Commercial client and quote desk exports. `merchant-commercial performance` receives a complete recorded comparison into the existing case and prepares an ordinary quote revision with an explicit monthly request volume. The original quotation, customer-response, accepted-implementation and complete receiving owners continue that draft.
+
+The original Pricing MCP provider exposes the sixteen Performance methods through its existing `pricing` registration. The original Support provider exposes the Commercial source review, receiving, revision and full-file operations. These selections preserve both providers and the original retained file downloader.
+
+The selected source includes the complete `sf97-merchant-revenue-ops`, `sf74-merchant-support-console` and `merchant-settlement-accounting` components. The service-period path imports the original `customer-statements/core.mjs`, `period-usage.mjs` and `native-usage.mjs`, with their original accounting dependencies. The original builder closes the source graph and includes the Performance browser assets, declaration files and complete operating guides.
+
+A saved Performance source retains its original Pricing version files, selected tariff portfolio, scenario plans, optional complete cost edition and paired service source. Its 48 MiB portable envelope can be inspected, retained and carried through Commercial material. Complete native receiving uses a new original Pricing `WORKSPACE_BACKUP` captured after the review and proposal operations, plus the full tariff portfolio. The backup retains the performance records, service sources and original proposal/selection journals. Restore it through the existing receiver, receive the portfolio through the original Tariff owner, then reopen Performance and continue its exact saved request UUIDs.
+
+Detailed operator contracts:
+
+- [Performance review, service capture, source transfer and native proposals](../sf97-merchant-revenue-ops/performance/README.md)
+- [Commercial performance material and customer quote revisions](../sf74-merchant-support-console/commercial/PERFORMANCE.md)
+- [Complete merchant economics operation](../../../products/merchant-economics/OPERATING.md)
+- [Complete Merchant support product](../../../products/merchant-support/README.md)
+
 ## Maintain a recipe
 
 Recipes live in `distribution/selections/ID.json` and use schema
@@ -255,3 +286,25 @@ that Applications and merchant provider catalogs contain its selected entries,
 that installed command help matches its registrations, and that the original
 product can complete its saved native journey. Reopen the same output with
 `--resume`, and confirm an explicit different selection cannot reuse it.
+
+## Flowable process operations and customer receiving
+
+Use [flowable-merchant.json](selections/flowable-merchant.json) to compose the
+complete installed Flowable workspace, native process source, typed client,
+Applications integration and merchant MCP provider. The original process
+engine handles deployment, human tasks, native migration validation and
+execution; the saved workspace retains complete request and source/history
+receiving.
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/tjlabs-stellar-merchant-workspace \
+  --ref FULL_ORIGINAL_COMMIT --selection flowable-merchant \
+  --out /absolute/flowable-release --offline
+~~~
+
+Follow [FLOWABLE_MERCHANT.md](selections/FLOWABLE_MERCHANT.md) for the complete
+build/install/Open workflow, actual engine receiving and customer handover.
+The recipe includes the source-owned `flowable-workspaces`,
+`merchant-provider-flowable-workspaces` and `flowable-product`
+contributions, the original browser assets and complete installed guides.

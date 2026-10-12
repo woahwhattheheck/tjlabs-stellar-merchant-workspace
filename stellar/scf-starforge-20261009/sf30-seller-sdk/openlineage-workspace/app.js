@@ -1,6 +1,7 @@
+import { createSchemaUI } from "./schema-ui.js";
 const $ = id => document.getElementById(id);
 const KINDS = { runs: "run", jobs: "job", datasets: "dataset" };
-const LABELS = { runs: "Runs", jobs: "Jobs", datasets: "Datasets", sources: "Sources", editions: "Saved editions", reviews: "Reviews", results: "Attached results", diagnostics: "Events requiring attention" };
+const LABELS = { runs: "Runs", jobs: "Jobs", datasets: "Datasets", sources: "Sources", editions: "Saved editions", reviews: "Reviews", results: "Attached results", schema: "Schema changes", diagnostics: "Events requiring attention" };
 const DESCRIPTIONS = {
   runs: "Execution history from imported events.",
   jobs: "Named jobs and their declared data boundaries.",
@@ -9,6 +10,7 @@ const DESCRIPTIONS = {
   editions: "Named event selections for comparison and review.",
   reviews: "Recorded decisions, reasons, and their history.",
   results: "Complete result files linked to an entity and a saved edition.",
+  schema: "Compare saved schemas, inspect declared downstream effects, and resolve staff decisions.",
   diagnostics: "Original events with details to resolve before projection."
 };
 const state = {
@@ -270,11 +272,13 @@ async function sendPending() {
   await refresh().catch(error => notice("Saved at revision " + saved.revision + ". " + error.message, true));
   return saved;
 }
-async function mutate(name, args, label) {
+async function mutate(name, args, label, options = {}) {
   if (state.pending || state.pendingBusy) { notice("Resolve the saved request before starting another save.", true); return null; }
   if (!state.view) throw new Error("Connect to the workspace first.");
-  await retainPending({ action: name, args: { ...args, operationId: crypto.randomUUID(), expectedRevision: state.view.revision },
-    label, workspaceId: state.view.workspaceId, createdAt: new Date().toISOString(), status: "prepared" });
+  const view = state.view, revision = options.expectedRevision ?? view.revision;
+  if (!Number.isSafeInteger(revision) || revision < 0) throw new Error("Use the original reviewed workspace revision.");
+  await retainPending({ action: name, args: { ...args, operationId: crypto.randomUUID(), expectedRevision: revision },
+    label, workspaceId: view.workspaceId, createdAt: new Date().toISOString(), status: "prepared" });
   return sendPending();
 }
 async function refresh() {
@@ -342,6 +346,7 @@ function selectEntityLink(key, label = null) {
 
 function renderCatalog() {
   if (!state.view) return;
+  if (state.section === "schema") { schemaUI.render($("catalog"), $("inspector")); return; }
   const host = $("catalog"), view = state.view;
   let records = (view[state.section] ?? []).filter(matching);
   if (state.section === "runs" && state.runState) records = records.filter(row => row.state === state.runState);
@@ -470,6 +475,7 @@ function inspectorHeader(type, title, subtitle, tools = []) {
     h("p", { className: "namespace" }, subtitle), tools.length ? h("div", { className: "button-row" }, tools) : null);
 }
 function renderInspector() {
+  if (state.section === "schema") { schemaUI.renderInspector($("inspector")); return; }
   const host = $("inspector"), selected = state.selection, detail = state.detail;
   if (!selected) { host.replaceChildren(empty("Inspect a record", "Choose an item to see its original events, facets, sources, reviews, and connected data.", null, true)); return; }
   if (state.detailLoading) { host.replaceChildren(h("div", { className: "loading", role: "status" }, "Loading selected record…")); return; }
@@ -945,6 +951,9 @@ async function downloadProducerConfiguration(event) {
   finally { state.producerDownloadBusy = false; setProducerControls(); }
 }
 
+const schemaUI = createSchemaUI({ h, button, table, jsonBlock, badge, count, when, notice, action, mutate,
+  downloadJSON, downloaded, downloadObject, setBusyControls, entityName,
+  getView: () => state.view, getSearch: () => state.search, isActive: () => state.section === "schema", hasPending: () => Boolean(state.pending) });
 document.querySelectorAll("[data-close]").forEach(control => control.addEventListener("click", () => closeDialog(control.dataset.close)));
 $("import-button").addEventListener("click", openImport);
 $("save-edition-button").addEventListener("click", openEdition);

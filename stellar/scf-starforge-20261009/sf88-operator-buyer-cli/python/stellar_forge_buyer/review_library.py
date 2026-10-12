@@ -107,6 +107,15 @@ class ResourceLibrary:
             raise StateError("REVIEW_ACTION_INVALID")
         return self._call(action, parameters, timeout=timeout, cancel_event=cancel_event)
 
+    def browser(self, *, port=0, page="resources", operation_id=None):
+        """Start the original browser on this same native library/process."""
+        from .review_browser import ReviewBrowser
+        return ReviewBrowser.start(self, port=port, page=page, operation_id=operation_id)
+
+    def browser_status(self):
+        """Return token-free lifecycle state from the original listener owner."""
+        return self.invoke("browser.status")
+
     def status(self):
         return self._call("library.status")
 

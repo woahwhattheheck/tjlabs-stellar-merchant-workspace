@@ -219,3 +219,8 @@ The final receiving reads compare the native frozen selection, report and every 
 The private output includes the actual original package, transfer and source identities in `result.json`, together with the existing Merchant configuration and receiving workspace. Reuse the same arguments and output directory to continue its original file transfer; the stable package-derived transfer key and native package identity select the retained operation. The original workspace and its source files remain the receiving authority.
 
 To first create a property package from retained survey inputs, use the installed `examples/property_source_journey.py` described in [PROPERTY_RESEARCH.md](PROPERTY_RESEARCH.md). Both examples use the same original property service and complete package format.
+
+
+## Survey spreadsheet onboarding
+
+The ten `property.onboarding.*` native operations and corresponding `merchant_study_property_onboarding_*` tools retain CSV/XLSX originals, explicit typed mappings, complete row provenance and source revisions in the same Property workspace. This brings the complete installed component to 61 Merchant tools. See [PROPERTY_ONBOARDING.md](PROPERTY_ONBOARDING.md) for the full operator, CLI and retained-input receiving contract. The original property review, purpose selection and complete package interfaces remain the subsequent workflow.

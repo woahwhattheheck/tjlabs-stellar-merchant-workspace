@@ -9,11 +9,13 @@ import { prepareMerchant, adoptDelivery, previewMerchant } from './merchant.mjs'
 import { detailReceipt } from './source-import.mjs';
 import { workshareBrief } from './brief.mjs';
 import { transactionGet, transactionPost } from './transactions/operator.mjs';
+import { fundingReportGet, fundingReportPost } from './reports/operator.mjs';
 
 const STATIC=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.js',['app.js','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
 STATIC.set('/transactions.html',['transactions.html','text/html; charset=utf-8']);
 STATIC.set('/transactions.js',['transactions.js','text/javascript; charset=utf-8']);
 STATIC.set('/transactions.css',['transactions.css','text/css; charset=utf-8']);
+for(const [ext,type]of [['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8']])STATIC.set('/funding-reports.'+ext,['funding-reports.'+ext,type]);
 const WEB=fileURLToPath(new URL('./web/',import.meta.url));
 const LIMIT=128*1024*1024;
 function jsonError(error){return {error:error.code??'OPERATION_FAILED',message:error.message,captureId:error.captureId??null,providerStatus:error.providerStatus??null,retryAt:error.retryAt??null};}
@@ -63,6 +65,7 @@ export async function serveWorkspace(workspace,{port=8783,receivingRoot}={}){
     authorize(req);
     if(req.method==='GET'){
       if(path==='/api/identity')return send(res,200,identity);
+      if(path.startsWith('/api/funding-reports/')){const r=await fundingReportGet(workspace,url);return send(res,r.status??200,r.value,r.options??{});}
       if(path.startsWith('/api/transactions/')){const r=transactionGet(workspace,url);return send(res,r.status??200,r.value,r.options??{});}
       if(path==='/api/state')return send(res,200,{...workspace.state(),server:{startedAt,receivingEnabled:!!receiving},jobs:[...jobs.values()].map(v=>v.job)});
       if(path==='/api/rows'){
@@ -95,6 +98,7 @@ export async function serveWorkspace(workspace,{port=8783,receivingRoot}={}){
     }
     requireThat(req.method==='POST','METHOD_NOT_ALLOWED',undefined,405);
     const body=await readBody(req);
+    if(path.startsWith('/api/funding-reports/')){const r=await fundingReportPost(workspace,path,body,{startJob,receivingRoot:receiving});return send(res,r.status??200,r.value,r.options??{});}
     if(path.startsWith('/api/transactions/')){const r=transactionPost(workspace,path,body,{startJob});return send(res,r.status??200,r.value,r.options??{});}
     if(path==='/api/queries')return send(res,200,workspace.saveQuery(body));
     if(path==='/api/captures')return send(res,202,startJob('provider_capture',signal=>workspace.runCapture(body,{signal})));

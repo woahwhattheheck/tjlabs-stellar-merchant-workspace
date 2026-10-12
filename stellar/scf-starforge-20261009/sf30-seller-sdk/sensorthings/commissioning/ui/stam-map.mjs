@@ -144,7 +144,7 @@ export async function mountCommissioningMap({container,client,sessionToken,jobId
   layer=vendor.STAM({baseUrl:service.href,queryObject:{entityType:entityKind},
    queryParameters:new Map([['snapshot',manifestValue.snapshotSha256]]),pageSize:500,maxEntities:50000,maxMarkersPerTile:50000,
    maxConcurrentRequests:4,requestDelay:100,debounceDuration:200,mqtt:false,cluster:true,clusterMin:5,
-   markerStyle:'#236681',polygonStyle:{color:'#236681',weight:2,opacity:0.9,fillColor:'#69a8bc',fillOpacity:0.18},
+   markerStyle:'#444444',polygonStyle:{color:'#444444',weight:2,opacity:0.9,fillColor:'#a3a3a3',fillOpacity:0.18},
    markerClick:popup,
    fetchOptions:{headers:{Authorization:'Bearer '+sessionToken,'X-SensorThings-Workspace':workspaceId},credentials:'same-origin',
     redirect:'error',cache:'no-store',signal:mapAbort.signal}});

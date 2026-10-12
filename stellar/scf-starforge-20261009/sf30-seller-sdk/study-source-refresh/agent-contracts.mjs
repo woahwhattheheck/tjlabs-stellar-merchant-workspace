@@ -65,6 +65,19 @@ native('property.selection.freeze', ['review_id','expected_version','operator','
 native('property.selection.read', ['selection_id'], ['selection_id'], true);
 native('property.selection.report', ['selection_id'], ['selection_id'], true);
 native('property.selection.export', ['selection_id','operator','label'], ['selection_id','operator','label']);
+
+native('property.onboarding.fields', [], [], true);
+native('property.onboarding.source', ['document_id','reader','offset','limit'], ['document_id','reader'], true);
+native('property.onboarding.plans', [], [], true);
+native('property.onboarding.plan.save', ['value','operator'], ['value','operator']);
+native('property.onboarding.plan.read', ['plan_id'], ['plan_id'], true);
+native('property.onboarding.preview', ['value','offset','limit','changes_offset'], ['value'], true);
+native('property.onboarding.prepare', ['plan_id','expected_projection_sha256','operator','label','note'],
+  ['plan_id','expected_projection_sha256','operator','label']);
+native('property.onboarding.retained', ['edition_id'], ['edition_id'], true);
+native('property.onboarding.rows', ['edition_id','offset','limit','state'], ['edition_id'], true);
+native('property.onboarding.continuation', ['edition_id','replacement_document_ids'], ['edition_id'], true);
+
 export const STUDY_NATIVE_OPERATIONS = Object.freeze(definitions);
 
 const tools = [];
@@ -181,4 +194,25 @@ tool('receive_status','Read original received and missing input-file offsets aft
   {...ws,transferId:text(80),offset:n(STUDY_MAX_PACKET_BYTES),limit:n(200,1)},['workspace','transferId'],true);
 tool('receive_commit','Verify every part and the original complete file hash before exposing the input to native import.',
   {...ws,transferId:text(80)},['workspace','transferId'],false,true);
+
+tool('property_onboarding_fields','Read the original Property column types, stable join identities, row-selection rules and source limits.',ws,['workspace'],true);
+tool('property_onboarding_source','Inspect original retained CSV or XLSX cells, headers, worksheet metadata, hidden rows, formulas and physical CSV lines.',
+  {...ws,document_id:id,reader:object,...nativePage},['workspace','document_id','reader'],true);
+tool('property_onboarding_plans','List immutable survey mapping plans retained as original Property documents.',ws,['workspace'],true);
+tool('property_onboarding_plan_save','Retain an explicit survey mapping and exact source-document bindings in the original Property workspace.',
+  {...ws,...inputValue,operator:text(200)},['workspace','operator'],false,true);
+tool('property_onboarding_plan_read','Reopen the exact retained mapping and source bindings by original document identity.',
+  {...ws,plan_id:id},['workspace','plan_id'],true);
+tool('property_onboarding_preview','Stream the complete retained survey sources through explicit typed mappings; page original cells, converted values, exclusions and source changes before receiving.',
+  {...ws,...inputValue,...nativePage,changes_offset:n()},['workspace'],true);
+tool('property_onboarding_prepare','Receive the reviewed source projection through original Property intake and change review at its exact preview hash; identical retries reopen the same native records.',
+  {...ws,plan_id:id,expected_projection_sha256:id,operator:text(200),label:text(1000),note:S(16000)},
+  ['workspace','plan_id','expected_projection_sha256','operator','label'],false,true);
+tool('property_onboarding_retained','Read the mapping, source-projection identity and complete row-map binding retained in an original survey edition or received package.',
+  {...ws,edition_id:id},['workspace','edition_id'],true);
+tool('property_onboarding_rows','Page the immutable included, excluded and rejected original source rows from an existing survey edition, including after full package receiving.',
+  {...ws,edition_id:id,...nativePage,state:{enum:['','included','excluded','error']}},['workspace','edition_id'],true);
+tool('property_onboarding_continuation','Open the existing mapping for a following source edition with exact replacement documents and the original previous-edition review.',
+  {...ws,edition_id:id,replacement_document_ids:docs},['workspace','edition_id'],true);
+
 export const studyWorkspaceTools = Object.freeze(tools);

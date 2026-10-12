@@ -25,7 +25,9 @@ ASSETS = {"/": ("index.html", "text/html; charset=utf-8"),
           "/app.js": ("app.js", "text/javascript; charset=utf-8"),
           "/style.css": ("style.css", "text/css; charset=utf-8"),
           "/properties.js": ("properties.js", "text/javascript; charset=utf-8"),
-          "/properties.css": ("properties.css", "text/css; charset=utf-8")}
+          "/properties.css": ("properties.css", "text/css; charset=utf-8"),
+          "/property-onboarding.js": ("property-onboarding.js", "text/javascript; charset=utf-8"),
+          "/property-onboarding.css": ("property-onboarding.css", "text/css; charset=utf-8")}
 
 
 class Handler(BaseHTTPRequestHandler):

@@ -108,7 +108,7 @@ class PropertyResearch:
     def import_document(self, path, metadata, expected_input_sha256=None):
         metadata = m.document(metadata)
         suffix = Path(path).suffix.lower()
-        if suffix not in (".pdf", ".csv", ".json", ".txt", ".html", ".xlsx", ".geojson", ".zip"):
+        if suffix not in (".pdf", ".csv", ".json", ".txt", ".html", ".xlsx", ".geojson", ".zip", ".jsonl"):
             fail("PROPERTY_DOCUMENT_FORMAT_UNSUPPORTED")
         parent = private_directory(self.w.directory / "property-documents")
         stage = Path(tempfile.mkdtemp(prefix=".document-", dir=parent))

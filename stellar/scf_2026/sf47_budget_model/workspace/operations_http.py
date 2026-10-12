@@ -9,7 +9,9 @@ from operations import Operations, decoded
 
 
 def register_static(static):
-    static.update({"/operations_implementation.mjs": ("operations_implementation.mjs", "text/javascript; charset=utf-8"),
+    static.update({"/operations_dispatch.mjs": ("operations_dispatch.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_dispatch.css": ("operations_dispatch.css", "text/css; charset=utf-8"),
+                   "/operations_implementation.mjs": ("operations_implementation.mjs", "text/javascript; charset=utf-8"),
                    "/operations_implementation.css": ("operations_implementation.css", "text/css; charset=utf-8"),
                    "/operations_cohort.mjs": ("operations_cohort.mjs", "text/javascript; charset=utf-8"),
                    "/operations_cohort.css": ("operations_cohort.css", "text/css; charset=utf-8"),
@@ -45,7 +47,7 @@ def read(handler, parsed):
     if path == "/api/operations":
         handler.send(200, {"cases": ops.list(query.get("planId", [None])[0])})
         return True
-    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|export.zip|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
+    match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})(?:/(report|history|export.zip|delivery-queue(?:/export.zip)?|installations(?:/installation-[a-f0-9]{32}(?:/history|/export.zip)?)?|completion|completion-reviews/review-[a-f0-9]{32}/export.zip|cohort-reviews/review-[a-f0-9]{32}/export.zip|implementation-reviews/review-[a-f0-9]{32}/export.zip|implementation-originals/source-[a-f0-9]{32}/[a-f0-9]{64}|sources/source-[a-f0-9]{32}|reviews/review-[a-f0-9]{32}|forecasts(?:/forecast-[a-f0-9]{32}(?:/export.zip)?)?|portfolios(?:/portfolio-[a-f0-9]{32}(?:/export.zip)?)?))?", path)
     if not match:
         raise Problem("Operations page not found.", 404, "NOT_FOUND")
     ident, action = match.groups()
@@ -57,6 +59,11 @@ def read(handler, parsed):
         handler.send(200, ops.history(ident, int(query.get("after", ["0"])[0]), int(query.get("limit", ["100"])[0])))
     elif action == "export.zip":
         handler.send(200, ops.export(ident), "application/zip", ident + ".zip")
+    elif action == "delivery-queue":
+        handler.send(200, ops.delivery_queue(ident, query.get("asOfDate", [None])[0]))
+    elif action == "delivery-queue/export.zip":
+        handler.send(200, ops.export_delivery_queue(ident, query.get("asOfDate", [None])[0]),
+                     "application/zip", ident + "-delivery-queue.zip")
     elif action == "installations":
         handler.send(200, {"installations": ops.list_installations(ident)})
     elif action.startswith("installations/"):

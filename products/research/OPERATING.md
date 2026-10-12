@@ -1093,58 +1093,50 @@ If the original agent reports an uncertain native action, use `commerce-reconcil
 
 Keep complete backups of the Research workspace, actual merchant state/outbox, Buyer workspace, immutable publication/purchase operation directories and customer handover. The paid archive is one complete gzip-framed stream with exact member order and hashes. Larger programmes use the original complete non-paid handover or an explicitly smaller selected delivery; no member is silently truncated.
 
-## Review a registered protocol and its methods
+## Review the registered protocol and planned methods
 
-The installed **Protocol and methods** view keeps the complete original capture beside the selected dossier and question. It shows the PDF, full extracted page text, the authored methods map, and the original SourceBundle preview. Source acquisition, the previewed question changes, and a reviewer’s appraisal remain separately identifiable in the same dossier.
+Open the intended dossier in the existing Research application and choose **Protocol and methods**. Select the original capture's complete `source-bundle.json`, choose its existing question, and use **Inspect captured source** followed by **Preview question changes**. Review the selected source, page-linked planned methods and expected dossier revision before **Save to this question**.
 
-Use the capture already retained by the original programme. The maintained `research-study-protocol` command owns capture and the complete source-inclusive handover; `research-protocol-review` supplies the browser-compatible inspect, prepare, receive and reconcile workflow. Opening a completed capture reads its retained files. A fresh PDF acquisition additionally uses the installation’s original Poppler executables.
+The NCT03529110 capture retains the complete registered PDF, all 117 extracted pages, the registry selection and the original extraction provenance. **Open PDF page** and **Read complete page text** show the retained original material. The registry labels the document *Study Protocol and Statistical Analysis Plan*; the PDF is protocol DS8201-A-U302 version 6.0, dated 25 September 2020, and refers some details to a separate SAP. These are planned methods from the source. Continue the original extraction and appraisal workflow to record the analyst's decisions.
 
-1. Open the intended dossier, then **Protocol and methods**.
-2. Select the complete retained `source-bundle.json` and the existing question.
-3. Choose **Inspect captured source**. Read the original PDF and complete page text at the relevant methods links.
-4. Choose **Preview question changes**. Review the source terms, method observations, question selection and expected revision.
-5. Choose **Save to this question**. Keep the returned source edition and original revision with the existing programme.
-
-The original importer receives the entire source bundle. A method observation is a source finding; its presence does not record an appraisal decision. The existing appraisal view records that judgment against the actual selected study and source.
-
-For terminal operation, use the same capture and private original connection:
+For terminal review of an already completed capture:
 
 ~~~sh
 starforge research-protocol-review inspect \
-  --source /absolute/original-protocol-capture/source-bundle.json \
-  --out /absolute/private-protocol-review/source-inspection.json
+  --source /ABS/original-protocol-capture/source-bundle.json \
+  --out /ABS/private-review/source-inspection.json
 
 starforge research-protocol-review prepare \
-  --source /absolute/original-protocol-capture/source-bundle.json \
-  --connection /absolute/private/research-connection.json \
-  --workspace-id ORIGINAL_WORKSPACE_ID \
-  --dossier ORIGINAL_DOSSIER_ID \
-  --question ORIGINAL_QUESTION_ID \
-  --directory /absolute/private-protocol-review
+  --source /ABS/original-protocol-capture/source-bundle.json \
+  --connection /PRIVATE/original-application-url.json \
+  --workspace-id research_ACTUAL_WORKSPACE_ID \
+  --dossier d_ACTUAL_DOSSIER_ID \
+  --question ACTUAL_QUESTION_ID \
+  --directory /ABS/private-review
 ~~~
 
-The uppercase selections are the actual values returned by the existing workspace. Preparation writes a complete `REVIEW.json` containing the original source, inspection, preview and fixed request. The browser accepts that same file. Reusing its directory reopens the first saved selection.
+Use the actual original connection and identifiers. `REVIEW.json` contains the full source, inspection, preview and immutable request; it also opens in the browser. Repeating preparation in the same directory validates that original review. The original `research-study-protocol capture` command remains available to the existing source owner when a capture is still needed.
 
-After the original review, receive or reconcile that exact request:
+Before resubmitting a request whose reply was lost, inspect its original result:
 
 ~~~sh
 starforge research-protocol-review reconcile \
-  --review /absolute/private-protocol-review/REVIEW.json \
-  --connection /absolute/private/research-connection.json
-
-starforge research-protocol-review receive \
-  --review /absolute/private-protocol-review/REVIEW.json \
-  --connection /absolute/private/research-connection.json \
-  --directory /absolute/private-protocol-review
+  --review /ABS/private-review/REVIEW.json \
+  --connection /PRIVATE/original-application-url.json
 ~~~
 
-Reconciliation reads whether the selected bundle is already present in that question. Receiving retains `RECEIVED.json` with the actual metadata response and source edition. A lost reply can be recovered from the same original request even when later dossier revisions exist. A new source or question receives an explicit new review directory.
+This reads the source's original import state and distinguishes `ALREADY_RECEIVED` from `NOT_RECEIVED`. After reviewing the selected request, receive it through the original SourceBundle operation:
 
-The browser commits its full request to IndexedDB before sending it. **Read original import state** and **Recover original import** use that same request after an uncertain response. **Download complete review** and **Download exact request** preserve the original recovery material. If another tab saved the draft, reopening adopts that saved draft and its storage revision together; the other local copy remains available for an explicit separate save. Keep a downloaded unsaved review if browser storage is unavailable.
+~~~sh
+starforge research-protocol-review receive \
+  --review /ABS/private-review/REVIEW.json \
+  --connection /PRIVATE/original-application-url.json \
+  --directory /ABS/private-review
+~~~
 
-For an attached SDK client, use its original `client.studyProtocol()` methods: `inspectFile`, `prepareFile`, `reconcile`, `receive` and `receiveCapture`. Await the operation and close the borrowed client when its work is complete. The attachment does not own the Research listener.
+`RECEIVED.json` retains the actual source edition and saved revision. The same request recovers an accepted import even after later dossier edits. In the browser, full drafts and pending requests survive navigation; a conflicting edit remains a separate saved copy. A transport or server failure leaves the outcome unresolved so the exact original request can be reconciled.
 
-The [complete protocol operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-OPERATOR.md) includes all methods, original registered-document semantics, current-engine handover commands and receiving recovery.
+The original typed attachment exposes `ResearchWorkspaceClient.studyProtocol()` for inspect, prepare, reconcile and receive. It shares the existing workspace identity and request lifecycle. The [complete operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/STUDY-PROTOCOL-OPERATOR.md) gives all client inputs, source-file choices, request recovery and revision-specific HTML, Markdown and editable-dossier downloads.
 
 ## Continue the paid delivery from Python
 

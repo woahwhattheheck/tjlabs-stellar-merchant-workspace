@@ -393,6 +393,8 @@ export class GrantWorkspaceClient {
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
       portfolio:() => '/api/operations/' + cid() + '/portfolios/' + id(args.portfolioId, 'portfolio'),
       review:() => '/api/operations/' + cid() + '/reviews/' + id(args.reviewId, 'review'),
+      'delivery-queue':() => '/api/operations/' + cid() + '/delivery-queue' +
+        (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
       installations:() => '/api/operations/' + cid() + '/installations',
       installation:() => '/api/operations/' + cid() + '/installations/' + id(args.installationId,'installation') +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Installation edition',1,500)),
@@ -666,6 +668,8 @@ export class GrantWorkspaceClient {
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',
+      'delivery-queue':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-queue/export.zip' +
+        (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
       installation:() => '/api/operations/' + id(args.caseId,'operation') + '/installations/' + id(args.installationId,'installation') +
         '/export.zip?revision=' + integer(args.revision,'Selected installation edition',1,500),
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),

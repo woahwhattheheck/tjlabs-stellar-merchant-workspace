@@ -1,5 +1,7 @@
 # Merchant payment plans and collections
 
+The [complete merchant financial workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md) connects this desk to original settlement accounting, customer invoices and receipt allocation, Xero handover and complete operating recovery.
+
 Prepare customer installment schedules over the merchant's issued invoices, collect against the same recorded payments and credits, and retain every customer schedule edition. The payment-plan desk brings dated collections, invoice activity, schedule revisions and complete customer files into the existing private accounting workspace.
 
 The `merchant-payment-plans` selection installs the **Customer payment plans** application together with the receivables, customer, accounting and quotation workflows it uses. The `merchant-receivables` selection also includes this desk. Both products use the same source under [merchant-settlement-accounting/receivables/payment-plans](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/README.md), the same customer identities and the same accounting writer.
@@ -104,14 +106,66 @@ One process owns the accounting directory at a time. Use the running browser or 
 A payment plan covers the actual amount still due on one issued invoice at a selected balance date. The invoice supplies its customer, currency code and decimal precision.
 
 1. Select **New payment plan**, choose the issued invoice and set its balance date. Inspect the balance after the original payments, allocation releases and credit notes effective on that date.
-2. Enter the installment dates and positive decimal amounts. Alternatively, use **Generate installments** with a count, first due date and interval in days; the generated rows remain editable.
+2. Enter the installment dates and positive decimal amounts. Alternatively, use **Prepare schedule** with a count, first due date and fixed-day or calendar-month cadence; the generated rows remain editable.
 3. Add the customer-facing title, reference and note. The schedule total must exactly equal the selected balance. Every installment date must be on or after the balance date.
 4. Save the draft, then review the invoice identity, customer, currency precision, retained balance and complete installment table.
 5. Activate that reviewed edition. Open its retained files to print or deliver the customer schedule.
 
-The generator divides exact decimal units and puts the remainder in the final installment. For example, 100.00 divided into three installments produces 33.33, 33.33 and 33.34. The interval is a number of **days**. Enter actual calendar dates in the editable rows for month-end or other irregular schedules.
+The generator divides exact decimal units and puts the remainder in the final installment. For example, 100.00 divided into three installments produces 33.33, 33.33 and 33.34. Monthly, quarterly and yearly schedules use calendar months from the first due date. Choose the original day of the month or the last day of each month; fixed-day schedules remain available.
 
 Drafts remain editable. An existing active schedule continues while its replacement is being prepared. Activation freezes the reviewed schedule and invoice basis into a new edition, with the current customer and issuer details, reference, note and payment instructions. A changed draft version or invoice basis prompts a fresh review before activation.
+
+### Calendar scheduling
+
+Choose **Monthly**, **Quarterly**, **Yearly**, or **Custom calendar months** in
+the schedule editor. The generator uses the first due date as the anchor for
+every installment. A shorter month uses its last day, then the next installment
+returns to the original day. For example, a monthly schedule starting on
+2027-01-31 produces 2027-01-31, 2027-02-28 and 2027-03-31; one starting on
+2027-01-30 returns to 2027-03-30 after February.
+
+Choose **Last day of month** to keep every date at month end. The first due date
+must itself be the last day of its month, so a monthly schedule starting on
+2027-02-28 continues on 2027-03-31 and 2027-04-30. With **Original day of month**,
+the same February start continues on March 28 and April 28. Leap years follow
+the calendar: a yearly schedule starting on 2024-02-29 returns to February 29
+in 2028.
+
+**Weekly** and **Every two weeks** use fixed intervals of seven and fourteen
+days. **Fixed number of days** preserves any explicit interval from one to
+3,660 days; omitted intervals in existing API requests still mean 30 days.
+Custom calendar spacing accepts one to 120 months. The count includes the
+first installment and supports one to 1,000 rows. All dates must remain within
+four-digit calendar years.
+
+The generator returns explicit editable dates and exact amounts. Saving,
+review, activation, historical collections and customer files continue using
+those selected rows. Changing a generation control alone leaves the current
+rows as entered; choose **Prepare schedule** to replace them with a new
+calculation. The editor keeps the selected cadence while preparing or editing
+that draft. Dates and amounts can always be adjusted before saving.
+
+The same HTTP, native and CLI generate request accepts either `intervalDays`
+or `intervalMonths`, never both. Calendar-month requests also accept
+`monthAnchor: "DAY_OF_MONTH"` (default) or `"END_OF_MONTH"`. A month anchor
+on a fixed-day request is rejected.
+
+```json
+{
+  "invoiceId": "ORIGINAL_INVOICE_UUID",
+  "balanceDate": "2027-01-15",
+  "firstDueDate": "2027-01-31",
+  "count": 4,
+  "intervalMonths": 1,
+  "monthAnchor": "END_OF_MONTH",
+  "title": "Monthly customer schedule"
+}
+```
+
+Use the original invoice ID and its actual balance date. The request above
+selects January 31, February 28, March 31 and April 30. Quarterly and yearly
+requests use `intervalMonths: 3` and `intervalMonths: 12`. Keep the returned
+draft, workspace ID and revision for the existing save and review steps.
 
 ### Customer files
 
