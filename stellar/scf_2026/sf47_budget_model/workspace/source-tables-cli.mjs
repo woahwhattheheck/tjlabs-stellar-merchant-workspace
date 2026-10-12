@@ -12,8 +12,10 @@ import {
   importPlanningBook, serializePlanningBook, planningBookFromNative, addPlanningTable,
   receivePlanningEdition, retainPlanningTableReview, changePlanningMapping, rebasePlanningBook,
   requireCurrentBaseline, preparePlanningImport, completeNativePreview, acceptPlanningPreview,
-  tableImportGuide, ROLES,
+  tableImportGuide, ROLES, receivePlanningWorkbook, retainPlanningBook,
 } from './source-tables-core.mjs';
+
+import {workbookUpload, decodeWorkbookBytes, workbookSelectionBody, validateWorkbookMaterials} from './source-workbooks.mjs';
 
 const execute = promisify(execFile), HERE = dirname(fileURLToPath(import.meta.url));
 const nativeCli = join(HERE, 'cli.py');
@@ -22,6 +24,10 @@ const json = value => JSON.stringify(value, null, 2) + '\n';
 const MAX = 128 * 1024 * 1024;
 const own = (value,key) => Object.prototype.hasOwnProperty.call(value,key);
 const COMMANDS = {
+  'inspect-workbook': ['file','sheet','range','header-row','offset','limit','python','output'],
+  'project-workbook': ['file','mapping','python','output'],
+  'receive-workbook': ['project','role','file','mapping','selection','python','output'],
+  'export-workbooks': ['project','output-directory'],
   snapshot: ['workspace','plan','revision','python','output'],
   receive: ['project','role','file','delimiter','no-header','output'],
   configure: ['project','role','binding','table-mapping','output'],
@@ -34,7 +40,7 @@ function need(value, message) { if (!value) throw new Error(message); }
 function argumentsFor(argv) {
   const [command, ...rest] = argv;
   if (!command || command === '--help' || command === 'help') return {command:'help'};
-  need(own(COMMANDS, command), 'Choose snapshot, receive, configure, review, rebase, preview or save.');
+  need(own(COMMANDS, command), 'Choose snapshot, receive, configure, review, rebase, preview, save, inspect-workbook, project-workbook, receive-workbook or export-workbooks.');
   const options = {command};
   for (let i=0;i<rest.length;i++) {
     const key=rest[i].replace(/^--/,'');
@@ -90,6 +96,96 @@ function delimiter(value) {
   const choices={comma:',',tab:'\t',semicolon:';',pipe:'|'};
   need(own(choices,value),'Use --delimiter comma, tab, semicolon or pipe.');return choices[value];
 }
+
+async function workbookNative(request, options) {
+  const input = json(request);
+  need(Buffer.byteLength(input) <= 32*1024*1024, 'The complete workbook request exceeds the original 32 MiB input allowance.');
+  return new Promise((resolve, reject) => {
+    const child = execFile(options.python || 'python3', [join(HERE,'source_workbooks.py')],
+      {encoding:'utf8',maxBuffer:MAX,windowsHide:true}, (error, stdout, stderr) => {
+        if (error) {
+          let body;
+          try { body = JSON.parse(stderr).error; } catch {}
+          reject(Object.assign(new Error(body?.message || String(stderr || error.message).trim()),
+            body ? {code:body.code,details:body.details} : {}));
+          return;
+        }
+        try { resolve(JSON.parse(stdout)); } catch (error) { reject(error); }
+      });
+    child.stdin.on('error', reject);
+    child.stdin.end(input);
+  });
+}
+async function uploadWorkbook(filename) {
+  const raw = await bytes(filename,32*1024*1024);
+  return workbookUpload(resolve(filename).split(/[\\/]/).at(-1),new Uint8Array(raw));
+}
+function workbookInteger(value, label) {
+  need(/^\d+$/.test(String(value)) && Number.isSafeInteger(Number(value)), label+' needs an original whole number.');
+  return Number(value);
+}
+async function inspectWorkbook(options) {
+  required(options,'file','output');
+  const preview = {offset:workbookInteger(options.offset || '0','Offset'),limit:workbookInteger(options.limit || '25','Page length')};
+  if (options.sheet) preview.sheet = options.sheet;
+  if (options.range) preview.range = options.range;
+  const request = {action:'inspect',source:await uploadWorkbook(options.file),preview};
+  if (own(options,'header-row')) request.headerRow = options['header-row'] === 'none' ? null : workbookInteger(options['header-row'],'Header row');
+  const result = await workbookNative(request,options);
+  return {output:await publish(options.output,json(result)),sourceId:result.source.id,
+    sheets:result.source.description.sheets.length,sourceBytes:result.source.bytes,
+    selectedSheet:result.preview.metadata.name,range:result.preview.range,nextOffset:result.preview.nextOffset};
+}
+async function projectWorkbook(options) {
+  required(options,'file','mapping');
+  return workbookNative({action:'project',source:await uploadWorkbook(options.file),mapping:await readJson(options.mapping)},options);
+}
+async function receiveWorkbook(options, book) {
+  required(options,'role');
+  need(own(ROLES,options.role),'Choose packages, milestones, contributors or assignments.');
+  need(Boolean(options.selection) !== Boolean(options.file || options.mapping),
+    'Choose either --selection COMPLETE_SELECTION.json or both --file ORIGINAL.xlsx and --mapping MAPPING.json.');
+  const received = options.selection ? await readJson(options.selection) : await projectWorkbook(options);
+  need(received?.source && received?.projection, 'Open the complete workbook selection, including its original source bytes.');
+  const next = await receivePlanningWorkbook(book,{role:options.role,source:received.source,projection:received.projection});
+  // The same native parser verifies portable selections received from the browser
+  // before the original planner is asked to calculate or save a change.
+  await workbookNative({action:'validate',retained:retainPlanningBook(next)},options);
+  return outputBook(options,next);
+}
+async function exportWorkbooks(book, directory) {
+  await validateWorkbookMaterials(book);
+  const destination = resolve(directory), sources = [], selections = [], artifacts = [];
+  await mkdir(destination,{recursive:true,mode:0o700});
+  for (const source of book.workbookSources || []) {
+    const relative = 'workbooks/'+source.sha256+'.xlsx', path=join(destination,relative);
+    await mkdir(dirname(path),{recursive:true,mode:0o700});
+    const artifact = await publish(path,Buffer.from(decodeWorkbookBytes(source.dataBase64)));
+    sources.push({sourceId:source.id,originalFilename:source.filename,path:relative,bytes:artifact.bytes,sha256:artifact.sha256});
+    artifacts.push(artifact);
+  }
+  for (const selection of book.workbookSelections || []) {
+    const body = workbookSelectionBody(selection), stem='worksheet-selections/'+selection.id;
+    const records = [
+      [stem+'.json',selection.text,'complete-selection'],
+      [stem+'.csv',body.csv.text,'projected-csv'],
+      [stem+'.rows.jsonl',body.rowMap.text,'original-worksheet-row-map'],
+      [stem+'.mapping.json',json(body.mapping),'saved-column-choices'],
+    ], outputs = [];
+    for (const [relative,content,role] of records) {
+      const path=join(destination,relative);await mkdir(dirname(path),{recursive:true,mode:0o700});
+      const artifact=await publish(path,content);artifacts.push(artifact);
+      outputs.push({role,path:relative,bytes:artifact.bytes,sha256:artifact.sha256});
+    }
+    selections.push({id:selection.id,sourceId:selection.sourceId,documentId:selection.documentId,editionId:selection.editionId,
+      sheet:body.mapping.plan.sheet,range:body.mapping.plan.range,rows:body.rows.length,files:outputs});
+  }
+  const index = {schema:'stellar-forge.planning-workbook-handover.v1',project:book.id,
+    sources,selections,selectedWorkbooks:book.selectedWorkbooks || {}};
+  artifacts.push(await publish(join(destination,'workbook-handover.json'),json(index)));
+  return {index,artifacts};
+}
+
 async function previewProject(options) {
   required(options,'project','output','workspace','plan');
   const book=await readBook(options.project), plan=await current(options);
@@ -170,10 +266,12 @@ async function savePreview(options) {
   const zip={plan:{id:result.id,revision:result.revision,contentSha256:result.contentSha256},
     output:{path:zipPath,bytes:rawZip.length,sha256:digest(rawZip)}};
   await publish(join(directory,'native-export.json'),json(zip));
+  const workbooks=(prepared.book.workbookSources || []).length ? await exportWorkbooks(prepared.book,directory) : null;
+  if(workbooks)artifacts.push(...workbooks.artifacts);
   const complete={schema:'stellar-forge.planning-source-tables.delivery.v1',
     requestId:options['request-id'],project:prepared.book.id,planId:result.id,revision:result.revision,
     contentSha256:result.contentSha256,sourceImport:prepared.id,
-    nativeExport:zip,artifacts};
+    nativeExport:zip,artifacts,...(workbooks?{workbookSources:workbooks.index.sources.length,workbookSelections:workbooks.index.selections.length}:{})};
   await publish(join(directory,'DELIVERY.json'),json(complete));
   return complete;
 }
@@ -181,6 +279,11 @@ export async function runPlanningSourceTables(argv=process.argv.slice(2)) {
   const options=argumentsFor(argv);
   if(options.command==='help') return {help:[
     'snapshot --workspace PATH --plan ID --output source-project.json',
+    'inspect-workbook --file ORIGINAL.xlsx [--sheet NAME --range A1:K9 --header-row 1 --offset 0 --limit 25] --output workbook-inspection.json',
+    'project-workbook --file ORIGINAL.xlsx --mapping workbook-mapping.json --output workbook-selection.json',
+    'receive-workbook --project source-project.json --role packages --selection workbook-selection.json --output next-project.json',
+    'receive-workbook --project source-project.json --role packages --file ORIGINAL.xlsx --mapping workbook-mapping.json --output next-project.json',
+    'export-workbooks --project source-project.json --output-directory NEW_DIRECTORY',
     'receive --project source-project.json --role packages --file costs.csv --delimiter comma --output next-project.json',
     'configure --project source-project.json --role packages --binding binding.json [--table-mapping mapping.json] --output mapped-project.json',
     'review --project mapped-project.json --role packages --output reviewed-project.json',
@@ -190,11 +293,23 @@ export async function runPlanningSourceTables(argv=process.argv.slice(2)) {
     'Use --python PATH on commands that invoke the original planner. Close its browser listener before headless commands open the same workspace.',
     'Every output is a complete new file. Retry the same save with the same preview, note, request ID and output directory.',
   ]};
+  if(options.command==='inspect-workbook')return inspectWorkbook(options);
+  if(options.command==='project-workbook'){
+    required(options,'output');const result=await projectWorkbook(options),body=workbookSelectionBody(result.projection);
+    return {output:await publish(options.output,json(result)),sourceId:result.source.id,
+      rows:body.rows.length,sheet:body.mapping.plan.sheet,range:body.mapping.plan.range,
+      csvSha256:body.csv.sha256,selectionSha256:result.projection.sha256};
+  }
+  if(options.command==='export-workbooks'){
+    required(options,'project','output-directory');
+    return exportWorkbooks(await readBook(options.project),options['output-directory']);
+  }
   if(options.command==='snapshot') { required(options,'workspace','plan','output'); return outputBook(options,await planningBookFromNative(await current(options))); }
   if(options.command==='preview')return previewProject(options);
   if(options.command==='save')return savePreview(options);
   required(options,'project','output');
   let book=await readBook(options.project);
+  if(options.command==='receive-workbook')return receiveWorkbook(options,book);
   if(options.command==='rebase')return outputBook(options,rebasePlanningBook(book,await current(options)));
   required(options,'role'); need(own(ROLES,options.role),'Choose packages, milestones, contributors or assignments.');
   if(options.command==='receive') {
@@ -220,6 +335,6 @@ export async function runPlanningSourceTables(argv=process.argv.slice(2)) {
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {
   runPlanningSourceTables().then(result=>process.stdout.write(json(result))).catch(error=>{
     process.stderr.write(json({error:{code:error.code||'PLANNING_SOURCE_TABLES',message:error.message,
-      ...(error.role?{role:error.role}:{}),...(error.record?{record:error.record,line:error.line}:{})}}));process.exitCode=1;
+      ...(error.role?{role:error.role}:{}),...(error.record?{record:error.record,line:error.line}:{}),...(error.details?{details:error.details}:{})}}));process.exitCode=1;
   });
 }

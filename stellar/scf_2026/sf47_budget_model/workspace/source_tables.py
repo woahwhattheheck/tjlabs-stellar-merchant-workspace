@@ -137,12 +137,18 @@ def validate_source_tables(value):
         review_ids.add(review["id"])
     require(book.get("appliedReviewId") is None or book["appliedReviewId"] in review_ids,
             "Retain the selected applied review.")
+    from source_workbooks import validate_workbook_materials, WorkbookInputError, error_body
+    try:
+        validate_workbook_materials(book)
+    except WorkbookInputError as exc:
+        fail(error_body(exc)["message"])
     return deepcopy(value)
 
 
 def register_static(routes):
     """Use the selected release's complete existing browser implementation."""
     routes.update({
+        "/source-workbooks.mjs": ("source-workbooks.mjs", "text/javascript; charset=utf-8"),
         "/source-tables.mjs": ("source-tables.mjs", "text/javascript; charset=utf-8"),
         "/source-tables-core.mjs": ("source-tables-core.mjs", "text/javascript; charset=utf-8"),
         "/source-tables.css": ("source-tables.css", "text/css; charset=utf-8"),

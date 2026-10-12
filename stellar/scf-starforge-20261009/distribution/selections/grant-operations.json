@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original grant planning and delivery calendars with complete source-table authoring, contributor delivery and cash, complete timesheet and supplier invoice source intake, statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases.",
+  "description": "Original grant planning and delivery calendars with complete XLSX and source-table authoring, contributor delivery and cash, complete timesheet and supplier invoice source intake, statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases.",
   "base": {
     "commands": [
       "installation",
@@ -184,7 +184,8 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace-recovery.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/workspace.mjs",
     "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/native-reconcile.mjs",
-    "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs"
+    "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-refresh/workbook/reader.py"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
