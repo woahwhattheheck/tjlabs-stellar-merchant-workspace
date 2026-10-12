@@ -121,7 +121,8 @@ export function createPaymentRequestUi(host) {
     const returns = detail.returns || [];
     if (!returns.length) return '<p class="muted">No transaction reference has been recorded.</p>';
     return returns.map(row => {
-      const seen = observation(row), code = seen.status || row.status || 'REFERENCE_RECORDED';
+      const seen = observation(row), latest = row.observations?.at(-1) || row.observation;
+      const code = latest?.status || seen.status || row.status || 'REFERENCE_RECORDED';
       return '<section class="section"><div class="row between"><strong>' + escape(label(code)) +
         '</strong>' + button('Inspect and receive', 'receive', detail.paymentRequest.id,
           'data-return="' + escape(row.id) + '" data-write') + '</div>' +

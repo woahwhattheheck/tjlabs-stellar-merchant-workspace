@@ -219,7 +219,7 @@ export interface PaymentRequestDetail {
   cancellationReason: string | null; history: HistoryEntry[]; revision: Revision;
 }
 export interface PaymentRequestQuery {
-  invoiceId?: string; customerId?: string; asOf?: DateOnly; offset?: number; limit?: number;
+  invoiceId?: string; customerId?: string; status?: PaymentRequestStatus; asOf?: DateOnly; offset?: number; limit?: number;
 }
 export interface PaymentRequestPage {
   items: PaymentRequestSummary[]; total: number; offset: number; limit: number; revision: Revision;
