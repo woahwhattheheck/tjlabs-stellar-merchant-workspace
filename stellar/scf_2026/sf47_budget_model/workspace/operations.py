@@ -22,7 +22,6 @@ import operations_completion as completion
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
-import operations_statements as statements
 import operations_performance as performance
 import operations_ledger_intake as ledger_intake
 import operations_payables as payables
@@ -269,15 +268,6 @@ class Operations:
             if command == "source.add":
                 after = self._source_add(program_id, data)
                 kind, record_id = "source", after["id"]
-            elif command == "statement.receive":
-                result = statements.receive(self, context, data, actor, next_version)
-                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
-                source_change = result.get("sourceChange")
-                extra_receipt = {key: value for key, value in result.items()
-                                 if key not in ("before", "after", "kind", "recordId", "sourceChange")}
-                if result["unchanged"]:
-                    return {"id": program_id, "version": expected, "action": command, "kind": kind,
-                            "recordId": record_id, **extra_receipt}
             elif command == "support.receive":
                 result = support.receive(self, context, data, actor, next_version)
                 source_change = result["sourceChange"]
@@ -538,11 +528,6 @@ class Operations:
         with self.workspace.mutex:
             context = deepcopy(self._context(identifier(program_id, "operation")))
         return buyer.preview(context, body)
-
-    def preview_statement(self, program_id, body):
-        with self.workspace.mutex:
-            context = deepcopy(self._completion_context(program_id, body, ("inputs",)))
-        return statements.preview(context, body.get("inputs"))
 
     def preview_support(self, program_id, body):
         with self.workspace.mutex:
@@ -1023,7 +1008,6 @@ class Operations:
                 domain.fail("The complete original review snapshot and report are required.")
             if digest(review["snapshot"]) != review["businessSha256"]:
                 domain.fail("A frozen review differs from its retained business snapshot.")
-        statements.validate_import(context, events, files)
         has_node = buyer.validate_node_import(context, events, reviews, files)
         node_names = {"node-accounting-observations.json", "node-accounting-observations.csv"}
         node_view = buyer.node_observations(context)

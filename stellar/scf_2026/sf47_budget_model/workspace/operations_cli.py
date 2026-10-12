@@ -232,15 +232,6 @@ def register(subparsers, common):
     target = command("completion-export", "Download the frozen form preparation and its exact selected sources", case=True)
     target.add_argument("--review", required=True)
     target.add_argument("--output", required=True)
-    for verb in ("statement-preview", "statement-receive"):
-        target = command(verb, "Reconcile an original account CSV or receive its reviewed cash observations", case=True, output=True)
-        target.add_argument("--inputs", required=True, help="Complete statement input JSON, or mapping with original source metadata when --file is supplied")
-        target.add_argument("--file", help="Original UTF-8 statement CSV; exact bytes join the declared source metadata")
-        if verb == "statement-receive":
-            mutation(target, version=True)
-            target.add_argument("--expected-preview-sha256", required=True)
-        else:
-            target.add_argument("--expected-version", type=int, required=True)
     target = command("forecast-preview", "Calculate a dated forecast from current original records", case=True, output=True)
     target.add_argument("--inputs", required=True, help="Forecast input JSON file")
     target.add_argument("--expected-version", type=int, required=True)
@@ -400,30 +391,6 @@ def operate(workspace, args):
         result = ops.forecast(args.case, args.forecast)
     elif action == "forecast-export":
         return {"forecastId": args.forecast, "output": publish(args.output, ops.export_forecast(args.case, args.forecast))}
-    elif action in ("statement-preview", "statement-receive"):
-        try:
-            inputs = json.loads(read_bytes(args.inputs, MAX_BUNDLE))
-        except (UnicodeError, ValueError) as exc:
-            raise Problem("Statement inputs must be complete UTF-8 JSON.", 422, "INVALID_STATEMENT") from exc
-        if not isinstance(inputs, dict):
-            raise Problem("Use one complete statement input object.", 422, "INVALID_STATEMENT")
-        if args.file:
-            source = inputs.get("source")
-            if not isinstance(source, dict):
-                raise Problem("Retain source filename, observation time and optional URL in the mapping JSON.", 422, "INVALID_STATEMENT")
-            filename = Path(args.file).name
-            if source.get("filename", filename) != filename:
-                raise Problem("The selected CSV filename differs from the declared original source.", 409, "STATEMENT_SOURCE_CONFLICT")
-            encoded = base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")
-            if source.get("contentBase64", encoded) != encoded:
-                raise Problem("The selected CSV differs from the retained input bytes.", 409, "STATEMENT_SOURCE_CONFLICT")
-            inputs["source"] = {**source, "filename": filename, "contentBase64": encoded}
-        if action == "statement-preview":
-            result = ops.preview_statement(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
-        else:
-            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
-                "requestId": args.request_id, "note": args.note, "action": "statement.receive",
-                "data": {"inputs": inputs, "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action in ("buyer-preview", "buyer-receive"):
         original = {"filename": Path(args.file).name,
                     "contentBase64": base64.b64encode(read_bytes(args.file, MAX_SOURCE)).decode("ascii")}

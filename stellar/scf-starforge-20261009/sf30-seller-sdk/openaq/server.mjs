@@ -38,11 +38,7 @@ export async function startOpenAQServer({workspace,port=0,sourceIdentity=null,co
  let origin,closing=null,draining=false;
  const fileReads=new RetainedFileReads({errorPrefix:'OPENAQ'});
  const assets=new Map(await Promise.all([['/','index.html','text/html; charset=utf-8'],['/app.mjs','app.mjs','text/javascript; charset=utf-8'],['/style.css','style.css','text/css; charset=utf-8'],
-  ['/examples/archive-context.json','../examples/archive-context.json','application/json; charset=utf-8'],
-  ["/examples/completed-del-norte/manifest.json","../examples/completed-del-norte/manifest.json","application/json; charset=utf-8"],
-  ["/examples/completed-del-norte/study.tgz","../examples/completed-del-norte/study.tgz","application/gzip"],
-  ["/examples/completed-del-norte/report.html","../examples/completed-del-norte/report.html","text/html; charset=utf-8"],
-  ["/examples/completed-del-norte/report.json","../examples/completed-del-norte/report.json","application/json; charset=utf-8"]]
+  ['/examples/archive-context.json','../examples/archive-context.json','application/json; charset=utf-8']]
  .map(async([route,name,type])=>[route,{data:await readFile(new URL('./public/'+name,import.meta.url)),type}])));
  const identityValue=()=>({schema:'stellar-forge.openaq-workspace-identity.v1',workspaceId:workspace.id,configurationSha256:workspace.configurationSha256,instanceId,sourceIdentity});
  const authenticate=req=>{

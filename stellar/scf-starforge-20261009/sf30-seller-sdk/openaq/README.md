@@ -20,17 +20,6 @@ Installed command: **starforge openaq**. Open the private URL printed by serve. 
 
 The supplied archive plan selects the exact credential-free example from the [official AWS quick start](https://docs.openaq.org/aws/quick-start), location 2178 on May 3, 2022. The supplied archive context is explicitly the [Locations documentation example](https://docs.openaq.org/resources/locations), including its source edition and license dates. It is not presented as a live authenticated API response. The browser loads those examples and requires the operator's actual named source review.
 
-## Open the completed source/report delivery
-
-The installed Overview and Delivery screens include **A complete worked study**.
-Receive the actual Del Norte May 3, 2022 package through the existing original
-receiver, inspect its 140 observations and six sensor series, and reopen its
-named review and complete report without a provider request. The same button
-reconciles its saved receiving operation across restart. [The full guide](examples/completed-del-norte/READING_GUIDE.md)
-contains the actual data edition, report interpretation, CLI receiving and
-client-installation path. Original HTML/JSON reports and the complete customer
-TGZ are bundled unchanged; existing project data remains in its own records.
-
 ## Complete workflow
 
 1. **Capture a study:** select archive days or API sensors and an explicit-offset period. Review the exact plan JSON and source metadata. A saved monitoring study retains its future plan with version/revision checks.
@@ -95,7 +84,7 @@ This product operates selected customer studies and attributed reports. It is no
 
 ## Installed Applications and agents
 
-The additive OpenAQ contribution registers the command, source exports, complete browser assets, the **openaq-studies** Applications provider and a typed merchant provider. Applications validates the installed runtime, the application code and bundled worked-study assets and the initialized declaration before launch, then owns Start/Open/Stop.
+The additive OpenAQ contribution registers the command, source exports, complete browser assets, the **openaq-studies** Applications provider and a typed merchant provider. Applications validates the installed runtime, all 19 application code/assets and the initialized declaration before launch, then owns Start/Open/Stop.
 
 For an existing listener, create a private operator config and select it through the original merchant host's **openaqConnection** setting:
 

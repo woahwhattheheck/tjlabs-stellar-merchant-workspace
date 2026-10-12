@@ -477,17 +477,6 @@ export class GrantWorkspaceClient {
     sha(body.expectedPreviewSha256); requestId(body.requestId);
     return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
   }
-  statementPreview(caseId, expectedVersion, inputs) {
-    id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Statement inputs');
-    return this.#request('/api/operations/' + caseId + '/statement-preview', {body:{expectedVersion, inputs}, mutation:false});
-  }
-  statementReceive(caseId, body) {
-    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'inputs', 'expectedPreviewSha256'],
-      ['expectedVersion', 'requestId', 'actor', 'inputs', 'expectedPreviewSha256']);
-    sha(body.expectedPreviewSha256); object(body.inputs, 'Statement inputs');
-    const {inputs, expectedPreviewSha256, ...original} = body;
-    return this.command(caseId, {...original, action:'statement.receive', data:{inputs, expectedPreviewSha256}});
-  }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
     return this.#request('/api/operations/' + caseId + '/forecast-preview', {body:{expectedVersion, inputs}, mutation:false});

@@ -29,34 +29,6 @@
         "../examples/archive-context.json",
         "application/json; charset=utf-8"
       ]
-    ],
-    [
-      "/examples/completed-del-norte/manifest.json",
-      [
-        "../examples/completed-del-norte/manifest.json",
-        "application/json; charset=utf-8"
-      ]
-    ],
-    [
-      "/examples/completed-del-norte/study.tgz",
-      [
-        "../examples/completed-del-norte/study.tgz",
-        "application/gzip"
-      ]
-    ],
-    [
-      "/examples/completed-del-norte/report.html",
-      [
-        "../examples/completed-del-norte/report.html",
-        "text/html; charset=utf-8"
-      ]
-    ],
-    [
-      "/examples/completed-del-norte/report.json",
-      [
-        "../examples/completed-del-norte/report.json",
-        "application/json; charset=utf-8"
-      ]
     ]
   ]
 }

@@ -424,12 +424,6 @@ export class MerchantGrantWorkspaces {
         ? await client.ledgerIntakePreview(caseId,{...body,document})
         : await client.ledgerIntakeApply(caseId,{...body,document});
     }
-    else if (verb === 'statement_preview') original=await client.statementPreview(args.caseId,args.expectedVersion,
-      await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES));
-    else if (verb === 'statement_receive') {
-      const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
-      original=await client.statementReceive(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Statement',GRANT_MAX_BUNDLE_BYTES)});
-    }
     else if (verb === 'installation_seed') original=await client.installationSeed(args.caseId,args.expectedVersion);
     else if (verb === 'installation_workshares') {
       const {caseId,...body}=rest; original=await client.installationWorkshares(caseId,body);
