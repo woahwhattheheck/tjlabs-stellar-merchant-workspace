@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deliver a completed Support customer and continue recovery in one retained process."""
 from __future__ import annotations
-import argparse, fcntl, hashlib, json, os, signal, stat, sys, types, uuid, zipfile
+import argparse, fcntl, hashlib, json, os, signal, sys, types, zipfile
 from pathlib import Path
 
 ORIGINAL_RUNNER_GIT = "ee7a28366f38960e101b27c589cd6401c2f13068"
@@ -208,8 +208,22 @@ class Completion:
             require(recovery.get("state") == "COMPLETE" and recovery.get("operationId") == config["operationId"],
                     "Inspect the retained current recovery result.")
         else:
-            self.receiver.child("current-recovery-" + uuid.uuid4().hex,
-                                [self.cfg["python"], "-B", str(programme), "--config", str(selected)], timeout=600)
+            # One process owns the current programme and its complete child cleanup.
+            # Nesting another one-second group supervisor here would race its inner cleanup.
+            module = types.ModuleType("scf_current_retained_recovery")
+            module.__file__ = str(programme)
+            sys.modules[module.__name__] = module
+            source = self.read(programme, 262144)
+            require(git_blob(source) == RECOVERY_PROGRAMME_GIT, "The current programme changed before loading.")
+            exec(compile(source, str(programme), "exec"), module.__dict__)
+            self.save_json(self.stage / "recovery-invocation.private.json",
+                           {"programme":str(programme), "programmeGit":RECOVERY_PROGRAMME_GIT,
+                            "configurationSha256":hashlib.sha256(self.read(selected, 262144)).hexdigest()})
+            current = module.Programme(str(selected))
+            with open(current.project / "programme.lock", "a+b") as lock:
+                os.fchmod(lock.fileno(), 0o600)
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                current.run()
             recovery = self.json(result_file)
         require(recovery.get("state") == "COMPLETE" and recovery.get("nativeState") == "COMPLETE" and
                 recovery.get("operationId") == config["operationId"], "The complete current recovery is not delivered.")
