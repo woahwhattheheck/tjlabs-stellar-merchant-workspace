@@ -124,11 +124,18 @@ function checkedPackage(value) {
     family.workspaceId === source.workspaceId, 'GRANT_HANDOFF_APPLICATION_SOURCE_CHANGED');
   return { document: value, caseBytes, setupBytes, setup };
 }
-async function readPackage(path) {
-  const bytes = await regular(absolute(resolve(path)), GRANT_HANDOFF_MAX_BYTES);
-  need(bytes.length > 0, 'GRANT_HANDOFF_PACKAGE_INVALID');
+function packageBytes(bytes, filename = PACKAGE) {
+  need(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= GRANT_HANDOFF_MAX_BYTES,
+    'GRANT_HANDOFF_PACKAGE_INVALID');
   const checked = checkedPackage(JSON.parse(decode(bytes)));
-  return { ...checked, bytes, sha256: digest(bytes), filename: basename(path) };
+  return { ...checked, bytes, sha256: digest(bytes), filename };
+}
+async function readPackage(path) {
+  return packageBytes(await regular(absolute(resolve(path)), GRANT_HANDOFF_MAX_BYTES), basename(path));
+}
+function inlinePackage(value) {
+  need(typeof value === 'string', 'GRANT_HANDOFF_PACKAGE_INVALID');
+  return packageBytes(Buffer.from(value, 'utf8'));
 }
 function packageSummary(checked) {
   const document = checked.document;
@@ -138,8 +145,9 @@ function packageSummary(checked) {
       const { contentBase64, ...metadata } = value; return [name, metadata];
     })) };
 }
-export async function inspectGrantHandoff({ package: path }) {
-  const checked = await readPackage(path);
+export async function inspectGrantHandoff({ package: path = null, packageText = null }) {
+  need(Boolean(path) !== (packageText !== null), 'GRANT_HANDOFF_PACKAGE_REQUIRED');
+  const checked = packageText !== null ? inlinePackage(packageText) : await readPackage(path);
   return { ...packageSummary(checked), setup: checked.setup };
 }
 function runtimeIdentity(runtime) {
@@ -193,6 +201,21 @@ async function application(model, id) {
   need(selected && !selected.error && selected.kind === 'grant-workspace',
     'GRANT_HANDOFF_APPLICATION_REQUIRED', 'Select the saved Grant planning and delivery application.');
   return selected;
+}
+/** Read the original saved cases from the selected Grant Application. */
+export async function grantHandoffCases(model, { applicationId, allowStart = false }) {
+  const saved = await application(model, applicationId);
+  const selected = await nativeSelection(model, saved.runtimeId, saved.settings, allowStart);
+  const client = await openNative(selected);
+  try {
+    const result = await client.read('cases');
+    need(Array.isArray(result.value?.cases), 'GRANT_HANDOFF_CASE_LIST_INVALID');
+    const current = await application(model, saved.id);
+    need(hash(applicationIdentity(current)) === hash(applicationIdentity(saved)),
+      'GRANT_HANDOFF_APPLICATION_SOURCE_CHANGED');
+    return { application: applicationIdentity(saved), selection: nativeIdentity(selected),
+      cases: result.value.cases, source: result.source };
+  } finally { await client.close(); }
 }
 function applicationIdentity(value) {
   return { id: value.id, revision: value.revision, runtimeId: value.runtimeId,
@@ -391,14 +414,20 @@ function checkApplicationSelection(application, record, received, bindings) {
 }
 export async function prepareGrantHandoff(model, {
   operation: directory, package: packagePath = null, bindings: bindingsPath = null, requestId = null,
+  packageText = null, bindingsValue = null,
 }) {
+  need(!(packagePath && packageText !== null) && !(bindingsPath && bindingsValue !== null),
+    'GRANT_HANDOFF_INPUT_INVALID', 'Choose one complete package and one complete destination binding.');
+  const readIncoming = () => packageText !== null ? inlinePackage(packageText) : readPackage(packagePath);
+  const readBindings = async () => bindingsValue !== null ? Buffer.from(json(receivingBindings(bindingsValue))) :
+    regular(absolute(resolve(bindingsPath)), MAX_SETUP);
   return localOperation(directory, async root => {
     let record = await readJSON(join(root, 'handoff', 'operation.json'), true);
     if (record) {
       record = await readRecord(root); await selectedWorkspace(model, record);
       await readReceiving(root, record);
-      if (packagePath) need((await readPackage(packagePath)).sha256 === record.package.sha256, 'GRANT_HANDOFF_PACKAGE_CHANGED');
-      if (bindingsPath) need(digest(await regular(absolute(resolve(bindingsPath)), MAX_SETUP)) === record.bindings.sha256,
+      if (packagePath || packageText !== null) need((await readIncoming()).sha256 === record.package.sha256, 'GRANT_HANDOFF_PACKAGE_CHANGED');
+      if (bindingsPath || bindingsValue !== null) need(digest(await readBindings()) === record.bindings.sha256,
         'GRANT_HANDOFF_BINDINGS_CHANGED');
       if (requestId) need(requestId === record.id, 'GRANT_HANDOFF_REQUEST_CHANGED');
       if (!record.preflight) {
@@ -409,10 +438,11 @@ export async function prepareGrantHandoff(model, {
       }
       return report(root, record);
     }
-    need(packagePath && bindingsPath, 'GRANT_HANDOFF_RECEIVING_REQUIRED',
-      'Choose the complete handoff file and explicit receiving host bindings.');
-    const received = await readPackage(packagePath);
-    const bindingBytes = await regular(absolute(resolve(bindingsPath)), MAX_SETUP);
+    need((packagePath || packageText !== null) && (bindingsPath || bindingsValue !== null),
+      'GRANT_HANDOFF_RECEIVING_REQUIRED', 'Choose the complete handoff file and explicit receiving host bindings.');
+    const received = await readIncoming();
+    const bindingBytes = await readBindings();
+    need(bindingBytes.length <= MAX_SETUP, 'GRANT_HANDOFF_BINDINGS_INVALID');
     const bindings = receivingBindings(JSON.parse(decode(bindingBytes)));
     const selected = await nativeSelection(model, bindings.runtimeId, bindings.settings, bindings.allowStart);
     const stamp = now(), id = operationId(requestId ?? randomUUID());
@@ -514,5 +544,16 @@ export async function saveGrantHandoffApplication(model, { operation: directory 
       await writeRecord(root, record);
       return report(root, record);
     } catch (error) { await retainFailure(root, record, error); throw error; }
+  });
+}
+
+/** Download the same complete original export through an authenticated browser. */
+export async function grantHandoffDownload({ operation: directory }) {
+  return localOperation(directory, async root => {
+    const record = await readRecord(root);
+    need(record.direction === 'EXPORT' && record.phase === 'EXPORTED', 'GRANT_HANDOFF_EXPORT_REQUIRED');
+    const checked = await readPackage(join(root, PACKAGE));
+    need(checked.sha256 === record.package.sha256, 'GRANT_HANDOFF_PACKAGE_CHANGED');
+    return { filename: PACKAGE, bytes: checked.bytes.length, sha256: checked.sha256, text: new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(checked.bytes) };
   });
 }

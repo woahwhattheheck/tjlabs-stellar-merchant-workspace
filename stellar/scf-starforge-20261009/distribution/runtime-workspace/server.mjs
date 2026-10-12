@@ -11,6 +11,7 @@ import { pythonOperationFields } from '../python-runtime/workspace.mjs';
 import { sourceBuildOperationFields } from './source-build-workspace.mjs';
 import { openRuntimeWorkspace } from './model.mjs';
 import { OPENAPI_SETUP_ROUTES, openApiSetupBodyLimit } from './openapi-connection-setup.mjs';
+import { GRANT_HANDOFF_BROWSER_ACTIONS, grantHandoffBodyLimit, grantHandoffBrowserAction } from './grant-application-handoff.mjs';
 import { plain, need, fail } from './storage.mjs';
 
 const HOST = '127.0.0.1';
@@ -51,6 +52,7 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/application-setup.mjs', 'application-setup.mjs', 'text/javascript; charset=utf-8'],
     ['/application-setup-library.mjs', 'application-setup-library.mjs', 'text/javascript; charset=utf-8'],
     ['/application-setup-codec.mjs', 'application-setup-codec.mjs', 'text/javascript; charset=utf-8'],
+    ['/grant-application-handoff.mjs', 'grant-application-handoff.mjs', 'text/javascript; charset=utf-8'],
     ['/application-review.mjs', 'application-review.mjs', 'text/javascript; charset=utf-8'],
     ['/openapi-application.mjs', 'openapi-application.mjs', 'text/javascript; charset=utf-8'],
     ['/accounting-application.mjs', 'accounting-application.mjs', 'text/javascript; charset=utf-8'],
@@ -292,6 +294,12 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
           'load', 'source', 'install', 'archive', 'sha256', 'label', 'nodeHeaders', ...Object.values(managedOperationFields).flat(), ...new Set(Object.values(imageOperationFields).flat()), ...new Set(Object.values(transferOperationFields).flat()), ...new Set(Object.values(pythonOperationFields).flat()), ...new Set(Object.values(sourceBuildOperationFields).flat())])));
       if (url.pathname === '/api/resume-queued') {
         const value = await body(req, ['operationId']); return send(202, await model.resumeQueued(value.operationId));
+      }
+      if (url.pathname.startsWith('/api/applications/grant-handoff/')) {
+        const action = url.pathname.slice('/api/applications/grant-handoff/'.length);
+        need(!url.search && Object.hasOwn(GRANT_HANDOFF_BROWSER_ACTIONS, action), 'GRANT_HANDOFF_INPUT_INVALID');
+        const value = await body(req, GRANT_HANDOFF_BROWSER_ACTIONS[action], grantHandoffBodyLimit(action));
+        return send(200, await grantHandoffBrowserAction(model, action, value));
       }
       if (url.pathname.startsWith('/api/applications/openapi-setup/')) {
         const action = url.pathname.slice('/api/applications/openapi-setup/'.length);
