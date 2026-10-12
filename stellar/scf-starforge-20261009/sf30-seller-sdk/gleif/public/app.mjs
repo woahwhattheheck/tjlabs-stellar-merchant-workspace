@@ -28,9 +28,9 @@ function options(select,items,defaultValue) {
   if(!select.multiple&&!select.value&&select.options.length)select.options[0].selected=true;
 }
 async function refresh({loadRows=true}={}) {
-  state=await api('/api/status');$('title').textContent=state.workspace.title;
+  state=await api('/api/status');$('title').textContent=state.workspace.title;if(state.persistenceFailure)notice(state.persistenceFailure.message,true);
   const editions=state.captures;const complete=editions.filter(c=>c.state==='COMPLETE');
-  $('captures').innerHTML=editions.length?editions.slice().reverse().map(c=>'<article class="'+(selectedCapture===c.id?'active':'')+'"><button data-capture="'+e(c.id)+'">'+e(c.plan.query)+'</button><p>'+e(c.state)+' · '+c.rows+' records · '+c.pages.length+' pages</p><small>'+e(c.id)+'</small>'+(c.error?'<p>'+e(c.error.message)+'</p>':'')+'</article>').join(''):'<p class="hint">No source editions have been captured.</p>';
+  $('captures').innerHTML=editions.length?editions.slice().reverse().map(c=>'<article class="'+(selectedCapture===c.id?'active':'')+'"><button data-capture="'+e(c.id)+'">'+e(c.plan.query)+'</button><p>'+e(c.state)+' · '+c.rows+' records · '+c.pages.length+' pages</p><small>'+e(c.id)+'</small>'+(c.error?'<p>'+e(c.error.message)+'</p>':'')+(c.state==='INTERRUPTED'&&c.next?'<button data-continue-capture="'+e(c.id)+'">Continue original pages</button>':'')+'</article>').join(''):'<p class="hint">No source editions have been captured.</p>';
   $('shortlist').innerHTML=state.reviews.length?state.reviews.map(r=>'<article><button data-review="'+e(r.id)+'">'+e(r.title)+'</button><p>'+e(r.decision)+' · '+e(r.reviewer)+' · revision '+r.version+'</p><small>'+e(r.lei)+'</small></article>').join(''):'<p class="hint">Company research decisions appear here.</p>';
   for(const select of document.querySelectorAll('.capture-select,.capture-multi'))options(select,complete.map(c=>[c.id,c.plan.query+' · '+c.createdAt+' · '+c.id]));
   $('reports').innerHTML=state.reports.map(r=>'<article><strong>'+e(r.title)+'</strong><p>'+r.records+' complete source records</p><div class="toolbar">'+r.files.map(file=>'<button data-file="'+file.sha256+'" data-name="'+e(file.name)+'">'+e(file.name)+'</button>').join('')+'</div></article>').join('');
@@ -42,7 +42,7 @@ async function refresh({loadRows=true}={}) {
   renderPending();if(selectedCapture&&loadRows)await loadEntityRows();
 }
 function renderPending() {
-  $('pending').hidden=!pending&&!state?.active;$('pause').hidden=state?.active?.action!=='capture';
+  $('pending').hidden=!pending&&!state?.active;$('pause').hidden=!['capture','capture.resume'].includes(state?.active?.action);
   $('resume').disabled=!!state?.active||!pending;
   $('pending-text').textContent=state?.active?state.active.action+' · '+state.active.id+' · running':pending?pending.action+' · '+pending.id:'';
 }
@@ -101,7 +101,7 @@ $('pause').onclick=run(async()=>{if(state.active)await api('/api/pause/'+state.a
 $('previous').onclick=run(async()=>{offset=Math.max(0,offset-50);await loadEntityRows();});
 $('next').onclick=run(async()=>{if(rows.nextOffset!==null){offset=rows.nextOffset;await loadEntityRows();}});
 let searchTimer;$('row-search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{offset=0;loadEntityRows().catch(error=>notice(error.message,true));},250);};
-$('captures').onclick=run(async event=>{const button=event.target.closest('[data-capture]');if(!button)return;selectedCapture=button.dataset.capture;offset=0;selected.clear();detail=null;$('detail').hidden=true;$('batch').hidden=true;await refresh();});
+$('captures').onclick=run(async event=>{const continuation=event.target.closest('[data-continue-capture]');if(continuation){const id=continuation.dataset.continueCapture;if(pending&&(pending.id===id||pending.input?.captureId===id))await execute(pending);else await execute(request('capture.resume',{captureId:id}));return;}const button=event.target.closest('[data-capture]');if(!button)return;selectedCapture=button.dataset.capture;offset=0;selected.clear();detail=null;$('detail').hidden=true;$('batch').hidden=true;await refresh();});
 $('shortlist').onclick=run(async event=>{const button=event.target.closest('[data-review]');if(!button)return;const review=state.reviews.find(r=>r.id===button.dataset.review);selectedCapture=review.captureId;offset=0;$('row-search').value=review.lei;await refresh();const item=rows.items.find(r=>r.row.lei===review.lei);if(item)showDetail(item);});
 $('entity-rows').onclick=run(async event=>{const entity=event.target.closest('[data-entity]');if(entity)showDetail(rows.items.find(r=>r.row.lei===entity.dataset.entity));
   const checkbox=event.target.closest('[data-select]');if(checkbox){const item=rows.items.find(r=>r.row.lei===checkbox.dataset.select);if(checkbox.checked)selected.set(item.row.lei,item);else selected.delete(item.row.lei);}});

@@ -8,14 +8,14 @@ import { SCHEMA, SOURCE, COLUMNS, clone, stable, key, need, label, plan, assembl
 import { newCapture, captureSource, importCapture } from './source.mjs';
 const MAX=256*1024*1024;
 const exists=async path=>{try{await lstat(path);return true;}catch(e){if(e.code==='ENOENT')return false;throw e;}};
-const actions=['capture','source.import','review.save','review.batch','report.prepare','dataset.prepare'];
+const actions=['capture','capture.resume','source.import','review.save','review.batch','report.prepare','dataset.prepare'];
 const now=()=>new Date().toISOString();
 const entry=record=>({id:record.id,action:record.action,state:record.state,createdAt:record.createdAt,updatedAt:record.updatedAt,error:record.error??null,result:record.result??null});
 const publicError=error=>({code:error?.code??'GLEIF_OPERATION_FAILED',message:String(error?.message??error).slice(0,4000),...(error?.status?{status:error.status}:{}),...(error?.notBefore?{notBefore:error.notBefore}:{})});
 export const GLEIF_ACTIONS=Object.freeze(actions);
 export async function openGleifWorkspace({directory,create=false,title,fetchImpl=globalThis.fetch}={}) {
   absolute(directory);await privateDirectory(directory,create);const unlock=await acquireWorkspace(directory);
-  let state,closed=false,active=null,queue=Promise.resolve();
+  let state,closed=false,active=null,queue=Promise.resolve(),persistenceFailure=null;
   try {
     if(create) {
       need(!await exists(join(directory,'workspace.json')),'GLEIF_WORKSPACE_EXISTS','Open the existing project.',409);
@@ -28,8 +28,12 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
     const metadata=await readJson(join(directory,'workspace.json'));state=await readJson(join(directory,'state.json'),MAX);
     need(metadata.schema===SCHEMA&&state.schema===SCHEMA+'.state'&&state.workspaceId===metadata.id,'GLEIF_WORKSPACE_IDENTITY','The saved project identity differs.',409);
     for(const folder of ['objects','datasets'])await privateDirectory(join(directory,folder));
-    const check=()=>need(!closed,'GLEIF_CLOSED','This project is closing.',409);
-    async function save() {state.revision++;await atomicJson(directory,'state.json',state);}
+    const check=()=>{need(!closed,'GLEIF_CLOSED','This project is closing.',409);if(persistenceFailure)throw persistenceFailure;};
+    async function save() {
+      if(persistenceFailure)throw persistenceFailure;
+      state.revision++;
+      try{await atomicJson(directory,'state.json',state);}catch(error){persistenceFailure=Object.assign(new Error('The project write could not be confirmed: '+error.message+'. Reopen this same project to reconcile its retained state.'),{code:'GLEIF_PROJECT_WRITE',status:503});throw persistenceFailure;}
+    }
     function serial(fn) {const pending=queue.then(()=>{check();return fn();});queue=pending.catch(()=>{});return pending;}
     async function put(raw) {
       const data=Buffer.isBuffer(raw)?raw:Buffer.from(raw);need(data.length<=MAX,'GLEIF_OBJECT_TOO_LARGE');
@@ -120,8 +124,8 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
     }
     async function perform(record,signal) {
       const input=record.input;
-      if(record.action==='capture') {
-        let current=state.captures.find(c=>c.id===record.id);
+      if(record.action==='capture'||record.action==='capture.resume') {
+        let current=record.action==='capture.resume'?capture(input.captureId):state.captures.find(c=>c.id===record.id);
         if(!current){current=newCapture(record.id,input.plan,record.createdAt);state.captures.push(current);await save();}
         await captureSource(current,{put,save:async()=>save(),fetchImpl,signal});
         const full=await entities(current.id);return {capture:full.capture,records:full.records.length};
@@ -155,12 +159,13 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
           state.operations.push(record);
         }
         need(!active,'GLEIF_BUSY','The current project operation is still running.',409);
-        if(record.action==='capture'){const c=state.captures.find(v=>v.id===record.id);if(c?.notBefore)need(Date.now()>=Date.parse(c.notBefore),'GLEIF_PROVIDER_COOLDOWN','Resume after '+c.notBefore+'.',429);}
+        if(record.action==='capture'||record.action==='capture.resume'){const c=state.captures.find(v=>v.id===(record.action==='capture.resume'?record.input.captureId:record.id));if(c?.notBefore)need(Date.now()>=Date.parse(c.notBefore),'GLEIF_PROVIDER_COOLDOWN','Resume after '+c.notBefore+'.',429);}
         record.state='RUNNING';record.attempts++;record.updatedAt=now();record.error=null;await save();
         const controller=new AbortController(),item={record,controller,promise:null};active=item;
         item.promise=(async()=>{
           try{record.result=await perform(record,controller.signal);record.state='COMPLETE';}
-          catch(error){record.error=publicError(error);record.state='INTERRUPTED';}
+          catch(error){record.error=publicError(error);record.state='INTERRUPTED';
+            if(record.action==='capture'||record.action==='capture.resume'){const captured=state.captures.find(c=>c.id===(record.action==='capture.resume'?record.input.captureId:record.id));if(captured&&captured.state!=='COMPLETE'){captured.state='INTERRUPTED';captured.error=record.error;}}}
           finally{record.updatedAt=now();try{await save();}finally{if(active===item)active=null;}}
           return entry(record);
         })();item.promise.catch(()=>{});return entry(record);
@@ -170,7 +175,7 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
     async function wait(id) {const record=operation(id);if(active?.record.id===id)await active.promise;return entry(operation(id));}
     async function pause(id) {need(active?.record.id===id,'GLEIF_NOT_RUNNING','This operation is not running.',409);active.controller.abort(new Error('Operator paused source acquisition.'));return wait(id);}
     function status() {
-      check();return {schema:SCHEMA,workspace:metadata,revision:state.revision,active:active?entry(active.record):null,
+      need(!closed,'GLEIF_CLOSED','This project is closing.',409);return {schema:SCHEMA,workspace:metadata,revision:state.revision,persistenceFailure:persistenceFailure?publicError(persistenceFailure):null,active:active?entry(active.record):null,
         captures:state.captures.map(c=>({...clone(c),attempts:undefined,pages:c.pages.map(p=>({url:p.url,observedAt:p.observedAt,records:p.records,sha256:p.sha256,bytes:p.bytes})),rows:c.pages.reduce((a,p)=>a+p.records,0)})),
         reviews:latestReviews().map(clone),reports:clone(state.reports),datasets:clone(state.datasets),operations:state.operations.map(entry)};
     }
@@ -190,7 +195,7 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
       const context={query:new URLSearchParams(query)},admitted=native.admit(context),result=admitted===true?native.handle(context):admitted;return result;
     }
     async function portable() {
-      need(!active,'GLEIF_BUSY','Finish or pause the current source operation before exporting.',409);
+      check();need(!active,'GLEIF_BUSY','Finish or pause the current source operation before exporting.',409);
       const snapshot=clone(state),hashes=new Set();
       for(const c of snapshot.captures)for(const page of c.attempts)hashes.add(page.sha256);
       for(const r of [...snapshot.reports,...snapshot.datasets])for(const file of r.files)hashes.add(file.sha256);
@@ -203,18 +208,29 @@ export async function openGleifWorkspace({directory,create=false,title,fetchImpl
 }
 export async function receiveGleifWorkspace({directory,package:input}={}) {
   absolute(directory);const {sha256,...body}=input??{};
-  need(body.schema===SCHEMA+'.package'&&sha256===identity(body)&&body.metadata?.schema===SCHEMA&&body.state?.workspaceId===body.metadata?.id,
+  need(body.schema===SCHEMA+'.package'&&sha256===identity(body)&&body.metadata?.schema===SCHEMA&&body.state?.schema===SCHEMA+'.state'&&body.state?.workspaceId===body.metadata?.id&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(body.metadata?.id??'')&&Number.isSafeInteger(body.state?.revision)&&body.state.revision>=0,
     'GLEIF_PACKAGE','Choose the complete original research project package.');
   need(Array.isArray(body.objects)&&Array.isArray(body.state.captures)&&Array.isArray(body.state.reviews)&&Array.isArray(body.state.reports)&&Array.isArray(body.state.datasets)&&Array.isArray(body.state.operations),
     'GLEIF_PACKAGE','The original project collections are missing.');
+  label(body.metadata.title,'project title',200);
+  for(const name of ['captures','reports','datasets','operations'])need(new Set(body.state[name].map(item=>key(item.id))).size===body.state[name].length,'GLEIF_PACKAGE_IDENTITIES');
   const rawByHash=new Map();
   for(const item of body.objects){need(/^[a-f0-9]{64}$/.test(item.sha256)&&typeof item.base64==='string'&&!rawByHash.has(item.sha256),'GLEIF_PACKAGE_OBJECT');
-    const raw=Buffer.from(item.base64,'base64');need(raw.toString('base64')===item.base64&&raw.length===item.bytes&&digest(raw)===item.sha256,'GLEIF_PACKAGE_OBJECT','A retained source file differs.');rawByHash.set(item.sha256,raw);}
+    need(item.base64.length<=Math.ceil(MAX/3)*4,'GLEIF_PACKAGE_OBJECT_SIZE');const raw=Buffer.from(item.base64,'base64');need(raw.toString('base64')===item.base64&&raw.length===item.bytes&&digest(raw)===item.sha256,'GLEIF_PACKAGE_OBJECT','A retained source file differs.');rawByHash.set(item.sha256,raw);}
   const required=new Set();
   for(const c of body.state.captures){for(const page of c.attempts){required.add(page.sha256);need(rawByHash.get(page.sha256)?.length===page.bytes,'GLEIF_PACKAGE_SOURCE');}
     assembleCapture(c,c.pages.map(p=>{const raw=rawByHash.get(p.sha256);need(raw&&raw.length===p.bytes,'GLEIF_PACKAGE_SOURCE');return new TextDecoder('utf-8',{fatal:true}).decode(raw);}));}
   for(const value of [...body.state.reports,...body.state.datasets])for(const file of value.files){required.add(file.sha256);need(rawByHash.get(file.sha256)?.length===file.bytes,'GLEIF_PACKAGE_FILE');}
   need([...required].every(sha=>rawByHash.has(sha))&&required.size===rawByHash.size,'GLEIF_PACKAGE_FILES','The complete source/file inventory differs.');
+  for(const dataset of body.state.datasets){
+    need(dataset.relativeDirectory==='datasets/'+dataset.id&&dataset.files.length===3&&new Set(dataset.files.map(file=>file.name)).size===3&&dataset.files.every(file=>['dataset.csv','dataset.json','source.json'].includes(file.name)),'GLEIF_PACKAGE_DATASET');
+    const config=JSON.parse(rawByHash.get(dataset.files.find(file=>file.name==='dataset.json').sha256));
+    need(config.schema==='stellar-forge.csv-dataset.v1'&&config.file==='dataset.csv'&&stable(config.columns)===stable(Object.fromEntries(COLUMNS.map(k=>[k,'string'])))&&config.maxBytes===MAX&&config.maxRows===1000000,'GLEIF_PACKAGE_DATASET_CONFIG','The native dataset must select its retained CSV and declared original columns.');
+  }
+  for(const review of body.state.reviews){
+    key(review.id);need(review.resourceSha256===identity(review.originalResource)&&review.lei===review.originalResource?.id&&Number.isSafeInteger(review.version)&&review.version>0,'GLEIF_PACKAGE_REVIEW');
+    const source=body.state.captures.find(c=>c.id===review.captureId);need(source&&source.pages.some(page=>page.sha256===review.sourcePage?.sha256),'GLEIF_PACKAGE_REVIEW_SOURCE');
+  }
   if(await exists(directory)){await privateDirectory(directory);const names=await readdir(directory);need(names.length===0||names.every(n=>['receiving.json','objects','datasets','publisher.lock'].includes(n)),'GLEIF_RECEIVE_DESTINATION','Choose an empty private receiving directory or resume its original receiving.',409);}
   else await privateDirectory(directory,true);
   const unlock=await acquireWorkspace(directory);

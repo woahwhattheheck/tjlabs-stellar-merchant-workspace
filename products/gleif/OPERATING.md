@@ -156,9 +156,11 @@ starforge gleif import-source \
   --file /absolute/private/original-responses.json
 ~~~
 
-An imported source with an unfinished next link is retained as incomplete. It can
-be reviewed as captured research; reports and native datasets select complete
-source editions.
+An imported source with an unfinished next link is retained as incomplete. Use
+**Continue original pages** or a capture.resume request whose input.captureId
+selects that original capture. It continues the retained next URL without
+repeating completed pages. The merchant_gleif_resume_capture tool supplies the
+same action. Reports and native datasets select complete source editions.
 
 ## Build a useful company shortlist
 
@@ -364,7 +366,7 @@ The merchant provider ID is gleif-research. Its private configuration is:
 Read those identities from the current startup/connection file. Initialize the
 existing merchant provider with its host's original configuration path. The
 merchant_gleif_connect result supplies the current instanceId for subsequent
-tools. Eighteen registered tools cover workspace discovery/connection, status,
+tools. Nineteen registered tools cover workspace discovery/connection, status,
 paged records, comparisons, operation recovery, source capture/import, individual
 and batch review, reports, native datasets/query, project files and exact chunked
 file reading. Disconnect closes that client; Applications retains its listener.

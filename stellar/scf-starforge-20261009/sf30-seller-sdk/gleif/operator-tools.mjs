@@ -2,7 +2,7 @@
 const string=(maxLength=4000)=>({type:'string',minLength:1,maxLength});
 const id={type:'string',pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$'},alias={type:'string',pattern:'^[a-z0-9][a-z0-9_-]{0,63}$'},hash={type:'string',pattern:'^[a-f0-9]{64}$'};
 const bound={workspace:alias,instanceId:string(80)},required=['workspace','instanceId'],read={idempotent:true,readOnly:true};
-export const ACTION_TOOLS=Object.freeze({merchant_gleif_capture:'capture',merchant_gleif_import_source:'source.import',merchant_gleif_review:'review.save',
+export const ACTION_TOOLS=Object.freeze({merchant_gleif_capture:'capture',merchant_gleif_resume_capture:'capture.resume',merchant_gleif_import_source:'source.import',merchant_gleif_review:'review.save',
   merchant_gleif_review_batch:'review.batch',merchant_gleif_report:'report.prepare',merchant_gleif_dataset:'dataset.prepare'});
 export function gleifMerchantTools(tool) {
   const result=[
@@ -20,6 +20,7 @@ export function gleifMerchantTools(tool) {
     tool('merchant_gleif_file','Read exact original file bytes by immutable hash and byte offset.',{...bound,sha256:hash,offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:65536}},[...required,'sha256'],read)
   ];
   const specs={
+    merchant_gleif_resume_capture:{description:'Continue the next original pages of an imported or paused source capture.',properties:{captureId:id},required:['captureId']},
     merchant_gleif_capture:{description:'Capture all official pages for an exact LEI or legal-name search; preserve this request ID for recovery.',properties:{plan:{type:'object',properties:{kind:{enum:['name','lei']},query:string(500),pageSize:{type:'integer',minimum:1,maximum:100},country:string(2),entityStatus:string(64),registrationStatus:string(64)},required:['kind','query']}},required:['plan']},
     merchant_gleif_import_source:{description:'Receive already acquired original source response envelopes without repeating acquisition.',properties:{plan:{type:'object'},pages:{type:'array',minItems:1,items:{type:'object',properties:{url:string(16000),observedAt:string(100),status:{const:200},headers:{type:'object'},body:string(16777216)},required:['url','observedAt','status','body']}}},required:['plan','pages']},
     merchant_gleif_review:{description:'Save a source-bound company shortlist decision with reviewer, rationale and next research work.',properties:{id,title:string(200),captureId:id,lei:string(20),expectedVersion:{type:'integer',minimum:0},decision:{enum:['include','exclude','research']},reviewer:string(200),rationale:{type:'string',maxLength:8000},useCase:{type:'string',maxLength:4000},nextWork:{type:'string',maxLength:4000}},required:['id','title','captureId','lei','expectedVersion','decision','reviewer','rationale']},

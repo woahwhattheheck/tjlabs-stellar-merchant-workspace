@@ -23,7 +23,7 @@ export class MerchantGleif {
     alias(args.workspace);const selected=this.config.workspaces[args.workspace];need(selected,'GLEIF_ALIAS_NOT_FOUND');
     if(name==='merchant_gleif_connect'){
       let client=this.clients.get(args.workspace);if(client)await client.verify();
-      else{client=await GleifClient.connect(selected.connectionFile);need(client.binding.workspaceId===selected.workspaceId&&client.binding.workspaceIdentity===selected.workspaceIdentity,'GLEIF_OPERATOR_BINDING_CHANGED');this.clients.set(args.workspace,client);}
+      else{client=await GleifClient.connect(selected.connectionFile);try{need(client.binding.workspaceId===selected.workspaceId&&client.binding.workspaceIdentity===selected.workspaceIdentity,'GLEIF_OPERATOR_BINDING_CHANGED');need(!this.closed,'GLEIF_OPERATOR_CLOSED');this.clients.set(args.workspace,client);}catch(error){client.close();throw error;}}
       return {workspace:args.workspace,workspaceId:client.binding.workspaceId,instanceId:client.binding.instanceId,sourceSha256:client.binding.sourceIdentity?.sha256};
     }
     const client=this.clients.get(args.workspace);need(client&&client.binding.instanceId===args.instanceId,'GLEIF_CURRENT_CONNECTION','Connect to the original current project instance.',409);
