@@ -16,8 +16,8 @@ const validReadId = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]
 
 /** Connect only to the operator-selected MCP endpoint; no payment or export calls. */
 export async function openMerchantFileClient({ url, tokenEnv = 'MCP_ACCESS_TOKEN', environment = process.env, signal, errorPrefix = 'SUPPORT', clientName = 'starforge-support-download', maximumResponseBytes = 2 * 1024 * 1024 } = {}) {
-  if (!Number.isSafeInteger(maximumResponseBytes) || maximumResponseBytes < 1024 || maximumResponseBytes > 24 * 1024 * 1024)
-    throw failure(errorPrefix + '_DOWNLOAD_CONFIGURATION', 'Use a response byte limit from 1024 to 24 MiB.');
+  if (!Number.isSafeInteger(maximumResponseBytes) || maximumResponseBytes < 1024 || maximumResponseBytes > 128 * 1024 * 1024)
+    throw failure(errorPrefix + '_DOWNLOAD_CONFIGURATION', 'Use a source-owned response byte limit from 1024 bytes to 128 MiB.');
   let endpoint;
   try { endpoint = new URL(url); } catch { throw failure(errorPrefix + '_DOWNLOAD_CONFIGURATION', 'Supply an HTTPS MCP endpoint or its original loopback HTTP listener.'); }
   if (endpoint.username || endpoint.password || endpoint.search || endpoint.hash ||
@@ -56,8 +56,12 @@ export async function openMerchantFileClient({ url, tokenEnv = 'MCP_ACCESS_TOKEN
     async call(name, args, options) {
       const result = await request('tools/call', { name, arguments: args }, options);
       const value = result?.structuredContent;
-      if (result?.isError) throw failure(/^[A-Z][A-Z0-9_]+$/.test(value?.code ?? '') ? value.code : errorPrefix + '_DOWNLOAD_TOOL_FAILED',
-        typeof value?.reason === 'string' ? value.reason : 'The original retained-file operation failed.');
+      if (result?.isError) {
+        const error = failure(/^[A-Z][A-Z0-9_]+$/.test(value?.code ?? '') ? value.code : errorPrefix + '_DOWNLOAD_TOOL_FAILED',
+          typeof value?.reason === 'string' ? value.reason : 'The original retained-file operation failed.');
+        if (value?.applied === false) error.applied = false;
+        throw error;
+      }
       if (!plain(value)) throw failure(errorPrefix + '_DOWNLOAD_REPLY_INVALID', 'The retained-file tool returned no structured result.');
       return value;
     } };
@@ -166,8 +170,20 @@ export function createRetainedDownload({ manifestName, parseManifest, maximumByt
       throw failure(error.message === 'FLEET_STATE_ALREADY_OWNED' ? errorPrefix + '_DOWNLOAD_BUSY' : errorPrefix + '_DOWNLOAD_LEASE_UNAVAILABLE',
         error.message === 'FLEET_STATE_ALREADY_OWNED' ? 'Another client owns this download directory.' : 'The download requires the original Linux flock lease (util-linux).');
     }
+    let operationError;
     try { return await operation({ root, stateDirectory, lease }); }
-    finally { await lease.close(); }
+    catch (error) { operationError = error; throw error; }
+    finally {
+      try { await lease.close(); }
+      catch (error) {
+        // Preserve the same original lease owner for the caller's cleanup path.
+        // The lease itself owns its one-shot descriptor-close semantics.
+        const primary = operationError ?? error;
+        primary.close = () => lease.close();
+        if (operationError) primary.closeError = error;
+        throw primary;
+      }
+    }
   }
   const partialName = file => nestedFiles ? 'part-' + sha(Buffer.from(file.name)) + '.part' : file.name + '.part';
   async function validateNestedRoot(context, manifest) {

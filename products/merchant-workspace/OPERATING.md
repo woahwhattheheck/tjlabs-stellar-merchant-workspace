@@ -28,6 +28,7 @@ They retain its original dependency manifests and lock.
 | Material catalog | The catalog guide's original runtime feature and provider configuration |
 | Retained grant purchase review and native Buyer results | Native Stellar packages, `mcp`, operator support and the original private workbench; receiving makes no new payment |
 | Kafka event datasets and complete customer clients | Python 3.11 or later; `confluent-kafka==2.16.0` in that Python environment for broker work; Node 22.16 or later for browser/client and the merchant's selected runtime features |
+| RSS/Atom/OPML collections and complete feed customer delivery | Python 3.11 or later for the existing feed console; Node 22.16 or later with `mcp` for the client/merchant host, plus the publisher or Buyer's selected runtime features |
 
 Use `starforge registrations` to inspect the selected package's actual command
 registrations. `starforge source` opens its source identity. Runtime upgrades
@@ -796,3 +797,203 @@ Its complete native demonstration operates the original six-reading example in
 one native Timescale2.30.2 database, then runs the merchant/browser and assigned-work
 receiving in that same cluster. The original Ubuntu runner and all three receiving
 programs are included in this product's source-owned Timescale contribution.
+
+## 13. Operate feed collections and receive complete datasets
+
+Use **Applications → RSS / Atom subscriptions** to open the selected private
+feed workspace. That console owns acquisition, review, notes, editions and
+collection history. The installed typed client and CLI attach to its existing
+merchant MCP connection and carry the same workflow through to customer delivery.
+
+The [feed host guide](../../stellar-forge/mcp-merchant-operator/FEEDS_WORKSPACE.md)
+contains the exact console launch, file declarations, merchant profiles and Buyer
+configuration. The
+[complete feed client guide](../../stellar-forge/mcp-merchant-operator/FEEDS_WORKSPACE_CLIENT.md)
+contains all 17 tools, 12 native actions, typed inputs, publisher controls,
+pagination and recovery commands.
+
+### Connect the selected workspace
+
+Keep the original full launch JSON from the running Applications entry in a
+private file with mode 0600. Its console capability remains on the host.
+A host connection file names that original launch record:
+
+~~~json
+{
+  "schema": "stellar-forge.feeds-workspace-connection.v1",
+  "workspaces": {
+    "research": {
+      "label": "Research subscriptions",
+      "consoleUrlFile": "/srv/starforge/config/research-feed-launch.json"
+    }
+  }
+}
+~~~
+
+Select the actual launch file and declare original input handles, merchant
+profiles and any existing Buyer workspace as described in the host guide. A
+restarted console produces a new launch record; update the host declaration to
+that actual instance. For an already configured merchant MCP host, retain its
+configuration and endpoint. To create a dedicated host configuration once:
+
+~~~sh
+starforge merchant-mcp init-feeds-workspaces \
+  --dir /srv/starforge/operator/feeds \
+  --connection /srv/starforge/config/feed-connections.json
+
+starforge merchant-mcp serve \
+  --config /srv/starforge/operator/feeds/merchant-mcp.json \
+  --port 3211 --token-env MCP_ACCESS_TOKEN
+~~~
+
+Set the existing bearer token in the named environment variable. Use the MCP URL
+returned by that listener as MCP_URL, and the declared workspace alias:
+
+~~~sh
+starforge feeds-workspace-client workspaces --url "$MCP_URL"
+
+starforge feeds-workspace-client status \
+  --url "$MCP_URL" --workspace research
+
+starforge feeds-workspace-client inventory \
+  --url "$MCP_URL" --workspace research --kind collections --all
+~~~
+
+### Import, capture and review the original subscriptions
+
+Select a declared OPML input from workspaces. Save its handle and one durable
+operation ID in a private intake.json:
+
+~~~json
+{
+  "file": "research-subscriptions",
+  "operationId": "research-opml-intake-20261012"
+}
+~~~
+
+~~~sh
+starforge feeds-workspace-client intake \
+  --url "$MCP_URL" --workspace research \
+  --input /srv/starforge/customer/intake.json \
+  --record /srv/starforge/customer/requests/intake --wait \
+  --results /srv/starforge/customer/results \
+  --output /srv/starforge/customer/intake-result.json
+
+starforge feeds-workspace-client read \
+  --url "$MCP_URL" --workspace research \
+  --kind subscription-plan --id "$OPML_SHA256" --array entries \
+  --limit 100 --all --results /srv/starforge/customer/results \
+  --output /srv/starforge/customer/subscription-entries.jsonl
+~~~
+
+Use the returned OPML source SHA and its original entry IDs. In the console,
+review folder paths and URLs, map entries to their actual feed registrations and
+save the collection. The collection can retain disabled entries; each new
+registration keeps its complete source configuration. The typed client and
+collection-save command expose this same selection and expected revision.
+
+To capture from the CLI, save collectionId, its current expectedRevision, an
+expectedRevisions entry for every enabled feed and one operationId in capture.json:
+
+~~~sh
+starforge feeds-workspace-client collection-capture \
+  --url "$MCP_URL" --workspace research \
+  --input /srv/starforge/customer/capture.json \
+  --record /srv/starforge/customer/requests/capture --wait \
+  --results /srv/starforge/customer/results \
+  --output /srv/starforge/customer/capture-result.json
+~~~
+
+Read the original collection-run and each child capture's review. Apply selected
+changes against the current feed revision, preserving explicit conflict decisions
+and any required source-identity choice. Notes, tags and starred state retain
+their own revisions. A partial acquisition resumes with collection-resume and
+the same runId; single-feed capture uses its original captureId and resume action.
+
+After review and application, freeze collection-edition from that original run,
+the selected fields including key, and the actual applied feed revisions. Query
+and comparison operate on these immutable editions.
+
+| Retained identity | Use |
+| --- | --- |
+| Edition ID | Query, comparison, dataset/feed-project export and publisher preparation |
+| Collection binding ID | Complete selected collection-project export |
+| Run ID | Multi-feed acquisition, review and continuation |
+| Collection ID and revision | Saved subscriptions and the selected OPML export |
+
+### Publish an edition and deliver the original customer result
+
+Use publisher-prepare with the selected editionId, a durable productId and a
+declared merchant profile. The original publisher imports the native CSV contract
+and its feed/XML provenance, then retains its draft, versions and release state.
+Review the actual draft and publish or stage it using the returned revision,
+snapshot and generation. The client guide lists every original publisher and
+release action with its complete input.
+
+A purchase continues through the selected original Buyer workspace, captured
+offer, intent and native approvals. Once that customer session has completed,
+save its productId, delivery operationId and original session id in customer.json:
+
+~~~sh
+starforge feeds-workspace-client customer \
+  --url "$MCP_URL" --workspace research \
+  --input /srv/starforge/customer/customer.json \
+  --record /srv/starforge/customer/requests/customer-delivery \
+  --directory /srv/starforge/customer/acquisition
+~~~
+
+This receives the original acquisition manifest, CSV, JSONL and HTML review
+together, checking their exact product/session and file identities. Retain the
+whole directory as the customer's completed acquisition.
+
+### Transfer a complete project and reopen it
+
+Create a collection-project export with its original operationId and collection
+binding id; use an edition ID for dataset or feed-project. The export returns
+the original export ID and complete feed-delivery.json manifest. Inspect those
+actual values, then download the entire selected delivery:
+
+~~~sh
+starforge feeds-workspace-client inspect-delivery \
+  --url "$MCP_URL" --workspace research --export "$EXPORT_ID"
+
+starforge feeds-workspace-client download \
+  --url "$MCP_URL" --workspace research --export "$EXPORT_ID" \
+  --manifest-sha256 "$MANIFEST_SHA256" \
+  --directory /srv/starforge/customer/collection-project
+
+starforge feeds-workspace-client reopen \
+  --workspace research --export "$EXPORT_ID" \
+  --manifest-sha256 "$MANIFEST_SHA256" \
+  --directory /srv/starforge/customer/collection-project
+~~~
+
+Keep the original manifest, every file and download-state directory together.
+An interrupted transfer continues with the same endpoint, workspace, export,
+manifest and destination. The existing downloader verifies the saved prefix,
+resumes its byte checkpoint and publishes each complete file after its full hash
+matches. Local reopen verifies all complete files with the remote merchant closed.
+
+For native project receiving, select a declared destination workspace and call
+receive with operationId, fromWorkspace and exportId. Follow its returned native
+job, reopen that same Applications workspace and query the retained original
+edition. The receiver keeps the original source, registrations, selected history
+and operation lineage.
+
+### Recover requests and close the client
+
+Use --record for a durable request and exact response, --results for complete
+large native JSON and --output for a create-only result file. A returned
+completeResult identifies the full retained result.json; SDK resolveResult or
+CLI --complete receives that file through the original download engine.
+
+After an uncertain request response, inspect-request and reconcile read the
+saved request and its original native operation. wait follows its existing job
+or ledger; an explicit --repeat repeats that same saved request after review.
+Keep the original action IDs and selected revisions during continuation.
+
+Node applications import openFeedsWorkspaceClient from
+@tokenjunkielabs/starforge-merchant/merchant/mcp/feeds/client and close that client
+before closing its enclosing merchant factory. The CLI retains signal handlers
+through its original request, file and provider drain. The existing console owns
+its continuing acquisition; cancel selects the actual running native job.
