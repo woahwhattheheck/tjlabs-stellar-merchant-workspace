@@ -5,9 +5,9 @@
   "applicant": "Bryce Muhlnickel / TokenJunkieLabs",
   "application": {
     "path": "application.md",
-    "bytes": 35051,
-    "sha256": "e6344dc0c09dc642061cf8c8d356e5681c7226d74b68b3065daa12e9ab62de94",
-    "git_blob": "cfe80a8200f85f79ddd5e3fd0ab9bfb57a5e11c3",
+    "bytes": 36942,
+    "sha256": "ecbb2a3de67fe4201364fc9c4529fa1ab1c57c9f25bdfa72beaf81a91fbe618d",
+    "git_blob": "1376f100c426bae4bd5f078b5016a32fef5c30d1",
     "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF"
   },
   "request": {
@@ -324,14 +324,29 @@
       "operator_workflow": "Retained source, analyst review, calendar template, successor comparison, saved report, existing merchant publication, complete project receiving.",
       "paid_unit": "One selected advertised briefing.html or briefing.json resource; additional advertised files and observation pages retain their own requests and prices.",
       "application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012"
+    },
+    {
+      "id": "coastal-model-input",
+      "kind": "maintained-product",
+      "source_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
+      "repository": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/",
+      "path": "products/coops/OPERATING.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92eb1c73a3cab9781ef7dbabdc12067344fb6aa2/products/coops/OPERATING.md",
+      "study_guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92eb1c73a3cab9781ef7dbabdc12067344fb6aa2/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/STUDIES.md",
+      "receiving_guide": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/92eb1c73a3cab9781ef7dbabdc12067344fb6aa2/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/RECEIVING.md",
+      "operator_workflow": "Original station responses, reviewed editions and study mapping, complete release, returned-file comparison and explicit receiving, native queries and Python offline receiving.",
+      "paid_unit": "One selected advertised model-input resource, such as the complete released study CSV; other files and query pages retain their own advertised access and request terms.",
+      "application_operation": "SCF-COASTAL-COMMISSIONING-APPLICATION-018A-20261012",
+      "native_receiving_operation": "COOPS-LA-JOLLA-STUDY-RECEIVING-018A-20261012-01",
+      "native_receiving_status": "Registered original operating run in progress."
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "3b1a1a31ec5da5324255a5c94888a36ce2d418f8",
-    "bytes": 38480,
-    "sha256": "fec079160f8b8befdf394712ab846a7afcc30bf2f7ca50f1c98d8c9620a39e6e",
-    "basis": "Original product and finance companion with the current recurring economic-report installation from the canonical application; the six-package budget and original cost assumptions are retained."
+    "git_blob": "8f9f58b8329a3fda48ee37077963aa35bd6376f1",
+    "bytes": 46612,
+    "sha256": "f3df0483be21ffb1cd2431d3fcd738746da2aaf67ae5a8b6408ba3ad4672d416",
+    "basis": "Original product and finance companion with the current recurring economic-report installation from the canonical application; the six-package budget and original cost assumptions are retained. The selected coastal model-input installation retains the same funded packages and its separately proposed commercial scope."
   },
   "narrative_source": {
     "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -350,8 +365,10 @@
       }
     ],
     "canonical_manuscript": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
-    "current_application_sha256": "e6344dc0c09dc642061cf8c8d356e5681c7226d74b68b3065daa12e9ab62de94",
+    "current_application_sha256": "ecbb2a3de67fe4201364fc9c4529fa1ab1c57c9f25bdfa72beaf81a91fbe618d",
     "economic_product_commit": "be44be564e35b63af23246bad531a95374bbb4c0",
-    "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012"
+    "economic_application_operation": "SCF-FRED-ECONOMIC-CUSTOMER-APPLICATION-20261012",
+    "coastal_product_commit": "92eb1c73a3cab9781ef7dbabdc12067344fb6aa2",
+    "coastal_application_operation": "SCF-COASTAL-COMMISSIONING-APPLICATION-018A-20261012"
   }
 }
