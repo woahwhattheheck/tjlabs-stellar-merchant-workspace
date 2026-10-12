@@ -104,6 +104,7 @@ The complete operating guide follows the full workflow from the original
 source to receiving and subsequent source reattachment:
 
 - [Operate, issue and receive the complete project](OPERATING.md).
+- [Run the complete selected build and SDK/MCP receiving on an existing worker](receiving/README.md).
 - [Original Node accounting export intake](../../stellar/scf-starforge-20261009/sf36-spend-governor/expense-workspace/NODE_OPERATIONS.md).
 - [Original governed MCP purchase-to-period guide](../../stellar/scf-starforge-20261009/sf36-spend-governor/expense-workspace/GOVERNED_MCP.md).
 - [Original Buyer expenses application](../../stellar/scf-starforge-20261009/sf36-spend-governor/expense-workspace/README.md).
