@@ -274,6 +274,8 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/PORTFOLIO\.md)/, companion);
   receive('grant-delivery-calendar', 'Original grant delivery calendar and complete exports',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/CALENDAR\.md)/, companion);
+  receive('grant-amendment-calendar', 'Saved grant amendment and complete paired calendar receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/AMENDMENT_CALENDAR\.md)/, companion);
   receive('grant-work-invoice-intake', 'Recorded work, supplier invoice intake and original-case receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/WORK_INTAKE\.md)/, companion);
   receive('grant-operating-forecast', 'Reviewed remaining effort, cash obligations and original operating forecast',
