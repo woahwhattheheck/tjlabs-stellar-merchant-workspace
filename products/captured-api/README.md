@@ -1,0 +1,74 @@
+# Captured API merchant
+
+Turn a network capture from an API you operate into a reviewed, priced data
+service. This product opens the original merchant browser and its HAR and
+OpenAPI agent connections against one private project library.
+
+The complete workflow keeps the original capture, observed inventory, authored
+source decisions, exact atomic prices, merchant packages, releases and receiving
+files together. Reopening uses the same native workspaces.
+
+## Open the product
+
+Use the complete TokenJunkieLabs Stellar merchant package on Linux with Node.js
+22.16 or later and util-linux flock. The
+[installation guide](../merchant-workspace/OPERATING.md) and
+[runtime installer](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md)
+describe the maintained archive and dependency installation.
+
+~~~sh
+starforge captured-api init --dir /private/merchant/captured-api \
+  --name 'Supplier API'
+
+starforge captured-api open --dir /private/merchant/captured-api --browser-only
+~~~
+
+Create the private parent directory first. Open the complete browser URL printed
+by the second command. Its access token belongs to this local session.
+
+From the source checkout, replace `starforge captured-api` with
+`node products/captured-api/cli.mjs`.
+
+In the browser, open **Captured API sources**, upload the original HAR, inspect
+the observed operations, author safe source decisions, and save the review.
+Use that source in the merchant form. Configure the public seller URL, payment
+terms, backend references and response policy, review the complete route
+worksheet, and save the original merchant package.
+
+The same browser starts the merchant, checks its routes, opens operations and
+continues its release workflow.
+
+## Add the merchant agent
+
+Set the incoming MCP bearer token in the host's existing environment, then open
+the same product without `--browser-only`:
+
+~~~sh
+starforge captured-api open --dir /private/merchant/captured-api \
+  --token-env MCP_ACCESS_TOKEN --mcp-port 3211
+~~~
+
+The result includes the existing merchant MCP URL and workspace alias
+`merchant`. The agent can intake and review captures, continue source editions,
+configure the merchant, apply the same source-bound pricing worksheet, retain
+complete downloads, and stage original packages.
+
+Close the first product process before opening another against that directory.
+Ctrl-C drains the agent's accepted work, then closes the product's owned original
+browser and seller. Retained operating files stay in place.
+
+## Complete operating paths
+
+| Work | Operating path |
+| --- | --- |
+| Capture and review an API | Browser upload and integrated review; original offline HAR commands are also available |
+| Author and price routes | Native merchant form and shared route worksheet |
+| Operate the same source through an agent | Both original providers attached to workspace `merchant` |
+| Use an existing managed browser | Initialize with its exact projects directory and private Applications URL record |
+| Update from a later capture | Select the previous saved source review and continue the native refresh workflow |
+| Move a complete source or merchant | Native source copy/adoption and complete package transfer |
+| Recover an interrupted setup or session | Reopen the same private product, source identity, saved package and release |
+
+The [complete operating guide](OPERATING.md) follows these paths through
+installation, first source, exact prices, release, customer receiving and
+upgrades.
