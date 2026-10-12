@@ -289,11 +289,13 @@ The source programme requires the exact 189-file candidate of the original full-
 
 Before each Start, the receiver durably saves the original review and UUID. A lost response is reconciled using that same original Applications run/history. Ownership is retained before the first awaited Start/recover call, so cleanup can stop the exact acquired run after an interruption.
 
-An incomplete invocation records its exact cleanup run/terminal identity. On the next invocation it reconciles any still-active original managed run before trying to open the direct project over the same workspace. Only after positive stop does it create a new reviewed UUID for a deliberate reopen. The old request/history is preserved.
+An incomplete invocation records its exact cleanup run and terminal identity. Before reopening the direct project, the next invocation reconciles every retained managed run belonging to this receiver. A saved `PENDING` run is cancelled through the original Applications API before its command is dispatched. An inactive worker alone is not proof of closure: the receiver requires the original cancellation, a completed command result, or positive reconciliation of the retained process identity. A surviving command or `OUTCOME_UNAVAILABLE` keeps that same run pending. Only after this positive closure does it create a new reviewed UUID for a deliberate reopen. The old request and history are preserved.
 
 The receiver never stops an unrelated application or another run. If the exact original run is still draining, it returns an incomplete state that requires continuation of that same retained operation. Original resource keys prevent overlapping project/workspace owners.
 
 The permanent receiving lock excludes a concurrent receiver. The final result records the original basis, original complete native result hashes, installed source identity, saved Applications histories, browser file identities and included-app receiving result. Its explicit facts are `providerDispatch: false`, `newQuery: false` and `newPayment: false`.
+
+The complete receiving state is retained before `result.json` is published. If that final file write is interrupted, the next invocation writes or verifies `result.json` from the exact retained COMPLETE result. It does not reopen a browser, dispatch a provider action or repeat a managed lifetime. A different existing result is preserved and rejected.
 
 ## Operating limits and current acceptance
 

@@ -53,18 +53,61 @@ export async function receiveInstalled(input){
   }while(cursor);
   return null;
  }
+ // Worker inactivity alone does not prove that its original command ended.
+ function runClosure(run){
+  if(!run||run.active)return null;
+  if(run.phase==='CANCELLED'&&run.result?.state==='CANCELLED'&&run.result.launched===false&&
+   run.result.operationId===run.id&&run.result.applicationId===state.applications.applicationId)
+   return {kind:'CANCELLED_BEFORE_DISPATCH',result:run.result};
+  const result=run.result??run.state?.result;
+  if(['SUCCEEDED','FAILED'].includes(run.phase)&&result?.operation==='original-command'&&
+   ['STOPPED','COMPLETED','EXITED','LAUNCH_FAILED'].includes(result.state)&&typeof result.completedAt==='string')
+   return {kind:'ORIGINAL_COMMAND_TERMINAL',result};
+  if(run.phase==='SUCCEEDED'&&result?.operation==='original-command'&&result.state==='RECONCILED'&&
+   run.state?.commandProcess?.pid&&run.state.commandProcess.processStart&&run.state.completedAt)
+   return {kind:'ORIGINAL_PROCESS_RECONCILED',result,process:run.state.commandProcess,completedAt:run.state.completedAt};
+  return null;
+ }
  async function stopRun(id,reason){
-  const original=await retainedRun(id);
-  if(original){
-   await apps.applicationsStop({applicationId:state.applications.applicationId,operationId:id});
-   const end=Date.now()+120000;
-   for(;;){const current=await retainedRun(id);
-    need(current,'LIGHTDASH_INSTALLED_RUN','The original managed run disappeared.');
-    if(!current.active){state.applications.cleanups[id]={reason,phase:current.phase,runId:id,completedAt:new Date().toISOString()};await persist();return current;}
-    need(Date.now()<end,'LIGHTDASH_INSTALLED_STOP_PENDING','The same original managed run is still draining.');await pause(1000);
-   }
+  let original=await retainedRun(id);
+  if(!original){
+   state.applications.cleanups[id]={reason,phase:'NOT_DISPATCHED',runId:id,observedAt:new Date().toISOString()};
+   await persist();return null;
   }
-  state.applications.cleanups[id]={reason,phase:'NOT_DISPATCHED',runId:id,observedAt:new Date().toISOString()};await persist();return null;
+  state.applications.cleanups[id]={reason,phase:original.phase,state:'DRAINING',runId:id,requestedAt:new Date().toISOString()};
+  await persist();
+  if(!runClosure(original))await apps.applicationsStop({applicationId:state.applications.applicationId,operationId:id});
+  const end=Date.now()+120000;let recovery=null;
+  for(;;){
+   const current=await retainedRun(id);
+   need(current,'LIGHTDASH_INSTALLED_RUN','The original managed run disappeared.');
+   const closure=runClosure(current);
+   if(closure){
+    state.applications.cleanups[id]={reason,phase:current.phase,state:'CLOSED',runId:id,closure,
+     ...(recovery?{recovery}:{}),completedAt:new Date().toISOString()};
+    await persist();return current;
+   }
+   // Reconcile only a retained launched process or complete command receipt.
+   // Recovering an undispatched failed request here could start its command.
+   if(!current.active&&(current.state?.commandProcess||current.result)){
+    try{recovery=await apps.applicationsRecover({applicationId:state.applications.applicationId,operationId:id});}
+    catch(error){if(error.code!=='RUNTIME_WORKSPACE_OPERATION_RUNNING')throw error;}
+   }
+   need(Date.now()<end,'LIGHTDASH_INSTALLED_STOP_PENDING',
+    recovery?.commandActive?'The same original command is still alive; retain this run until its original Stop and reconciliation complete.':
+    'The same original run has no positive terminal or cancellation outcome; preserve it for original command reconciliation.');
+   await pause(1000);
+  }
+ }
+ async function finalizeComplete(){
+  need(state.state==='COMPLETE'&&state.result?.state==='COMPLETE','LIGHTDASH_INSTALLED_RESULT','No complete retained receiving result is available.');
+  const file=path.join(output,'result.json');
+  if(await exists(file))need(same(await json(file,{maximum:32*1024*1024,privateFile:true}),state.result),
+   'LIGHTDASH_INSTALLED_RESULT_CHANGED','The completed receiving result differs from its retained original state.');
+  else await saveJson(file,state.result);
+  need(same(await json(file,{maximum:32*1024*1024,privateFile:true}),state.result),
+   'LIGHTDASH_INSTALLED_RESULT_CHANGED','The completed receiving result did not read back exactly.');
+  return state.result;
  }
  async function closeLocal(){
   if(page){await page.close();page=null;}if(browser){await browser.close();browser=null;}
@@ -113,7 +156,7 @@ export async function receiveInstalled(input){
   if(state.state==='COMPLETE'){
    const checked=await fileIdentity(state.receiving.archive.file);
    need(checked.sha256===state.receiving.archive.sha256&&checked.bytes===state.receiving.archive.bytes,'LIGHTDASH_INSTALLED_HANDOVER_CHANGED','The completed original handover changed.');
-   return {...state.result,replayed:true};
+   return {...await finalizeComplete(),replayed:true};
   }
   const project=await prepareProject(input.project);
   need(project.installation.application.manifestSha256===core.applicationSource.manifestSha256,'LIGHTDASH_INSTALLED_SOURCE','The installed wrapper must retain the complete original application.');
@@ -123,10 +166,10 @@ export async function receiveInstalled(input){
   // before the direct project attempts to acquire the same workspace lease.
   if(state.applications.applicationId){
    apps=await runtimeModel.openRuntimeWorkspace({directory:applicationsDirectory});
-   for(const cycle of state.applications.cycles.filter(x=>x.state!=='COMPLETE'&&!x.retired)){
+   for(const cycle of state.applications.cycles){
     const prior=await retainedRun(cycle.request.requestId);
-    if(prior?.active||prior?.phase==='QUEUED')
-     await stopRun(cycle.request.requestId,'Reconcile the exact previous incomplete receiving owner before reopening the original workspace.');
+    if(prior&&!runClosure(prior))
+     await stopRun(cycle.request.requestId,'Reconcile the exact previous receiving owner before reopening the original workspace.');
    }
    await apps.close();apps=null;
   }
@@ -189,13 +232,14 @@ export async function receiveInstalled(input){
    let cycle=state.applications.cycles.findLast(x=>x.index===index&&x.state!=='COMPLETE'&&!x.retired);
    if(cycle){
     const prior=await retainedRun(cycle.request.requestId);
-    if(prior&&!prior.active&&(!['QUEUED','RUNNING'].includes(prior.phase)||state.applications.cleanups[cycle.request.requestId])){
-     cycle.retired={phase:prior.phase,reason:'The exact preceding receiving launch is positively stopped; the next review is a deliberate reopen.'};
+    const closure=runClosure(prior);
+    if(closure){
+     cycle.retired={phase:prior.phase,closure,reason:'The exact preceding receiving launch is positively stopped; the next review is a deliberate reopen.'};
      await persist();cycle=null;
     }
    }
    if(!cycle){
-    current=await readApplication();need(!current.current?.active,'LIGHTDASH_INSTALLED_EXISTING_RUN','Reconcile the existing original application owner before a new reviewed launch.');
+    current=await readApplication();need(!current.current||runClosure(current.current),'LIGHTDASH_INSTALLED_EXISTING_RUN','Reconcile the existing original command to a positive terminal or cancellation outcome before a new reviewed launch.');
     const review=await apps.applicationsStartReview({applicationId:current.id});
     cycle={index,review,request:{applicationId:current.id,reviewId:review.id,requestId:randomUUID()},state:'REQUESTED'};
     state.applications.cycles.push(cycle);await persist();
@@ -240,9 +284,9 @@ export async function receiveInstalled(input){
    browserMcp:state.stages.browserMcp,applications:state.applications,customerReceiving:received.result,
    providerDispatch:false,newQuery:false,newPayment:false,completedAt:new Date().toISOString()};
   state.result=result;state.state='COMPLETE';await persist();
-  await saveJson(path.join(output,'result.json'),result);return result;
+  return await finalizeComplete();
  }catch(error){
-  if(state){state.state='INCOMPLETE';state.error={code:error.code??'LIGHTDASH_INSTALLED_FAILED',message:error.message};
+  if(state&&state.state!=='COMPLETE'){state.state='INCOMPLETE';state.error={code:error.code??'LIGHTDASH_INSTALLED_FAILED',message:error.message};
    try{await persist();}catch{}}
   throw error;
  }finally{
