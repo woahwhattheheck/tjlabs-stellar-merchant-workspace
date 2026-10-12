@@ -62,7 +62,8 @@ function uniqueNewId(value, used, name) {
 }
 function receiptSnapshot(receipt) {
   return {id: receipt.id, customerId: receipt.customerId, reference: receipt.reference, method: receipt.method,
-    receivedDate: receipt.receivedDate, currency: clone(receipt.currency), amount: receipt.amount,
+    receivedDate: receipt.receivedDate, accountingDate: receipt.accountingDate ?? receipt.receivedDate,
+    currency: clone(receipt.currency), amount: receipt.amount,
     sourceKind: receipt.source?.kind ?? null, sourceKey: receipt.sourceKey};
 }
 function normalizeFunding(data, receipt, input, effectiveDate, usedIds) {
@@ -120,7 +121,7 @@ function baseProposal(data, customer, value, schema) {
   need(customer?.id === receipt.customerId, 'CUSTOMER_FUNDS_IDENTITY_CHANGED',
     'Use the original receipt customer.', 409);
   const effectiveDate = dateValue(value.effectiveDate, 'funds disposition date');
-  need(effectiveDate >= receipt.receivedDate, 'REFUND_BEFORE_RECEIPT',
+  need(effectiveDate >= (receipt.accountingDate ?? receipt.receivedDate), 'REFUND_BEFORE_RECEIPT',
     'Use a disposition date on or after the original receipt date.');
   const id = identifier(value.id ?? randomUUID(), 'funds operation');
   need(!refundRows(data).some(row => row.id === id) && !dispositionRows(data).some(row => row.id === id),
@@ -246,7 +247,7 @@ function assertInvoiceConservation(data, ids) {
   }
 }
 function receiptBalanceSnapshot(summary) {
-  return Object.fromEntries(['id', 'customerId', 'reference', 'method', 'receivedDate', 'currency',
+  return Object.fromEntries(['id', 'customerId', 'reference', 'method', 'receivedDate', 'accountingDate', 'currency',
     'amount', 'allocated', 'refunded', 'reserved', 'netAmount', 'available', 'status', 'voidDate', 'asOf']
     .map(key => [key, summary[key] ?? null]));
 }
@@ -307,7 +308,7 @@ export function customerFundsView(data, customers, adjustments, {customerId, asO
   const customer = customerId === undefined ? null : customers.find(row => row.id === identifier(customerId, 'customer'));
   need(customerId === undefined || customer, 'CUSTOMER_NOT_FOUND', 'Choose an original accounting customer.', 404);
   const selectedReceipts = data.receipts.filter(row => (!customerId || row.customerId === customerId) &&
-    row.status === 'RECORDED' && row.receivedDate <= asOf);
+    row.status === 'RECORDED' && (row.accountingDate ?? row.receivedDate) <= asOf);
   const receipts = selectedReceipts.map(row => ({...receiptSummary(row, data, asOf),
     availableToRefund: receiptRefundCapacity(row, data, asOf)}));
   const receiptIds = new Set(selectedReceipts.map(row => row.id)), eligibleFunding = [], targetInvoices = [];

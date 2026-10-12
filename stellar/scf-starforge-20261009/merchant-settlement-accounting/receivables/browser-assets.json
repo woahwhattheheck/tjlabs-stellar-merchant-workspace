@@ -66,6 +66,13 @@
       ]
     ],
     [
+      "/receivables/bank-statements.mjs",
+      [
+        "bank-statements.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/receivables/collections.mjs",
       [
         "collections.mjs",

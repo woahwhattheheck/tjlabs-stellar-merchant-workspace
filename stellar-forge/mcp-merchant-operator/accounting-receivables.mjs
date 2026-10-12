@@ -90,7 +90,9 @@ export class MerchantReceivables {
       const history = data.requests.filter(row => !args.customerId ||
         invoiceIds.has(row.result.invoiceId) || receiptIds.has(row.result.receiptId) ||
         paymentIds.has(row.result.paymentRequestId) || refundIds.has(row.result.refundId) ||
-        dispositionIds.has(row.result.creditDispositionId));
+        dispositionIds.has(row.result.creditDispositionId) ||
+        (row.result.receiptIds || []).some(id => receiptIds.has(id)) ||
+        (row.result.invoiceIds || []).some(id => invoiceIds.has(id)));
       const metadata = {workspace: args.workspace, schema: data.schema, view, asOf,
         customerId: args.customerId ?? null, revision: this.workspace.state.revision};
       if (view === 'summary') return clone({...metadata, issuer: data.issuer,
@@ -203,6 +205,12 @@ export class MerchantReceivables {
     return paged(rows, args, metadata);
   }
 
+  async bankImportDetail(args) {
+    const result = await this.controller.bankImport(args.bankImportId, payload(args, 'bankImportId'));
+    return {...result, files: result.files.map(file => ({...file,
+      selection: fileSelection('receivables-bank', {bankImportId: args.bankImportId}, file.name)}))};
+  }
+
   async requestLookup(args) {
     const requestId = field(args.requestId, 'original request ID', 160);
     need(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(requestId),
@@ -276,6 +284,17 @@ export class MerchantReceivables {
       case 'refund_receive': return this.controller.receiveRefund(args.refundId, payload(args, 'refundId'));
       case 'credit_disposition_preview': return this.controller.previewCreditDisposition(input);
       case 'credit_disposition_apply': return this.controller.applyCreditDisposition(input);
+      case 'bank_accounts': return this.controller.bankAccounts(input);
+      case 'bank_account_save': return this.controller.saveBankAccount(input);
+      case 'bank_source_inspect': return this.controller.inspectBankSource(input);
+      case 'bank_source_import': return this.controller.importBankSource(input);
+      case 'bank_import_list': return this.controller.bankImports(input);
+      case 'bank_import_detail': return this.bankImportDetail(args);
+      case 'bank_posting_preview': return this.controller.previewBankPosting(args.bankImportId, payload(args, 'bankImportId'));
+      case 'bank_receipts_post': return this.controller.postBankReceipts(args.bankImportId, payload(args, 'bankImportId'));
+      case 'bank_rows_ignore': return this.controller.ignoreBankRows(args.bankImportId, payload(args, 'bankImportId'));
+      case 'bank_rows_restore': return this.controller.restoreBankRows(args.bankImportId, payload(args, 'bankImportId'));
+      case 'bank_import_close': return this.controller.closeBankImport(args.bankImportId, payload(args, 'bankImportId'));
       case 'request_lookup': return this.requestLookup(args);
       default: need(false, 'ACCOUNTING_RECEIVABLES_OPERATION', 'Choose an original receivables operation.');
     }
@@ -301,6 +320,8 @@ export class MerchantReceivables {
         'Select a returned transaction only when reading its native proof.');
       return this.controller.paymentRequestFile(args.paymentRequestId, name);
     }
+    if (args.kind === 'receivables-bank')
+      return this.controller.bankImportFile(args.bankImportId, args.file);
     if (args.kind === 'receivables-refund')
       return this.controller.refundFile(args.refundId, args.file);
     if (args.kind === 'receivables-customer') {
