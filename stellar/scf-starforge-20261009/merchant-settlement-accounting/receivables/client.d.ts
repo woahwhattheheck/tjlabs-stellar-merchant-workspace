@@ -28,6 +28,16 @@ export type {CollectionPriority, CollectionStatus, CollectionActivityKind, Colle
   CollectionSummary, CollectionsQuery, CollectionsReport, CollectionDetail, CollectionContext, SaveCollectionCase, CollectionActivityInput,
   CollectionTransitionInput, CollectionMutationResult, CollectionReminder, CollectionFileName, CollectionOperationResult} from './collections-types.d.ts';
 
+import type {CashPlanListQuery,CashPlanList,CashPlanPreviewInput,CashPlanPreview,CashPlanDetail,SaveCashPlanInput,
+  CashPlanStatusInput,CashPlanMutationResult,CashPlanFileName,CashPlanCompareQuery,CashPlanComparison,CashPlanOperationResult} from './cash-planning-types.d.ts';
+export type {
+  CashPlanOverride, CashPlanInput, CashPlanTerms, CashPlanSourceIssue, CashPlanLine,
+  CashPlanCurrency, CashPlanInvoice, CashPlanProjection, CashPlanPreviewInput, CashPlanPreview,
+  CashPlanEdition, CashPlanSummary, CashPlanListQuery, CashPlanList, CashPlanDetail,
+  SaveCashPlanInput, CashPlanStatusInput, CashPlanMutationResult, CashPlanCompareQuery, CashPlanDifference,
+  CashPlanComparison, CashPlanFileName, CashPlanOperationResult
+} from './cash-planning-types.d.ts';
+
 export type Money = string;
 export type DateOnly = string;
 export type Revision = number;
@@ -280,6 +290,16 @@ export class ReceivablesApiError extends Error {
 export class ReceivablesClient {
   constructor(options?: ClientOptions);
   state(query?: {asOf?: DateOnly}): Promise<ReceivablesState>;
+  cashPlans(query?:CashPlanListQuery, options?:RequestOptions):Promise<CashPlanList>;
+  previewCashPlan(value:CashPlanPreviewInput, options?:RequestOptions):Promise<CashPlanPreview>;
+  cashPlan(id:string, query?:{editionId?:string}, options?:RequestOptions):Promise<CashPlanDetail>;
+  saveCashPlan(value:SaveCashPlanInput, options?:RequestOptions):Promise<CashPlanMutationResult>;
+  archiveCashPlan(id:string, value:CashPlanStatusInput, options?:RequestOptions):Promise<CashPlanMutationResult>;
+  reopenCashPlan(id:string, value:CashPlanStatusInput, options?:RequestOptions):Promise<CashPlanMutationResult>;
+  cashPlanFile(id:string, name:CashPlanFileName, query?:{editionId?:string}, options?:RequestOptions):Promise<Response>;
+  compareCashPlans(query:CashPlanCompareQuery, options?:RequestOptions):Promise<CashPlanComparison>;
+  cashPlanComparisonFile(name:'comparison.json'|'comparison.csv', query:CashPlanCompareQuery, options?:RequestOptions):Promise<Response>;
+  cashPlanOperation(requestId:string, options?:RequestOptions):Promise<CashPlanOperationResult>;
   collectionCases(query?: CollectionsQuery, options?: RequestOptions): Promise<CollectionsReport>;
   collectionCase(id:string, query?:{asOf?:DateOnly}, options?:RequestOptions):Promise<CollectionDetail>;
   saveCollectionCase(value:SaveCollectionCase, options?:RequestOptions):Promise<CollectionMutationResult>;
