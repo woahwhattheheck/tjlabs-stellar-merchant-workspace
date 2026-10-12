@@ -375,12 +375,12 @@ release for rollback.
 ### Retain a Python application through the price change
 
 For a Python merchant, attach the complete original release directory. Use that
-release's `python/merchant.json` as the seller configuration and the same
+release's `seller-service.json` as the seller configuration and the same
 workspace, observation and release-store options:
 
 ```sh
 node stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/workspace/cli.mjs \
-  --config /private/merchant/releases/python-first/python/merchant.json \
+  --config /private/merchant/releases/python-first/seller-service.json \
   --state /private/merchant/pricing-workspace \
   --ops-url http://127.0.0.1:8424 \
   --source-package /private/merchant/releases/python-first \
@@ -390,8 +390,8 @@ node stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/workspace/cli.mjs 
 ```
 
 The attached release contains its original `manifest.json`,
-`python/declaration.json`, compiled `python/merchant.json`, and
-`python/source/` application tree. The adapter inspects this original release
+`python/declaration.json`, the retained `python/merchant.json` runtime declaration,
+compiled `seller-service.json`, and `python/source/` application tree. The adapter inspects this original release
 and matches its compiled seller to the pricing review before preparing a change.
 
 Use **Prepare price change**, edit the chosen atomic amounts, and select
