@@ -545,6 +545,28 @@ defines comparison, dormant-route carry, offline refresh and package operations.
 
 ## 8. Hand over the complete source and merchants
 
+In the product-owned browser, choose **Merchant handover** from the original
+workspace header. Create an outgoing collection from the complete saved
+merchant/source inventory, save its draft edition, prepare and inspect its
+native review, then publish and download the full `.sfhandover` file.
+
+Open **Merchant handover** in the receiving product. Upload the complete file,
+inspect its source and merchant histories, choose receiving names, save and
+review that exact mapping, then receive and reopen the native merchants.
+**Drafts**, **Operations**, **Files** and **Received** retain the original server
+work across browser and product restarts. The browser keeps working forms by
+draft and saved base, preserving them when navigating to another draft or viewing
+history. The edition selector identifies retained working edits; reopen the
+working form to continue it. Every accepted original request keeps its own
+selected edition.
+
+The complete [browser walkthrough](HANDOVER.md#complete-the-handover-in-the-browser)
+covers source selection, package/environment review, resumable chunk upload,
+original name conflicts, saved request continuation and native merchant reopen.
+Normal Stop keeps the original native listener open until accepted handover
+operations finish their source/package calls.
+
+
 The product's complete handover joins original captured histories with their
 saved merchant packages. Select actual members, copy and review the full native
 collection, publish it, then review and receive it into another initialized
@@ -640,6 +662,9 @@ alongside the saved process session.
 | Applications start reply is lost | The saved original application and managed operation, including its retained private startup record |
 | Worksheet transfer stops | Same source/plan, worksheet identity and native downloader |
 | Complete handover is interrupted | Same selection/output or receiving review/operation ID; completed native members reopen |
+| Browser handover draft or reply is interrupted | Original saved draft edition and retained request under Merchant handover |
+| Whole handover file transfer stops | Same original download or saved file upload; resume the retained byte range/chunk |
+| Handover browser uses a new port after restart | Open the original server-side Drafts, Operations, Files or Received entry |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |

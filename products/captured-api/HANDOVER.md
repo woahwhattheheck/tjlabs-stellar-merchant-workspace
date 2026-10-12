@@ -17,6 +17,169 @@ and [complete merchant package transfer](../../stellar/scf-starforge-20261009/sf
 The existing console owns source adoption, package publication, compiler,
 runtime and release operations.
 
+## Complete the handover in the browser
+
+Open the retained product with `starforge captured-api open --dir PRODUCT` or
+start its saved **Captured API merchant** application. Follow **Merchant handover**
+in the original merchant browser's header. The handover page uses that same
+private browser session and product directory.
+
+### Send the complete collection
+
+1. Choose **New outgoing collection**. Give the collection a useful label.
+2. Refresh the original inventory. Select saved merchant packages, captured
+   sources, or both. Package selections retain the displayed manifest hash.
+   A captured merchant automatically includes its original capture or refresh
+   and the review used to author that merchant.
+3. Use **Selected members** to inspect every explicit selection. An optional
+   original review hash requires that saved review to be present; the source
+   still carries its complete retained review history.
+4. Choose **Save draft edition**, then **Prepare complete collection**. The
+   product retains the complete original request before copying native members.
+   An accepted preparation appears under **Operations** and continues on the
+   same original native writer if the page disconnects.
+5. Review the completed collection's summary, merchants, sources and full file
+   roster. Source rows expose the original review hashes and both histories of
+   a refresh. Merchant rows expose their original package/source identity and
+   required runtime environment references.
+6. Choose **Publish and create complete file**. This publishes the reviewed
+   native collection and streams its complete original files into one
+   `.sfhandover` archive. Choose **Download complete handover** and retain
+   the displayed file byte count and SHA-256 with the delivery.
+
+The download carries the exact original handover manifest, original review,
+every declared merchant and captured-source file, and the collection's operating
+instructions. It includes the complete native packages, raw captures, immutable
+source histories and compiled output. The manifest and original native
+compilers remain the content authority.
+
+The browser uses a short-lived download permission on the same private host.
+A normal file download streams from the retained original file descriptor and
+supports a single HTTP byte range. If a download stops, reopen Download in the
+original browser; the file and hash remain the same.
+
+### Receive and operate the collection
+
+Initialize and open the receiving product. In its **Merchant handover** page:
+
+1. Choose the original complete `.sfhandover` file. Enter the sender's
+   file SHA-256 when it was supplied, then choose **Upload and inspect complete
+   file**.
+2. Uploads retain their original identity, complete size and original payload
+   file before data arrives. The page sends 1 MiB chunks with their SHA-256.
+   The receiver streams and hashes the complete original archive, extracts its
+   declared members into a private retained collection, then invokes the
+   original full handover inspector.
+3. Review the inspected merchants, captured histories and full file roster.
+   Choose **Use this collection for receiving**. The receiving draft now
+   contains that exact retained collection, manifest hash and original names.
+4. Edit any receiving names, save the complete draft edition, and choose
+   **Review receiving names**. The review reports existing matching sources,
+   missing reviews, reusable packages and individual conflicts.
+5. Resolve a name conflict in a new saved draft edition and review again.
+   **Receive this reviewed collection** applies the exact displayed review,
+   including its original source identity and complete name mapping.
+6. After receiving completes, use **Open NAME** to reopen each original native
+   merchant with its full source, plan, atomic prices and compiled package.
+   Its original worksheet, runtime, customer, operation and release controls
+   remain available. Reopen captured sources from the native source library
+   to continue their saved decisions or prepare a later capture edition.
+
+The **Received** library reads the original product's receiving records.
+Opening one inspects its native merchant and source files again. A completed
+receiving result remains available after the downloaded collection is moved
+away. Additional reviews authored by the receiving operator remain present.
+
+A collection already available in a private directory on the receiving host can
+be opened without uploading a file. Choose **Open receiving collection**, enter
+its directory and optional known manifest hash, save, then choose **Inspect saved
+collection**. Use that inspected result to populate the exact manifest and
+merchant names before saving and reviewing receiving.
+
+### Continue a saved browser operation
+
+The browser retains each working form by draft and selected base edition.
+Switching drafts or opening saved history keeps those edits available. History
+is a view of the original saved fields; **Open retained working form** returns
+to the edit, and **Work from this edition** restores that edition's retained
+form or starts from its saved fields. The edition selector marks bases with a
+retained working edit. A saved draft's server history remains available when the
+browser uses a different local port.
+
+Accepted requests remain bound to their selected saved edition. Editing a form
+does not change a preparation, publication or receiving operation already in
+progress. Reopening an inactive draft or job finishes its own interrupted
+whole-file publication before reading it. A draft whose first edition was
+interrupted completes that original edition from its retained creation fields.
+
+| Interrupted work | Continue in the same product |
+| --- | --- |
+| Draft save loses its reply | **Continue original request** reuses the complete original edit and save identifier |
+| Another operator saved the same draft | Compare the current saved edition; open it or retain your working form for a new save |
+| Preparation or publication stops | Open its original **Operations** entry and choose **Continue this original operation** |
+| File upload stops | Open its entry under **Files**, choose the same original file, and continue the retained offset/chunk |
+| Upload finishes before the reply arrives | The retained file status supplies its original full byte count and hash |
+| File import stops | Continue its original operation; completed immutable files stay retained |
+| Receiving stops after some native members | Continue the original receiving operation with its selected review and names |
+| A receiving reply is lost after completion | Open the original operation or **Received** entry and reopen the native merchants |
+| The browser restarts on another local port | Open the saved draft, file or operation from the product's server libraries |
+
+A partially written upload chunk retains its original start, size and SHA-256.
+On continuation the browser resends that same original slice; the native writer
+compares its retained prefix and writes only the missing suffix. It never
+replaces a completed payload with a new file. A different file belongs in a new
+upload.
+
+New browser operations are retained under
+`PRODUCT/handover-desk/`: immutable draft editions in `drafts/`,
+accepted complete requests and results in `jobs/`, original uploads in
+`uploads/`, and full inspected collections in `collections/`.
+Original source/package receiving continues under the product's existing native
+projects and `receiving/handovers/` directories.
+
+Normal Stop first drains the merchant agent, then denies new handover requests
+while accepted uploads, exports, native source/package operations and downloads
+finish. The original merchant listener stays available for those accepted
+native calls. It then follows the existing browser, seller and product lease
+shutdown. Reopen the same retained product to continue an interrupted operation.
+
+An externally attached SF61 console keeps its original lifetime and interface.
+The product's existing terminal handover commands operate through that original
+connection. The integrated handover browser is available when this product owns
+the browser, including its Applications-managed launch.
+
+## Move one complete file from the terminal
+
+The same maintained archive implementation is available from the existing
+handover command. First prepare and publish a collection using the selection
+and review steps below. Then export its complete file into a new private
+directory:
+
+~~~sh
+starforge captured-api handover file-export \
+  --bundle /private/handovers/supplier-edition-1 \
+  --out /private/handovers/supplier-edition-1-file \
+  --manifest-sha256 ACTUAL_PUBLISHED_MANIFEST_SHA256
+~~~
+
+The result supplies the exact archive path, bytes and SHA-256. Move that one
+file using the normal private transfer path. On the receiving host, preserve its
+private file mode and import it with the original file identity:
+
+~~~sh
+starforge captured-api handover file-import \
+  --file /private/delivery/captured-ORIGINAL_ID.sfhandover \
+  --out /private/delivery/supplier-edition-1 \
+  --file-sha256 ACTUAL_ORIGINAL_ARCHIVE_SHA256 \
+  --file-bytes ACTUAL_ORIGINAL_ARCHIVE_BYTES
+~~~
+
+The importer retains its original input binding, verifies the streamed full file,
+receives every original member, and runs the complete native handover inspector.
+Its result supplies the same native collection directory and manifest hash used
+by the existing receiving review and receive commands. Repeat the exact file
+export or import after an interruption to continue its original publication.
+
 ## 1. Open the sending product and select actual members
 
 Install the complete product and open its existing private directory, as described
@@ -372,3 +535,27 @@ From an uninstalled complete source checkout, replace
 `starforge captured-api handover` with
 `node products/captured-api/handover-cli.mjs`. Use the same prepared runtime that
 provides the original SF61, compiler and merchant dependencies.
+
+### Complete file and browser APIs
+
+The distribution also exports `./products/captured-api/handover-archive`,
+`./products/captured-api/handover-upload` and
+`./products/captured-api/handover-browser`. The original product launcher
+uses the browser module directly.
+
+| Native API | Complete input and result |
+| --- | --- |
+| `exportCapturedHandoverArchive` | `{bundle, directory, expectedManifestSha256}` → original complete file path, bytes, SHA-256 and handover identity |
+| `receiveCapturedHandoverArchive` | `{path, directory, expectedSha256, expectedBytes}` → original inspected full native collection and archive identity |
+| `initializeCapturedHandoverUpload` | `{root, id, name, bytes, expectedSha256?}` retains the original upload |
+| `appendCapturedHandoverUpload` | `{root, id, offset, bytes: Buffer, sha256}` continues its original chunk |
+| `inspectCapturedHandoverUpload` | `{root, id}` returns complete size, retained offset and any original pending chunk |
+| `finishCapturedHandoverUpload` | `{root, id}` returns the completed original file path/hash after its full byte count is present |
+| `createCapturedHandoverWeb` | `{directory}` → optional original-host `navigation`, `servePublic`, `api` and `close` hooks |
+
+The original SF61 host authenticates the browser's
+`/api/captured-handover/*` routes with its existing workspace token and
+exact origin check. Saved-draft APIs select an immutable revision. A native job
+selects either that revision, a completed original review, a finished upload, or
+an existing receiving operation. The saved original job is resolved before a
+repeat can enter a new native writer.
