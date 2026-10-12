@@ -237,6 +237,9 @@ def main():
                 if file.is_symlink():
                     raise ValueError("Receiving output must retain ordinary files: " + str(file))
                 if file.is_file():
+                    # Browser captures remain available for internal inspection.
+                    if file.is_relative_to(output) and file.suffix.lower() == ".png":
+                        continue
                     bundle.write(file, file.relative_to(root).as_posix())
         for file in (root / "source-selection.json", root / "complete-source-packet.json",
                      root / "config.json", root / "native-result.json"):
@@ -245,12 +248,10 @@ def main():
                     "sha256": digest(archive.read_bytes())}
     json_file(root / "archive.json", archive_meta)
     print("SCF_NATIVE_RESULT " + json.dumps({**native_summary, "archive": archive_meta}), flush=True)
-    captures = sorted(path for path in output.rglob("*.png") if path.is_file())
-    pdfs = sorted(path for path in output.rglob("*.pdf") if path.is_file())
     replacement = ((args.replace_library_file_id, args.expected_library_version)
                    if args.replace_library_file_id else None)
     try:
-        saved = save_outputs(runtime, [archive, *captures, *pdfs], private, replacement)
+        saved = save_outputs(runtime, [archive], private, replacement)
         if not saved["all_saved"] and state == "COMPLETE":
             return 2
     except Exception as error:
