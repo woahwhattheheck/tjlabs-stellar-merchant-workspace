@@ -70,8 +70,6 @@ The workspace uses the existing `/drafts.mjs` and the same application/source-in
 
 The HTML reader and downloadable Markdown have different relative locations. The composer adjusts companion and source-index links only in the rendered HTML. Markdown sibling links remain relative to `grant-data/`.
 
-Canvas authoring uses the public `blob/main/stellar-forge/developer-site/dist/grant-data/product-and-finance.md` URL for companion links. The maintained customer projection receives that exact current-file URL as the Markdown sibling link, preserving its chapter fragment; pinned historical sources retain their original links. This keeps the canonical authoring copy, downloaded answer and installed page on the same complete companion.
-
 
 ## Preserve the complete authoring package
 
@@ -160,23 +158,6 @@ original request, baseline, six funded packages, capacity, cash and submission
 fields. The reader distinguishes the completed organisation receiving and the
 recorded financial stages through the chapter's actual operating results.
 
-## Receive current delivery finance
-
-The ordinary `--manuscript` path receives the complete canonical **8. Delivery
-capacity and cash timing** section into the existing **8. Capacity and cash plan**
-companion chapter. This keeps the original receipt-derived deadlines, Calendar
-exports, reviewed remaining cash and effort, work and supplier invoices, and
-retained capacity/payment sensitivities together on each manuscript refresh.
-Other complete customer chapters keep their original identities.
-
-The source register follows the selected `CALENDAR.md`, `WORK_INTAKE.md` and
-`FORECAST.md` links into `grant-delivery-calendar`,
-`grant-work-invoice-intake` and `grant-operating-forecast`. Changed original
-source selections use the existing metadata refresh behavior. The full package
-valuation sensitivity remains distinct from agreed cash obligations and observed
-receipts. The nine-answer front and six funded packages retain their existing
-source and submission bindings.
-
 ## Read the complete companion
 
 Choose **Product and financing** in the application navigation. The maintained
@@ -186,3 +167,82 @@ downloads, selected or complete printing, and a self-contained offline export.
 Its four assets are declared by the existing browser manifest and travel with
 the complete developer-site source. Composition refreshes its source descriptor
 while retaining the original four-reader sourcePins contract.
+
+## Receive current grant delivery, capacity and cash operations
+
+When a complete canonical manuscript is selected, the existing customer receiver
+also receives its entire **8. Delivery capacity and cash timing** section into
+the companion's existing **8. Capacity and cash plan** chapter. The chapter
+identity stays stable. The canonical section supplies current payment clocks,
+confirmed extensions, resource and cash scenarios, currency treatment and
+recorded work or supplier obligations; every other companion chapter remains
+in place. An existing capacity/cash chapter is required before this update.
+
+The source register follows the selected immutable **CALENDAR.md** and
+**WORK_INTAKE.md** links as **grant-delivery-calendar** and
+**grant-work-invoice-intake**. The original source registration rules retain
+prior entries and clear an obsolete blob pin when its source identity changes.
+
+Use the same maintained composer and four-file receiving contract. Keep actual
+receipts, assigned dates and recorded work distinct from the original planning
+scenarios and internal exercise records. The current canonical manuscript owns
+the six-package allocation and its capacity/cash narrative.
+
+The same source receiver also registers `grant-amendment-calendar` from the complete current §8's `AMENDMENT_CALENDAR.md` link, preserving CEDAR's adopted before/selected agendas and complete saved-case receiving alongside the Delivery Calendar and Work/Invoice Intake sources.
+
+## Receive installation and recurring buyer work
+
+The canonical “9A. Current demonstration and operator journey” includes “Product selection, installation and recurring buyer work”. Receive that complete accepted subsection through the ordinary `--manuscript` path. The existing section receiver updates it in place and keeps every other customer chapter.
+
+The chapter carries the selected Source Builds guide and Request Collections authoring guide. The original source registration receives them as `source-builds-product-catalogue` and `request-collections-authoring`, retaining each exact repository, source commit and path. A later selected source updates that record and removes an obsolete blob pin through the same existing receiver.
+
+Keep the installation and planning capabilities together: selecting and comparing an immutable product edition, continuing its retained source build and installation, authoring a reusable plan from the original saved provider catalogue, preparing and reopening a named period, creating or resuming its original collection, and preserving prepared operator state in the existing receiving workflow. Measured native outcomes continue to come from the original operated case.
+
+The product is part of the existing starting foundation. The unchanged six priced packages fund the remaining customer-specific source integration, deployment, independent buyer operation and maintainer handover.
+
+## Receive complete county report publication
+
+The recurring economic-report installation includes the original analyst
+briefing and county-report products in the same saved FRED project. Receive its
+complete canonical subsection through the existing `--manuscript` operation.
+Its dedicated economic section receiver replaces that subsection in place,
+while the customer source receiver retains the county operating guides.
+
+The canonical chapter selects two immutable source links from the actual
+published county product:
+
+- `economic-county-report` selects `fred/qcew/MERCHANT.md`: original SF30
+  publication, the SF88 purchase, saved intent and receiving destination,
+  independent package receiving, and complete merchant/project transfer.
+- `economic-county-source-methods` selects `fred/qcew/README.md`: original
+  BLS QCEW and CPI capture, calculation profiles, complete report production,
+  and retained edition and source history.
+
+The ordinary source receiver reads each guide's exact repository, commit and
+path from that chapter. A later accepted source refreshes the same record and
+clears an obsolete blob identity. An earlier manuscript without a county guide
+link preserves its existing source register. New county records require the
+chapter's selected original guide links.
+
+After the complete county product is merged, use that actual merged economic
+application commit for `--fred-commit` and retain the chapter's immutable guide
+links. The existing analyst source entry remains part of the same economic
+installation. Other product selections keep their original flags and source
+identities. The unchanged four-reader output contract carries the complete
+application, companion, HTML reader and source index to the existing
+Page, draft/review and Site receiving operation.
+
+Keep the county paid unit explicit in the chapter. The default
+`report-package.json.gz` contains the selected report and every original
+predecessor, each complete manifest and all original report files. A customer
+can also select an individually advertised current report file. Each selected
+resource retains its own original request and price through the maintained
+Buyer. Customer receiving keeps its saved destination and original intent
+through restart; complete-project receiving restores the merchant from its
+original compressed package and retained terms.
+
+The implementation workorder, merchant's report price, payment principal and
+network charges retain their separate commercial assignments. The county
+product contributes to the same six funded delivery packages within the
+existing allocation. Completed native results enter the chapter from the
+original operated project and its full receiving programme.
