@@ -1322,6 +1322,17 @@ class CommercialReceivables:
                         raise Problem("A retained commercial or acceptance source changed.",
                                       409, "COMMERCIAL_SOURCE_CHANGED")
                     return content
+                # Original case imports receive new Program IDs while preserving
+                # immutable source IDs. A retained copy of the exact same source
+                # can therefore close this read-only export after either case is
+                # reopened, without rewriting its frozen originating identities.
+                for row in self.db.execute(
+                        "SELECT content FROM ops_sources WHERE id=? ORDER BY program_id",
+                        (source_id,)):
+                    content = bytes(row[0])
+                    if (len(content) == metadata["bytes"]
+                            and hashlib.sha256(content).hexdigest() == metadata["sha256"]):
+                        return content
                 raise Problem("The original acceptance file " + source_id
                               + " belongs to the linked case. Receive that case's complete "
                               "source archive before exporting this customer handoff.",
