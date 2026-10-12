@@ -47,12 +47,12 @@ const requestBody = { type: 'object', additionalProperties: false,
 
 function tenderlyWorkspaceTools(tool) {
   return [
-    tool('merchant_tenderly_workspaces', 'List the host-declared Tenderly workspace aliases, owned browser instances, active profile and retained file reads. Opens no merchant or provider connection.', {}, [], read),
-    tool('merchant_tenderly_open', 'Open one original private Tenderly workspace and its existing browser interface. Reuses this process-owned instance and returns its current browser URL, saved profiles, original plan template and state. Opening does not start a seller.', selected, ['workspace'], { idempotent: true }),
-    tool('merchant_tenderly_close', 'Drain and close this exact process-owned browser, original merchant and model after their active work finishes. Keep the returned original workspace identity for reopening the same host alias.', {
+    tool('merchant_tenderly_workspaces', 'List host-declared Tenderly workspace aliases, managed or owned attachment mode, last observed merchant profile/state and retained file reads. Opens no merchant or provider connection; status refreshes a managed observation.', {}, [], read),
+    tool('merchant_tenderly_open', 'Open the declared original Tenderly workspace. Managed mode attaches to the existing Applications listener and its live model; owned mode starts its original browser/model. Reuses this current attachment and returns the actual instance, browser URL, saved profiles and state. Opening does not start a seller.', selected, ['workspace'], { idempotent: true }),
+    tool('merchant_tenderly_close', 'Close this exact current attachment after active calls and retained reads finish. Managed mode detaches and returns DETACHED; Applications retains its running browser, merchant and model. Owned mode drains and closes its original server and returns CLOSED. Keep the workspace and instance identities.', {
       ...selected, instanceId: uuid,
     }, ['workspace', 'instanceId'], { destructive: true }),
-    tool('merchant_tenderly_status', 'Read the original workspace and merchant state, current browser URL and owned verified file-read sessions. Browser and MCP share this same model.', selected, ['workspace'], read),
+    tool('merchant_tenderly_status', 'Refresh the original workspace and merchant state, current browser URL, attachment ownership and retained file reads. Managed and owned modes operate the same original model used by that browser.', selected, ['workspace'], read),
     tool('merchant_tenderly_profile_preview', 'Validate a merchant plan with the original Tenderly product compiler and return its exact normalized plan, hash, route, payment and environment references. Omit plan for the original template and explicit-block example request.', {
       ...selected, plan: { type: 'object' },
     }, ['workspace'], read),

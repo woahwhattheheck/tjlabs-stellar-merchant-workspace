@@ -1,10 +1,12 @@
 import { usaSpendingWorkspaceTools, read, selected, UUID, page, nativeId, expectedRevision, query, alias, shortText, inEdition, awardKey, strings, inDossier, exportKind, digest, offset, pageSize, RESEARCH_ID, EXPORTS, DIGEST } from './catalog/usaspending-workspace.mjs';
 export { usaSpendingWorkspaceTools } from './catalog/usaspending-workspace.mjs';
+import { USASPENDING_TRANSACTION_SOURCE_KINDS, isUSASpendingTransactionTool, executeUSASpendingTransactionTool, importUSASpendingTransactionSource, exportUSASpendingTransactions } from './usaspending-transactions.mjs';
+import { isUSASpendingReportTool, executeUSASpendingReportTool, importUSASpendingReportSource, exportUSASpendingReport } from './usaspending-reports.mjs';
 // MIT. Agent operation of the original USAspending research, delivery and dossier applications.
 import { realpath, mkdir, open, link, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
-import { exact, failure, identifier, line, plain } from './config.mjs';
+import { exact, failure, identifier, line, plain } from './host-files.mjs';
 import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
 import { readBytes, privateDirectory, parse, syncDirectory } from '../../stellar/scf-starforge-20261009/sf102-cube-paid-query-adapter/onboarding/files.mjs';
 import { canonical, sha, csv, publicRow, COLUMNS, integer } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/usaspending/core.mjs';
@@ -66,7 +68,7 @@ export async function readUSASpendingWorkspaceConfiguration(path) {
   const base = dirname(path), directories = new Set(), workspaces = Object.create(null);
   for (const [key, input] of Object.entries(raw.workspaces)) {
     identifier(key, 'USAspending workspace alias');
-    exact(input, ['label', 'directory', 'dossierDirectory', 'operator', 'sources', 'deliveries', 'merchant'], ['directory']);
+    exact(input, ['label', 'directory', 'dossierDirectory', 'operator', 'sources', 'deliveries', 'merchant', 'fundingReports'], ['directory']);
     const directory = await canonicalDirectory(hostPath(input.directory, base));
     const dossierDirectory = input.dossierDirectory === undefined ? join(directory, 'dossiers')
       : await canonicalDirectory(hostPath(input.dossierDirectory, base));
@@ -79,8 +81,8 @@ export async function readUSASpendingWorkspaceConfiguration(path) {
     for (const [source, item] of Object.entries(input.sources ?? {})) {
       identifier(source, 'Retained source alias');
       exact(item, ['kind', 'file', 'receipt', 'sha256'], ['kind', 'file']);
-      if (!['collection', 'capture', 'detail', 'workspace', 'dossier'].includes(item.kind))
-        throw failure('CONFIGURATION_ERROR', 'Choose collection, capture, detail, workspace or dossier for the retained source.');
+      if (!['collection', 'capture', 'detail', 'workspace', 'dossier', 'funding-report', ...USASPENDING_TRANSACTION_SOURCE_KINDS].includes(item.kind))
+        throw failure('CONFIGURATION_ERROR', 'Choose collection, capture, detail, workspace, dossier, transaction-pages, transactions or funding-report for the retained source.');
       if ((item.kind === 'detail') !== (item.receipt !== undefined))
         throw failure('CONFIGURATION_ERROR', 'Declare an original receipt only for a detail source.');
       sources[source] = { kind: item.kind, file: await sourceFile(item.file, base),
@@ -93,6 +95,13 @@ export async function readUSASpendingWorkspaceConfiguration(path) {
     for (const [delivery, path] of Object.entries(input.deliveries ?? {})) {
       identifier(delivery, 'Original delivery alias');
       deliveries[delivery] = await canonicalDirectory(hostPath(path, base));
+    }
+    const reportConfig=input.fundingReports??{};exact(reportConfig,['inboxes'],[]);
+    if(reportConfig.inboxes!==undefined&&(!plain(reportConfig.inboxes)||Object.keys(reportConfig.inboxes).length>32))throw failure('CONFIGURATION_ERROR','Declare up to 32 original funding-report buyer inboxes.');
+    const fundingReports={inboxes:Object.create(null)};
+    for(const [name,value]of Object.entries(reportConfig.inboxes??{})){
+      identifier(name,'Original buyer inbox alias');exact(value,['directory','receivingRoot'],['directory','receivingRoot']);
+      fundingReports.inboxes[name]={directory:await canonicalDirectory(hostPath(value.directory,base)),receivingRoot:await canonicalDirectory(hostPath(value.receivingRoot,base))};
     }
     const merchant = input.merchant ?? {};
     exact(merchant, ['payment', 'origin', 'path', 'defaultLimit', 'maxLimit'], []);
@@ -108,7 +117,7 @@ export async function readUSASpendingWorkspaceConfiguration(path) {
     integer(merchant.defaultLimit ?? 50, 'Default page size', 1, 250);
     integer(merchant.maxLimit ?? 100, 'Maximum page size', merchant.defaultLimit ?? 50, 250);
     workspaces[key] = { label: line(input.label ?? key, 'USAspending workspace label'), directory, dossierDirectory,
-      operator: line(input.operator ?? 'USAspending research operator', 'Research operator'), sources, deliveries, merchant };
+      operator: line(input.operator ?? 'USAspending research operator', 'Research operator'), sources, deliveries, merchant, fundingReports };
   }
   return { schema: USASPENDING_WORKSPACE_CONNECTION_SCHEMA, workspaces };
 }
@@ -161,7 +170,7 @@ export class MerchantUSASpendingWorkspaces {
           closing: Boolean(entry?.closing), workspaceId: entry?.workspaceId ?? null, instanceId: entry?.instanceId ?? null,
           browserUrl: entry?.service.url ?? null, dossierBrowserUrl: entry?.dossierService.url ?? null,
           sources: Object.entries(definition.sources).map(([source, value]) => ({ source, kind: value.kind, sha256: value.sha256 ?? null })),
-          deliveries: Object.keys(definition.deliveries), merchantPaymentConfigured: Boolean(definition.merchant.payment) };
+          deliveries: Object.keys(definition.deliveries), fundingBuyerInboxes:Object.keys(definition.fundingReports?.inboxes??{}), merchantPaymentConfigured: Boolean(definition.merchant.payment) };
       }) };
   }
   #definition(alias) {
@@ -209,6 +218,9 @@ export class MerchantUSASpendingWorkspaces {
       schema: native.schema, operationCount: native.operationCount, columns: native.columns, reviewStatuses: native.reviewStatuses,
       counts: Object.fromEntries(['queries', 'captures', 'editions', 'reviews', 'publications'].map(key => [key, native[key].length])),
       active: native.active, captures: native.captures.filter(item => ['capturing', 'paused', 'error'].includes(item.status)).map(captureView),
+      transactions: { counts: { captures: native.transactions?.captures?.length ?? 0, reviews: native.transactions?.reviews?.length ?? 0 },
+        captures: (native.transactions?.captures ?? []).filter(item => ['capturing','paused','error'].includes(item.status)).map(captureView) },
+      fundingReports:{reports:native.fundingReports?.reports.length??0,merchants:native.fundingReports?.merchants.length??0},
       jobs: native.jobs.map(({ result, error, ...job }) => ({ ...job, error, resultAvailable: result !== null })),
       dossiers: await entry.dossiers.list(), fileReads: this.#reads.status(this.#scope(entry.alias)) };
   }
@@ -287,6 +299,10 @@ export class MerchantUSASpendingWorkspaces {
       const bytes = await readBytes(selected.file, { max: 256000000 });
       if (sha(bytes) !== selected.sha256) throw failure('USASPENDING_SOURCE_CHANGED', 'Retained source bytes differ from the host-selected SHA256.');
     }
+    if (selected.kind==='funding-report') return importUSASpendingReportSource(entry,selected,input);
+    if (USASPENDING_TRANSACTION_SOURCE_KINDS.includes(selected.kind)) return importUSASpendingTransactionSource(entry, selected, input);
+    if (['editionId','awardKey','includeReview'].some(key => input[key] !== undefined))
+      throw failure('INVALID_PARAMS', 'Edition, award and transaction review selection apply only to declared transaction sources.');
     const options = { name: input.name, maxRows: input.maxRows };
     if (selected.kind === 'collection') return entry.imports.importSourceCollection(entry.model, selected.file, options);
     if (selected.kind === 'capture') return entry.imports.importRetainedCapture(entry.model, selected.file, options);
@@ -323,6 +339,8 @@ export class MerchantUSASpendingWorkspaces {
     } else if (kind === 'edition-json') body = entry.model.exportEdition(input.editionId, { includeSourceBytes: true, includeReviews: input.includeReviews ?? false });
     else if (kind === 'edition-csv') body = csv(entry.model.rows(input.editionId).map(publicRow), COLUMNS, { spreadsheet: true });
     else if (kind === 'workspace') body = entry.model.exportPacket();
+    else if (kind.startsWith('funding-')) body = await exportUSASpendingReport(entry,input);
+    else if (kind.startsWith('transaction-')) body = exportUSASpendingTransactions(entry, input);
     else if (kind === 'source-page') body = entry.model.sourcePage(input.captureId, input.page).response;
     else if (kind === 'brief') body = entry.brief.workshareBrief(entry.model, input.editionId, input.awardKey);
     else if (kind === 'comparison') body = entry.model.compare(input.before, input.after);
@@ -364,6 +382,10 @@ export class MerchantUSASpendingWorkspaces {
   async #execute(entry, name, args) {
     const { workspace, ...input } = args, original = entry.model;
     const result = native => ({ workspace, native: this.#visible(entry, native) });
+    if (isUSASpendingReportTool(name)) return result(await executeUSASpendingReportTool(entry,name,input,{http:(path,body)=>this.#http(entry,path,body),paged,definition:this.#definition(workspace)}));
+    if (isUSASpendingTransactionTool(name)) return result(await executeUSASpendingTransactionTool(entry, name, input, {
+      http: (path, body) => this.#http(entry, path, body), paged, captureView,
+    }));
     switch (name) {
       case 'merchant_usaspending_status': return this.#visible(entry, await this.#state(entry));
       case 'merchant_usaspending_inventory': {

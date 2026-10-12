@@ -1,0 +1,32 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "coingecko-product",
+  "description": "CoinGecko selected product and complete native customer delivery",
+  "components": [
+    "products/coingecko",
+    "stellar/scf-starforge-20261009/sf101-merchant-outbox-continuity"
+  ],
+  "commands": {
+    "coingecko-product": "products/coingecko/cli.mjs"
+  },
+  "commandDescriptions": {
+    "coingecko-product": "Open the original CoinGecko workspace, manage source and reports, or create, inspect and receive the complete customer delivery."
+  },
+  "exports": {
+    "./products/coingecko": "./source/products/coingecko/cli.mjs",
+    "./products/coingecko/delivery": "./source/products/coingecko/delivery.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf43-agent-commerce/mcp-buyer-acceptance.mjs"
+  ],
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/intake/browser-assets.json"
+    },
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/job-workspace/resolution/browser-assets.json"
+    }
+  ]
+}

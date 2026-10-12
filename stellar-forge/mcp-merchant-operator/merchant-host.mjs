@@ -2,6 +2,7 @@
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { MAX_MCP_REQUEST_BYTES, MAX_MCP_REPLY_BYTES } from '../mcp-paid-agent/http-tools.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
 
@@ -51,9 +52,12 @@ export async function startMerchantStdioHost({ configPath, environment = process
   };
   try {
     const readyHost = await ready; clearTimeout(startupTimer);
-    if (!Number.isSafeInteger(readyHost.maxRequestBytes) || readyHost.maxRequestBytes < 1 || readyHost.maxRequestBytes > 32 * 1024 * 1024)
+    if (!Number.isSafeInteger(readyHost.maxRequestBytes) || readyHost.maxRequestBytes < 1 || readyHost.maxRequestBytes > MAX_MCP_REQUEST_BYTES)
       throw failure('MCP_MERCHANT_HOST_REQUEST_LIMIT_INVALID');
-    return { ...readyHost, close, closed, durable: true, paymentAdapterConnected: false };
+    // Complete native tariff plans can produce larger retained JSON replies.
+    // Existing merchant families keep the original 8 MiB forwarding default.
+    const maxReplyBytes = readyHost.maxRequestBytes > 32 * 1024 * 1024 ? MAX_MCP_REPLY_BYTES : 8 * 1024 * 1024;
+    return { ...readyHost, maxReplyBytes, close, closed, durable: true, paymentAdapterConnected: false };
   } catch (error) {
     await close().catch(() => {}); throw error;
   }

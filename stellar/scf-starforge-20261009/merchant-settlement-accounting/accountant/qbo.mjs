@@ -2,6 +2,8 @@
 import {createHash} from 'node:crypto';
 import {accountantColumns,inspectHandoff,parseReturnCsv,renderCsv,validateHandoff,validateRevision} from './engine.mjs';
 import {validateQboCompany} from './qbo-company.mjs';
+import {isBuyerHandoff} from './buyer-source.mjs';
+import {isQboBuyerPlan,qboBuyerDecisions,qboBuyerPlanFacts,validateQboBuyerPlan,checkQboBuyerSource} from './qbo-buyer.mjs';
 
 export const QBO_PLAN_SCHEMA='stellar-forge.quickbooks-journal-plan.v1';
 export const QBO_RESPONSE_SCHEMA='stellar-forge.quickbooks-journal-response.v1';
@@ -67,8 +69,9 @@ function makeJournal(plan){
 }
 
 /** Operator valuations are separate from atomic settlement amounts and quotes. */
-export function createQboPlan({handoff,revision=null,id,name,actor,createdAt,realmId,companyName,baseCurrency,environment='sandbox',txnDate,docNumber,rows,companySnapshot=null}={}){
-  validateHandoff(handoff);if(revision)validateRevision(handoff,revision);
+export function createQboPlan({handoff,revision=null,id,name,actor,createdAt,realmId,companyName,baseCurrency,environment='sandbox',txnDate,docNumber,rows,companySnapshot=null,valuationBasis}={}){
+  validateHandoff(handoff,{allowBuyer:true});if(revision)validateRevision(handoff,revision);
+  const buyer=isBuyerHandoff(handoff);
   qboId(id);qboText(name,'journal name');qboText(actor,'operator',1000);timestamp(createdAt);
   target(realmId,'company realm ID');qboText(companyName,'company name',200);
   let companyAccounts=null;
@@ -82,14 +85,16 @@ export function createQboPlan({handoff,revision=null,id,name,actor,createdAt,rea
   date(txnDate);
   docNumber=docNumber===undefined||docNumber===null||docNumber===''?('SF'+id.replaceAll('-','').slice(0,19)):docNumber;
   qboText(docNumber,'document number',21);
-  qboCheck(Array.isArray(rows)&&rows.length>0&&rows.length<=500,'QBO_ROW_LIMIT','Select between 1 and 500 source events.');
+  const buyerDecisions=buyer?qboBuyerDecisions({handoff,revision,rows,environment,valuationBasis}):null;
+  if(!buyer)qboCheck(Array.isArray(rows)&&rows.length>0&&rows.length<=500,'QBO_ROW_LIMIT','Select between 1 and 500 source events.');
   const sourceRows=new Map(inspectHandoff(handoff,revision).rows.map(row=>[row.rowId,row])),seen=new Set();
-  const selected=rows.map(selection=>{
+  const choices=buyer?buyerDecisions.included:rows.map(selection=>({selection}));
+  const selected=choices.map(({selection,row:buyerRow})=>{
     qboCheck(object(selection)&&typeof selection.rowId==='string'&&HEX.test(selection.rowId),'QBO_SOURCE_ROW_REQUIRED','Choose a frozen handoff event.');
-    const row=sourceRows.get(selection.rowId);
+    const row=buyerRow??sourceRows.get(selection.rowId);
     qboCheck(row&&!seen.has(row.rowId),'QBO_SOURCE_ROW_CONFLICT','Each selected event must occur exactly once in this handoff.');seen.add(row.rowId);
     qboCheck(!['BOOKED','EXCLUDED'].includes(row.externalStatus),'QBO_ALREADY_ACCOUNTED','A selected event is already booked or excluded; review its original accountant return.',409);
-    if(environment==='production')qboCheck(row.original.network==='stellar:pubnet'&&row.original.transfer==='OFFICIAL_TRANSFER_MATCHED',
+    if(!buyer&&environment==='production')qboCheck(row.original.network==='stellar:pubnet'&&row.original.transfer==='OFFICIAL_TRANSFER_MATCHED',
       'QBO_PRODUCTION_SOURCE_REQUIRED','Production journals require the original matched public-network transfer; use sandbox for a testnet workflow.');
     const selectedAccount=input=>{
       if(!companyAccounts)return account(input,baseCurrency);
@@ -99,15 +104,20 @@ export function createQboPlan({handoff,revision=null,id,name,actor,createdAt,rea
     };
     const debitAccount=selectedAccount(selection.debitAccount),creditAccount=selectedAccount(selection.creditAccount);
     qboCheck(debitAccount.value!==creditAccount.value,'QBO_SAME_ACCOUNTS','Choose different debit and credit accounts for the event.');
-    return {rowId:row.rowId,eventId:row.eventId,sourceRowSha256:row.sourceRowSha256,assignmentSha256:assignmentHash(row),
-      sourceNetwork:row.original.network,sourceAmountAtomic:row.original.amountAtomic,sourceLabel:clone(row.label),sourceAdjustments:clone(row.adjustments??null),
-      amount:money(minorUnits(selection.amount)),debitAccount,creditAccount,description:qboText(selection.description??'','line description',1000,{empty:true})};
+    const facts=buyer?{...qboBuyerPlanFacts(row),assignmentSha256:assignmentHash(row)}:
+      {rowId:row.rowId,eventId:row.eventId,sourceRowSha256:row.sourceRowSha256,assignmentSha256:assignmentHash(row),
+        sourceNetwork:row.original.network,sourceAmountAtomic:row.original.amountAtomic,sourceLabel:clone(row.label),sourceAdjustments:clone(row.adjustments??null)};
+    return {...facts,amount:money(minorUnits(selection.amount)),debitAccount,creditAccount,
+      description:qboText(selection.description??'','line description',1000,{empty:true}),
+      ...(buyer?{decision:'include',valuationNote:selection.valuationNote}:{})};
   });
   const total=selected.reduce((sum,row)=>sum+minorUnits(row.amount),0n);
   const plan={schema:QBO_PLAN_SCHEMA,id,name,actor,createdAt,handoffId:handoff.id,handoffSha256:handoff.integrity.sha256,
     accountantRevisionId:revision?.id??null,accountantRevisionSha256:revision?.integrity.sha256??null,
     source:clone(handoff.source),realmId,companyName,baseCurrency,environment,txnDate,docNumber,companySnapshot:clone(companySnapshot),rows:selected,
-    summary:{rowCount:selected.length,lineCount:selected.length*2,totalDebit:money(total),totalCredit:money(total)},docs:clone(QBO_DOCS)};
+    summary:{rowCount:selected.length,lineCount:selected.length*2,totalDebit:money(total),totalCredit:money(total),
+      ...(buyer?{buyerExpenseRows:selected.filter(row=>row.kind==='BUYER_EXPENSE').length,buyerCreditRows:selected.filter(row=>row.kind==='BUYER_CREDIT').length,excludedRows:buyerDecisions.excluded.length}:{})},
+    ...(buyer?{sourceKind:'buyer-expense-period',valuationBasis:buyerDecisions.valuationBasis,excluded:buyerDecisions.excluded}:{}),docs:clone(QBO_DOCS)};
   plan.journalEntry=makeJournal(plan);
   return seal(plan);
 }
@@ -119,11 +129,13 @@ export function validateQboPlan(plan){
   if(plan.companySnapshot){validateQboCompany(plan.companySnapshot);qboCheck(plan.companySnapshot.realmId===plan.realmId&&plan.companySnapshot.baseCurrency===plan.baseCurrency,'QBO_COMPANY_SETUP_CHANGED','The retained native company setup changed.',409);}
   qboCheck(Array.isArray(plan.rows)&&plan.rows.length>0&&plan.rows.length<=500&&qboCanonical(plan.journalEntry)===qboCanonical(makeJournal(plan)),
     'QBO_JOURNAL_CHANGED','The retained journal no longer matches its frozen event mappings.',409);
-  return plan;
+  validateQboBuyerPlan(plan);return plan;
 }
 function currentRows(plan,handoff,revision){
-  validateQboPlan(plan);validateHandoff(handoff);if(revision)validateRevision(handoff,revision);
+  validateQboPlan(plan);validateHandoff(handoff,{allowBuyer:true});if(revision)validateRevision(handoff,revision);
   qboCheck(handoff.id===plan.handoffId&&handoff.integrity.sha256===plan.handoffSha256,'QBO_HANDOFF_CHANGED','Use this plan’s original handoff.',409);
+  qboCheck(isQboBuyerPlan(plan)===isBuyerHandoff(handoff),'QBO_SOURCE_KIND_CHANGED','Use the original buyer or merchant source type retained by this plan.',409);
+  if(isQboBuyerPlan(plan))checkQboBuyerSource(plan,handoff,revision);
   const rows=new Map(inspectHandoff(handoff,revision).rows.map(row=>[row.rowId,row]));
   for(const selected of plan.rows){
     const row=rows.get(selected.rowId);
@@ -217,8 +229,17 @@ export function qboReturnCsv(plan,result,handoff,revision){
   return Buffer.from([columns.map(quote).join(','),...cells].join('\r\n')+'\r\n','utf8');
 }
 const html=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+
+function renderBuyerQboReview(plan){
+  const b=plan.source.buyer;
+  const rows=plan.rows.map(row=>'<tr><td>'+html(row.kind)+'<br><small>'+html(row.sourceLineId)+'</small><br>'+html(row.description)+'</td><td>'+html(row.sourceAmountAtomic)+' '+html(row.sourceAllocation.asset)+'<br>'+html(row.sourceNetwork)+'<br>'+html(row.sourceAllocation.dataContext)+'<br>'+html(row.sourceAllocation.transfer)+'</td><td>'+html(row.sourceAllocation.sourceAt)+'<br>'+html(row.sourceAllocation.costCenter)+' / '+html(row.sourceAllocation.project)+'</td><td>'+html(row.amount)+' '+html(plan.baseCurrency)+'<br>'+html(row.valuationNote)+'</td><td>'+html(row.debitAccount.name??'')+' ('+html(row.debitAccount.value)+')</td><td>'+html(row.creditAccount.name??'')+' ('+html(row.creditAccount.value)+')</td></tr>').join('');
+  const excluded=plan.excluded.map(row=>'<tr><td>'+html(row.kind)+'<br><small>'+html(row.sourceLineId)+'</small></td><td>'+html(row.sourceAmountAtomic)+' '+html(row.sourceAllocation.asset)+'</td><td>'+html(row.reason)+'</td></tr>').join('');
+  return Buffer.from('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QuickBooks buyer journal review</title><style>body{font:15px system-ui;color:#222;max-width:1500px;margin:32px auto;padding:0 20px}p{line-height:1.5}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}small{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere}.table{overflow:auto}th{background:#eee}@media print{.table{overflow:visible}}</style><main><h1>'+html(plan.name)+'</h1><p>'+html(plan.companyName)+' · realm '+html(plan.realmId)+' · '+html(plan.environment)+' · '+html(plan.baseCurrency)+'</p><p>Posting date '+html(plan.txnDate)+' · document '+html(plan.docNumber)+' · debit '+html(plan.summary.totalDebit)+' / credit '+html(plan.summary.totalCredit)+'</p><h2>Reviewed valuation and tax treatment</h2><p>'+html(plan.valuationBasis)+'</p><p>Original expenses and returned credits remain positive native-unit allocations. Each selected home-currency amount and debit/credit direction is the accountant’s explicit choice. This journal adds no currency conversion, tax or payment.</p><h2>Included allocations</h2><div class="table"><table><thead><tr><th>Original allocation</th><th>Native units and evidence</th><th>Recognition / coding</th><th>Home value / valuation source</th><th>Debit</th><th>Credit</th></tr></thead><tbody>'+rows+'</tbody></table></div><h2>Explicitly excluded from this journal</h2><p>These retained plan decisions leave the source’s accountant fields unchanged.</p><div class="table"><table><thead><tr><th>Original allocation</th><th>Native units</th><th>Reason</th></tr></thead><tbody>'+excluded+'</tbody></table></div><h2>Frozen source</h2><p>Buyer workspace '+html(b.workspaceId)+'<br>Issued close '+html(b.closeId)+' · edition '+html(b.sequence)+'<br>Handoff '+html(plan.handoffId)+'<br>Original report SHA256 '+html(plan.source.reportSha256)+'<br>Plan SHA256 '+html(plan.integrity.sha256)+'</p></main></html>');
+}
+
 export function renderQboReview(plan){
   validateQboPlan(plan);
+  if(isQboBuyerPlan(plan))return renderBuyerQboReview(plan);
   return Buffer.from('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QuickBooks journal review</title>'+
     '<style>body{font:15px system-ui;color:#222;max-width:1200px;margin:32px auto;padding:0 20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}small{overflow-wrap:anywhere}pre{white-space:pre-wrap}</style>'+
     '<h1>'+html(plan.name)+'</h1><p>'+html(plan.companyName)+' · '+html(plan.realmId)+' · '+html(plan.environment)+' · '+html(plan.baseCurrency)+'</p>'+

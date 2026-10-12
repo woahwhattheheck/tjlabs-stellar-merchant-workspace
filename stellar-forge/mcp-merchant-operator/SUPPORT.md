@@ -16,6 +16,14 @@ Acknowledgment and notification recovery use the same original transactions as
 the terminal commands. Workorder preparation keeps customer acceptance and
 external workorder delivery in the operator's existing commercial workflow.
 
+## Operational service renewals
+
+The same support provider exposes the complete saved agreement renewal workflow:
+portfolio queue, reviewed continuation, original quotation and customer response,
+service activation and a complete revision-pinned financial handover. Follow
+[Service renewals through the merchant operator](SERVICE_RENEWALS.md) for the
+nine tools, exact revision guards, replay and complete file receiving.
+
 ## Register the existing support inputs on the host
 
 Create a private case directory, or use the existing directory passed to the

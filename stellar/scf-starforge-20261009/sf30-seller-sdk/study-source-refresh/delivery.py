@@ -108,7 +108,15 @@ def export_package(workspace, comparison_id, *, expected_version, operator, labe
             manifest = verify_package(out)
             if manifest["operation_id"] != operation_id:
                 fail("DELIVERY_DESTINATION_CONFLICT")
-            return {"id": manifest["package_id"], "directory": str(out), "reopened": True, **manifest}
+            body = {"directory": str(out), **manifest}
+            # The complete rename may have survived a lost SQLite commit. Recover
+            # the original export index so archive/download can reopen that package.
+            if not workspace.connection.execute("SELECT 1 FROM exports WHERE id=?", (manifest["package_id"],)).fetchone():
+                workspace.connection.execute("INSERT INTO exports VALUES(?,?,?)",
+                    (manifest["package_id"], encoded(body).decode(), now()))
+                workspace.event("export.create", manifest["package_id"],
+                    {"comparison_id": comparison_id, "rows": manifest["rows"], "recovered": True})
+            return {"id": manifest["package_id"], "reopened": True, **body}
         stage = Path(tempfile.mkdtemp(prefix=".delivery-", dir=parent))
         try:
             for source in sources:
@@ -243,6 +251,9 @@ def verify_package(directory):
     actual = {str(path.relative_to(directory)) for path in directory.rglob("*") if not path.is_dir()}
     if actual != set(expected) | {"manifest.json"}:
         fail("DELIVERY_INVENTORY_CHANGED")
+    if manifest.get("kind") == "property-research":
+        from property_research.delivery import verify_payload
+        return verify_payload(directory, manifest)
     for sid in manifest["source_ids"]:
         descriptor = verify_source(directory / "originals" / hash_id(sid))
         if source_identity(descriptor) != sid:
@@ -354,6 +365,9 @@ def _receive_events(workspace, packed):
 def receive_package(package, destination):
     source = Path(package).expanduser().resolve(strict=True)
     manifest = verify_package(source)
+    if manifest.get("kind") == "property-research":
+        from property_research.delivery import receive_payload
+        return receive_payload(source, destination, manifest)
     out = Path(destination).expanduser().absolute()
     parent = private_directory(out.parent)
     if parent != out.parent:
@@ -430,6 +444,9 @@ def import_package(workspace, package):
     """Merge an unchanged retained packet into the open operator workspace."""
     source = Path(package).expanduser().resolve(strict=True)
     manifest = verify_package(source)
+    if manifest.get("kind") == "property-research":
+        from property_research.delivery import import_payload
+        return import_payload(workspace, source, manifest)
     packed = sqlite3.connect("file:" + str(source / "workspace.sqlite3") + "?mode=ro", uri=True)
     packed.row_factory = sqlite3.Row
     try:

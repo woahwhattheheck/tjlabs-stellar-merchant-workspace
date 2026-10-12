@@ -7,6 +7,7 @@ from importlib import import_module as _import_module
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 if _TYPE_CHECKING:
+    from .dbnomics import DbnomicsAnalysisSource, DbnomicsEconomicWorkflow
     from .client import Buyer, Operation, Review
     from .inbox import Inbox, InboxResult, InboxError
     from .acquisitions import AcquisitionWorkspace, AcquisitionResult, AcquisitionProcess, AcquisitionError
@@ -19,12 +20,19 @@ if _TYPE_CHECKING:
     from .recovery import WorkspaceRecovery, WorkspaceRecoveryResult, WorkspaceRecoveryProcess, WorkspaceRecoveryError
     from .result import AccountingResult, BuyerResult, FileDelivery, FileTransfer, SessionAccountingResult
     from .research_workspace import ResearchWorkspace, ResearchError
+    from .research_commerce import ResearchCommerce, ResearchCommerceArchive
+    from .research_extraction import ResearchExtraction
+    from .research_customer_updates import ResearchCustomerUpdates, ResearchCustomerDelivery
+    from .research_customer_receiving import ResearchCustomerCancelled, run_research_customer_delivery
     from .research_documents import ResearchDocuments, ResearchPipelines, ResearchSelection, ResearchInputFile, ResearchDocumentSource
     from .requests import MultipartRequest, UploadFile
     from .streams import SSEEvent, NDJSONRecord, StreamDelivery, read_retained_response, export_saved_stream
 
 __all__ = [
-    "ResearchWorkspace", "ResearchError", "ResearchDocuments", "ResearchPipelines",
+    "DbnomicsAnalysisSource", "DbnomicsEconomicWorkflow",
+    "ResearchCustomerUpdates", "ResearchCustomerDelivery", "ResearchCustomerCancelled", "run_research_customer_delivery",
+    "ResearchCommerce", "ResearchCommerceArchive",
+    "ResearchWorkspace", "ResearchError", "ResearchExtraction", "ResearchDocuments", "ResearchPipelines",
     "ResearchSelection", "ResearchInputFile", "ResearchDocumentSource",
     "AcquisitionWorkspace", "AcquisitionResult", "AcquisitionProcess", "AcquisitionError",
     "WorkspaceRecovery", "WorkspaceRecoveryResult", "WorkspaceRecoveryProcess", "WorkspaceRecoveryError",
@@ -38,8 +46,17 @@ __all__ = [
 ]
 
 _EXPORTS = {
+    "DbnomicsAnalysisSource": ".dbnomics",
+    "DbnomicsEconomicWorkflow": ".dbnomics",
+    "ResearchCustomerUpdates": ".research_customer_updates",
+    "ResearchCustomerDelivery": ".research_customer_updates",
+    "ResearchCustomerCancelled": ".research_customer_receiving",
+    "run_research_customer_delivery": ".research_customer_receiving",
+    "ResearchCommerce": ".research_commerce",
+    "ResearchCommerceArchive": ".research_commerce",
     "ResearchWorkspace": ".research_workspace",
     "ResearchError": ".research_workspace",
+    "ResearchExtraction": ".research_extraction",
     "ResearchDocuments": ".research_documents",
     "ResearchPipelines": ".research_documents",
     "ResearchSelection": ".research_documents",

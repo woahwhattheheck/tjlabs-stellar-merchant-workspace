@@ -616,6 +616,8 @@ Original integration sources:
 
 ## Retained merchant accounting
 
+QuickBooks and Xero chart changes are available through the same accounting MCP connection, customer client and CLI. Inspect the original chart and economic source, save the native successor review, apply its explicit approval, recover the same application and download the complete retained handoff. See [the complete chart-change agent workflow](accounting-source-changes.md).
+
 The same provider operates the original merchant accounting workspace, completed-receipt recovery, reconciliation tables, named exception reviews, comparison and exact retained response/report/TAR retrieval. Configure host-selected source aliases with `init-accounting --dir NEW_DIRECTORY --accounting ACCOUNTING_JSON`, attach `--accounting` to an existing source initializer, or add the optional accounting configuration to an existing private merchant host. The original workspace owns revisions, source capture, verification, reports and its lease; no new payment is required to recover a completed purchase.
 
 See [ACCOUNTING.md](ACCOUNTING.md) for the complete installed and subprocess workflow, asynchronous job status, original source selection, SHA-pinned file chunks and durable reopening. Existing release, Python, DuckDB, discovery and fleet operations use the same provider.

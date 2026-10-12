@@ -6,11 +6,15 @@ import { digest, projectName, plain, readWorkspaceRevision } from './store.mjs';
 import { readExport, verifyExport, verifyFiles } from './merchant.mjs';
 import { readDeployment } from './deployment.mjs';
 import { readPreview } from './authoring.mjs';
-import { describeProjectHandover, PROJECT_HANDOVER_FILE } from './handover.mjs';
+import { describeResponseComparisonFiles } from './comparison-report.mjs';
+import { prepareRequestPacket } from './request-files.mjs';
+import { preparePreparationPacket } from './preparation-files.mjs';
+import { readRequestBytes, writeRequestBytes } from './request-sets.mjs';
+import { describeProjectHandover, readProjectHandoverFile, PROJECT_HANDOVER_FILE } from './handover.mjs';
 
 export const GRAPHQL_FILE_SET_SCHEMA = 'stellar-forge.graphql-workspace-files.v1';
 export const GRAPHQL_FILE_SET_MANIFEST = 'workspace-files.json';
-export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover'];
+export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover', 'comparison', 'requests', 'preparation'];
 const json = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
@@ -24,15 +28,22 @@ function filename(value) {
   return value;
 }
 function selectionOf(input) {
-  if (!plain(input) || Object.keys(input).some(key => !['project', 'revision', 'kind', 'exportId', 'deploymentId', 'hostId', 'previewId'].includes(key)))
+  if (!plain(input) || Object.keys(input).some(key => !['project', 'revision', 'kind', 'exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId', 'requestSetId', 'runId', 'generation', 'preparationId'].includes(key)))
     fail('Select original workspace identities, not filesystem paths.');
   const selection = { ...input };
   projectName(selection.project);
   if (!Number.isSafeInteger(selection.revision) || selection.revision < 1) fail('Select a saved project revision.');
   if (!GRAPHQL_FILE_KINDS.includes(selection.kind)) fail('Choose a supported retained file kind.');
-  const fields = { draft: [], handover: [], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
+  if (selection.kind === 'requests') {
+    if (Boolean(selection.requestSetId) === Boolean(selection.runId) || !uuid(selection.requestSetId ?? selection.runId))
+      fail('Choose one original request set or run for the file packet.');
+    if (selection.generation !== undefined && (!selection.runId || !Number.isSafeInteger(selection.generation) || selection.generation < 1 || selection.generation > 256))
+      fail('Only a saved run packet selects an original generation.');
+  } else if (selection.requestSetId !== undefined || selection.runId !== undefined || selection.generation !== undefined)
+    fail('This file kind does not select request sets or run checkpoints.');
+  const fields = { preparation: ['preparationId'], requests: [], draft: [], handover: [], comparison: ['comparisonId'], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
     deployment: ['deploymentId'], host: ['deploymentId', 'hostId'] }[selection.kind];
-  for (const key of ['exportId', 'deploymentId', 'hostId', 'previewId']) {
+  for (const key of ['exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId', 'preparationId']) {
     if (fields.includes(key)) {
       if (key === 'hostId' ? typeof selection[key] !== 'string' || !/^host-[1-9]\d*-[a-f0-9]{8}$/.test(selection[key]) : !uuid(selection[key]))
         fail('Select the original ' + key + ' from this project.');
@@ -86,6 +97,19 @@ export function createWorkspaceFiles(store) {
         { file: { ...item.file, contentType: typeOf(name) }, load: item.load });
       source = { ...source, handoverSha256: handover.sha256, counts: handover.index.counts,
         deploymentBinding: handover.index.deploymentBinding };
+    } else if (selection.kind === 'comparison') {
+      const comparison = await describeResponseComparisonFiles(store, selection);
+      for (const [name, item] of comparison.loaders) loaders.set(name,
+        { file: { ...item.file, contentType: typeOf(name) }, load: item.load });
+      source = { ...source, ...comparison.source };
+    } else if (selection.kind === 'requests') {
+      const requests = await prepareRequestPacket(store, selection);
+      addDisk(requests.directory, requests.files);
+      source = { ...source, ...requests.source, packetSha256: requests.packetSha256 };
+    } else if (selection.kind === 'preparation') {
+      const preparation = await preparePreparationPacket(store, selection);
+      addDisk(preparation.directory, preparation.files);
+      source = { ...source, ...preparation.source, packetSha256: preparation.packetSha256 };
     } else if (selection.kind === 'draft') {
       addBytes(saved.input.schemaText.trimStart().startsWith('{') ? 'schema-source.json' : 'schema-source.graphql', Buffer.from(saved.input.schemaText));
       addBytes('queries.json', Buffer.from(saved.input.queriesText));
@@ -132,16 +156,68 @@ export function createWorkspaceFiles(store) {
     if (bytes.length > 65000) fail('The retained file manifest exceeds its transfer limit.');
     return { manifest, bytes, sha256: digest(bytes), loaders };
   }
+  const pinned = selection => ['handover', 'requests', 'preparation'].includes(selection.kind);
+  const indexName = sha256 => 'workspace-file-indexes/' + sha256 + '.json';
+  const sameSelection = (a, b) => JSON.stringify(Object.keys(a).sort().map(key => [key, a[key]]))
+    === JSON.stringify(Object.keys(b).sort().map(key => [key, b[key]]));
+  async function retain(value) {
+    if (pinned(value.manifest.selection))
+      await writeRequestBytes(store, indexName(value.sha256), value.bytes, 65000);
+    return value;
+  }
+  async function selected(input, expectedSha256) {
+    const selection = selectionOf(input);
+    if (typeof expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSha256))
+      fail('Choose the exact inspected native file manifest.', 409);
+    if (!pinned(selection)) {
+      const value = await describe(selection);
+      if (value.sha256 !== expectedSha256) fail('The retained file set differs from the inspected manifest.', 409);
+      return value;
+    }
+    let bytes;
+    try { bytes = (await readRequestBytes(store, indexName(expectedSha256), expectedSha256, 65000)).raw; }
+    catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      const value = await describe(selection);
+      if (value.sha256 !== expectedSha256)
+        fail('The retained file set differs from the inspected manifest.', 409);
+      return retain(value);
+    }
+    const manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    if (!plain(manifest) || manifest.schema !== GRAPHQL_FILE_SET_SCHEMA || !plain(manifest.selection)
+        || !sameSelection(selectionOf(manifest.selection), selection) || !plain(manifest.source)
+        || manifest.source.project !== selection.project || manifest.source.revision !== selection.revision
+        || manifest.source.kind !== selection.kind || !Array.isArray(manifest.files)
+        || !manifest.files.length || manifest.files.length > 512)
+      fail('The pinned native file manifest changed its original selection.', 409);
+    const loaders = new Map(); let total = 0;
+    for (const item of manifest.files) {
+      if (!plain(item) || loaders.has(filename(item.name)) || item.name === GRAPHQL_FILE_SET_MANIFEST
+          || !Number.isSafeInteger(item.bytes) || item.bytes < 0 || item.bytes > 8 * 1024 * 1024
+          || typeof item.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(item.sha256)
+          || typeof item.contentType !== 'string' || !item.contentType || /[\r\n]/.test(item.contentType))
+        fail('The pinned native file manifest contains an invalid file.', 409);
+      total += item.bytes;
+      const load = selection.kind === 'handover'
+        ? () => readProjectHandoverFile(store, selection, manifest.source.handoverSha256, item.name, item)
+        : () => {
+          if (!/^[a-f0-9]{64}$/.test(manifest.source.packetSha256 ?? ''))
+            fail('The retained request packet has no original file-set identity.', 409);
+          return diskBytes(join(store.root, selection.kind === 'preparation' ? 'preparation-packets' : 'request-packets', manifest.source.packetSha256), item.name, item);
+        };
+      loaders.set(item.name, { file: item, load });
+    }
+    if (total > 256_000_000) fail('The pinned native file set exceeds its original transfer limit.', 409);
+    return { manifest, bytes, sha256: expectedSha256, loaders };
+  }
   return {
     async manifest(selection) {
-      const value = await describe(selection);
+      const value = await retain(await describe(selection));
       return { manifest: value.manifest, manifestFile: { name: GRAPHQL_FILE_SET_MANIFEST,
         bytes: value.bytes.length, sha256: value.sha256, contentType: 'application/json' } };
     },
     async read(selection, name, expectedManifestSha256) {
-      const value = await describe(selection);
-      if (typeof expectedManifestSha256 !== 'string' || value.sha256 !== expectedManifestSha256)
-        fail('The retained file set differs from the inspected manifest.', 409);
+      const value = await selected(selection, expectedManifestSha256);
       if (name === GRAPHQL_FILE_SET_MANIFEST) return { name, bytes: value.bytes, type: 'application/json' };
       const item = value.loaders.get(filename(name));
       if (!item) fail('Choose a file from the exact retained manifest.', 404);

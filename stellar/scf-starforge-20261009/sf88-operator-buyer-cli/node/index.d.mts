@@ -328,7 +328,84 @@ export class Buyer {
   attachObject(options: { id: string; directory: string; accountingOnly?: boolean }): Promise<ObjectAcquisition>;
   listObjects(): AsyncIterable<ObjectAcquisition>;
 }
+
+export interface OperationAccountingIdentity {
+  intentId: string;
+  stateDirectory: string;
+  operationDirectory: string;
+  producerRuntimeDirectory: string;
+  operationSha256: string;
+  configurationSha256: string;
+  bodyPresent: boolean;
+  bodyBytes: number;
+  bodySha256: string;
+  ticketSha256: string | null;
+  attemptDirectory: string;
+  attemptCreatedAt: string;
+  producingCommandSha256: string | null;
+  nativeWorkspace: string | null;
+  preapprovalHistorySha256: string | null;
+}
+export interface OperationFinalizationOptions {
+  /** Derived for fromWorkspace. Required for paid fromConfig attempts. */
+  workspaceDirectory?: string;
+  /** Supply together with merchantRoute for the actual original merchant. */
+  outboxDirectory?: string;
+  merchantRoute?: string;
+  signal?: AbortSignal;
+}
+export interface OperationAccountingNative extends JsonObject {
+  schema: 'stellar-forge.node-operation-accounting-native.v1';
+  kind: 'PAID_FINALIZATION' | 'UNPAID_RESPONSE';
+  contextSha256: string;
+  identity: OperationAccountingIdentity;
+  workspace: string | null;
+  accountingRuntimeDirectory: string;
+  evidencePath: string;
+  evidenceSha256: string;
+  attemptSnapshotSha256: string;
+  observedAttemptSha256: string;
+  approvedRequestSha256: string | null;
+  completedAt: string;
+  recordAuthority: 'ORIGINAL_SF36_LEDGER_RESULT' | 'ORIGINAL_UNSIGNED_RESPONSE';
+  result: JsonObject & {outcome:
+    'FINALIZED' | 'IDEMPOTENT_FINALIZED' | 'NOT_FINALIZED' | 'WORKER_ERROR' | 'NO_PAYMENT_REQUIRED'};
+}
+export interface OperationAccountingCommand {
+  native: OperationAccountingNative;
+  commandId: string;
+  commandDirectory: string;
+  startedAt: string;
+  process: {exitCode: number | null; exitSignal: string | null; errorCode: string | null};
+  viewStatus: 'SAVED' | 'SAVE_FAILED' | 'RECOVERED_NATIVE_OUTPUT';
+  recovered: boolean;
+}
+export interface OperationAccountingView {
+  schema: 'stellar-forge.node-operation-accounting-view.v1';
+  intentId: string;
+  latest: {
+    commandId: string; commandDirectory: string; startedAt: string;
+    status: 'NO_COMPLETE_OUTPUT' | 'RECORDED' | 'OUTPUT_RECOVERED';
+    process: OperationAccountingCommand['process'];
+    result: OperationAccountingCommand | null;
+  };
+  lastComplete: OperationAccountingCommand | null;
+  lastFinalized: OperationAccountingCommand | null;
+}
+export interface OperationAccountingExport {
+  path: string; bytes: number; sha256: string; format: 'json';
+  intentId: string; commandId: string; outcome: string;
+}
+
 export class Operation {
+  readonly lastAccounting?: OperationAccountingCommand;
+  /** Finalize the retained attempt through the original SF36 worker; never executes a buyer. */
+  finalize(options?: OperationFinalizationOptions): Promise<OperationAccountingCommand>;
+  /** Local saved accounting view; no key loader, ledger write or provider request. */
+  accounting(options?: {commandId?: string}): Promise<OperationAccountingView | null>;
+  /** Recover complete native accounting stdout after an interrupted local save. */
+  recoverAccounting(options?: {commandId?: string}): Promise<OperationAccountingView | null>;
+  exportAccounting(destination: string, options?: {commandId?: string; signal?: AbortSignal}): Promise<OperationAccountingExport>;
   readonly intentId: string;
   readonly directory: string;
   readonly configPath: string;
@@ -453,6 +530,21 @@ export interface InboxReview {
   readonly reviewedAt: string;
   readonly native: JsonObject;
 }
+/** A safe reference to complete private native error details. */
+export type InboxDiagnostic = Readonly<{
+  schema: 'stellar-forge.node-inbox-diagnostic.v1';
+  phase: 'COMMAND' | 'WORKER';
+  errorClass: 'Error' | 'SyntaxError' | 'TypeError' | 'RangeError' | 'ReferenceError'
+    | 'URIError' | 'EvalError' | 'AggregateError' | 'BuyerError' | 'InputError';
+} & ({
+  status: 'SAVED';
+  file: 'native-error.json' | 'worker-error.json';
+  bytes: number;
+  sha256: string;
+} | {
+  status: 'UNAVAILABLE';
+  writeErrorCode: string;
+})>;
 export class InboxResult<T = JsonObject> {
   readonly native: T;
   /** Outcome of this command, separate from the historical buyer attempt. */
@@ -463,9 +555,14 @@ export class InboxResult<T = JsonObject> {
   };
   /** Failed/uncertain logs remain private here; also set if successful temporary cleanup failed. */
   readonly commandDirectory: string | null;
+  readonly diagnostic: InboxDiagnostic | null;
 }
 export class InboxError extends BuyerError {
   readonly result: InboxResult<JsonObject | null>;
+  readonly diagnostic?: InboxDiagnostic;
+  /** Direct private access; absent from toJSON() and ordinary error inspection. */
+  readonly diagnosticPath?: string;
+  toJSON(): ReturnType<BuyerError['toJSON']> & { diagnostic?: InboxDiagnostic };
   readonly inboxDirectory?: string;
   readonly intentId?: string;
   constructor(code: string, result: InboxResult<JsonObject | null>, details?: Record<string, unknown>);
@@ -512,6 +609,39 @@ export interface InboxLostOutputRecoveryOptions extends InboxLostOutputSelection
   expectedRequestSha256: string;
 }
 
+
+export interface InboxRpcDocument { bytes: number; sha256: string; text: string }
+export interface InboxRpcReadEdition {
+  readId: string; complete: boolean; readSha256: string; completedSha256: string | null;
+  recoveryReadStartedAt: string; responseObservedAt: string; publishedAt: string | null;
+  response: {path: string; bytes: number; sha256: string; contentType: 'application/json'};
+}
+export interface InboxRpcSavedResponse {
+  status: 'SAVED'; path: string; bytes: number; sha256: string; contentType: 'application/json';
+  source: 'SETTLED_RPC_RECOVERY_READ'; readId: string; readSha256: string; completedSha256: string;
+  originalAttemptStartedAt: string; recoveryReadStartedAt: string; responseObservedAt: string;
+  publishedAt: string; transaction: string;
+  /** The original recovery writer accepts HTTP 200 before publishing its record. */
+  httpStatus: 200; httpStatusSource: 'ORIGINAL_RPC_RECOVERY_HTTP_200_CONTRACT';
+  [key: string]: unknown;
+}
+export interface InboxRpcRecovery {
+  schema: 'stellar-forge.commerce-rpc-saved-results.v1';
+  state: 'PAYMENT_RECONCILIATION_REQUIRED' | 'SETTLED_RESPONSE_RECOVERY_PENDING' | 'SETTLED_RESULT_RECOVERED';
+  original: JsonObject; settlement: JsonObject | null; reads: InboxRpcReadEdition[];
+  responseFile: InboxRpcSavedResponse | null; providerReads: 0;
+  commerceDirectory: string; inboxDirectory: string;
+  sessionSha256: string; sellerConfigSha256: string; planSha256: string;
+}
+export interface InboxRpcSelectedRecovery extends InboxRpcRecovery {
+  state: 'SETTLED_RESULT_RECOVERED'; responseFile: InboxRpcSavedResponse;
+  readId: string; readSha256: string; completedSha256: string;
+  readDocument: InboxRpcDocument; completedDocument: InboxRpcDocument;
+}
+export interface InboxRpcResponseSelection {
+  commerceDirectory: string; readId: string; expectedResponseSha256: string; signal?: AbortSignal;
+}
+
 export class Inbox {
   readonly directory: string;
   constructor(buyer: Buyer, directory: string);
@@ -549,6 +679,11 @@ export class Inbox {
   }): Promise<InboxResult<InboxOperationsExport>>;
   /** Reopen the exact saved edition without recapturing current Inbox state. */
   inspectOperations(file: string, options?: {signal?: AbortSignal}): Promise<InboxResult<InboxOperationsInspection>>;
+  /** List create-only original RPC read editions through the original finality reader. */
+  rpcResponses(intentId: string, options: {commerceDirectory: string; signal?: AbortSignal}):
+    Promise<InboxResult<InboxJob & {rpcRecovery: InboxRpcRecovery | null}>>;
+  /** Receive one selected original recovery edition while retaining the terminal outcome. */
+  rpcResponse(intentId: string, options: InboxRpcResponseSelection): Promise<InboxRpcResponse | null>;
   /** Original terminal summary + configured saved response; null if no response record exists. */
   response(intentId: string, options?: {signal?: AbortSignal}): Promise<InboxResponse | null>;
 }
@@ -563,6 +698,12 @@ export class InboxResponse extends VerifiedFile {
     runtimeDirectory: string);
   events(options?: StreamReadOptions): AsyncIterable<BuyerStreamEvent>;
   ndjson<T = unknown>(options?: StreamReadOptions): AsyncIterable<T>;
+}
+
+export class InboxRpcResponse extends InboxResponse {
+  readonly job: InboxJob & {rpcRecovery: InboxRpcSelectedRecovery};
+  readonly recovery: InboxRpcSelectedRecovery;
+  readonly delivery: InboxRpcSavedResponse;
 }
 
 export type DatasetScalar = string | number | boolean | null;

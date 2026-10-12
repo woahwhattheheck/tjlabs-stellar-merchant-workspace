@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),short=x=>String(x??'').slice(0,12);
 let token=location.hash.slice(1);
 try{token ||= sessionStorage.getItem('sf30.iati.token');if(token)sessionStorage.setItem('sf30.iati.token',token);
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);}catch{}
-let dqaUi;
+let dqaUi, publishingUi, refreshUi, organisationUi, resultsUi, reconciliationUi, ampUi;
 let state={sources:[],plans:[],builds:[],comparisons:[]},portfolios=[],presets=[];
 let source=null,portfolio=null,report=null,comparison=null,changesOffset=0,nextChanges=null;
 let currentQuery={},queryBase={},cursor=null,queryHistory=[],busy=false,savedPlan=null;
@@ -22,7 +22,7 @@ document.querySelectorAll('[data-go]').forEach(button=>button.addEventListener('
 async function request(path,options={}){
  const result=await fetch(path,{...options,redirect:'error',headers:{authorization:'Bearer '+token,...options.headers}});
  if(!result.ok){let value={};try{value=await result.json();}catch{}
-  throw new Error(value.error||'The original source operation returned HTTP '+result.status+'.');}
+  const error=new Error(value.error||'The original source operation returned HTTP '+result.status+'.');error.status=result.status;error.details=value;throw error;}
  return result;
 }
 const get=async path=>(await request(path)).json();
@@ -35,6 +35,14 @@ async function action(message,fn){
 }
 function buttons(){
  dqaUi?.buttons();
+ publishingUi?.buttons();
+ organisationUi?.buttons();
+ reconciliationUi?.buttons();
+ ampUi?.buttons();
+ $('source-to-portfolio').disabled=busy||source?.inventory?.kind==='organisation';
+ $('source-to-organisation').hidden=source?.inventory?.kind!=='organisation';
+ refreshUi?.buttons();
+ resultsUi?.buttons();
  $('query-next').disabled=busy||!cursor;$('query-prev').disabled=busy||!queryHistory.length;
  $('changes-next').disabled=busy||nextChanges===null;$('changes-download').disabled=busy||!comparison;
  for(const id of ['portfolio-download','report-download','report-json'])$(id).disabled=busy||!portfolio;
@@ -86,7 +94,7 @@ function structured(holder,value){
 function sourceChoices(selected){
  const ids=new Set(selected??[...$('portfolio-sources').querySelectorAll('input:checked')].map(el=>el.value));
  $('portfolio-sources').replaceChildren();
- for(const item of state.sources){const choice=document.createElement('label');choice.className='source-choice';const input=document.createElement('input');input.type='checkbox';input.value=item.id;input.checked=ids.has(item.id);
+ for(const item of state.sources.filter(x=>!organisationUi?.isOrganisationSource(x.id))){const choice=document.createElement('label');choice.className='source-choice';const input=document.createElement('input');input.type='checkbox';input.value=item.id;input.checked=ids.has(item.id);
   const text=document.createElement('span'),small=document.createElement('small');text.textContent=item.label||item.name;small.textContent=item.id+' · '+item.bytes+' bytes';text.append(small);choice.append(input,text);$('portfolio-sources').append(choice);}
  if(!state.sources.length)$('portfolio-sources').textContent='Retain a publisher source first.';
 }
@@ -99,8 +107,11 @@ async function refresh(selected={}){
  const [saved,ports]=await Promise.all([get('/api/state'),get('/api/iati/portfolios')]);
  if(saved.schema!=='stellar-forge.iati-workspace.v1')throw new Error('This private URL belongs to another source format.');
  state=saved;portfolios=ports.portfolios;
+ await organisationUi?.refresh();
+ await reconciliationUi?.refresh();
  const sources=state.sources.map(v=>({id:v.id,label:(v.label||v.name)+' · '+short(v.id)}));
- for(const id of ['source-select','mapping-source'])select(id,sources,selected.source);
+ select('source-select',sources,selected.source);
+ select('mapping-source',sources.filter(x=>!organisationUi?.isOrganisationSource(x.id)),selected.source);
  const portsView=portfolios.map(v=>({id:v.id,label:v.name+' · r'+v.revision}));
  for(const id of ['portfolio-select','compare-portfolio','transfer-portfolio'])select(id,portsView,selected.portfolio);
  const planViews=state.plans.map(v=>({id:v.id,label:v.name+' · '+short(v.id)}));select('plan-select',planViews,selected.plan);
@@ -111,6 +122,10 @@ async function refresh(selected={}){
  metrics($('overview-counts'),[['Publisher editions',state.sources.length],['Saved portfolios',portfolios.length],['Native editions',state.builds.length],['Retained comparisons',state.comparisons.length]]);
  cards($('overview-portfolios'),portfolios,async item=>{show('portfolios');await openPortfolio(item.id);},'No saved portfolios yet. Retain publisher XML to begin.');
  cards($('overview-sources'),state.sources,async item=>{show('sources');await openSource(item.id);},'The original source workspace is empty.');
+ await publishingUi?.refresh();
+ await refreshUi?.refresh();
+ await resultsUi?.refresh();
+ await ampUi?.refresh();
  $('connection').textContent='Private source workspace';buildSummary();buttons();
 }
 async function openSource(id){
@@ -217,6 +232,7 @@ $('source-form').addEventListener('submit',event=>{event.preventDefault();action
  const result=await(await request('/api/source',{method:'POST',headers:{'content-type':'application/xml','X-IATI-Name':encodeURIComponent(file.name),'X-IATI-Label':encodeURIComponent($('source-label').value)},body:file})).json();
  await refresh({source:result.id});await openSource(result.id);status('Original publisher edition retained: '+result.bytes+' bytes.');});});
 $('source-open').onclick=()=>action('Opening the retained source profile…',async()=>{await openSource($('source-select').value);status('Original source profile opened.');});
+$('source-to-organisation').onclick=()=>action('Opening organisation planning for this publisher…',async()=>{show('organisation');await organisationUi.newPlanFromSource(source.source.id);});
 $('source-to-portfolio').onclick=()=>{show('portfolios');formPortfolio();if(source?.source?.id)sourceChoices([source.source.id]);};
 $('portfolio-new').onclick=()=>{formPortfolio();$('portfolio-report').replaceChildren();$('portfolio-report').textContent='Save this selection to build its source-backed report.';status('New portfolio selection. Existing revisions remain retained.');};
 $('portfolio-open').onclick=()=>action('Opening the exact saved portfolio revision…',async()=>{await openPortfolio($('portfolio-select').value,$('portfolio-revision').value||undefined);status('Saved portfolio and complete report opened.');});
@@ -258,6 +274,12 @@ $('transfer-download').onclick=()=>action('Preparing a complete saved portfolio 
  const q=new URLSearchParams({portfolio:id});if($('transfer-revision').value)q.set('revision',$('transfer-revision').value);return download('/api/iati/export?'+q,'iati-portfolio.zip');});
 $('reload').onclick=()=>action('Refreshing the original saved workspace…',async()=>{await refresh();status('Retained source, portfolio and native edition inventory refreshed.');});
 dqaUi=window.IatiDqaUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state});
+publishingUi=window.IatiPublishingUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>({...state,sources:state.sources.filter(x=>!organisationUi?.isOrganisationSource(x.id))}),refreshWorkspace:refresh,openPortfolio,show,isBusy:()=>busy});
+organisationUi=window.IatiOrganisationUi({get,post,request,action,status,download,metrics,table,properties,details,refreshWorkspace:refresh,show,isBusy:()=>busy});
+refreshUi=window.IatiRefreshUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>({...state,sources:state.sources.filter(x=>!organisationUi?.isOrganisationSource(x.id))}),portfolioList:()=>portfolios,refreshWorkspace:refresh,openPortfolio,show,isBusy:()=>busy});
+resultsUi=window.IatiResultsUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state});
+reconciliationUi=window.IatiOrganisationReconciliationUi({get,post,request,action,status,download,metrics,table,properties,details,refreshWorkspace:refresh,show,isBusy:()=>busy});
+ampUi=window.IatiAmpUi({get,post,request,action,status,download,metrics,table,properties,details,portfolioList:()=>portfolios,refreshWorkspace:refresh,show,isBusy:()=>busy});
 action('Opening the original private IATI workspace…',async()=>{
  if(!token)throw new Error('Open the private console URL printed by this original process.');
  await refresh();const catalogue=await get('/api/iati/presets');presets=presetList(catalogue);select('preset-select',presets);

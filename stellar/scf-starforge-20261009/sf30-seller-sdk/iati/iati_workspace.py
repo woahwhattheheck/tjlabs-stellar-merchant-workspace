@@ -31,7 +31,12 @@ REPORT = "stellar-forge.iati-report.v1"
 PACKET = "stellar-forge.iati-portfolio-packet.v1"
 REPORT_PACKET = "stellar-forge.iati-report-packet.v1"
 COMPARE = "stellar-forge.iati-portfolio-comparison.v1"
-IATI_FORMAT = SourceFormat("iati", "IATI", inventory, validate_plan, extract, dataset_spec)
+def retained_iati_inventory(stream, cancel=None):
+    # The package is loaded after the original workspace classes are initialized.
+    from organisation.xml import source_inventory
+    return source_inventory(stream, cancel)
+
+IATI_FORMAT = SourceFormat("iati", "IATI", retained_iati_inventory, validate_plan, extract, dataset_spec)
 COLLECTIONS = ("activities", "transactions", "budgets")
 MAX_PACKET = 4 * 1024 * 1024 * 1024
 MAX_METADATA = 64 * 1024 * 1024
@@ -271,6 +276,18 @@ class IatiWorkspace(Workspace):
         """)
         from dqa import IatiDqa
         self.dqa = IatiDqa(self)
+        from publishing import IatiPublishing
+        self.publishing = IatiPublishing(self)
+        from organisation import OrganisationPlanner
+        self.organisation = OrganisationPlanner(self)
+        from refresh import IatiRefresh
+        self.refresh = IatiRefresh(self)
+        from organisation_reconciliation import OrganisationReconciliation
+        self.reconciliation = OrganisationReconciliation(self)
+        from results.workspace import IatiResults
+        self.results = IatiResults(self)
+        from amp import AmpWorkspace
+        self.amp = AmpWorkspace(self)
 
     def presets(self):
         return source_presets()
@@ -285,6 +302,10 @@ class IatiWorkspace(Workspace):
         with self.mutex:
             result = super().state()
             result["portfolios"] = self.portfolios()
+            result["publishing"] = {"projects":len(self.publishing.list())}
+            result["refresh"] = {"plans": len(self.refresh.plans())}
+            result["results"] = {"projects": len(self.results.inventory()["projects"])}
+            result["amp"] = {"captures": len(self.amp.captures()), "plans": len(self.amp.plans()), "runs": len(self.amp.runs())}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -788,4 +809,22 @@ class IatiWorkspace(Workspace):
         from dqa import PACKET as DQA_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == DQA_PACKET:
             return self.dqa.receive(path)
+        from publishing import PACKET as PUBLISHING_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == PUBLISHING_PACKET:
+            return self.publishing.receive(path)
+        from refresh import PACKET as REFRESH_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == REFRESH_PACKET:
+            return self.refresh.receive(path)
+        from organisation.portable import PACKET as ORGANISATION_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == ORGANISATION_PACKET:
+            return self.organisation.receive({"path": path})
+        from results.transfer import PACKET as RESULTS_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RESULTS_PACKET:
+            return self.results.receive(path)
+        from organisation_reconciliation import PACKET as RECONCILIATION_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == RECONCILIATION_PACKET:
+            return self.reconciliation.receive({"path": path})
+        from amp.portable import SCHEMA as AMP_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == AMP_PACKET:
+            return self.amp.receive(path)
         return super().import_packet(path)

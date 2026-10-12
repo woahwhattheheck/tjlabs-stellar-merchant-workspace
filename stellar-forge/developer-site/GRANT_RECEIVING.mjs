@@ -74,12 +74,19 @@ async function retain(path, bytes) {
     try { await directory.sync(); } finally { await directory.close(); }
   } finally { await unlink(temporary).catch(() => {}); }
 }
-async function selectedSources(root) {
+async function selectedSources(root, sourcePins = null) {
+  need(sourcePins === null || (sourcePins && typeof sourcePins === 'object' && !Array.isArray(sourcePins)),
+    'Use the explicit route-to-blob source pins from the application composer.');
+  for (const [route, sha] of Object.entries(sourcePins || {})) {
+    need(Object.hasOwn(PINS, route) && typeof sha === 'string' && /^[a-f0-9]{40}$/.test(sha),
+      'Retain a selected original route and its actual Git blob: ' + route);
+  }
+  const selectedPins = { ...PINS, ...(sourcePins || {}) };
   const manifestPath = join(root, SOURCE, 'browser-assets.json');
   const manifest = await regular(manifestPath);
   const assets = await readBrowserAssets(pathToFileURL(manifestPath));
   const selected = new Map();
-  for (const [route, expected] of Object.entries(PINS)) {
+  for (const [route, expected] of Object.entries(selectedPins)) {
     const asset = assets.get(route);
     need(asset, 'The selected original package does not serve ' + route);
     const bytes = await regular(fileURLToPath(asset.url));
@@ -159,10 +166,11 @@ function readout(result, files) {
 /**
  * Continue the original grant application's visual receiving with an owner-controlled Page.
  * sourceRoot is the selected package's source root (contains stellar-forge/ and stellar/).
+ * sourcePins optionally selects a later composed application edition; omitted pins retain the original source.
  * No browser, context, listener, provider or financial calculation is constructed.
  */
 export async function inspectGrantApplication(page, {
-  sourceRoot, outputDirectory, expectedOrigin, sourceCommit,
+  sourceRoot, outputDirectory, expectedOrigin, sourceCommit, sourcePins = null,
   operationId = 'DCE4-SCF-GRANT-APPLICATION-RECEIVING-20261012',
   readPublishedFilm = true, printPdf = true,
 } = {}) {
@@ -190,7 +198,7 @@ export async function inspectGrantApplication(page, {
   const output = resolve(outputDirectory);
   await mkdir(output, { recursive: true, mode: 0o700 });
   need(await realpath(output) === output, 'Use an ordinary original receiving directory.');
-  const originals = await selectedSources(root);
+  const originals = await selectedSources(root, sourcePins);
   const selection = {
     schema: SCHEMA, operation_id: operationId, source_commit: sourceCommit,
     source_root: root, origin: expectedOrigin, manifest: originals.manifest,
@@ -267,7 +275,22 @@ export async function inspectGrantApplication(page, {
     const contents = await page.locator('nav[aria-label="Application sections"] a').evaluateAll(items => items.map(item => ({
       id: item.hash.slice(1), text: item.textContent.trim(),
     })));
-    need(contents.length === 10 && new Set(contents.map(item => item.id)).size === 10, 'The complete ten-section application navigation is missing.');
+    const expectedSections = [
+      'project-and-requested-outcome',
+      'customer-problem-need-and-adoption',
+      'why-stellar-and-what-we-contribute',
+      'defined-architecture-and-operating-behavior',
+      'working-product-and-demonstrated-results',
+      'three-funded-tranches-and-six-priced-deliverables',
+      'threat-response-and-outcome-measurement',
+      'delivery-capacity-payment-timing-and-sustainability',
+      'applicant-experience-and-submission',
+      'open-the-existing-work',
+    ];
+    if (originals.selected.get('/grant.html').bytes.toString('utf8').includes('<!-- grant-reviewer-entry:start -->')) {
+      expectedSections.unshift('review-the-product');
+    }
+    need(same(contents.map(item => item.id), expectedSections), 'Retain every original application section and the selected working-product opening.');
     for (const item of contents) {
       await anchor(item.id);
       need((await page.locator('#' + item.id).innerText()).trim(), 'An application section is empty: ' + item.id);

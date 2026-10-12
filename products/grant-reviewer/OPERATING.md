@@ -35,12 +35,53 @@ published presentation links. The four direct local downloads are:
 | Six-package budget | `/grant-data/budget.csv` |
 | Source and measure index | `/grant-data/source-index.json` |
 
-These six original grant files come from the reviewed source at
-`f7fe93c07355b1688a550bbcd349a5590fa1d680`; their contents remain unchanged.
-The source index retains the underlying manuscript and financial source
-identities. Read the published film and editable companion at the original
-release links on the page. The local package contains the application and
-economic-report source downloads.
+The source manifest identifies the complete selected application edition.
+The source index retains the underlying manuscript and financial identities;
+the preceding reviewer source at `f7fe93c07355b1688a550bbcd349a5590fa1d680`
+remains in the original history. Read the published film and editable
+companion at the original release links. The package retains the current
+application and economic-report source downloads.
+
+Begin with **Explore the working product** to inspect the original film and
+complete report, follow Applications, or prepare the same installed/source
+command and complete opening guide. Its [reviewer-opening guide](../../stellar-forge/developer-site/GRANT_ENTRY.md)
+travels with this selected source.
+
+Choose **Prepare submission** to edit the nine complete answers, map the
+actual issuer fields and limits, copy the selected full text, and save a
+complete version. Export and reopen the working draft with every source
+edition, manual answer, field mapping and review note. Receiving a later
+source edition preserves manual edits against their original baselines.
+The [submission operating guide](../../stellar-forge/developer-site/GRANT_SUBMISSION.md)
+covers that complete original workflow.
+
+Choose **Review prepared draft** for the original named reviewer and author
+workflow. Receive the complete saved draft, record decisions and quoted change
+requests, return the full review, and compare the author's next complete draft.
+Carry decisions explicitly for unchanged content; changed source or answers
+reopen affected review requests. The original **Submission handover** retains
+that selected review with planning, prepared output and issuer observations.
+The [review-round guide](../../stellar-forge/developer-site/GRANT_REVIEW_ROUNDS.md)
+and [handover guide](../../stellar-forge/developer-site/GRANT_HANDOVER.md) travel
+with the same installed source and draft-store workflow.
+
+The installed `grant-compose` command receives the owner's selected manuscript
+through the same maintained composer:
+
+~~~sh
+starforge grant-compose \
+  --directory /absolute/current/developer-site/dist \
+  --manuscript /absolute/current-scf-application.md \
+  --source-pins-output /absolute/current-grant-source-pins.json
+~~~
+
+Keep the current application, complete detailed companion, source index and
+page shell together in that directory. Existing product selections are
+retained from the source index; the [composition guide](../../stellar-forge/developer-site/GRANT_COMPOSITION.md)
+describes explicitly selecting a new economic, coastal, merchant-financial or paired Datasette source. Its [financial application guide](../../stellar-forge/developer-site/GRANT_FINANCIAL_OPERATIONS.md) covers **--finance-commit**, dated customer balances, settlement and accountant receiving within the same current application.
+The four emitted reader pins go to the original `inspectGrantApplication`
+callback. The selected installed renderer/projector hashes and the original
+canonical-front identity remain recorded in the source index.
 
 Ctrl+C closes this reader. Reopen the same command to read the same installed
 source. For a checkout, the original entry is
@@ -257,3 +298,27 @@ includes the exact recipe inputs, response recovery, full-file controls and
 original native receiving continuation. The
 [Merchant operator Applications guide](../../stellar-forge/mcp-merchant-operator/console/APPLICATIONS.md)
 covers saved launch, current private Open, drained Stop and cold reopen.
+
+## Read the scientific report-product architecture
+
+The [development guide](../merchant-workspace/DEVELOPMENT.md#frozen-scientific-reports-as-merchant-resources)
+now connects the complete Groundwater report product to the same native seller,
+buyer and Operations boundaries. The upstream
+[operator guide](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/9b6b92c2c290b73ca6e263d28603fdcad3a19bf6/stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report/OPERATOR.md)
+covers exact frozen report assets and terms, original buyer preparation,
+full-package verification, an attributed file decision, optional selected-case
+association and complete report-desk receiving.
+
+Review this as a distinct delivered software capability. Its exact source,
+Linux request recovery and complete control-desk restore have been verified;
+its scientific report/portal operation is still being continued from the
+original generated-package reference finding. A successful source check is
+not a completed report sale or customer receiving decision.
+
+The NYC HPD reviewer packet, both quote outcomes, original result bytes and
+existing purchase/receiving operation above remain unchanged. Read the new
+report workflow from its own actual frozen report and explicitly authorized
+buyer evidence when those records are available. The
+[Operations guide](../grant-operations/OPERATING.md#frozen-groundwater-report-receiving)
+describes the precise case/deployment/purchase selection. Neither this
+architecture addition nor opening its source creates another purchase.

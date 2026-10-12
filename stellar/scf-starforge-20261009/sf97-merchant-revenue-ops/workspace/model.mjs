@@ -537,7 +537,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
   async function stageRepricing({decision,reviewSha256} = {}) {
     if (!releaseStore) throw fault('RELEASE_STORE_REQUIRED','Configure the original seller release store to stage this saved decision.');
     const entry = await findDecision(decision);
-    if (!entry.value.sourcePackage) throw fault('RELEASE_SOURCE_REQUIRED','This decision has no retained original API merchant package.');
+    if (!entry.value.sourcePackage) throw fault('RELEASE_SOURCE_REQUIRED','This decision has no retained merchant source package.');
     if (reviewSha256 !== entry.value.reviewSha256)
       throw fault('PRICE_REVIEW_CHANGED','Reload the saved price decision before staging its release.',409);
     const previous = await stageReceipt(decision);
@@ -622,8 +622,12 @@ export async function openWorkspace({config, directory, snapshot, history:histor
   async function pricingBackup() {
     // Capture independent immutable plans and decisions before the pricing prefix
     // so every selected original source can be included in the same backup.
-    const scenario=await scenarioBackup(),files=[...scenario.files],decisions=await decisionHistory(),pricingEntries=await history();
+    const {capturePerformanceBackup}=await import('../performance/workspace.mjs');
+    const performance=await capturePerformanceBackup({directory});
+    const scenario=await scenarioBackup(),files=[...scenario.files,...performance.files],decisions=await decisionHistory(),pricingEntries=await history();
     const versions=new Set(pricingEntries.map(entry=>entry.value.version));
+    if(performance.pricingVersions.some(version=>!versions.has(version)))
+      throw fault('PERFORMANCE_BACKUP_SOURCE_MISSING','A recorded performance or native proposal has no matching original Pricing review.');
     if(scenario.plans.some(plan=>!versions.has(plan.version)))
       throw fault('SCENARIO_BACKUP_SOURCE_MISSING','A saved comparison has no matching original pricing review.');
     for(const entry of pricingEntries){
@@ -643,7 +647,8 @@ export async function openWorkspace({config, directory, snapshot, history:histor
         read:()=>privateBytes(join(directory,'staged-releases',decision+'.json'))});
     }
     return {files,scenarioPlans:scenario.plans,pricingVersions:pricingEntries.map(entry=>entry.value.version),
-      requiredCostEditions:pricingEntries.map(entry=>entry.value.costOrigin?.edition).filter(Boolean),
+      requiredCostEditions:[...new Set([...pricingEntries.map(entry=>entry.value.costOrigin?.edition).filter(Boolean),...performance.requiredCostEditions])],
+      performance:performance.summary,
       pricingRevision:pricingEntries.at(-1)?.revision??null,decisionRevision:decisions.at(-1)?.revision??null};
   }
   const economics=await openEconomics({directory,pricingSource:economicsSource,

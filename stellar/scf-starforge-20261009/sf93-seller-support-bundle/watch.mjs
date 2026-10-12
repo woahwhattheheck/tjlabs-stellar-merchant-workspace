@@ -5,8 +5,12 @@ import {openIncidentStore} from './incident-store.mjs';
 import {applyObservation,validateDelivery} from './incident-model.mjs';
 import {destinationForEvent,deliverNotification,applyDelivery,updateIncidentNotificationState} from './notifications.mjs';
 import {prepareSlackRequest} from './notifications-slack.mjs';
+import {collectObjectObservation} from './object-source.mjs';
+import {collectCkanObservation} from './ckan-source.mjs';
 
 async function collectMerchant(merchant,signal) {
+  if(merchant.object)return collectObjectObservation(merchant,signal);
+  if(merchant.ckan)return collectCkanObservation(merchant,signal);
   let packet;
   try {packet=await readSupportBundle({...merchant,signal});}
   catch(error) {
@@ -32,6 +36,7 @@ function delay(ms,signal) {
 async function drainNotifications(store,env,signal) {
   if(signal?.aborted)return;
   const jobs=await store.transaction(state=>{
+    if(state.recovery?.deliveryPaused)return [];
     const now=Date.now(),jobs=[];
     for(const event of state.notifications) {
       if(event.status==='IN_FLIGHT'&&Date.parse(event.inFlightUntil)<=now) {

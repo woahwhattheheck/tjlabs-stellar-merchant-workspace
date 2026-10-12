@@ -366,6 +366,168 @@ A whole OData workspace transfer already includes every complete collection's or
 
 Closing the original merchant workspace drains accepted collection work with the same live/source operations, releases its file reads and closes its owned browser and merchants. Reopen then returns the same saved collections and customer artifacts.
 
+## Complete live collection comparison and reviewed customer editions
+
+The live comparison tools operate the same saved collections, comparison directory and review history as the original browser and CLI. They preserve each side's declared entity keys, original query, acquisition window, field selection, exact scalar spelling and explicit null state. The original comparison engine joins keys without converting Decimal or Int64 to floating point.
+
+A field can change because its selected state, null state, declared type, declaration, lexical spelling or typed value changed. Native rows retain that distinction. A before-only or after-only row describes presence in those selected complete collections. The original source windows and query identities remain visible in the result.
+
+| Tool | Complete operation |
+| --- | --- |
+| merchant_odata_live_comparisons | Page this service's complete and interrupted comparisons. |
+| merchant_odata_live_comparison | Inspect its complete selection, counts, current reviews, review history and retained-file inventory. |
+| merchant_odata_live_comparison_create | Create or resume a stable comparison from two inspected original collections. |
+| merchant_odata_live_comparison_rows | Page changed cells or all entities, with the exact retained entity key and native status. |
+| merchant_odata_live_comparison_review | Save or reopen an original review request at comparison, entity, column or cell scope. |
+| merchant_odata_live_comparison_publish | Freeze the selected current review revision as a complete analytical edition. |
+| merchant_odata_live_comparison_source | Open that explicit edition and its complete analytical file references and mapping. |
+| merchant_odata_live_comparison_restore | Receive its original source pair, comparison and compatible review history. |
+
+These tools use liveServiceId and comparisonId. The existing merchant_odata_compare tool continues to compare captured source editions. Its saved file kind is comparison; the live comparison files use live-comparison.
+
+### Select the original source pair
+
+Inspect both collections before creating the saved comparison. The native comparison requires the same original service root, entity set and ordered declared keys. Every selected key is included in the comparison's maximum of 64 fields.
+
+~~~js
+const scope = { workspace: "reference", liveServiceId: "orders" };
+const before = await call("merchant_odata_collection", {
+  ...scope, collectionId: "northwind-orders-complete"
+});
+const after = await call("merchant_odata_collection", {
+  ...scope, collectionId: "orders-country-projection"
+});
+const comparisonId = "orders-reviewed-projection";
+const created = await call("merchant_odata_live_comparison_create", {
+  ...scope, comparisonId,
+  beforeCollectionId: before.id,
+  afterCollectionId: after.id,
+  expectedBeforeSha256: before.manifestSha256,
+  expectedAfterSha256: after.manifestSha256,
+  title: "Original Orders and the customer country projection"
+});
+~~~
+
+The comparison ID, both selected hashes and complete creation input stay unchanged on retry. A new source pair or a different field selection gets its own comparison ID. The native limits are at most 512 MiB of complete input files, 128 MiB of derived output and one million changed cells. A caller may select smaller limits. Complete analytical publication also retains the original Analysis source limits.
+
+The retained reference has 830 original Orders. In a full-source versus country-projection comparison, all 830 declared keys can match while each entity's exported status is changed: fields omitted from the second selection have a different selected state. Read counts.matched and the row's entityStatus/status according to these distinct meanings.
+
+### Page original values and review history
+
+~~~js
+const selected = { ...scope, comparisonId };
+const current = await call("merchant_odata_live_comparison", {
+  ...selected, offset: 0, limit: 50
+});
+const cells = await call("merchant_odata_live_comparison_rows", {
+  ...selected, kind: "cells", status: "changed", offset: 0, limit: 50
+});
+~~~
+
+The inspection pages files, retainedFiles, reviews.current and reviews.history independently. Follow each pagination entry's nextOffset until it is null. The native selection and comparison identity accompany the page. The row reader returns its own nextOffset and filtered total. Cells contain only changed fields; entities includes the full joined entity set. A status filter uses changed, unchanged, before_only or after_only.
+
+Use the exact returned entityKey for an entity or cell review. Preserve field names and source values exactly. Decimal/Int64 source text, empty text, explicit null, an unselected field and an absent row remain distinct throughout the source document and CSV mapping.
+
+### Retain the review request through an uncertain reply
+
+~~~js
+const first = cells.rows[0];
+const request = {
+  ...selected,
+  requestId: "orders-projection-cell-review-001",
+  expectedRevision: current.reviews.revision,
+  scope: "cell", entityKey: first.entityKey, field: first.field,
+  status: "accepted", actor: "Customer receiving analyst",
+  note: "The narrower customer projection intentionally selects fewer original fields."
+};
+const saved = await call("merchant_odata_live_comparison_review", request);
+~~~
+
+Keep this complete request before sending it. If the reply is lost, send the same request ID, scope, entity key, field, status, reviewer and note. Native review history returns the first saved version when those bytes identify the same request. expectedRevision governs a new save and remains outside the signed review content. A changed request under an existing ID is rejected. A later analyst decision has a new request ID and the current inspected revision.
+
+The four scopes are comparison, entity, column and cell. Supply entityKey only for entity/cell and field only for column/cell. Decisions are accepted, investigate, excluded and note. Reviews retain their source rows and original comparison values.
+
+For a complete native entity key too large for the provider's 131,072-byte MCP request envelope, the host may declare a comparisonReviews file alongside comparisonSources in the same workspace connection. Each alias declares file and the exact required lowercase sha256, with an optional label. The file can be at most 16 MiB; the native entity key remains limited to 2 MiB and the whole review history to 16 MiB. The alias reuses the original request; it introduces no additional reviewer state.
+
+A declared request has this shape, with actual selected values substituted:
+
+~~~js
+{
+  schema: "stellar-forge.odata-comparison-review-request.v1",
+  liveServiceId: "orders",
+  comparisonId: "orders-reviewed-projection",
+  requestId: "orders-projection-cell-review-001",
+  expectedRevision: current.reviews.revision,
+  scope: "cell", entityKey: first.entityKey, field: first.field,
+  status: "accepted", actor: "Customer receiving analyst",
+  note: "The narrower customer projection intentionally selects fewer original fields."
+}
+~~~
+
+After the host saves that exact JSON and its digest in comparisonReviews, call:
+
+~~~json
+{"workspace":"reference","liveServiceId":"orders","comparisonId":"orders-reviewed-projection","reviewRequest":"orders-cell-review"}
+~~~
+
+An alias supplies the complete review request. Inline review fields and reviewRequest are mutually exclusive. Status lists the declared aliases and their saved digests.
+
+### Publish and transfer the complete reviewed edition
+
+~~~js
+const reviewed = await call("merchant_odata_live_comparison", selected);
+const published = await call("merchant_odata_live_comparison_publish", {
+  ...selected, expectedRevision: reviewed.reviews.revision
+});
+const source = await call("merchant_odata_live_comparison_source", {
+  ...selected, editionId: published.editionId,
+  expectedSha256: published.sha256
+});
+~~~
+
+A published edition freezes the complete original source pair, comparison manifest, transformation source, current review history, changed-cell CSV and all source packets. Its editionId identifies the comparison and review bytes. The returned sha256 identifies the actual source.json bytes; retain both values. A later review produces another edition. Repeating publication of the same current revision returns its original edition.
+
+The source tool requires an explicit published edition and exact source digest. Every files entry includes its full byte count, SHA-256 and a ready merchant_odata_file reference using live-comparison. Download each file through the existing retained-file reader, preserving its exact relative path beneath editions/<editionId>/. Continue a chunk read with its original readId, expectedSha256 and nextOffset; retain completed bytes and the final digest. Transfer the source.json and every declared document/original file together.
+
+The complete source can be registered by the existing AnalysisWorkspace source-document receiver. Once registration returns the actual source name and revision, request the native mapping:
+
+~~~js
+const mapped = await call("merchant_odata_live_comparison_source", {
+  ...selected, editionId: published.editionId,
+  expectedSha256: published.sha256,
+  source: registeredSource.name,
+  sourceRevision: registeredSource.revision
+});
+~~~
+
+mapped.analysisInput is the original response-preview mapping for all 13 CSV text columns. Continue the existing Analysis import, saved SQL queries, report publication, workbook delivery and complete workspace receiving using the actual source and job identities. The original before/after state columns and scalar spellings survive that projection. The source contains the reviewed engine bytes for independent comparison receiving.
+
+### Receive an edition and continue the same customer work
+
+On the same host, receive a published edition under a declared source workspace, including one whose provider handle is closed:
+
+~~~js
+await call("merchant_odata_live_comparison_restore", {
+  workspace: "receiving", liveServiceId: "orders",
+  comparisonId: "orders-reviewed-projection",
+  sourceWorkspace: "reference", sourceLiveServiceId: "orders",
+  sourceComparisonId: comparisonId, sourceEditionId: published.editionId,
+  expectedSha256: published.sha256
+});
+~~~
+
+For a file received through Analysis or another customer host, declare comparisonSources on the destination workspace. Its alias supplies the original source.json path and required digest; every sibling file remains at its original relative path. Select that alias with sourceDocument:
+
+~~~json
+{"workspace":"receiving","liveServiceId":"orders","comparisonId":"orders-reviewed-projection","sourceDocument":"orders-review"}
+~~~
+
+Receiving checks the destination's original live service identity, every source packet, source/query selection, exact original values, native derived results and reviewer history. Reopening the same comparison ID resumes its selected receiving. A compatible longer local review history remains selected when an older published edition arrives; divergent histories return the native conflict. Complete OData workspace backup/restore includes all of these comparison source files and frozen review editions.
+
+All eight tools execute inside the original OData provider's handle.tail. Its native service sequence and per-comparison kernel lease remain authoritative. The shared browser and SDK use the same native comparison directory queue, so an overlapping row preview and inspection proceed in order. Closing the provider drains accepted operations and its retained file reads, then closes its original browser and merchant processes. Reopen returns the same saved comparison and customer editions.
+
+The [native comparison guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTION_COMPARISONS.md) documents the exact source semantics and CLI. The [complete customer receiving command](../../stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/examples/COMPARISON_CUSTOMER.md) carries the full original source, browser review, Analysis/report/workbook and independent customer receiving operation.
+
 ## Transfer, download and reopen
 
 merchant_odata_transfer with action:"create" and a stable transferId saves the complete original bundle. Pause active imports first. The bundle includes source bytes, catalogs, plans, editions, reviews, dataset exports, live packages, buyer handoffs, committed customer receiving files and complete collection/Analysis source files.
@@ -392,8 +554,9 @@ merchant_odata_file supports:
 | buyer | Live service id, buyer recordId and filename. |
 | receiving | Live service id, receiving recordId and filename. |
 | collection | Live service id, collection recordId and an exact filename from its retained inventory. |
+| live-comparison | Live service id, comparison recordId and an exact original or published-edition filename. |
 | transfer | Saved transfer id. |
-| comparison | Returned comparisonId as id. |
+| comparison | Captured-edition comparisonId as id. |
 
 The first chunk returns readId, file SHA-256, complete byte length, offset, base64 bytes and nextOffset. Continue with the same readId, expectedSha256 and returned offset. The shared reader loads the original file once and releases its retained bytes at EOF. Maximum chunk size is 196,608 bytes. An expired read resumes with the same original hash and byte offset. merchant_odata_file_release releases an unfinished read.
 
@@ -416,3 +579,7 @@ The default capture returns while the original import continues. With wait:true,
 ## Complete customer download and receiving command
 
 The installed `starforge odata-collection-customer` command lists and inspects the original saved collections, downloads their exact source document and every declared analytical/source file, resumes durable byte checkpoints, and invokes the original native collection restore. It also reopens received rows and generates the native Analysis preview mapping from the actual registered source revision. See [Complete OData customer receiving](ODATA_COLLECTION_CUSTOMER.md) for the full CLI, JavaScript API, offline receiving and Analysis/report/workbook continuation. Its source-owned contribution keeps this workflow in the same installed merchant product.
+
+## Complete comparison customer operation
+
+The installed `starforge odata-comparison-customer` command selects original collection pairs, creates comparisons, pages native rows and review history, retains exact review requests, and publishes immutable review editions. It lists the actual frozen-edition inventory, downloads every declared file through the existing ranged reader, resumes the same byte checkpoint, and receives the selected complete source through the native comparison engine. Its CLI and typed JavaScript API also continue original Analysis mappings and source-bound receiving into another configured merchant workspace. See [Remote OData comparison customer workflow](ODATA_COMPARISON_CUSTOMER.md) for the complete source/review/publication/download/restore and report/workbook operation.

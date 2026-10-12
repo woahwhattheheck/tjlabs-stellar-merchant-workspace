@@ -31,6 +31,22 @@
     "./unstructured": {
       "types": "./unstructured/index.d.mts",
       "import": "./unstructured/index.mjs"
+    },
+    "./agents/inbox-task": {
+      "types": "./agents/inbox-task.d.mts",
+      "import": "./agents/inbox-task.mjs"
+    },
+    "./agents/task-desk": {
+      "types": "./agents/task-desk/client.d.mts",
+      "import": "./agents/task-desk/client.mjs"
+    },
+    "./agents/task-desk/server": {
+      "types": "./agents/task-desk/server.d.mts",
+      "import": "./agents/task-desk/server.mjs"
+    },
+    "./agents/agentledger": {
+      "types": "./agents/agentledger.d.mts",
+      "import": "./agents/agentledger.mjs"
     }
   },
   "files": [
@@ -53,7 +69,9 @@
     "unstructured",
     "PROTECTED_STORAGE.md",
     "preapproval-native-record.py",
-    "PREAPPROVAL_RECOVERY.md"
+    "PREAPPROVAL_RECOVERY.md",
+    "INBOX_TASKS.md",
+    "AGENTLEDGER.md"
   ],
   "sideEffects": false,
   "peerDependencies": {
@@ -75,5 +93,10 @@
     "zod": {
       "optional": true
     }
+  },
+  "bin": {
+    "starforge-inbox-task": "./agents/inbox-task-cli.mjs",
+    "starforge-task-desk": "./agents/task-desk/cli.mjs",
+    "starforge-agentledger": "./agents/agentledger-cli.mjs"
   }
 }

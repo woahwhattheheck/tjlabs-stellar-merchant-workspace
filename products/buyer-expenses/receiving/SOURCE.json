@@ -1,0 +1,38 @@
+{
+  "schema": "stellar-forge.buyer-finance-receiving-source.v1",
+  "operation": "BUYER-FINANCE-STANDALONE-6200-20261012",
+  "sourceRepository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceCommit": "05d093bc81a6e65d0ada0a7b9eed77fcc3208d8b",
+  "sourceTree": "71a982cd9bf1eedac9b496fea5430b59962c1339",
+  "gitReceiverBlob": "6fe4119a46e89c2a5831abe9a5c5726f4dc5668a",
+  "decodedInput": {
+    "bytes": 29732584,
+    "sha256": "3de754897c439304144ac5125750914ee8c1b8bc2b911d68e9534d6397cbfb9c"
+  },
+  "originalInputs": {
+    "receivingSha256": "31f88f9daa0d4f4d65bc23b463dbd3e90c7c80182f19cd7c41e1722b8731b880",
+    "projectBytes": 497098,
+    "projectSha256": "46329775e2298e49fbf9deb1dc6300f63db798f10e252ac3e727ab4e0f815c7b"
+  },
+  "files": {
+    "operation.py": {
+      "bytes": 18756,
+      "sha256": "697e6c18a66ed455b5d3f2a0b329b32328151db8063d7a177e83a3c9cb298d2f"
+    },
+    "receive.mjs": {
+      "bytes": 7991,
+      "sha256": "a8f18d5848641bf0dce9fc4ba16dc248c5c53188334e26d17b993aa7fb18dac9"
+    },
+    "run_native_receiving.py": {
+      "bytes": 10506,
+      "sha256": "f3385bb5dd347e7320aca3134e80f1a9883a8ac236ad8d53326ff648c1bbdbc7"
+    },
+    "source-input.json": {
+      "bytes": 12132083,
+      "sha256": "deeee670f57567f796fc7ad9b7a599aac07d68f50b0ab9364f36c594c9d27843"
+    }
+  },
+  "originalSourceCommit": "27347f1b1a9ae0f1ab7979803dd471f26c5185cf",
+  "originalPublishedMerge": "b86b7da8a72aed4ebd9f38aef7c2c37129940410",
+  "sourceRefinement": "05d093bc81a6e65d0ada0a7b9eed77fcc3208d8b"
+}

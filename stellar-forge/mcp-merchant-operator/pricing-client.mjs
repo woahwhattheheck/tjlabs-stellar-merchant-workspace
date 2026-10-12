@@ -1,6 +1,11 @@
 // MIT. Saved scenario operations through the original authenticated merchant MCP.
 import { createRetainedDownload, openMerchantFileClient } from './retained-download.mjs';
 import { pricingCostClientOperations } from './pricing-cost-client.mjs';
+import { tariffClientOperations } from './catalog/pricing-tariffs.mjs';
+import { performanceClientOperations,PERFORMANCE_MCP_OPERATIONS } from './catalog/pricing-performance.mjs';
+export { MerchantTariffClient,createMerchantTariffClient,downloadMerchantTariffPlan,inspectMerchantTariffPlan,
+  downloadMerchantTariffPortfolio,inspectMerchantTariffPortfolio,downloadMerchantTariffPricingReview,
+  inspectMerchantTariffPricingReview } from './pricing-tariffs-client.mjs';
 export { downloadMerchantCosts, inspectMerchantCosts } from './pricing-cost-client.mjs';
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -12,6 +17,8 @@ const plain = value => value !== null && typeof value === 'object' && !Array.isA
 
 export const pricingClientOperations = Object.freeze({
   ...pricingCostClientOperations,
+  ...tariffClientOperations,
+  ...performanceClientOperations,
   status:'merchant_pricing_status',open:'merchant_pricing_open',close:'merchant_pricing_close',
   capture:'merchant_pricing_source','review-preview':'merchant_pricing_preview',
   'review-save':'merchant_pricing_save','review-load':'merchant_pricing_load',
@@ -28,6 +35,7 @@ export const pricingClientOperations = Object.freeze({
 export async function callMerchantPricing({operation,args={},...connection} = {}) {
   if (!Object.hasOwn(pricingClientOperations,operation) || !plain(args))
     throw fail('ARGUMENTS','Choose a declared pricing operation and its exact input object.');
+  args=structuredClone(args);
   if (operation !== 'status' && !ALIAS.test(args.workspace ?? ''))
     throw fail('ARGUMENTS','Supply the existing host-declared pricing workspace alias.');
   if (operation === 'price-manifest') {
@@ -37,7 +45,9 @@ export async function callMerchantPricing({operation,args={},...connection} = {}
       throw fail('ARGUMENTS','The selected price decision conflicts with the original manifest identity.');
     args={...selected,kind:'decision',...(decision !== undefined ? {id:decision} : {})};
   }
-  const client=await openMerchantFileClient({...connection,errorPrefix:'PRICING',clientName:'starforge-merchant-pricing'});
+  const client=await openMerchantFileClient({...connection,
+    ...((operation.startsWith('tariff-')||operation.startsWith('performance-'))?{maximumResponseBytes:128*1024*1024}:{}),
+    errorPrefix:'PRICING',clientName:'starforge-merchant-pricing'});
   if (!['status','open','close'].includes(operation))
     await client.call('merchant_pricing_open',{workspace:args.workspace});
   return client.call(pricingClientOperations[operation],args);
@@ -155,4 +165,54 @@ export function downloadMerchantPriceDecision({workspace,decision,...options}={}
 export function inspectMerchantPriceDecision({workspace,decision,...options}={}) {
   if (!UUID.test(decision ?? '')) throw fail('ARGUMENTS','Supply the exact retained price decision ID.');
   return priceDecisionDownloader(workspace).inspect({...options,exportId:decision});
+}
+
+
+// Complete recorded-performance receiving uses the maintained retained downloader.
+function parsePerformanceManifest(bytes,performanceId){
+  let value;try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
+  catch{throw fail('MANIFEST_INVALID','The complete performance manifest must contain UTF-8 JSON.');}
+  const names=['source.json','review.json','review.html','usage.csv'];
+  if(value?.schema!=='stellar-forge.merchant-performance-files.v1'||value.performanceId!==performanceId||
+      !HASH.test(value.sourceId??'')||!HASH.test(value.performanceSha256??'')||!plain(value.files)||
+      Object.keys(value.files).length!==names.length)
+    throw fail('MANIFEST_INVALID','Retain the original complete performance manifest and its source identity.');
+  const files=names.map(name=>{
+    const row=value.files[name];
+    if(!plain(row)||!Number.isSafeInteger(row.bytes)||row.bytes<0||row.bytes>64*1024*1024||!HASH.test(row.sha256??''))
+      throw fail('MANIFEST_INVALID','Keep all four complete performance files with their original bytes and hashes.');
+    return {name,bytes:row.bytes,sha256:row.sha256};
+  });
+  return {...value,exportId:performanceId,files};
+}
+function performanceDownloader(workspace){
+  if(!ALIAS.test(workspace??''))throw fail('ARGUMENTS','Supply the existing original Pricing alias.');
+  return createRetainedDownload({manifestName:'manifest.json',parseManifest:parsePerformanceManifest,
+    maximumBytes:64*1024*1024,maximumManifestBytes:65536,
+    stateSchema:'stellar-forge.performance-download-state.v1',resultSchema:'stellar-forge.performance-download.v1',
+    toolPrefix:'merchant_pricing_performance',errorPrefix:'PRICING',clientName:'starforge-merchant-performance',
+    describe:value=>({performanceId:value.performanceId,sourceId:value.sourceId,performanceSha256:value.performanceSha256}),
+    connect:async options=>{
+      const original=await openMerchantFileClient({...options,maximumResponseBytes:128*1024*1024});
+      await original.call('merchant_pricing_open',{workspace});
+      return {endpoint:original.endpoint,async call(name,args,requestOptions){
+        const {exportId,...input}=args;let result;
+        if(name.endsWith('_file_release'))
+          result=await original.call('merchant_pricing_file_release',{workspace,readId:input.readId},requestOptions);
+        else if(name.endsWith('_manifest'))
+          result=await original.call(PERFORMANCE_MCP_OPERATIONS.capture,{workspace,performanceId:exportId},requestOptions);
+        else result=await original.call(PERFORMANCE_MCP_OPERATIONS.download,{workspace,performanceId:exportId,...input},requestOptions);
+        if(result.workspace!==workspace||result.performanceId!==undefined&&result.performanceId!==exportId)
+          throw fail('IDENTITY_CHANGED','The complete performance reply belongs to a different original workspace or review.');
+        return {...result,exportId,...(name.endsWith('_manifest')?{state:'MANIFEST_RETAINED'}:{})};
+      }};
+    }});
+}
+export function downloadMerchantPerformance({workspace,performanceId,...options}={}){
+  if(!UUID.test(performanceId??''))throw fail('ARGUMENTS','Choose the original saved performance UUID.');
+  return performanceDownloader(workspace).download({...options,exportId:performanceId});
+}
+export function inspectMerchantPerformance({workspace,performanceId,...options}={}){
+  if(!UUID.test(performanceId??''))throw fail('ARGUMENTS','Choose the original saved performance UUID.');
+  return performanceDownloader(workspace).inspect({...options,exportId:performanceId});
 }

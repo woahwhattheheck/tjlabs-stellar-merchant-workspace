@@ -69,6 +69,28 @@ export class GraphqlProductClient {
     }
     return client.call(name, selected, options);
   }
+  async listMerchantPreparations(selection) { return this.call('merchant_graphql_preparations', selection); }
+  async inspectMerchantPreparation(selection) { return this.call('merchant_graphql_preparation', selection); }
+  async prepareMerchant(request) { return this.call('merchant_graphql_preparation_prepare', request); }
+  async recoverMerchantPreparation(request) { return this.call('merchant_graphql_preparation_recover', request); }
+  async continueMerchantPreparation(request) { return this.call('merchant_graphql_preparation_continue', request); }
+  async prepareMerchantPacket(selection) { return this.call('merchant_graphql_preparation_packet', selection); }
+  async prepareRequestSet(request) { return this.call('merchant_graphql_request_set_prepare', request); }
+  async inspectRequestSet(selection) { return this.call('merchant_graphql_request_set', selection); }
+  async recoverRequestSet(request) { return this.call('merchant_graphql_request_set_recover', request); }
+  async startRequestRun(request) { return this.call('merchant_graphql_request_run_start', request); }
+  async inspectRequestRun(selection) { return this.call('merchant_graphql_request_run', selection); }
+  async continueRequestRun(request) { return this.call('merchant_graphql_request_run_continue', request); }
+  async controlRequestRun(request) { return this.call('merchant_graphql_request_run_control', request); }
+  async recoverRequestRun(request) { return this.call('merchant_graphql_request_run_recover', request); }
+  async compareRequestRuns(request) { return this.call('merchant_graphql_request_run_compare', request); }
+  async prepareRequestPacket(selection) { return this.call('merchant_graphql_request_packet', selection); }
+  async prepareComparison(request) { return this.call('merchant_graphql_comparison_prepare', request); }
+  async inspectComparison(selection) { return this.call('merchant_graphql_comparison', selection); }
+  async comparisonChanges(selection) { return this.call('merchant_graphql_comparison_changes', selection); }
+  async reviewComparison(request) { return this.call('merchant_graphql_comparison_review', request); }
+  async inspectPendingComparison(selection) { return this.call('merchant_graphql_comparison_pending', selection); }
+  async recoverComparison(request) { return this.call('merchant_graphql_comparison_recover', request); }
   async prepareHandover({ id, project, revision } = {}) {
     return this.call('merchant_graphql_handover_prepare', { id, project, revision });
   }

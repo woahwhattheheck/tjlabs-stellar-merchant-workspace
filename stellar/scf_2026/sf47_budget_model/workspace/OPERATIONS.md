@@ -2,6 +2,10 @@
 
 This desk extends the original SF47 planning workspace. Open **Delivery operations** in the existing browser or use the existing CLI's `operations` command. It uses the same workspace directory, SQLite connection, process lease, private access link and retained request receipts. No additional service or database is needed.
 
+## Work and invoice source intake
+
+Use **Work / invoice intake** to receive complete timesheets and supplier invoice lines from CSV or TSV. Map columns and original counterparties, retain corrections and duplicate decisions, save drafts, and apply the reviewed source in one native transaction. All source rows and applied record links travel with the complete operating case. [Work and invoice intake](WORK_INTAKE.md) covers the browser, CLI, typed client and merchant tools.
+
 ## Working from a saved plan
 
 Open a case from a saved planning revision. The case retains the exact scenario, staffing/payment plan, native calculation, source file identity and saved report. Later forecasts do not rewrite that selected revision. The browser lists every operations case in the workspace, including received cases whose planner history was imported under a new native plan ID. Each case displays its own pinned plan.
@@ -103,3 +107,7 @@ Aggregate export holds the original mutex and one SQLite read snapshot, borrowin
 ## Operating cash and remaining-work forecasts
 
 The **Operating forecast** tab calculates dated remaining obligations from this same case. It retains original paid allocations, uninvoiced work, conditional grant receipts and selected customer delivery scenarios, then saves the complete reviewed snapshot through the existing case transaction. Reopen saved forecasts or receive them with the complete case archive. See [FORECAST.md](FORECAST.md) for the operating workflow, cash calculations, exact sources and customer/capacity assumptions.
+
+## Implementation evidence
+
+[Implementation evidence](IMPLEMENTATION_EVIDENCE.md) adds a source-preserving review desk to this original case. Read the complete SF74 source, select original observations and their existing case associations, preview the current links, and freeze the same request. Technical and customer receiving remain distinct; negative and historical observations retain their meaning. Optional Completion evidence and complete export/import use the maintained original reader to verify the exact frozen source and cutoff.

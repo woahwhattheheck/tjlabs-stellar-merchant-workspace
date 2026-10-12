@@ -13,6 +13,8 @@ import uuid
 import zipfile
 from workspace import Workspace
 from harvest import InputError, jbytes, decode
+from islandora import IslandoraDesk, path_under
+from islandora_io import payload_bytes, manifest_document, log_page, selected_log, desk_state
 
 HERE=Path(__file__).resolve().parent
 MAX_BODY=48*1024*1024
@@ -21,6 +23,12 @@ class Console:
     def __init__(self,workspace):
         self.ws=workspace;self.worker=None;self.error=None;self.lock=threading.Lock()
         self.token=uuid.uuid4().hex
+        # Stable across console restarts; changes when this workspace directory or database is replaced.
+        from harvest import sha
+        root_info=workspace.root.stat(); database_info=(workspace.root/"workspace.sqlite").stat()
+        self.relay_identity=sha(jbytes([str(workspace.root),str(root_info.st_dev),str(root_info.st_ino),
+                                      str(database_info.st_dev),str(database_info.st_ino)]))
+        self.islandora=IslandoraDesk(workspace)
 
     def run(self,identity):
         with self.lock:
@@ -33,8 +41,42 @@ class Console:
             self.worker.start()
         return {"operationId":identity,"running":True}
 
+    def islandora_action(self,name,p):
+        desk=self.islandora
+        if name=="create":return desk.create(p["buildId"],p["label"],p["host"],p.get("config"),p.get("plan"),p.get("baseline") or None)
+        if name=="configure":return desk.configure(p["id"],p.get("host"),p.get("config"))
+        if name=="rebuild":return desk.rebuild(p["id"],p["plan"])
+        if name=="edit":return desk.edit(p["id"],p["identifier"],p.get("overrides"),p.get("choices"))
+        if name=="attach":return desk.attach(p["id"],manifest_document(payload_bytes(p),"assets"),p["assetRoot"])
+        if name=="relationships":return desk.relationships(p["id"],manifest_document(payload_bytes(p),"relationships"))
+        if name=="associations":return desk.associations(p["id"],p["identifier"],assets=p.get("assets"),parents=p.get("parents"))
+        if name=="receive":
+            kind=p.get("kind","target")
+            if kind not in {"target","map"}:raise InputError("Choose target records or a source-to-node map")
+            return desk.receive(p["id"],payload_bytes(p),kind,p.get("host"))
+        if name=="inspect-target":return desk.start_inspection(p["id"])
+        if name=="import-native-map":return desk.import_native_map(p["id"])
+        if name=="review":return desk.review(p["id"],p["operator"],p["note"])
+        if name=="prepare":return desk.prepare(p["id"])
+        if name=="start":return desk.start(p["id"],p["batch"],p["workbench"],python=p.get("python") or None,check=p.get("check",False))
+        if name=="stop":return desk.stop()
+        if name=="finish":return desk.finish(p["id"],p["operator"],p["note"])
+        raise InputError("Choose an Islandora desk action")
+
+    def backup(self,destination):
+        desk=self.islandora
+        if desk.worker and desk.worker.is_alive():
+            raise InputError("Complete or stop native work before saving the full workspace")
+        if not desk.operation_lock.acquire(blocking=False):
+            raise InputError("The current migration operation is still using this workspace")
+        try:
+            return self.ws.backup(destination)
+        finally:
+            desk.operation_lock.release()
+
     def action(self,name,p):
         ws=self.ws
+        if name.startswith("islandora."):return self.islandora_action(name.split(".",1)[1],p)
         if name=="repository": return ws.add_repository(p["url"],p.get("label"),p.get("interval",2.1))
         if name=="start":
             op=ws.start(p["repositoryId"],p["verb"],p.get("arguments",{}),p["operationId"],p.get("baseline"))
@@ -42,18 +84,22 @@ class Console:
         if name=="run": return self.run(p["id"])
         if name=="cancel": ws.cancel.set();return {"operationId":ws.active,"cancelling":True}
         if name=="restart": return ws.restart(p["id"],p["expectedRevision"])
+        if name=="select-records":
+            return ws.select_records(p["sourceOperationIds"],p["operationId"],p.get("baseline"),p.get("label"))
         if name=="preview": return ws.preview(p["operationId"],p.get("choices"))
         if name=="review": return ws.review(p["id"],p["expectedDigest"],p["reviewer"],p["note"])
         if name=="mapping": return ws.save_mapping(p["plan"])
         if name=="build": return ws.build(p["editionId"],p["planId"])
         if name=="query": return ws.query(p["buildId"],p.get("query",{}))
-        if name=="import":
+        if name in {"import","import-relay"}:
             if self.worker and self.worker.is_alive(): raise InputError("The active harvest owns its response input; finish or cancel it before importing another host response")
             body=base64.b64decode(p["bodyBase64"],validate=True)
             if len(body)>32*1024*1024: raise InputError("Use the native import command for response pages larger than 32 MiB")
-            metadata=p["metadata"]
             with tempfile.NamedTemporaryFile(dir=ws.area/"tmp") as file:
                 file.write(body);file.flush()
+                if name=="import-relay":
+                    return ws.ingest_relay(p["operationId"],file.name,p["receipt"])
+                metadata=p["metadata"]
                 return ws.ingest(p["operationId"],file.name,metadata["url"],metadata["status"],
                                  metadata.get("headers",[]),metadata.get("finalURL"),metadata.get("observedAt"))
         raise InputError("Unknown operator action")
@@ -103,7 +149,7 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
                 if url.path=="/":
                     page=(HERE/"index.html").read_text().replace("SESSION_TOKEN",console.token)
                     return self.send(200,page.encode(),"text/html; charset=utf-8")
-                if url.path in {"/browser.mjs","/style.css"}:
+                if url.path in {"/browser.mjs","/style.css","/islandora.mjs","/islandora.css"}:
                     return self.send(200,(HERE/url.path[1:]).read_bytes(),
                         "text/javascript; charset=utf-8" if url.path.endswith("mjs") else "text/css; charset=utf-8")
                 if url.path=="/api/launch":
@@ -111,14 +157,23 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
                     if launch is None:return self.send(404,{"error":"This console has no managed launch"})
                     return self.send(200,launch)
                 if url.path=="/api/state":
-                    return self.send(200,{**ws.state(),"workerError":console.error,
-                        "running":bool(console.worker and console.worker.is_alive())})
+                    return self.send(200,{**ws.state(),"relayWorkspaceIdentity":console.relay_identity,"workerError":console.error,
+                        "running":bool(console.worker and console.worker.is_alive()),
+                        "islandoraRunning":bool(console.islandora.worker and console.islandora.worker.is_alive()),
+                        "islandoraError":getattr(console.islandora,"last_error",None)})
+                if url.path=="/api/islandora/state":return self.send(200,desk_state(console.islandora))
+                if url.path=="/api/islandora/inventory":return self.send(200,console.islandora.inventory(q["build"]))
+                if url.path=="/api/islandora/default-plan":return self.send(200,console.islandora.default_plan(q["build"]))
+                if url.path=="/api/islandora/job":return self.send(200,console.islandora.job(q["id"]))
+                if url.path=="/api/islandora/records":return self.send(200,console.islandora.records(q["job"],offset,limit,q.get("kind",""),q.get("query","")))
+                if url.path=="/api/islandora/record":return self.send(200,console.islandora.record(q["job"],q["identifier"]))
+                if url.path=="/api/islandora/log":return self.send(200,log_page(console.islandora,q["job"],q["run"],offset,int(q.get("bytes",65536))))
                 if url.path=="/api/catalog":return self.send(200,ws.catalog(q["repository"],q["kind"],offset,limit))
                 if url.path=="/api/requests":return self.send(200,ws.requests(q["operation"],offset,limit))
                 if url.path=="/api/changes":return self.send(200,ws.changes(q["preview"],q.get("kind"),offset,limit))
                 if url.path=="/api/records":return self.send(200,ws.records(q["edition"],offset,limit,q.get("query","")))
                 if url.path=="/api/history":return self.send(200,ws.history(q["kind"],offset,limit))
-                if url.path=="/api/default-mapping":return self.send(200,ws.default_mapping())
+                if url.path=="/api/default-mapping":return self.send(200,ws.default_mapping(edition_id=q.get("edition")))
                 if url.path=="/api/metadata-mapping":return self.send(200,ws.metadata_mapping(q["edition"]))
                 if url.path=="/api/object":
                     kind=q["kind"];ident=q["id"]
@@ -139,6 +194,56 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
                         from bridge import storage
                         if storage.file_digest(path)!=body["sha256"]:raise InputError("Retained response bytes changed")
                     return self.file(path,body["sha256"]+(".xml" if body["xmlSourceId"] else ".bin"))
+                if url.path=="/download/relay-receipt":
+                    with ws.mutex:
+                        req=ws._get("oai_requests",q["id"])
+                        acquisition=req.get("acquisition",{})
+                        if acquisition.get("kind")!="relay":
+                            raise InputError("Choose a request received with a relay receipt")
+                        receipt=acquisition["receipt"]
+                        from bridge import storage
+                        content=jbytes(receipt)
+                        if storage.digest(content)!=acquisition["receiptSha256"]:
+                            raise InputError("The retained relay receipt changed")
+                    return self.send(200,content,extra={
+                        "Content-Disposition":'attachment; filename="oai-relay-'+q["id"]+'.json"'})
+                if url.path=="/download/islandora-guide":
+                    return self.file(HERE/"ISLANDORA_OPERATOR_GUIDE.md","ISLANDORA_OPERATOR_GUIDE.md","text/markdown; charset=utf-8")
+                if url.path=="/download/islandora":
+                    with tempfile.TemporaryDirectory(dir=ws.area/"tmp") as directory:
+                        output=Path(directory)/"migration.zip"
+                        console.islandora.export(q["job"],output)
+                        return self.file(output,"islandora-migration-"+q["job"][:12]+".zip","application/zip")
+                if url.path=="/download/islandora-log":
+                    run,path=selected_log(console.islandora,q["job"],q["run"])
+                    if not path.is_file():raise InputError("This native run has not written its log yet")
+                    return self.file(path,"islandora-native-"+run["id"][:12]+".log","text/plain; charset=utf-8")
+                if url.path=="/download/islandora-run-input":
+                    job=console.islandora.job(q["job"])
+                    run=next((r for r in job.get("runs",[]) if r["id"]==q["run"]),None)
+                    if run is None:raise InputError("Select a saved native run")
+                    kind=q.get("kind","csv")
+                    if kind not in {"csv","config","preparedConfig"}:
+                        raise InputError("Select this run's CSV or configuration")
+                    item=run.get("inputs",{}).get(kind)
+                    if item is None:raise InputError("This earlier run has no saved input copy")
+                    path=path_under(console.islandora.directory(job["id"]),item["path"])
+                    from bridge import storage
+                    if storage.file_digest(path)!=item["sha256"]:
+                        raise InputError("The retained native input changed")
+                    return self.file(path,"islandora-"+run["id"][:12]+"-"+path.name,
+                        "text/csv; charset=utf-8" if kind=="csv" else "application/yaml")
+                if url.path=="/download/islandora-input":
+                    job=console.islandora.job(q["job"])
+                    batch=next((b for b in job.get("batches",[]) if b["name"]==q["batch"]),None)
+                    if batch is None:raise InputError("Select a prepared native batch")
+                    kind=q.get("kind","csv")
+                    if kind not in {"csv","config"}:raise InputError("Select the original CSV or configuration")
+                    path=path_under(console.islandora.directory(job["id"]),"batches/"+batch[kind])
+                    from bridge import storage
+                    if storage.file_digest(path)!=batch["csvSha256" if kind=="csv" else "configSha256"]:
+                        raise InputError("Prepared native inputs changed; prepare the current migration again")
+                    return self.file(path,path.name,"text/csv; charset=utf-8" if kind=="csv" else "application/yaml")
                 if url.path in {"/download/source","/download/backup"}:
                     with tempfile.TemporaryDirectory(dir=ws.area/"tmp") as directory:
                         temp=Path(directory);out=temp/"download.zip"
@@ -149,7 +254,7 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
                                     if file.is_file():archive.write(file,file.relative_to(temp/"source").as_posix())
                             os.chmod(out,0o600)
                             return self.file(out,"oai-source-"+q["build"][:12]+".zip","application/zip")
-                        ws.backup(out)
+                        console.backup(out)
                         return self.file(out,"oai-workspace.zip","application/zip")
                 return self.send(404,{"error":"Page was not found"})
             except (InputError,ValueError,KeyError,OSError) as e:return self.send(400,{"error":str(e)})
@@ -181,4 +286,6 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
         if previous_term is not None:signal.signal(signal.SIGTERM,previous_term)
         ws.cancel.set()
         if console.worker:console.worker.join()
+        console.islandora.stop()
+        if console.islandora.worker:console.islandora.worker.join()
         server.server_close();ws.close()

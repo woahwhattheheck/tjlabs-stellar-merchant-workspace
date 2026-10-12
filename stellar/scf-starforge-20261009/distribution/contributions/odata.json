@@ -42,6 +42,14 @@
     "./seller/odata/semantics": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/semantics.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/semantics.mjs"
+    },
+    "./seller/odata/live/collection-comparison": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/collection-comparison.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/collection-comparison.mjs"
+    },
+    "./seller/odata/live/collection-comparison-store": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/collection-comparison-store.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/collection-comparison-store.mjs"
     }
   },
   "applicationProviders": {

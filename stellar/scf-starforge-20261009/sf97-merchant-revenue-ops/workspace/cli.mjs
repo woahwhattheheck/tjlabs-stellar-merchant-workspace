@@ -61,6 +61,8 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(JSON.stringify({schema:PRICING_WORKSPACE_LAUNCH_SCHEMA,
     status:'MERCHANT_PRICING_WORKSPACE_READY',...workspace.model.launch,
     pid:process.pid,url:workspace.url,planningUrl:workspace.planningUrl,costsUrl:workspace.url+'/economics',
+    ...(workspace.tariffsUrl?{tariffsUrl:workspace.tariffsUrl}:{}),
+    ...(workspace.performanceUrl?{performanceUrl:workspace.performanceUrl}:{}),
     ...(costRestore?{costRestore:{...costRestore,archive:resolve(args['--restore-cost-workspace'])}}:{})}));
   const stop = () => workspace.close().catch(() => { process.exitCode = 1; });
   process.once('SIGINT',stop); process.once('SIGTERM',stop);

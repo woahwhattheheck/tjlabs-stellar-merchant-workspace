@@ -3,7 +3,7 @@
 The original Applications runtime can open and operate the merchant pricing
 workspace. It retains the selected seller, traffic source, saved reviews and
 scenarios in one application. The same managed process supplies the **Open
-application**, **Scenario planning** and **Supplier costs** links, then closes through **Stop** and
+application**, **Scenario planning**, **Supplier costs** and **Tariff planning** links, then closes through **Stop** and
 reopens the merchant's saved work on the next start.
 
 ## Select the merchant
@@ -81,6 +81,26 @@ commercial review.
    amounts. With an attached original package and release store, a saved price
    decision can enter the merchant's existing staged-release workflow.
 
+### Compare tariffs and retain their selected pricing
+
+Open **Tariff planning** from the managed application, or **Tariffs** from the
+original Pricing header. Select one of the same merchant's saved pricing reviews,
+enter graduated or volume tiers, and compare the intended whole-request quantities.
+The review retains the exact band totals, baseline and contribution where original
+cost inputs support them. Inspect any tier-boundary revenue decrease.
+
+Save the tariff plan with its label and original request UUID. Select a positive
+quantity and review the exact tariff total together with the derived **UNIFORM**
+quote, its gross projection and rounding difference. The original scenario and
+pricing commits use their two retained UUIDs and expected revisions. Zero quantity
+remains a readable comparison without a scenario selection.
+
+Continue the selected pricing version through its original quote-to-atomic amount
+review, saved price-decision reopening and source-bound seller-release staging. The
+same native source remains available through installed `merchant-tariffs` and its
+typed HTTP client; the [complete tariff guide](../../sf97-merchant-revenue-ops/tariffs/README.md)
+gives all request, download and receiving contracts.
+
 The [pricing workspace guide](../../sf97-merchant-revenue-ops/WORKSPACE.md) covers
 source selection, native settlement, exact payment choices and repricing. The
 [planning guide](../../sf97-merchant-revenue-ops/PLANNING.md) describes scenario
@@ -111,6 +131,9 @@ files.
 The original CLI emits one startup object containing its schema, existing
 `MERCHANT_PRICING_WORKSPACE_READY` status, canonical `state` and `configPath`, the
 actual `configSha256`, `pid`, `url`, `planningUrl` and `costsUrl`.
+A selected runtime containing tariff planning also emits `tariffsUrl`. Applications
+accepts that optional link only on the same verified origin at `/tariffs/`, with no
+query, fragment or credentials. Older pricing runtimes retain their existing links.
 A backup receiving start also reports `costRestore`, including the actual archive,
 receiving directory, restored archive digest, complete file count and replay state. Applications accepts the
 reported links for that selected seller, workspace and requested port. The
@@ -167,7 +190,8 @@ Keep its complete original TAR, up to the native 512 MiB limit.
 6. Open **Supplier costs** to read its original documents and saved editions.
    Open **Scenario planning** and the pricing history to continue the restored
    comparisons and saved reviews. All three links belong to the same original
-   pricing process and directory.
+   pricing process and directory. A runtime containing tariff planning also opens
+   **Tariff planning** on this same process.
 7. Stop and reopen that application normally. A completed restoration reopens
    its current retained work, including changes made after import. After
    successful receiving, the configuration can clear the optional backup field
@@ -179,6 +203,15 @@ restoration. It retains complete files and original completion records; a
 pre-existing unrelated workspace is not a receiving destination. Choosing
 another backup uses a new receiving directory. The same original archive and
 destination recover an interrupted import.
+
+Saved tariff plans have their own complete portfolio JSON. Export it alongside
+the original **WORKSPACE_BACKUP** from the same finished selection. First receive
+the original pricing backup; then open **Tariff planning** and receive that complete
+portfolio into the restored pricing directory. The receiver matches its original
+pricing versions and retained selection requests. The [Merchant economics receiving
+guide](../../../../products/merchant-economics/OPERATING.md#receive-tariff-plans-with-their-original-pricing-workspace)
+includes both original exports, complete CLI commands and the independent reopen
+sequence.
 
 A single **COST_EDITION** export remains useful for its original edition
 handover. It does not contain the complete pricing workspace required by this

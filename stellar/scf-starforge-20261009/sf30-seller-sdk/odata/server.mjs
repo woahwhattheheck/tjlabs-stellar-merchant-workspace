@@ -6,14 +6,24 @@ import { join } from 'node:path';
 import { fault } from './state.mjs';
 
 const assets=fileURLToPath(new URL('./public/',import.meta.url));
-const files=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/collection-view.mjs',['collection-view.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
-export async function startODataServer({workspace,port=8797,liveServiceId,liveOperations,closeWorkspace=true}={}){
+const files=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/collection-view.mjs',['collection-view.mjs','text/javascript; charset=utf-8']],['/comparison-view.mjs',['comparison-view.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
+export async function startODataServer({workspace,port=8797,liveServiceId,liveOperations,closeWorkspace=true,subscriptionConnection,expectedSubscriptionsSha256}={}){
   if(!Number.isInteger(port)||port<0||port>65535)throw new TypeError('Choose a local TCP port.');
   if(typeof closeWorkspace!=='boolean')throw new TypeError('closeWorkspace must be a Boolean.');
   if(liveOperations!==undefined&&(!liveOperations||typeof liveOperations.status!=='function'||typeof liveOperations.start!=='function'))
     throw new TypeError('Pass the original open live operations object.');
   let publisher,live=liveOperations,closing;
   const ownsLive=liveOperations===undefined;
+  let subscriptions=null,subscriptionHandler=null,subscriptionIdentity=null;
+  if(subscriptionConnection===undefined&&expectedSubscriptionsSha256!==undefined)
+    throw new TypeError('Select a subscription connection with its expected SHA256.');
+  if(subscriptionConnection!==undefined){
+    const [{openSubscriptionOperator},{subscriptionHttpHandler},{odataSubscriptionSelection}]=await Promise.all([
+      import('./live/subscriptions/operator.mjs'),import('./live/subscriptions/server.mjs'),import('./live/subscriptions/managed.mjs')]);
+    const selected=await odataSubscriptionSelection(subscriptionConnection,{expectedSha256:expectedSubscriptionsSha256});
+    subscriptionIdentity=selected.identity;
+    subscriptions=await openSubscriptionOperator({connection:selected.configuration});subscriptionHandler=subscriptionHttpHandler({operator:subscriptions});
+  }
   const getPublisher=async()=>publisher||=(await import('./publisher.mjs')).openODataPublisher({workspace});
   const getLive=async()=>{
     if(!live)live=import('./live-operations.mjs').then(module=>module.openODataLiveOperations({
@@ -35,6 +45,8 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
       if(req.headers.host!=='127.0.0.1:'+address.port&&req.headers.host!=='localhost:'+address.port)throw fault('ODATA_LOCAL_HOST','Use the displayed local workspace address.',400);
       const url=new URL(req.url,origin);
       if(req.headers.origin&&req.headers.origin!==origin&&req.headers.origin!=='http://localhost:'+address.port)throw fault('ODATA_LOCAL_ORIGIN','Open the local workspace before submitting an operation.',403);
+      if(req.method==='GET'&&url.pathname==='/api/subscriptions-connection')return send(res,200,{configured:Boolean(subscriptions),url:subscriptions?'/subscriptions/':null});
+      if(subscriptionHandler&&await subscriptionHandler(req,res,url))return;
       if(req.method==='GET'&&files.has(url.pathname)){
         const [name,type]=files.get(url.pathname);return send(res,200,await readFile(join(assets,name)),{'Content-Type':type,
           'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"});}
@@ -43,7 +55,7 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
         browserMaxBytes:64*1024*1024,workspaceDirectory:workspace.directory,
         nativeCommand:[process.execPath,fileURLToPath(new URL('./cli.mjs',import.meta.url))]});
       if(req.method==='GET'&&url.pathname==='/api/application'){
-        const {odataWorkspaceProbe}=await import('./live/startup.mjs');return send(res,200,await odataWorkspaceProbe(workspace));}
+        const {odataWorkspaceProbe}=await import('./live/startup.mjs');return send(res,200,await odataWorkspaceProbe(workspace,{subscriptions:subscriptionIdentity}));}
       if(req.method==='GET'&&url.pathname==='/api/rows')return send(res,200,{rows:await workspace.rows(url.searchParams.get('id'))});
       if(req.method==='GET'&&url.pathname==='/api/edition')return send(res,200,await workspace.edition(url.searchParams.get('id')));
       if(req.method==='GET'&&url.pathname==='/api/source')return send(res,200,await workspace.raw(url.searchParams.get('hash')),
@@ -62,6 +74,11 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
       if(req.method==='GET'&&url.pathname==='/api/live/collection/rows'){
         const input=Object.fromEntries(url.searchParams);input.offset=Number(input.offset??0);input.limit=Number(input.limit??100);
         return send(res,200,await(await getLive()).collectionRows(input));}
+      if(req.method==='GET'&&url.pathname==='/api/live/comparisons')return send(res,200,await(await getLive()).comparisons({id:url.searchParams.get('id')}));
+      if(req.method==='GET'&&url.pathname==='/api/live/comparison')return send(res,200,await(await getLive()).comparison(Object.fromEntries(url.searchParams)));
+      if(req.method==='GET'&&url.pathname==='/api/live/comparison/rows'){
+        const input=Object.fromEntries(url.searchParams);input.offset=Number(input.offset??0);input.limit=Number(input.limit??100);
+        return send(res,200,await(await getLive()).comparisonRows(input));}
       if(req.method==='GET'&&url.pathname==='/api/live/file'){
         const file=await(await getLive()).file(Object.fromEntries(url.searchParams));
         return send(res,200,file.bytes,{'Content-Type':file.name.endsWith('.csv')?'text/csv; charset=utf-8':file.name.endsWith('.jsonl')?'application/x-ndjson':file.name.endsWith('.json')?'application/json; charset=utf-8':'application/octet-stream',
@@ -97,17 +114,21 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
         case '/api/live/buyer':result=await(await getLive()).buyer(input);break;
         case '/api/live/receive':result=await(await getLive()).receive(input);break;
         case '/api/live/collection':result=await(await getLive()).collect(input);break;
+        case '/api/live/comparison':result=await(await getLive()).compareCollections(input);break;
+        case '/api/live/comparison/review':result=await(await getLive()).reviewComparison(input);break;
+        case '/api/live/comparison/publish':result=await(await getLive()).publishComparison(input);break;
         default:throw fault('ODATA_ROUTE','Workspace operation not found.',404);
       }
       return send(res,200,result);
     }catch(error){if(!res.headersSent)send(res,error.status||(error instanceof TypeError?400:500),{error:error.code||'ODATA_OPERATION_FAILED',message:error.message});else res.destroy();}
   });
-  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
-  const service={url:'http://127.0.0.1:'+server.address().port,server,liveRuntime:null,
+  try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});}
+  catch(error){await subscriptions?.close();throw error;}
+  const service={url:'http://127.0.0.1:'+server.address().port,server,liveRuntime:null,subscriptionIdentity,
     close:()=>closing??=(async()=>{
       // Stop accepting browser operations before releasing any owned runtime.
       await new Promise(resolve=>server.close(resolve));
-      try{if(ownsLive&&live)await(await live).close();}
+      try{try{if(ownsLive&&live)await(await live).close();}finally{await subscriptions?.close();}}
       finally{if(closeWorkspace)await workspace.close();}
     })()};
   try{if(liveServiceId)service.liveRuntime=await(await getLive()).start({id:liveServiceId});return service;}

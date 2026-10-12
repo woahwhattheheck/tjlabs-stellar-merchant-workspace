@@ -1,0 +1,172 @@
+{
+  "summary": "Capture Helsinki services and requests",
+  "description": "Capture the original services and fixed-window feedback through the local Open311 workspace, then return saved source identifiers.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "runKey": {
+        "type": "string",
+        "description": "Stable identifier for this operator action; reuse it when continuing the same flow.",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,119}$"
+      },
+      "connectionId": {
+        "type": "string",
+        "default": "helsinki-public"
+      },
+      "servicesQuery": {
+        "type": "object",
+        "default": {
+          "locale": "en"
+        }
+      },
+      "requestsQuery": {
+        "type": "object",
+        "default": {
+          "start_date": "2026-10-08T08:00:00Z",
+          "end_date": "2026-10-08T12:00:00Z",
+          "extensions": true
+        }
+      }
+    },
+    "required": [
+      "runKey"
+    ]
+  },
+  "value": {
+    "modules": [
+      {
+        "id": "prepare_services",
+        "summary": "Prepare service catalogue",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "prepare_capture"
+            },
+            "target": {
+              "type": "static",
+              "value": "source"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({kind:'services', connectionId:flow_input.connectionId, query:flow_input.servicesQuery, runKey:flow_input.runKey+':services'})"
+            }
+          }
+        }
+      },
+      {
+        "id": "services",
+        "summary": "Save original service catalogue",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "apply_plan"
+            },
+            "target": {
+              "type": "static",
+              "value": "source"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({plan:results.prepare_services})"
+            }
+          }
+        }
+      },
+      {
+        "id": "prepare_requests",
+        "summary": "Prepare fixed-window requests",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "prepare_capture"
+            },
+            "target": {
+              "type": "static",
+              "value": "source"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({kind:'requests', connectionId:flow_input.connectionId, query:flow_input.requestsQuery, runKey:flow_input.runKey+':requests'})"
+            }
+          }
+        }
+      },
+      {
+        "id": "requests",
+        "summary": "Save original feedback requests",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "apply_plan"
+            },
+            "target": {
+              "type": "static",
+              "value": "source"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({plan:results.prepare_requests})"
+            }
+          }
+        }
+      },
+      {
+        "id": "overview",
+        "summary": "Read the updated workspace",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "overview"
+            },
+            "target": {
+              "type": "static",
+              "value": "source"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({})"
+            }
+          }
+        }
+      },
+      {
+        "id": "result",
+        "summary": "Return saved captures",
+        "value": {
+          "type": "rawscript",
+          "language": "bun",
+          "content": "export async function main(services: any, requests: any, overview: any) {\n  return {schema:\"tjlabs.windmill.open311.capture.v1\", services, requests, overview};\n}\n",
+          "input_transforms": {
+            "services": {
+              "type": "javascript",
+              "expr": "results.services"
+            },
+            "requests": {
+              "type": "javascript",
+              "expr": "results.requests"
+            },
+            "overview": {
+              "type": "javascript",
+              "expr": "results.overview"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,8 +1,8 @@
 # Operate and receive a Timescale data product
 
 Use this workflow to bring an existing TimescaleDB source through native
-operations, reviewed dataset publication, assigned follow-up work and complete
-customer handover. The browser, command line and merchant agent share the saved
+operations, complete source commissioning, reviewed dataset publication,
+assigned follow-up work and complete customer handover. The browser, command line and merchant agent share the saved
 project and its PostgreSQL publisher.
 
 The complete operating path is available in this standalone product. Its source
@@ -43,8 +43,8 @@ node stellar/scf-starforge-20261009/distribution/cli.mjs registrations --source 
 ~~~
 
 Replace `starforge` below with that absolute CLI path when working from source.
-The registration includes seven commands, thirteen original exports, the
-Timescale browser assets, merchant provider and Applications provider.
+The registration includes the native, client and receiving commands, public
+SDK exports, Timescale browser assets, merchant provider and Applications provider.
 
 The selected native database must have TimescaleDB 2.30.2 on PostgreSQL 16, 17 or
 18. A read declaration identifies the actual database and selected read role;
@@ -95,8 +95,7 @@ Inspection returns the saved project identity and configuration binding.
 Choose **Timescale merchant workspace** in installed Applications and select
 that merchant configuration and alias. Save the reviewed input selection, then
 use its existing Start, Open, Stop and reopen controls. The browser opens the
-native operations above the original dataset publisher, including the assigned
-work desk.
+native operations above the original dataset publisher, including the commissioning and assigned-work desks.
 
 The equivalent direct launch is:
 
@@ -148,10 +147,10 @@ customer data.
 7. Open the original buyer handoff and read the published snapshot. Preserve its
    exact row values, source run and publication identity with the handover.
 
-The browser and thirty Timescale MCP tools expose this same workflow. The
-original twenty-one native/publication/file tools are joined by nine assigned
-work and report tools. Merchant publisher tools continue the extraction review,
-publication, buyer handoff and enabled publication schedules.
+The browser and Timescale MCP tools expose this same workflow, together with
+assigned work, complete commissioning and retained reports. Merchant publisher
+tools continue the extraction review, publication, buyer handoff and enabled
+publication schedules.
 
 For command and JSON input details, use the
 [native operator guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/timescale/README.md)
@@ -324,9 +323,67 @@ contain the product code and guides. A completed native journey and a completed
 checkpoint are recorded separately; use the returned original artifacts when
 evaluating a run.
 
+## 8. Commission the full source and hand it over
+
+Open **Commissioning** on that same project to retain the complete original
+intake, fill its actual source contract and acceptance criteria, and bind the
+retained native edition, aggregate, time window and publication columns.
+Import the complete baseline and observed JSON tables with exact native text
+and null cells. Map every column or record an explicit omission reason, then
+inspect every row of the full multiset comparison. Duplicate multiplicity and
+large decimal values remain intact.
+
+Record the original native operations and their actual outcomes, assess each
+original criterion, and complete technical handover with either accepted
+criteria or named open work. Reopen when the source or remaining work changes;
+the full original revision history remains. The desk uses the existing
+journal, publisher and native controls.
+
+Publish the exact selected revision as complete JSON and printable HTML. The
+JSON retains the original intake, all original source-file bodies, every
+comparison and observed native outcome, and every full prior project revision.
+The installed `timescale-client commissioning-report-download` resumes the
+original two files and manifest after interruption or a host restart. Each
+file must fit the original reader's 256,000,000-byte capacity. For larger
+projects, the whole-project package retains every source and revision.
+
+[COMMISSIONING.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/timescale/COMMISSIONING.md)
+contains the complete source format, browser workflow, original request
+recovery, all command inputs, typed client and MCP interfaces. The same
+`dataset-timescale` command exposes the commissioning operations, and the
+existing client exposes `client.commissioning`. Existing Applications launch
+configuration continues to open this full product.
+
+The original native demonstration remains bound to its selected source commit
+and request input. Later commissioning receiving adopts the updated product
+source against that completed retained project with explicit lineage. It does
+not rewrite the original run or repeat its native database operations.
+
+## Retain the operator's full working context
+
+The Commissioning desk now keeps complete forms and original selected files
+under their workspace, project and criterion identities. Switching projects,
+native editions or operation choices preserves the previous authored form and
+clears an unrelated loaded result. Reopen the complete retained form to recover
+its exact source identity and full file bytes.
+
+Use its **Retained original requests** panel to inspect or download the complete
+original command after completion, failure or a lost response. A closed local
+request keeps its original file and UUID in history. The completion of an older
+command cannot discard a newer draft or replace another selected project.
+When the saved source or review context advances, explicitly reconcile the
+retained form with the current project before submitting it.
+
+The commissioning browser's requests and downloads bind the original workspace
+UUID even when a listener URL is reused. These controls join the existing native
+journal, installed receiver and Applications lifecycle described above. The
+original native operation and its subsequent installed receiving keep their
+existing source and request identities.
+
 ## Source and operating references
 
 - [Native source, refresh, job, publication and portable project](../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/timescale/README.md)
+- [Complete source commissioning and acceptance](../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/timescale/COMMISSIONING.md)
 - [Assigned work and full revision history](../../stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/timescale/REMEDIATION.md)
 - [Merchant configuration, Applications and complete project download](../../stellar-forge/mcp-merchant-operator/TIMESCALE_WORKSPACE.md)
 - [Typed client, reports and full desk receiving](../../stellar-forge/mcp-merchant-operator/TIMESCALE_CLIENT.md)
@@ -337,3 +394,13 @@ The product preserves the original database, publisher, schedule, payment and
 receiving implementations and the applicable dependency licenses. Select the
 customer's actual source, access and vendor deployment terms when adapting the
 worked example.
+
+## Continue commissioning through the installed receiver
+
+The existing `timescale-remediation-receiving` command now accepts `--commissioning-source-commit` and `--commissioning-directory`. Run it with the original native result, merchant configuration, workspace and remediation receiving directory; supplied private inputs use both `--commissioning-intake-file` and `--commissioning-adoption-file`. The source argument is the final merged 40-character commissioning commit. A completed original receiving is reopened and its earlier phases are reused. The continuation keeps the same owner and source, retains the complete technical intake and native tables, maps every criterion, reopens the handover, resumes its frozen report after the original owner restarts, and receives the complete portable project.
+
+The complete invocation, supplied-input mapping, recovery behavior and file layout are documented in `stellar-forge/mcp-merchant-operator/TIMESCALE_COMMISSIONING_RECEIVING.md`. The original pinned native operation completes before this explicit source adoption. Company inputs and commercial decisions stay with the original private case.
+
+## Continue commissioning into customer reconciliation
+
+Use the [complete Timescale customer product](../timescale-customer/OPERATING.md) to retain the original complete commissioning report in the existing DuckDB customer. Review all native field types and meanings, import baseline and observed editions with duplicate observations preserved, and continue through complete paired accounting, engineer decisions, saved reports and portable warehouse receiving. The new intake uses the original report format and its exact source bytes; the native Timescale project keeps its original ownership and history.

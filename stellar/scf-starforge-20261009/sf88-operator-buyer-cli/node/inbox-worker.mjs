@@ -6,6 +6,8 @@ import { pathToFileURL } from 'node:url';
 import { absolute, digest, intent, object, need, safeCode, readBytes, readJson,
   writeJson, syncDirectory } from './store.mjs';
 
+import { retainInboxDiagnostic } from './inbox-diagnostics.mjs';
+
 const SCHEMA = 'stellar-forge.node-buyer-inbox-command.v1';
 const INBOX = 'stellar-forge.sf88.buyer-inbox.v1';
 const controller = new AbortController();
@@ -21,7 +23,7 @@ async function main([runtimeDirectory, inputFile, resultFile, ...extra]) {
   const input = await readJson(absolute(inputFile));
   need(input.schema === SCHEMA && typeof input.command === 'string', 'INBOX_WORKER_INPUT_INVALID');
   const original = name => import(pathToFileURL(join(runtimeDirectory, name)).href);
-  let queue, native = null, responseFile = null, error = null;
+  let queue, native = null, responseFile = null, error = null, diagnostic = null;
   try {
     need(!controller.signal.aborted, 'OPERATION_ABORTED_BEFORE_START');
     if (['export-operations','inspect-operations'].includes(input.command)) {
@@ -104,6 +106,20 @@ async function main([runtimeDirectory, inputFile, resultFile, ...extra]) {
               native = {...await queue.show(intentId), lostOutputProof:exported};
             }
           } else if (input.command === 'show') native = await queue.show(intentId);
+          else if (input.command === 'rpc-responses' || input.command === 'rpc-response') {
+            const { readCommerceRpcResponse } = await original('../sf66-demo-launcher/commerce.mjs');
+            native = await readCommerceRpcResponse(absolute(input.commerceDirectory), {
+              intentId, expectedQueueRoot:root, environment:process.env,
+              node:process.execPath, signal:controller.signal,
+              ...(input.command === 'rpc-response' ? {
+                readId:input.readId, expectedResponseSha256:input.expectedResponseSha256,
+              } : {}),
+            });
+            const file = join(root, 'jobs', native.id, 'execution.json');
+            need(digest(await readBytes(file)) === native.configSha256, 'INBOX_CONFIG_CHANGED');
+            const config = await original('config.mjs');
+            responseFile = config.responseFile(await config.config(file));
+          }
           else if (input.command === 'response') {
             native = await queue.show(intentId);
             const file = join(root, 'jobs', native.id, 'execution.json');
@@ -132,6 +148,8 @@ async function main([runtimeDirectory, inputFile, resultFile, ...extra]) {
     }
   } catch (problem) {
     error = safeCode(problem?.code, 'INBOX_OPERATION_FAILED');
+    diagnostic = await retainInboxDiagnostic(problem, { phase:'COMMAND', runtimeDirectory,
+      inputFile, resultFile, command:input.command, workerFile:process.argv[1] });
     // The native attempt may already exist. Return its original current view
     // when readable; never clear a marker or dispatch another intent.
     if (queue && input.intentId) {
@@ -140,12 +158,15 @@ async function main([runtimeDirectory, inputFile, resultFile, ...extra]) {
     process.exitCode = signalExit ?? 1;
   }
   await writeJson(absolute(resultFile), { schema:SCHEMA, command:input.command,
-    root:input.root ?? null, native, responseFile, error }, { exclusive:true });
+    root:input.root ?? null, native, responseFile, error, diagnostic }, { exclusive:true });
   if (signalExit !== undefined) process.exitCode = signalExit;
 }
 
-main(process.argv.slice(2)).catch(error => {
+main(process.argv.slice(2)).catch(async error => {
+  const [runtimeDirectory, inputFile, resultFile] = process.argv.slice(2);
+  const diagnostic = await retainInboxDiagnostic(error, { phase:'WORKER', runtimeDirectory,
+    inputFile, resultFile, workerFile:process.argv[1] });
   process.stderr.write(JSON.stringify({ error:safeCode(error?.code, 'INBOX_WORKER_FAILED'),
-    retry:'NO_AUTOMATIC_RETRY' }) + '\n');
+    retry:'NO_AUTOMATIC_RETRY', diagnostic }) + '\n');
   process.exitCode = signalExit ?? 1;
 }).finally(() => { process.removeListener('SIGINT', interrupt); process.removeListener('SIGTERM', terminate); });

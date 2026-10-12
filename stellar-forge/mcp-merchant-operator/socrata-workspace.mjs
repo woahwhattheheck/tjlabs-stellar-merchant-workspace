@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { exact, failure, identifier, line, plain, privateSupportDirectory, fileBytes } from './config.mjs';
 import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
 import { publicDomain } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/source.mjs';
+import { readFacilitatorProfiles } from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/release-facilitator.mjs';
 
 export const SOCRATA_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.socrata-workspace-connection.v1';
 
@@ -70,7 +71,7 @@ export async function readSocrataWorkspaceConfiguration(path) {
   const base = dirname(path), workspaces = Object.create(null), seen = new Set();
   for (const [name, input] of Object.entries(raw.workspaces)) {
     identifier(name, 'Socrata workspace alias');
-    exact(input, ['label', 'directory', 'domains', 'appTokenEnv', 'imports', 'merchants', 'buyerWorkspaces', 'runtime'],
+    exact(input, ['label', 'directory', 'domains', 'appTokenEnv', 'imports', 'merchants', 'buyerWorkspaces', 'runtime', 'facilitatorConnection'],
       ['directory', 'domains']);
     const directory = await realpath(hostPath(input.directory, base));
     await privateSupportDirectory(directory);
@@ -103,7 +104,10 @@ export async function readSocrataWorkspaceConfiguration(path) {
     }
     workspaces[name] = { label: line(input.label ?? name), directory, domains,
       appTokenEnv: input.appTokenEnv ?? 'SOCRATA_APP_TOKEN', tokenRequired: input.appTokenEnv !== undefined,
-      imports, merchants, buyerWorkspaces: buyers, runtime: runtime(input.runtime) };
+      imports, merchants, buyerWorkspaces: buyers, runtime: runtime(input.runtime),
+      ...(input.facilitatorConnection === undefined ? {} : {
+        facilitators: await readFacilitatorProfiles(hostPath(input.facilitatorConnection, base))
+      }) };
   }
   return { workspaces };
 }
@@ -152,7 +156,7 @@ export class MerchantSocrataWorkspaces {
         const appToken = process.env[configuration.appTokenEnv];
         if (configuration.tokenRequired && !appToken) throw failure('SOCRATA_TOKEN_UNAVAILABLE', 'The declared provider token environment variable is empty.');
         const { openSocrataOperator } = await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/socrata/server.mjs');
-        const operator = await openSocrataOperator({ directory: configuration.directory, appToken });
+        const operator = await openSocrataOperator({ directory: configuration.directory, appToken, facilitators: configuration.facilitators });
         return { configuration, operator, instanceId: randomUUID(), browser: null, tail: Promise.resolve(), closing: false };
       })();
       this.#handles.set(name, opening);
@@ -167,7 +171,8 @@ export class MerchantSocrataWorkspaces {
         workspace, label: entry.label, domains: entry.domains, state: this.#handles.has(workspace) ? 'OPEN' : 'CLOSED',
         imports: Object.entries(entry.imports).map(([sourceImport, item]) => ({ sourceImport, label: item.label, kind: item.kind })),
         merchants: Object.entries(entry.merchants).map(([profile, item]) => ({ profile, label: item.label, origin: item.origin, path: item.path, payment: item.payment })),
-        buyerWorkspaces: Object.entries(entry.buyerWorkspaces).map(([buyerWorkspace, item]) => ({ buyerWorkspace, label: item.label }))
+        buyerWorkspaces: Object.entries(entry.buyerWorkspaces).map(([buyerWorkspace, item]) => ({ buyerWorkspace, label: item.label })),
+        facilitators: Object.entries(entry.facilitators?.providers ?? {}).map(([provider, item]) => ({ provider, ...item }))
       })) };
     const configuration = this.#declared(name), pending = this.#handles.get(name);
     if (!pending) return { workspace: name, label: configuration.label, state: 'CLOSED' };
@@ -197,7 +202,7 @@ export class MerchantSocrataWorkspaces {
           const file = await handle.operator.readExport(args.id, args.filename);
           return { bytes: await fileBytes(file.path, 256_000_000), name: args.filename, type: file.contentType };
         }
-        if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review'].includes(args.kind))
+        if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review', 'facilitator-review'].includes(args.kind))
           throw failure('INVALID_PARAMS', 'Choose a supported original publisher file kind.');
         const file = await handle.operator.readPublisherExport(args.kind, args.id);
         return { bytes: file.bytes, name: file.filename, type: file.contentType };

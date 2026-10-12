@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { acquireReleaseLease } from '../../sf82-seller-pilot/release-process.mjs';
 import { templateFromWorkspace,prepareFromWorkspace,writePackage,readPackage,prepareBuyerHandoff,receivePage } from './live/client.mjs';
 import { openServiceCollections } from './live/collection-store.mjs';
+import { openServiceComparisons } from './live/collection-comparison-store.mjs';
 import { startODataMerchant } from './live/merchant.mjs';
 import { atomic,readJson,writeNew,formatted,digest,stable,identifier,fault,now } from './state.mjs';
 
@@ -118,8 +119,18 @@ export async function openODataLiveOperations({workspace,nativeFactoryFor,env=pr
   const collect=async({id,collectionId,pages,title,fields,limits})=>(await collectionStore(id)).collect({id:collectionId,pages,title,fields,limits});
   const restoreCollection=async({id,collectionId,sourceManifest,expectedSha256})=>
     (await collectionStore(id)).restore({id:collectionId,sourceManifest,expectedSha256});
+  async function comparisonStore(id){const record=await profile(id);
+    return openServiceComparisons({directory:join(products,record.id),profile:record,sequence});}
+  const comparisons=async({id})=>(await comparisonStore(id)).list();
+  const comparison=async({id,comparisonId})=>(await comparisonStore(id)).inspect(comparisonId);
+  const comparisonRows=async({id,comparisonId,...options})=>(await comparisonStore(id)).rows(comparisonId,options);
+  const compareCollections=async({id,comparisonId,...input})=>(await comparisonStore(id)).create({id:comparisonId,...input});
+  const reviewComparison=async({id,comparisonId,...input})=>(await comparisonStore(id)).review(comparisonId,input);
+  const publishComparison=async({id,comparisonId,...input})=>(await comparisonStore(id)).publish(comparisonId,input);
+  const restoreComparison=async({id,comparisonId,...input})=>(await comparisonStore(id)).restore({id:comparisonId,...input});
   async function file({id,kind='package',recordId,name}){
     if(kind==='collection')return (await collectionStore(id)).file(recordId,name);
+    if(kind==='comparison')return (await comparisonStore(id)).file(recordId,name);
     await profile(id);
     const allowed=kind==='package'?packageFiles:kind==='buyer'?[...buyerFiles,'response.json']:kind==='receiving'?receivedFiles:null;
     if(!allowed?.includes(name))throw fault('ODATA_LIVE_FILE','Live service file not found.',404);
@@ -134,5 +145,5 @@ export async function openODataLiveOperations({workspace,nativeFactoryFor,env=pr
     return {...record,plan:prepared.plan,selection:prepared.selection,runtime:publicRun(running.get(id)),
       buyers:await list('buyers','handoff.json'),received:await list('receiving','receiving.json')};}
   async function close(){closing=true;await tail;let failure;for(const id of [...running.keys()])try{await stopOne(id);}catch(error){failure??=error;}if(failure)throw failure;}
-  return {root,status,prepare,start,stop,buyer,receive,collections,collection,collectionRows,collect,restoreCollection,file,detail,close};
+  return {root,status,prepare,start,stop,buyer,receive,collections,collection,collectionRows,collect,restoreCollection,comparisons,comparison,comparisonRows,compareCollections,reviewComparison,publishComparison,restoreComparison,file,detail,close};
 }

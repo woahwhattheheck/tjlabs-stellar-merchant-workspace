@@ -2,6 +2,8 @@
 import type { Buffer } from 'node:buffer';
 import type { ODataWorkspace } from './workspace.mjs';
 import type { ODataServiceCollectionController, ODataServiceCollectionInput } from './live/collection-store.mjs';
+import type { ODataServiceComparisonController,ODataServiceComparisonInput } from './live/collection-comparison-store.mjs';
+import type { ODataComparisonRowsOptions,ODataComparisonReviewRequest } from './live/collection-comparison.mjs';
 import type { ODataEnvironment, ODataLiveProfile, ODataPayment } from './types.mjs';
 import type { ODataNativeFactory, ODataLiveSnapshot, ODataNormalizedLivePlan, ODataLiveQuery,
   ODataBuyerHandoff, ODataLiveReceiving } from './live-sdk.mjs';
@@ -20,6 +22,8 @@ export interface ODataLivePrepareInput {
 export type ODataLiveReceivedRecord = Omit<ODataLiveReceiving, 'directory'> & { id: string; directory?: string };
 export interface ODataLiveCollectionReference { id: string; collectionId: string }
 export type ODataLiveCollectionInput = ODataLiveCollectionReference & Omit<ODataServiceCollectionInput, 'id'>;
+export interface ODataLiveComparisonReference {id:string;comparisonId:string}
+export type ODataLiveComparisonInput=ODataLiveComparisonReference & Omit<ODataServiceComparisonInput,'id'>;
 export interface ODataLiveOperations {
   root: string;
   status(): Promise<{ products: Array<ODataLiveProfile & {
@@ -38,6 +42,14 @@ export interface ODataLiveOperations {
   collect(input: ODataLiveCollectionInput): ReturnType<ODataServiceCollectionController['collect']>;
   restoreCollection(input: ODataLiveCollectionReference & { sourceManifest: string; expectedSha256: string }):
     ReturnType<ODataServiceCollectionController['restore']>;
+  comparisons(input:{id:string}):ReturnType<ODataServiceComparisonController['list']>;
+  comparison(input:ODataLiveComparisonReference):ReturnType<ODataServiceComparisonController['inspect']>;
+  comparisonRows(input:ODataLiveComparisonReference & ODataComparisonRowsOptions):ReturnType<ODataServiceComparisonController['rows']>;
+  compareCollections(input:ODataLiveComparisonInput):ReturnType<ODataServiceComparisonController['create']>;
+  reviewComparison(input:ODataLiveComparisonReference & ODataComparisonReviewRequest):ReturnType<ODataServiceComparisonController['review']>;
+  publishComparison(input:ODataLiveComparisonReference & {expectedRevision:number}):ReturnType<ODataServiceComparisonController['publish']>;
+  restoreComparison(input:ODataLiveComparisonReference & {sourceManifest:string;expectedSha256:string}):ReturnType<ODataServiceComparisonController['restore']>;
+  file(input:{id:string;name:string;kind:'comparison';recordId:string}):ReturnType<ODataServiceComparisonController['file']>;
   file(input: { id: string; name: string; kind: 'collection'; recordId: string }):
     ReturnType<ODataServiceCollectionController['file']>;
   file(input: { id: string; name: string; kind?: 'package'; recordId?: never } |

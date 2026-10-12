@@ -172,10 +172,10 @@ function previewView(row) {
 function projectView(value, args = {}) {
   const result = { id: value.id, title: value.input.title, revision: value.revision, currentRevision: value.currentRevision,
     createdAt: value.createdAt, updatedAt: value.updatedAt, inputDigest: value.inputDigest,
-    counts: { exports: value.exports.length, deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0 } };
+    counts: { exports: value.exports.length, deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0, comparisons: value.comparisons?.length ?? 0, requestSets: value.requestSets?.length ?? 0, requestRuns: value.requestRuns?.length ?? 0, merchantPreparations: value.merchantPreparations?.length ?? 0 } };
   if (args.includeInput === true) result.input = value.input;
   if (args.collection) {
-    const mapping = { exports: exportView, deployments: deploymentView, previews: previewView }[args.collection];
+    const mapping = { exports: exportView, deployments: deploymentView, previews: previewView, comparisons: value => value, requestSets: value => value, requestRuns: value => value, merchantPreparations: value => value }[args.collection];
     if (!mapping) throw failure('INVALID_PARAMS', 'Choose an original project collection.');
     result.collection = args.collection; result.records = page((value[args.collection] ?? []).map(mapping), args);
   }
@@ -192,7 +192,14 @@ function releaseView(value) {
 export class MerchantGraphqlWorkspaces {
   #config; #entries = new Map(); #opening = new Map(); #ended = new Map(); #closing = false; #close;
   #files;
-  constructor(config) { this.#config = config; this.#files = new MerchantGraphqlFiles(config); }
+  constructor(config) {
+    this.#config = config;
+    this.#files = new MerchantGraphqlFiles(config, { nativeForWorkspace: alias => {
+      const entry = this.#entries.get(alias);
+      if (entry?.closing) throw failure('GRAPHQL_CLOSING', 'The original workspace files are closing.');
+      return entry?.service.files;
+    } });
+  }
   get summary() {
     return { configured: Boolean(this.#config.graphqlWorkspaces), closing: this.#closing, files: this.#files.summary,
       workspaces: Object.entries(this.#config.graphqlWorkspaces?.workspaces ?? {}).map(([workspace, item]) => {
@@ -419,6 +426,124 @@ export class MerchantGraphqlWorkspaces {
     }
     const entry = this.#entry(args.workspace);
     switch (name) {
+      case 'merchant_graphql_preparations':
+      case 'merchant_graphql_preparation': {
+        const listing = name === 'merchant_graphql_preparations';
+        const allowed = listing ? ['workspace', 'project', 'offset', 'limit', 'expectedSnapshotSha256']
+          : ['workspace', 'project', 'preparationId', 'generation', 'recordSha256'];
+        exact(args, allowed, listing ? ['workspace', 'project'] : ['workspace', 'project', 'preparationId']);
+        const query = new URLSearchParams();
+        for (const key of allowed) if (key !== 'workspace' && args[key] !== undefined) query.set(key, String(args[key]));
+        const value = await this.#request(entry, (listing ? '/api/preparations?' : '/api/preparation?') + query);
+        return { ...value, ...(plain(value.project) ? { project: projectView(value.project) } : {}) };
+      }
+      case 'merchant_graphql_preparation_prepare':
+      case 'merchant_graphql_preparation_continue':
+      case 'merchant_graphql_preparation_recover':
+      case 'merchant_graphql_preparation_packet': {
+        const action = name.slice('merchant_graphql_preparation_'.length);
+        const allowed = {
+          prepare: ['workspace', 'source', 'id', 'project', 'expectedRevision', 'inputDigest', 'kind', 'baselineExportId', 'comparisonDigest'],
+          continue: ['workspace', 'source', 'id', 'project', 'preparationId', 'expectedGeneration', 'expectedRecordSha256'],
+          recover: ['workspace', 'project', 'preparationId'],
+          packet: ['workspace', 'project', 'revision', 'preparationId'],
+        }[action];
+        exact(args, allowed, ['workspace', 'project']);
+        if (action === 'prepare' || action === 'continue') {
+          let draftRevision = args.expectedRevision;
+          if (action === 'continue') {
+            const retained = await this.#request(entry, '/api/preparation?' + new URLSearchParams({
+              project: originalProject(args.project), preparationId: originalUuid(args.preparationId) }));
+            draftRevision = retained.record.draftRevision;
+          }
+          // Read the original frozen revision on same-ID replay, even after later edits.
+          const saved = await this.#project(entry, { project: args.project, revision: revision(draftRevision) });
+          this.#sourceForQueries(entry.alias, args.source, parse(saved.input.queriesText, 'Approved queries'));
+        }
+        const { workspace, source, ...body } = args;
+        const value = await this.#request(entry, '/api/preparation/' + action, body);
+        return { ...value, ...(plain(value.project) ? { project: projectView(value.project) } : {}),
+          ...(Object.hasOwn(value, 'exported') ? { exported: value.exported ? exportView(value.exported) : null } : {}) };
+      }
+      case 'merchant_graphql_request_set_prepare':
+      case 'merchant_graphql_request_set_recover':
+      case 'merchant_graphql_request_run_recover':
+      case 'merchant_graphql_request_run_compare':
+      case 'merchant_graphql_request_run_control':
+      case 'merchant_graphql_request_packet': {
+        const contracts = {
+          merchant_graphql_request_set_prepare: ['/api/request-set/prepare', ['workspace', 'id', 'project', 'expectedRevision', 'title', 'notes', 'cases', 'basedOn']],
+          merchant_graphql_request_set_recover: ['/api/request-set/recover', ['workspace', 'project', 'requestSetId', 'expectedRevision', 'recordSha256']],
+          merchant_graphql_request_run_recover: ['/api/request-run/recover', ['workspace', 'project', 'runId', 'expectedRevision', 'generation', 'expectedRecordSha256']],
+          merchant_graphql_request_run_compare: ['/api/request-run/compare', ['workspace', 'id', 'project', 'expectedRevision', 'title', 'baseline', 'candidate', 'caseIds']],
+          merchant_graphql_request_run_control: ['/api/request-run/control', ['workspace', 'id', 'project', 'runId', 'attemptId', 'action']],
+          merchant_graphql_request_packet: ['/api/requests/packet', ['workspace', 'project', 'revision', 'requestSetId', 'runId', 'generation']],
+        };
+        const [path, allowed] = contracts[name]; exact(args, allowed);
+        const { workspace, ...body } = args, value = await this.#request(entry, path, body);
+        return { ...value, ...(plain(value.project) ? { project: projectView(value.project) } : {}) };
+      }
+      case 'merchant_graphql_request_set':
+      case 'merchant_graphql_request_run': {
+        const run = name === 'merchant_graphql_request_run';
+        const allowed = run ? ['workspace', 'project', 'runId', 'generation', 'expectedRecordSha256', 'compact']
+          : ['workspace', 'project', 'requestSetId', 'recordSha256'];
+        exact(args, allowed, ['workspace', 'project', run ? 'runId' : 'requestSetId']);
+        const query = new URLSearchParams();
+        for (const key of allowed) if (key !== 'workspace' && args[key] !== undefined) query.set(key, String(args[key]));
+        const value = await this.#request(entry, (run ? '/api/request-run?' : '/api/request-set?') + query);
+        return { ...value, ...(plain(value.project) ? { project: projectView(value.project) } : {}) };
+      }
+      case 'merchant_graphql_request_run_start':
+      case 'merchant_graphql_request_run_continue': {
+        const start = name === 'merchant_graphql_request_run_start';
+        const allowed = start ? ['workspace', 'source', 'id', 'project', 'expectedRevision', 'requestSetId',
+          'requestSetSha256', 'title', 'caseIds'] : ['workspace', 'source', 'id', 'project', 'runId',
+            'expectedRevision', 'expectedGeneration', 'expectedRecordSha256'];
+        exact(args, allowed, allowed);
+        const project = originalProject(args.project);
+        const retained = await this.#request(entry, start
+          ? '/api/request-set?' + new URLSearchParams({ project, requestSetId: originalUuid(args.requestSetId),
+            recordSha256: digest(args.requestSetSha256) })
+          : '/api/request-run?' + new URLSearchParams({ project, runId: originalUuid(args.runId) }));
+        const requestSet = start ? retained.record : retained.requestSet;
+        if (!Array.isArray(requestSet?.cases) || !requestSet.cases.length)
+          throw failure('GRAPHQL_REQUEST_SET_CHANGED', 'The original run has no retained source cases.');
+        let source;
+        for (const item of requestSet.cases)
+          source = this.#sourceForQueries(entry.alias, args.source, item.connection);
+        if (!start && retained.record.allowLoopback && source.allowLoopback !== true)
+          throw failure('GRAPHQL_SOURCE_CHANGED', 'This original run requires its explicitly permitted local source alias.');
+        const { workspace, source: sourceAlias, ...body } = args;
+        const value = await this.#request(entry, '/api/request-run/' + (start ? 'start' : 'continue'),
+          { ...body, ...(start ? { allowLoopback: source.allowLoopback === true } : {}) });
+        return { ...value, project: projectView(value.project) };
+      }
+      case 'merchant_graphql_comparison_prepare':
+      case 'merchant_graphql_comparison_review':
+      case 'merchant_graphql_comparison_recover': {
+        const action = name.slice('merchant_graphql_comparison_'.length);
+        const allowed = action === 'prepare' ? ['workspace', 'project', 'expectedRevision', 'id', 'title', 'pairs']
+          : action === 'review' ? ['workspace', 'project', 'expectedRevision', 'id', 'comparisonId',
+            'expectedGeneration', 'expectedRecordSha256', 'reviewer', 'notes', 'decisions']
+            : ['workspace', 'project', 'expectedRevision', 'comparisonId', 'generation', 'expectedRecordSha256'];
+        exact(args, allowed);
+        const { workspace, ...body } = args;
+        const value = await this.#request(entry, '/api/comparison/' + action, body);
+        return { ...value, project: projectView(value.project) };
+      }
+      case 'merchant_graphql_comparison':
+      case 'merchant_graphql_comparison_changes':
+      case 'merchant_graphql_comparison_pending': {
+        const pending = name.endsWith('_pending'), changes = name.endsWith('_changes');
+        const allowed = pending ? ['workspace', 'project', 'comparisonId', 'generation']
+          : ['workspace', 'project', 'revision', 'comparisonId', 'generation', 'expectedRecordSha256',
+            ...(changes ? ['pairId', 'offset', 'limit'] : [])];
+        exact(args, allowed, ['workspace', 'project', 'comparisonId']);
+        const query = new URLSearchParams();
+        for (const key of allowed) if (key !== 'workspace' && args[key] !== undefined) query.set(key, String(args[key]));
+        return this.#request(entry, '/api/comparison' + (pending ? '/pending' : changes ? '/changes' : '') + '?' + query);
+      }
       case 'merchant_graphql_handover_receivings': {
         exact(args, ['workspace', 'offset', 'limit', 'expectedSnapshotSha256'], ['workspace']);
         const query = new URLSearchParams();
@@ -533,13 +658,16 @@ export class MerchantGraphqlWorkspaces {
       }
       case 'merchant_graphql_preview_result': return this.#result(entry, args);
       case 'merchant_graphql_prepare': case 'merchant_graphql_prepare_revision': {
-        const saved = await this.#project(entry, args, true);
+        const saved = args.preparationId === undefined ? await this.#project(entry, args, true)
+          : await this.#project(entry, { project: args.project, revision: revision(args.expectedRevision) });
         this.#sourceForQueries(entry.alias, args.source, parse(saved.input.queriesText, 'Approved queries'));
         const evolving = name === 'merchant_graphql_prepare_revision';
         const value = await this.#request(entry, evolving ? '/api/evolution/prepare' : '/api/export',
-          { id: saved.id, expectedRevision: saved.revision, ...(evolving ? {
-            baselineExportId: originalUuid(args.baselineExportId), comparisonDigest: digest(args.comparisonDigest) } : {}) });
-        return { project: projectView(value.project), exported: exportView(value.exported) };
+          { id: saved.id, expectedRevision: saved.revision,
+            ...(args.preparationId === undefined ? {} : { preparationId: originalUuid(args.preparationId) }),
+            ...(evolving ? { baselineExportId: originalUuid(args.baselineExportId), comparisonDigest: digest(args.comparisonDigest) } : {}) });
+        return { project: projectView(value.project), exported: value.exported ? exportView(value.exported) : null,
+          preparation: value.reference, recordSha256: value.recordSha256, state: value.record.state };
       }
       case 'merchant_graphql_evolution': {
         const saved = await this.#project(entry, args, true);

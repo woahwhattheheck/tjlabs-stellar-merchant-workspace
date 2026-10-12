@@ -1,8 +1,22 @@
 # Customer installation operations
 
+For the complete receiver-to-owner workflow, open **Delivery operations → Receiving returns** and follow [Installation receiving returns](INSTALLATION_RETURNS.md). It records named observations against one exact saved edition, returns every original file, compares the owner's current definition, and stages explicit choices before the original Installation save.
+
 The **Customer installations** desk completes the commissioning-to-receiving workflow inside the existing SF47 operating case. An installation describes the customer's whole task, original source and commercial terms, selected merchant and buyer deployments, receiving application, maintainer and assigned funded work. Its acceptance steps select the existing work, purchase, outcome and source records.
 
 Each save appends an immutable edition. A later source observation or installation edit leaves earlier editions readable. The complete original Operations ZIP carries every saved edition, the native planner history, the case event history and all retained attachments. **Export complete handover** also includes a selected-edition marker and a readable offline installation document. Importing that ZIP opens the selected edition in the receiving case.
+
+## Delivery assignments and queue
+
+Each saved installation may carry `document.coordination`: its delivery assignee, target date, priority and note, plus per-check overrides and prerequisites. This metadata travels with the complete installation document through the existing preview/save and receiving workflow. [Installation delivery queue](DELIVERY_QUEUE.md) explains the fields, current-edition work view, typed client, CLI, MCP and complete dated handover.
+
+## Allocate installation phases in Portfolio
+
+Open **Delivery and cash operations → Portfolio**, choose the original saved Forecast and select **Use installation phases**. Select the exact saved Installation edition for its matching commercial task. The original phase owners, dependencies, quoted effort, delivery terms and support terms remain visible with their source.
+
+Enter explicit remaining phase work and resource availability, then review the delivery boundary. The boundary phases and their ancestors determine the commercial work dates; later support still consumes the same shared resources. Recorded check acceptance and remaining effort stay separate. Preview the complete allocation and cash, save the reviewed Portfolio, and use **Open dated cash forecast draft** to open the original Forecast draft.
+
+The [Portfolio guide](PORTFOLIO.md#allocate-saved-installation-phases) covers the full operator workflow. The original Portfolio seed API, CLI and SDK accept optional exact edition selections and a complete existing draft. Saved phase allocations retain their source editions and travel with the full original case export, so a receiving operator can reopen both the installation history and its allocation.
 
 ## Operate the complete workflow
 
@@ -18,6 +32,52 @@ Each save appends an immutable edition. A later source observation or installati
 10. Use **Export complete handover** for the selected edition. Another operator uses the existing **Import complete case** control, reads the offline installation document, opens the selected saved edition and continues the same original case workflow.
 
 The desk can save an installation during planning or commissioning with open decisions. The stage, configuration completeness and accepted-step count remain separate fields, so an unfinished customer assignment can be worked and handed between operators without manufacturing acceptance.
+
+## Receive an original commercial Workshare
+
+A commercial Workshare can become a complete Installation in this same operating case. The complete original commissioning input remains an immutable Sources attachment. A matching complete receiving packet can travel with it. The native reader retains the original commercial case, whole plan, currency, price status, milestones, phase assignments, dependencies and planned effort.
+
+1. In **Sources**, attach the complete original `dealscout.workshare-commissioning-inputs.v1` or `sec-workshare.commissioning-inputs.v1` JSON. Attach its complete matching receiving packet when available. Use the original complete files; the Installation reader selects one case from the source.
+2. In **Customer installations**, choose **Receive commercial Workshare**. Select the commissioning source and optional receiving packet, then choose **Read original Workshares**. The returned inventory shows each original case and plan.
+3. Select the commercial case and review its customer, supplier, exact fee/currency/status, complete milestone amounts, phase count and planned hours. Choose a destination: a new installation, the complete open draft, or a new edition of the selected saved installation.
+4. Choose **Prepare complete installation**. Each original phase becomes a required acceptance step with a stable identity, full original criterion, original phase owner and effort. Existing funding-plan steps remain present. The selected Workshare supplies the original workorder reference, payer, scope and terms.
+5. Complete the existing installation editor: useful customer task, merchant and buyer deployments, actual native payment selections, receiving application and host, independent operator, original work allocation, maintenance and source change procedure. Review and save through the existing complete-installation actions.
+6. Export the selected complete handover. Its offline HTML includes the original commercial overview, every full phase assignment and criterion, the complete commissioning-case JSON and the selected receiving packet. The original attachment files and all saved editions remain in the full case ZIP.
+
+The commercial fee remains in its original currency and status. Its planned engineering hours remain the original estimate. The native payment fields retain their explicitly selected network, asset, recipient and whole atomic amounts; the commercial importer supplies no exchange-rate assumption. Existing Workshare-to-grant forecasting calls continue to require their original proposed-USD contract.
+
+### Receive a revised Workshare
+
+Attach the complete revised source as a new original file. Open the existing installation or its current draft, select the new source, read the same original commercial case, and prepare the next edition. The whole original source stays attached to each saved historical edition.
+
+An unchanged original phase and effort keep their entered observations and native record links. A changed phase assignment, owner, dependency, criterion or effort reopens that step and clears its prior acceptance in the prepared document. The previous observation remains in the earlier saved edition. The native preview/save and archive importer also reject carrying the same accepted observation into a changed phase merely by adding a new source reference or reordering evidence links. A new explicit observing operator, timestamp, result or native work/purchase/outcome evidence can support a new observation.
+
+The copied original workorder fields and bound phase identities, titles, criteria and requirements remain tied to the selected source. Use a revised complete source to change those fields. The browser keeps native task, source-operating meaning, deployment, payment, receiving, funding selection and observation fields editable.
+
+Typing later changes while a source is being received preserves those edits. If the submitted draft changed during the read, the received Workshare becomes another retained draft and the later edits remain open. The existing case-version and saved-edition checks apply when the document is previewed and saved.
+
+### Native Workshare selection
+
+`installation-workshares` accepts the current `expectedVersion`, attached `sourceId` and `expectedSourceSha256`. The optional `packetSourceId` and `expectedPacketSha256` are selected together. It returns the original source selection and complete commercial case inventory.
+
+`installation-workshare-seed` accepts those same fields plus `workshareCaseId`, `installationId` and `expectedRevision`. A new installation uses null and zero. An existing one uses its original current installation identity and edition. An optional `document` supplies the complete current editable draft; omission starts from the saved installation or the original funded-plan seed.
+
+The result carries the complete editable `/document`, selected original `/workshare`, source version, original installation selection and `/sourceChanges`. Save this complete document with the existing preview/save lifecycle. The optional `/document/workshare` binding identifies both complete source files, the original case and plan digest, and each original phase's stable native check. Ordinary existing installation documents retain their original schema and behavior.
+
+~~~sh
+python3 workspace/cli.py operations --workspace /absolute/private/workspace \
+  installation-workshares --case operation-ORIGINAL --expected-version CURRENT_VERSION \
+  --source source-ORIGINAL --expected-source-sha256 ORIGINAL_COMMISSIONING_SHA256 \
+  --output /absolute/private/output/original-workshares.json
+
+python3 workspace/cli.py operations --workspace /absolute/private/workspace \
+  installation-workshare-seed --case operation-ORIGINAL --expected-version CURRENT_VERSION \
+  --source source-ORIGINAL --expected-source-sha256 ORIGINAL_COMMISSIONING_SHA256 \
+  --workshare-case ORIGINAL_COMMERCIAL_CASE --expected-revision 0 \
+  --output /absolute/private/output/workshare-installation.json
+~~~
+
+Add `--packet-source` and `--expected-packet-sha256` for the matching complete packet. For a source refresh, add the original `--installation`, current `--expected-revision`, and optional full `--document`. Extract `/document` from the returned JSON, edit it, and continue with the installation-preview/save commands below.
 
 ## What an edition retains
 
@@ -64,6 +124,8 @@ All routes retain the existing original local application's authentication and c
 | Read saved edition | GET /api/operations/{case}/installations/{id}?revision=N | read('installation', {caseId, installationId, revision}) |
 | Page earlier editions | GET /api/operations/{case}/installations/{id}/history?before=N&limit=25 | read('installation-history', {caseId, installationId, before, limit}) |
 | Seed complete input | POST /api/operations/{case}/installation-seed | installationSeed(caseId, expectedVersion) |
+| Read original commercial cases | POST /api/operations/{case}/installation-workshares | installationWorkshares(caseId, body) |
+| Receive original Workshare into complete input | POST /api/operations/{case}/installation-workshare-seed | installationWorkshareSeed(caseId, body) |
 | Preview complete input | POST /api/operations/{case}/installation-preview | installationPreview(caseId, body) |
 | Save reviewed edition | POST /api/operations/{case}/command, action installation.save | installationSave(caseId, body) |
 | Selected complete-case handover | GET /api/operations/{case}/installations/{id}/export.zip?revision=N | download('installation', {caseId, installationId, revision}) |
@@ -116,11 +178,15 @@ The existing grant-workspaces provider exposes:
 - merchant_grant_installation
 - merchant_grant_installation_history
 - merchant_grant_installation_seed
+- merchant_grant_installation_workshares
+- merchant_grant_installation_workshare_seed
 - merchant_grant_installation_preview
 - merchant_grant_installation_save
 - merchant_grant_export with kind installation and the required saved revision
 
 Preview and save take the complete document as inputs, or through the existing verified original input/snapshot/transfer reference. inputPointer selects /document from an original seed or /preview/document from a saved edition. expectedInputSha256 identifies the full selected file before pointer selection.
+
+Workshare receiving uses the selected original attached file IDs and hashes. `merchant_grant_installation_workshare_seed` accepts the original commercial case and optional complete current draft through the same `inputs` or retained-input reference. Its complete result uses `/document`; continue with the existing installation preview/save methods.
 
 Saving requires the original request ID, operator, reason, current case version, selected installation ID or null, current edition or zero, and reviewed preview SHA. The native service remains the mutation authority. Complete responses use the provider's existing immutable snapshot, pointer, array paging and original file-transfer operations.
 
@@ -201,3 +267,7 @@ The operation binds the original 647,130-byte case SHA `c71303844660d5a859d3936a
 The selected-edition archive is then received into a separate original workspace with every prior edition, all original records, complete sources and plan history. The command reopens both editions, recovers the same native save and import request IDs, compares the complete original source, and reads/exports the second edition through the original CLI. Its delivery directory contains both source editions, the independently received edition, the CLI export, readable opening instructions and the original CLI records. `result.json` names the retained workspaces, installation, source identity and whole-file downloads.
 
 Keep the same `--work` directory to continue after an interrupted response. Each native phase records its exact original request before dispatch and retains the returned snapshot and complete bytes before advancing. A later source correction records its current native binding alongside the original binding; the original scenario, case bytes and phase request identities remain fixed. Inspect a retained interrupted native phase and continue the same command against the corrected source. The operating case remains available through the standard browser, CLI and MCP controls.
+
+## Saved customer-use calendar
+
+The optional `document.useCalendar` records complete useful tasks, dated uses, separate DIRECT/PREPAID funding groups and original buyer receipt associations in the same immutable Installation history. The **Customer use** tab reads exact saved reports alongside current receipt/source changes, expands explicit working dates into an editable draft, exports JSON/CSV/ICS, and stages the original Cohort inputs while preserving an existing edited draft. See [Customer-use calendar](CUSTOMER_USE_CALENDAR.md) for the full document, CLI, typed client, MCP and independent receiving workflow.

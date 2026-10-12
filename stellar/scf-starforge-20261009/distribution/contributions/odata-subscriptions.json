@@ -1,0 +1,33 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "odata-subscriptions",
+  "description": "Complete retained collection subscription publishers, incremental customer receiving, Analysis export, original backup/replay, industrial local UI and configured MCP operations.",
+  "commands": {
+    "odata-subscriptions": "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/cli.mjs"
+  },
+  "commandDescriptions": {
+    "odata-subscriptions": "Publish, receive or restore complete customer subscriptions and operate their original managed Applications lifecycle."
+  },
+  "exports": {
+    "./seller/odata/subscriptions": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/index.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/index.mjs"
+    }
+  },
+  "merchantProviders": {
+    "odata-subscriptions": "stellar-forge/mcp-merchant-operator/providers/odata-subscriptions.mjs"
+  },
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/browser-assets.json"
+    }
+  ],
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/SUBSCRIPTIONS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/connection.example.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/browser-assets.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/MANAGED_RECEIVING.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/subscriptions/managed-receiving.example.json"
+  ]
+}

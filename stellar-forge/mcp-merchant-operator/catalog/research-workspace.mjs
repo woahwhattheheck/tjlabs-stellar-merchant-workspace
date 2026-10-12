@@ -1,9 +1,16 @@
 // MIT. Research tool metadata; the selected provider loads its runtime on demand.
 import {MAX_RETAINED_CHUNK_BYTES} from '../retained-file-contracts.mjs';
 import {researchCitationReviewTools} from './research-citation-updates.mjs';
+import {researchExtractionTools,RESEARCH_EXTRACTION_EXPORTS,RESEARCH_EXTRACTION_EXPORT_FIELDS} from './research-extraction.mjs';
+import {researchEligibilityTools,RESEARCH_ELIGIBILITY_EXPORTS,RESEARCH_ELIGIBILITY_EXPORT_FIELDS} from './research-eligibility.mjs';
+import {researchCustomerUpdateTools,RESEARCH_CUSTOMER_UPDATE_EXPORTS,RESEARCH_CUSTOMER_UPDATE_EXPORT_FIELDS} from './research-customer-updates.mjs';
+import {researchRisTools,RESEARCH_RIS_EXPORTS,RESEARCH_RIS_EXPORT_FIELDS} from './research-ris.mjs';
+import {researchCommerceTools,RESEARCH_COMMERCE_EXPORTS,RESEARCH_COMMERCE_EXPORT_FIELDS} from './research-commerce.mjs';
+import {researchQuoteTools,RESEARCH_QUOTE_EXPORTS,RESEARCH_QUOTE_EXPORT_FIELDS} from './research-quotes.mjs';
 import {researchEuropePmcTools,RESEARCH_EUROPE_PMC_EXPORTS,RESEARCH_EUROPE_PMC_EXPORT_FIELDS} from './research-europe-pmc.mjs';
 import {researchDocumentTools,RESEARCH_DOCUMENT_EXPORTS,RESEARCH_DOCUMENT_EXPORT_FIELDS} from './research-documents.mjs';
 import {researchClinicalTrialsTools,RESEARCH_CLINICALTRIALS_EXPORTS,RESEARCH_CLINICALTRIALS_CRITERIA} from './research-clinicaltrials.mjs';
+import {researchRiskOfBiasTools,RESEARCH_RISK_EXPORTS,RESEARCH_RISK_EXPORT_FIELDS} from './research-risk-of-bias.mjs';
 import {RESEARCH_SECTIONS,RESEARCH_COMPARISON_SECTIONS} from '../../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-contracts.mjs';
 
 const alias={type:'string',pattern:'^[a-z0-9][a-z0-9_-]{0,63}$'};
@@ -23,9 +30,16 @@ export const RESEARCH_EXPORTS=Object.freeze({
   markdown:{format:'md',extension:'md'},html:{format:'html',extension:'html'},
   'crossref-edition':{extension:'json'},'retained-edition':{extension:'json'},comparison:{extension:'json'},
   'source-content':{extension:'bin'},'source-record':{extension:'json'},'source-file':{extension:'bin'},
+  ...RESEARCH_ELIGIBILITY_EXPORTS,
+  ...RESEARCH_CUSTOMER_UPDATE_EXPORTS,
+  ...RESEARCH_RIS_EXPORTS,
+  ...RESEARCH_COMMERCE_EXPORTS,
+  ...RESEARCH_QUOTE_EXPORTS,
+  ...RESEARCH_RISK_EXPORTS,
   ...RESEARCH_CLINICALTRIALS_EXPORTS,
   ...RESEARCH_DOCUMENT_EXPORTS,
   ...RESEARCH_EUROPE_PMC_EXPORTS,
+  ...RESEARCH_EXTRACTION_EXPORTS,
 });
 const exportKind={type:'string',enum:Object.keys(RESEARCH_EXPORTS)};
 export function researchWorkspaceTools(tool){
@@ -93,9 +107,9 @@ export function researchWorkspaceTools(tool){
     tool('merchant_research_crossref_receive','Receive the exact reviewed Crossref edition into the original question using its plan hash, edition hash and current dossier revision. The native receiver reconciles a lost committed reply.',{
       ...operation,expectedRevision:revision,expectedPlanSha256:digest,expectedEditionSha256:digest},
       ['workspace','dossierId','operationId','expectedRevision','expectedPlanSha256','expectedEditionSha256'],{idempotent:true}),
-    tool('merchant_research_export','Stream and retain a complete portable dossier, report, edition, comparison, original occurrence content/record or selected bundle file. Select revision for exact previous/reviewed/current HTML, Markdown or portable history. Source kinds bind editionId/key; source-file also requires original fileName and expectedSha256. Europe PMC exports require library and their native operationId or workspace requestId; omit dossierId for those library-wide exports. Returns the same content-addressed export ID for reads and restart recovery.',{
+    tool('merchant_research_export','Stream and retain a complete portable dossier, report, edition, comparison, original occurrence content/record or selected bundle file. Select revision for exact previous/reviewed/current HTML, Markdown or portable history. Source kinds bind editionId/key; source-file also requires original fileName and expectedSha256. Europe PMC exports require library and their native operationId or workspace requestId; omit dossierId for those library-wide exports. Eligibility exports require dossierId, reviewId and a retained revision; workSetId and section select the original review report. Commerce file kinds require commerceKind, commerceId and the exact expectedSha256; commerce-operation-json requires commerceOperationId. Both retain the complete original file for the same reader. Quote operation files require quoteOperationId/quoteFileName/quoteExpectedBytes; case and tariff files require quoteCaseId and exactly one quoteInput or quoteInputSource. Inspect quote file metadata first and provide its exact expectedSha256. Returns the same content-addressed export ID for reads and restart recovery.',{
       ...dossier,kind:exportKind,operationId:nativeId,editionId:nativeId,before:revision,after:revision,
-      ...RESEARCH_DOCUMENT_EXPORT_FIELDS,...RESEARCH_EUROPE_PMC_EXPORT_FIELDS,revision,
+      ...RESEARCH_RIS_EXPORT_FIELDS,...RESEARCH_DOCUMENT_EXPORT_FIELDS,...RESEARCH_EUROPE_PMC_EXPORT_FIELDS,...RESEARCH_ELIGIBILITY_EXPORT_FIELDS,...RESEARCH_EXTRACTION_EXPORT_FIELDS,...RESEARCH_CUSTOMER_UPDATE_EXPORT_FIELDS,...RESEARCH_COMMERCE_EXPORT_FIELDS,...RESEARCH_QUOTE_EXPORT_FIELDS,...RESEARCH_RISK_EXPORT_FIELDS,revision,
       key:{type:'string',pattern:'^(0|[1-9][0-9]{0,8})$'},fileName:{type:'string',minLength:1,maxLength:1024},
       sourceId:{type:'string',pattern:'^ctsrc_[a-f0-9]{64}$'},criteria:RESEARCH_CLINICALTRIALS_CRITERIA,expectedSha256:digest},
       ['workspace','kind'],{}),
@@ -110,9 +124,16 @@ export function researchWorkspaceTools(tool){
     tool('merchant_research_reopen','Reopen one complete host-declared portable source or retained portable export through the original streamed reader. Preserves the package dossier ID, verified history, notes, selections and findings.',{
       ...workspace,source:alias,kind:{type:'string',enum:['portable-json','portable-gzip']},exportId:digest},
       ['workspace'],{idempotent:true}),
+    ...researchRiskOfBiasTools(tool),
     ...researchClinicalTrialsTools(tool),
     ...researchDocumentTools(tool),
     ...researchCitationReviewTools(tool),
-    ...researchEuropePmcTools(tool)
+    ...researchEligibilityTools(tool),
+    ...researchCustomerUpdateTools(tool),
+    ...researchRisTools(tool),
+    ...researchCommerceTools(tool),
+    ...researchQuoteTools(tool),
+    ...researchEuropePmcTools(tool),
+    ...researchExtractionTools(tool)
   ];
 }

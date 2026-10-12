@@ -4,6 +4,94 @@ The firm portfolio coordinates separately owned client workspaces. Procedures, c
 
 [Install and select the original workspaces](INSTALLING.md) first. Open the running firm at `/portfolio.html`; use **Open client desk** to work in that exact client's mounted Runbooks. All selections begin from the actual saved source.
 
+## Review an issued buyer period
+
+Use a separate configured buyer alias when the source is the original
+`stellar-forge.buyer-accountant-source.v1` document issued by Buyer Expenses.
+That document carries its frozen expense and credit allocations, source
+observations, period history and outstanding reservations. The original
+accountant validates the complete source and keeps its native amounts and
+financial context. A buyer alias uses source startup, accountant returns,
+QuickBooks, Xero, chart changes and operating recovery; firm Portfolio and Runbooks operations keep their
+merchant aliases.
+
+Save the host's accounting declaration with the real original file and chosen
+private directory. This example declares only the source needed for startup:
+
+~~~json
+{
+  "workspaces": {
+    "expenses": {
+      "label": "Buyer expense accounting",
+      "sourceMode": "buyer",
+      "directory": "./buyer-accounting",
+      "buyerSources": {
+        "issued-period": "../issued/period-accountant-source.json"
+      },
+      "recovery": {
+        "stateRoot": ".",
+        "backupRoot": "../accounting-backups",
+        "passEnv": "STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE"
+      }
+    }
+  }
+}
+~~~
+
+Resolve these paths relative to the actual host configuration. Add
+`accountantReturns` and `platformInputs` aliases only for the original return
+and QuickBooks/Xero files being supplied. The complete [buyer host guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md)
+includes initialization of the existing MCP host and its original authentication.
+An existing host can add this declaration under `accounting`, preserving its
+other providers. Omit merchant outbox, proof, terms, Runbooks and Portfolio
+inputs from the buyer alias.
+
+The installed `merchant-accounting-platforms` command covers the whole buyer
+path. Set `ACCOUNTING_MCP_URL` to the actual running host and retain its existing
+authentication:
+
+~~~sh
+starforge merchant-accounting-platforms sources \
+  --url "$ACCOUNTING_MCP_URL" --workspace expenses --platform buyer
+
+starforge merchant-accounting-platforms source \
+  --url "$ACCOUNTING_MCP_URL" --workspace expenses --platform buyer \
+  --source issued-period --view summary
+~~~
+
+Source preview works before the buyer accountant directory exists. Read the
+returned period and totals, then page `allocations`, `outstanding` and
+`captures` with the returned SHA256. Keep that digest on every page; review is
+not a truncated substitute for the original file.
+
+The [complete client workflow](../../stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md#buyer-issued-source-startup-and-receiving)
+provides the exact JSON and commands for each retained operation:
+
+| Stage | Operator action | Original result |
+| --- | --- | --- |
+| Initialize | Preview `--action initialize` with the real source alias, name and operator; save the complete preview using `prepare`, then explicitly `execute`. | Native Store binding, complete retained source and the original first-handoff UUID. |
+| Recover initialization | `reconcile` the same saved operation after an uncertain response. | The accepted source/name/operator and original binding, even when the former import file is unavailable. |
+| Review retained source | Read `startup` and `retained-source` against the saved source digest. | Complete paged allocations and source observations with the current accountant revision. |
+| Create the first handoff | Preview `--action handoff`, save its full request, then explicitly execute it. | The startup's original handoff ID, named review and exact create-request identity. |
+| Recover a handoff | Reconcile the same operation directory and request. | Its accepted native handoff; a changed request under that ID remains a conflict. |
+| Continue bookkeeping | Select `--platform qbo` or `--platform xero` on this alias and use the actual handoff, company/context, explicit allocation/fiat/chart decisions and original response. | Retained native journal observations, reviewed accountant return and the buyer-return file. |
+| Adopt a changed chart | Preview and save the original platform's source-change review, inspect its complete mappings, then explicitly apply its current revision and confirmations. | The original cancellation/successor application, recoverable by its retained request and complete handoff file. |
+
+The [buyer QuickBooks instructions](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md#continue-quickbooks-from-the-issued-buyer-handoff) cover every include/exclude allocation choice, exact home valuation and same-book source reservation. The [chart-change guide](../../stellar-forge/mcp-merchant-operator/accounting-source-changes.md) covers the full native review, original-application recovery and complete retained download.
+
+The existing original buyer source and accountant writers own these operations.
+Startup and handoff recovery do not create provider journals. A zero-native
+allocation keeps its explicit exclusion where a positive fiat line would be
+invalid. Source currency, native units, testnet/development provenance and
+bookkeeping status remain distinct fields.
+
+Before moving the same initialized directory to the browser or managed
+Applications, close its MCP owner. The existing Merchant accounting application
+reads the buyer binding, retains the original workspace/source identity and
+opens the buyer desk; it does not require manufactured merchant directories.
+Use the original buyer startup and [managed Connections guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/CONNECTIONS.md)
+for the chosen existing runtime and its normal start/stop controls.
+
 ## Commission the firm
 
 Save the firm's name, close standard, reporting standard and cadence, and the escalation instructions used by the practice. Add the real people with stable identifiers, names, available minutes per day, working weekdays, holidays and dated time off.
@@ -24,7 +112,35 @@ Use the actual approved recording links, notes, transcripts, close instructions 
 
 Publishing a change creates a new immutable edition. An existing period keeps the edition selected when it opened. Stable task IDs permit an exact external checklist mapping even when task titles repeat.
 
-The task handover CSV preserves its original 12 human-readable columns and appends **Runbook ID**, **Edition ID**, **Period ID** and **Task ID**. Use that identity tuple when mapping tasks into the practice's existing Double or other close-management workspace. The product supplies the complete native handover and those stable identifiers; assisted task setup and the selected external system's own import workflow remain explicit operator steps.
+The task handover CSV preserves its original 12 human-readable columns and appends **Runbook ID**, **Edition ID**, **Period ID** and **Task ID**. Named-set periods also append **Procedure set ID** and **Procedure set name**. Use that identity tuple when mapping tasks into the practice's existing Double or other close-management workspace. The product supplies the complete native handover and those stable identifiers; assisted task setup and the selected external system's own import workflow remain explicit operator steps.
+
+## Use weekly and monthly procedure sets
+
+Use the [complete editable starter](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/examples/weekly-monthly-runbook.json) as the client's initial procedure catalog, or add named sets to its existing author draft. Preserve the real stable task IDs and edit the procedure instructions, resources and responsible people to match the engagement.
+
+| Saved set | Starter scope |
+| --- | --- |
+| `weekly-cash` | Source intake, cash position, upcoming obligations, short-term cash outlook, client questions and reviewer handover. |
+| `monthly-close` | Source intake, cash position, period cutoff, reconciliations, variance review, reporting pack, client questions and reviewer handover. |
+
+An edition can declare up to 32 named sets. Each selects one or more distinct IDs from that edition's procedure catalog; execution order follows the catalog. Publishing a changed membership creates another immutable edition. Existing periods retain their edition and selection.
+
+Choose the set when starting each new period. **All procedures** uses the complete catalog. **Start following period** retains the prior choice in the draft while requiring the new period's dates and actual source. A choice absent from the newly selected edition remains visible for correction before creation.
+
+For the installed native CLI, copy and edit the complete supplied JSON, then retain the original save request:
+
+~~~sh
+starforge client-close runbooks prepare \
+  --url http://127.0.0.1:8446 --client client-a --action save \
+  --input /private/client-a/weekly-monthly-runbook.json \
+  --out /private/client-a/save-procedures.json
+
+starforge client-close runbooks execute \
+  --url http://127.0.0.1:8446 --client client-a \
+  --prepared /private/client-a/save-procedures.json
+~~~
+
+Use the returned runbook and edition IDs in the native `create` input. Its optional `profileId` is the selected saved set, for example `weekly-cash`; omit it to retain the all-procedure behavior. The [full native guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/RUNBOOK_PROFILES.md) includes a complete creation input, source selection, SDK paging and receiving rules.
 
 ## Save the client commission
 
@@ -53,7 +169,7 @@ The new period also selects its immutable procedure edition, label, preparer, re
 
 Add one row per client period, selecting its commissioning edition and close/review dates. Enter the expected preparation, review and backup-reserve minutes. Use the commissioned people or explicitly select the planned assignment.
 
-A row can bind an existing original period. A planned future period can select its actual new source, or leave source selection until the files arrive. Creating the native period requires the real source selection.
+A row can bind an existing original period, which supplies its own immutable procedure edition and set. For a future period, select a named set from the commissioned edition or **All procedures**; the published row fixes that choice for its native create command. It can also select its actual new source, or leave source selection until the files arrive. Creating the native period requires the real source selection.
 
 **Preview** calculates the complete schedule against the saved firm edition and current published bookings. It works backwards from deadlines across the actual available working dates. Review is constrained to its close-to-review interval, and preparation/review allocation takes priority over backup reserve.
 
@@ -72,7 +188,7 @@ In the client desk, record each task's actual result and attach the supporting f
 | Not applicable | Record why the procedure does not apply to this period. |
 | Open item | Record the unresolved work, cause and follow-up note. |
 
-Submitting retains the complete preparation round. Required tasks must be complete, explained as not applicable, or recorded as open items with a note.
+Preparation and progress contain only the period's frozen selected procedures. Submitting retains that complete preparation round. Required selected tasks must be complete, explained as not applicable, or recorded as open items with a note.
 
 The reviewer can return the preparation with corrections. The preparer then edits the same period and submits another retained round. Approval retains the selected submission and review decision. Required open items must be resolved or explicitly selected as accepted exceptions with a review note.
 

@@ -1,11 +1,18 @@
 // MIT. Live SF93 operations inside the existing SF74 merchant case workspace.
 import {parseWorkspace} from './workspace-file.mjs';
+import {mountIncidentRecoveryDesk} from './incident-recovery-desk.mjs';
 
 const add=(parent,tag,text,className='')=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;parent.append(n);return n;};
 const button=(parent,text,action,className='secondary')=>{const n=add(parent,'button',text,className);n.type='button';n.addEventListener('click',action);return n;};
 const labels={ENDPOINT_UNAVAILABLE:'Endpoint unavailable',OBSERVER_INCOMPLETE:'Incomplete observations',HTTP_5XX:'Server errors',
   DISCONNECTED:'Interrupted connections',DELIVERY_UNAVAILABLE:'Delivery unavailable',DELIVERY_BACKLOG:'Delivery backlog',
-  DELIVERY_EXHAUSTED:'Delivery attempts exhausted'};
+  DELIVERY_EXHAUSTED:'Delivery attempts exhausted',OBJECT_SOURCE_UNAVAILABLE:'Object source unavailable',
+  OBJECT_IDENTITY_CHANGED:'Object identity changed',OBJECT_OUTPUT_INTEGRITY:'Object output integrity',
+  OBJECT_FINANCIAL_UNRESOLVED:'Unresolved buyer financial view',OBJECT_FINALIZED_OUTPUT_INCOMPLETE:'Finalized request with incomplete output',
+  CKAN_SOURCE_UNAVAILABLE:'CKAN source unavailable',CKAN_IDENTITY_CHANGED:'CKAN project identity changed',
+  CKAN_SOURCE_INTEGRITY:'CKAN source integrity',CKAN_OPERATION_FAILED:'CKAN operation failed',
+  CKAN_OPERATION_OVERDUE:'CKAN operation overdue',CKAN_REVIEW_PENDING:'CKAN refresh review pending',
+  CKAN_PUBLICATION_PENDING:'CKAN publication pending'};
 const human=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^\w/,c=>c.toUpperCase());
 const when=value=>value?new Date(value).toLocaleString():'—';
 const terminal=new Set(['DELIVERED','CANCELLED']);
@@ -13,7 +20,9 @@ const terminal=new Set(['DELIVERED','CANCELLED']);
 export function mountIncidentDesk({root,exportCase,importCase}) {
   const abort=new AbortController();
   let destroyed=false,busy=false,sequence=0,selection=0,offset=0,timer=null,current=null,detail=null,selectedId=null;
-  let configDirty=false,loadedConfigRevision=null,prepared=null;
+  let configDirty=false,loadedConfigRevision=null,prepared=null,recovery=null;
+  let objectReview=null,objectEpoch=0,objectChoicesKey='';
+  let ckanReview=null,ckanEpoch=0,ckanChoicesKey='';
   const downloads=new Set();
   root.id='incidents';root.className='card incident-desk';root.hidden=true;
   const heading=add(root,'div',undefined,'section-heading'),copy=add(heading,'div');
@@ -32,7 +41,9 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const applyFilter=add(selectionForm,'button','Filter','secondary');applyFilter.type='submit';
   const status=add(root,'p','Loading incident sources…','status');status.id='incident-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const counters=add(root,'div',undefined,'incident-counters');
+  const objectStatus=add(root,'section',undefined,'runtime-captures');objectStatus.id='incident-object-status';objectStatus.hidden=true;
 
+  const ckanStatus=add(root,'section',undefined,'runtime-captures');ckanStatus.id='incident-ckan-status';ckanStatus.hidden=true;
   const workerPanel=add(root,'div',undefined,'incident-worker');
   const workerCopy=add(workerPanel,'div');add(workerCopy,'h3','Watcher');
   const workerState=add(workerCopy,'p','','incident-worker-state'),workerObserved=add(workerCopy,'p','','hint');
@@ -58,6 +69,8 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const detailTitle=add(detailCopy,'h3',''),detailIdentity=add(detailCopy,'p','','hint');
   const closeDetail=button(detailHeader,'Close incident',()=>{if(busy)return;selection++;sequence++;selectedId=null;detail=null;clearPrepared();drawDetail();drawList();schedule();});
   const facts=add(details,'div',undefined,'scope');
+  const objectDetails=add(details,'div',undefined,'runtime-captures');objectDetails.id='incident-object-captures';
+  const ckanDetails=add(details,'div',undefined,'runtime-captures');ckanDetails.id='incident-ckan-captures';
   const acknowledgeForm=add(details,'form',undefined,'incident-ack-form');
   const operatorLabel=add(acknowledgeForm,'label','Operator name'),operator=add(operatorLabel,'input');
   operator.id='incident-operator';operator.required=true;operator.maxLength=160;operator.autocomplete='name';
@@ -78,7 +91,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const casePanel=add(details,'div',undefined,'incident-case-panel');
   add(casePanel,'h3','Continue in the merchant case');
   add(casePanel,'p','Prepare the incident’s original captures with the route and draft terms currently selected in this workspace. Review the handoff, then open it in Cases.');
-  const routeLabel=add(casePanel,'label','Advertised route ID'),routeId=add(routeLabel,'input');routeId.id='incident-case-route';routeId.maxLength=80;routeId.required=true;routeId.autocomplete='off';
+  const routeLabel=add(casePanel,'label','Captured route or registered source ID'),routeId=add(routeLabel,'input');routeId.id='incident-case-route';routeId.maxLength=80;routeId.required=true;routeId.autocomplete='off';
   const routeChoices=add(casePanel,'datalist');routeChoices.id='incident-route-choices';routeId.setAttribute('list',routeChoices.id);
   const captureStatus=add(casePanel,'p','','hint');
   const caseButtons=add(casePanel,'div',undefined,'actions');
@@ -89,16 +102,72 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const technical=add(details,'details',undefined,'source-details');add(technical,'summary','Incident source and revision');
   const raw=add(technical,'pre');raw.tabIndex=0;
 
+  const recoveryRoot=add(root,'details');recoveryRoot.id='incident-store-recovery';
   const configPanel=add(root,'details',undefined,'source-details incident-config');
   add(configPanel,'summary','Watcher registration and notification settings');
   const configSummary=add(configPanel,'p','','hint');
   add(configPanel,'p','Edit the registered merchants, observation thresholds and notification destination. Existing queued messages retain their selected destination; an operator reminder selects the current destination.');
+  const objectPanel=add(configPanel,'section',undefined,'incident-object-registration');objectPanel.hidden=true;
+  add(objectPanel,'h3','Watch a saved Object buyer');
+  add(objectPanel,'p','Select a session registered by this console’s private startup configuration. Inspect its original identity and saved bytes, then add the reviewed selection to this configuration draft.');
+  const objectForm=add(objectPanel,'form'),objectGrid=add(objectForm,'div',undefined,'form-grid');
+  const objectSourceLabel=add(objectGrid,'label','Registered Object session'),objectSource=add(objectSourceLabel,'select');objectSource.id='incident-object-source';
+  const objectIdLabel=add(objectGrid,'label','Watcher source ID'),objectId=add(objectIdLabel,'input');objectId.id='incident-object-id';objectId.required=true;objectId.maxLength=64;objectId.pattern='[A-Za-z0-9_-]{1,64}';
+  const objectNameLabel=add(objectGrid,'label','Source label'),objectName=add(objectNameLabel,'input');objectName.id='incident-object-label';objectName.required=true;objectName.maxLength=120;
+  const objectLimits={};
+  for(const [key,label,value,min,max] of [
+    ['maxBytes','Maximum object bytes to inspect',1073741824,0,Number.MAX_SAFE_INTEGER],
+    ['maxChunks','Maximum original chunks',1000,1,100000],
+    ['timeoutMs','Inspection deadline (milliseconds)',30000,100,300000],
+    ['financialAfterSeconds','Unresolved financial view age (seconds)',300,1,31536000],
+    ['outputAfterSeconds','Finalized-output age (seconds)',300,1,31536000]]) {
+    const labelNode=add(objectGrid,'label',label),input=add(labelNode,'input');input.type='number';
+    input.id='incident-object-'+key;input.value=String(value);input.min=String(min);input.max=String(max);input.step='1';input.required=true;objectLimits[key]=input;
+  }
+  const objectActions=add(objectForm,'div',undefined,'actions');
+  const inspectObject=add(objectActions,'button','Inspect saved Object','secondary');inspectObject.type='submit';inspectObject.id='incident-object-inspect';
+  const objectDraft=button(objectActions,'Add or replace source in draft',addObjectDraft);objectDraft.id='incident-object-add';
+  const objectReviewStatus=add(objectPanel,'p','No Object inspection selected.','hint');objectReviewStatus.setAttribute('role','status');
+  const objectReviewFacts=add(objectPanel,'div',undefined,'scope');
+  const ckanPanel=add(configPanel,'section',undefined,'incident-ckan-registration');ckanPanel.hidden=true;
+  add(ckanPanel,'h3','Watch a saved CKAN catalog project');
+  add(ckanPanel,'p','Choose an original workspace registered for this console. Inspect its saved project, source, refresh decisions and publication records, then add that reviewed selection to the watcher draft.');
+  const ckanForm=add(ckanPanel,'form'),ckanGrid=add(ckanForm,'div',undefined,'form-grid');
+  const ckanSourceLabel=add(ckanGrid,'label','Registered CKAN workspace'),ckanSource=add(ckanSourceLabel,'select');ckanSource.id='incident-ckan-source';
+  const ckanIdLabel=add(ckanGrid,'label','Watcher source ID'),ckanId=add(ckanIdLabel,'input');ckanId.id='incident-ckan-id';ckanId.required=true;ckanId.maxLength=64;ckanId.pattern='[A-Za-z0-9_-]{1,64}';
+  const ckanNameLabel=add(ckanGrid,'label','Source label'),ckanName=add(ckanNameLabel,'input');ckanName.id='incident-ckan-label';ckanName.required=true;ckanName.maxLength=120;
+  const ckanSettings=add(ckanForm,'details',undefined,'source-details');add(ckanSettings,'summary','Record selection and observation settings');
+  add(ckanSettings,'p','Leave record IDs blank to follow the current related source, refresh and publication in the saved project. Enter an original ID to keep that record selected. Row changes retain the comparison’s original query windows.');
+  const ckanSettingsGrid=add(ckanSettings,'div',undefined,'form-grid'),ckanRecords={};
+  for(const [key,label]of [['sourceId','Original source ID'],['refreshId','Original refresh ID'],['publicationId','Original publication ID']]) {
+    const field=add(ckanSettingsGrid,'label',label),input=add(field,'input');input.id='incident-ckan-'+key;input.maxLength=36;
+    input.pattern='[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}';ckanRecords[key]=input;
+  }
+  const ckanLimits={};
+  for(const [key,label,value,min,max]of [
+    ['maxBytes','Complete retained source bytes',4*1024*1024,1024,6*1024*1024-65536],
+    ['maxFiles','Complete retained source files',256,1,4096],
+    ['maxStateBytes','Maximum bytes in each workbench read',2*1024*1024,1024,3*1024*1024-65536],
+    ['timeoutMs','Observation deadline (milliseconds)',30000,100,300000],
+    ['operationAfterSeconds','Running operation age (seconds)',300,1,31536000],
+    ['reviewAfterSeconds','Pending refresh review age (seconds)',86400,0,31536000],
+    ['publicationAfterSeconds','Pending publication age (seconds)',3600,0,31536000]]) {
+    const field=add(ckanSettingsGrid,'label',label),input=add(field,'input');input.type='number';input.id='incident-ckan-'+key;
+    input.value=String(value);input.min=String(min);input.max=String(max);input.step='1';input.required=true;ckanLimits[key]=input;
+  }
+  const publicationLabel=add(ckanSettingsGrid,'label'),requirePublication=add(publicationLabel,'input');requirePublication.type='checkbox';requirePublication.id='incident-ckan-require-publication';requirePublication.checked=true;
+  add(publicationLabel,'span','Watch publication of the effective source');
+  const ckanActions=add(ckanForm,'div',undefined,'actions');
+  const inspectCkan=add(ckanActions,'button','Inspect saved CKAN project','secondary');inspectCkan.type='submit';inspectCkan.id='incident-ckan-inspect';
+  const ckanDraft=button(ckanActions,'Add or replace source in draft',addCkanDraft);ckanDraft.id='incident-ckan-add';
+  const ckanReviewStatus=add(ckanPanel,'p','Choose a saved CKAN workspace to inspect.','hint');ckanReviewStatus.setAttribute('role','status');
+  const ckanReviewFacts=add(ckanPanel,'div',undefined,'scope');
   const configForm=add(configPanel,'form');
   const configLabel=add(configForm,'label','Current watcher configuration'),configText=add(configLabel,'textarea');
   configText.id='incident-config-json';configText.rows=14;configText.spellcheck=false;configText.maxLength=60000;
   const configActions=add(configForm,'div',undefined,'actions');
   const saveConfig=add(configActions,'button','Apply configuration');saveConfig.type='submit';saveConfig.id='incident-config-save';
-  const reloadConfig=button(configActions,'Reload current settings',()=>{configDirty=false;loadedConfigRevision=null;drawConfig();controls();});
+  const reloadConfig=button(configActions,'Reload current settings',()=>{configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();drawConfig();controls();});
   const verify=button(configActions,'Verify Slack workspace',()=>perform('destination',()=>({expectedConfigRevision:current.configRevision})));verify.id='incident-destination';
   const destinationStatus=add(configPanel,'p','','hint');destinationStatus.setAttribute('role','status');
 
@@ -123,18 +192,189 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     openCase.disabled=busy||!prepared;closeDetail.disabled=busy;
     configText.disabled=busy||!current;saveConfig.disabled=busy||!current||loadedConfigRevision===null||!configDirty;reloadConfig.disabled=busy||!current;
     verify.disabled=busy||current?.config.notification?.transport!=='slack';
+    for(const input of [objectSource,objectId,objectName,...Object.values(objectLimits)])input.disabled=busy||!current;
+    inspectObject.disabled=busy||!current||!objectSource.value||loadedConfigRevision!==current.configRevision;
+    objectDraft.disabled=busy||!objectReview||!current||loadedConfigRevision!==current.configRevision;
+    for(const input of [ckanSource,ckanId,ckanName,requirePublication,...Object.values(ckanRecords),...Object.values(ckanLimits)])input.disabled=busy||!current;
+    inspectCkan.disabled=busy||!current||!ckanSource.value||loadedConfigRevision!==current.configRevision;
+    ckanDraft.disabled=busy||!ckanReview||!current||loadedConfigRevision!==current.configRevision;
     for(const node of queueRows.querySelectorAll('button'))node.disabled=busy||!operator.value.trim();
+    recovery?.refreshControls();
   }
   function drawConfig() {
     if(!current)return;
+    drawObjectChoices();drawCkanChoices();
+    if(ckanReview&&ckanReview.configRevision!==current.configRevision)invalidateCkan('Watcher settings changed. Inspect this CKAN project against the current revision.');
+    if(objectReview&&objectReview.configRevision!==current.configRevision)invalidateObject('Watcher settings changed. Inspect this session against the current revision.');
     if(!configDirty&&loadedConfigRevision!==current.configRevision) {
       configText.value=JSON.stringify(current.config,null,2);loadedConfigRevision=current.configRevision;
     }
     configSummary.textContent='Loaded revision '+loadedConfigRevision+' · current revision '+current.configRevision+
       (configDirty?' · unsaved edits':'')+(configDirty&&loadedConfigRevision!==current.configRevision?' · reload current settings before applying a new edit.':'');
   }
+  function invalidateObject(message='Inspect the selected Object before adding it to this draft.') {
+    objectEpoch++;objectReview=null;objectReviewFacts.replaceChildren();objectReviewStatus.textContent=message;objectReviewStatus.className='hint';
+  }
+  function objectInput() {
+    const limits=Object.fromEntries(Object.entries(objectLimits).map(([key,input])=>[key,Number(input.value)]));
+    if(Object.values(limits).some(value=>!Number.isSafeInteger(value)))throw new Error('Use whole numbers for the Object observation limits.');
+    return {objectSourceId:objectSource.value,expectedConfigRevision:current.configRevision,...limits};
+  }
+  function objectFormKey(){return JSON.stringify({profile:source.value,input:objectInput(),id:objectId.value,label:objectName.value});}
+  function drawObjectChoices() {
+    const choices=current.source.objectSessions??[],key=JSON.stringify({source:current.source.id,choices});
+    objectPanel.hidden=!choices.length;
+    if(key===objectChoicesKey)return;
+    objectChoicesKey=key;invalidateObject();const prior=objectSource.value;objectSource.replaceChildren();
+    for(const choice of choices)add(objectSource,'option',choice.label).value=choice.id;
+    if(choices.some(choice=>choice.id===prior))objectSource.value=prior;
+    const chosen=choices.find(choice=>choice.id===objectSource.value);
+    objectId.value=chosen?.id??'';objectName.value=chosen?.label??'';
+  }
+  async function inspectSavedObject() {
+    if(busy||!current||!objectForm.reportValidity()||loadedConfigRevision!==current.configRevision)return;
+    invalidateObject('Inspecting the original saved session and its bytes…');
+    const epoch=objectEpoch,profile=source.value,key=objectFormKey(),input=objectInput();
+    busy=true;sequence++;clearTimeout(timer);controls();
+    try {
+      const result=await api(base()+'/inspect-object',input);
+      if(destroyed||epoch!==objectEpoch||profile!==source.value||key!==objectFormKey())return;
+      if(result.source?.id!==profile||result.objectSourceId!==input.objectSourceId||result.configRevision!==input.expectedConfigRevision)
+        throw new Error('The Object review returned a different source or configuration revision.');
+      objectReview={result,configRevision:result.configRevision,key};
+      const addFact=(label,value)=>{const row=add(objectReviewFacts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));};
+      addFact('Original session',result.object.sessionId);addFact('Source intent',result.object.sourceIntentId);
+      addFact('Session file SHA-256',result.object.sessionSha256);addFact('Configuration SHA-256',result.object.configurationSha256);
+      addFact('Saved output',result.output.status+' · '+result.output.verifiedBytes+' / '+result.output.bytes+' bytes');
+      addFact('Verified chunks',result.output.verifiedChunks+' / '+result.output.chunks);addFact('Observed',when(result.observedAt));
+      objectReviewStatus.textContent='Read-only inspection retained. Review the identity and limits, then add this exact selection to the draft.';
+      say('Original Object inspected. Apply configuration explicitly after reviewing the draft.');
+    } catch(error) {
+      if(!destroyed&&epoch===objectEpoch){objectReview=null;objectReviewStatus.textContent=error.message;objectReviewStatus.className='status error';say(error.message,true);}
+    } finally {busy=false;controls();schedule();}
+  }
+  function addObjectDraft() {
+    if(busy||!objectReview||!current||!objectForm.reportValidity())return;
+    try {
+      if(objectReview.configRevision!==current.configRevision||loadedConfigRevision!==current.configRevision||objectReview.key!==objectFormKey())
+        throw new Error('The reviewed Object selection or watcher settings changed. Inspect it again.');
+      const config=JSON.parse(configText.value),id=objectId.value;
+      if(!Array.isArray(config.merchants)||['__proto__','constructor','prototype'].includes(id))throw new Error('Use a valid watcher configuration and source ID.');
+      const row={id,label:objectName.value,object:objectReview.result.object},index=config.merchants.findIndex(item=>item.id===id);
+      if(index<0){if(config.merchants.length>=8)throw new Error('The watcher already has eight sources. Remove or replace a source in the draft first.');config.merchants.push(row);}
+      else config.merchants[index]=row;
+      configText.value=JSON.stringify(config,null,2);configDirty=true;
+      objectReviewStatus.textContent='Exact reviewed Object added to the draft. Apply configuration to register it with the existing watcher.';
+      drawConfig();controls();say('Configuration draft updated. Other sources and notification settings are preserved.');
+    } catch(error){say(error.message,true);}
+  }
+  function objectFacts(parent,summary,title) {
+    const box=add(parent,'section',undefined,'runtime-capture');add(box,'h4',title);
+    const f=summary.financial,o=summary.output;
+    add(box,'p','Coverage: '+human(summary.coverage)+' · Output: '+human(o.state)+' · Observed '+when(summary.observedAt),'hint');
+    add(box,'p','Finalized requests: '+f.finalizedRequests+' · Unresolved: '+f.unresolvedRequests+
+      ' · Not attempted: '+f.notAttemptedRequests+' · No payment required: '+f.noPaymentRequests);
+    add(box,'p','Verified bytes: '+(o.verifiedBytes??'unknown')+' / '+(o.expectedBytes??'unknown')+
+      ' · Chunks: '+(o.verifiedChunks??'unknown')+' / '+(o.chunks??'unknown'),'hint');
+    add(box,'p','Original session '+summary.selection.sessionId+' · Intent '+summary.selection.sourceIntentId,'hint');
+    if(summary.poll&&!summary.poll.successful)add(box,'p','This poll did not establish a fresh complete native observation: '+human(summary.poll.reason)+'.','status error');
+    if(summary.nativeCodes.length)add(box,'p',summary.nativeCodes.join(', '),'status error');
+    const original=add(box,'details',undefined,'source-details');add(original,'summary','Recorded selection, financial view and output');
+    add(original,'pre',JSON.stringify(summary,null,2)).tabIndex=0;
+  }
+  function drawObjects() {
+    objectStatus.replaceChildren();const objects=current.merchants.filter(row=>row.kind==='OBJECT_SESSION');
+    objectStatus.hidden=!objects.length;if(!objects.length)return;
+    add(objectStatus,'h3','Saved buyer observations');
+    add(objectStatus,'p','Finalized request counts are retained native views. They are separate from verified output and do not report a monetary total or a fresh ledger query.','hint');
+    for(const row of objects) {
+      if(row.observation)objectFacts(objectStatus,row.observation,row.label);
+      else {const box=add(objectStatus,'section',undefined,'runtime-capture');add(box,'h4',row.label);add(box,'p','No retained read-only observation yet. Start the existing watcher to inspect this registered source.','hint');}
+    }
+  }
+  function invalidateCkan(message='Inspect the selected CKAN project before adding it to the draft.') {
+    ckanEpoch++;ckanReview=null;ckanReviewFacts.replaceChildren();ckanReviewStatus.textContent=message;ckanReviewStatus.className='hint';
+  }
+  function ckanInput() {
+    const limits=Object.fromEntries(Object.entries(ckanLimits).map(([key,input])=>[key,Number(input.value)]));
+    if(Object.values(limits).some(value=>!Number.isSafeInteger(value)))throw new Error('Use whole numbers for CKAN observation settings.');
+    return {ckanSourceId:ckanSource.value,expectedConfigRevision:current.configRevision,...limits,
+      ...Object.fromEntries(Object.entries(ckanRecords).map(([key,input])=>[key,input.value.trim()||null])),
+      requirePublication:requirePublication.checked};
+  }
+  function ckanFormKey(){return JSON.stringify({profile:source.value,input:ckanInput(),id:ckanId.value,label:ckanName.value});}
+  function drawCkanChoices() {
+    const choices=current.source.ckanWorkspaces??[],key=JSON.stringify({source:current.source.id,choices});
+    ckanPanel.hidden=!choices.length;if(key===ckanChoicesKey)return;
+    ckanChoicesKey=key;invalidateCkan();const prior=ckanSource.value;ckanSource.replaceChildren();
+    for(const choice of choices)add(ckanSource,'option',choice.label).value=choice.id;
+    if(choices.some(choice=>choice.id===prior))ckanSource.value=prior;
+    const chosen=choices.find(choice=>choice.id===ckanSource.value);
+    ckanId.value=chosen?.id??'';ckanName.value=chosen?.label??'';
+    for(const input of Object.values(ckanRecords))input.value='';
+  }
+  async function inspectSavedCkan() {
+    if(busy||!current||!ckanForm.reportValidity()||loadedConfigRevision!==current.configRevision)return;
+    invalidateCkan('Reading the original saved project and complete selected source files…');
+    const epoch=ckanEpoch,profile=source.value,key=ckanFormKey(),input=ckanInput();
+    busy=true;sequence++;clearTimeout(timer);controls();
+    try {
+      const result=await api(base()+'/inspect-ckan',input);
+      if(destroyed||epoch!==ckanEpoch||profile!==source.value||key!==ckanFormKey())return;
+      if(result.source?.id!==profile||result.ckanSourceId!==input.ckanSourceId||result.configRevision!==input.expectedConfigRevision)
+        throw new Error('The CKAN review returned a different source or watcher revision.');
+      ckanReview={result,configRevision:result.configRevision,key};
+      const fact=(label,value)=>{const row=add(ckanReviewFacts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));};
+      const summary=result.summary;
+      fact('Original catalog',result.ckan.catalogOrigin);fact('Project created',result.ckan.projectCreatedAt);
+      fact('Source coverage',summary.coverage);fact('Effective source',summary.selection.effectiveSourceId??summary.selection.sourceId);
+      fact('Refresh',summary.refresh?.record.id);fact('Decision SHA-256',summary.refresh?.decisionSha256);
+      fact('Publication',summary.publication?.record.id);fact('Retained original bytes',summary.files.bytes);fact('Observed',when(result.observedAt));
+      ckanReviewStatus.textContent='Original project inspected. Review its selected records and settings, then add this exact registration to the draft.';
+      say('Saved CKAN project inspected.');
+    } catch(error) {
+      if(!destroyed&&epoch===ckanEpoch){ckanReview=null;ckanReviewStatus.textContent=error.message;ckanReviewStatus.className='status error';say(error.message,true);}
+    } finally {busy=false;controls();schedule();}
+  }
+  function addCkanDraft() {
+    if(busy||!ckanReview||!current||!ckanForm.reportValidity())return;
+    try {
+      if(ckanReview.configRevision!==current.configRevision||loadedConfigRevision!==current.configRevision||ckanReview.key!==ckanFormKey())
+        throw new Error('The reviewed CKAN selection or watcher settings changed. Inspect the project again.');
+      const config=JSON.parse(configText.value),id=ckanId.value;
+      if(!Array.isArray(config.merchants)||['__proto__','constructor','prototype'].includes(id))throw new Error('Use a valid watcher configuration and source ID.');
+      const row={id,label:ckanName.value,ckan:ckanReview.result.ckan},index=config.merchants.findIndex(item=>item.id===id);
+      if(index<0){if(config.merchants.length>=8)throw new Error('The watcher already has eight sources. Remove or replace a source in the draft first.');config.merchants.push(row);}
+      else config.merchants[index]=row;
+      configText.value=JSON.stringify(config,null,2);configDirty=true;
+      ckanReviewStatus.textContent='Reviewed CKAN selection added to the draft. Apply configuration to register it with the existing watcher.';
+      drawConfig();controls();say('CKAN watcher draft updated.');
+    } catch(error){say(error.message,true);}
+  }
+  function ckanFacts(parent,summary,title) {
+    const box=add(parent,'section',undefined,'runtime-capture');add(box,'h4',title);
+    add(box,'p','Coverage: '+human(summary.coverage)+' · Observed '+when(summary.observedAt),'hint');
+    add(box,'p',summary.project.catalogOrigin??'Registered catalog project');
+    add(box,'p','Source '+(summary.selection.sourceId??'—')+' · Effective source '+(summary.selection.effectiveSourceId??'—'),'hint');
+    add(box,'p','Saved operation '+(summary.operation?.state??'none')+
+      ' · Refresh '+(summary.refresh?.record.state??'none')+' · Publication '+(summary.publication?.published?'Retained published output':'Pending or absent'));
+    if(summary.refresh)add(box,'p','Review the original comparison’s query windows and complete decision when interpreting row changes.','hint');
+    if(summary.poll&&!summary.poll.successful)add(box,'p','Current observation: '+human(summary.poll.reason),'status error');
+    if(summary.integrityCodes.length)add(box,'p',summary.integrityCodes.join(', '),'status error');
+    const original=add(box,'details',undefined,'source-details');add(original,'summary','Original project, refresh and publication records');
+    add(original,'pre',summary.originalJson??JSON.stringify(summary,null,2)).tabIndex=0;
+  }
+  function drawCkan() {
+    ckanStatus.replaceChildren();const projects=current.merchants.filter(row=>row.kind==='CKAN_WORKBENCH');
+    ckanStatus.hidden=!projects.length;if(!projects.length)return;
+    add(ckanStatus,'h3','Saved catalog observations');
+    for(const row of projects) {
+      if(row.observation)ckanFacts(ckanStatus,row.observation,row.label);
+      else {const box=add(ckanStatus,'section',undefined,'runtime-capture');add(box,'h4',row.label);add(box,'p','Start the existing watcher to read this registered project.','hint');}
+    }
+  }
   function drawList() {
-    listRows.replaceChildren();if(!current)return;
+    listRows.replaceChildren();recovery?.update(current);if(!current)return;
     for(const item of current.incidents) {
       const row=add(listRows,'tr');row.setAttribute('aria-selected',String(item.id===selectedId));
       const cell=add(row,'td');button(cell,item.merchantLabel||current.merchants.find(m=>m.id===item.merchantId)?.label||item.merchantId,()=>selectIncident(item.id),'case-link');
@@ -151,12 +391,14 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     const worker=current.worker;
     workerState.textContent=(worker.ownership==='console'?'This console · ':worker.ownership==='external'?'Recorded external service · ':'')+human(worker.status);
     workerObserved.textContent='Last sweep: '+when(worker.recorded?.lastSweepAt)+(worker.error?' · '+human(worker.error):'');
-    badge.textContent=current.source.label;drawConfig();controls();
+    badge.textContent=current.source.label;drawConfig();drawObjects();drawCkan();controls();
   }
   function fact(label,value){const row=add(facts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));}
   function drawDetail() {
-    details.hidden=!detail;if(!detail){controls();return;}
+    details.hidden=!detail;objectDetails.replaceChildren();ckanDetails.replaceChildren();if(!detail){controls();return;}
     const incident=detail.incident;
+    for(const [side,summary]of Object.entries(detail.objectObservations??{}))objectFacts(objectDetails,summary,human(side)+' original Object capture');
+    for(const [side,summary]of Object.entries(detail.ckanObservations??{}))ckanFacts(ckanDetails,summary,human(side)+' original CKAN capture');
     routeChoices.replaceChildren();
     for(const choice of detail.routes??[]){const option=add(routeChoices,'option');option.value=choice.id;option.label=choice.method+' '+(choice.path??'')+' · '+choice.sides.join(' and ');}
     captureStatus.textContent=Object.entries(detail.captureProblems??{}).map(([side,problem])=>human(side)+' capture: '+problem.detail).join(' ');
@@ -181,11 +423,14 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
         add(receiptCell,'small','Message '+receipt.messageTs);add(receiptCell,'small','Thread '+receipt.threadTs);
       } else add(receiptCell,'span',event.acceptedAt?'Accepted '+when(event.acceptedAt):'—');
       const actions=add(row,'td');
-      if(['PAUSED','EXHAUSTED'].includes(event.status))button(actions,'Retry delivery',()=>queueAction(event,'retry'),'text-button');
+      if(['PAUSED','EXHAUSTED'].includes(event.status)&&!current?.recovery?.deliveryPaused)button(actions,'Retry delivery',()=>queueAction(event,'retry'),'text-button');
       if(!terminal.has(event.status)&&event.status!=='IN_FLIGHT')button(actions,'Cancel delivery',()=>queueAction(event,'cancel'),'text-button');
       if(!actions.childElementCount)add(actions,'span','—');
     }
     if(!detail.notifications.length)add(add(queueRows,'tr'),'td','No notification has been queued for this incident.').colSpan=5;
+    queueHint.textContent=current?.recovery?.deliveryPaused?
+      'This received store holds unfinished notification deliveries. Review its recovery section before retrying an event.':
+      'Delivery attempts and accepted Slack receipts are retained by the original queue.';
     raw.textContent=JSON.stringify({incident,notifications:detail.notifications},null,2);controls();
   }
   function schedule() {
@@ -224,7 +469,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
         destinationStatus.textContent=result.accepted?'Verified workspace '+result.teamId+' · actor '+result.actorId+' · channel '+result.channelId:human(result.reason);
         say(result.accepted?'Slack workspace and actor verified.':'Slack verification needs attention.',!result.accepted);
       } else {
-        if(action==='configure'){configDirty=false;loadedConfigRevision=null;destinationStatus.textContent='';}
+        if(action==='configure'){configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();destinationStatus.textContent='';}
         if(action==='ack')notes.value='';
         say(action==='start'?'Watcher start requested. Its state appears above.':action==='stop'?'This console’s watcher stopped and drained.':
           action==='configure'?'Watcher configuration applied.':action==='ack'?'Incident acknowledged.':action==='notify'?'Operator reminder queued.':'Operation completed.');
@@ -269,14 +514,42 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
       if(opened)document.getElementById('cases')?.scrollIntoView({block:'start'});
     } catch(error){say(error.message,true);}finally{busy=false;controls();}
   }
+  recovery=mountIncidentRecoveryDesk({root:recoveryRoot,request:api,
+    getContext:()=>({source:source.value,current,busy}),onBusy(value){busy=value;controls();},
+    refreshParent:()=>refresh({force:true}),signal:abort.signal,
+    async selectSource(id,profiles) {
+      if(!Array.isArray(profiles?.sources)||!profiles.sources.some(row=>row.id===id))
+        throw new Error('The received store was saved, but its current source profile was not returned.');
+      source.replaceChildren();for(const row of profiles.sources)add(source,'option',row.label).value=row.id;
+      source.value=id;await changeSource();
+    }});
   selectionForm.addEventListener('submit',event=>{event.preventDefault();if(busy)return;offset=0;refresh();},{signal:abort.signal});
-  source.addEventListener('change',()=>{selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
+  async function changeSource() {
+    selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
+    invalidateObject();objectChoicesKey='';objectStatus.replaceChildren();objectStatus.hidden=true;
+    invalidateCkan();ckanChoicesKey='';ckanStatus.replaceChildren();ckanStatus.hidden=true;
     destinationStatus.textContent='';merchant.value='';routeId.value='';configText.value='';configSummary.textContent='Loading settings…';listRows.replaceChildren();
-    clearPrepared();drawDetail();refresh();},{signal:abort.signal});
+    clearPrepared();recovery?.update(null);drawDetail();await refresh({force:true});
+  }
+  source.addEventListener('change',()=>{void changeSource();},{signal:abort.signal});
   operator.addEventListener('input',controls,{signal:abort.signal});
   routeId.addEventListener('input',()=>{clearPrepared();controls();},{signal:abort.signal});
   acknowledgeForm.addEventListener('submit',event=>{event.preventDefault();if(!acknowledgeForm.reportValidity())return;
     perform('ack',()=>({expectedRevision:detail.incident.revision,by:operator.value.trim(),notes:notes.value}),true);},{signal:abort.signal});
+  objectForm.addEventListener('submit',event=>{event.preventDefault();inspectSavedObject();},{signal:abort.signal});
+  objectSource.addEventListener('change',()=>{
+    invalidateObject();const chosen=current?.source.objectSessions?.find(row=>row.id===objectSource.value);
+    objectId.value=chosen?.id??'';objectName.value=chosen?.label??'';controls();
+  },{signal:abort.signal});
+  for(const input of [objectId,objectName,...Object.values(objectLimits)])
+    input.addEventListener('input',()=>{invalidateObject();controls();},{signal:abort.signal});
+  ckanForm.addEventListener('submit',event=>{event.preventDefault();inspectSavedCkan();},{signal:abort.signal});
+  ckanSource.addEventListener('change',()=>{
+    invalidateCkan();const chosen=current?.source.ckanWorkspaces?.find(row=>row.id===ckanSource.value);
+    ckanId.value=chosen?.id??'';ckanName.value=chosen?.label??'';for(const input of Object.values(ckanRecords))input.value='';controls();
+  },{signal:abort.signal});
+  for(const input of [ckanId,ckanName,requirePublication,...Object.values(ckanRecords),...Object.values(ckanLimits)])
+    input.addEventListener('input',()=>{invalidateCkan();controls();},{signal:abort.signal});
   configText.addEventListener('input',()=>{configDirty=true;drawConfig();controls();},{signal:abort.signal});
   configForm.addEventListener('submit',event=>{event.preventDefault();let config;
     try{config=JSON.parse(configText.value);}catch{say('Enter valid configuration JSON before applying settings.',true);return;}
@@ -289,5 +562,5 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     if(navigation){navigation.hidden=false;navigation.closest('.workflow').classList.add('has-incidents');}
     say('Choose an incident to review, or operate the selected watcher.');refresh();
   }).catch(error=>{if(!destroyed){root.hidden=false;say(error.message,true);}});
-  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();abort.abort();root.replaceChildren();}};
+  return {destroy(){destroyed=true;clearTimeout(timer);clearPrepared();recovery?.destroy();abort.abort();root.replaceChildren();}};
 }

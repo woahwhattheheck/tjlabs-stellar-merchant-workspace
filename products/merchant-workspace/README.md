@@ -14,10 +14,15 @@ The [development architecture and delivery plan](https://github.com/woahwhattheh
 connects the original code, user interfaces, prospective Stellar integration
 roadmap, native acceptance and complete customer handover in one source.
 
+## Launch the first customer services
+
+Use the [complete customer launch playbook](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/CUSTOMER_LAUNCH.md) to agree the customer task and paid unit, prepare the original commissioning workorder, install the merchant and buyer together, operate recurring periods, and hand the complete service to its receiving engineer. The playbook connects the existing Installation, Buyer, recurring-work, Accounting and Cohort interfaces to the six funded delivery packages.
+
 ## Choose a workflow
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Complete recurring customer periods and source changes | **Merchant operator → Workflows → Recurring customer work** or `starforge merchant-workflow-series` | [Saved customer series](../../stellar-forge/mcp-merchant-operator/console/WORKFLOW_SERIES.md), exact original cycle runs, full prior-period history, operator handover and complete customer-file receiving |
 | Receive Baserow data into a Rails application | **Applications → Baserow source authoring** and `starforge baserow-rails` | [Complete selected installation](../baserow-rails/README.md), original source editions and attachments, typed Ruby receiving, transactional Rails preview/import and full application handover |
 | Set up and operate a WooCommerce / CoCart customer | `starforge cocart-setup` and **Applications → CoCart** | Original saved-profile or whole-customer intake, native cart and Woo checkout, managed reopening and complete receiving |
 | Turn captured HTTP API traffic into a merchant | `starforge captured-api` | Original source review, exact route prices, native merchant packages, release operations and complete receiving |
@@ -32,8 +37,10 @@ roadmap, native acceptance and complete customer handover in one source.
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
 | Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
-| Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
+| [Operate complete Merchant Support](../merchant-support/README.md) | **Applications → Merchant support**, `starforge support-console`, or the original merchant agent | Saved cases and incidents, implementation and source editions, service commitments, quotations, complete customer packages and independently continued receiving |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
+| Open an issued buyer period for accounting | `starforge merchant-accounting-workspace buyer init` and the accounting browser | Complete retained buyer source, the same saved handoff, explicit accounting decisions, original returns and encrypted recovery |
+| Review a changed QuickBooks or Xero chart | **Accounting → Chart source changes** or `starforge accounting-source-changes` | Both original company-chart editions, reviewed mappings and valuations, and a recoverable replacement of the selected unused plan |
 | Review aid-finance publisher data and hand it over | **Applications → IATI aid finance** or `starforge dataset-iati` | Complete original XML editions, exact financial groups, named portfolio review, browser/MCP/CLI operation and portable customer receiving |
 
 The [operator guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/merchant-workspace/OPERATING.md)
@@ -55,6 +62,16 @@ same workflow. The
 [pricing and supplier-cost guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 connects original supplier sources, allocation, saved pricing reviews, scenario
 planning and complete backup receiving through that same Applications lifecycle.
+
+The [accounting connections guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/CONNECTIONS.md)
+keeps each saved provider selection with its original accounting owner. The
+[buyer accounting guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/BUYER_ACCOUNTING.md)
+covers retaining an issued period, reopening its source and continuing the same
+accountant handoff. The [chart source-change guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/SOURCE_CHANGES.md)
+covers comparing retained chart editions, reviewing each mapping and valuation,
+and replacing an unused plan with one saved successor. Those screens run inside
+the same accounting server and operating-state recovery as the existing merchant,
+runbook and portfolio workflows.
 
 The [merchant fleet guide](../merchant-fleet/OPERATING.md) connects an existing
 fleet plan and its original seller stores to Applications review, start, open,

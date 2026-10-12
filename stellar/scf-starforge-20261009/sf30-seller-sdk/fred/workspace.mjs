@@ -7,11 +7,20 @@ import { loadDatasetConfig } from '../dataset-handler.mjs';
 import { readPrivateJson } from '../routescan/quota.mjs';
 import { Buyer } from '../../sf88-operator-buyer-cli/node/index.mjs';
 import { need, inspectCapture, MAX_CAPTURE_BYTES, operationId } from './model.mjs';
-import { jsonBytes } from './source.mjs';
+import { jsonBytes, hash } from './source.mjs';
+import { pageFredBriefing } from './briefing/model.mjs';
+import { inspectFredReleaseCapture } from './releases/model.mjs';
 import { readFredWorkspaceLaunch, FRED_WORKSPACE_STARTUP } from './launch.mjs';
+import { QCEW_WORKSPACE_REQUEST_BYTES, QCEW_WORKSPACE_ACTIONS,
+  readQcewWorkspace, runQcewWorkspaceAction } from './qcew/workspace.mjs';
 import { readFredProject, fredProjectView, getFredCapture, configureFredProject, importFredCapture, acquireFredCapture,
   selectFredCapture, combineFredTables, reviewFredCapture, compareFredCaptures, publishFredReview, exportFredProject,
-  selectFredPublication, abandonFredOperation } from './project.mjs';
+  selectFredPublication, abandonFredOperation, previewFredBriefing, getFredBriefing, downloadFredBriefing,
+  listFredBriefingTemplates, saveFredBriefingTemplate, previewFredBriefingSuccessor, saveFredBriefingSuccessor,
+  getFredBriefingSuccessor, downloadFredBriefingSuccessor,
+  listFredReleaseCaptures, getFredReleaseCapture, importFredReleaseCapture, acquireFredReleaseCapture,
+  listFredReleaseWatches, saveFredReleaseWatch, previewFredReleasePlan, saveFredReleasePlan,
+  getFredReleasePlan, downloadFredReleasePlan, acquireFredPlannedVintage } from './project.mjs';
 import { startFredMerchant, readFredMerchant, prepareFredPurchase, executeFredPurchase,
   recoverFredPurchase, exportFredPurchase } from './merchant.mjs';
 
@@ -34,6 +43,24 @@ function pageNumber(value, max = 1000000) {
   need(value === null || /^\d+$/.test(value) && Number(value) <= max, 'Invalid page offset.');
   return Number(value ?? 0);
 }
+function recurringSelection(request) {
+  return { templateId: request.templateId, captureId: request.captureId, anchorDate: request.anchorDate ?? null,
+    baselineReviewId: request.baselineReviewId ?? null, previousSuccessorId: request.previousSuccessorId ?? null,
+    note: request.note ?? '' };
+}
+function changesOnlyQuery(value) {
+  need(value === null || value === '0' || value === '1', 'Choose a valid comparison filter.');
+  return value !== '0';
+}
+function releasePlanSelection(request) {
+  return { watchId: request.watchId, beforeCaptureId: request.beforeCaptureId ?? null, afterCaptureId: request.afterCaptureId };
+}
+function releasePageOptions(url) {
+  const offset = pageNumber(url.searchParams.get('offset'));
+  const limit = url.searchParams.has('limit') ? pageNumber(url.searchParams.get('limit'), 500) : 100;
+  need(limit >= 1, 'Choose a release page size from 1 to 500.');
+  return { section: url.searchParams.get('section'), offset, limit };
+}
 function output(value) {
   if (!value || typeof value !== 'object') return value;
   const { result, ...plain } = value;
@@ -49,7 +76,12 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   need(Number.isInteger(port) && port >= 0 && port <= 65535, 'Use an available local port.');
   const token = randomBytes(32).toString('hex'), abort = new AbortController(), assetMap = new Map([
     ['/', ['index.html', 'text/html; charset=utf-8']], ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
-    ['/style.css', ['style.css', 'text/css; charset=utf-8']] ]);
+    ['/style.css', ['style.css', 'text/css; charset=utf-8']], ['/briefing.js', ['briefing.js', 'text/javascript; charset=utf-8']],
+    ['/recurring.js', ['recurring.js', 'text/javascript; charset=utf-8']],
+    ['/releases.js', ['releases.js', 'text/javascript; charset=utf-8']],
+    ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
+    ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
+    ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']] ]);
   const assets = new Map();
   for (const [route, [file, type]] of assetMap) assets.set(route, [await readFile(new URL('./ui/' + file, import.meta.url)), type]);
   const buyer = launch.buyerSettings ? await new Buyer(launch.buyerSettings).ready() : null;
@@ -61,13 +93,31 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     editionId: merchant.editionId, snapshot: merchant.snapshot, resource: merchant.resource } : null;
   const run = async request => {
     const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
+    if (QCEW_WORKSPACE_ACTIONS.includes(request.action))
+      return runQcewWorkspaceAction({ directory, projectId: binding.projectId, request, environment });
     switch (request.action) {
       case 'configure': return configureFredProject({ ...common, selection: request.selection });
       case 'capture': return acquireFredCapture({ ...common, environment, signal: abort.signal });
       case 'import': return importFredCapture({ ...common, capture: request.capture });
       case 'combine': return combineFredTables({ ...common, captureIds: request.captureIds });
       case 'select': return selectFredCapture({ ...common, captureId: request.captureId });
-      case 'review': return reviewFredCapture({ ...common, captureId: request.captureId, policy: request.policy, note: request.note });
+      case 'review': return reviewFredCapture({ ...common, captureId: request.captureId, policy: request.policy, note: request.note, briefing: request.briefing ?? null });
+      case 'template-save': return saveFredBriefingTemplate({ ...common, reviewId: request.reviewId,
+        name: request.name, window: request.window ?? {}, previousTemplateId: request.previousTemplateId ?? null });
+      case 'successor-save': return saveFredBriefingSuccessor({ ...common, ...recurringSelection(request),
+        previewId: request.previewId });
+      case 'release-import': return importFredReleaseCapture({ ...common,
+        capture: request.capture, releaseCaptureId: request.releaseCaptureId });
+      case 'release-capture': return acquireFredReleaseCapture({ ...common, selection: request.selection,
+        environment, signal: abort.signal });
+      case 'release-watch-save': return saveFredReleaseWatch({ ...common, name: request.name, series: request.series,
+        templateId: request.templateId ?? null, observationStart: request.observationStart,
+        observationEnd: request.observationEnd ?? 'as_of', baselineAsOf: request.baselineAsOf,
+        catchUp: request.catchUp ?? 'all_vintages', pageSize: request.pageSize, maxRows: request.maxRows });
+      case 'release-plan-save': return saveFredReleasePlan({ ...common, ...releasePlanSelection(request),
+        previewId: request.previewId });
+      case 'release-vintage-capture': return acquireFredPlannedVintage({ ...common, planId: request.planId,
+        asOf: request.asOf, environment, signal: abort.signal });
       case 'publish': return publishFredReview({ ...common, reviewId: request.reviewId, origin: request.origin, path: request.path, payment: request.payment });
       case 'abandon': return abandonFredOperation({ ...common, pendingId: request.pendingId });
       case 'merchant-start': {
@@ -120,6 +170,10 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       if (req.method === 'GET' && url.pathname === '/api/state')
         return send(res, 200, { project: await fredProjectView(directory), merchant: runtimeView(),
           busy: pending?.action ?? null, buyerConfigured: Boolean(buyer) });
+      if (req.method === 'GET' && url.pathname.startsWith('/api/qcew/')) {
+        const result = await readQcewWorkspace({ directory, projectId: binding.projectId, url, environment });
+        return send(res, 200, result.value, result.contentType, result.filename);
+      }
       if (req.method === 'GET' && url.pathname === '/api/observations') {
         const capture = await getFredCapture(directory, url.searchParams.get('capture')), model = inspectCapture(capture);
         const series = url.searchParams.get('series') ?? '', offset = pageNumber(url.searchParams.get('offset'));
@@ -134,6 +188,79 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         if (url.searchParams.get('download') === '1') return send(res, 200, report, 'application/json', 'fred-vintage-comparison.json');
         const offset = pageNumber(url.searchParams.get('offset')), { changes, ...summary } = report;
         return send(res, 200, { ...summary, total: changes.length, offset, limit: 100, changes: changes.slice(offset, offset + 100) });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/briefing-preview') {
+        const request = await body(req, 65536);
+        return send(res, 200, await previewFredBriefing({ directory, captureId: request.captureId,
+          briefing: request.briefing, offset: request.offset ?? 0, limit: 100 }));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/briefing') {
+        const reviewId = url.searchParams.get('review'), format = url.searchParams.get('format');
+        if (format !== null) {
+          const file = await downloadFredBriefing({ directory, reviewId, format });
+          return send(res, 200, file.body, file.contentType, file.path);
+        }
+        const value = await getFredBriefing(directory, reviewId);
+        const bytes = jsonBytes(value.manifest);
+        return send(res, 200, { ...pageFredBriefing(value.report, { offset: pageNumber(url.searchParams.get('offset')), limit: 100 }),
+          manifest: value.manifest, files: [...value.manifest.files, { path: 'briefing-manifest.json', bytes: bytes.length,
+            sha256: hash(bytes), contentType: 'application/json', role: 'BRIEFING_MANIFEST' }] });
+      }
+      if (req.method === 'GET' && url.pathname === '/api/release-captures')
+        return send(res, 200, await listFredReleaseCaptures({ directory }));
+      if (req.method === 'GET' && url.pathname === '/api/release-watches')
+        return send(res, 200, await listFredReleaseWatches({ directory }));
+      if (req.method === 'GET' && url.pathname === '/api/release-capture') {
+        const releaseCaptureId = url.searchParams.get('capture');
+        const capture = await getFredReleaseCapture({ directory, releaseCaptureId });
+        if (url.searchParams.get('download') === '1')
+          return send(res, 200, capture, 'application/json; charset=utf-8', 'fred-release-capture.json');
+        const model = inspectFredReleaseCapture(capture), page = releasePageOptions(url), section = page.section ?? 'series';
+        need(['series', 'releases', 'calendar', 'vintages'].includes(section), 'Choose a release source table.');
+        const all = model[section];
+        need(page.offset <= all.length, 'Choose an offset inside the retained release source table.');
+        const project = await readFredProject(directory), items = all.slice(page.offset, page.offset + page.limit);
+        return send(res, 200, { projectId: project.id, revision: project.revision, releaseCaptureId,
+          selection: model.selection, source: model.source,
+          counts: { series: model.series.length, releases: model.releases.length,
+            calendar: model.calendar.length, vintages: model.vintages.length },
+          section, total: all.length, offset: page.offset, limit: page.limit,
+          nextOffset: page.offset + items.length < all.length ? page.offset + items.length : null, items });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/release-plan-preview') {
+        const request = await body(req, 65536), offset = request.offset ?? 0, limit = request.limit ?? 100;
+        need(Number.isInteger(offset) && offset >= 0 && offset <= 1000000, 'Choose a valid release page offset.');
+        need(Number.isInteger(limit) && limit >= 1 && limit <= 500, 'Choose a release page size from 1 to 500.');
+        return send(res, 200, await previewFredReleasePlan({ directory, ...releasePlanSelection(request),
+          section: request.section ?? 'acquisitions', offset, limit }));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/release-plan') {
+        const planId = url.searchParams.get('plan');
+        if (url.searchParams.get('download') === '1') {
+          const file = await downloadFredReleasePlan({ directory, planId });
+          return send(res, 200, file.body, file.contentType, file.path);
+        }
+        const page = releasePageOptions(url);
+        return send(res, 200, await getFredReleasePlan({ directory, planId,
+          ...page, section: page.section ?? 'acquisitions' }));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/briefing-templates')
+        return send(res, 200, await listFredBriefingTemplates({ directory }));
+      if (req.method === 'POST' && url.pathname === '/api/briefing-successor-preview') {
+        const request = await body(req, 65536);
+        return send(res, 200, await previewFredBriefingSuccessor({ directory, ...recurringSelection(request),
+          offset: request.offset ?? 0, limit: request.limit ?? 100, changesOnly: request.changesOnly ?? true }));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/briefing-successor') {
+        const successorId = url.searchParams.get('successor'), format = url.searchParams.get('format');
+        if (format !== null) {
+          const file = await downloadFredBriefingSuccessor({ directory, successorId, format });
+          return send(res, 200, file.body, file.contentType, file.path);
+        }
+        return send(res, 200, await getFredBriefingSuccessor({ directory, successorId,
+          offset: pageNumber(url.searchParams.get('offset')),
+          limit: url.searchParams.has('limit') ? pageNumber(url.searchParams.get('limit'), 500) : 100,
+          changesOnly: changesOnlyQuery(url.searchParams.get('changesOnly')) }));
       }
       if (req.method === 'GET' && url.pathname === '/api/bundle')
         return send(res, 200, await exportFredProject({ directory }), 'application/json', 'fred-economic-project.json');
@@ -165,9 +292,11 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         const result = await exportFredPurchase({ directory: selected, buyer, intentId: url.searchParams.get('intent') });
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
-      if (req.method === 'POST' && url.pathname === '/api/action') {
-        const request = await body(req);
+      if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
+        const countyAction = url.pathname === '/api/qcew/action';
+        const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : undefined);
         need(request && typeof request === 'object' && !Array.isArray(request) && typeof request.action === 'string', 'Select a workspace action.');
+        need(!countyAction || QCEW_WORKSPACE_ACTIONS.includes(request.action), 'Choose a county report action.');
         need(!pending, 'The original workspace action is still running; read its state.', 'FRED_WORKSPACE_BUSY', 409);
         const task = run(request); pending = { action: request.action, task };
         try { return send(res, 200, await task); } finally { pending = null; }

@@ -1,3 +1,8 @@
+import type { OrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
+import type { AmpStatus, AmpCapture, AmpPlan, AmpSelection, AmpDecisionState, AmpRows, AmpRunSummary, AmpRun, AmpEvents, AmpRequest, AmpAction, AmpCaptureInput, AmpCaptureResult, AmpSave, AmpSaved, AmpScope, AmpScopePreview, AmpDecisions, AmpAdvance, AmpReview, AmpPrepare, AmpNativeCapture, AmpNativeStart, AmpNativeStarted, AmpCredentials, AmpNativeReconcile, AmpNativeReceived, AmpFileKind, AmpReceiving } from './amp_client.mjs';
+export type * from './amp_client.mjs';
+import type { OrganisationStatus, OrganisationProfile, OrganisationPlan, OrganisationRequest, OrganisationSections, OrganisationRowsInput, OrganisationPage, OrganisationSnapshot, OrganisationDetail, OrganisationSave, OrganisationReviewInput, OrganisationReleaseInput, OrganisationReleaseResult, OrganisationCompare, OrganisationComparison, OrganisationFileKind, OrganisationReceiving } from './organisation_client.mjs';
+export type * from './organisation_client.mjs';
 /** MIT. Typed access to the original IATI console. Financial and identifier values remain strings. */
 export type Sha256 = string;
 export type ExactDecimalString = string;
@@ -325,7 +330,219 @@ export interface ReceivedDqaCase {
 }
 
 /** Borrows an existing authenticated loopback console. It creates no source store or process. */
+
+export type ParticipantAction = 'create' | 'feedback' | 'evidence' | 'triage' | 'correct' | 'candidate' | 'finance' | 'review' | 'release';
+export interface ParticipantRequest { requestId: string; actor: string; id?: Sha256; expectedRevision?: number; [field: string]: unknown }
+export interface ParticipantFinding {
+ id: string; activityId: string; indicatorId: string; finding: string; priority: 'normal' | 'blocking';
+ owner: string; dueDate: string; status: 'open' | 'planned' | 'resolved' | 'deferred'; note: string;
+ evidenceIds: Sha256[]; sourceAsset: Sha256; sourceRow: number; original: Record<string,string>;
+}
+export interface ParticipantSchemaResult {
+ schema: 'stellar-forge.iati-schema-validation.v1'; state: 'VALID' | 'INVALID' | 'UNAVAILABLE';
+ sourceSha256: Sha256; sourceBytes: number; stage: string; schemaManifestSha256?: Sha256;
+ errors: Array<{line: number; column: number; message: string; [field: string]: unknown}>;
+ [field: string]: unknown;
+}
+export interface ParticipantProject {
+ schema: 'stellar-forge.iati-participant-project.v1'; id: Sha256; revision: number; name: string;
+ publisherRef: string; cutoff: string; notes: string; activityIds: string[];
+ baselineSource: Sha256; candidateSource: Sha256;
+ state: 'DRAFT' | 'NEEDS_CORRECTION' | 'REVIEWED' | 'RELEASED';
+ feedback: ParticipantFinding[]; feedbackAssets: Array<Record<string,unknown>>; evidence: Array<Record<string,unknown>>;
+ corrections: Array<Record<string,unknown>>; baselineValidation: ParticipantSchemaResult;
+ candidateValidation: ParticipantSchemaResult; methodology: Record<string,unknown>; lastEditor: string;
+ finance: null | {portfolioId: Sha256; beforeRevision: number; candidateRevision: number; comparisonId: Sha256; baselineSource: Sha256; candidateSource: Sha256; comparedBy: string; comparedAt: number};
+ review: null | {decision: 'accepted' | 'needs-correction'; reviewer: string; note: string; sourceId: Sha256; definitionSha256: Sha256; [field:string]:unknown};
+ release: null | {id:Sha256;label:string;note:string;sourceId:Sha256;publicationState:'READY_FOR_PUBLISHER';[field:string]:unknown};
+ created: number; updated: number; previousRevision: number | null; lastAction: Record<string,unknown>;
+}
+export interface ParticipantField {
+ field: 'title' | 'description' | 'participating-org' | 'document-link'; index: number; sha256: Sha256;
+ attributes: Record<string,string>; narratives: Array<{index:number;sha256:Sha256;language:string;text:string}>;
+ categories: string[];
+}
+export interface ParticipantPreview {
+ project:Sha256;revision:number;sourceId:Sha256;candidateId:Sha256;previewSha256:Sha256;
+ audit:Record<string,unknown>;validation:ParticipantSchemaResult;
+}
+export interface ParticipantReceiving {
+ schema:'stellar-forge.iati-participant-receiving.v1';state:'COMPLETE';project:ParticipantProject;
+ revisions:number;sources:number;evidenceFiles:number;packet:{bytes:number;sha256:Sha256};
+}
+
+
+/** Exact original native revision; this pointer never follows mutable latest state. */
+export type RefreshNativeSelection = Pick<Portfolio,'id'|'revision'|'definitionSha256'|'sources'|'selection'|'review'>;
+export type RefreshPlanState = 'ACTIVE'|'PAUSED'|'ARCHIVED';
+export type RefreshRunState = 'AWAITING_REVIEW'|'REVIEWED'|'NEEDS_CORRECTION'|'PROMOTED'|'CANCELLED';
+export interface RefreshPageOptions extends RequestOptions {offset?:number;limit?:number;snapshot?:Sha256}
+export interface RefreshPage<T> {snapshot:Sha256;offset:number;total:number;items:T[];nextOffset:number|null}
+export interface RefreshPlan {
+ schema:'stellar-forge.iati-refresh-plan.v1';id:Sha256;portfolioId:Sha256;revision:number;previousRevision:number|null;
+ name:string;owner:string;note:string;state:RefreshPlanState;baseline:RefreshNativeSelection;
+ created:number;updated:number;requestId:string;
+}
+export interface RefreshPreviewInput {
+ planId:Sha256;expectedPlanRevision:number;expectedPortfolioRevision:number;sources:Sha256[];
+ /** Only changed before/after editions. Unchanged source IDs are paired automatically. */
+ pairs:Array<{before:Sha256;after:Sha256}>;selection?:Selection;selectionNote?:string;sourceChangeNote?:string;
+}
+export interface RefreshPreview {
+ schema:'stellar-forge.iati-refresh-preview.v1';planId:Sha256;planRevision:number;portfolioId:Sha256;
+ expectedPortfolioRevision:number;baseline:RefreshNativeSelection;sources:Sha256[];
+ pairs:Array<{before:Sha256;after:Sha256}>;unchangedSources:Sha256[];addedSources:Sha256[];removedSources:Sha256[];
+ sourceChangeNote:string;selection:Selection;selectionChanged:boolean;selectionNote:string;
+ sourceFiles:Array<{id:Sha256;bytes:number;inventorySha256:Sha256}>;beforeCounts:PortfolioCounts;sha256:Sha256;
+}
+export interface RefreshCancellation {requestId:string;actor:string;note:string;created:number}
+export interface RefreshPromotion extends RefreshCancellation {
+ planRevision:number;baselineBefore:RefreshNativeSelection;baselineAfter:RefreshNativeSelection;
+}
+export interface RefreshRun {
+ schema:'stellar-forge.iati-refresh-run.v1';id:Sha256;planId:Sha256;portfolioId:Sha256;revision:number;previousRevision:number|null;
+ planRevision:number;label:string;actor:string;note:string;state:RefreshRunState;baseline:RefreshNativeSelection;preview:RefreshPreview;
+ candidate:RefreshNativeSelection|null;comparison:PortfolioComparison|null;afterCounts:PortfolioCounts|null;review:Review|null;
+ created:number;updated:number;requestId:string;promotion:RefreshPromotion|null;cancellation:RefreshCancellation|null;
+}
+export type RefreshPlanSave = {requestId:string;name:string;owner:string;note?:string;state?:RefreshPlanState} &
+ ({portfolioId:Sha256;baselineRevision:number;id?:never;expectedRevision?:never} |
+  {id:Sha256;expectedRevision:number;portfolioId?:never;baselineRevision?:never});
+export interface RefreshStart extends RefreshPreviewInput {requestId:string;previewSha256:Sha256;label:string;actor:string;note?:string}
+export interface RefreshRunSelection {requestId:string;planId:Sha256;runId:Sha256;expectedRevision:number}
+export interface RefreshReview extends RefreshRunSelection {
+ expectedPortfolioRevision:number;review:{status:'reviewed'|'needs-correction';reviewer:string;note:string};
+}
+export interface RefreshPromote extends RefreshRunSelection {expectedPlanRevision:number;actor:string;note:string}
+export interface RefreshCancel extends RefreshRunSelection {actor:string;note:string}
+export interface RefreshAbandon {requestId:string;planId:Sha256;pendingRequestId:string;actor:string;note:string}
+export interface RefreshInputs {
+ 'plan-save':RefreshPlanSave;start:RefreshStart;review:RefreshReview;promote:RefreshPromote;cancel:RefreshCancel;abandon:RefreshAbandon;
+}
+export type RefreshAction = keyof RefreshInputs;
+export interface RefreshCompleted {
+ requestId:string;action:RefreshAction;state:'COMPLETE';plan:RefreshPlan;run:RefreshRun|null;
+}
+export interface RefreshAbandoned {requestId:string;action:RefreshAction;state:'ABANDONED';cancellation:RefreshCancellation}
+export interface RefreshActionRecordBase<A extends RefreshAction = RefreshAction> {
+ schema:'stellar-forge.iati-refresh-action.v1';ordinal:number;requestId:string;kind:A;input:RefreshInputs[A];
+ inputSha256:Sha256;created:number;prepared:Record<string,unknown>;
+ native:null|{portfolio:RefreshNativeSelection;comparison?:PortfolioComparison};
+}
+export type RefreshPrepared = RefreshActionRecordBase & {state:'PREPARED'};
+export type RefreshActionRecord = RefreshPrepared |
+ (RefreshActionRecordBase & {state:'COMPLETE';completedAt:number;result:RefreshCompleted}) |
+ (RefreshActionRecordBase & {state:'ABANDONED';cancellation:RefreshCancellation});
+export interface RefreshStatus {
+ plan:RefreshPlan;portfolio:RefreshNativeSelection;snapshot:Sha256;pendingRequest:RefreshPrepared|null;runCount:number;actionCount:number;
+}
+export interface RefreshReceiving {
+ schema:'stellar-forge.iati-refresh-receiving.v1';plan:RefreshPlan;currentPlan:RefreshPlan;
+ snapshot:Sha256;currentSnapshot:Sha256;reconstructed:true;reused:boolean;sourceCount:number;runCount:number;actionCount:number;
+ historyCount:number;pendingRequest:RefreshPrepared|null;portfolio:RefreshNativeSelection;reportFiles:string[];
+}
+
+
+/** Original IATI 2.03 results. All reported and calculated decimal values are strings. */
+export interface ResultsSelection {
+ indicatorKeys?:Sha256[]; activityIds?:string[]; resultTypes?:string[]; measures?:string[];
+ periodFrom?:CalendarDate|''; periodTo?:CalendarDate|''; includeUndated?:boolean;
+}
+export interface ResultsInterpretation {
+ indicatorKey:Sha256; unitLabel:string; direction:'reported'|'higher'|'lower'|'none'; note:string;
+}
+export type ResultsPair = {periodKey:Sha256;actualKey:Sha256;note:string} & (
+ {targetKey:Sha256;baselineKey:Sha256|null;operation:'inspect'|'difference'|'target-ratio'} |
+ {targetKey:Sha256;baselineKey:Sha256;operation:'baseline-progress'} |
+ {targetKey:null;baselineKey:Sha256;operation:'baseline-change'}
+);
+export interface ResultsDefinition {
+ name:string; sources:Sha256[]; notes?:string; selection?:ResultsSelection; review?:Review;
+ interpretations?:ResultsInterpretation[]; bindings?:ResultsPair[];
+}
+export type ResultsSave = ResultsDefinition & {requestId:string} &
+ ({id?:never;expectedRevision?:never}|{id:Sha256;expectedRevision:number});
+export interface ResultsCompare {
+ requestId:string; id:Sha256; beforeRevision:number; afterRevision:number;
+ /** Only unmatched source-bound indicators need an explicit one-to-one correspondence. */
+ pairs:Array<{before:Sha256;after:Sha256;note:string}>;
+}
+export interface ResultsAdopt {
+ requestId:string; id:Sha256; expectedRevision:number; selectedRevision:number; actor:string; note:string;
+}
+export type ResultsCancel = {requestId:string;reason:string} & (
+ {targetKind:'save';targetInput:ResultsSave}|{targetKind:'compare';targetInput:ResultsCompare}|{targetKind:'adopt';targetInput:ResultsAdopt});
+export interface ResultsFinding {code:string;message:string;locator:string;severity:string;source?:Sha256}
+export interface ResultsProjectionRecord {
+ id:Sha256;source:Pick<SourceSummary,'id'|'label'|'name'|'bytes'>;analysisContractSha256:Sha256;file:FileIdentity;
+}
+export interface ResultsValue {
+ key:Sha256;source:Sha256;locator:string;indicatorKey:Sha256;periodKey:Sha256|null;
+ kind:'baseline'|'target'|'actual';attributes:Record<string,string>;rawValue:string|null;
+ decimal:ExactDecimalString|null;measure:string;year:string|null;isoDate:string|null;
+ dateDay:CalendarDate|null;original:JsonValue;originalSha256:Sha256;findings:ResultsFinding[];
+ [key:string]:unknown;
+}
+export interface ResultsPeriod {
+ key:Sha256;source:Sha256;locator:string;indicatorKey:Sha256;
+ targets:ResultsValue[];actuals:ResultsValue[];findings:ResultsFinding[];[key:string]:unknown;
+}
+export interface ResultsIndicator {
+ key:Sha256;source:Sha256;locator:string;activityId:string;activityKey:Sha256;resultKey:Sha256;
+ reportingOrgRef:string;title:string;resultTitle:string;resultType:string;
+ measure:string;measureLabel:string;ascending:boolean|null;aggregationStatus:boolean|null;
+ baselines:ResultsValue[];periods:ResultsPeriod[];contentSha256:Sha256;sourceValuesSha256:Sha256;
+ sourcePeriodCount:number;findings:ResultsFinding[];[key:string]:unknown;
+}
+export interface ResultsReport {
+ schema:'stellar-forge.iati-results-report.v1';reportSha256:Sha256;analysisContract:Record<string,unknown>;
+ selection:ResultsSelection;activities:Array<Record<string,unknown>>;results:Array<Record<string,unknown>>;
+ coverage:Array<{source:Pick<SourceSummary,'id'|'label'|'name'|'bytes'>;projectionSha256:Sha256;sourceCounts:Record<string,number>}>;
+ counts:Record<string,number>;indicators:ResultsIndicator[];interpretations:ResultsInterpretation[];
+ bindings:ResultsPair[];comparisons:Array<Record<string,unknown>>;findings:ResultsFinding[];aggregation:string;
+}
+export interface ResultsEdition {
+ schema:'stellar-forge.iati-results-edition.v1';id:Sha256;revision:number;parentRevision:number|null;
+ createdAt:string;savedAt:string;definition:Required<ResultsDefinition>;projections:ResultsProjectionRecord[];
+ report:ResultsReport;sha256:Sha256;
+}
+export interface ResultsSavedComparison {
+ schema:'stellar-forge.iati-results-saved-comparison.v1';id:Sha256;project:Sha256;
+ beforeRevision:number;afterRevision:number;beforeEditionSha256:Sha256;afterEditionSha256:Sha256;
+ comparison:{schema:'stellar-forge.iati-results-comparison.v1';sha256:Sha256;
+ selectionChanged:boolean;interpretationChanged:boolean;pairs:Array<Record<string,unknown>>;
+ removedIndicators:Sha256[];addedIndicators:Sha256[];[key:string]:unknown};recordedAt:string;
+}
+export interface ResultsReceiving {
+ schema:'stellar-forge.iati-results-receipt.v1';id:Sha256;project:Sha256;snapshotSha256:Sha256;
+ snapshotFile:FileIdentity;file:FileIdentity & {manifestSha256:Sha256};receivedAt:string;
+ selectedRevision:number;selectedEditionSha256:Sha256;localHeadBefore:number|null;localHeadAfter:number;
+ preservedExistingHead:boolean;sourceIds:Sha256[];editions:number[];reviewMeaning:string;requestMeaning:string;
+}
+export interface ResultsHeadSelection {
+ schema:'stellar-forge.iati-results-head-selection.v1';id:Sha256;previousRevision:number;
+ selectedRevision:number;selectedSha256:Sha256;actor:string;note:string;recordedAt:string;
+}
+export interface ResultsCancelled {
+ schema:'stellar-forge.iati-results-cancelled-request.v1';requestId:string;kind:'save'|'compare'|'adopt';
+ project:Sha256|'';inputSha256:Sha256;cancelledAt:string;cancellationRequestId:string;reason:string;
+}
+export interface ResultsInventory {
+ schema:'stellar-forge.iati-results-inventory.v1';workspaceId:Sha256;analysisContract:Record<string,unknown>;
+ projects:Array<{id:Sha256;revision:number;name:string;review:Review;savedAt:string;sha256:Sha256;counts:Record<string,number>}>;
+ projections:ResultsProjectionRecord[];receipts:ResultsReceiving[];
+}
+export interface ResultsSource {
+ projection:ResultsProjectionRecord;counts:Record<string,number>;findings:ResultsFinding[];sourceMetadata:Record<string,unknown>;
+}
+export interface ResultsPreview {definition:Required<ResultsDefinition>;projections:ResultsProjectionRecord[];report:ResultsReport}
+export type ResultsOperation =
+ {requestId:string;found:false}|
+ {requestId:string;found:true;kind:'save'|'compare'|'adopt'|'cancel';state:'COMPLETE'|'CANCELLED';inputSha256:Sha256;
+ input:ResultsSave|ResultsCompare|ResultsAdopt|ResultsCancel;response:ResultsEdition|ResultsSavedComparison|ResultsHeadSelection|ResultsCancelled};
+
 export declare class IatiWorkspaceClient {
+  readonly organisationReconciliation: OrganisationReconciliationClient;
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
   state(options?: RequestOptions): Promise<WorkspaceState>;
@@ -348,7 +565,7 @@ export declare class IatiWorkspaceClient {
   /** Consume or cancel the returned full native stream; this is never a reconstructed file. */
   export(kind: 'project' | 'dataset' | 'changes' | 'portfolio' | 'report', id: Sha256, options?: RevisionOptions): Promise<Response>;
   ingest(input: SourceInput, options?: RequestOptions): Promise<Source>;
-  receive(input: PacketInput, options?: RequestOptions): Promise<ReceivedPortfolio | ReceivedProject>;
+  receive(input: PacketInput, options?: RequestOptions): Promise<ReceivedPortfolio | ReceivedProject | ResultsReceiving>;
   dqaProviders(options?: RequestOptions): Promise<{ providers: DqaProvider[] }>;
   dqaSaveProvider(input: DqaProviderSave, options?: RequestOptions): Promise<DqaProvider>;
   dqaCapture(input: DqaCapture, options?: RequestOptions): Promise<DqaAssessment>;
@@ -365,6 +582,101 @@ export declare class IatiWorkspaceClient {
   dqaExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
   dqaFile(id: Sha256, kind: 'response' | 'request' | 'configuration-before' | 'configuration-after', options?: RequestOptions): Promise<Response>;
   dqaReceive(input: Pick<PacketInput, 'body' | 'bytes'>, options?: RequestOptions): Promise<ReceivedDqaCase>;
+
+  publishingContext(options?: RequestOptions): Promise<{schema:'stellar-forge.iati-participant-context.v1';workspaceSha256:Sha256}>;
+  publishingMethodology(options?: RequestOptions): Promise<{id:Sha256;body:Record<string,unknown>;bytes:number;sha256:Sha256}>;
+  publishingProjects(options?: RequestOptions): Promise<{projects:ParticipantProject[]}>;
+  publishingProject(id:Sha256,options?:RevisionOptions): Promise<ParticipantProject>;
+  publishingHistory(id:Sha256,options?:RequestOptions): Promise<{history:ParticipantProject[]}>;
+  publishingRequest(requestId:string,options?:RequestOptions): Promise<{requestId:string;state:'RECORDED'|'NOT_RECORDED';input?:ParticipantRequest;project?:ParticipantProject}>;
+  publishingActivities(id:Sha256,options?:RevisionOptions & {offset?:number;limit?:number}): Promise<{project:Sha256;revision:number;sourceId:Sha256;rows:Array<Record<string,unknown>>;total:number;offset:number;limit:number}>;
+  publishingFields(id:Sha256,activity:string,options?:RevisionOptions): Promise<{project:Sha256;revision:number;sourceId:Sha256;activityId:string;activitySha256:Sha256;attributes:Record<string,string>;fields:ParticipantField[]}>;
+  publishingPreview(input:{id:Sha256;expectedRevision:number;patches:Array<Record<string,unknown>>},options?:RequestOptions): Promise<ParticipantPreview>;
+  publishingSave(action:ParticipantAction,input:ParticipantRequest,options?:RequestOptions): Promise<ParticipantProject>;
+  publishingExport(id:Sha256,options?:RevisionOptions): Promise<Response>;
+  publishingSource(id:Sha256,options?:RevisionOptions & {edition?:'baseline'|'candidate'}): Promise<Response>;
+  publishingReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions): Promise<ParticipantReceiving>;
+
+
+  refreshContext(options?:RequestOptions):Promise<{schema:'stellar-forge.iati-refresh-context.v1';workspaceSha256:Sha256}>;
+  refreshStatus(plan:Sha256,options?:RequestOptions):Promise<RefreshStatus>;
+  refreshPlans(options?:RefreshPageOptions):Promise<RefreshPage<RefreshPlan>>;
+  refreshPlan(id:Sha256,options?:RevisionOptions):Promise<RefreshPlan>;
+  refreshHistory(plan:Sha256,options?:RefreshPageOptions):Promise<RefreshPage<RefreshPlan>>;
+  refreshRuns(plan:Sha256,options?:RefreshPageOptions):Promise<RefreshPage<RefreshRun>>;
+  refreshRun(plan:Sha256,id:Sha256,options?:RevisionOptions):Promise<RefreshRun>;
+  refreshRunHistory(plan:Sha256,id:Sha256,options?:RefreshPageOptions):Promise<RefreshPage<RefreshRun>>;
+  refreshRequest(requestId:string,options?:RequestOptions):Promise<RefreshActionRecord|{requestId:string;state:'NOT_RECORDED'}>;
+  refreshPreview(input:RefreshPreviewInput,options?:RequestOptions):Promise<RefreshPreview>;
+  refreshSave<A extends RefreshAction>(action:A,input:RefreshInputs[A],options?:RequestOptions):Promise<RefreshCompleted|RefreshAbandoned>;
+  refreshResume(requestId:string,options?:RequestOptions):Promise<RefreshCompleted|RefreshAbandoned>;
+  refreshExport(plan:Sha256,options?:RequestOptions&{snapshot?:Sha256}):Promise<Response>;
+  refreshReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<RefreshReceiving>;
+
+
+  organisationStatus(options?: RequestOptions): Promise<OrganisationStatus>;
+  organisationProfile(sourceId: Sha256, options?: RequestOptions): Promise<OrganisationProfile>;
+  organisationPlan(id: Sha256, options?: RevisionOptions): Promise<OrganisationPlan>;
+  organisationHistory(id: Sha256, options?: RequestOptions): Promise<{ history: OrganisationPlan[] }>;
+  organisationRequest(requestId: string, options?: RequestOptions): Promise<OrganisationRequest>;
+  organisationRows<S extends keyof OrganisationSections>(input: OrganisationRowsInput<S>, options?: RequestOptions): Promise<OrganisationPage<OrganisationSections[S]>>;
+  organisationDetail(input: OrganisationSnapshot & { rowId: Sha256; targetId?: Sha256 }, options?: RequestOptions): Promise<OrganisationDetail>;
+  organisationSave(input: OrganisationSave, options?: RequestOptions): Promise<OrganisationPlan>;
+  organisationReview(input: OrganisationReviewInput, options?: RequestOptions): Promise<OrganisationPlan>;
+  organisationRelease(input: OrganisationReleaseInput, options?: RequestOptions): Promise<OrganisationReleaseResult>;
+  organisationCompare(input: OrganisationCompare, options?: RequestOptions): Promise<OrganisationComparison>;
+  /** Returns the complete native stream with Content-Length and X-Content-SHA256. */
+  organisationExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
+  organisationFile(id: Sha256, kind: OrganisationFileKind, options?: RevisionOptions): Promise<Response>;
+  organisationReceive(input: Pick<PacketInput,'body'|'bytes'>, options?: RequestOptions): Promise<OrganisationReceiving>;
+
+
+  resultsInventory(options?:RequestOptions):Promise<ResultsInventory>;
+  resultsSource(source:Sha256,options?:RequestOptions):Promise<ResultsSource>;
+  resultsIndicators(projection:Sha256,options?:RequestOptions & {offset?:number;limit?:number;search?:string;measure?:string}):Promise<{
+    projection:ResultsProjectionRecord;sourceCounts:Record<string,number>;rows:Array<Record<string,unknown>>;total:number;offset:number;nextOffset:number|null}>;
+  resultsIndicator(projection:Sha256,key:Sha256,options?:RequestOptions):Promise<ResultsIndicator>;
+  resultsPreview(input:ResultsDefinition,options?:RequestOptions):Promise<ResultsPreview>;
+  resultsSave(input:ResultsSave,options?:RequestOptions):Promise<ResultsEdition>;
+  resultsCompare(input:ResultsCompare,options?:RequestOptions):Promise<ResultsSavedComparison>;
+  resultsAdopt(input:ResultsAdopt,options?:RequestOptions):Promise<ResultsHeadSelection>;
+  resultsCancel(input:ResultsCancel,options?:RequestOptions):Promise<ResultsCancelled>;
+  resultsRequest(requestId:string,options?:RequestOptions):Promise<ResultsOperation>;
+  resultsProject(id:Sha256,options?:RevisionOptions):Promise<ResultsEdition>;
+  resultsReport(id:Sha256,options?:RevisionOptions):Promise<{edition:ResultsEdition;report:ResultsReport}>;
+  resultsHistory(id:Sha256,options?:RequestOptions):Promise<{id:Sha256;headRevision:number;editions:ResultsEdition[]}>;
+  resultsComparisons(id:Sha256,options?:RequestOptions):Promise<{comparisons:ResultsSavedComparison[]}>;
+  /** The caller must consume/cancel the complete returned file stream. */
+  resultsExport(id:Sha256,options?:RevisionOptions & {reportOnly?:boolean}):Promise<Response>;
+  resultsOriginalSource(source:Sha256,options?:RequestOptions):Promise<Response>;
+  resultsReceive(input:Pick<PacketInput,'body'|'bytes'> & {sha256?:Sha256},options?:RequestOptions):Promise<ResultsReceiving>;
+
+
+  ampStatus(options?:RequestOptions):Promise<AmpStatus>;
+  ampCapture(id:Sha256,options?:RequestOptions):Promise<AmpCapture>;
+  ampPlan(id:Sha256,options?:RevisionOptions):Promise<AmpPlan>;
+  ampHistory(id:Sha256,options?:RequestOptions):Promise<{history:AmpPlan[]}>;
+  ampRows(input:AmpSelection&{offset?:number;limit?:number;state?:AmpDecisionState},options?:RequestOptions):Promise<AmpRows>;
+  ampRuns(id?:Sha256,options?:RequestOptions):Promise<{runs:AmpRunSummary[]}>;
+  ampRun(id:Sha256,options?:RequestOptions):Promise<AmpRun>;
+  ampEvents(id:Sha256,options?:RequestOptions&{after?:number;limit?:number}):Promise<AmpEvents>;
+  ampRequest(requestId:string,options?:RequestOptions):Promise<AmpRequest>;
+  ampCaptureImport(input:AmpAction&{capture:AmpCaptureInput},options?:RequestOptions):Promise<AmpCaptureResult>;
+  ampSave(input:AmpSave,options?:RequestOptions):Promise<AmpSaved>;
+  ampDecisionPreview(input:AmpSelection&{selection:AmpScope},options?:RequestOptions):Promise<AmpScopePreview>;
+  ampDecisions(input:AmpDecisions,options?:RequestOptions):Promise<AmpSaved>;
+  ampAdvance(input:AmpAdvance,options?:RequestOptions):Promise<AmpSaved>;
+  ampReview(input:AmpReview,options?:RequestOptions):Promise<AmpSaved>;
+  ampPrepare(input:AmpPrepare,options?:RequestOptions):Promise<AmpSaved>;
+  ampNativeCapture(input:AmpNativeCapture,options?:RequestOptions):Promise<AmpCaptureResult>;
+  ampNativeStart(input:AmpNativeStart,options?:RequestOptions):Promise<AmpNativeStarted>;
+  ampNativeContinue(input:{runId:Sha256;credentials:AmpCredentials},options?:RequestOptions):Promise<AmpNativeStarted>;
+  ampNativeReconcile(input:AmpNativeReconcile,options?:RequestOptions):Promise<AmpNativeReceived>;
+  ampExport(id:Sha256,options?:RevisionOptions):Promise<Response>;
+  ampFile(id:Sha256,kind:AmpFileKind,options?:RevisionOptions):Promise<Response>;
+  ampAsset(sha256:Sha256,options?:RequestOptions):Promise<Response>;
+  ampReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions):Promise<AmpReceiving>;
+
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;
 }

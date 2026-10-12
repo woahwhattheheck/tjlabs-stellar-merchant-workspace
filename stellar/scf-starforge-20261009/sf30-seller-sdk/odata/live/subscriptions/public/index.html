@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Collection subscriptions</title><link rel="stylesheet" href="./style.css"></head>
+<body><header><a href="../">OData</a><strong>Collection subscriptions</strong><span id="connection"></span><button id="refresh">Refresh</button></header>
+<div class="layout"><nav><button data-tab="publishers">Publishers</button><button data-tab="customers">Customers</button><button data-tab="artifacts">Deliveries</button><button data-tab="operation">Operation</button><p>Fixed selected fields and entity keys. Each delivery retains its original query and complete edition identity.</p></nav>
+<main><div id="message" role="status" aria-live="polite"></div><div id="retry"></div><section id="content"></section><details id="receipt"><summary>Original operation receipt</summary><pre id="result"></pre></details></main></div>
+<script type="module" src="./app.mjs"></script></body></html>

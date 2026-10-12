@@ -5,7 +5,11 @@ import { pathToFileURL } from 'node:url';
 import { createRuntimeWorkspace, openRuntimeWorkspace } from './model.mjs';
 import { startRuntimeWorkspace } from './server.mjs';
 import { readJSON } from './storage.mjs';
-import { fail, json } from './storage.mjs';
+import { fail, json, saveJSON } from './storage.mjs';
+import { inspectApplicationSetup, exportApplicationSetup, prepareApplicationSetup,
+  applicationSetupStatus, saveApplicationSetup } from './application-setup-operations.mjs';
+
+import { inspectProductPlanBundle, readProductPlanDocument } from './source-product-plans.mjs';
 
 const HELP = `Starforge customer runtime workspace
 
@@ -13,6 +17,16 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace attach --workspace DIRECTORY --runtime EXISTING_RUNTIME [--label NAME]
   runtime-workspace serve --workspace DIRECTORY [--port 8465]
   runtime-workspace status --workspace DIRECTORY [--runtime-id ID]
+  runtime-workspace source-plans --workspace DIRECTORY [--query TEXT --limit 30 --cursor ID] [--receiving-query TEXT --receiving-status all --receiving-limit 30 --receiving-cursor ID]
+  runtime-workspace source-plan-inspect --document COMPLETE_JSON
+  runtime-workspace source-plan-save --workspace DIRECTORY --request COMPLETE_JSON
+  runtime-workspace source-plan-open --workspace DIRECTORY --plan-id ID [--binding-id ID]
+  runtime-workspace source-plan-refresh --workspace DIRECTORY --plan-id ID [--binding-id ID]
+  runtime-workspace source-plan-export --workspace DIRECTORY --plan-id ID [--output NEW_JSON]
+  runtime-workspace source-plan-receive --workspace DIRECTORY --document COMPLETE_JSON --repository ABSOLUTE_GIT [--offline true --python python3]
+  runtime-workspace source-plan-receiving --workspace DIRECTORY --receipt-id ID [--output NEW_JSON]
+  runtime-workspace source-plan-continue --workspace DIRECTORY --receipt-id ID
+  runtime-workspace source-plan-build --workspace DIRECTORY --plan-id ID [--binding-id ID]
   runtime-workspace source-builds --workspace DIRECTORY
   runtime-workspace source-build-catalog --workspace DIRECTORY --request ABSOLUTE_JSON_FILE
   runtime-workspace source-build-review --workspace DIRECTORY --request ABSOLUTE_JSON_FILE
@@ -37,6 +51,11 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace managed-recover --workspace DIRECTORY --operation-id UUID
   runtime-workspace managed-stop --workspace DIRECTORY --operation-id UUID
   runtime-workspace managed-config --workspace DIRECTORY --home-id ID [--path RELATIVE_FILE]
+  runtime-workspace application-setup-inspect --document COMPLETE_JSON
+  runtime-workspace application-setup-export --workspace DIRECTORY --application-id ID --output PRIVATE_JSON [--name NAME]
+  runtime-workspace application-setup-prepare --workspace DIRECTORY --operation PRIVATE_DIRECTORY [--document COMPLETE_JSON --mode new|reopen] [--kind TYPE] [--bindings PRIVATE_JSON] [--request-id UUID]
+  runtime-workspace application-setup-status --operation PRIVATE_DIRECTORY
+  runtime-workspace application-setup-save --workspace DIRECTORY --operation PRIVATE_DIRECTORY
   runtime-workspace applications --workspace DIRECTORY [--history-limit 1]
   runtime-workspace application-history --workspace DIRECTORY --application-id ID [--limit 30] [--cursor CURSOR]
   runtime-workspace application-review --workspace DIRECTORY --request PRIVATE_JSON
@@ -47,6 +66,14 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace application-stop --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-recover --workspace DIRECTORY --application-id ID --operation-id UUID
   runtime-workspace application-output --workspace DIRECTORY --application-id ID --operation-id UUID
+  runtime-workspace application-groups --workspace DIRECTORY [--group-id ID] [--run-id UUID] [--limit 20] [--cursor UUID]
+  runtime-workspace application-group-save --workspace DIRECTORY --request PRIVATE_JSON
+  runtime-workspace application-group-review --workspace DIRECTORY --group-id ID [--run-id UUID]
+  runtime-workspace application-group-start --workspace DIRECTORY --request PRIVATE_JSON
+  runtime-workspace application-group-continue --workspace DIRECTORY --request PRIVATE_JSON
+  runtime-workspace application-group-apply-review --workspace DIRECTORY --request PRIVATE_JSON
+  runtime-workspace application-group-member --workspace DIRECTORY --request PRIVATE_JSON
+  runtime-workspace application-group-stop --workspace DIRECTORY --group-id ID --run-id UUID
 
 The private browser receives an original archive or reuses an existing runtime,
 reviews exact dependency profiles, prepares and resumes original installations,
@@ -56,10 +83,33 @@ Install workers retain progress and continue across browser/server restarts.
 Linux, Node22.16+, Python3.11+, npm and flock are the original installer requirements.
 `;
 const allowed = {
+  'source-plans': ['--workspace', '--query', '--limit', '--cursor', '--receiving-query', '--receiving-status', '--receiving-limit', '--receiving-cursor'],
+  'source-plan-inspect': ['--document'],
+  'source-plan-save': ['--workspace', '--request'],
+  'source-plan-open': ['--workspace', '--plan-id', '--binding-id'],
+  'source-plan-build': ['--workspace', '--plan-id', '--binding-id'],
+  'source-plan-refresh': ['--workspace', '--plan-id', '--binding-id'],
+  'source-plan-export': ['--workspace', '--plan-id', '--output'],
+  'source-plan-receive': ['--workspace', '--document', '--repository', '--offline', '--python'],
+  'source-plan-receiving': ['--workspace', '--receipt-id', '--output'],
+  'source-plan-continue': ['--workspace', '--receipt-id'],
+  'application-setup-inspect': ['--document'],
+  'application-setup-export': ['--workspace', '--application-id', '--output', '--name'],
+  'application-setup-prepare': ['--workspace', '--operation', '--document', '--mode', '--kind', '--bindings', '--request-id'],
+  'application-setup-status': ['--operation'],
+  'application-setup-save': ['--workspace', '--operation'],
   'source-builds': ['--workspace'],
   'source-build-catalog': ['--workspace', '--request'], 'source-build-review': ['--workspace', '--request'],
   'source-build-review-show': ['--workspace', '--review-id'],
   'source-build-operation': ['--workspace', '--request'], 'source-build-continue': ['--workspace', '--operation-id'],
+  'application-groups': ['--workspace', '--group-id', '--run-id', '--limit', '--cursor'],
+  'application-group-save': ['--workspace', '--request'],
+  'application-group-review': ['--workspace', '--group-id', '--run-id'],
+  'application-group-start': ['--workspace', '--request'],
+  'application-group-continue': ['--workspace', '--request'],
+  'application-group-apply-review': ['--workspace', '--request'],
+  'application-group-member': ['--workspace', '--request'],
+  'application-group-stop': ['--workspace', '--group-id', '--run-id'],
   applications: ['--workspace', '--history-limit'],
   'application-history': ['--workspace', '--application-id', '--limit', '--cursor'],
   'application-review': ['--workspace', '--request'], 'application-save': ['--workspace', '--request'],
@@ -92,6 +142,18 @@ export async function main(argv = process.argv.slice(2)) {
       fail('RUNTIME_WORKSPACE_ARGUMENTS_INVALID');
     options[key] = rest[i + 1];
   }
+  if (command === 'application-setup-inspect') {
+    if (!options['--document']) fail('APPLICATION_SETUP_DOCUMENT_REQUIRED');
+    process.stdout.write(json(await inspectApplicationSetup({ document: options['--document'] }))); return;
+  }
+  if (command === 'application-setup-status') {
+    if (!options['--operation']) fail('APPLICATION_SETUP_OPERATION_REQUIRED');
+    process.stdout.write(json(await applicationSetupStatus({ operation: options['--operation'] }))); return;
+  }
+  if (command === 'source-plan-inspect') {
+    if (!options['--document']) fail('PRODUCT_PLAN_DOCUMENT_REQUIRED');
+    process.stdout.write(json(inspectProductPlanBundle(await readProductPlanDocument(resolve(options['--document']))))); return;
+  }
   if (!options['--workspace']) fail('RUNTIME_WORKSPACE_DIRECTORY_REQUIRED');
   const directory = resolve(options['--workspace']);
   if (command === 'init') {
@@ -115,7 +177,66 @@ export async function main(argv = process.argv.slice(2)) {
   }
   const model = await openRuntimeWorkspace({ directory });
   let result;
-  if (command === 'source-builds') result = await model.sourceBuildsState();
+  if (command === 'application-setup-export') {
+    if (!options['--application-id'] || !options['--output']) fail('APPLICATION_SETUP_EXPORT_SELECTION_REQUIRED');
+    result = await exportApplicationSetup(model, { applicationId: options['--application-id'], output: options['--output'], name: options['--name'] ?? '' });
+  } else if (command === 'application-setup-prepare') {
+    if (!options['--operation']) fail('APPLICATION_SETUP_OPERATION_REQUIRED');
+    result = await prepareApplicationSetup(model, { operation: options['--operation'],
+      document: options['--document'] ?? null, mode: options['--mode'] ?? null, kind: options['--kind'] ?? null,
+      bindings: options['--bindings'] ?? null, requestId: options['--request-id'] ?? null });
+  } else if (command === 'application-setup-save') {
+    if (!options['--operation']) fail('APPLICATION_SETUP_OPERATION_REQUIRED');
+    result = await saveApplicationSetup(model, { operation: options['--operation'] });
+  } else if (command === 'source-plans') result = await model.sourcePlansState({
+    ...(options['--query'] !== undefined ? { query: options['--query'] } : {}),
+    ...(options['--limit'] !== undefined ? { limit: Number(options['--limit']) } : {}),
+    ...(options['--cursor'] !== undefined ? { cursor: options['--cursor'] } : {}),
+    ...(options['--receiving-query'] !== undefined ? { receivingQuery: options['--receiving-query'] } : {}),
+    ...(options['--receiving-status'] !== undefined ? { receivingStatus: options['--receiving-status'] } : {}),
+    ...(options['--receiving-limit'] !== undefined ? { receivingLimit: Number(options['--receiving-limit']) } : {}),
+    ...(options['--receiving-cursor'] !== undefined ? { receivingCursor: options['--receiving-cursor'] } : {}),
+  });
+  else if (command === 'source-plan-build') {
+    if (!options['--plan-id']) fail('PRODUCT_PLAN_ID_REQUIRED');
+    const value = await model.sourcePlanRead({ planId: options['--plan-id'],
+      ...(options['--binding-id'] ? { bindingId: options['--binding-id'] } : {}) });
+    result = { planId: value.plan.planId, bindingId: value.bindingId, operation: await model.begin(value.buildRequest) };
+  }
+  else if (command === 'source-plan-save') {
+    if (!options['--request']) fail('PRODUCT_PLAN_REQUEST_REQUIRED');
+    result = await model.sourcePlanSave(await readProductPlanDocument(resolve(options['--request'])));
+  }
+  else if (['source-plan-open', 'source-plan-refresh', 'source-plan-export'].includes(command)) {
+    if (!options['--plan-id']) fail('PRODUCT_PLAN_ID_REQUIRED');
+    const method = { 'source-plan-open': 'sourcePlanRead', 'source-plan-refresh': 'sourcePlanRefresh',
+      'source-plan-export': 'sourcePlanExport' }[command];
+    result = await model[method]({ planId: options['--plan-id'],
+      ...(options['--binding-id'] ? { bindingId: options['--binding-id'] } : {}) });
+    if (options['--output']) {
+      await saveJSON(resolve(options['--output']), result);
+      result = { output: resolve(options['--output']), planId: result.plan.planId, sha256: result.sha256 };
+    }
+  }
+  else if (command === 'source-plan-receive') {
+    if (!options['--document'] || !options['--repository']) fail('PRODUCT_PLAN_DOCUMENT_REPOSITORY_REQUIRED');
+    if (options['--offline'] !== undefined && !['true', 'false'].includes(options['--offline']))
+      fail('PRODUCT_PLAN_OFFLINE_BOOLEAN_REQUIRED');
+    result = await model.sourcePlanReceive({ bundle: await readProductPlanDocument(resolve(options['--document'])),
+      repository: resolve(options['--repository']),
+      ...(options['--offline'] !== undefined ? { offline: options['--offline'] === 'true' } : {}),
+      ...(options['--python'] ? { python: options['--python'] } : {}) });
+  }
+  else if (['source-plan-receiving', 'source-plan-continue'].includes(command)) {
+    if (!options['--receipt-id']) fail('PRODUCT_PLAN_RECEIPT_REQUIRED');
+    result = await model[command === 'source-plan-continue' ? 'sourcePlanContinue' : 'sourcePlanReceiving']({
+      receiptId: options['--receipt-id'] });
+    if (options['--output']) {
+      await saveJSON(resolve(options['--output']), result);
+      result = { output: resolve(options['--output']), receiptId: result.input.receiptId, status: result.state.status };
+    }
+  }
+  else if (command === 'source-builds') result = await model.sourceBuildsState();
   else if (command === 'source-build-review-show') result = await model.sourceBuildsReadReview(options['--review-id']);
   else if (command === 'source-build-continue') result = await model.recoverSourceBuildOperation(options['--operation-id']);
   else if (['source-build-catalog', 'source-build-review', 'source-build-operation'].includes(command)) {
@@ -124,6 +245,26 @@ export async function main(argv = process.argv.slice(2)) {
     if (command === 'source-build-operation' && input?.operation !== 'source-build') fail('SOURCE_BUILD_OPERATION_REQUIRED');
     const method = { 'source-build-catalog': 'sourceBuildsCatalog', 'source-build-review': 'sourceBuildsReview', 'source-build-operation': 'begin' }[command];
     result = await model[method](input);
+  }
+  else if (command === 'application-groups') result = await model.applicationGroupsState({
+    ...(options['--group-id'] ? { groupId: options['--group-id'] } : {}),
+    ...(options['--run-id'] ? { runId: options['--run-id'] } : {}),
+    ...(options['--limit'] ? { limit: Number(options['--limit']) } : {}),
+    ...(options['--cursor'] ? { cursor: options['--cursor'] } : {}),
+  });
+  else if (['application-group-review', 'application-group-stop'].includes(command)) {
+    if (!options['--group-id']) fail('APPLICATION_GROUP_ID_REQUIRED');
+    const method = command === 'application-group-review' ? 'applicationGroupsReview' : 'applicationGroupsStop';
+    result = await model[method]({ groupId: options['--group-id'],
+      ...(options['--run-id'] ? { runId: options['--run-id'] } : {}) });
+  }
+  else if (['application-group-save', 'application-group-start', 'application-group-continue',
+    'application-group-apply-review', 'application-group-member'].includes(command)) {
+    if (!options['--request']) fail('APPLICATION_GROUP_REQUEST_FILE_REQUIRED');
+    const method = { 'application-group-save': 'applicationGroupsSave', 'application-group-start': 'applicationGroupsStart',
+      'application-group-continue': 'applicationGroupsContinue', 'application-group-apply-review': 'applicationGroupsApplyReview',
+      'application-group-member': 'applicationGroupsMember' }[command];
+    result = await model[method](await readJSON(resolve(options['--request'])));
   }
   else if (command === 'applications') result = await model.applicationsState({ historyLimit: options['--history-limit'] === undefined ? 1 : Number(options['--history-limit']) });
   else if (command === 'application-history') {

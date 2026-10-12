@@ -2,7 +2,7 @@
 
 Operate a coastal source study from the original NOAA response through source
 review, receiving conventions, analytical workbooks, native publication and
-complete customer files. The browser, command line and 48 coastal merchant tools
+complete customer files. The browser, command line and 49 coastal merchant tools
 share the same private workspace, station profiles, immutable editions and saved
 operations.
 
@@ -19,6 +19,7 @@ queries and merchant releases.
 | --- | --- | --- |
 | Capture, review and operate a study | **Applications → Coastal source operations** or `starforge coops-workspace` | Original coastal workspace, source responses, reviews and releases |
 | Prepare a study and receive its returned files | **Studies & receiving**, `starforge coops study-preview` and `starforge coops study-return` | Exact station/edition windows, reviewed mapping, full source delivery and saved receiving decision |
+| Query and publish a reviewed study delivery | **Use complete delivery in native queries** or `starforge coops study-dataset` | Exact released CSV, historical review and complete original source in the native dataset and publisher |
 | Run an explicit source operation | `starforge coops` | The same capture, archive, mapping, dataset or receiving operation |
 | Build the complete analytical delivery | **Build coastal workbook** or `starforge coops analyse` | Offline HTML, editable workbook, all numerical/source files and manifest |
 | Reproduce a downloaded workbook | `starforge coops-analysis` | A complete new delivery directory from its original input |
@@ -499,6 +500,38 @@ The prepared dataset supports at most 250,000 rows and a 256 MiB CSV snapshot.
 For a longer historical archive, select the edition and window needed by its
 consumer; the complete historical source remains in its original partitions.
 
+### Use a reviewed study delivery in native queries
+
+In **Studies & receiving**, open the saved delivery and choose **Use complete
+delivery in native queries**. Enter the dataset name and prepare it. The application
+uses the complete released CSV, with its exact headings, lexical values, row order,
+byte count and SHA-256. Opening the same unchanged named preparation returns its
+original dataset.
+
+The dataset retains the immutable study ID, revision, digest and source windows;
+its recorded review and mapping revision; the complete original mapping file;
+the released CSV and manifest; and every retained accepted or failed source
+response. Those identities remain attached when the working study or mapping
+advances. The release's own historical review is the review of this selected input.
+
+Open the result in **Datasets**, inspect its description, query the first page and
+continue with the returned cursor. Every published field is a string so that
+original numeric text, blanks, source timestamps and identifiers keep their
+released representation. Use the selected receiving convention for any later
+numerical interpretation.
+
+The same native limits of 250,000 rows and 256 MiB apply to the entire released CSV.
+If a study exceeds them, retain the complete delivery and explicitly select,
+review and release a narrower study for native queries. Preparation does not
+truncate rows or silently narrow a source window.
+
+The native handoff retains its original SF82 publisher selection and records the
+reviewed study separately as `sourceSelection`. The saved source manifest binds
+the selected study, exact CSV, review, receiving mapping and original source
+files. Inspect those records before continuing into the ordinary publisher below.
+
+### Publish and receive the selected native dataset
+
 Enter the actual release origin, route and payment terms, then prepare and
 inspect the original publisher release. Activate the selected release with the
 generation returned by inspection. Start and stop it through that same publisher
@@ -681,9 +714,15 @@ JSONL through the real return form, compares every row and records the internal
 receiving decision. This returned file is the original internal exchange file.
 The result identifies that purpose and preserves its complete comparison.
 
+The same journey then prepares the exact reviewed study CSV through the native
+dataset control. It recovers the original request after an interrupted response,
+downloads the full source manifest and configuration, compares the native query
+with the complete release's first original rows, and continues the returned
+cursor. A later study edit preserves the released dataset and its query result.
+
 The final same-origin reopen retains both the reviewed original study and its
 later working revision, together with the original release, returned file,
-receiving decision and selected rows. Follow the
+receiving decision, selected rows and prepared study dataset. Follow the
 [complete receiving response and continuation contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/coops/STUDIES.md#joined-original-operator-receiving)
 when operating the full selected journey.
 
@@ -720,6 +759,37 @@ Retained source packages and analytical workbooks provide complete selected
 deliveries. The closed workspace backup preserves the continuing operation.
 After an upgrade, attach that same operating state to the selected new runtime
 and reopen its original records and received files.
+
+## Python model-input receiving
+
+The installed `coops-model` command and standard-library Python API use this
+same original console and reviewed study release. Analysts can receive all five
+delivery files, verify every source TAR member, receive the original native
+dataset metadata, stream every selected query page into CSV/JSONL, and submit an
+actual returned file through the existing chunked comparison and explicit
+receiving decision.
+
+Select the original private console startup JSON, an owned receiving directory
+and Python 3.10 or later:
+
+```sh
+starforge coops-model --python /selected/python3 \
+  --directory /selected/private/coastal-receiver \
+  --startup /selected/private/coops-session.json \
+  receive-study --release ORIGINAL_STUDY_RELEASE_ID
+```
+
+The client retains exact issued operation bodies and reconciles the original
+native operation before replay. The complete returned input, file receipts,
+comparison and actual decision remain available after a console restart or an
+offline receiver reopen. Source strings and mapped headings stay unchanged;
+the original dataset engine owns filters, sorting and cursors.
+
+See [Python receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/RECEIVING.md)
+for the complete API, selected query export, actual returned-file decision
+format and the callable continuation for the existing receiving host. That
+continuation uses the caller's original console/restart and selected Python
+interpreter; its selected file footprint belongs in the same native admission.
 
 Copyright TokenJunkieLabs. This product retains its MIT license and applicable
 third-party notices.

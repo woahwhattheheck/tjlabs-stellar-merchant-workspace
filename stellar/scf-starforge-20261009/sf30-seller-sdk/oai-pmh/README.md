@@ -2,7 +2,7 @@
 
 A complete OAI-PMH 2.0 metadata workflow for the original Starforge XML and dataset tools. An operator discovers a repository, harvests the selected population through every continuation, reviews its record edition, projects explicit XML fields, and opens the retained dataset in the existing merchant publisher.
 
-The console uses a neutral industrial layout and works on a narrow screen. Source records, original HTTP responses, saved reviews and complete exports remain reachable from the same workspace.
+The console uses a neutral industrial layout and works on a narrow screen. Source records, original HTTP responses and relayed source receipts, saved reviews and complete exports remain reachable from the same workspace.
 
 ## Open the operator console
 
@@ -28,7 +28,7 @@ Repository identity is the exact configured OAI base URL. Item identifiers are r
 
 `Identify` supplies the actual protocol version, earliest datestamp, date granularity and deletion policy. `ListMetadataFormats` supplies prefixes, XML namespaces and schema locations. `ListSets` uses its own complete continuation. A set selection covers that set; the repository can also contain records belonging to no set.
 
-The first ListRecords request carries the selected metadata prefix and optional set/from/until. Subsequent requests carry only the verb and opaque resumption token. Tokens are URL encoded without interpretation. The original selection, every response, token attributes, request time, actual HTTP status and headers remain in the workspace.
+The first ListRecords request carries the selected metadata prefix and optional set/from/until. Subsequent requests carry only the verb and opaque resumption token. Tokens are URL encoded without interpretation. The original selection, every response, token attributes and receiving history remain in the workspace. Direct captures retain the observed HTTP status and headers. Relayed captures retain the source service's original acquisition receipt, exact requested URL, body length and SHA-256.
 
 From and until are inclusive. Both boundaries use the same granularity. Day-granularity requests are supported by the protocol; second-granularity selections require the repository's declaration. Records use the repository's declared datestamp precision.
 
@@ -98,6 +98,8 @@ Each command opens and closes the same original workspace. JSON documents can be
 | `start --repository ID --verb VERB --arguments JSON --id OPERATION [--baseline EDITION]` | Save an original discovery or harvest operation |
 | `run --id OPERATION`, `resume --id OPERATION` | Follow the complete continuation |
 | `import-response --id OPERATION --body FILE --transport JSON` | Import an actual response from another host |
+| `import-relay --id OPERATION --body FILE --receipt JSON` | Receive original relay bytes and recover the same saved result on retry |
+| `import-relay-request --request JSON` | Receive the complete original body and receipt downloaded from the browser |
 | `preview --id OPERATION [--choices JSON]` | Reconcile the complete record edition |
 | `review --id PREVIEW --expected PREVIEW --reviewer NAME --note NOTE` | Approve the exact reconciliation |
 | `records --id EDITION --offset N --limit N` | Page through all retained identifiers |
@@ -113,6 +115,77 @@ Each command opens and closes the same original workspace. JSON documents can be
 Transport JSON contains the actual `url`, integer `status`, original header pairs in `headers`, `finalURL` and UTC `observedAt`. The importer checks the captured URL against the next request in the retained operation. Pages up to the original XML limit of 256 MiB are accepted by the native importer. The browser accepts response uploads up to 32 MiB.
 
 Conflict choices map an exact identifier to `{"observationId":"retained observation ID","note":"reason"}`. Choices only apply to the current conflicting observations. The operator can inspect each complete source record before selecting it.
+
+## Receive responses acquired through a relay service
+
+Some source services return the complete original XML, requested source URL and an attachment or acquisition receipt. Receive those original values with **import-relay**. Direct HTTP capture and **import-response** continue to use the status and header pairs observed by their acquisition host.
+
+A relay receipt describes one unchanged body:
+
+```json
+{
+  "schema": "stellar-forge.oai-relay-response.v1",
+  "provider": "notion.source_url_attachment",
+  "receiptId": "the-original-file-upload-id",
+  "sourceURL": "https://repository.example/oai?verb=ListRecords&metadataPrefix=qdc&set=journal",
+  "response": {
+    "bytes": 44502,
+    "sha256": "the-64-character-lowercase-sha256-of-the-original-body",
+    "filename": "original-records.xml"
+  },
+  "providerReceipt": {
+    "request": {
+      "source_url": "https://repository.example/oai?verb=ListRecords&metadataPrefix=qdc&set=journal",
+      "filename": "original-records.xml",
+      "content_type": "application/xml"
+    },
+    "upload": {
+      "file_upload_id": "the-original-file-upload-id",
+      "filename": "original-records.xml",
+      "content_type": "application/xml",
+      "content_length": 44502,
+      "status": "uploaded"
+    },
+    "download": {
+      "file_upload_id": "the-original-file-upload-id",
+      "filename": "original-records.xml",
+      "content_type": "application/xml",
+      "content_length": 44502
+    }
+  }
+}
+```
+
+Replace the example values with the actual returned provider objects and exact received file information. The provider receipt is preserved in full. An optional **observedAt** records an actually observed acquisition timestamp in UTC; the original XML's **responseDate** remains independently available. The receiving application records its own **receivedAt** when it imports the body. The receipt can also contain an original acquisition note in **notes**.
+
+1. Add the actual repository base URL. Start **Identify**, **ListMetadataFormats**, and the needed **ListSets** operation with stable IDs. In the browser, clear **Fetch discovery from this console** to prepare an operation for importing its original response. A native **start** command already creates the retained request without executing it.
+2. Import each discovery XML file with its original receipt. The importer matches the requested URL to that operation, parses the actual response, and updates the same repository catalog.
+3. Start the original **ListRecords** selection using the discovered metadata prefix and set. In the browser, clear **Fetch from this console** to prepare the selected operation for relay receiving.
+4. Open the operation in **Harvests**, expand **Receive an original response through a relay service**, select the unchanged XML and original receipt JSON, and choose **Receive original response**. The table exposes each original body and receipt for download.
+5. Continue using the exact **nextArguments.resumptionToken** returned by the repository. An imported terminal response completes the same operation. A token error follows the existing original-selection restart workflow. The complete operation then enters the ordinary edition review, XML projection and native dataset build.
+6. Keep the reviewed edition and resulting build together when opening the TIND or Islandora product. Original relay receipts travel with the complete source export and private workspace backup.
+
+Native commands:
+
+```bash
+python sf30-seller-sdk/oai-pmh/cli.py --workspace /private/repository \
+  import-relay --id ORIGINAL_OPERATION_ID \
+  --body /private/source/original-records.xml \
+  --receipt /private/source/original-records.receipt.json
+
+python sf30-seller-sdk/oai-pmh/cli.py --workspace /private/repository \
+  import-relay-request --request /private/source/oai-relay-import-request.json
+```
+
+The native body limit is 256 MiB. The receipt limit is 256 KiB. The browser accepts original bodies up to 32 MiB and checks the full encoded request against the server's 48 MiB limit. Its **Download prepared import** action saves one complete body-and-receipt document accepted by **import-relay-request**.
+
+### Resume the original receiving result
+
+Each provider and stable receipt ID is bound to its exact operation, body digest and complete receipt digest. Repeating the same import returns its saved receiving result and the operation's current state. It preserves the originally received request, attempt and page number. Reusing a receipt ID with different body bytes, receipt details or an operation returns a correction error.
+
+Before sending, browser receiving saves the complete request in IndexedDB for this exact workspace identity. If the connection ends before a result arrives, the saved-import panel resumes that same request. It also offers the full native import download. Reopen the same console origin and port to use its browser storage after restart; the downloaded document works with the original workspace from any native console address. When the receiver returns a correction error, **Edit returned request** restores the complete body and editable receipt.
+
+The request history identifies **Relay** or **HTTP** and retains each acquisition's original fields. A relay receipt does not supply an HTTP exchange. Publisher exports carry the exact receipt in **acquisition.receipt** and its digest in **acquisition.receiptSha256**; the private backup also retains the replay index and interrupted request history.
 
 ## Portable source and merchant integration
 
@@ -192,3 +265,88 @@ The `binding` command reads the original workspace marker and database identity 
 `distribution/runtime-workspace/application-oai.mjs` provides the maintained Applications entry, preparation and authenticated startup observer. Its application identifier is `oai-repository`; the operator command is `oai`. The publisher uses the separate `oai-publisher` entry. Both operate on the original source and receiving packages described above.
 
 The worked Zenodo case completed all six operator sections, exact original XML and full source/backup downloads, phone-width layout, saved mapping queries, and stop/reopen. Its managed launch additionally reopened the original four operations, one reviewed edition and one build unchanged through two full launch/stop cycles.
+
+
+## Islandora commissioning
+
+The **Islandora** console section carries a reviewed OAI dataset through metadata mapping, original-file and collection manifests, native target receiving, Workbench execution, and staff handover. It uses the same private workspace, retained XML source, dataset build and full backup as the existing repository console.
+
+Open [the complete Islandora operator guide](ISLANDORA_OPERATOR_GUIDE.md) for the interface, file formats and command reference. The console also serves this guide for download and includes it in each migration package.
+
+Choose the actual target content type, field machine names, cardinalities, controlled values and authentication environment. The crosswalk keeps repeated metadata explicit and supports staff overrides and source/target decisions. Record type, rights, access scope and embargo release belong in their separate configured target fields. The existing target platform supplies its access controls and editorial workflows.
+
+The native commands run the installed original [Islandora Workbench](https://mjordan.github.io/islandora_workbench_docs/). Prepared creation, field update, file and parent batches use its CSV/YAML contract. Workbench's source-to-node SQLite map stays with the job for recovery. Creation output supplies native identity; a separate Workbench export receives current typed metadata. Native receiving also reads actual node UUIDs, publication state, media identifiers, file digests and parent links.
+
+A completed edition becomes the baseline for a source refresh. Metadata changes reconcile the preceding source, current source and target; collection membership changes apply source additions/removals while retaining independent staff changes. A later source edition can therefore preserve work already done in the repository.
+
+```bash
+python sf30-seller-sdk/oai-pmh/islandora_cli.py --workspace /absolute/repository-workspace state
+python sf30-seller-sdk/oai-pmh/islandora_cli.py --workspace /absolute/repository-workspace create --build BUILD_ID --label "Repository migration" --host https://target.example.org --plan crosswalk.json --config target.json
+```
+
+Use the CLI's `configure` command to set the receiving installation before target writes. The original native process result, all input files, returned metadata, file selections and receiving state stay in the saved job. A job package delivers that operation; the original full workspace backup restores the complete operating environment and its source history. Re-enter host-local Workbench and Python paths after moving to a different machine.
+
+The source adds `islandora.py`, `islandora_io.py`, `islandora_cli.py`, `islandora.mjs`, `islandora.css` and the guide, with existing server and browser integration. The operation lock keeps native execution, inspection, editing and full workspace backup from racing. On POSIX, the child Workbench retains the original workspace lease until it exits.
+
+### Installed migration command
+
+The maintained `oai` contribution packages the complete original OAI and XML source, including the Islandora console, native commands and operator guide. Its additional `islandora` command uses the same Python selection, Node dataset engine, signal handling and native exit status as the original repository launcher:
+
+```sh
+starforge islandora --python /absolute/path/to/python --workspace /absolute/private/workspace state
+starforge islandora --python /absolute/path/to/python --workspace /absolute/private/workspace inventory --build BUILD_ID
+```
+
+The same entry point can be called directly with `node islandora_cli.mjs`. Managed Applications opens **Repository metadata and migration** under the original `oai-repository` identity. Its source review binds all 22 original runtime and migration files before launch, then verifies the original workspace and live session through the existing startup exchange. The native Workbench executable and environment are selected inside the retained migration.
+
+
+## Review completed original GetRecord operations as one collection
+
+Use **Record selections** when a staff case, migration cohort or source review needs records from several native sets. Complete each original GetRecord operation with its exact requested identifier and metadata format. The collection then references those original operations and observations directly.
+
+The console provides the complete workflow:
+
+1. Prepare an individual GetRecord operation using the exact repository, metadata prefix and identifier. Choose direct acquisition or receive the original response and receipt in Harvests.
+2. Choose completed source rows, paste their original operation IDs, or open a complete saved selection request. Every selected operation must belong to the same repository and metadata format.
+3. Give the collection a stable operation ID and name. Optionally select an earlier explicit collection as its reviewed baseline.
+4. Prepare the complete edition review. Review the identifiers, datestamps and any same-datestamp conflicts, then save the edition decision.
+5. Choose the edition's metadata mapping, edit the actual original fields, and build through the maintained native dataset engine.
+6. Export the complete source or continue the edition in the TIND or Islandora workflow.
+
+A collection baseline carries forward its existing members. Later original records update the same identifiers by repository datestamp. Explicit deleted headers retain the established deletion rule. A new collection without a baseline selects a different membership. The UI displays the complete selection and source operations before the edition review.
+
+### Durable receiving and native continuation
+
+The browser saves the entire selection request in the same workspace-scoped IndexedDB slot used for original response receiving. An unknown receiving result resumes the same operation ID and exact source list. A returned request can be corrected after the receiver has explicitly declined it. Another mutation waits for this saved request's result.
+
+Download the complete selection request before native continuation. The file uses this schema:
+
+```json
+{
+  "schema": "stellar-forge.oai-record-selection-request.v1",
+  "operationId": "staff-record-selection",
+  "sourceOperationIds": [
+    "first-completed-getrecord-operation",
+    "second-completed-getrecord-operation"
+  ],
+  "baseline": null,
+  "label": "Original staff source collection"
+}
+```
+
+Use actual retained source operation IDs in the selected workspace. Continue the complete request with the native CLI:
+
+```bash
+python3 oai-pmh/cli.py --workspace /private/original-workspace \
+  select-records --request /private/oai-record-selection-request.json
+```
+
+The returned collection is an immutable completed local selection. It retains every original source operation, attempt, revision, request ID, observation ID and response digest. A changed source list, baseline or name requires a new collection operation ID. Identical retries return the original collection.
+
+### Original source paths and export
+
+The mapping for a collection uses the original expanded-name path **OAI-PMH / GetRecord / record**. ListRecords editions retain their original ListRecords path. The metadata mapping command chooses the appropriate path from the actual edition; a build verifies that the mapping belongs to that source wrapper.
+
+The source export includes the complete original GetRecord bodies and receipts, the local selection and original operations in operations.json, immutable edition membership, the full lineage, and the native dataset. Each record still points to the actual observation and request that supplied it. Original request-history pages remain available from the collection.
+
+The existing whole-workspace backup and TIND handover include collection membership in the native SQLite database. Reopen or receive them with the corresponding maintained source version.

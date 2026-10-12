@@ -10,12 +10,15 @@
 </head>
 <body>
 <a class="skip" href="#qbo-main">Skip to QuickBooks journal handoff</a>
-<header class="topbar"><strong>STELLAR FORGE <span>/</span> MERCHANT OPERATIONS</strong><a href="/connections.html">Connections</a><a href="/">Merchant workspace</a></header>
+<header class="topbar"><strong>STELLAR FORGE <span>/</span> MERCHANT OPERATIONS</strong><a href="/connections.html">Connections</a><a href="/source-changes.html">Chart source changes</a><a href="/">Merchant workspace</a></header>
 <div class="layout qbo-layout">
   <aside class="sidebar" aria-label="Operator and saved journal plans">
     <label for="qbo-operator">Operator / reviewer</label>
     <input id="qbo-operator" maxlength="1000" autocomplete="name" placeholder="Your name or reference">
-    <p class="hint">Saved with each journal plan, received response and accountant return.</p>
+    <p class="hint">Choose the same operator reference when reopening drafts and pending requests. This is the name recorded with commands.</p>
+    <button id="qbo-recovery-open" type="button">Open operator drafts</button>
+    <label for="qbo-saved-operator" class="side-title">Saved in this workspace</label>
+    <select id="qbo-saved-operator"><option value="">Choose a saved operator</option></select>
     <button id="qbo-refresh" type="button">Refresh saved state</button>
     <label class="side-title" for="qbo-plan-search">Saved journal plans</label>
     <input id="qbo-plan-search" type="search" placeholder="Name, company or source">
@@ -25,13 +28,29 @@
   </aside>
   <main id="qbo-main" tabindex="-1">
     <div class="heading">
-      <div><div class="eyebrow">Accountant handoff · QuickBooks Online</div><h1>QuickBooks journal handoff</h1><p>Review a retained settlement journal, post it to the connected QuickBooks company, and keep the received result with its original accounting records.</p></div>
+      <div><div class="eyebrow">Accountant handoff · QuickBooks Online</div><h1>QuickBooks journal handoff</h1><p>Review a journal from merchant settlements or buyer allocations, post it to the connected QuickBooks company, and keep the received result with its original accounting records.</p></div>
       <span class="badge">Retained merchant workspace</span>
     </div>
     <div id="qbo-message" class="message" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-    <section id="qbo-retry-panel" class="conflict" hidden>
-      <div><strong>The submitted operation needs a response</strong><p id="qbo-retry-message"></p></div>
-      <div class="actions"><button id="qbo-retry" class="primary" type="button">Read or retry the same operation</button><button id="qbo-dismiss-retry" type="button">Keep form; dismiss retry</button></div>
+    <section id="qbo-recovery-panel" class="panel qbo-recovery" aria-labelledby="qbo-recovery-title">
+      <div class="panel-heading"><div><h2 id="qbo-recovery-title">Draft and request recovery</h2><p id="qbo-recovery-state" role="status" aria-live="polite">Reading this workspace…</p></div></div>
+      <div class="padded">
+        <p>Drafts, company exports and complete response JSON stay with the selected operator in this browser. Every submitted request is saved before dispatch. Reloading keeps its original ID and values.</p>
+        <div class="actions"><button id="qbo-recovery-save" type="button">Save browser draft</button><button id="qbo-recovery-reload" type="button">Reload saved operator record</button><button id="qbo-recovery-download" type="button">Download browser record</button></div>
+        <p id="qbo-recovery-outcome" class="hint"></p>
+        <div id="qbo-reopen-warning" class="conflict" hidden><strong>The saved accounting state must reopen</strong><p>Keep the original request. Use <a href="/recovery.html">Workspace recovery</a> to close and reopen this workspace, then read its retained outcome.</p></div>
+        <details><summary>Workspace identity and other saved browser records</summary>
+          <p id="qbo-recovery-scope" class="mono"></p>
+          <p class="hint">Records from another workspace or source selection are available for download. They are never adopted into this workspace automatically. Browser drafts are separate from the complete accounting backup.</p>
+          <label for="qbo-other-record">Saved browser record</label><select id="qbo-other-record"><option value="">Choose a saved browser record</option></select>
+          <button id="qbo-other-download" type="button">Download selected record</button>
+        </details>
+      </div>
+    </section>
+    <section id="qbo-retry-panel" class="conflict qbo-recovery" role="region" aria-labelledby="qbo-pending-title" hidden>
+      <div><strong id="qbo-pending-title">Original request awaiting reconciliation</strong><p id="qbo-retry-message"></p></div>
+      <div class="actions"><button id="qbo-read-pending" class="primary" type="button">Read original saved outcome</button><button id="qbo-retry" type="button">Retry unchanged request</button><button id="qbo-download-pending" type="button">Download exact request</button></div>
+      <p class="hint">An unreadable response, timeout or unverified rejection does not clear this request. A saved native operation keeps its actual status and its own continuation controls.</p>
     </section>
     <section id="qbo-connection-panel" class="panel qbo-connection-panel" aria-labelledby="qbo-connection-title">
       <div class="panel-heading"><div><h2 id="qbo-connection-title">Connected QuickBooks company</h2><p id="qbo-connection-description">Reading the accounting server connection…</p></div><span id="qbo-connection-status" class="badge">Loading</span></div>
@@ -66,16 +85,18 @@
           <div><label for="qbo-company-name">Company name</label><input id="qbo-company-name" required maxlength="160" placeholder="Name used in QuickBooks"></div>
           <div><label for="qbo-currency">Company home currency</label><select id="qbo-currency" required><option value="">Choose the company currency</option><option value="USD">USD · US dollar</option><option value="CAD">CAD · Canadian dollar</option><option value="EUR">EUR · Euro</option><option value="GBP">GBP · Pound sterling</option><option value="AUD">AUD · Australian dollar</option><option value="NZD">NZD · New Zealand dollar</option></select><p class="hint">Use the company’s configured accounting currency.</p></div>
           <div><label for="qbo-environment">QuickBooks environment</label><select id="qbo-environment" required><option value="sandbox" selected>Sandbox company</option><option value="production">Production company</option></select><p class="hint">Production plans use public-network events with an official transfer match.</p></div>
-          <div><label for="qbo-date">Journal date</label><input id="qbo-date" required type="date"></div>
+          <div><label for="qbo-date">Journal date</label><input id="qbo-date" required type="date"><p class="hint">One date for this journal. Original source recognition dates remain visible in the allocation review.</p></div>
           <div><label for="qbo-doc-number">Document number</label><input id="qbo-doc-number" maxlength="21" autocomplete="off" placeholder="Optional journal reference"></div>
+          <div id="qbo-buyer-basis-field" class="qbo-wide" hidden><label for="qbo-valuation-basis">Common buyer valuation basis</label><textarea id="qbo-valuation-basis" rows="3" maxlength="2000" aria-describedby="qbo-valuation-basis-help" placeholder="Source of the home-currency values, valuation date and treatment of buyer expenses and credits"></textarea><p id="qbo-valuation-basis-help" class="hint">Required for buyer allocations. Enter each positive home-currency value and its debit and credit direction explicitly. Each included allocation also needs its own valuation note.</p></div>
           
         </div>
-        <div class="panel-heading qbo-section-heading"><div><h3>Select source events and map their journal lines</h3><p>Enter the amount in company home currency and the debit and credit accounts for each selected original event.</p></div></div>
+        <div class="panel-heading qbo-section-heading"><div><h3 id="qbo-mapping-title">Select source events and map their journal lines</h3><p id="qbo-mapping-description">Enter the amount in company home currency and the debit and credit accounts for each selected original event.</p></div></div>
         <div id="qbo-mapping-help" class="padded hint" aria-live="polite">Choose an original accountant handoff to load its events.</div>
-        <details class="padded qbo-divider"><summary>Fill blank account fields across selected events</summary><div class="qbo-form-grid qbo-spaced"><div><label for="qbo-default-debit-id">Debit account ID</label><input id="qbo-default-debit-id" list="qbo-account-options" maxlength="100" placeholder="QuickBooks account ID"></div><div><label for="qbo-default-debit-name">Debit account name</label><input id="qbo-default-debit-name" maxlength="160" placeholder="For example, settlement clearing"></div><div><label for="qbo-default-credit-id">Credit account ID</label><input id="qbo-default-credit-id" list="qbo-account-options" maxlength="100" placeholder="QuickBooks account ID"></div><div><label for="qbo-default-credit-name">Credit account name</label><input id="qbo-default-credit-name" maxlength="160" placeholder="For example, merchant revenue"></div></div><div class="actions qbo-spaced"><button id="qbo-fill-accounts" type="button">Fill blank account fields</button><span class="hint">Existing row values and all amounts stay as entered.</span></div></details>
-        <div class="filters"><label for="qbo-draft-search">Find source events</label><input id="qbo-draft-search" type="search" placeholder="Event, option, network or original reference"><button id="qbo-draft-select-page" type="button">Select this page</button><button id="qbo-draft-clear" type="button">Clear selection</button></div>
+        <details class="padded qbo-divider"><summary id="qbo-fill-description">Fill blank account fields across selected events</summary><div class="qbo-form-grid qbo-spaced"><div><label for="qbo-default-debit-id">Debit account ID</label><input id="qbo-default-debit-id" list="qbo-account-options" maxlength="100" placeholder="QuickBooks account ID"></div><div><label for="qbo-default-debit-name">Debit account name</label><input id="qbo-default-debit-name" maxlength="160" placeholder="For example, settlement clearing"></div><div><label for="qbo-default-credit-id">Credit account ID</label><input id="qbo-default-credit-id" list="qbo-account-options" maxlength="100" placeholder="QuickBooks account ID"></div><div><label for="qbo-default-credit-name">Credit account name</label><input id="qbo-default-credit-name" maxlength="160" placeholder="For example, merchant revenue"></div></div><div class="actions qbo-spaced"><button id="qbo-fill-accounts" type="button">Fill blank account fields</button><span class="hint">Existing row values and all amounts stay as entered.</span></div></details>
+        <details id="qbo-buyer-bulk" class="padded qbo-divider" hidden><summary>Explicitly exclude the remaining pending allocations</summary><p id="qbo-buyer-bulk-count" class="hint qbo-spaced"></p><label for="qbo-buyer-bulk-reason" class="qbo-spaced">Reason for these exclusions</label><textarea id="qbo-buyer-bulk-reason" rows="2" maxlength="2000" placeholder="Why the still-pending allocations will not have lines in this journal"></textarea><div class="actions qbo-spaced"><button id="qbo-buyer-exclude-pending" type="button">Exclude pending allocations</button></div><p class="hint qbo-spaced">These are journal decisions. The original allocation, accountant status and any earlier included or excluded decision remain unchanged.</p></details>
+        <div class="filters"><label id="qbo-draft-search-label" for="qbo-draft-search">Find source events</label><input id="qbo-draft-search" type="search" placeholder="Event, option, network or original reference"><button id="qbo-draft-select-page" type="button">Select this page</button><button id="qbo-draft-clear" type="button">Clear selection</button></div>
         <div class="table-wrap"><table class="qbo-mapping-table">
-          <caption class="sr-only">Journal mapping for each original payment option</caption>
+          <caption id="qbo-mapping-caption" class="sr-only">Journal mapping for each original payment option</caption>
           <thead id="qbo-mapping-head"><tr><th scope="col">Select</th><th scope="col">Original event</th><th scope="col">Home-currency amount</th><th scope="col">Debit account</th><th scope="col">Credit account</th><th scope="col">Journal description</th></tr></thead><tbody id="qbo-mappings"></tbody>
         </table></div>
         <div class="pagination"><span id="qbo-draft-page"></span><div class="actions"><button id="qbo-draft-previous" type="button">Previous</button><button id="qbo-draft-next" type="button">Next</button></div></div>
@@ -86,10 +107,16 @@
       <div class="panel-heading"><div><h2>Review the proposed journal</h2><p id="qbo-plan-preview-description"></p></div><span class="badge">Unsaved preview</span></div>
       <div id="qbo-plan-preview-metrics" class="metrics inset"></div>
       <div id="qbo-plan-preview-issues" class="padded qbo-issues" hidden></div>
+      <section id="qbo-buyer-preview-review" class="qbo-allocation-review qbo-divider" aria-labelledby="qbo-buyer-preview-title" hidden>
+        <div class="padded"><h3 id="qbo-buyer-preview-title">Review every proposed buyer allocation decision</h3><p id="qbo-buyer-preview-summary" class="hint qbo-spaced"></p><h4 class="qbo-spaced">Common valuation basis</h4><p id="qbo-buyer-preview-basis" class="qbo-allocation-note"></p></div>
+        <div class="filters"><label for="qbo-buyer-preview-search">Find allocations</label><input id="qbo-buyer-preview-search" type="search" placeholder="Allocation, source, account, valuation or exclusion reason"><label for="qbo-buyer-preview-filter">Decision</label><select id="qbo-buyer-preview-filter"><option value="all">All decisions</option><option value="include">Included</option><option value="exclude">Excluded</option></select></div>
+        <div class="table-wrap"><table><caption class="sr-only">Review every proposed buyer allocation decision</caption><thead><tr><th scope="col">Decision</th><th scope="col">Original allocation</th><th scope="col">Home-currency value and accounts</th><th scope="col">Valuation or exclusion reason</th></tr></thead><tbody id="qbo-buyer-preview-rows"></tbody></table></div>
+        <div class="pagination"><span id="qbo-buyer-preview-page"></span><div class="actions"><button id="qbo-buyer-preview-previous" type="button">Previous</button><button id="qbo-buyer-preview-next" type="button">Next</button></div></div>
+      </section>
       <details class="padded"><summary>Proposed QuickBooks request</summary><pre id="qbo-plan-preview-json" class="qbo-json" tabindex="0"></pre></details>
       <div class="padded actions"><button id="qbo-retain-plan" class="primary" type="button">Retain this journal plan</button><button id="qbo-clear-plan-preview" type="button">Continue editing</button></div>
     </section>
-    <section id="qbo-empty" class="panel empty"><h2>Continue a retained settlement handoff</h2><p>Select its source and account mapping above, or reopen a saved journal plan from the left.</p></section>
+    <section id="qbo-empty" class="panel empty"><h2>Continue a retained journal handoff</h2><p>Select its source and account mapping above, or reopen a saved journal plan from the left.</p></section>
     <div id="qbo-selected" hidden>
       <section class="panel">
         <div class="panel-heading"><div><h2 id="qbo-title"></h2><p id="qbo-subtitle"></p></div><span id="qbo-plan-status" class="badge"></span></div>
@@ -106,6 +133,12 @@
       <section id="qbo-view-journal" class="qbo-view">
         <section class="panel"><div class="panel-heading"><div><h2>Review the retained journal</h2><p id="qbo-journal-description"></p></div><span id="qbo-balance-status" class="badge"></span></div>
           <div id="qbo-plan-issues" class="padded qbo-issues" hidden></div>
+      <section id="qbo-buyer-plan-review" class="qbo-allocation-review qbo-divider" aria-labelledby="qbo-buyer-plan-title" hidden>
+        <div class="padded"><h3 id="qbo-buyer-plan-title">Retained buyer allocations and valuation</h3><p id="qbo-buyer-plan-summary" class="hint qbo-spaced"></p><h4 class="qbo-spaced">Common valuation basis</h4><p id="qbo-buyer-plan-basis" class="qbo-allocation-note"></p></div>
+        <div class="filters"><label for="qbo-buyer-plan-search">Find allocations</label><input id="qbo-buyer-plan-search" type="search" placeholder="Allocation, source, account, valuation or exclusion reason"><label for="qbo-buyer-plan-filter">Decision</label><select id="qbo-buyer-plan-filter"><option value="all">All decisions</option><option value="include">Included</option><option value="exclude">Excluded</option></select></div>
+        <div class="table-wrap"><table><caption class="sr-only">Retained buyer allocations and valuation</caption><thead><tr><th scope="col">Decision</th><th scope="col">Original allocation</th><th scope="col">Home-currency value and accounts</th><th scope="col">Valuation or exclusion reason</th></tr></thead><tbody id="qbo-buyer-plan-rows"></tbody></table></div>
+        <div class="pagination"><span id="qbo-buyer-plan-page"></span><div class="actions"><button id="qbo-buyer-plan-previous" type="button">Previous</button><button id="qbo-buyer-plan-next" type="button">Next</button></div></div>
+      </section>
           <form id="qbo-line-filter" class="filters"><label for="qbo-line-search">Find a journal line</label><input id="qbo-line-search" type="search" placeholder="Account, source row, amount or description"><button type="submit">Apply filter</button></form>
           <div class="record-layout qbo-record-layout">
             <div class="records">

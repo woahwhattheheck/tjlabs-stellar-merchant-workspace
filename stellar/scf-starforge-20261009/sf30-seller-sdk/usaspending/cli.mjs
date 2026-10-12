@@ -8,6 +8,8 @@ import { readJsonFile, importRetainedCapture, importRetainedDetail, importSource
 import { prepareMerchant, previewMerchant, serveMerchant, adoptDelivery } from './merchant.mjs';
 import { serveWorkspace } from './server.mjs';
 import { workshareBrief } from './brief.mjs';
+import { TRANSACTION_HELP, transactionCommand } from './transactions/operator.mjs';
+import { FUNDING_REPORT_HELP, fundingReportCommand, serveFundingMerchant } from './reports/operator.mjs';
 import { COLUMNS, requireThat, integer, csv, publicRow, sha } from './core.mjs';
 
 const HELP = 'USAspending research — Node 22.13+ or 24\n\n'+
@@ -34,6 +36,7 @@ const HELP = 'USAspending research — Node 22.13+ or 24\n\n'+
 '  backup --out FILE | restore --file FILE\n'+
 '  merchant-prepare --edition ID [--payment FILE --origin HTTPS_ORIGIN --path /federal-awards]\n'+
 '  adopt-delivery --directory FINALIZED_SF88_OR_SF100_DIRECTORY\n\n'+
+TRANSACTION_HELP+'\n'+FUNDING_REPORT_HELP+'\n'+
 'Merchant commands use the retained bundle directly and do not require --workspace:\n'+
 '  merchant-preview --bundle DIRECTORY [--query-file QUERY.json] [--out FILE]\n'+
 '  merchant-serve --bundle DIRECTORY [--port 8423 --facilitator HTTPS_URL]\n'+
@@ -79,6 +82,14 @@ export async function main(args=process.argv.slice(2),{print=true}={}){
   try{
     let result;
     switch(o.command){
+      case 'report-merchant-serve':{
+        only(o,['merchant','port','facilitator','allow-local-facilitator','availability-dir']);
+        const session=await serveFundingMerchant(workspace,need(o,'merchant'),{port:num(o,'port',8423,0,65535),facilitator:o.facilitator,allowLocalFacilitator:!!o['allow-local-facilitator'],availabilityDirectory:o['availability-dir']});
+        process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);detached=true;
+        const closeMerchant=session.close;let closingMerchant;session.close=()=>closingMerchant??=(async()=>{await closeMerchant();workspace.close();})();
+        for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>session.close().catch(error=>{process.stderr.write(error.message+'\n');process.exitCode=1;}));
+        emit({url:session.url,mode:session.mode,merchantId:session.merchantId,reportId:session.reportId,reportSha256:session.reportSha256,assetSha256:session.assetSha256,offers:session.url+'/_seller/offers',docs:session.url+'/_seller/docs'});return session;
+      }
       case 'init':case 'state':only(o,[]);result=workspace.state();break;
       case 'serve':{
         only(o,['port','receiving-root']);process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);
@@ -107,7 +118,7 @@ export async function main(args=process.argv.slice(2),{print=true}={}){
       case 'restore':only(o,['file']);result=workspace.restorePacket(await json(need(o,'file'),512*1024*1024));break;
       case 'merchant-prepare':only(o,['edition','payment','origin','path']);requireThat(!!o.payment===!!o.origin,'PAYMENT_AND_ORIGIN_TOGETHER');result=await prepareMerchant(workspace,need(o,'edition'),{...(o.payment?{payment:await json(o.payment,16384),origin:need(o,'origin')}:{}),...(o.path?{path:o.path}:{})});break;
       case 'adopt-delivery':only(o,['directory']);result=await adoptDelivery(workspace,need(o,'directory'));break;
-      default:throw Object.assign(new Error('Unknown command. Use --help.'),{code:'COMMAND_UNKNOWN'});
+      default:if(o.command.startsWith('report-')){result=await fundingReportCommand(workspace,o,{only,need,num,json,output,signal:controller.signal});break;}if(o.command.startsWith('tx-')){result=await transactionCommand(workspace,o,{only,need,num,json,output,signal:controller.signal});break;}throw Object.assign(new Error('Unknown command. Use --help.'),{code:'COMMAND_UNKNOWN'});
     }
     return emit(result);
   }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);if(!detached)workspace.close();}

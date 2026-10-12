@@ -119,7 +119,7 @@ export function appendAuthenticationReview(target,routes,{make}) {
           make('p','Token endpoint: '+auth.tokenEndpoint,'wrap'),
           make('p','Scopes: '+(auth.scopes.join(', ')||'provider default'),'wrap'),
           make('p','Environment references: '+auth.clientIdEnv+' and '+auth.clientSecretEnv,'hint'));
-      }else entry.append(make('p',auth.scheme+': '+auth.header+' from '+auth.environment,'hint'));
+      }else entry.append(make('p',auth.scheme+': '+(auth.in==='query'?'query '+auth.query:auth.header)+' from '+auth.environment,'hint'));
     }
     section.append(entry);
   }

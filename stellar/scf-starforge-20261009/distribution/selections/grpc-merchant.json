@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grpc-merchant",
   "title": "Native gRPC merchant product, operator Console and customer receiving",
-  "description": "Original protobuf and reflection intake, typed unary and streaming calls, seller releases, contract upgrades, retained service health, saved merchant Console workflows and complete customer receiving",
+  "description": "Original protobuf and reflection intake, typed unary and streaming calls, seller releases, contract upgrades, retained service health, reviewed incidents and corrective actions, saved merchant Console workflows and complete customer receiving, and complete original workspace migration",
   "base": {
     "commands": [
       "installation",
@@ -57,6 +57,8 @@
     "grpc-upgrade-agent",
     "grpc-request-streams",
     "grpc-health",
+    "grpc-operations",
+    "grpc-workspace-transfer",
     "merchant-provider-grpc-workspaces",
     "merchant-console",
     "grpc-product"
@@ -92,7 +94,9 @@
     "stellar-forge/mcp-merchant-operator/GRPC_UPGRADES.md",
     "stellar-forge/mcp-merchant-operator/GRPC_HEALTH.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/grpc/workspace/browser-assets.json",
-    "stellar/scf-starforge-20261009/distribution/runtime-workspace/GRPC_APPLICATIONS.md"
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/GRPC_APPLICATIONS.md",
+    "products/grpc-merchant/OPERATIONS.md",
+    "products/grpc-merchant/TRANSFER.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs",
@@ -100,7 +104,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Original gRPC merchant browser, agent and persistent operator Console with native streams, service health and complete customer receiving",
+    "description": "Original gRPC merchant browser, agent and persistent operator Console with native streams, health histories, reviewed incidents and complete customer receiving, with complete native workspace relocation",
     "readme": "stellar/scf-starforge-20261009/distribution/selections/GRPC_MERCHANT.md",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",

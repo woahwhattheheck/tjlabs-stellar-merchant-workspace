@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "accountant-portfolio",
-  "title": "Client close runbooks and firm portfolio",
-  "description": "Original client procedures, source files, preparation and review, named backup handovers, staff capacity and close calendars, native accounting clients, and complete portable portfolio receiving",
+  "title": "Client close runbooks, procedure sets and firm portfolio",
+  "description": "Weekly cash and monthly close procedure sets, original source files, preparation and review, named backup handovers, staff capacity, close calendars and complete portable client/portfolio receiving",
   "base": {
     "commands": [
       "installation",
@@ -80,6 +80,7 @@
     "stellar-forge/mcp-merchant-operator/accounting.mjs",
     "stellar-forge/mcp-merchant-operator/client-exports.mjs",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING.md",
+    "stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_RUNBOOKS.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_PORTFOLIO.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_CRYPTOWORTH.md",
@@ -87,17 +88,21 @@
     "stellar-forge/mcp-merchant-operator/ACCOUNTING-ADJUSTMENTS-CLIENT.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md",
+    "stellar-forge/mcp-merchant-operator/accounting-source-changes.md",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENTS.md",
     "stellar-forge/mcp-paid-agent/oauth-resource.mjs",
     "stellar-forge/mcp-paid-agent/OAUTH_RESOURCE.md",
-    "stellar-forge/mcp-paid-agent/package.json"
+    "stellar-forge/mcp-paid-agent/package.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/RUNBOOK_PROFILES.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/examples/weekly-monthly-runbook.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/PORTFOLIO_GUIDE.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Client close runbooks, reviewed firm capacity and complete portfolio receiving in the original accounting workspace",
+    "description": "Weekly cash and monthly close procedures, reviewed firm capacity and complete portfolio receiving in the original accounting workspace",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

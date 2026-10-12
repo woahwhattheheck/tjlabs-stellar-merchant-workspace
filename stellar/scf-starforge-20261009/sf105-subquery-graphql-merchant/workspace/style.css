@@ -8,3 +8,14 @@
 .deployment-host{border:1px solid #ccc;padding:15px;margin-top:16px}#deployment-panel>.checkbox{margin-top:12px}#deployment-summary td{overflow-wrap:anywhere}#deployment-console-link{margin-top:14px}#host-runbook{margin-top:20px}#host-runbook pre{max-height:680px}#recover-deployment:disabled{display:none}
 .query-node{min-width:0;margin:12px 0;padding:14px;border:1px solid #c9c9c5;background:#fbfbfa}.query-node legend{font-size:12px;font-weight:600;padding:0 5px}.query-field-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end}.query-arguments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.query-argument{min-width:0;padding:12px;background:#fff;border:1px solid #ddd}.query-argument p{margin:8px 0;font-size:11px}.query-argument button{font-size:11px}.query-argument details{margin-top:10px}.query-children{padding-left:12px;border-left:2px solid #bbb;margin-top:14px}.query-variables{margin-top:20px;border-top:1px solid #ccc;padding-top:10px}.query-variables h4{margin:8px 0}.preview-card{border:1px solid #ccc;padding:14px;margin:12px 0}.preview-card p{margin:7px 0}.preview-card .toolbar{margin-top:8px}#query-builder{margin-top:18px}#preview-result{min-width:0}#preview-result td{overflow-wrap:anywhere;max-width:340px}#preview-history{max-height:680px;overflow:auto}#authoring-loopback{width:auto}
 @media(max-width:700px){.query-field-row,.query-arguments{grid-template-columns:minmax(0,1fr)}.query-field-row>button{justify-self:start}.query-children{padding-left:8px}.query-node{padding:10px}.query-argument{padding:10px}}
+
+#response-comparisons{min-width:0}#response-comparisons>*{min-width:0}
+#response-comparisons .comparison-case{min-width:0;border:1px solid #c9c9c5;padding:14px;margin:14px 0;background:#fbfbfa}
+#response-comparisons legend{font-size:12px;font-weight:600;padding:0 5px}
+#response-comparisons .comparison-reference{border:1px solid #cececa;padding:14px;margin:12px 0;display:grid;gap:6px}
+#response-comparisons code,#response-comparisons td,#response-comparisons button{overflow-wrap:anywhere;word-break:normal}
+#response-comparisons .table-wrap table{table-layout:fixed;min-width:560px}
+#response-comparisons td pre{margin:0}#response-comparisons h3{margin-top:22px}#response-comparisons h4{margin:6px 0 12px}
+#comparison-packet>code{display:block;padding:12px;background:#f5f5f3;border:1px solid #ddd}
+#comparison-full-value .grid>div{min-width:0}#comparison-pending .comparison-case>strong{overflow-wrap:anywhere}
+@media(max-width:640px){#response-comparisons .comparison-case{padding:10px}#response-comparisons .table-wrap table{min-width:480px}}

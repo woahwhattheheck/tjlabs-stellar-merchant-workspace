@@ -11,6 +11,17 @@ For the complete host operating workflow, see [RPC readiness and shared signer
 ownership](OPERATIONS.md): review and probe the configured RPC, start the same
 service with private account ownership, inspect `/readyz`, then drain and restart.
 
+## Catalog successful native payments
+
+The optional [native settlement catalog](CATALOG.md) connects successful SDK
+settlements to the original durable Bazaar, catalog trust and lifecycle journal.
+It preserves transaction identity across restarts, serves the original discovery
+queries and carries the SF54 outcome through the private backend and SF58 gateway.
+Configure merchant origin/recipient ownership in the existing facilitator JSON;
+the standard seller and payment APIs use the same runtime.
+Pending metadata shares the original guarded journal batch publication, with
+per-request receipts, validation outcomes and catalog health counters.
+
 ## Operate from the local browser
 
 The [native facilitator operator workspace](workspace/README.md) brings the original
@@ -38,7 +49,7 @@ original SF30 sibling modules resolve the same dependency installation:
 
 ```sh
 npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund \
-  @x402/core@2.28.0 @x402/stellar@2.28.0 @x402/extensions@2.28.0 @stellar/stellar-sdk@16.3.0
+  @x402/core@2.28.0 @x402/stellar@2.28.0 @x402/extensions@2.28.0 @stellar/stellar-sdk@16.3.0 re2js@2.8.6
 ```
 
 Keep the following operator JSON outside the source repository, replacing the
@@ -181,7 +192,9 @@ accepted native settlement reserves one available account until its original SDK
 call finishes. Selection rotates through the configured accounts and skips those
 already in flight. The SDK receives that call's reserved account after its awaited
 verification; it still checks every configured signer and fee-bump address through
-one complete native safety set. There is no automatic retry or payment queue.
+one complete native safety set. With the optional catalog enabled, that admitted
+call includes its durable catalog outcome before releasing the account slot.
+There is no automatic retry or payment queue.
 
 The composed seller uses the same capacity in its original SF30 lifecycle before
 executing an application. A long-running request therefore occupies one merchant

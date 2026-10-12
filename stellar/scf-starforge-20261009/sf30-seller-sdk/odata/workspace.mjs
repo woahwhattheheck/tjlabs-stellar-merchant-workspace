@@ -6,6 +6,7 @@ import { discoverService, compileQuery, fetchPage } from './source.mjs';
 import { projectODataSemantics, odataCaptureManifest } from './semantics.mjs';
 import { acquireReleaseLease } from '../../sf82-seller-pilot/release-process.mjs';
 import { serviceCollectionFiles,parseCollectionTransferPath,validateServiceCollectionTransfer,verifyServiceCollections } from './live/collection-store.mjs';
+import { serviceComparisonFiles,parseComparisonTransferPath,validateServiceComparisonTransfer,verifyServiceComparisons } from './live/collection-comparison-store.mjs';
 import { openState, atomic, readJson, retain, writeNew, identifier, digest, stable, formatted, fault, now } from './state.mjs';
 
 const copy = value => structuredClone(value);
@@ -338,6 +339,8 @@ export async function openODataWorkspace({ directory, fetchImpl = globalThis.fet
       }
       const collections=await serviceCollectionFiles({directory:join(root,'live','products',record.id),profile:record});
       files.push(...collections.files);
+      const comparisons=await serviceComparisonFiles({directory:join(root,'live','products',record.id),profile:record});
+      files.push(...comparisons.files);
     }
     return {schema:'stellar-forge.odata-transfer.v1',exportedAt:now(),state:saved,files};
     }finally{await liveLease?.close();}
@@ -353,7 +356,9 @@ export async function openODataWorkspace({ directory, fetchImpl = globalThis.fet
     for(const file of bundle.files){
       const collection=parseCollectionTransferPath(file?.path);
       const retainedCollection=collection&&(bundle.state.liveProducts||[]).some(record=>record.id===collection.serviceId);
-      if(!file||(!permitted.test(file.path)&&!retainedCollection)||seen.has(file.path))throw fault('ODATA_TRANSFER_PATH','The transfer contains an unsupported or repeated file path.');
+      const comparison=parseComparisonTransferPath(file?.path);
+      const retainedComparison=comparison&&(bundle.state.liveProducts||[]).some(record=>record.id===comparison.serviceId);
+      if(!file||(!permitted.test(file.path)&&!retainedCollection&&!retainedComparison)||seen.has(file.path))throw fault('ODATA_TRANSFER_PATH','The transfer contains an unsupported or repeated file path.');
       const bytes=Buffer.from(file.bodyBase64,'base64');if(digest(bytes)!==file.sha256)throw fault('ODATA_TRANSFER_HASH','A transfer file differs from its original hash.',409);
       if(file.path.startsWith('sources/')&&file.path.slice(8)!==file.sha256)throw fault('ODATA_TRANSFER_HASH','Source identity differs from its original bytes.',409);
       seen.add(file.path);validated.push({path:file.path,bytes});}
@@ -364,6 +369,7 @@ export async function openODataWorkspace({ directory, fetchImpl = globalThis.fet
     for(const record of bundle.state.liveProducts||[]){
       for(const path of liveFilePaths(record))required.add(path);
       validateServiceCollectionTransfer({profile:record,files:bundle.files});
+      validateServiceComparisonTransfer({profile:record,files:bundle.files});
       const original=validated.find(file=>file.path==='live/products/'+record.id+'/profile.json');
       if(!original||stable(JSON.parse(original.bytes.toString('utf8')))!==stable(record))throw fault('ODATA_LIVE_PROFILE','The transferred live profile differs from its saved identity.',409);
     }
@@ -381,13 +387,17 @@ export async function openODataWorkspace({ directory, fetchImpl = globalThis.fet
     let collectionCount=0;
     for(const record of bundle.state.liveProducts||[])collectionCount+=(await verifyServiceCollections({
       directory:join(root,'live','products',record.id),profile:record})).length;
+    const comparisonResults=[];
+    for(const record of bundle.state.liveProducts||[])comparisonResults.push(...await verifyServiceComparisons({
+      directory:join(root,'live','products',record.id),profile:record}));
     return store.mutate(state=>{
       if(state.restoredFrom?.sha256===transferSha256){const {sha256,...counts}=state.restoredFrom;return counts;}
       if(state.connections.length||state.editions.length||state.plans.length||state.liveProducts?.length)throw fault('ODATA_RESTORE_TARGET','The receiving workspace changed during restore.',409);
       const revision=state.revision;Object.assign(state,copy(bundle.state));state.revision=revision;state.restoredAt=now();
       for(const record of state.exports)record.directory=join(root,'exports',record.id);
       for(const record of state.editions)if(record.status==='IMPORTING')record.status='PAUSED';
-      const counts={connections:state.connections.length,editions:state.editions.length,exports:state.exports.length,liveProducts:state.liveProducts?.length||0,collections:collectionCount};
+      const counts={connections:state.connections.length,editions:state.editions.length,exports:state.exports.length,liveProducts:state.liveProducts?.length||0,collections:collectionCount,
+        comparisons:comparisonResults.filter(value=>value.status==='COMPLETE').length,incompleteComparisons:comparisonResults.filter(value=>value.status==='INCOMPLETE').length};
       state.restoredFrom={sha256:transferSha256,...counts};return counts;});
   }
   async function close(){closed=true;for(const control of running.values())control.abort();await Promise.allSettled([...completions.values()]);await store.settle();}

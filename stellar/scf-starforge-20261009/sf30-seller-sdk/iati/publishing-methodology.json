@@ -1,0 +1,256 @@
+{
+  "schema": "stellar-forge.iati-participant-methodology.v1",
+  "id": "pwyf-2026-technical-paper-20260603",
+  "title": "PWYF 2026 technical paper",
+  "editionDate": "2026-06-03",
+  "sourceUrl": "https://www.publishwhatyoufund.org/download/2026-aid-transparency-index-technical-paper/",
+  "programmeUrl": "https://www.publishwhatyoufund.org/download/aid-transparency-index-2028-information-pack/",
+  "observedDate": "2026-10-12",
+  "targetProgramme": "2027 intake / 2028 Aid Transparency Index",
+  "nextMethodology": "2028 methodology scheduled for October 2027; retain its original edition when published",
+  "use": "Participant implementation planning and review; PWYF conducts its original assessment and accreditation",
+  "sourceWindows": {
+    "currentActivityMonths": 12,
+    "publicationFrequencyMonths": 24
+  },
+  "indicators": [
+    {
+      "id": "1",
+      "name": "Quality of FOI legislation",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "2",
+      "name": "Accessibility",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "3",
+      "name": "Organisation strategy",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "4",
+      "name": "Annual report",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "5",
+      "name": "Allocation policy",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "6",
+      "name": "Procurement policy",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "7",
+      "name": "Country or sector strategy / MoU",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "8",
+      "name": "Audit",
+      "component": "organisation",
+      "sourcePage": 21
+    },
+    {
+      "id": "9",
+      "name": "Total organisation budget",
+      "component": "finance",
+      "sourcePage": 21
+    },
+    {
+      "id": "10",
+      "name": "Disaggregated budget",
+      "component": "finance",
+      "sourcePage": 21
+    },
+    {
+      "id": "11",
+      "name": "Project budget",
+      "component": "finance",
+      "sourcePage": 21
+    },
+    {
+      "id": "12",
+      "name": "Project budget document",
+      "component": "finance",
+      "sourcePage": 21
+    },
+    {
+      "id": "13",
+      "name": "Commitments",
+      "component": "finance",
+      "sourcePage": 21
+    },
+    {
+      "id": "14",
+      "name": "Disbursements and expenditure",
+      "component": "finance",
+      "sourcePage": 21
+    },
+    {
+      "id": "15",
+      "name": "Budget alignment",
+      "component": "finance",
+      "sourcePage": 21
+    },
+    {
+      "id": "16",
+      "name": "Title",
+      "component": "project",
+      "sourcePage": 21
+    },
+    {
+      "id": "17",
+      "name": "Description",
+      "component": "project",
+      "sourcePage": 21
+    },
+    {
+      "id": "18",
+      "name": "Planned dates",
+      "component": "project",
+      "sourcePage": 21
+    },
+    {
+      "id": "19",
+      "name": "Actual dates",
+      "component": "project",
+      "sourcePage": 22
+    },
+    {
+      "id": "20",
+      "name": "Current status",
+      "component": "project",
+      "sourcePage": 22
+    },
+    {
+      "id": "21",
+      "name": "Contact details",
+      "component": "project",
+      "sourcePage": 22
+    },
+    {
+      "id": "22",
+      "name": "Sector",
+      "component": "project",
+      "sourcePage": 22
+    },
+    {
+      "id": "23",
+      "name": "Location",
+      "component": "project",
+      "sourcePage": 22
+    },
+    {
+      "id": "24",
+      "name": "Conditions",
+      "component": "project",
+      "sourcePage": 22
+    },
+    {
+      "id": "25",
+      "name": "Unique ID",
+      "component": "project",
+      "sourcePage": 22
+    },
+    {
+      "id": "26",
+      "name": "Flow type",
+      "component": "joined",
+      "sourcePage": 22
+    },
+    {
+      "id": "27",
+      "name": "Aid type",
+      "component": "joined",
+      "sourcePage": 22
+    },
+    {
+      "id": "28",
+      "name": "Finance type",
+      "component": "joined",
+      "sourcePage": 22
+    },
+    {
+      "id": "29",
+      "name": "Tied aid status",
+      "component": "joined",
+      "sourcePage": 22
+    },
+    {
+      "id": "30",
+      "name": "Networked data",
+      "component": "joined",
+      "sourcePage": 22
+    },
+    {
+      "id": "31",
+      "name": "Project procurement",
+      "component": "joined",
+      "sourcePage": 22
+    },
+    {
+      "id": "32",
+      "name": "Objectives",
+      "component": "performance",
+      "sourcePage": 22
+    },
+    {
+      "id": "33",
+      "name": "Pre-project impact appraisal",
+      "component": "performance",
+      "sourcePage": 22
+    },
+    {
+      "id": "34",
+      "name": "Reviews and evaluations",
+      "component": "performance",
+      "sourcePage": 22
+    },
+    {
+      "id": "35",
+      "name": "Results",
+      "component": "performance",
+      "sourcePage": 22
+    }
+  ],
+  "manualReview": {
+    "organisationDocuments": [
+      3,
+      4,
+      5,
+      6,
+      8
+    ],
+    "projectIndicators": [
+      7,
+      16,
+      17,
+      12,
+      23,
+      24,
+      31,
+      32,
+      33,
+      34,
+      35,
+      30
+    ],
+    "method": "PWYF selects its official sample. Import the exact supplied feedback or sample identities into this workspace.",
+    "sourcePages": [
+      7,
+      8
+    ]
+  }
+}

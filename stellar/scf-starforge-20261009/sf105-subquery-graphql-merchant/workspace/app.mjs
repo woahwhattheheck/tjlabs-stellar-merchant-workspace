@@ -1,5 +1,8 @@
 // MIT. Editable original documents; the maintained onboarding compiler owns review.
 import { createAuthoringWorkspace } from './authoring-ui.mjs';
+import { createComparisonWorkspace } from './comparison-ui.mjs';
+import { createRequestSetsWorkspace } from './request-sets-ui.mjs';
+import { createPreparationWorkspace } from './preparation-ui.mjs';
 import { createHandoverWorkspace } from './handover-ui.mjs';
 const $ = id => document.getElementById(id);
 const tokenKey = 'sf105-workspace:' + location.origin;
@@ -9,7 +12,7 @@ const token = fragment || sessionStorage.getItem(tokenKey) || '';
 const state = { saved: null, revision: 0, dirty: false, review: null, operation: 0, exportId: null,
   queries: null, plan: null, busy: false, baselineId: null, evolution: null,
   deploymentId: null, deploymentExportId: null, deploymentInspection: null };
-let authoring = null, handover = null;
+let authoring = null, handover = null, comparison = null, requests = null, preparations = null;
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 function node(tag, text, className) {
@@ -51,7 +54,7 @@ async function api(path, body) {
     headers: { 'X-Workspace-Token': token, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   const value = await response.json();
-  if (!response.ok) throw new Error(value.error ?? 'Workspace request failed.');
+  if (!response.ok) throw Object.assign(new Error(value.error ?? 'Workspace request failed.'), { status: response.status });
   return value;
 }
 async function action(message, work) {
@@ -84,7 +87,7 @@ function buttons() {
   $('recover-deployment').disabled = !saved || !state.deploymentInspection?.pending;
   $('deployment-console').disabled = state.busy || !deployment || Boolean(deployment.handover);
   $('host-facilitator').disabled = state.busy || $('host-mode').value !== 'native';
-  authoring?.buttons(); handover?.buttons();
+  authoring?.buttons(); handover?.buttons(); comparison?.buttons(); requests?.buttons(); preparations?.buttons();
 }
 function changed() {
   state.dirty = true; state.review = null;
@@ -254,7 +257,7 @@ function loadDraft(saved) {
   $('review-summary').replaceChildren(); $('review-status').textContent = 'Review this saved project against its retained schema and current compiler.';
   state.baselineId = null; resetEvolution();
   if (saved.revision !== saved.currentRevision) { state.dirty = true; state.exportId = null; }
-  loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); buttons();
+  loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); comparison?.reset(); requests?.reset(); preparations?.reset(); buttons();
 }
 function fresh() {
   state.saved = null; state.revision = 0; state.dirty = false; state.review = null; state.operation = 0; state.exportId = null;
@@ -267,7 +270,7 @@ function fresh() {
   $('review-status').textContent = 'Review the complete draft using its original schema and merchant compiler.';
   state.baselineId = null; resetEvolution();
   state.deploymentId = null; state.deploymentExportId = null; state.deploymentInspection = null;
-  $('history').replaceChildren(); loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); buttons();
+  $('history').replaceChildren(); loadEditors(); authoring?.reset(); renderExports(); renderDeployments(); comparison?.reset(); requests?.reset(); preparations?.reset(); buttons();
 }
 function discard() { return !(state.dirty || authoring?.pending()) || confirm('Open another project and discard these unsaved edits?'); }
 async function projects() {
@@ -659,10 +662,11 @@ $('review').addEventListener('click', () => action('Reviewing the current mercha
   notice(state.dirty || !state.saved ? 'Merchant review completed. Save this draft to export these exact contents.' : 'Merchant review completed. The saved project is ready to export.');
   $('review-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }));
-$('export').addEventListener('click', () => action('Exporting through the original merchant compiler…', async () => {
-  const result = await api('/api/export', { id: state.saved.id, expectedRevision: state.revision });
-  const reviewed = state.review; loadDraft(result.project); state.review = reviewed; state.exportId = result.exported.id;
-  if (reviewed) renderReview(reviewed); renderExports(); await projects(); await historyList(); notice('Merchant package exported to ' + result.exported.directory + '.');
+$('export').addEventListener('click', () => action('Preparing the original saved merchant request…', async () => {
+  const result = await preparations.prepare('merchant');
+  if (result?.exported && state.saved?.id === result.project.id && !state.dirty && !authoring?.pending()) {
+    state.exportId = result.exported.id; renderExports();
+  }
 }));
 $('baseline-export').addEventListener('change', () => {
   state.baselineId = $('baseline-export').value || null;
@@ -679,15 +683,13 @@ $('compare-evolution').addEventListener('click', () => action('Comparing the dra
   notice(compared.review.ready ? state.dirty ? 'Changes compared. Save this draft to prepare its reviewed revision.'
     : 'Changes compared. The saved candidate is ready to prepare.' : 'Changes compared. Correct the reported candidate validation error.');
 }));
-$('prepare-evolution').addEventListener('click', () => action('Preparing the original merchant revision and retained baseline…', async () => {
-  const compared = state.evolution;
-  const result = await api('/api/evolution/prepare', { id: state.saved.id, expectedRevision: state.revision,
-    baselineExportId: compared.baseline.id, comparisonDigest: compared.comparisonDigest });
-  loadDraft(result.project); state.exportId = result.exported.id; state.review = compared.merchant;
-  state.baselineId = compared.baseline.id; renderExports(); renderReview(compared.merchant);
-  renderEvolution({ ...compared, retained: true, draftRevision: result.exported.draftRevision });
-  await projects(); await historyList();
-  notice('Revised merchant, previous package and buyer handoff prepared in ' + result.exported.evolution.directory + '.');
+$('prepare-evolution').addEventListener('click', () => action('Preparing the original saved revision request…', async () => {
+  const compared = state.evolution, result = await preparations.prepare('revision', compared);
+  if (result?.exported && state.saved?.id === result.project.id && !state.dirty && !authoring?.pending()) {
+    state.exportId = result.exported.id; state.review = compared.merchant; state.baselineId = compared.baseline.id;
+    renderExports(); renderReview(compared.merchant);
+    renderEvolution({ ...compared, retained: true, draftRevision: result.exported.draftRevision });
+  }
 }));
 $('deployment-export').addEventListener('change', () => { state.deploymentExportId = $('deployment-export').value || null; buttons(); });
 $('deployment-select').addEventListener('change', () => action('Opening retained deployment…', async () => {
@@ -774,6 +776,38 @@ authoring = createAuthoringWorkspace({ $, node, button, control, selectControl, 
     return { examplesRetained: Boolean(state.plan) };
   }
 });
+async function downloadNativeFile(path, filename) {
+    const response = await fetch(path, { headers: { 'X-Workspace-Token': token } });
+    if (!response.ok) {
+      const value = await response.json();
+      throw Object.assign(new Error(value.error ?? 'Original file download failed.'), { status: response.status });
+    }
+    const href = URL.createObjectURL(await response.blob()), anchor = node('a');
+    anchor.href = href; anchor.download = filename; anchor.click();
+    setTimeout(() => URL.revokeObjectURL(href), 1000);
+  
+}
+comparison = createComparisonWorkspace({
+  api, action, notice, acceptProject,
+  directory: () => $('directory').textContent,
+  current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
+  download: downloadNativeFile,
+});
+requests = createRequestSetsWorkspace({
+  api, action, notice, acceptProject,
+  directory: () => $('directory').textContent,
+  current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
+  openPreview: (id, project) => authoring.openRetained(id, project),
+  openComparison: (id, generation) => comparison.open(id, generation),
+  inspectComparison: (id, generation) => comparison.inspectPending(id, generation),
+  download: downloadNativeFile,
+});
+preparations = createPreparationWorkspace({
+  api, action, notice, acceptProject,
+  directory: () => $('directory').textContent,
+  current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
+  download: downloadNativeFile,
+});
 handover = createHandoverWorkspace({
   api, action, notice, refreshProjects: projects,
   current: () => ({ saved: state.saved, dirty: state.dirty || Boolean(authoring?.pending()), busy: state.busy }),
@@ -786,5 +820,5 @@ handover = createHandoverWorkspace({
 fresh();
 action('Opening private workspace…', async () => {
   if (!token) throw new Error('Open the complete private URL printed by the workspace launcher.');
-  await projects(); await handover.refresh(); $('connection').textContent = 'Private local workspace'; notice('Workspace ready. Load your original schema, queries and merchant plan.');
+  await projects(); await handover.refresh(); await preparations.refresh(); $('connection').textContent = 'Private local workspace'; notice('Workspace ready. Load your original schema, queries and merchant plan.');
 });

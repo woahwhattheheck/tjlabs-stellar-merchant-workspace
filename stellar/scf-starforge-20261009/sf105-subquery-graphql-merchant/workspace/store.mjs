@@ -81,12 +81,17 @@ export function validateVersion(value, id) {
   if (!plain(value) || value.schema !== SCHEMA || value.id !== id || !Number.isSafeInteger(value.revision) || value.revision < 1 ||
       value.inputDigest !== inputDigest(value.input) || !Array.isArray(value.exports) ||
       value.deployments !== undefined && !Array.isArray(value.deployments) ||
-      value.previews !== undefined && !Array.isArray(value.previews)) fail('Saved project content is inconsistent.');
+      value.previews !== undefined && !Array.isArray(value.previews) ||
+      value.comparisons !== undefined && !Array.isArray(value.comparisons) ||
+      value.requestSets !== undefined && !Array.isArray(value.requestSets) ||
+      value.requestRuns !== undefined && !Array.isArray(value.requestRuns) ||
+      value.merchantPreparations !== undefined && !Array.isArray(value.merchantPreparations)) fail('Saved project content is inconsistent.');
   return value;
 }
 const summary = value => ({ id: value.id, title: value.input.title, revision: value.revision,
   updatedAt: value.updatedAt, inputDigest: value.inputDigest, exports: value.exports.length,
-  deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0 });
+  deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0,
+  comparisons: value.comparisons?.length ?? 0, requestSets: value.requestSets?.length ?? 0, requestRuns: value.requestRuns?.length ?? 0, merchantPreparations: value.merchantPreparations?.length ?? 0 });
 
 async function acquireWriter(root) {
   if (process.platform !== 'linux') fail('This workspace requires Linux with util-linux flock.', 501);
@@ -133,6 +138,10 @@ export async function openWorkspaceStore(directory) {
   const deployments = await privateDir(join(root, 'deployments'), true);
   const releaseStores = await privateDir(join(root, 'release-stores'), true);
   const previews = await privateDir(join(root, 'previews'), true);
+  const comparisons = await privateDir(join(root, 'comparisons'), true);
+  const requestSets = await privateDir(join(root, 'request-sets'), true);
+  const requestRuns = await privateDir(join(root, 'request-runs'), true);
+  const merchantPreparations = await privateDir(join(root, 'merchant-preparations'), true);
   const writer = await acquireWriter(root);
   let busy = false, closed = false;
   const read = (id, revision) => readWorkspaceRevision(root, id, revision);
@@ -155,7 +164,7 @@ export async function openWorkspaceStore(directory) {
     busy = true;
     try { return await operation(); } finally { busy = false; }
   }
-  async function save({ id, input, expectedRevision = 0, exportRecord, deploymentRecord, previewRecord } = {}) {
+  async function save({ id, input, expectedRevision = 0, exportRecord, deploymentRecord, previewRecord, comparisonRecord, requestSetRecord, requestRunRecord, merchantPreparationRecord } = {}) {
     return mutate(async () => {
       projectName(id);
       if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) fail('A current project revision is required.');
@@ -171,8 +180,14 @@ export async function openWorkspaceStore(directory) {
       const now = new Date().toISOString(), revision = expectedRevision + 1;
       let value = { schema: SCHEMA, id, revision, createdAt: previous?.createdAt ?? now,
         updatedAt: now, inputDigest: inputDigest(draft), input: draft, exports: previous?.exports ?? [],
-        deployments: previous?.deployments ?? [], previews: previous?.previews ?? [] };
-      if (exportRecord) value.exports = [...value.exports, exportRecord];
+        deployments: previous?.deployments ?? [], previews: previous?.previews ?? [], comparisons: previous?.comparisons ?? [],
+        requestSets: previous?.requestSets ?? [], requestRuns: previous?.requestRuns ?? [],
+        merchantPreparations: previous?.merchantPreparations ?? [] };
+      if (exportRecord) {
+        const prior = value.exports.find(item => item.id === exportRecord.id);
+        if (prior && json(prior) !== json(exportRecord)) fail('The original merchant export UUID changed.', 409);
+        if (!prior) value.exports = [...value.exports, exportRecord];
+      }
       if (deploymentRecord) {
         const prior = value.deployments.find(item => item.id === deploymentRecord.id);
         if (deploymentRecord.generation !== (prior?.generation ?? 0) + 1 ||
@@ -188,6 +203,66 @@ export async function openWorkspaceStore(directory) {
         if (prior && json(prior) !== json(previewRecord)) fail('The retained preview changed.', 409);
         if (!prior) value.previews = [...value.previews, previewRecord];
       }
+      if (comparisonRecord) {
+        const prior = value.comparisons.find(item => item.id === comparisonRecord.id);
+        if (!plain(comparisonRecord) || comparisonRecord.project !== id ||
+            !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(comparisonRecord.id ?? '') ||
+            !/^[a-f0-9]{64}$/.test(comparisonRecord.recordSha256 ?? '') ||
+            !/^[a-f0-9]{64}$/.test(comparisonRecord.definitionSha256 ?? '') ||
+            comparisonRecord.generation !== (prior?.generation ?? 0) + 1 ||
+            comparisonRecord.previousRecordSha256 !== (prior?.recordSha256 ?? null) ||
+            prior && prior.definitionSha256 !== comparisonRecord.definitionSha256)
+          fail('The response review does not continue its original comparison.', 409);
+        value.comparisons = [...value.comparisons.filter(item => item.id !== comparisonRecord.id), comparisonRecord];
+      }
+      if (requestSetRecord) {
+        const prior = value.requestSets.find(item => item.id === requestSetRecord.id);
+        if (!plain(requestSetRecord) || requestSetRecord.project !== id ||
+            !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(requestSetRecord.id ?? '') ||
+            !/^[a-f0-9]{64}$/.test(requestSetRecord.recordSha256 ?? '') || !/^[a-f0-9]{64}$/.test(requestSetRecord.inputDigest ?? '') ||
+            !Number.isSafeInteger(requestSetRecord.draftRevision) || requestSetRecord.draftRevision < 1 ||
+            requestSetRecord.draftRevision > expectedRevision ||
+            !Number.isInteger(requestSetRecord.caseCount) || requestSetRecord.caseCount < 1 || requestSetRecord.caseCount > 32 ||
+            prior && json(prior) !== json(requestSetRecord))
+          fail('The request set differs from its original saved project.', 409);
+        if (!prior) value.requestSets = [...value.requestSets, requestSetRecord];
+      }
+      if (requestRunRecord) {
+        const prior = value.requestRuns.find(item => item.id === requestRunRecord.id);
+        if (!plain(requestRunRecord) || requestRunRecord.project !== id ||
+            !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(requestRunRecord.id ?? '') ||
+            !/^[a-f0-9]{64}$/.test(requestRunRecord.recordSha256 ?? '') ||
+            requestRunRecord.generation !== (prior?.generation ?? 0) + 1 ||
+            requestRunRecord.previousRecordSha256 !== (prior?.recordSha256 ?? null) ||
+            !value.requestSets.some(item => item.id === requestRunRecord.requestSetId &&
+              item.recordSha256 === requestRunRecord.requestSetSha256 && item.inputDigest === requestRunRecord.inputDigest &&
+              item.draftRevision === requestRunRecord.draftRevision) ||
+            prior && (prior.requestSetId !== requestRunRecord.requestSetId || prior.requestSetSha256 !== requestRunRecord.requestSetSha256) ||
+            !['READY', 'RUNNING', 'PAUSED', 'COMPLETED', 'PARTIAL'].includes(requestRunRecord.state))
+          fail('The request run does not continue its original saved request set.', 409);
+        value.requestRuns = [...value.requestRuns.filter(item => item.id !== requestRunRecord.id), requestRunRecord];
+      }
+      if (merchantPreparationRecord) {
+        const prior = value.merchantPreparations.find(item => item.id === merchantPreparationRecord.id);
+        if (!plain(merchantPreparationRecord) || merchantPreparationRecord.project !== id ||
+            !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(merchantPreparationRecord.id ?? '') ||
+            !/^[a-f0-9]{64}$/.test(merchantPreparationRecord.recordSha256 ?? '') ||
+            !/^[a-f0-9]{64}$/.test(merchantPreparationRecord.definitionSha256 ?? '') ||
+            !/^[a-f0-9]{64}$/.test(merchantPreparationRecord.inputDigest ?? '') ||
+            !Number.isSafeInteger(merchantPreparationRecord.draftRevision) || merchantPreparationRecord.draftRevision < 1 ||
+            merchantPreparationRecord.draftRevision > expectedRevision ||
+            merchantPreparationRecord.generation !== (prior?.generation ?? 0) + 1 ||
+            merchantPreparationRecord.previousRecordSha256 !== (prior?.recordSha256 ?? null) ||
+            !['merchant', 'revision'].includes(merchantPreparationRecord.kind) ||
+            !['READY', 'PREPARING', 'PARTIAL', 'COMPLETED'].includes(merchantPreparationRecord.state) ||
+            prior && prior.definitionSha256 !== merchantPreparationRecord.definitionSha256 ||
+            merchantPreparationRecord.state === 'COMPLETED' &&
+              !value.exports.some(item => item.id === merchantPreparationRecord.exportId &&
+                item.inputDigest === merchantPreparationRecord.inputDigest))
+          fail('The merchant preparation does not continue its original saved source.', 409);
+        value.merchantPreparations = [...value.merchantPreparations.filter(item => item.id !== merchantPreparationRecord.id),
+          merchantPreparationRecord];
+      }
       const path = join(folder, revision + '.json');
       // A process crash after a version write leaves an unreferenced immutable file.
       // Its exact bytes may be adopted; divergent content is never overwritten.
@@ -197,7 +272,9 @@ export async function openWorkspaceStore(directory) {
         const orphan = validateVersion(await regular(path), id);
         if (orphan.revision !== revision || json(draftInput(orphan.input)) !== json(draft) ||
             json(orphan.exports) !== json(value.exports) || json(orphan.deployments ?? []) !== json(value.deployments) ||
-            json(orphan.previews ?? []) !== json(value.previews))
+            json(orphan.previews ?? []) !== json(value.previews) || json(orphan.comparisons ?? []) !== json(value.comparisons) ||
+            json(orphan.requestSets ?? []) !== json(value.requestSets) || json(orphan.requestRuns ?? []) !== json(value.requestRuns) ||
+            json(orphan.merchantPreparations ?? []) !== json(value.merchantPreparations))
           fail('An interrupted save retained a different next revision; save this draft as a new project.', 409);
         value = orphan;
       }
@@ -212,5 +289,5 @@ export async function openWorkspaceStore(directory) {
     // different inode while an existing writer still owns the previous one.
     await writer.close();
   }
-  return { root, packages, deployments, releaseStores, previews, read, list, history, save, exclusive: mutate, close };
+  return { root, packages, deployments, releaseStores, previews, comparisons, requestSets, requestRuns, merchantPreparations, read, list, history, save, exclusive: mutate, close };
 }

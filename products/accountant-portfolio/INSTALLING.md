@@ -28,6 +28,14 @@ Use a different output directory when selecting a different commit or product. T
 
 The original Runtime workspace also provides **Build a product** on releases that include that interface. Select this repository and exact commit, choose **Client close runbooks and firm portfolio**, review the source selection and open the completed archive in **Source & profile**. It is the same builder and retained output.
 
+## Keep the complete operator materials
+
+The selected package explicitly requires all three original Runbooks documents: `RUNBOOKS.md`, `RUNBOOK_PROFILES.md` and `examples/weekly-monthly-runbook.json` under `source/stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/`. The same paths appear in the package's file inventory. The four product guides and `accounting.example.json` stay under `source/products/accountant-portfolio/`.
+
+Copy the installed weekly/monthly JSON into the private commissioning directory, replace its operator/client/responsibility content, and prepare it through `starforge client-close runbooks prepare --action save`. Keep that edited input outside the installed source so a following package can preserve the original template and the client's actual version independently. The [operating guide](OPERATING.md#use-weekly-and-monthly-procedure-sets) covers publication and exact period selection.
+
+The browser selection helper is an original registered asset. Use the whole selected runtime when upgrading an operator or receiver so the controller, browser, MCP descriptions and typed declarations support the same saved profiles.
+
 ## Prepare the native runtime
 
 Use the maintained Linux runtime with Node 22.16 or newer, Python 3.11 or newer, npm, `flock` and `tar`. The original installer reports the actual required dependencies and native build prerequisites for the selected profile. Preserve its exact resolved graph.

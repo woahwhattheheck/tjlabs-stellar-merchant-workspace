@@ -14,7 +14,7 @@ import { readReconciliationDecisions, appendReconciliationResult } from './recon
 const JSON_BYTES=value=>Buffer.from(JSON.stringify(value,null,2)+'\n');
 const SOURCE_LIMIT=16777216,DECISION_LIMIT=4194304;
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
-function request(input){
+export function normalizeLaboratoryRequest(input){
   const keys=['profile','reviewName','expectedSourceSha256','encoding','decisionFormat','tableScope','tableFields','baselineProfile','baselineEncoding','expectedBaselineSha256','baselineDecisionFormat','reconciliationFormat','$files'];
   if(!plain(input)||Object.keys(input).some(key=>!keys.includes(key))||
     typeof input.profile!=='string'||typeof input.reviewName!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(input.reviewName))
@@ -97,7 +97,7 @@ function guide(manifest){
   ].join('\n');
 }
 export async function laboratoryReview(input,context){
-  request(input);
+  normalizeLaboratoryRequest(input);
   if(!context?.files||!context.signal||typeof context.jobId!=='string')labError('RECEIVER','Use the original sealed-file application receiver.');
   const profile=labProfile(input.profile),signal=context.signal,descriptors=context.files.list();
   signal.throwIfAborted();
@@ -152,7 +152,9 @@ export async function laboratoryReview(input,context){
     try{
       prepared=await renderPreparedFiles(delivery,review,{signal,processes:context.processes});
       nativeZip=writeLabZip(prepared,{signal});
-      nativePreparation={status:'PREPARED',files:prepared.length};
+      nativePreparation={status:'PREPARED',files:prepared.length,
+        ...(prepared.some(file=>file.formatConversion)?{conversions:prepared.filter(file=>file.formatConversion)
+          .map(file=>({filename:file.filename,sourceFile:file.sourceFile,...file.formatConversion}))}:{})};
     }catch(error){
       signal.throwIfAborted();
       nativePreparation={status:'REVIEW_REQUIRED',error:{code:String(error.code??'NATIVE_PREPARATION'),message:String(error.message??error),
@@ -198,7 +200,8 @@ export async function laboratoryReview(input,context){
       report:{summary:review.report.summary,counts:review.report.counts,disposition:review.report.disposition},
       changes:review.changes,comparison:comparison?{disposition:comparison.disposition,counts:comparison.counts}:null,
       nativePreparation,reconciliation,prepared:nativeZip?{archive:'prepared/receiving-files.zip',bytes:nativeZip.byteLength,sha256:sha256(nativeZip),
-        files:prepared.map(file=>({filename:file.filename,bytes:file.size,sha256:file.sha256,mediaType:file.mediaType??null})),
+        files:prepared.map(file=>({filename:file.filename,bytes:file.size,sha256:file.sha256,mediaType:file.mediaType??null,
+          ...(file.formatConversion?{sourceFile:file.sourceFile,formatConversion:file.formatConversion}:{})})),
         directMember:directNative}:null,editableTables:tables};
     await archive.add('README.md',Buffer.from(guide(manifest)),{contentType:'text/markdown; charset=utf-8'});
     manifest.members=archive.members();await archive.add('manifest.json',JSON_BYTES(manifest),{contentType:'application/json'});

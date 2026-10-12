@@ -31,7 +31,15 @@ starforge sensorthings-desk \
   --port 8467 > /absolute/private/sensorthings-startup.json
 ```
 
-Retain the original startup record privately. It reports schema `stellar-forge.sensorthings-workspace-startup.v1`, the persistent `workspaceId`, origin, private URL and process identity. The running application owns its writer. Open the private URL from that original startup record in the browser, or use the connected client while it runs. The Desk removes the private session fragment from the displayed address and holds it in browser memory. Managed Applications retains the same launch privately and returns its original application URL file. One-shot direct commands acquire the original writer themselves. The separate `sensorthings serve` command remains available when the operator needs the original API-only listener.
+Each running Desk owns its selected source inbox through upload completion and shutdown. Choose a different private inbox for a concurrent Desk, or stop the existing owner before reusing its inbox.
+
+Retain the original startup record privately. A direct workspace listener reports `stellar-forge.sensorthings-workspace-startup.v1`; the Operations Desk reports its original `stellar-forge.sensorthings-desk-startup.v1` and `SENSORTHINGS_DESK_READY`. Each binds the persistent `workspaceId`, origin, private URL and process identity. The running application owns its writer. Open the private URL from that original startup record in the browser, or use the connected client while it runs. The Desk removes the private session fragment from the displayed address and holds it in browser memory. Managed Applications retains the same launch privately and returns its original application URL file. One-shot direct commands acquire the original writer themselves. The separate `sensorthings serve` command remains available when the operator needs the original API-only listener.
+
+## Open retained observation analysis
+
+Use **Observation analysis** in the running Desk to open `/analysis/` on the same native listener and workspace. The button passes the existing private session fragment directly to the source-owned analysis interface. Keep the Desk running while the analysis interface uses its original store and action journal.
+
+The coupled interface retains edition and stream selection, source/quality review, the original Helgoland view, annotations, later-edition comparison, publication, Python Analysis source preparation and complete receiving/export. Its operating contract is `source/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/ANALYSIS.md`; the actual viewer installation and licence contract is `analysis/deployment/OPERATIONS.md` in that component. `sensorthings-analysis serve` can own a stopped workspace directly with its original private session-file option. The running Desk already serves the same analysis routes.
 
 ## Bind the original merchant and agent client
 
@@ -138,3 +146,32 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
 ```
 
 An offline build uses the same selected existing Git objects with `--offline`. The original builder reports the actual source and archive identities. A resumed build inherits its retained recipe; a different selected product uses a separate output. Keep the original runtime lock, selected package and private customer workspace available through updates and receiving.
+
+## Deliver a reviewed analysis publication
+
+The selected product now includes **Publication delivery** at `/analysis/merchant/` on the original SensorThings listener. Open it from the existing analysis interface. It keeps the current Bearer session in memory and binds requests to the original workspace UUID. Its pages cover the reviewed source selection, native offer, saved buyer output, complete receiving, and retained history. Current DataCove commissioning actions, routes and managed application ownership remain in the same installed source.
+
+The complete operator instructions are `source/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/analysis/merchant/OPERATOR.md`; the API, private runtime schema and same-operation browser instructions are in that directory. The immutable public release source map is `SOURCE_MANIFEST.json`; `CANONICAL_SOURCE.json` records this Merchant composition, its original preimages and complete coupled analysis dependencies.
+
+Select an actual completed analysis publication, its unchanged accepted review and the matching full `analysis.export`. Configure the original file seller with the operator's real origin, route and payment terms. The offer freezes the original publication and full source archive, plus any explicitly selected companions. Native seller readback binds each compiled route and asset to those exact bytes. A configured buyer preparation records its original review; it does not execute a purchase.
+
+Use the actual saved SF88 output and original Inbox selector for receiving. The receiver preserves the complete source project, original delivery records and source-linked decisions. Optional SF47 receiving uses the existing selected case, deployment and purchase and retains each command before dispatch. A local HTTP response alone does not establish buyer completion or receiving acceptance.
+
+The running workspace owns all mutations through its original `/api/action` journal. If an action reply is lost, inspect the original operation first; the delivery desk can explicitly continue an unresolved original request with its captured phase identities. A lost saved output remains unavailable until that same source is recovered. Reopening or importing a project preserves the original history and does not restart seller services, create a new capture or submit a buyer purchase.
+
+The existing command opens or connects to the same delivery surface:
+
+```sh
+starforge sensorthings-analysis-delivery --help
+starforge sensorthings-analysis-delivery-native --help
+```
+
+The native continuation attaches to an already owned Chromium page and actual existing source/receiving workspace records. Retain one input file and one control directory. Its first stage prepares the selected original offer and full download. Once the original buyer output exists, continue the same operation with that exact receiving input. The complete stage verifies the original download, full project export, independent import/reopen, publication and receiving IDs, original history and file hashes. Record those actual results before reporting a completed native delivery.
+
+## Explicit MultiDatastream analysis and Python receiving
+
+The installed source includes the already published component-selection, component reporting and native viewer projection modules that the current analysis core requires. Select original zero-based positions with their edition-bound metadata identities; units, declared properties and result vectors stay unchanged. An attributed `numeric-json` interpretation remains separate from source conformance. The original scalar workflow stays available.
+
+The `sensorthings-python-source` command can prepare the actual saved component analysis version using the original `analysis.python.components.prepare` action. The existing Python programme consumes its complete normal download manifest and retains raw tables, explicit selected-component tables, editable queries, reports, workbooks and full receiving history. Its full contract is `source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SENSORTHINGS_ANALYSIS.md`; the source-level component guide is `source/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/analysis/COMPONENTS.md`.
+
+The current source edition, source completeness, plotted data, publication approval and buyer/receiving completion are distinct observations. Retained Hamburg data remains categorical. Use the original owner-provided numeric or explicitly selected component source when that view is needed, and retain its actual native result rather than supplying an expected one.

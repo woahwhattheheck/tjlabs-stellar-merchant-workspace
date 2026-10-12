@@ -32,6 +32,14 @@ starforge client-close runbooks download \
 
 Use a standalone client's running URL without `--client`, or its stopped `--workspace` selector. Download destinations must be new or already hold the same complete bytes.
 
+## Receive the selected procedure set
+
+A named-set period's packet keeps the complete original catalog and all its named set definitions, together with only that period's selected work and review history. The printable handover names the set; its task CSV includes the selected procedures and the set ID/name alongside the stable Runbook/Edition/Period/Task identity.
+
+Use the complete profile-capable selected runtime at the receiver. Native receiving verifies the frozen choice against the original edition and creation record, each selected work entry and the assignment/review history. An existing all-procedure period retains its original digest and CSV shape.
+
+After receiving the reviewed period, start the next local weekly or monthly period from the carried edition and the receiver's actual new files. Review the named set in that new draft before creating it. The full catalog remains available for choosing another saved set; receiving a weekly period does not turn the entire catalog into completed work.
+
 ## Capture the firm portfolio
 
 Select the actual clients and the original period IDs to deliver. Include a period using each client's commissioned procedure edition. Read and retain each current client workspace identity/revision before capture.
@@ -130,6 +138,61 @@ Use `receivedId` to select a complete already received portfolio, or add its ori
 
 A prepared receive reads its declared input alias once and retains the complete source bytes in the original request. Reconciliation checks the saved native request before reopening a changed or absent alias. Preserve the same complete prepared request after a lost reply.
 
+## Receive the original buyer accountant
+
+Retain the exact issued-source JSON, its byte count and SHA256 with the complete
+selected source package. The installed host needs the buyer catalog and source
+helper, `accounting-platform-buyer-client.mjs`, the updated existing platform
+client/CLI and the original accountant runtime. The `accountant-portfolio`
+selection carries that closure and this edition's full
+[buyer operating guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_BUYER.md).
+
+Download the original source through the same native reader using
+`kind:"buyer-source"`. Its complete bytes include every original source and
+allocation row; paged review does not change the delivered file. Accountant
+files retain their actual handoff and optional returned revision; QuickBooks
+and Xero files retain the original plan/response identities. A chart-change
+handoff retains its original `changeId`, full source/plan/mappings and application
+history. Keep each file's own digest.
+
+A complete operational handover also retains:
+
+- The existing host configuration and actual buyer workspace/source binding.
+- The original initialization and handoff operation directories, including
+  their complete private requests and saved recovery state.
+- The native encrypted accounting backup and its exact verified manifest.
+- The retained QuickBooks/Xero plan, company/context and response identities, plus
+  each complete prepared chart-change request and its original application state.
+  Use the supported original-application recovery after reopening and retain the
+  complete SHA-pinned chart-change handoff.
+- The selected original source/runtime package and dependency profile.
+- The actual source, handoff, context, journal-response and returned-edition
+  identities needed by the receiving operator.
+
+Use the existing accounting maintenance sequence to pause the native writer,
+review the selected roots, acknowledge stopped external writers, capture and
+verify the encrypted backup, then restore its original destination and resume.
+The passphrase uses its declared host environment variable. Preserve the same
+native backup/restore request and incomplete marker after interruption; never
+initialize over an incomplete restored directory. The full commands remain in
+the installed [maintenance client guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING-MAINTENANCE-CLIENT.md).
+
+After restoration, reopen the same configured alias and inspect `startup`.
+Its workspace ID, source digest, initialization name/operator and first-handoff
+UUID must come from the retained original state. Reconcile the original
+initialization and handoff requests to recover their accepted results; a
+matching label alone does not establish identity. Continue accountant or Xero
+work from the actual retained revision.
+
+Close that MCP owner before the browser or managed Applications opens the
+same original directory. The managed source review and saved launch use its
+buyer binding and original lifecycle. A new installed source edition may be
+selected while the financial workspace and prior requests remain the same.
+
+The source lineage records code adoption. Use the actual native operating and
+receiving records for execution results; an included source file or a source
+download alone does not establish that the receiver ran the complete workflow.
+
 ## Continue on an upgraded standalone installation
 
 The standalone `accountant-portfolio` product adopts the original Runbooks and Portfolio native engines. Existing merchant accounting workspace identities and source bindings remain compatible with that foundation. Install its new source package in a separate runtime and select the same stopped original workspace configuration.
@@ -140,8 +203,8 @@ A complete installed continuation should retain the following original outcomes:
 | --- | --- |
 | Package | Actual source commit and `accountant-portfolio` recipe; complete archive/manifest and exact source inventory. |
 | Runtime | Original native + MCP + operator profile, complete dependency graph/lock, ready runtime and installed source check. |
-| Commands | `client-close` and original workspace forwarding; typed Runbooks/Portfolio exports. |
-| Client observations | The same original workspace IDs, periods, commissions, plans and incoming packet identities. |
+| Commands | `client-close` and original workspace forwarding; typed Runbooks/Portfolio exports; complete named-set paging and original prepared create requests. |
+| Client observations | The same original workspace IDs, periods, frozen procedure sets, commissions, plans and incoming packet identities. |
 | File receiving | Complete existing period/portfolio bytes through the installed native reader, with matching size and SHA256. |
 | Managed application | Reviewed original source configuration, complete coordinator/client resource set, saved start, client desk and normal stop. |
 | Reopen | The same stopped-owner CLI and client records, without rebuilding the original merchant source or repeating committed work. |
