@@ -1,8 +1,20 @@
-import os, sys, json, hashlib, base64, tempfile, pathlib, subprocess, time, socket, io, zipfile, tty, termios, traceback, datetime
+import argparse, os, sys, json, hashlib, base64, tempfile, pathlib, subprocess, time, socket, io, zipfile, tty, termios, traceback, datetime
 EXPECTED_BYTES = 457314
 EXPECTED_GIT = "364a0a210027b8e42ba50386e82e14ef5cbb9d0b"
-original_tty = termios.tcgetattr(0)
-tty.setraw(0)
+parser = argparse.ArgumentParser()
+parser.add_argument("--packet", type=pathlib.Path)
+parser.add_argument("--archive", type=pathlib.Path)
+args = parser.parse_args()
+if bool(args.packet) != bool(args.archive):
+    parser.error("--packet and --archive must be supplied together")
+if args.packet and (not args.packet.is_absolute() or not args.archive.is_absolute()):
+    parser.error("Packet and archive paths must be absolute")
+if args.archive and args.archive.exists():
+    parser.error("Archive path already exists; reconcile the existing run before another execution")
+original_tty = termios.tcgetattr(0) if os.isatty(0) else None
+if original_tty is not None:
+    tty.setraw(0)
+failed = False
 child = None
 log = None
 archive = None
@@ -24,13 +36,19 @@ def port_used(port):
         return s.connect_ex(("127.0.0.1",port))==0
 try:
     emit({"phase":"ready","expectedBytes":EXPECTED_BYTES,"pid":os.getpid()})
-    raw=bytearray()
-    while len(raw)<EXPECTED_BYTES:
-        piece=os.read(0,min(65536,EXPECTED_BYTES-len(raw)))
-        if not piece: raise RuntimeError("Incomplete original source packet.")
-        raw.extend(piece)
-    raw=bytes(raw)
-    if git_hash(raw)!=EXPECTED_GIT: raise RuntimeError("Original packet Git blob mismatch.")
+    if args.packet:
+        raw=args.packet.read_bytes()
+        if len(raw)==EXPECTED_BYTES+1 and raw.endswith(b"\n") and git_hash(raw[:-1])==EXPECTED_GIT:
+            raw=raw[:-1]
+    else:
+        raw=bytearray()
+        while len(raw)<EXPECTED_BYTES:
+            piece=os.read(0,min(65536,EXPECTED_BYTES-len(raw)))
+            if not piece: raise RuntimeError("Incomplete original source packet.")
+            raw.extend(piece)
+        raw=bytes(raw)
+    if len(raw)!=EXPECTED_BYTES or git_hash(raw)!=EXPECTED_GIT:
+        raise RuntimeError("Original packet byte count or Git blob mismatch.")
     packet=json.loads(raw)
     root=pathlib.Path(tempfile.mkdtemp(prefix="windmill-open311-9b2c-20261012-",dir="/dev"))
     source=root/"source"
@@ -70,6 +88,8 @@ try:
     run=subprocess.run(["node",str(integration/"adapter-journey.mjs"),str(root/"journey")],cwd=source,env=env,capture_output=True,text=True,timeout=90)
     command={"argv":run.args,"exitCode":run.returncode,"stdout":run.stdout,"stderr":run.stderr}
     (root/"command-result.json").write_text(json.dumps(command,indent=2)+"\n")
+    if run.returncode:
+        raise RuntimeError("Original adapter journey failed: "+json.dumps(command))
     result=json.loads((root/"journey/result.json").read_text())
     child.terminate()
     try: child.wait(timeout=10)
@@ -87,8 +107,22 @@ try:
                 z.write(path,relative)
                 members.append({"path":relative,"bytes":path.stat().st_size})
     archive=buffer.getvalue()
-    emit({"phase":"archive-ready","bytes":len(archive),"sha256":hashlib.sha256(archive).hexdigest(),"gitSha1":git_hash(archive),"members":len(members),"sourceHead":packet["source"]["integrationCommit"],"result":result})
-    while True:
+    archive_path=None
+    if args.archive:
+        args.archive.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+        fd, temporary_name=tempfile.mkstemp(prefix="."+args.archive.name+".",dir=args.archive.parent)
+        temporary_path=pathlib.Path(temporary_name)
+        try:
+            with os.fdopen(fd,"wb") as output:
+                output.write(archive)
+                output.flush()
+                os.fsync(output.fileno())
+            os.link(temporary_path,args.archive)
+        finally:
+            temporary_path.unlink(missing_ok=True)
+        archive_path=str(args.archive)
+    emit({"phase":"archive-ready","path":archive_path,"bytes":len(archive),"sha256":hashlib.sha256(archive).hexdigest(),"gitSha1":git_hash(archive),"members":len(members),"sourceHead":packet["source"]["integrationCommit"],"result":result})
+    while not args.archive:
         line=read_line()
         if line is None or line=="QUIT": break
         if line=="RESULT": emit({"phase":"result","result":result});continue
@@ -100,6 +134,7 @@ try:
             emit({"phase":"archive-chunk","offset":offset,"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"content_base64":base64.b64encode(data).decode()})
         else: emit({"phase":"unknown-command"})
 except Exception as error:
+    failed = True
     emit({"phase":"failed","error":str(error),"traceback":traceback.format_exc()})
 finally:
     if child is not None and child.poll() is None:
@@ -107,4 +142,6 @@ finally:
         try: child.wait(timeout=5)
         except subprocess.TimeoutExpired: child.kill();child.wait()
     if log is not None: log.close()
-    termios.tcsetattr(0,termios.TCSADRAIN,original_tty)
+    if original_tty is not None:
+        termios.tcsetattr(0,termios.TCSADRAIN,original_tty)
+sys.exit(1 if failed else 0)

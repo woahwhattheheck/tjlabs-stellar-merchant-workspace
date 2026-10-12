@@ -1,0 +1,167 @@
+{
+  "schema": "tjlabs.windmill.open311.adapter-journey.v1",
+  "startedAt": "2026-10-12T17:22:27.268Z",
+  "node": "v24.19.0",
+  "steps": [
+    {
+      "name": "initial",
+      "completedAt": "2026-10-12T17:22:27.295Z"
+    },
+    {
+      "name": "receiver-initial",
+      "completedAt": "2026-10-12T17:22:27.301Z"
+    },
+    {
+      "name": "adapter-services-plan",
+      "completedAt": "2026-10-12T17:22:27.308Z"
+    },
+    {
+      "name": "adapter-services",
+      "completedAt": "2026-10-12T17:22:27.330Z"
+    },
+    {
+      "name": "adapter-requests-plan",
+      "completedAt": "2026-10-12T17:22:27.348Z"
+    },
+    {
+      "name": "adapter-requests",
+      "completedAt": "2026-10-12T17:22:27.363Z"
+    },
+    {
+      "name": "first-source",
+      "completedAt": "2026-10-12T17:22:27.371Z"
+    },
+    {
+      "name": "services",
+      "completedAt": "2026-10-12T17:22:27.375Z"
+    },
+    {
+      "name": "review-plan",
+      "completedAt": "2026-10-12T17:22:27.396Z"
+    },
+    {
+      "name": "assignments",
+      "completedAt": "2026-10-12T17:22:27.443Z"
+    },
+    {
+      "name": "adapter-repeat-plan",
+      "completedAt": "2026-10-12T17:22:27.458Z"
+    },
+    {
+      "name": "adapter-repeat",
+      "completedAt": "2026-10-12T17:22:27.468Z"
+    },
+    {
+      "name": "comparison",
+      "completedAt": "2026-10-12T17:22:27.483Z"
+    },
+    {
+      "name": "delivery",
+      "completedAt": "2026-10-12T17:22:27.508Z"
+    },
+    {
+      "name": "source-final",
+      "completedAt": "2026-10-12T17:22:27.516Z"
+    },
+    {
+      "name": "receive-plan",
+      "completedAt": "2026-10-12T17:22:27.542Z"
+    },
+    {
+      "name": "received",
+      "completedAt": "2026-10-12T17:22:27.565Z"
+    },
+    {
+      "name": "receiver-reopened",
+      "completedAt": "2026-10-12T17:22:27.572Z"
+    },
+    {
+      "name": "receiver-delivery",
+      "completedAt": "2026-10-12T17:22:27.607Z"
+    }
+  ],
+  "status": "PASSED",
+  "workspaceId": "acd9377e-3a46-4225-a756-5fa08fbac69e",
+  "sourceRevision": 7,
+  "receivedRevision": 8,
+  "services": 5,
+  "requests": 3,
+  "reviews": 3,
+  "captures": 3,
+  "serviceCaptureId": "capture-018a341e8db10690e0255702",
+  "requestCaptureId": "capture-3eca490650e427617916c5a3",
+  "unchangedRequests": 3,
+  "downloadedFiles": [
+    {
+      "filename": "original-capture-3eca490650e427617916c5a3.json",
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 3394,
+      "sha256": "fdd7f209fd09d7287ecd20aeabc8183f57b3b2c1979051ca0693bacadf600f97",
+      "encoding": "base64"
+    },
+    {
+      "filename": "open311-capture-3eca490650e427617916c5a3.json",
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 25692,
+      "sha256": "a65b40f9a341350ad928281354acab6018a61334931f43e511c65fb2b5e401ae",
+      "encoding": "base64"
+    },
+    {
+      "filename": "open311-capture-3eca490650e427617916c5a3.csv",
+      "contentType": "text/csv; charset=utf-8",
+      "bytes": 2168,
+      "sha256": "324298f8f7f84a8f37ac499ba660377f67b711eab1de712c101c7e19b3a9f41a",
+      "encoding": "base64"
+    },
+    {
+      "filename": "open311-capture-3eca490650e427617916c5a3.html",
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 3532,
+      "sha256": "fa56ae3efcb9a0dbf63a6b0fc839f4d94a063f527be2a7473dd3fd23a071e5af",
+      "encoding": "base64"
+    },
+    {
+      "filename": "original-capture-018a341e8db10690e0255702.json",
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 1374,
+      "sha256": "3cde27bec04e034915d5fa8156b96729e9636ce0648ac0db42b6d3d6a4f59977",
+      "encoding": "base64"
+    },
+    {
+      "filename": "open311-capture-018a341e8db10690e0255702.json",
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 12799,
+      "sha256": "f47df8d6f6c617ebbd3f952eb1076825b6c884d9385637a63e95baeb4af96476",
+      "encoding": "base64"
+    },
+    {
+      "filename": "open311-capture-018a341e8db10690e0255702.csv",
+      "contentType": "text/csv; charset=utf-8",
+      "bytes": 655,
+      "sha256": "2989fe4f1b2960724289be2c72243eb44ca9503515350561505d7de6ef061c6f",
+      "encoding": "base64"
+    },
+    {
+      "filename": "open311-capture-018a341e8db10690e0255702.html",
+      "contentType": "text/html; charset=utf-8",
+      "bytes": 1984,
+      "sha256": "50a29ad72bd6e2e9ffa4d8d6fef20afcc1cc4e0884087c4e931cac41bd53a7b7",
+      "encoding": "base64"
+    },
+    {
+      "filename": "open311-workspace-acd9377e-3a46-4225-a756-5fa08fbac69e.json",
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 58630,
+      "sha256": "de12c8e2618013094fc1dea359f8fff7c8994583956c01a953532bce41ae9384",
+      "encoding": "base64"
+    }
+  ],
+  "completedAt": "2026-10-12T17:22:27.614Z",
+  "producingProcess": {
+    "pid": 2,
+    "root": "/dev/windmill-open311-9b2c-20261012-xke1bcjg",
+    "childExitCode": 0,
+    "sourcePacketGitSha1": "364a0a210027b8e42ba50386e82e14ef5cbb9d0b",
+    "sourceFileCount": 52
+  }
+}
