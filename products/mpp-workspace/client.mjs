@@ -111,6 +111,21 @@ export class MppProductClient {
       throw error;
     }
   }
+  channelState() { return this.#request('/api/channel/state'); }
+  channelAction(name,input={}) {
+    need(typeof name==='string' && /^[a-z]+(?:-[a-z]+)*$/.test(name),'MPP_CHANNEL_OPERATION_INVALID');
+    return this.#request('/api/channel/'+name,input);
+  }
+  channelRecord(kind,key) {
+    need(['tasks','purchases','contracts'].includes(kind),'MPP_CHANNEL_RECORD_KIND');
+    return this.#request('/api/channel/'+kind+'/'+encodeURIComponent(id(key)));
+  }
+  channelResponse(purchaseId) {
+    return this.#request('/api/channel/responses/'+encodeURIComponent(id(purchaseId)),undefined,{raw:true});
+  }
+  channelHandover(sha256) {
+    return this.#request('/api/channel/handovers/'+sha(sha256),undefined,{raw:true,maximum:128*1024*1024});
+  }
   state() { return this.#request('/api/state'); }
   catalog() { return this.#request('/api/customer'); }
   handoff(kind, profileId) {

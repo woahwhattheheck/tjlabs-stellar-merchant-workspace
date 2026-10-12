@@ -138,3 +138,9 @@ Selected scientific/source delivery is the complete project archive. Existing me
 ## Reopening a named publisher review
 
 The complete OpenAQ selection includes the original publisher’s saved review request support. The project passes its existing operation UUID into that publisher; the reviewed candidate, native review identity, event and completed result commit in the publisher’s existing SQLite transaction. Continuing the same saved operation reopens that exact result, including after a later review or publication. It does not create a second reviewer decision. A new review uses a new project operation ID and the currently displayed candidate and target. Install the complete selection when updating a customer installation so that this original publisher capability travels with the OpenAQ workspace.
+
+## Study to operated merchant
+
+**Dataset & merchant → Operate this study’s merchant** opens the original SF82 release console over this project’s staged store. Choose the actual completed staging request, inspect its source capture/review and immutable dataset release, then use the original console for reviewed activation, supervised Run/Stop, rollback and native account/client/delivery operations. The project owns that console lifetime; the original engines own the operations.
+
+Preparation retains packages in release-packages/PREPARATION_REQUEST_UUID, outside the publisher source and dataset. Staging follows the exact original preparation record. Read merchant.status, merchant.release, merchant.open and merchant.close through the existing CLI connection or corresponding typed tools. An exact old console close cannot close a later replacement. The [full operating guide](MERCHANT_OPERATIONS.md) gives the complete customer path and interruption/reopen behavior.

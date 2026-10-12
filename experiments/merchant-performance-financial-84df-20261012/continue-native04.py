@@ -938,28 +938,125 @@ def release_source_memory():
     except (AttributeError,OSError):
         pass
 
-def receive_compact_source(payload, receiving):
-    path = pathlib.Path(payload.get("githubReaderPath","/workspace/scratch/c79fd06aedf2/scf-usage/github_ops.py"))
-    if sha(path.read_bytes()) != "86f055b8ff4da2ebb35fdeeba48e0f76f09b843eb2de5fd8bd7f92329c49618a":
-        raise RuntimeError("The original secondary Git reader changed")
-    spec = importlib.util.spec_from_file_location("scf_original_github_reader",path)
-    reader = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(reader)
-    identity = reader.api_response("/user",actor="tokenjunkielabs")
-    if identity["data"].get("id") != 311286379 or identity["data"].get("login") != "tokenjunkielabs":
-        raise RuntimeError("Original secondary Git actor differs")
-    receipts = [{"action":"identity","login":identity["data"]["login"],"id":identity["data"]["id"],
-                 "receipt":identity["receipt"]}]
-    def receive_blob(expected):
-        response = reader.api_response("/repos/"+REPO+"/git/blobs/"+expected,actor="tokenjunkielabs")
-        value = response["data"]
-        if value.get("sha") != expected or value.get("encoding") != "base64":
-            raise RuntimeError("Original Git source response differs")
-        data = base64.b64decode(value["content"].replace("\n",""),validate=True)
-        if git_blob(data) != expected:
-            raise RuntimeError("Original Git source bytes differ")
-        receipts.append({"action":"source","gitBlob":expected,"bytes":len(data),"receipt":response["receipt"]})
+def retained_source_blob_reader(source_files):
+    """Read the exact original source carriers supplied by the receiving operator."""
+    if (not isinstance(source_files, dict)
+        or set(source_files) not in ({"compact", "complete", "following"}, {"compact", "index", "following"})):
+        raise RuntimeError("sourceFiles must select compact, following and one original complete file or index")
+    selected = {}
+    for name, value in source_files.items():
+        if not isinstance(value, str) or not value or not pathlib.Path(value).is_absolute():
+            raise RuntimeError("Use the absolute original sourceFiles path for " + name)
+        selected[name] = pathlib.Path(value)
+    descriptors = {
+        "compact": {"gitBlob": "96d4980da9795e19f7cc1daecdb51634e04da018", "bytes": 2485576},
+        "complete": FINANCIAL_BASE,
+        "following": FINANCIAL_FOLLOWING,
+        "index": {"gitBlob": FINANCIAL_BASE["indexGitBlob"], "bytes": 4949},
+    }
+
+    def read_carrier(name):
+        if name == "complete" and "index" in selected:
+            index = json.loads(read_carrier("index"))
+            pieces = []
+            for number, descriptor in enumerate(index["parts"], 1):
+                if descriptor["part"] != number or descriptor["total"] != len(index["parts"]):
+                    raise RuntimeError("Original local source index order differs")
+                path = selected["index"].parent / checked_relative(descriptor["path"])
+                part = json.loads(source_checked(native_read_regular(path), descriptor, str(path)))
+                if (part["schema"] != "commons.complete-source-text-part.v1"
+                    or part["part"] != number or part["total"] != len(index["parts"])
+                    or part["completeSourceGitBlob"] != FINANCIAL_BASE["gitBlob"]
+                    or part["encoding"] != "utf-8"):
+                    raise RuntimeError("Original local source part identity differs")
+                piece = part["content"].encode("utf-8")
+                if (len(piece) != descriptor["sourceContentBytes"] or sha(piece) != descriptor["sourceContentSha256"]
+                    or len(piece) != part["contentBytes"] or sha(piece) != part["contentSha256"]):
+                    raise RuntimeError("Original local source content segment differs")
+                pieces.append(piece)
+            data = b"".join(pieces)
+        else:
+            data = native_read_regular(selected[name])
+        descriptor = descriptors[name]
+        if len(data) != descriptor["bytes"] or git_blob(data) != descriptor["gitBlob"]:
+            raise RuntimeError("Complete original local source differs: " + name)
+        if "sha256" in descriptor and sha(data) != descriptor["sha256"]:
+            raise RuntimeError("Complete original local source digest differs: " + name)
         return data
+
+    def read_blob(expected):
+        for name, descriptor in descriptors.items():
+            if expected == descriptor["gitBlob"] and (name in selected or name == "complete"):
+                return read_carrier(name)
+        compact = json.loads(read_carrier("compact"))
+        if expected == compact["indexGitBlob"]:
+            return source_json_bytes(compact["indexTemplate"])
+        supplied = compact["sourceBlobs"].get(expected)
+        if supplied is not None:
+            return supplied.encode("utf-8")
+        complete_bytes = read_carrier("complete")
+        for descriptor, template in zip(compact["indexTemplate"]["parts"], compact["partTemplates"], strict=True):
+            if descriptor["gitBlob"] == expected:
+                offset = sum(row["sourceContentBytes"] for row in compact["indexTemplate"]["parts"]
+                             if row["part"] < descriptor["part"])
+                piece = complete_bytes[offset:offset + descriptor["sourceContentBytes"]]
+                if len(piece) != descriptor["sourceContentBytes"] or sha(piece) != descriptor["sourceContentSha256"]:
+                    raise RuntimeError("Original local source segment differs")
+                if template["part"] != descriptor["part"] or template["total"] != len(compact["indexTemplate"]["parts"]):
+                    raise RuntimeError("Original local source part order differs")
+                part = {**template, "content": piece.decode("utf-8")}
+                return source_checked(source_json_bytes(part), descriptor, descriptor["path"])
+        complete = json.loads(complete_bytes)
+        for row in complete["files"] + complete["foundationFiles"]:
+            if row["gitBlob"] == expected:
+                return source_checked(row["content"].encode("utf-8"), row, row["path"])
+        raise RuntimeError("The selected original source carriers do not contain Git blob " + expected)
+
+    def checked_blob(expected):
+        data = read_blob(expected)
+        if git_blob(data) != expected:
+            raise RuntimeError("Original local source bytes differ: " + expected)
+        return data
+
+    # Verify every complete selection before source adoption. The original caller
+    # still owns each source write, its journal and the complete customer run.
+    for name in ("compact", "complete", "following"):
+        read_carrier(name)
+    return checked_blob
+
+
+def receive_compact_source(payload, receiving):
+    local_files = payload.get("sourceFiles")
+    if local_files is not None:
+        local_read = retained_source_blob_reader(local_files)
+        receipts = []
+        def receive_blob(expected):
+            data = local_read(expected)
+            receipts.append({"action":"source","transport":"retained-local-source",
+                             "gitBlob":expected,"bytes":len(data)})
+            return data
+    else:
+        path = pathlib.Path(payload.get("githubReaderPath","/workspace/scratch/c79fd06aedf2/scf-usage/github_ops.py"))
+        if sha(path.read_bytes()) != "86f055b8ff4da2ebb35fdeeba48e0f76f09b843eb2de5fd8bd7f92329c49618a":
+            raise RuntimeError("The original secondary Git reader changed")
+        spec = importlib.util.spec_from_file_location("scf_original_github_reader",path)
+        reader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reader)
+        identity = reader.api_response("/user",actor="tokenjunkielabs")
+        if identity["data"].get("id") != 311286379 or identity["data"].get("login") != "tokenjunkielabs":
+            raise RuntimeError("Original secondary Git actor differs")
+        receipts = [{"action":"identity","login":identity["data"]["login"],"id":identity["data"]["id"],
+                     "receipt":identity["receipt"]}]
+        def receive_blob(expected):
+            response = reader.api_response("/repos/"+REPO+"/git/blobs/"+expected,actor="tokenjunkielabs")
+            value = response["data"]
+            if value.get("sha") != expected or value.get("encoding") != "base64":
+                raise RuntimeError("Original Git source response differs")
+            data = base64.b64decode(value["content"].replace("\n",""),validate=True)
+            if git_blob(data) != expected:
+                raise RuntimeError("Original Git source bytes differ")
+            receipts.append({"action":"source","gitBlob":expected,"bytes":len(data),"receipt":response["receipt"]})
+            return data
     raw = receive_blob(payload["compactSource"]["gitBlob"])
     if len(raw) != payload["compactSource"]["bytes"]:
         raise RuntimeError("The compact original source byte count differs")
@@ -1028,18 +1125,23 @@ def receive_compact_source(payload, receiving):
     following_bytes = source_checked(following["content"].encode("utf-8"),following,"financial successor")
     following_commit = "c2199987c03b59ee41cc28c0f247840e3948ea87"
     following_path = "experiments/merchant-performance-financial-84df-20261012/financial-source-successor.json"
-    response = reader.api_response("/repos/"+REPO+"/contents/"+following_path+"?ref="+following_commit,actor="tokenjunkielabs")
-    value = response["data"]
-    if value.get("path") != following_path or value.get("encoding") != "base64":
-        raise RuntimeError("Published following source response differs")
-    published_bytes = base64.b64decode(value["content"].replace("\n",""),validate=True)
-    published_git = git_blob(published_bytes)
-    if value.get("sha") != published_git or published_git != "a5548d76367906e07c4726bd6237080fbe3ef410":
-        raise RuntimeError("Published PR424 following source identity differs")
+    if local_files is not None:
+        published_bytes = receive_blob(FINANCIAL_FOLLOWING["gitBlob"])
+        published_git = git_blob(published_bytes)
+    else:
+        response = reader.api_response("/repos/"+REPO+"/contents/"+following_path+"?ref="+following_commit,actor="tokenjunkielabs")
+        value = response["data"]
+        if value.get("path") != following_path or value.get("encoding") != "base64":
+            raise RuntimeError("Published following source response differs")
+        published_bytes = base64.b64decode(value["content"].replace("\n",""),validate=True)
+        published_git = git_blob(published_bytes)
+        if value.get("sha") != published_git:
+            raise RuntimeError("Published following source Git response differs")
+        receipts.append({"action":"following-source","gitBlob":published_git,"sourceCommit":following_commit,"receipt":response["receipt"]})
+    source_checked(published_bytes, FINANCIAL_FOLLOWING, "published PR424 following source")
     retain_source_bytes(carrier/"financial-source-predecessor.json",following_bytes)
     following_bytes = published_bytes
     following = {"gitBlob":published_git,"bytes":len(published_bytes),"sha256":sha(published_bytes),"sourceCommit":following_commit}
-    receipts.append({"action":"following-source","gitBlob":published_git,"sourceCommit":following_commit,"receipt":response["receipt"]})
     print(json.dumps({"phase":"FOLLOWING_SOURCE_RECEIVED",**following}),flush=True)
     successor_path = carrier/("financial-following-"+following["gitBlob"]+".json")
     retain_source_bytes(successor_path,following_bytes)
@@ -1050,7 +1152,8 @@ def receive_compact_source(payload, receiving):
         raise RuntimeError("Published PR424 financial source receiver differs")
     receiver_path = carrier/"financial-following/receive-financial-source.py"
     retain_source_bytes(receiver_path,receiver_bytes)
-    write_json(carrier/("receiving-"+receiving.name+".json"),{"requests":receipts,"files":installed})
+    write_json(carrier/("receiving-"+receiving.name+".json"),{"requests":receipts,"files":installed,
+        "sourceFiles":local_files})
     result = {"sourceIndex":str(index_path),"sourceSuccessor":str(successor_path),
               "sourceReceiver":str(receiver_path),"sourceCarrier":expected,
               "compactSource":payload["compactSource"],"financialSuccessor":{k:following[k] for k in ("gitBlob","bytes","sha256")},
@@ -1058,7 +1161,9 @@ def receive_compact_source(payload, receiving):
               "sourceOverrides":base.get("sourceOverrides",[]),"fileCount":len(base["files"]),
               "foundationFiles":len(base["foundationFiles"]),"sourceBodiesReceived":sum(not row["loadedFromRetainedFile"] for row in installed),
               "following":successor["receiving"],"followingGraph":successor["graph"],
-              "sourceRequests":len(receipts)-1}
+              "sourceRequests":0 if local_files is not None else len(receipts)-1,
+              "sourceIntake":"retained-local-source" if local_files is not None else "original-secondary-Git",
+              "retainedBlobReads":len(receipts) if local_files is not None else None}
     print(json.dumps({"phase":"SOURCE_RECEIVED","gitBlob":expected["gitBlob"],"bytes":expected["bytes"],
                       "files":result["fileCount"],"foundationFiles":result["foundationFiles"],
                       "sourceBodiesReceived":result["sourceBodiesReceived"],"sourceRequests":result["sourceRequests"]}),flush=True)

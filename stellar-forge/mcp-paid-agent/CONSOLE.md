@@ -147,3 +147,14 @@ SHA-256 before structured/text display and file download.
 
 See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for the full workflow, available actions,
 transport/body limits and installed typed client.
+
+## Multiple native HTTP services
+
+A host configured with [NATIVE_REGISTRY.md](NATIVE_REGISTRY.md) exposes its full
+service list in the HTTP requests desk. The selected catalog offer shows only
+route/payment-compatible native choices. Each saved request retains its service,
+original intent, exact input and complete original provider page. Opening history
+from any service restores that request's original service for execution,
+cancellation, recovery and saved-response download. The inbox can show one
+service or the complete combined history. A busy operation stays associated with
+its saved request and can be explicitly executed when admission is available.

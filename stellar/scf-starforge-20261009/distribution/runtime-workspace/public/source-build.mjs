@@ -1,3 +1,4 @@
+import { matchProductRequirements, normalizeProductRequirements, productReviewRequest } from '/product-requirements.mjs';
 // MIT. Complete source-product workflow over the original workspace operations.
 import { searchProductCatalog, productSourceSummary, compareProductSources,
   formatProductCatalogMarkdown } from '../../product-catalog/catalog.mjs';
@@ -32,12 +33,13 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
   let sourceSignature = '', listSignature = '', reviewSignature = '', lastRead = 0, nodes = null;
   let productPreview = null, comparison = null, comparedSelections = [];
   let queryText = '', showUnavailable = false, visibleProducts = 25;
+  let requiredCapabilities = [], requirementMatch = 'all', requirementSort = 'source';
   const productDetails = new Map();
   const key = () => 'starforge-source-builds-' + workspaceId;
   const snapshot = () => ({ repository: nodes.repository.value.trim(), ref: nodes.ref.value.trim() || 'HEAD',
     offline: nodes.offline.checked, python: nodes.python.value.trim() || 'python3',
     selection: nodes.product.value || savedSelection, selectedReviewId,
-    query: queryText, showUnavailable, comparedSelections });
+    query: queryText, showUnavailable, comparedSelections, requiredCapabilities, requirementMatch, requirementSort });
   const operationFor = id => getState()?.operations.find(item => item.id === id);
   function persist() {
     if (!nodes || !workspaceId) return;
@@ -47,7 +49,10 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
     if (!nodes) return;
     nodes.fields.disabled = pending;
     nodes.product.disabled = pending || !catalog;
-    nodes.reviewButton.disabled = pending || !catalog || !nodes.product.value;
+    const selected = catalog?.products.find(item => item.id === nodes.product.value);
+    const requirementsCovered = !requiredCapabilities.length || !selected?.capabilityError &&
+      requiredCapabilities.every(id => selected?.requirements?.includes(id));
+    nodes.reviewButton.disabled = pending || !catalog || !nodes.product.value || !requirementsCovered;
     nodes.compareButton.disabled = pending || !catalog || comparedSelections.length < 2;
     nodes.search.disabled = pending || !catalog;
     nodes.showUnavailable.disabled = pending || !catalog;
@@ -78,6 +83,7 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
     catalog = null; review = null; selectedReviewId = null; builds = []; savedSelection = '';
     productPreview = null; comparison = null; comparedSelections = [];
     queryText = ''; showUnavailable = false; visibleProducts = 25; productDetails.clear();
+    requiredCapabilities = []; requirementMatch = 'all'; requirementSort = 'source';
     sourceSignature = ''; listSignature = ''; reviewSignature = ''; lastRead = 0; nodes = null; root.replaceChildren();
   }
   function ensure() {
@@ -97,6 +103,11 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
       '<p data-commit class="note"></p><div data-catalog hidden>' +
       '<div class="source-catalog-controls"><label>Find a product<input data-product-search type="search" placeholder="Search products, such as weather or accounting" autocomplete="off"></label>' +
       '<label class="check"><input data-show-unavailable type="checkbox">Show unavailable recipes</label></div>' +
+      '<div class="source-catalog-controls"><label>Required capability<input data-required-capability list="source-product-capabilities" placeholder="command:buyer-runbook" autocomplete="off"></label>' +
+      '<datalist id="source-product-capabilities" data-capability-options></datalist><button data-add-requirement type="button">Add requirement</button>' +
+      '<label>Coverage<select data-requirement-match><option value="all">Cover every requirement</option><option value="any">Show partial matches</option></select></label>' +
+      '<label>Order<select data-requirement-sort><option value="source">Original product order</option><option value="coverage">Most requirements covered</option><option value="runtime-groups">Fewest optional runtime groups</option><option value="commands">Fewest commands</option></select></label></div>' +
+      '<div data-requirement-basket class="actions" aria-label="Selected capabilities"></div><p data-capability-errors class="note"></p>' +
       '<p data-product-count class="note" role="status" aria-live="polite"></p><div data-products class="source-catalog-list"></div>' +
       '<div data-products-more class="actions"></div>' +
       '<div class="source-catalog-selection"><input data-product type="hidden"><p><strong data-product-title>No product selected</strong></p>' +
@@ -113,6 +124,9 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
       product: find('product'), productTitle: find('product-title'), description: find('product-description'), reviewButton: find('review'),
       catalogPanel: find('catalog'), search: find('product-search'), showUnavailable: find('show-unavailable'),
       productCount: find('product-count'), products: find('products'), productsMore: find('products-more'),
+      requiredCapability: find('required-capability'), capabilityOptions: find('capability-options'), addRequirement: find('add-requirement'),
+      requirementMatch: find('requirement-match'), requirementSort: find('requirement-sort'), requirementBasket: find('requirement-basket'),
+      capabilityErrors: find('capability-errors'),
       productPreview: find('product-preview'), comparison: find('comparison'), compareButton: find('compare'),
       comparisonCount: find('comparison-count'),
       reviewPanel: find('review-panel'), buildList: find('build-list'), count: find('build-count') };
@@ -126,6 +140,26 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
       if (Array.isArray(saved.comparedSelections)) comparedSelections = [...new Set(saved.comparedSelections.filter(value => typeof value === 'string'))].slice(0, 4);
       if (/^[a-f0-9]{24}$/.test(saved.selectedReviewId ?? '')) selectedReviewId = saved.selectedReviewId;
     }
+    try { requiredCapabilities = normalizeProductRequirements(saved?.requiredCapabilities ?? []); } catch {}
+    if (['all', 'any'].includes(saved?.requirementMatch)) requirementMatch = saved.requirementMatch;
+    if (['source', 'coverage', 'runtime-groups', 'commands'].includes(saved?.requirementSort)) requirementSort = saved.requirementSort;
+    nodes.requirementMatch.value = requirementMatch; nodes.requirementSort.value = requirementSort;
+    const addCapability = () => {
+      try {
+        requiredCapabilities = normalizeProductRequirements([...requiredCapabilities, nodes.requiredCapability.value.trim()]);
+        nodes.requiredCapability.value = ''; visibleProducts = 25; persist(); renderCatalog(); renderProductPreview();
+      } catch (value) { error(value); }
+    };
+    nodes.addRequirement.addEventListener('click', addCapability);
+    nodes.requiredCapability.addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); addCapability(); }
+    });
+    nodes.requirementMatch.addEventListener('change', () => {
+      requirementMatch = nodes.requirementMatch.value; visibleProducts = 25; persist(); renderCatalog();
+    });
+    nodes.requirementSort.addEventListener('change', () => {
+      requirementSort = nodes.requirementSort.value; visibleProducts = 25; persist(); renderCatalog();
+    });
     nodes.search.value = queryText; nodes.showUnavailable.checked = showUnavailable;
     const invalidate = source => {
       review = null; selectedReviewId = null;
@@ -165,6 +199,10 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
         catalog = value; review = null; selectedReviewId = null;
         productPreview = null; comparison = null; productDetails.clear(); visibleProducts = 25;
         nodes.commit.textContent = 'Source version: ' + value.sourceCommit;
+        nodes.capabilityOptions.replaceChildren(...(value.capabilities ?? []).map(item => {
+          const option = make('option'); option.value = item.id;
+          option.label = item.kind + ' · ' + item.products + ' products'; return option;
+        }));
         comparedSelections = comparedSelections.filter(id => value.products.some(item => item.available && item.id === id));
         nodes.product.value = ''; nodes.productTitle.textContent = 'No product selected'; nodes.description.textContent = '';
         renderCatalog(); renderProductPreview(); renderComparison();
@@ -174,9 +212,9 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
     });
     nodes.reviewButton.addEventListener('click', () => perform(async alive => {
       if (!catalog || !nodes.product.value) throw new Error('Choose a committed product first.');
-      const value = await api('/api/source-builds/review', { repository: catalog.repository,
-        ref: catalog.sourceCommit, selection: nodes.product.value, offline: catalog.offline,
-        python: nodes.python.value.trim() || 'python3' });
+      const value = await api('/api/source-builds/review', productReviewRequest(catalog, nodes.product.value, {
+        python: nodes.python.value.trim() || 'python3', requirements: requiredCapabilities,
+      }));
       if (!alive()) return;
       review = value; selectedReviewId = value.reviewId; savedSelection = value.selection; persist();
       lastRead = 0; await refresh({ force: true });
@@ -218,13 +256,20 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
     if (!nodes) return;
     nodes.catalogPanel.hidden = !catalog;
     if (!catalog) return;
-    const result = searchProductCatalog(catalog, { query: queryText, availableOnly: !showUnavailable });
+    const searched = searchProductCatalog(catalog, { query: queryText, availableOnly: !showUnavailable });
+    const result = matchProductRequirements(searched.products, {
+      requirements: requiredCapabilities, match: requirementMatch, sort: requirementSort,
+    });
+    nodes.requirementBasket.replaceChildren(...requiredCapabilities.map(id => button('Remove ' + id, async alive => {
+      if (alive()) { requiredCapabilities = requiredCapabilities.filter(value => value !== id); visibleProducts = 25; persist(); renderCatalog(); renderProductPreview(); }
+    })));
+    nodes.capabilityErrors.textContent = result.unread.map(item => item.title + ': ' + item.error.message).join('\n');
     nodes.productCount.textContent = result.products.length + ' of ' + catalog.products.length + ' products' +
-      (queryText.trim() ? ' match your search.' : '.');
+      (queryText.trim() || requiredCapabilities.length ? ' match your search and capability requirements.' : '.');
     nodes.comparisonCount.textContent = comparedSelections.length + ' selected for comparison · choose up to 4';
     nodes.products.replaceChildren(); nodes.productsMore.replaceChildren();
     if (!result.products.length)
-      nodes.products.append(make('p', 'No products match. Change the search or show unavailable recipes.', 'empty'));
+      nodes.products.append(make('p', 'No products match. Change the search, capability requirements or coverage option.', 'empty'));
     for (const item of result.products.slice(0, visibleProducts)) {
       const row = make('article', undefined, 'source-catalog-row');
       if (!item.available) {
@@ -254,6 +299,8 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
             .find(value => value.dataset.compareId === item.id)?.focus();
         });
         label.append(checkbox, make('span', 'Compare')); row.append(select, label);
+        if (requiredCapabilities.length) row.append(make('p', 'Covers ' + item.requirementMatch.covered.length + '/' +
+          requiredCapabilities.length + (item.requirementMatch.missing.length ? ' · missing: ' + item.requirementMatch.missing.join(', ') : ''), 'note'));
       }
       nodes.products.append(row);
     }
@@ -293,6 +340,8 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
       return;
     }
     const { summary: value } = productPreview;
+    const selected = catalog?.products.find(item => item.id === value.id);
+    const missingCapabilities = requiredCapabilities.filter(id => !selected?.requirements?.includes(id));
     const heading = make('div', undefined, 'section-title');
     heading.append(make('h3', value.title), make('span', 'Product contents', 'status'));
     panel.append(heading, make('p', value.description, 'muted'));
@@ -300,8 +349,20 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
       ['Merchant connections', value.counts.merchantProviders], ['Adapter groups', value.counts.features]], 'facts'));
     const exports = make('div', undefined, 'actions');
     exports.append(button('Save product details', async alive => { if (alive()) exportValue('product-' + value.id, value); }),
-      button('Save readable product guide', async alive => { if (alive()) exportValue('product-' + value.id, value, true); }));
+      button('Save readable product guide', async alive => { if (alive()) exportValue('product-' + value.id, value, true); }),
+      button('Save build review request', async alive => {
+        if (alive()) exportValue('product-' + value.id + '-build-review',
+          productReviewRequest(catalog, value.id, { python: nodes.python.value.trim() || 'python3', requirements: requiredCapabilities }));
+      }, missingCapabilities.length > 0 || Boolean(selected?.capabilityError)));
     panel.append(exports);
+    if (requiredCapabilities.length) {
+      panel.append(make('p', missingCapabilities.length ?
+        'Choose a product covering the remaining capabilities to prepare a build: ' + missingCapabilities.join(', ') :
+        'This product covers every requested capability.', 'note'));
+      panel.append(detail('Requested capability sources', table(['Capability', 'Registration sources'],
+        requiredCapabilities.map(id => [id, selected?.capabilityDeclarations?.find(item => item.id === id)?.sources
+          .map(source => source.id + ' · ' + source.path).join('\n') || 'Not included']))));
+    }
     if (value.applications.length)
       panel.append(detail('Included applications', table(['Application'], value.applications.map(name => [name]))));
     if (value.merchantProviders.length)
@@ -318,6 +379,24 @@ export function createSourceBuildWorkspaceView({ root, api, getState, operation,
     }
     if (value.runtime.native.length || value.runtime.features.length)
       panel.append(detail('Installation requirements', requirements));
+    const dependencyLocks = productPreview.source.runtimeRequirements?.dependencyLocks ?? {};
+    const resolvedGroups = Object.entries(dependencyLocks).filter(([, group]) => group.instances?.length);
+    if (resolvedGroups.length) {
+      const closure = make('div');
+      closure.append(make('p', 'Exact production dependencies recorded by the committed lockfiles, including transitive packages. Runtime installation selects packages for the target platform.', 'note'));
+      for (const [name, group] of resolvedGroups) {
+        closure.append(make('h3', name + ' · ' + group.counts.directInstances + ' direct / ' + group.counts.transitiveInstances + ' transitive instances'),
+          make('p', group.source.path + ' · ' + group.status, 'note'),
+          table(['Package', 'Locked version', 'Locations'], group.packages.map(item => [item.name, item.version, item.locations.join('\n')])));
+        for (const issue of group.unresolved ?? [])
+          closure.append(make('p', issue.name + ' from ' + issue.from + ': ' + (issue.reason ?? 'Not found in committed lock'), 'note'));
+      }
+      panel.append(detail('Committed dependency closure', closure));
+    }
+    for (const [name, group] of Object.entries(dependencyLocks).filter(([, group]) => ['mismatched', 'unsupported', 'unavailable'].includes(group.status)))
+      panel.append(make('p', name + ' dependency lock: ' + (group.reason ?? group.error?.message), 'note'));
+    for (const issue of productPreview.source.runtimeRequirements?.errors ?? [])
+      panel.append(make('p', issue.feature + ': ' + issue.message, 'note'));
     panel.append(detail('Commands', table(['Command', 'Original source'],
       value.commands.map(item => [item.name, item.entry]))));
     panel.append(detail('Package exports', table(['Export', 'Original source'],

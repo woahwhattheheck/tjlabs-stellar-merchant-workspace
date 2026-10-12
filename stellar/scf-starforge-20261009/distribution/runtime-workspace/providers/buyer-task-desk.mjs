@@ -53,6 +53,8 @@ export function taskDeskApplication(common = []) {
         'Optional original directory containing task.json. Select its original receiving destination or delivered packet below.'),
       field('existingOutputDirectory', 'Original receiving or delivered packet', false,
         'The exact destination recorded by that task, or its complete delivered packet. A moved complete packet opens for reading and download.'),
+      field('commerceDirectory', 'Original RPC commerce session', false,
+        'Optional existing commerce session for listing and selecting its saved RPC read editions. It must contain the selected original Inbox.'),
       field('workspaceDirectory', 'Original operator workspace', false,
         'Optional original native operator workspace used by explicit execution.'),
       ...common,
@@ -75,6 +77,15 @@ export async function prepareTaskDeskApplication(settings, { inputPath, runtimeD
   const inboxDirectory = await directory('inboxDirectory');
   const tasksDirectory = await directory('tasksDirectory', { missing: true });
   const outputsDirectory = await directory('outputsDirectory', { missing: true });
+  const commerceDirectory = settings.commerceDirectory === undefined
+    ? undefined : await directory('commerceDirectory');
+  if (commerceDirectory !== undefined) {
+    need(join(commerceDirectory, 'inbox') === inboxDirectory,
+      'APPLICATION_TASK_DESK_COMMERCE_INBOX_CHANGED', 'Choose the original commerce session that contains this Inbox.');
+    inputs.push(await inputPath(join(commerceDirectory, 'session.json'), 'file'));
+    for (const name of ['commerce.mjs', 'commerce-jsonrpc-recovery.mjs'])
+      inputs.push(await inputPath(join(nativeRuntimeDirectory, '..', 'sf66-demo-launcher', name), 'file'));
+  }
   const workspaceDirectory = settings.workspaceDirectory === undefined
     ? undefined : await directory('workspaceDirectory');
   separateResults(tasksDirectory, inboxDirectory, outputsDirectory);
@@ -129,6 +140,7 @@ export async function prepareTaskDeskApplication(settings, { inputPath, runtimeD
   const args = ['--runtime', nativeRuntimeDirectory, '--state', stateDirectory,
     '--inbox', inboxDirectory, '--tasks', tasksDirectory, '--outputs', outputsDirectory];
   if (workspaceDirectory !== undefined) args.push('--workspace', workspaceDirectory);
+  if (commerceDirectory !== undefined) args.push('--commerce', commerceDirectory);
   if (retainedTask) args.push('--existing-task', retainedTask.taskDirectory,
     '--existing-output', retainedTask.outputDirectory);
   const resourceKey = resource(tasksDirectory);
@@ -140,7 +152,7 @@ export async function prepareTaskDeskApplication(settings, { inputPath, runtimeD
 function launchSelection(request) {
   need(request?.command === COMMAND && !request.pythonCommand && Array.isArray(request.args),
     'APPLICATION_TASK_DESK_STARTUP_CHANGED');
-  const allowed = new Set(['--runtime', '--state', '--inbox', '--tasks', '--outputs', '--workspace', '--port',
+  const allowed = new Set(['--runtime', '--state', '--inbox', '--tasks', '--outputs', '--workspace', '--commerce', '--port',
     '--existing-task', '--existing-output']);
   const values = new Map();
   need(request.args.length % 2 === 0, 'APPLICATION_TASK_DESK_STARTUP_CHANGED');
@@ -156,6 +168,7 @@ function launchSelection(request) {
     ['--inbox', 'inboxDirectory'], ['--tasks', 'tasksDirectory'], ['--outputs', 'outputsDirectory'],
   ]) selected[name] = absolute(values.get(flag));
   if (values.has('--workspace')) selected.workspaceDirectory = absolute(values.get('--workspace'));
+  if (values.has('--commerce')) selected.commerceDirectory = absolute(values.get('--commerce'));
   need(values.has('--existing-task') === values.has('--existing-output'), 'APPLICATION_TASK_DESK_STARTUP_CHANGED');
   if (values.has('--existing-task')) {
     selected.existingTaskDirectory = absolute(values.get('--existing-task'));
@@ -196,6 +209,7 @@ export async function taskDeskStartup(request, announcement, context = {}) {
   need(UUID.test(announcement.instanceId ?? '') &&
     announcement.inbox === selected.inboxDirectory &&
     announcement.tasks === selected.tasksDirectory && announcement.outputs === selected.outputsDirectory &&
+    announcement.commerce === selected.commerceDirectory &&
     announcement.existingTask === selected.existingTaskDirectory &&
     announcement.existingOutput === selected.existingOutputDirectory,
   'APPLICATION_TASK_DESK_STARTUP_CHANGED', 'The task desk announcement differs from the saved application roots.');
@@ -211,6 +225,7 @@ export async function taskDeskStartup(request, announcement, context = {}) {
   need(status?.schema === STATUS && status.instanceId === announcement.instanceId &&
     status.roots?.inbox === selected.inboxDirectory &&
     status.roots?.tasks === selected.tasksDirectory && status.roots?.outputs === selected.outputsDirectory &&
+    status.roots?.commerce === selected.commerceDirectory &&
     status.roots?.existingTask === selected.existingTaskDirectory &&
     status.roots?.existingOutput === selected.existingOutputDirectory &&
     typeof status.csrfToken === 'string' && status.csrfToken.length > 0,

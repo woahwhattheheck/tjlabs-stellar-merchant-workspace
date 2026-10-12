@@ -68,7 +68,8 @@
     "stellar/scf-starforge-20261009/partners/unstructured",
     "stellar/scf_2026/presentation/reviewer",
     "products/merchant-workspace",
-    "products/material-catalog"
+    "products/material-catalog",
+    "products/grant-operations"
   ],
   "browserAssets": [
     {

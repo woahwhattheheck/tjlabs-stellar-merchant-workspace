@@ -56,6 +56,19 @@ export interface StatementUsageImport {
   id: string; name: string; sha256: string; bytes: number; createdAt: string; sourceCreatedAt: string;
   sourceRevision: number | string; sourceSchema: string; orderCount: number; actor: string;
 }
+export interface StatementServicePassIdentity {
+  orderRef: string; eventId: string; routeId: string; method: string; network: string;
+  amountAtomic: string; assetDigest: string; recipientDigest: string | null; entitledAt: string;
+  planId: string; planRevision: string; planSha256: string; manifestSha256: string; unitsPurchased: string;
+}
+export type StatementServiceCapture = StatementUsageImport & {
+  schema: 'stellar-forge.merchant-service-capture.v1';
+} & (
+  | { periodEligible: true; periodIdentity: StatementServicePassIdentity; periodIdentitySha256: string;
+      pass: StatementServicePassIdentity & StatementServiceBalance & {planLabel: string; callCount: number}; unavailableCode: null; }
+  | { periodEligible: false; periodIdentity: null; periodIdentitySha256: null; pass: null;
+      unavailableCode: 'COMPLETE_NATIVE_PERIOD_SOURCE_REQUIRED' | 'SERVICE_PERIOD_ENTITLEMENT_REQUIRED'; }
+);
 export interface StatementUsageSource {
   source: string; sha256: string; bytes: number; sourceSchema: string;
   sourceCreatedAt: string; sourceRevision: number | string; orderCount: number;
@@ -249,6 +262,8 @@ export interface AccountingStatementClient {
   lookup(requestId: string, options?: StatementCallOptions): Promise<StatementLookupResult>;
   allCustomers(options?: StatementCallOptions): Promise<StatementInventory<StatementCustomer>>;
   allUsage(options?: StatementCallOptions): Promise<StatementInventory<StatementUsageImport>>;
+  usageCaptures(args?: StatementPageArguments, options?: StatementCallOptions): Promise<{revision: number; page: StatementPage<StatementServiceCapture, 'usage-captures'>}>;
+  allUsageCaptures(options?: StatementCallOptions): Promise<StatementInventory<StatementServiceCapture>>;
   allBindings(args?: StatementBindingsQuery, options?: StatementCallOptions): Promise<StatementInventory<StatementBinding>>;
   allStatements(args?: StatementListQuery, options?: StatementCallOptions): Promise<StatementInventory<RetainedStatement>>;
   saveCustomer(value: CustomerSaveInput, options?: StatementCallOptions): Promise<CustomerSaveResult>;
