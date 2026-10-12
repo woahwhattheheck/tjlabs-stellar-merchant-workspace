@@ -543,17 +543,68 @@ release workflows to compare, stage and switch the merchant.
 The [capture refresh guide](../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/har/REFRESH.md)
 defines comparison, dormant-route carry, offline refresh and package operations.
 
-## 8. Receive the complete source and merchant
+## 8. Hand over the complete source and merchants
 
-A source handover is the complete native capture or refresh directory: original
-bytes, inventory, manifest and immutable reviews. The original source copy
-verifies these files.
+The product's complete handover joins original captured histories with their
+saved merchant packages. Select actual members, copy and review the full native
+collection, publish it, then review and receive it into another initialized
+product.
 
-The standard HAR destination `handover` selects `receiving/source-handover`.
-Import aliases `capture` and `refresh` select `receiving/capture` and
-`receiving/refresh`. Use the complete native source intended for that operation.
+~~~sh
+starforge captured-api handover inventory --dir /private/state/captured-api
 
-Initialize and open the receiving product, then adopt the original directory:
+starforge captured-api handover prepare \
+  --dir /private/state/captured-api \
+  --selection /private/inputs/merchant-handover.json \
+  --out /private/handovers/merchant-edition-1
+
+starforge captured-api handover publish \
+  --out /private/handovers/merchant-edition-1 \
+  --review-sha256 ACTUAL_PREPARED_REVIEW_SHA256
+~~~
+
+The selection contains original package names/manifest hashes and optional
+capture or refresh selections. A captured merchant automatically includes its
+original source and saved review. A refresh retains both complete source
+editions, their histories, comparison, draft and native reviewer. Every selected
+package includes the original OpenAPI, complete plan and atomic prices,
+source revision, generated files, compiled merchant and native export manifest.
+
+Move the complete published directory to the receiving host and use its actual
+manifest hash:
+
+~~~sh
+starforge captured-api handover receive-review \
+  --dir /private/state/receiving-merchant \
+  --bundle /private/delivery/merchant-edition-1 \
+  --manifest-sha256 ACTUAL_PUBLISHED_MANIFEST_SHA256
+
+starforge captured-api handover receive \
+  --dir /private/state/receiving-merchant \
+  --bundle /private/delivery/merchant-edition-1 \
+  --manifest-sha256 ACTUAL_PUBLISHED_MANIFEST_SHA256 \
+  --review-sha256 ACTUAL_RECEIVING_REVIEW_SHA256
+~~~
+
+Initialize and open the receiving product before its native adoption/package
+writes. The receiving review lists existing source matches and package names;
+an optional private name map lets the operator choose another receiving name.
+The same native source adoption merges missing immutable reviews and retains
+receiving-only decisions. Native package receiving preserves original UUIDs,
+source, complete plans, prices and compiled bytes.
+
+Repeat the same preparation or receiving command after an interruption. Use
+`handover status --dir PRODUCT --operation ORIGINAL_OPERATION_ID` to reopen the
+retained receiving result after restart or after the delivered bundle moves.
+Open the received source and saved package in the original browser, then use its
+native worksheet, merchant and release controls to continue operation.
+
+[HANDOVER.md](HANDOVER.md) supplies the complete selection schemas, target-name
+review, file collection, publication/receiving commands, restart and release
+walkthrough. It also exposes the same complete workflow as a source module.
+
+For an individual existing source directory, the original command remains
+available:
 
 ~~~sh
 starforge captured-api adopt \
@@ -562,21 +613,9 @@ starforge captured-api adopt \
   --label 'Received supplier source'
 ~~~
 
-Native adoption validates the original manifests and merges missing immutable
-reviews for an equal source. Existing receiving-only reviews remain available.
-
-The complete merchant transfer also includes original OpenAPI, full plan,
-generated merchant, compiled files and manifest. The OpenAPI `handover` alias
-selects `receiving/merchant-package`. Receive that full directory through the
-original package workflow, inspect its manifest and reopen the saved package.
-
 Keep the complete base and proposed worksheet JSON when moving unfinished
-pricing work. The native file hashes and source/asset binding continue to govern
-import and reconciliation.
-
-The exported OpenAPI document is useful for authoring. The complete native
-capture or refresh directory preserves captured-source history and decision
-continuation for the receiving operator.
+pricing work. Native file hashes and source/asset binding govern its import and
+reconciliation.
 
 ## 9. Recover and upgrade
 
@@ -600,6 +639,7 @@ alongside the saved process session.
 | Applications launch configuration changes | Fresh review of the same saved product before its next start |
 | Applications start reply is lost | The saved original application and managed operation, including its retained private startup record |
 | Worksheet transfer stops | Same source/plan, worksheet identity and native downloader |
+| Complete handover is interrupted | Same selection/output or receiving review/operation ID; completed native members reopen |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |
