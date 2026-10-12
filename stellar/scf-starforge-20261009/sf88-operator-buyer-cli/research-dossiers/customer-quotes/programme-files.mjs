@@ -100,6 +100,17 @@ function lazyOriginal(factory,expected,signal){
  return {status:(...args)=>original().then(client=>client.status(...args)),
   customerUpdates:()=>scope('customerUpdates'),europePmc:()=>scope('europePmc')};
 }
+function rememberOperation(operations,operation,programme){
+ if(operation?.schema!=='sf88-research-customer-quote-operation/v1')return;
+ assertResearchQuoteProgrammeOperation(operation,programme);
+ const previous=operations.get(operation.id);
+ need(!previous||previous.requestSha256===operation.requestSha256,'RESEARCH_QUOTE_HANDOVER_OPERATION_CHANGED');
+ if(!previous||operation.status==='COMPLETE'){
+  const {id,kind,status,requestSha256}=operation;
+  operations.set(id,{id,kind,status,requestSha256,operationSha256:fingerprint(operation),
+   publicationId:kind==='PUBLICATION'&&status==='COMPLETE'?operation.result.publicationId:null});
+ }
+}
 async function snapshot(root,input){
  return withCustomerOperation(input.programmeDirectory,async original=>{
   const programme=await readResearchQuoteProgrammeHeader(original),rows=await readdir(join(original,'steps')),
@@ -119,17 +130,7 @@ async function snapshot(root,input){
    const names=['input.json','request.json','result.json',...(step.native.original?['original.json']:[]),
     ...step.native.attempts.map(row=>row.name)];
    for(const name of names)await add(join(step.directory,'operation',name),prefix+'operation/'+name);
-   const operation=step.native.result.result;
-   if(operation.schema==='sf88-research-customer-quote-operation/v1'){
-    assertResearchQuoteProgrammeOperation(operation,programme);
-    const previous=operations.get(operation.id);
-    need(!previous||previous.requestSha256===operation.requestSha256,'RESEARCH_QUOTE_HANDOVER_OPERATION_CHANGED');
-    if(!previous||operation.status==='COMPLETE'){
-     const {id,kind,status,requestSha256}=operation;
-     operations.set(id,{id,kind,status,requestSha256,operationSha256:fingerprint(operation),
-      publicationId:kind==='PUBLICATION'&&status==='COMPLETE'?operation.result.publicationId:null});
-    }
-   }
+   rememberOperation(operations,step.native.result.result,programme);
   }
   need(sourceFiles.length<=FILE_COUNT&&operations.size>0,'RESEARCH_QUOTE_HANDOVER_FILES_REQUIRED');
   const plan={schema:PLAN,request:input,requestSha256:fingerprint(input),programme,
@@ -355,13 +356,21 @@ export async function inspectResearchQuoteHandover(directory,{manifestSha256}={}
  need(same(summary.programme,programme.programme)&&same(summary.selection,selected)&&
   same([...summary.steps].sort((a,b)=>a.stepId.localeCompare(b.stepId)),[...programme.steps].sort((a,b)=>a.stepId.localeCompare(b.stepId))),
   'RESEARCH_QUOTE_HANDOVER_PROGRAMME_CHANGED');
- for(const step of programme.steps){
-  const prefix='programme/steps/'+step.stepId+'/';
+ const requiredOperations=new Map(),stepsById=new Map(programme.steps.map(step=>[step.stepId,step]));
+ // Reuse the original selected order and COMPLETE precedence from source capture.
+ for(const stepId of selected.stepIds){
+  const step=stepsById.get(stepId);
+  need(step?.status==='COMPLETE','RESEARCH_QUOTE_HANDOVER_COMPLETED_STEP_REQUIRED');
+  const prefix='programme/steps/'+stepId+'/';
   for(const name of ['step.json','operation/input.json','operation/request.json','operation/result.json'])demand(prefix+name);
   demand(prefix+'step-input.json',step.inputFile);demand('requests/'+step.stepId+'.json',step.inputFile);
   const folder=await customerDirectory(join(root,prefix,'operation'),{create:false});
   for(const name of await readdir(folder))if(/^(?:attempt|error)-[a-f0-9-]{36}\.json$/.test(name)||name==='original.json')
    demand(prefix+'operation/'+name);
+  const reply=(await readCustomerJson(join(folder,'result.json'),QUOTE_FILE_LIMIT)).value;
+  need(reply?.resultSha256===step.resultSha256&&reply.resultSha256===fingerprint(reply.result),
+   'RESEARCH_QUOTE_HANDOVER_OPERATION_CHANGED');
+  rememberOperation(requiredOperations,reply.result,programme.programme);
  }
  const originalInput=await readResearchHostFile(await selectedMember(root,'package-input.json'),QUOTE_REQUEST_LIMIT);
  need(same(researchQuoteHandoverInput(JSON.parse(originalInput)),manifest.request),'RESEARCH_QUOTE_HANDOVER_REQUEST_CHANGED');
@@ -386,8 +395,17 @@ export async function inspectResearchQuoteHandover(directory,{manifestSha256}={}
   'RESEARCH_QUOTE_HANDOVER_CUSTOMER_CHANGED');
  demand('customer/handover.json',{bytes:customer.manifestBytes,sha256:customer.manifestSha256});
  for(const file of customer.files)demand('customer/'+file.name,file);
+ const expectedOperations=[...requiredOperations.values()].sort((a,b)=>a.id.localeCompare(b.id));
  need(Array.isArray(selected.operations)&&selected.operations.length>0&&
-  new Set(selected.operations.map(row=>row.id)).size===selected.operations.length,'RESEARCH_QUOTE_HANDOVER_OPERATIONS_CHANGED');
+  new Set(selected.operations.map(row=>row.id)).size===selected.operations.length&&
+  same([...selected.operations].sort((a,b)=>a.id.localeCompare(b.id)),
+   expectedOperations.map(row=>({...row,name:'native/'+row.id+'/export.json'}))),
+  'RESEARCH_QUOTE_HANDOVER_OPERATIONS_CHANGED');
+ const expectedPublications=expectedOperations.filter(row=>row.publicationId!==null).map(row=>row.publicationId).sort();
+ need(new Set(expectedPublications).size===expectedPublications.length&&
+  new Set(selected.publications.map(row=>row.id)).size===selected.publications.length&&
+  same(selected.publications.map(row=>row.id).sort(),expectedPublications),
+  'RESEARCH_QUOTE_HANDOVER_PUBLICATION_CHANGED');
  const operations=[];
  for(const item of selected.operations){
   id(item.id);need(item.name==='native/'+item.id+'/export.json','RESEARCH_QUOTE_HANDOVER_OPERATION_CHANGED');
@@ -406,7 +424,11 @@ export async function inspectResearchQuoteHandover(directory,{manifestSha256}={}
   demand(item.name);
   const original=(await readCustomerJson(await selectedMember(root,item.name),QUOTE_FILE_LIMIT)).value;
   need(original.id===item.id&&original.workspaceId===selected.workspaceId&&original.record?.status==='ENROLLED'&&
-   same(original.files.map(row=>row.part),['publication','handoff','archive']),'RESEARCH_QUOTE_HANDOVER_PUBLICATION_CHANGED');
+   original.record.result?.publicationId===item.id&&
+   same(original.files.map(row=>row.part),['publication','handoff','archive'])&&
+   same(item.files,original.files.map(row=>({...pin(row.metadata.descriptor),part:row.part,
+    name:'publications/'+item.id+'/'+row.part+'/'+row.metadata.descriptor.name}))),
+   'RESEARCH_QUOTE_HANDOVER_PUBLICATION_CHANGED');
   for(const file of original.files){
    const name='publications/'+item.id+'/'+file.part+'/'+file.metadata.descriptor.name;
    demand(name,file.metadata.descriptor);

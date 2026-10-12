@@ -56,7 +56,7 @@ function header(value){
  need(value.source.workspaceId===value.workspaceId&&value.source.casesWorkspaceId===value.casesWorkspaceId&&
   value.source.dossierId===value.input.dossierId&&value.source.revision===value.input.revision&&
   value.source.project?.id===value.input.projectId&&
-  (value.input.caseMode==='EXISTING'?value.source.case?.case?.id===value.input.caseId:value.source.case===null),
+  (value.input.caseMode==='EXISTING'?value.source.case?.id===value.input.caseId:value.source.case===null),
   'RESEARCH_QUOTE_PROGRAMME_SOURCE_CHANGED');
  return value;
 }
