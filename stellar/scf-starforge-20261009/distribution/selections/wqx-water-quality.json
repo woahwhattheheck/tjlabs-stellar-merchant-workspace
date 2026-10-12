@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "wqx-water-quality",
-  "title": "WQX water-quality scientific editions",
-  "description": "Complete original WQX source, reviewed reporting units and scientific editions, managed applications, 39 WQX merchant tools, paid scientific jobs and original customer receiving",
+  "title": "WQX scientific editions and KiWIS commissioning",
+  "description": "Complete original WQX source, scientific editions, KiWIS monitoring and native laboratory correspondence, managed applications, 39 WQX merchant tools, paid jobs and complete customer receiving",
   "base": {
     "commands": [
       "installation",
@@ -157,7 +157,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "WQX water-quality source, paired scientific editions, complete managed and paid receiving",
+    "description": "WQX scientific editions and KiWIS commissioning with complete managed, paid and independent receiving",
     "readme": "stellar/scf-starforge-20261009/distribution/selections/WQX_WATER_QUALITY.md",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",

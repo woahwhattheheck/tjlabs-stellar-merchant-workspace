@@ -47,6 +47,8 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
   refunds: 'refund_list', refund: 'refund_detail', cancelRefund: 'refund_cancel', reverseRefund: 'refund_reverse',
   reportRefundReturn: 'refund_return', receiveRefund: 'refund_receive',
   previewCreditDisposition: 'credit_disposition_preview', applyCreditDisposition: 'credit_disposition_apply',
+  remittances: 'remittance_list', previewRemittance: 'remittance_preview',
+  applyRemittance: 'remittance_apply', remittance: 'remittance_detail',
   bankAccounts: 'bank_accounts', saveBankAccount: 'bank_account_save', inspectBankSource: 'bank_source_inspect',
   importBankSource: 'bank_source_import', bankImports: 'bank_import_list', bankImport: 'bank_import_detail',
   previewBankPosting: 'bank_posting_preview', postBankReceipts: 'bank_receipts_post',
@@ -54,6 +56,7 @@ export const ACCOUNTING_RECEIVABLES_METHODS = Object.freeze({
 });
 const OPERATIONS = new Set(Object.values(ACCOUNTING_RECEIVABLES_METHODS));
 const ACTIONS = Object.freeze({
+  remittance_apply: 'remittance_applied',
   settings: 'settings_saved', draft_save: 'draft_saved', quote_import: 'quote_imported',
   invoice_issue: 'invoice_issued', invoice_void: 'invoice_voided', credit: 'credit_issued',
   receipt_record: 'payment_recorded', receipt_void: 'payment_voided', settlement_import: 'settlement_recorded',
@@ -67,7 +70,7 @@ const ACTIONS = Object.freeze({
 });
 export const ACCOUNTING_RECEIVABLES_MUTATIONS = Object.freeze(Object.keys(ACTIONS));
 const PAGED = new Set(['status', 'invoice_preview', 'invoice_detail', 'settlement_ledger', 'payment_list', 'payment_detail', 'refund_list',
-  'bank_accounts', 'bank_import_list', 'bank_import_detail']);
+  'bank_accounts', 'bank_import_list', 'bank_import_detail', 'remittance_list', 'remittance_detail']);
 
 /** Validate transport identity while preserving every original JSON field and string. */
 export function accountingReceivablesArguments(kind, value) {
@@ -143,6 +146,28 @@ export function accountingBankPostingArguments(preview, value) {
   return {bankImportId: preview.proposal.bankImportId, ...identity(value), revision: preview.revision,
     proposal: structuredClone(preview.proposal), reviewSha256: preview.reviewSha256};
 }
+/** Keep the complete original CSV and the workspace-bound native review together. */
+export function accountingRemittancePreview(preview) {
+  need(plain(preview) && plain(preview.source) && plain(preview.review) &&
+    typeof preview.source.csv === 'string' && SHA.test(preview.workspaceId ?? '') &&
+    preview.review.schema === 'stellar-forge.merchant-remittance-review.v1' &&
+    preview.review.workspaceId === preview.workspaceId && preview.review.revision === preview.revision &&
+    preview.source.sourceId === preview.review.sourceId && preview.source.filename === preview.review.filename &&
+    Buffer.byteLength(preview.source.csv, 'utf8') === preview.review.sourceBytes &&
+    preview.review.sourceBytes > 0 && preview.review.sourceBytes <= 500_000 &&
+    createHash('sha256').update(preview.source.csv, 'utf8').digest('hex') === preview.review.sourceSha256 &&
+    SHA.test(preview.reviewSha256 ?? '') && digest(preview.review) === preview.reviewSha256,
+    'Keep the complete original remittance CSV, exact workspace identity and native review SHA-256.', 'PREVIEW');
+  version(preview.revision); return preview;
+}
+export function accountingRemittanceArguments(preview, value) {
+  accountingRemittancePreview(preview);
+  need(preview.review.canApply === true && preview.review.conflictCount === 0,
+    'Resolve every remittance conflict in the original source before preparing the complete batch.', 'PREVIEW');
+  return {workspaceId: preview.workspaceId, source: structuredClone(preview.source),
+    ...identity(value), revision: preview.revision, reviewSha256: preview.reviewSha256};
+}
+
 function nativeIntent(kind, input) {
   const value = wire(input);
   delete value.revision;
@@ -212,6 +237,8 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
         'Choose an original paged read and let this reader advance its offsets.');
       if (kind === 'bank_import_detail') need(['rows', 'history', 'postings'].includes(args.view),
         'Select rows, history or postings for a complete original bank import view.');
+      if (kind === 'remittance_detail') need(['groups', 'errors'].includes(args.view),
+        'Select groups or errors for a complete original remittance review.');
       const rowKey = kind === 'refund_list' ? 'refunds' : kind === 'bank_accounts' ? 'accounts' :
         kind === 'bank_import_list' ? 'imports' : 'items';
       const items = [], ids = new Set(); let offset = 0, total, revision, date, metadata;
@@ -257,6 +284,10 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       }
       need(metadata && length === metadata.bytes, 'The original complete file ended early.', 'FILE_REPLY');
       return {bytes: Buffer.concat(parts, length), file: metadata};
+    },
+    remittanceFile({batchId, file}, options) {
+      identifier(batchId, UUID, 'original remittance batch UUID');
+      return client.fileBytes({kind: 'receivables-remittance', batchId, file}, options);
     },
     bankImportFile({bankImportId, file}, options) {
       identifier(bankImportId, UUID, 'original bank import UUID');
@@ -350,6 +381,15 @@ export function createAccountingReceivablesClient({workspace, call} = {}) {
       return result;
     };
   }
+  const remittancePreview = client.previewRemittance;
+  client.previewRemittance = async (args, options) => {
+    const result = accountingRemittancePreview(await remittancePreview(args, options));
+    need(result.workspaceId === args.workspaceId && result.source.sourceId === args.source?.sourceId?.trim() &&
+      result.source.filename === args.source?.filename?.trim() &&
+      (args.source.csv === undefined || result.source.csv === args.source.csv),
+      'The remittance review belongs to different original source or workspace selections.', 'PREVIEW');
+    return result;
+  };
   const bankPreview = client.previewBankPosting;
   client.previewBankPosting = async (args, options) => {
     const result = accountingBankPostingPreview(await bankPreview(args, options));

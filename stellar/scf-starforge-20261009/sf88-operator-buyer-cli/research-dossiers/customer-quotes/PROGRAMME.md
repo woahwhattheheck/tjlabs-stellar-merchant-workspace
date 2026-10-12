@@ -332,7 +332,7 @@ The receiving input binds the actual destination returned by its Research status
 
 Use configuration.cases.workspaceId for the expected case workspace. Set expectedRevision to null for a new local case; otherwise use that destination case's current original revision. The original case ID comes from the complete source package and remains the target ID. Set sourceActor to the receiving operator's recorded name when the handover contains an original Europe PMC source-workspace archive.
 
-The [original case-transfer workflow](OPERATING.md) defines the complete native review. Existing commissioning and service histories are reconciled by the maintained CaseStore writer. The dossier is received through the original Research handover engine. Both results retain their actual destination identities.
+The [original case-transfer workflow](CASE_TRANSFER.md) defines the complete native review. Existing commissioning and service histories are reconciled by the maintained CaseStore writer. The dossier is received through the original Research handover engine. Both results retain their actual destination identities.
 
 A stopped case save, lost reply or partial dossier receipt keeps the original input, review and completed phase result. Repeat receive with the same operation directory and review SHA. The original case request resolves its saved result before later destination revisions; the original customer receiver resolves its retained dossier and source-workspace inputs. The full receiving result is retained after both native phases finish.
 

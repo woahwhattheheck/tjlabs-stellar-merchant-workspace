@@ -51,7 +51,7 @@ export {runStudyProtocolReview,STUDY_PROTOCOL_PREPARED} from './study-protocol-o
 
 export {createResearchQuotesClient} from './customer-quotes/client.mjs';
 export {openResearchCustomerQuotes} from './customer-quotes/workspace.mjs';
-export {QUOTES_SCHEMA,QUOTE_OPERATION_SCHEMA,QUOTE_HOST_SCHEMA} from './customer-quotes/contracts.mjs';
+export {QUOTES_SCHEMA,QUOTE_OPERATION_SCHEMA,QUOTE_HOST_SCHEMA,QUOTE_CASE_TRANSFER_LIMIT} from './customer-quotes/contracts.mjs';
 
 export {inspectResearchQuoteLaunch,assertResearchQuoteLaunch,researchQuoteLaunchView} from './customer-quotes/launch-inspection.mjs';
 export {normalizeResearchQuoteConfiguration,readResearchQuoteConfiguration} from './customer-quotes/configuration.mjs';
@@ -65,3 +65,6 @@ export {RESEARCH_QUOTE_HANDOVER_SCHEMA,RESEARCH_QUOTE_HANDOVER_REQUEST,
  createResearchQuoteHandover,inspectResearchQuoteHandover,copyResearchQuoteHandover} from './customer-quotes/programme-files.mjs';
 export {RESEARCH_QUOTE_PROGRAMME_RECEIVING,prepareResearchQuoteProgrammeReceiving,
  receiveResearchQuoteProgramme,readResearchQuoteProgrammeReceiving} from './customer-quotes/programme-receiving.mjs';
+
+export {createDossierReturnsClient} from './dossier-returns/client.mjs';
+export {RESEARCH_CASE_TRANSFER_SCHEMA,inspectResearchCaseTransfer,caseTransferSelection} from './customer-quotes/case-transfer.mjs';

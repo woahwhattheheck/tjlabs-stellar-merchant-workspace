@@ -114,6 +114,33 @@ also covers receiving a matching application/source-index pair with its
 original URL and complete budget/companion files. Reopen `draft.json` through
 **Prepare submission** to continue the same draft.
 
+## Prepare the customer's operating procedure
+
+The installed reviewer includes Command finder and Operating plans. A saved
+submission's **Planning → Customer operating procedure** turns its selected
+native SF47 packages into editable ordered work, with each original scope,
+completion measure, price, hours and relative window retained.
+
+~~~sh
+starforge grant-operating-plan \
+  --file /absolute/customer/submission-draft.json \
+  --customer "Receiving merchant" \
+  --out /absolute/customer/operating-plan.json
+
+starforge discover serve --host 127.0.0.1 --port 8846
+~~~
+
+Open `http://127.0.0.1:8846/operating-plan.html` and choose **Import complete
+plan**. Enter actual operating instructions, due dates and command arguments,
+then save revisions as work progresses. Complete JSON transfers all saved
+history; HTML and Markdown carry the readable procedure.
+
+Use `starforge discover plan catalog --out /absolute/customer/toolkit-catalog.json`
+to supply the complete actual toolkit registrations to the saved planning
+review. The [customer operating procedure guide](../../stellar-forge/developer-site/GRANT_OPERATING_PLANS.md)
+describes original native files, explicit package selection, catalog bindings
+and receiving.
+
 ## Open the reviewer
 
 Use the [maintained runtime installation](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md)

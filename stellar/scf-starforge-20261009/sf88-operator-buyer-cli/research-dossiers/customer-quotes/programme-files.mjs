@@ -351,6 +351,7 @@ export async function inspectResearchQuoteHandover(directory,{manifestSha256}={}
   selected.caseId===programme.programme.input.caseId&&selected.dossierId===programme.programme.input.dossierId&&
   selected.projectId===programme.programme.input.projectId&&selected.caseRevision===manifest.request.caseRevision&&
   selected.deliveryId===manifest.request.deliveryId&&selected.revision===manifest.request.revision&&
+  (manifest.request.stepIds===null||same(selected.stepIds,manifest.request.stepIds))&&
   same([...selected.stepIds].sort(),programme.steps.map(row=>row.stepId).sort()),'RESEARCH_QUOTE_HANDOVER_PROGRAMME_CHANGED');
  const summary=(await readCustomerJson(await selectedMember(root,'programme-summary.json'),QUOTE_FILE_LIMIT)).value;
  need(same(summary.programme,programme.programme)&&same(summary.selection,selected)&&

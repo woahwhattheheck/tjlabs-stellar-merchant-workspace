@@ -23,6 +23,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | ars-air-quality.json | Complete source intake → named air-quality review → client report/delivery → correction and original receiving task |
 | lutra-qgis.json | Complete baseline/corrected vector migration → two native QGIS projects/publications → original independent receiving and operator handover |
 | LUTRA_QGIS.md | Full Lutra source, commercial phases, native operation, correction, complete receiving and handover |
+| georobotix-csapi.json | Complete selected Connected Systems source window → reviewed native editions → useful queries/comparison → independent customer receiving and original Installation |
+| GEOROBOTIX_CSAPI.md | Full GeoRobotix commissioning scope, exact selected archive/reference, operator/runtime setup, recovery and complete source/Installation handover |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
 | supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
 | source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
@@ -174,6 +176,10 @@ The receiving journey includes the agreed actual API response, testnet purchase,
 Query.Farm covers the complete acquired data result, original VGI catalog/worker, typed SQL use, retained-edition recovery and an explicitly selected next edition. ARS covers authorized client source intake, the named air-quality review, complete client reporting and delivery, linked correction and independent reopening. Its default is the original monthly reporting scope; a daily-review programme uses explicit customer task bindings.
 
 Use [Customer programmes](CUSTOMER_PROGRAMMES.md) for the full operating journeys, first-installation commands, existing-installation updates and a recurring-use calendar grounded in the actual source cadence.
+
+### GeoRobotix Connected Systems
+
+Use `georobotix-csapi` for one civil or environmental JSON observation endpoint with an agreed source window, declared schema and independent receiving environment. The programme preserves complete source pages, reviewed fields/time/units/quality, native mappings/editions, useful queries and comparison, original-request recovery, full operator/MCP use and exact project/data receiving. The original proposed Workshare retains 72 engineering hours over 12 active business days and USD 9,600 in two USD 4,800 milestones; actual case terms and acceptance remain with the original native record. The illustrative publisher reference and completed selected archive have their own evidence, while installed/browser and customer acceptance require their actual results. [GEOROBOTIX_CSAPI.md](GEOROBOTIX_CSAPI.md) gives the complete programme, maintained commands and receiving sequence.
 
 ## Supplier catalogue and order workshares
 

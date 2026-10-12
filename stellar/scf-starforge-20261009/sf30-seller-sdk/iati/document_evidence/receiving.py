@@ -299,7 +299,7 @@ def run(config):
             raise
 
 
-def run_connected(config, *, node, mcp_directory, playwright_module=None, chromium=None):
+def run_connected(config, *, node, mcp_directory, playwright_module=None, chromium=None, workspace_paths=None):
     """Keep the same native workspaces open through their real client/browser journey."""
     from contextlib import ExitStack
     import subprocess
@@ -308,11 +308,23 @@ def run_connected(config, *, node, mcp_directory, playwright_module=None, chromi
     directory = physical_directory(config["directory"])
     private = physical_directory(directory / "private")
     output = physical_directory(directory / "connected")
+    selected_paths = {alias: directory / alias for alias in ("sender", "receiver")} if workspace_paths is None else workspace_paths
+    if not isinstance(selected_paths, dict) or set(selected_paths) != {"sender", "receiver"}:
+        raise InputError("Select both complete original native workspace paths")
+    paths = {}
+    for alias, path in selected_paths.items():
+        if not Path(path).is_dir():
+            raise InputError("The selected original connected workspace is missing")
+        paths[alias] = physical_directory(path)
+    if paths["sender"] == paths["receiver"]:
+        raise InputError("Independent receiving uses its own original workspace")
+    # Following callers hold the original case lock while mapping its recipient
+    # into this phase's sender; the phase lock protects this complete output.
     with case_owner(directory), ExitStack() as stack:
         servers, running, connection_files = [], [], []
         try:
             for alias in ("sender", "receiver"):
-                workspace = stack.enter_context(IatiWorkspace(directory / alias))
+                workspace = stack.enter_context(IatiWorkspace(paths[alias]))
                 server = OperatorServer(workspace, port=0)
                 servers.append(server)
                 thread = threading.Thread(target=server.serve_forever, daemon=False)
@@ -344,7 +356,8 @@ def run_connected(config, *, node, mcp_directory, playwright_module=None, chromi
             if playwright_module is not None:
                 value["browser"] = {"playwrightModule": str(Path(playwright_module).resolve()),
                                     "executablePath": str(Path(chromium).resolve())}
-            input_path = private / "connected-input.json"
+            # Retain each explicit runtime selection without overwriting an earlier one.
+            input_path = private / ("connected-input-" + digest(json_bytes(value)) + ".json")
             exact_json(input_path, value)
             child = subprocess.run([str(node), str(HERE / "receiving.mjs"), str(input_path)],
                 cwd=directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)

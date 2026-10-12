@@ -6,7 +6,7 @@
   "parentSellerCommit": "3c9063c0872e835c25cb1e95c00ab27bd30326a2",
   "productPullRequest": 593,
   "originalSellerPullRequest": 517,
-  "sourceAcquisition": "Exact selected 808-file source stream plus 19 original runtime assets, all Git blob/SHA256 verified; compressed base source and retained assets reopen under the original operation lock.",
+  "sourceAcquisition": "Exact original 808-file source stream plus 19 runtime assets, all Git/SHA256 verified and retained under the same operation. The original base capsule is preserved; native signer and Dataset unpaid checkout/wire corrections are selected by exact original and successor source identities.",
   "dependencyProfile": {
     "package": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
     "lockfile": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package-lock.json",
@@ -26,23 +26,40 @@
   "files": [
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/native-journey.mjs",
-      "gitBlob": "9e7c36402d33b75a6ffb2fbc938ec9351898f59f",
-      "bytes": 16654,
-      "sha256": "96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6"
+      "bytes": 19060,
+      "sha256": "f3940401de94c25b38f5f98e95a1066b6390597a384535f0d6e7ab0ba76cdb07",
+      "gitBlob": "098471874e1c56e8645bb48bc58a17b2d994ae77"
     },
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/receive.py",
-      "gitBlob": "29340b6c4aebb61002c386d603a2f8aad5a33077",
-      "bytes": 24778,
-      "sha256": "18e4253b7d4a43870d109b7c5e5d83e68e2b596e4b1871f2d8bdd64f3e852e01"
+      "bytes": 34897,
+      "sha256": "59aca8c6d4a7dedc54c117a268749d7972438325cc77af49c1a337e612fe4894",
+      "gitBlob": "2c59ab261d4de476297d44da5697a383cdd390fb"
+    },
+    {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-unpaid-repairs.json",
+      "bytes": 68151,
+      "sha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+      "gitBlob": "a17c25b28fe1d5509d1df8c6e1b2c77d942de985"
     }
   ],
   "nativeContinuation": {
-    "previousJourneySha256": "43bc5e869bbc5f5e3cfe9506512b0f8b36915cecac974012dad67eabed6013ba",
-    "reason": "The original host denied Unix broker sockets and did not allocate a controlling terminal with its tty stream. The receiver explicitly selects the original supported terminal channel, retains the Node Popen/process group and its actual controlling PTY, and supplies no approval response.",
+    "previousJourneySha256": "96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6",
+    "reason": "Use the original true-admission Dataset response contract and explicitly continue the reviewed unsigned attempt only after retaining its full SF82 checkout and inactive wire history through the original Dataset/SF36 authorities.",
     "mutableJournalDirectory": "/dev/shm/921ba0-openaq-buyer-native-20261012/native",
     "reproducibleSourceDirectory": "/dev/921ba0-openaq-runtime-20261012/source",
-    "sourceRecovery": "The original operation lock remains held during source intake and is inherited by each original child; exact complete files are reopened and the source selection marker is always checked. The canonical compressed capsule restores invocation-private source without moving or replacing native session journals."
+    "sourceRecovery": "The original operation lock remains held during source intake and is inherited by each original child; exact complete files are reopened and the source selection marker is always checked. The canonical compressed capsule restores invocation-private source without moving or replacing native session journals.",
+    "originalBootstrapJourneySha256": "43bc5e869bbc5f5e3cfe9506512b0f8b36915cecac974012dad67eabed6013ba",
+    "originalUnpaidAttempt": {
+      "index": 1,
+      "attemptSha256": "0c8f89e1292825866d057a28af227d4fa54c76fa02163eacdb35fb936e5c068e",
+      "intentId": "dataset:fcd3c83df5c5dcfbe02af2c600e0e39622cbbc6501d4e0debefd8eb1e7b3392f",
+      "nativeError": "INITIAL_TRANSPORT_FAILED",
+      "transportError": "ECONNRESET",
+      "paymentSent": false,
+      "operatorReservation": null,
+      "responseStatus": "NOT_STARTED"
+    }
   },
   "sourceStream": {
     "manifest": "source-manifest.json",
@@ -67,5 +84,69 @@
     "sourceBytes": 253313,
     "completeSourceFiles": 827,
     "baseManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c"
-  }
+  },
+  "sourceRepair": {
+    "schema": "stellar-forge.openaq-buyer-source-repair.v1",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+    "reason": "Import the original native signing diagnostic validator from its actual diagnostics module; preserve the original signer adapter and all request/payment behavior.",
+    "before": {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs",
+      "gitBlob": "053825b1862f3a5b3fc42aaa248f6b8aa6401254",
+      "bytes": 13420,
+      "sha256": "66d744c89f3e23157ba895f228729d6b294893260202cfdfe830cb7a8215461c"
+    },
+    "after": {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs",
+      "gitBlob": "c12720ce4f432e24f4972523021d71fa9d85e2ce",
+      "bytes": 13483,
+      "sha256": "b30f43740c9d0a7f99439ac8e6876aea6284d15efad71cf5168bed9d8c705cc0"
+    }
+  },
+  "unpaidSourceRepair": {
+    "schema": "stellar-forge.openaq-buyer-unpaid-source-selection.v1",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+    "sourceManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c",
+    "assetsSha256": "6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc",
+    "packetSha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+    "reason": "Preserve the original Dataset unsigned wire and linked SF82 checkout records in its existing unpaid history before explicit same-page continuation.",
+    "files": [
+      {
+        "before": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs",
+          "gitBlob": "e87fd6310a8261c490930ace3225dbd3a857de78",
+          "bytes": 36219,
+          "sha256": "8247cf9b2f0a6df5e5417adaf9cf8d14a491b4c1c8477029e43b2c514254f35b"
+        },
+        "after": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs",
+          "bytes": 43462,
+          "sha256": "055e76e4f6f4655a1cce000dc8b13cec2a24d733d746d6f43be68dbe4978cf2c",
+          "gitBlob": "092304ce9ed33fe7a2c1d483501a091e3db6c7b9"
+        }
+      },
+      {
+        "before": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.mjs",
+          "gitBlob": "d01a8e16d70d35a27ec7bc67fd2e1d51461dc743",
+          "bytes": 14526,
+          "sha256": "7d098e04db4524c223e3e7f8849e65938b1a334c6654a35889b08f91586a82e7"
+        },
+        "after": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.mjs",
+          "bytes": 22182,
+          "sha256": "f9b9832a16c09cab1ca4b6ced416f94e060d778c1be38606cad4a93cfbfb99fe",
+          "gitBlob": "a99c40ec7ee4c2df8a8df9d9339b05a3e469ba08"
+        }
+      }
+    ],
+    "packet": {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-unpaid-repairs.json",
+      "bytes": 68151,
+      "sha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+      "gitBlob": "a17c25b28fe1d5509d1df8c6e1b2c77d942de985"
+    }
+  },
+  "runtimeSourceBytesAfterCorrections": 10778929
 }

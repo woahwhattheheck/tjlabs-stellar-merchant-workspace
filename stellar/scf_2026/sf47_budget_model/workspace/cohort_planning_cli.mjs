@@ -10,6 +10,9 @@ import {
   seedCohortPlan, evaluateCohortPlan, exportCohortPlanCsv, compareCohortPlans, exportCohortPlanComparisonCsv
 } from "./cohort_planning.mjs";
 
+import { seedCohortPlanFromCalendar } from "./cohort_planning_calendar.mjs";
+import { COHORT_DELIVERY_SCHEDULE_SCHEMA, seedCohortDeliveryScheduling, scheduleCohortDelivery, reopenCohortDeliverySchedule, exportCohortDeliveryScheduleCsv } from "./cohort_planning_scheduling.mjs";
+
 const EDITION_SCHEMA = "stellar-forge.sf47-cohort-plan-edition.v1";
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 const HELP = [
@@ -17,9 +20,14 @@ const HELP = [
   "",
   "Usage:",
   "  node cohort_planning_cli.mjs seed --native-seed seed.json [options]",
+  "  node cohort_planning_cli.mjs calendar --native-seed seed.json --calendar selection.json [--group WINDOW_ID] [options]",
   "  node cohort_planning_cli.mjs evaluate --input plan.json [--native-seed seed.json] [--output report.json]",
   "  node cohort_planning_cli.mjs csv --input report.json [--output report.csv]",
   "  node cohort_planning_cli.mjs compare --baseline earlier.json --candidate later.json [--output comparison.json]",
+  "  node cohort_planning_cli.mjs schedule-seed --input plan.json [--output choices.json]",
+  "  node cohort_planning_cli.mjs schedule --input plan.json [--constraints choices.json] [--name TEXT] [--output allocation.json]",
+  "  node cohort_planning_cli.mjs schedule-plan --input allocation.json [--output successor.json]",
+  "  node cohort_planning_cli.mjs schedule-compare --input allocation.json [--output comparison.json]",
   "",
   "Seed options:",
   "  --as-of ISO_TIMESTAMP       Explicit observation time; defaults to native seed time.",
@@ -30,12 +38,19 @@ const HELP = [
   "  --name TEXT               Customer-facing plan title.",
   "  --output FILE             Create a new output file; omit or use - for stdout.",
   "",
+  "calendar receives the complete Customer-use Calendar and matching native customer-use-calendar-cohort response.",
+  "Named funding groups remain separate from uses; missing commercial terms remain editable and unpriced.",
+  "calendar accepts --as-of, --draft-id, --name and --output seed options.",
   "evaluate accepts a plan, complete planning report, or saved planning edition.",
   "compare accepts two complete plans, planning reports, or saved planning editions.",
   "csv accepts a planning report, saved planning edition, or complete plan comparison.",
   "Comparison JSON carries both original documents and recalculated reports.",
   "compare also accepts --name TEXT and --note TEXT for the retained comparison review.",
   "Use --input - to read JSON from stdin. A native seed must be a separate file.",
+  "schedule uses explicit service flexibility and the original daily capacity, funding and economics.",
+  "schedule-seed retains existing choices and defaults new services to fixed dates.",
+  "schedule-plan and schedule-compare reopen the whole calculation before producing its successor or comparison.",
+  "csv also accepts a complete delivery scheduling result, including all unresolved date constraints.",
   "Files are created atomically and existing destinations are preserved.",
   "All amounts and hours in plan JSON use decimal text; atomic prices use integer text.",
   "capacityPools and schedule capacityPoolId compare shared daily active hours with recurring demand.",
@@ -52,11 +67,16 @@ function parse(argv) {
   const command = argv[0], options = {};
   const allowed = {
     seed: ["native-seed", "as-of", "window-start", "draft-id", "plan-id", "plan-revision", "name", "output"],
+    calendar: ["native-seed", "calendar", "group", "as-of", "draft-id", "name", "output"],
     evaluate: ["input", "native-seed", "output"],
     csv: ["input", "output"],
-    compare: ["baseline", "candidate", "name", "note", "output"]
+    compare: ["baseline", "candidate", "name", "note", "output"],
+    "schedule-seed": ["input", "output"],
+    schedule: ["input", "constraints", "name", "output"],
+    "schedule-plan": ["input", "output"],
+    "schedule-compare": ["input", "output"]
   }[command];
-  if (!allowed) fail("INVALID_COMMAND", "Choose seed, evaluate, compare or csv.", "command");
+  if (!allowed) fail("INVALID_COMMAND", "Choose seed, calendar, evaluate, compare, schedule-seed, schedule, schedule-plan, schedule-compare or csv.", "command");
   for (let i = 1; i < argv.length; i += 2) {
     const flag = argv[i], key = flag.startsWith("--") ? flag.slice(2) : "";
     if (!allowed.includes(key)) fail("INVALID_ARGUMENT", "Unsupported argument " + flag + ".", "arguments");
@@ -64,10 +84,11 @@ function parse(argv) {
     if (i + 1 >= argv.length || argv[i + 1].startsWith("--")) fail("INVALID_ARGUMENT", flag + " requires one value.", flag);
     options[key] = argv[i + 1];
   }
-  const required = command === "seed" ? ["native-seed"] : command === "compare" ? ["baseline", "candidate"] : ["input"];
+  const required = command === "calendar" ? ["native-seed", "calendar"] : command === "seed" ? ["native-seed"] : command === "compare" ? ["baseline", "candidate"] : ["input"];
   for (const key of required) if (!options[key]) fail("INVALID_ARGUMENT", "--" + key + " is required.", key);
   if (command === "compare" && options.baseline === "-" && options.candidate === "-")
     fail("INVALID_ARGUMENT", "Read at most one comparison source from stdin; use a file for the other.", "input");
+  if (options.constraints === "-") fail("INVALID_ARGUMENT", "Use a separate file for scheduling constraints.", "constraints");
   if (options["native-seed"] === "-") fail("INVALID_ARGUMENT", "Use a separate file for the native seed.", "native-seed");
   return { command, options };
 }
@@ -134,7 +155,7 @@ async function main(argv) {
   const { command, options } = parse(argv);
   if (command === "help") { process.stdout.write(HELP); return; }
   let result;
-  if (command === "seed") {
+  if (command === "seed" || command === "calendar") {
     const nativeSeed = await readJson(options["native-seed"]);
     const settings = {};
     for (const [flag, key] of [
@@ -146,17 +167,26 @@ async function main(argv) {
       settings.planRevision = Number(options["plan-revision"]);
       if (!Number.isSafeInteger(settings.planRevision)) fail("INVALID_ARGUMENT", "Plan revision exceeds the supported integer range.", "plan-revision");
     }
-    result = seedCohortPlan(nativeSeed, settings);
+    result = command === "calendar" ? seedCohortPlanFromCalendar(nativeSeed, await readJson(options.calendar), { ...settings, ...(options.group ? { groupId: options.group } : {}) }) : seedCohortPlan(nativeSeed, settings);
   } else if (command === "evaluate") {
     const input = planFrom(await readJson(options.input));
     const nativeSeed = options["native-seed"] ? await readJson(options["native-seed"]) : undefined;
     result = evaluateCohortPlan(input, { nativeSeed });
+  } else if (command === "schedule-seed") {
+    result = seedCohortDeliveryScheduling(await readJson(options.input));
+  } else if (command === "schedule") {
+    result = scheduleCohortDelivery(await readJson(options.input), options.constraints ? await readJson(options.constraints) : undefined,
+      options.name === undefined ? {} : {name: options.name});
+  } else if (command === "schedule-plan" || command === "schedule-compare") {
+    const original = reopenCohortDeliverySchedule(await readJson(options.input));
+    result = command === "schedule-plan" ? original.candidate :
+      compareCohortPlans(original.sourceDocument, original.candidate, {title: original.candidate.name + " · delivery allocation", note: original.constraints.note});
   } else if (command === "compare") {
     const baseline = await readJson(options.baseline), candidate = await readJson(options.candidate);
     result = compareCohortPlans(baseline, candidate, { ...(options.name !== undefined ? { title: options.name } : {}), ...(options.note !== undefined ? { note: options.note } : {}) });
   } else {
     const document = await readJson(options.input);
-    result = document?.schema === COHORT_PLAN_COMPARISON_SCHEMA ? exportCohortPlanComparisonCsv(document) : exportCohortPlanCsv(reportFrom(document));
+    result = document?.schema === COHORT_PLAN_COMPARISON_SCHEMA ? exportCohortPlanComparisonCsv(document) : document?.schema === COHORT_DELIVERY_SCHEDULE_SCHEMA ? exportCohortDeliveryScheduleCsv(document) : exportCohortPlanCsv(reportFrom(document));
   }
   await output(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n", options.output);
 }

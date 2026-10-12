@@ -44,5 +44,5 @@ export interface FredDdpMigrationPlanPage extends Omit<FredDdpMigrationPlan,'ser
 }
 export function normalizeFredDdpMigrationInput(input:unknown):FredDdpNormalizedMigrationInput;
 export function buildFredDdpMigrationPlan(input:FredDdpMigrationInput & {packageCapture:FredDdpPackageCapture;crosswalk:FredDdpCrosswalkCapture}):FredDdpMigrationPlan;
-export function validateFredDdpMigrationPlan(plan:unknown,context?:{packageCapture?:FredDdpPackageCapture|null;crosswalk?:FredDdpCrosswalkCapture|null}):FredDdpMigrationPlan;
+export function validateFredDdpMigrationPlan(plan:unknown,context?:{packageCapture?:FredDdpPackageCapture|null;crosswalk?:FredDdpCrosswalkCapture|null;copy?:boolean}):FredDdpMigrationPlan;
 export function pageFredDdpMigrationPlan(plan:FredDdpMigrationPlan,options?:FredDdpMigrationPlanPageOptions):FredDdpMigrationPlanPage;

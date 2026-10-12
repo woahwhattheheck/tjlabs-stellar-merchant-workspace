@@ -1,10 +1,11 @@
 // MIT. Complete quotations use one admitted operation in the original Research transport.
-import {QUOTES_SCHEMA,QUOTE_HOST_SCHEMA,QUOTE_OPERATION_SCHEMA,QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,
+import {QUOTES_SCHEMA,QUOTE_HOST_SCHEMA,QUOTE_OPERATION_SCHEMA,QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT,
  fields,id,hash,alias,need,same,fingerprint,page,briefSelection,responseSelection,
  normalizePublicationSelection,realizedSelection,caseSelection,applySelection} from './contracts.mjs';
 
+import {caseTransferInput,caseTransferSelection} from './case-transfer.mjs';
 const prefix='/api/customer-quotes';
-const kinds=['CASE','BRIEF','RESPONSE','PUBLICATION','REALIZED'];
+const kinds=['CASE','CASE_TRANSFER','BRIEF','RESPONSE','PUBLICATION','REALIZED'];
 export const RESEARCH_QUOTES_CASE_ACTIONS=Object.freeze([
  'preview','save-draft','publish','receive','receive-pricing','compare','preview-implementation','adopt-implementation',
  'receiving-status','receiving-capture','receiving-inspect','receiving-attach','receiving-case','receiving-restore',
@@ -16,10 +17,10 @@ export const RESEARCH_QUOTES_PRICING_ACTIONS=Object.freeze([
  'repricing-source','repricing-preview','repricing-save','repricing-stage',
 ]);
 /** Capture the actual JSON sent to the native host before admitting asynchronous work. */
-export function captureResearchQuoteInput(value){
+export function captureResearchQuoteInput(value,{maximum=QUOTE_REQUEST_LIMIT}={}){
  need(value!==null&&typeof value==='object'&&!Array.isArray(value),'RESEARCH_QUOTE_FIELDS_INVALID');
  const body=JSON.stringify(value);
- need(typeof body==='string'&&Buffer.byteLength(body)<=QUOTE_REQUEST_LIMIT,'RESEARCH_QUOTE_REQUEST_TOO_LARGE',413);
+ need(typeof body==='string'&&Buffer.byteLength(body)<=maximum,'RESEARCH_QUOTE_REQUEST_TOO_LARGE',413);
  const result=JSON.parse(body);
  need(result!==null&&typeof result==='object'&&!Array.isArray(result),'RESEARCH_QUOTE_FIELDS_INVALID');
  return result;
@@ -30,9 +31,9 @@ function query(value){const result=new URLSearchParams();
  return result.size?'?'+result.toString():'';}
 function name(value){need(typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,179}$/.test(value),
  'RESEARCH_QUOTE_FILE_NAME_INVALID');return value;}
-function size(value){need(Number.isSafeInteger(value)&&value>=0&&value<=QUOTE_FILE_LIMIT,'RESEARCH_QUOTE_FILE_SIZE_INVALID');return value;}
-function descriptor(value){
- need(value&&typeof value==='object','RESEARCH_QUOTE_FILE_CHANGED');name(value.name);hash(value.sha256);size(value.bytes);
+function size(value,maximum=QUOTE_FILE_LIMIT){need(Number.isSafeInteger(value)&&value>=0&&value<=maximum,'RESEARCH_QUOTE_FILE_SIZE_INVALID');return value;}
+function descriptor(value,maximum=QUOTE_FILE_LIMIT){
+ need(value&&typeof value==='object','RESEARCH_QUOTE_FILE_CHANGED');name(value.name);hash(value.sha256);size(value.bytes,maximum);
  need(typeof value.contentType==='string'&&value.contentType.length>0&&!/[\r\n\0]/.test(value.contentType),
   'RESEARCH_QUOTE_FILE_CHANGED');return value;
 }
@@ -81,14 +82,14 @@ export function createResearchQuotesClient({request,download,run}={}){
  };
  const caseMetadata=(value,caseId,input)=>{
   need(value?.schema===QUOTES_SCHEMA&&value.caseId===caseId&&value.case?.id===caseId,'RESEARCH_QUOTE_CASE_FILE_CHANGED');
-  hash(value.case.revision);descriptor(value.descriptor);
+  hash(value.case.revision);descriptor(value.descriptor,input.kind==='CASE_RECORD'?QUOTE_CASE_TRANSFER_LIMIT:QUOTE_FILE_LIMIT);
   need(input.revision===undefined||input.revision===value.case.revision,'RESEARCH_QUOTE_CASE_REVISION_CHANGED');
   return bound(value);
  };
- const selectedFile=value=>{
+ const selectedFile=(value,maximum=QUOTE_FILE_LIMIT)=>{
   need(typeof value.file==='string'&&value.file.length>0,'RESEARCH_QUOTE_DESTINATION_REQUIRED');
   if(value.expectedSha256!==undefined)hash(value.expectedSha256);
-  if(value.expectedBytes!==undefined)size(value.expectedBytes);
+  if(value.expectedBytes!==undefined)size(value.expectedBytes,maximum);
   return {file:value.file,expectedSha256:value.expectedSha256,expectedBytes:value.expectedBytes,signal:value.signal};
  };
  const pin=(metadata,selected)=>{
@@ -120,7 +121,7 @@ export function createResearchQuotesClient({request,download,run}={}){
    '?metadata=true',selected,o),caseId,selected));
  };
  const caseDownload=(caseId,value,callOptions,tariff)=>{
-  id(caseId);const selected=captureResearchQuoteInput(value),o=selectedFile(callOptions??{});
+  id(caseId);const selected=captureResearchQuoteInput(value),o=selectedFile(callOptions??{},!tariff&&selected.kind==='CASE_RECORD'?QUOTE_CASE_TRANSFER_LIMIT:QUOTE_FILE_LIMIT);
   need(selected.id===undefined||selected.id===caseId,'RESEARCH_QUOTE_CASE_CHANGED');
   if(selected.revision!==undefined)hash(selected.revision);
   const route=prefix+'/cases/'+caseId+'/'+(tariff?'tariff-download':'download');
@@ -171,6 +172,19 @@ export function createResearchQuotesClient({request,download,run}={}){
    alias(profile);need(RESEARCH_QUOTES_PRICING_ACTIONS.includes(action),'RESEARCH_QUOTE_PRICING_ACTION_REQUIRED');
    const selected=captureResearchQuoteInput(value),o=options(callOptions);
    return run(async()=>envelope(await request(prefix+'/pricing/'+profile+'/'+action,selected,o),action,{profile}));
+  },
+  prepareCaseTransfer(value,callOptions={}){
+   const selected=caseTransferInput(value),identity=caseTransferSelection(selected),o=options(callOptions);
+   return run(async()=>operation(await request(prefix+'/case-transfers/prepare',selected,o),
+    {requestId:identity.requestId,kind:'CASE_TRANSFER',input:identity}));
+  },
+  applyCaseTransfer(value,callOptions={}){
+   const selected=applySelection(captureResearchQuoteInput(value)),o=options(callOptions);
+   return run(async()=>{
+    const result=operation(await request(prefix+'/case-transfers/apply',selected,o),
+     {requestId:selected.id,kind:'CASE_TRANSFER',reviewSha256:selected.reviewSha256});
+    need(result.status==='COMPLETE','RESEARCH_CASE_TRANSFER_APPLY_RESULT_CHANGED');return result;
+   });
   },
   createCase:(value,o)=>send('/cases/create',caseSelection,'CASE',value,o),
   prepare:(value,o)=>send('/prepare',briefSelection,'BRIEF',value,o),

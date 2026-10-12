@@ -98,7 +98,7 @@ await withOwner(root,async()=>{
    const pending=(async()=>{
     const url=new URL(req.url,origin),context={method:req.method,url:url.href,query:Object.fromEntries(url.searchParams),headers:req.headers};
     if(req.method!=='GET'||url.pathname!=='/data')return res.writeHead(404).end();
-    requests++;await appendFile(join(root,'http-requests.jsonl'),JSON.stringify({sequence:requests,method:req.method,url:url.href,observedAt:new Date().toISOString()})+'\n',{mode:0o600});const admitted=await versions.admit(context);const result=admitted??await versions.handle(context);
+    requests++;await appendFile(join(root,'http-requests.jsonl'),JSON.stringify({sequence:requests,method:req.method,url:url.href,observedAt:new Date().toISOString()})+'\n',{mode:0o600});const admitted=await versions.admit(context);const result=admitted===true?await versions.handle(context):admitted;
     const body=Buffer.from(typeof result.body==='string'?result.body:JSON.stringify(result.body));
     res.writeHead(result.status??200,{...result.headers,'Content-Type':'application/json','Content-Length':String(body.length)});
     res.end(body);
@@ -134,12 +134,43 @@ await withOwner(root,async()=>{
   const ready=await api.prepareOpenAQBuyer(selection);const reopened=await api.prepareOpenAQBuyer(selection);
   assert.equal(reopened.requestSha256,ready.requestSha256);assert.equal(reopened.sessionDirectory,ready.sessionDirectory);
   await phase('04_ORIGINAL_BUYER_PREPARATION',{requestSha256:ready.requestSha256,configurationSha256:ready.configurationSha256,sessionDirectory:ready.sessionDirectory});
-  const native=await api.runOpenAQBuyer({directory:customer,environment:env,signal:abort.signal});
+  const originalUnpaidAttempt='0c8f89e1292825866d057a28af227d4fa54c76fa02163eacdb35fb936e5c068e';
+  const inspected={native:await api.recoverOpenAQBuyer({directory:customer})};
+  let continuation={};
+  if(inspected.native.status==='RECONCILIATION_REQUIRED') {
+   assert.equal(inspected.native.unpaidContinuation?.attemptSha256,originalUnpaidAttempt);
+   assert.equal(inspected.native.unpaidContinuation?.originalError?.code,'INITIAL_TRANSPORT_FAILED');
+   await retainJson(join(root,'unpaid-continuation-request.json'),{
+    schema:'stellar-forge.openaq-original-unpaid-continuation.v1',operation:intent,
+    requestSha256:ready.requestSha256,sessionDirectory:ready.sessionDirectory,
+    expectedAttemptSha256:originalUnpaidAttempt,
+    reason:'Correct the original true-admission HTTP handler and preserve complete SF82/wire history before the same unsigned page continues.'});
+   continuation={retryUnpaid:true,expectedAttemptSha256:originalUnpaidAttempt};
+  }
+  const native=await api.runOpenAQBuyer({directory:customer,environment:env,signal:abort.signal,...continuation});
+  await directory(join(root,'acquisitions'),{create:true});
+  const nativeBytes=bytes(native);
+  await retained(join(root,'acquisitions',digest(nativeBytes)+'.json'),nativeBytes);
   assert.equal(native.status,'COMPLETE');assert.equal(native.completedPages,3);assert.equal(native.acquiredRows,140);assert.equal(native.snapshot,staged.dataset.baselineSnapshot);
+  assert(native.pages.every(page=>page.nativeBuyerStatus==='NO_PAYMENT_REQUIRED'));
+  let unpaidHistory=null;
+  const unpaidDirectory=join(ready.sessionDirectory,'pages/000001/unpaid-history',originalUnpaidAttempt);
+  if(await exists(join(unpaidDirectory,'continued.json'))) {
+   assert.equal(digest(await readFile(join(unpaidDirectory,'attempt.json'))),originalUnpaidAttempt);
+   const archived=await read(join(unpaidDirectory,'continued.json'));
+   assert.equal(archived.outcome,'ORIGINAL_UNPAID_ATTEMPT_ARCHIVED');
+   assert.equal(archived.wireHistory.status,'RETAINED');
+   const originalError=await read(join(unpaidDirectory,'original-wire/unsigned-error.json'));
+   assert.equal(originalError.code,'ECONNRESET');
+   unpaidHistory={attemptSha256:originalUnpaidAttempt,originalError:originalError.code,
+    wireSourceSha256:archived.wireHistory.sourceSha256,
+    wireRetirementSha256:archived.wireHistory.retirementSha256,
+    checkoutSelectionSha256:archived.checkoutSelectionSha256};
+  }
   const before=requests,replay=await api.runOpenAQBuyer({directory:customer,environment:env,signal:abort.signal});
   assert.equal(replay.configurationSha256,native.configurationSha256);assert.equal(requests,before);
   await phase('05_ORIGINAL_UNSIGNED_HTTP_PAGES',{status:native.status,pages:native.completedPages,rows:native.acquiredRows,httpRequests:requests,replayAdditionalRequests:requests-before,
-   snapshot:native.snapshot,pageIds:native.pages.map(p=>p.intentId)});
+   snapshot:native.snapshot,pageIds:native.pages.map(p=>p.intentId),unpaidHistory});
   const accounting=await api.accountOpenAQBuyer({directory:customer,signal:abort.signal});
   await retainJson(join(root,'original-accounting.json'),accounting);
   assert.equal(accounting.entries.length,3);
@@ -161,7 +192,11 @@ await withOwner(root,async()=>{
    originalSessionId:again.session.session.sessionId,rows:again.session.session.acquiredRows,additionalHttpRequests:requests-closedRequests});
   const result={schema:'stellar-forge.openaq-buyer-native-receiving.v1',state:'COMPLETE',operation:intent,sourceCommit:'c7ac4399e3bb419fafd42395841bace7d089036a',
    completedAt:new Date().toISOString(),node:process.version,mode:'NO_PAYMENT_REQUIRED',providerCalls:sourceCalls,httpRequests:requests,
-   paymentApprovals:0,settlements:0,rows:140,pages:3,phases,allOwnersRetired:true,delivery:delivery.directory,receiving:received.directory,manifestSha256:delivery.manifestSha256};
+   paymentApprovals:0,settlements:0,rows:140,pages:3,phases,unpaidHistory,
+   driverSha256:digest(await readFile(new URL(import.meta.url))),
+   sourceRepairs:{signer:await read(join(source,'SOURCE-REPAIRS.json')),
+    unpaid:await read(join(source,'SOURCE-UNPAID-REPAIRS.json'))},
+   allOwnersRetired:true,delivery:delivery.directory,receiving:received.directory,manifestSha256:delivery.manifestSha256};
   await retainJson(join(root,'NATIVE_RESULT.json'),result);console.log(JSON.stringify(result));
  }catch(error){
   try{await closeAll();}catch(close){error.closeError={message:close.message,errors:close.errors?.map(e=>({message:e.message,owner:e.owner}))};}

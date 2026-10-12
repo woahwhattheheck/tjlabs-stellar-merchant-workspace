@@ -12,3 +12,4 @@
 /* Let saved source labels and controls fit their grid track; tables retain their own scroll area. */
 .view>*,.grid>*,.metrics>*,.workspace-bar>*,.filters>*,.posting-grid>*,.stack>*,.section-heading>*,.masthead>*,#detail-body>*,#record-body>*{min-width:0}
 form,fieldset,label{min-inline-size:0}.section-heading p,.header-actions,.metric{overflow-wrap:anywhere}button,a.button{max-width:100%;min-width:0;overflow-wrap:anywhere}
+footer>*{min-width:0;max-width:100%;overflow-wrap:anywhere}

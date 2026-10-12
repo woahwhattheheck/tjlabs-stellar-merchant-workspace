@@ -24,6 +24,7 @@ SCHEMA = "commons.airflow-runtime-bundle.v1"
 RECEIVING_SCHEMA = "commons.airflow-runtime-receiving.v1"
 MANIFEST = "runtime-manifest.json"
 ROOT_NAME = "airflow-runtime"
+RETENTION_STAGE = ".runtime-retained"
 PACKAGE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.!+_-]*$")
 SHA = re.compile(r"^[0-9a-f]{64}$")
@@ -74,25 +75,50 @@ def private(path):
         raise ValueError("Use a private directory: " + str(path))
     return path
 
+def only_retention_staging(directory):
+    entries = list(Path(directory).iterdir())
+    if not entries:
+        return True
+    stage = Path(directory) / RETENTION_STAGE
+    return (len(entries) == 1 and entries[0] == stage and not stage.is_symlink() and
+            stage.is_dir() and all(not item.is_symlink() and item.is_file() and
+                                  item.name.endswith(".pending") for item in stage.iterdir()))
+
 def retained(path, raw):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     if path.is_symlink():
         raise ValueError("Retain an ordinary source file: " + str(path))
     if path.exists():
-        if path.read_bytes() != raw:
+        if not path.is_file() or path.read_bytes() != raw:
             raise ValueError("Original retained file differs: " + str(path))
-    else:
-        with path.open("xb") as handle:
+        return
+    stage = private(path.parent / RETENTION_STAGE)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=path.name + ".", suffix=".pending", dir=stage)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
             handle.write(raw)
             handle.flush()
             os.fsync(handle.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            if path.is_symlink() or not path.is_file() or path.read_bytes() != raw:
+                raise ValueError("Original retained file differs: " + str(path))
+        directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 def relative(value):
     if not isinstance(value, str) or not value or "\\" in value or "\x00" in value:
         raise ValueError("Invalid bundle member path")
     path = PurePosixPath(value)
-    if path.is_absolute() or any(part in ("", ".", "..") for part in value.split("/")):
+    if path.is_absolute() or any(part in ("", ".", "..", RETENTION_STAGE) for part in value.split("/")):
         raise ValueError("Invalid bundle member path")
     return path
 
@@ -209,7 +235,7 @@ def inspect_bundle(directory):
     for path in root.rglob("*"):
         if path.is_symlink():
             raise ValueError("A runtime bundle cannot contain symlinks")
-        if path.is_dir():
+        if RETENTION_STAGE in path.relative_to(root).parts or path.is_dir():
             continue
         name = path.relative_to(root).as_posix()
         if name == MANIFEST:
@@ -246,7 +272,7 @@ def build_bundle(profile_path, constraints_path, directory, *, source_distributi
         if requirement not in constraint_lines:
             raise ValueError("Build tools must match the retained original Airflow constraints: " + requirement)
     root = private(directory)
-    if any(root.iterdir()) and not (root / "build-selection.json").is_file():
+    if not only_retention_staging(root) and not (root / "build-selection.json").is_file():
         raise ValueError("Select an empty bundle directory or its retained build selection")
     selection = {"profileSha256": hashlib.sha256(profile_raw).hexdigest(),
                  "constraintsSha256": hashlib.sha256(constraints_raw).hexdigest(),
@@ -259,7 +285,7 @@ def build_bundle(profile_path, constraints_path, directory, *, source_distributi
         if name not in selected:
             raise ValueError("Select only a source distribution from the original installed graph")
     work = private(root.parent / (root.name + ".build-work"))
-    if any(work.iterdir()) and not (work / "selection.json").is_file():
+    if not only_retention_staging(work) and not (work / "selection.json").is_file():
         raise ValueError("Retain the original selected build workspace")
     retained(work / "selection.json", canonical(selection))
     logs = private(root / "build-logs")
@@ -309,6 +335,8 @@ def build_bundle(profile_path, constraints_path, directory, *, source_distributi
     for path in sorted(root.rglob("*")):
         if path.is_symlink():
             raise ValueError("Retain ordinary runtime source and wheels")
+        if RETENTION_STAGE in path.relative_to(root).parts:
+            continue
         if path.is_file():
             files.append({"path": path.relative_to(root).as_posix(), **identity(path)})
     manifest = {"schema": SCHEMA, "operationId": operation_id, "createdAt": now(),
@@ -429,7 +457,7 @@ def restore_runtime(bundle, destination):
         actual = inspect_runtime(python, manifest)
         subprocess.run([str(python), "-m", "pip", "check"], check=True)
         return {**retained_record, "alreadyPresent": True, "inventory": actual}
-    if target.exists() and any(target.iterdir()) and not (target / "runtime-intent.json").exists():
+    if target.exists() and not only_retention_staging(target) and not (target / "runtime-intent.json").exists():
         raise ValueError("Select an empty private runtime directory or its retained receiving intent")
     target = private(target)
     intent = {"schema": RECEIVING_SCHEMA, "manifestSha256": inspected["manifestSha256"],

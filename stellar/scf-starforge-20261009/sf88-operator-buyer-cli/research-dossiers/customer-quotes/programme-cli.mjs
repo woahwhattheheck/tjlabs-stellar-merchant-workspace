@@ -82,14 +82,19 @@ const permissions={
 async function writeOutput(stream,body){
  return new Promise((accept,reject)=>{
   let settled=false;
-  const failed=error=>done(error),done=error=>{
-   if(settled)return;settled=true;
+  const cleanup=()=>{stream.removeListener('error',failed);stream.removeListener('close',closed);};
+  const done=(error,source)=>{
+   if(settled){if(source!=='callback')cleanup();return;}
+   settled=true;
    // A failed Writable callback may still emit its matching error afterward.
-   if(!error)stream.removeListener('error',failed);
+   // Synchronous throws and an already-closed stream have no later event to own.
+   if(!error||source!=='callback'||stream.closed===true)cleanup();
    error?reject(error):accept();
   };
-  stream.once('error',failed);
-  try{stream.write(body,done);}catch(error){done(error);}
+  const failed=error=>done(error,'error'),closed=()=>done(stream.errored??Object.assign(
+   new Error('RESEARCH_QUOTE_OUTPUT_CLOSED'),{code:'RESEARCH_QUOTE_OUTPUT_CLOSED'}),'close');
+  stream.once('error',failed);stream.once('close',closed);
+  try{stream.write(body,error=>done(error,'callback'));}catch(error){done(error,'throw');}
  });
 }
 function errorView(error,values,result){
