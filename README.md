@@ -48,7 +48,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Review research sources, documents and processing jobs | **Applications → Research dossiers**, `starforge research-workspace` and `starforge research-client` | Saved questions, complete Documents and managed Pipelines operations, reviewed source editions, findings and full original-file/report receiving |
 | Review a Zotero library and hand over the original Research project | `starforge zotero` and [the complete operating guide](products/zotero/OPERATING.md) | Exact library pages, collection projects, original evidence and complete linked Research receiving across successive operators |
 | Review a retained grant purchase and hand it over | **Applications → Grant purchase reviewer** or `starforge grant-demo workbench` | Original packet/source review, complete native Buyer results, whole-Buyer closed export and independent receiving |
-| Plan grant work and operate delivery | **Applications → Grant planning and delivery** or `starforge grant-workspace` | Versioned budgets, staffing and cash forecasts, customer work, original buyer and support observations, cohort review, tranche completion and complete workspace receiving |
+| Plan grant work and operate delivery | **Applications → Grant planning and delivery** or `starforge grant-workspace` | Versioned budgets, staffing and cash forecasts, complete customer installation commissioning and handover, original buyer and support observations, cohort review, tranche completion and complete workspace receiving |
 | Operate a QuestDB time-series data product | **Applications → QuestDB source and dataset publishers** or `starforge questdb-workspace` | Native fixed-window, SAMPLE BY and keyed-ASOF reports, complete retained editions, versioned publication and full customer receiving |
 | Operate a SQL Server data product | **Applications → SQL Server data products** or `starforge mssql-agent` | Native catalog and typed-query review, retained sellers, 21 merchant tools, complete customer files and resumable merchant receiving; [selected installation and operating guide](products/mssql/README.md) |
 | Operate a Timescale data product | **Applications → Timescale merchant workspace** or `starforge timescale-agent` | Native editions, refresh and job review, exact publication, assigned work, complete reports and portable customer receiving |
@@ -145,7 +145,8 @@ and complete export/source-packet receiving.
 
 The [Grant Operations guide](products/grant-operations/OPERATING.md) connects
 budget and resource planning, cash forecasts, customer delivery, original buyer
-and support observations, cohort review, and tranche completion in one retained
+and support observations, complete customer installation editions, cohort review,
+and tranche completion in one retained
 workspace. Build its complete installed application with
 `--selection grant-operations`; its browser, CLI and agent service share the same
 case versions, saved requests, review history and complete receiving workflow.
