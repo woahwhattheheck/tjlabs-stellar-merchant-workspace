@@ -1,0 +1,22 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "graphql-product",
+  "description": "Original GraphQL customer setup, managed browser/agent, authored merchant and deployment work, and complete native file receiving.",
+  "components": [
+    "products/graphql-workspace"
+  ],
+  "commands": {
+    "graphql-product": "products/graphql-workspace/cli.mjs"
+  },
+  "commandDescriptions": {
+    "graphql-product": "Initialize and open the original GraphQL merchant browser and agent; retain native projects, deploy and receive exact files."
+  },
+  "exports": {
+    "./products/graphql-workspace": "./source/products/graphql-workspace/workspace.mjs",
+    "./products/graphql-workspace/managed": "./source/products/graphql-workspace/managed.mjs",
+    "./products/graphql-workspace/client": "./source/products/graphql-workspace/client.mjs"
+  },
+  "applicationProviders": {
+    "graphql-product": "products/graphql-workspace/application-provider.mjs"
+  }
+}
