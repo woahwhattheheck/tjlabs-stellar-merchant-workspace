@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // MIT. One complete native saved-plan → editable workbook → receiving programme.
-import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {mkdir,mkdtemp,readFile,writeFile} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
@@ -268,12 +268,40 @@ export async function receiveCurrentBudgetWorkbookHandover(directory,options={})
   }
   return result;
 }
+export async function resumeCurrentBudgetWorkbookBrowser(directory,options={}){
+  const root=resolve(directory),summaryPath=join(root,'WORKBOOK_HANDOVER_RECEIVING.json'),
+    result=await readJson(summaryPath);
+  need(result.schema==='stellar-forge.planning-workbook-handover.receiving.v1'&&
+    result.nativePortableOutputComplete&&result.received?.contentSha256,
+    'Resume the browser from the complete original native workbook receiving case.');
+  if(result.browser?.savedAndReopened)return result;
+  // Restore the exact saved native ZIP into a private receiving workspace. The
+  // portable operating case deliberately carries no live access keys or database.
+  const receiving=join(root,'receiving');await mkdir(receiving,{recursive:true,mode:0o700});
+  const workspace=await mkdtemp(join(receiving,'workbook-browser-'));
+  const restored=await native(['import-bundle','--workspace',workspace,
+    '--file',join(root,'final-workbook-handover','planning.zip'),
+    '--name','Browser continuation of the complete workbook receiving case',
+    '--request-id','current-budget-workbook-browser-continuation']);
+  const plan=await native(['show','--workspace',workspace,'--plan',restored.plan.id,'--part','all']);
+  need(plan.contentSha256===result.received.contentSha256,
+    'The browser continuation must restore the exact previously received native plan.');
+  result.browser=await browserCase(root,workspace,plan,join(root,'returned-workbook.xlsx'),options);
+  result.browser.resumedFromNativeResult=true;
+  await writeFile(summaryPath,json(result),{mode:0o600});
+  return result;
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   if(!process.argv[2]||process.argv[2]==='--help')process.stdout.write(
-    'node receive-current-budget-workbook-handover.mjs NEW_PRIVATE_DIRECTORY [--browser]\nRuns the full saved-plan workbook export, edited receiving, native save/reopen and optional actual browser workflow.\n');
+    'node receive-current-budget-workbook-handover.mjs NEW_PRIVATE_DIRECTORY [--browser]\n'+
+    'node receive-current-budget-workbook-handover.mjs COMPLETE_NATIVE_CASE_DIRECTORY --resume-browser\n'+
+    'Runs the whole native receiving programme or resumes its actual browser flow from the saved portable native case.\n');
   else{
-    need(process.argv.slice(3).every(value=>value==='--browser')&&process.argv.slice(3).length<=1,'Use one optional --browser flag.');
-    receiveCurrentBudgetWorkbookHandover(process.argv[2],{browser:process.argv.includes('--browser')}).then(value=>process.stdout.write(json(value)))
+    const flags=process.argv.slice(3);
+    need(flags.length===0||(flags.length===1&&['--browser','--resume-browser'].includes(flags[0])),
+      'Use one optional --browser or --resume-browser flag.');
+    const run=flags[0]==='--resume-browser'?resumeCurrentBudgetWorkbookBrowser:receiveCurrentBudgetWorkbookHandover;
+    run(process.argv[2],{browser:flags[0]==='--browser'}).then(value=>process.stdout.write(json(value)))
       .catch(error=>{process.stderr.write(json({error:{message:error.message,code:error.code}}));process.exitCode=1;});
   }
 }
