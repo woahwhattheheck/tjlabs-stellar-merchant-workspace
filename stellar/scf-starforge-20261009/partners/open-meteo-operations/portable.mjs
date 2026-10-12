@@ -1,4 +1,5 @@
 // MIT. Complete weather report receiving and immutable source lineage.
+import {validateWeatherRenewal,mapWeatherRenewal} from './renewal.mjs';
 import {
  MAX_RESPONSE_BYTES,need,keys,text,normalizeSite,normalizeRequest,
  parsePayload,canonical,sha,clone,encoded
@@ -34,7 +35,7 @@ function validateArchive(archive,report){
 }
 function reportValue(report){const {sha256,...value}=report;need(HASH.test(sha256??'')&&reportDigest(value)===sha256,'HANDOVER_REPORT_CHANGED');return value;}
 function validateReport(report){
- keys(report,['schema','id','createdAt','title','owner','notes','decisions','captures','attribution','sha256','receivedFrom']);
+ keys(report,['schema','id','createdAt','title','owner','notes','decisions','captures','attribution','sha256','receivedFrom','renewal']);
  need(report.schema==='stellar-forge.weather-report.v1','HANDOVER_REPORT_SCHEMA_INVALID');
  id(report.id,'report');stamp(report.createdAt);text(report.title,'REPORT_TITLE');text(report.owner,'REPORT_OWNER',120);
  need(typeof report.notes==='string'&&report.notes.length<=10000&&!report.notes.includes('\0'),'REPORT_NOTES_INVALID');
@@ -108,6 +109,7 @@ export function inspectWeatherHandover(content){
  }
  const history=list(value.decisionHistory,4096,'HANDOVER_HISTORY_LIMIT').map(d=>validateDecision(d,captures));
  const decisions=unique(history,decisionKey,'HANDOVER_DUPLICATE_DECISION');
+ validateWeatherRenewal(value.report.renewal,value.report.decisions,history);
  const selected=unique(value.report.decisions,d=>d.id,'HANDOVER_DUPLICATE_REPORT_DECISION');
  const reportCaptures=unique(value.report.captures,c=>c.id,'HANDOVER_DUPLICATE_REPORT_SOURCE');
  const sourceIds=new Set();
@@ -151,6 +153,7 @@ export function inspectWeatherHandover(content){
   const originalById=unique(originalCaptures,capture=>capture.id,'HANDOVER_DUPLICATE_SOURCE');
   const originalDecisions=list(receipt.originalDecisions,4096,'HANDOVER_HISTORY_LIMIT').map(decision=>validateDecision(decision,originalById));
   const originalByRevision=unique(originalDecisions,decisionKey,'HANDOVER_DUPLICATE_DECISION');
+  validateWeatherRenewal(receipt.originalReport.renewal,receipt.originalReport.decisions,originalDecisions);
   const reportDecisions=unique(receipt.originalReport.decisions,decision=>decision.id,'HANDOVER_DUPLICATE_REPORT_DECISION');
   const reportSources=unique(receipt.originalReport.captures,capture=>capture.id,'HANDOVER_DUPLICATE_REPORT_SOURCE');
   const selectedSources=new Set();
@@ -186,7 +189,7 @@ export function inspectWeatherHandover(content){
    reportId:value.report.id,reportSha256:value.report.sha256,title:value.report.title,owner:value.report.owner,
    createdAt:value.report.createdAt,sourceCount:sources.length,sourceBytes:sources.reduce((sum,c)=>sum+c.bytes,0),
    selectedDecisions:value.report.decisions.length,decisionRevisions:history.length,
-   receivingHistory:receipts.length,...(value.legacyArchive?{originalArchive:{sha256:value.legacyArchive.sha256,bytes:value.legacyArchive.bytes},historyScope:'selected revisions retained in the original ZIP'}:{}),
+   receivingHistory:receipts.length,...(value.report.renewal?{renewal:{sourceReport:clone(value.report.renewal.sourceReport),decisions:value.report.renewal.entries.length}}:{}),...(value.legacyArchive?{originalArchive:{sha256:value.legacyArchive.sha256,bytes:value.legacyArchive.bytes},historyScope:'selected revisions retained in the original ZIP'}:{}),
    sources:sources.map(c=>({id:c.id,sha256:c.sha256,bytes:c.bytes,title:c.request.title,site:c.request.site.name,
     family:c.metadata.family,model:c.metadata.model,timezone:c.metadata.timezone,
     timestamps:c.view.times.length,columns:c.view.columns.length,provenance:clone(c.provenance)}))}};
@@ -232,6 +235,7 @@ export function prepareWeatherReceiving(inspection){
  const report={...clone(originalReport),id:localId('report',origin,value.report.id,originalReportSha),
   decisions:value.report.decisions.map(d=>clone(decisionMap.get(decisionKey(d)))),
   captures:value.report.captures.map(c=>sourceDescriptor(captureMap.get(c.id))),
+  ...(value.report.renewal?{renewal:mapWeatherRenewal(value.report.renewal,decision=>decisionMap.get(decisionKey(decision)))}:{}),
   receivedFrom:{originId:origin,reportId:value.report.id,reportSha256:originalReportSha}};
  report.sha256=reportDigest(report);
  return {sites,requests,captures:receivedCaptures,decisions:receivedDecisions,report,

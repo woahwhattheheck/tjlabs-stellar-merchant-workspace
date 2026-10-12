@@ -63,10 +63,12 @@ export async function startWeatherServer({workspace,port=0}){
     if(result.bytes)send(response,200,result.bytes,result.type,{'content-disposition':'attachment; filename="'+result.name+'"','x-content-sha256':sha(result.bytes)});
     else json(response,200,result);return;
    }
+   matched=url.pathname.match(/^\/api\/reports\/(report-[a-f0-9-]{36})\/renewal$/);
+   if(matched){need(!url.search,'UNEXPECTED_QUERY');json(response,200,await workspace.renewalChoices(matched[1]));return;}
    matched=url.pathname.match(/^\/api\/reports\/(report-[a-f0-9-]{36})\/download$/);
    if(matched){
     const format=url.searchParams.get('format')??'zip';need(['zip','html','json','handover'].includes(format),'REPORT_FORMAT_INVALID');
-    const bytes=await workspace.serial(async()=>{const report=workspace.store.report(matched[1]),captures=report.captures.map(c=>workspace.store.capture(c.id));return frozenReportBytes(report,captures,{format,...(format==='handover'?{handover:workspace.store.handover(report.id)}:{})});});
+    const bytes=await workspace.serial(async()=>{const report=workspace.store.report(matched[1]),captures=report.captures.map(c=>workspace.store.capture(c.id));return frozenReportBytes(report,captures,{format,...(format==='handover'||format==='zip'&&report.renewal?{handover:workspace.store.handover(report.id)}:{})});});
     send(response,200,bytes,format==='zip'?'application/zip':format==='html'?'text/html; charset=utf-8':'application/json',
      {'content-disposition':'attachment; filename="'+matched[1]+'.'+(format==='handover'?'weather.json':format)+'"','x-content-sha256':sha(bytes)});return;
    }
@@ -79,7 +81,13 @@ export async function startWeatherServer({workspace,port=0}){
   }
   if(request.method==='POST'){
    const receiving=url.pathname==='/api/handover/review'||url.pathname==='/api/handover/receive';
-   const body=await requestJson(request,receiving?MAX_HANDOVER_BYTES*2+4096:65536);
+   const renewal=url.pathname==='/api/renewal/review'||url.pathname==='/api/renewal/commit';
+   const body=await requestJson(request,receiving?MAX_HANDOVER_BYTES*2+4096:renewal?1048576:65536);
+   if(renewal){
+    if(url.pathname.endsWith('/review')){json(response,200,await workspace.reviewRenewal(body));return;}
+    keys(body,['selection','expectedReviewSha256']);
+    json(response,200,await workspace.commitRenewal(body.selection,{expectedReviewSha256:body.expectedReviewSha256}));return;
+   }
    if(receiving){
     keys(body,url.pathname.endsWith('/review')?['content']:['content','expectedSha256']);
     const result=url.pathname.endsWith('/review')?await workspace.reviewHandover(body.content):await workspace.receiveHandover(body.content,{expectedSha256:body.expectedSha256});
