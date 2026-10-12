@@ -11,6 +11,7 @@ import {createGzip} from 'node:zlib';
 import {connectAccountingStatementClient, accountingStatementPreview, accountingStatementSelection} from './accounting-statement-client.mjs';
 import {prepareAccountingStatementCycle, runAccountingStatementCycle, observeAccountingStatementCycle} from './accounting-statement-cycle.mjs';
 
+import {readAccountingStatementServicePlanner,compileAccountingStatementServicePlan,validateAccountingStatementServicePlan,prepareAccountingStatementServiceCycle,renderAccountingStatementServicePlanCsv,renderAccountingStatementServicePlanHtml} from './accounting-statement-service-planner.mjs';
 import {createCustomerSetupRoutes} from './accounting-statement-setup.mjs';
 import {inspectAccountingStatementCustomerDossiers, exportAccountingStatementCustomerDossier, readAccountingStatementCustomerDossier} from './accounting-statement-customer-dossier.mjs';
 import {readBrowserAssets} from '../../stellar/scf-starforge-20261009/distribution/browser-assets.mjs';
@@ -107,7 +108,7 @@ export async function startAccountingStatementCycleWorkbench({
   await mkdir(directory,{recursive:true,mode:0o700});const root=await realpath(directory);
   const rootInfo=await stat(root);
   need(rootInfo.isDirectory()&&!(rootInfo.mode&0o077)&&(!process.getuid||rootInfo.uid===process.getuid()),'Use a private cycle directory owned by this operator (mode 0700).',400,'WORKBENCH_DIRECTORY');
-  const csrfToken=randomBytes(32).toString('hex'),jobs=new Map(),dossierExports=new Map(),dossierQueues=new Map(),controller=new AbortController();let clientPromise,inventoryPromise,closing=false,origin,workQueue=Promise.resolve();
+  const csrfToken=randomBytes(32).toString('hex'),jobs=new Map(),dossierExports=new Map(),dossierQueues=new Map(),controller=new AbortController();let clientPromise,inventoryPromise,plannerInventory,plannerInventoryPromise,closing=false,origin,workQueue=Promise.resolve();
   const connection=async()=>{
     if(!clientPromise)clientPromise=(async()=>{
       const client=providedClient??await connectAccountingStatementClient({url,workspace,tokenEnv,environment,signal:controller.signal});
@@ -270,6 +271,50 @@ export async function startAccountingStatementCycleWorkbench({
         if(!inventoryPromise)inventoryPromise=connection().then(inventory).finally(()=>{inventoryPromise=undefined;});
         sendJson(response,200,await inventoryPromise);return;
       }
+      if(request.method==='GET'&&path==='/api/service-planner'){
+        if(!plannerInventoryPromise)plannerInventoryPromise=connection()
+          .then(client=>readAccountingStatementServicePlanner({client,signal:controller.signal}))
+          .then(result=>{plannerInventory=result;return result;}).finally(()=>{plannerInventoryPromise=undefined;});
+        sendJson(response,200,await plannerInventoryPromise);return;
+      }
+      if(request.method==='POST'&&path==='/api/service-planner/plan'){
+        const body=await bodyJson(request);
+        need(plannerInventory&&body.inventorySha256===plannerInventory.inventorySha256,
+          'Refresh the service planner before compiling these choices. Your selected captures can be kept.',409,'WORKBENCH_PLANNER_CHANGED');
+        sendJson(response,200,compileAccountingStatementServicePlan({inventory:plannerInventory,choices:body.choices}));return;
+      }
+      if(request.method==='POST'&&path==='/api/service-planner/validate'){
+        const body=await bodyJson(request),plan=validateAccountingStatementServicePlan(body.plan);
+        need(plan.workspace===workspace&&(!plan.endpoint||plan.endpoint===url),'Open this plan in its original merchant workspace.',409,'WORKBENCH_WORKSPACE');
+        sendJson(response,200,{planSha256:plan.planSha256,counts:plan.counts});return;
+      }
+      if(request.method==='POST'&&path==='/api/service-planner/export'){
+        const body=await bodyJson(request),plan=validateAccountingStatementServicePlan(body.plan);
+        need(plan.workspace===workspace&&(!plan.endpoint||plan.endpoint===url),'Open this plan in its original merchant workspace.',409,'WORKBENCH_WORKSPACE');
+        need(['csv','html'].includes(body.format),'Choose a CSV register or readable HTML plan.');
+        sendJson(response,200,{filename:'service-close-'+plan.planSha256.slice(0,12)+'.'+body.format,
+          mimeType:body.format==='csv'?'text/csv;charset=utf-8':'text/html;charset=utf-8',
+          content:body.format==='csv'?renderAccountingStatementServicePlanCsv(plan):renderAccountingStatementServicePlanHtml(plan)});return;
+      }
+      if(request.method==='POST'&&path==='/api/service-planner/cycles'){
+        const body=await bodyJson(request),plan=validateAccountingStatementServicePlan(body.plan);
+        need(plan.workspace===workspace&&(!plan.endpoint||plan.endpoint===url),'Prepare this plan in its original merchant workspace.',409,'WORKBENCH_WORKSPACE');
+        need(UUID.test(body.requestId??''),'Use one request identity for this prepared cycle.');
+        need(typeof body.label==='string'&&body.label.trim()&&body.label.trim().length<=200,'Name this closing cycle.');
+        const selections=plan.selections.map(selection),key='cycle-'+body.requestId;
+        const inputHash=digest(JSON.stringify({label:body.label.trim(),selections})),previousJob=jobs.get(key);
+        need(!previousJob?.inputHash||previousJob.inputHash===inputHash,'This preparation request already has different selections. Start a new cycle.',409,'WORKBENCH_PREPARATION_CHANGED');
+        if(await exists(join(cyclePath(key),'request.json'))){
+          const original=await compatible(key);
+          need(original.label===body.label.trim()&&JSON.stringify(original.selections)===JSON.stringify(selections),
+            'This preparation request already belongs to different customer selections. Start a new cycle.',409,'WORKBENCH_PREPARATION_CHANGED');
+          if(await exists(join(cyclePath(key),'manifest.json'))){sendJson(response,200,await record(key));return;}
+        }
+        const job=begin(key,'PREPARE',async()=>prepareAccountingStatementServiceCycle({plan,directory:cyclePath(key),url,workspace,actor,
+          label:body.label.trim(),tokenEnv,environment,signal:controller.signal,client:providedClient}));
+        job.label=body.label.trim();job.inputHash=inputHash;
+        sendJson(response,202,{key,job:jobView(job)});return;
+      }
       if(request.method==='POST'&&path==='/api/preview'){
         const body=await bodyJson(request);sendJson(response,200,await (await connection()).preview(selection(body.selection)));return;
       }
@@ -395,6 +440,7 @@ export async function startAccountingStatementCycleWorkbench({
     if(!closePromise){closing=true;controller.abort();closePromise=(async()=>{
       await new Promise((done,reject)=>server.close(error=>error?reject(error):done()));
       await Promise.allSettled([...jobs.values()].map(job=>job.promise).concat([...dossierExports.values()]));
+      await Promise.allSettled([plannerInventoryPromise,inventoryPromise].filter(Boolean));
       await customerSetup.close();
       if(clientPromise&&!providedClient)await (await clientPromise).disconnect();
     })();}return closePromise;

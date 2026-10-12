@@ -28,6 +28,7 @@
           <button data-view="discover" aria-current="page">Discover</button>
           <button data-view="history">Quote history</button>
           <button data-view="results">Saved results</button>
+          <button data-view="native">HTTP requests</button>
         </nav>
         <span id="durability" class="muted"></span>
       </div>
@@ -44,7 +45,7 @@
             <label>Payment scheme<input id="search-scheme" placeholder="Exact advertised scheme" maxlength="4096"></label>
             <label>Extension key<input id="search-extension" placeholder="Exact extension key" maxlength="4096"></label>
             <label>Maximum amount<input id="search-amount" inputmode="numeric" pattern="0|[1-9][0-9]*" placeholder="Integer base units" maxlength="128"></label>
-            <label>Provider page size<select id="search-limit"><option value="25">25 rows</option><option value="50">50 rows</option><option value="100">100 rows</option></select></label>
+            <label>Provider page size<select id="search-limit"><option value="5">5 rows</option><option value="10">10 rows</option><option value="25" selected>25 rows</option><option value="50">50 rows</option><option value="100">100 rows</option></select></label>
           </div></details>
         </form>
         <div id="search-results"></div>
@@ -58,6 +59,10 @@
       <section id="view-results" class="view" hidden aria-labelledby="results-title">
         <div class="section-heading"><div><h2 id="results-title">Saved results</h2><p>Read the complete native tool response attached to its original quote.</p></div><button id="refresh-results">Refresh results</button></div>
         <div id="results-list"></div>
+      </section>
+      <section id="view-native" class="view" hidden aria-labelledby="native-title">
+        <div class="section-heading"><div><h2 id="native-title">HTTP requests</h2><p>Prepare an exact request from a discovered offer, then continue its saved native intent.</p></div></div>
+        <div id="native-requests"></div>
       </section>
       <section id="quote-detail" class="panel quote-panel" hidden aria-label="Selected quote"></section>
       <section id="result-detail" class="panel result-panel" hidden aria-label="Complete saved result"></section>

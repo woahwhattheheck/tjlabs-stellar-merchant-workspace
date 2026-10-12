@@ -100,7 +100,7 @@ export interface GrantHandoffReport {
   createdAt: string;
   updatedAt: string;
 }
-export function inspectGrantHandoff(options: { package: string }): Promise<GrantHandoffInspection>;
+export function inspectGrantHandoff(options: { package?: string | null; packageText?: string | null }): Promise<GrantHandoffInspection>;
 /** New exports require applicationId, caseId and the selected expectedVersion. Resume uses the original operation. */
 export function exportGrantHandoff(model: GrantRuntimeWorkspace, options: {
   operation: string; applicationId?: string; caseId?: string; expectedVersion?: number;
@@ -109,7 +109,15 @@ export function exportGrantHandoff(model: GrantRuntimeWorkspace, options: {
 /** A new receiving operation requires package and a complete GrantHandoffBindings JSON file. */
 export function prepareGrantHandoff(model: GrantRuntimeWorkspace, options: {
   operation: string; package?: string | null; bindings?: string | null; requestId?: string | null;
+  packageText?: string | null; bindingsValue?: GrantHandoffBindings | null;
 }): Promise<GrantHandoffReport>;
 export function receiveGrantHandoff(model: GrantRuntimeWorkspace, options: { operation: string }): Promise<GrantHandoffReport>;
 export function saveGrantHandoffApplication(model: GrantRuntimeWorkspace, options: { operation: string }): Promise<GrantHandoffReport>;
 export function grantHandoffStatus(options: { operation: string }): Promise<GrantHandoffReport>;
+
+export function grantHandoffCases(model: GrantRuntimeWorkspace, options: { applicationId: string; allowStart?: boolean }): Promise<{
+  application: Record<string, unknown>; selection: Record<string, unknown>;
+  cases: Array<GrantCaseIdentity & { name: string; state: string; updatedAt: string }>;
+  source: Record<string, unknown>;
+}>;
+export function grantHandoffDownload(options: { operation: string }): Promise<{ filename: string; bytes: number; sha256: string; text: string }>;

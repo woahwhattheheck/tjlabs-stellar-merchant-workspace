@@ -31,15 +31,15 @@ const strictBytes = (v,max=256*1024)=>{
 const sameTerms=(a,b)=>['scheme','network','asset','amount','payTo'].every(k=>a?.[k]===b?.[k]);
 const sanitizedPrice=a=>({scheme:a.scheme,network:a.network,asset:a.asset,amount:a.amount,payTo:a.payTo});
 const asBool=r=>r===true;
-async function readData(response,max=64*1024){
+async function readData(response,max=64*1024,{retainBytes=false}={}){
   const reader=response.body?.getReader();if(!reader)return {body:'',contentType:null,truncated:false};
   const chunks=[];let size=0,truncated=false;
   try {for(;;){const {done,value}=await reader.read();if(done)break;
     if(size+value.byteLength>max){chunks.push(value.subarray(0,Math.max(0,max-size)));size=max;truncated=true;break;}
     chunks.push(value);size+=value.byteLength;
   }}finally{if(truncated)await reader.cancel().catch(()=>{});reader.releaseLock();}
-  const body=Buffer.concat(chunks).toString('utf8');
-  return {body,contentType:response.headers.get('content-type')??null,truncated};
+  const bytes=Buffer.concat(chunks),body=bytes.toString('utf8');
+  return {body,contentType:response.headers.get('content-type')??null,truncated,...(retainBytes?{bytes}: {})};
 }
 const statOf=q=>({quoteId:q.quoteId,status:q.status,resource:q.resource,requestUrl:q.url,method:q.method,
   ...(q.invocation?{invocation:structuredClone(q.invocation)}:{}),
@@ -161,13 +161,13 @@ export class McpPaidToolBroker {
   async #get(url){
     const resp=await this.#fetch(url,{method:'GET',headers:{accept:'application/json'},redirect:'error',signal:this.#signal()});
     if(!resp.ok)fail('DISCOVERY_UNAVAILABLE','Bazaar returned HTTP '+resp.status);
-    const data=await readData(resp,2*1024*1024);if(data.truncated)fail('DISCOVERY_TOO_LARGE','Bazaar response exceeds configured limit');
-    let value;try{value=JSON.parse(data.body);}catch{fail('DISCOVERY_INVALID','Invalid Bazaar JSON');}
+    const data=await readData(resp,2*1024*1024,{retainBytes:true});if(data.truncated)fail('DISCOVERY_TOO_LARGE','Bazaar response exceeds configured limit');
+    let value;try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(data.bytes));}catch{fail('DISCOVERY_INVALID','Invalid Bazaar UTF-8 JSON');}
     if(!plain(value)||!Array.isArray(value.resources)||
       (value.partialResults!==undefined&&typeof value.partialResults!=='boolean')||
       (value.pagination!==undefined&&value.pagination!==null&&!plain(value.pagination)))
       fail('DISCOVERY_INVALID','Invalid Bazaar result');
-    return value;
+    return {body:value,bytes:data.bytes};
   }
   async search(args){return this.#discover('search',args);}
   async resources(args={}){return this.#discover('resources',args);}
@@ -175,10 +175,11 @@ export class McpPaidToolBroker {
     this.#running();
     const request=normalizeDiscoveryArguments(mode,args);
     const url=discoveryRequestUrl(this.#catalogUrl,mode,request);
-    const body=await this.#get(url);
+    const {body,bytes}=await this.#get(url);
     this.#running();
     const observedAt=Date.now(), source={url:url.href,observedAt:new Date(observedAt).toISOString(),
-      mode,request:structuredClone(request)};
+      mode,request:structuredClone(request),pageSha256:createHash('sha256').update(bytes).digest('hex'),pageBytes:bytes.length};
+    const capture={bytes,source};
     const pending=[],listed=[];
     let filtered=0,invalid=0;
     for(let rowIndex=0;rowIndex<body.resources.length;rowIndex++){
@@ -199,6 +200,7 @@ export class McpPaidToolBroker {
         fail('DISCOVERY_TOO_MANY_RESULTS','The complete provider page exceeds the configured resource-handle capacity. Use more selective discovery filters or a larger operator cache.');
       const bazaar=structuredClone(row.extensions.bazaar);
       const info={resource:structuredClone(resource),input:bazaar.info.input,bazaar,accepts:eligible,origin,
+        capture,providerAcceptIndexes:eligible.map(option=>row.accepts.indexOf(option)),
         source:{...source,resource:structuredClone(row.resource),rowIndex},
         fingerprint:hash([resourceUrl,input,eligible]),type:input.type,createdAt:observedAt};
       const handle=randomUUID();pending.push([handle,info]);
@@ -209,12 +211,43 @@ export class McpPaidToolBroker {
     const continuation=discoveryContinuation(mode,request,body,body.resources.length);
     // Retain the whole selected page together, then retire only older handles.
     for(const [handle,info] of pending)this.#records.set(handle,info);
-    while(this.#records.size>this.#maxRecords)this.#records.delete(this.#records.keys().next().value);
+    // Keep complete provider pages within the same ephemeral resource cache.
+    // Every handle from a page shares one byte buffer.
+    const pages=new Map();let retainedBytes=0;
+    for(const row of this.#records.values()){
+      const page=row.capture;if(!page)continue;
+      if(!pages.has(page)){pages.set(page,0);retainedBytes+=page.bytes.length;}
+      pages.set(page,pages.get(page)+1);
+    }
+    while(this.#records.size>this.#maxRecords||retainedBytes>16*1024*1024){
+      const key=this.#records.keys().next().value,row=this.#records.get(key);
+      this.#records.delete(key);
+      if(row.capture){
+        const remaining=pages.get(row.capture)-1;pages.set(row.capture,remaining);
+        if(!remaining)retainedBytes-=row.capture.bytes.length;
+      }
+    }
     return {resources:listed,partialResults:body.partialResults??false,
       pagination:structuredClone(body.pagination??null),source:structuredClone(source),
       page:{received:body.resources.length,returned:listed.length,filtered,invalid,
         continuationError:continuation.continuationError},
       continuation:continuation.continuation};
+  }
+  #resolveDiscoverySelection(handle,acceptIndex=0){
+    this.#running();
+    const row=this.#records.get(handle);
+    if(!row||Date.now()-row.createdAt>this.#quoteTTL)
+      fail('RESOURCE_STALE','Discover this resource again before preparing a new request');
+    if(!this.#trustedOrigins.has(row.origin))fail('ORIGIN_UNAPPROVED','Operator has not approved this exact resource origin');
+    if(row.type!=='http')fail('MCP_NATIVE_HTTP_REQUIRED','The native HTTP workspace requires an HTTP resource');
+    if(!Number.isSafeInteger(acceptIndex)||acceptIndex<0||acceptIndex>=row.accepts.length)
+      fail('INVALID_PARAMS','Invalid accepted payment option');
+    if(!row.capture)fail('RESOURCE_STALE','Discover this resource again to retain its complete provider page');
+    return {
+      handle,eligibleAcceptIndex:acceptIndex,
+      source:structuredClone(row.capture.source),raw:Uint8Array.from(row.capture.bytes),
+      rowIndex:row.source.rowIndex,acceptIndex:row.providerAcceptIndexes[acceptIndex],
+    };
   }
   describe({handle}={}){
     const row=this.#records.get(handle);
@@ -573,7 +606,8 @@ export class McpPaidToolBroker {
       case 'sf43_discover_review_and_pay':{
         this.#running();
         if(!this.#agentCommerce)fail('AGENT_COMMERCE_UNAVAILABLE','SF43 requires an explicitly injected approved adapter');
-        const operation=Promise.resolve().then(()=>{this.#running();return this.#agentCommerce(structuredClone(args),{signal:this.#shutdown.signal});});
+        const operation=Promise.resolve().then(()=>{this.#running();return this.#agentCommerce(structuredClone(args),{signal:this.#shutdown.signal,
+          resolveDiscoverySelection:(handle,acceptIndex)=>this.#resolveDiscoverySelection(handle,acceptIndex)});});
         this.#active.add(operation);
         try{return await operation;}finally{this.#active.delete(operation);}
       }

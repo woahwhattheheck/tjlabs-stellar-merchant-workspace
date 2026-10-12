@@ -13,18 +13,22 @@ export async function runSourceWindowMcpJourney(context) {
   const directory = join(context.outDirectory, 'mcp-source-journey');
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const downloaded = join(directory, 'received-original-files');
+  const clientDirectory = join(directory, 'client'), receiverDirectory = join(directory, 'receiver');
+  const exportsDirectory = join(directory, 'exports');
+  for (const path of [clientDirectory, receiverDirectory, downloaded, exportsDirectory])
+    await mkdir(path, { recursive: true, mode: 0o700 });
   const originalInputs = { record: { file: context.original.path, label: 'Original Find a Tender record', url: context.original.observation.requestedUrl } };
   for (const [index, original] of context.originalDocuments.entries())
     originalInputs['document-' + index] = { file: original.path, label: 'Acquired original document ' + (index + 1), url: original.observation.requestedUrl };
   const configPath = join(directory, 'ocds-workspaces.json');
   await writeFile(configPath, json({ schema: 'starforge.ocds.workspace-connection.v1', workspaces: {
-    client: { directory: join(directory, 'client'), inputs: originalInputs,
+    client: { directory: clientDirectory, inputs: originalInputs,
       sourceDeliveries: { agency: context.handoffDirectory }, operator: 'Native procurement operator' },
-    receiver: { directory: join(directory, 'receiver'), sourceDeliveries: { original: downloaded }, operator: 'Receiving procurement team' },
+    receiver: { directory: receiverDirectory, sourceDeliveries: { original: downloaded }, operator: 'Receiving procurement team' },
     highway: { directory: context.executive.workspaceDirectory, operator: 'Executive Compass internal desk' }
   } }), { mode: 0o600, flag: 'wx' });
   const configuration = await readOcdsWorkspaceConfiguration(configPath);
-  const config = { ocdsWorkspaces: configuration, exportsDirectory: join(directory, 'exports') };
+  const config = { ocdsWorkspaces: configuration, exportsDirectory };
   let merchant = new MerchantOcdsWorkspaces(config);
   const calls = [], receipts = {};
   const call = async (name, args) => {

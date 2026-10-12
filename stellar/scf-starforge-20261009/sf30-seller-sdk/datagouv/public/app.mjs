@@ -5,7 +5,7 @@ const count=n=>new Intl.NumberFormat('en-GB').format(n??0);
 const date=value=>{if(!value)return 'Not supplied';const d=new Date(value);return Number.isNaN(d.valueOf())?String(value):new Intl.DateTimeFormat('en-GB',{dateStyle:'medium',timeStyle:'short'}).format(d);};
 const pretty=value=>JSON.stringify(value,null,2);
 const label=state=>({PLAN_READY:'Plan saved',PLANNING:'Saving plan',EXTRACTING:'Building complete candidate',READY:'Candidate ready',REVIEWED:'Reviewed',PUBLISHED:'Local edition published',PUBLICATION_UNKNOWN:'Reconcile original publication',INTERRUPTED:'Original operation interrupted',FAILED:'Original operation stopped',CANCELLED:'Extraction cancelled'}[state]??String(state??'Prepared').replaceAll('_',' ').toLowerCase());
-let state,session,source,currentPublication,currentComparison,sourceOffset=0,queryCursor=null,queryInput='limit=25',historyOffset=0;
+let state,session,source,currentPublication,currentComparison,sourceOffset=0,queryCursor=null,queryInput='limit=25',historyOffset=0,publicationViewRequest=0,queryRequest=0;
 const requests=JSON.parse(localStorage.getItem('publisherRequests')??'{}');
 function requestId(path,input){const key=path+' '+JSON.stringify(input);if(!requests[key]){requests[key]=crypto.randomUUID();localStorage.setItem('publisherRequests',JSON.stringify(requests));}return requests[key];}
 function notice(message,error=false){$('notice').hidden=!message;$('notice').textContent=message??'';$('notice').dataset.error=String(error);}
@@ -53,12 +53,35 @@ function renderPublicationActions(){if(!currentPublication)return;const p=curren
   $('review-form').hidden=!['READY','REVIEWED'].includes(p.state);$('query-form').hidden=p.state!=='PUBLISHED';
   $('publication-record').textContent=pretty(p);
 }
-async function showPublication(id){currentPublication=state.publications.find(p=>p.id===id)??currentPublication;needValue(currentPublication,'The publication is not in the current workspace');location.hash='publications';$('publication-detail').hidden=false;$('publication-title').textContent=currentPublication.label;renderPublicationActions();
-  if(currentPublication.native?.data?.candidate){const result=await api('/api/publication?'+new URLSearchParams({publication:id,query:'limit=25'}));if(result.preview)table($('publication-rows'),result.preview.fields,result.preview.rows);else $('publication-rows').replaceChildren();}
-  else $('publication-rows').replaceChildren();$('query-rows').replaceChildren();$('query-info').textContent='';$('query-next').hidden=true;
+async function showPublication(id){
+  const request=++publicationViewRequest;
+  currentPublication=state.publications.find(p=>p.id===id)??currentPublication;
+  needValue(currentPublication,'The publication is not in the current workspace');
+  const publication=currentPublication;
+  queryRequest++;queryCursor=null;
+  $('publication-rows').replaceChildren();$('query-rows').replaceChildren();
+  $('query-info').textContent='';$('query-next').hidden=true;
+  location.hash='publications';$('publication-detail').hidden=false;
+  $('publication-title').textContent=publication.label;renderPublicationActions();
+  if(publication.native?.data?.candidate){
+    const result=await api('/api/publication?'+new URLSearchParams({publication:id,query:'limit=25'}));
+    if(request!==publicationViewRequest||currentPublication?.id!==publication.id)return;
+    if(result.preview)table($('publication-rows'),result.preview.fields,result.preview.rows);
+  }
 }
 const needValue=(value,message)=>{if(!value)throw new Error(message);};
-async function runQuery(next=false){needValue(currentPublication,'Select a publication');const input=new URLSearchParams(queryInput);if(next&&queryCursor)input.set('cursor',queryCursor);input.set('publication',currentPublication.id);const r=await api('/api/query?'+input);table($('query-rows'),r.fields,r.rows);queryCursor=r.page.nextCursor;$('query-next').hidden=!queryCursor;$('query-info').textContent=count(r.page.returned)+' rows on this page · '+count(r.page.total)+' matching rows · original values retained';}
+async function runQuery(next=false){
+  needValue(currentPublication,'Select a publication');
+  const publicationId=currentPublication.id,request=++queryRequest;
+  const input=new URLSearchParams(queryInput);
+  if(next&&queryCursor)input.set('cursor',queryCursor);
+  input.set('publication',publicationId);
+  const r=await api('/api/query?'+input);
+  if(request!==queryRequest||currentPublication?.id!==publicationId)return;
+  table($('query-rows'),r.fields,r.rows);queryCursor=r.page.nextCursor;
+  $('query-next').hidden=!queryCursor;
+  $('query-info').textContent=count(r.page.returned)+' rows on this page · '+count(r.page.total)+' matching rows · original values retained';
+}
 async function showComparison(id){currentComparison=await api('/api/comparison?'+new URLSearchParams({comparison:id}));location.hash='compare';$('comparison-detail').hidden=false;const s=currentComparison.summary;facts($('comparison-facts'),[['Added',count(s.added)],['Removed',count(s.removed)],['Changed',count(s.changed)],['Unchanged',count(s.unchanged)],['Original CSV changed',s.rawBodyChanged?'Yes':'No'],['Metadata changed',s.metadataChanged?'Yes':'No'],['Decision',currentComparison.decision?.action??'Awaiting decision']]);$('comparison-download').href=href('comparison',id);table($('comparison-rows'),[{label:'Key',key:'key'},{label:'Change',key:'kind'},{label:'Before',key:'before'},{label:'After',key:'after'}],currentComparison.changes);$('decision-form').hidden=!!currentComparison.decision;}
 async function showPortal(id){const result=await api('/api/portal/status?'+new URLSearchParams({operation:id}));$('portal-result').textContent=pretty(result);$('portal-action').elements.operationId.value=id;const operation=result.operation??result;if(operation.review?.id)$('portal-action').elements.reviewId.value=operation.review.id;location.hash='portal';}
 function onForm(id,fn){$(id).addEventListener('submit',event=>{event.preventDefault();fn($(id)).catch(e=>notice(e.message,true));});}

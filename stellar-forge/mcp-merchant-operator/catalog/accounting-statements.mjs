@@ -51,6 +51,8 @@ const statementDefinitions=[
   {...base,source:alias},['workspace','source'],readOnly],
  [PREFIX+'usage_import','Import the reviewed host-declared usage source into the original workspace. The exact input SHA is required; native byte-identical imports retain the original identity.',
   {...change,source:alias,expectedSha256:hash,name:text(200,1)},['workspace','revision','actor','source','expectedSha256'],{idempotent:true}],
+ [PREFIX+'usage_captures','Page retained usage captures with their exact original pass, entitlement, purchased plan and balances. Complete native API captures include the immutable identity used by the original period compiler; other captures remain visible with their source type and eligibility reason. This reads the retained original files without changing merchant records.',
+  {...base,...page},['workspace'],readOnly],
  [PREFIX+'usage_period','Inspect the complete original service activity between two retained native API-pass captures. Returns opening/closing balances, activity counts, optional route/call pages and a complete usage-period.json file selector.',
   {...base,usageOpeningId:uuid,usageId:uuid,view:{type:'string',enum:['summary','routes','calls']},...page},['workspace','usageOpeningId','usageId'],readOnly],
  [PREFIX+'statement_preview','Prepare the original statement or correction. Returns the native preview digest and a complete preview.json file selector for the existing chunk reader.',

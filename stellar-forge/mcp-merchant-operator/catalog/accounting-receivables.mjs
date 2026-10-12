@@ -83,6 +83,46 @@ const dispositionTerms = {id: uuid, receiptId: uuid, effectiveDate: date, reason
 // dated balance effects. Their native owner validates the exact retained proposal.
 const reviewedNativeProposal = object({}, [], true);
 
+
+const bankCsvColumns = object(Object.fromEntries(
+  ['date', 'amount', 'credit', 'debit', 'transactionId', 'reference', 'counterparty', 'invoiceReference', 'valueDate', 'balance']
+    .map(name => [name, text(32000, 1)])));
+const bankCsvLayout = object({
+  delimiter: {type: 'string', enum: [',', ';', '\t']},
+  dateFormat: {type: 'string', enum: ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'YYYYMMDD']},
+  decimalMark: {type: 'string', enum: ['.', ',']},
+  groupSeparator: {type: 'string', enum: ['', ',', '.', ' ']},
+  amountMode: {type: 'string', enum: ['SIGNED', 'CREDIT_DEBIT']},
+  creditSign: {type: 'string', enum: ['POSITIVE', 'NEGATIVE']}, columns: bankCsvColumns,
+}, ['delimiter', 'dateFormat', 'decimalMark', 'groupSeparator', 'amountMode', 'creditSign', 'columns']);
+const bankStatementOptions = object({
+  profile: {type: 'string', enum: ['TEXT_BODY', 'FIN_ENVELOPE']},
+  encoding: {type: 'string', enum: ['ASCII', 'UTF-8', 'ISO-8859-1']},
+  debitCreditProfile: {type: 'string', enum: ['CD_ONLY', 'CD_REVERSALS']},
+  yearWindowStart: {type: 'integer', minimum: 1900, maximum: 2000},
+  dateBasis: {type: 'string', enum: ['VALUE_DATE']},
+  currencyScales: {type: 'object', properties: {}, additionalProperties: {type: 'integer', minimum: 0, maximum: 6}},
+}, ['profile', 'encoding', 'debitCreditProfile', 'yearWindowStart', 'dateBasis']);
+const bankSourceInput = {
+  accountId: uuid, format: {type: 'string', enum: ['CSV', 'OFX', 'MT940']},
+  file: object({name: text(240, 1), dataBase64: {
+    type: 'string', minLength: 4, maxLength: 1333336, pattern: '^[A-Za-z0-9+/]*={0,2}$',
+  }}, ['name', 'dataBase64']),
+  sectionId: text(1000, 1), csvLayout: bankCsvLayout, statementOptions: bankStatementOptions,
+};
+const bankAllocation = object({invoiceId: uuid, amount: money, allocatedDate: date}, ['invoiceId', 'amount']);
+const bankSplit = object({
+  action: {type: 'string', enum: ['CREATE', 'LINK', 'CORRECT']}, customerId: uuid, receiptId: uuid, amount: money,
+  coverageKey: hash,
+  allocations: {type: 'array', maxItems: 100, items: bankAllocation},
+  residualAllocations: {type: 'array', maxItems: 100, items: bankAllocation},
+  effectiveDate: date, reason: text(3000), dateDifferenceReason: text(3000),
+}, ['action', 'amount']);
+const bankSelections = {type: 'array', minItems: 1, maxItems: 100,
+  items: object({rowId: hash, distinctPaymentReason: text(3000), sourceResolutionReason: text(3000),
+    splits: {type: 'array', minItems: 1, maxItems: 100, items: bankSplit}}, ['rowId', 'splits'])};
+const bankRowIds = {type: 'array', maxItems: 5000, items: hash, uniqueItems: true};
+
 const read = (suffix, description, properties = {}, required = []) =>
   [PREFIX + suffix, description, {...base, ...properties}, ['workspace', ...required], readOnly];
 const mutate = (suffix, description, properties = {}, required = []) =>
@@ -95,9 +135,10 @@ export const receivablesFileNames = Object.freeze([
   'payment-request.uri', 'receiving.json', 'proof.json', 'account.json', 'invoices.csv', 'account.html', 'account.tar',
   'request.json', 'request.html', 'request.csv', 'refund.json', 'refund.html', 'refund.csv',
   'reversal.json', 'reversal.html', 'reversal.csv', 'disposition.json', 'disposition.html', 'disposition.csv',
+  'source.csv', 'source.ofx', 'source.mt940', 'import.json', 'rows.json', 'rows.csv', 'reconciliation.json', 'parser-report.json',
 ]);
 export const receivablesFileSelectors = Object.freeze([
-  'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'returnId', 'customerId', 'asOf',
+  'documentId', 'invoiceId', 'paymentRequestId', 'refundId', 'bankImportId', 'returnId', 'customerId', 'asOf',
 ]);
 export const receivablesDefinitions = [
   read('status', 'Read original invoice, receipt, credit, allocation, aging or operation-journal rows. Summary returns issuer, scoped counts and the current accounting revision.',
@@ -188,6 +229,32 @@ export const receivablesDefinitions = [
     dispositionTerms, ['receiptId', 'effectiveDate', 'reason', 'allocations']),
   mutate('credit_disposition_apply', 'Apply the exact reviewed credit-disposition proposal and reviewSha256 through the original accounting journal. Original allocation history and every affected later receipt and invoice balance remain bound to that review.',
     {proposal: reviewedNativeProposal, reviewSha256: hash}, ['proposal', 'reviewSha256']),
+  read('bank_accounts', 'Page original bank account identities, currencies, saved CSV layouts and active or archived status.',
+    {status: {type: 'string', enum: ['ACTIVE', 'ARCHIVED']}, search: text(300), ...nativePage}),
+  mutate('bank_account_save', 'Save the original bank account identity and invoice currency. Editing retains id and expectedVersion; a retained statement keeps its original currency, bankId and accountReference.',
+    {id: uuid, expectedVersion: revision, reference: text(80,1), name: text(200,1), currency,
+      method: text(100,1), bankId: text(200), accountReference: text(200), csvLayout: bankCsvLayout,
+      status: {type: 'string', enum: ['ACTIVE', 'ARCHIVED']}}, ['reference', 'name', 'currency']),
+  read('bank_source_inspect', 'Inspect complete original CSV, OFX or MT940 bytes. Read actual account sections, dates, balances, row counts, parser findings and source SHA256. CSV inspection accepts an incomplete column mapping to reveal original headers; MT940 requires its explicit envelope, encoding, debit/reversal convention, 100-year window and complete value-date basis.',
+    bankSourceInput, ['format', 'file']),
+  mutate('bank_source_import', 'Retain the selected original statement section and exact file bytes for one bank account. Complete CSV column mapping or explicit MT940 source options are required by the native parser. Retention preserves source, normalized rows and parser report for subsequent reviewed customer posting.',
+    bankSourceInput, ['accountId', 'format', 'file', 'sectionId']),
+  read('bank_import_list', 'Page retained original bank statements with their account, currency, source identity, open/closed status and posted, linked, ignored, duplicate or conflicting credit counts.',
+    {accountId: uuid, status: {type: 'string', enum: ['OPEN', 'CLOSED']}, search: text(300), ...nativePage}),
+  read('bank_import_detail', 'Read original bank statement metadata and files, or page its complete source rows, posting history and operations. Row filters apply before paging. Each original source row retains its transaction identity, raw fields, source conflicts, original receipt candidates, invoice candidates and customer matching reasons.',
+    {bankImportId: uuid, view: {type: 'string', enum: ['summary', 'rows', 'history', 'postings']},
+      rowStatus: {type: 'string', enum: ['UNASSIGNED', 'POSTED', 'LINKED', 'IGNORED', 'DUPLICATE', 'CONFLICT', 'SOURCE_ONLY']},
+      direction: {type: 'string', enum: ['CREDIT', 'DEBIT', 'ZERO']}, search: text(300), ...nativePage}, ['bankImportId']),
+  read('bank_posting_preview', 'Review complete original bank credits split across actual customers. CREATE records receipts; LINK retains existing receipt identities and supports explicit partial receipt coverage; CORRECT retains original cash dates while replacing an incorrectly recorded receipt, preserving remaining original-customer cash and releasing its original allocations. Optional residualAllocations assigns that remaining cash to original-customer invoices. The native owner checks source conflicts and all affected dated balances and returns the complete proposal, balanceEffects, reviewSha256 and revision.',
+    {bankImportId: uuid, selections: bankSelections}, ['bankImportId', 'selections']),
+  mutate('bank_receipts_post', 'Post exactly the complete original bank proposal and reviewSha256 returned by bank_posting_preview at its reviewed revision. The original journal retains the bank posting, receipts, correction relationships, allocation releases, new allocations and complete customer receipt documents together.',
+    {bankImportId: uuid, proposal: reviewedNativeProposal, reviewSha256: hash}, ['bankImportId', 'proposal', 'reviewSha256']),
+  mutate('bank_rows_ignore', 'Retain a reason excluding selected original source rows from customer cash posting. Original transaction identities and complete statement files remain readable.',
+    {bankImportId: uuid, rowIds: {...bankRowIds, minItems: 1}, reason: text(3000,1)}, ['bankImportId', 'rowIds', 'reason']),
+  mutate('bank_rows_restore', 'Restore explicitly selected ignored source rows and reopen a closed original statement. Empty rowIds reopens a closed statement while preserving existing postings for an explicit receipt correction.',
+    {bankImportId: uuid, rowIds: bankRowIds, reason: text(3000,1)}, ['bankImportId', 'reason']),
+  mutate('bank_import_close', 'Close an original bank statement after every actual cash credit has a retained disposition. Keep original source, parser findings, customer postings and complete reconciliation files available.',
+    {bankImportId: uuid, reason: text(3000)}, ['bankImportId']),
   read('request_lookup', 'Recover the exact original receivables operation by requestId after an uncertain response. Returns found, the retained operation and current original invoice/payment/receipt result identities.',
     {requestId, asOf: date}, ['requestId']),
 ];
