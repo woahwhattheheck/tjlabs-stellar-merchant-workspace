@@ -29,7 +29,8 @@ function preview(bytes){
  if(!binary&&/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text??''))binary=true;
  return {text:binary?'':text,truncated:bytes.length>sample.length,binary,bytes:bytes.length};
 }
-export async function startApiPassWorkspace({model,port=0,host='127.0.0.1'}){
+export async function startApiPassWorkspace({model,port=0,host='127.0.0.1',beforeRelease}){
+ check(beforeRelease===undefined||typeof beforeRelease==='function','WORKSPACE_CLOSE_CALLBACK_REQUIRED');
  check(model&&typeof model.snapshot==='function'&&typeof model.enqueue==='function','ORIGINAL_CUSTOMER_MODEL_REQUIRED');
  check(host==='127.0.0.1','LOOPBACK_BIND_REQUIRED');check(Number.isInteger(port)&&port>=0&&port<=65535,'INVALID_PORT');
  const token=randomBytes(32).toString('base64url'),pending=new Set(),sockets=new Set(),hosts=new Set();
@@ -123,7 +124,7 @@ export async function startApiPassWorkspace({model,port=0,host='127.0.0.1'}){
  });
  server.requestTimeout=30000;server.headersTimeout=15000;
  server.on('connection',socket=>{sockets.add(socket);socket.once('close',()=>sockets.delete(socket));});
- let requestedBeforeRelease,listenerStop,listenerStopped=false,timer,callbackCompleted=false;
+ let requestedBeforeRelease=beforeRelease,listenerStop,listenerStopped=false,timer,callbackCompleted=false;
  const finishUnderLease=async()=>{
   while(pending.size)await Promise.allSettled([...pending]);
   await listenerStop;
@@ -161,7 +162,7 @@ export async function startApiPassWorkspace({model,port=0,host='127.0.0.1'}){
  try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve);});}
  catch(error){
   try{await owner.close();}catch(closeError){throw attachCloseRecovery(closeError,owner,closeError.closePhase??'starting-http');}
-  throw error;
+  throw attachCloseRecovery(error,owner,model.closePhase??'starting-http');
  }
  const actual=server.address().port;origin=new URL('http://127.0.0.1:'+actual).origin;
  hosts.add('127.0.0.1:'+actual);hosts.add(new URL(origin).host);

@@ -112,9 +112,24 @@ function form(key,onSubmit){
 }
 function submit(form,labelText,help){const group=node('div',null,'form-actions'),b=node('button',labelText,'primary');b.type='submit';append(group,b,help?node('small',help):null);form.append(group);retainDraft(form.draftKey).catch(showError);return b;}
 function textFile(form,key,input,labelText,max){
- let selected=0;
- input.addEventListener('change',()=>{const sequence=++selected,file=input.files?.[0],scope=currentScope();if(!file)return;if(file.size>max){showError(fail('INPUT_FILE_TOO_LARGE'));return;}
-  file.text().then(async value=>{checkScope(scope);if(sequence!==selected)return;form.data[key]=value;const target=form.elements.namedItem(key);if(target)target.value=value;await retainDraft(form.draftKey);checkScope(scope);notice(labelText+' loaded: '+file.name);}).catch(showError);});
+ let selected=0,edits=0;
+ const target=form.elements.namedItem(key);
+ target?.addEventListener('input',()=>edits++);
+ input.addEventListener('change',()=>{
+  const sequence=++selected,file=input.files?.[0],scope=currentScope(),routeSequence=S.sequence,
+   originalData=form.data,originalEdits=edits,full=draftKey(form.draftKey,scope);
+  const current=()=>sequence===selected&&routeSequence===S.sequence&&form.isConnected&&S.drafts.get(full)===originalData;
+  if(!file)return;if(file.size>max){showError(fail('INPUT_FILE_TOO_LARGE'));return;}
+  file.text().then(async value=>{
+   checkScope(scope);if(!current()||edits!==originalEdits)return;
+   form.data[key]=value;
+   if(target){
+    target.value=value;target.dispatchEvent(new Event('input',{bubbles:true}));
+    await S.draftWrites.get(full);
+   }else await retainDraft(form.draftKey);
+   checkScope(scope);if(current())notice(labelText+' loaded: '+file.name);
+  }).catch(error=>{if(current())showError(error);});
+ });
 }
 function header(title,description,...controls){const h=node('div',null,'page-head'),left=node('div');append(left,node('h1',title),description?node('p',description):null);append(h,left,append(node('div',null,'actions'),controls));return h;}
 function renderShell(){
@@ -377,11 +392,21 @@ function renderComposer(p){
  formField(f,'bodyMode','Request body',{type:'select',value:d.bodyMode,choices:[['none','No body'],['text','Text / JSON'],['file','Exact file bytes']]});
  formField(f,'bodyText','Text / JSON body',{type:'textarea',value:d.bodyText,full:true,rows:9,help:'Saved as UTF-8. JSON is preserved as entered.'});
  const file=formField(f,'bodyFile','Body file',{type:'file',full:true,help:d.filename?'Selected: '+d.filename:'Maximum 1 MiB. Select “Exact file bytes” above.'});
- let bodyRead=0;
+ let bodyRead=0,bodyEdits=0;
+ f.addEventListener('input',event=>{if(['bodyMode','bodyText'].includes(event.target.name))bodyEdits++;});
  file.addEventListener('change',()=>{
-  const selected=++bodyRead,chosen=file.files?.[0],scope=currentScope();f.loadingBody=false;if(!chosen)return;
+  const selected=++bodyRead,chosen=file.files?.[0],scope=currentScope(),routeSequence=S.sequence,
+   originalEdits=bodyEdits,full=draftKey(key,scope);
+  const current=()=>selected===bodyRead&&routeSequence===S.sequence&&f.isConnected&&S.drafts.get(full)===d;
+  f.loadingBody=false;if(!chosen)return;
   if(chosen.size>1048576){showError(fail('REQUEST_TOO_LARGE'));return;}f.loadingBody=true;
-  chosen.arrayBuffer().then(async raw=>{checkScope(scope);if(selected!==bodyRead)return;d.fileBase64=base64(new Uint8Array(raw));d.filename=chosen.name;d.bodyMode='file';f.elements.namedItem('bodyMode').value='file';await retainDraft(key);checkScope(scope);notice('Exact body saved: '+chosen.name+' · '+raw.byteLength+' bytes');}).catch(showError).finally(()=>{if(selected===bodyRead)f.loadingBody=false;});
+  chosen.arrayBuffer().then(async raw=>{
+   checkScope(scope);if(!current()||bodyEdits!==originalEdits)return;
+   d.fileBase64=base64(new Uint8Array(raw));d.filename=chosen.name;d.bodyMode='file';
+   f.elements.namedItem('bodyMode').value='file';
+   await retainDraft(key);checkScope(scope);
+   if(current())notice('Exact body saved: '+chosen.name+' · '+raw.byteLength+' bytes');
+  }).catch(error=>{if(current())showError(error);}).finally(()=>{if(selected===bodyRead)f.loadingBody=false;});
  });
  submit(f,'Save exact request','The saved request is dispatched from its own result page.');
  f.append(button('Start another request ID',async()=>{

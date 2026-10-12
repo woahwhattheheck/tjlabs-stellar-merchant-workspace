@@ -152,7 +152,7 @@ export async function serveConfiguredWorkspace({configFile,port=0,environment=pr
   approval=await originalApprovals(config,{mode:approvalMode,moduleFile:approvalModule,expectedSha256:expectedApprovalSha256});
   model=await openApiPassWorkspace({config,environment,approvals:approval.broker,expectedWorkspaceSha256});
   check(digest(await readBytes(configFile,65536))===configSha256,'REVIEWED_CONFIGURATION_CHANGED',409);
-  app=await startApiPassWorkspace({model,port});
+  app=await startApiPassWorkspace({model,port,beforeRelease});
   const source=await codeFile(ENTRY);
   launch={schema:LAUNCH_SCHEMA,status:agentDirectory?'STARTING':'LISTENING',instanceId:randomUUID(),workspaceId:model.state.id,
    directory:config.directory,configFile,configSha256,expectedWorkspaceSha256:expectedWorkspaceSha256??null,
