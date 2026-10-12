@@ -15,28 +15,34 @@ const descriptions = {
   contributor:'Record your completed work and invoices, attach original source files and submit work for review.',
   owner:'Administer the installation and operate its complete planning and delivery workspace.'
 };
-let identity=null, members=[], catalog=[], board=null, selectedCase=null, credential=null, eventsAfter=0, busy=false;
+let identity=null, members=[], catalog=[], board=null, selectedCase=null, credential=null, eventsAfter=0, busy=false, draft=null;
 const requests = new Map();
 function inform(message,error=false) {$('#message').textContent=message;$('#message').dataset.error=String(error);}
 async function run(action) {
   if(busy)return;
   busy=true;
   document.querySelectorAll('button').forEach(x=>{x.dataset.wasDisabled=String(x.disabled);x.disabled=true;});
+  const forms=[...document.querySelectorAll('form,#work-case')].map(element=>({element,inert:element.inert}));
+  forms.forEach(({element})=>{element.inert=true;});
   try {await action();}
   catch(error){inform(error.message,true);}
   finally {
     busy=false;
     document.querySelectorAll('button[data-was-disabled]').forEach(x=>{x.disabled=x.dataset.wasDisabled==='true';delete x.dataset.wasDisabled;});
+    forms.forEach(({element,inert})=>{element.inert=inert;});
+    renderDraftState();
   }
 }
 document.addEventListener('click',event=>{if(busy&&event.target.closest('button,a.button')){event.preventDefault();event.stopImmediatePropagation();}},true);
-function requestId(path,body) {
-  const key=identity.id+'\0'+path+'\0'+JSON.stringify(body);
+async function requestId(path,body) {
+  const staffId=identity.id;
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(body)));
+  const key=staffId+'\0'+path+'\0'+Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
   if(!requests.has(key))requests.set(key,crypto.randomUUID());
   return requests.get(key);
 }
 async function mutate(path,body) {
-  return staffRequest(path,{...body,requestId:requestId(path,body)});
+  return staffRequest(path,{...body,requestId:await requestId(path,body)});
 }
 function download(blob,name) {
   const url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -45,6 +51,10 @@ function download(blob,name) {
 }
 function downloadJson(value,name) {download(new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}),name);}
 async function openSession(session) {
+  if(draft&&session.principal.id!==draft.staffId) {
+    await signOutStaff();
+    throw new Error('Sign in as the person who opened this draft to continue it.');
+  }
   identity=session.principal;
   $('#sign-in').hidden=true;$('#signed-in').hidden=false;$('#sign-out').hidden=false;
   $('#person-name').textContent=identity.displayName;
@@ -123,7 +133,125 @@ async function refreshWork() {
   if(!board.cases.some(c=>c.program.id===selectedCase))selectedCase=board.cases[0]?.program.id||null;
   $('#work-case').innerHTML=board.cases.map(c=>option(c.program.id,c.program.name,c.program.id===selectedCase)).join('');
   renderWork();
+  reconcileDraft();
 }
+function closeDraft() {
+  draft=null;
+  $('#work-editor').replaceChildren();$('#work-editor').hidden=true;
+  $('#work-case').disabled=false;
+}
+function leaveDraft() {
+  if(!draft)return true;
+  if(draft.pending) {
+    inform('Use Receive original save before leaving this draft. Its original request is still available on this page.',true);
+    $('#work-editor').scrollIntoView({block:'nearest'});
+    return false;
+  }
+  if(draft.dirty&&!confirm('Discard the unsaved changes in this draft?'))return false;
+  closeDraft();return true;
+}
+function beginDraft(kind,c,id=null) {
+  const row=id?(kind==='work'?c.work:c.invoices).find(value=>value.id===id):null;
+  draft={kind,id,caseId:c.program.id,staffId:identity.id,contributorId:c.contributor.id,
+    version:c.program.version,baseline:JSON.stringify(row||null),dirty:false,pending:null,
+    conflict:null,blocked:'',notice:''};
+}
+function draftCase() {return board?.cases.find(c=>c.program.id===draft?.caseId);}
+function reconcileDraft() {
+  if(!draft)return;
+  const c=draftCase();
+  draft.blocked=!c?'This case is no longer assigned to this sign-in. Your draft is still on this page.'
+    :c.contributor.id!==draft.contributorId?'The contributor assignment changed. Your draft keeps its original person.'
+    :c.program.state==='CLOSED'?'This case is closed. Your draft is retained while the lead reviews it.':'';
+  if(c&&!draft.pending&&!draft.blocked) {
+    const row=draft.id?(draft.kind==='work'?c.work:c.invoices).find(value=>value.id===draft.id):null;
+    if(draft.id&&JSON.stringify(row||null)!==draft.baseline) {
+      draft.conflict={row,version:c.program.version,
+        editable:!!row&&row.state===(draft.kind==='work'?'LOGGED':'RECEIVED')};
+      draft.notice='This record changed while your draft was open. Review the current saved record below.';
+    } else {
+      if(draft.version!==c.program.version)draft.notice='Read the current case. Your entered values and selected file are retained.';
+      draft.version=c.program.version;draft.conflict=null;
+    }
+  }
+  renderDraftState();
+}
+function savedRecordSummary(row) {
+  if(!row)return blank('The original record is no longer available in this case.');
+  const states={LOGGED:'Logged',RECEIVED:'Received',SUBMITTED:'Submitted',ACCEPTED:'Accepted',VOID:'Void'};
+  const values=draft.kind==='work'
+    ?[['Completed work',esc(row.description)],['Hours',esc(row.hours)],
+      ['Work dates',esc(row.startDate)+' – '+esc(row.endDate)],['Source reference',esc(row.sourceNote)]]
+    :[['Invoice',esc(row.number)],['Issued / due',esc(row.issuedDate)+' / '+esc(row.dueDate||'Not entered')],
+      ['Total', 'USD '+esc(row.totalUsd)],['Source reference',esc(row.sourceNote)]];
+  values.push(['State',esc(states[row.state]||row.state)]);
+  let result=table(['Current saved field','Value'],values.map(([name,value])=>[esc(name),value]));
+  if(draft.kind==='invoice')result+=table(['Invoice line','Amount'],row.lines.map(line=>[esc(line.description),'USD '+esc(line.amountUsd)]));
+  return result;
+}
+function renderDraftState() {
+  if(!draft)return;
+  const form=$('#record-form')||$('#source-form');if(!form)return;
+  let status=$('#draft-status');
+  if(!status){status=document.createElement('div');status.id='draft-status';status.setAttribute('aria-live','polite');form.before(status);}
+  status.innerHTML=draft.pending
+    ?'<p>'+(busy?(draft.pending.uncertain?'Receiving the original save.':'Saving the original request.')
+      :'The save response is unavailable. Receive the original save to recover its result.')
+      +' The original file and entered values are retained on this page.</p>'
+    :draft.blocked?'<p>'+esc(draft.blocked)+'</p>'
+    :draft.conflict?'<p>'+esc(draft.notice)+'</p>'+savedRecordSummary(draft.conflict.row)
+      +(draft.conflict.editable?'<p>Your draft remains below. Keep it to apply your intended values to this current record, or cancel to leave the saved record as shown.</p><div class="actions">'
+        +button('Keep my draft on the current record','draft-use-current')+'</div>':'<p>The current record is no longer editable in the contributor desk. Your draft remains below.</p>')
+    :draft.notice?'<p>'+esc(draft.notice)+'</p>':'';
+  form.querySelectorAll('input,select,textarea,button[type=button]').forEach(element=>{element.inert=!!draft.pending;});
+  const submit=form.querySelector('button[type=submit]');
+  if(!submit.dataset.originalLabel)submit.dataset.originalLabel=submit.textContent;
+  submit.textContent=draft.pending?(busy?(draft.pending.uncertain?'Receiving original save':'Saving'):'Receive original save'):submit.dataset.originalLabel;
+  submit.disabled=busy||(!draft.pending&&!!(draft.blocked||draft.conflict));
+  form.noValidate=!!draft.pending;
+  $('#work-case').disabled=!!draft.pending;
+}
+async function saveDraft(action,data,note) {
+  const editing=draft;
+  if(!editing)throw new Error('Open the intended work, invoice or source draft.');
+  if(!editing.pending) {
+    if(editing.blocked||editing.conflict)throw new Error('Review the current saved record before saving this draft.');
+    const path='/api/operations/'+editing.caseId+'/command';
+    const body={expectedVersion:editing.version,actor:identity.actor,action,data,note};
+    editing.pending={path,body:{...body,requestId:await requestId(path,body)},uncertain:false};
+  } else {
+    const session=await readStaffSession();
+    if(!session.authenticated||session.principal.id!==editing.staffId) {
+      $('#sign-in').hidden=false;
+      throw new Error('Sign in as the original contributor, then receive the original save.');
+    }
+    identity=session.principal;
+  }
+  renderDraftState();
+  try {await staffRequest(editing.pending.path,editing.pending.body);}
+  catch(error) {
+    const definite=error.code==='OPERATIONS_CONFLICT'
+      ||(!editing.pending.uncertain&&error.status>=400&&error.status<500);
+    if(definite)editing.pending=null;
+    else editing.pending.uncertain=true;
+    if(error.status===401)$('#sign-in').hidden=false;
+    if(error.code==='OPERATIONS_CONFLICT') {
+      try {await refreshWork();}catch(refreshError) {
+        editing.notice='Your draft is retained. Refresh work when the connection returns.';
+      }
+    }
+    renderDraftState();throw error;
+  }
+  const kind=editing.kind;
+  closeDraft();
+  await refreshWork();
+  inform(kind==='source'?'The original file is retained and available for attachment.':'Saved the original '+kind+' record.');
+}
+$('#work-editor').addEventListener('input',()=>{if(draft)draft.dirty=true;});
+$('#work-editor').addEventListener('change',()=>{if(draft)draft.dirty=true;});
+window.addEventListener('beforeunload',event=>{
+  if(draft&&(draft.dirty||draft.pending)){event.preventDefault();event.returnValue='';}
+});
 const attachments = ids => {
   const c=currentCase();
   return '<fieldset class="wide source-checks"><legend>Original attachments</legend><div class="checks">'
@@ -173,7 +301,10 @@ function invoiceLine(line={},index=0) {
     +'</div></fieldset><div>'+button('Remove line','invoice-line-remove')+'</div></div></fieldset>';
 }
 function recordEditor(kind,id=null) {
-  const c=currentCase(),row=(kind==='work'?c.work:c.invoices).find(r=>r.id===id)||{};
+  if(!leaveDraft())return;
+  const c=currentCase();if(!c)return;
+  beginDraft(kind,c,id);
+  const row=(kind==='work'?c.work:c.invoices).find(r=>r.id===id)||{};
   const date=new Date().toISOString().slice(0,10);
   $('#work-editor').hidden=false;
   let fields;
@@ -190,8 +321,9 @@ function recordEditor(kind,id=null) {
   $('#record-form').addEventListener('submit',event=>{
     event.preventDefault();
     run(async()=>{
+      if(draft.pending)return saveDraft();
       const form=event.currentTarget,values=new FormData(form);
-      const data={contributorId:c.contributor.id,sourceIds:values.getAll('sourceIds'),sourceNote:values.get('sourceNote')};
+      const data={contributorId:draft.contributorId,sourceIds:values.getAll('sourceIds'),sourceNote:values.get('sourceNote')};
       if(id)data.id=id;
       if(kind==='work')Object.assign(data,{description:values.get('description'),costId:values.get('costId')||null,hours:values.get('hours'),
         startDate:values.get('startDate'),endDate:values.get('endDate'),fundingBasis:values.get('fundingBasis')});
@@ -199,8 +331,7 @@ function recordEditor(kind,id=null) {
         lines:[...form.querySelectorAll('[data-invoice-line]')].map(line=>({id:line.dataset.lineId,
           description:line.querySelector('[name=lineDescription]').value,amountUsd:line.querySelector('[name=lineAmount]').value,
           costId:line.querySelector('[name=lineCost]').value||null,workIds:[...line.querySelectorAll('[name=lineWork]:checked')].map(x=>x.value)}))});
-      await command(c,kind+'.save',data,values.get('note'));
-      $('#work-editor').hidden=true;await refreshWork();inform('Saved the original '+kind+' record.');
+      await saveDraft(kind+'.save',data,values.get('note'));
     });
   });
 }
@@ -209,7 +340,9 @@ async function command(c,action,data,note) {
     {expectedVersion:c.program.version,actor:identity.actor,action,data,note});
 }
 function sourceEditor() {
-  const c=currentCase();
+  if(!leaveDraft())return;
+  const c=currentCase();if(!c)return;
+  beginDraft('source',c);
   $('#work-editor').hidden=false;
   $('#work-editor').innerHTML='<h3>Upload an original source</h3><form id="source-form" class="form">'
     +'<label>Source file<input type="file" name="file" required></label><label>Source kind<select name="kind">'+option('work','Work')+option('invoice','Invoice')+'</select></label>'
@@ -218,13 +351,14 @@ function sourceEditor() {
   $('#source-form').addEventListener('submit',event=>{
     event.preventDefault();
     run(async()=>{
+      if(draft.pending)return saveDraft();
       const values=new FormData(event.currentTarget),file=values.get('file');
       if(!file.size||file.size>8*1024*1024)throw new Error('Select a nonempty original file up to 8 MiB.');
       const bytes=new Uint8Array(await file.arrayBuffer());let binary='';
       for(let n=0;n<bytes.length;n+=8192)binary+=String.fromCharCode(...bytes.subarray(n,n+8192));
-      await command(c,'source.add',{filename:file.name,contentBase64:btoa(binary),mediaType:file.type||'application/octet-stream',
+      await saveDraft('source.add',{filename:file.name,contentBase64:btoa(binary),mediaType:file.type||'application/octet-stream',
         kind:values.get('kind'),sourceUrl:values.get('sourceUrl')},'Retain original contributor source');
-      $('#work-editor').hidden=true;await refreshWork();inform('The original file is retained and available for attachment.');
+
     });
   });
 }
@@ -237,13 +371,20 @@ document.addEventListener('click',event=>{
   if(action==='credential-download')return downloadJson(credential,'grant-access-'+credential.staffId+'.json');
   if(action==='work-new'||action==='invoice-new')return recordEditor(action.split('-')[0]);
   if(action==='work-edit'||action==='invoice-edit')return recordEditor(action.split('-')[0],id);
-  if(action==='record-cancel'){$('#work-editor').hidden=true;return;}
+  if(action==='record-cancel'){leaveDraft();return;}
+  if(action==='draft-use-current') {
+    if(!draft?.conflict?.editable)return;
+    draft.baseline=JSON.stringify(draft.conflict.row);
+    draft.version=draft.conflict.version;draft.conflict=null;
+    draft.notice='Your draft is retained against the reviewed current record. Save it when the intended values are ready.';
+    renderDraftState();return;
+  }
   if(action==='source-new')return sourceEditor();
   if(action==='invoice-line-add') {
     const lines=$('#invoice-lines');if(lines.children.length>=200)return inform('An invoice supports up to 200 lines.',true);
-    lines.insertAdjacentHTML('beforeend',invoiceLine({id:'line-'+crypto.randomUUID().slice(0,12)},lines.children.length));return;
+    lines.insertAdjacentHTML('beforeend',invoiceLine({id:'line-'+crypto.randomUUID().slice(0,12)},lines.children.length));draft.dirty=true;return;
   }
-  if(action==='invoice-line-remove') {control.closest('[data-invoice-line]').remove();return;}
+  if(action==='invoice-line-remove') {control.closest('[data-invoice-line]').remove();draft.dirty=true;return;}
   run(async()=>{
     if(['profile-rotate','profile-revoke','profile-sign-out'].includes(action)) {
       const p=members.find(x=>x.id===id),verb=action.slice('profile-'.length);
@@ -254,6 +395,7 @@ document.addEventListener('click',event=>{
     }
     const matched=/^(work|invoice)-(submit|void)$/.exec(action);
     if(matched) {
+      if(!leaveDraft())return;
       const note=prompt(matched[2]==='submit'?'Submission note':'Reason for voiding the original record',
         matched[2]==='submit'?'Submit completed work for review':'');
       if(note===null)return;if(!note.trim())throw new Error('Record a reason for this transition.');
@@ -263,12 +405,12 @@ document.addEventListener('click',event=>{
 });
 $('#login-form').addEventListener('submit',event=>{event.preventDefault();const values=new FormData(event.currentTarget);run(async()=>{await openSession(await signInStaff(values.get('staffId'),values.get('accessCode')));inform('Signed in.');});});
 $('#owner-form').addEventListener('submit',event=>{event.preventDefault();const values=new FormData(event.currentTarget);run(async()=>{await openSession(await signInOwner(values.get('ownerKey').trim()));inform('Owner access opened.');});});
-$('#sign-out').addEventListener('click',()=>run(async()=>{await signOutStaff();credential=null;requests.clear();location.assign('/team');}));
+$('#sign-out').addEventListener('click',()=>run(async()=>{if(!leaveDraft())return;await signOutStaff();credential=null;requests.clear();location.assign('/team');}));
 $('#new-profile').addEventListener('click',()=>profileEditor());
 $('#refresh-staff').addEventListener('click',()=>run(refreshStaff));
 $('#refresh-work').addEventListener('click',()=>run(async()=>{await refreshWork();inform('Read the current case.');}));
 $('#download-work').addEventListener('click',()=>downloadJson(board,'grant-my-work-'+identity.id+'.json'));
-$('#work-case').addEventListener('change',event=>{selectedCase=event.target.value;$('#work-editor').hidden=true;renderWork();});
+$('#work-case').addEventListener('change',event=>{if(!leaveDraft()){event.target.value=selectedCase;return;}selectedCase=event.target.value;renderWork();});
 $('#backup').addEventListener('click',()=>run(async()=>{
   const response=await staffRequest('/api/staff/installation/export.zip',undefined,{download:true});
   download(await response.blob(),'grant-team-installation.zip');inform('Downloaded the complete operating installation and recovery instructions.');
