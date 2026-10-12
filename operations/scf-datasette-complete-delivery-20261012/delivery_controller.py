@@ -142,7 +142,7 @@ def persist_complete_phase(original_outcome,phase):
         else:shutil.copy2(prior_manifest,retained_manifest)
     export=root/"export";export.mkdir(mode=0o700,exist_ok=True)
     archive_path=export/("Datasette_Publisher_Complete_Checkpoint.zip" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Checkpoint.zip")
-    members=[];excluded=[]
+    members=[];directories=[];excluded=[]
     with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
         for folder,dirs,files in os.walk(root,followlinks=False):
             dirs.sort();files.sort()
@@ -164,7 +164,7 @@ def persist_complete_phase(original_outcome,phase):
                     members.append({"path":rel,"kind":"symlink","target":os.readlink(path)});continue
                 if not stat.S_ISREG(info.st_mode):excluded.append({"path":rel,"kind":"non-regular-runtime-member"});continue
                 z.write(path,rel);members.append({"path":rel,"bytes":info.st_size,"sha256":digest(path),"mtime_ns":info.st_mtime_ns})
-        z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"excluded":excluded},indent=2)+"\n")
+        z.writestr("complete-checkpoint-manifest.json",json.dumps({"schema":"commons.datasette-complete-checkpoint.v1","operation":OP,"original_root":str(root),"state":outcome["state"],"source":source_identity,"files":members,"directories":directories,"excluded":excluded},indent=2)+"\n")
     archive_identity={"file_name":archive_path.name,"bytes":archive_path.stat().st_size,"sha256":digest(archive_path),"members":len(members)+1}
     emit("datasette_complete_checkpoint",state=outcome["state"],**archive_identity)
     def save_files(paths,label):
@@ -284,6 +284,17 @@ try:
     if not (repository/".git").is_dir():
         run(["git","init",repository],"canonical-git-init")
         run(["git","-C",repository,"remote","add","origin",payload["repository_url"]],"canonical-git-origin")
+    git_directory=repository/".git"
+    shape={name:{"directory":(git_directory/name).is_dir(),"file":(git_directory/name).is_file()} for name in ("HEAD","config","objects","refs")}
+    emit("datasette_restored_git_layout",**shape)
+    if not (git_directory/"refs").exists():
+        if (not (git_directory/"objects").is_dir() or not (git_directory/"config").is_file()
+            or not (git_directory/"HEAD").is_file()
+            or (git_directory/"HEAD").read_text().strip()!=payload["installed_source_ref"]):
+            raise RuntimeError("The retained Git metadata differs from its original detached source.")
+        original_head=(git_directory/"HEAD").read_bytes()
+        run(["git","-C",repository,"init"],"canonical-git-restore-directories")
+        if (git_directory/"HEAD").read_bytes()!=original_head:raise RuntimeError("The original Git HEAD changed while restoring its directories.")
     resolved=subprocess.run(["git","-C",repository,"rev-parse","--verify",payload["installed_source_ref"]+"^{commit}"],capture_output=True,text=True)
     if resolved.returncode:
         run(["git","-C",repository,"-c","http.version=HTTP/1.1","-c","pack.threads=1","-c","pack.windowMemory=32m","fetch","--depth","1","--no-tags","origin",payload["installed_source_ref"]],"canonical-git-fetch",timeout=600)
@@ -317,7 +328,7 @@ try:
     probe.write_text('import {pathToFileURL} from "node:url";\nconst loaded=await import(pathToFileURL(process.argv[2]).href);\nconst chromium=loaded.chromium ?? loaded.default?.chromium;\nif(!chromium)throw new Error("The selected runtime has no Chromium launcher.");\nconsole.log(JSON.stringify({module:process.argv[2],executable:chromium.executablePath()}));\n',encoding="utf-8")
     run([node,probe,playwright],"browser-runtime-location",timeout=60)
     browser_description=json.loads((root/"browser-runtime-location.stdout").read_text())
-    candidates=[P(value) for value in (os.environ.get("DATASETTE_CHROMIUM"),browser_description.get("executable"),shutil.which("chromium"),shutil.which("chromium-browser"),shutil.which("google-chrome"),"/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell") if value]
+    candidates=[P(value) for value in (os.environ.get("DATASETTE_CHROMIUM"),browser_description.get("executable"),shutil.which("chromium"),shutil.which("chromium-browser"),shutil.which("google-chrome"),"/workspace/scratch/64b7f381b23e/browser-runtime/chrome-151.0.7922.34/chrome-linux64/chrome","/tmp/chromium","/workspace/scratch/97c4b0da767a/hif-browser-runtime/extracted/chromium","/workspace/scratch/5403360e55a4/counterpress-capture-runtime/bin/chromium","/workspace/scratch/b57f9a30380a/browser-runtime/chromium-153/chromium","/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell") if value]
     chromium=next((path for path in candidates if path.is_file() and os.access(path,os.X_OK)),None)
     if chromium is None:
         os.environ["PLAYWRIGHT_BROWSERS_PATH"]=str(browser_home/"browsers")
