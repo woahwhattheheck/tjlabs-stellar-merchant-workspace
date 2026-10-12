@@ -2,7 +2,7 @@
 
 Operation: WINDMILL-OPEN311-IMPLEMENTATION-9B2C-20261012.
 
-The complete 33-file integration is merged in [PR 283](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/283), merge commit `20e56a68c142ca75dec245cdc39d217b0ef5b6b0`. The reviewed source head is `9a4aa2397c3f61de8d104feeadff62106c426c61`.
+The complete 33-file integration was merged in [PR 283](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/283). Browser recovery is now merged in [PR 348](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/348), merge commit `d58fe759dcf1f4c6e4cd7ca400fb1b16864176b0`, reviewed head `1febb08f5dba6bb30724a48c379e4965a617237c`. All 33 integration files in the native packet match that merge. The original 19 Open311 dependencies retain their explicit original source composition in the packet.
 
 ## Files
 
@@ -14,7 +14,11 @@ The complete 33-file integration is merged in [PR 283](https://github.com/woahwh
 | results/open311-adapter-81d804d.zip | Complete source, both databases, raw captures, all download bodies, operation results and process logs from the completed run |
 | results/open311-adapter-81d804d.json | Complete actual run summary |
 
-Current native source packet: 460,921 bytes, Git blob `43f791f203195f9b9ae0b92a09dbc3d28aaab701`. The current native journey stops and starts the same Compose project while the original approval waits, then continues that same job through approval, exports and receiving.
+Current native source packet: 462,874 bytes, Git blob `8cf91cdbd13d20964464113c14ada71e543bcfa7`. The current native journey stops and starts the same Compose project while the original approval waits, then continues that same job through approval, exports and receiving.
+
+## Browser recovery
+
+The native app retains each complete active launch input until Activity has been persisted and the job is terminal. Reopening merges retained tickets without replacing newer known states. Storage failures preserve the launch input and display a recovery error; late launch responses preserve newer polling results. The merged App is 33,105 bytes, Git blob `4d3072dfa700299264d1d9db7c09cc46f61d3de4`.
 
 ## Completed adapter workflow
 
