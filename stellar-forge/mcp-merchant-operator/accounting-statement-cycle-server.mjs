@@ -141,9 +141,10 @@ export async function startAccountingStatementCycleWorkbench({
     const previous=jobs.get(key);if(['QUEUED','RUNNING'].includes(previous?.phase))return previous;
     const job={kind,phase:'QUEUED',error:null,startedAt:new Date().toISOString(),finishedAt:null,promise:null};
     jobs.set(key,job);
-    job.promise=workQueue.then(()=>{controller.signal.throwIfAborted();job.phase='RUNNING';return work();}).then(()=>{job.phase='FINISHED';},error=>{job.phase='ERROR';job.error=cleanError(error);})
+    const predecessor=kind==='RUN'?workQueue:Promise.resolve();
+    job.promise=predecessor.then(()=>{controller.signal.throwIfAborted();job.phase='RUNNING';return work();}).then(()=>{job.phase='FINISHED';},error=>{job.phase='ERROR';job.error=cleanError(error);})
       .finally(()=>{job.finishedAt=new Date().toISOString();});
-    workQueue=job.promise;
+    if(kind==='RUN')workQueue=job.promise;
     return job;
   }
   const jobView=job=>({kind:job.kind,phase:job.phase,error:job.error,startedAt:job.startedAt,finishedAt:job.finishedAt});
@@ -227,7 +228,7 @@ export async function startAccountingStatementCycleWorkbench({
           need(original.label===body.label.trim()&&JSON.stringify(original.selections)===JSON.stringify(selections),'This preparation request already belongs to different customer selections. Start a new cycle.',409,'WORKBENCH_PREPARATION_CHANGED');
           if(await exists(join(cyclePath(key),'manifest.json'))){sendJson(response,200,await record(key));return;}
         }
-        const job=begin(key,'PREPARE',async()=>prepareAccountingStatementCycle({directory:cyclePath(key),url,workspace,actor,label:body.label.trim(),selections,tokenEnv,environment,signal:controller.signal,client:await connection()}));
+        const job=begin(key,'PREPARE',async()=>prepareAccountingStatementCycle({directory:cyclePath(key),url,workspace,actor,label:body.label.trim(),selections,tokenEnv,environment,signal:controller.signal,client:providedClient}));
         job.label=body.label.trim();job.inputHash=inputHash;
         sendJson(response,202,{key,job:jobView(job)});return;
       }
@@ -246,7 +247,7 @@ export async function startAccountingStatementCycleWorkbench({
         }
         if(request.method==='POST'&&action==='prepare'){
           await bodyJson(request);const original=await compatible(key);
-          const job=begin(key,'PREPARE',async()=>prepareAccountingStatementCycle({directory:cyclePath(key),url,workspace,actor:original.actor,label:original.label,selections:original.selections,tokenEnv:original.tokenEnv,environment,signal:controller.signal,client:await connection()}));
+          const job=begin(key,'PREPARE',async()=>prepareAccountingStatementCycle({directory:cyclePath(key),url,workspace,actor:original.actor,label:original.label,selections:original.selections,tokenEnv:original.tokenEnv,environment,signal:controller.signal,client:providedClient}));
           sendJson(response,202,{key,job:jobView(job)});return;
         }
         const reviewMatch=action.match(/^items\/([1-9][0-9]*)\/review$/);
