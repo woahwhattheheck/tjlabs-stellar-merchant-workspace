@@ -10,6 +10,7 @@ import webbrowser
 from .duckdb_dataset import DuckDBWorkspace
 from . import spatial_cli
 from .reconciliation import cli as reconciliation_cli
+from .duckdb_analytics import cli as analytics_cli
 from .timescale_intake import cli as timescale_intake_cli
 from .errors import BuyerError
 from .storage import parse, read
@@ -50,6 +51,7 @@ def parser():
     commands = result.add_subparsers(dest="command", required=True)
     spatial_cli.add_parser(commands)
     reconciliation_cli.add_parser(commands)
+    analytics_cli.add_parser(commands)
     timescale_intake_cli.add_parser(commands)
     commands.add_parser("status", help="Read editions, active views, import reviews, saved queries and exports")
 
@@ -141,6 +143,8 @@ def main(argv=None):
             }
         elif args.command == "timescale-intake":
             output = timescale_intake_cli.dispatch(workspace, args)
+        elif args.command == "analytics":
+            output = analytics_cli.dispatch(workspace, args)
         elif args.command == "reconcile":
             output = reconciliation_cli.dispatch(workspace, args)
         elif args.command == "spatial":

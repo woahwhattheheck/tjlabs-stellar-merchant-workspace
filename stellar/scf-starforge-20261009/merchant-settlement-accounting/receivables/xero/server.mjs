@@ -106,7 +106,14 @@ function publicError(error) {
       /CONFLICT|STALE|REVISION|VERSION|REQUEST_ID_REUSED|LEASE|ALREADY/i.test(code) ? 409 :
       code === 'INTERNAL_ERROR' ? 500 : 400;
   }
-  return {status, value: {error: {code, message: status >= 500 ? 'The workspace could not finish this request. Keep the operation and retry after recovery.' : String(error?.message || code), ...(error?.details === undefined ? {} : {details: error.details})}}};
+  return {status, value: {error: {
+    code,
+    message: status >= 500 ? 'The workspace could not finish this request. Keep the operation and retry after recovery.' : String(error?.message || code),
+    ...(error?.details === undefined ? {} : {details: error.details}),
+    ...(typeof error?.outcomeUnknown === 'boolean' ? {outcomeUnknown: error.outcomeUnknown} : {}),
+    ...(typeof error?.reopenRequired === 'boolean' ? {reopenRequired: error.reopenRequired} : {}),
+    ...(error?.commitUncertainty === undefined ? {} : {commitUncertainty: error.commitUncertainty}),
+  }}};
 }
 
 
@@ -143,6 +150,27 @@ export async function handleXeroReceivablesRequest(controller, {
   if (method === 'GET') {
     if (route === '' || route === 'state') result = await controller.state({asOf: search.get('asOf') || undefined});
     else if (parts[0] === 'packages' && parts.length === 2) result = await controller.detail(parts[1]);
+    else if (parts[0] === 'packages' && parts[2] === 'cash' && parts[3] === 'cycles') {
+      if (parts.length === 4) result = await controller.cashCycles(parts[1]);
+      else if (parts.length === 5) result = await controller.cashCycle(parts[1], parts[4]);
+      else if (parts.length === 7 && parts[5] === 'files') {
+        const selected = await controller.cashFile(parts[1], parts[4], parts[6]);
+        return {file: selected, type: selected.type};
+      } else if (parts.length === 6 && parts[5] === 'export') {
+        const bundle = await controller.cashExport(parts[1], parts[4]), name = search.get('name');
+        if (name === 'handover.tar') {
+          const selected = {name: 'xero-cash-' + parts[1] + '-' + parts[4] + '.tar',
+            type: 'application/x-tar', bytes: renderCustomerTar(bundle.files)};
+          return {file: selected, type: selected.type};
+        }
+        if (name) {
+          const selected = bundle.files.find(item => item.name === name);
+          if (!selected) throw problem('DOCUMENT_NOT_FOUND', 'Choose a file listed in this saved cash cycle.', 404);
+          return {file: selected, type: selected.type};
+        }
+        result = bundle.value;
+      } else throw problem('NOT_FOUND', 'This saved Xero cash-cycle route does not exist.', 404);
+    }
     else if (parts[0] === 'packages' && parts[2] === 'files' && parts.length === 4) {
       const selected = await controller.file(parts[1], parts[3]); return {file: selected, type: selected.type};
     } else if (parts[0] === 'packages' && parts[2] === 'export' && parts.length === 3) {
@@ -163,6 +191,10 @@ export async function handleXeroReceivablesRequest(controller, {
     if (route === 'profiles') result = await controller.saveProfile(value);
     else if (route === 'preview') result = await controller.preview(value);
     else if (route === 'packages') result = await controller.prepare(value);
+    else if (parts[0] === 'packages' && parts[2] === 'cash' && parts.length === 4 && parts[3] === 'preview')
+      result = await controller.cashPreview(parts[1], value);
+    else if (parts[0] === 'packages' && parts[2] === 'cash' && parts.length === 4 && parts[3] === 'cycles')
+      result = await controller.cashCapture(parts[1], value);
     else if (parts[0] === 'packages' && parts.length === 3 && parts[2] === 'receive') result = await controller.receive(parts[1], value);
     else if (parts[0] === 'packages' && parts.length === 3 && parts[2] === 'correct') result = await controller.correct(parts[1], value);
     else throw problem('NOT_FOUND', 'This Xero handover operation does not exist.', 404);

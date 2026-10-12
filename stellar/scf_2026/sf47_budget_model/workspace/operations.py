@@ -30,6 +30,7 @@ import operations_performance as performance
 import operations_ledger_intake as ledger_intake
 import operations_payables as payables
 import operations_task_outcomes as task_outcomes
+import operations_funding as funding
 import award_terms
 import issuer_receiving
 import operations_cash_accounts as cash_accounts
@@ -301,6 +302,10 @@ class Operations:
             if command == "source.add":
                 after = self._source_add(program_id, data)
                 kind, record_id = "source", after["id"]
+            elif command == "funding.save":
+                result = funding.save(self, context, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                extra_receipt = {"funding": result["funding"]}
             elif command == issuer_receiving.ACTION:
                 if not _within_transaction:
                     domain.fail("Use the complete original message receiving action.")
@@ -502,7 +507,7 @@ class Operations:
             self.db.execute("UPDATE ops_programs SET version=?,updated_at=? WHERE id=?", (next_version, now(), program_id))
             self._event(program_id, next_version, {**body, "actor": actor, "note": note}, command, before, after, kind, record_id,
                         source_change=source_change)
-            if command in amendments.ACTIONS or command in award_terms.ACTIONS:
+            if command in amendments.ACTIONS or command in award_terms.ACTIONS or command == "funding.save":
                 # Reject atomically if these complete decisions would make the
                 # original case impossible to hand over through its native limit.
                 self.export(program_id)
@@ -514,6 +519,34 @@ class Operations:
             return action()
         return self.workspace._transaction(body.get("requestId"), payload, action)
 
+
+    def funding_catalog(self, program_id):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            return {"catalog": funding.catalog(context),
+                    "history": [funding.summary(row) for row in reversed(funding.records(self, program_id))]}
+
+    def seed_funding(self, program_id, body):
+        with self._snapshot():
+            return funding.seed(self, self._context(identifier(program_id, "operation")), body)
+
+    def preview_funding(self, program_id, body):
+        with self._snapshot():
+            return funding.preview(self, self._context(identifier(program_id, "operation")), body)
+
+    def funding(self, program_id, revision=None):
+        with self._snapshot():
+            return funding.get(self, self._context(identifier(program_id, "operation")), revision)
+
+    def funding_request(self, program_id, request_id):
+        with self._snapshot():
+            return funding.request(self, identifier(program_id, "operation"), request_id)
+
+    def export_funding(self, program_id, revision, expected_version, expected_report_sha256):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            funding.expected_version(context, {"expectedVersion": expected_version})
+            return funding.export_bundle(self, context, revision, expected_report_sha256)
 
 
     def inspect_issuer_correspondence(self, program_id, body):
@@ -1428,7 +1461,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, reconciliation_account = account_reconciliation.unwrap_bundle(raw)
+        native_raw, funding_report = funding.unwrap_bundle(raw)
+        native_raw, reconciliation_account = account_reconciliation.unwrap_bundle(native_raw)
         native_raw, cash_account = cash_accounts.unwrap_bundle(native_raw)
         native_raw, supplier_account = payables.unwrap_bundle(native_raw)
         native_raw, performance_report = performance.unwrap_bundle(native_raw)
@@ -1540,6 +1574,8 @@ class Operations:
             domain.fail("The selected installation heads differ from their complete retained editions.")
         saved_work_intakes = work_intake.validate_import(context, document.get("workIntakes", []), events, files,
                                                         plan_for_version=selected_plan_at)
+        funding.validate_import(context, events, files, saved_work_intakes, plan_for_version=selected_plan_at)
+        selected_funding = funding.validate_received(funding_report, document, files)
         intake_refs = work_intake.refs(saved_work_intakes)
         if document.get("workIntakeRefs", []) != intake_refs:
             domain.fail("The current work/invoice intake selections differ from their complete saved editions.", "INTAKE_RECEIVING")
@@ -1660,6 +1696,7 @@ class Operations:
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
                     **({"selectedInstallation": selected_installation} if selected_installation else {}),
                     **({"selectedTaskOutcomes": selected_task_outcomes} if selected_task_outcomes else {}),
+                    **({"selectedFunding": selected_funding} if selected_funding else {}),
                     **({"selectedAwardTerms": selected_award_terms} if selected_award_terms else {}),
                     **({"selectedEngagement": selected_engagement} if selected_engagement else {}),
                     **({"selectedInstallationReturn": selected_installation_return} if selected_installation_return else {}),

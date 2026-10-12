@@ -109,7 +109,8 @@ function bindOriginalSources({ outcome, request, terms, routeId, payer }) {
     httpStatus: outcome.httpStatus,
     contentType: typeof outcome.contentType === 'string' ? outcome.contentType : null };
 }
-async function loadInput(configFile) {
+async function loadInput(configFile, resolveSourcePath = path => path) {
+  need(typeof resolveSourcePath === 'function', 'RECOVERY_SOURCE_PATH_RESOLVER_REQUIRED');
   const config = parse(await readPrivate(configFile));
   const keys = ['schema', 'outcomeFile', 'requestFile', 'termsFile', 'routeId', 'payer',
     'rpcEndpoint', 'httpsProxyEnv', 'response'];
@@ -120,7 +121,7 @@ async function loadInput(configFile) {
   'RECOVERY_INVALID_PROXY_ENVIRONMENT_NAME');
   const source = new Map();
   for (const [name, key] of [['outcome.json', 'outcomeFile'], ['request.json', 'requestFile'], ['terms.json', 'termsFile']])
-    source.set(name, await readPrivate(config[key]));
+    source.set(name, await readPrivate(resolveSourcePath(normalized(config[key]))));
   const outcome = parse(source.get('outcome.json'));
   const request = parse(source.get('request.json'));
   const terms = parse(source.get('terms.json'));
@@ -136,7 +137,7 @@ async function loadInput(configFile) {
       Object.keys(r).every(key => ['file', 'sha256', 'bytes'].includes(key)) && hex(r.sha256) &&
       Number.isSafeInteger(r.bytes) && r.bytes >= 0 && r.bytes <= RESPONSE_LIMIT,
     'RECOVERY_SAVED_RESPONSE_IDENTITY_REQUIRED');
-    const bytes = await readPrivate(r.file, RESPONSE_LIMIT, { allowEmpty: true });
+    const bytes = await readPrivate(resolveSourcePath(normalized(r.file)), RESPONSE_LIMIT, { allowEmpty: true });
     need(bytes.length === r.bytes && sha(bytes) === r.sha256, 'RECOVERY_SAVED_RESPONSE_CHANGED');
     source.set('response.bin', bytes);
     response = { file: 'response.bin', sha256: r.sha256, bytes: r.bytes, contentType: binding.contentType,
@@ -152,8 +153,8 @@ const reviewed = input => ({ schema: CONFIG_SCHEMA, origin: RECOVERY_ORIGIN, ...
   nextOperation: 'READ_ONLY_ORIGINAL_SF86_TRANSFER_RECONCILIATION' });
 
 /** Offline input review: reads selected files, no SDK, keys, listener, or RPC. */
-export async function reviewRecoveredSettlement({ configFile } = {}) {
-  return reviewed(await loadInput(configFile));
+export async function reviewRecoveredSettlement({ configFile, resolveSourcePath } = {}) {
+  return reviewed(await loadInput(configFile, resolveSourcePath));
 }
 function verifyProofBinding(proof, entry) {
   need(object(proof) && proof.schema === 'stellar-forge.sf86.rpc-reconciliation.v1' &&
@@ -212,8 +213,8 @@ function requireSameImport(existing, input) {
 
 /** Independent RPC reconciliation followed by one durable, immutable local import. */
 export async function importRecoveredSettlement({ configFile, recoveredDir, fetchImpl,
-  decodeContractEvent, signal } = {}) {
-  const input = await loadInput(configFile);
+  decodeContractEvent, signal, resolveSourcePath } = {}) {
+  const input = await loadInput(configFile, resolveSourcePath);
   await directory(recoveredDir, { create: true });
   const { recoveryId } = input.binding;
   if (await exists(join(recoveredDir, recoveryId)))

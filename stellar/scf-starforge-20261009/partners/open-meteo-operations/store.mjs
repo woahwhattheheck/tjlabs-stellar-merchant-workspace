@@ -7,6 +7,7 @@ import {privateDirectory,privateSqliteFile} from './files.mjs';
 import {SCHEMA,need,keys,normalizeSite,normalizeRequest,parsePayload,canonical,sha,clone,text,ATTRIBUTION} from './contract.mjs';
 import {decisionInput,evaluate,reportDigest} from './analysis.mjs';
 import {createWeatherHandover,inspectWeatherHandover,prepareWeatherReceiving,weatherReceivingIdentity} from './portable.mjs';
+import {normalizeWeatherRenewal,reviewWeatherRenewal,weatherRenewalRecord,weatherRenewalSourceMatches} from './renewal.mjs';
 const {acquireStateLease}=await native('merchant-fleet-gateway/state-lease.mjs');
 const now=()=>new Date().toISOString(),parse=s=>s===null?null:JSON.parse(s);
 const receivingSummary=record=>{
@@ -28,6 +29,7 @@ export class WeatherStore{
     'CREATE TABLE IF NOT EXISTS decisions(id TEXT NOT NULL,revision INTEGER NOT NULL,capture_id TEXT NOT NULL REFERENCES captures(id),payload TEXT NOT NULL,result TEXT NOT NULL,created TEXT NOT NULL,PRIMARY KEY(id,revision));'+
     'CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY,payload TEXT NOT NULL,sha TEXT NOT NULL,created TEXT NOT NULL);'+
     'CREATE TABLE IF NOT EXISTS received_reports(package_sha TEXT PRIMARY KEY,receipt_id TEXT NOT NULL,original BLOB NOT NULL,created TEXT NOT NULL);'+
+    'CREATE TABLE IF NOT EXISTS report_renewals(review_sha TEXT PRIMARY KEY,selection_sha TEXT NOT NULL,report_id TEXT NOT NULL REFERENCES reports(id),created TEXT NOT NULL);'+
     'CREATE TABLE IF NOT EXISTS receiving_history(id TEXT PRIMARY KEY,payload TEXT NOT NULL);'+
     'CREATE TABLE IF NOT EXISTS events(sequence INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT NOT NULL,subject TEXT NOT NULL,payload TEXT NOT NULL,created TEXT NOT NULL);PRAGMA user_version=1;');
    const store=new WeatherStore(directory,db,lease);
@@ -136,6 +138,56 @@ export class WeatherStore{
   return this.transaction(()=>{const old=this.db.prepare('SELECT MAX(revision) r FROM decisions WHERE id=?').get(id).r??0;need(old===expected,'DECISION_REVISION_CHANGED');
    this.db.prepare('INSERT INTO decisions VALUES (?,?,?,?,?,?)').run(id,old+1,capture.id,canonical(payload),canonical({...result,captureSha256:capture.sha256,specSha256:capture.specSha256}),now());
    this.event('DECISION_SAVED',id,{revision:old+1,captureId:capture.id});return this.decision(id);});
+ }
+ renewalChoices(reportId){
+  this.assert();const report=this.report(reportId),available=this.captures();
+  const entries=report.decisions.map(baseline=>{
+   const working=this.decision(baseline.id),previous=this.capture(working.captureId,{raw:false});
+   const candidates=available.filter(capture=>weatherRenewalSourceMatches(previous,capture,working.rule.variable));
+   if(!candidates.some(capture=>capture.id===previous.id))candidates.push(previous);
+   return {baseline,working,candidates,selection:{decisionId:working.id,expectedRevision:working.revision,
+    captureId:working.captureId,startUtc:working.rule.startUtc,endUtc:working.rule.endUtc,disposition:'review',notes:working.notes}};
+  });
+  return {report,entries,selection:{reportId:report.id,expectedReportSha256:report.sha256,
+   title:report.title,owner:report.owner,notes:report.notes,entries:entries.map(entry=>entry.selection)}};
+ }
+ reviewRenewal(input){
+  this.assert();const selection=normalizeWeatherRenewal(input),report=this.report(selection.reportId);
+  const current=report.decisions.map(decision=>this.decision(decision.id));
+  const captureIds=new Set([...report.decisions.map(decision=>decision.captureId),...current.map(decision=>decision.captureId),
+   ...selection.entries.map(entry=>entry.captureId)]);
+  return reviewWeatherRenewal({originId:this.originId(),report,currentDecisions:current,
+   captures:[...captureIds].map(id=>this.capture(id)),input:selection});
+ }
+ commitRenewal(input,{expectedReviewSha256}={}){
+  const selection=normalizeWeatherRenewal(input),selectionSha256=sha(Buffer.from(canonical(selection)));
+  need(/^[a-f0-9]{64}$/.test(expectedReviewSha256??''),'RENEWAL_REVIEW_REQUIRED');
+  return this.transaction(()=>{
+   const prior=this.db.prepare('SELECT selection_sha,report_id FROM report_renewals WHERE review_sha=?').get(expectedReviewSha256);
+   if(prior){
+    need(prior.selection_sha===selectionSha256,'RENEWAL_REVIEW_INPUT_CHANGED');
+    return {schema:'stellar-forge.weather-report-renewal-result.v1',reopened:true,
+     reviewSha256:expectedReviewSha256,report:this.report(prior.report_id)};
+   }
+   const review=this.reviewRenewal(selection);need(review.reviewSha256===expectedReviewSha256,'RENEWAL_REVIEW_CHANGED');
+   const createdAt=now(),updated=review.entries.map(entry=>{
+    const {id,revision,captureId,result,...payload}=entry.proposed;
+    this.db.prepare('INSERT INTO decisions VALUES (?,?,?,?,?,?)').run(id,revision,captureId,canonical(payload),canonical(result),createdAt);
+    this.event('DECISION_RENEWED',id,{revision,captureId,sourceReportId:review.sourceReport.id,reviewSha256:expectedReviewSha256});
+    return {...entry.proposed,createdAt};
+   });
+   const captureIds=[...new Set(updated.map(decision=>decision.captureId))],captures=captureIds.map(id=>this.capture(id,{raw:false}));
+   const id='report-'+randomUUID(),payload={schema:'stellar-forge.weather-report.v1',id,createdAt,
+    title:selection.title,owner:selection.owner,notes:selection.notes,decisions:updated,captures,
+    renewal:weatherRenewalRecord(review,updated),attribution:ATTRIBUTION};
+   const hash=reportDigest(payload);
+   this.db.prepare('INSERT INTO reports VALUES (?,?,?,?)').run(id,canonical(payload),hash,createdAt);
+   this.db.prepare('INSERT INTO report_renewals VALUES (?,?,?,?)').run(expectedReviewSha256,selectionSha256,id,createdAt);
+   this.event('REPORT_RENEWED',id,{sha256:hash,sourceReport:review.sourceReport,reviewSha256:expectedReviewSha256,
+    decisions:updated.length,captures:captures.length});
+   return {schema:'stellar-forge.weather-report-renewal-result.v1',reopened:false,
+    reviewSha256:expectedReviewSha256,report:{...payload,sha256:hash}};
+  });
  }
  freezeReport(input){
   keys(input,['title','owner','notes','decisions']);need(Array.isArray(input.decisions)&&input.decisions.length>=1&&input.decisions.length<=32,'REPORT_SELECTION_INVALID');

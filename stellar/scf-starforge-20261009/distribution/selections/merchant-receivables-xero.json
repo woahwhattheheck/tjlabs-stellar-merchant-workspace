@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-receivables-xero",
   "title": "Merchant receivables and Xero handovers",
-  "description": "Complete original invoices, payments, credits and service billing with exact Xero draft imports, native provider results, retained document identities and corrected handovers.",
+  "description": "Complete original invoices, customer payments, credit dispositions and service billing with Xero document receiving and immutable cash commissioning across successive billing cycles.",
   "base": {
     "commands": [
       "installation",
@@ -84,7 +84,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete original invoices, payments, credits and service billing with exact Xero draft imports, native provider results, retained document identities and corrected handovers.",
+    "description": "Complete original invoices, customer payments, credit dispositions and service billing with Xero document receiving and immutable cash commissioning across successive billing cycles.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

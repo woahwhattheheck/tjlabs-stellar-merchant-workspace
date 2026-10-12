@@ -225,7 +225,39 @@ export interface PlanningExplicitFundingReport extends Omit<PlanningExplicitFund
   economics: PlanningEconomicAmounts | null;
 }
 
+
+export declare const COHORT_SCHEDULING_SCHEMA: "stellar-forge.sf47-delivery-scheduling.v1";
+export interface PlanningDateAllocation {
+  /** Date selected by the unchanged original cadence and source calendar. */
+  sourceDate: DateText;
+  /** Reviewed delivery date inside that same complete rule window. */
+  date: DateText;
+}
+export interface PlanningSchedulingPolicy {
+  scheduleId: string;
+  flexible: boolean;
+  /** Tolerances are anchored to sourceDate; replanning does not reset them. */
+  advanceDays: number;
+  delayDays: number;
+  releaseDate: DateText | null;
+  /** The complete output must arrive by the end of this UTC date. */
+  dueDate: DateText | null;
+  weekdays: Weekday[];
+  minimumGapDays: number;
+  /** Larger values receive shared capacity first. */
+  priority: number;
+  note: string;
+}
+export interface PlanningDeliveryScheduling {
+  schema: typeof COHORT_SCHEDULING_SCHEMA;
+  strategy: "NEAREST" | "EARLIEST";
+  schedules: PlanningSchedulingPolicy[];
+  note: string;
+}
+export declare function normalizeCohortScheduling(raw: unknown, schedules: PlanningSchedule[]): PlanningDeliveryScheduling;
+
 export interface PlanningSchedule {
+  dateAllocations?: PlanningDateAllocation[];
   fundingGroupIds?: string[];
   origin?: PlanningFundingOrigin | null;
   /** Shared active-hours pool; omission keeps delivery effort unassigned. */
@@ -265,6 +297,7 @@ export interface PlanningSensitivity {
 
 /** Complete normalized plan; the edition may also retain the original caller JSON. */
 export interface CohortPlan {
+  deliveryScheduling?: PlanningDeliveryScheduling;
   schema: typeof COHORT_PLAN_SCHEMA;
   draftId: string;
   name: string;
@@ -363,6 +396,9 @@ export interface PlanningEconomicAmounts {
 }
 
 export interface PlanningOccurrence extends PlannedMetrics {
+  /** Present when this original occurrence has a reviewed date allocation. */
+  sourceDate?: DateText;
+  originalScheduledAt?: TimestampText;
   fundingGroupIds?: string[];
   id: string;
   scheduleId: string;

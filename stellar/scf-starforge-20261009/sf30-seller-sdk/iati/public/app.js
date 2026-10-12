@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),short=x=>String(x??'').slice(0,12);
 let token=location.hash.slice(1);
 try{token ||= sessionStorage.getItem('sf30.iati.token');if(token)sessionStorage.setItem('sf30.iati.token',token);
  if(location.hash)history.replaceState(null,'',location.pathname+location.search);}catch{}
-let dqaUi, publishingUi, refreshUi, organisationUi, resultsUi, reconciliationUi, ampUi, documentEvidenceUi;
+let dqaUi, publishingUi, refreshUi, organisationUi, resultsUi, reconciliationUi, ampUi, documentEvidenceUi, geographyUi;
 let state={sources:[],plans:[],builds:[],comparisons:[]},portfolios=[],presets=[];
 let source=null,portfolio=null,report=null,comparison=null,changesOffset=0,nextChanges=null;
 let currentQuery={},queryBase={},cursor=null,queryHistory=[],busy=false,savedPlan=null;
@@ -39,6 +39,8 @@ function buttons(){
  organisationUi?.buttons();
  reconciliationUi?.buttons();
  ampUi?.buttons();
+ geographyUi?.buttons();
+ $('source-to-geography').disabled=busy||!source||source?.inventory?.kind==='organisation';
  documentEvidenceUi?.buttons();
  $('source-to-portfolio').disabled=busy||source?.inventory?.kind==='organisation';
  $('source-to-organisation').hidden=source?.inventory?.kind!=='organisation';
@@ -128,6 +130,7 @@ async function refresh(selected={}){
  await refreshUi?.refresh();
  await resultsUi?.refresh();
  await ampUi?.refresh();
+ await geographyUi?.refresh();
  $('connection').textContent='Private source workspace';buildSummary();buttons();
 }
 async function openSource(id){
@@ -235,6 +238,7 @@ $('source-form').addEventListener('submit',event=>{event.preventDefault();action
  await refresh({source:result.id});await openSource(result.id);status('Original publisher edition retained: '+result.bytes+' bytes.');});});
 $('source-open').onclick=()=>action('Opening the retained source profile…',async()=>{await openSource($('source-select').value);status('Original source profile opened.');});
 $('source-to-organisation').onclick=()=>action('Opening organisation planning for this publisher…',async()=>{show('organisation');await organisationUi.newPlanFromSource(source.source.id);});
+$('source-to-geography').onclick=()=>action('Opening geographic review for this publisher…',async()=>{show('geography');await geographyUi.newFromSource(source.source.id);});
 $('source-to-portfolio').onclick=()=>{show('portfolios');formPortfolio();if(source?.source?.id)sourceChoices([source.source.id]);};
 $('portfolio-new').onclick=()=>{formPortfolio();$('portfolio-report').replaceChildren();$('portfolio-report').textContent='Save this selection to build its source-backed report.';status('New portfolio selection. Existing revisions remain retained.');};
 $('portfolio-open').onclick=()=>action('Opening the exact saved portfolio revision…',async()=>{await openPortfolio($('portfolio-select').value,$('portfolio-revision').value||undefined);status('Saved portfolio and complete report opened.');});
@@ -282,6 +286,7 @@ refreshUi=window.IatiRefreshUi({get,post,request,action,status,download,metrics,
 resultsUi=window.IatiResultsUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>state});
 reconciliationUi=window.IatiOrganisationReconciliationUi({get,post,request,action,status,download,metrics,table,properties,details,refreshWorkspace:refresh,show,isBusy:()=>busy});
 ampUi=window.IatiAmpUi({get,post,request,action,status,download,metrics,table,properties,details,portfolioList:()=>portfolios,refreshWorkspace:refresh,show,isBusy:()=>busy});
+geographyUi=window.IatiGeographyUi({get,post,request,action,status,download,metrics,table,properties,details,workspaceState:()=>({...state,sources:state.sources.filter(x=>!organisationUi?.isOrganisationSource(x.id))}),portfolioList:()=>portfolios,refreshWorkspace:refresh,show,isBusy:()=>busy});
 documentEvidenceUi=window.IatiDocumentEvidenceUi({get,post,request,action,status,metrics,table,properties,details,refreshWorkspace:refresh,show,isBusy:()=>busy,openOrganisationPlan:(id,revision)=>organisationUi.openPlan(id,revision)});
 action('Opening the original private IATI workspace…',async()=>{
  if(!token)throw new Error('Open the private console URL printed by this original process.');
