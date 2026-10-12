@@ -1,19 +1,17 @@
 // MIT. Operate the original CanadaBuys HTTP API on existing customer workspaces.
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, open, rename, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const copy = value => JSON.parse(JSON.stringify(value));
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const need = (ok, message) => { if (!ok) throw new Error(message); };
-const metadata = new Set(['id', 'revision', 'expectedRevision', 'createdAt', 'updatedAt', 'history', 'totals', 'operator']);
 function differences(expected, actual, path = '') {
   if (Array.isArray(expected)) {
     if (!Array.isArray(actual) || expected.length !== actual.length) return [{path, expected, actual: actual ?? null}];
     return expected.flatMap((value, index) => differences(value, actual[index], path + '[' + index + ']'));
   }
   if (expected !== null && typeof expected === 'object') return Object.entries(expected)
-    .filter(([key]) => !metadata.has(key))
     .flatMap(([key, value]) => differences(value, actual?.[key], path ? path + '.' + key : key));
   return expected === actual ? [] : [{path, expected: expected ?? null, actual: actual ?? null}];
 }
@@ -28,6 +26,20 @@ function workshareFields(record) {
     .filter(key => Object.hasOwn(record || {}, key)).map(key => [key, record[key]]));
   if (fields.currency) fields.currency = fields.currency.toUpperCase();
   return fields;
+}
+async function atomicWrite(path, body) {
+  const temporary = path + '.' + randomUUID() + '.tmp';
+  const handle = await open(temporary, 'wx', 0o600);
+  try {
+    await handle.writeFile(body);
+    await handle.sync();
+    await handle.close();
+    await rename(temporary, path);
+  } catch (error) {
+    await handle.close().catch(() => {});
+    await unlink(temporary).catch(() => {});
+    throw error;
+  }
 }
 async function optionalJSON(path) {
   try { return JSON.parse(await readFile(path, 'utf8')); }
@@ -56,22 +68,33 @@ export async function operateCanadaBuysApi({
     need(previous.schema === 'commons.canadabuys.api-journey.v1' &&
       previous.noticeId === noticeId && previous.workspace.id === initial.workspace.id,
       'The retained operation belongs to another notice or workspace.');
-    await writeFile(join(directory, 'previous-attempt-' + Date.now() + '.json'), json(previous), {mode:0o600});
+    await atomicWrite(join(directory, 'previous-attempt-' + Date.now() + '.json'), json(previous));
   }
   const result = {
     schema:'commons.canadabuys.api-journey.v1', interface:'http-api', status:'running',
     startedAt:previous?.startedAt || new Date().toISOString(), continuedAt:new Date().toISOString(),
     directory, noticeId, workspace:copy(initial.workspace), stage:'original-source',
-    saved:copy(previous?.saved || {}), downloads:{}
+    saved:copy(previous?.saved || {}), downloads:{},
+    receivingTarget:copy(previous?.receivingTarget || previous?.receiving?.before || previous?.receiving?.after || null),
+    receiving:copy(previous?.receiving || null)
   };
-  const save = async () => writeFile(join(directory, 'result.json'), json(result), {mode:0o600});
+  const save = async () => atomicWrite(join(directory, 'result.json'), json(result));
   const write = async (name, value) => {
     const body = typeof value === 'string' || Buffer.isBuffer(value) ? value : json(value);
     const bytes = Buffer.from(body);
-    await writeFile(join(directory, name), bytes, {mode:0o600});
+    await atomicWrite(join(directory, name), bytes);
     return {file:name, path:join(directory, name), bytes:bytes.length, sha256:sha256(bytes)};
   };
   try {
+    if (result.receivingTarget?.id) need(receivingClient, 'Supply the original receiving client to continue this operation.');
+    if (receivingClient) {
+      const target = (await receivingClient.workspace()).workspace;
+      need(target?.id, 'The receiving client must identify its existing workspace.');
+      if (result.receivingTarget?.id) need(result.receivingTarget.id === target.id,
+        'Continue with the original receiving workspace.');
+      else result.receivingTarget = copy(target);
+      await save();
+    }
     const originalRead = await client.notice(noticeId), original = originalRead.notice || originalRead;
     need(original.id === noticeId && original.currentEntry?.row && Array.isArray(original.history),
       'Retain the complete original notice and history.');
@@ -174,15 +197,20 @@ export async function operateCanadaBuysApi({
     if (receivingClient) {
       result.stage = 'receive-same-package';
       const before = await receivingClient.workspace();
+      need(before.workspace?.id === result.receivingTarget?.id,
+        'Continue receiving into the original target workspace.');
+      if (result.receiving?.packageId !== pkg.packageId) result.receiving = null;
       let priorReceipt = null;
       try { const value = await receivingClient.receiving(pkg.packageId); priorReceipt = value.receiving || value; }
       catch (error) { if (error.status !== 404) throw error; }
       let receipt;
       if (priorReceipt) receipt = {receiving:priorReceipt, ...(await receivingClient.workspace())};
       else {
+        result.receiving = {before:copy(before.workspace), packageId:pkg.packageId,
+          expectedRevision:before.workspace.revision, receiving:null};
+        await save();
         receipt = await receivingClient.receivePackage(pkg, before.workspace.revision);
-        result.receiving = {before:before.workspace, after:receipt.workspace, packageId:pkg.packageId,
-          expectedRevision:before.workspace.revision, receiving:receipt.receiving || null};
+        result.receiving = {...result.receiving, after:receipt.workspace, receiving:receipt.receiving || null};
         await save();
       }
       need(receipt.workspace?.id === before.workspace.id, 'Receiving changed the original target workspace.');
