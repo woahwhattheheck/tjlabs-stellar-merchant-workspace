@@ -1,7 +1,8 @@
 // MIT. QCEW joins the original complete FRED project bundle and receiving transaction.
 import { need, canonical, clone } from './model.mjs';
-import { QCEW_PUBLICATION_EXTENSION, QCEW_PUBLICATION_MAX_BYTES, validateQcewMerchantPlan } from './publication-model.mjs';
-import { decodeQcewReportDelivery } from './delivery.mjs';
+import { QCEW_PUBLICATION_EXTENSION, QCEW_CUSTOMER_EXTENSION, QCEW_PUBLICATION_MAX_BYTES, validateQcewMerchantPlan } from './publication-model.mjs';
+import { qcewMerchantDefinition } from './merchant.mjs';
+import { exportQcewCustomerState, validateQcewCustomerState, receiveQcewCustomerState } from './purchase.mjs';
 import { QCEW_EXTENSION, validateQcewState, qcewStatePresent } from './state.mjs';
 import { createQcewCaptureContext, readQcewCapture, readQcewCaptureWithContext, inspectQcewCapture, storeQcewCapture, sha256 } from './source.mjs';
 import { readQcewFiles, validateQcewFilePackage, receiveQcewFiles } from './files.mjs';
@@ -39,10 +40,11 @@ export async function exportQcewExtension(directory,state,fredCaptures,{sourceCo
       const merchant=await readQcewMerchant(qcewPublicationDirectory(directory,record.id));
       validateQcewMerchantPlan(merchant.plan,{record,edition:inventory.editions.find(item=>item.id===record.editionId)});
       publications.push({plan:clone(merchant.plan),delivery:{encoding:'base64',bytes:merchant.deliveryBytes.length,
-        sha256:sha256(merchant.deliveryBytes),body:merchant.deliveryBytes.toString('base64')}});
+        sha256:sha256(merchant.deliveryBytes),body:merchant.deliveryBytes.toString('base64')},
+        customers:await exportQcewCustomerState(merchant.directory,merchant)});
     }
   }
-  const extension={schema:publications.length?QCEW_PUBLICATION_EXTENSION:QCEW_EXTENSION,captures,editions,
+  const extension={schema:publications.length?QCEW_CUSTOMER_EXTENSION:QCEW_EXTENSION,captures,editions,
     ...(publications.length?{publications}:{})};
   validateQcewExtension(extension,state,fredCaptures,{sourceContexts});
   return extension;
@@ -52,7 +54,8 @@ export function validateQcewExtension(extension,state,fredCaptures,{sourceContex
   if(!present) {need(extension===null||extension===undefined,'An unbound QCEW extension is not part of this project.');return null;}
   sourceContexts=operationContexts(sourceContexts);
   const publicationRecords=inventory.publications??[];
-  need(extension?.schema===(publicationRecords.length?QCEW_PUBLICATION_EXTENSION:QCEW_EXTENSION)&&
+  need((publicationRecords.length?[QCEW_PUBLICATION_EXTENSION,QCEW_CUSTOMER_EXTENSION].includes(extension?.schema):
+      extension?.schema===QCEW_EXTENSION)&&
     (publicationRecords.length?Array.isArray(extension.publications)&&extension.publications.length===publicationRecords.length:
       extension.publications===undefined)&&Array.isArray(extension.captures)&&Array.isArray(extension.editions)&&
     extension.captures.length===inventory.captures.length&&extension.editions.length===inventory.editions.length,
@@ -102,14 +105,20 @@ export function validateQcewExtension(extension,state,fredCaptures,{sourceContex
     need(bytes.length===file.bytes&&bytes.toString('base64')===file.body&&sha256(bytes)===file.sha256&&
       plan.downloads.some(item=>item.path==='report-package.json.gz'&&item.bytes===file.bytes&&item.sha256===file.sha256),
       'The original paid report package bytes changed.');
-    const delivery=decodeQcewReportDelivery(bytes);
+    const merchant=qcewMerchantDefinition({deliveryBytes:bytes,origin:plan.origin,path:plan.path,payment:plan.payment});
+    need(canonical(merchant.plan)===canonical(plan),'The complete original county merchant terms changed.');
+    const delivery=merchant.checked;
     need(delivery.delivery.editionId===record.editionId&&delivery.delivery.deliverySha256===record.deliverySha256&&
       delivery.editions.every(item=>{
         const original=editions.get(item.manifest.editionId);
         return original&&canonical({manifest:original.manifest,files:original.files})===
           canonical({manifest:item.manifest,files:item.files});
       }),'The paid report package differs from the original project editions.');
-    publications.set(record.id,{plan,bytes,editions:delivery.editions});
+    const customers=extension.schema===QCEW_CUSTOMER_EXTENSION?
+      validateQcewCustomerState(transfer.customers,merchant):null;
+    need(extension.schema===QCEW_CUSTOMER_EXTENSION||transfer.customers===undefined,
+      'Use the complete customer-state extension for retained county purchase requests.');
+    publications.set(record.id,{plan,bytes,editions:delivery.editions,merchant,customers});
   }
   return {captures,editions,sourceContexts,publications};
 }
@@ -132,6 +141,7 @@ export async function receiveQcewExtension(directory,extension,state,fredCapture
       const merchant=await prepareQcewMerchant({directory:qcewPublicationDirectory(directory,record.id),
         editions:transfer.editions,origin:plan.origin,path:plan.path,payment:plan.payment,originalDeliveryBytes:transfer.bytes});
       need(canonical(merchant.plan)===canonical(plan),'The original county merchant changed during complete project receiving.');
+      if(transfer.customers)await receiveQcewCustomerState(merchant.directory,transfer.customers,transfer.merchant);
     }
   }
   return {captures:inventory.captures.length,profiles:inventory.profiles.length,editions:inventory.editions.length,

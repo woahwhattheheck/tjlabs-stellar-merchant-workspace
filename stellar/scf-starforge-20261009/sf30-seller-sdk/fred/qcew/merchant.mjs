@@ -32,7 +32,7 @@ export function qcewPublicationDirectory(directory, publicationId) {
   need(HASH.test(publicationId ?? ''), 'Choose a retained county publication.');
   return join(resolve(directory), 'qcew', 'publications', publicationId);
 }
-function merchantDefinition({ deliveryBytes, origin, path, payment }) {
+export function qcewMerchantDefinition({ deliveryBytes, origin, path, payment }) {
   const checked = decodeQcewReportDelivery(deliveryBytes);
   const terms = normalizeQcewMerchantTerms({ origin, path, payment });
   const edition = checked.edition, manifest = edition.manifest;
@@ -65,7 +65,7 @@ function merchantDefinition({ deliveryBytes, origin, path, payment }) {
     configSha256: sha256(configBytes), offersSha256: sha256(offersBytes) };
   plan.planSha256 = qcewMerchantPlanSha256(plan);
   validateQcewMerchantPlan(plan);
-  return { checked, assets, plan, config, configBytes, offers, offersBytes };
+  return { checked, edition: editionView(checked), assets, plan, config, configBytes, offers, offersBytes };
 }
 function editionView(checked) {
   const { edition, delivery } = checked;
@@ -89,7 +89,7 @@ export async function prepareQcewMerchant({ directory, editions, origin, path = 
     deliveryBytes ??= encodeQcewReportDelivery(delivery);
     need(canonical(decodeQcewReportDelivery(deliveryBytes).delivery) === canonical(delivery),
       'Retain the exact original paid report package for these complete editions.');
-    const value = merchantDefinition({ deliveryBytes, origin, path, payment });
+    const value = qcewMerchantDefinition({ deliveryBytes, origin, path, payment });
     await retainQcewDeliveryBytes(directory, deliveryBytes);
     for (const file of value.assets) if (file.path !== QCEW_REPORT_PACKAGE) await exactFile(directory, file.path, file.body);
     await exactFile(directory, 'merchant-config.json', value.configBytes);
@@ -106,7 +106,7 @@ export async function readQcewMerchant(directory) {
   const deliveryBytes = await readBytes(join(directory, QCEW_REPORT_PACKAGE), packageFile.bytes);
   need(deliveryBytes.length === packageFile.bytes && sha256(deliveryBytes) === packageFile.sha256,
     'The original paid report package changed.');
-  const value = merchantDefinition({ deliveryBytes, origin: plan.origin, path: plan.path, payment: plan.payment });
+  const value = qcewMerchantDefinition({ deliveryBytes, origin: plan.origin, path: plan.path, payment: plan.payment });
   need(canonical(plan) === canonical(value.plan), 'The original county merchant plan or file inventory changed.');
   for (const asset of value.assets) {
     if (asset.path === QCEW_REPORT_PACKAGE) continue;
