@@ -216,8 +216,13 @@ def read_csv(decoded, config):
 
 
 def cash_facts(row):
+    allocations = row.get("allocations", [])
+    if (not isinstance(allocations, list)
+            or any(not isinstance(item, dict) or not isinstance(item.get("invoiceId"), str)
+                   for item in allocations)):
+        fail("The statement cash facts have an invalid original invoice allocation.", "STATEMENT_CASH_RECORD")
     return {**{key: row.get(key) for key in CASH_FACTS},
-            "allocations": sorted(row.get("allocations", []), key=lambda item: item["invoiceId"])}
+            "allocations": sorted(allocations, key=lambda item: item["invoiceId"])}
 
 
 def reference_key(account, currency, reference):
@@ -235,7 +240,8 @@ def preview(context, inputs):
                       "inputs": {key: value for key, value in inputs.items() if key != "source"}})
     source["editionSha256"] = edition
     previous_sources = [row for row in context["sources"].values()
-                        if row.get("statement", {}).get("schema") == SCHEMA
+                        if isinstance(row.get("statement"), dict)
+                        and row["statement"].get("schema") == SCHEMA
                         and row["statement"].get("role") == "CSV"
                         and row["statement"].get("editionSha256") == edition]
     staged = deepcopy(context)
@@ -392,7 +398,9 @@ def preview(context, inputs):
     total_records = sum(len(values) for values in context["records"].values())
     if total_records + counts["NEW"] > MAX_ROWS:
         findings.append({"code": "STATEMENT_RECORD_LIMIT", "message": "This import would exceed the original case's 5,000 retained-record limit."})
-    known_edition = next((source for source in previous_sources if source.get("statement", {}).get("reviewSourceId") in context["sources"]), None)
+    known_edition = next((source for source in previous_sources
+                          if isinstance(source["statement"].get("reviewSourceId"), str)
+                          and source["statement"]["reviewSourceId"] in context["sources"]), None)
     if known_edition and counts["NEW"]:
         findings.append({"code": "STATEMENT_RETAINED_EDITION_CONFLICT", "message": "A retained statement edition is missing an original cash observation. Reopen its complete case before receiving this edition again."})
     unchanged = bool(known_edition and not counts["NEW"] and not counts["CONFLICT"])
@@ -507,6 +515,8 @@ def validate_import(context, events, files):
         if not isinstance(marker, dict) or marker.get("schema") != SCHEMA or marker.get("role") != "CSV":
             continue
         review_id = marker.get("reviewSourceId")
+        if not isinstance(review_id, str) or not review_id:
+            fail("The original statement is missing its retained review identity.", "STATEMENT_IMPORT_SOURCE")
         review_source = sources.get(review_id)
         if (not review_source or not isinstance(review_source.get("statement"), dict)
                 or review_source["statement"].get("csvSourceId") != metadata["id"]):
@@ -518,7 +528,7 @@ def validate_import(context, events, files):
         if not isinstance(review, dict):
             fail("The retained statement review must be an object.", "STATEMENT_IMPORT_REVIEW")
         if (review.get("schema") != SCHEMA + ".review" or review.get("sourceId") != metadata["id"]
-                or review.get("sourceSha256") != metadata["sha256"] or review.get("editionSha256") != marker["editionSha256"]):
+                or review.get("sourceSha256") != metadata["sha256"] or review.get("editionSha256") != marker.get("editionSha256")):
             fail("The statement review differs from its original source identity.", "STATEMENT_IMPORT_SOURCE")
         candidate = review.get("preview", {})
         if not isinstance(candidate, dict):
@@ -536,18 +546,24 @@ def validate_import(context, events, files):
         rows = {row["rowNumber"]: row for row in candidate["rows"]}
         selected_rows = review["cashRows"]
         if (len(rows) != len(candidate["rows"])
-                or any(not isinstance(row, dict) or set(row) != {"rowNumber", "cashId"} for row in selected_rows)
+                or any(not isinstance(row, dict) or set(row) != {"rowNumber", "cashId"}
+                       or isinstance(row.get("rowNumber"), bool) or not isinstance(row.get("rowNumber"), int)
+                       or row["rowNumber"] < 2 or not isinstance(row.get("cashId"), str) or not row["cashId"]
+                       for row in selected_rows)
                 or len({row["cashId"] for row in selected_rows}) != len(selected_rows)
                 or len({row["rowNumber"] for row in selected_rows}) != len(selected_rows)
                 or {row["rowNumber"] for row in selected_rows} != {number for number, row in rows.items() if row["status"] == "NEW"}):
             fail("The statement review must retain one original cash identity for every new source row.", "STATEMENT_IMPORT_CASH")
-        expected_existing = [row["recordId"] for row in candidate["rows"] if row["status"] == "EXISTING"]
-        if review.get("existingCashIds") != expected_existing or len(set(expected_existing)) != len(expected_existing):
+        expected_existing = [row.get("recordId") for row in candidate["rows"] if row["status"] == "EXISTING"]
+        if (any(not isinstance(ident, str) or not ident for ident in expected_existing)
+                or review.get("existingCashIds") != expected_existing or len(set(expected_existing)) != len(expected_existing)):
             fail("The statement review differs from its selected existing cash identities.", "STATEMENT_IMPORT_CASH")
         for selected in selected_rows:
             original = rows.get(selected.get("rowNumber"))
             retained = cash.get(selected.get("cashId"))
-            if not original or not retained or original.get("status") != "NEW" or cash_facts(retained) != cash_facts(original.get("record", {})):
+            if (not original or not retained or original.get("status") != "NEW"
+                    or not isinstance(original.get("record"), dict)
+                    or cash_facts(retained) != cash_facts(original["record"])):
                 fail("An imported statement cash observation differs from its original review.", "STATEMENT_IMPORT_CASH")
             if not {metadata["id"], review_id}.issubset(retained.get("sourceIds", [])):
                 fail("A statement cash observation is missing its original source and review.", "STATEMENT_IMPORT_CASH")

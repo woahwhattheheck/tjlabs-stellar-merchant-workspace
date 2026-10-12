@@ -9,7 +9,9 @@ export const OPENAQ_SOURCE='stellar/scf-starforge-20261009/sf30-seller-sdk/opena
 export const STARTUP_SCHEMA='stellar-forge.openaq-workspace-startup.v1';
 export const SOURCE_FILES=Object.freeze(['contract.mjs','projection.mjs','source.mjs','reports.mjs','package.mjs','publisher.mjs','workspace.mjs',
  'server.mjs','managed.mjs','cli.mjs','download.mjs','application-provider.mjs','operator.mjs','operator-tools.mjs','operator-provider.mjs',
- 'public/index.html','public/app.mjs','public/style.css','examples/archive-context.json']);
+ 'public/index.html','public/app.mjs','public/style.css','examples/archive-context.json',
+ 'examples/completed-del-norte/manifest.json','examples/completed-del-norte/study.tgz',
+ 'examples/completed-del-norte/report.html','examples/completed-del-norte/report.json']);
 export async function inspectOpenAQSource(directory=fileURLToPath(new URL('.',import.meta.url)),expected){
  directory=await realpath(resolve(directory));const files=[];
  for(const name of SOURCE_FILES){

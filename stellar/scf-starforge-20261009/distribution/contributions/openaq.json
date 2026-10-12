@@ -24,7 +24,12 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/project.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/archive-plan.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/archive-context.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/operations/archive-study.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/operations/archive-study.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/manifest.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/study.tgz",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/report.html",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/report.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/READING_GUIDE.md"
   ],
   "browserAssets": [
     {

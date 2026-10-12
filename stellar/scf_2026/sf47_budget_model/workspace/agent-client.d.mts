@@ -126,6 +126,191 @@ export interface GrantStatementReceipt {
   previewSha256: string;
 }
 
+export interface GrantCommercialConnectionInput {
+  id: string;
+  label: string;
+  /** Complete local HTTP API URL including its original port and API path. */
+  baseUrl: string;
+  actor: string;
+  requestId: string;
+}
+export interface GrantCommercialConnection {
+  id: string;
+  label: string;
+  baseUrl: string;
+  workspaceId: string;
+  sourcesSha256: string;
+  recordedBy: string;
+}
+export interface GrantCommercialConnections {
+  schema: 'stellar-forge.commercial-receivables-connections.v1';
+  endpoints: GrantCommercialConnection[];
+}
+export interface GrantCommercialCustomers {
+  revision: number;
+  issuer: GrantObject;
+  customers: (GrantObject & { id: string; name: string })[];
+}
+export interface GrantCommercialCurrency { code: string; scale: number; }
+export type GrantCommercialBillingBasis = 'PHASE_ACCEPTANCE' | 'COMMERCIAL_AUTHORIZATION';
+export interface GrantCommercialScheduleInput {
+  expectedVersion: number;
+  installationId: string;
+  installationRevision: number;
+  expectedInstallationSha256: string;
+  /** Exact original currency scale, from zero through six. Amounts are never rounded. */
+  currencyScale: number;
+}
+export interface GrantCommercialMilestoneMapping {
+  milestoneId: string;
+  issueDate: GrantCivilDate;
+  dueDate: GrantCivilDate;
+  billingBasis: GrantCommercialBillingBasis;
+  requiredCheckIds?: string[];
+  authorizationSourceIds?: string[];
+  authorizationNote?: string;
+}
+export interface GrantCommercialPrepareInput extends GrantCommercialScheduleInput {
+  requestId: string;
+  actor: string;
+  expectedScheduleSha256: string;
+  endpointId: string;
+  customerId: string;
+  /** Every original schedule milestone appears exactly once. */
+  milestones: GrantCommercialMilestoneMapping[];
+  purchaseOrder?: string;
+  note?: string;
+}
+export interface GrantCommercialSource {
+  sourceId: string;
+  sourceSha256: string;
+  packetSourceId: string | null;
+  packetSha256: string | null;
+  caseId: string;
+  planSha256: string;
+}
+export interface GrantCommercialSourceMilestone {
+  milestoneId: string;
+  sourceIndex: number;
+  label: string;
+  trigger: string;
+  /** Exact fixed-scale native money. */
+  amount: string;
+  sourceAmount: string | number;
+  sourceSha256: string;
+  original: GrantObject;
+}
+export interface GrantCommercialSchedule {
+  schema: 'stellar-forge.sf47-commercial-receivables.v1';
+  programId: string;
+  expectedVersion: number;
+  installation: GrantInstallationRef;
+  source: GrantCommercialSource;
+  customer: unknown;
+  supplier: unknown;
+  title: string;
+  currency: GrantCommercialCurrency;
+  amount: string;
+  priceStatus: string;
+  commercial: GrantObject;
+  milestones: GrantCommercialSourceMilestone[];
+  phaseChecks: GrantObject[];
+  scheduleSha256: string;
+}
+export interface GrantCommercialEligibility extends GrantObject {
+  ready: boolean;
+}
+export interface GrantCommercialIntent extends GrantObject {
+  id: string;
+  action: 'draft' | 'issue';
+  state: string;
+  actor: string;
+  attempts: number;
+  native: GrantObject | null;
+}
+export interface GrantCommercialMilestone extends GrantCommercialSourceMilestone, GrantCommercialMilestoneMapping {
+  obligationKey: string;
+  specificationSha256: string;
+  specificationRevision: number;
+  superseded: boolean;
+  nativeRequestId: string;
+  requiredCheckIds: string[];
+  authorizationSourceIds: string[];
+  authorizationNote: string;
+  invoiceId: string | null;
+  native: GrantObject | null;
+  lastRefreshAt: string | null;
+  origin: { programId: string; preparedId: string; milestoneId: string; };
+  draftIntent: GrantCommercialIntent | null;
+  issueIntent: GrantCommercialIntent | null;
+  eligibility: GrantCommercialEligibility;
+}
+export interface GrantCommercialPrepared {
+  schema: 'stellar-forge.sf47-commercial-receivables.v1';
+  id: string;
+  programId: string;
+  sourceProgramId: string;
+  createdAt: string;
+  actor: string;
+  requestId: string;
+  endpointId: string;
+  accountingIdentity: { workspaceId: string; sourcesSha256: string; [key: string]: unknown; };
+  customerId: string;
+  nativeCustomer: GrantObject;
+  schedule: GrantCommercialSchedule;
+  milestones: GrantCommercialMilestone[];
+  purchaseOrder: string;
+  note: string;
+  sourceSnapshot: {
+    installation: Omit<GrantInstallationEdition, 'current'>;
+    commissioningCase: GrantObject;
+    receivingPacket: GrantObject | null;
+    workshare: GrantObject;
+  };
+  preparedSha256: string;
+}
+export interface GrantCommercialSummary {
+  id: string;
+  createdAt: string;
+  customerName: string;
+  currency: GrantCommercialCurrency;
+  amount: string;
+  milestoneCount: number;
+  draftCount: number;
+  issuedCount: number;
+  voidCount: number;
+  pendingCount: number;
+  supersededCount: number;
+}
+export interface GrantCommercialList {
+  schema: 'stellar-forge.sf47-commercial-receivables.v1';
+  programId: string;
+  items: GrantCommercialSummary[];
+}
+export interface GrantCommercialIssuePreview {
+  id: string;
+  milestoneId: string;
+  invoiceId: string;
+  eligibility: GrantCommercialEligibility;
+  nativePreview: {
+    document: GrantObject;
+    previewSha256: string;
+    expectedVersion: number;
+    revision: number;
+  };
+  issuePreviewSha256: string;
+  retainedIntent?: GrantCommercialIntent;
+}
+export interface GrantCommercialCommandResult {
+  id: string;
+  milestoneId: string;
+  obligationKey: string;
+  requestId: string;
+  intent: GrantCommercialIntent;
+  native: GrantObject;
+  commercial: GrantCommercialPrepared;
+}
+
 export interface GrantBindingInput {
   directory: string;
   scenarioFile?: string;
@@ -1040,6 +1225,86 @@ export interface GrantPortfolioSelection extends GrantObject {
   };
 }
 
+/** Two explicit retained revisions; omit toPlanId to compare within the same plan. */
+export interface GrantPlanComparisonSelection {
+  planId: string;
+  fromRevision: number;
+  toRevision: number;
+  toPlanId?: string;
+  expectedComparisonSha256?: string;
+}
+export interface GrantPlanComparisonExportSelection extends GrantPlanComparisonSelection {
+  expectedComparisonSha256: string;
+}
+export interface GrantPlanComparisonIdentity {
+  id: string;
+  name: string;
+  revision: number;
+  savedAt: string;
+  note: string;
+  contentSha256: string;
+  reportSha256: string;
+  calculatorSha256: string | null;
+  source: GrantObject & { sha256: string; filename: string; url: string };
+}
+export interface GrantPlanComparisonChange {
+  path: string;
+  kind: 'added' | 'removed' | 'changed';
+  beforePresent: boolean;
+  afterPresent: boolean;
+  before: unknown;
+  after: unknown;
+}
+export interface GrantPlanComparisonRow {
+  id: string;
+  state: 'added' | 'removed' | 'changed' | 'unchanged';
+  before: GrantObject | null;
+  after: GrantObject | null;
+  changes: GrantPlanComparisonChange[];
+}
+export interface GrantPlanComparisonMetric {
+  id: string;
+  label: string;
+  unit: string;
+  before: string | number | null;
+  after: string | number | null;
+  /** Exact decimal after minus before. Null means at least one side is unset or absent. */
+  delta: string | null;
+  path: string;
+}
+export interface GrantPlanComparisonDay {
+  day: number;
+  before: GrantObject | null;
+  after: GrantObject | null;
+  delta: Record<'accruedUsd' | 'plannedOutflowUsd' | 'conditionalInflowUsd' | 'cashGapUsd' | 'gapAfterCapitalInputUsd' | 'accruedUnpaidUsd', string | null>;
+}
+export interface GrantPlanComparison {
+  schema: 'stellar-forge.sf47.plan-comparison.v1';
+  comparisonSha256: string;
+  before: GrantPlanComparisonIdentity;
+  after: GrantPlanComparisonIdentity;
+  basis: {
+    delta: 'after - before';
+    reportBasis: string;
+    dailyBasis: string;
+    sameOriginalSource: boolean;
+    sameCalculator: boolean;
+    sameInputs: boolean;
+  };
+  summary: {
+    inputChanges: number;
+    reportChanges: number;
+    groups: Record<'workPackages' | 'milestones' | 'contributors' | 'delivery', Record<'added' | 'removed' | 'changed' | 'unchanged', number>>;
+    modeledDaysBefore: number;
+    modeledDaysAfter: number;
+  };
+  metrics: GrantPlanComparisonMetric[];
+  groups: Record<'workPackages' | 'milestones' | 'contributors' | 'delivery', GrantPlanComparisonRow[]>;
+  changes: Array<GrantPlanComparisonChange & { area: 'scenario' | 'planning' | 'report' }>;
+  days: GrantPlanComparisonDay[];
+  snapshots: Record<'before' | 'after', GrantObject & { scenario: GrantObject; planning: GrantObject; report: GrantObject }>;
+}
+
 export interface GrantReadSelection {
   planId?: string;
   caseId?: string;
@@ -1056,6 +1321,11 @@ export type GrantOtherReadView =
   | 'forecasts' | 'forecast' | 'portfolios' | 'portfolio' | 'review' | 'completion';
 export interface GrantDownloadSelections {
   plan: { planId: string };
+  'plan-comparison': GrantPlanComparisonExportSelection;
+  'plan-comparison-report': GrantPlanComparisonExportSelection;
+  'plan-comparison-changes': GrantPlanComparisonExportSelection;
+  'plan-comparison-impact': GrantPlanComparisonExportSelection;
+  'plan-comparison-daily': GrantPlanComparisonExportSelection;
   scenario: { planId: string };
   'daily-csv': { planId: string };
   'costs-csv': { planId: string };
@@ -1066,6 +1336,7 @@ export interface GrantDownloadSelections {
   performance: GrantPerformanceDownloadSelection;
   'supplier-account': GrantSupplierAccountDownloadSelection;
   installation: { caseId: string; installationId: string; revision: number };
+  commercial: { caseId: string; billingId: string };
   source: { caseId: string; sourceId: string };
   completion: { caseId: string; reviewId: string };
   cohort: { caseId: string; reviewId: string };
@@ -1082,6 +1353,7 @@ export class GrantWorkspaceClient {
   inspect(): Promise<GrantInspection>;
   open(selection?: { expectedSelectionSha256?: string }): Promise<GrantInspection>;
   browser(): Promise<{ schema: typeof GRANT_AGENT_SCHEMA; url: string; original: GrantObject }>;
+  read(view: 'plan-comparison', selection: GrantPlanComparisonSelection): Promise<GrantJsonResponse<GrantPlanComparison>>;
   read(view: 'ledger-intake', selection: { caseId: string }): Promise<GrantJsonResponse<GrantLedgerContract>>;
   read(view: 'ledger-intake-original', selection: { caseId: string; sourceId: string }): Promise<GrantJsonResponse<GrantLedgerOriginal>>;
   read(view: 'performance', selection: GrantPerformanceSelection): Promise<GrantJsonResponse<GrantPerformanceReport>>;
@@ -1115,6 +1387,19 @@ export class GrantWorkspaceClient {
   installationWorkflowSeed(caseId: string, body: GrantWorkflowSourceSelection & GrantInstallationSelection & { cycleIds: string[]; document?: GrantInstallationDocument }): Promise<GrantJsonResponse<GrantInstallationSeed>>;
   installationPreview(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantInstallationPreview>>;
   installationSave(caseId: string, body: GrantInstallationSaveInput): Promise<GrantJsonResponse<GrantInstallationSaveReceipt>>;
+  commercialConnections(): Promise<GrantJsonResponse<GrantCommercialConnections>>;
+  commercialConfigureConnection<T = GrantObject>(body: GrantCommercialConnectionInput): Promise<GrantJsonResponse<T>>;
+  commercialCustomers(endpointId: string): Promise<GrantJsonResponse<GrantCommercialCustomers>>;
+  commercialList(caseId: string): Promise<GrantJsonResponse<GrantCommercialList>>;
+  commercialDetail(caseId: string, billingId: string): Promise<GrantJsonResponse<GrantCommercialPrepared>>;
+  commercialSchedule(caseId: string, body: GrantCommercialScheduleInput): Promise<GrantJsonResponse<GrantCommercialSchedule>>;
+  /** A new request may correct unbilled selections before a native command is retained. */
+  commercialPrepare(caseId: string, body: GrantCommercialPrepareInput): Promise<GrantJsonResponse<GrantCommercialPrepared>>;
+  /** Native request identity is retained once for each original obligation and action. */
+  commercialDraft(caseId: string, billingId: string, milestoneId: string, body: { actor: string }): Promise<GrantJsonResponse<GrantCommercialCommandResult>>;
+  commercialPreview(caseId: string, billingId: string, milestoneId: string): Promise<GrantJsonResponse<GrantCommercialIssuePreview>>;
+  commercialIssue(caseId: string, billingId: string, milestoneId: string, body: { actor: string; expectedIssuePreviewSha256: string }): Promise<GrantJsonResponse<GrantCommercialCommandResult>>;
+  commercialRefresh(caseId: string, billingId: string): Promise<GrantJsonResponse<GrantCommercialPrepared>>;
   cohortSeed<T = GrantObject>(caseId: string, expectedVersion: number, tranche: 2 | 3): Promise<GrantJsonResponse<T>>;
   cohortPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   cohortPrepare<T = GrantObject>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;

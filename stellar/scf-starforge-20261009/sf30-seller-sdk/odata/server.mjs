@@ -7,17 +7,22 @@ import { fault } from './state.mjs';
 
 const assets=fileURLToPath(new URL('./public/',import.meta.url));
 const files=new Map([['/',['index.html','text/html; charset=utf-8']],['/app.mjs',['app.mjs','text/javascript; charset=utf-8']],['/collection-view.mjs',['collection-view.mjs','text/javascript; charset=utf-8']],['/comparison-view.mjs',['comparison-view.mjs','text/javascript; charset=utf-8']],['/style.css',['style.css','text/css; charset=utf-8']]]);
-export async function startODataServer({workspace,port=8797,liveServiceId,liveOperations,closeWorkspace=true,subscriptionConnection}={}){
+export async function startODataServer({workspace,port=8797,liveServiceId,liveOperations,closeWorkspace=true,subscriptionConnection,expectedSubscriptionsSha256}={}){
   if(!Number.isInteger(port)||port<0||port>65535)throw new TypeError('Choose a local TCP port.');
   if(typeof closeWorkspace!=='boolean')throw new TypeError('closeWorkspace must be a Boolean.');
   if(liveOperations!==undefined&&(!liveOperations||typeof liveOperations.status!=='function'||typeof liveOperations.start!=='function'))
     throw new TypeError('Pass the original open live operations object.');
   let publisher,live=liveOperations,closing;
   const ownsLive=liveOperations===undefined;
-  let subscriptions=null,subscriptionHandler=null;
+  let subscriptions=null,subscriptionHandler=null,subscriptionIdentity=null;
+  if(subscriptionConnection===undefined&&expectedSubscriptionsSha256!==undefined)
+    throw new TypeError('Select a subscription connection with its expected SHA256.');
   if(subscriptionConnection!==undefined){
-    const [{openSubscriptionOperator},{subscriptionHttpHandler}]=await Promise.all([import('./live/subscriptions/operator.mjs'),import('./live/subscriptions/server.mjs')]);
-    subscriptions=await openSubscriptionOperator({connection:subscriptionConnection});subscriptionHandler=subscriptionHttpHandler({operator:subscriptions});
+    const [{openSubscriptionOperator},{subscriptionHttpHandler},{odataSubscriptionSelection}]=await Promise.all([
+      import('./live/subscriptions/operator.mjs'),import('./live/subscriptions/server.mjs'),import('./live/subscriptions/managed.mjs')]);
+    const selected=await odataSubscriptionSelection(subscriptionConnection,{expectedSha256:expectedSubscriptionsSha256});
+    subscriptionIdentity=selected.identity;
+    subscriptions=await openSubscriptionOperator({connection:selected.configuration});subscriptionHandler=subscriptionHttpHandler({operator:subscriptions});
   }
   const getPublisher=async()=>publisher||=(await import('./publisher.mjs')).openODataPublisher({workspace});
   const getLive=async()=>{
@@ -50,7 +55,7 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
         browserMaxBytes:64*1024*1024,workspaceDirectory:workspace.directory,
         nativeCommand:[process.execPath,fileURLToPath(new URL('./cli.mjs',import.meta.url))]});
       if(req.method==='GET'&&url.pathname==='/api/application'){
-        const {odataWorkspaceProbe}=await import('./live/startup.mjs');return send(res,200,await odataWorkspaceProbe(workspace));}
+        const {odataWorkspaceProbe}=await import('./live/startup.mjs');return send(res,200,await odataWorkspaceProbe(workspace,{subscriptions:subscriptionIdentity}));}
       if(req.method==='GET'&&url.pathname==='/api/rows')return send(res,200,{rows:await workspace.rows(url.searchParams.get('id'))});
       if(req.method==='GET'&&url.pathname==='/api/edition')return send(res,200,await workspace.edition(url.searchParams.get('id')));
       if(req.method==='GET'&&url.pathname==='/api/source')return send(res,200,await workspace.raw(url.searchParams.get('hash')),
@@ -117,8 +122,9 @@ export async function startODataServer({workspace,port=8797,liveServiceId,liveOp
       return send(res,200,result);
     }catch(error){if(!res.headersSent)send(res,error.status||(error instanceof TypeError?400:500),{error:error.code||'ODATA_OPERATION_FAILED',message:error.message});else res.destroy();}
   });
-  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
-  const service={url:'http://127.0.0.1:'+server.address().port,server,liveRuntime:null,
+  try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});}
+  catch(error){await subscriptions?.close();throw error;}
+  const service={url:'http://127.0.0.1:'+server.address().port,server,liveRuntime:null,subscriptionIdentity,
     close:()=>closing??=(async()=>{
       // Stop accepting browser operations before releasing any owned runtime.
       await new Promise(resolve=>server.close(resolve));
