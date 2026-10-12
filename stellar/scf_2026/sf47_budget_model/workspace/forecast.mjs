@@ -1,3 +1,5 @@
+import { createForecastCurrencyUI, formatNativeMoney, formatCurrencyValuation } from './forecast_currency.mjs';
+
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd = value => value === null || value === undefined ? 'Not entered' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
 const today = () => new Date().toISOString().slice(0,10);
@@ -23,11 +25,13 @@ function download(raw,filename,type='application/json') {
 
 export function mountForecast({container,current,api:transport,mutationId,recordingActor,onSaved,initialForecastId=null,initialInputs=null,onSelection=()=>{}}) {
   const root=document.createElement('section');root.className='operating-forecast';container.replaceChildren(root);
-  let active=true,busy=false,selected=null,preview=null,editing=true,inputState=null,request=null;
+  let active=true,busy=false,hostBusy=false,selected=null,preview=null,editing=true,inputState=null,request=null;
+  const blocked=()=>busy||hostBusy;
   const available=()=>active&&root.isConnected;
   function requireActive(){if(!available())throw new Error('This forecast view is closed. Reopen its original case to continue.');}
   async function api(...args){requireActive();const result=await transport(...args);requireActive();return result;}
   const path='/api/operations/'+current.program.id;
+  const currency=createForecastCurrencyUI({current,field,table,button,usd});
   const sourceOptions=current.sources.map(row=>[row.id,row.filename+' · '+row.sha256.slice(0,12)]);
   const cashOptions=(direction,customer=false)=>current.records.cash.filter(row=>row.state==='OBSERVED'&&row.direction===direction&&row.usdValue!==null&&!row.network.toLowerCase().includes('testnet')&&(customer?row.category==='CUSTOMER':!row.allocations.length)).map(row=>[row.id,row.date+' · '+usd(row.usdValue)+' · '+row.externalRef]);
   const invoiceOptions=current.records.invoices.filter(row=>row.lines.every(line=>line.costId===null)).map(row=>[row.id,row.number+' · '+usd(row.totalUsd)]);
@@ -36,8 +40,10 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function defaults(){return {name:current.program.name+' — operating forecast',asOfDate:today(),calendarStart:current.program.calendarStart||current.plan.planning.calendarStart||'',
     openingCash:{amountUsd:null,basis:'NOT_ENTERED',sourceIds:[],note:''},packageOverrides:[],invoiceOverrides:[],grantReceipts:[],commercial:[],capacity:{weeklyHours:null,note:''},note:''};}
   function status(message,error=false){if(!available())return;const node=$('[data-forecast-status]');node.textContent=message;node.setAttribute('role',error?'alert':'status');}
-  function setBusy(state){busy=state;if(!available())return;root.setAttribute('aria-busy',String(state));root.querySelectorAll('input,select,textarea,button').forEach(node=>node.disabled=state||node.dataset.forecastFixed==='true');}
-  async function run(task){if(busy||!available())return;setBusy(true);try{await task();}catch(error){status(error.message,true);}finally{if(available())setBusy(false);}}
+  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(state));root.querySelectorAll('input,select,textarea,button').forEach(node=>node.disabled=state||node.dataset.forecastFixed==='true');}
+  function setBusy(state){busy=state;applyBusy();}
+  function setHostBusy(state){hostBusy=!!state;applyBusy();}
+  async function run(task){if(blocked()||!available())return;setBusy(true);try{await task();}catch(error){status(error.message,true);}finally{if(available())setBusy(false);}}
   function invalidate(){preview=null;request=null;const save=$('[data-forecast-action=save]');if(save){save.disabled=true;save.dataset.forecastFixed='true';}const note=$('[data-forecast-preview-state]');if(note)note.textContent='Inputs changed. Preview this source and these inputs before saving.';}
   function packageEditor(row){
     const prior=costMap.get(row.costId), direct=cashOptions('OUT');
@@ -53,8 +59,8 @@ export function mountForecast({container,current,api:transport,mutationId,record
     const original=current.report.invoices.find(x=>x.id===row.invoiceId);
     return '<tr data-forecast-invoice="'+esc(row.invoiceId)+'"><td>'+esc(original.number)+'<small>'+esc(original.state)+' · source due '+esc(original.dueDate||'undated')+'</small></td><td>'+usd(original.totalUsd)+'</td><td>'+usd(original.paidUsd)+'</td><td>'+usd(original.openUsd)+'</td><td><input aria-label="Expected payment for '+esc(original.number)+'" name="dueDate" type="date" value="'+esc(row.dueDate||'')+'"></td><td><label class="forecast-check"><input name="include" type="checkbox"'+(row.include===false?'':' checked')+'>Include</label></td><td><input aria-label="Timing or exclusion reason for '+esc(original.number)+'" name="note" value="'+esc(row.note||'')+'"></td></tr>';
   }
-  function receiptEditor(row,index){
-    return '<tr data-forecast-receipt><td><input name="receiptId" aria-label="Receipt identity" value="'+esc(row.id||'milestone-'+(index+1))+'" required></td><td><input name="receiptLabel" aria-label="Receipt label" value="'+esc(row.label||'')+'" required></td><td><input name="receiptAmount" aria-label="Quoted milestone USD" value="'+esc(row.amountUsd||'')+'" required></td><td><input name="receiptDate" aria-label="Forecast collection date" type="date" value="'+esc(row.date||'')+'"></td><td data-forecast-timing-only><input name="receiptCondition" aria-label="Original relative collection term" value="'+esc(row.condition||'')+'" placeholder="Before work, or days after accepted handover"></td><td>'+button('Remove','remove-receipt')+'</td></tr>';
+  function receiptEditor(row,index,native=false){
+    return '<tr data-forecast-receipt><td><input name="receiptId" aria-label="Receipt identity" value="'+esc(row.id||'milestone-'+(index+1))+'" required></td><td><input name="receiptLabel" aria-label="Receipt label" value="'+esc(row.label||'')+'" required></td><td>'+currency.receiptFields(row,native)+'</td><td><input name="receiptDate" aria-label="Forecast collection date" type="date" value="'+esc(row.date||'')+'"></td><td data-forecast-timing-only><input name="receiptCondition" aria-label="Original relative collection term" value="'+esc(row.condition||'')+'" placeholder="Before work, or days after accepted handover"></td><td>'+button('Remove','remove-receipt')+'</td></tr>';
   }
   function commercialEditor(row){
     const timed=row.timing?.mode==='EVENT_DEPENDENT', conditions=new Map((row.timing?.receiptConditions||[]).map(item=>[item.receiptId,item.condition]));
@@ -62,8 +68,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +field('Project name','title',row.title,{required:true})+field('Original case / offer identity','caseRef',row.caseRef,{required:true})
       +field('Original commercial stage','stage',row.stage||'QUOTED',{options:[['QUOTED','Quoted offer'],['AGREED','Agreed scope'],['IN_PROGRESS','Implementation in progress']]})
       +'<label class="forecast-check"><input name="selected" type="checkbox"'+(row.selected===false?'':' checked')+'>Include this customer delivery scenario</label>'
-      +field('Original total quoted price (USD)','priceUsd',row.priceUsd,{required:true})
-      +field('Current total customer-specific delivery cost (USD)','totalDeliveryCostUsd',row.totalDeliveryCostUsd,{required:true,help:'Includes linked invoices and assigned direct payments. Existing reusable product development stays in its original scope.'})
+      +currency.pricingEditor(row,inputState?.fxRates||[])
       +field('Remaining customer-specific hours','remainingHours',row.remainingHours,{required:true})
       +field('Work timing','timingMode',timed?'EVENT_DEPENDENT':'DATED',{options:[['DATED','Dated work window'],['EVENT_DEPENDENT','After an original deposit or other event']]})
       +field('Delivery starts','startDate',row.startDate,{type:'date',required:!timed})+field('Delivery finishes','endDate',row.endDate,{type:'date',required:!timed})
@@ -79,17 +84,17 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +field('Actual direct payments','directCashIds',row.directCashIds||[],{options:cashOptions('OUT'),multiple:true})
       +field('Scope, prerequisites and acceptance','scope',row.scope||'',{area:true,wide:true})
       +field('Source of cost, remaining hours and forecast dates','note',row.note||'',{area:true,required:true,wide:true})
-      +'</div><h5>Original payment milestones and forecast collection dates</h5><p class="forecast-muted">Amounts must sum to the original price. Leave a collection date empty until a date can be forecast. Observed receipts reduce the listed milestones in their original order.</p>'
-      +'<div class="forecast-table"><table><thead><tr><th>Identity</th><th>Milestone</th><th>Quoted USD</th><th>Forecast collection</th><th data-forecast-timing-only>Original relative collection term</th><th>Action</th></tr></thead><tbody data-forecast-receipts>'+row.receipts.map((receipt,index)=>receiptEditor({...receipt,condition:conditions.get(receipt.id)||''},index)).join('')+'</tbody></table></div>'+button('Add receipt milestone','add-receipt')+'</fieldset>';
+      +'</div>'+currency.creditEditor(row)+'<h5>Original payment milestones and forecast collection dates</h5><p class="forecast-muted">Amounts must sum to the original price. Leave a collection date empty until a date can be forecast. Observed receipts reduce the listed milestones in their original order.</p>'
+      +'<div class="forecast-table"><table><thead><tr><th>Identity</th><th>Milestone</th><th data-forecast-receipt-amount-heading>Quoted USD</th><th>Forecast collection</th><th data-forecast-timing-only>Original relative collection term</th><th>Action</th></tr></thead><tbody data-forecast-receipts>'+row.receipts.map((receipt,index)=>receiptEditor({...receipt,condition:conditions.get(receipt.id)||''},index,!!row.nativePricing)).join('')+'</tbody></table></div>'+button('Add receipt milestone','add-receipt')+'</fieldset>';
   }
   function syncCommercialTiming(row){
     const timed=value(row,'timingMode')==='EVENT_DEPENDENT';
     for(const node of row.querySelectorAll('[data-forecast-timing-only]'))node.hidden=!timed;
     for(const name of ['startDate','endDate'])row.querySelector('[name="'+name+'"]').required=!timed;
     for(const node of row.querySelectorAll('[name=timingStartCondition],[name=timingDeliveryBusinessDays],[name=receiptCondition]')){
-      node.required=timed;node.disabled=busy||!timed;node.dataset.forecastFixed=String(!timed);
+      node.required=timed;node.disabled=blocked()||!timed;node.dataset.forecastFixed=String(!timed);
     }
-    const trigger=row.querySelector('[name=timingReviewedReleaseDate]');trigger.disabled=busy||!timed;trigger.dataset.forecastFixed=String(!timed);
+    const trigger=row.querySelector('[name=timingReviewedReleaseDate]');trigger.disabled=blocked()||!timed;trigger.dataset.forecastFixed=String(!timed);
   }
   function editor(inputs){
     const packages=new Map(inputs.packageOverrides.map(row=>[row.costId,row]));
@@ -112,6 +117,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +(current.report.invoices.length?'<div class="forecast-table"><table><thead><tr><th>Original invoice</th><th>Total</th><th>Paid</th><th>Open</th><th>Expected payment</th><th>Include</th><th>Reason</th></tr></thead><tbody>'+current.report.invoices.map(row=>invoiceEditor(invoices.get(row.id)||{invoiceId:row.id})).join('')+'</tbody></table></div>':empty('No invoice records in this case.'))+'</details>'
       +'<details><summary>Conditional grant receipt dates</summary><p>A past-due unreceived payout stays outside the cash curve until a new date is entered. Original observed grant receipts reduce their own tranches.</p><div class="forecast-table"><table><thead><tr><th>Tranche</th><th>Conditional total</th><th>Observed</th><th>New forecast receipt</th><th>Include</th><th>Reason</th></tr></thead><tbody>'
       +current.report.tranches.map(row=>{const input=grants.get(row.tranche)||{};return '<tr data-forecast-grant="'+row.tranche+'"><td>'+row.tranche+' · original day '+row.hypotheticalPaidDay+'</td><td>'+usd(row.conditionalPlannedUsd)+'</td><td>'+usd(row.observedGrantUsd)+'</td><td><input name="date" aria-label="Tranche '+row.tranche+' forecast date" type="date" value="'+esc(input.date||'')+'"></td><td><label class="forecast-check"><input name="include" type="checkbox"'+(input.include===false?'':' checked')+'>Include</label></td><td><input name="note" aria-label="Tranche '+row.tranche+' timing source" value="'+esc(input.note||'')+'"></td></tr>';}).join('')+'</tbody></table></div></details>'
+      +currency.ratesEditor(inputs)
       +'<details open><summary>Customer delivery scenarios</summary><p>Each project carries the original quote, collection schedule and delivery cost. Add only the customer-specific remaining scope.</p><div data-forecast-commercials>'+inputs.commercial.map(commercialEditor).join('')+'</div>'+button('Add customer project','add-commercial')+'</details>'
       +'<div class="forecast-actions"><button type="submit">Preview current forecast</button>'+button('Load input JSON','load-inputs')+button('Download input JSON','download-inputs')+'</div><input hidden data-forecast-input-file type="file" accept=".json,application/json"></form>';
   }
@@ -128,53 +134,88 @@ export function mountForecast({container,current,api:transport,mutationId,record
       grantReceipts:[...form.querySelectorAll('[data-forecast-grant]')].map(row=>({tranche:Number(row.dataset.forecastGrant),date:optional(row,'date'),include:row.querySelector('[name=include]').checked,note:value(row,'note')})).filter(row=>explicitGrants.has(row.tranche)||row.date!==null||row.include===false||row.note!==''),
       commercial:[...form.querySelectorAll('[data-forecast-commercial]')].map(row=>({id:row.dataset.forecastCommercial,title:value(row,'title'),
         caseRef:value(row,'caseRef'),stage:value(row,'stage'),selected:row.querySelector('[name=selected]').checked,
-        priceUsd:value(row,'priceUsd'),totalDeliveryCostUsd:value(row,'totalDeliveryCostUsd'),remainingHours:value(row,'remainingHours'),
+        ...currency.readPricing(row),remainingHours:value(row,'remainingHours'),
         startDate:optional(row,'startDate'),endDate:optional(row,'endDate'),paymentMode:value(row,'paymentMode'),
         ...(value(row,'timingMode')==='EVENT_DEPENDENT'?{timing:{mode:'EVENT_DEPENDENT',
           startCondition:value(row,'timingStartCondition'),reviewedReleaseDate:optional(row,'timingReviewedReleaseDate'),deliveryBusinessDays:Number(value(row,'timingDeliveryBusinessDays')),
           receiptConditions:[...row.querySelectorAll('[data-forecast-receipt]')].map(receipt=>({receiptId:value(receipt,'receiptId'),condition:value(receipt,'receiptCondition')}))}}:{}),
         sourceUrl:value(row,'sourceUrl'),sourceIds:selectedValues(row,'sourceIds'),cashIds:selectedValues(row,'cashIds'),
         invoiceIds:selectedValues(row,'invoiceIds'),directCashIds:selectedValues(row,'directCashIds'),scope:value(row,'scope'),note:value(row,'note'),
-        receipts:[...row.querySelectorAll('[data-forecast-receipt]')].map(receipt=>({id:value(receipt,'receiptId'),label:value(receipt,'receiptLabel'),amountUsd:value(receipt,'receiptAmount'),date:optional(receipt,'receiptDate')}))}))};
+        receipts:[...row.querySelectorAll('[data-forecast-receipt]')].map(receipt=>({id:value(receipt,'receiptId'),label:value(receipt,'receiptLabel'),...currency.readReceiptAmount(row,receipt),date:optional(receipt,'receiptDate')}))}))};
+    const rates=currency.readRates(form);
+    if(rates.length||Object.hasOwn(inputState,'fxRates')||form.dataset.forecastFxTouched==='true')inputs.fxRates=rates;
     return inputs;
   }
   function chart(report){
-    const series=[['spendingOnly','Existing obligations and grant work',''],['conditionalGrant','With conditional grants','8 4'],['commercial','With selected customer work','2 4']];
+    const partial=report.currencyValuation?.datedCashComplete===false;
+    const series=[['spendingOnly','Existing obligations and grant work',''],['conditionalGrant','With conditional grants','8 4'],[partial?'knownCommercial':'commercial',partial?'Valued portion of selected customer work':'With selected customer work','2 4']];
     const key=report.openingCash.amountUsd===null?'DeltaUsd':'BalanceUsd';
-    const amounts=report.days.flatMap(day=>series.map(([id])=>Number(day[id+key])));
+    const numeric=value=>value===null||value===undefined||value===''?null:(Number.isFinite(Number(value))?Number(value):null);
+    const amounts=report.days.flatMap(day=>series.map(([id])=>numeric(day[id+key]))).filter(value=>value!==null);
+    if(!report.days.length||!amounts.length)return empty('No valued dated cash points are available.');
     const low=Math.min(0,...amounts),high=Math.max(1,...amounts),span=high-low||1,w=900,h=260,x0=90,y0=20,plotW=790,plotH=190;
     const x=i=>x0+i*plotW/Math.max(report.days.length-1,1),y=n=>y0+(high-n)/span*plotH;
+    const lines=series.map(([id,label,dash],index)=>{
+      const segments=[];let segment=[];
+      report.days.forEach((day,i)=>{const amount=numeric(day[id+key]);if(amount===null){if(segment.length)segments.push(segment);segment=[];}else segment.push(x(i).toFixed(2)+','+y(amount).toFixed(2));});
+      if(segment.length)segments.push(segment);
+      return segments.map(points=>'<polyline fill="none" stroke="'+['#151515','#555','#888'][index]+'" stroke-width="2.5" stroke-dasharray="'+dash+'" points="'+points.join(' ')+'"><title>'+esc(label)+'</title></polyline>').join('');
+    }).join('');
     return '<figure class="forecast-chart"><figcaption>'+esc(key==='DeltaUsd'?'Cumulative forward cash change (opening cash not entered)':'Forecast available cash including entered opening balance')+'</figcaption>'
-      +'<svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Dated forecast cash scenarios"><line x1="'+x0+'" y1="'+y(0)+'" x2="'+(x0+plotW)+'" y2="'+y(0)+'" stroke="#888"/>'
-      +[high,(high+low)/2,low].map(amount=>'<text x="80" y="'+(y(amount)+4)+'" text-anchor="end">'+esc(usd(amount))+'</text>').join('')
-      +series.map(([id,label,dash],index)=>'<polyline fill="none" stroke="'+['#151515','#555','#888'][index]+'" stroke-width="2.5" stroke-dasharray="'+dash+'" points="'+report.days.map((day,i)=>x(i).toFixed(2)+','+y(Number(day[id+key])).toFixed(2)).join(' ')+'"><title>'+esc(label)+'</title></polyline>').join('')
+      +(partial?'<p class="forecast-valuation-warning">The customer curve shows only its valued portion. Unvalued native amounts and missing credit allocations remain outside this subtotal; the full customer scenario is unresolved.</p>':'')
+      +'<svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+esc(partial?'Dated forecast with a partial valued customer scenario':'Dated forecast cash scenarios')+'"><line x1="'+x0+'" y1="'+y(0)+'" x2="'+(x0+plotW)+'" y2="'+y(0)+'" stroke="#888"/>'
+      +[high,(high+low)/2,low].map(amount=>'<text x="80" y="'+(y(amount)+4)+'" text-anchor="end">'+esc(usd(amount))+'</text>').join('')+lines
       +'<text x="'+x0+'" y="240">'+esc(report.days[0]?.date||'')+'</text><text x="'+(x0+plotW)+'" y="240" text-anchor="end">'+esc(report.lastForecastDate)+'</text></svg>'
       +'<div class="forecast-legend">'+series.map(([id,label],index)=>'<span><i class="forecast-line line-'+index+'"></i>'+esc(label)+'</span>').join('')+'</div></figure>';
   }
   function eventTimingHtml(report){
     const timing=report.eventTiming;if(!timing)return '';
-    return '<section class="forecast-note"><h5>Event-dependent work and collections</h5><p>'+esc(timing.undatedHours)+' selected work hours and '+usd(timing.undatedDeliveryCostUsd)+' of delivery costs await work dates. '+usd(timing.undatedCustomerReceiptsUsd)+' of quoted collections await collection dates. These amounts remain in the complete scope; the cash and capacity curves cover entered dates.</p>'
-      +table(['Project','Original start condition','Original reviewed trigger','Delivery working days','Work window','Original collection terms'],timing.projects.map(row=>[
-        esc(row.title)+(row.selected?'':'<small>Excluded from this scenario</small>'),esc(row.startCondition),esc(row.reviewedReleaseDate||'Awaiting original event'),esc(row.deliveryBusinessDays),
-        row.startDate?esc(row.startDate)+' — '+esc(row.endDate):'Awaiting reviewed dates',
-        row.receipts.map(receipt=>esc(receipt.label)+' · '+usd(receipt.amountUsd)+' · '+esc(receipt.condition)+'<small>'+(receipt.date?esc(receipt.date):'Collection date not entered')+'</small>').join('<br>')
-      ]))+'<p>'+esc(timing.basis)+'</p></section>';
+    const amount=value=>report.currencyValuation?formatCurrencyValuation(value):usd(value);
+    const knownUndated=(label,value,known)=>value===null&&known!==undefined?'<p class="forecast-valuation-warning">'+esc(label)+': '+esc(usd(known))+' known portion; unvalued original amounts remain unresolved.</p>':'';
+    return '<section class="forecast-note"><h5>Event-dependent work and collections</h5><p>'+esc(timing.undatedHours)+' selected work hours await work dates. Undated delivery cost valuation: '+esc(amount(timing.undatedDeliveryCostUsd))+'. Undated quoted collection valuation: '+esc(amount(timing.undatedCustomerReceiptsUsd))+'. The cash and capacity curves cover entered dates; original terms remain below.</p>'
+      +knownUndated('Undated delivery costs',timing.undatedDeliveryCostUsd,timing.knownUndatedDeliveryCostUsd)+knownUndated('Undated quoted collections',timing.undatedCustomerReceiptsUsd,timing.knownUndatedCustomerReceiptsUsd)
+      +table(['Project','Original start condition','Original reviewed trigger','Delivery working days','Work window','Original collection terms'],timing.projects.map(row=>{
+        const original=report.commercial.find(project=>project.id===row.id);
+        return [
+          esc(row.title)+(row.selected?'':'<small>Excluded from this scenario</small>'),esc(row.startCondition),esc(row.reviewedReleaseDate||'Awaiting original event'),esc(row.deliveryBusinessDays),
+          row.startDate?esc(row.startDate)+' — '+esc(row.endDate):'Awaiting reviewed dates',
+          row.receipts.map(receipt=>{
+            const originalReceipt=original?.receipts?.find(item=>item.id===receipt.id);
+            const nativeAmount=receipt.amountNative??originalReceipt?.amountNative;
+            const quote=nativeAmount!==undefined?formatNativeMoney(nativeAmount,original?.nativePricing?.price?.currency||original?.currencyValuation?.price?.currency):amount(receipt.amountUsd);
+            return esc(receipt.label)+' · '+esc(quote)+(nativeAmount!==undefined?'<small>USD valuation: '+esc(formatCurrencyValuation(receipt.amountUsd??originalReceipt?.amountUsd))+'</small>':'')+' · '+esc(receipt.condition)+'<small>'+(receipt.date?esc(receipt.date):'Collection date not entered')+'</small>';
+          }).join('<br>')
+        ];
+      }))+'<p>'+esc(timing.basis)+'</p></section>';
   }
   function reportHtml(result,isPreview=false){
-    const r=result.report;
-    const scenarioRows=[['spendingOnly','Existing obligations and grant work'],['conditionalGrant','With conditional grant receipts'],['commercial','With selected customer delivery']].map(([id,label])=>{const row=r.scenarios[id];return [esc(label),usd(row.additionalCashNeededUsd),usd(row.gapAfterOpeningCashUsd),esc(row.peakNeedDate),usd(row.endBalanceUsd)];});
+    const r=result.report,hasCurrency=!!r.currencyValuation;
+    const valued=value=>hasCurrency?formatCurrencyValuation(value):usd(value);
+    const total=(value,known)=>'<strong>'+esc(valued(value))+'</strong>'+((value===null||value===undefined)&&known!==null&&known!==undefined?'<small>Known portion: '+esc(usd(known))+'</small>':'');
+    const scenarioRows=[];
+    for(const [id,label] of [['spendingOnly','Existing obligations and grant work'],['conditionalGrant','With conditional grant receipts'],['commercial','With selected customer delivery']]){
+      const row=r.scenarios[id],partial=id==='commercial'&&row.valuationComplete===false;
+      scenarioRows.push([esc(label)+(partial?'<small class="forecast-unvalued">Dated cash valuation incomplete</small>':''),esc(partial?formatCurrencyValuation(row.additionalCashNeededUsd):usd(row.additionalCashNeededUsd)),esc(partial?formatCurrencyValuation(row.gapAfterOpeningCashUsd):usd(row.gapAfterOpeningCashUsd)),esc(row.peakNeedDate||(partial?'Unvalued':'')),esc(partial?formatCurrencyValuation(row.endBalanceUsd):usd(row.endBalanceUsd))]);
+      if(partial&&row.valuedPortion){
+        const known=row.valuedPortion;
+        scenarioRows.push(['<strong>Valued portion of selected customer delivery</strong><small>Partial subtotal; unvalued amounts are excluded</small>',esc(usd(known.additionalCashNeededUsd)),esc(usd(known.gapAfterOpeningCashUsd)),esc(known.peakNeedDate||''),esc(usd(known.endBalanceUsd))]);
+      }
+    }
     const warnings=r.issues.map(row=>'<li><strong>'+esc(row.code.replaceAll('_',' ').toLowerCase())+'</strong> · '+esc(row.id)+': '+esc(row.message)+(row.amountUsd?' '+usd(row.amountUsd):'')+'</li>').join('');
     return '<section aria-label="Operating forecast result"><div class="forecast-heading"><div><h4>'+esc(result.inputs.name)+'</h4><p>As of '+esc(r.asOfDate)+' · source case version '+result.source.version+' · pinned plan revision '+result.source.planRevision+'</p></div><div class="forecast-actions">'
       +(isPreview?button('Save this forecast','save',current.program.state==='CLOSED'?'disabled data-forecast-fixed="true"':''):button('Download complete forecast','export-forecast')+button('Download original forecast JSON','export-json'))
       +'</div></div>'+(isPreview?'<p data-forecast-preview-state>Preview ready. Saving retains this exact calculation and its original source.</p>':'<p class="forecast-muted">Saved by '+esc(result.actor)+' on '+esc(result.createdAt)+'. '+(result.current?.sourceChanged?'The current operating records differ. This view retains the original saved calculation.':'The retained operating facts still match the current case.')+'</p>')
-      +'<div class="forecast-stats">'+[['Unpaid invoice obligations',usd(r.totals.openInvoiceUsd)],['Remaining grant package cash',usd(r.totals.remainingPackageCostUsd)],['Selected customer delivery cash',usd(r.totals.selectedCommercialUninvoicedCostUsd)],['Remaining grant / customer hours',r.totals.remainingGrantPackageHours+' / '+r.totals.selectedCommercialHours]].map(([label,total])=>'<div><span>'+esc(label)+'</span><strong>'+esc(total)+'</strong></div>').join('')+'</div>'
-      +eventTimingHtml(r)+table(['Scenario','Cash needed before opening balance','Gap after opening balance','Peak need date','Ending available cash'],scenarioRows)+chart(r)
+      +'<div class="forecast-stats"><div><span>Unpaid invoice obligations</span><strong>'+esc(usd(r.totals.openInvoiceUsd))+'</strong></div><div><span>Remaining grant package cash</span><strong>'+esc(usd(r.totals.remainingPackageCostUsd))+'</strong></div><div><span>Selected customer delivery cash</span>'+total(r.totals.selectedCommercialUninvoicedCostUsd,r.totals.knownSelectedCommercialUninvoicedCostUsd)+'</div><div><span>Remaining grant / customer hours</span><strong>'+esc(r.totals.remainingGrantPackageHours+' / '+r.totals.selectedCommercialHours)+'</strong></div></div>'
+      +currency.reportCoverage(r)+eventTimingHtml(r)+table(['Scenario','Cash needed before opening balance','Gap after opening balance','Peak need date','Ending available cash'],scenarioRows)+chart(r)
       +'<h5>Remaining delivery capacity</h5><p>'+esc(r.capacity.peakWeeklyEquivalentHours)+' peak weekly-equivalent hours; '+(r.capacity.weeklyHours===null?'available capacity has not been entered.':esc(r.capacity.weeklyHours)+' available weekly hours; '+r.capacity.overloadedDays+' modeled overloaded calendar days.')+'</p>'
       +'<details open><summary>Remaining work packages</summary>'+table(['Package','Invoice / paid USD','Remaining uninvoiced cash','Remaining hours','Dates','Estimate source'],r.packages.map(row=>[esc(row.id),usd(row.invoicedUsd)+' / '+usd(row.paidUsd),usd(row.remainingCostUsd),esc(row.remainingHours),esc(row.startDate)+' — '+esc(row.endDate),esc(row.note||'Pinned allocation less recorded invoices and assigned direct payments')]))+'</details>'
-      +'<details open><summary>Customer delivery decisions</summary>'+(r.commercial.length?table(['Project / original stage','Original price / observed receipts','Remaining delivery cash','Uncollected price','Remaining hours / dates','Scenario'],r.commercial.map(row=>[esc(row.title)+'<small>'+esc(row.stage)+' · '+esc(row.caseRef)+'</small>',usd(row.priceUsd)+' / '+usd(row.observedReceiptsUsd),usd(row.totalRemainingCashCostUsd),usd(row.uncollectedPriceUsd),esc(row.remainingHours)+'<small>'+(row.startDate?esc(row.startDate)+' — '+esc(row.endDate):'Awaiting original start condition')+'</small>',row.selected?'Included':'Excluded'])):empty('No customer scenario selected.'))+'</details>'
+      +'<details open><summary>Customer delivery decisions</summary>'+(r.commercial.length?table(['Project / original stage','Original price / observed receipts','Remaining delivery cash','Uncollected price','Remaining hours / dates','Scenario'],r.commercial.map(row=>{
+        const native=currency.nativeSummary(row);
+        return [esc(row.title)+'<small>'+esc(row.stage)+' · '+esc(row.caseRef)+'</small>',native?native.price+'<small>Original observed receipts: '+esc(usd(row.observedReceiptsUsd))+'</small>':usd(row.priceUsd)+' / '+usd(row.observedReceiptsUsd),native?native.cost:usd(row.totalRemainingCashCostUsd),native?native.uncollected:usd(row.uncollectedPriceUsd),esc(row.remainingHours)+'<small>'+(row.startDate?esc(row.startDate)+' — '+esc(row.endDate):'Awaiting original start condition')+'</small>',row.selected?'Included':'Excluded'];
+      })):empty('No customer scenario selected.'))+currency.projectReports(r)+'</details>'
       +'<details><summary>Conditional grant amounts</summary>'+table(['Tranche','Original conditional amount','Observed receipt','Remaining amount','Forecast date'],r.grants.map(row=>[esc(row.tranche),usd(row.conditionalPlannedUsd),usd(row.observedGrantUsd),usd(row.remainingUsd),esc(row.included?(row.forecastDate||'Needs new date'):'Excluded')]))+'</details>'
       +'<details'+(r.issues.length?' open':'')+'><summary>Source and estimate decisions ('+r.issues.length+')</summary>'+(warnings?'<ul>'+warnings+'</ul>':empty('No outstanding date or allocation decisions.'))+'</details>'
-      +'<details><summary>Complete dated cash and work</summary>'+table(['Date','Invoice out','Grant work out','Customer work out','Conditional grants','Customer collections','Combined cash change','Hours'],r.days.map(row=>[esc(row.date),usd(row.invoiceOutflowUsd),usd(row.packageOutflowUsd),usd(row.commercialOutflowUsd),usd(row.conditionalGrantInflowUsd),usd(row.forecastCustomerInflowUsd),usd(row.commercialDeltaUsd),esc(row.remainingWorkHours)]))+'</details>'
+      +'<details><summary>Complete dated cash and work</summary>'+(r.currencyValuation?.datedCashComplete===false?'<p class="forecast-valuation-warning">Customer outflow and collections below are valued subtotals. Unvalued dated amounts are excluded; the complete combined cash change remains unresolved.</p>':'')+table(['Date','Invoice out','Grant work out',r.currencyValuation?.datedCashComplete===false?'Valued customer work out':'Customer work out','Conditional grants',r.currencyValuation?.datedCashComplete===false?'Valued customer collections':'Customer collections','Combined cash change','Hours'],r.days.map(row=>[esc(row.date),usd(row.invoiceOutflowUsd),usd(row.packageOutflowUsd),esc(valued(row.commercialOutflowUsd)),usd(row.conditionalGrantInflowUsd),esc(valued(row.forecastCustomerInflowUsd)),esc(valued(row.commercialDeltaUsd))+(hasCurrency&&row.commercialDeltaUsd===null?'<small>Known portion: '+esc(usd(row.knownCommercialDeltaUsd))+'</small>':''),esc(row.remainingWorkHours)]))+'</details>'
       +'<details><summary>Original source and assumptions</summary><p>'+esc(r.basis)+'</p><p>Opening cash: '+esc(r.openingCash.basis)+' · '+esc(r.openingCash.note)+'</p><p>'+esc(result.inputs.note)+'</p><dl><dt>Original case</dt><dd>'+esc(result.source.programId)+'</dd><dt>Plan content</dt><dd>'+esc(result.source.planContentSha256)+'</dd><dt>Business snapshot</dt><dd>'+esc(result.source.businessSha256)+'</dd><dt>Preview</dt><dd>'+esc(result.previewSha256)+'</dd>'+(result.sha256?'<dt>Complete saved forecast</dt><dd>'+esc(result.sha256)+'</dd>':'')+'</dl></details></section>';
   }
   function render(){
@@ -185,6 +226,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +(current.program.state==='CLOSED'?'<p class="forecast-note">This case is closed. You can inspect and preview forecasts; reopen the case in its original controls before saving a new forecast.</p>':'')
       +(editing?editor(inputState||defaults()):'')+'<div data-forecast-report>'+(selected&&!editing?reportHtml(selected):'')+'</div>';
     root.querySelectorAll('[data-forecast-commercial]').forEach(syncCommercialTiming);
+    const form=$('[data-forecast-form]');if(form)currency.syncRates(form,{busy:blocked()});
   }
   async function loadSaved(id){selected=await api(path+'/forecasts/'+id);editing=false;preview=null;request=null;onSelection(id);render();status('Reopened the original saved forecast.');}
   async function doPreview(){
@@ -192,11 +234,12 @@ export function mountForecast({container,current,api:transport,mutationId,record
     inputState=preview.inputs;selected=null;request=null;onSelection(null);
     $('[data-forecast-report]').innerHTML=reportHtml(preview,true);status('Current source and dated assumptions are ready to save.');
   }
-  root.addEventListener('input',event=>{if(event.target.closest('[data-forecast-form]'))invalidate();});
+  root.addEventListener('input',event=>{const form=event.target.closest('[data-forecast-form]');if(form){invalidate();currency.handleChange(event.target,form,{busy:blocked()});}});
   root.addEventListener('change',event=>{
     if(event.target.matches('[data-forecast-selection]')){const id=event.target.value;run(async()=>{if(id)await loadSaved(id);else{selected=null;editing=true;onSelection(null);render();}});return;}
     if(event.target.closest('[data-forecast-form]'))invalidate();
     if(event.target.matches('[name=timingMode]'))syncCommercialTiming(event.target.closest('[data-forecast-commercial]'));
+    const form=event.target.closest('[data-forecast-form]');if(form)currency.handleChange(event.target,form,{busy:blocked()});
     if(event.target.matches('[data-forecast-input-file]')){
       const file=event.target.files[0];if(!file)return;
       run(async()=>{if(file.size>8*1024*1024)throw new Error('Forecast inputs must fit the original 8 MiB input bound.');const loaded=JSON.parse(await file.text());requireActive();if(!loaded||typeof loaded!=='object'||Array.isArray(loaded))throw new Error('Load a forecast input object.');
@@ -204,16 +247,17 @@ export function mountForecast({container,current,api:transport,mutationId,record
         const candidate=await api(path+'/forecast-preview',{expectedVersion:current.program.version,inputs:loaded});inputState=candidate.inputs;selected=null;editing=true;preview=candidate;request=null;onSelection(null);render();$('[data-forecast-report]').innerHTML=reportHtml(candidate,true);status('Loaded and previewed the complete input scenario.');});
     }
   });
-  root.addEventListener('submit',event=>{if(!event.target.matches('[data-forecast-form]'))return;event.preventDefault();const inputs=readEditor();run(async()=>{inputState=inputs;await doPreview();});});
+  root.addEventListener('submit',event=>{if(!event.target.matches('[data-forecast-form]'))return;event.preventDefault();run(async()=>{await doPreview();});});
   root.addEventListener('click',event=>{
     const target=event.target.closest('[data-forecast-action]');if(!target)return;
     const action=target.dataset.forecastAction;
-    if(action==='add-commercial'&&!busy){invalidate();const row={id:'project-'+crypto.randomUUID(),title:'',caseRef:'',stage:'QUOTED',selected:true,priceUsd:'',totalDeliveryCostUsd:'',remainingHours:'',startDate:'',endDate:'',paymentMode:'accrual',sourceUrl:'',sourceIds:[],cashIds:[],invoiceIds:[],directCashIds:[],scope:'',note:'',receipts:[{id:'kickoff',label:'Kickoff',amountUsd:'',date:null},{id:'acceptance',label:'Acceptance',amountUsd:'',date:null}]};$('[data-forecast-commercials]').insertAdjacentHTML('beforeend',commercialEditor(row));syncCommercialTiming($('[data-forecast-commercials]').lastElementChild);return;}
-    if(action==='remove-commercial'&&!busy){target.closest('[data-forecast-commercial]').remove();invalidate();return;}
-    if(action==='add-receipt'&&!busy){const body=target.closest('[data-forecast-commercial]').querySelector('[data-forecast-receipts]');body.insertAdjacentHTML('beforeend',receiptEditor({id:'receipt-'+crypto.randomUUID(),label:'',amountUsd:''},body.children.length));syncCommercialTiming(body.closest('[data-forecast-commercial]'));invalidate();return;}
-    if(action==='remove-receipt'&&!busy){target.closest('[data-forecast-receipt]').remove();invalidate();return;}
-    if(action==='load-inputs'&&!busy){const input=$('[data-forecast-input-file]');input.value='';input.click();return;}
-    if(action==='download-inputs'&&!busy){download(JSON.stringify(readEditor(),null,2)+'\n','operating-forecast-inputs.json');return;}
+    if(!blocked()&&currency.handleAction(action,target,$('[data-forecast-form]'),{busy:blocked()})){invalidate();return;}
+    if(action==='add-commercial'&&!blocked()){invalidate();const row={id:'project-'+crypto.randomUUID(),title:'',caseRef:'',stage:'QUOTED',selected:true,priceUsd:'',totalDeliveryCostUsd:'',remainingHours:'',startDate:'',endDate:'',paymentMode:'accrual',sourceUrl:'',sourceIds:[],cashIds:[],invoiceIds:[],directCashIds:[],scope:'',note:'',receipts:[{id:'kickoff',label:'Kickoff',amountUsd:'',date:null},{id:'acceptance',label:'Acceptance',amountUsd:'',date:null}]};$('[data-forecast-commercials]').insertAdjacentHTML('beforeend',commercialEditor(row));syncCommercialTiming($('[data-forecast-commercials]').lastElementChild);currency.syncRates($('[data-forecast-form]'),{busy:blocked()});return;}
+    if(action==='remove-commercial'&&!blocked()){target.closest('[data-forecast-commercial]').remove();invalidate();return;}
+    if(action==='add-receipt'&&!blocked()){const body=target.closest('[data-forecast-commercial]').querySelector('[data-forecast-receipts]');body.insertAdjacentHTML('beforeend',receiptEditor({id:'receipt-'+crypto.randomUUID(),label:'',amountUsd:'',amountNative:''},body.children.length,value(body.closest('[data-forecast-commercial]'),'pricingMode')==='NATIVE'));syncCommercialTiming(body.closest('[data-forecast-commercial]'));currency.syncPricing(body.closest('[data-forecast-commercial]'),{busy:blocked()});invalidate();return;}
+    if(action==='remove-receipt'&&!blocked()){target.closest('[data-forecast-receipt]').remove();invalidate();return;}
+    if(action==='load-inputs'&&!blocked()){const input=$('[data-forecast-input-file]');input.value='';input.click();return;}
+    if(action==='download-inputs'&&!blocked()){try{download(JSON.stringify(readEditor(),null,2)+'\n','operating-forecast-inputs.json');}catch(error){status(error.message,true);}return;}
     run(async()=>{
       if(action==='new'){inputState=defaults();selected=null;preview=null;request=null;editing=true;onSelection(null);render();return;}
       if(action==='reforecast'){inputState=structuredClone(selected.inputs);inputState.name+=' — updated';selected=null;preview=null;request=null;editing=true;onSelection(null);render();return;}
@@ -229,6 +273,6 @@ export function mountForecast({container,current,api:transport,mutationId,record
     });
   });
   inputState=initialInputs?structuredClone(initialInputs):defaults();render();
-  const ready=initialForecastId&&!initialInputs?loadSaved(initialForecastId):Promise.resolve();
-  return {ready,draftInputs(){return editing&&available()?structuredClone(readEditor()):null;},dispose(){active=false;},root};
+  const ready=initialForecastId&&!initialInputs?(async()=>{setBusy(true);try{await loadSaved(initialForecastId);}finally{if(available())setBusy(false);}})():Promise.resolve();
+  return {ready,setHostBusy,draftInputs(){return editing&&available()?structuredClone(readEditor()):null;},dispose(){active=false;},root};
 }
