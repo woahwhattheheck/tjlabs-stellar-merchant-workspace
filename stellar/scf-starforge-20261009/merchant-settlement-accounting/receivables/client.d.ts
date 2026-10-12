@@ -186,8 +186,15 @@ export interface CreatePaymentRequestInput extends MutationContext {
 export interface ReturnedPaymentInput extends MutationContext {
   /** Exact 64-character lowercase hexadecimal wallet transaction hash. */
   transaction: string;
-  /** Optional operation sender; the verifier derives the actual payer when omitted. */
-  payer?: string | null; note?: string;
+  /**
+   * Optional operation sender. For an existing transaction, omission preserves its current
+   * sender constraint. Before verification, an explicit account changes the constraint;
+   * explicit null clears it so the verifier derives the payer from the matching transfer.
+   * A changed or cleared constraint requires note.
+   */
+  payer?: string | null;
+  /** Operator note; required when correcting the sender of an existing unverified reference. */
+  note?: string;
 }
 export interface ReceivePaymentRequestInput extends MutationContext {
   returnId: string;
