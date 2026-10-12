@@ -55,7 +55,8 @@
   "contributions": [
     "usaspending",
     "merchant-provider-usa-spending-workspaces",
-    "merchant-provider-tools"
+    "merchant-provider-tools",
+    "merchant-console-browser-assets"
   ],
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/supplier-quota",

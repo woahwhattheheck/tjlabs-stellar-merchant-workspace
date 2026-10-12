@@ -38,6 +38,33 @@ On hosts where a temporary filesystem is local to one execution namespace, keep 
 
 Set `TMPDIR` to an owned directory with enough space for browser and archive work. Keep the original input archive unchanged. Do not delete the original case or reset the request files to repeat a completed action.
 
+### Automatic caller in one worker
+
+`examples/native_currency_held_receiving.py` performs all three phases below, closes their child processes, and publishes the complete private archive before releasing its worker. Its intake has schema `stellar-forge.sf47-currency-held-intake.v1`: `operationId`, `sourceCommit`, the complete original `privatePacket`, and the full selected `sourceFiles` and `companions`. Each source item retains its repository-relative path, UTF-8 content, byte count, SHA-256 and Git blob. The complete original case remains a separately supplied file with its own fixed identity.
+
+```sh
+python3 -u examples/native_currency_held_receiving.py \
+  --base /absolute/owned/native-currency \
+  --archive-directory /absolute/persistent/receiving-archives \
+  --intake /absolute/private/complete-intake.json \
+  --case-file /absolute/private/original-case.zip \
+  --playwright /absolute/installed/playwright/index.mjs \
+  --chromium /absolute/installed/chromium \
+  --hold-result
+```
+
+When `--intake` is omitted, the caller emits `INPUT_READY` and reads one complete bounded JSON line from standard input. Keep that input and the receiving run in the same worker; a separate execution namespace may not retain the same temporary directory.
+
+The original case is verified before it is copied into the caller's retained input location. Reentry can use those same retained bytes when the former external source path is unavailable. Each process records its actual runtime under `RUNTIME-<attempt>.json`; earlier runtime observations remain unchanged.
+
+Use a persistent archive directory that is outside the temporary receiving tree. The caller verifies the complete copied archive before returning `SHARED_ARCHIVE_READY`. A full shared filesystem does not prevent the original calculations or browser continuation from running; local state remains available while the caller attempts the available publication route.
+
+On a ChatGPT worker with the original bundled `library_upload.py`, the caller can run that helper from the same namespace. Supply `--library-helper /absolute/installed/library_upload.py` only when selecting an actual installed helper explicitly. Otherwise the caller uses its known bundle when present and can complete on an equipped VM without that plugin. The original helper owns upload preparation, transfer and finalization; the caller retains its full response and requires an actual successful item before reporting the upload as complete.
+
+If neither a verified persistent archive nor a successful upload exists, delivery remains `PRESERVATION_PENDING`. Keep the held worker open and preserve the actual archive before ending that execution namespace. The native phase result and the delivery result are separate fields: a passed calculation is never reported as a successful save by itself.
+
+With `--hold-result`, the caller accepts `{"action":"status"}`, `{"action":"inspect-image","name":"forecast-mobile.png","offset":0}` (or the desktop filename), and `{"action":"finish"}` after publishing its result. Image replies are bounded byte pages with the complete original file's SHA-256 and byte count. The two inspection PNGs are kept separately from the private source/case archive.
+
 ### 1. Prepare the original case
 
 ```sh
@@ -121,7 +148,7 @@ The final private handover includes:
 - The complete original case, original engine copies and business/reference source files.
 - Every original native request/reply, saved forecast/portfolio and preview used in receiving.
 - Forecast and Portfolio ZIPs with native amounts, source rates, credit/rounding details and known-versus-unvalued cash.
-- Browser journal, full original downloads and retained screens.
+- Browser journal and full original downloads; keep the two layout-inspection PNGs as separate optional sidecars.
 - The complete final Operations export and its full fresh-import receipt.
 - Both closed Workspace databases and their original source histories.
 - Any original failure artifacts and the actual successful continuation.

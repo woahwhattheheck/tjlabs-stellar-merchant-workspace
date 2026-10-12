@@ -86,7 +86,7 @@ For an interrupted manual read, keep the complete file selection, expectedSha256
 
 ## Receive on a second operating host
 
-Install the selected merchant source package as described in OPERATING.md. Copy the complete workspace bundle through the recipient's established file transfer route and compare its delivered SHA-256 with the original handoff.
+Install the delivered selected merchant source archive as described in [OPERATING.md](OPERATING.md#install-the-selected-merchant-product), keeping its original manifest and archive digest. The source-only installation supports the browser and CLI receiving commands below. Run npx from that host's private open311-install directory. Copy the complete workspace bundle through the recipient's established file transfer route and compare its delivered SHA-256 with the original handoff.
 
 Create an empty private destination and inspect its revision:
 
@@ -115,11 +115,15 @@ npx --no-install starforge open311 serve \
   --port 0
 ~~~
 
-The startup JSON identifies the received workspace and actual loopback URL. In the browser, open a received capture, inspect a source case and its review, download the original source, then close and reopen the application. Existing Applications installations can select this initialized receiving directory and use the normal Review/Save and Start/Open controls.
+The startup JSON identifies the received workspace and actual loopback URL. In the browser, open a received capture, inspect a source case and its review, download the original source, then close and reopen the application.
+
+For managed Applications, receive the bundle before the first Review/Save of this directory. Applications preparation binds the directory and its saved workspace UUID. If an existing application was saved against the empty destination before receiving, stop that managed process, Review/Save the same application against the received directory, then use Start/Open. This refreshes its saved binding to the original workspace UUID restored by receiving.
 
 For a new source refresh after receiving, select the actual current date interval and keep the source's documented limits and extensions. The old fixed captures remain available for original reports and comparison.
 
 ## Receive through a merchant alias
+
+On the receiving host, complete [Prepare the runtime](OPERATING.md#prepare-the-runtime-for-the-selected-source-archive) using the delivered source archive and its digest, then initialize the merchant and generate its client configuration through that runtime as shown in [Attach the merchant tools](OPERATING.md#attach-the-merchant-tools). The generator records that host's actual Node and installed source paths. Keep its configuration and workspace paths local to that receiving host.
 
 Create the receiving desk with the CLI state command. In its private host connection file, select that directory and bind the actual bundle path and delivered SHA-256 under an input alias:
 
@@ -158,7 +162,7 @@ const result = await receiver.receive({
 console.log(result);
 ~~~
 
-Open the same receiving directory through its browser or Applications entry. A concurrent browser observes the received identity through the live startup endpoint.
+Open the same receiving directory through its browser or Applications entry. A concurrent browser observes the received identity through the live startup endpoint. For an Applications row saved before receiving, stop the managed process and Review/Save its received workspace binding before the next Start/Open, as described above.
 
 ## Recover a response lost during receiving
 

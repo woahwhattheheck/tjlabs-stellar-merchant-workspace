@@ -1,0 +1,253 @@
+{
+  "schema": "stellar-forge.federal-awards-installed-source.v1",
+  "operation": "SCF-USASPENDING-AWARD-TRANSACTIONS-64B7-20261012",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "a8ebea9d6f08086db7ec7d2ee62dc26dadb273d8",
+    "tree": "0ae3e03c2e0ac470a2dd9923a23c137e65a7f93d"
+  },
+  "sourceFiles": 1836,
+  "sourceBytes": 26503614,
+  "sourceSelection": "federal-awards",
+  "initialSelectionFiles": 760,
+  "metadata": {
+    "path": "source-metadata.json",
+    "gitBlob": "28dfb96f0b10dbced180b26944a42eff6e26346d",
+    "bytes": 1621454
+  },
+  "driver": {
+    "path": "receive-installed.mjs",
+    "gitBlob": "0241433a2a3176d70530cd0ddd419ebe72e3d8b6",
+    "bytes": 9138
+  },
+  "receiver": {
+    "path": "receive-installed.py",
+    "gitBlob": "a46a3c5a21384a02af6af601735d0f2eda34a5e6",
+    "bytes": 15662
+  },
+  "parts": [
+    {
+      "path": "source-parts/part-001.json",
+      "gitBlob": "7fca78d3241290787fcaa298bd41448515dd5839",
+      "bytes": 898504,
+      "sourceFiles": 55,
+      "sourceBytes": 875373
+    },
+    {
+      "path": "source-parts/part-002.json",
+      "gitBlob": "4c5b10263b6f45044bf8c7a241d8d159d7feb4b1",
+      "bytes": 873018,
+      "sourceFiles": 83,
+      "sourceBytes": 850169
+    },
+    {
+      "path": "source-parts/part-003.json",
+      "gitBlob": "15b6977dbbc6603c5b07c5ac493b714a0f2ce683",
+      "bytes": 894728,
+      "sourceFiles": 46,
+      "sourceBytes": 873149
+    },
+    {
+      "path": "source-parts/part-004.json",
+      "gitBlob": "df53fb98657a3d9cb534766586b3e731a085a8fb",
+      "bytes": 894892,
+      "sourceFiles": 62,
+      "sourceBytes": 871523
+    },
+    {
+      "path": "source-parts/part-005.json",
+      "gitBlob": "3b3914a2bcc309f55801417d147d8f0e1b80d6fa",
+      "bytes": 889378,
+      "sourceFiles": 56,
+      "sourceBytes": 866603
+    },
+    {
+      "path": "source-parts/part-006.json",
+      "gitBlob": "71ba968f6ae4d929b7829cb73f04cc59e8c2ba10",
+      "bytes": 896617,
+      "sourceFiles": 64,
+      "sourceBytes": 872149
+    },
+    {
+      "path": "source-parts/part-007.json",
+      "gitBlob": "d46ee4051cf87abdfe6be2faef914b85703f62e0",
+      "bytes": 890402,
+      "sourceFiles": 43,
+      "sourceBytes": 860006
+    },
+    {
+      "path": "source-parts/part-008.json",
+      "gitBlob": "05c9d680b840cd62474d633c50136a188c9990b9",
+      "bytes": 891554,
+      "sourceFiles": 53,
+      "sourceBytes": 867505
+    },
+    {
+      "path": "source-parts/part-009.json",
+      "gitBlob": "098d3e7caee30286612706897859a1122e2a72d5",
+      "bytes": 855056,
+      "sourceFiles": 38,
+      "sourceBytes": 836998
+    },
+    {
+      "path": "source-parts/part-010.json",
+      "gitBlob": "7fcd720e5e475181d2493280c26d0a2b146457c5",
+      "bytes": 893631,
+      "sourceFiles": 60,
+      "sourceBytes": 869424
+    },
+    {
+      "path": "source-parts/part-011.json",
+      "gitBlob": "7120bd65560c49f84f977e114d38ec76bc993863",
+      "bytes": 883209,
+      "sourceFiles": 72,
+      "sourceBytes": 855537
+    },
+    {
+      "path": "source-parts/part-012.json",
+      "gitBlob": "62bfe765ef41f793b7269a9289cc151cf18d3f6c",
+      "bytes": 894046,
+      "sourceFiles": 70,
+      "sourceBytes": 856194
+    },
+    {
+      "path": "source-parts/part-013.json",
+      "gitBlob": "974f0070dcbcfc34c58c6c731a7bf39dea155d0e",
+      "bytes": 889149,
+      "sourceFiles": 56,
+      "sourceBytes": 865778
+    },
+    {
+      "path": "source-parts/part-014.json",
+      "gitBlob": "e948120bcd5756605fd954d4d72aef7912ff9474",
+      "bytes": 898491,
+      "sourceFiles": 87,
+      "sourceBytes": 869034
+    },
+    {
+      "path": "source-parts/part-015.json",
+      "gitBlob": "0781b7b32f462a93333bdb2ab5b7d5939706fe96",
+      "bytes": 863564,
+      "sourceFiles": 45,
+      "sourceBytes": 841361
+    },
+    {
+      "path": "source-parts/part-016.json",
+      "gitBlob": "be0152d4809a6ee4b607377d6a4ad783a07dbbd7",
+      "bytes": 847563,
+      "sourceFiles": 68,
+      "sourceBytes": 821146
+    },
+    {
+      "path": "source-parts/part-017.json",
+      "gitBlob": "2efcb6946be8d96759b4ee0537b1b4f37db33a7b",
+      "bytes": 893527,
+      "sourceFiles": 80,
+      "sourceBytes": 864844
+    },
+    {
+      "path": "source-parts/part-018.json",
+      "gitBlob": "030b6cbe65121de2c6f5f36671f033cc12b2bec6",
+      "bytes": 900192,
+      "sourceFiles": 72,
+      "sourceBytes": 872887
+    },
+    {
+      "path": "source-parts/part-019.json",
+      "gitBlob": "b6ede81575a7fb3e88ce81d324cb47c419c87659",
+      "bytes": 889376,
+      "sourceFiles": 59,
+      "sourceBytes": 864564
+    },
+    {
+      "path": "source-parts/part-020.json",
+      "gitBlob": "34e7648ced583161c739a12a3b86035141886c7f",
+      "bytes": 899764,
+      "sourceFiles": 67,
+      "sourceBytes": 873263
+    },
+    {
+      "path": "source-parts/part-021.json",
+      "gitBlob": "5a840ef0d5ee5c2da76d117a07a6c28443f03d7c",
+      "bytes": 883875,
+      "sourceFiles": 55,
+      "sourceBytes": 860076
+    },
+    {
+      "path": "source-parts/part-022.json",
+      "gitBlob": "fc55a10599cc5a14d2ca84d8677c290f11746fb2",
+      "bytes": 896242,
+      "sourceFiles": 65,
+      "sourceBytes": 870186
+    },
+    {
+      "path": "source-parts/part-023.json",
+      "gitBlob": "aa4e7a40be1711a58b43bf35b274d2474e84c3a7",
+      "bytes": 891356,
+      "sourceFiles": 59,
+      "sourceBytes": 865607
+    },
+    {
+      "path": "source-parts/part-024.json",
+      "gitBlob": "93e06cdf9ca979face8ae1212b78d4906e72dd2d",
+      "bytes": 891838,
+      "sourceFiles": 66,
+      "sourceBytes": 860579
+    },
+    {
+      "path": "source-parts/part-025.json",
+      "gitBlob": "62843cf27538fcd97d3aeb90ab6fd47204684cf8",
+      "bytes": 899531,
+      "sourceFiles": 69,
+      "sourceBytes": 861271
+    },
+    {
+      "path": "source-parts/part-026.json",
+      "gitBlob": "fe38e07feca1f8587e613f96a616d27322ddff53",
+      "bytes": 891437,
+      "sourceFiles": 40,
+      "sourceBytes": 856022
+    },
+    {
+      "path": "source-parts/part-027.json",
+      "gitBlob": "d878937ce3ae5863914a969906268627961f05e0",
+      "bytes": 869587,
+      "sourceFiles": 38,
+      "sourceBytes": 821676
+    },
+    {
+      "path": "source-parts/part-028.json",
+      "gitBlob": "aced7b9ef8acd7d2c0351bd8c3fcd226707f855d",
+      "bytes": 896636,
+      "sourceFiles": 54,
+      "sourceBytes": 858712
+    },
+    {
+      "path": "source-parts/part-029.json",
+      "gitBlob": "9999cb5b043ba657ef7becf5afac65c6f7609cda",
+      "bytes": 878947,
+      "sourceFiles": 51,
+      "sourceBytes": 852881
+    },
+    {
+      "path": "source-parts/part-030.json",
+      "gitBlob": "0e02ecb7c9dcde21c2043e22dabba51efbf2fdb7",
+      "bytes": 882203,
+      "sourceFiles": 59,
+      "sourceBytes": 854916
+    },
+    {
+      "path": "source-parts/part-031.json",
+      "gitBlob": "40fb402ee7f440ddc7e75b24ee12436c6c30dec6",
+      "bytes": 733964,
+      "sourceFiles": 44,
+      "sourceBytes": 714181
+    }
+  ],
+  "prerequisites": {
+    "rootSourcePacket": "9cfce7aae075c3c5f4cbc470bd85fd447e6aeacc",
+    "nativeMerchantPacket": "02a73125b410bcf0265e75f6b2cf7fc77ed48bf3",
+    "applicationsSourcePacket": "3f03c6f7db84188b207c7da262325685474f3edb"
+  },
+  "authority": "The original Git object receiver validates the original commit and full tree. The original native build.mjs selects and packages the product from this cache. The original runtime installer and Applications workflow perform receiving."
+}

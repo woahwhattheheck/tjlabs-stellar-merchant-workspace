@@ -152,7 +152,9 @@ def main():
             cfg["executionRelocation"] = {"originalBaseDirectory":str(original_base),"executionBaseDirectory":str(base)}
         if args.case_file:
             cfg["inputs"]["case"]["path"] = str(Path(args.case_file).resolve())
-        case_file = Path(cfg["inputs"]["case"]["path"])
+        case_file = base / "ORIGINAL_CASE.zip"
+        if not case_file.is_file():
+            case_file = Path(cfg["inputs"]["case"]["path"])
         case_raw = case_file.read_bytes()
         require(len(case_raw) == cfg["inputs"]["case"]["bytes"] and digest(case_raw) == cfg["inputs"]["case"]["sha256"],
                 "The original complete case archive differs.")
@@ -165,6 +167,14 @@ def main():
         write_json(base / "CONFIG.json", cfg)
         atomic(base / "ORIGINAL_PRIVATE_PACKET.json", (json.dumps(private,ensure_ascii=False,sort_keys=True,separators=(",",":"))+"\n").encode())
         atomic(base / "ORIGINAL_CASE.zip", case_raw)
+        # The original caller prefers its own retained input before an external
+        # source path. Stage the already verified bytes so reentry also works if
+        # a previous host's original archive location is no longer mounted.
+        case_name = cfg["inputs"]["case"]["filename"]
+        require(isinstance(case_name, str) and Path(case_name).name == case_name
+                and case_name not in ("", ".", "..") and "\\" not in case_name,
+                "Use one plain original case filename.")
+        atomic(base / "receiving" / "inputs" / case_name, case_raw)
         pins = {p["path"]:p for p in cfg["sourcePins"]}
         selected = {item["path"]:raw for item,raw in raw_files if item["path"] in pins}
         require(set(selected) == set(pins), "The complete selected operating source is required.")
@@ -198,14 +208,22 @@ def main():
         for key in ("SF47_SUPPORT_NODE","SF47_BUYER_NODE"):
             env[key] = node
         subprocess.run([node,"--check",str(callback)],check=True,env=env,cwd=base)
-        write_json(base / "RUNTIME.json", {"operationId":operation,"pid":os.getpid(),"python":python,
+        attempt = str(time.time_ns())
+        write_json(base / ("RUNTIME-" + attempt + ".json"), {"operationId":operation,"pid":os.getpid(),"python":python,
             "node":node,"playwright":playwright,"chromium":chromium,"sourceCommit":cfg["sourceCommit"],
             "sourceFiles":len(pins),"sourceBytes":sum(x["bytes"] for x in pins.values())})
-        # Shared checkpoints are optional. The original bundled Library helper
-        # publishes the final archive directly from this same execution namespace.
-        library_helper = choose_file(args.library_helper, [
-            "/root/.codex/plugins/cache/openai-curated-remote/openai-library/0.1.62/skills/library/scripts/library_upload.py"
-        ], "bundled Library upload helper")
+        # A persistent receiving host does not require this ChatGPT-specific
+        # publication helper. An explicitly selected missing helper is an error;
+        # otherwise use an actually installed bundle when it is available.
+        library_helper = None
+        if args.library_helper:
+            library_helper = choose_file(args.library_helper, [], "selected bundled Library upload helper")
+        else:
+            default_helper = Path("/root/.codex/plugins/cache/openai-curated-remote/openai-library/0.1.62/skills/library/scripts/library_upload.py")
+            if default_helper.is_file():
+                library_helper = str(default_helper.absolute())
+        if library_helper is None:
+            emit({"state":"LIBRARY_HELPER_UNAVAILABLE","archiveDirectory":str(requested_sink)})
         reservation = sink / (operation + ".publication.part")
         try:
             if not reservation.exists():
@@ -218,7 +236,6 @@ def main():
         except OSError as exc:
             emit({"state":"SHARED_CHECKPOINT_UNAVAILABLE","error":str(exc)})
         child = None
-        attempt = str(time.time_ns())
         outcome = {"operationId":operation,"attempt":attempt,"state":"RUNNING","sourceCommit":cfg["sourceCommit"]}
         receiving = base / "receiving"
         receiving.mkdir(exist_ok=True)
@@ -243,20 +260,19 @@ def main():
             target = requested_sink / ("SF47_Native_Currency_" + label + "_" + attempt + ".zip")
             try:
                 requested_sink.mkdir(parents=True,exist_ok=True)
-                with reservation.open("a+b") as out, archive.open("rb") as inp:
-                    out.seek(0)
-                    # O_APPEND is cleared by reopening r+b before the exact copy.
-                with reservation.open("r+b") as out, archive.open("rb") as inp:
+                # Stage on the destination filesystem, including when the sink
+                # was unavailable at startup and the reservation is local.
+                staging = reservation if reservation.parent == requested_sink else target.with_name("." + target.name + ".part")
+                with staging.open("r+b" if staging.exists() else "w+b") as out, archive.open("rb") as inp:
                     out.seek(0)
                     for chunk in iter(lambda:inp.read(1024*1024),b""):
                         out.write(chunk)
                     out.truncate(size); out.flush(); os.fsync(out.fileno())
-                if target.exists():
-                    require(target.stat().st_size==size and digest(target.read_bytes())==receipt["sha256"],
-                            "Retained shared archive differs.")
-                else:
-                    os.link(reservation,target)
-                reservation.unlink()
+                if not target.exists():
+                    os.link(staging,target)
+                require(target.stat().st_size==size and digest(target.read_bytes())==receipt["sha256"],
+                        "Retained shared archive differs.")
+                staging.unlink()
                 receipt["sharedPath"]=str(target)
                 write_json(requested_sink/(target.name+".receipt.json"),receipt)
             except OSError as exc:
@@ -267,6 +283,7 @@ def main():
             return receipt
         def library_upload(archive_receipt):
             nonlocal child
+            require(library_helper is not None, "No bundled Library helper is installed on this receiving host.")
             request={"uploads":[{"local_path":archive_receipt["localPath"],"purpose":"create_library_file"}]}
             write_json(base/("LIBRARY_REQUEST-"+attempt+".json"),request)
             emit({"state":"LIBRARY_UPLOAD_STARTED","bytes":archive_receipt["bytes"],"sha256":archive_receipt["sha256"]})
@@ -277,11 +294,31 @@ def main():
                 code=child.returncode
                 child=None
             raw=(base/("library-"+attempt+".stdout")).read_bytes()
-            require(code==0,"Bundled Library upload failed: "+(base/("library-"+attempt+".stderr")).read_text(errors="replace")[-4000:])
             value=json.loads(raw)
-            write_json(base/("LIBRARY_RESULT-"+attempt+".json"),value)
-            emit({"state":"LIBRARY_UPLOAD_RETURNED","result":value})
-            return value
+            result_path=base/("LIBRARY_RESULT-"+attempt+".json")
+            write_json(result_path,value)
+            require(code==0,"Bundled Library helper returned exit "+str(code)+"; retain its original stdout and stderr.")
+            # The maintained native Library consumer calls the unchanged
+            # library_upload.LibraryUploadWorkflow.run and consumes ordered
+            # results with local_path/status. Require a matching successful item
+            # and its original file identities; keep every other shape unresolved.
+            require(isinstance(value,dict) and isinstance(value.get("results"),list)
+                    and len(value["results"])==1,"The original Library response does not identify one completed upload.")
+            row=value["results"][0]
+            require(isinstance(row,dict) and row.get("local_path")==archive_receipt["localPath"]
+                    and row.get("status")=="succeeded","The original Library upload item is not a matching success.")
+            require(row.get("purpose","create_library_file")=="create_library_file",
+                    "The original Library result has a different publication purpose.")
+            require(all(isinstance(row.get(key),str) and row[key].strip() for key in ("file_id","library_file_id")),
+                    "The original Library item lacks its complete native file identities.")
+            require(Path(archive_receipt["localPath"]).stat().st_size==archive_receipt["bytes"]
+                    and digest(Path(archive_receipt["localPath"]).read_bytes())==archive_receipt["sha256"],
+                    "The published archive changed during the original Library upload.")
+            receipt={"status":"succeeded","local_path":row["local_path"],"file_id":row["file_id"],
+                "library_file_id":row["library_file_id"],"bytes":archive_receipt["bytes"],
+                "sha256":archive_receipt["sha256"],"resultFile":str(result_path),"resultSha256":digest(result_path.read_bytes())}
+            emit({"state":"LIBRARY_UPLOAD_SUCCEEDED",**receipt})
+            return receipt
         def run_phase(phase, argv):
             nonlocal child
             emit({"state":"PHASE_STARTED","phase":phase,"operationId":operation})
@@ -323,16 +360,25 @@ def main():
             try:
                 final=publish("COMPLETE" if outcome["state"]=="PASS" else "INTERRUPTED")
                 outcome["archive"]=final
-                try:
-                    outcome["library"]=library_upload(final)
-                    outcome["deliveryState"]="LIBRARY_RETURNED"
-                except BaseException as exc:
-                    outcome["deliveryState"]="SHARED_ARCHIVE_READY" if final.get("sharedPath") else "PRESERVATION_PENDING"
-                    outcome["libraryError"]=str(exc)
-                    emit({"state":"LIBRARY_UPLOAD_FAILED","error":str(exc)})
+                outcome["deliveryState"]="SHARED_ARCHIVE_READY" if final.get("sharedPath") else "PRESERVATION_PENDING"
+                if library_helper is not None:
+                    try:
+                        outcome["library"]=library_upload(final)
+                        outcome["deliveryState"]="LIBRARY_SAVED"
+                    except BaseException as exc:
+                        outcome["libraryError"]=str(exc)
+                        emit({"state":"LIBRARY_UPLOAD_FAILED","error":str(exc)})
+                else:
+                    outcome["libraryUnavailable"]=True
+            except BaseException as exc:
+                outcome["deliveryState"]="PRESERVATION_PENDING"
+                outcome["archiveError"]=str(exc)
+                emit({"state":"ARCHIVE_PUBLICATION_FAILED","error":str(exc),"base":str(base)})
             finally:
-                if reservation.exists():
-                    reservation.unlink()
+                try:
+                    reservation.unlink(missing_ok=True)
+                except OSError as exc:
+                    outcome["reservationCleanupError"]=str(exc)
             try:
                 write_json(requested_sink/("OUTCOME-"+attempt+".json"),outcome)
             except OSError:
@@ -346,8 +392,8 @@ def main():
                     except OSError:
                         pass
             emit(outcome)
-        if args.hold_result:
-            emit({"state":"RESULT_HELD","pid":os.getpid(),"base":str(base)})
+        if args.hold_result or (outcome.get("deliveryState")=="PRESERVATION_PENDING" and sys.stdin.isatty()):
+            emit({"state":"RESULT_HELD","pid":os.getpid(),"base":str(base),"deliveryState":outcome.get("deliveryState")})
             while True:
                 raw=sys.stdin.buffer.readline(256*1024)
                 if not raw:

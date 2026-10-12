@@ -23,6 +23,8 @@ const ANSWERS = [
 const ARTICLE = '<article class="application-prose" aria-label="Complete Build application">';
 const EXISTING_WORK = '<h2 id="open-the-existing-work">Open the existing work</h2>';
 const ECONOMIC_HEADING = '## Recurring economic-report installation';
+const COASTAL_HEADING = '## Coastal model-input installation';
+const COASTAL_OPERATION = 'SCF-COASTAL-COMMISSIONING-APPLICATION-018A-20261012';
 const digest = value => createHash('sha256').update(value).digest('hex');
 const gitBlob = value => createHash('sha1').update('blob ' + Buffer.byteLength(value) + '\0').update(value).digest('hex');
 const bytes = value => Buffer.byteLength(value);
@@ -106,13 +108,36 @@ export function receiveEconomicApplication(productAndFinanceMarkdown, manuscript
   return clean(companion.slice(0, place) + economic + '\n' + companion.slice(place));
 }
 
+/** Retain the complete selected coastal installation in the same companion. */
+export function receiveCoastalApplication(productAndFinanceMarkdown, manuscript) {
+  const source = clean(manuscript), starts = [...source.matchAll(/^## Coastal model-input installation\n/gm)];
+  need(starts.length === 1, 'Select one complete coastal model-input installation subsection from the canonical manuscript.');
+  const start = starts[0].index, after = source.slice(start + COASTAL_HEADING.length + 1);
+  const next = after.search(/^#{1,2}\s/m);
+  const coastal = clean(source.slice(start, next < 0 ? source.length : start + COASTAL_HEADING.length + 1 + next));
+  const companion = clean(productAndFinanceMarkdown);
+  const existing = [...companion.matchAll(/^## Coastal model-input installation\n/gm)];
+  need(existing.length <= 1, 'Keep one coastal installation in the original companion.');
+  if (existing.length) {
+    const current = existing[0].index, tail = companion.slice(current + COASTAL_HEADING.length + 1);
+    const following = tail.search(/^#{1,2}\s/m);
+    return clean(companion.slice(0, current) + coastal + '\n' +
+      (following < 0 ? '' : companion.slice(current + COASTAL_HEADING.length + 1 + following)));
+  }
+  const place = companion.indexOf('## 7. Threat response and useful-outcome measurement\n');
+  need(place >= 0, 'Retain the original companion and its threat-response section.');
+  return clean(companion.slice(0, place) + coastal + '\n' + companion.slice(place));
+}
+
 /** Pure composition; the caller chooses whether and where the result is written. */
 export function composeGrantApplication({
   applicationMarkdown, productAndFinanceMarkdown, templateHtml, sourceIndex,
-  fredCommit, canonicalManuscript = CANONICAL_MANUSCRIPT,
+  fredCommit, coopsCommit = null, canonicalManuscript = CANONICAL_MANUSCRIPT,
 }) {
   need(typeof fredCommit === 'string' && /^[a-f0-9]{40}$/.test(fredCommit), 'Select the actual merged economic product commit.');
+  need(coopsCommit === null || (typeof coopsCommit === 'string' && /^[a-f0-9]{40}$/.test(coopsCommit)), 'Select the actual merged coastal product commit.');
   const application = clean(applicationMarkdown), companion = clean(productAndFinanceMarkdown);
+  if (coopsCommit) need(companion.includes(COASTAL_HEADING + '\n'), 'Retain the selected complete coastal installation with its source commit.');
   need(!application.includes('{{') && !companion.includes('{{'), 'Resolve all application source placeholders before composition.');
   const headings = [...application.matchAll(/^## (.+)$/gm)].map(match => match[1]);
   need(JSON.stringify(headings) === JSON.stringify(ANSWERS), 'Retain the complete nine original application answers in their existing order.');
@@ -139,6 +164,27 @@ export function composeGrantApplication({
   if (previous >= 0) index.sources[previous] = source; else index.sources.push(source);
   index.narrative_source = { ...index.narrative_source, canonical_manuscript: canonicalManuscript,
     current_application_sha256: digest(application), economic_product_commit: fredCommit, economic_application_operation: OPERATION };
+  let coastalSource = null;
+  if (coopsCommit) {
+    coastalSource = {
+      id: 'coastal-model-input', kind: 'maintained-product',
+      source_commit: coopsCommit, repository: MERCHANT_ROOT,
+      path: 'products/coops/OPERATING.md',
+      url: MERCHANT_ROOT + 'blob/' + coopsCommit + '/products/coops/OPERATING.md',
+      study_guide: MERCHANT_ROOT + 'blob/' + coopsCommit + '/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/STUDIES.md',
+      receiving_guide: MERCHANT_ROOT + 'blob/' + coopsCommit + '/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/RECEIVING.md',
+      operator_workflow: 'Original station responses, reviewed editions and study mapping, complete release, returned-file comparison and explicit receiving, native queries and Python offline receiving.',
+      paid_unit: 'One selected advertised model-input resource, such as the complete released study CSV; other files and query pages retain their own advertised access and request terms.',
+      application_operation: COASTAL_OPERATION,
+      native_receiving_operation: 'COOPS-LA-JOLLA-STUDY-RECEIVING-018A-20261012-01',
+      native_receiving_status: 'Registered original operating run in progress.',
+    };
+    const coastalAt = index.sources.findIndex(item => item.id === coastalSource.id);
+    if (coastalAt >= 0) index.sources[coastalAt] = coastalSource; else index.sources.push(coastalSource);
+    index.product_and_finance.basis += ' The selected coastal model-input installation retains the same funded packages and its separately proposed commercial scope.';
+    index.narrative_source.coastal_product_commit = coopsCommit;
+    index.narrative_source.coastal_application_operation = COASTAL_OPERATION;
+  }
   const indexText = JSON.stringify(index, null, 2) + '\n';
   const files = {
     'grant.html': html,
@@ -147,15 +193,15 @@ export function composeGrantApplication({
     'grant-data/source-index.json': indexText,
   };
   return { files, sourcePins: Object.fromEntries(Object.entries(files).map(([path, body]) => ['/' + path, gitBlob(body)])),
-    application: index.application, productAndFinance: index.product_and_finance, economicSource: source };
+    application: index.application, productAndFinance: index.product_and_finance, economicSource: source, coastalSource };
 }
 
 function argumentsFor(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i];
-    need(['--directory', '--manuscript', '--fred-commit', '--source-pins-output'].includes(name) && i + 1 < argv.length,
-      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha> and optional --source-pins-output <file>.');
+    need(['--directory', '--manuscript', '--fred-commit', '--coops-commit', '--source-pins-output'].includes(name) && i + 1 < argv.length,
+      'Use --directory <existing dist>, --manuscript <canonical.md>, --fred-commit <merged sha>, optional --coops-commit <merged sha> and --source-pins-output <file>.');
     need(!Object.hasOwn(options, name), 'Use each composition option once: ' + name);
     options[name] = argv[++i];
   }
@@ -172,15 +218,18 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   ]);
   const index = JSON.parse(indexText);
   const manuscript = options['--manuscript'] ? await readFile(resolve(options['--manuscript']), 'utf8') : null;
+  const coopsCommit = options['--coops-commit'] || index.narrative_source?.coastal_product_commit || null;
+  let companion = manuscript ? receiveEconomicApplication(productAndFinanceMarkdown, manuscript) : productAndFinanceMarkdown;
+  if (manuscript && coopsCommit) companion = receiveCoastalApplication(companion, manuscript);
   const result = composeGrantApplication({
     applicationMarkdown: manuscript ? extractReviewerApplication(manuscript) : applicationMarkdown,
-    productAndFinanceMarkdown: manuscript ? receiveEconomicApplication(productAndFinanceMarkdown, manuscript) : productAndFinanceMarkdown,
-    templateHtml, sourceIndex: index,
+    productAndFinanceMarkdown: companion, templateHtml, sourceIndex: index,
     fredCommit: options['--fred-commit'] || index.narrative_source?.economic_product_commit,
+    coopsCommit,
   });
   for (const [path, body] of Object.entries(result.files)) await writeFile(join(directory, path), body);
   if (options['--source-pins-output']) await writeFile(resolve(options['--source-pins-output']), JSON.stringify(result.sourcePins, null, 2) + '\n');
-  return { sourcePins: result.sourcePins, application: result.application, productAndFinance: result.productAndFinance, economicSource: result.economicSource };
+  return { sourcePins: result.sourcePins, application: result.application, productAndFinance: result.productAndFinance, economicSource: result.economicSource, coastalSource: result.coastalSource };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   runGrantComposition().then(result => process.stdout.write(JSON.stringify(result, null, 2) + '\n')).catch(error => {

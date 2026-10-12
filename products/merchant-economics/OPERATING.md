@@ -1,12 +1,12 @@
 # Operate supplier costs, tariffs, pricing and receiving
 
-Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, graduated and volume tariff comparisons, pricing decisions and receiving. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
+Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, graduated and volume tariff comparisons, pricing decisions, customer quotation and receiving. The original customer case carries the selected price into accepted implementation, Service work and complete editable handover. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
 
 This workflow is included in the Stellar merchant product as `revenue-workspace`, `merchant-tariffs` and `merchant-mcp pricing`. Its source and browser use the existing SF97 engine. The MCP interface uses the original merchant MCP runtime. Select the merchant’s existing payment, database or provider runtime separately when starting that merchant.
 
 ## Install the complete Merchant economics product
 
-In the maintained runtime workspace, choose **Build a product**, select the reviewed canonical source commit and **Merchant economics**, then use the resulting original archive in **Source & profile**. The committed `merchant-economics` recipe includes the original API merchant, supplier costs, Pricing application, tariff operator, scenario/repricing modules, typed HTTP client and seller-release workflow. It retains the original OpenAPI merchant source and package dependencies used by release staging.
+In the maintained runtime workspace, choose **Build a product**, select the reviewed canonical source commit and **Merchant economics**, then use the resulting original archive in **Source & profile**. The committed `merchant-economics` recipe includes the original API merchant, supplier costs, Pricing and Merchant support applications, tariff operator, scenario/repricing modules, typed clients, customer quotations, accepted implementation, Service and buyer/accountant continuation, and seller releases. It retains the original OpenAPI merchant source and package dependencies used by release staging.
 
 The same existing builder accepts this selection:
 
@@ -300,6 +300,71 @@ starforge merchant-tariffs receive \
 ~~~
 
 The receiver matches each referenced original pricing version and the exact source, request and manifest identities before receiving the plans and selections. Reopen a saved tariff plan, download its original JSON/CSV, reopen the selected original scenario and pricing version, then inspect any saved price decision and its files. Continue ordinary editing and next pricing review in that received directory. An interrupted portfolio receive retains the same complete input and original identities for continuation.
+
+## 8. Carry the selected tariff into a customer quotation
+
+The installed Merchant economics and Merchant Support editions both include the original Pricing and Support applications. A customer can prepare a price, retain its exact tariff basis in the saved case, agree the work, deliver it and reopen the complete result through the same edition.
+
+Open **Applications → Merchant support** using the customer's private case, source and complete-package directories. Keep its existing incident profile; an original profile with an empty `sources` array supports case work before a watcher is attached. The application provides **Commercial quotations** on its verified local listener. Open the saved case and choose **Tariff sources** in the quotation desk.
+
+1. Select the original pricing directory, seller configuration and one saved snapshot or history file. Choose the completed original selection request. Its two saved outcomes identify the scenario plan and the resulting pricing version.
+2. Capture that selection into a separate private receiving directory. Keep the original backup request UUID and capture input for recovery. The capture contains the selected portfolio and the complete original pricing backup, including the pricing version created by the selected request.
+3. Inspect that retained source, confirm the merchant and route correspondence, and attach it to the current case. The original case engine retains separate request UUIDs for pricing receive, backup attachment and tariff attachment. Reuse those exact inputs when continuing an interrupted response.
+4. Choose the attached tariff source in the quotation editor. The editor selects its matching pricing source and original quantity. Add the implementation work, service terms and customer delivery terms, then review and save the complete quotation edition.
+5. Record the customer's response against that exact edition. Use **Implementation** to review accepted task and plan changes, preserve current delivery progress, and apply the reviewed scope or change order.
+6. Continue the original work, technical and customer receiving. Export the complete case through its existing package controls. In the receiving case, reopen the saved quotation and restore the retained pricing backup before the original tariff portfolio is received.
+
+The selected portfolio retains the original plan and comparison, exact quantity and tier schedule, derived uniform rate, rounding, both request UUIDs and both completed outcomes. The original pricing backup retains their underlying saved files. Together with the case history, quote editions, responses and materials, these form the editable customer handover.
+
+### Keep the saved rate and the later quantity explicit
+
+A positive selected quantity derives a uniform per-request quote from the exact tariff total. The customer quotation displays that saved rate, the original tier total and its rounding difference. A later explicit monthly quantity displays the charge at the saved uniform rate alongside the original tier schedule at that new quantity.
+
+To adopt a different rate, save a new comparison selection in **Merchant pricing → Tariff planning**, then capture that completed source for a new quote edition. Zero monthly requests give a zero route charge. The source retains the earlier positive selection that established the saved rate.
+
+### Use the original commands and clients
+
+Export only the selected native source with the completed pricing selection request UUID:
+
+~~~sh
+starforge merchant-tariffs export \
+  --config /srv/starforge/config/merchant-seller.json \
+  --state /srv/starforge/state/merchant-pricing \
+  --snapshot /srv/starforge/observations/merchant-traffic.json \
+  --selection-request-id ORIGINAL_COMPLETED_SELECTION_UUID \
+  --output /srv/starforge/receiving/selected-tariff-portfolio.json
+
+starforge merchant-tariffs inspect \
+  --config /srv/starforge/config/merchant-seller.json \
+  --state /srv/starforge/state/merchant-pricing \
+  --snapshot /srv/starforge/observations/merchant-traffic.json \
+  --input /srv/starforge/receiving/selected-tariff-portfolio.json
+~~~
+
+The source and output paths must be the actual private selections. Omit `--selection-request-id` to export the original full portfolio. Read-only inspection uses the same native preflight as receiving. Original saved pricing and scenario sources must be present in the inspected workspace.
+
+The customer case uses the maintained `starforge merchant-commercial tariffs` actions: `catalog`, `selection`, `capture`, `inspect`, `attach`, `case`, `restore` and `download`. Each uses `--cases-dir` and one private `--input` JSON file; `status` returns the current case and active source operations. The complete [Tariff quotation and customer receiving guide](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/TARIFFS.md) supplies the exact inputs, complete-package commands and recovery steps.
+
+The installed typed Commercial client is:
+
+~~~js
+import { createCommercialTariffClient } from '@tokenjunkielabs/starforge-merchant/merchant/commercial-tariff-client';
+
+const client = createCommercialTariffClient({
+  url: originalMerchantUrl,
+  caseId: originalCaseId,
+  workspaceId: originalWorkspaceSha256
+});
+const current = await client.status();
+const inspected = await client.inspect({
+  directory: retainedReceivingDirectory,
+  expectedSourceSha256: retainedReceivingSha256
+});
+~~~
+
+The Pricing HTTP and MCP clients retain the original `bundle`/download methods with optional `selectionRequestId`, plus `inspectPortfolio`. The existing Pricing MCP CLI exposes `tariff-bundle`, `tariff-portfolio-download` and `tariff-inspect`. The existing Support provider exposes the nine `merchant_case_commercial_tariff_*` operations through the same case writer and retained file reader. Native Pricing inspection returns the complete original review; the MCP response presents its typed source and request summary after that same full preflight.
+
+The [Merchant Support product guide](../merchant-support/README.md) connects this quotation to accepted implementation, Service work, buyer/accountant continuation and complete customer receiving. The original [Tariff MCP guide](../../stellar-forge/mcp-merchant-operator/TARIFFS.md) defines selected export, full inspection, manifest and resume behavior.
 
 ## Continue the original complete receiving operation
 
