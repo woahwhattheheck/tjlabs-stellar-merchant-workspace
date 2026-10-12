@@ -10,6 +10,7 @@ import sys
 from .errors import BuyerError
 from .review_library import ResourceLibrary, ReviewError, ReviewTransferError
 from .storage import parse, read
+from .review_serve import browser_arguments, serve_foreground
 
 
 def _print(value):
@@ -39,6 +40,16 @@ def parser():
     init.add_argument("--files-root", action="append")
     init.add_argument("--max-file-bytes", type=int)
     init.add_argument("--index-bytes", type=int)
+    serve = commands.add_parser("serve", help="Open the original browser on this Python-owned native library")
+    serve.add_argument("--receiver", action="store_true", help="Create a portable-review receiver if needed")
+    browser_arguments(serve)
+    receive = commands.add_parser("receive", help="Receive a complete handover into an independent editable workspace")
+    receive.add_argument("--input", required=True)
+    receive.add_argument("--operation-id", required=True, help="Reuse the same identity to recover a lost reply")
+    receive.add_argument("--sha256")
+    receive.add_argument("--stage-return", action="store_true", help="Stage against a comparison already present here")
+    receive.add_argument("--serve", action="store_true", help="Continue directly into the original browser")
+    browser_arguments(receive)
     commands.add_parser("status")
     commands.add_parser("capabilities", help="Actual selected native engine features and action names")
     commands.add_parser("scan")
@@ -172,6 +183,14 @@ def _all(items):
 
 def execute(library, a):
     command, sub = a.command, getattr(a, "subcommand", None)
+    if command == "serve":
+        return serve_foreground(library, a)
+    if command == "receive":
+        if a.stage_return:
+            received = library.stage_return(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
+        else:
+            received = library.import_review(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
+        return serve_foreground(library, a, received=received) if a.serve else received
     if command in ("init", "status"):
         return library.status()
     if command == "capabilities":
@@ -237,7 +256,9 @@ def main(argv=None):
     args = p.parse_args(argv)
     options = dict(checkout=args.checkout, state=args.state, node=args.node, timeout=args.timeout)
     try:
-        if args.command == "init":
+        if args.command == "receive" or (args.command == "serve" and args.receiver):
+            library = ResourceLibrary.receiver(**options)
+        elif args.command == "init":
             if args.receiver:
                 if args.source or args.files_root:
                     p.error("--receiver uses its own original empty source; omit --source and --files-root")
