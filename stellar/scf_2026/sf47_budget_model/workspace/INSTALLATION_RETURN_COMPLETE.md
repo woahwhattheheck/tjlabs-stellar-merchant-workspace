@@ -1,6 +1,6 @@
 # Complete Installation return receiving
 
-The original Installation return operation connects a receiver's observations to the owner's current Installation without replacing the owner's current criteria, purchase records or saved history. This entry point operates the complete original model, native CLI, managed application, typed client and MCP provider, and publishes one complete customer archive after all owned processes close.
+The original Installation return operation connects a receiver's observations to the owner's current Installation without replacing the owner's current criteria, purchase records or saved history. This entry point operates the complete original model, native CLI, managed application, typed client and MCP provider, and publishes one complete customer archive after all owned processes close. If the managed application already belongs to another original owner, it releases only its borrowed connection and retains that exact close result.
 
 The example is explicitly a **WALKTHROUGH**. Its receiving observations exercise the product; they are not a customer acceptance, paid sale or external deployment result.
 
@@ -12,7 +12,7 @@ Use the complete current source selection, existing Python 3.12 or newer, Node 2
 
 It imports the original GrantWorkspaceClient, managed launch reader, MerchantGrantWorkspaces and Installation Page receiving callback from that same source root. The original managed launcher verifies every file in its current boot selection and authenticates its actual loopback listener. The MCP provider attaches to that already-running original workspace with allowStart false.
 
-Create one private absolute input file outside the selected source. Keep source, the two workspaces and the receiving output in separate directories. Select an ordinary task filesystem that survives the command closing. An execution-local /dev mount must not be the only home of an archive or case that a later command needs.
+Create one private absolute input file outside the selected source. Create the selected root and workspace parents with mode 0700 before staging; the receiver rejects an existing public 0755 parent instead of silently changing someone else's directory. Keep source, the two workspaces and the receiving output in separate directories. Select an ordinary task filesystem that survives the command closing. An execution-local /dev mount must not be the only home of an archive or case that a later command needs.
 
     {
       "schema": "stellar-forge.sf47-installation-return-complete.v1.input",
@@ -54,7 +54,7 @@ The first phase executes installation-return-receiving.py with its unchanged fiv
 
 The second phase opens the same closed source workspace through GrantWorkspaceClient. It obtains the authenticated browser URL through readGrantWorkspaceLaunch and attaches the original MCP provider to that same listener. The original Page callback reads both complete reports through typed HTTP and MCP, repeats the three original requests without adding events, uses the actual Installation return UI at 1360 and 390 pixels, downloads all six original browser/typed/MCP case ZIPs, verifies their full retained reviews with the native reader, and reloads the same saved owner review and Installation edition.
 
-The parent closes the Page context, Chromium, MCP file readers and original managed service. A failed close retains its original handle for another close attempt and prevents a COMPLETE claim. The callback's complete core-ZIP verification remains in force: the final Page package includes the original core archive only after its entire member set and every original byte match the retained core result.
+The parent closes the Page context, Chromium and MCP file readers, then retains GrantWorkspaceClient.close() in full with the selected instance and ownership. OWNED_ORIGINAL_SERVICE_CLOSED means it closed its own original service. BORROWED_CONNECTION_RELEASED means it released its connection to an existing original service; that service remains with its original owner. A failed close retains its original handle for another close attempt and prevents a COMPLETE claim. The callback's complete core-ZIP verification remains in force: the final Page package includes the original core archive only after its entire member set and every original byte match the retained core result.
 
 ## Saved outputs and continuation
 
@@ -67,12 +67,12 @@ The selected output directory retains:
 - managed/: the original public launch records and selected runtime paths, without the bearer access fragment.
 - commands/: complete per-attempt original Python stdout, stderr and exit receipts.
 - historical/: the optional exact earlier completed result.
-- closed.json, customer-package-input.json and result.json: the closed-lifetime record, full package selection and final result.
+- closed.json, customer-package-input.json and result.json: the exact original owned-service or borrowed-connection closure, full package selection and final result.
 - Installation_Return_Complete_Receiving_20261012.zip: the complete customer archive.
 
 The original native workspaces remain at workspaceDirectory and receivedDirectory. The archive includes full portable case ZIPs and the complete receiving records needed to inspect and receive them independently. Browser screenshots remain in page/views for local visual verification; their descriptors remain in the Page result, and their binary files are excluded from the customer archive.
 
-Every native invocation uses the same explicitly selected Python and the executing Node via SF30_XML_NODE. Original stdout and stderr are written directly to private attempt files, so the full actual failure remains available even if a final JSON result cannot be published.
+Every native invocation uses the same explicitly selected Python and the executing Node via SF30_XML_NODE. Each owned Python command starts in its own Linux process group. On interruption the parent sends TERM to that original group, including its inherited Node descendants, and still waits for the original leader's close and complete output. The command receipt retains the group ID, close observation, stop state and any failed stop; a failed stop keeps its original group handle. Original stdout and stderr are written directly to private attempt files, so the full actual failure remains available even if a final JSON result cannot be published.
 
 The parent holds one original Linux state lease. It publishes files through private, verified, fsynced stages under that lease. Incomplete stages remain retained. Repeating the same input resumes the native saved requests and the original Page callback's request companions; it does not generate replacement operation IDs to work around an uncertain response.
 
@@ -80,7 +80,7 @@ A full customer-package-input.json is retained before archive publication. It bi
 
 If the operation returns INTERRUPTED, read its original attempts and command result. Resolve the actual source, resource or runtime error and continue the same complete input. An earlier completed source edition and a newly reconstructed current case remain separate facts. Do not replace a missing historical archive with freshly generated bytes carrying the old identity.
 
-Once the archive is complete and the workspaces are closed, save the complete archive through the host's existing persistent file route and retain the returned identity. An unknown external save outcome remains unresolved on that original save; the receiving entry point does not issue a second upload.
+Once the archive is complete and this parent's owned resources have closed, save the complete archive through the host's existing persistent file route and retain the returned identity. An unknown external save outcome remains unresolved on that original save; the receiving entry point does not issue a second upload.
 
 ## Independent opening
 

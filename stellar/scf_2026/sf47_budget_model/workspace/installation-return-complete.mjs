@@ -83,7 +83,8 @@ function normalize(value){
   return structuredClone(value);
 }
 async function verifySource(config){
-  need(Number(process.versions.node.split('.')[0])>=22,'Use the selected original Node 22 or newer runtime.');
+  need(process.platform==='linux'&&Number(process.versions.node.split('.')[0])>=22,
+    'Use the selected original Linux Node 22 or newer runtime.');
   const raw=await original(config.sourceManifestFile),manifest=JSON.parse(raw);
   need(manifest.schema==='commons.sf47.installation-return-source-selection.v1'&&
     /^[0-9a-f]{40}$/.test(manifest.sourceCommit)&&Array.isArray(manifest.files)&&manifest.files.length>0,
@@ -167,10 +168,18 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
   for(const path of [dirname(config.workspaceDirectory),dirname(config.receivedDirectory),config.outputDirectory])
     await privateDirectory(path);
   const lease=await acquireStateLease(config.outputDirectory),children=new Set();
-  let browser=null,context=null,client=null,mcp=null,interrupted=null,primary=null;
+  let browser=null,context=null,client=null,mcp=null,interrupted=null,primary=null,managedSelection=null,managedClosure=null;
+  function stopGroup(owner){
+    if(owner.closed||!Number.isSafeInteger(owner.pid)||owner.pid<=0)return;
+    try{process.kill(-owner.pid,'SIGTERM');owner.stopState='TERM_SENT';owner.stopError=null;}
+    catch(error){
+      if(error.code==='ESRCH'){owner.stopState='GROUP_ABSENT';owner.stopError=null;}
+      else{owner.stopState='STOP_FAILED';owner.stopError={code:error.code??null,message:error.message};}
+    }
+  }
   const onSignal=signal=>{
     interrupted=signal;
-    for(const child of children)child.kill('SIGTERM');
+    for(const owner of children)stopGroup(owner);
     if(browser)browser.close().catch(()=>{});
   };
   const interrupt=()=>onSignal('SIGINT'),terminate=()=>onSignal('SIGTERM');
@@ -180,21 +189,30 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
     const root=join(config.outputDirectory,name==='package'?'packaging':'commands',name+'-'+randomUUID());
     await privateDirectory(root);
     const out=await open(join(root,'stdout'),'wx',0o600),err=await open(join(root,'stderr'),'wx',0o600);
-    let child,spawnError=null,code=null,signal=null;
+    let child,owner,spawnError=null,code=null,signal=null;
     try{
       await new Promise(resolveResult=>{
         child=spawn(config.pythonExecutable,['-B',...argv],{
           cwd:config.sourceRoot,env:{...process.env,PYTHONDONTWRITEBYTECODE:'1',SF30_XML_NODE:process.execPath},
-          stdio:['ignore',out.fd,err.fd]});
-        children.add(child);
+          stdio:['ignore',out.fd,err.fd],detached:true});
+        owner={child,pid:child.pid??null,closed:false,stopState:null,stopError:null};
+        children.add(owner);
+        child.once('spawn',()=>{owner.pid=child.pid;if(interrupted)stopGroup(owner);});
         child.once('error',error=>{spawnError=error;});
-        child.once('close',(value,endedSignal)=>{code=value;signal=endedSignal;children.delete(child);resolveResult();});
+        child.once('close',(value,endedSignal)=>{
+          code=value;signal=endedSignal;owner.closed=true;
+          if(owner.stopState!=='STOP_FAILED')children.delete(owner);
+          resolveResult();
+        });
       });
       await out.sync();await err.sync();
     }finally{await out.close();await err.close();}
     const stdout=await original(join(root,'stdout')),stderr=await original(join(root,'stderr'));
     const receipt={schema:SCHEMA+'.command',name,executable:config.pythonExecutable,argv:['-B',...argv],
-      nodeExecutable:process.execPath,code,signal,error:spawnError?{code:spawnError.code??null,message:spawnError.message}:null,
+      nodeExecutable:process.execPath,code,signal,
+      processGroup:{id:owner?.pid??null,leaderClosed:owner?.closed??false,
+        stopState:owner?.stopState??null,stopError:owner?.stopError??null},
+      error:spawnError?{code:spawnError.code??null,message:spawnError.message}:null,
       stdout:{path:relative(config.outputDirectory,join(root,'stdout')),bytes:stdout.length,sha256:hash(stdout)},
       stderr:{path:relative(config.outputDirectory,join(root,'stderr')),bytes:stderr.length,sha256:hash(stderr)}};
     await publish(join(root,'result.json'),encode(receipt),lease);
@@ -208,7 +226,14 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
     for(const [name,value] of [['context',context],['browser',browser],['MCP',mcp],['managed client',client]]){
       if(!value)continue;
       try{
-        await value.close();
+        const returned=await value.close();
+        if(name==='managed client'){
+          need(returned&&['OWNED_ORIGINAL_SERVICE_CLOSED','BORROWED_CONNECTION_RELEASED'].includes(returned.state),
+            'Retain the original managed close result.');
+          if(managedSelection)need(returned.originalInstanceId===managedSelection.instanceId,
+            'The original managed close returned another selected instance.');
+          managedClosure={selection:managedSelection,original:returned};
+        }
         if(name==='context')context=null;else if(name==='browser')browser=null;else if(name==='MCP')mcp=null;else client=null;
       }catch(error){failures.push({name,error});}
     }
@@ -233,6 +258,13 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
       same(intent.summary.coreArtifact,core.completeArtifact)&&same(intent.summary.pageArtifact,page.completeArtifact)&&
       same(intent.summary.checks,[...core.checks,...page.checks]),
       'The complete customer summary must retain its original native and Page results.');
+    const closed=JSON.parse(await original(join(config.outputDirectory,'closed.json')));
+    need(closed.operationId===config.operationId&&closed.ownedBrowserClosed===true&&closed.originalMcpClosed===true&&
+      same(closed.managedClosure,intent.summary.managedClosure)&&
+      ['OWNED_ORIGINAL_SERVICE_CLOSED','BORROWED_CONNECTION_RELEASED'].includes(closed.managedClosure?.original.state)&&
+      closed.originalManagedServiceClosed===(closed.managedClosure.original.state==='OWNED_ORIGINAL_SERVICE_CLOSED')&&
+      closed.originalBorrowedConnectionReleased===(closed.managedClosure.original.state==='BORROWED_CONNECTION_RELEASED'),
+      'Retain the exact original owned-service or borrowed-connection closure.');
     const names=new Set(intent.files.map(row=>row.path));
     need(names.size===intent.files.length&&['input.json','source-selection.json','core-input.json',
       'core-result.json','page-result.json','closed.json','core/result.json','core/complete-receiving.zip',
@@ -284,6 +316,10 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
     await client.open({expectedSelectionSha256:binding.selectionSha256});
     const instance=await client.inspect();
     const originalLaunch=instance.original;
+    need(originalLaunch&&['OWNED_ORIGINAL_SERVICE','BORROWED_ORIGINAL_SERVICE'].includes(instance.connection),
+      'Retain the actual selected managed instance and its ownership.');
+    managedSelection={instanceId:originalLaunch.instanceId,connection:instance.connection,
+      selectionSha256:binding.selectionSha256,workspaceDirectory:config.workspaceDirectory};
     const launch=await readGrantWorkspaceLaunch({workspaceDirectory:config.workspaceDirectory,
       scenarioFile:binding.scenarioFile,pythonExecutable:config.pythonExecutable,selectionSha256:binding.selectionSha256,
       executionSourceDirectory:originalLaunch.execution.sourceDirectory,pid:originalLaunch.pid,instanceId:originalLaunch.instanceId,
@@ -291,7 +327,8 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
     const attempt=join(config.outputDirectory,'managed',randomUUID());
     await publish(join(attempt,'original-listener.json'),encode({schema:SCHEMA+'.listener',
       nodeExecutable:process.execPath,nodeVersion:process.version,pythonExecutable:config.pythonExecutable,
-      playwrightModule:config.playwrightModule,chromiumExecutable:config.chromiumExecutable,original:launch.original}),lease);
+      playwrightModule:config.playwrightModule,chromiumExecutable:config.chromiumExecutable,
+      ownership:managedSelection,original:launch.original}),lease);
     const connection={schema:'stellar-forge.sf47-workspace-connection.v1',workspaces:{
       [config.workspaceAlias]:{directory:config.workspaceDirectory,scenarioFile:binding.scenarioFile,
         pythonExecutable:config.pythonExecutable,label:'Installation return current receiving',allowStart:false}}};
@@ -323,7 +360,9 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
     await closeOwners();
     await publish(join(config.outputDirectory,'closed.json'),encode({schema:SCHEMA+'.closed',
       operationId:config.operationId,coreOperationId:config.coreOperationId,pageOperationId:config.pageOperationId,
-      ownedBrowserClosed:true,originalMcpClosed:true,originalManagedServiceClosed:true}),lease);
+      ownedBrowserClosed:true,originalMcpClosed:true,managedClosure,
+      originalManagedServiceClosed:managedClosure?.original.state==='OWNED_ORIGINAL_SERVICE_CLOSED',
+      originalBorrowedConnectionReleased:managedClosure?.original.state==='BORROWED_CONNECTION_RELEASED'}),lease);
     const summary={schema:SCHEMA,operationId:config.operationId,mode:core.mode,
       source:{commit:source.manifest.sourceCommit,manifestSha256:source.sha256,files:source.files,bytes:source.bytes},
       coreOperationId:core.operationId,pageOperationId:received.operationId,
@@ -331,11 +370,11 @@ export async function runInstallationReturnComplete(input,{coreOnly=false}={}){
       independentCaseId:core.independentCaseId,installationId:core.installationId,revision:core.revision,
       installationSha256:core.installationSha256,receivingReviewId:core.receivingReviewId,ownerReviewId:core.ownerReviewId,
       coreArtifact:core.completeArtifact,pageArtifact:received.completeArtifact,
-      checks:[...core.checks,...received.checks],viewports:received.viewports,javascriptErrors:received.javascriptErrors,
+      checks:[...core.checks,...received.checks],viewports:received.viewports,javascriptErrors:received.javascriptErrors,managedClosure,
       workspaceDirectory:config.workspaceDirectory,receivedDirectory:config.receivedDirectory,
       historicalResult:config.historicalResult?{path:'historical/original-receiving-result.json',
         bytes:config.historicalResult.bytes,sha256:config.historicalResult.sha256}:null,
-      localQa:received.localQa??[],custody:'The complete native case ZIPs and original receiving files are included. Both closed workspaces remain at their selected original directories.'};
+      localQa:received.localQa??[],custody:'The complete native case ZIPs and original receiving files are included. Both original workspaces remain at their selected directories. The recorded managed close result distinguishes an owned service closed by this parent from a released connection to another original owner.'};
     const intent={schema:SCHEMA+'.package',inputSha256:hash(encode(config)),sourceManifestSha256:source.sha256,
       summary,files:await inventory(config.outputDirectory)};
     await publish(join(config.outputDirectory,'customer-package-input.json'),encode(intent),lease);
