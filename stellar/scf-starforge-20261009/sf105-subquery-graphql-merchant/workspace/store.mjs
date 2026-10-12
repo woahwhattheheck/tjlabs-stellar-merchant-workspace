@@ -81,12 +81,14 @@ export function validateVersion(value, id) {
   if (!plain(value) || value.schema !== SCHEMA || value.id !== id || !Number.isSafeInteger(value.revision) || value.revision < 1 ||
       value.inputDigest !== inputDigest(value.input) || !Array.isArray(value.exports) ||
       value.deployments !== undefined && !Array.isArray(value.deployments) ||
-      value.previews !== undefined && !Array.isArray(value.previews)) fail('Saved project content is inconsistent.');
+      value.previews !== undefined && !Array.isArray(value.previews) ||
+      value.comparisons !== undefined && !Array.isArray(value.comparisons)) fail('Saved project content is inconsistent.');
   return value;
 }
 const summary = value => ({ id: value.id, title: value.input.title, revision: value.revision,
   updatedAt: value.updatedAt, inputDigest: value.inputDigest, exports: value.exports.length,
-  deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0 });
+  deployments: value.deployments?.length ?? 0, previews: value.previews?.length ?? 0,
+  comparisons: value.comparisons?.length ?? 0 });
 
 async function acquireWriter(root) {
   if (process.platform !== 'linux') fail('This workspace requires Linux with util-linux flock.', 501);
@@ -133,6 +135,7 @@ export async function openWorkspaceStore(directory) {
   const deployments = await privateDir(join(root, 'deployments'), true);
   const releaseStores = await privateDir(join(root, 'release-stores'), true);
   const previews = await privateDir(join(root, 'previews'), true);
+  const comparisons = await privateDir(join(root, 'comparisons'), true);
   const writer = await acquireWriter(root);
   let busy = false, closed = false;
   const read = (id, revision) => readWorkspaceRevision(root, id, revision);
@@ -155,7 +158,7 @@ export async function openWorkspaceStore(directory) {
     busy = true;
     try { return await operation(); } finally { busy = false; }
   }
-  async function save({ id, input, expectedRevision = 0, exportRecord, deploymentRecord, previewRecord } = {}) {
+  async function save({ id, input, expectedRevision = 0, exportRecord, deploymentRecord, previewRecord, comparisonRecord } = {}) {
     return mutate(async () => {
       projectName(id);
       if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) fail('A current project revision is required.');
@@ -171,7 +174,7 @@ export async function openWorkspaceStore(directory) {
       const now = new Date().toISOString(), revision = expectedRevision + 1;
       let value = { schema: SCHEMA, id, revision, createdAt: previous?.createdAt ?? now,
         updatedAt: now, inputDigest: inputDigest(draft), input: draft, exports: previous?.exports ?? [],
-        deployments: previous?.deployments ?? [], previews: previous?.previews ?? [] };
+        deployments: previous?.deployments ?? [], previews: previous?.previews ?? [], comparisons: previous?.comparisons ?? [] };
       if (exportRecord) value.exports = [...value.exports, exportRecord];
       if (deploymentRecord) {
         const prior = value.deployments.find(item => item.id === deploymentRecord.id);
@@ -188,6 +191,18 @@ export async function openWorkspaceStore(directory) {
         if (prior && json(prior) !== json(previewRecord)) fail('The retained preview changed.', 409);
         if (!prior) value.previews = [...value.previews, previewRecord];
       }
+      if (comparisonRecord) {
+        const prior = value.comparisons.find(item => item.id === comparisonRecord.id);
+        if (!plain(comparisonRecord) || comparisonRecord.project !== id ||
+            !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(comparisonRecord.id ?? '') ||
+            !/^[a-f0-9]{64}$/.test(comparisonRecord.recordSha256 ?? '') ||
+            !/^[a-f0-9]{64}$/.test(comparisonRecord.definitionSha256 ?? '') ||
+            comparisonRecord.generation !== (prior?.generation ?? 0) + 1 ||
+            comparisonRecord.previousRecordSha256 !== (prior?.recordSha256 ?? null) ||
+            prior && prior.definitionSha256 !== comparisonRecord.definitionSha256)
+          fail('The response review does not continue its original comparison.', 409);
+        value.comparisons = [...value.comparisons.filter(item => item.id !== comparisonRecord.id), comparisonRecord];
+      }
       const path = join(folder, revision + '.json');
       // A process crash after a version write leaves an unreferenced immutable file.
       // Its exact bytes may be adopted; divergent content is never overwritten.
@@ -197,7 +212,7 @@ export async function openWorkspaceStore(directory) {
         const orphan = validateVersion(await regular(path), id);
         if (orphan.revision !== revision || json(draftInput(orphan.input)) !== json(draft) ||
             json(orphan.exports) !== json(value.exports) || json(orphan.deployments ?? []) !== json(value.deployments) ||
-            json(orphan.previews ?? []) !== json(value.previews))
+            json(orphan.previews ?? []) !== json(value.previews) || json(orphan.comparisons ?? []) !== json(value.comparisons))
           fail('An interrupted save retained a different next revision; save this draft as a new project.', 409);
         value = orphan;
       }
@@ -212,5 +227,5 @@ export async function openWorkspaceStore(directory) {
     // different inode while an existing writer still owns the previous one.
     await writer.close();
   }
-  return { root, packages, deployments, releaseStores, previews, read, list, history, save, exclusive: mutate, close };
+  return { root, packages, deployments, releaseStores, previews, comparisons, read, list, history, save, exclusive: mutate, close };
 }

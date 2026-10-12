@@ -6,6 +6,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openWorkspaceStore, plain } from './store.mjs';
+import { prepareResponseComparison, inspectResponseComparison, comparisonChanges, reviewResponseComparison,
+  recoverResponseComparison, inspectPendingResponseComparison } from './comparison.mjs';
+import { describeResponseComparisonFiles } from './comparison-report.mjs';
 import { createWorkspaceFiles } from './files.mjs';
 import { inspectProjectHandover, prepareProjectHandover, receiveProjectHandover, listProjectReceivings } from './handover.mjs';
 import { inspectDraftSchema, reviewDraft, exportDraft, readExport, exportView, startDraftMerchant,
@@ -18,6 +21,8 @@ import { authoringCatalog, captureAuthoringSchema, describeAuthoredOperation, co
 
 const STATIC = new Map([['/', ['index.html', 'text/html']], ['/app.mjs', ['app.mjs', 'text/javascript']],
   ['/authoring-ui.mjs', ['authoring-ui.mjs', 'text/javascript']],
+  ['/comparison-values.mjs', ['comparison-values.mjs', 'text/javascript']],
+  ['/comparison-ui.mjs', ['comparison-ui.mjs', 'text/javascript']],
   ['/handover-ui.mjs', ['handover-ui.mjs', 'text/javascript']],
   ['/style.css', ['style.css', 'text/css']]]);
 const HELP = 'node workspace/server.mjs --workspace PRIVATE_DIRECTORY [--port 0]';
@@ -47,6 +52,7 @@ const publicDraft = async value => ({ ...value, exports: await Promise.all(value
 export async function startWorkspace({ workspace, port = 0, noSignals = false } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) fail('Port must be 0–65535.');
   const store = await openWorkspaceStore(workspace), token = randomBytes(32).toString('hex');
+  const files = createWorkspaceFiles(store);
   const releaseConsoles = new Map();
   const connections = new Set();
   let origin, active = null, stopping = false, busy = false, pending = Promise.resolve();
@@ -113,6 +119,25 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (!url.pathname.startsWith('/api/')) return send(404, { error: 'Not found.' });
       if (!equal(req.headers['x-workspace-token'], token)) return send(401, { error: 'Open the complete private URL printed by the launcher.' });
       if (req.method === 'GET') {
+        if (['/api/comparison', '/api/comparison/changes', '/api/comparison/pending', '/api/comparison/file'].includes(url.pathname)) {
+          const value = Object.fromEntries(url.searchParams);
+          for (const key of ['revision', 'generation', 'offset', 'limit']) if (value[key] !== undefined) {
+            if (!/^(0|[1-9]\d*)$/.test(value[key]) || !Number.isSafeInteger(Number(value[key]))) fail('Use an original integer comparison selector.');
+            value[key] = Number(value[key]);
+          }
+          if (url.pathname.endsWith('/file')) {
+            if (Object.keys(value).some(key => !['project', 'revision', 'comparisonId', 'file', 'expectedManifestSha256'].includes(key)))
+              fail('Choose an original comparison file selection.');
+            const file = await files.read({ project: value.project, revision: value.revision, kind: 'comparison',
+              comparisonId: value.comparisonId }, value.file, value.expectedManifestSha256);
+            res.writeHead(200, { 'Content-Type': file.type,
+              'Content-Disposition': "attachment; filename*=UTF-8''" + encodeURIComponent(file.name.split('/').at(-1)) });
+            res.end(file.bytes); return;
+          }
+          return send(200, url.pathname.endsWith('/pending') ? await inspectPendingResponseComparison(store, value)
+            : url.pathname.endsWith('/changes') ? await comparisonChanges(store, value)
+              : await inspectResponseComparison(store, value));
+        }
         if (url.pathname === '/api/handover/receivings') return send(200, await listProjectReceivings(store, {
           offset: Number(url.searchParams.get('offset') ?? 0), limit: Number(url.searchParams.get('limit') ?? 20),
           ...(url.searchParams.has('expectedSnapshotSha256') ? { expectedSnapshotSha256: url.searchParams.get('expectedSnapshotSha256') } : {}) }));
@@ -146,6 +171,20 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
       if (req.method !== 'POST') return send(405, { error: 'Use GET or POST.' });
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) return send(415, { error: 'Use application/json.' });
       const body = await bodyOf(req);
+      if (['/api/comparison/prepare', '/api/comparison/review', '/api/comparison/recover'].includes(url.pathname)) {
+        const operation = url.pathname.endsWith('/prepare') ? prepareResponseComparison
+          : url.pathname.endsWith('/review') ? reviewResponseComparison : recoverResponseComparison;
+        const result = await mutate(() => operation(store, body));
+        return send(201, { ...result, project: await publicDraft(result.project) });
+      }
+      if (url.pathname === '/api/comparison/packet') {
+        if (Object.keys(body).some(key => !['project', 'revision', 'comparisonId'].includes(key))) fail('Choose a retained comparison packet.');
+        return send(201, await mutate(async () => {
+          const selection = { project: body.project, revision: body.revision, kind: 'comparison', comparisonId: body.comparisonId };
+          const manifest = await files.manifest(selection), packet = await describeResponseComparisonFiles(store, selection);
+          return { selection, directory: packet.directory, ...manifest };
+        }));
+      }
       if (url.pathname === '/api/handover/inspect') return send(200, await inspectProjectHandover(store, body));
       if (url.pathname === '/api/handover/prepare')
         return send(201, await mutate(() => prepareProjectHandover(store, body)));
@@ -268,7 +307,7 @@ export async function startWorkspace({ workspace, port = 0, noSignals = false } 
     signals.push([name, handler]); process.once(name, handler);
   }
   return { url: origin + '/#' + token, origin, token, directory: store.root,
-    files: createWorkspaceFiles(store), close };
+    files, close };
 }
 export async function main(args = process.argv.slice(2)) {
   if (args.length === 1 && args[0] === '--help') { console.log(HELP); return; }

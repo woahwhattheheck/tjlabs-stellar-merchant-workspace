@@ -136,6 +136,18 @@
         <div class="toolbar"><button id="handover-history-refresh" type="button" class="secondary">Refresh receiving history</button><button id="handover-history-next" type="button" class="secondary">Next receiving page</button></div>
         <div id="handover-history"></div>
       </section>
+      <section class="panel" id="response-comparisons">
+        <div class="panel-heading"><h2>Retained response comparison and review</h2></div>
+        <p id="comparison-context"></p>
+        <p>Select completed baseline and candidate previews from this project. Compare returned data, errors, status and source context, then retain review decisions. This workflow uses existing responses and sends no new source request.</p>
+        <details open><summary>Define the baseline and candidate cases</summary><div id="comparison-definition"></div></details>
+        <div id="comparison-list"></div>
+        <div id="comparison-opened"></div>
+        <div id="comparison-changes"></div>
+        <div id="comparison-review"></div>
+        <div id="comparison-packet"></div>
+        <details><summary>Continue an original comparison request</summary><div id="comparison-pending"></div><div id="comparison-recovery"></div></details>
+      </section>
       <section class="panel"><div class="panel-heading"><h2>Project revisions</h2><button id="history-refresh" type="button" class="secondary">Refresh history</button></div><div id="history"></div></section>
     </main>
   </div>
