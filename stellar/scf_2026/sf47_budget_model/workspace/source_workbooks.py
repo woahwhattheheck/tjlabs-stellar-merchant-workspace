@@ -207,12 +207,19 @@ def projection_from_open(source, workbook, selected):
     source_rows = [json.loads(line) for line in row_text.splitlines()]
     values = list(csv.reader(io.StringIO(initial_csv, newline="")))
     fields = values[0]
+    # Numeric conversion is ASCII-to-ASCII and preserves CSV quoting. Bound the
+    # growing projection before retaining each expanded value, including when a
+    # whole worksheet column contains large exponents.
+    expanded_csv_bytes = len(csv_output.getvalue())
     transforms = []
     for index, row in enumerate(values[1:]):
         for col, field in enumerate(fields):
             if row[col] != "" and mapping["numericText"][field] == "decimal":
                 try:
                     after = decimal_text(row[col])
+                    expanded_csv_bytes += len(after) - len(row[col])
+                    need(expanded_csv_bytes <= MAX_TABLE_BYTES, "WORKBOOK_CAPACITY",
+                         "The exact decimal projection exceeds the original 16 MiB source-table allowance. Select a smaller worksheet range or keep original numeric spelling.")
                 except WorkbookInputError as exc:
                     coordinate = mapping["plan"]["columns"][col]["source"] + str(source_rows[index]["row"])
                     raise WorkbookInputError(exc.code, str(exc), {"cell": coordinate, "field": field, "sourceValue": row[col]}) from exc
