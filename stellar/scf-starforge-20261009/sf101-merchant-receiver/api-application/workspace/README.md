@@ -4,6 +4,9 @@ The API merchant console brings the original paid application into one browser a
 
 Start it through the installed `starforge api-merchant-workspace` command or choose **API merchant console** in **Applications**. The browser uses the same durable operation queue as the command interface. Offers, orders, request IDs and results remain owned by the original checkout, API access and application engines.
 
+
+The [complete agent operating guide](AGENT_OPERATING.md) connects this same console to the source-owned merchant MCP provider. It includes all 33 tools, the typed client, original durable operation continuation, complete native file receiving after console shutdown and host-declared encrypted backup restore.
+
 ## Prepare the original application
 
 Select these existing inputs:
