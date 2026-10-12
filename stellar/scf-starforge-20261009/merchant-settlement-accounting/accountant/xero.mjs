@@ -1,7 +1,7 @@
 // MIT. Xero manual journals from original merchant accounting source.
 import {createHash,randomUUID} from 'node:crypto';
 import {validateHandoff,validateRevision,inspectHandoff,renderCsv,parseReturnCsv,accountantColumns,EDITABLE_COLUMNS} from './engine.mjs';
-import {isBuyerHandoff} from './buyer-source.mjs';
+import {isBuyerHandoff,buyerAccountingComponents} from './buyer-source.mjs';
 import {validateAdjustment} from '../adjustments.mjs';
 
 export const XERO_CONTEXT_SCHEMA='stellar-forge.xero-context.v1';
@@ -73,20 +73,7 @@ export function createXeroContext({id=randomUUID(),name,actor,createdAt=new Date
     accounts,source:[sourceFile('organization.json',organizationBytes),sourceFile('accounts.json',accountsBytes)],docs:XERO_DOCS});
 }
 export function validateXeroContext(context){verify(context,XERO_CONTEXT_SCHEMA);xeroId(context.id);xeroId(context.tenantId);xeroCheck(context.organization?.id===context.tenantId&&Array.isArray(context.accounts),'INVALID_XERO_CONTEXT','The retained organization or accounts are invalid.');return context;}
-function buyerComponents(handoff){
-  const occurrences=new Map();
-  return handoff.rows.map(row=>{
-    const source=row.original,kind=row.kind==='EXPENSE'?'BUYER_EXPENSE':'BUYER_CREDIT',native=source.native_payment??null;
-    const economicId=xeroHash(xeroCanonical({workspaceId:handoff.source.buyer.workspaceId,kind,network:source.network,asset:source.asset,identity:source.transfer_identity??native?.transfer_identity??source.item_id}));
-    const dimension=xeroCanonical([economicId,source.center_id,source.project,source.account_code]),occurrence=(occurrences.get(dimension)??0)+1;occurrences.set(dimension,occurrence);
-    return {id:xeroHash('stellar-forge.xero-buyer-component.v1\n'+dimension+'\n'+occurrence),kind,rowId:row.rowId,sourceLineId:row.sourceLineId,sourceRowSha256:row.sourceRowSha256,
-      economicId,network:source.network,sourceAt:source.recognition_date,sourceTimeBasis:'BUYER_REVIEWED_RECOGNITION_DATE',amountAtomic:source.amount,originalEconomicAmount:row.kind==='CREDIT'?source.native_return:source.settled_actual,
-      asset:source.asset,assetLabel:row.label.assetLabel,unitLabel:row.label.unitLabel,transfer:row.kind==='CREDIT'?'TRANSFER_MATCHED':native?.classification??'SF36_FINALIZED_RECEIPT',
-      transactionFingerprint:source.transaction??native?.observation?.transactionHash??source.receipt_ref??null,observationSha256:source.observation_sha256??native?.observation_sha256??null,
-      dataContext:source.data_context??native?.data_context??handoff.source.buyer.dataContext,costCenter:source.center_code,project:source.project,sourceAccountCode:source.account_code,
-      codingId:source.coding_id,line:source.line,itemId:source.item_id,creditId:source.credit_id??null};
-  });
-}
+const buyerComponents=buyerAccountingComponents;
 export function xeroSourceComponents(handoff,adjustmentsBytes){
   validateHandoff(handoff,{allowBuyer:true});
   if(isBuyerHandoff(handoff)){xeroCheck(!adjustmentsBytes,'XERO_BUYER_SOURCE_AMBIGUOUS','Buyer credits come from their original issued allocations.');return buyerComponents(handoff);}

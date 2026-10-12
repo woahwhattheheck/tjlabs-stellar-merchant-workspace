@@ -150,7 +150,7 @@ function renderBuyerWorkspace() {
   for(const id of ['run-search','run-list','run-more','period-current'])$(id).hidden=buyer;
   document.querySelector('label[for="run-search"]').hidden=buyer;
   for(const button of document.querySelectorAll('.tabs [data-area]'))button.hidden=buyer&&!['accountant','maintenance'].includes(button.dataset.area);
-  for(const link of document.querySelectorAll('.tabs a'))link.hidden=buyer&&!['/connections.html','/xero.html','/source-changes.html'].includes(link.getAttribute('href'));
+  for(const link of document.querySelectorAll('.tabs a'))link.hidden=buyer&&!['/connections.html','/qbo.html','/xero.html','/source-changes.html'].includes(link.getAttribute('href'));
   const original=state.buyerStartup;
   document.title='Buyer accounting workspace';
   document.querySelector('.topbar strong').textContent='STELLAR FORGE / BUYER ACCOUNTING';

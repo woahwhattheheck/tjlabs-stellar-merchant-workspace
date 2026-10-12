@@ -1,6 +1,7 @@
 // MIT. Exact source-edition comparison for the original QBO/Xero accountant plans.
 import {qboCanonical,qboHash,validateQboPlan} from './qbo.mjs';
 import {validateQboCompany} from './qbo-company.mjs';
+import {isQboBuyerPlan} from './qbo-buyer.mjs';
 import {validateXeroContext,validateXeroPlan} from './xero.mjs';
 
 export const SOURCE_CHANGE_SCHEMA='stellar-forge.accounting-source-change.v1';
@@ -72,9 +73,12 @@ export function successorDefaults(kind,plan,target){
   planIdentity(kind,plan);const after=sourceEdition(kind,target),accounts=new Map(after.accounts.map(row=>[row.id,row]));
   const selected=(id,key)=>{const row=accounts.get(id);return row?.eligible?row[key]:'';};
   const name=(plan.name+' — chart update').slice(0,160);
-  if(kind==='qbo')return {name,txnDate:plan.txnDate,docNumber:null,rows:plan.rows.map(row=>({rowId:row.rowId,amount:row.amount,
-    debitAccount:{value:selected(row.debitAccount.value,'id')},creditAccount:{value:selected(row.creditAccount.value,'id')},
-    description:row.description}))};
+  if(kind==='qbo')return {name,txnDate:plan.txnDate,docNumber:null,
+    ...(isQboBuyerPlan(plan)?{sourceKind:plan.sourceKind,valuationBasis:plan.valuationBasis}:{}),rows:[
+    ...plan.rows.map(row=>({rowId:row.rowId,amount:row.amount,
+      debitAccount:{value:selected(row.debitAccount.value,'id')},creditAccount:{value:selected(row.creditAccount.value,'id')},
+      description:row.description,...(isQboBuyerPlan(plan)?{decision:'include',valuationNote:row.valuationNote}:{})})),
+    ...(isQboBuyerPlan(plan)?plan.excluded.map(row=>({rowId:row.rowId,decision:'exclude',reason:row.reason})):[])]};
   return {name,valuationBasis:plan.valuationBasis,entries:[
     ...plan.entries.map(row=>({componentId:row.id,decision:'include',date:row.date,amount:row.amount,
       debitAccountCode:selected(row.debitAccount.id,'code'),creditAccountCode:selected(row.creditAccount.id,'code'),
@@ -88,6 +92,15 @@ export function assertSameEconomicSource(kind,before,after){
     changeCheck(before.handoffId===after.handoffId&&before.handoffSha256===after.handoffSha256&&
       before.realmId===after.realmId&&before.environment===after.environment,'SOURCE_CHANGE_ECONOMIC_SOURCE',
       'Preserve this plan’s exact handoff, company and environment.',409);
+    changeCheck(isQboBuyerPlan(before)===isQboBuyerPlan(after),'SOURCE_CHANGE_ECONOMIC_SOURCE','Preserve the original source kind.',409);
+    if(isQboBuyerPlan(before)){
+      const project=plan=>plan.rows.map(row=>Object.fromEntries(Object.entries(row).filter(([key])=>
+        !['amount','amountMinor','debitAccount','creditAccount','valuationNote','description'].includes(key)))).sort((a,b)=>a.rowId.localeCompare(b.rowId));
+      const excluded=plan=>[...plan.excluded].sort((a,b)=>a.rowId.localeCompare(b.rowId));
+      changeCheck(same(before.source,after.source)&&same(project(before),project(after))&&same(excluded(before),excluded(after)),
+        'SOURCE_CHANGE_ECONOMIC_SOURCE','Keep every included buyer allocation and original exclusion; change only explicit accounts and valuations.',409);
+      return true;
+    }
     const project=plan=>plan.rows.map(row=>({rowId:row.rowId,eventId:row.eventId,sourceRowSha256:row.sourceRowSha256,
       assignmentSha256:row.assignmentSha256,sourceNetwork:row.sourceNetwork,sourceAmountAtomic:row.sourceAmountAtomic,
       sourceLabel:row.sourceLabel,sourceAdjustments:row.sourceAdjustments})).sort((a,b)=>a.rowId.localeCompare(b.rowId));
@@ -113,7 +126,7 @@ export function successorRequest(kind,previous,target,input,{accountantRevisionI
   if(kind==='qbo')return {id:input.id,name:input.name,actor:input.actor,createdAt:input.createdAt,handoffId:previous.handoffId,
     expectedParentId:accountantRevisionId,realmId:previous.realmId,companyName:target.companyName,baseCurrency:target.baseCurrency,
     environment:previous.environment,txnDate:input.txnDate,docNumber:input.docNumber??null,rows:changeClone(input.rows),
-    companySnapshot:changeClone(target)};
+    companySnapshot:changeClone(target),...(isQboBuyerPlan(previous)?{valuationBasis:input.valuationBasis}:{})};
   return {id:input.id,name:input.name,actor:input.actor,createdAt:input.createdAt,handoffId:previous.source.handoffId,
     contextId:target.id,accountantRevisionId:accountantRevisionId??'initial',entries:changeClone(input.entries),
     purpose:previous.purpose,valuationBasis:input.valuationBasis,showOnCashBasisReports:previous.showOnCashBasisReports};
