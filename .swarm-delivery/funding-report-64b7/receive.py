@@ -69,7 +69,11 @@ def main():
     parser.add_argument("--source-blob", default=DEFAULT_SOURCE)
     parser.add_argument("--source-packet")
     parser.add_argument("--restore-archive")
+    parser.add_argument("--local-result", action="store_true",
+                        help="Receive from a supplied complete source packet and retain the full ZIP on this host")
     args = parser.parse_args()
+    if args.local_result and not args.source_packet:
+        parser.error("--local-result requires the original --source-packet file")
     root = Path(args.directory).absolute()
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
     if root.resolve() != root:
@@ -87,18 +91,19 @@ def main():
                 if part.is_absolute() or ".." in part.parts or not part.parts:
                     raise RuntimeError("Invalid original archive member")
                 retain(root / part, archive.read(item))
-    github = helper()
+    github = None if args.local_result else helper()
 
     def api(path, method="GET", data=None):
         result = github.api_response(path, method=method, data=data, actor=ACTOR)
         return result["data"]
 
-    actor = api("/user")
-    if actor.get("login") != ACTOR or actor.get("id") != 311286379:
-        raise RuntimeError("Original secondary account identity mismatch")
-    access = api("/repos/" + BANK_REPOSITORY)
-    if access.get("private") is not True or access.get("permissions", {}).get("push") is not True:
-        raise RuntimeError("Original private result bank permission unavailable")
+    if not args.local_result:
+        actor = api("/user")
+        if actor.get("login") != ACTOR or actor.get("id") != 311286379:
+            raise RuntimeError("Original secondary account identity mismatch")
+        access = api("/repos/" + BANK_REPOSITORY)
+        if access.get("private") is not True or access.get("permissions", {}).get("push") is not True:
+            raise RuntimeError("Original private result bank permission unavailable")
     if args.source_packet:
         packet_bytes = Path(args.source_packet).read_bytes()
     else:
@@ -170,6 +175,20 @@ def main():
             archive.write(path, path.relative_to(root).as_posix())
     os.chmod(archive_path, 0o600)
     archive_bytes = archive_path.read_bytes()
+    if args.local_result:
+        manifest = {**run_record, "schema": "stellar-forge.funding-report-native-bank.v1",
+                    "archive": {"file": archive_path.name, "bytes": len(archive_bytes),
+                                "sha256": sha(archive_bytes), "git_blob": git_hash(archive_bytes)},
+                    "receiving_result": native_result}
+        manifest_path = logs / "receiving.json"
+        retain(manifest_path, encoded(manifest))
+        print(json.dumps({"operation": OPERATION, "phase": "native_receiving_retained",
+                          "exit_code": result.returncode, "complete": run_record["complete"],
+                          "source_blob": args.source_blob, "archive_path": str(archive_path),
+                          "manifest_path": str(manifest_path), "archive_bytes": len(archive_bytes),
+                          "archive_sha256": sha(archive_bytes),
+                          "native_error": (logs / "stderr.log").read_text()[-8000:] if result.returncode else None}), flush=True)
+        return result.returncode
     zip_blob = api("/repos/" + BANK_REPOSITORY + "/git/blobs", "POST",
                    {"encoding": "base64", "content": base64.b64encode(archive_bytes).decode()})
     if zip_blob.get("sha") != git_hash(archive_bytes):
