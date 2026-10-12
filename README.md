@@ -21,6 +21,7 @@ roadmap, native acceptance and complete customer handover in one source.
 | Operate purchased API access | `starforge api-pass-workspace` and `starforge merchant-api-pass` | One saved customer, original purchases and requests, browser/agent operation and complete response receiving |
 | Operate native MPP merchant and customer | **Applications → Native MPP merchant and customer** or `starforge mpp-workspace` | One retained native workspace, original 402 purchase and consent/recovery flow, browser/agent operation, twelve-file customer delivery and exact paid-response receiving |
 | Turn an existing GraphQL query service into a merchant | **Applications → GraphQL merchant workspace** or `starforge graphql-product` | Reviewed source operations, buyer clients, deployment releases and complete project history that reopens for continued authoring |
+| Receive a complete OData query into customer analysis | **Applications → OData source and live merchant** or `starforge dataset odata --workspace DIRECTORY serve` | Retained source/query, complete ordered live-page collection, original Analysis/report/workbook and full workspace receiving |
 | Turn Kafka events into a dataset and merchant | `starforge dataset-kafka`, `starforge kafka-client` and the Kafka merchant tools | Exact retained topic history, mapped editions, native query/merchant packages and resumable complete customer receiving |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
@@ -216,6 +217,8 @@ supported configuration. Retain the previous runtime and selected release until
 the replacement is operating as intended.
 
 ## Product source and guides
+
+- [Complete OData collections, Analysis and customer receiving](stellar/scf-starforge-20261009/sf30-seller-sdk/odata/live/COLLECTIONS.md)
 
 - [Timescale native operations, assigned work and complete receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/timescale/OPERATING.md)
 - [Native MPP merchant, customer and managed receiving](products/mpp-workspace/README.md)
