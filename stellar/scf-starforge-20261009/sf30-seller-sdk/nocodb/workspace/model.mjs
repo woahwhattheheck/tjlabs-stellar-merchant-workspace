@@ -708,9 +708,11 @@ export async function openNocoDBAuthoring({ directory, create = false, connectio
       return run('DEPLOYMENT_CONSOLE_OPEN', {}, requestId, async () => {
         if (!deploymentService) {
           await privateDirectory(deploymentDirectory, true);
-          const { initReleaseStore } = await import('../../../sf82-seller-pilot/releases.mjs');
+          const { initReleaseStore, readReleaseState } = await import('../../../sf82-seller-pilot/releases.mjs');
           const { startReleaseConsole } = await import('../../../sf82-seller-pilot/release-console.mjs');
-          await initReleaseStore(releaseDirectory);
+          // Reopen the same original store. A partial or invalid retained store is not a new store.
+          if (await absent(releaseDirectory)) await initReleaseStore(releaseDirectory);
+          else await readReleaseState(releaseDirectory);
           deploymentService = { id: randomUUID(), native: await startReleaseConsole(releaseDirectory, { port: 0, env: environment }) };
         }
         return deploymentOwnership();
