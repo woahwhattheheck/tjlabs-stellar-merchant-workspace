@@ -1,0 +1,11 @@
+{
+  "workspaces": {
+    "merchant": {
+      "label": "Merchant accounting",
+      "directory": "/absolute/private/merchant-accounting",
+      "outboxDir": "/absolute/private/original-outbox",
+      "proofDir": "/absolute/private/original-proofs",
+      "termsFile": "/absolute/private/original-terms.json"
+    }
+  }
+}

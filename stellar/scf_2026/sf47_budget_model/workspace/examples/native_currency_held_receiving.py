@@ -1,0 +1,372 @@
+#!/usr/bin/env python3
+"""Run the original currency receiving in one owned execution namespace."""
+from __future__ import annotations
+import argparse, ast, base64, fcntl, hashlib, json, os, shutil, signal, stat, subprocess, sys, tempfile, termios, time, traceback, zipfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+def require(ok, message):
+    if not ok:
+        raise RuntimeError(message)
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+def git_blob(raw):
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+
+def emit(value):
+    print(json.dumps(value, ensure_ascii=False, sort_keys=True), flush=True)
+
+def atomic(path, raw):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        require(path.is_file() and path.read_bytes() == raw, "Retained bytes differ: " + str(path))
+        return
+    fd, name = tempfile.mkstemp(prefix="." + path.name + ".", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as out:
+            out.write(raw); out.flush(); os.fsync(out.fileno())
+        try:
+            os.link(name, path)
+        except FileExistsError:
+            require(path.read_bytes() == raw, "Concurrent retained bytes differ: " + str(path))
+    finally:
+        Path(name).unlink(missing_ok=True)
+
+def write_json(path, value):
+    atomic(path, (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode())
+
+def relative(root, name):
+    require(isinstance(name, str) and name and not Path(name).is_absolute() and ".." not in Path(name).parts,
+            "Use a relative retained source path.")
+    path = (root / name).resolve()
+    require(path.is_relative_to(root), "Retained path escapes the operation.")
+    return path
+
+def source_bytes(item):
+    raw = item["content"].encode("utf-8")
+    require(len(raw) == item["bytes"] and digest(raw) == item["sha256"], "Intake byte identity differs: " + item["path"])
+    if item.get("gitBlob"):
+        require(git_blob(raw) == item["gitBlob"], "Intake Git identity differs: " + item["path"])
+    return raw
+
+def choose_file(explicit, candidates, label, executable=False):
+    for name in ([explicit] if explicit else []) + candidates:
+        if not name:
+            continue
+        path = Path(name).expanduser()
+        if path.is_file() and (not executable or os.access(path, os.X_OK)):
+            return str(path.absolute())
+    raise RuntimeError("Existing " + label + " is unavailable; supply its actual installed path.")
+
+BROWSER_DRIVER = r"""
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const [playwrightFile, executablePath, callbackFile, readyFile, outputDirectory, pythonExecutable] = process.argv.slice(2);
+const pw = await import(pathToFileURL(playwrightFile).href);
+const chromium = pw.chromium ?? pw.default?.chromium;
+if (!chromium) throw new Error('The original installed Playwright module has no chromium export.');
+const {receiveNativeCurrency} = await import(pathToFileURL(callbackFile).href);
+const browser = await chromium.launch({
+  headless: true, executablePath,
+  args: ['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--renderer-process-limit=1'],
+});
+try {
+  const result = await receiveNativeCurrency({readyFile, outputDirectory, browser, pythonExecutable});
+  console.log(JSON.stringify({state:result.state, caseId:result.caseId, nativeReadySha256:result.nativeReadySha256}));
+} finally {
+  await browser.close();
+}
+"""
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base", required=True)
+    parser.add_argument("--archive-directory", required=True)
+    parser.add_argument("--intake")
+    parser.add_argument("--case-file")
+    parser.add_argument("--python", default=sys.executable)
+    parser.add_argument("--node")
+    parser.add_argument("--playwright")
+    parser.add_argument("--chromium")
+    parser.add_argument("--library-helper")
+    parser.add_argument("--hold-result", action="store_true")
+    args = parser.parse_args()
+    base = Path(args.base).resolve()
+    sink = Path(args.archive_directory).resolve()
+    require(base != sink and not sink.is_relative_to(base), "Keep the durable archive outside temporary execution state.")
+    base.mkdir(parents=True, exist_ok=True)
+    requested_sink = sink
+    try:
+        sink.mkdir(parents=True, exist_ok=True)
+        lock_file = (sink / "native-currency-operation.lock").open("a+b")
+    except OSError as exc:
+        emit({"state":"SHARED_SINK_UNAVAILABLE","error":str(exc),"path":str(sink)})
+        sink = base / "publication-fallback"
+        sink.mkdir(exist_ok=True)
+        lock_file = (base / "native-currency-operation.lock").open("a+b")
+    with lock_file as guard:
+        fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if args.intake:
+            intake_raw = Path(args.intake).read_bytes()
+        else:
+            if sys.stdin.isatty():
+                terminal = termios.tcgetattr(sys.stdin.fileno())
+                terminal[3] &= ~(termios.ECHO | termios.ICANON)
+                terminal[6][termios.VMIN] = 1
+                terminal[6][termios.VTIME] = 0
+                termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, terminal)
+            emit({"state":"INPUT_READY","pid":os.getpid(),"base":str(base)})
+            intake_raw = sys.stdin.buffer.readline(16 * 1024 * 1024 + 1)
+        require(0 < len(intake_raw) <= 16 * 1024 * 1024, "Use one complete bounded receiving intake.")
+        intake = json.loads(intake_raw)
+        require(intake.get("schema") == "stellar-forge.sf47-currency-held-intake.v1", "Unknown receiving intake schema.")
+        operation = intake["operationId"]
+        private = intake["privatePacket"]
+        require(operation == private["operationId"], "Original operation differs.")
+        raw_files = [(item, source_bytes(item)) for item in intake["sourceFiles"] + intake["companions"]]
+        raw_private = []
+        for item in private["files"]:
+            raw = item["content_utf8"].encode()
+            require(len(raw) == item["bytes"] and digest(raw) == item["sha256"], "Private original source differs: " + item["path"])
+            if item.get("gitBlob"):
+                require(git_blob(raw) == item["gitBlob"], "Private Git source differs: " + item["path"])
+            raw_private.append((item, raw))
+        require(len({x["path"] for x, _ in raw_files}) == len(raw_files), "Duplicate product source intake.")
+        cfg = json.loads(next(raw for item, raw in raw_private if item["path"] == "CONFIG.json"))
+        original_base = Path(private["baseDirectory"])
+        require(Path(cfg["repositoryRoot"]) == original_base / "source", "Original repository root differs.")
+        require(cfg["operationId"] == operation, "Configuration operation differs.")
+        # Relocation occurs only before first preparation. The retained configuration
+        # still preserves original source, file and business identities.
+        if base != original_base:
+            cfg["repositoryRoot"] = str(base / "source")
+            cfg["sourceRoot"] = str(base / "source" / Path(cfg["sourceRoot"]).relative_to(original_base / "source"))
+            for value in cfg["inputs"].values():
+                prior = Path(value["path"])
+                if prior.is_relative_to(original_base):
+                    value["path"] = str(base / prior.relative_to(original_base))
+            cfg["executionRelocation"] = {"originalBaseDirectory":str(original_base),"executionBaseDirectory":str(base)}
+        if args.case_file:
+            cfg["inputs"]["case"]["path"] = str(Path(args.case_file).resolve())
+        case_file = Path(cfg["inputs"]["case"]["path"])
+        case_raw = case_file.read_bytes()
+        require(len(case_raw) == cfg["inputs"]["case"]["bytes"] and digest(case_raw) == cfg["inputs"]["case"]["sha256"],
+                "The original complete case archive differs.")
+        for item, raw in raw_files:
+            target = relative(base / "source", item["path"])
+            atomic(target, raw)
+        for item, raw in raw_private:
+            if item["path"] != "CONFIG.json":
+                atomic(relative(base, item["path"]), raw)
+        write_json(base / "CONFIG.json", cfg)
+        atomic(base / "ORIGINAL_PRIVATE_PACKET.json", (json.dumps(private,ensure_ascii=False,sort_keys=True,separators=(",",":"))+"\n").encode())
+        atomic(base / "ORIGINAL_CASE.zip", case_raw)
+        pins = {p["path"]:p for p in cfg["sourcePins"]}
+        selected = {item["path"]:raw for item,raw in raw_files if item["path"] in pins}
+        require(set(selected) == set(pins), "The complete selected operating source is required.")
+        for name, raw in selected.items():
+            require(git_blob(raw) == pins[name]["gitBlob"] and len(raw) == pins[name]["bytes"], "Selected source differs: " + name)
+        source = Path(cfg["sourceRoot"])
+        caller = source / "examples" / "native_currency_receiving.py"
+        callback = source / "examples" / "native_currency_browser_receiving.mjs"
+        ast.parse(caller.read_text(), str(caller))
+        atomic(base / "run-browser.mjs", BROWSER_DRIVER.encode())
+        temp = base / "tmp"
+        temp.mkdir(exist_ok=True)
+        env = {**os.environ, "TMPDIR":str(temp), "PYTHONDONTWRITEBYTECODE":"1"}
+        runtime_modules = os.environ.get("CODEX_PRIMARY_RUNTIME_NODE_MODULES", "")
+        node = choose_file(args.node, [os.environ.get("CODEX_PRIMARY_RUNTIME_NODE"),
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node", shutil.which("node")], "Node", True)
+        python = choose_file(args.python, [sys.executable], "Python", True)
+        playwright = choose_file(args.playwright, [
+            str(Path(runtime_modules) / "playwright" / "index.mjs") if runtime_modules else None,
+            str(Path(runtime_modules) / "playwright" / "index.js") if runtime_modules else None,
+            str(Path(runtime_modules) / "playwright-core" / "index.mjs") if runtime_modules else None,
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs",
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node_modules/playwright/index.mjs",
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node_modules/playwright/index.js",
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node_modules/playwright-core/index.mjs",
+        ], "Playwright module")
+        chromium = choose_file(args.chromium, [
+            "/workspace/scratch/bc0850d7ba23/browser-runtime/chrome-headless-shell",
+        ], "Chromium", True)
+        env["PATH"] = str(Path(node).parent) + os.pathsep + env.get("PATH", "")
+        for key in ("SF47_SUPPORT_NODE","SF47_BUYER_NODE"):
+            env[key] = node
+        subprocess.run([node,"--check",str(callback)],check=True,env=env,cwd=base)
+        write_json(base / "RUNTIME.json", {"operationId":operation,"pid":os.getpid(),"python":python,
+            "node":node,"playwright":playwright,"chromium":chromium,"sourceCommit":cfg["sourceCommit"],
+            "sourceFiles":len(pins),"sourceBytes":sum(x["bytes"] for x in pins.values())})
+        # Shared checkpoints are optional. The original bundled Library helper
+        # publishes the final archive directly from this same execution namespace.
+        library_helper = choose_file(args.library_helper, [
+            "/root/.codex/plugins/cache/openai-curated-remote/openai-library/0.1.62/skills/library/scripts/library_upload.py"
+        ], "bundled Library upload helper")
+        reservation = sink / (operation + ".publication.part")
+        try:
+            if not reservation.exists():
+                with reservation.open("x+b") as handle:
+                    try:
+                        os.posix_fallocate(handle.fileno(), 0, 16 * 1024 * 1024)
+                    except OSError:
+                        handle.truncate(0)
+                    handle.flush(); os.fsync(handle.fileno())
+        except OSError as exc:
+            emit({"state":"SHARED_CHECKPOINT_UNAVAILABLE","error":str(exc)})
+        child = None
+        attempt = str(time.time_ns())
+        outcome = {"operationId":operation,"attempt":attempt,"state":"RUNNING","sourceCommit":cfg["sourceCommit"]}
+        receiving = base / "receiving"
+        receiving.mkdir(exist_ok=True)
+        archives = []
+        def publish(label):
+            archive = base / ("archive-" + label + "-" + attempt + ".zip")
+            paths = [p for p in sorted(base.rglob("*")) if p.is_file()
+                and not p.is_relative_to(temp) and not p.name.startswith("archive-")
+                and not p.is_relative_to(base/"publication-fallback")
+                and not (p.is_relative_to(receiving/"browser") and p.suffix.lower()==".png")
+                and not p.name.endswith(".part")]
+            with zipfile.ZipFile(archive,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as zipped:
+                for path in paths:
+                    zipped.write(path,path.relative_to(base).as_posix())
+            raw_hash = hashlib.sha256()
+            size = archive.stat().st_size
+            with archive.open("rb") as inp:
+                for chunk in iter(lambda:inp.read(1024*1024),b""):
+                    raw_hash.update(chunk)
+            receipt = {"localPath":str(archive),"bytes":size,"sha256":raw_hash.hexdigest(),"stage":label,
+                       "sharedPath":None}
+            target = requested_sink / ("SF47_Native_Currency_" + label + "_" + attempt + ".zip")
+            try:
+                requested_sink.mkdir(parents=True,exist_ok=True)
+                with reservation.open("a+b") as out, archive.open("rb") as inp:
+                    out.seek(0)
+                    # O_APPEND is cleared by reopening r+b before the exact copy.
+                with reservation.open("r+b") as out, archive.open("rb") as inp:
+                    out.seek(0)
+                    for chunk in iter(lambda:inp.read(1024*1024),b""):
+                        out.write(chunk)
+                    out.truncate(size); out.flush(); os.fsync(out.fileno())
+                if target.exists():
+                    require(target.stat().st_size==size and digest(target.read_bytes())==receipt["sha256"],
+                            "Retained shared archive differs.")
+                else:
+                    os.link(reservation,target)
+                reservation.unlink()
+                receipt["sharedPath"]=str(target)
+                write_json(requested_sink/(target.name+".receipt.json"),receipt)
+            except OSError as exc:
+                receipt["sharedPublicationError"]=str(exc)
+                emit({"state":"SHARED_CHECKPOINT_UNAVAILABLE","stage":label,"error":str(exc)})
+            archives.append(receipt)
+            emit({"state":"ARCHIVE_READY",**receipt})
+            return receipt
+        def library_upload(archive_receipt):
+            nonlocal child
+            request={"uploads":[{"local_path":archive_receipt["localPath"],"purpose":"create_library_file"}]}
+            write_json(base/("LIBRARY_REQUEST-"+attempt+".json"),request)
+            emit({"state":"LIBRARY_UPLOAD_STARTED","bytes":archive_receipt["bytes"],"sha256":archive_receipt["sha256"]})
+            with (base/("library-"+attempt+".stdout")).open("wb") as stdout, (base/("library-"+attempt+".stderr")).open("wb") as stderr:
+                child=subprocess.Popen([python,library_helper],cwd=base,env=env,stdin=subprocess.PIPE,
+                    stdout=stdout,stderr=stderr,start_new_session=True)
+                child.communicate(json.dumps(request).encode())
+                code=child.returncode
+                child=None
+            raw=(base/("library-"+attempt+".stdout")).read_bytes()
+            require(code==0,"Bundled Library upload failed: "+(base/("library-"+attempt+".stderr")).read_text(errors="replace")[-4000:])
+            value=json.loads(raw)
+            write_json(base/("LIBRARY_RESULT-"+attempt+".json"),value)
+            emit({"state":"LIBRARY_UPLOAD_RETURNED","result":value})
+            return value
+        def run_phase(phase, argv):
+            nonlocal child
+            emit({"state":"PHASE_STARTED","phase":phase,"operationId":operation})
+            with (base / (phase + ".stdout")).open("ab") as stdout, (base / (phase + ".stderr")).open("ab") as stderr:
+                child = subprocess.Popen(argv,cwd=source,env=env,stdin=subprocess.DEVNULL,stdout=stdout,stderr=stderr,start_new_session=True)
+                pid = child.pid
+                code = child.wait()
+                child = None
+            emit({"state":"PHASE_RETURNED","phase":phase,"pid":pid,"exitCode":code})
+            if code:
+                tail=(base/(phase+".stderr")).read_text(errors="replace")[-12000:]
+                raise RuntimeError(phase + " exited " + str(code) + "\n" + tail)
+        try:
+            run_phase("prepare",[python,"-B",str(caller),"--config",str(base/"CONFIG.json"),"--output",str(receiving),"--phase","prepare"])
+            ready = json.loads((receiving/"NATIVE_READY.json").read_bytes())
+            emit({"state":"NATIVE_READY","caseId":ready["caseId"],"legacyForecasts":len(ready["legacy"]["forecasts"]),
+                "legacyPortfolios":len(ready["legacy"]["portfolios"]),"readySha256":digest((receiving/"NATIVE_READY.json").read_bytes())})
+            publish("PREPARED")
+            run_phase("browser",[node,"--max-old-space-size=256",str(base/"run-browser.mjs"),playwright,chromium,
+                str(callback),str(receiving/"NATIVE_READY.json"),str(receiving/"browser"),python])
+            run_phase("verify",[python,"-B",str(caller),"--config",str(base/"CONFIG.json"),"--output",str(receiving),
+                "--phase","verify","--browser-result",str(receiving/"browser"/"RESULT.json")])
+            result=json.loads((receiving/"RESULT.json").read_bytes())
+            require(result.get("state")=="PASS","Original final receiving did not pass.")
+            outcome.update(state="PASS",result=str(receiving/"RESULT.json"),caseId=result["preparedCaseId"],
+                phases=result["phases"],forecasts=result["forecasts"],portfolios=result["portfolios"])
+        except BaseException as exc:
+            outcome.update(state="FAILED",error=str(exc),errorType=type(exc).__name__)
+            traceback.print_exc()
+        finally:
+            if child is not None and child.poll() is None:
+                os.killpg(child.pid,signal.SIGTERM)
+                try:
+                    child.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    os.killpg(child.pid,signal.SIGKILL); child.wait()
+            outcome["finishedAt"]=datetime.now(timezone.utc).isoformat()
+            write_json(base/("OUTCOME-"+attempt+".json"),outcome)
+            try:
+                final=publish("COMPLETE" if outcome["state"]=="PASS" else "INTERRUPTED")
+                outcome["archive"]=final
+                try:
+                    outcome["library"]=library_upload(final)
+                    outcome["deliveryState"]="LIBRARY_RETURNED"
+                except BaseException as exc:
+                    outcome["deliveryState"]="SHARED_ARCHIVE_READY" if final.get("sharedPath") else "PRESERVATION_PENDING"
+                    outcome["libraryError"]=str(exc)
+                    emit({"state":"LIBRARY_UPLOAD_FAILED","error":str(exc)})
+            finally:
+                if reservation.exists():
+                    reservation.unlink()
+            try:
+                write_json(requested_sink/("OUTCOME-"+attempt+".json"),outcome)
+            except OSError:
+                pass
+            # Retain the two visual-inspection files beside the full archive.
+            for name in ("forecast-mobile.png","forecast-desktop.png"):
+                picture=receiving/"browser"/name
+                if picture.is_file():
+                    try:
+                        atomic(requested_sink/(attempt+"-"+name),picture.read_bytes())
+                    except OSError:
+                        pass
+            emit(outcome)
+        if args.hold_result:
+            emit({"state":"RESULT_HELD","pid":os.getpid(),"base":str(base)})
+            while True:
+                raw=sys.stdin.buffer.readline(256*1024)
+                if not raw:
+                    break
+                command=json.loads(raw)
+                if command.get("action")=="finish":
+                    break
+                if command.get("action")=="status":
+                    emit(outcome)
+                elif command.get("action")=="inspect-image":
+                    name=command.get("name")
+                    require(name in ("forecast-mobile.png","forecast-desktop.png"),"Select an original receiving screenshot.")
+                    raw=(receiving/"browser"/name).read_bytes()
+                    offset=int(command.get("offset",0))
+                    require(offset>=0,"Use a nonnegative original-file offset.")
+                    part=raw[offset:offset+32768]
+                    emit({"name":name,"offset":offset,"bytes":len(raw),"sha256":digest(raw),
+                        "content_base64":base64.b64encode(part).decode(),"nextOffset":offset+len(part)})
+        return 0 if outcome["state"]=="PASS" and outcome.get("deliveryState")!="PRESERVATION_PENDING" else 1
+
+if __name__ == "__main__":
+    raise SystemExit(main())

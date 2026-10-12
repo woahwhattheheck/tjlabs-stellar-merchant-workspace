@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "baserow-rails",
   "title": "Baserow to Rails",
-  "description": "Original Baserow source selection, complete editions and attachments, Ruby receiving, managed private bundles and transactional Rails operator applications",
+  "description": "Original Baserow source selection, complete rows and attachments, managed Ruby customer applications, transactional data revisions and connected agent operation",
   "base": {
     "commands": [
       "installation",
@@ -96,7 +96,8 @@
     "merchant-provider-receiving",
     "merchant-provider-tools",
     "baserow-rails-product",
-    "ruby-runtime"
+    "ruby-runtime",
+    "ruby-connected"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -147,7 +148,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete Baserow customer rows and attachments, exact private Ruby environments and portable transactional Rails applications",
+    "description": "Complete Baserow customer data, managed Ruby/Rails applications, source-bound revisions and typed connected operation with portable receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

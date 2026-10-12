@@ -45,6 +45,85 @@ function integer(value, minimum, maximum, label) {
     fail('FRED_CLIENT_INPUT_INVALID', 'Supply a supported integer ' + label + '.');
   return value;
 }
+
+function recurringId(value, kind) {
+  const pattern = kind === 'template' ? /^fred-template-[a-f0-9]{64}$/ : /^fred-successor-[a-f0-9]{64}$/;
+  if (typeof value !== 'string' || !pattern.test(value))
+    fail('FRED_CLIENT_INPUT_INVALID', 'Select the retained briefing ' + kind + ' ID.');
+  return value;
+}
+function successorSelection(input, saved = false) {
+  fields(input, ['templateId', 'captureId', 'anchorDate', 'baselineReviewId', 'previousSuccessorId', 'note',
+    ...(saved ? ['id', 'expectedRevision', 'previewId'] : ['offset', 'limit', 'changesOnly'])], 'Successor selection');
+  const value = JSON.parse(canonicalFredJSON(input));
+  recurringId(value.templateId, 'template'); digest(value.captureId, 'target capture ID');
+  for (const key of ['baselineReviewId', 'previousSuccessorId']) if (value[key] !== undefined && value[key] !== null) {
+    if (key === 'baselineReviewId') digest(value[key], 'preceding saved review ID');
+    else recurringId(value[key], 'successor');
+  }
+  if (value.anchorDate !== undefined && value.anchorDate !== null &&
+      (typeof value.anchorDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value.anchorDate)))
+    fail('FRED_CLIENT_INPUT_INVALID', 'Use an explicit calendar anchor in YYYY-MM-DD form.');
+  if (value.note !== undefined && (typeof value.note !== 'string' || value.note.length > 8000 ||
+      /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value.note)))
+    fail('FRED_CLIENT_INPUT_INVALID', 'Supply the complete readable successor review note.');
+  if (saved) {
+    operation(value.id); revision(value.expectedRevision); digest(value.previewId, 'reviewed successor preview ID');
+  } else {
+    value.offset = integer(value.offset ?? 0, 0, 60000, 'change offset');
+    value.limit = integer(value.limit ?? 100, 1, 500, 'change page size');
+    if (value.changesOnly !== undefined && typeof value.changesOnly !== 'boolean')
+      fail('FRED_CLIENT_INPUT_INVALID', 'Choose a boolean changesOnly value.');
+    value.changesOnly ??= true;
+  }
+  return value;
+}
+function successorChangePage(value, { captureId, comparisonId, offset, limit, changesOnly } = {}) {
+  if (value?.schema !== 'stellar-forge.fred-briefing-changes.v1' || !SHA.test(value.comparisonId ?? '') ||
+      !Array.isArray(value.rows) || !Number.isSafeInteger(value.rowCount) || value.rowCount < 0 || value.rowCount > 60000 ||
+      !Number.isSafeInteger(value.filteredCount) || value.filteredCount < 0 || value.filteredCount > value.rowCount ||
+      !Number.isSafeInteger(value.offset) || value.offset < 0 || value.offset > value.filteredCount ||
+      !Number.isSafeInteger(value.limit) || value.limit < 1 || value.limit > 500 || typeof value.changesOnly !== 'boolean' ||
+      value.rows.length !== Math.min(value.limit, value.filteredCount - value.offset) ||
+      value.nextOffset !== (value.offset + value.limit < value.filteredCount ? value.offset + value.limit : null) ||
+      captureId !== undefined && value.after?.captureId !== captureId ||
+      comparisonId !== undefined && value.comparisonId !== comparisonId ||
+      offset !== undefined && value.offset !== offset || limit !== undefined && value.limit !== limit ||
+      changesOnly !== undefined && value.changesOnly !== changesOnly)
+    fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The saved report change page or original source binding changed.');
+  return value;
+}
+function successorIdentity(value, successorId) {
+  const record = value?.successor;
+  if (record?.schema !== 'stellar-forge.fred-briefing-successor.v1' || record.id !== successorId ||
+      value.template?.id !== record.templateId || value.materialization?.templateId !== record.templateId ||
+      value.materialization?.captureId !== record.captureId || value.materialization?.originReviewId !== record.originReviewId ||
+      value.comparison?.before?.reviewId !== record.beforeReviewId ||
+      value.comparison?.before?.captureId !== record.beforeCaptureId ||
+      value.briefing?.reviewId !== record.reviewId || value.briefing?.reportId !== record.reportId ||
+      value.briefing?.manifest?.reviewId !== record.reviewId || value.briefing?.manifest?.captureId !== record.captureId ||
+      value.briefing?.manifest?.reportId !== record.reportId)
+    fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The received successor belongs to a different template, source or preceding report.');
+  return value;
+}
+function successorView(value, successorId, paging) {
+  successorIdentity(value, successorId);
+  successorChangePage(value.comparison, { ...paging, captureId: value.successor.captureId, comparisonId: value.successor.comparison?.id });
+  return value;
+}
+function successorFile(value, successorId) {
+  successorIdentity(value, successorId);
+  const comparison = value.comparison;
+  if (comparison?.schema !== 'stellar-forge.fred-briefing-changes.v1' ||
+      comparison.comparisonId !== value.successor.comparison?.id || comparison.after?.captureId !== value.successor.captureId ||
+      !Array.isArray(comparison.rows) || comparison.rowCount !== comparison.rows.length)
+    fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The full successor file lost its complete original comparison.');
+  const { comparisonId, ...identity } = comparison;
+  if (!SHA.test(comparisonId ?? '') || fredDigest(Buffer.from(canonicalFredJSON(identity))) !== comparisonId)
+    fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The complete successor comparison differs from its retained identity.');
+  return value;
+}
+
 function fields(value, allowed, label) {
   object(value, label);
   if (Object.keys(value).some(key => !allowed.includes(key)))
@@ -246,7 +325,7 @@ export class FredWorkspaceClient {
       : definition.consoleUrlEnv ? this.#environment[definition.consoleUrlEnv] : definition.url;
     return connection(raw, definition, this.#boundId);
   }
-  async #fetchResponse(selected, path, { method = 'GET', body, signal, operationId, maximum } = {}) {
+  async #fetchResponse(selected, path, { method = 'GET', body, signal, operationId, maximum, readOnly = false } = {}) {
     const headers = { accept: 'application/json', authorization: 'Bearer ' + selected.token, origin: selected.origin };
     let encoded;
     if (body !== undefined) {
@@ -261,12 +340,12 @@ export class FredWorkspaceClient {
     try { response = await this.#fetch(selected.origin + path, { method, headers, ...(encoded === undefined ? {} : { body: encoded }),
       redirect: 'error', signal: requestSignal }); }
     catch { fail('FRED_CLIENT_TRANSPORT_ERROR', 'The original response was not received. Inspect the same project operation or recover the same customer intent.',
-      { ...details, ambiguous: method !== 'GET', responseReceived: false }); }
+      { ...details, ambiguous: method !== 'GET' && !readOnly, responseReceived: false }); }
     try { bytes = await responseBytes(response, maximum ?? this.maxResponseBytes); }
     catch (error) {
       throw new FredWorkspaceError(error.code ?? 'FRED_CLIENT_RESPONSE_INCOMPLETE',
         error instanceof FredWorkspaceError ? error.message : 'The original response body did not complete.',
-        { ...details, status: response.status, ambiguous: method !== 'GET', responseReceived: true });
+        { ...details, status: response.status, ambiguous: method !== 'GET' && !readOnly, responseReceived: true });
     }
     if (!response.ok) {
       let original; try { original = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch {}
@@ -274,8 +353,8 @@ export class FredWorkspaceClient {
       const code = typeof error?.code === 'string' ? error.code : 'FRED_CLIENT_HTTP_ERROR';
       const message = (typeof error?.message === 'string' ? error.message : 'The original workspace rejected the request.')
         .split(selected.token).join('[private]').slice(0, 6000);
-      fail(code, message, { ...details, status: response.status, ambiguous: method !== 'GET' && response.status >= 500,
-        responseReceived: true, inspectOriginalOperation: method !== 'GET', responseBytes: bytes.length, responseSha256: fredDigest(bytes),
+      fail(code, message, { ...details, status: response.status, ambiguous: method !== 'GET' && !readOnly && response.status >= 500,
+        responseReceived: true, inspectOriginalOperation: method !== 'GET' && !readOnly, responseBytes: bytes.length, responseSha256: fredDigest(bytes),
         ...(typeof error?.retryAt === 'string' ? { retryAt: error.retryAt } : {}) });
     }
     return { response, bytes };
@@ -309,7 +388,7 @@ export class FredWorkspaceClient {
     const result = await this.#request(path, options);
     try { return JSON.parse(result.bytes.toString('utf8')); }
     catch { fail('FRED_CLIENT_RESPONSE_INVALID', 'The original response was not complete JSON.',
-      { ambiguous: options.method === 'POST', ...(options.operationId ? { operationId: options.operationId } : {}) }); }
+      { ambiguous: options.method === 'POST' && !options.readOnly, ...(options.operationId ? { operationId: options.operationId } : {}) }); }
   }
   async launch(options = {}) {
     await this.#connect(options.signal);
@@ -339,6 +418,88 @@ export class FredWorkspaceClient {
       offset: String(integer(offset, 0, 1000000, 'comparison offset')) });
     return page(await this.#json('/api/compare?' + query, options), 'changes');
   }
+  async previewBriefing({ captureId, briefing, offset = 0 }, options) {
+    digest(captureId, 'capture ID'); object(briefing, 'Original analyst selection');
+    const value = await this.#json('/api/briefing-preview', { ...options, method: 'POST', readOnly: true,
+      body: { captureId, briefing, offset: integer(offset, 0, 30000, 'measure offset') } });
+    return briefingPage(value, { captureId, reviewId: null });
+  }
+  async briefing({ reviewId, offset = 0 }, options) {
+    digest(reviewId, 'saved analyst review ID');
+    return briefingPage(await this.#json('/api/briefing?' + new URLSearchParams({ review: reviewId,
+      offset: String(integer(offset, 0, 30000, 'measure offset')) }), options), { reviewId });
+  }
+  async briefingTemplates(options = {}) {
+    const value = await this.#json('/api/briefing-templates', options);
+    if (value?.projectId !== this.#boundId || !Number.isSafeInteger(value.revision) || value.revision < 1 ||
+        !Array.isArray(value.templates) || !Array.isArray(value.successors))
+      fail('FRED_CLIENT_PROJECT_CHANGED', 'The briefing inventory does not belong to the original project revision.');
+    const templates = new Set(), successors = new Set();
+    for (const item of value.templates) {
+      recurringId(item?.id, 'template');
+      if (templates.has(item.id)) fail('FRED_CLIENT_RESPONSE_INVALID', 'The original template inventory repeats a saved ID.');
+      templates.add(item.id);
+    }
+    for (const item of value.successors) {
+      recurringId(item?.id, 'successor');
+      if (successors.has(item.id) || !templates.has(item.templateId))
+        fail('FRED_CLIENT_RESPONSE_INVALID', 'The original successor inventory has a repeated or unbound saved ID.');
+      successors.add(item.id);
+    }
+    return value;
+  }
+  async saveBriefingTemplate(input, options) {
+    fields(input, ['id', 'expectedRevision', 'reviewId', 'name', 'window', 'previousTemplateId'], 'Briefing template');
+    const body = JSON.parse(canonicalFredJSON(input));
+    digest(body.reviewId, 'original saved analyst review ID');
+    if (body.name !== undefined) text(body.name, 'briefing template name', 160);
+    if (body.window !== undefined) {
+      fields(body.window, ['months', 'anchor', 'lagMonths'], 'Calendar window');
+      if (body.window.months !== undefined) integer(body.window.months, 1, 1200, 'calendar months');
+      if (body.window.lagMonths !== undefined) integer(body.window.lagMonths, 0, 1200, 'calendar lag months');
+      if (body.window.anchor !== undefined && !['latest_all', 'latest_any'].includes(body.window.anchor))
+        fail('FRED_CLIENT_INPUT_INVALID', 'Choose latest_all or latest_any for the original observation-date anchor.');
+    }
+    if (body.previousTemplateId !== undefined && body.previousTemplateId !== null) recurringId(body.previousTemplateId, 'template');
+    const value = await this.#action('template-save', body, options);
+    if (!/^fred-template-[a-f0-9]{64}$/.test(value?.templateId ?? '') ||
+        value.template?.id !== value.templateId || value.template?.origin?.reviewId !== body.reviewId)
+      fail('FRED_CLIENT_TEMPLATE_CHANGED', 'The saved template response differs from the original reviewed selection.',
+        { operationId: body.id, ambiguous: true, inspectOriginalOperation: true });
+    return value;
+  }
+  async previewBriefingSuccessor(input, options) {
+    const body = successorSelection(input);
+    const value = await this.#json('/api/briefing-successor-preview', {
+      ...options, method: 'POST', readOnly: true, body
+    });
+    if (!SHA.test(value?.previewId ?? '') || !SHA.test(value?.reviewId ?? '') ||
+        value.template?.id !== body.templateId || value.materialization?.templateId !== body.templateId ||
+        value.materialization?.captureId !== body.captureId ||
+        value.briefing?.captureId !== body.captureId || value.briefing?.reviewId !== value.reviewId ||
+        body.baselineReviewId != null && value.baselineReviewId !== body.baselineReviewId ||
+        body.previousSuccessorId != null && value.previousSuccessorId !== body.previousSuccessorId)
+      fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The successor preview differs from the selected template, source or report lineage.');
+    successorChangePage(value.comparison, { captureId: body.captureId, offset: body.offset, limit: body.limit, changesOnly: body.changesOnly });
+    return value;
+  }
+  async saveBriefingSuccessor(input, options) {
+    const body = successorSelection(input, true);
+    const value = await this.#action('successor-save', body, options);
+    if (!/^fred-successor-[a-f0-9]{64}$/.test(value?.successorId ?? '') || value.templateId !== body.templateId ||
+        value.captureId !== body.captureId || !SHA.test(value.reviewId ?? ''))
+      fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The saved successor response differs from its original reviewed preview.',
+        { operationId: body.id, ambiguous: true, inspectOriginalOperation: true });
+    return value;
+  }
+  async briefingSuccessor({ successorId, offset = 0, limit = 100, changesOnly = true }, options) {
+    recurringId(successorId, 'successor');
+    integer(offset, 0, 60000, 'change offset'); integer(limit, 1, 500, 'change page size');
+    if (typeof changesOnly !== 'boolean') fail('FRED_CLIENT_INPUT_INVALID', 'Choose a boolean changesOnly value.');
+    const query = new URLSearchParams({ successor: successorId, offset: String(offset), limit: String(limit), changesOnly: String(changesOnly) });
+    return successorView(await this.#json('/api/briefing-successor?' + query, options), successorId, { offset, limit, changesOnly });
+  }
+
   publication(publicationId, options) {
     return this.#json('/api/publication?' + new URLSearchParams({ publication: digest(publicationId, 'publication ID') }), options);
   }
@@ -397,7 +558,7 @@ export class FredWorkspaceClient {
   }
   async file(selection, options = {}) {
     object(selection, 'Original file selection');
-    let path, fallback;
+    let path, fallback, expectedMember = null;
     if (selection.kind === 'source') {
       path = '/api/source?' + new URLSearchParams({ capture: digest(selection.captureId, 'capture ID') }); fallback = 'fred-original-capture.json';
     } else if (selection.kind === 'comparison') {
@@ -407,11 +568,34 @@ export class FredWorkspaceClient {
     else if (selection.kind === 'customer') {
       path = '/api/customer-download?' + new URLSearchParams({ publication: digest(selection.publicationId, 'publication ID'), intent: operation(selection.intentId) });
       fallback = 'fred-customer-response.bin';
-    } else fail('FRED_CLIENT_INPUT_INVALID', 'Choose an original source, comparison, project or customer file.');
+    } else if (selection.kind === 'briefing') {
+      const memberNames = { html: 'briefing.html', csv: 'briefing-measures.csv', json: 'briefing.json', manifest: 'briefing-manifest.json' };
+      fallback = memberNames[selection.format];
+      if (!fallback) fail('FRED_CLIENT_INPUT_INVALID', 'Choose the original HTML, CSV, JSON or manifest briefing file.');
+      const saved = await this.briefing({ reviewId: selection.reviewId }, options);
+      expectedMember = saved.files?.find(file => file.path === fallback);
+      if (!expectedMember || !SHA.test(expectedMember.sha256) || !Number.isSafeInteger(expectedMember.bytes) || expectedMember.bytes < 1)
+        fail('FRED_CLIENT_BRIEFING_CHANGED', 'The original saved briefing file descriptor is missing.');
+      path = '/api/briefing?' + new URLSearchParams({ review: selection.reviewId, format: selection.format });
+    } else if (selection.kind === 'briefing-successor') {
+      recurringId(selection.successorId, 'successor');
+      if (!['json', 'csv', 'html'].includes(selection.format))
+        fail('FRED_CLIENT_INPUT_INVALID', 'Choose the complete successor JSON, CSV or HTML comparison.');
+      path = '/api/briefing-successor?' + new URLSearchParams({ successor: selection.successorId, format: selection.format });
+      fallback = selection.successorId + '.' + selection.format;
+    } else fail('FRED_CLIENT_INPUT_INVALID', 'Choose an original source, comparison, briefing, successor, project or customer file.');
     const { response, bytes } = await this.#request(path, options);
     const sha256 = fredDigest(bytes);
+    if (expectedMember && (sha256 !== expectedMember.sha256 || bytes.length !== expectedMember.bytes))
+      fail('FRED_CLIENT_BRIEFING_CHANGED', 'The complete original briefing differs from its saved source review.', { sha256, bytes: bytes.length });
     if (options.expectedSha256 !== undefined && digest(options.expectedSha256) !== sha256)
       fail('FRED_CLIENT_FILE_CHANGED', 'The complete original download differs from its reviewed SHA256.', { sha256, bytes: bytes.length });
+    if (selection.kind === 'briefing-successor' && selection.format === 'json') {
+      let value;
+      try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+      catch { fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The original successor file is not complete JSON.'); }
+      successorFile(value, selection.successorId);
+    }
     const proposed = (response.headers.get('content-disposition') ?? '').match(/filename="([^"]*)"/)?.[1] ?? fallback;
     const name = basename(proposed).replace(/[\x00-\x1f\x7f"\\/]/g, '_').slice(0, 180) || fallback;
     const result = { name, type: response.headers.get('content-type') ?? 'application/octet-stream', bytes, sha256,
@@ -427,16 +611,65 @@ export class FredWorkspaceClient {
   close() { this.#closed = true; this.#bound = null; this.#lifetime.abort(new Error('FRED workspace client closed')); }
 }
 
+function briefingPage(value, binding) {
+  if (value?.schema !== 'stellar-forge.fred-briefing-model.v1' || !Array.isArray(value.measures) || !Array.isArray(value.series) ||
+      !Number.isSafeInteger(value.measureCount) || value.measureCount < 0 || value.measureCount > 30000 ||
+      !Number.isSafeInteger(value.offset) || value.offset < 0 || value.offset > value.measureCount ||
+      value.limit !== 100 || value.measures.length !== Math.min(100, value.measureCount - value.offset) ||
+      value.nextOffset !== (value.offset + 100 < value.measureCount ? value.offset + 100 : null) ||
+      Object.entries(binding).some(([key, expected]) => value[key] !== expected))
+    fail('FRED_CLIENT_BRIEFING_CHANGED', 'The original analyst page or its source/review binding changed.');
+  if (binding.reviewId !== null && (!value.manifest || value.manifest.reviewId !== binding.reviewId ||
+      value.manifest.captureId !== value.captureId || value.manifest.reportId !== value.reportId ||
+      !Array.isArray(value.files) || value.files.length !== 4))
+    fail('FRED_CLIENT_BRIEFING_CHANGED', 'The saved analyst page lost its complete original file inventory.');
+  return value;
+}
 export function inspectFredProjectBundle(bundle) {
-  if (bundle?.schema !== 'stellar-forge.fred-project-bundle.v1' || !plain(bundle.state) ||
-      !Array.isArray(bundle.captures) || !Array.isArray(bundle.publicationPlans) || !SHA.test(bundle.bundleSha256 ?? ''))
-    fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the complete original FRED project bundle.');
-  const identity = { schema: bundle.schema, state: bundle.state, captures: bundle.captures, publicationPlans: bundle.publicationPlans };
+  const recurring = bundle?.schema === 'stellar-forge.fred-project-bundle.v3';
+  const briefing = recurring || bundle?.schema === 'stellar-forge.fred-project-bundle.v2';
+  if ((!briefing && bundle?.schema !== 'stellar-forge.fred-project-bundle.v1') || !plain(bundle.state) ||
+      !Array.isArray(bundle.captures) || !Array.isArray(bundle.publicationPlans) || !SHA.test(bundle.bundleSha256 ?? '') ||
+      (briefing ? !Array.isArray(bundle.briefings) || bundle.briefings.length < 1 : bundle.briefings !== undefined))
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the complete original versioned FRED project bundle.');
+  const identity = { schema: bundle.schema, state: bundle.state, captures: bundle.captures, publicationPlans: bundle.publicationPlans,
+    ...(briefing ? { briefings: bundle.briefings } : {}) };
   if (fredDigest(Buffer.from(canonicalFredJSON(identity))) !== bundle.bundleSha256 ||
-      bundle.state.schema !== 'stellar-forge.fred-project.v1' || !UUID.test(bundle.state.id ?? '') || bundle.state.pending)
+      bundle.state.schema !== 'stellar-forge.fred-project.v1' || !UUID.test(bundle.state.id ?? '') || bundle.state.pending ||
+      !Array.isArray(bundle.state.reviews))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The original completed project bundle identity changed.');
+  const templates = bundle.state.briefingTemplates ?? [], successors = bundle.state.briefingSuccessors ?? [];
+  if (!Array.isArray(templates) || !Array.isArray(successors) || recurring && templates.length === 0 ||
+      !recurring && (templates.length > 0 || successors.length > 0))
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the project bundle version retaining its complete recurring briefing records.');
+  if (recurring) {
+    const templateIds = new Set(), successorIds = new Set();
+    for (const item of templates) {
+      if (!plain(item) || !/^fred-template-[a-f0-9]{64}$/.test(item.id ?? '') || templateIds.has(item.id) ||
+          !bundle.state.reviews.some(review => review.id === item.origin?.reviewId && review.captureId === item.origin?.captureId && review.briefing))
+        fail('FRED_CLIENT_BUNDLE_INVALID', 'A recurring template lost its original saved analyst source review.');
+      templateIds.add(item.id);
+    }
+    for (const item of successors) {
+      if (!plain(item) || !/^fred-successor-[a-f0-9]{64}$/.test(item.id ?? '') || successorIds.has(item.id) ||
+          !templateIds.has(item.templateId) ||
+          !bundle.state.reviews.some(review => review.id === item.reviewId && review.captureId === item.captureId && review.briefing))
+        fail('FRED_CLIENT_BUNDLE_INVALID', 'A recurring successor lost its original template or saved report.');
+      successorIds.add(item.id);
+    }
+    if (templates.some(item => item.previousTemplateId !== null && !templateIds.has(item.previousTemplateId)) ||
+        successors.some(item => item.previousSuccessorId !== null && !successorIds.has(item.previousSuccessorId)))
+      fail('FRED_CLIENT_BUNDLE_INVALID', 'The project export lost a preceding recurring briefing record.');
+  }
+  const analystReviews = bundle.state.reviews.filter(review => review.briefing);
+  if ((bundle.briefings ?? []).length !== analystReviews.length ||
+      new Set((bundle.briefings ?? []).map(item => item.manifest?.reviewId)).size !== analystReviews.length ||
+      (bundle.briefings ?? []).some(item => !analystReviews.some(review => review.id === item.manifest?.reviewId)))
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'The complete project export lost an original analyst briefing.');
   return { schema: bundle.schema, projectId: bundle.state.id, revision: bundle.state.revision,
-    bundleSha256: bundle.bundleSha256, captures: bundle.captures.length, publications: bundle.publicationPlans.length };
+    bundleSha256: bundle.bundleSha256, captures: bundle.captures.length, publications: bundle.publicationPlans.length,
+    ...(briefing ? { briefings: bundle.briefings.length } : {}),
+    ...(recurring ? { templates: templates.length, successors: successors.length } : {}) };
 }
 
 /** Publishes the complete original bytes without replacing an existing file. */
