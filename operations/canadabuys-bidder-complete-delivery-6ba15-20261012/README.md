@@ -44,13 +44,17 @@ Retain the controller until the actual process exits. `--batch` exits after rece
 
 ## Source and history
 
-The complete input is **2,748,876 bytes**, SHA-256 `51d6e681705ad4816789c9fdfb928e1cf357b4b466e1c0e469855ea091ffab8e`. Its unchanged 37-file application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`.
+The complete input is **2,815,260 bytes**, SHA-256 `60de2486a2db1d2f7fe702d2d6e6feb2dd25338805f4111d77a33f34cffd47cf`. Its unchanged 37-file application carrier is **935,605 bytes**, SHA-256 `3e5272c97e057f7b2d242ce18f379b3124bbe845cf5af0008507381ab0983ab7`, Git blob `ca20e7d68b47f4ab8f327a07828662f2a087a495`.
 
 The current fixture preserves the original captures, documents, supplier profile and expected results. The official tender and award row extracts retain every selected column. Authored amendments, operating documents and the entered supplier records are identified as examples in the fixture. The application retains the owner's faster CSV scanner, indexed publication lookup and the merged blank/wildcard commodity-code correction.
 
 The original 73284 browser attempt and integrated 12385 execution completed six phases before their recorded failures. Their actual output, source selections, commands and complete earlier input remain in the existing history. PR585 and [PR622](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/622) preserve those prior producer versions and the current memory-observation changes.
 
 The producer releases duplicate parsed source buffers after staging the complete input and application. Actual boot, Python/Node and cgroup memory readings remain in `resource-history.jsonl`. The supported save path replaces the missing old runtime helper.
+
+The original integrated run `61367` reached the v1 intake stage at 22:21 UTC on October 12, then its tool transport disconnected. The subsequent same-session read returned `Unknown process id`; the one following capacity observation failed before process creation because the environment was offline. Its full original output and commands are retained in `runtime-attempt-history.json`. The last cgroup reading was 8,589,012,992 of 8,589,934,592 bytes, with an existing count of 31 OOM-killed processes. That shared counter does not identify this run's terminal process state.
+
+The current producer reads its own memory from `/proc/self/status` and resolves Node through the acquired child process and its host/namespace identity. Earlier namespace-indexed process readings remain verbatim in history with their attribution correction. On a retained original host, inspect `/dev/shm/canadabuys-bidder-6ba15-ueyhx43v` before starting another case. The original receiving programme resumes completed phases and commands in its existing `working-delivery` directory under its original lifetime database lock. An alternate worker uses the complete selected application and operating-case bodies in this directory.
 
 ## Directory contents
 
@@ -60,4 +64,4 @@ The producer releases duplicate parsed source buffers after staging the complete
 - `run-canadabuys-bidder-receiving.mjs`: the complete native, HTTP, browser and receiving workflow.
 - `input.json`: complete application, programme, operating-case and historical source bodies.
 - `integrated-source-selection.json`: original and selected application members.
-- `original-attempt-recovery.json` and `integrated-attempt-history.json`: actual retained execution history.
+- `original-attempt-recovery.json`, `integrated-attempt-history.json` and `runtime-attempt-history.json`: actual retained execution history.
