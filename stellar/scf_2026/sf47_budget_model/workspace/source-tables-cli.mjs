@@ -151,8 +151,10 @@ async function savePreview(options) {
   try { rawZip=await readFile(zipPath); }
   catch(error) {
     if(error.code!=='ENOENT')throw error;
+    // A committed request keeps its original immutable saved revision even if
+    // another operator saved later work before this ZIP could be published.
     await native(['export','--workspace',resolve(options.workspace),'--plan',result.id,
-      '--expected-revision',String(result.currentRevision),'--output',zipPath],options);
+      '--revision',String(result.revision),'--output',zipPath],options);
     rawZip=await readFile(zipPath);
   }
   // Use the same complete native ZIP receiver as the maintained submission editor.
