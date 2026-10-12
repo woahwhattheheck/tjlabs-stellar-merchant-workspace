@@ -214,6 +214,7 @@ def create_native_subset(ds, choices, output):
             for d, count in zip(var.get_dims(), normalized["shape"]):
                 scope = ensure_group(d.group()); key = dim_path(d)
                 if key not in dimension_specs:
+                    require(count > 0 or d.isunlimited(), "A native fixed dimension cannot be exported with zero length; select a non-empty window")
                     scope.createDimension(d.name, None if d.isunlimited() else count); dimension_specs[key] = count
         for item in choices:
             source = native_variable(ds, item["path"]); group = ensure_group(source.group()); native_type = source.datatype
@@ -397,7 +398,11 @@ class Workspace:
             require(isinstance(choices, list) and choices and all(isinstance(v, dict) and isinstance(v.get("path"), str) for v in choices), "Select one or more original variables")
             require(len({v["path"] for v in choices}) == len(choices), "Each original variable is selected once")
             include = bool(p.get("include_coordinates", True))
-            with Dataset(self.source_path(source), "r") as ds: prepared = prepared_variables(ds, choices, include)
+            with Dataset(self.source_path(source), "r") as ds:
+                prepared = prepared_variables(ds, choices, include)
+                for item in prepared:
+                    var = native_variable(ds, item["path"]); normalized, _ = selection_for(var, item["slices"])
+                    require(all(count > 0 or dimension.isunlimited() for dimension, count in zip(var.get_dims(), normalized["shape"])), "A saved native fixed dimension requires a non-empty window")
             selection = {"id": "selection-" + uuid.uuid4().hex, "title": str(p.get("title") or "Scientific selection"), "source_id": source["id"], "source_sha256": source["sha256"], "variables": prepared,
                          "decode_cf": bool(p.get("decode_cf", False)), "include_coordinates": include, "created_at": now()}
             state["selections"].append(selection); commit(selection); return selection
