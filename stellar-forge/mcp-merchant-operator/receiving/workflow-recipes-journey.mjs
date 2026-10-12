@@ -387,7 +387,7 @@ export async function receiveMerchantWorkflowRecipes({directory,chromiumPath,pla
       assert.equal(installed.definition.revision,1);assert.equal(installed.currentDefinitionRevision,2);
       assert.equal(run.state,'COMPLETE');assert.equal(run.requestSha256,report.run.requestSha256);
       assert.equal((await api(host,'profile/'+targetProfile)).calls.length,8);
-      assert.equal((await api(host,'profile/'+baseline.profileId)).calls.length,7);
+      assert.equal((await api(host,'profile/'+baseline.profileId)).calls.length,baseline.nativeCalls?.length??7);
     }
     assert.equal(sha(await api(receiver,'customer-archive/'+report.customerId,{raw:true})),report.customerArchive.sha256);
     assert.equal(sha(await api(receiver,'customer-archive/'+baseline.customerId,{raw:true})),baseline.customerArchive.sha256);
