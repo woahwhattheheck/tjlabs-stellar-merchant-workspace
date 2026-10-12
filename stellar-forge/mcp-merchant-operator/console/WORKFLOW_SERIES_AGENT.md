@@ -81,6 +81,7 @@ Use these full tool names with the selected `console` alias:
 | `profile_save` | Create a stable profile `id` and `name`, or edit with its current `expectedRevision` |
 | `profile_bind` | Bind with the current profile revision and reviewed host fingerprint; retain binding history |
 | `tools`, `tool` | Read all native tool pages or one complete selected tool definition |
+| `draft`, `draft_save` | Read or save a complete original native request used by a workflow step |
 | `workflows`, `workflow` | Read original workflow definitions, runs and selected revisions |
 | `workflow_save` | Save the complete original Console workflow request under `input` |
 | `recipes`, `recipe_installation` | Read saved original recipe installations and their complete run inputs |
@@ -134,6 +135,7 @@ native run state. Follow the original pagination.
 | `cycle_save` | Pass the complete unchanged preparation. Returns the original saved period. |
 | `cycle_start_prepare` | Select the saved period ID. Returns its full first-start review or existing run. |
 | `cycle_start` | Pass the complete unchanged first-start preparation. The Console dispatches and checkpoints its original native workflow. |
+| `call_start` | Dispatch the stable original saved request through the Console, retaining its native call ID for recovery |
 | `cycle`, `run`, `call` | Read the complete saved period, run or original native call and return |
 | `cycle_wait` | Wait for completion, pause or recovery, or return the current state at the selected interval |
 | `run_pause`, `run_resume` | Control the original run using its displayed current revision |
@@ -156,10 +158,7 @@ work. Date proposals and calendar export do not start a run.
 
 ## Deliver all customer files
 
-For the original OpenAPI maintenance/receiving workflow, call `customer_receive`
-with its completed export `runId`. The Console customer owner collects every
-original package file. Use `customer_wait` or the profile to read that same
-receiving record.
+Call `customer_receive` with the complete original customer selection under `input`: its customer `profileId`, export `family`, optional `workspace`, original `exportId`, `expectedManifestSha256` and reviewed `expectedHostFingerprint`. The Console customer owner collects every original export file. For an OpenAPI maintenance/receiving run, `customer_receive_run` derives that selection from its completed export `runId`. Use `customer_wait` or the profile to read the same receiving record. `customer_pause` pauses that original transfer by its delivery `id`; reopening the same complete selection continues its retained file state.
 
 Capture a named complete handover with `merchant_workflow_series_handover_capture`:
 
@@ -192,7 +191,7 @@ first chunk and releases the descriptor at EOF. Use `handover_file_release` when
 ending early. After expiration or restart, reopen the same original file at the
 retained offset with its expected hash.
 
-`handover_reopen` verifies the complete retained handover and every file.
+`handover_reopen` verifies the complete retained handover and every file. `handover_reopen`, `handover_file` and `handover_file_release` can select either a captured `handoverId` or a host-declared `incoming` alias. Incoming selections use their original directory and declared handover SHA256, so the receiving agent can read every customer byte through the same file tools.
 Captures live under the private exports directory at
 `workflow-series-handovers/<console>/<handoverId>/`.
 

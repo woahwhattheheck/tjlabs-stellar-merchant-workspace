@@ -24,7 +24,7 @@ const agenda = on({ profileId: id, from: text(10), to: text(10), today: text(10)
   includeOverdue: { type: 'boolean' }, includeProposed: { type: 'boolean' }, ...page });
 const range = { readId: id, expectedSha256: sha, offset: { type: 'integer', minimum: 0 },
   limit: { type: 'integer', minimum: 1, maximum: MAX_RETAINED_CHUNK_BYTES } };
-const handover = on({ handoverId: alias });
+const handover = on({ handoverId: alias, incoming: alias });
 const descriptions = [
   ['connections', 'List configured recurring-work Consoles and their declared incoming customer handovers.', {}, [], true],
   ['host', 'Read the selected Console, current native tool composition, workspace identity and host fingerprint.', connection, ['console'], true],
@@ -38,10 +38,13 @@ const descriptions = [
   ['tools', 'Read a complete page of native Console tools. Follow nextOffset to retain the whole selection.',
     on({ family: text(64), query: { type: 'string', maxLength: 240 }, profileId: id, offset: { type: 'integer', minimum: 0 } }), ['console'], true],
   ['tool', 'Read one complete native tool definition and its schema SHA256.', on({ name: text(128) }), ['console', 'name'], true],
+  ['draft', 'Read a complete original saved native request at its selected revision.', on({ id, revision }), ['console', 'id'], true],
+  ['draft_save', 'Save the complete original native request used by a workflow step, retaining its tool, arguments and expected revision.',
+    input('The original drafts API request: id, profileId, name, tool, complete arguments and expectedRevision when editing.'), ['console', 'input'], false],
   ['workflows', 'List the original workflow definitions and runs for a customer profile.', on({ profileId: id }), ['console', 'profileId'], true],
   ['workflow', 'Read the complete original workflow at a selected saved revision.', on({ id, revision }), ['console', 'id'], true],
   ['workflow_save', 'Save a complete original Console workflow definition, preserving its steps, bindings, policies and expectedRevision.',
-    input('The complete original workflows API request with profileId, id, name, steps, inputs and revision controls.'), ['console', 'input'], false],
+    input('The complete original workflows API request with profileId, id, name, steps, inputFields and revision controls.'), ['console', 'input'], false],
   ['recipes', 'List the retained recipe installations for this original customer profile.', on({ profileId: id }), ['console', 'profileId'], true],
   ['recipe_prepare', 'Prepare a complete recipe installation against the original destination tool definitions and inputs.',
     input('The original recipe preparation input, including stable id, profileId, complete recipe or maintenance/receiving source, inputs and acceptToolChanges.'), ['console', 'input'], true],
@@ -85,9 +88,14 @@ const descriptions = [
   ['run_handover', 'Transfer the reviewed run to the selected original workspace and host while retaining its handover ID, revision and note.',
     on({ id, expectedRevision: revision, handoverId: id, workspaceId: id, hostFingerprint: sha, note: text(8000) }),
     ['console', 'id', 'expectedRevision', 'handoverId', 'workspaceId', 'hostFingerprint', 'note'], false],
+  ['call_start', 'Dispatch or recover the exact original saved native request through the Console, retaining a stable call ID for workflow recovery.',
+    input('The complete original calls API request, including stable id, profileId, draftId, draftRevision and expectedHostFingerprint.'), ['console', 'input'], false],
   ['call', 'Read the complete original native call, arguments, return JSON, error and source identities.', selected, ['console', 'id'], true],
-  ['customer_receive', 'Receive every original package file from a completed export run through the Console customer owner.',
+  ['customer_receive', 'Receive every original customer file from the complete selected native export through the Console customer owner.',
+    input('The complete original customers API selection: profileId, family, optional workspace, exportId, expectedManifestSha256 and expectedHostFingerprint.'), ['console', 'input'], false],
+  ['customer_receive_run', 'Receive every original OpenAPI package file from its completed export run through the Console customer owner.',
     on({ runId: id, expectedHostFingerprint: sha }), ['console', 'runId'], false],
+  ['customer_pause', 'Pause the original customer file transfer while retaining its receiving record and selected native export.', selected, ['console', 'id'], false],
   ['customer_wait', 'Read the original customer receiving job until complete or the selected interval, preserving its saved delivery identity.',
     on({ profileId: id, deliveryId: id, timeoutMs: { type: 'integer', minimum: 1, maximum: 120000 },
       pollMs: { type: 'integer', minimum: 100, maximum: 10000 } }), ['console', 'profileId', 'deliveryId'], true],
@@ -97,14 +105,14 @@ const descriptions = [
     on({ archive: record('The complete original profile archive with its contentSha256.') }), ['console', 'archive'], false],
   ['handover_capture', 'Retain the complete original customer profile and all selected completed customer files in a stable named handover; resume the same capture after interruption.',
     on({ handoverId: alias, profileId: id, deliveryIds: { type: 'array', maxItems: 1000, items: id } }), ['console', 'handoverId', 'profileId'], false],
-  ['handover_reopen', 'Reopen and verify every file in the complete retained handover, including profile, selection and handover metadata.', handover, ['console', 'handoverId'], true],
+  ['handover_reopen', 'Reopen and verify every file in the complete retained handover, including profile, selection and handover metadata.', handover, ['console'], true],
   ['handover_receive', 'Receive a complete retained handover or a host-declared incoming handover through the original profile importer.',
     on({ handoverId: alias, sourceConsole: alias, incoming: alias }), ['console'], false],
   ['handover_file', 'Read a complete retained handover member through the original resumable file reader using the displayed handover and member SHA256 values.',
-    on({ handoverId: alias, expectedContentSha256: sha, file: text(4000), ...range }),
-    ['console', 'handoverId', 'expectedContentSha256', 'file', 'expectedSha256'], true],
+    on({ handoverId: alias, incoming: alias, expectedContentSha256: sha, file: text(4096), ...range }),
+    ['console', 'expectedContentSha256', 'file', 'expectedSha256'], true],
   ['handover_file_release', 'Release a retained customer file read after completion or interruption.',
-    on({ handoverId: alias, readId: id }), ['console', 'handoverId', 'readId'], false],
+    on({ handoverId: alias, incoming: alias, readId: id }), ['console', 'readId'], false],
 ];
 export const workflowSeriesAgentDefinitions = Object.freeze(descriptions.map(
   ([action, description, properties, required, readOnly]) => Object.freeze({

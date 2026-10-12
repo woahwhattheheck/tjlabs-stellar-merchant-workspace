@@ -61,29 +61,44 @@ export class MerchantWorkflowSeriesAgent {
     const owner = await workflowSeriesPrivateDirectory(join(root, alias), create);
     return workflowSeriesPrivateDirectory(join(owner, handoverId), create);
   }
-  #scope(alias, handoverId) { return alias + '\0' + handoverId; }
-  async #describe(alias, handoverId, received) {
+  #scope(alias, selection) {
+    need(Boolean(selection.handoverId) !== Boolean(selection.incoming), 'WORKFLOW_SERIES_HANDOVER_SELECTION',
+      'Select one retained handoverId or one host-declared incoming handover.');
+    if (selection.incoming) need(this.#definition(alias).incoming[selection.incoming],
+      'WORKFLOW_SERIES_HANDOVER_SELECTION', 'Select a declared incoming customer handover.');
+    return alias + '\0' + (selection.incoming ? 'incoming\0' + selection.incoming : 'captured\0' + selection.handoverId);
+  }
+  async #selectedDirectory(alias, selection) {
+    this.#scope(alias, selection);
+    if (!selection.incoming) return { directory: await this.#directory(alias, selection.handoverId) };
+    const declared = this.#definition(alias).incoming[selection.incoming];
+    return { directory: await workflowSeriesPrivateDirectory(declared.directory), expected: declared.expectedContentSha256 };
+  }
+  async #describe(alias, selection, received) {
     const files = received.files.map(({ absolutePath, ...file }) => ({ ...file, mediaType:
       file.path.endsWith('.json') ? 'application/json' : 'application/octet-stream' }));
     for (const name of ['selection.json', 'handover.json']) {
       const bytes = await readWorkflowSeriesPrivateFile(join(received.directory, name), 128 * 1024 * 1024);
       files.push({ path: name, bytes: bytes.length, sha256: sha(bytes), mediaType: 'application/json' });
     }
-    const result = { state: received.state, console: alias, handoverId, profileId: received.profileId,
+    const result = { state: received.state, console: alias, ...selection, profileId: received.profileId,
       contentSha256: received.contentSha256, manifest: received.manifest, files };
     // The original profile stays complete in profile.json; cached metadata does
     // not duplicate every call and customer byte in each range response.
-    this.#handovers.set(this.#scope(alias, handoverId), { directory: received.directory, result });
+    this.#handovers.set(this.#scope(alias, selection), { directory: received.directory, result });
     return result;
   }
-  async #reopen(alias, handoverId) {
-    const directory = await this.#directory(alias, handoverId);
+  async #reopen(alias, selection) {
+    const { directory, expected } = await this.#selectedDirectory(alias, selection);
     const received = await reopenWorkflowSeriesHandover({ directory });
-    return this.#describe(alias, handoverId, received);
+    need(expected === undefined || expected === received.contentSha256, 'WORKFLOW_SERIES_HANDOVER_CHANGED',
+      'Reopen the complete original incoming handover selected by this host.');
+    return this.#describe(alias, selection, received);
   }
   async #file(args) {
-    const scope = this.#scope(args.console, args.handoverId);
-    if (!this.#handovers.has(scope)) await this.#reopen(args.console, args.handoverId);
+    const selection = args.incoming ? { incoming: args.incoming } : { handoverId: args.handoverId };
+    const scope = this.#scope(args.console, args);
+    if (!this.#handovers.has(scope)) await this.#reopen(args.console, selection);
     const retained = this.#handovers.get(scope);
     need(retained.result.contentSha256 === args.expectedContentSha256, 'WORKFLOW_SERIES_HANDOVER_CHANGED',
       'Select the displayed complete customer handover SHA256.');
@@ -106,18 +121,18 @@ export class MerchantWorkflowSeriesAgent {
             name: basename(file.path), type: file.mediaType };
         } catch (error) { await handle.close(); throw error; }
       } });
-    return { console: args.console, handoverId: args.handoverId, contentSha256: retained.result.contentSha256,
+    return { console: args.console, ...selection, contentSha256: retained.result.contentSha256,
       path: file.path, ...result };
   }
   async #execute(action, args) {
     if (action === 'connections') return this.summary;
     const { console: alias, ...input } = args;
     this.#definition(alias);
-    if (action === 'handover_reopen') return this.#reopen(alias, args.handoverId);
+    if (action === 'handover_reopen') return this.#reopen(alias, input);
     if (action === 'handover_file') return this.#file(args);
     if (action === 'handover_file_release') {
-      await this.#reads.release(this.#scope(alias, args.handoverId), args.readId);
-      return { console: alias, handoverId: args.handoverId, readId: args.readId, state: 'RELEASED' };
+      await this.#reads.release(this.#scope(alias, args), args.readId);
+      return { console: alias, ...(args.incoming ? { incoming: args.incoming } : { handoverId: args.handoverId }), readId: args.readId, state: 'RELEASED' };
     }
     return this.#using(alias, async (client, host) => {
       switch (action) {
@@ -132,6 +147,8 @@ export class MerchantWorkflowSeriesAgent {
           return client.console.json('tools?' + query);
         }
         case 'tool': return client.console.json('tool/' + encodeURIComponent(input.name));
+        case 'draft': return client.console.json('draft/' + encodeURIComponent(input.id) + (input.revision === undefined ? '' : '?revision=' + input.revision));
+        case 'draft_save': return client.console.json('drafts', input.input);
         case 'workflows': return client.console.json('workflows?' + new URLSearchParams({ profile: input.profileId }));
         case 'workflow': return client.console.definition(input.id, input.revision);
         case 'workflow_save': return client.console.saveWorkflow(input.input);
@@ -158,8 +175,11 @@ export class MerchantWorkflowSeriesAgent {
         case 'run_resume': return client.resume(input);
         case 'run_resolve': return client.resolve(input);
         case 'run_handover': return client.handover(input);
+        case 'call_start': return client.console.json('calls', input.input);
         case 'call': return client.console.json('call/' + encodeURIComponent(input.id));
-        case 'customer_receive': { const { runId, ...options } = input; return client.console.receiveCustomer(runId, options); }
+        case 'customer_receive': return client.console.json('customers', input.input);
+        case 'customer_receive_run': { const { runId, ...options } = input; return client.console.receiveCustomer(runId, options); }
+        case 'customer_pause': return client.console.json('customer-pause', { id: input.id });
         case 'customer_wait': { const { profileId, deliveryId, ...options } = input; return client.console.waitCustomer(profileId, deliveryId, options); }
         case 'profile_export': {
           const exported = await client.exportProfile(input.id);
@@ -170,7 +190,7 @@ export class MerchantWorkflowSeriesAgent {
           const directory = await this.#directory(alias, input.handoverId, true);
           const received = await client.capture({ profileId: input.profileId, directory,
             ...(input.deliveryIds === undefined ? {} : { deliveryIds: input.deliveryIds }) });
-          return this.#describe(alias, input.handoverId, received);
+          return this.#describe(alias, { handoverId: input.handoverId }, received);
         }
         case 'handover_receive': {
           need(Boolean(input.handoverId) !== Boolean(input.incoming) && !(input.incoming && input.sourceConsole),
@@ -184,10 +204,12 @@ export class MerchantWorkflowSeriesAgent {
           const selected = await reopenWorkflowSeriesHandover({ directory });
           need(expected === undefined || expected === selected.contentSha256, 'WORKFLOW_SERIES_HANDOVER_CHANGED',
             'Receive the complete original incoming handover selected by this host.');
+          const original = await this.#describe(input.incoming ? alias : input.sourceConsole ?? alias,
+            input.incoming ? { incoming: input.incoming } : { handoverId: input.handoverId }, selected);
           const imported = await client.importProfile(selected.profile);
           return { state: 'RECEIVED', console: alias, profileId: selected.profileId, contentSha256: selected.contentSha256,
             source: input.incoming ? { incoming: input.incoming } : { console: input.sourceConsole ?? alias, handoverId: input.handoverId },
-            manifest: selected.manifest, imported, workflowSeries: selected.profile.workflowSeriesData ?? null };
+            manifest: selected.manifest, files: original.files, imported, workflowSeries: selected.profile.workflowSeriesData ?? null };
         }
         default: throw seriesConnectionFailure('WORKFLOW_SERIES_AGENT_METHOD', 'Select a declared recurring-work operation.');
       }
