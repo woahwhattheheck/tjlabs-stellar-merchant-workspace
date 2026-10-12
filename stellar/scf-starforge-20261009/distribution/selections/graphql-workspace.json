@@ -147,8 +147,12 @@
     "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
     "stellar/scf-starforge-20261009/distribution/specification.mjs",
     "stellar/scf-starforge-20261009/distribution/workspace.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/oauth-connections/host-check.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/upstream-serve.mjs",
+    "stellar/scf-starforge-20261009/sf61-openapi-seller-import/cli.mjs",
     "stellar/scf-starforge-20261009/sf61-openapi-seller-import/package-lock.json",
-    "stellar/scf-starforge-20261009/sf61-openapi-seller-import/package.json"
+    "stellar/scf-starforge-20261009/sf61-openapi-seller-import/package.json",
+    "stellar/scf-starforge-20261009/sf98-merchant-delivery/worker.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

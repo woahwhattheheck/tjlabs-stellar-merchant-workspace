@@ -62,8 +62,12 @@ and deployment source; original SF82 release and SF99 host source; merchant and
 buyer operating resources; the original Applications browser; and the selected
 source-owned MCP providers. Explicit support files retain the original dynamic
 GraphQL/configuration/client-export/discovery loaders and the runtime worker.
-The builder follows the selected modules' static imports. The other product
-registrations remain in their own source selections.
+They also include SF82's original OpenAPI compilation and upstream launch
+entrypoints, plus SF99's generated delivery worker and OAuth host preflight.
+The builder follows the selected modules' static imports. Generated GraphQL
+handlers bind the installed original adapter path and hash; receiving a complete
+project prepares its local deployment through that same native compiler.
+The other product registrations remain in their own source selections.
 
 Continue a partial or completed build in its same output:
 
