@@ -55,6 +55,11 @@ Executable fixtures, test directories and hidden paths remain excluded. Declared
 data still passes the original regular-file, explicit-exclusion, Git identity,
 individual-file and complete-package checks.
 
+A source-owned `supportFiles` entry can also retain an exact text `.conf` file,
+for example the A2A analytical service's Nginx deployment configuration. These
+configuration files require explicit selection and retain their original bytes
+and file checks throughout the source build and installation.
+
 The progress stream reports the resolved commit, selected file count, source
 inspection, each fetch, bytes loaded, materialization, npm packaging and final
 archive hash. It carries configured remote names instead of credential-bearing
