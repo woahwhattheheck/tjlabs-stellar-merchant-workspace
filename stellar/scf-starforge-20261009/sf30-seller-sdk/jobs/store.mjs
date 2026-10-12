@@ -58,22 +58,39 @@ export async function openJobStore(directory, source) {
     fail('JOB_PRIVATE_DIRECTORY_REQUIRED', 400);
   await privateDirectory(directory);
   const lease = await acquireStateLease(directory);
-  let closed = false, closing = false, tail = Promise.resolve(), fault = null;
+  let closed = false, closing = false, closePromise = null, tail = Promise.resolve(), fault = null;
   const recordDirectory = join(directory, 'records'), resultDirectory = join(directory, 'results');
   const rows = new Map();
-  function assertOpen() {
-    if (closed || closing) fail('JOB_STORE_CLOSED');
+  function assertRetained() {
+    if (closed) fail('JOB_STORE_CLOSED');
     lease.assertHeld();
   }
+  function assertOpen() {
+    if (closing) fail('JOB_STORE_CLOSED');
+    assertRetained();
+  }
+  function close() {
+    if (closed) return Promise.resolve();
+    if (closePromise) return closePromise;
+    // Refuse new calls synchronously while accepted callbacks retain this lease.
+    closing = true;
+    closePromise = (async () => {
+      await tail;
+      // The original Linux lease closes its raw descriptor only once, including
+      // closeSync errors. Keep that diagnostic; never retry a reused fd number.
+      try { await lease.close(); } finally { closed = true; }
+    })();
+    return closePromise;
+  }
   async function atomic(path, bytes) {
-    assertOpen();
+    assertRetained();
     const parent = path.slice(0, path.lastIndexOf('/'));
     const temp = join(parent, '.job-' + randomUUID() + '.tmp');
     let handle;
     try {
       handle = await open(temp, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600);
       await handle.writeFile(bytes); await handle.sync(); await handle.close(); handle = null;
-      assertOpen(); await rename(temp, path); await flushDirectory(parent);
+      assertRetained(); await rename(temp, path); await flushDirectory(parent);
     } finally { await handle?.close().catch(() => {}); await unlink(temp).catch(() => {}); }
   }
   // A crash can leave the complete temporary file linked to its immutable name.
@@ -134,7 +151,8 @@ export async function openJobStore(directory, source) {
     }
   }
   function serial(operation) {
-    const pending = tail.then(async () => { assertOpen(); return operation(); });
+    assertOpen();
+    const pending = tail.then(async () => { assertRetained(); return operation(); });
     tail = pending.catch(() => {});
     return pending;
   }
@@ -167,7 +185,11 @@ export async function openJobStore(directory, source) {
       if (row.id !== id || !Object.hasOwn(source.compiled.functions, row.functionId)) fail('JOB_RECORD_SOURCE_MISMATCH');
       rows.set(id, row);
     }
-  } catch (error) { closed = true; await lease.close(); throw error; }
+  } catch (error) {
+    try { await close(); }
+    catch (cleanupError) { Object.defineProperty(error, 'cleanupError', { value: cleanupError, configurable: true }); }
+    throw error;
+  }
 
   return Object.freeze({ directory, recordDirectory, resultDirectory, source,
     assertHeld() { assertOpen(); },
@@ -227,7 +249,7 @@ export async function openJobStore(directory, source) {
         try {
           handle = await open(temp, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY | constants.O_NOFOLLOW, 0o600);
           await handle.writeFile(body); await handle.sync(); await handle.close(); handle = null;
-          assertOpen();
+          assertRetained();
           try { await link(temp, path); }
           catch (error) {
             if (error.code !== 'EEXIST') throw error;
@@ -240,15 +262,13 @@ export async function openJobStore(directory, source) {
       });
     },
     async readResult(result) {
-      assertOpen();
-      if (!plain(result) || !HASH.test(result.sha256 ?? '') || result.file !== result.sha256 + '.bin') fail('JOB_RESULT_RECORD_INVALID');
-      const body = await readPrivate(join(resultDirectory, result.file), 67108864);
-      if (body.length !== result.bytes || digest(body) !== result.sha256) fail('JOB_RESULT_CHANGED');
-      return body;
+      return serial(async () => {
+        if (!plain(result) || !HASH.test(result.sha256 ?? '') || result.file !== result.sha256 + '.bin') fail('JOB_RESULT_RECORD_INVALID');
+        const body = await readPrivate(join(resultDirectory, result.file), 67108864);
+        if (body.length !== result.bytes || digest(body) !== result.sha256) fail('JOB_RESULT_CHANGED');
+        return body;
+      });
     },
-    async close() {
-      if (closed) return;
-      await tail; closing = true; closed = true; await lease.close();
-    },
+    close,
   });
 }

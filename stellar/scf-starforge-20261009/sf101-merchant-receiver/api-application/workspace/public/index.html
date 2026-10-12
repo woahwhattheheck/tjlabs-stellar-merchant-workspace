@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>API Merchant Workspace</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to workspace</a>
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Stellar Forge</p>
+      <h1>API merchant workspace</h1>
+      <p id="workspace-label" class="muted">Connect to the original local workspace.</p>
+    </div>
+    <div class="masthead-controls">
+      <span id="connection-state" class="badge">Locked</span>
+      <button id="refresh-button" type="button" disabled>Refresh</button>
+      <button id="lock-button" type="button" disabled>Lock</button>
+    </div>
+  </header>
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <section id="connect-panel" class="connect-panel" aria-labelledby="connect-title">
+    <p class="eyebrow">Local operator session</p>
+    <h2 id="connect-title">Open your merchant workspace</h2>
+    <p>Open the launch link created by the original merchant service, or paste its capability below. The capability stays in this page’s memory.</p>
+    <form id="connect-form">
+      <label for="capability">Launch link or capability</label>
+      <input id="capability" name="capability" type="password" autocomplete="off" spellcheck="false" required>
+      <button type="submit">Connect</button>
+    </form>
+  </section>
+  <div id="workspace-shell" class="workspace-shell" hidden>
+    <nav class="navigation" aria-label="Merchant workspace">
+      <a href="#/overview" data-nav="overview">Overview</a>
+      <a href="#/offers" data-nav="offers">Offers</a>
+      <a href="#/orders" data-nav="orders">Orders and access</a>
+      <a href="#/executions" data-nav="executions">Executions</a>
+      <a href="#/operations" data-nav="operations">Operations</a>
+      <a href="#/exports" data-nav="exports">Files and exports</a>
+      <a href="#/service" data-nav="service">Service and backup</a>
+    </nav>
+    <main id="main" tabindex="-1" aria-busy="false">
+      <div id="view"></div>
+    </main>
+  </div>
+  <footer class="footer">
+    <span>Original checkout, allowance, application and recovery records</span>
+    <span id="local-status">Draft storage has not opened.</span>
+  </footer>
+  <noscript><p class="notice">JavaScript is required to operate this local workspace.</p></noscript>
+</body>
+</html>
