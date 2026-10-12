@@ -135,6 +135,84 @@ Metadata visibility and file visibility are separate decisions. File options are
 
 Access decisions are retained with the frozen record and each original file. Use the selected native institution's permission and embargo settings when receiving those files. MARC rights text, metadata visibility and file permissions each retain their own operational meaning.
 
+## Source cases and complete staff review
+
+Use **Source cases** to turn an original observation collection into reviewed repository records. A collection can contain access terms, explicit release dates, creator and advisor roles, named ORCID assignments, journal relationships, licence terms and source discrepancies. Every case retains its original page or export URLs and observation date.
+
+The desk matches exact identifiers, landing URLs and DOIs against the original OAI observation in the selected migration. It compares identifier elements, including the original OAI header; a DOI mentioned in an abstract does not identify that source record. HTTP and HTTPS forms of the same landing URL share an identity, with the host normalized and a trailing slash ignored. Paths and query arguments retain their original meaning. A case with multiple original matches requires an explicit selection. An unmatched case remains visible while the original intake receives its source edition.
+
+### Receive and review a collection
+
+1. Import the complete `stellar-forge.tind-source-cases.v1` JSON document. The original submitted JSON values and the normalized working collection are retained separately. The intake reports single, unmatched and multiple identity matches.
+2. Open the collection and inspect each case's complete source facts. Choose the actual original record for each selected case, then choose **Prepare selected staff records**.
+3. Review the complete editable input. The proposed MARC starts from the current complete source record, including any existing staff override. Source supplements add fields and enrich the matching personal name entry with its explicit role, named ORCID and affiliation. Existing metadata stays present. Repeated matching names or different ORCIDs appear as review notes; inspect the full name entries before saving.
+4. Review proposed metadata visibility, file restrictions, release date and journal hierarchy. Keep an explicit release date separate from a degree or publication date. Keep an indefinite or undated restriction's release date empty until its original policy supplies a date. Date discrepancies and unassigned identifiers remain in the source facts.
+5. Review `filePolicies`. Each entry selects an existing original file by its ID, SHA-256 and byte length. Set `apply` to `true` for the files whose role or access should change. Other files retain their current policies. A changed policy preserves earlier native observations so the file receiving desk can compare the new desired policy with the actual last native result.
+6. Enter the reviewing operator and decision note, then save the selected cases. The save uses the revision at which the plan was prepared and retains the exact original observation IDs. If the source or working migration has changed, prepare the current records again.
+7. Continue in **Records and decisions**, **Native export and files**, and **Batches and delivery**. Each saved case review has a complete download containing its collection identity, original source observations, before/after staff decisions and selected file-policy changes.
+
+When the proposed MARC is accepted without additional manual edits, the saved staff record retains a reference to its source-case supplement. Subsequent repository editions remap their complete current source and reapply those reviewed fields. A deliberate complete MARC edit stays as the existing editable override. Differences in repeated names or assigned ORCIDs on a later source edition appear in the normal record decisions.
+
+The entire collection and its review history travel with the existing editable handover. An exported staff draft includes the migration, collection and revision, and can be received again in this collection after restoring the complete workspace. Drafts remain editable before they are saved. Pending saves use the same durable browser request and operation ID as every other TIND mutation.
+
+### Source collection format
+
+The top-level fields are `schema`, `title`, `observedOn`, optional `context`, and `cases`. `observedOn` is the original date in `YYYY-MM-DD` form. `context` retains original case source identifiers or acquisition details as JSON values. Each collection contains 1–250 cases, and the complete encoded save body must fit within 8 MiB.
+
+| Case field | Contents |
+| --- | --- |
+| `caseId`, `title` | Stable case identity and original source title. |
+| `sourceUrls` | Original public page or authorized export URLs. |
+| `match` | Arrays named `identifiers`, `urls` and `dois`; use the actual original values. Omitting `match` uses `sourceUrls`. |
+| `facts` | Complete original factual observations, including unresolved dates or person assignments. |
+| `proposedAccess` | The existing access object: `metadata`, `files`, `releaseDate`, `restriction`, `licenseURI`. |
+| `proposedHierarchy` | Existing `journalTitle`, `volume`, `issue`, `pages`, `parentRecordId`, `issn` and `relationship` fields. Native parent IDs are retained only when the selected destination supplies them. |
+| `people` | Ordered entries with `name`, `role`, and optional `aliases`, `orcid`, `affiliation`, `nameIndicator` and `mainEntry`. Attach an ORCID only to its explicitly identified person. |
+| `fields` | Ordered supplemental MARC data fields with `tag`, `ind1`, `ind2` and `subfields`. Native control, file and OAI identity fields remain outside this supplement. |
+| `notes` | Ordered original observation and mapping notes. |
+
+People use the same MARC `100`/`700` model as the original source mapping. `$e` retains the role, `$1` the person's ORCID URI, and `$u` the original affiliation. Existing exact name spellings are retained; reviewed aliases help recognize an existing entry. The collection validates ORCID check digits before proposing a person field. [MARC personal names](https://www.loc.gov/marc/bibliographic/bd700.html) describes those subfields.
+
+Access restrictions and reuse terms stay separate. MARC `506` carries restrictions, authorized users and the explicit availability date; its `$g` prefers `YYYYMMDD`. MARC `540` carries licence or reuse terms and their original URI. The working access object's date remains `YYYY-MM-DD`. See [MARC 506](https://www.loc.gov/marc/bibliographic/bd506.html) and [MARC 540](https://www.loc.gov/marc/bibliographic/bd540.html).
+
+### Command operation and retained downloads
+
+The same complete source-case workflow is available through the original command. Save a regular operation request whose `kind` is `source-cases` and whose `input` is `{"document": COMPLETE_SOURCE_COLLECTION}`, using the current project ID and revision:
+
+```sh
+starforge tind-migration --workspace /private/repository apply \
+  --request /private/source-case-intake-request.json
+
+starforge tind-migration --workspace /private/repository source-cases \
+  --project ACTUAL_PROJECT_ID --offset 0 --limit 50
+
+starforge tind-migration --workspace /private/repository source-case \
+  --project ACTUAL_PROJECT_ID --id ACTUAL_COLLECTION_ID
+```
+
+Write the selected actual bindings as `[{"caseId":"ACTUAL_CASE_ID","identifier":"ACTUAL_ORIGINAL_IDENTIFIER"}]`. Prepare complete staff records in one original operation:
+
+```sh
+starforge tind-migration --workspace /private/repository source-case-plan \
+  --project ACTUAL_PROJECT_ID --id ACTUAL_COLLECTION_ID \
+  --choices /private/original-case-bindings.json
+```
+
+The returned `input` is the complete editable case review. Set each reviewing operator and note, edit the desired fields, then save it with `kind: "source-case-review"` and the returned `revision`. The normal apply command retains the same operation-ID replay behavior.
+
+```sh
+starforge tind-migration --workspace /private/repository source-case-reviews \
+  --project ACTUAL_PROJECT_ID --id ACTUAL_COLLECTION_ID --offset 0 --limit 50
+
+starforge tind-migration --workspace /private/repository source-case-review \
+  --project ACTUAL_PROJECT_ID --id ACTUAL_REVIEW_ID
+
+starforge tind-migration --workspace /private/repository source-case-export \
+  --project ACTUAL_PROJECT_ID --id ACTUAL_COLLECTION_ID
+```
+
+Collections and reviews are paged independently. Original source files, current migration records, native snapshots and file results keep their existing complete downloads.
+
 ## Receive or continue the native export
 
 In **Destination and files**, receive the full native MARCXML export with its actual source URL, retrieval timestamp including timezone, selection, exact record count, operator and completeness flag. Record the native field coverage, actual export permissions and selected instance version separately. The parser requires native record `001` identities and rejects duplicate native records. Count and original-byte identities are retained with the snapshot.
