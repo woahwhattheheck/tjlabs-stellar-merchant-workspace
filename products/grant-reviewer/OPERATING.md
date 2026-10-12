@@ -114,3 +114,49 @@ covers the original command, private access, receiving decisions and managed
 continuation. Its full receiving carrier can extend the same already completed
 direct journal with an actual matching READY runtime; it keeps the original
 run, skips completed direct phases and preserves the earlier result.
+
+
+## Operate the same review from a merchant or application client
+
+The [merchant provider and typed client](../../stellar/scf_2026/presentation/reviewer/merchant/README.md)
+connect these same workbenches to the existing merchant MCP host. Select the
+full toolkit or a reviewed product selection containing both `merchant-mcp`
+and the `merchant-grant-reviewer` contribution.
+
+Save the original and receiving directories under named aliases in a private
+`stellar-forge.grant-reviewer-merchant-connection.v1` JSON file. An alias with
+`allowStart: false` borrows the workbench already opened by Applications;
+`allowStart: true` permits an explicit start of that same original workbench.
+The complete guide supplies the exact connection fields and source-file pins.
+
+~~~sh
+starforge merchant-grant-reviewer init --directory /srv/starforge/reviewer-merchant \
+  --connection /srv/starforge/private/reviewer-connections.json
+starforge merchant-mcp serve --config /srv/starforge/reviewer-merchant/merchant-mcp.json \
+  --port 3211 --token-env MCP_ACCESS_TOKEN
+~~~
+
+The twenty `merchant_grant_reviewer_` operations provide source review and
+receiving, current Buyer lifecycle, original quote/history/result reading,
+complete document retrieval, closed-view export and full-file receiving.
+The typed `@tokenjunkielabs/starforge-merchant/grant/reviewer-merchant` client
+uses the same contracts; its CLI supports calls, local-file review, inspection,
+interrupted-download continuation and local cold reopening.
+
+Retain the request UUID with each action. After a lost reply, inspect or repeat
+that original action with the same input. An exported file keeps its complete
+manifest, original workbench identity, byte count and SHA-256 as the merchant
+host restarts. The receiver resumes the original saved download directory and
+checks every file before reopening it.
+
+Merchant shutdown releases its readers and its own workbenches. An
+Applications-owned workbench remains with that original owner. The private
+Buyer code stays in its original host connection.
+
+This standalone edition includes the complete source from
+[public PR1984](https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/1984),
+merge `ddde47d69aac27cae5021a17bc6b3d15d43fc884`. The complete
+[merchant receiving continuation](../../stellar/scf_2026/presentation/reviewer/merchant/RECEIVING.mjs)
+extends the same original closed reviewer operation and both saved result files.
+Its new twelve-phase run is pending runtime admission; the completed original
+fourteen-phase browser outcome and original payment count remain unchanged.
