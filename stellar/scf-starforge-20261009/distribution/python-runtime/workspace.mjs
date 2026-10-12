@@ -141,6 +141,8 @@ export async function reviewPythonRuntime(root,{runtimeId,runtimeDirectory,pytho
     probe.interpreter.version[0]===3 && probe.interpreter.version[1]>=11),'PYTHON_311_REQUIRED');
   need(probe.project?.name==='stellar-forge-buyer' && plain(probe.project.extras) &&
     chosen.every(extra=>Object.hasOwn(probe.project.extras,extra)),'PYTHON_EXTRA_NOT_DECLARED');
+  need(!chosen.includes('vgi') || probe.interpreter.version[0]>3 || probe.interpreter.version[0]===3 && probe.interpreter.version[1]>=13,
+    'PYTHON_VGI_313_REQUIRED','The selected original VGI SDK requires Python 3.13 or newer.');
   const body={schema:'stellar-forge.python-selection.v1',binding,python:selected.python,
     interpreter:{...selected,...probe.interpreter,python:selected.python},
     extras:chosen,project:probe.project,engineSha256:digest(await regular(ENGINE,2*1024*1024))};

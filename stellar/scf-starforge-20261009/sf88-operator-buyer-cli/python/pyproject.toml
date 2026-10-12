@@ -14,6 +14,12 @@ readme = "README.md"
 [project.optional-dependencies]
 duckdb = ["duckdb==1.5.6"]
 postgres = ["psycopg[binary]==3.3.6"]
+vgi = [
+  "duckdb==1.5.6",
+  "vgi-python[http,oauth]==0.43.1",
+  "vgi-rpc[http,oauth]==0.51.0",
+  "waitress==3.0.2",
+]
 workbooks = ["openpyxl==3.1.5"]
 agents = [
   "langchain-core>=1.6.9,<2",
@@ -23,6 +29,7 @@ agents = [
 ]
 
 [project.scripts]
+stellar-forge-vgi-results = "stellar_forge_buyer.vgi_service.cli:main"
 stellar-forge-duckdb = "stellar_forge_buyer.duckdb_cli:main"
 stellar-forge-postgres = "stellar_forge_buyer.postgres_cli:main"
 stellar-forge-buyer = "stellar_forge_buyer.__main__:main"
@@ -34,5 +41,8 @@ stellar-forge-workbook-deliver = "stellar_forge_buyer.workbook_client:main"
 stellar-forge-worldbank-analysis = "stellar_forge_buyer.worldbank_analysis:main"
 
 [tool.setuptools]
-packages = ["stellar_forge_buyer"]
+packages = ["stellar_forge_buyer", "stellar_forge_buyer.vgi_service"]
+
+[tool.setuptools.package-data]
+"stellar_forge_buyer.vgi_service" = ["public/*", "*.md", "runtime-selection.json"]
 

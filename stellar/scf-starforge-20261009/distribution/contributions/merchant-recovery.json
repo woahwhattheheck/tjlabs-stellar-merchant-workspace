@@ -1,8 +1,27 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-recovery",
-  "description": "merchant recovery original Applications",
+  "description": "Original merchant recovery Applications, connected workspace CLI and complete managed-fleet operator receiving",
   "applicationProviders": {
     "merchant-recovery": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/merchant-recovery.mjs"
-  }
+  },
+  "commands": {
+    "merchant-recovery-workspace": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/cli.mjs",
+    "merchant-fleet-operator-receive": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/fleet-operator.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-recovery-workspace": "Open or attach to the original recovery workspace; review, start, read and resume the same retained request.",
+    "merchant-fleet-operator-receive": "Adopt a completed original fleet recovery case through its browser, CLI and merchant provider, then reopen the same saved operator."
+  },
+  "exports": {
+    "./merchant/remote-recovery/workspace/cli": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/cli.mjs",
+    "./merchant/remote-recovery/workspace/fleet": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/fleet.mjs",
+    "./merchant/fleet-recovery/operator-receive": "./source/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/fleet-operator.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/GUIDE.md",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/FLEET_ADAPTER.md",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/browser-assets.json",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/README.md"
+  ]
 }
