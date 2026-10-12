@@ -194,17 +194,21 @@ export function validateFredDdpReceivingFileManifest(value) {
   }
   return value;
 }
-export function createFredDdpReceivingFiles(receiving, { rendererVersion = FRED_DDP_RECEIVING_RENDERER } = {}) {
-  validateFredDdpReceiving(receiving);
+/** Generate complete original members one at a time without retaining three large buffers. */
+export function* generateFredDdpReceivingFiles(receiving, { rendererVersion = FRED_DDP_RECEIVING_RENDERER } = {}) {
+  validateFredDdpReceiving(receiving, { copy: false });
   need(rendererVersion === FRED_DDP_RECEIVING_RENDERER, 'Use the original retained DDP receiving renderer.');
   const json = jsonTextV1(receiving) + '\n';
-  const bodies = [Buffer.from(json), Buffer.from(csvTextV1(receiving)), Buffer.from(htmlV1(receiving, json))];
-  const files = FRED_DDP_RECEIVING_MEMBERS.map((definition, index) => {
-    const body = bodies[index];
+  for (let index = 0; index < FRED_DDP_RECEIVING_MEMBERS.length; index++) {
+    const definition = FRED_DDP_RECEIVING_MEMBERS[index];
+    const text = index === 0 ? json : index === 1 ? csvTextV1(receiving) : htmlV1(receiving, json);
+    const body = Buffer.from(text);
     need(body.length <= FRED_DDP_RECEIVING_FILE_LIMIT, 'This complete DDP comparison file exceeds the 384 MiB reader capacity.');
-    return { ...definition, bytes: body.length, sha256: hash(body), body };
-  });
-  return { rendererVersion, files };
+    yield { ...definition, bytes: body.length, sha256: hash(body), body };
+  }
+}
+export function createFredDdpReceivingFiles(receiving, { rendererVersion = FRED_DDP_RECEIVING_RENDERER } = {}) {
+  return { rendererVersion, files: [...generateFredDdpReceivingFiles(receiving, { rendererVersion })] };
 }
 export function fredDdpReceivingFileManifest(prepared) {
   return validateFredDdpReceivingFileManifest({ rendererVersion: prepared.rendererVersion,
@@ -217,4 +221,16 @@ export function verifyFredDdpReceivingFiles(receiving, retained) {
     canonical({ rendererVersion: retained.rendererVersion, files: retained.files }),
     'The complete DDP receiving files differ from their original retained bytes.');
   return prepared;
+}
+
+/** Verify complete original byte identities while retaining only their small descriptors. */
+export function verifyFredDdpReceivingManifest(receiving, retained) {
+  validateFredDdpReceivingFileManifest(retained);
+  const files = [];
+  for (const { body, ...descriptor } of generateFredDdpReceivingFiles(receiving, { rendererVersion: retained.rendererVersion }))
+    files.push(descriptor);
+  const manifest = validateFredDdpReceivingFileManifest({ rendererVersion: retained.rendererVersion, files });
+  need(canonical(manifest) === canonical({ rendererVersion: retained.rendererVersion, files: retained.files }),
+    'The complete DDP receiving files differ from their original retained bytes.');
+  return manifest;
 }

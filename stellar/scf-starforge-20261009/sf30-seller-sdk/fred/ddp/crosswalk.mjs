@@ -7,7 +7,7 @@ const SCHEMA = 'stellar-forge.fred-ddp-crosswalk.v1';
 const MODEL = 'stellar-forge.fred-ddp-crosswalk-model.v1';
 const fieldNames = ['ddp_release', 'board_series_id', 'fred_series_id'];
 const keyOf = row => row.release + '\u0000' + row.boardSeriesId;
-const same = (a,b) => canonical(a) === canonical(b);
+const same = (a,b) => ddpDigest(a) === ddpDigest(b);
 function originalName(value, label, max = 512) {
   need(typeof value === 'string' && value.length >= 1 && value.length <= max &&
     value === value.trim() && !/[\u0000-\u001f\u007f]/.test(value), 'Invalid original ' + label + '.');
