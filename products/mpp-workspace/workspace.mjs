@@ -131,7 +131,7 @@ export async function readNativeIdentity(directory) {
   const profiles = {};
   for (const kind of ['merchant', 'buyer', 'customer']) {
     const id = metadata[kind];
-    if (id === null) { profiles[kind] = null; continue; }
+    if (id === null || id === undefined) { profiles[kind] = null; continue; }
     sha(id);
     const bytes = await privateFile(join(directory, 'profiles', digest(id) + '.json'), 4 * 1024 * 1024);
     const record = decode(bytes), profile = record.value;
