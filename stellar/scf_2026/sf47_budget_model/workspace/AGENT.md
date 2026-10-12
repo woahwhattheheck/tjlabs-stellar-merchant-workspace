@@ -6,6 +6,10 @@ The original Workspace, Operations, forecast and portfolio implementations remai
 
 The complete Merchant setup, tools, input references, source-bound pages, downloads, same-ID recovery and receiving workflow are in [Grant workspaces through Merchant MCP](../../../../stellar-forge/mcp-merchant-operator/GRANT_WORKSPACES.md).
 
+## Installation delivery queue
+
+Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
+
 ## Direct API
 
 First call inspectGrantAgentBinding with directory and optional scenarioFile, pythonExecutable, allowStart and label. It reads the original host selection without launching a process. Construct a GrantWorkspaceClient from that result.
