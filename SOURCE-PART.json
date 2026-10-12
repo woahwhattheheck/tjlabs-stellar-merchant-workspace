@@ -1,0 +1,2007 @@
+{
+  "schema": "stellar-forge.git-source-part.v1",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "d1868cba6fd5f3b57e0445a094da8a3d4002b00e",
+    "tree": "9e4112bc3da8a93aaa1eab045330ff96ae23c7d6",
+    "fileCount": 4940,
+    "sourceBytes": 65179698
+  },
+  "part": 3,
+  "parts": 18,
+  "kind": "source-files",
+  "members": [
+    {
+      "path": "stellar-forge/mcp-merchant-operator/clinicaltrials-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "330e40bc2fd4724e8f792477a4aeb00f31717aaf",
+      "bytes": 41436
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/cocart-download.mjs",
+      "mode": "100644",
+      "gitBlob": "44bd65d2e060458ea3858e69a7c47462be3da566",
+      "bytes": 5427
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/cocart-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "dfe00dc1902b5cc7696c494d6f2ac517b5dffda0",
+      "bytes": 19086
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/coingecko-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "cc5321834ad198a37cccc30b42580e9afc45f862",
+      "bytes": 25322
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/config.mjs",
+      "mode": "100644",
+      "gitBlob": "cd0d25e0c811a6b43725d01259906c2ee9c16c88",
+      "bytes": 116027
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/APPLICATIONS.md",
+      "mode": "100644",
+      "gitBlob": "8a6142c7d8a0b7141baa443bcd59f5c4491331ae",
+      "bytes": 8794
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/README.md",
+      "mode": "100644",
+      "gitBlob": "b22b6d95e34af7df055dc1feb1852f2efa91ed9c",
+      "bytes": 12613
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/application-provider.mjs",
+      "mode": "100644",
+      "gitBlob": "7e57f283fa27bfa65be40e847e0b99f8ca4eae39",
+      "bytes": 1335
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/application.mjs",
+      "mode": "100644",
+      "gitBlob": "105fee5cd04c42b4d8f47323c4b52dbd4bfe566d",
+      "bytes": 6115
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/customers.mjs",
+      "mode": "100644",
+      "gitBlob": "480fff69cee928c20b709919b6d61900dbbcf0e9",
+      "bytes": 10605
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/managed.mjs",
+      "mode": "100644",
+      "gitBlob": "7ce6299da48c7250e10be59ef2a81747765b9709",
+      "bytes": 18257
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/public/app.mjs",
+      "mode": "100644",
+      "gitBlob": "3f90f56249cd34566aee99950d73c19354f2ef77",
+      "bytes": 31213
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/public/index.html",
+      "mode": "100644",
+      "gitBlob": "ee85c269350f33f8aaa8239bc9f59a7339071857",
+      "bytes": 11149
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/public/style.css",
+      "mode": "100644",
+      "gitBlob": "6a7a025831faec2c1f17475a34cbaff605faddd6",
+      "bytes": 8267
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/service.mjs",
+      "mode": "100644",
+      "gitBlob": "25b74465c5ee0e17b9b5959ddf82971e4eda820c",
+      "bytes": 18155
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/console/store.mjs",
+      "mode": "100644",
+      "gitBlob": "cf2ea5ba26a9703594b8084938cc0db142b56912",
+      "bytes": 23056
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/controls.mjs",
+      "mode": "100644",
+      "gitBlob": "941935a7fa2018a268804770364815e2b4139f31",
+      "bytes": 2352
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/dataset-lifecycle.mjs",
+      "mode": "100644",
+      "gitBlob": "daa9ca3ef76cda97af01394c9765e87c9c9488ae",
+      "bytes": 6369
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/discovery.mjs",
+      "mode": "100644",
+      "gitBlob": "77f1b6db48ae86338086c2854038fcfb11490c31",
+      "bytes": 4176
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/baserow-handoff.mjs",
+      "mode": "100644",
+      "gitBlob": "3e75e918d88daa7a82020f2b9cbc75d68b083ed5",
+      "bytes": 28277
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/fred-workspace-inputs.json",
+      "mode": "100644",
+      "gitBlob": "3f505d1bd2ab387e8a8355dfa86c8961928d3c20",
+      "bytes": 642
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/opendatasoft-receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "dd61909b7ba37eeed6269854ee514b6e438b0fe6",
+      "bytes": 15175
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/prescient-client-retained-operation.mjs",
+      "mode": "100644",
+      "gitBlob": "07b39128d6109231ba899aab8d11bee65ad3a520",
+      "bytes": 16181
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/stac-client-retained-receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "695a0634e16cf945c3d02449f1973274a541a3da",
+      "bytes": 17497
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/usaspending-native.mjs",
+      "mode": "100644",
+      "gitBlob": "a99ca8dd6e4c12609338fe05b7949d98ec54021d",
+      "bytes": 26070
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/worldbank-managed-receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "689c7a846c042be6dbcbf76a2f1b23ca87d0cd9b",
+      "bytes": 37012
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/worldbank-native-receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "e2b5423cf189df5c5614e719aa96649ff459ebed",
+      "bytes": 16559
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/examples/worldbank-reference-capture.json",
+      "mode": "100644",
+      "gitBlob": "7720081a49c880a81b977793027d14dccaeef123",
+      "bytes": 19913
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-download.d.mts",
+      "mode": "100644",
+      "gitBlob": "a3a44d04abc062e1a9d210e6f9930e6a5d51b23b",
+      "bytes": 2406
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-download.mjs",
+      "mode": "100644",
+      "gitBlob": "578aba96bb5e9c26272fb6a27fb3af05621a7189",
+      "bytes": 6092
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-manifest.mjs",
+      "mode": "100644",
+      "gitBlob": "a9df10740558c14fb629ce543ed7eaab96719a5b",
+      "bytes": 2245
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-workspace-cli.d.mts",
+      "mode": "100644",
+      "gitBlob": "0f5966629688d1a9c91be583cb4b1c28c91575a4",
+      "bytes": 272
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-workspace-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "aeb10322abeac3dfde14196133637fa3f1b9c09a",
+      "bytes": 22833
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-workspace-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "9b84b9e21c0c3ea55bd3f99ebc3ab8970d672c62",
+      "bytes": 17863
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-workspace-client.mjs",
+      "mode": "100644",
+      "gitBlob": "a8168ad888f57a0768e16febf67163943ad9e6e6",
+      "bytes": 25444
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-workspace-request.d.mts",
+      "mode": "100644",
+      "gitBlob": "ec6d9cdd06d50b3b3782b8de3820cf5a2bc05a2e",
+      "bytes": 2381
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-workspace-request.mjs",
+      "mode": "100644",
+      "gitBlob": "f5d42e3dfe0a709f10ce5f18273f748fd3169759",
+      "bytes": 16706
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/feeds-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "01647a42e40e4a56d6dc5a613b709b08d09533dc",
+      "bytes": 51130
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fiscaldata-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "b4418462891fa4c4564f2bf3bd9d01b340c35af2",
+      "bytes": 27813
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fleet.mjs",
+      "mode": "100644",
+      "gitBlob": "fa68933ea6c2453d6d2508f0aed07e912b0c884d",
+      "bytes": 8290
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-cli.d.mts",
+      "mode": "100644",
+      "gitBlob": "20bd33689a0e42c0c69c99d9b3af24e029c02f25",
+      "bytes": 179
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "032c97282c43ff6625174dcb21547a78d391919a",
+      "bytes": 14628
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "8b0676c26afda33d17a3bea465ce4212c596395c",
+      "bytes": 11105
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-client.mjs",
+      "mode": "100644",
+      "gitBlob": "e980359a04d0d1e856e2c1b9d502b583e8568c1f",
+      "bytes": 32397
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-setup.d.mts",
+      "mode": "100644",
+      "gitBlob": "61a29ca09231803c1a238c54917eb8c86ef679b3",
+      "bytes": 361
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace-setup.mjs",
+      "mode": "100644",
+      "gitBlob": "21aabf50ee2996ecdfd97eaa3c87cdba7169d8f6",
+      "bytes": 1730
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace.d.mts",
+      "mode": "100644",
+      "gitBlob": "1d2d2ce9293f465b258d7bac0cfae72fd3ba4423",
+      "bytes": 859
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/fred-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "a1a4f88706b71af61f7977020a1d997ec0989c2d",
+      "bytes": 13364
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/geocodio-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "62b89621300112238a82e74c1f8893ab97fe9744",
+      "bytes": 26027
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grant-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "432970ccf48f4a883ba0527d87f085bf8b80327c",
+      "bytes": 31643
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grantsgov-download.mjs",
+      "mode": "100644",
+      "gitBlob": "93d1da30996156e096c8032d14b641380affe7a8",
+      "bytes": 8063
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grantsgov-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "6da88e2e09dcdbf50f93a1878196db249d9e6624",
+      "bytes": 24132
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/graphql-export-manifest.mjs",
+      "mode": "100644",
+      "gitBlob": "81042f04124b03bb1fd316e83dd2a07dd8ea945c",
+      "bytes": 3482
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/graphql-workspace-download.mjs",
+      "mode": "100644",
+      "gitBlob": "4fabdcb22546aadf421f2cb394b59eaef84e0bd6",
+      "bytes": 947
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/graphql-workspace-files.mjs",
+      "mode": "100644",
+      "gitBlob": "7e0d8490ecc728dac50cd4a6e38a925e1e5b4869",
+      "bytes": 9782
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/graphql-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "e93ccf91163f0a22d223bcd62be04e97c9cecf38",
+      "bytes": 42498
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grpc-upgrade-download.mjs",
+      "mode": "100644",
+      "gitBlob": "8647e66a463a3fb4b3bdcbec23ac7c67b66f1db2",
+      "bytes": 1226
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grpc-upgrades.mjs",
+      "mode": "100644",
+      "gitBlob": "4768f42d8c3801c1ac68aecc4b2b824e52cb14d3",
+      "bytes": 4256
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grpc-workspace-download.mjs",
+      "mode": "100644",
+      "gitBlob": "41b45494a94d7f9b6fdf04203fef42370f806788",
+      "bytes": 4145
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grpc-workspace-export.mjs",
+      "mode": "100644",
+      "gitBlob": "8d3fb3cd4047b152b42fc35bd2043591d9a5a885",
+      "bytes": 5033
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/grpc-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "86ec993670c3e86a7f73f09c407b08b3ac0219d6",
+      "bytes": 40913
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/har-download.mjs",
+      "mode": "100644",
+      "gitBlob": "c4747392caf6bd06d468593956b62bdc4e93f9d6",
+      "bytes": 823
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/har-export-contracts.mjs",
+      "mode": "100644",
+      "gitBlob": "6e20a8227afe521b9ad8194cc371953535cce22a",
+      "bytes": 467
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/har-export.mjs",
+      "mode": "100644",
+      "gitBlob": "a3cf718a72a9ab00f987e6d9b467b0fc281e784d",
+      "bytes": 2623
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/har-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "14f064aa4f4e2f1cadbe809928abd69f52278b8f",
+      "bytes": 33764
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/host-files.mjs",
+      "mode": "100644",
+      "gitBlob": "a366cc4aa3e3ee3dfb7cb88320b84fcb00ab2fad",
+      "bytes": 2195
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/instructions.mjs",
+      "mode": "100644",
+      "gitBlob": "1c651917436a520c05c23178d362c8d0376fef7f",
+      "bytes": 1152
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/matomo-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "f27b4453990880c0c2d3e32fbce67f2c36fa7d25",
+      "bytes": 28087
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/merchant-host.mjs",
+      "mode": "100644",
+      "gitBlob": "1d7536546ff930935ee73f589e994d94a29febab",
+      "bytes": 5088
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/mpp-config.mjs",
+      "mode": "100644",
+      "gitBlob": "6f8c5d04e79d42409d6ccf81e61d3758260b09d1",
+      "bytes": 5946
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/mpp-console.d.mts",
+      "mode": "100644",
+      "gitBlob": "538ba0f69178814dc0b3b9b09f5c030f044ed873",
+      "bytes": 2917
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/mpp-console.mjs",
+      "mode": "100644",
+      "gitBlob": "f08c45452fb0b4bc79de1bc5c4393c7bd40c12ad",
+      "bytes": 20907
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/mpp-contracts.mjs",
+      "mode": "100644",
+      "gitBlob": "aa64d89f91e66b7401f406faf5316739592a0a9e",
+      "bytes": 143
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/mpp-download.d.mts",
+      "mode": "100644",
+      "gitBlob": "966b11bdae3d01d16898f47bb423f2403a6fac3d",
+      "bytes": 969
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/mpp-download.mjs",
+      "mode": "100644",
+      "gitBlob": "33cbbd6d50947c9b3c44f3593f95cd5b18e2f9df",
+      "bytes": 725
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/mpp-files.mjs",
+      "mode": "100644",
+      "gitBlob": "cc2295f965bf9299fa8742090caadc0cfe9c6034",
+      "bytes": 8012
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/n8n-workspace-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "83eec34b1d6cb417ffb29b91814dd86f8305ded8",
+      "bytes": 2240
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/n8n-workspace-client.mjs",
+      "mode": "100644",
+      "gitBlob": "e8085c938da2b0a558cc4cdb28be96fdff3494d6",
+      "bytes": 4952
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/n8n-workspace.d.mts",
+      "mode": "100644",
+      "gitBlob": "6fef797c94d349636c896412977edf9d438e00fc",
+      "bytes": 4332
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/n8n-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "bbe80b0ba362fa30d4a178f8eab2cb62cdcd27b1",
+      "bytes": 14908
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/nocodb-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "4cea8cced628f77951e432a24ee0e0eabbde7cb7",
+      "bytes": 25009
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/odata-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "f7552f77e60b0823828c5d91aec6ba91ff536bd7",
+      "bytes": 44293
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/openapi-route-worksheet-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "093f05b0cc33a2fd125ea4953dde2bbc4d377312",
+      "bytes": 3145
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/openapi-route-worksheet-client.mjs",
+      "mode": "100644",
+      "gitBlob": "0d1b98403cdbad5fabec5f89e735ec53b3efcb65",
+      "bytes": 8119
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/openapi-route-worksheet-journey.mjs",
+      "mode": "100644",
+      "gitBlob": "0063e354a237471b4a1a574560127d8ee218b57a",
+      "bytes": 22544
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/openapi-route-worksheet.mjs",
+      "mode": "100644",
+      "gitBlob": "e39f5498af1808278d5d7fdc18912d9a90edc671",
+      "bytes": 16997
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/openapi-workspace-client.mjs",
+      "mode": "100644",
+      "gitBlob": "e67b06f14524ec843a863dbb71c4458ea0a1fd27",
+      "bytes": 3107
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/openapi-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "d135bb03bf1329c0a22e8e720f8b6707e991c2f0",
+      "bytes": 16424
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opencage-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "1a3785f56358da3aada0155e8f01e1aa411f00d8",
+      "bytes": 29865
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opendatasoft-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "1ea1f9861d8817efbb5dfbeaf9466a660aa1b0b4",
+      "bytes": 5727
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opendatasoft-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "07ffcd032233d8a07b189789127e2d8d0c520f0b",
+      "bytes": 9344
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opendatasoft-client.mjs",
+      "mode": "100644",
+      "gitBlob": "e70a6854f62fc2d4e35935e9e15f9a998149b454",
+      "bytes": 4975
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opendatasoft-files.mjs",
+      "mode": "100644",
+      "gitBlob": "1a9b6ea9d6fec8815c6443bdb6281aaefcfc4369",
+      "bytes": 13588
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opendatasoft-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "23eaab74b81acef84998843b996c2b08d796540a",
+      "bytes": 31160
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opensearch-deployment.mjs",
+      "mode": "100644",
+      "gitBlob": "764f2a0431f5ee5ffa789fd9579072e2ce001b26",
+      "bytes": 17093
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/opensearch-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "5c21835f90fdd967bb49e01ebca519207adc8506",
+      "bytes": 33804
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/operations-journey.mjs",
+      "mode": "100644",
+      "gitBlob": "5aaa7d90b7b7d5e5a336a2225d449d12f59a4ad9",
+      "bytes": 13688
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/operator.mjs",
+      "mode": "100644",
+      "gitBlob": "cfa714f4df0c481371101e9c21c460231d33e4d2",
+      "bytes": 19621
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/paid-jobs-cli.mjs",
+      "mode": "100755",
+      "gitBlob": "eed7343191a3f0e71774140ef60629faa655fd66",
+      "bytes": 5731
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/paid-jobs-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "478836a2027a923bec6a8cde819c69c7fb802e10",
+      "bytes": 5432
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/paid-jobs-client.mjs",
+      "mode": "100644",
+      "gitBlob": "44cda1ac01fa68e39652db3c90486982cc7ed057",
+      "bytes": 14619
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/paid-jobs-setup.mjs",
+      "mode": "100644",
+      "gitBlob": "0dac3e32c7d8eb9430e23b0baa1a12a03171d8da",
+      "bytes": 1775
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/paid-jobs.d.mts",
+      "mode": "100644",
+      "gitBlob": "14363d55f43d9aef35072c716f859b297f9e04cc",
+      "bytes": 4884
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/paid-jobs.mjs",
+      "mode": "100644",
+      "gitBlob": "ed45a6cf9241c87933481e83480ded3d441f4dd9",
+      "bytes": 17329
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/pricing-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "3cd6d51b2da07e9e7ec0e6980025cd0279626724",
+      "bytes": 10706
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/pricing-client.mjs",
+      "mode": "100644",
+      "gitBlob": "b08f0917dbe2f41c6daf1432aaed0459ec33f0fc",
+      "bytes": 10675
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/pricing-cost-client.mjs",
+      "mode": "100644",
+      "gitBlob": "f72b3e10c5bcaca679f5e0c0ab88d456312215d4",
+      "bytes": 5051
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/pricing-cost-files.mjs",
+      "mode": "100644",
+      "gitBlob": "1d58e192df2a009b1c84a8e4ce6830628a0baa59",
+      "bytes": 5339
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/pricing-costs.mjs",
+      "mode": "100644",
+      "gitBlob": "da99c5ab33e369cf519ce58308f70467ee32bf3f",
+      "bytes": 24502
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/pricing.mjs",
+      "mode": "100644",
+      "gitBlob": "c766a4ae42586af5703457532db248970b4bd6cd",
+      "bytes": 26487
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/provider-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "659082e11704869dc64de5c1e95e2a47bc9f5a27",
+      "bytes": 2700
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/provider-contract.d.mts",
+      "mode": "100644",
+      "gitBlob": "1caeecdf5170f5f8f735fd1431e331583f3cac49",
+      "bytes": 2622
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/provider-contract.mjs",
+      "mode": "100644",
+      "gitBlob": "84a78fa4f594294b3b3e82d7056a5aeff740ab3d",
+      "bytes": 6260
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/provider-lifecycle.mjs",
+      "mode": "100644",
+      "gitBlob": "01ddbbcccd2281ebe51b93f0174fdf41b5c26f87",
+      "bytes": 7324
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/provider-registry.mjs",
+      "mode": "100644",
+      "gitBlob": "048d04e52090fbc0ae23926e9cab7c31a858faa7",
+      "bytes": 4369
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers.mjs",
+      "mode": "100644",
+      "gitBlob": "d0d1984bca7de72769cb35822339551bc42ea423",
+      "bytes": 2114
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/accounting.mjs",
+      "mode": "100644",
+      "gitBlob": "76cf9a23fc82202eb97d70b2151c4712eff6154f",
+      "bytes": 2472
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/api-merchant-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "1bbfb05647764037880c941377518c05bfeb57c3",
+      "bytes": 2200
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/api-pass-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "0388fb9c22157af4a3e103ad57fb2029d2f46bb4",
+      "bytes": 2101
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/arcgis-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "0321418d098843e06450c21cbb55282f431fdd28",
+      "bytes": 2461
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/baserow-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "0b2dde5065cf696e1466e8bdd17afe8e63b882b8",
+      "bytes": 1646
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/buyer-expenses.mjs",
+      "mode": "100644",
+      "gitBlob": "8cb4556e3310a25eefdd10f0d49b0f07836314b3",
+      "bytes": 1705
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/cache.mjs",
+      "mode": "100644",
+      "gitBlob": "cc9808c784e211eadeb208604d6122d3dc49fef0",
+      "bytes": 791
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/census-geocoder-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "56a2e9e90fccf6e275da06628269b948a75c3904",
+      "bytes": 2183
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/ckan-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "0aa8e09ebb9af1230a55e4e91a7f949f38bfc117",
+      "bytes": 1753
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/client-exports.mjs",
+      "mode": "100644",
+      "gitBlob": "0533fc40d38fc4348162ed92a6add889209b7225",
+      "bytes": 1058
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/clinical-trials-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "8e24b03086fce257d62233e5e016701b89d4f313",
+      "bytes": 1968
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/cocart-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "7ce2ac60b539a150e4e71263d2d877c7a905ace4",
+      "bytes": 1075
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/coingecko-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "56211d1f87974e1ca2f88ed009aced17d72cc46a",
+      "bytes": 2261
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/dataset.mjs",
+      "mode": "100644",
+      "gitBlob": "6d8019644fcb937a82b3fa34322748d7a90d3846",
+      "bytes": 650
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/discovery.mjs",
+      "mode": "100644",
+      "gitBlob": "266b8ad12195214a3fa9b9ea46b215ed3a078ebb",
+      "bytes": 1212
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/dspace-operators.mjs",
+      "mode": "100644",
+      "gitBlob": "57c701137a544a03f8dd323e68e5302c00bb53f3",
+      "bytes": 2191
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/edgar-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "432616773aa13a9bbb877d980d1a2fca2ca585cd",
+      "bytes": 1061
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/facilitators.mjs",
+      "mode": "100644",
+      "gitBlob": "93dd34f4c9a63c8daaa92dbb42a2772bcc7b1897",
+      "bytes": 1527
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/feeds-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "bdc5731e4c9a7625f850a708448646495380dc46",
+      "bytes": 1062
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/fiscal-data-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "4bddf581d8d8abfe08cb1f505943427b9ad9ef5f",
+      "bytes": 1924
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/fleet.mjs",
+      "mode": "100644",
+      "gitBlob": "3ebdb2e9d55cd5c5eaf0511551898e64fa42a5f7",
+      "bytes": 1513
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "b9c8f4f3b0a1230a91317444644d317350d7859e",
+      "bytes": 2396
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/geocodio-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "4da13562b0b7ca5c6aceb80e77c8ea20246b1f9e",
+      "bytes": 1103
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/grant-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "a7aeac2e1c2b0515de7be58b6c363933123b6737",
+      "bytes": 1817
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/grants-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "fa74fded25786c0da6a91ae6e02259f2386cec70",
+      "bytes": 2188
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/graphql-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "87770f182d978471ed72769552165b4074a46044",
+      "bytes": 1090
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/grpc-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "d0a4be5d057e747e3a188fcfcb6090a6ad169efd",
+      "bytes": 2107
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/har-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "b01412c056eab34bb9550d1a75434ffbd21da46d",
+      "bytes": 1819
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/matomo-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "0f129ce44a2fb5ef347c7cc3c8ce5e59de5aa795",
+      "bytes": 2371
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/mpp.mjs",
+      "mode": "100644",
+      "gitBlob": "bffb2398de7b180f1b4fd50fdf86457706354c58",
+      "bytes": 1723
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/n8n-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "7bddcb61d8cde7e762f03dcdf0dcdf46f07c89e6",
+      "bytes": 2099
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/nocodb-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "4b4dfdf67e65e0a4eaf9dd2c000290aa69055940",
+      "bytes": 2162
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/odata-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "ccd25dd5f78842814b63dd31a90f22dfb96667c4",
+      "bytes": 1061
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/openapi-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "18ad0ef7bae14a4e34a4b9840c05729472c14993",
+      "bytes": 1106
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/opencage-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "fe397b3fde912618633b20781dace64d282251e1",
+      "bytes": 2107
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/opendatasoft-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "bd5facefab0b1d67dcd6f92d46e58478769f7669",
+      "bytes": 2148
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/opensearch-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "f38ff986f7c01f570a5f31bbfdcc3e08cc1a695d",
+      "bytes": 2838
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/paid-job-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "22df1c175d598212ef4c2a76b8d19e8a9273b3c1",
+      "bytes": 2465
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/pricing.mjs",
+      "mode": "100644",
+      "gitBlob": "cec673fe33226d4a231cd4a495ae7dcdc71c1afc",
+      "bytes": 1836
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/publishers.mjs",
+      "mode": "100644",
+      "gitBlob": "be904e724ec6e5622c8fee4037559cd533bdd217",
+      "bytes": 1430
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/python-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "d828f0462f3620acb169b4a4f4470eb50a6c8e39",
+      "bytes": 1773
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "bf2002363ec4f82339714252bc1e29c48203a2a1",
+      "bytes": 1355
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/redis-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "c87868480ca7867e1aabff12b41d67cd3f078027",
+      "bytes": 1100
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/research-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "96fde1e77515c1f9915a896ef966ea04533e824b",
+      "bytes": 2436
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/s3-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "6467c1fcdc689f7f1c54c60b03e3e19344d87b09",
+      "bytes": 1058
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/sheets-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "de55e1f352676de17cd148d65ce39823792c29e1",
+      "bytes": 2153
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/socrata-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "f66e7b2ee6a85c95cbdfa731874a9f3d8657ebea",
+      "bytes": 1089
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/source-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "97eb1ee8beede73e517b900bb9046d1cea730b33",
+      "bytes": 1075
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/stac-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "ff03d67ff2d224214778877f20bf1c7d06e90c44",
+      "bytes": 971
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/stellar-expert-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "9fc170e988debffced217ee3e9fcf314406851e1",
+      "bytes": 1757
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/support.mjs",
+      "mode": "100644",
+      "gitBlob": "f9969bdd9fe16a78052f3f23fb4f0062f381bf9c",
+      "bytes": 1549
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/tenderly-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "c3848488bb17f555ac17d01bcef03a106f41ab0f",
+      "bytes": 1997
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/timescale-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "4ead967c1eb2533d251b712bd947195995c7cc56",
+      "bytes": 2517
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/usa-spending-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "7b2cbf4d765cfe11c47d17a5bdad8bdae8e812db",
+      "bytes": 1148
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/usgs-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "a98ecf61dd2326dd8160e89b26c38a75dc4289b6",
+      "bytes": 1920
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/webdav-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "f5135c59cb6efc6f667a4197814f71f78cb4c400",
+      "bytes": 1063
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/woocommerce.mjs",
+      "mode": "100644",
+      "gitBlob": "5751fca8b7755c80eb715f69bc14eebe7d51aded",
+      "bytes": 2146
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/providers/worldbank-workspaces.mjs",
+      "mode": "100644",
+      "gitBlob": "a8d60404cbae52d5b71987adeb899b2a3c8daaae",
+      "bytes": 1930
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/publisher.mjs",
+      "mode": "100644",
+      "gitBlob": "8f65a91641809c8e270783451f8cdfa86a2d6fbe",
+      "bytes": 21926
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/python-workspace-download.mjs",
+      "mode": "100644",
+      "gitBlob": "a548a3b42fd88762331971363f2e851630860276",
+      "bytes": 21172
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/python-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "24a943b476cb6ef40a72db46e039c567a2c574a3",
+      "bytes": 26224
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "bdb97c80f259312519ce83badf0c6b026ed17908",
+      "bytes": 21581
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving/configured-startup-run.json",
+      "mode": "100644",
+      "gitBlob": "6824dcbdb2bf91121ef085d1ecdd5fd3b780a8c2",
+      "bytes": 15141
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving/configured-startup.mjs",
+      "mode": "100644",
+      "gitBlob": "2598fb0433fb8042104d4d3b3136c085ab7ab8d5",
+      "bytes": 17959
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving/console-applications.mjs",
+      "mode": "100755",
+      "gitBlob": "df8317e336a8a739df4b5a261e2caa73792375fb",
+      "bytes": 20521
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving/console-journey.mjs",
+      "mode": "100644",
+      "gitBlob": "93adc1cf34983f369ac54751476235b872eda0dc",
+      "bytes": 19844
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving/har-console-adoption.mjs",
+      "mode": "100644",
+      "gitBlob": "16dc9b546932d6c0382a5864b13350f897af967e",
+      "bytes": 25641
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving/provider-lifecycle.mjs",
+      "mode": "100644",
+      "gitBlob": "840931e8a40ea918ff940848aa4a6bb82586d351",
+      "bytes": 15900
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/redis-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "9a8e8cfd42364c61e8814ba7172fa721587d442e",
+      "bytes": 18038
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/research-clinicaltrials.mjs",
+      "mode": "100644",
+      "gitBlob": "ed490ee7cd5c68a4d67a7d584707c62a33be7c15",
+      "bytes": 6464
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/research-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "436a9cdb2ba50f0642a3de8075bf77f267666a3c",
+      "bytes": 26870
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-download.mjs",
+      "mode": "100644",
+      "gitBlob": "f8c2e1917772c0b2c6bfdaa681073854104c9673",
+      "bytes": 28730
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs",
+      "mode": "100644",
+      "gitBlob": "16dbce5411cddc372ac93cbe4813c373b9d81457",
+      "bytes": 156
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
+      "mode": "100644",
+      "gitBlob": "546e4db6fe832b70adf13733b0bea3f96e64cdfa",
+      "bytes": 22746
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-source-files.mjs",
+      "mode": "100644",
+      "gitBlob": "a952bd74a19be78e95bd0966fbd0ecfc4e5646bd",
+      "bytes": 5944
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/s3-workspace-download.mjs",
+      "mode": "100644",
+      "gitBlob": "59b6a1938d5896a6309b2d9f19df1b72311d5249",
+      "bytes": 10625
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/s3-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "d6cc2814a28f9f41b4567ef1c4cc6db4281bde11",
+      "bytes": 13092
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/sec-edgar-download.mjs",
+      "mode": "100644",
+      "gitBlob": "f6ed0248dba7d40e34ca6a1400b4591ac5ee9f0a",
+      "bytes": 13379
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/sec-edgar-tools.mjs",
+      "mode": "100644",
+      "gitBlob": "05a5b5271a768fb65fd5a41da68691a04c9b4868",
+      "bytes": 43072
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/sec-edgar-transfer.mjs",
+      "mode": "100644",
+      "gitBlob": "c6f20cd810c231bf4b604cbaa899586cad0b0fbc",
+      "bytes": 4957
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/serve.mjs",
+      "mode": "100644",
+      "gitBlob": "3b01f62dc188f802e0aaecf9bd30dd1b5a89171d",
+      "bytes": 87272
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/sf61-connection-contracts.mjs",
+      "mode": "100644",
+      "gitBlob": "1b1c9eda35c459eeda51de892afdbdc0766951d8",
+      "bytes": 196
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/sf61-connection.mjs",
+      "mode": "100644",
+      "gitBlob": "d99bd28d57bf840d921edc972c535eb394f1bd07",
+      "bytes": 12551
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/sheets-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "7551904f05baa70c35ea7d80b02af189b196b18e",
+      "bytes": 23213
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/socrata-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "30f83d2896ea6e5346695b0edc0ff0195b7d535d",
+      "bytes": 20818
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/source-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "35e1d8aed2afc456e7227c58fc73861f1b48581a",
+      "bytes": 24670
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stac-prescient-contract.mjs",
+      "mode": "100644",
+      "gitBlob": "d42aca91bcfd914e52186e59d7a53a8c5a4930e0",
+      "bytes": 1114
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stac-workspace-cli.d.mts",
+      "mode": "100644",
+      "gitBlob": "bdba6a920f6ce64ea2f35efbae1e0dcb3e5d9adf",
+      "bytes": 253
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stac-workspace-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "4a6898b0df1bb39e3370b3f42dab695cd230b1a1",
+      "bytes": 13563
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stac-workspace-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "d8c65466c2ffcceaf87c74e6ddacffcb5fc08cfb",
+      "bytes": 12044
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stac-workspace-client.mjs",
+      "mode": "100644",
+      "gitBlob": "226c1c02d4406581cd13d544ed5c706bc44cd919",
+      "bytes": 41552
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stac-workspace.d.mts",
+      "mode": "100644",
+      "gitBlob": "d1736b1bb702bf4bc64479396262e9d0e90c1c10",
+      "bytes": 725
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stac-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "c432349fd705d61b2d92eb07b5abe515d80738d9",
+      "bytes": 21073
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stdio.mjs",
+      "mode": "100644",
+      "gitBlob": "2893910c1503af5ca825b8c5ac98aa3f4998ee6e",
+      "bytes": 3499
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stellar-expert-client.mjs",
+      "mode": "100644",
+      "gitBlob": "d48d05fa104c28415357eb2b73e3c4067fe410f2",
+      "bytes": 16237
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/stellar-expert-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "564231be54de2df9207248b27856e5755c165ee6",
+      "bytes": 25272
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/support-download.mjs",
+      "mode": "100644",
+      "gitBlob": "6e4b90abe7d2ed6f3c2d4869d8c964dcbf196804",
+      "bytes": 6133
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/support.mjs",
+      "mode": "100644",
+      "gitBlob": "29f30aaf5539da7bfca88747af388233543aaf58",
+      "bytes": 33559
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/tenderly-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "18de288e65f4ff481fbd77ae13ba44eaa4791930",
+      "bytes": 16820
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-client-cli.mjs",
+      "mode": "100755",
+      "gitBlob": "ad0dea11c9344b53da09f77c15deccf8f9e2da78",
+      "bytes": 6823
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "0add56a5ce9d74baad6b31227e69aae9ac1798ce",
+      "bytes": 10174
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-client.mjs",
+      "mode": "100644",
+      "gitBlob": "10618cd05894ee48d8cdf752e8c48d81a6e56522",
+      "bytes": 9319
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-export-contract.mjs",
+      "mode": "100644",
+      "gitBlob": "63d90a7d5f6affb0e3ea274d6ec00a5c8c31e300",
+      "bytes": 3849
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-remediation-contract.mjs",
+      "mode": "100644",
+      "gitBlob": "9c4974a48efdc5e881d235f259e69a0966fe82c7",
+      "bytes": 2178
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-remediation-receiving.mjs",
+      "mode": "100755",
+      "gitBlob": "36114feedd274439e542c0ded6cba20ee2cb9b55",
+      "bytes": 29691
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-remediation-report.mjs",
+      "mode": "100644",
+      "gitBlob": "dcad2fa5348d00de66b194351ff2ead353ef95e0",
+      "bytes": 6955
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-setup.mjs",
+      "mode": "100644",
+      "gitBlob": "d6dc2c1b01f176ae93d40273eabab76e710a7ac9",
+      "bytes": 4194
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-workspace-download-cli.mjs",
+      "mode": "100755",
+      "gitBlob": "050b7768ceac6a5bcd7eb2072ff5977875bc82ad",
+      "bytes": 3403
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-workspace-download.mjs",
+      "mode": "100644",
+      "gitBlob": "28a40b306ab9dd028fffbad8342da4b13a750b94",
+      "bytes": 3665
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-workspace-launcher.mjs",
+      "mode": "100755",
+      "gitBlob": "e86004b29761219e47182182dc70670166714f6a",
+      "bytes": 12095
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-workspace-native-receiving.mjs",
+      "mode": "100755",
+      "gitBlob": "f5f0538997f114dd79351d34925398286a767c08",
+      "bytes": 19429
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/timescale-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "261f767f3ad582069b0f5fd597a9da7eaa0ab411",
+      "bytes": 36718
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/usaspending-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "5d1816e9a4431d686d6ff86b003d6c597a65c508",
+      "bytes": 34864
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/usgs-delivery.mjs",
+      "mode": "100644",
+      "gitBlob": "fb7a81b71bc18f913224c9797ba8666dda6fa7c6",
+      "bytes": 2034
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/usgs-handover-stream.mjs",
+      "mode": "100644",
+      "gitBlob": "70274f2ea78a23452fd2ba8e05a5acfbbb4b6b7e",
+      "bytes": 3606
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/usgs-workspace-download.mjs",
+      "mode": "100644",
+      "gitBlob": "a3e41deff6255df7afbaa237beb91e0d211bb093",
+      "bytes": 13392
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/usgs-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "a13d3aa33fe289c03d79ac4d640be32a0e283e68",
+      "bytes": 40482
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/webdav-tools.mjs",
+      "mode": "100644",
+      "gitBlob": "08bc974c5ee8e2bdb4da4f686770ba93ba2fed21",
+      "bytes": 27977
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/woo-erp-artifacts.mjs",
+      "mode": "100644",
+      "gitBlob": "f741b4eb1b2465dd92d0e552412f5aa33bfb5e2f",
+      "bytes": 14442
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/woo-erp-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "c9a6043450d89012cd0353d27bd1c3a12261b4da",
+      "bytes": 7453
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/woo-erp-client.d.mts",
+      "mode": "100644",
+      "gitBlob": "3504c8e021e158fd5b8d08999e22d6c94168cf97",
+      "bytes": 7605
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/woo-erp-client.mjs",
+      "mode": "100644",
+      "gitBlob": "5b33d5be1d0b32550643253450e39a2906557ae2",
+      "bytes": 6817
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/woo-erp-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "55022d7695339f48c6b31a4193c2d0345795e9e0",
+      "bytes": 10741
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/woo-erp.mjs",
+      "mode": "100644",
+      "gitBlob": "88ff3c77ff021113a7057a3649e367a649708268",
+      "bytes": 11486
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/woocommerce.mjs",
+      "mode": "100644",
+      "gitBlob": "054d5ad8e4df97dd73e4e0d002c84be3e5b3ef0a",
+      "bytes": 24063
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/worldbank-download-manifest.mjs",
+      "mode": "100644",
+      "gitBlob": "2de0b686a69cc65a7476ad4f61c2633ccf1e1418",
+      "bytes": 3552
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/worldbank-workspace-download.mjs",
+      "mode": "100644",
+      "gitBlob": "27e251d7c02fafa5a110a29bf6b2a8ea0d7cf050",
+      "bytes": 1727
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/worldbank-workspace-launcher.mjs",
+      "mode": "100644",
+      "gitBlob": "b1ea31f9777b42acf912c2584c43ce5987872770",
+      "bytes": 11873
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/worldbank-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "20a7d8696518c23d1471d750b28d32be46814f29",
+      "bytes": 27335
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/ANALYSIS.md",
+      "mode": "100644",
+      "gitBlob": "71bc7edbe16f325a516f7b3a6ece253a45f3c849",
+      "bytes": 18070
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/ARCHIVES.md",
+      "mode": "100644",
+      "gitBlob": "2293eb59b6bfac69b33096ad74811e86cb52e999",
+      "bytes": 14045
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/COLLECTIONS.md",
+      "mode": "100644",
+      "gitBlob": "5841d9328774d6ce0695219973a73c7b37dbc392",
+      "bytes": 14171
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/COLLECTION_RECOVERY.md",
+      "mode": "100644",
+      "gitBlob": "5696d85e28b074437fd6deae4d90171a055fa21b",
+      "bytes": 12404
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/CONSOLE.md",
+      "mode": "100644",
+      "gitBlob": "96237dec23586b9a832371d8096ffc6f7fc28e9b",
+      "bytes": 7434
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/DATASETS.md",
+      "mode": "100644",
+      "gitBlob": "5d3f15d5b8d79f9ec2dd94fc5e2c8024cb933b41",
+      "bytes": 12280
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/DATA_TOOLS.md",
+      "mode": "100644",
+      "gitBlob": "3bf7e5835598d6bd8a04103ea260bf35a0d871d1",
+      "bytes": 15620
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/DUCKDB.md",
+      "mode": "100644",
+      "gitBlob": "6f663b6b3050ab2d0874b746fcff75da79088455",
+      "bytes": 22806
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/DURABILITY.md",
+      "mode": "100644",
+      "gitBlob": "cb6e6245c649a9df3ad33cdcbd74cf6089867379",
+      "bytes": 9004
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/MYSQL_PACKAGES.md",
+      "mode": "100644",
+      "gitBlob": "bf849cc316deebe4fe57fc7653415e184395e369",
+      "bytes": 10680
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/NATIVE_SPEND_RECOVERY.md",
+      "mode": "100644",
+      "gitBlob": "c03a099f34abd2832e02adfc734e8a16f17dfa87",
+      "bytes": 9750
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/NATIVE_WORKSPACE.md",
+      "mode": "100644",
+      "gitBlob": "3f070750bda461d8ec3de9517a3f01a2d8eee60d",
+      "bytes": 12788
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/OAUTH_RESOURCE.md",
+      "mode": "100644",
+      "gitBlob": "37933709cc6d8743a9196b02dc9d1a762992bf4c",
+      "bytes": 20805
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/OBJECTS.md",
+      "mode": "100644",
+      "gitBlob": "867f2f2bc3f8e5c783bc4ae4426e8a89b1334ad9",
+      "bytes": 12235
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/PAID_TOOLS.md",
+      "mode": "100644",
+      "gitBlob": "3cdbf3a75a3fcd0a51263c40731eadee047a319f",
+      "bytes": 11733
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/PAYMENT_RECOVERY.md",
+      "mode": "100644",
+      "gitBlob": "fd22e334a2f373f15a9ad0a737650c901984738a",
+      "bytes": 7731
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/README.md",
+      "mode": "100644",
+      "gitBlob": "74b053102e9a6f3f45b606e9f235de885e8fbc53",
+      "bytes": 11644
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/REMOTE_MCP.md",
+      "mode": "100644",
+      "gitBlob": "4b43a1ae1742594da9d318d0ab74b6ce44d50928",
+      "bytes": 10513
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/RESULTS.md",
+      "mode": "100644",
+      "gitBlob": "d8385842f0f3a858b3605c68a27d30c57c3d3bf5",
+      "bytes": 7963
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/SAVED_SOURCES.md",
+      "mode": "100644",
+      "gitBlob": "809d8d38c395cbfd5724cb17a7d3fab2a1a27f41",
+      "bytes": 11629
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/SEMANTICS.md",
+      "mode": "100644",
+      "gitBlob": "a5f7718a68db8d676284fd5cb027aaea72a69f16",
+      "bytes": 10264
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/SPENDING.md",
+      "mode": "100644",
+      "gitBlob": "9d5a3cdb44440c555aa792ef3993266ea203b0a6",
+      "bytes": 8902
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/STDIO.md",
+      "mode": "100644",
+      "gitBlob": "9966209b0452cfa657eb43cd0acd8999602371a5",
+      "bytes": 7944
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/WORKBOOKS.md",
+      "mode": "100644",
+      "gitBlob": "897fb35941f995492004c137f4af9648da1e16e9",
+      "bytes": 13666
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/agent-server.mjs",
+      "mode": "100644",
+      "gitBlob": "78744658ed6e3b656194c455d4eba59ef9dbb38c",
+      "bytes": 41700
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/client-config.mjs",
+      "mode": "100644",
+      "gitBlob": "a725f291e5c97892f2200dfe9ab3e2fc6342e3f8",
+      "bytes": 5732
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/data-serve.mjs",
+      "mode": "100644",
+      "gitBlob": "39ba7a26abf026bea5106a36c7b0a7f97f72cf78",
+      "bytes": 8776
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/data-tools.mjs",
+      "mode": "100644",
+      "gitBlob": "4a3eca7af6233d6fca5d29e01aa9101d43d3dac6",
+      "bytes": 7057
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/descriptor.mjs",
+      "mode": "100644",
+      "gitBlob": "8dd94bc296565f5b04a68d5aa4ba458a65a0361d",
+      "bytes": 3634
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/examples/collections-handoff.mjs",
+      "mode": "100644",
+      "gitBlob": "4bbe79fd59c39168876378afbe2f1b55c2199387",
+      "bytes": 21546
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/expense-statement.mjs",
+      "mode": "100644",
+      "gitBlob": "aca38bc98bb43447d5d77b86d35d92b9434d7237",
+      "bytes": 8332
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/history.mjs",
+      "mode": "100644",
+      "gitBlob": "0317b73fba85f4562be5fb0f1636bc24358bd2ca",
+      "bytes": 7691
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/http-tools.mjs",
+      "mode": "100644",
+      "gitBlob": "0d47bcb0b78de072870381247786a20ca86fdd24",
+      "bytes": 7148
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/mysql-package.mjs",
+      "mode": "100644",
+      "gitBlob": "89429fc368b0de6a0ea4ba57067315a05165f0dc",
+      "bytes": 24403
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-archive-download.mjs",
+      "mode": "100644",
+      "gitBlob": "fc78cdfbc60da8c0f64aadbda68c4b57337b3a6a",
+      "bytes": 20119
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-archives-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "d6d9d6aeb0895b77d270ab1292f23000a6203b67",
+      "bytes": 2061
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-archives.mjs",
+      "mode": "100644",
+      "gitBlob": "d79c91193d77802a44ce624c00ab460748a31d52",
+      "bytes": 8325
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "7422984fd6d63c2d61f2d61682d3d3115fab2d49",
+      "bytes": 12759
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-semantics.mjs",
+      "mode": "100644",
+      "gitBlob": "90aacc525dcb7957757a9737a128ebc82f7fce71",
+      "bytes": 7047
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-sources-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "5ed0645cc7efe8a49149230e0d1c97f31b7163f8",
+      "bytes": 1493
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-sources.mjs",
+      "mode": "100644",
+      "gitBlob": "31b8a67ca3d5527ac8a55c9fcd022eb3666dafe3",
+      "bytes": 10211
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-workbooks-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "cc010078038a6a349cd309ccc29760bc48749940",
+      "bytes": 6331
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-workbooks.mjs",
+      "mode": "100644",
+      "gitBlob": "fe50148fe6dac5e6329b72a6e1935f4e46b8c2af",
+      "bytes": 11399
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-analysis.mjs",
+      "mode": "100644",
+      "gitBlob": "4816d90d5ce6bdccea5ffb0685e9f0c99e5e8918",
+      "bytes": 23170
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-collections-download.mjs",
+      "mode": "100644",
+      "gitBlob": "3163d652297b573a80050c2cfe9ac6ee30fcb0f6",
+      "bytes": 10561
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-collections-recovery-download.mjs",
+      "mode": "100644",
+      "gitBlob": "51f3db47cee3c94c621e9070d29a304b34fb6714",
+      "bytes": 12612
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-collections-recovery-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "2ae4be193f58ab787240195b49064a1fd99e6401",
+      "bytes": 4043
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-collections-recovery.mjs",
+      "mode": "100644",
+      "gitBlob": "2c05b43c1e9e0e96581ee5a1ccb96faedef978b7",
+      "bytes": 39148
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-collections-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "cceec562587b99051f97a406c773eeed4e025d13",
+      "bytes": 5981
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-collections.mjs",
+      "mode": "100644",
+      "gitBlob": "f04229c877c246029df1e79550488411cb8b5a22",
+      "bytes": 28295
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-dataset-meaning.mjs",
+      "mode": "100644",
+      "gitBlob": "2e0dc4ca9c922d91fd20c7002e22b017dfd7ad1e",
+      "bytes": 7485
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-dataset-receive.mjs",
+      "mode": "100644",
+      "gitBlob": "3602da6b6851950f95ab7db003718d195ac5c562",
+      "bytes": 10692
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-datasets.mjs",
+      "mode": "100644",
+      "gitBlob": "6eb3bd1c57ff79c998879135f89791c359dbad93",
+      "bytes": 43247
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-duckdb-schema.mjs",
+      "mode": "100644",
+      "gitBlob": "c644902d100fa5d15263d5480357e0928409c93e",
+      "bytes": 7628
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-duckdb.mjs",
+      "mode": "100644",
+      "gitBlob": "115322e69ccb76a54aadc7756bcc58c44ff5748a",
+      "bytes": 22437
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-file.mjs",
+      "mode": "100644",
+      "gitBlob": "d3e2251dac66ffde2190c77ed302a49f7d83e951",
+      "bytes": 3347
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-mcp-operator.mjs",
+      "mode": "100644",
+      "gitBlob": "26e8c9a24b69a48be59c7dfab319d5b87b1055d2",
+      "bytes": 8189
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-objects.mjs",
+      "mode": "100644",
+      "gitBlob": "8d478482624504a029ff85e0e857e35dad0b00e7",
+      "bytes": 27763
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-spend-governor.mjs",
+      "mode": "100644",
+      "gitBlob": "e1bb76f3a81f9c13910319b0883cd7372c119fcc",
+      "bytes": 15169
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-spend-governor.py",
+      "mode": "100644",
+      "gitBlob": "cf073f86078fcadd577271d21c01c0055be90edf",
+      "bytes": 17503
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-spend-recovery-lock.py",
+      "mode": "100644",
+      "gitBlob": "28bc75c0377df26fae2a0a68fda8b5fe01aedb89",
+      "bytes": 9373
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-spend-recovery-receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "bb6dc871ec7d26b34aa340154f7c5aadf82c2b9d",
+      "bytes": 15950
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-spend-recovery.mjs",
+      "mode": "100644",
+      "gitBlob": "7c571229146617436b133a7f598cec04177e21c0",
+      "bytes": 36257
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-spend-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "54c5a5b924011364be4be9341f876d851fd8edb0",
+      "bytes": 10632
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-workspace-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "71e32a6f6b3e028764f31d4eba63c5d500516a18",
+      "bytes": 11728
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/native-workspace.mjs",
+      "mode": "100644",
+      "gitBlob": "365f394c263b38abf0e543641c414074e243a070",
+      "bytes": 31761
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-discovery.d.mts",
+      "mode": "100644",
+      "gitBlob": "4c7b363be9772d229a132f17db4a44d1a2107ebf",
+      "bytes": 4165
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-discovery.mjs",
+      "mode": "100644",
+      "gitBlob": "52167b08a0828c8b448b818025f2c82a99ddb2aa",
+      "bytes": 24128
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-host.d.mts",
+      "mode": "100644",
+      "gitBlob": "7b525a7be1cb5f640207d5e8b683dd9911346a68",
+      "bytes": 687
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-host.mjs",
+      "mode": "100644",
+      "gitBlob": "54f4d40997008f6acd0533ec4b3f7021792a0ebb",
+      "bytes": 2526
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-resource-cli.d.mts",
+      "mode": "100644",
+      "gitBlob": "7179c6d3b61c35d96e657ec303ad5fb440ad9cff",
+      "bytes": 1685
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-resource-cli.mjs",
+      "mode": "100644",
+      "gitBlob": "db6ddb67f790963918909699d0dbd7437864ee1b",
+      "bytes": 13545
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-resource.d.mts",
+      "mode": "100644",
+      "gitBlob": "f755c4d1c822a53a43f6ea235d5a8dc9b10313bf",
+      "bytes": 3752
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/oauth-resource.mjs",
+      "mode": "100644",
+      "gitBlob": "6a0461a370b557a7b5315e31f2f1e9fc668ef142",
+      "bytes": 20061
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/operations/oauth-resource-receiving.mjs",
+      "mode": "100644",
+      "gitBlob": "d042cb417b47b6f065772fd0cbc9da8ffdbf7115",
+      "bytes": 27054
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/operator-console.mjs",
+      "mode": "100644",
+      "gitBlob": "8dcf422249a7a7d5666c5c34d563ff6bec942ea0",
+      "bytes": 2388
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/operator-ui/app.mjs",
+      "mode": "100644",
+      "gitBlob": "119053b756d240b0f0c8abc0e635509480a697a5",
+      "bytes": 34765
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/operator-ui/client.mjs",
+      "mode": "100644",
+      "gitBlob": "a1d8709bb4ec783f5e3778789f40250f83302f1d",
+      "bytes": 5615
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/operator-ui/index.html",
+      "mode": "100644",
+      "gitBlob": "ac90efa74a3e445f3b788ec762bec809f0019627",
+      "bytes": 4527
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/operator-ui/style.css",
+      "mode": "100644",
+      "gitBlob": "3cf6074890644e083b87ceab59d5046eb343c836",
+      "bytes": 7216
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/package.json",
+      "mode": "100644",
+      "gitBlob": "25c40f788e9be3ac932b3337bbce02bf7c37e64f",
+      "bytes": 360
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/paid-tool-server.mjs",
+      "mode": "100644",
+      "gitBlob": "97af54cc2997a11691ff17b928e171229d427789",
+      "bytes": 21586
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/payment-receipt.mjs",
+      "mode": "100644",
+      "gitBlob": "b6ca9a0d823d12da0204e5b8c5c16c02fe1e1042",
+      "bytes": 2748
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/payment-reconciliation.mjs",
+      "mode": "100644",
+      "gitBlob": "d21fe95afb677fff6c7955c55e721f3b15b176b4",
+      "bytes": 2716
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/query-requirements.mjs",
+      "mode": "100644",
+      "gitBlob": "a08cf3cd84b8294728308b67c582ee058306a8ca",
+      "bytes": 1132
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/quote-history.mjs",
+      "mode": "100644",
+      "gitBlob": "cedc163c07e6471d8d4d3876b84aa0eda4f1bc4e",
+      "bytes": 1594
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/quote-store.mjs",
+      "mode": "100644",
+      "gitBlob": "4871e6ffab629dcc9765fe1479e73d38008b41f2",
+      "bytes": 11188
+    }
+  ]
+}
