@@ -131,9 +131,40 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   const parts = path.slice(apiPath.length).split('/').filter(Boolean).map(identifier);
   const route = parts.join('/');
   const search = query instanceof URLSearchParams ? query : new URLSearchParams(Object.entries(query).filter(([, value]) => value !== undefined && value !== null));
+  const cashComparisonQuery = () => Object.fromEntries(['leftId','rightId','leftEditionId','rightEditionId'].map(key => [key,search.get(key)||undefined]));
+  const collectionsQuery = () => Object.fromEntries(['asOf','customerId','owner','status','search'].map(key => [key, search.get(key) || undefined]));
   let result;
   if (method === 'GET') {
     if (route === '' || route === 'state') result = await receivables.state({asOf: search.get('asOf') || undefined});
+    else if (route === 'cash-plans') result = await receivables.cashPlans({status:search.get('status')||undefined,search:search.get('search')||undefined});
+    else if (route === 'cash-plans/compare') result = await receivables.compareCashPlans(cashComparisonQuery());
+    else if (route === 'cash-plans/compare/export') {
+      const selected=await receivables.cashPlanComparisonFile(search.get('name'),cashComparisonQuery());
+      return {file:selected,type:selected.type};
+    }
+    else if (parts[0] === 'cash-plans' && parts[1] === 'operations' && parts.length === 3)
+      result = await receivables.cashPlanOperation(parts[2]);
+    else if (parts[0] === 'cash-plans' && parts.length === 2)
+      result = await receivables.cashPlan(parts[1],{editionId:search.get('editionId')||undefined});
+    else if (parts[0] === 'cash-plans' && parts[2] === 'files' && parts.length === 4) {
+      const selected=await receivables.cashPlanFile(parts[1],parts[3],{editionId:search.get('editionId')||undefined});
+      return {file:selected,type:selected.type};
+    }
+    else if (route === 'collections') result = await receivables.collectionCases(collectionsQuery());
+    else if (route === 'collections/export') {
+      const selected = await receivables.collectionsFile(search.get('name'), collectionsQuery());
+      return {file: selected, type: selected.type};
+    }
+    else if (parts[0] === 'collections' && parts[1] === 'operations' && parts.length === 3)
+      result = await receivables.collectionOperation(parts[2]);
+    else if (parts[0] === 'collections' && parts.length === 2)
+      result = await receivables.collectionCase(parts[1], {asOf: search.get('asOf') || undefined});
+    else if (parts[0] === 'collections' && parts[2] === 'reminder' && parts.length === 3)
+      result = await receivables.collectionReminder(parts[1], {asOf: search.get('asOf') || undefined});
+    else if (parts[0] === 'collections' && parts[2] === 'files' && parts.length === 4) {
+      const selected = await receivables.collectionFile(parts[1], parts[3], {asOf: search.get('asOf') || undefined});
+      return {file: selected, type: selected.type};
+    }
     else if (route === 'funds') result = await receivables.customerFunds({
       customerId: search.get('customerId') || undefined, asOf: search.get('asOf') || undefined,
     });
@@ -188,6 +219,20 @@ export async function handleReceivablesRequest(receivables, {method, path, query
   } else if (method === 'POST') {
     if (!value || Array.isArray(value) || typeof value !== 'object') throw problem('INVALID_JSON', 'Send a JSON operator request.');
     if (route === 'settings') result = await receivables.settings(value);
+    else if (route === 'cash-plans/preview') result = await receivables.previewCashPlan(value);
+    else if (route === 'cash-plans') result = await receivables.saveCashPlan(value);
+    else if (parts[0] === 'cash-plans' && parts.length === 3) {
+      if (parts[2] === 'archive') result=await receivables.archiveCashPlan(parts[1],value);
+      else if (parts[2] === 'reopen') result=await receivables.reopenCashPlan(parts[1],value);
+      else throw problem('NOT_FOUND','Choose an existing cash-plan operation.',404);
+    }
+    else if (route === 'collections') result = await receivables.saveCollectionCase(value);
+    else if (parts[0] === 'collections' && parts.length === 3) {
+      if (parts[2] === 'activities') result = await receivables.recordCollectionActivity(parts[1], value);
+      else if (parts[2] === 'close') result = await receivables.closeCollectionCase(parts[1], value);
+      else if (parts[2] === 'reopen') result = await receivables.reopenCollectionCase(parts[1], value);
+      else throw problem('NOT_FOUND', 'Choose an existing collection case operation.', 404);
+    }
     else if (route === 'refunds/preview') result = await receivables.previewRefund(value);
     else if (route === 'refunds') result = await receivables.commitRefund(value);
     else if (route === 'credit-dispositions/preview') result = await receivables.previewCreditDisposition(value);

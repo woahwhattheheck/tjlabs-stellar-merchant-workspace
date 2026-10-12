@@ -123,6 +123,9 @@ def main():
          source["metadata"]["source"]["commit"] == SOURCE_COMMIT and
          source["metadata"]["source"]["tree"] == SOURCE_TREE,
          "The original receiver is bound to a different product or Git tree")
+    # The verified parsed source owns these bytes for the original operation.
+    # Release the encoded and decoded carrier copies before any native child.
+    del packet, compressed, decoder, raw
 
     receiving, _, receiving_sha = file_digest(args.original_receiving)
     need(receiving_sha == OUTER_SHA256, "The complete original F232 receiving ZIP changed")

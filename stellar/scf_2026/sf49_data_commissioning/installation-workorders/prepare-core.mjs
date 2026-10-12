@@ -142,19 +142,105 @@ export function prepareInstallation(seed, profile, bindings) {
 }
 export function renderWorkorder(prepared) {
   const d = prepared.document;
-  const section = (title, rows) => "## " + title + "\n\n" + rows.map(([key, value]) =>
-    "### " + key + "\n\n" + (typeof value === "string" ? value || "Selection remains in the original case." : JSON.stringify(value, null, 2)) + "\n").join("\n");
-  return "# " + d.name + "\n\n" +
-    "Original operating case: " + prepared.source.caseId + ". Pinned plan: " + prepared.source.planId + " / " + prepared.source.planRevision +
-    ". Commercial case: " + (prepared.workshareCaseId ?? "select the retained Workshare") + ".\n\n" +
-    section("Customer task", Object.entries(d.task)) +
-    section("Original source", Object.entries(d.source)) +
-    section("Receiving and operation", Object.entries(d.receiving)) +
-    section("Retained commercial workorder", Object.entries(d.workorder)) +
-    "## Implementation\n\n" + prepared.implementation.map((step, index) =>
-      (index + 1) + ". **" + step.title + ".** " + step.result).join("\n\n") + "\n\n" +
-    "## Customer selections\n\n" + (prepared.selections.length ?
-      prepared.selections.map(item => "- **" + item.field + ":** " + item.purpose).join("\n") :
-      "All preparation fields are populated. Use the original native preview to resolve their case ownership and source.") + "\n\n" +
-    "## Source\n\n" + prepared.sourceFiles.map(item => "- " + item.path + " · Git blob " + item.blob).join("\n") + "\n";
+  const shown = value => value === null || value === undefined || value === "" ?
+    "To be selected in the original case." : Array.isArray(value) ?
+      value.length ? value.join(", ") : "None selected." : String(value);
+  const cell = value => shown(value).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+  const table = (headers, rows) => "| " + headers.map(cell).join(" | ") + " |\n| " +
+    headers.map(() => "---").join(" | ") + " |\n" +
+    rows.map(row => "| " + row.map(cell).join(" | ") + " |").join("\n") + "\n";
+  const section = (title, rows) => "## " + title + "\n\n" + rows.map(([label, value]) =>
+    "### " + label + "\n\n" + shown(value) + "\n").join("\n");
+  const referenceRows = [
+    ["Operating case", prepared.source.caseId],
+    ["Case version", prepared.source.version],
+    ["Pinned grant plan", prepared.source.planId],
+    ["Plan edition", prepared.source.planRevision],
+    ["Plan content SHA-256", prepared.source.planContentSha256],
+    ["Plan source SHA-256", prepared.source.planSourceSha256],
+    ["Original commercial case", prepared.workshareCaseId],
+    ["Installation stage", d.stage],
+    ["Accountable merchant deployment", d.merchantDeploymentId],
+    ["Customer buyer deployments", d.buyerDeploymentIds]
+  ];
+  const text = [
+    "# " + d.name + "\n",
+    "## Original installation selection\n",
+    table(["Selection", "Original value"], referenceRows),
+    section("Customer task", [
+      ["Useful task", d.task.name], ["Customer purpose", d.task.purpose],
+      ["Complete request", d.task.request], ["Whole useful output", d.task.completeOutput],
+      ["Reason for another purchase", d.task.repeatTrigger], ["Merchant-priced unit", d.task.pricedUnit]
+    ]),
+    section("Authorized source", [
+      ["Selected edition or live connection", d.source.reference], ["Source behavior", d.source.mode],
+      ["Complete source population", d.source.population], ["Keys, types, units and time", d.source.meaning],
+      ["Source rights and authority", d.source.authority], ["Source change and withdrawal", d.source.changePolicy],
+      ["Original source attachments", d.source.sourceIds]
+    ]),
+    "## Payment and whole-task budget\n",
+    table(["Payment selection", "Original value"], [
+      ["Stellar payment network", d.payment.network], ["Payment asset", d.payment.asset],
+      ["Merchant recipient", d.payment.recipient], ["Price per unit, atomic units", d.payment.priceAtomic],
+      ["Priced task-unit count", d.payment.taskUnits], ["Approved task budget, atomic units", d.payment.taskBudgetAtomic]
+    ]),
+    "### Buyer approval and spending authority\n\n" + shown(d.payment.authority) + "\n",
+    "### Original payment terms files\n\n" + shown(d.payment.termsSourceIds) + "\n",
+    "### Selected facilitators\n\n" + (d.payment.facilitators.length ?
+      table(["Operator", "Endpoint", "Source files", "Selection basis"], d.payment.facilitators.map(provider =>
+        [provider.operatorId, provider.endpoint, provider.sourceIds, provider.note])) :
+      "Receive the actual operator and endpoint selections in the original case.\n"),
+    section("Complete receiving and operation", [
+      ["Application and version", d.receiving.application], ["Authorized receiving host", d.receiving.host],
+      ["Named receiving engineer", d.receiving.operator], ["Useful-output acceptance", d.receiving.acceptanceRule],
+      ["Independent change or withdrawal", d.receiving.changeAndWithdraw],
+      ["Original interruption recovery", d.receiving.recovery], ["Maintenance and support ownership", d.receiving.maintenance],
+      ["Complete receiving source files", d.receiving.sourceIds]
+    ]),
+    section("Retained commercial workorder", [
+      ["Original commissioning source", d.workorder.sourceId], ["Workorder reference", d.workorder.reference],
+      ["Commissioning payer", d.workorder.payer], ["Complete implementation scope", d.workorder.scope],
+      ["Original commercial terms", d.workorder.terms]
+    ]),
+    "## Delivery and funding assignments\n",
+    "### Original funded packages\n\n" + (d.assignments.costIds.length ?
+      d.assignments.costIds.map(id => "- " + id).join("\n") : "Use the original selected funding assignment.") + "\n",
+    "### Separate commercial assignment\n\n" + shown(d.assignments.commercialRef) + "\n",
+    "### Actual work allocation\n\n" + shown(d.assignments.note) + "\n",
+    "## Complete implementation\n",
+    prepared.implementation.map((step, index) => (index + 1) + ". **" + step.title + ".** " + step.result).join("\n\n") + "\n",
+    "## Every original acceptance phase and criterion\n",
+    d.checks.map((check, index) => {
+      const rows = [
+        ["Original step", check.id], ["Original tranche", check.tranche ?? "Commercial / unassigned"],
+        ["Required", check.required ? "Yes" : "No"], ["Current state", check.state],
+        ["Observing operator", check.operator], ["Observation time", check.observedAt],
+        ["Source attachments", check.sourceIds], ["Original work records", check.workIds],
+        ["Original purchases", check.purchaseIds], ["Original outcomes", check.outcomeIds]
+      ];
+      return "### " + (index + 1) + ". " + check.title + "\n\n" +
+        "**Original acceptance criterion**\n\n" + shown(check.criterion) + "\n\n" +
+        "**Phase owner, effort, dependencies and retained result note**\n\n" + shown(check.note) + "\n\n" +
+        table(["Original step field", "Value"], rows);
+    }).join("\n"),
+    "## Complete customer input list\n",
+    prepared.inputs.map(input => "- " + input).join("\n") + "\n",
+    "## Actual selections to receive\n",
+    (prepared.selections.length ? prepared.selections.map(item =>
+      "- **" + item.field + ":** " + item.purpose).join("\n") :
+      "All preparation fields are populated. The original native preview resolves their case ownership and source.") + "\n",
+    "## Maintained implementation source\n",
+    prepared.sourceFiles.map(item => "- " + item.path + " · Git blob " + item.blob).join("\n") + "\n"
+  ];
+  if (d.workshare) text.push(
+    "## Original Workshare source binding\n",
+    table(["Binding", "Original value"], [
+      ["Commercial case", d.workshare.caseId], ["Plan SHA-256", d.workshare.planSha256],
+      ["Commissioning source", d.workshare.sourceId], ["Commissioning source SHA-256", d.workshare.sourceSha256],
+      ["Complete packet source", d.workshare.packetSourceId], ["Complete packet SHA-256", d.workshare.packetSha256]
+    ]),
+    table(["Original commercial phase", "Native acceptance step"],
+      d.workshare.phaseChecks.map(phase => [phase.phaseId, phase.checkId]))
+  );
+  return text.join("\n");
 }

@@ -85,6 +85,12 @@ function performanceQuery(args, exported = false) {
   }
   return values.size ? '?' + values.toString() : '';
 }
+function supplierAccountQuery(args, exported = false) {
+  const values = new URLSearchParams(performanceQuery(args, exported));
+  if (args.contributorId !== undefined && args.contributorId !== null)
+    values.set('contributorId', id(args.contributorId, 'person'));
+  return values.size ? '?' + values.toString() : '';
+}
 const cohortReviewIds = value => {
   need(Array.isArray(value) && value.length <= 20 && new Set(value).size === value.length,
     'GRANT_INVALID_INPUT', 'Select at most 20 distinct original frozen cohort reviews.');
@@ -399,7 +405,10 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
+      'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
         '&limit=' + integer(args.limit ?? 100, 'History page size', 1, 200),
       forecasts:() => '/api/operations/' + cid() + '/forecasts',
@@ -449,6 +458,36 @@ export class GrantWorkspaceClient {
     object(body.data, 'Original action data');
     return this.#request('/api/operations/' + caseId + '/command', {body, originalRequestId:body.requestId});
   }
+  ledgerIntakeInspect(caseId, file) {
+    id(caseId, 'operation'); object(file, 'Original intake file');
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-inspect', {body:{file}, mutation:false});
+  }
+  ledgerIntakePreview(caseId, body) {
+    id(caseId, 'operation'); exact(body, ['document', 'expectedVersion'], ['document']);
+    object(body.document, 'Complete ledger intake');
+    if (body.expectedVersion !== undefined) integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-preview', {body, mutation:false});
+  }
+  ledgerIntakeApply(caseId, body) {
+    id(caseId, 'operation');
+    exact(body, ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor', 'note'],
+      ['document', 'expectedVersion', 'expectedPreviewSha256', 'requestId', 'actor']);
+    object(body.document, 'Complete ledger intake');
+    integer(body.expectedVersion, 'Current case version', 1, 10000000);
+    sha(body.expectedPreviewSha256); requestId(body.requestId);
+    return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
+  }
+  statementPreview(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Statement inputs');
+    return this.#request('/api/operations/' + caseId + '/statement-preview', {body:{expectedVersion, inputs}, mutation:false});
+  }
+  statementReceive(caseId, body) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'inputs', 'expectedPreviewSha256'],
+      ['expectedVersion', 'requestId', 'actor', 'inputs', 'expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs, 'Statement inputs');
+    const {inputs, expectedPreviewSha256, ...original} = body;
+    return this.command(caseId, {...original, action:'statement.receive', data:{inputs, expectedPreviewSha256}});
+  }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
     return this.#request('/api/operations/' + caseId + '/forecast-preview', {body:{expectedVersion, inputs}, mutation:false});
@@ -462,10 +501,24 @@ export class GrantWorkspaceClient {
     return this.#request('/api/operations/' + caseId + '/command',
       {body:{...original, action:'forecast.save', data:{inputs, expectedPreviewSha256}}, originalRequestId:body.requestId});
   }
-  portfolioSeed(caseId, expectedVersion, forecastId) {
+  portfolioSeed(caseId, expectedVersion, forecastId, options = {}) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); id(forecastId, 'forecast');
+    exact(options, ['installationSelections', 'inputs']);
+    if (Object.hasOwn(options, 'installationSelections')) {
+      need(Array.isArray(options.installationSelections) && options.installationSelections.length <= 100,
+        'GRANT_INVALID_INPUT', 'Select at most 100 original Installation editions.');
+      for (const selected of options.installationSelections) {
+        exact(selected, ['taskId', 'installationId', 'installationRevision', 'installationSha256'],
+          ['taskId', 'installationId', 'installationRevision', 'installationSha256']);
+        text(selected.taskId, 'Original Portfolio task ID', 150);
+        id(selected.installationId, 'installation');
+        integer(selected.installationRevision, 'Saved installation edition', 1, 500);
+        sha(selected.installationSha256);
+      }
+    }
+    if (Object.hasOwn(options, 'inputs')) object(options.inputs, 'Complete Portfolio draft');
     return this.#request('/api/operations/' + caseId + '/portfolio-seed',
-      {body:{expectedVersion, forecastId}, mutation:false});
+      {body:{expectedVersion, forecastId, ...options}, mutation:false});
   }
   portfolioPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Portfolio inputs');
@@ -680,6 +733,7 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      'supplier-account':() => '/api/operations/' + id(args.caseId,'operation') + '/supplier-account/export.zip' + supplierAccountQuery(args,true),
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',

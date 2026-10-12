@@ -29,13 +29,34 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs inspect
   --dir /private/analysis-runtime --load --source
 ~~~
 
-Retain the returned source root, source commit and source-manifest digest. Provision the original Python package in **Runtime workspace → Python**, selecting Python 3.12 or later and this same source release. Resolution, installation and activation stay with the original Python runtime worker. The package's console-script inventory must include `stellar-forge-analysis-project`; an older installation remains available for its existing sessions.
+Retain the returned source root, source commit and source-manifest digest. The named recipe includes the maintained `python` contribution, which supplies the original Python Applications provider, command registrations and package exports. Its catalog includes **Open Analysis project** and **Export complete Analysis project** from the original Python lifecycle.
+
+Use an existing private Runtime workspace, or initialize one once and attach this installed release:
+
+~~~sh
+node /private/analysis-runtime/package/source/stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs init \
+  --workspace /private/runtime-workspace
+
+node /private/analysis-runtime/package/source/stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs attach \
+  --workspace /private/runtime-workspace --runtime /private/analysis-runtime
+~~~
+
+For the operator interface, open that same workspace with its original server:
+
+~~~sh
+node /private/analysis-runtime/package/source/stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs serve \
+  --workspace /private/runtime-workspace
+~~~
+
+Keep this workspace and its attached runtime when continuing the installed receiving operation. Provision the original Python package in **Runtime workspace → Python**, selecting Python 3.12 or later and this same source release. Resolution, installation and activation stay with the original Python runtime worker. The package's console-script inventory must include `stellar-forge-analysis-project`; an older installation remains available for its existing sessions.
 
 Select the declared extras needed by subsequent analytical work. Opening a retained project and exporting its already generated report/workbook files use the original source and standard library. Building new workbook editions requires the original `workbooks` extra. The current installed `pyproject.toml` and the retained project's source select their actual dependencies.
 
 The installed command runs with the lexical virtual-environment Python path. Its original project launcher then imports the project's own verified `runtime/python` source, with the selected installed dependencies still available. Node uses the supplied executable and the project's matching `runtime/native` tree. Keep all of those files together.
 
 The [Python runtime guide](../../stellar/scf-starforge-20261009/distribution/python-runtime/README.md) documents exact resolve/install/activate and complete environment transfer commands.
+
+The included [installed receiving program](RECEIVING.md#run-the-retained-installed-journey) can commission this same package directly from an actual `--python` executable through those original operations. It also accepts an already retained `--installation` ID. The program keeps the review, resolution, installation and activation requests alongside the original customer project, then completes its full Applications opening and following handover.
 
 ## Open through Applications
 

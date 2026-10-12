@@ -2,7 +2,8 @@ import { tenderlyWorkspaceTools, read, selected, uuid, profile, pageSize, inProf
 export { tenderlyWorkspaceTools } from './catalog/tenderly-workspace.mjs';
 // MIT. Agent and browser operation of one original Tenderly merchant workspace.
 import { realpath } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { attachTenderlyWorkspace } from '../../stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace/connection.mjs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { exact, failure, identifier, line, plain } from './config.mjs';
 import { RetainedFileReads, MAX_RETAINED_CHUNK_BYTES } from './retained-file-reads.mjs';
@@ -55,17 +56,23 @@ export async function readTenderlyWorkspaceConfiguration(path) {
   const base = dirname(path), directories = new Set(), workspaces = Object.create(null);
   for (const [key, input] of Object.entries(raw.workspaces)) {
     identifier(key, 'Tenderly workspace alias');
-    exact(input, ['label', 'directory', 'plan', 'facilitator'], ['directory']);
+    exact(input, ['label', 'directory', 'plan', 'facilitator', 'mode'], ['directory']);
+    const mode = input.mode ?? 'owned';
+    if (!['owned', 'managed'].includes(mode) || mode === 'managed' && (input.plan !== undefined || input.facilitator !== undefined))
+      throw failure('CONFIGURATION_ERROR', 'Use owned mode for a host-launched workspace or managed mode for the existing Applications listener; select its plan and facilitator in Applications.');
     const directory = hostPath(input.directory, base);
     await privateDirectory(directory);
     const canonical = await realpath(directory);
     if (canonical !== directory || directories.has(canonical))
       throw failure('CONFIGURATION_ERROR', 'Bind each original canonical Tenderly workspace through one alias.');
     directories.add(canonical);
+    let workspaceId = null, workspaceSha256 = null;
     try {
-      const saved = parse(await readBytes(join(directory, 'workspace.json'), { privateFile: true, max: 65536 }), 'Tenderly workspace');
+      const identityBytes = await readBytes(join(directory, 'workspace.json'), { privateFile: true, max: 65536 });
+      const saved = parse(identityBytes, 'Tenderly workspace');
       if (saved.schema !== NATIVE_SCHEMA || !UUID.test(saved.id ?? ''))
         throw failure('CONFIGURATION_ERROR', 'Use the original Tenderly operator workspace.');
+      workspaceId = saved.id; workspaceSha256 = createHash('sha256').update(identityBytes).digest('hex');
     } catch (issue) { if (issue.code !== 'ENOENT') throw issue; }
     let planPath;
     if (input.plan !== undefined) {
@@ -79,7 +86,8 @@ export async function readTenderlyWorkspaceConfiguration(path) {
         throw failure('CONFIGURATION_ERROR', 'Declare the original selected HTTPS payment facilitator.');
       merchantOptions.facilitator = url.href;
     }
-    workspaces[key] = { label: line(input.label ?? key, 'Tenderly workspace label'), directory, planPath, merchantOptions };
+    workspaces[key] = { label: line(input.label ?? key, 'Tenderly workspace label'), directory, planPath, merchantOptions,
+      mode, workspaceId, workspaceSha256 };
   }
   return { schema: TENDERLY_WORKSPACE_CONNECTION_SCHEMA, workspaces };
 }
@@ -111,11 +119,14 @@ export class MerchantTenderlyWorkspaces {
     return { configured: Boolean(this.#config.tenderlyWorkspaces), ...this.#reads.summary,
       workspaces: Object.entries(this.#config.tenderlyWorkspaces?.workspaces ?? {}).map(([workspace, definition]) => {
         const entry = this.#entries.get(workspace);
+        const observed = entry?.service.client ? entry.service.client.lastStatus : entry?.model.status();
         return { workspace, label: definition.label, open: Boolean(entry),
           opening: this.#opening.has(workspace), closing: Boolean(entry?.closing),
           instanceId: entry?.instanceId ?? null, browserUrl: entry?.service.url ?? null,
-          state: entry?.model.status().state ?? 'CLOSED', profile: entry?.model.status().profile ?? null,
-          facilitatorConfigured: Boolean(definition.merchantOptions.facilitator) };
+          state: observed?.state ?? 'CLOSED', profile: observed?.profile ?? null,
+          mode: definition.mode ?? 'owned', ownership: entry?.service.ownership ?? null,
+          observedAt: entry?.service.client?.lastStatusAt ?? null,
+          facilitatorConfigured: entry?.service.client ? Boolean(entry.service.client.connection.facilitator) : Boolean(definition.merchantOptions.facilitator) };
       }) };
   }
   #definition(alias) {
@@ -133,9 +144,9 @@ export class MerchantTenderlyWorkspaces {
   }
   #scope(alias) { return 'tenderly:' + alias + ':' + this.#definition(alias).directory; }
   async #state(entry, bootstrap = false) {
-    const native = withoutDirectory(entry.model.status());
+    const native = withoutDirectory(await entry.model.status());
     const result = { workspace: entry.alias, instanceId: entry.instanceId, browserUrl: entry.service.url,
-      native, fileReads: this.#reads.status(this.#scope(entry.alias)) };
+      native, ownership: entry.service.ownership ?? 'owned', fileReads: this.#reads.status(this.#scope(entry.alias)) };
     if (bootstrap) {
       const initial = await entry.model.bootstrap();
       if (initial.schema !== NATIVE_SCHEMA) throw failure('TENDERLY_WORKSPACE_SCHEMA_CHANGED', 'Use the original supported Tenderly workspace.');
@@ -153,10 +164,13 @@ export class MerchantTenderlyWorkspaces {
       const { startTenderlyWorkspace } = await import('../../stellar/scf-starforge-20261009/partners/tenderly-stellar-pilot/workspace/server.mjs');
       let service;
       try {
-        service = await startTenderlyWorkspace({ directory: definition.directory, planPath: definition.planPath,
-          merchantOptions: definition.merchantOptions, port: 0 });
+        service = definition.mode === 'managed'
+          ? await attachTenderlyWorkspace({ directory: definition.directory, workspaceId: definition.workspaceId,
+              workspaceSha256: definition.workspaceSha256 })
+          : await startTenderlyWorkspace({ directory: definition.directory, planPath: definition.planPath,
+              merchantOptions: definition.merchantOptions, port: 0 });
         if (this.#closing) throw failure('TENDERLY_WORKSPACE_CLOSING', 'The merchant operator is closing.');
-        const entry = { alias, service, model: service.model, instanceId: randomUUID(), pending: new Set(), closing: null };
+        const entry = { alias, service, model: service.model, instanceId: service.instanceId, pending: new Set(), closing: null };
         this.#entries.set(alias, entry);
         try { return await this.#state(entry, true); }
         catch (issue) { this.#entries.delete(alias); throw issue; }
@@ -174,7 +188,8 @@ export class MerchantTenderlyWorkspaces {
         if (this.#entries.get(entry.alias) === entry) this.#entries.delete(entry.alias);
       }
       return { workspace: entry.alias, workspaceId: entry.model.manifest.id,
-        instanceId: entry.instanceId, state: 'CLOSED' };
+        instanceId: entry.instanceId, ownership: entry.service.ownership ?? 'owned',
+        state: entry.service.ownership === 'managed' ? 'DETACHED' : 'CLOSED' };
     })();
     return entry.closing;
   }
@@ -209,7 +224,7 @@ export class MerchantTenderlyWorkspaces {
     switch (name) {
       case 'merchant_tenderly_status': return this.#state(entry);
       case 'merchant_tenderly_profile_preview': return result(input.plan === undefined
-        ? { template: templatePlan(), exampleRequest: exampleRequest() } : original.preview(input.plan));
+        ? { template: templatePlan(), exampleRequest: exampleRequest() } : await original.preview(input.plan));
       case 'merchant_tenderly_profile_save': return result(withoutDirectory(await original.saveProfile(input)));
       case 'merchant_tenderly_profiles': return result(await original.profiles(input));
       case 'merchant_tenderly_profile': return result(withoutDirectory(await original.inspectProfile(input.profile)));
@@ -233,8 +248,9 @@ export class MerchantTenderlyWorkspaces {
       case 'merchant_tenderly_operation': return result(await original.operation(input));
       case 'merchant_tenderly_audit': return result(await original.audit(input));
       case 'merchant_tenderly_result': {
-        const response = await original.response(input);
-        return result({ status: response.status, headers: response.headers, bytes: response.bytes.length,
+        const response = entry.service.client ? await entry.service.client.responseMetadata(input) : await original.response(input);
+        return result({ status: response.status, headers: response.headers,
+          bytes: entry.service.client ? response.bytes : response.bytes.length,
           sha256: response.sha256, summary: response.summary, name: response.name });
       }
       case 'merchant_tenderly_recover':
@@ -263,7 +279,7 @@ export class MerchantTenderlyWorkspaces {
       if (name === 'merchant_tenderly_close') {
         const entry = this.#entry(args.workspace);
         if (entry.instanceId !== checked(args.instanceId, UUID, 'workspace instance'))
-          throw failure('TENDERLY_INSTANCE_CONFLICT', 'Close only the current Tenderly instance owned by this MCP process.');
+          throw failure('TENDERLY_INSTANCE_CONFLICT', 'Close or detach only this current original Tenderly instance.');
         return await this.#closeEntry(entry);
       }
       const entry = this.#entry(args.workspace), pending = Promise.resolve().then(() => this.#execute(entry, name, args));

@@ -14,6 +14,8 @@ import { DATASET_BINDING_SCHEMA, datasetContractSha256, prepareDatasetRelease,
   DATASET_SOURCE_FILE_LIMITS, readDatasetSourceFiles, copyDatasetSourceFiles } from '../../sf82-seller-pilot/release-dataset.mjs';
 import { initReleaseStore, stageRelease, inspectRelease, activateRelease,
   rollbackRelease, releaseStatus, runActiveRelease } from '../../sf82-seller-pilot/releases.mjs';
+import { readFacilitatorProfiles } from '../../sf82-seller-pilot/release-facilitator.mjs';
+import { openPublisherFacilitators } from './publisher-facilitators.mjs';
 
 const SCHEMA = 'stellar-forge.socrata-publisher.v1';
 const HASH = /^[a-f0-9]{64}$/;
@@ -88,7 +90,7 @@ const publicError = error => ({ code: typeof error.code === 'string' ? error.cod
 
 /** The original draft workspace serializes source preparation and publication.
  * The running original dataset seller exclusively owns its version writer. */
-export async function openSocrataPublisher({ directory } = {}) {
+export async function openSocrataPublisher({ directory, facilitators } = {}) {
   directory = absolute(directory);
   await mkdir(directory, { recursive: true, mode: 0o700 });
   if (await realpath(directory) !== directory) throw fault('SOCRATA_PUBLISHER_DIRECTORY', 'Use a canonical private publisher directory.');
@@ -97,8 +99,10 @@ export async function openSocrataPublisher({ directory } = {}) {
   for (const path of [packagesDirectory, sessionsDirectory]) await mkdir(path, { recursive: true, mode: 0o700 });
   const drafts = await openPublisherDrafts({ datasetDirectory, directory: join(directory, 'drafts') });
   let closed = false, tail = Promise.resolve(), running = null, ownedRelease = null, closePromise;
+  let facilitatorControl;
   try {
     if (await absent(join(releaseDirectory, 'state.json'))) await initReleaseStore(releaseDirectory);
+    facilitatorControl = await openPublisherFacilitators({ directory, releaseDirectory, profiles:facilitators });
   } catch (error) { await drafts.close(); throw error; }
   async function target({ offline = true } = {}) {
     try {
@@ -137,9 +141,11 @@ export async function openSocrataPublisher({ directory } = {}) {
   }
   async function state() {
     if (closed) throw fault('SOCRATA_PUBLISHER_CLOSED', 'Reopen the publisher.');
-    const [selected, releases, acquired] = await Promise.all([target(), releaseStatus(releaseDirectory), sessions()]);
+    const [selected, releases, acquired, providerState] = await Promise.all([
+      target(), releaseStatus(releaseDirectory), sessions(), facilitatorControl.state()
+    ]);
     return { schema: SCHEMA, directory, datasetDirectory, releaseDirectory,
-      target: selected, drafts: drafts.view(), releases, sessions: acquired,
+      target: selected, drafts: drafts.view(), releases, sessions: acquired, facilitators:providerState,
       running: running ? { action: running.action, startedAt: running.startedAt } : null,
       ownsRelease: ownedRelease !== null };
   }
@@ -383,6 +389,10 @@ export async function openSocrataPublisher({ directory } = {}) {
         return datasetControl(datasetDirectory, 'activate', { snapshot: input.snapshot, ...expected(input) });
       case 'publisher.collect':
         only(input, []); await target({ offline: false }); return datasetControl(datasetDirectory, 'collect', {});
+      case 'publisher.facilitators.history':
+      case 'publisher.facilitators.inspect':
+      case 'publisher.facilitators.review':
+      case 'publisher.facilitators.stage': return facilitatorControl.act(action, input);
       case 'publisher.release.stage': {
         only(input, ['draftId','id','label','runtime']);
         const selected = await savedCandidate(input.draftId);
@@ -448,6 +458,7 @@ export async function openSocrataPublisher({ directory } = {}) {
     tail = operation; return operation;
   }
   async function readExport(kind, id) {
+    if (kind === 'facilitator-review') return facilitatorControl.readExport(id);
     if (!UUID.test(id ?? '')) throw fault('SOCRATA_EXPORT_ID', 'Choose a retained export.', 400);
     if (kind === 'draft-csv') return { bytes: await drafts.csv(id), filename: 'dataset.csv', contentType: 'text/csv; charset=utf-8' };
     if (kind === 'draft-review') return { bytes: json(await drafts.export(id)), filename: 'dataset-review.json', contentType: 'application/json' };
@@ -493,18 +504,28 @@ const USAGE = [
   '  node publisher.mjs --dir ABSOLUTE_DIRECTORY status',
   '  node publisher.mjs --dir ABSOLUTE_DIRECTORY ACTION --input JSON_FILE',
   '',
+  '--facilitators FILE selects the host provider profiles for this invocation.',
+  'publisher.facilitators.review/stage/inspect/history use retained original SF82 reviews.',
   'Actions use the original publisher, release and buyer engines. See PUBLISHING.md.',
   'Starting a release keeps this process alive; Ctrl+C drains its original seller.'
 ].join('\n');
 export async function main(args = process.argv.slice(2)) {
   if (args.length === 1 && args[0] === '--help') { console.log(USAGE); return; }
-  if (args[0] !== '--dir' || !args[1] || !args[2] ||
-      args.length !== 3 && !(args.length === 5 && args[3] === '--input'))
+  if (args[0] !== '--dir' || !args[1] || !args[2] || args.length % 2 !== 1)
     throw new TypeError(USAGE);
-  const publisher = await openSocrataPublisher({ directory: resolve(args[1]) });
+  const options = new Map();
+  for (let index = 3; index < args.length; index += 2) {
+    const name = args[index], value = args[index + 1];
+    if (!['--input', '--facilitators'].includes(name) || options.has(name) || !value || value.startsWith('--'))
+      throw new TypeError(USAGE);
+    options.set(name, value);
+  }
+  const facilitators = options.has('--facilitators')
+    ? await readFacilitatorProfiles(resolve(options.get('--facilitators'))) : undefined;
+  const publisher = await openSocrataPublisher({ directory: resolve(args[1]), facilitators });
   let retained = false;
   try {
-    const action = args[2], payload = args[3] ? await readJson(resolve(args[4]), 65536) : {};
+    const action = args[2], payload = options.has('--input') ? await readJson(resolve(options.get('--input')), 65536) : {};
     const result = action === 'status' ? await publisher.state() : await publisher.act(action, payload);
     console.log(JSON.stringify(result, null, 2));
     if (action === 'publisher.release.start') {

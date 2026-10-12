@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { inspectMerchantRuntime } from '../../sf46-release/runtime-package.mjs';
 import { readBytes, parse, sha256 } from '../../sf102-cube-paid-query-adapter/onboarding/files.mjs';
 import { absolute, plain, need } from './storage.mjs';
+import { readTenderlyWorkspaceConnection, TENDERLY_CONNECTION_FILENAME } from '../../partners/tenderly-stellar-pilot/workspace/connection.mjs';
 
 const WORKSPACE = 'stellar-forge.tenderly-workspace.v1';
 const STARTUP = 'stellar-forge.tenderly-workspace-startup.v1';
@@ -116,7 +117,17 @@ export async function tenderlyStartup(request, text) {
     /^[#][A-Za-z0-9_-]{43}$/.test(url.hash) &&
     Number.isInteger(port) && port >= 0 && port <= 65535 && (port === 0 || Number(url.port || 80) === port),
     'APPLICATION_TENDERLY_STARTUP_CHANGED');
-  return { url: url.href, original: { schema: STARTUP, directory,
+  let live = {};
+  if (value.instanceId !== undefined || value.connection !== undefined) {
+    need(UUID.test(value.instanceId ?? '') && plain(value.connection), 'APPLICATION_TENDERLY_STARTUP_CHANGED');
+    const connection = await readTenderlyWorkspaceConnection(join(directory, TENDERLY_CONNECTION_FILENAME),
+      { directory, workspaceId: workspace.id, workspaceSha256: workspace.sha256, expectedInstanceId: value.instanceId });
+    need(value.connection.path === connection.path && value.connection.sha256 === connection.sha256 &&
+      connection.value.origin + '/#' + connection.value.token === url.href,
+      'APPLICATION_TENDERLY_STARTUP_CHANGED', 'The managed connection must identify this original listener.');
+    live = { instanceId: value.instanceId, connection: { path: connection.path, sha256: connection.sha256 } };
+  }
+  return { url: url.href, original: { schema: STARTUP, directory, ...live,
     workspace: workspace.id, workspaceSha256: workspace.sha256,
     planFile: plan, planSha256: expectedPlan, facilitator } };
 }
