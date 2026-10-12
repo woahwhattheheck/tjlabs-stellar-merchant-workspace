@@ -36,8 +36,11 @@ describes the saved application's fields and startup identity.
 
 Use a complete checkout or the existing Git object receiver with a reviewed full
 commit available to the maintained builder. On Linux, use Node24, Python3.11 or
-later, npm, Git and util-linux `flock`. Python Analysis has no extra Python
-dependencies; its original Node bridge and source tree are included.
+later, npm, Git and util-linux `flock`. Both managed receiving preparation and
+execution require Node24 or later. The original installer's base profile accepts
+Node22.16 and later; selecting that lower minimum does not satisfy the complete
+managed programme. Python Analysis has no extra Python dependencies; its original
+Node bridge and source tree are included.
 
 Choose real absolute paths. The build output is a new owned directory. Set
 `SOURCE_COMMIT` to the reviewed commit containing this recipe and the intended
@@ -102,9 +105,11 @@ imports and any declared native binding. Keep its returned `directory`,
 `sourceRoot`, `dependencyRoot`, source commit and manifest identity.
 
 If an existing owner supplies a complete retained dependency graph and its
-original `package-lock.json`, receive both into this newly prepared runtime
-through that owner's established transfer. Then the original installer can
-check and adopt those exact inputs:
+original `package-lock.json`, receive the complete graph at
+`$RUNTIME/node_modules` and that exact lock at `$RUNTIME/package-lock.json` through
+that owner's established transfer. Keep both original byte identities with this
+newly prepared runtime. Then the original installer can check and adopt those
+exact inputs:
 
 ~~~sh
 node "$CHECKOUT/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs" \
