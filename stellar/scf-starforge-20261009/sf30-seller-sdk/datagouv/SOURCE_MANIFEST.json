@@ -1,0 +1,27 @@
+{
+  "schema": "commons.datagouv.publication-source.v1",
+  "files": {
+    "datagouv-publication.mjs": {
+      "bytes": 69750,
+      "sha256": "4c60587f2b8ca679376425b5e84c923f7d7e5cef6ef589c7d840680ed27b2ee2"
+    },
+    "PUBLICATION.md": {
+      "bytes": 19582,
+      "sha256": "f6f42cb604db3e7044acbccd230a33d36c150260d90633be733e81a767cf4736"
+    },
+    "draft-input.example.json": {
+      "bytes": 869,
+      "sha256": "95251c79eeb08cba9d335c05af9dcfbd4b722dd3e28eddb96b859867907b6c25"
+    },
+    "publication-input.schema.json": {
+      "bytes": 6235,
+      "sha256": "01010a144ee6af11dd175d688fac7527733e900174bc980d46bcd1f7d28ca105"
+    }
+  },
+  "verification": {
+    "javascript_parse_only": true,
+    "provider_writes": 0,
+    "credential_included": false,
+    "scope": "source implementation; native receiving belongs to the parent workspace"
+  }
+}
