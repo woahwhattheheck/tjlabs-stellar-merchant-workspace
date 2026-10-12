@@ -9,6 +9,8 @@ from operations import Operations, decoded
 
 
 def register_static(static):
+    static.update({"/operations_statements.mjs": ("operations_statements.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_statements.css": ("operations_statements.css", "text/css; charset=utf-8")})
     static.update({"/operations_performance.mjs": ("operations_performance.mjs", "text/javascript; charset=utf-8"),
                    "/operations_performance.css": ("operations_performance.css", "text/css; charset=utf-8"),
                    "/operations_dispatch.mjs": ("operations_dispatch.mjs", "text/javascript; charset=utf-8"),
@@ -157,11 +159,11 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
-        methods = {"command": ops.command, "implementation-source": ops.seed_implementation,
+        methods = {"command": ops.command, "statement-preview": ops.preview_statement, "implementation-source": ops.seed_implementation,
                    "implementation-preview": ops.preview_implementation, "cohort-seed": ops.seed_cohort, "cohort-preview": ops.preview_cohort, "installation-seed": ops.seed_installation,
                    "installation-workflows": ops.installation_workflows,
                    "installation-workflow-seed": ops.seed_workflow_installation,
