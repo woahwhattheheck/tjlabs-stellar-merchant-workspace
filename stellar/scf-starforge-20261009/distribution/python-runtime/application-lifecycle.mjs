@@ -15,6 +15,15 @@ const environment=field('environmentFile','Private environment JSON','path');
 const original='stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/stellar_forge_buyer/';
 const key=value=>digest(json(canonical(value)));
 export const PYTHON_APPLICATION_CATALOG=Object.freeze([
+  {id:'python-vgi',python:true,command:'vgi',terminal:false,
+    requiredSource:original+'vgi_service/cli.py',title:'Purchased-result VGI workspace',
+    description:'Review complete native query exports, publish retained result tables, manage current access and operate the original VGI listener.',
+    fields:[installation,field('workspaceDirectory','Original DuckDB workspace directory','path',true),
+      field('port','Private operator port','port',false,'Use 0 to select an available loopback port. The VGI listener is selected inside its original operator.'),
+      field('exportRoot','Query export directory','path',false,'Optional private parent for new original query exports.'),
+      field('handoffRoot','Warehouse handoff directory','path',false,'Optional private parent for original complete warehouse backups.'),
+      environment]},
+
   {id:'python-postgres',python:true,command:'postgres',terminal:false,
     requiredSource:original+'postgres_http.py',title:'PostgreSQL receiving workspace',
     description:'Review source mappings, import complete dataset editions, compare changes and manage the customer application SQL view.',
@@ -62,7 +71,7 @@ function option(args,name) {
   return values[0];
 }
 export function pythonApplicationResource(type,settings) {
-  if(type.command==='duckdb')return key({family:'python-duckdb',directory:settings.workspaceDirectory});
+  if(['duckdb','vgi'].includes(type.command))return key({family:'python-duckdb',directory:settings.workspaceDirectory});
   if(type.command==='postgres')return key({family:'python-postgres',directory:settings.workspaceDirectory});
   if(type.command==='analysis')return key({family:'python-analysis',directory:settings.databaseDirectory});
   const args=argumentsFrom(settings);
@@ -85,9 +94,9 @@ export async function pythonApplicationCommand(root,type,settings,{
       !/[\x00-\x1f\x7f]/.test(databaseSchema),'PYTHON_POSTGRES_SCHEMA_INVALID');
     args=['--connection-env',connectionEnvironment,'--schema',databaseSchema,
       'serve','--workspace',settings.workspaceDirectory,'--port',String(settings.port??0)];
-  }else if(type.command==='duckdb'){
+  }else if(['duckdb','vgi'].includes(type.command)){
     inputs.push(await inputPath(settings.workspaceDirectory,'directory',true,true));
-    args=['--workspace',settings.workspaceDirectory,'serve','--port',String(settings.port??0)];
+    args=['--workspace',settings.workspaceDirectory,type.command==='vgi'?'workspace':'serve','--port',String(settings.port??0)];
     for(const [name,flag] of [['exportRoot','--export-root'],['handoffRoot','--handoff-root']]){
       if(settings[name]){
         inputs.push(await inputPath(settings[name],'directory',true,true));
@@ -148,7 +157,7 @@ export function assertPythonManagedLaunch(request,launch) {
   need(typeof createdAt==='string' && key(body)===key(launchBody(request)),
     'PYTHON_MANAGED_LAUNCH_CHANGED');
 }
-export const pythonManagedStopSignal=request=>['analysis','duckdb','postgres'].includes(request.pythonCommand?.command)?'SIGINT':'SIGTERM';
+export const pythonManagedStopSignal=request=>['analysis','duckdb','postgres','vgi'].includes(request.pythonCommand?.command)?'SIGINT':'SIGTERM';
 export async function preparePythonManagedChild(root,request,environment,{leaseFd=3}={}) {
   const command=await preparePythonApplicationCommand(root,request.pythonCommand,{leaseFd});
   return {executable:command.executable,args:command.args,

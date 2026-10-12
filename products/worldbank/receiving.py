@@ -211,6 +211,56 @@ def managed_application(root, supplied, binding, source_root, lease):
     return received, handover
 
 
+
+def reopen_complete(root, binding, package):
+    target = root / "product-receiving.json"
+    if not target.exists():
+        return None
+    record = json.loads(read_regular(target))
+    if record.get("status") != "COMPLETE" or record.get("installation") != binding:
+        raise ValueError("The completed product receiving belongs to another installation.")
+    from stellar_forge_buyer.analysis_workspace import AnalysisWorkspace
+    from stellar_forge_buyer.workspace_archive_receive import restore_archive
+    from stellar_forge_buyer.analysis_workbooks import WorkbookDelivery
+    result = json.loads(read_regular(root / "producer-result.json"))
+    delivery = root / "producer/worldbank-analysis" / PRODUCER_ID / "delivery"
+    files = {item["filename"]: item for item in result["files"]}
+    for item in result["files"]:
+        body = read_regular(delivery / item["filename"], maximum=1024**3)
+        if len(body) != item["bytes"] or digest(body) != item["sha256"]:
+            raise ValueError("The original customer delivery differs: " + item["filename"])
+    handover = read_regular(root / "WorldBank_Managed_Customer_Handover_20261012.zip")
+    if {"bytes": len(handover), "sha256": digest(handover)} != record["handover"]:
+        raise ValueError("The completed economic handover changed.")
+    archive = delivery / "WorldBank_Analysis_Workspace.zip"
+    received = restore_archive(archive, root / "customer",
+        operation="431e21b8c6e44f65a3d6c279f5b8e012",
+        expected_sha256=files[archive.name]["sha256"])
+    if received.get("reused") is not True:
+        raise ValueError("Continue the original completed customer receiving.")
+    workspace = AnalysisWorkspace(root / "customer")
+    try:
+        if workspace.identity != result["workspace"]["workspace_id"]:
+            raise ValueError("The reopened customer workspace identity changed.")
+        publication = workspace.workbooks.source(
+            {"kind": "report", "id": result["report"]["id"], "section": 0})
+        if publication["sha256"] != result["report"]["sha256"]:
+            raise ValueError("The original report publication changed.")
+    finally:
+        workspace.close()
+    workbook = WorkbookDelivery(root / "customer-workbook",
+        expected_manifest_sha256=result["workbook"]["manifest_sha256"])
+    workbook.verify_archive(delivery / "WorldBank_Workbook_Handover.zip")
+    with workbook.open("workbook.xlsx") as stream:
+        workbook_body = stream.read()
+    if digest(workbook_body) != files["WorldBank_Analysis.xlsx"]["sha256"]:
+        raise ValueError("The original received workbook changed.")
+    emit({"phase": "COMPLETE", "operation": OPERATION, "reused": True,
+          "result": str(target), "customer_workspace": str(root / "customer"),
+          "customer_edits_preserved": True})
+    return record
+
+
 def main():
     global SOURCE_REF
     parser = argparse.ArgumentParser(description=__doc__)
@@ -248,6 +298,8 @@ def main():
         import openpyxl
         if openpyxl.__version__ != "3.1.5":
             raise ValueError("Install the original workbooks extra: openpyxl==3.1.5.")
+        if reopen_complete(root, binding, package) is not None:
+            return 0
         managed, body = managed_application(root, supplied, binding, source_root, lease)
         from stellar_forge_buyer.worldbank_analysis import WorldBankAnalysis, encoded, write
         handover = root / "WorldBank_Managed_Customer_Handover_20261012.zip"

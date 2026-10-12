@@ -47,7 +47,40 @@ The selected reference is `delivery/captures/ndbc-46042-june-2023.erddap.zip`: t
 
 The public technical contact is retained as source metadata. An appointed scientific contact remains unanswered until supplied by the provider. This reference therefore exercises the complete working-review export and receiving path with that visible question; the actual core review determines ready-export availability.
 
-For a new provider request, use the application's live metadata/query workflow and retain its actual complete response. The earlier fixed June 2025 capture helper remains source history; the included June 2023 reference is the selected reproducing input here. The separate three-day 432-row coastal capture belongs to its separately selected coastal workflow.
+For a new provider request, use the application's live metadata/query workflow and retain its actual complete response. The 144-row June 2023 NDBC selection remains the provider-intake reference. The same selected product also contains the complete original grid and three-day station captures for explicit edition comparison and coastal work.
+
+### Complete fixed historical source set
+
+All five original source ZIPs are included under `delivery/captures/`. Each contains the complete retained metadata, DDS, DAS, JSON, CSV and acquisition manifest. The exact sizes and SHA256 values are recorded in `products/erddap-provider/SOURCE.json` and the full import guide at `delivery/CAPTURE_IMPORT.md`.
+
+| Original selection | Rows | Source ZIP |
+| --- | ---: | --- |
+| mur-sst-june-2025 | 27 | `mur-sst-june-2025.erddap.zip` |
+| ndbc-46042-june-2023 | 144 | `ndbc-46042-june-2023.erddap.zip` |
+| mur-sst-june-2023 | 27 | `mur-sst-june-2023.erddap.zip` |
+| mur-46042-nearby-june-2023 | 27 | `mur-46042-nearby-june-2023.erddap.zip` |
+| ndbc-46042-three-days-june-2023 | 432 | `ndbc-46042-three-days-june-2023.erddap.zip` |
+
+The total across these editions is 657 selected rows. The 144-row NDBC edition overlaps the 432-row edition, and the MUR grids use their actual returned coordinates. Keep the editions and their original time/spatial bounds explicit when comparing them.
+
+Choose a retained `NOAA_OPERATION` directory for the complete five-source workflow. Use the following packet order so the maintained helper keeps the same comparison sequence:
+
+~~~sh
+python3 -B "$ERDDAP/delivery/native-receive.py" \
+  --source-root "$ERDDAP" \
+  --operation-root "$NOAA_OPERATION" \
+  --source-packet "$ERDDAP/delivery/captures/mur-sst-june-2025.erddap.zip" \
+  --source-packet "$ERDDAP/delivery/captures/ndbc-46042-june-2023.erddap.zip" \
+  --source-packet "$ERDDAP/delivery/captures/mur-sst-june-2023.erddap.zip" \
+  --source-packet "$ERDDAP/delivery/captures/mur-46042-nearby-june-2023.erddap.zip" \
+  --source-packet "$ERDDAP/delivery/captures/ndbc-46042-three-days-june-2023.erddap.zip"
+~~~
+
+This completes saved source/mapping/build creation, all native cursor rows, dataset exports, three edition comparisons, five original customer packets, independent receiving and matching row reads after closing and reopening the receiver. The result is retained at `NOAA_OPERATION/native/native-result.json`. Continue the same directory and packet order after an interruption; the helper reuses its original completed outputs.
+
+The source comparison accepts numerically equal JSON/CSV spellings such as `36` and `36.0` using exact decimal comparison. It preserves both original files and their parsed numeric tokens; it still reports a genuinely different decimal. Retain the original non-UTF8 DAS bytes when moving source files. A verified source ZIP preserves those bytes, while a text-decoding file client may transform them even when it reports the original Git blob identity.
+
+
 
 This workbench turns an explicit ERDDAP grid or station-table selection into a saved native dataset, a versioned merchant release and a complete customer receiving packet. It keeps the provider's original responses, reviewed mapping and useful output together.
 
@@ -296,14 +329,7 @@ Use `starforge-merchant erddap provider-handoff --help` or the installed `erddap
 
 The complete source includes reusable native dataset, provider handoff and browser receiving entrypoints. They consume actual captured source ZIPs and keep their original workspaces and checkpoints through failure.
 
-First, the original native source-to-customer operation:
-
-~~~sh
-python3 -B "$ERDDAP/delivery/native-receive.py" \
-  --source-root "$ERDDAP" --operation-root /private/erddap-operation \
-  --source-packet /private/noaa-capture/mur-sst-june-2025.erddap.zip \
-  --source-packet /private/noaa-capture/ndbc-46042-june-2025.erddap.zip
-~~~
+First, run the complete five-source command in **Complete fixed historical source set** above. Retain its original `NOAA_OPERATION` directory and packet order.
 
 It imports complete originals, proposes the explicit lexical mapping, builds through the original engine, reads every native cursor page, exports seller datasets and complete customer packets, then independently reconstructs and closes/reopens each received edition. Actual same-mapping source pairs also produce the full original comparison. native/native-result.json records the actual results and source/engine identities.
 
@@ -311,8 +337,8 @@ Then run the existing browser owner on that same now-closed workspace:
 
 ~~~sh
 python3 -B "$ERDDAP/delivery/browser-owner.py" \
-  --source-root "$ERDDAP" --operation-root /private/erddap-operation \
-  --workspace /private/erddap-operation/workspace
+  --source-root "$ERDDAP" --operation-root "$NOAA_OPERATION" \
+  --workspace "$NOAA_OPERATION/workspace"
 ~~~
 
 The browser owner uses the selected Node/Playwright/Chromium environment. It owns one page/context, the original operator and one independent customer receiver. It operates real source upload, reviewed mapping, build/native cursor query, preserved drafts, edition comparison, source/native/project downloads and customer receiving, then reopens the closed receiving workspace.
