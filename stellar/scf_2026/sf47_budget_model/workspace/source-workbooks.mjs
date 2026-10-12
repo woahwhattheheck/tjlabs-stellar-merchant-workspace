@@ -207,7 +207,7 @@ export function createPlanningWorkbookIntake(context) {
     return element;
   };
   const {button, field, select, checkbox, section, table, details, download} = context;
-  let disposed = false, serial = 0, currentRole = '', state = {};
+  let disposed = false, serial = 0, currentRole = '', currentBookId = '', state = {};
   const roleState = new Map(), PAGE = 25;
   const alive = () => !disposed && context.alive();
   const source = () => context.getBook().workbookSources?.find(item => item.id === state.sourceId);
@@ -404,6 +404,10 @@ export function createPlanningWorkbookIntake(context) {
   }
   function render() {
     if (!alive()) return node('div');
+    const selectedBook = context.getBook();
+    if (selectedBook.id !== currentBookId) {
+      serial++; roleState.clear(); state = {}; currentRole = ''; currentBookId = selectedBook.id;
+    }
     const role = context.getRole();
     if (role !== currentRole) {
       if (currentRole) roleState.set(currentRole,state);

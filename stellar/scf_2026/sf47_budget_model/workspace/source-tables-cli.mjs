@@ -112,7 +112,7 @@ async function workbookNative(request, options) {
         }
         try { resolve(JSON.parse(stdout)); } catch (error) { reject(error); }
       });
-    child.stdin.on('error', reject);
+    child.stdin.on('error', error => { if(error.code !== 'EPIPE')reject(error); });
     child.stdin.end(input);
   });
 }

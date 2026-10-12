@@ -202,7 +202,7 @@ async function listenerCase(workspace,source,mapping,expectedHash) {
     return {sameProjection:true,sheets:inspection.source.description.sheets.length,
       sourceBytes:inspection.source.bytes,worksheet:inspection.preview.metadata.name,browserModuleBytes:Buffer.byteLength(module)};
   } finally {
-    if(child.exitCode===null) {
+    if(child.exitCode===null&&child.signalCode===null) {
       const closed=new Promise(resolveClosed=>child.once('exit',resolveClosed));child.kill('SIGTERM');
       const timeout=setTimeout(()=>child.kill('SIGKILL'),10000);await closed;clearTimeout(timeout);
     }
