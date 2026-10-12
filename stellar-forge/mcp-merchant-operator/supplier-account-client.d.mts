@@ -11,7 +11,7 @@ export interface MerchantClient {
 }
 export interface Account {
   alias: string; directory: string; account: string; apiKeyEnv?: string | null;
-  requestsPerSecond?: number; callsPerDay?: number;
+  requestsPerSecond: number; callsPerDay: number;
 }
 export interface Assignment { binding: string; account: string | null; }
 export interface WorkspacePin { workspaceId?: WorkspaceId; }
