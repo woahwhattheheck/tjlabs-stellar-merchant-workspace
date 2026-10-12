@@ -891,6 +891,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(!request.id){delete session.requestOpen;persist();render();return;}
     if(!Number.isSafeInteger(request.revision)||request.revision<1)
       throw new Error('Refresh the delivery queue and select the original saved edition.');
+    persist();
     await reloadCase();if(!available())return;
     const head=list().find(row=>row.id===request.id);
     if(!head)throw new Error('Refresh the delivery queue to reopen the current installation.');
