@@ -53,7 +53,9 @@ try{
  assert.equal(h.digest('hex'),original.sources[0].sha256);assert.equal(rawBytes,original.sources[0].bytes);
  await checkpoint('original-client-source',{workspaceId:inventory.workspaceId,projection:projection.projection.id,source:original.sources[0].sha256,bytes:rawBytes,indicatorPage:page.rows.length,totalIndicators:page.total});
 
- const {chromium}=await import(pathToFileURL(createRequire(import.meta.url).resolve(config.playwright)));
+ const playwrightModule=await import(pathToFileURL(createRequire(import.meta.url).resolve(config.playwright)));
+ const chromium=playwrightModule.chromium??playwrightModule.default?.chromium;
+ assert.equal(typeof chromium?.launchPersistentContext,'function','Selected Playwright module has no Chromium API');
  const profile=join(config.output,'browser-profile');
  browser=await chromium.launchPersistentContext(profile,{executablePath:config.chromium,headless:true,viewport:{width:1440,height:1000},
   acceptDownloads:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--single-process','--no-zygote']});
