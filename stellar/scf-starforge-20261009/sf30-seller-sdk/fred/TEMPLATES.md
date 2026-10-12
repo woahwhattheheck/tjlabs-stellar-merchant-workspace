@@ -153,7 +153,9 @@ Source context is recorded separately. A later information date, retrieval windo
 
 Original missing values stay explicit. Coverage includes every selected series, including a series with zero observations inside the chosen calendar window. An entirely empty window requires a different selection. The report counts original observations after the selected window, making the effect of a lag or explicit anchor visible.
 
-The downloaded HTML is a complete offline comparison with local series/change filters, source coverage, original-row inspection, full JSON export and full CSV export. Downloads include every comparison page. Original FRED source notices and report files stay attached to the saved analyst reports.
+The downloaded HTML is a complete offline comparison with local series/change filters, source coverage, original-row inspection, full JSON export and full CSV export. The filters wrap to fit a phone screen. Each wide table scrolls within its own region, keeping the report controls and reading text in view.
+
+Use Tab to reach the labelled **Selected source coverage**, **Source meaning and information basis**, or **Period changes** region. The focused region has a visible outline; Left and Right move through its columns. Continue with Tab to a row's **Inspect** button to read its full original source values. Series, change and display filters affect the visible comparison rows. **Download all changes** and **Download complete source comparison** include every comparison page and preserve the complete source context. Original FRED source notices and report files stay attached to the saved analyst reports.
 
 ## Continue into the merchant workflow
 
