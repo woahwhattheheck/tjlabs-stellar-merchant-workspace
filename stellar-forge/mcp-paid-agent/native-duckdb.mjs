@@ -12,6 +12,7 @@ import {createSavedFileReader} from './native-file.mjs';
 import {nativeDuckDBOperations,nativeDuckDBActions,nativeDuckDBSchema} from './native-duckdb-schema.mjs';
 export {nativeDuckDBActions,nativeDuckDBSchema};
 import {dispatchDuckDBReconciliation} from './native-duckdb-reconciliation.mjs';
+import {dispatchDuckDBAnalytics} from './native-duckdb-analytics.mjs';
 import {dispatchDuckDBTimescale} from './native-duckdb-timescale.mjs';
 
 const SCHEMA='stellar-forge.mcp-native-duckdb.v1';
@@ -352,7 +353,8 @@ export function createNativeDuckDB({manifest,isClosed=()=>false}={}){
   const get=route=>request(connection,route,undefined,context.signal);
   const post=(route,value,options)=>request(connection,route,value,context.signal,options);
   let value;
-  if(op.startsWith('timescale-intake-'))value=publicTimescaleRecord(await dispatchDuckDBTimescale({
+  if(op.startsWith('analytics-'))value=publicRecord(await dispatchDuckDBAnalytics({operation:op,body,get,post,workspaceId:record.workspaceId}));
+  else if(op.startsWith('timescale-intake-'))value=publicTimescaleRecord(await dispatchDuckDBTimescale({
    operation:op,body,get,post,workspaceId:record.workspaceId,registeredReports:record.timescaleReports??[],
    readFile:value=>timescaleFile(record,connection,value,context.signal)}));
   else if(op.startsWith('reconcile-'))value=publicRecord(await dispatchDuckDBReconciliation({operation:op,body,get,post,workspaceId:record.workspaceId}));

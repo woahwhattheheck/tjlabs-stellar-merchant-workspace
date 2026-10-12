@@ -18,6 +18,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from . import _duckdb_ui, _spatial_ui, spatial_http
 from .reconciliation import http as reconciliation_http
+from .duckdb_analytics import http as analytics_http
 from .timescale_intake import http as timescale_intake_http
 from .duckdb_agent import identity as agent_identity, catalog as agent_catalog, request_record, check_report
 from ._analysis_export_http import send_export
@@ -154,6 +155,7 @@ class DuckDBOperator:
                 "operations": self.operation_records(),
                 "spatial": spatial_http.spatial(self).status(),
                 "reconciliation": reconciliation_http.model(self).status(),
+                "analytics": analytics_http.model(self).status(),
                 "timescale_intake": timescale_intake_http.model(self).status(),
             }
 
@@ -217,6 +219,8 @@ class DuckDBOperator:
             spatial_http.validate_export(body)
         elif route == "/api/reconciliation/exports":
             reconciliation_http.validate_export(body)
+        elif route == "/api/analytics/exports":
+            analytics_http.validate_export(body)
         elif route == "/api/source-handoffs":
             _fields(body, ("edition_id", "request_id"))
             _identifier(body["edition_id"])
@@ -231,7 +235,7 @@ class DuckDBOperator:
                 raise StateError("DUCKDB_OPERATOR_ORIGINAL_REQUEST_CHANGED")
         else:
             original = {"request_id": request_id, "route": route, "body": body,
-                        "directory": self._destination(self.export_root if route in {"/api/exports", "/api/spatial/exports", "/api/reconciliation/exports"} else self.handoff_root, request_id),
+                        "directory": self._destination(self.export_root if route in {"/api/exports", "/api/spatial/exports", "/api/reconciliation/exports", "/api/analytics/exports"} else self.handoff_root, request_id),
                         "created_at": datetime.now(timezone.utc).isoformat()}
             dump(path, original, exclusive=True)
         dump(status_path, {"state": "RUNNING", "updated_at": datetime.now(timezone.utc).isoformat()})
@@ -243,6 +247,8 @@ class DuckDBOperator:
                 result = spatial_http.export(self, body, original["directory"])
             elif route == "/api/reconciliation/exports":
                 result = reconciliation_http.export(self, body, original["directory"])
+            elif route == "/api/analytics/exports":
+                result = analytics_http.export(self, body, original["directory"])
             else:
                 native = (self.workspace.export_source(body["edition_id"], original["directory"])
                           if route == "/api/source-handoffs" else self.workspace.backup(original["directory"]))
@@ -270,6 +276,8 @@ class DuckDBOperator:
 
     def perform(self, route, body):
         with self.mutex:
+            if route.startswith("/api/analytics/"):
+                return analytics_http.perform(self, route, body)
             if route.startswith("/api/timescale-intake/"):
                 return timescale_intake_http.perform(self, route, body)
             if route.startswith("/api/reconciliation/"):
@@ -418,7 +426,7 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None,
                 value, mime = assets[url.path]
                 return self._reply(200, value.encode(), mime)
             if self.command in {"GET", "HEAD"}:
-                selected = timescale_intake_http.asset(url.path) or reconciliation_http.asset(url.path)
+                selected = analytics_http.asset(url.path) or timescale_intake_http.asset(url.path) or reconciliation_http.asset(url.path)
                 if selected is not None and (not url.query or url.path in {
                         "/reconciliation", "/reconciliation/", "/timescale-intake", "/timescale-intake/"}):
                     payload, mime = selected
@@ -427,7 +435,7 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None,
             if len(capabilities) != 1 or not secrets.compare_digest(capabilities[0], token):
                 return self._reply(403, {"error": "DUCKDB_OPERATOR_CAPABILITY_REQUIRED"})
             workspace_ids = self.headers.get_all("X-DuckDB-Workspace-ID", [])
-            if url.path.startswith(("/api/reconciliation/", "/api/timescale-intake/")) and len(workspace_ids) != 1:
+            if url.path.startswith(("/api/reconciliation/", "/api/timescale-intake/", "/api/analytics/")) and len(workspace_ids) != 1:
                 return self._reply(409, {"error": "DUCKDB_OPERATOR_WORKSPACE_ID_REQUIRED"})
             if workspace_ids and (len(workspace_ids) != 1 or not secrets.compare_digest(
                     workspace_ids[0], workspace.identity()["workspace_id"])):
@@ -437,6 +445,9 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None,
                 raise StateError("DUCKDB_OPERATOR_PARAMETERS_INVALID")
             parts = [unquote(part) for part in url.path.strip("/").split("/")]
             if self.command in {"GET", "HEAD"}:
+                if url.path.startswith("/api/analytics/"):
+                    with operator.mutex:
+                        return self._reply(200, analytics_http.get(operator, url.path, parameters))
                 if url.path.startswith("/api/timescale-intake/"):
                     if timescale_intake_http.download(self, operator, url.path, parameters):
                         return
@@ -539,7 +550,7 @@ def serve(workspace, *, port=0, export_root=None, handoff_root=None,
             except BuyerError as exc:
                 code = exc.code
                 status = 409 if any(word in code for word in ("REVISION", "CHANGED", "BUSY", "EXISTS", "OPEN")) else 400
-                if code.startswith(("DUCKDB_RECONCILIATION_", "DUCKDB_TIMESCALE_")) and code.endswith("_NOT_FOUND"):
+                if code.startswith(("DUCKDB_RECONCILIATION_", "DUCKDB_TIMESCALE_", "DUCKDB_ANALYTICS_")) and code.endswith("_NOT_FOUND"):
                     status = 404
                 self._reply(status, {"error": code})
             except (ValueError, TypeError, KeyError, OverflowError):
