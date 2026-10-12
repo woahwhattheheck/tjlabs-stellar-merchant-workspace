@@ -7,14 +7,16 @@
     "coops": "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/cli.mjs",
     "coops-mcp": "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/mcp-client.mjs",
     "coops-analysis": "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/analysis/bundle.mjs",
-    "coops-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/receiving-host.mjs"
+    "coops-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/receiving-host.mjs",
+    "coops-model": "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/cli.mjs"
   },
   "commandDescriptions": {
     "coops-workspace": "Operate retained coastal observations, datum evidence, historical studies, analyst decisions and native delivery",
     "coops": "Capture, resume, review and export original NOAA coastal source work",
     "coops-mcp": "Use the same coastal workspace through native merchant tools and complete retained-file receiving",
     "coops-analysis": "Open a retained coastal analysis input or workbook and write the complete offline analyst delivery",
-    "coops-receive": "Receive one original coastal study through the native console, actual source review and selected persistent browser"
+    "coops-receive": "Receive one original coastal study through the native console, actual source review and selected persistent browser",
+    "coops-model": "Receive reviewed coastal study files, query original model inputs and return analyst files through the native Python receiving workflow"
   },
   "exports": {
     "./seller/coops": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/core.mjs",
@@ -39,7 +41,8 @@
     "./seller/coops/receiving-host": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/receiving-host.mjs",
     "./seller/coops/study": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/study.mjs",
     "./seller/coops/study-exchange": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/study-exchange.mjs",
-    "./seller/coops/study-dataset": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/study-dataset.mjs"
+    "./seller/coops/study-dataset": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/study-dataset.mjs",
+    "./seller/coops/python-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/receiving.mjs"
   },
   "browserAssets": [
     {
@@ -70,6 +73,15 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/STUDIES.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/examples/study-input-columns.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/examples/coastal-receiving-selection.json",
-    "products/coops/OPERATING.md"
+    "products/coops/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/stellar_coops/transport.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/stellar_coops/journal.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/stellar_coops/client.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/stellar_coops/__init__.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/stellar_coops/cli.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/coops_model.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/receiving.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/RECEIVING.md"
   ]
 }

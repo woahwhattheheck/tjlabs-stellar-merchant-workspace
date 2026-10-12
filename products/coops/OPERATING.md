@@ -760,5 +760,36 @@ deliveries. The closed workspace backup preserves the continuing operation.
 After an upgrade, attach that same operating state to the selected new runtime
 and reopen its original records and received files.
 
+## Python model-input receiving
+
+The installed `coops-model` command and standard-library Python API use this
+same original console and reviewed study release. Analysts can receive all five
+delivery files, verify every source TAR member, receive the original native
+dataset metadata, stream every selected query page into CSV/JSONL, and submit an
+actual returned file through the existing chunked comparison and explicit
+receiving decision.
+
+Select the original private console startup JSON, an owned receiving directory
+and Python 3.10 or later:
+
+```sh
+starforge coops-model --python /selected/python3 \
+  --directory /selected/private/coastal-receiver \
+  --startup /selected/private/coops-session.json \
+  receive-study --release ORIGINAL_STUDY_RELEASE_ID
+```
+
+The client retains exact issued operation bodies and reconciles the original
+native operation before replay. The complete returned input, file receipts,
+comparison and actual decision remain available after a console restart or an
+offline receiver reopen. Source strings and mapped headings stay unchanged;
+the original dataset engine owns filters, sorting and cursors.
+
+See [Python receiving](../../stellar/scf-starforge-20261009/sf30-seller-sdk/coops/python/RECEIVING.md)
+for the complete API, selected query export, actual returned-file decision
+format and the callable continuation for the existing receiving host. That
+continuation uses the caller's original console/restart and selected Python
+interpreter; its selected file footprint belongs in the same native admission.
+
 Copyright TokenJunkieLabs. This product retains its MIT license and applicable
 third-party notices.
