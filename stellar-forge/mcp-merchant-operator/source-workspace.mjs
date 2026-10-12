@@ -14,7 +14,7 @@ const EXPORT_SCHEMA = 'stellar-forge.source-console-export.v1';
 
 const MAX_EXPORT = 256000000;
 const MAX_IATI_PACKET = 4 * 1024 * 1024 * 1024;
-const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report', 'dqa'].includes(kind) ? MAX_IATI_PACKET : kind === 'dqa-file' ? 64 * 1024 * 1024 : MAX_EXPORT;
+const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report', 'dqa', 'publishing'].includes(kind) ? MAX_IATI_PACKET : kind === 'dqa-file' ? 64 * 1024 * 1024 : MAX_EXPORT;
 const MAX_SOURCE = 256 * 1024 * 1024;
 const MAX_JSON = 16 * 1024 * 1024;
 const fail = (code, message) => Object.assign(new Error(message), { code });
@@ -160,7 +160,7 @@ export class MerchantSourceWorkspaces {
   async #request(definition, route, { body, headers = {}, method = body === undefined ? 'GET' : 'POST' } = {}, consume) {
     const connection = await this.#connection(definition);
     try {
-      const response = await fetch(connection.origin + route, { method, redirect: 'error', signal: AbortSignal.timeout(route.startsWith('/api/iati/dqa/') ? 900000 : 240000),
+      const response = await fetch(connection.origin + route, { method, redirect: 'error', signal: AbortSignal.timeout((route.startsWith('/api/iati/dqa/') || route.startsWith('/api/iati/publishing/')) ? 900000 : 240000),
         headers: { Authorization: 'Bearer ' + connection.token, ...headers },
         ...(body === undefined ? {} : { body, ...(typeof body === 'string' || Buffer.isBuffer(body) ? {} : { duplex: 'half' }) }) });
       if (!response.ok) {
@@ -178,8 +178,8 @@ export class MerchantSourceWorkspaces {
   }
   #json(definition, route, body) {
     const payload = body === undefined ? undefined : JSON.stringify(body);
-    const maximum = route.startsWith('/api/iati/dqa/') ? 64 * 1024 * 1024 : MAX_JSON;
-    if (payload !== undefined && Buffer.byteLength(payload) > (route.startsWith('/api/iati/dqa/') ? maximum : 131072)) throw fail('INVALID_PARAMS', 'Native JSON request exceeds its complete selection limit.');
+    const maximum = (route.startsWith('/api/iati/dqa/') || route.startsWith('/api/iati/publishing/')) ? 64 * 1024 * 1024 : MAX_JSON;
+    if (payload !== undefined && Buffer.byteLength(payload) > ((route.startsWith('/api/iati/dqa/') || route.startsWith('/api/iati/publishing/')) ? maximum : 131072)) throw fail('INVALID_PARAMS', 'Native JSON request exceeds its complete selection limit.');
     return this.#request(definition, route, { body: payload, headers: payload === undefined ? {} : { 'Content-Type': 'application/json' } },
       async response => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await responseBytes(response, maximum))));
   }
@@ -197,8 +197,8 @@ export class MerchantSourceWorkspaces {
     const directory = await this.#directory(workspace);
     const metadata = JSON.parse((await bytes(join(directory, id + '.json'), 65536, true)).toString('utf8'));
     if (metadata.schema !== EXPORT_SCHEMA || metadata.workspace !== workspace || metadata.exportId !== id ||
-        !['project','dataset','changes','merchant','portfolio','report','dqa','dqa-file'].includes(metadata.kind) ||
-        ['portfolio','report','dqa','dqa-file'].includes(metadata.kind) && metadata.format !== 'iati' ||
+        !['project','dataset','changes','merchant','portfolio','report','dqa','dqa-file','publishing'].includes(metadata.kind) ||
+        ['portfolio','report','dqa','dqa-file','publishing'].includes(metadata.kind) && metadata.format !== 'iati' ||
         !Number.isSafeInteger(metadata.bytes) || metadata.bytes < 0 || metadata.bytes > exportLimit(metadata.format, metadata.kind))
       throw fail('SOURCE_EXPORT_INVALID', 'Retained export metadata changed.');
     return { directory, metadata };
@@ -265,7 +265,7 @@ export class MerchantSourceWorkspaces {
   async #execute(name, args) {
     if (name === 'merchant_source_workspaces') return this.summary;
     const { workspace, ...input } = args, definition = this.#definition(workspace);
-    for (const field of ['source','plan','build','before','after','comparison','exportId','portfolio','assessment','case'])
+    for (const field of ['source','plan','build','before','after','comparison','exportId','portfolio','assessment','case','participant'])
       if (input[field] !== undefined) checked(input[field], SHA, field + ' SHA256');
     const result = native => ({ workspace, native });
     if (name.startsWith('merchant_source_iati_') && definition.format !== 'iati')
@@ -357,8 +357,8 @@ export class MerchantSourceWorkspaces {
         } else {
           const owner = input.fromWorkspace ?? workspace; this.#definition(owner);
           const { directory, metadata } = await this.#exportMetadata(owner, input.exportId);
-          if (!['project','portfolio','dqa'].includes(metadata.kind) || metadata.format !== definition.format)
-            throw fail('INVALID_PARAMS', 'Import a complete project, IATI portfolio or DQA customer packet matching the original receiving format.');
+          if (!['project','portfolio','dqa','publishing'].includes(metadata.kind) || metadata.format !== definition.format)
+            throw fail('INVALID_PARAMS', 'Import a complete project, IATI portfolio, DQA or participant release packet matching the original receiving format.');
           file = { path: join(directory, input.exportId + '.data'), sha256: input.exportId };
         }
         return result(await this.#upload(definition, file, '/api/import'));
@@ -436,6 +436,59 @@ export class MerchantSourceWorkspaces {
         // One original file can be selected by several assessments. Its SHA owns
         // the bytes; this response owns the current assessment/kind selection.
         return { ...retained, assessment: input.assessment, fileKind: input.kind };
+      }
+
+      case 'merchant_source_iati_publishing_context':
+      case 'merchant_source_iati_publishing_methodology': {
+        const route = name.endsWith('_context') ? 'context' : 'methodology';
+        return result(await this.#json(definition, '/api/iati/publishing/' + route));
+      }
+      case 'merchant_source_iati_publishing_projects':
+        return result(paged((await this.#json(definition, '/api/iati/publishing/projects')).projects, input));
+      case 'merchant_source_iati_publishing_project': {
+        const revision = input.revision === undefined ? '' : '&revision=' + integer(input.revision, 1, Number.MAX_SAFE_INTEGER);
+        return result(await this.#json(definition, '/api/iati/publishing/project?id=' + input.participant + revision));
+      }
+      case 'merchant_source_iati_publishing_history': {
+        const revision = input.revision === undefined ? '' : '&revision=' + integer(input.revision, 1, Number.MAX_SAFE_INTEGER);
+        return result(paged((await this.#json(definition, '/api/iati/publishing/history?id=' + input.participant + revision)).history, input));
+      }
+      case 'merchant_source_iati_publishing_request':
+        checked(input.requestId, /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/, 'original participant request ID');
+        return result(await this.#json(definition, '/api/iati/publishing/request?' + new URLSearchParams({ requestId: input.requestId })));
+      case 'merchant_source_iati_publishing_activities': {
+        const query = new URLSearchParams({ id: input.participant, offset: integer(input.offset ?? 0, 0, Number.MAX_SAFE_INTEGER),
+          limit: integer(input.limit ?? 50, 1, 200) });
+        if (input.revision !== undefined) query.set('revision', integer(input.revision, 1, Number.MAX_SAFE_INTEGER));
+        return result(await this.#json(definition, '/api/iati/publishing/activities?' + query));
+      }
+      case 'merchant_source_iati_publishing_fields': {
+        text(input.activity, 'Original activity identifier', 1000);
+        const query = new URLSearchParams({ id: input.participant, activity: input.activity });
+        if (input.revision !== undefined) query.set('revision', integer(input.revision, 1, Number.MAX_SAFE_INTEGER));
+        return result(await this.#json(definition, '/api/iati/publishing/fields?' + query));
+      }
+      case 'merchant_source_iati_publishing_preview':
+        if (!plain(input.definition)) throw fail('INVALID_PARAMS', 'Supply the exact selected participant revision and full proposed corrections.');
+        return result(await this.#json(definition, '/api/iati/publishing/preview', input.definition));
+      case 'merchant_source_iati_publishing_save':
+        if (!['create','feedback','evidence','triage','correct','candidate','finance','review','release'].includes(input.action) || !plain(input.definition))
+          throw fail('INVALID_PARAMS', 'Choose an original participant action and its full requestId/actor/revision definition.');
+        return result(await this.#json(definition, '/api/iati/publishing/' + input.action, input.definition));
+      case 'merchant_source_iati_publishing_file': {
+        if (!['feedback','evidence'].includes(input.action) || !plain(input.definition) || Object.hasOwn(input.definition, 'fileBase64'))
+          throw fail('INVALID_PARAMS', 'Choose feedback or evidence with its complete original definition; the declared file supplies all bytes.');
+        const selected = definition.files[checked(input.file, ALIAS, 'participant file handle')];
+        if (!selected || selected.kind !== 'source') throw fail('INVALID_PARAMS', 'Choose one configured original source-file handle.');
+        const raw = await bytes(selected.path, 16 * 1024 * 1024);
+        if (selected.sha256 && hash(raw) !== selected.sha256) throw fail('SOURCE_FILE_CHANGED', 'Participant file differs from its selected original SHA256.');
+        return result(await this.#json(definition, '/api/iati/publishing/' + input.action,
+          { ...input.definition, filename: input.definition.filename ?? selected.name ?? input.file, fileBase64: raw.toString('base64') }));
+      }
+      case 'merchant_source_iati_publishing_export': {
+        const revision = input.revision === undefined ? '' : '&revision=' + integer(input.revision, 1, Number.MAX_SAFE_INTEGER);
+        return this.#retain(workspace, definition, '/api/iati/publishing/export?id=' + input.participant + revision,
+          'publishing', { participant: input.participant, ...(input.revision === undefined ? {} : { revision: input.revision }) });
       }
       default: throw fail('TOOL_NOT_FOUND', 'Unknown original source-workspace operation.');
     }

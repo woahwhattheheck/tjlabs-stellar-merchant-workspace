@@ -114,6 +114,30 @@ export class IatiWorkspaceClient{
  dqaReceive({body,bytes},options={}){if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose a complete original DQA customer ZIP up to 4 GiB.');
   return this.#request('/api/iati/dqa/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});}
 
+
+ /** Participant publishing uses the same saved source, revision and native finance workspace. */
+ #publishingPost(route,value,options={}){if(!object(value))throw problem('INPUT','Use a complete participant object.');
+  const data=JSON.stringify(value);if(Buffer.byteLength(data)>64*1024*1024)throw problem('INPUT_LIMIT','The complete participant selection exceeds 64 MiB.');
+  return this.#request('/api/iati/publishing/'+route,{...options,maximum:64*1024*1024,headers:{'content-type':'application/json'},body:data});}
+ publishingContext(options){return this.#request('/api/iati/publishing/context',options);}
+ publishingMethodology(options){return this.#request('/api/iati/publishing/methodology',options);}
+ publishingProjects(options){return this.#request('/api/iati/publishing/projects',{...options,maximum:64*1024*1024});}
+ publishingProject(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/publishing/project?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ publishingHistory(id,options){return this.#request('/api/iati/publishing/history?'+query({id:hash(id)}),{...options,maximum:64*1024*1024});}
+ publishingRequest(requestId,options){if(typeof requestId!=='string'||!requestId||requestId.length>160)throw problem('REQUEST','Use the original participant request ID.');
+  return this.#request('/api/iati/publishing/request?'+query({requestId}),{...options,maximum:64*1024*1024});}
+ publishingActivities(id,{offset=0,limit=50,revision:selectedRevision,...options}={}){return this.#request('/api/iati/publishing/activities?'+query({id:hash(id),offset,limit,revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ publishingFields(id,activity,{revision:selectedRevision,...options}={}){if(typeof activity!=='string'||!activity||activity.length>1000)throw problem('ACTIVITY','Use one original activity identifier.');
+  return this.#request('/api/iati/publishing/fields?'+query({id:hash(id),activity,revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});}
+ publishingPreview(input,options){return this.#publishingPost('preview',input,options);}
+ publishingSave(action,input,options){if(!['create','feedback','evidence','triage','correct','candidate','finance','review','release'].includes(action))throw problem('ACTION','Choose a supported participant action.');
+  return this.#publishingPost(action,input,options);}
+ publishingExport(id,{revision:selectedRevision,...options}={}){return this.#request('/api/iati/publishing/export?'+query({id:hash(id),revision:revision(selectedRevision)}),{...options,raw:true});}
+ publishingSource(id,{revision:selectedRevision,edition='candidate',...options}={}){if(!['candidate','baseline'].includes(edition))throw problem('SOURCE','Select the original baseline or candidate.');
+  return this.#request('/api/iati/publishing/source?'+query({id:hash(id),revision:revision(selectedRevision),edition}),{...options,raw:true});}
+ publishingReceive({body,bytes},options={}){if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('PACKET','Choose a complete original participant release up to 4 GiB.');
+  return this.#request('/api/iati/publishing/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});}
+
  async dispose(){if(this.#closed)return;this.#closed=true;this.#controller.abort(problem('CLOSED','The local IATI client is closing.'));
   await Promise.allSettled([...this.#pending]);}
 }

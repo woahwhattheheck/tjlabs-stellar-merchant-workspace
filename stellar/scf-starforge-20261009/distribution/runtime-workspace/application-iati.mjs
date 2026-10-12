@@ -14,6 +14,21 @@ const SOURCE_FILES = [
   'iati/cli.py', 'iati/cli.mjs', 'iati/managed.py',
   'iati/public/index.html', 'iati/public/app.js', 'iati/public/style.css',
   'iati/dqa.py', 'iati/dqa_http.py', 'iati/dqa_cli.py', 'iati/public/dqa.js', 'iati/public/dqa.css',
+  'iati/PUBLISHING.md', 'iati/PUBLISHING_SOURCES.md',
+  'iati/publishing.py',
+  'iati/publishing_xml.py',
+  'iati/publishing_validation.py',
+  'iati/publishing_http.py',
+  'iati/publishing_cli.py',
+  'iati/public/publishing.js',
+  'iati/public/publishing.css',
+  'iati/publishing-methodology.json',
+  'iati/publishing-schema-source.json',
+  'iati/publishing-schema/iati-activities-schema.xsd',
+  'iati/publishing-schema/iati-common.xsd',
+  'iati/publishing-schema/xml.xsd',
+  'iati/publishing-schema/LICENSE',
+  'iati/publishing-schema/IATI-LICENSE.rst',
   'xml/xml_source.py', 'xml/workspace.py', 'xml/server.py', 'xml/native.mjs',
   'dataset-handler.mjs',
 ];
@@ -23,9 +38,9 @@ const field = (name, label, type = 'path', required = false, description = '') =
 
 export function iatiApplication(common = []) {
   return {
-    id: 'iati', command: 'dataset-iati', title: 'IATI aid finance and DQA', terminal: false,
+    id: 'iati', command: 'dataset-iati', title: 'IATI finance, data quality and publishing', terminal: false,
     requiredSource: ROOT + '/iati/managed.py',
-    description: 'Review original IATI publisher XML, saved aid portfolios, exact currency/type/date groups, native edition comparisons, saved DQA assessments and complete customer handoffs.',
+    description: 'Review original IATI publisher XML, saved aid portfolios, exact currency/type/date groups, native edition comparisons, saved DQA assessments, participant correction/review/release and complete customer handoffs.',
     fields: [
       field('workspaceDirectory', 'Original IATI workspace', 'path', true,
         'Choose the private directory initialized or received by the original IATI command.'),

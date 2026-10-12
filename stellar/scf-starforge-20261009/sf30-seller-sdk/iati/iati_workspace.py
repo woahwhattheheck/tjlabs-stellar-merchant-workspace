@@ -271,6 +271,8 @@ class IatiWorkspace(Workspace):
         """)
         from dqa import IatiDqa
         self.dqa = IatiDqa(self)
+        from publishing import IatiPublishing
+        self.publishing = IatiPublishing(self)
 
     def presets(self):
         return source_presets()
@@ -285,6 +287,7 @@ class IatiWorkspace(Workspace):
         with self.mutex:
             result = super().state()
             result["portfolios"] = self.portfolios()
+            result["publishing"] = {"projects":len(self.publishing.list())}
             result["dqa"] = {"providers": len(self.dqa.providers()), "assessments": len(self.dqa.assessments()),
                              "cases": len(self.dqa.cases())}
             return result
@@ -788,4 +791,7 @@ class IatiWorkspace(Workspace):
         from dqa import PACKET as DQA_PACKET
         if isinstance(manifest, dict) and manifest.get("schema") == DQA_PACKET:
             return self.dqa.receive(path)
+        from publishing import PACKET as PUBLISHING_PACKET
+        if isinstance(manifest, dict) and manifest.get("schema") == PUBLISHING_PACKET:
+            return self.publishing.receive(path)
         return super().import_packet(path)

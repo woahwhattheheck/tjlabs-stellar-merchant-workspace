@@ -1,0 +1,72 @@
+{
+  "schema": "stellar-forge.iati-participant-demonstration-evidence.v1",
+  "observedAt": "2026-10-12T14:10:45.647Z",
+  "origin": "TJLabs receiving demonstration; these are locally authored review decisions, not PWYF-issued feedback or FCDO publication instructions.",
+  "publisher": {
+    "name": "UK Foreign, Commonwealth & Development Office",
+    "ref": "GB-GOV-1",
+    "url": "https://iati.fcdo.gov.uk/iati_files/solr/FCDO-set-20.xml",
+    "bytes": 8496890,
+    "sha256": "98a6bad80d60aa8deaa35fe1a593313515649a9fae7456895d1bfed4ac4a756d",
+    "generatedDatetime": "2026-09-24T05:45:02.027"
+  },
+  "cohort": [
+    {
+      "activityId": "GB-GOV-1-400043",
+      "transactions": 0,
+      "budgets": 0,
+      "originalActivitySha256": "40a8fa413a9396269dbd7cdaf268ae65346abd3f9ecf087fbf8086fe16be6a26"
+    },
+    {
+      "activityId": "GB-GOV-1-400043-301",
+      "transactions": 4,
+      "budgets": 4,
+      "originalActivitySha256": "c777a39e8c7e84687259097523edd4c156b9b5671dcd263bdf7d564514ad1bc4"
+    },
+    {
+      "activityId": "GB-GOV-1-400043-401",
+      "transactions": 11,
+      "budgets": 6,
+      "originalActivitySha256": "c9c96bf987eb78d10bad3fbc62be7e22aec7f83c84711058dd69bdd4b8fe286e"
+    },
+    {
+      "activityId": "GB-GOV-1-400043-402",
+      "transactions": 2,
+      "budgets": 1,
+      "originalActivitySha256": "0ece4b127291e313f64d36e6c6780c8695349dd41a8922fa3730a1a637c19f9a"
+    }
+  ],
+  "decisions": [
+    {
+      "findingId": "wadi-title-translation",
+      "kind": "authored-translation",
+      "before": "Water Adaptation and Desalination Infrastructure (WADI)",
+      "after": "Adaptation des ressources en eau et infrastructure de dessalement (WADI)",
+      "language": "fr",
+      "preservation": "Add a distinct French narrative. Retain the original English narrative, all financial records and all other publisher bytes."
+    },
+    {
+      "findingId": "wadi-title-whitespace",
+      "kind": "literal-whitespace-correction",
+      "before": "Programme Design - Evidence for Business Case Development ",
+      "after": "Programme Design - Evidence for Business Case Development",
+      "preservation": "Remove only the final title-space byte; retain its original full element and source history."
+    },
+    {
+      "findingId": "wadi-organisation-reference",
+      "kind": "deferred",
+      "reason": "The exact legal name is present and Companies House identifies a company with that name, but the publisher has not confirmed that the selected participating organisation is that contracting entity or approved a reference. No reference will be invented or written.",
+      "sourceUrl": "https://find-and-update.company-information.service.gov.uk/company/OC303525",
+      "observedName": "PRICEWATERHOUSECOOPERS LLP",
+      "observedCompanyNumber": "OC303525"
+    },
+    {
+      "findingId": "wadi-original-document-link",
+      "kind": "deferred",
+      "reason": "The full original file retains the HTTP annual-review URL. No complete document byte verification and publisher approval is selected for this demonstration, so the candidate keeps that URL.",
+      "sourceUrl": "http://iati.fcdo.gov.uk/iati_documents/S4000439.odt"
+    }
+  ],
+  "financialAcceptance": "The original 17 transaction elements and 11 budget elements remain byte-preserved. Native finance comparison must keep reporting organisation, hierarchy, currency, transaction/budget classification, periods and value dates separate. The parent has no direct finance; no parent-level total is invented.",
+  "releaseBoundary": "The candidate is a local reviewed demonstration for the original publisher's decision. It is not externally published, not a PWYF score, and not evidence of FCDO commissioning TJLabs or entering the 2028 Index."
+}

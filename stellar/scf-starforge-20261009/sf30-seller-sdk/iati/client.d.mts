@@ -325,6 +325,47 @@ export interface ReceivedDqaCase {
 }
 
 /** Borrows an existing authenticated loopback console. It creates no source store or process. */
+
+export type ParticipantAction = 'create' | 'feedback' | 'evidence' | 'triage' | 'correct' | 'candidate' | 'finance' | 'review' | 'release';
+export interface ParticipantRequest { requestId: string; actor: string; id?: Sha256; expectedRevision?: number; [field: string]: unknown }
+export interface ParticipantFinding {
+ id: string; activityId: string; indicatorId: string; finding: string; priority: 'normal' | 'blocking';
+ owner: string; dueDate: string; status: 'open' | 'planned' | 'resolved' | 'deferred'; note: string;
+ evidenceIds: Sha256[]; sourceAsset: Sha256; sourceRow: number; original: Record<string,string>;
+}
+export interface ParticipantSchemaResult {
+ schema: 'stellar-forge.iati-schema-validation.v1'; state: 'VALID' | 'INVALID' | 'UNAVAILABLE';
+ sourceSha256: Sha256; sourceBytes: number; stage: string; schemaManifestSha256?: Sha256;
+ errors: Array<{line: number; column: number; message: string; [field: string]: unknown}>;
+ [field: string]: unknown;
+}
+export interface ParticipantProject {
+ schema: 'stellar-forge.iati-participant-project.v1'; id: Sha256; revision: number; name: string;
+ publisherRef: string; cutoff: string; notes: string; activityIds: string[];
+ baselineSource: Sha256; candidateSource: Sha256;
+ state: 'DRAFT' | 'NEEDS_CORRECTION' | 'REVIEWED' | 'RELEASED';
+ feedback: ParticipantFinding[]; feedbackAssets: Array<Record<string,unknown>>; evidence: Array<Record<string,unknown>>;
+ corrections: Array<Record<string,unknown>>; baselineValidation: ParticipantSchemaResult;
+ candidateValidation: ParticipantSchemaResult; methodology: Record<string,unknown>; lastEditor: string;
+ finance: null | {portfolioId: Sha256; beforeRevision: number; candidateRevision: number; comparisonId: Sha256; baselineSource: Sha256; candidateSource: Sha256; comparedBy: string; comparedAt: number};
+ review: null | {decision: 'accepted' | 'needs-correction'; reviewer: string; note: string; sourceId: Sha256; definitionSha256: Sha256; [field:string]:unknown};
+ release: null | {id:Sha256;label:string;note:string;sourceId:Sha256;publicationState:'READY_FOR_PUBLISHER';[field:string]:unknown};
+ created: number; updated: number; previousRevision: number | null; lastAction: Record<string,unknown>;
+}
+export interface ParticipantField {
+ field: 'title' | 'description' | 'participating-org' | 'document-link'; index: number; sha256: Sha256;
+ attributes: Record<string,string>; narratives: Array<{index:number;sha256:Sha256;language:string;text:string}>;
+ categories: string[];
+}
+export interface ParticipantPreview {
+ project:Sha256;revision:number;sourceId:Sha256;candidateId:Sha256;previewSha256:Sha256;
+ audit:Record<string,unknown>;validation:ParticipantSchemaResult;
+}
+export interface ParticipantReceiving {
+ schema:'stellar-forge.iati-participant-receiving.v1';state:'COMPLETE';project:ParticipantProject;
+ revisions:number;sources:number;evidenceFiles:number;packet:{bytes:number;sha256:Sha256};
+}
+
 export declare class IatiWorkspaceClient {
   constructor(consoleUrl: string, options?: { timeoutMs?: number });
   readonly origin: string;
@@ -365,6 +406,21 @@ export declare class IatiWorkspaceClient {
   dqaExport(id: Sha256, options?: RevisionOptions): Promise<Response>;
   dqaFile(id: Sha256, kind: 'response' | 'request' | 'configuration-before' | 'configuration-after', options?: RequestOptions): Promise<Response>;
   dqaReceive(input: Pick<PacketInput, 'body' | 'bytes'>, options?: RequestOptions): Promise<ReceivedDqaCase>;
+
+  publishingContext(options?: RequestOptions): Promise<{schema:'stellar-forge.iati-participant-context.v1';workspaceSha256:Sha256}>;
+  publishingMethodology(options?: RequestOptions): Promise<{id:Sha256;body:Record<string,unknown>;bytes:number;sha256:Sha256}>;
+  publishingProjects(options?: RequestOptions): Promise<{projects:ParticipantProject[]}>;
+  publishingProject(id:Sha256,options?:RevisionOptions): Promise<ParticipantProject>;
+  publishingHistory(id:Sha256,options?:RequestOptions): Promise<{history:ParticipantProject[]}>;
+  publishingRequest(requestId:string,options?:RequestOptions): Promise<{requestId:string;state:'RECORDED'|'NOT_RECORDED';input?:ParticipantRequest;project?:ParticipantProject}>;
+  publishingActivities(id:Sha256,options?:RevisionOptions & {offset?:number;limit?:number}): Promise<{project:Sha256;revision:number;sourceId:Sha256;rows:Array<Record<string,unknown>>;total:number;offset:number;limit:number}>;
+  publishingFields(id:Sha256,activity:string,options?:RevisionOptions): Promise<{project:Sha256;revision:number;sourceId:Sha256;activityId:string;activitySha256:Sha256;attributes:Record<string,string>;fields:ParticipantField[]}>;
+  publishingPreview(input:{id:Sha256;expectedRevision:number;patches:Array<Record<string,unknown>>},options?:RequestOptions): Promise<ParticipantPreview>;
+  publishingSave(action:ParticipantAction,input:ParticipantRequest,options?:RequestOptions): Promise<ParticipantProject>;
+  publishingExport(id:Sha256,options?:RevisionOptions): Promise<Response>;
+  publishingSource(id:Sha256,options?:RevisionOptions & {edition?:'baseline'|'candidate'}): Promise<Response>;
+  publishingReceive(input:Pick<PacketInput,'body'|'bytes'>,options?:RequestOptions): Promise<ParticipantReceiving>;
+
   /** Aborts and drains this client's requests only. Applications owns the original console. */
   dispose(): Promise<void>;
 }
