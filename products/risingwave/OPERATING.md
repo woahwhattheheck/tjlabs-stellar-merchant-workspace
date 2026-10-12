@@ -465,6 +465,17 @@ difference through the selected MCP runtime, downloads both published editions
 and the original buyer file, and completes stop and fresh-process reopen.
 Keep the original native server and environment references available throughout.
 
+The included [browser continuation](../../stellar/scf-starforge-20261009/sf30-seller-sdk/risingwave/examples/browser-workbench.mjs)
+opens both managed launches with the existing Playwright and Chromium runtime.
+Pass its absolute installed path with --browser-module. It visits all saved
+report mappings and subscription reviews, receives fourteen capture files and
+all four comparison files through the visible download controls, opens both
+published run panels and the original customer offer, and downloads the saved
+source and merchant terms. Each phase retains seven desktop and three mobile
+views with the complete original file comparisons. The Applications guide
+provides the exact invocation, inherited browser environment and retained
+output paths.
+
 
 The native receiving operator in the
 [source guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/risingwave/README.md)
