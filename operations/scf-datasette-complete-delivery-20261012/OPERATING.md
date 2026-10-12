@@ -40,6 +40,12 @@ Source and received application ports remain 53173 and 53174. DATASETTE_CHROMIUM
 
 ## Recovery and complete delivery
 
+The original publisher and all 17 MCP operations completed at 2026-10-12 21:02:35 UTC. This edition saves a complete Datasette_Publisher_Complete_Checkpoint.zip and result immediately after that phase, before fetching or building the installed application. The subsequent installed checkpoint retains the publisher save identities. A disconnected installed build can therefore continue from the completed publisher instead of repeating source and MCP work.
+
+The receiving entrypoint first reconciles the exact preceding producer using its observed physical PID and the SHA256 of its actual Python command argument. It reads that identity without printing command bytes. If the same producer is still active, it returns its current original journal phases for continuation; otherwise the complete original restore proceeds. The transfer verifies the exact archive size and SHA256 and, after a mismatched physical transfer, refreshes the same canonical file selection once before receiving it again. Expected and received byte identities are retained.
+
+New checkpoint manifests preserve each regular file's nanosecond modification time and the complete original runtime symlink targets. Restore validates all regular files before creating the declared links, checks parent links before writing, and restores the original times. The selected Git fetch keeps genuine commit/tree/blob objects and uses a single pack thread with a 32MiB pack window to reduce memory pressure on the shared host.
+
 Each native exit records the original publisher and installed journals, logs and complete result. At the same normal save boundary it captures the existing cgroup memory counters and filesystem capacity for the fleet's original capacity recovery, without starting another worker. The full checkpoint retains source, original inputs, all workspaces, received files, application/runtime state, browser images and downloads, actual Git objects and the controller. Runtime sockets and reproducible temporary caches are recorded as exclusions.
 
 The same process uploads the full checkpoint and result and validates every per-file succeeded status and returned file identity. An actual transfer failure retries the same file; if the complete archive still cannot transfer, the exact archive is saved as ordered 10MiB parts with a complete assembly manifest. The receiver retains its process for retry-save input if that transfer recovery is still unfinished.

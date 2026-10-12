@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original grant planning and delivery calendars with complete source-table authoring, contributor delivery and cash, complete timesheet and supplier invoice source intake, statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases.",
+  "description": "Original grant planning and delivery calendars with complete source-table authoring, reviewed native baseline amendments with full historical receiving, contributor delivery and cash, complete timesheet and supplier invoice source intake, statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving.",
   "base": {
     "commands": [
       "installation",
@@ -199,7 +199,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Grant Operations: retained plans, payment-derived delivery calendars, native currencies and sourced FX, statement receiving, delivery/cash forecasting and resource portfolios, buyer/support sources, customer installations and complete returned receiving, implementation evidence and receiving, cohort reviews and tranche completion.",
+    "description": "Grant Operations: retained plans, reviewed baseline amendments with preserved work/cash identities and complete historical receiving, payment-derived delivery calendars, native currencies and sourced FX, statement receiving, delivery/cash forecasting and resource portfolios, buyer/support sources, customer installations and complete returned receiving, implementation evidence and receiving, cohort reviews and tranche completion. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving.",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

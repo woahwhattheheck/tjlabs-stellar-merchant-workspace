@@ -629,7 +629,7 @@ def command(ops, context, action, data, actor, version, note):
             "matchedRecordIds": [link["recordId"] for link in (row["applied"] or {}).get("links", []) if link["operation"] == "REUSED"]}
 
 
-def validate_import(context, history, events, files):
+def validate_import(context, history, events, files, *, plan_for_version=None):
     """Receive every draft/applied edition and its original native record links."""
     if not isinstance(history, list) or len(history) > context["program"]["version"]:
         fail("The saved work/invoice intake history is invalid.", "INTAKE_RECEIVING")
@@ -652,6 +652,11 @@ def validate_import(context, history, events, files):
         ident = intake_id(row.get("id"))
         revision = domain.integer(row.get("revision"), "Saved intake edition", 1, 10000000)
         version = domain.integer(row.get("caseVersion"), "Intake case version", 2, context["program"]["version"])
+        historical = context
+        if plan_for_version is not None:
+            plan = plan_for_version(version - 1)
+            historical = {**context, "plan": plan,
+                          "program": {**context["program"], "planRevision": plan["revision"]}}
         if version in versions:
             fail("Two intake editions cannot belong to the same original case event.", "INTAKE_RECEIVING")
         versions.add(version)
@@ -686,7 +691,7 @@ def validate_import(context, history, events, files):
             applied = plain(row.get("applied"), "Applied original intake")
             if applied.get("caseVersion") != version or applied.get("previewSha256") != row.get("previewSha256") or applied.get("summary") != row.get("previewSummary"):
                 fail("The applied intake lost its original reviewed selection.", "INTAKE_RECEIVING")
-            _, _, evaluated, candidates = compile_source(context, source, raw, row["kind"], normalized)
+            _, _, evaluated, candidates = compile_source(historical, source, raw, row["kind"], normalized)
             if any(value["errors"] for value in evaluated):
                 fail("An applied intake contains unresolved source rows.", "INTAKE_RECEIVING")
             proposed = {value["key"]: value for value in candidates}
@@ -711,7 +716,7 @@ def validate_import(context, history, events, files):
                 if operation == "CREATED" and (snapshot.get("version") != version or snapshot.get("state") != ("LOGGED" if item["kind"] == "work" else "RECEIVED")
                         or snapshot.get("sourceIds") != [source["id"]] or decision.get("action") == "REUSE"):
                     fail("A created native record does not belong to its original intake.", "INTAKE_RECEIVING")
-                original = domain.prepare(item["kind"], snapshot, {**context, "restoring": True}, snapshot)
+                original = domain.prepare(item["kind"], snapshot, {**historical, "restoring": True}, snapshot)
                 if any(snapshot.get(key) != value for key, value in original.items() if key != "state"):
                     fail("An original native record differs from its normalized fields.", "INTAKE_RECEIVING")
         previous[ident] = row

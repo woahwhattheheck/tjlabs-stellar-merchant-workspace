@@ -787,10 +787,12 @@ python3 workflow_cli.py export \
   --destination /absolute/private/supplier/Complete_Supplier_Project.zip
 ~~~
 
-The existing installed wrapper also supports these commands as
-starforge datasette-analysis -- workflow followed by the command arguments.
-The native supplier component is available through its installed
-starforge supplier-report command.
+The existing installed wrapper also supports these commands after its actual
+--runtime-workspace, --runtime-directory, --runtime-id and --installation-id
+selection, followed by -- workflow and the command arguments. The full installed
+invocation and independent successor sequence are in
+[WORKFLOW_RECEIVING.md](WORKFLOW_RECEIVING.md). The native supplier component is
+available through its installed starforge supplier-report command.
 
 ### Read and receive every original file
 
@@ -844,3 +846,23 @@ A saved comparison still awaiting review remains visible with its complete
 sources, rules and outcome. A reviewed result carries the source-owned accepted
 CSV/SQL/lineage set. The adapter preserves those native decisions and identities
 through delivery, receiving and re-export.
+
+
+### Original CSV baseline products
+
+New original CSV editions select the native original-csv-strings-v1 product
+profile. Their source-wide report and workbook describe the actual original
+columns, publisher, edition, local import time, original strings, blanks and
+published zero values. The pricing source keeps its declared GBP amount fields,
+billing periods and display wording with each original row. The catalogue
+baseline describes its own original catalogue fields.
+
+New baseline report jobs pin the native edition's complete selected collection
+bindings. They can resume after an unrelated source adds other views to the
+same Analysis operation. Existing saved report/workbook definitions and already
+pinned job inputs retain their original identity. Completed native source
+products remain available in the complete received workspace.
+
+The original baseline report/workbook and all six customer SQL sections belong
+in the independent operator/browser review described in
+[WORKFLOW_RECEIVING.md](WORKFLOW_RECEIVING.md).
