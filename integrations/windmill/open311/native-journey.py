@@ -9,7 +9,7 @@ import time
 import urllib.parse
 import uuid
 from datetime import datetime, timezone
-from commission import HERE, FOLDER, SCRIPT, APP, Api, api_for, app_source, app_matches, built_app, read_json, write_json, now
+from commission import HERE, FOLDER, SCRIPT, APP, Api, api_for, app_source, app_matches, built_app, read_json, write_json, now, up, stop
 
 def check(ok, message):
     if not ok:
@@ -58,6 +58,44 @@ class Journey:
               "The native job identity belongs to another path or input: "+job_id)
         self.jobs[name]=job_id
         return job_id
+    def restart_at_approval(self, name, flow_job, approval_job):
+        completed = self.root/"jobs"/(name+"-services-restarted.json")
+        pending = self.root/"jobs"/(name+"-services-restart.json")
+        if completed.exists():
+            saved = read_json(completed)
+            check(saved["flowJobId"] == flow_job["id"] and saved["approvalJobId"] == approval_job["id"],
+                  "Continue the original service restart and approval identity.")
+            return saved
+        if pending.exists():
+            saved = read_json(pending)
+            check(saved["flowJobId"] == flow_job["id"] and saved["approvalJobId"] == approval_job["id"],
+                  "The retained restart belongs to another approval.")
+        else:
+            saved = {"schema":"tjlabs.windmill.open311.native-restart.v1","phase":"PREPARED","preparedAt":now(),
+                     "project":self.config["project"],"flowJobId":flow_job["id"],"approvalJobId":approval_job["id"],
+                     "flowBefore":flow_job,"approvalBefore":approval_job,"images":self.config["images"]}
+            write_json(pending, saved)
+        args = argparse.Namespace(private=self.private)
+        if saved["phase"] == "PREPARED":
+            # Stop and start this original Compose project without removing containers or volumes.
+            stop(args)
+            saved = {**saved,"phase":"STOPPED","stoppedAt":now()}
+            write_json(pending, saved)
+        up(args)
+        resumed = self.job(flow_job["id"])
+        retained_approval = self.job(approval_job["id"])
+        check(resumed["id"] == saved["flowBefore"]["id"]
+              and resumed.get("script_path") == saved["flowBefore"].get("script_path")
+              and resumed.get("args") == saved["flowBefore"].get("args"),
+              "The native review job changed across the service restart.")
+        check(retained_approval["id"] == saved["approvalBefore"]["id"]
+              and retained_approval.get("type") == "CompletedJob" and retained_approval.get("success") is True,
+              "The original completed approval step was lost across the service restart.")
+        saved = {**saved,"phase":"RESUMED","resumedAt":now(),"flowAfter":resumed,"approvalAfter":retained_approval}
+        write_json(completed, saved)
+        print(json.dumps({"phase":"NATIVE_SERVICES_RESTARTED","jobId":flow_job["id"],
+                          "approvalJobId":approval_job["id"],"project":self.config["project"]}),flush=True)
+        return saved
     def wait(self,name,job_id,approval=False):
         deadline=time.monotonic()+self.timeout
         decision=self.root/"jobs"/(name+"-approval-submitted.json")
@@ -72,13 +110,16 @@ class Journey:
             if approval:
                 modules=job.get("flow_status",{}).get("modules",[])
                 step=next((m for m in modules if m.get("id")=="approval"),None)
-                if step and step.get("job"):
+                suspended=next((m for m in modules if m.get("type")=="WaitingForEvents"
+                                and step and m.get("job")==step.get("job")),None)
+                if step and step.get("job") and suspended:
                     child=self.job(step["job"])
                     if child.get("type")=="CompletedJob" and child.get("success"):
                         value=self.api.call("GET",self.prefix+"/jobs_u/completed/get_result/"+step["job"])
                         if value.get("resume") and not decision.exists():
                             write_json(self.root/"jobs"/(name+"-approval-job.json"),child)
                             write_json(self.root/"jobs"/(name+"-approval-request.json"),value)
+                            self.restart_at_approval(name,job,child)
                             if self.approve:
                                 # This submits a real event to the URL issued by Windmill for this precise suspended job.
                                 response=self.api.resume(value["resume"],{})
@@ -179,6 +220,7 @@ class Journey:
                  "services":len(services["items"]),"requests":len(source["items"]),"reviews":len(reopened["reviews"]),
                  "captures":len(reopened["captures"]),"unchangedRequests":len(comparison["unchanged"]),
                  "approval":{"flowJobId":self.jobs["review"],"decisionSaved":(self.root/"jobs/review-approval-submitted.json").exists()},
+                 "restart":read_json(self.root/"jobs/review-services-restarted.json"),
                  "launch":{"flowJobId":self.jobs["capture"],"launcherJobId":self.jobs.get("capture-launch"),
                            "replayJobId":self.jobs["capture-launch-replay"],"replayed":launch_replay["replayed"]},
                  "deployedSources":{"sourceCommit":deployment.get("sourceCommit"),"scriptHash":deployment["script"]["hash"],
@@ -193,6 +235,11 @@ def main():
     parser.add_argument("--approve-review",action="store_true",help="Submit the commissioning review through its actual native Windmill approval URL.")
     parser.add_argument("--timeout",type=int,default=900,help="Seconds to wait per existing native job before saving its current state.")
     args=parser.parse_args()
+    # A prior invocation may have stopped the services before its process ended.
+    pending=args.private.resolve()/"journey/jobs/review-services-restart.json"
+    completed=args.private.resolve()/"journey/jobs/review-services-restarted.json"
+    if pending.exists() and not completed.exists():
+        up(args)
     journey=Journey(args)
     try:
         journey.run()
