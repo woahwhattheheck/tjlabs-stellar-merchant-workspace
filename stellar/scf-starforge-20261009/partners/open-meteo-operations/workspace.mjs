@@ -92,6 +92,9 @@ export class WeatherWorkspace{
  saveSite(input){return this.serial(()=>this.store.saveSite(input));}
  saveRequest(input){return this.serial(()=>this.store.saveRequest(input));}
  saveDecision(input){return this.serial(()=>this.store.saveDecision(input));}
+ renewalChoices(reportId){return this.serial(()=>this.store.renewalChoices(reportId));}
+ reviewRenewal(input){return this.serial(()=>this.store.reviewRenewal(input));}
+ commitRenewal(input,options){return this.serial(()=>this.store.commitRenewal(input,options));}
  freezeReport(input){return this.serial(()=>this.store.freezeReport(input));}
  report(id){return this.serial(()=>this.store.report(id));}
  events(options){return this.serial(()=>this.store.events(options));}
