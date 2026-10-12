@@ -116,6 +116,139 @@ The selected projects directory must already be canonical and private. The
 product opens the original console against it and keeps its existing merchant
 packages and captured-source library.
 
+### Run the retained product from Applications
+
+Applications can own this product's browser and merchant agent as one original
+managed process. Start with the complete installed runtime selected in section 1
+and initialize the private product once:
+
+~~~sh
+starforge runtime-install run --dir /private/runtimes/captured-api -- \
+  captured-api init --dir /private/state/captured-api --name 'Supplier API'
+~~~
+
+An existing project library can be selected with the same original `--projects`
+option. Finish initialization before selecting the application. Review reads the
+retained product; setup and source intake remain the original product operations.
+
+In the runtime workspace, select the actual READY installation and choose
+**Applications → New application → Captured API merchant**.
+
+| Application setting | Select |
+| --- | --- |
+| Product directory | The existing private directory containing `product.json`, such as `/private/state/captured-api` |
+| Browser only | Enable for the original source/merchant browser alone; disable to add its original merchant agent |
+| Browser port | `0` for an available loopback port, or the actual fixed callback port required by the selected browser OAuth configuration |
+| MCP port | `0` for an available port, or the intended original agent port; it must differ from a fixed owned browser port |
+| Token environment name | The host's original incoming MCP token reference, normally `MCP_ACCESS_TOKEN` |
+| Environment file | The existing private environment selected for the original process, where required by the merchant and its providers |
+
+For the full agent, supply its existing fixed bearer token or the original
+`MCP_OAUTH_CONFIG` configuration according to the native merchant MCP
+authorization contract. Applications retains environment reference names and
+the selected file path; token values belong to the original private host
+environment.
+
+Use the original application lifecycle:
+
+1. **Review application** to inspect the retained product name, exact project and
+   configuration paths, browser ownership, both source providers, listener choices
+   and selected runtime/source.
+2. **Save application** to retain that selection through the existing managed
+   release. Keep its saved application and operation identity if the reply is lost.
+3. **Review start** to bind the current product profile, original operator and
+   connection files, optional OAuth configuration and directory identities.
+4. **Start reviewed application** to open the original product through its existing
+   lease. Applications receives one source-bound startup record after the original
+   listeners are open and the selected files have been checked again.
+5. **Open application** to enter the original captured-source library and merchant
+   form. With the agent enabled, use the actual returned MCP listener and native
+   workspace alias `merchant`. The HAR and OpenAPI providers share the same product.
+6. Complete capture, operation review, merchant terms, route pricing, package save,
+   release and receiving using sections 3–8.
+7. **Stop application** to drain the original agent, then the owned browser and its
+   merchant. Review the same saved application again and start it to reopen its
+   retained sources, review revisions, plans, packages and releases.
+
+Close an existing manually started product before starting its managed application.
+Both use the same original product lease. Closing the Applications browser window
+leaves its managed process available through the existing runtime operation;
+use **Stop application** when that process should close.
+
+The launch binding changes when a retained product/configuration file, selected
+directory identity, listener choice or authorization configuration changes.
+Review the actual current selection again after such an edit. Normal capture,
+review, pricing, package and release work leaves that launch configuration intact.
+Session records and changing private listener tokens are deliberately outside it.
+
+For a product-owned browser with registered OAuth providers, the original
+OpenAPI launch inspector supplies the **Registered provider connections** review:
+selected private connection directories, immutable profiles, registered callbacks
+and source identities. The original managed OpenAPI launcher verifies those
+same opened profiles before the outer product announces its listeners. Changing
+a directory environment reference, public profile or callback requires a fresh
+launch review; normal grant renewal remains within the retained connection.
+
+An externally attached original console retains its own lifetime. For such a
+product, choose browser port `0`: its existing console already owns the browser
+port and provider registry. Stopping this managed product drains its owned agent;
+the selected external console remains under its original owner.
+
+The [Applications guide](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md)
+covers the existing READY runtime, save/start review, original process recovery
+and reopening controls.
+
+### Embed the same managed launcher
+
+The product also exports its inspected launch for an existing host integration:
+
+~~~js
+import {
+  inspectCapturedApiLaunch,
+  openCapturedApiManaged,
+} from './products/captured-api/managed.mjs';
+
+const options = {
+  directory: '/private/state/captured-api',
+  port: 0,
+  mcpPort: 0,
+  browserOnly: true,
+  tokenEnv: 'MCP_ACCESS_TOKEN',
+};
+const reviewed = await inspectCapturedApiLaunch(options, { environment: process.env });
+const session = await openCapturedApiManaged({
+  ...options,
+  expectedBindingSha256: reviewed.bindingSha256,
+}, { environment: process.env });
+
+// The existing host owns session.close() and calls it when its operation stops.
+// session.startup contains the original listeners and the reviewed binding.
+~~~
+
+Inspection returns the complete source binding, nonsecret review fields, stable
+product resource identity, static file paths/byte counts/SHA-256 values and
+directory identities. It opens no listener. Managed open rechecks that binding
+under the original product lease before starting and before announcing success.
+
+The command-line inspection returns that same binding without starting a process:
+
+~~~sh
+starforge captured-api inspect-launch --dir /private/state/captured-api --browser-only
+
+starforge captured-api open --dir /private/state/captured-api --browser-only \
+  --managed-binding-sha256 ACTUAL_INSPECTED_BINDING_SHA256
+~~~
+
+Copy the actual `bindingSha256` from inspection and retain the same selected
+options and original environment for opening.
+
+The corresponding original CLI accepts `--managed-binding-sha256` on `open`.
+That mode prints exactly one JSON startup line with schema
+`stellar-forge.captured-api-managed-session.v1`; it includes the inspected
+binding, product identity and actual original browser/MCP URLs. These capability
+URLs belong to the host's private operation record. Ordinary `open` retains its
+readable JSON output and the same signal handling.
+
 ### Attach an Applications-managed console
 
 ~~~sh
@@ -410,17 +543,68 @@ release workflows to compare, stage and switch the merchant.
 The [capture refresh guide](../../stellar/scf-starforge-20261009/sf61-openapi-seller-import/har/REFRESH.md)
 defines comparison, dormant-route carry, offline refresh and package operations.
 
-## 8. Receive the complete source and merchant
+## 8. Hand over the complete source and merchants
 
-A source handover is the complete native capture or refresh directory: original
-bytes, inventory, manifest and immutable reviews. The original source copy
-verifies these files.
+The product's complete handover joins original captured histories with their
+saved merchant packages. Select actual members, copy and review the full native
+collection, publish it, then review and receive it into another initialized
+product.
 
-The standard HAR destination `handover` selects `receiving/source-handover`.
-Import aliases `capture` and `refresh` select `receiving/capture` and
-`receiving/refresh`. Use the complete native source intended for that operation.
+~~~sh
+starforge captured-api handover inventory --dir /private/state/captured-api
 
-Initialize and open the receiving product, then adopt the original directory:
+starforge captured-api handover prepare \
+  --dir /private/state/captured-api \
+  --selection /private/inputs/merchant-handover.json \
+  --out /private/handovers/merchant-edition-1
+
+starforge captured-api handover publish \
+  --out /private/handovers/merchant-edition-1 \
+  --review-sha256 ACTUAL_PREPARED_REVIEW_SHA256
+~~~
+
+The selection contains original package names/manifest hashes and optional
+capture or refresh selections. A captured merchant automatically includes its
+original source and saved review. A refresh retains both complete source
+editions, their histories, comparison, draft and native reviewer. Every selected
+package includes the original OpenAPI, complete plan and atomic prices,
+source revision, generated files, compiled merchant and native export manifest.
+
+Move the complete published directory to the receiving host and use its actual
+manifest hash:
+
+~~~sh
+starforge captured-api handover receive-review \
+  --dir /private/state/receiving-merchant \
+  --bundle /private/delivery/merchant-edition-1 \
+  --manifest-sha256 ACTUAL_PUBLISHED_MANIFEST_SHA256
+
+starforge captured-api handover receive \
+  --dir /private/state/receiving-merchant \
+  --bundle /private/delivery/merchant-edition-1 \
+  --manifest-sha256 ACTUAL_PUBLISHED_MANIFEST_SHA256 \
+  --review-sha256 ACTUAL_RECEIVING_REVIEW_SHA256
+~~~
+
+Initialize and open the receiving product before its native adoption/package
+writes. The receiving review lists existing source matches and package names;
+an optional private name map lets the operator choose another receiving name.
+The same native source adoption merges missing immutable reviews and retains
+receiving-only decisions. Native package receiving preserves original UUIDs,
+source, complete plans, prices and compiled bytes.
+
+Repeat the same preparation or receiving command after an interruption. Use
+`handover status --dir PRODUCT --operation ORIGINAL_OPERATION_ID` to reopen the
+retained receiving result after restart or after the delivered bundle moves.
+Open the received source and saved package in the original browser, then use its
+native worksheet, merchant and release controls to continue operation.
+
+[HANDOVER.md](HANDOVER.md) supplies the complete selection schemas, target-name
+review, file collection, publication/receiving commands, restart and release
+walkthrough. It also exposes the same complete workflow as a source module.
+
+For an individual existing source directory, the original command remains
+available:
 
 ~~~sh
 starforge captured-api adopt \
@@ -429,21 +613,9 @@ starforge captured-api adopt \
   --label 'Received supplier source'
 ~~~
 
-Native adoption validates the original manifests and merges missing immutable
-reviews for an equal source. Existing receiving-only reviews remain available.
-
-The complete merchant transfer also includes original OpenAPI, full plan,
-generated merchant, compiled files and manifest. The OpenAPI `handover` alias
-selects `receiving/merchant-package`. Receive that full directory through the
-original package workflow, inspect its manifest and reopen the saved package.
-
 Keep the complete base and proposed worksheet JSON when moving unfinished
-pricing work. The native file hashes and source/asset binding continue to govern
-import and reconciliation.
-
-The exported OpenAPI document is useful for authoring. The complete native
-capture or refresh directory preserves captured-source history and decision
-continuation for the receiving operator.
+pricing work. Native file hashes and source/asset binding govern its import and
+reconciliation.
 
 ## 9. Recover and upgrade
 
@@ -459,14 +631,26 @@ alongside the saved process session.
 | --- | --- |
 | Setup stops | Repeat `init --dir` for the retained original setup |
 | Browser or agent closes | Reopen the same product and original source/package/release state |
+| Stop reports a close failure | Keep the same original process and retry Stop; its native owners and product lease remain retained until the drain finishes |
 | Capture reply is lost | Exact original bytes and prior saved selection |
 | Decision save reply is lost | The original source's immutable review list |
 | Merchant save reply is lost | Intended package name, original source and complete plan |
 | Managed browser restarts | Its original private URL record on the next operation |
+| Applications launch configuration changes | Fresh review of the same saved product before its next start |
+| Applications start reply is lost | The saved original application and managed operation, including its retained private startup record |
 | Worksheet transfer stops | Same source/plan, worksheet identity and native downloader |
+| Complete handover is interrupted | Same selection/output or receiving review/operation ID; completed native members reopen |
 | Receiving adoption repeats | Same source manifest and immutable reviews |
 | Runtime installation stops | Original installer directory, archive and lock |
 | Source contract changes | Previous review, new capture edition and native revision/release flow |
+
+The product records `DRAINING` while stopping. A failed native close records
+`CLOSE_FAILED`, retains the original owner instances and keeps the product lease.
+Repeat Stop or call that same returned `close()` handle to continue. Repeated
+signals join the current attempt. `CLOSED` is recorded after both owned native
+sessions finish; a rejected opening records `FAILED` after its cleanup finishes.
+An embedded opening failure that still needs cleanup exposes that same
+`error.close()` handle together with the original startup and cleanup errors.
 
 Keep state and connection files outside the checkout. Close through the normal
 drain before moving the full operating directories.

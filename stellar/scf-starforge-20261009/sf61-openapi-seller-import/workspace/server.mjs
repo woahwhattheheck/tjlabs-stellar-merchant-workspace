@@ -400,7 +400,13 @@ export async function startWorkspace({ parent, port=0, noSignals=false, oauthCon
             return main(args,{env:runtimeEnv});
           }}), nativeClose=original.close.bind(original);
           let closed;
-          original.close=()=>closed??=Promise.resolve().then(nativeClose);
+          original.close=()=>{
+            if(closed)return closed;
+            const attempt=Promise.resolve().then(nativeClose);
+            closed=attempt;
+            void attempt.catch(()=>{if(closed===attempt)closed=null;});
+            return attempt;
+          };
           return original;
         }});
         if (shuttingDown) {await session.close();return send(503,{error:'Workspace stopped during startup'});}
@@ -427,30 +433,43 @@ export async function startWorkspace({ parent, port=0, noSignals=false, oauthCon
   try {await new Promise((yes,no)=>{server.once('error',no);server.listen(port,'127.0.0.1',()=>{server.off('error',no);yes();});});}
   catch(error){await oauth.close();throw error;}
   origin='http://127.0.0.1:'+server.address().port;
-  let closing;
-  const close=()=>closing??=(async()=>{
-    shuttingDown=true;
-    const errors=[];
-    const attempt=async action=>{try{await action();}catch(error){errors.push(error);}};
-    // Observe server closure immediately while preserving each original owner's
-    // drain order. One failed optional application must not skip the others.
-    const closed=new Promise((yes,no)=>server.close(e=>e?no(e):yes())).catch(error=>{errors.push(error);});
-    await mutationDone;
-    await Promise.allSettled([...cacheRequests]);
-    await attempt(()=>packageTransfer.close());
-    for(const opening of cacheWorkspaces.values()) await attempt(async()=>{
-      const workspace=await opening.catch(()=>null);if(workspace)await workspace.close();
-    });
-    cacheWorkspaces.clear();
-    const migration=migrationPromise;
-    if (migration) await attempt(async()=>{await (await migration).close();});
-    await attempt(closeCustomer);
-    await attempt(async()=>{if (active) {await active.session.close();active=null;}});
-    await attempt(()=>oauth.close());
-    await closed;
-    if (errors.length===1) throw errors[0];
-    if (errors.length>1) throw new AggregateError(errors,'Workspace sessions did not finish stopping.');
-  })();
+  let closing, packageTransferClosed=false, oauthClosed=false;
+  const close=()=>{
+    if(closing)return closing;
+    const disposing=(async()=>{
+      shuttingDown=true;
+      const errors=[];
+      const attempt=async action=>{try{await action();}catch(error){errors.push(error);}};
+      // Observe the original listener immediately. A retry retains each failed
+      // owner and accepts that the listener may already have finished closing.
+      const closed=new Promise((yes,no)=>server.close(error=>
+        error&&error.code!=='ERR_SERVER_NOT_RUNNING'?no(error):yes()))
+        .catch(error=>{errors.push(error);});
+      await mutationDone;
+      await Promise.allSettled([...cacheRequests]);
+      if(!packageTransferClosed)await attempt(async()=>{await packageTransfer.close();packageTransferClosed=true;});
+      for(const [name,opening] of [...cacheWorkspaces])await attempt(async()=>{
+        const workspace=await opening.catch(()=>null);
+        if(workspace)await workspace.close();
+        if(cacheWorkspaces.get(name)===opening)cacheWorkspaces.delete(name);
+      });
+      const migration=migrationPromise;
+      if(migration)await attempt(async()=>{
+        await (await migration).close();
+        if(migrationPromise===migration){migrationPromise=null;migrationInstance=null;}
+      });
+      await attempt(closeCustomer);
+      await attempt(async()=>{if(active){await active.session.close();active=null;}});
+      // A still-draining owner can continue using its original provider profile.
+      if(!errors.length&&!oauthClosed)await attempt(async()=>{await oauth.close();oauthClosed=true;});
+      await closed;
+      if(errors.length===1)throw errors[0];
+      if(errors.length>1)throw new AggregateError(errors,'Workspace sessions did not finish stopping.');
+    })();
+    closing=disposing;
+    void disposing.catch(()=>{if(closing===disposing)closing=null;});
+    return disposing;
+  };
   if (!noSignals) for (const signal of ['SIGINT','SIGTERM']) process.once(signal,()=>close().catch(()=>{process.exitCode=1;}));
   return {url:origin+'/#'+token,origin,token,close,output,connectionStatus:()=>registry.list()};
 }

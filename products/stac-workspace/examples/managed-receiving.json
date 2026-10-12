@@ -1,0 +1,10 @@
+{
+  "schema": "stellar-forge.stac-managed-applications-input.v1",
+  "runtimeDirectory": "/srv/starforge/runtimes/imagery-01",
+  "sourceWorkspace": "/srv/starforge/imagery",
+  "sourceProcessingWorkspace": "/srv/starforge/processing",
+  "directory": "/srv/starforge/receiving/application-1",
+  "label": "Received imagery and processing",
+  "timeoutMs": 180000,
+  "pollMs": 500
+}

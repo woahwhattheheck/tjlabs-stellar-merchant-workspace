@@ -1,0 +1,10 @@
+{
+  "runtimeId": "RETURNED_RUNTIME_ID",
+  "kind": "stac-prescient",
+  "label": "Prescient customer",
+  "settings": {
+    "workspaceDirectory": "/srv/starforge/prescient/customer-one",
+    "deploymentFile": "/srv/starforge/private/prescient-deployment.json",
+    "port": 0
+  }
+}
