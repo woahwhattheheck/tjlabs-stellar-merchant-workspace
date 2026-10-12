@@ -5,23 +5,31 @@
     "repository": "woahwhattheheck/public-commons-sprint-2026",
     "implementationMerge": "3585e7620cc8e8c6f7fed24a5eb031415195c078",
     "executionHead": "00acbcddd9a5646f3006b46a6e87d8f17d452162",
-    "completeSourceCommit": "bcdeeb2fe3e32f1f9340a892a2f82a1137bcbe75",
-    "erddapTree": "1af5b4890991a3f5c4663997c8bd0ee23a956bd4",
+    "completeSourceCommit": "184abaf54ce864973f7a28fc8fb835b83497ef5b",
+    "erddapTree": "e36d568cd01f9636a59a2957a0a80fd2d4bf4775",
     "sourceHistory": [
       {
         "completeSourceCommit": "8a9a7d238473d6ac5a5ba420054b9cc67a67c876",
         "erddapTree": "56d6e84edbd0b39ca27ce402f5fc6ef4ace17073",
         "destinationMerge": "3c25fdc8ded02bc7fc7678aebde3e002b433851d",
         "destinationSourceManifest": "518e4f3b12454c4906e13420056ef426db1c68ff"
+      },
+      {
+        "completeSourceCommit": "bcdeeb2fe3e32f1f9340a892a2f82a1137bcbe75",
+        "erddapTree": "1af5b4890991a3f5c4663997c8bd0ee23a956bd4",
+        "destinationMerge": "c99df86f91564b1b3e133ae6b294798bd8ed002c",
+        "destinationSourceManifest": "3deec3ed941189d6c7d2776e62ac15cf1688940b"
       }
     ],
     "providerHistoryMerge": "bcdeeb2fe3e32f1f9340a892a2f82a1137bcbe75",
-    "providerHistoryHead": "e9164502e2f2f1db6895ea39ba48c1947baf2b44"
+    "providerHistoryHead": "e9164502e2f2f1db6895ea39ba48c1947baf2b44",
+    "browserResponseMerge": "184abaf54ce864973f7a28fc8fb835b83497ef5b",
+    "browserResponseHead": "e0b5597967803247b1ba8263d938737c1123b727"
   },
   "destination": {
     "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-    "baseCommit": "9048149a4f3327634abfa8d157685f8445280b12",
-    "previousBaseCommit": "7e1ed722ff1c0ed7eac0cc4cfa428869d68e8982"
+    "baseCommit": "d1ace72ca13f5e990073f6d43e892b7d537d8b1a",
+    "previousBaseCommit": "9048149a4f3327634abfa8d157685f8445280b12"
   },
   "sourceFiles": [
     {
@@ -117,9 +125,9 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/browser-phase.cjs",
-      "bytes": 42064,
-      "sha256": "c81be3bbd8050a0dde711bcb774c46cafd38eef0c895bde6d6949604d236f30f",
-      "gitBlob": "4258b324ea689b272219505db714fb4c526f2ab6",
+      "bytes": 42253,
+      "sha256": "27129035f25f4b2fb2883a557ea30975f00ab65e6703c0014d3096187f2806e4",
+      "gitBlob": "66bb5155b41bff330934dc914b0a551eaeae59d3",
       "mode": "100644"
     },
     {
@@ -499,8 +507,63 @@
       "currentDeclaredAndKnownUnversionedDecimalReceived": true,
       "changedReviewAndUnknownVersionRejected": true
     },
-    "browserStatus": "Prepared for the same original workspace and reviewed profile; completed browser receipt will be retained by that owner.",
-    "installedStatus": "Selected source is integrated; complete maintained build/install receiving remains the original product continuation."
+    "browserStatus": "The original browser completed original_workspace, then exposed a response-body lifetime failure. Its corrected-source continuation reopened the saved third provider revision but lost the owning host before returning a new phase. Resume the same retained operation with the declared csvPolicy and direct profile; no completed full browser result is claimed.",
+    "installedStatus": "Selected source is integrated; complete maintained build/install receiving remains the original product continuation.",
+    "editionSelection": {
+      "status": "ERDDAP_PROVIDER_EDITION_SELECTION_COMPLETE",
+      "result": {
+        "path": "provider-native/edition-selection/result.json",
+        "bytes": 48204,
+        "sha256": "b67f4082dd4c898032167fbdfce3c68242cfffc087797cd0d77489e40e8f920f"
+      },
+      "revision": "80e36ef2dc7de66353d9a3f0d0a9679a0e737fac452268a7384390a6d4dde02b",
+      "parentRevision": "b538d84749d9edc41261481adb87e246fad7d9d26de9d0a0b63dc79776279afb",
+      "historyCount": 3,
+      "profile": {
+        "path": "handoff-profile-canonical-json.json",
+        "bytes": 15168,
+        "sha256": "c5a47939c86e9e25f8bb96ea3b1b1e833f823910ff95ffe4c7e870c5ede78153",
+        "dataEdition": "canonical-json"
+      },
+      "review": {
+        "ready": false,
+        "rows": 144,
+        "errorCount": 1,
+        "warningCount": 0,
+        "remainingField": "contacts.scientific",
+        "numericEquivalentSpellings": 46,
+        "missingValues": 98
+      },
+      "bundle": {
+        "mode": "review",
+        "bytes": 27206,
+        "sha256": "eda9d515e89b226eea63532a7522e7c7d9c81a56d450d970a0bd9e554aae6159"
+      },
+      "exactSaveRetry": true,
+      "independentReceiving": true,
+      "identicalRedownload": true,
+      "closedWorkspaceReopen": true,
+      "readyExportRejected": true
+    },
+    "browserContinuation": {
+      "status": "RETAINED_FOR_CONTINUATION",
+      "phaseGitBlob": "66bb5155b41bff330934dc914b0a551eaeae59d3",
+      "inputManifestSha256": "7eba76ab237cea2d3d7abcd69ddbaacd9c471fb4038666c04803b81332c06da9",
+      "lastCompletedPhase": "original_workspace",
+      "originalResult": {
+        "path": "browser/browser-result.json",
+        "bytes": 3068,
+        "sha256": "168ec76985e960fee1eb87908754e1e1799c1d6688a9281ec8c692936e62815c"
+      },
+      "lastOwnerRecord": {
+        "path": "browser/owner-result.json",
+        "bytes": 2979,
+        "sha256": "ddadfa8acd12ea5344bc2c544953170e46399cea96b9d8d2e4570e70b561a887",
+        "startedAt": "2026-10-12T12:54:17.467040+00:00",
+        "observedState": "browser",
+        "lockAvailableAfterOwnerLoss": true
+      }
+    }
   },
   "capturedReferences": [
     {
@@ -538,5 +601,19 @@
       "sha256": "2e1ee02cde8c3e8afe3ffc1b3c68718364e98da7373de6b29eea5e774fe5f57c",
       "rows": 432
     }
-  ]
+  ],
+  "selectedCaptureDeclaration": {
+    "path": "stellar/scf-starforge-20261009/distribution/selections/erddap-provider.json",
+    "gitBlob": "093a226cdaf4657f60ac569c3566e501f134c370",
+    "bytes": 6063,
+    "sha256": "f5da01c2f32b803f33aa4595cdf2e29f747cb1f3cc5da0d39c98c946129a3be8",
+    "paths": [
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/mur-46042-nearby-june-2023.erddap.zip",
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/mur-sst-june-2023.erddap.zip",
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/mur-sst-june-2025.erddap.zip",
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/ndbc-46042-june-2023.erddap.zip",
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/ndbc-46042-three-days-june-2023.erddap.zip"
+    ],
+    "archiveVerification": "Pending the maintained selected build and installation continuation."
+  }
 }

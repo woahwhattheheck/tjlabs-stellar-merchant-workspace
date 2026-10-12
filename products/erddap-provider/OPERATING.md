@@ -51,7 +51,7 @@ For a new provider request, use the application's live metadata/query workflow a
 
 ### Complete fixed historical source set
 
-All five original source ZIPs are included under `delivery/captures/`. Each contains the complete retained metadata, DDS, DAS, JSON, CSV and acquisition manifest. The exact sizes and SHA256 values are recorded in `products/erddap-provider/SOURCE.json` and the full import guide at `delivery/CAPTURE_IMPORT.md`.
+All five original source ZIPs are included under `delivery/captures/`. The selected build explicitly declares all five archives as retained source data, including the three MUR grids and the three-day NDBC table. Each contains the complete retained metadata, DDS, DAS, JSON, CSV and acquisition manifest. The exact sizes and SHA256 values are recorded in `products/erddap-provider/SOURCE.json` and the full import guide at `delivery/CAPTURE_IMPORT.md`.
 
 | Original selection | Rows | Source ZIP |
 | --- | ---: | --- |
@@ -390,7 +390,11 @@ Existing unversioned reviews retain their original identity, report and export b
 
 Exact-save recovery first resolves and validates the already saved source/profile/parent request, even if the current evaluator has changed. Deliberate reevaluation is a new review whose parent is the current head. Historical reads, export regeneration, lost export-receipt recovery, independent receiving, re-download and reopened receipt inspection use the same version routing. Legacy exports omit new evaluator markers so their original ZIP bytes remain reproducible.
 
-The original NDBC native operation completed dataset publication and independent receiving for all 144 rows, plus two provider revisions and their working-review bundles. A subsequent focused continuation preserved both historical bundles byte-for-byte, exact-save retry and the complete original head/history; it also received current declared-Decimal and known unversioned-Decimal records from the same original capture/profile. A rehashed altered review and an unknown evaluator were rejected. The compact source manifest records the original result identities. Full browser and selected installed-product receiving remain separate phases of that same retained operation.
+The original NDBC native operation completed dataset publication and independent receiving for all 144 rows, plus two provider revisions and their working-review bundles. A subsequent focused continuation preserved both historical bundles byte-for-byte, exact-save retry and the complete original head/history; it also received current declared-Decimal and known unversioned-Decimal records from the same original capture/profile. A rehashed altered review and an unknown evaluator were rejected.
+
+A third explicitly reviewed profile selected `canonical-json` against the saved second revision. Revision `80e36ef2dc7de66353d9a3f0d0a9679a0e737fac452268a7384390a6d4dde02b` and its 27,206-byte working-review bundle completed exact-save recovery, independent receiving, identical redownload and closed-workspace reopen. The source comparison still covers all 144 rows, including 46 equivalent numeric spellings and 98 missing representations. The separately appointed scientific contact remains unknown, so the review correctly has one unresolved field and ready export remains unavailable. The first two profiles and bundles are preserved. `SOURCE.json` records all original result and artifact identities.
+
+Full browser and selected installed-product receiving continue through the same retained operation. The browser completed its original-workspace phase and exposed a response-body lifetime failure. The maintained response helper now reads the matching body immediately while the UI action completes. A continuation reopened the saved third revision with this correction, but its host was lost before a new phase returned; the original checkpoint and available owner lock were reconciled. Resume using the same operation, `--csv-policy canonical-json`, and the separately retained `handoff-profile-canonical-json.json`. No completed full browser or installed-product result is claimed by these source records.
 
 The separately appointed scientific contact remains an explicit intake question. Working-review receiving is complete without inventing that appointment; a ready bundle is available only when the actual review permits it.
 

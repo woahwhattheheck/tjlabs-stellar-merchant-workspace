@@ -123,7 +123,11 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/ndbc-46042-june-2023.erddap.zip",
     "products/erddap-provider/OPERATING.md",
     "products/erddap-provider/SOURCE.json",
-    "stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md"
+    "stellar/scf-starforge-20261009/distribution/ERDDAP_PROVIDER.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/mur-46042-nearby-june-2023.erddap.zip",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/mur-sst-june-2023.erddap.zip",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/mur-sst-june-2025.erddap.zip",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/ndbc-46042-three-days-june-2023.erddap.zip"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
