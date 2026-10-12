@@ -486,3 +486,43 @@ A retained browser native-task document has `task` in place of `kind`; continue 
 - [Library of Congress MARC 024](https://www.loc.gov/marc/bibliographic/bd024.html), [773](https://www.loc.gov/marc/bibliographic/bd773.html) and [MARCXML](https://www.loc.gov/standards/marcxml/).
 
 The case-specific issuer documents, commercial programme, source acquisition and partner communication remain in the existing sales operation. This selected product is the reusable engineering workflow and complete editable delivery.
+
+## Prepare the original source before selecting a TIND institution
+
+A complete reviewed OAI edition can open immediately as an editable TIND migration. The institution field may remain empty while the operator maps original metadata, reviews source cases, preserves contributor identities, prepares rights and hierarchy decisions, and saves the full handover. This supports procurement and commissioning work before a receiving tenant has been selected.
+
+When the actual receiving institution is selected, open **Mapping**, set the profile's `instance` to that institution's HTTPS origin, and save the complete profile. Preparing a native batch, running native search, or sending an exact native request uses that selected institution. An institution already associated with received destination records or prepared native batches remains bound to the original migration.
+
+The OAI console also receives unchanged XML through `import-relay` or `import-relay-request`. Its original acquisition receipts, source bodies and replay history are retained through edition review, projection, the TIND project and the full editable workspace handover. See the adjacent OAI operator README for the complete receipt format and original-request recovery commands.
+
+
+## Complete original staff cohorts
+
+The maintained OAI source desk can now review completed GetRecord operations together as one explicit collection. This is useful when an institution's original staff cases cross thesis, journal, article and issue sets.
+
+Open the OAI console's **Record selections** tab. Receive each actual source record, choose its completed operation, prepare the collection, review the original identifier/datestamp decisions, and save the edition. Its metadata mapping retains the original GetRecord wrapper and can be built through the same SF30 dataset engine.
+
+Create the TIND project from that exact reviewed edition. The existing source-case desk matches the original OAI identifiers, preserves the original rights and release context, enriches assigned contributors and relationships, and records complete before/after staff decisions. The full mapping, destination reconciliation, file receiving and handover continue from that project.
+
+The collection includes references to all original operations and unchanged observations. Its source export carries original bodies, acquisition receipts, original operations, edition lineage, selected metadata paths and the native dataset. The complete handover retains the same collection and source-case history for receiving and reopening.
+
+### Complete MSU original staff-case operation
+
+The private receiving package at opportunities/discoverygarden_msu2026112_20261012/tind-operator contains the exact original responses and the complete 11-case collection request, msu-staff-record-selection.json.
+
+The complete journal receiving operation continues to use its original command and output directory. Receive all eleven original staff cases together using the same original MSU workspace and a separate collection output:
+
+```bash
+python3 /absolute/commons/opportunities/discoverygarden_msu2026112_20261012/tind-operator/receive_original_oai.py \
+  --source /absolute/merchant-checkout \
+  --workspace /private/msu-scholars-junction \
+  --out /private/msu-complete-staff-receiving \
+  --initialize \
+  --edition-mode staff-cases \
+  --operator "Actual receiving operator" \
+  --note "The complete original MSU staff cohort and its source rights, release rules, contributors and relationships reviewed"
+```
+
+This reuses the original received response identities, selects all eleven exact GetRecord sources, reviews and builds the actual collection, applies all eleven original staff cases, and writes the complete editable records, mapped MARCXML, native source export, operator page and whole-workspace handover. The result includes its actual collection operation, edition, build, project, review and archive identities.
+
+The existing complete Endeavors edition remains available in the same workspace. Each output directory retains its own exact receiving context, source selection and saved TIND/case requests. Continue an interrupted run with the same selected mode and output directory.

@@ -2,8 +2,9 @@
 import {createIslandoraDesk} from './islandora.mjs';
 const token=document.querySelector('meta[name="oai-session"]').content;
 const $=id=>document.getElementById(id), short=id=>String(id??'').slice(0,12);
-let state,tab='Repositories',selectedRepo='',selectedOperation='',selectedPreview='',selectedEdition='',selectedBuild='',mappingDraft=null;
-const tabs=['Repositories','Harvests','Edition review','Records','Projection','Islandora','Exports'];
+let pendingWrite=null,relayIdentity='',relayBusy=false,relayDraft=null,relayStorageError='',selectionDraft=null;
+let state,tab='Repositories',selectedRepo='',selectedOperation='',selectedPreview='',selectedEdition='',selectedBuild='',mappingDraft=null,mappingEdition='';
+const tabs=['Repositories','Harvests','Record selections','Edition review','Records','Projection','Islandora','Exports'];
 const islandora=createIslandoraDesk({get,action,onState:()=>refresh(false)});
 function el(tag,attrs={},...children){const n=document.createElement(tag);for(const [k,v]of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(k==='class')n.className=v;else if(k==='text')n.textContent=v;else if(k in n)n[k]=v;else n.setAttribute(k,v);}for(const child of children.flat(Infinity)){if(child!==null&&child!==undefined)n.append(child instanceof Node?child:document.createTextNode(String(child)));}return n;}
 const paragraph=text=>el('p',{},text), pre=value=>el('pre',{},typeof value==='string'?value:JSON.stringify(value,null,2));
@@ -16,11 +17,129 @@ function table(headers,rows){return el('div',{class:'table'},el('table',{},el('t
 const panel=(title,...body)=>el('section',{},el('h2',{},title),...body);
 function notice(message){$('notice').textContent=message;}
 async function get(path){const r=await fetch(path,{cache:'no-store'}),v=await r.json();if(!r.ok)throw Error(v.error??r.statusText);return v;}
-async function action(action,payload){const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-OAI-Session':token},body:JSON.stringify({action,payload})}),v=await r.json();if(!r.ok)throw Error(v.error??r.statusText);return v;}
+async function sendAction(action,payload){
+ const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-OAI-Session':token},body:JSON.stringify({action,payload})});
+ const v=await r.json();
+ if(!r.ok){const error=Error(v.error??r.statusText);error.httpStatus=r.status;throw error;}
+ return v;
+}
+async function action(name,payload){
+ if(relayBusy&&!['query','cancel'].includes(name))throw Error('The workspace request is being saved. Continue when its receiving result appears.');
+ if(!relayStorageError&&relayIdentity)pendingWrite=await relayStore('get',relayIdentity);
+ if(pendingWrite&&!['query','cancel'].includes(name))throw Error('Resume or resolve the saved workspace request before another workspace change.');
+ return sendAction(name,payload);
+}
+function relayStore(mode,key,value){
+ return new Promise((resolve,reject)=>{
+  const open=indexedDB.open('starforge-oai-relay-imports',1);
+  open.onupgradeneeded=()=>open.result.createObjectStore('pending',{keyPath:'workspace'});
+  open.onerror=()=>reject(Error('Browser storage could not preserve the complete workspace request. Download it and continue with its native command.'));
+  open.onsuccess=()=>{
+   const db=open.result,transaction=db.transaction('pending',mode==='get'?'readonly':'readwrite'),store=transaction.objectStore('pending');
+   let result=null;
+   transaction.oncomplete=()=>{db.close();resolve(result);};
+   transaction.onerror=()=>{db.close();reject(Error('Browser storage could not save this complete request. Download it for native receiving.'));};
+   transaction.onabort=()=>{db.close();reject(Error('Another tab changed this saved request. Refresh the workspace.'));};
+   const read=store.get(key);
+   read.onsuccess=()=>{
+    result=read.result??null;
+    if(mode==='add'){
+     if(result){transaction.abort();return;}
+     result={...value,workspace:key};store.add(result);
+    }else if(mode==='put'||mode==='delete'){
+     if(!result||result.id!==value.id){transaction.abort();return;}
+     if(mode==='delete'){store.delete(key);result=null;}
+     else{result={...value,workspace:key};store.put(result);}
+    }
+   };
+  };
+ });
+}
+function downloadJSON(value,name){
+ const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}));
+ const link=el('a',{href:url,download:name});document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function relayRequestDocument(payload){
+ return {schema:'stellar-forge.oai-relay-import-request.v1',operationId:payload.operationId,receipt:payload.receipt,bodyBase64:payload.bodyBase64};
+}
+async function relayPayload(operationId,file,receiptText){
+ const receipt=JSON.parse(receiptText);let bodyBase64;
+ if(file){if(file.size>32*1024*1024)throw Error('Use native import-relay for an original response larger than 32 MiB.');
+  const bytes=new Uint8Array(await file.arrayBuffer());let binary='';
+  for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  bodyBase64=btoa(binary);
+ }else if(relayDraft?.operationId===operationId){bodyBase64=relayDraft.bodyBase64;}
+ else throw Error('Select the unchanged original response body.');
+ const payload={operationId,receipt,bodyBase64};
+ if(new TextEncoder().encode(JSON.stringify({action:'import-relay',payload})).length>48*1024*1024)throw Error('The complete import envelope exceeds 48 MiB. Use native import-relay.');
+ return payload;
+}
+function selectionRequestDocument(payload){
+ return {schema:'stellar-forge.oai-record-selection-request.v1',operationId:payload.operationId,
+  sourceOperationIds:payload.sourceOperationIds,baseline:payload.baseline??null,label:payload.label??null};
+}
+async function receiveStoredWrite(actionName,payload=null){
+ if(relayBusy)throw Error('The saved workspace request is already receiving.');
+ relayBusy=true;
+ try{
+  pendingWrite=await relayStore('get',relayIdentity);
+  if(payload){
+   if(pendingWrite)throw Error('Resume the saved workspace request before preparing another.');
+   pendingWrite=await relayStore('add',relayIdentity,{id:crypto.randomUUID(),action:actionName,payload,status:'prepared',savedAt:new Date().toISOString()});
+  }
+  if(!pendingWrite)throw Error('Choose a complete prepared workspace request.');
+  const saved=pendingWrite,name=saved.action??'import-relay';
+  if(name!==actionName)throw Error('Resume the saved request using its recovery panel.');
+  let value;
+  try{value=await sendAction(name,saved.payload);}
+  catch(error){
+   const declined=error.httpStatus>=400&&error.httpStatus<500;
+   pendingWrite=await relayStore('put',relayIdentity,{...saved,status:declined?'declined':'unknown',error:error.message});
+   await render();
+   throw Error(declined?error.message:'The complete request is saved. Resume the same request to recover its receiving result. '+error.message);
+  }
+  await relayStore('delete',relayIdentity,saved);pendingWrite=null;
+  selectedOperation=saved.payload.operationId;
+  if(name==='select-records'){
+   selectionDraft=null;
+   await refresh(false);
+   const preview=await sendAction('preview',{operationId:selectedOperation});
+   selectedPreview=preview.id;tab='Edition review';await refresh();
+   notice('Original record selection received · '+value.recordCount+' identifiers · '+value.sourceOperationIds.length+' source operations');
+  }else{
+   relayDraft=null;await refresh();
+   notice((value.relayImport?.replayed?'Saved import recovered':'Original response received')+' · '+value.status+' · '+value.pageCount+' pages');
+  }
+  return value;
+ }finally{relayBusy=false;}
+}
+function receiveRelay(payload=null){return receiveStoredWrite('import-relay',payload);}
+function relayRecovery(root){
+ if(!pendingWrite)return;
+ const saved=pendingWrite,p=saved.payload,name=saved.action??'import-relay';
+ if(name==='select-records'){
+  const body=panel('Saved original record selection',
+   paragraph(saved.status==='declined'?'The receiver returned this selection for correction. Its original stable ID and source operations remain saved.':'The complete selection request is saved in this browser. Resume it to recover the same original record collection.'),
+   pre({operation:p.operationId,label:p.label,sourceOperations:p.sourceOperationIds.length,baseline:p.baseline,status:saved.status,error:saved.error??null}),
+   el('div',{class:'actions'},button('Resume saved selection',()=>receiveStoredWrite('select-records')),
+    button('Download complete selection request',()=>downloadJSON(selectionRequestDocument(p),'oai-record-selection-request.json'))));
+  if(saved.status==='declined')body.append(button('Edit returned selection',async()=>{
+   await relayStore('delete',relayIdentity,saved);selectionDraft=p;pendingWrite=null;tab='Record selections';await render();
+  }));
+  root.append(body);return;
+ }
+ const body=panel('Saved original response import',paragraph(saved.status==='declined'?'The receiver returned this request for correction. Edit the returned receipt or retry the same original request.':'The complete original body and receipt are saved in this browser. Resume this request to recover its receiving result.'),
+  pre({operation:p.operationId,provider:p.receipt.provider,receiptId:p.receipt.receiptId,bytes:p.receipt.response?.bytes,status:saved.status,error:saved.error??null}),
+  el('div',{class:'actions'},button('Resume saved import',()=>receiveRelay()),button('Download complete import request',()=>downloadJSON(relayRequestDocument(p),'oai-relay-import-request.json'))));
+ if(saved.status==='declined')body.append(button('Edit returned request',async()=>{
+  await relayStore('delete',relayIdentity,saved);relayDraft=p;pendingWrite=null;selectedOperation=p.operationId;tab='Harvests';await render();
+ }));
+ root.append(body);
+}
 async function object(kind,id){return get('/api/object?'+new URLSearchParams({kind,id}));}
 async function work(fn){try{notice('');$('activity').textContent='Working';await fn();}catch(e){notice(e.message);}finally{activity();}}
 function activity(){if(state)$('activity').textContent=state.islandoraRunning?'Islandora batch running':state.running?'Harvest running · '+(state.active??'starting'):'Workspace ready';}
-async function refresh(renderView=true){state=await get('/api/state');selectedRepo ||=state.repositories[0]?.id??'';selectedEdition ||=state.editions[0]?.id??'';selectedOperation ||=state.operations[0]?.id??'';selectedPreview ||=state.previews[0]?.id??'';selectedBuild ||=state.builds[0]?.id??'';$('workspace').textContent=state.directory;activity();if(state.workerError)notice(state.workerError);if(renderView)await render();}
+async function refresh(renderView=true){state=await get('/api/state');if(state.relayWorkspaceIdentity!==relayIdentity){relayIdentity=state.relayWorkspaceIdentity;try{pendingWrite=await relayStore('get',relayIdentity);relayStorageError='';}catch(error){relayStorageError=error.message;}}selectedRepo ||=state.repositories[0]?.id??'';selectedEdition ||=state.editions[0]?.id??'';selectedOperation ||=state.operations[0]?.id??'';selectedPreview ||=state.previews[0]?.id??'';selectedBuild ||=state.builds[0]?.id??'';$('workspace').textContent=state.directory;activity();if(state.workerError)notice(state.workerError);if(renderView)await render();}
 function go(name){tab=name;return render();}
 async function more(kind){const next=state.pages[kind]?.next;if(next==null)return;const result=await get('/api/history?'+new URLSearchParams({kind,offset:next,limit:50}));state[kind].push(...result.items);state.pages[kind]={...result};delete state.pages[kind].items;return render();}
 function moreButton(kind){return state.pages[kind]?.next!=null?button('Load more '+kind,()=>more(kind)):null;}
@@ -32,9 +151,10 @@ async function paged(container,path,draw,offset=0){const join=path.includes('?')
 async function render(){
  if(tab!=='Islandora')islandora.leave();
  $('navigation').replaceChildren(...tabs.map(name=>el('button',{'aria-current':tab===name?'page':'false',onclick:()=>work(()=>go(name))},name)));
- const root=$('content');root.replaceChildren();
+ const root=$('content');root.replaceChildren();relayRecovery(root);
  if(tab==='Repositories')await repositories(root);
  if(tab==='Harvests')await harvests(root);
+ if(tab==='Record selections')await recordSelections(root);
  if(tab==='Edition review')await reviews(root);
  if(tab==='Records')await records(root);
  if(tab==='Projection')await projection(root);
@@ -44,11 +164,12 @@ async function render(){
 async function repositories(root){
  const url=el('input',{type:'url',placeholder:'https://zenodo.org/oai2d'}),label=el('input',{placeholder:'Repository name'}),interval=el('input',{type:'number',min:0,step:0.1,value:2.1});
  const add=panel('Add a repository',paragraph('Use its OAI-PMH base URL. Discovery retains the repository identity, available metadata formats and complete set pages.'),field('Base URL',url),field('Display name',label),field('Minimum seconds between requests',interval),button('Add repository',async()=>{const r=await action('repository',{url:url.value,label:label.value||url.value,interval:Number(interval.value)});selectedRepo=r.id;await refresh();},true));
- const right=panel('Repository discovery',field('Repository',repoSelect(()=>work(()=>render()))),moreButton('repositories'));
+ const fetchHere=el('input',{type:'checkbox',checked:true});
+ const right=panel('Repository discovery',field('Repository',repoSelect(()=>work(()=>render()))),moreButton('repositories'),field('Fetch discovery from this console',fetchHere),paragraph('Clear this option to prepare the original request for a response acquired through another service or host.'));
  root.append(el('div',{class:'grid'},add,right));
  if(!selectedRepo)return;
  const repo=await object('repository',selectedRepo);
- right.append(paragraph(repo.baseURL),el('div',{class:'actions'},...['Identify','ListMetadataFormats','ListSets'].map(verb=>button(verb,async()=>{const id='discover-'+verb+'-'+Date.now();selectedOperation=id;await action('start',{repositoryId:selectedRepo,verb,arguments:{},operationId:id});await refresh();}))));
+ right.append(paragraph(repo.baseURL),el('div',{class:'actions'},...['Identify','ListMetadataFormats','ListSets'].map(verb=>button(verb,async()=>{const id='discover-'+verb+'-'+Date.now();selectedOperation=id;await action('start',{repositoryId:selectedRepo,verb,arguments:{},operationId:id,run:fetchHere.checked});await refresh();}))));
  right.append(metrics({Identity:repo.identify?'Saved':'Pending',Formats:repo.formatsComplete?'Complete':'Pending',Sets:repo.setsSupported===false?'Unsupported':repo.setsComplete?'Complete':'Pending'}));
  if(repo.identify)right.append(pre(repo.identify));
  const catalog=panel('Available metadata formats and sets');root.append(catalog);
@@ -56,19 +177,105 @@ async function repositories(root){
 }
 async function harvests(root){
  const repo=repoSelect(),id=el('input',{value:'harvest-'+Date.now()}),format=el('input',{placeholder:'Exact discovered metadataPrefix'}),set=el('input',{placeholder:'Optional setSpec'}),from=el('input',{placeholder:'YYYY-MM-DD or UTC timestamp'}),until=el('input',{placeholder:'Inclusive final date'}),baseline=select(state.editions.map(e=>[e.id,short(e.id)+' · '+e.activeRecords+' records']),null,null,'Start without a baseline');
- const form=panel('Harvest a selected population',paragraph('The console follows every continuation automatically. From and until are inclusive. A baseline carries forward records absent from this selection; deletion requires an explicit repository notice.'),el('div',{class:'formgrid'},field('Repository',repo),field('Stable operation ID',id),field('Metadata prefix',format),field('Set',set),field('From',from),field('Until',until),el('div',{class:'full'},field('Reviewed baseline edition',baseline))),button('Start complete harvest',async()=>{const args={metadataPrefix:format.value};for(const [k,n]of [['set',set],['from',from],['until',until]])if(n.value)args[k]=n.value;selectedOperation=id.value;await action('start',{repositoryId:repo.value,verb:'ListRecords',arguments:args,operationId:id.value,baseline:baseline.value||null});await refresh();},true));
+ const fetchHere=el('input',{type:'checkbox',checked:true});
+ const form=panel('Harvest a selected population',paragraph('The console follows every continuation automatically. From and until are inclusive. A baseline carries forward records absent from this selection; deletion requires an explicit repository notice.'),el('div',{class:'formgrid'},field('Repository',repo),field('Stable operation ID',id),field('Metadata prefix',format),field('Set',set),field('From',from),field('Until',until),el('div',{class:'full'},field('Reviewed baseline edition',baseline)),field('Fetch from this console',fetchHere)),paragraph('Clear Fetch from this console to create the original selection and import its acquired responses below.'),button('Start selected operation',async()=>{const args={metadataPrefix:format.value};for(const [k,n]of [['set',set],['from',from],['until',until]])if(n.value)args[k]=n.value;selectedOperation=id.value;await action('start',{repositoryId:repo.value,verb:'ListRecords',arguments:args,operationId:id.value,baseline:baseline.value||null,run:fetchHere.checked});await refresh();},true));
  root.append(form);
- const history=panel('Retained operations',table(['Operation','Verb / selection','State','Pages','Actions'],state.operations.map(o=>[o.id,el('div',{},o.verb,el('div',{class:'muted'},JSON.stringify(o.selection))),el('div',{},el('span',{class:'tag'},o.status),o.lastError?el('div',{class:'muted'},o.lastError):null),o.pageCount,el('div',{class:'actions'},button('Open',async()=>{selectedOperation=o.id;await render();}),...(!['COMPLETE','FETCHING'].includes(o.status)?[button('Resume',async()=>{await action('run',{id:o.id});await refresh();})]:[]),...(o.status==='COMPLETE'&&o.verb==='ListRecords'?[button('Review edition',async()=>{const p=await action('preview',{operationId:o.id});selectedPreview=p.id;selectedOperation=o.id;await refresh(false);await go('Edition review');})]:[]))])),moreButton('operations'));
+ const history=panel('Retained operations',table(['Operation','Verb / selection','State','Pages','Actions'],state.operations.map(o=>[o.id,el('div',{},o.verb,el('div',{class:'muted'},o.kind==='record-selection'?(o.label+' · '+o.recordCount+' identifiers'):JSON.stringify(o.selection))),el('div',{},el('span',{class:'tag'},o.status),o.lastError?el('div',{class:'muted'},o.lastError):null),o.pageCount,el('div',{class:'actions'},button('Open',async()=>{selectedOperation=o.id;await render();}),...(!['COMPLETE','FETCHING'].includes(o.status)?[button('Resume',async()=>{await action('run',{id:o.id});await refresh();})]:[]),...(o.status==='COMPLETE'&&['ListRecords','RecordSelection'].includes(o.verb)?[button('Review edition',async()=>{const p=await action('preview',{operationId:o.id});selectedPreview=p.id;selectedOperation=o.id;await refresh(false);await go('Edition review');})]:[]))])),moreButton('operations'));
  if(state.running)history.append(button('Cancel active harvest',async()=>{await action('cancel',{});await refresh();}));
  root.append(history);
  if(selectedOperation){
   const op=await object('operation',selectedOperation),host=el('div');
   const details=panel('Operation '+op.id,pre(op),host);root.append(details);
-  await paged(host,'/api/requests?'+new URLSearchParams({operation:op.id}),items=>table(['Attempt / page','Original request','HTTP / records','Response'],items.map(r=>[r.attempt+' / '+r.ordinal,r.url,(r.http?.status??r.state)+' / '+(r.parsed?.recordCount??'—'),r.response?el('a',{class:'button',href:'/download/response?id='+encodeURIComponent(r.id)},'Download exact body'):r.error??'Awaiting response'])));
+  await paged(host,'/api/requests?'+new URLSearchParams({operation:op.id}),items=>table(['Attempt / page','Original request','Acquisition / records','Original response'],items.map(r=>[
+   r.attempt+' / '+r.ordinal,r.url,
+   (r.acquisition?.kind==='relay'?'Relay · '+r.acquisition.receipt.provider:(r.http?.status?'HTTP '+r.http.status:r.state))+' / '+(r.parsed?.recordCount??'—'),
+   r.response?el('div',{class:'actions'},el('a',{class:'button',href:'/download/response?id='+encodeURIComponent(r.id)},'Download exact body'),
+    r.acquisition?.kind==='relay'?el('a',{class:'button',href:'/download/relay-receipt?id='+encodeURIComponent(r.id)},'Download original receipt'):null):r.error??'Awaiting response'
+  ])));
+  const relayFile=el('input',{type:'file'}),receiptFile=el('input',{type:'file',accept:'.json,application/json'}),receipt=el('textarea',{class:'code',rows:11,placeholder:'{"schema":"stellar-forge.oai-relay-response.v1","provider":"source service","receiptId":"original provider receipt ID","sourceURL":"exact original OAI request URL","response":{"bytes":0,"sha256":"actual original body digest"},"providerReceipt":{}}'});
+  if(relayDraft?.operationId===op.id)receipt.value=JSON.stringify(relayDraft.receipt,null,2);
+  receiptFile.addEventListener('change',()=>work(async()=>{if(!receiptFile.files[0])return;if(receiptFile.files[0].size>256*1024)throw Error('Use a receipt within 256 KiB.');receipt.value=await receiptFile.files[0].text();JSON.parse(receipt.value);}));
+  const relayInput=el('details',{open:Boolean(relayDraft?.operationId===op.id)},el('summary',{},'Receive an original response through a relay service'),
+   paragraph('Keep the unchanged XML and the original acquisition receipt together. The receipt identifies the exact source URL, provider operation, byte count and SHA-256. The same receipt recovers its original receiving result on retry.'),
+   field('Unchanged original XML body (up to 32 MiB)',relayFile),relayDraft?.operationId===op.id?paragraph('The returned original body is retained. Select a file only to replace it.'):null,
+   field('Open receipt JSON',receiptFile),field('Complete original relay receipt',receipt),relayStorageError?paragraph(relayStorageError):null,
+   el('div',{class:'actions'},
+    button('Receive original response',async()=>receiveRelay(await relayPayload(op.id,relayFile.files[0],receipt.value)),true),
+    button('Download prepared import',async()=>downloadJSON(relayRequestDocument(await relayPayload(op.id,relayFile.files[0],receipt.value)),'oai-relay-import-request.json'))),
+   paragraph('Browser receiving saves the complete request before sending. Reopen the same console address to resume it, or use the downloaded request with native import-relay-request. Native import-relay accepts original pages up to 256 MiB.'));
+  if(op.kind!=='record-selection')details.append(relayInput);
   const file=el('input',{type:'file'}),meta=el('textarea',{class:'code',rows:7,placeholder:'{"url":"exact request URL","status":200,"headers":[],"observedAt":"UTC acquisition time"}'});
-  const input=el('details',{},el('summary',{},'Import a response acquired on another host'),paragraph('Select the unchanged response body and its observed transport metadata. The request URL must match this operation’s next request.'),field('Original response body (up to 32 MiB)',file),field('Observed HTTP metadata',meta),button('Import original response',async()=>{if(!file.files[0])throw Error('Select the original response file');if(file.files[0].size>32*1024*1024)throw Error('Use the native import-response command for a larger response');const bytes=new Uint8Array(await file.files[0].arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));await action('import',{operationId:op.id,metadata:JSON.parse(meta.value),bodyBase64:btoa(binary)});await refresh();}));
-  details.append(input);
+  const input=el('details',{},el('summary',{},'Import a response with an observed HTTP exchange'),paragraph('Select the unchanged response body and the HTTP status and headers observed by its acquisition host. The request URL must match this operation’s next request.'),field('Original response body (up to 32 MiB)',file),field('Observed HTTP metadata',meta),button('Import original HTTP response',async()=>{if(!file.files[0])throw Error('Select the original response file');if(file.files[0].size>32*1024*1024)throw Error('Use the native import-response command for a larger response');const bytes=new Uint8Array(await file.files[0].arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));await action('import',{operationId:op.id,metadata:JSON.parse(meta.value),bodyBase64:btoa(binary)});await refresh();}));
+  if(op.kind!=='record-selection')details.append(input);
  }
+}
+async function recordSelections(root){
+ const draft=selectionDraft??{operationId:'selection-'+Date.now(),label:'',sourceOperationIds:[],baseline:null};
+ selectionDraft=draft;
+ const id=el('input',{value:draft.operationId}),label=el('input',{value:draft.label??'',placeholder:'Staff case collection or receiving scope'}),
+  sources=el('textarea',{class:'code',rows:8,value:draft.sourceOperationIds.join('\n'),placeholder:'One completed original GetRecord operation ID per line'}),
+  baseline=select(state.editions.filter(e=>e.selection.kind==='explicit-identifiers').map(e=>[e.id,short(e.id)+' · '+e.activeRecords+' records']),draft.baseline,null,'Start a new record collection'),
+  sourceFile=el('input',{type:'file',accept:'.json,application/json'});
+ const request=()=>{
+  const sourceOperationIds=[...new Set(sources.value.split(/[\s,]+/).filter(Boolean))];
+  if(!sourceOperationIds.length)throw Error('Choose completed original GetRecord operations for this collection.');
+  if(sourceOperationIds.length>10000)throw Error('Select up to 10000 original GetRecord operations in one collection.');
+  const payload={operationId:id.value.trim(),label:label.value.trim()||'Selected original records',sourceOperationIds,baseline:baseline.value||null};
+  if(!payload.operationId)throw Error('Supply this collection’s stable operation ID.');
+  selectionDraft=payload;return payload;
+ };
+ const remember=()=>{selectionDraft={operationId:id.value,label:label.value,sourceOperationIds:sources.value.split(/[\s,]+/).filter(Boolean),baseline:baseline.value||null};};
+ for(const control of [id,label,sources,baseline])control.addEventListener('input',remember);
+ sourceFile.addEventListener('change',()=>work(async()=>{
+  const file=sourceFile.files[0];if(!file)return;
+  if(file.size>4*1024*1024)throw Error('Choose a complete record selection request within 4 MiB.');
+  const received=JSON.parse(await file.text());
+  if(received.schema!=='stellar-forge.oai-record-selection-request.v1'||typeof received.operationId!=='string'||!Array.isArray(received.sourceOperationIds)||received.sourceOperationIds.some(v=>typeof v!=='string'))throw Error('Choose a complete original record selection request.');
+  selectionDraft={operationId:received.operationId,label:received.label??'',sourceOperationIds:received.sourceOperationIds,baseline:received.baseline??null};
+  await render();
+ }));
+ const form=panel('Review original records together',
+  paragraph('Choose complete GetRecord operations from one repository and metadata format. Each selected record retains its original XML, identifier, datestamp and acquisition receipt. The collection has an explicit identity and becomes an editable reviewed edition.'),
+  el('div',{class:'formgrid'},field('Stable collection operation ID',id),field('Collection name',label),
+   el('div',{class:'full'},field('Original GetRecord operation IDs',sources)),field('Reviewed collection baseline',baseline),
+   field('Open a saved selection request',sourceFile)),
+  paragraph('A selected baseline carries its earlier records forward. Original records with newer datestamps update it; same-datestamp conflicts receive an explicit choice in Edition review. Create a new collection without a baseline to choose a different membership.'),
+  relayStorageError?paragraph(relayStorageError):null,
+  el('div',{class:'actions'},button('Prepare complete edition review',()=>receiveStoredWrite('select-records',request()),true),
+   button('Download complete selection request',()=>downloadJSON(selectionRequestDocument(request()),'oai-record-selection-request.json'))),
+  paragraph('The complete request is saved before sending. Reopen this console address to resume the same request, or use native select-records --request with its downloaded JSON.'));
+ root.append(form);
+ const available=state.operations.filter(o=>o.verb==='GetRecord'&&o.status==='COMPLETE');
+ const selected=new Set(draft.sourceOperationIds),checks=[];
+ const list=panel('Completed original records',paragraph('Choose source rows below or paste earlier operation IDs above. Load more operations to reach earlier retained source records.'),
+  table(['Select','Original operation','Repository','Requested identifier','Metadata format'],available.map(o=>{
+   const box=el('input',{type:'checkbox',checked:selected.has(o.id),'aria-label':'Select '+o.id});
+   checks.push([o.id,box]);
+   box.addEventListener('change',()=>{
+    const chosen=new Set(sources.value.split(/[\s,]+/).filter(Boolean));
+    if(box.checked)chosen.add(o.id);else chosen.delete(o.id);
+    sources.value=[...chosen].join('\n');remember();
+   });
+   return [box,o.id,o.repositorySnapshot?.label??o.repositoryId,o.selection.identifier,o.selection.metadataPrefix];
+  })),moreButton('operations'),
+  button('Add all displayed completed records',()=>{
+   const chosen=new Set(sources.value.split(/[\s,]+/).filter(Boolean));
+   for(const [sourceId,box] of checks){chosen.add(sourceId);box.checked=true;}
+   sources.value=[...chosen].join('\n');remember();
+  }));
+ root.append(list);
+ const repository=repoSelect(),format=el('input',{placeholder:'Exact discovered metadataPrefix'}),
+  identifier=el('input',{placeholder:'Exact original OAI identifier'}),operation=el('input',{value:'record-'+Date.now()}),
+  fetchHere=el('input',{type:'checkbox',checked:true});
+ root.append(panel('Receive another original record',
+  paragraph('Prepare its exact GetRecord request. Fetch it from this console or clear the fetch option to receive an original body and acquisition receipt in Harvests.'),
+  el('div',{class:'formgrid'},field('Repository',repository),field('Metadata prefix',format),
+   field('Original record identifier',identifier),field('Stable source operation ID',operation),field('Fetch from this console',fetchHere)),
+  button('Prepare original record request',async()=>{
+   selectedOperation=operation.value;
+   await action('start',{repositoryId:repository.value,verb:'GetRecord',arguments:{metadataPrefix:format.value,identifier:identifier.value},operationId:operation.value,run:fetchHere.checked});
+   await refresh(false);await go('Harvests');
+  },true)));
 }
 async function reviews(root){
  const sel=select(state.previews.map(p=>[p.id,short(p.id)+' · '+p.operationId]),selectedPreview,v=>{selectedPreview=v;work(()=>render());});
@@ -99,11 +306,16 @@ async function records(root){
 }
 async function projection(root){
  const saved=select(state.mappings.map(m=>[m.id,m.name+' · '+short(m.id)]),'',async value=>{if(value){mappingDraft=await object('mapping',value);editor.value=JSON.stringify(mappingDraft,null,2);}}),editor=el('textarea',{class:'code',rows:23});
- mappingDraft ||=await get('/api/default-mapping');editor.value=JSON.stringify(mappingDraft,null,2);editor.addEventListener('input',()=>{try{mappingDraft=JSON.parse(editor.value);}catch{}});
  const current=selectedEdition?await object('edition',selectedEdition):null;
+ const headerPath='/api/default-mapping'+(current?'?'+new URLSearchParams({edition:current.id}):'');
+ const header=await get(headerPath);
+ if(!mappingDraft)mappingDraft=header;
+ else if(mappingEdition!==selectedEdition)mappingDraft={...mappingDraft,recordPath:header.recordPath};
+ mappingEdition=selectedEdition;
+ editor.value=JSON.stringify(mappingDraft,null,2);editor.addEventListener('input',()=>{try{mappingDraft=JSON.parse(editor.value);}catch{}});
  const body=panel('Project a reviewed record edition',field('Edition',editionSelect(()=>work(()=>render()))),field('Reuse a saved XML mapping',saved),paragraph('Paths use expanded XML names, such as {namespace URI}title. Repeated values, missing elements, nulls, scalar types, filter fields and edition keys are explicit mapping choices. The complete edition is checked by the existing SF30 dataset engine.'),field('XML mapping',editor),el('div',{class:'actions'},
  button('Save mapping and build full dataset',async()=>{if(!selectedEdition)throw Error('Choose a reviewed edition');mappingDraft=JSON.parse(editor.value);const m=await action('mapping',{plan:mappingDraft});const b=await action('build',{editionId:selectedEdition,planId:m.id});selectedBuild=b.id;await refresh(false);await render();},true),
- button('Use header fields',async()=>{mappingDraft=await get('/api/default-mapping');editor.value=JSON.stringify(mappingDraft,null,2);}),
+ button('Use header fields',async()=>{mappingDraft=await get(headerPath);editor.value=JSON.stringify(mappingDraft,null,2);}),
  ...(current?[button('Use repository metadata fields',async()=>{mappingDraft=await get('/api/metadata-mapping?'+new URLSearchParams({edition:current.id}));editor.value=JSON.stringify(mappingDraft,null,2);})]:[])));
  root.append(body);
  if(current){const data=await get('/api/records?'+new URLSearchParams({edition:current.id,limit:1}));if(data.items[0])body.append(button('Inspect an original record for mapping',async()=>showDetail(await object('observation',data.items[0].id))));}
@@ -119,7 +331,7 @@ async function showQuery(build){
 }
 async function exportsView(root){
  const bsel=select(state.builds.map(b=>[b.id,short(b.id)+' · '+b.rowCount+' rows']),selectedBuild,v=>{selectedBuild=v;work(()=>render());});
- const source=panel('Portable publisher source',field('Native dataset',bsel),moreButton('builds'),paragraph('This package contains the reviewed native dataset, mapping, record lineage and every retained HTTP/XML page in the edition history. Session and authorization header values stay in the private workspace backup. Open source.json with the OAI publisher to prepare, review and publish the same dataset through the existing merchant tools.'));
+ const source=panel('Portable publisher source',field('Native dataset',bsel),moreButton('builds'),paragraph('This package contains the reviewed native dataset, mapping, record lineage and every retained HTTP/XML page and original relay receipt in the edition history. Session and authorization header values stay in the private workspace backup. Open source.json with the OAI publisher to prepare, review and publish the same dataset through the existing merchant tools.'));
  if(selectedBuild)source.append(el('a',{class:'button primary',href:'/download/source?'+new URLSearchParams({build:selectedBuild})},'Download complete source package'));
  root.append(source,panel('Complete workspace backup',paragraph('Save repositories, discovery, interrupted and complete harvests, record conflicts, reviewed editions and dataset builds. Restore the archive into a new private workspace and reopen this console.'),el('a',{class:'button',href:'/download/backup'},'Download full workspace'),pre('python cli.py --workspace /absolute/new-workspace restore --archive /absolute/oai-workspace.zip\npython cli.py --workspace /absolute/new-workspace serve')));
 }

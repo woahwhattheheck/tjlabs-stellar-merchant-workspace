@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Remittance receiving</title>
+<link rel="stylesheet" href="./remittances.css">
+<script type="module" src="./remittances-app.mjs"></script>
+</head>
+<body>
+<header><div><a href="./">Receivables</a><h1>Remittance receiving</h1>
+<p>Match customer remittances to the original invoice and payment records.</p></div>
+<button id="refresh" type="button">Refresh saved batches</button></header>
+<main>
+<p id="status" role="status" aria-live="polite">Opening the accounting workspace…</p>
+<section aria-labelledby="source-heading">
+<h2 id="source-heading">1. Original remittance</h2>
+<form id="source-form">
+<div class="fields">
+<label>Source identifier<input id="source-id" required maxlength="160" placeholder="merchant-bank-account-1">
+<small>Keep this identifier for later imports from the same remittance source.</small></label>
+<label>Operator<input id="actor" required maxlength="1000" autocomplete="name"></label>
+<label>CSV file<input id="csv-file" type="file" accept=".csv,text/csv" required>
+<small>UTF-8; up to 1,000 data rows and 500,000 bytes.</small></label>
+</div>
+<div class="actions"><button type="submit">Review remittance</button>
+<button id="template" type="button">Download column template</button></div>
+</form>
+<details><summary>CSV columns and matching</summary>
+<p>Use exactly these eleven headers. Header order may vary.</p>
+<code>remittance_id,customer_reference,payment_reference,payment_method,payment_date,currency,scale,payment_amount,invoice_number,allocation_amount,allocation_date</code>
+<p>Repeat one remittance ID and the full payment identity for its invoice lines. Match the exact saved customer reference and issued invoice number. All amounts are decimal strings at the chosen currency precision. Leave the final three columns empty to retain an unapplied receipt.</p>
+<p>Existing matching receipts retain their original source. New payment records use the same operator-recorded receipt category as the receivables desk.</p>
+</details>
+</section>
+<section aria-labelledby="review-heading">
+<h2 id="review-heading">2. Review and receive</h2>
+<div id="summary"><p>Choose an original CSV to see the proposed receipts and allocations.</p></div>
+<div class="table-wrap"><table id="review-table" hidden><thead><tr>
+<th>Remittance</th><th>Customer</th><th>Payment</th><th>Status</th><th>Invoices and allocation dates</th><th>Remaining funds</th>
+</tr></thead><tbody></tbody></table></div>
+<pre id="row-errors" hidden></pre>
+<div class="actions"><button id="save-request" type="button" disabled>Save reviewed request</button>
+<button id="apply" type="button" disabled>Receive batch</button></div>
+<p id="request-status"></p>
+<details><summary>Recover a saved request</summary>
+<p>Open the original reviewed request JSON to retry the same operation after reopening this workspace.</p>
+<label>Reviewed request JSON<input id="request-file" type="file" accept=".json,application/json"></label>
+<div class="fields"><label>Original request ID<input id="recover-id" maxlength="160"></label>
+<button id="recover" type="button">Find saved operation</button></div>
+</details>
+</section>
+<section aria-labelledby="batches-heading">
+<h2 id="batches-heading">3. Saved batches</h2>
+<div id="batches"></div>
+<article id="batch-detail" hidden></article>
+</section>
+</main>
+</body>
+</html>

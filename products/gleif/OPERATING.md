@@ -222,6 +222,19 @@ starforge gleif run \
 The review.batch action accepts an input.items array containing these same full
 review bodies. Every selected review is validated before the batch is committed.
 
+The browser retains each draft with its selected source edition and the company
+review version opened for editing. Selecting companies for a batch retains those
+same source and review versions. Refreshing saved work updates the displayed
+project without replacing an editor's original version or draft text.
+
+If another review is saved while you are editing, the company panel displays the
+current saved decision beside your retained edits. **Load the saved review** opens
+that saved text. **Keep my edits with this revision** keeps your text and explicitly
+uses the displayed version for the next save. The same correction is available
+for a selected batch. Earlier requests remain in browser and project history;
+a corrected save uses a new request. An earlier browser draft can be restored
+explicitly in the selected company panel.
+
 ## Refresh the source and compare the complete records
 
 Capture the same query with a new ID after the source period has changed. The

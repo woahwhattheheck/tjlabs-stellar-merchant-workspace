@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import threading
@@ -194,6 +195,373 @@ def phase(output, state, name, **details):
     print(json.dumps({"operation": OPERATION, "phase": name, **{
         k: state[k] for k in ("caseId", "finalRevision") if k in state
     }}, sort_keys=True), flush=True)
+
+
+CHECKPOINT_SCHEMA = "stellar-forge.iati-financial-reconciliation-checkpoint.v1"
+CHECKPOINT_MAX_BYTES = 8 * 1024 * 1024 * 1024
+CHECKPOINT_MAX_FILES = 50000
+
+
+def checkpoint_member_name(name):
+    require(isinstance(name, str) and name and len(name) <= 1024
+            and "\\" not in name and "\x00" not in name and ":" not in name
+            and all(part not in ("", ".", "..") for part in name.split("/"))
+            and not name.startswith("/"),
+            "A receiving checkpoint member must use its original relative path")
+    return name
+
+
+def checkpoint_excluded(relative):
+    parts = relative.parts
+    return (
+        parts[0] in ("connections", "temporary")
+        or relative.name in (".reconciliation-receiving.lock", ".lock", ".checkpoint-restore.json")
+        or relative.name == "source-workspace-connection.json"
+        or (parts[0] == "merchant-exports"
+            and relative.name.startswith((".partial-", ".record-")))
+        or (parts[0] in ("sender-workspace", "receiver-workspace")
+            and len(parts) > 2 and parts[1] == "tmp")
+        or (relative.name.startswith(".") and (
+            ".incoming-" in relative.name or relative.name.endswith(".next")))
+    )
+
+
+@contextmanager
+def closed_native_leases(output):
+    """Borrow the original closed workspace locks without starting a runtime."""
+    descriptors = []
+    try:
+        for name in ("sender-workspace", "receiver-workspace"):
+            root = output / name
+            require(root.is_dir() and not root.is_symlink(),
+                    "Complete original independent receiving before retaining the closed case")
+            descriptor = os.open(root / ".lock",
+                                 os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            descriptors.append(descriptor)
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise RuntimeError(
+                    "The original " + name + " is still in use; retain it after that owner closes") from error
+        yield
+    finally:
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
+
+
+def checkpoint_destination(args, output):
+    destination = private_directory(
+        args.checkpoint_directory or output.with_name(output.name + "-checkpoints"))
+    require(destination != output and output not in destination.parents,
+            "Keep the closed-case checkpoints outside the operation they retain")
+    require(all(destination != root and root not in destination.parents
+                for root in (IATI, (IATI.parent / "xml").resolve())),
+            "Keep the closed-case checkpoints outside the installed source trees")
+    return destination
+
+
+def checkpoint_state_identity(state):
+    return {key: state[key] for key in ("operation", "caseId", "finalRevision", "sourceEdition")}
+
+
+def saved_case_checkpoint(args, output, state, stage):
+    """Stream one complete, closed operation before the expensive continuation."""
+    require(state.get("caseId") and state.get("nativePacket") and state.get("receiving"),
+            "Retain the completed native case and its independent receiver together")
+    destination = checkpoint_destination(args, output)
+    state_path = output / "operation-state.json"
+    checkpoint(state_path, state)
+    source_state = state_path.read_bytes()
+    identity = checkpoint_state_identity(state)
+    # This checkpoint is already complete for the same original preparation.
+    # Failed attempts have their own checkpoint containing the actual diagnostic.
+    existing = next((item for item in reversed(state.get("closedCaseCheckpoints", []))
+                     if stage != "continuation-ended"
+                     and item.get("stage") == stage and item.get("identity") == identity), None)
+    if existing:
+        path = Path(existing["path"])
+        if path.parent == destination and path.is_file() and not path.is_symlink():
+            require(digest_file(path) == {key: existing[key] for key in ("bytes", "sha256")},
+                    "The original closed-case checkpoint changed")
+            return existing
+
+    temporary = destination / (".receiving-checkpoint.incoming-" + uuid.uuid4().hex)
+    files, directories, total = {}, [], 0
+    try:
+        with closed_native_leases(output):
+            # Keep empty native directories as well as data. A restored original
+            # workspace needs its sources/plans/builds/comparisons/tmp directories.
+            members = []
+            for root, child_directories, child_files in os.walk(output, followlinks=False):
+                root = Path(root)
+                for name in sorted(child_directories.copy()):
+                    path = root / name
+                    relative = path.relative_to(output)
+                    if checkpoint_excluded(relative):
+                        child_directories.remove(name)
+                        continue
+                    require(not path.is_symlink() and path.is_dir(),
+                            "The closed operation contains a changed directory: " + str(relative))
+                    directories.append(checkpoint_member_name(relative.as_posix()))
+                for name in sorted(child_files):
+                    path = root / name
+                    relative = path.relative_to(output)
+                    if checkpoint_excluded(relative):
+                        continue
+                    require(not path.is_symlink() and stat.S_ISREG(path.lstat().st_mode),
+                            "The closed operation contains a changed file: " + str(relative))
+                    members.append((checkpoint_member_name(relative.as_posix()), path))
+            require(len(members) <= CHECKPOINT_MAX_FILES and len(directories) <= CHECKPOINT_MAX_FILES,
+                    "The receiving checkpoint exceeds the complete operation member limit")
+            with temporary.open("xb") as sink:
+                os.chmod(temporary, 0o600)
+                with zipfile.ZipFile(sink, "w", compression=zipfile.ZIP_DEFLATED,
+                                     compresslevel=1, allowZip64=True) as archive:
+                    for name, path in sorted(members):
+                        before = path.stat()
+                        info = zipfile.ZipInfo("operation/" + name, date_time=(1980, 1, 1, 0, 0, 0))
+                        info.create_system = 3
+                        info.external_attr = (stat.S_IFREG | 0o600) << 16
+                        info.compress_type = (zipfile.ZIP_STORED if path.suffix.lower() in
+                                              (".zip", ".gz", ".png", ".jpg", ".jpeg", ".webp")
+                                              else zipfile.ZIP_DEFLATED)
+                        digest, count = hashlib.sha256(), 0
+                        with path.open("rb") as source, archive.open(info, "w", force_zip64=True) as target:
+                            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                                count += len(chunk)
+                                total += len(chunk)
+                                require(total <= CHECKPOINT_MAX_BYTES,
+                                        "The receiving checkpoint exceeds its complete byte limit")
+                                target.write(chunk)
+                                digest.update(chunk)
+                        after = path.stat()
+                        require((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+                                == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+                                and count == before.st_size,
+                                "An original closed case member changed while it was retained: " + name)
+                        files[name] = {"bytes": count, "sha256": digest.hexdigest()}
+                    require(files.get("operation-state.json") == {
+                        "bytes": len(source_state), "sha256": hashlib.sha256(source_state).hexdigest()},
+                        "The complete checkpoint must retain the exact closed operation state")
+                    manifest = {
+                        "schema": CHECKPOINT_SCHEMA, "identity": identity, "stage": stage,
+                        "createdAt": datetime.now(timezone.utc).isoformat(),
+                        "originOutput": str(output), "files": files,
+                        "directories": sorted(directories), "sourceBytes": total,
+                    }
+                    archive.writestr("checkpoint.json", json_bytes(manifest))
+                sink.flush()
+                os.fsync(sink.fileno())
+        archive_identity = digest_file(temporary)
+        path = destination / ("FCDO_Financial_Closed_Case_" + archive_identity["sha256"] + ".zip")
+        try:
+            os.link(temporary, path, follow_symlinks=False)
+        except FileExistsError:
+            require(not path.is_symlink() and path.is_file()
+                    and digest_file(path) == archive_identity,
+                    "The complete closed-case checkpoint path belongs to another archive")
+        parent = os.open(destination, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        try:
+            os.fsync(parent)
+        finally:
+            os.close(parent)
+        descriptor = {
+            "path": str(path), **archive_identity, "identity": identity, "stage": stage,
+            "files": len(files), "sourceBytes": total,
+            "manifestSha256": hashlib.sha256(json_bytes(manifest)).hexdigest(),
+            "attempts": list(state.get("continuationAttempts", [])),
+        }
+        state.setdefault("closedCaseCheckpoints", []).append(descriptor)
+        checkpoint(state_path, state)
+        print(json.dumps({"operation": OPERATION, "phase": "closed-case-checkpoint-retained",
+                          "checkpoint": descriptor}, sort_keys=True), flush=True)
+        return descriptor
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def upload_case_checkpoint(args, output, state, descriptor):
+    """Use the unchanged official uploader in the producing namespace, if selected."""
+    if not args.checkpoint_upload_helper:
+        return
+    helper = Path(args.checkpoint_upload_helper).expanduser().resolve(strict=True)
+    require(helper.name == "library_upload.py" and helper.is_file()
+            and all((helper.parent / name).is_file() for name in
+                    ("library_hosted_apps.py", "library_file_transfer.py")),
+            "Supply the current complete official Library upload helper and both companion files")
+    path = Path(descriptor["path"])
+    require(digest_file(path) == {key: descriptor[key] for key in ("bytes", "sha256")},
+            "The complete closed-case archive changed before its original upload")
+    uploads = state.setdefault("checkpointUploads", {})
+    previous = uploads.get(descriptor["sha256"], {})
+    if previous.get("status") == "succeeded":
+        print(json.dumps({"operation": OPERATION, "phase": "closed-case-checkpoint-saved",
+                          "checkpointSha256": descriptor["sha256"],
+                          "libraryFileId": previous["libraryFileId"]}, sort_keys=True), flush=True)
+        return
+    request = {"uploads": [{"local_path": str(path), "purpose": "create_library_file",
+                            "library_artifact_type": "other"}]}
+    # One invocation processes one complete batch from closed stdin. Its helper
+    # owns prepare, transfer and finalize; the programme does not recreate them.
+    result = subprocess.run([sys.executable, str(helper)], input=json.dumps(request),
+                            text=True, capture_output=True)
+    receipt = {"returncode": result.returncode}
+    try:
+        response = json.loads(result.stdout)
+    except (ValueError, TypeError):
+        response = None
+    items = response.get("results", []) if isinstance(response, dict) else []
+    item = items[0] if len(items) == 1 and isinstance(items[0], dict) else {}
+    if result.returncode == 0 and item.get("local_path") == str(path) \
+            and item.get("status") == "succeeded" and item.get("library_file_id"):
+        receipt.update(status="succeeded", libraryFileId=item["library_file_id"],
+                       fileId=item.get("file_id"), fileName=item.get("file_name"),
+                       currentVersionNumber=item.get("current_version_number"))
+        # Preserve the unchanged helper's own application receipt after its
+        # matching successful file result. Its private transport diagnostics
+        # remain inside that helper invocation.
+        prefix = "__OPENAI_LIBRARY_FILE_WRITE_RECEIPT_V1__="
+        for line in result.stderr.splitlines():
+            if not line.startswith(prefix):
+                continue
+            try:
+                delivered = json.loads(line[len(prefix):])
+            except (ValueError, TypeError):
+                continue
+            if (isinstance(delivered, dict)
+                    and set(delivered) == {"sandbox_path", "file_id", "library_file_id"}
+                    and delivered["sandbox_path"] == str(path)
+                    and delivered["file_id"] == item.get("file_id")
+                    and delivered["library_file_id"] == item["library_file_id"]):
+                print(line, file=sys.stderr, flush=True)
+    else:
+        # The helper's per-file status is authoritative even when it exits zero.
+        # Retain only its public structured failure; signed transport URLs and
+        # borrowed runtime credentials never enter the operation's deliverables.
+        receipt.update(status="failed", errorCode=item.get("error_code", "uploader_incomplete"),
+                       message=item.get("message", "The original uploader returned no complete file receipt"))
+    uploads[descriptor["sha256"]] = receipt
+    checkpoint(output / "operation-state.json", state)
+    print(json.dumps({"operation": OPERATION, "phase": "closed-case-checkpoint-upload",
+                      "checkpointSha256": descriptor["sha256"], "result": receipt}, sort_keys=True), flush=True)
+    require(receipt["status"] == "succeeded",
+            "The closed-case archive is retained at " + str(path) + "; its original upload returned "
+            + receipt.get("errorCode", "incomplete") + ": " + receipt.get("message", ""))
+    return receipt
+
+
+def restore_case_checkpoint(output, source):
+    """Receive one exact saved operation, with a resumable, non-overwriting copy."""
+    source = Path(source).expanduser().resolve(strict=True)
+    require(source.is_file(), "Select the complete closed-case ZIP")
+    archive_identity = digest_file(source)
+    state_path = output / "operation-state.json"
+    marker_path = output / ".checkpoint-restore.json"
+    require(not state_path.is_symlink() and (not state_path.exists() or state_path.is_file()),
+            "The checkpoint destination state must be an original regular file")
+    if state_path.is_file():
+        current = load_json(state_path.read_bytes())
+        prior = current.get("restoredCheckpoint")
+        if prior and prior.get("sha256") == archive_identity["sha256"]:
+            require(current.get("schema") == SCHEMA and current.get("operation") == OPERATION,
+                    "The restored checkpoint must continue the original receiving operation")
+            return
+    with zipfile.ZipFile(source) as archive:
+        entries = archive.infolist()
+        names = [item.filename for item in entries]
+        require(len(entries) <= CHECKPOINT_MAX_FILES + 1 and len(names) == len(set(names)),
+                "The closed-case ZIP must have a complete unique member list")
+        require(all(not (item.flag_bits & 1)
+                    and item.compress_type in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
+                    for item in entries),
+                "The closed-case ZIP must use the original complete archive encoding")
+        require("checkpoint.json" in names and archive.getinfo("checkpoint.json").file_size <= 16 * 1024 * 1024,
+                "The closed-case ZIP must retain its complete checkpoint manifest")
+        manifest_raw = archive.read("checkpoint.json")
+        manifest = load_json(manifest_raw)
+        require(manifest.get("schema") == CHECKPOINT_SCHEMA
+                and manifest.get("identity", {}).get("operation") == OPERATION,
+                "Select this original financial receiving operation's closed checkpoint")
+        files, directories = manifest.get("files"), manifest.get("directories")
+        require(isinstance(files, dict) and isinstance(directories, list)
+                and len(directories) == len(set(directories))
+                and len(directories) <= CHECKPOINT_MAX_FILES,
+                "The closed-case checkpoint must retain its exact files and directories")
+        for name in [*files, *directories]:
+            checkpoint_member_name(name)
+            require(not checkpoint_excluded(Path(name)),
+                    "Private live connections and temporary runtime paths do not belong in a closed checkpoint")
+        require(set(files).isdisjoint(directories)
+                and set(names) == {"checkpoint.json", *("operation/" + name for name in files)},
+                "The closed-case manifest must describe every original archive member")
+        directory_set = set(directories)
+        for name in [*files, *directories]:
+            parts = name.split("/")
+            require(all("/".join(parts[:index]) in directory_set for index in range(1, len(parts))),
+                    "The closed-case manifest must preserve every parent directory")
+        total = 0
+        for name, identity in files.items():
+            require(isinstance(identity, dict) and type(identity.get("bytes")) is int
+                    and identity["bytes"] >= 0
+                    and re.fullmatch(r"[0-9a-f]{64}", str(identity.get("sha256", ""))),
+                    "Every original closed-case file requires its exact size and SHA256")
+            info = archive.getinfo("operation/" + name)
+            mode = (info.external_attr >> 16) & 0o170000
+            require(info.file_size == identity["bytes"] and not info.is_dir()
+                    and mode in (0, stat.S_IFREG) and not (info.flag_bits & 1),
+                    "The complete closed-case ZIP contains a changed member descriptor")
+            total += info.file_size
+        require(total == manifest.get("sourceBytes") and total <= CHECKPOINT_MAX_BYTES,
+                "The complete closed-case byte count differs from its manifest")
+        require("operation-state.json" in files and "sender-workspace" in directories
+                and "receiver-workspace" in directories and "reports/requests.json" in files,
+                "Receive both original workspaces, operation state and complete original request set")
+        require(files["operation-state.json"]["bytes"] <= 16 * 1024 * 1024,
+                "The complete original operation state exceeds its descriptor limit")
+        original_state_raw = archive.read("operation/operation-state.json")
+        require(files["operation-state.json"] == {
+                    "bytes": len(original_state_raw), "sha256": hashlib.sha256(original_state_raw).hexdigest()},
+                "The restored operation state differs from the complete original manifest")
+        original = load_json(original_state_raw)
+        require(original.get("schema") == SCHEMA
+                and checkpoint_state_identity(original) == manifest["identity"],
+                "The restored case, revision and source edition must match the original closed operation")
+        restore = {"schema": CHECKPOINT_SCHEMA, **archive_identity,
+                   "manifestSha256": hashlib.sha256(manifest_raw).hexdigest(),
+                   "identity": manifest["identity"]}
+        existing = list(output.iterdir())
+        if marker_path.exists():
+            require(not marker_path.is_symlink() and load_json(marker_path.read_bytes()) == restore,
+                    "Continue the exact original checkpoint that began restoring here")
+        else:
+            require(all(path.name == ".reconciliation-receiving.lock" for path in existing),
+                    "Restore into a new private operation directory")
+            retained(marker_path, restore)
+        for name in sorted(directories, key=lambda value: (value.count("/"), value)):
+            private_directory(output / name)
+        # State is published last. An interrupted restore resumes these immutable
+        # byte copies through its original restore marker without resetting work.
+        for name, identity in sorted(files.items()):
+            if name == "operation-state.json":
+                continue
+            path = output / name
+            if path.exists() or path.is_symlink():
+                require(not path.is_symlink() and path.is_file() and digest_file(path) == identity,
+                        "An existing restore member belongs to another case: " + name)
+                continue
+            with archive.open("operation/" + name) as original_file, complete_retained_file(path, identity) as target:
+                shutil.copyfileobj(original_file, target, 1024 * 1024)
+        if state_path.exists() or state_path.is_symlink():
+            require(not state_path.is_symlink() and state_path.is_file()
+                    and state_path.read_bytes() == original_state_raw,
+                    "The destination already contains a different operating state")
+        else:
+            retained(state_path, original_state_raw)
+        original["restoredCheckpoint"] = restore
+        checkpoint(state_path, original)
+        marker_path.unlink(missing_ok=True)
+        print(json.dumps({"operation": OPERATION, "phase": "closed-case-checkpoint-restored",
+                          "checkpoint": restore, "output": str(output)}, sort_keys=True), flush=True)
 
 
 def installed_source_edition(output):
@@ -840,18 +1208,27 @@ def closed_workspace_receiving(output, state, requests):
 # this operation remains one additive Python programme and one runnable guide.
 NODE_CONTINUATION = r'''// MIT. Continue one original financial reconciliation through its equipped public surfaces.
 // Run: node reconciliation-continuation.mjs /private/operation-config.json
-import { readFile, writeFile, mkdir, open, rename, chmod, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, open, rename, chmod, stat, unlink } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
-import { join, resolve, isAbsolute } from 'node:path';
+import { join, resolve, isAbsolute, dirname, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 
 const configPath = resolve(process.argv[2] || '');
 const config = JSON.parse(await readFile(configPath, 'utf8'));
-const required = ['iatiDirectory','mcpDirectory','senderConnectionFile','receiverConnectionFile','exportsDirectory','outputDirectory','caseId','selector','finalRevision','saveRequests','reviewRequests','compareRequest','currentCase','packetPath'];
+const required = ['iatiDirectory','mcpDirectory','senderConnectionFile','receiverConnectionFile','exportsDirectory','outputDirectory','caseId','selector','finalRevision','saveRequests','reviewRequests','compareRequest','currentCase','packetPath','sourceIdentity'];
 for (const key of required) if (config[key] === undefined) throw new Error('Missing original operation configuration: ' + key);
 for (const key of ['iatiDirectory','mcpDirectory','senderConnectionFile','receiverConnectionFile','exportsDirectory','outputDirectory','packetPath'])
   if (typeof config[key] !== 'string' || !isAbsolute(config[key])) throw new Error('Use the original absolute path for ' + key);
+needSourceIdentity(config.sourceIdentity);
+function needSourceIdentity(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) ||
+      typeof value.sourceEdition !== 'string' || !value.sourceEdition ||
+      !value.manifest || typeof value.manifest.file !== 'string' ||
+      !Number.isSafeInteger(value.manifest.bytes) || value.manifest.bytes < 1 ||
+      !/^[0-9a-f]{64}$/.test(value.manifest.sha256 || ''))
+    throw new Error('Retain the original installed-source edition and complete manifest descriptor.');
+}
 const output = resolve(config.outputDirectory);
 for (const directory of [output, config.exportsDirectory, join(output,'client'), join(output,'mcp'), join(output,'browser')]) {
   await mkdir(directory, { recursive:true, mode:0o700 });
@@ -865,9 +1242,30 @@ const canonical = value => Array.isArray(value) ? value.map(canonical) : value &
   ? Object.fromEntries(Object.keys(value).sort().map(key => [key,canonical(value[key])])) : value;
 const same = (a,b) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
 const identity = data => ({bytes:data.length,sha256:createHash('sha256').update(data).digest('hex')});
+const publishedArtifacts = new Map();
+const syncDirectory = async path => {
+  const directory=await open(path,'r');
+  try { await directory.sync(); } finally { await directory.close(); }
+};
+async function atomicJson(name,value) {
+  const path=join(output,name),temporary=join(dirname(path),'.'+basename(path)+'.incoming-'+randomUUID());
+  const data=Buffer.from(JSON.stringify(value,null,2)+'\n','utf8');
+  let handle;
+  try {
+    handle=await open(temporary,'wx',0o600);
+    await handle.writeFile(data); await handle.sync(); await handle.close(); handle=undefined;
+    await rename(temporary,path); await syncDirectory(dirname(path));
+  } catch(error) {
+    await handle?.close().catch(()=>{});
+    await unlink(temporary).catch(()=>{});
+    throw error;
+  }
+  return {path,...identity(data)};
+}
 const jsonFile = async (name,value) => {
-  const path=join(output,name);
-  await writeFile(path,JSON.stringify(value,null,2)+'\n',{mode:0o600}); await chmod(path,0o600); return path;
+  const descriptor=await atomicJson(name,value);
+  publishedArtifacts.set(name,descriptor);
+  return descriptor.path;
 };
 const checkCase = (value, revision, label) => {
   need(value?.id===config.caseId && value.revision===revision, label+' returned a different saved case revision.');
@@ -885,13 +1283,43 @@ for (const [label,,input,revision] of requestRows)
   need(input && typeof input.requestId==='string' && Number.isSafeInteger(revision), 'Original '+label+' request/revision is missing.');
 let sender,receiver,merchant,browser;
 const secrets = [];
+const phaseStartedAt=new Date().toISOString(),attemptId=randomUUID();
+const phaseHistory=[];
+let activePhase='initializing',lastCompletedPhase=null;
+async function checkpoint(phase, phaseState='COMPLETE') {
+  activePhase=phase;
+  if(phaseState==='COMPLETE')lastCompletedPhase=phase;
+  const at=new Date().toISOString();
+  const processMemory=process.memoryUsage();
+  phaseHistory.push({phase,state:phaseState,at,processMemory});
+  const value={
+    schema:'stellar-forge.iati-reconciliation-public-progress.v1',
+    state:observations.state,attemptId,startedAt:phaseStartedAt,updatedAt:at,
+    phase,phaseState,lastCompletedPhase,pid:process.pid,processMemory,
+    caseId:config.caseId,revision:config.finalRevision,
+    reportSha256:config.currentCase.report.snapshotSha256,
+    sourceIdentity:config.sourceIdentity,
+    originalRequests:requestRows.map(([label,action,input,revision])=>({label,action,requestId:input.requestId,revision})),
+    history:phaseHistory,
+    artifacts:Object.fromEntries(publishedArtifacts),
+    client:{revisions:observations.client.revisions??[],replays:observations.client.replays??[],
+      comparisonSummary:observations.client.comparison?.summary??null,
+      files:observations.client.files??{},packet:observations.client.packet??null,
+      receive:observations.client.receive??null},
+    mcp:{files:observations.mcp.files??{},packet:observations.mcp.packet??null,
+      receive:observations.mcp.receive??null},
+    browser:observations.browser,
+    ...(observations.error?{error:observations.error}:{})
+  };
+  await atomicJson('operation-progress.json',value);
+}
 function redacted(error) {
   let text=String(error?.message || error);
   for (const secret of secrets) if (secret) text=text.split(secret).join('[private console]');
   return text.replace(/http:\/\/127\.0\.0\.1:\d+\/#[A-Za-z0-9_-]+/g,'[private console]');
 }
 async function saveResponse(openResponse, name) {
-  const target=join(output,name),temporary=target+'.part-'+randomUUID();
+  const target=join(output,name),temporary=join(dirname(target),'.'+basename(target)+'.incoming-'+randomUUID());
   const handle=await open(temporary,'wx',0o600);
   const hash=createHash('sha256'); let received=0,expected,sha;
   try {
@@ -909,8 +1337,10 @@ async function saveResponse(openResponse, name) {
     need(received===expected && hash.digest('hex')===sha,'Complete native file differs from its original descriptor.');
     await handle.sync();
   } finally { await handle.close(); }
-  await rename(temporary,target);
-  return {path:target,bytes:received,sha256:sha};
+  await rename(temporary,target); await syncDirectory(dirname(target));
+  const descriptor={path:target,bytes:received,sha256:sha};
+  publishedArtifacts.set(name,descriptor);
+  return descriptor;
 }
 async function allPages(iterator, name) {
   let snapshot,total,offset=0; const rows=[];
@@ -925,7 +1355,8 @@ async function allPages(iterator, name) {
 }
 async function readRetained(exported, name) {
   need(/^[0-9a-f]{64}$/.test(exported.exportId||''),'MCP omitted the retained export identity.');
-  const path=join(output,name),handle=await open(path,'w',0o600),hash=createHash('sha256');
+  const path=join(output,name),temporary=join(dirname(path),'.'+basename(path)+'.incoming-'+randomUUID());
+  const handle=await open(temporary,'wx',0o600),hash=createHash('sha256');
   let offset=0,readId,descriptor,completed=false;
   try {
     for (;;) {
@@ -948,7 +1379,10 @@ async function readRetained(exported, name) {
     await handle.close();
     if(!completed && readId) await merchant.call('merchant_source_file_release',{workspace:'sender',readId}).catch(()=>{});
   }
-  return {path,bytes:offset,sha256:exported.exportId};
+  await rename(temporary,path); await syncDirectory(dirname(path));
+  const result={path,bytes:offset,sha256:exported.exportId};
+  publishedArtifacts.set(name,result);
+  return result;
 }
 async function mcpRegister(action, input, name) {
   const rows=[];let snapshot,total,offset=0;
@@ -964,6 +1398,7 @@ async function mcpRegister(action, input, name) {
   return {rows,total,snapshotSha256:snapshot};
 }
 try {
+  await checkpoint('client-open','STARTED');
   for(const path of [config.senderConnectionFile,config.receiverConnectionFile]){
     const privateUrl=(await readFile(path,'utf8')).trim();secrets.push(privateUrl,new URL(privateUrl).hash.slice(1));
   }
@@ -993,6 +1428,7 @@ try {
     need(same(page.rows,expected),'Typed '+section+' rows differ from the original full report.');
     await jsonFile('client/'+section+'.json',page);
   }
+  await checkpoint('client-registers');
   const replays=[];
   for(const [label,action,input,revision] of requestRows){
     const saved=checkCase(await client[action](input),revision,'Typed original '+label+' replay');
@@ -1005,17 +1441,26 @@ try {
   const comparison=await client.compare(config.compareRequest);
   observations.client.comparison=comparison;
   await jsonFile('client/revision-comparison.json',comparison);
+  await checkpoint('client-request-replay');
   observations.client.files={};
-  for(const [kind,extension] of [['report','html'],['csv','csv'],['json','json']])
+  for(const [kind,extension] of [['report','html'],['csv','csv'],['json','json']]){
+    await checkpoint('client-file-'+kind,'STARTED');
     observations.client.files[kind]=await saveResponse(()=>client.file(config.caseId,kind,{revision:config.finalRevision}),'client/reconciliation.'+extension);
+    await checkpoint('client-file-'+kind);
+  }
+  await checkpoint('client-packet','STARTED');
   observations.client.packet=await saveResponse(()=>client.export(config.caseId,{revision:config.finalRevision}),'client/reconciliation.zip');
+  await checkpoint('client-packet');
+  await checkpoint('client-receive','STARTED');
   const packetInfo=await stat(config.packetPath);
   const typedReceived=await receivingClient.receive({body:createReadStream(config.packetPath),bytes:packetInfo.size});
   need(typedReceived.state==='COMPLETE','Typed original packet receiving did not complete.');
   checkCase(typedReceived.case,config.finalRevision,'Typed packet receive');
   checkCase(await receivingClient.plan(config.caseId,{revision:config.finalRevision}),config.finalRevision,'Typed receiver reopen');
   observations.client.receive={state:typedReceived.state,reused:typedReceived.reused,revision:typedReceived.currentCase.revision};
+  await checkpoint('client-receive');
 
+  await checkpoint('mcp-open','STARTED');
   const {MerchantSourceWorkspaces,readSourceWorkspaceConfiguration,SOURCE_WORKSPACE_CONNECTION_SCHEMA}
     =await import(pathToFileURL(join(config.mcpDirectory,'source-workspace.mjs')));
   const sourceConfigPath=await jsonFile('source-workspace-connection.json',{schema:SOURCE_WORKSPACE_CONNECTION_SCHEMA,
@@ -1036,6 +1481,7 @@ try {
     const expected=section==='activity'?original.report.activityRows:original.report[section];
     need(same(received.rows,expected),'MCP '+section+' register differs from the original report.');
   }
+  await checkpoint('mcp-registers');
   for(const [label,action,input,revision] of requestRows){
     const saved=checkCase((await merchant.call('merchant_source_iati_reconciliation_'+action,{workspace:'sender',definition:input})).native,
       revision,'MCP original '+label+' replay');
@@ -1044,17 +1490,23 @@ try {
   }
   const mcpComparison=(await merchant.call('merchant_source_iati_reconciliation_compare',{workspace:'sender',...config.compareRequest})).native;
   need(same(mcpComparison,comparison),'MCP historical comparison differs from the typed original comparison.');
+  await checkpoint('mcp-request-replay');
   observations.mcp.files={};
   for(const [kind,extension] of [['report','html'],['csv','csv'],['json','json']]){
+    await checkpoint('mcp-file-'+kind,'STARTED');
     const exported=await merchant.call('merchant_source_iati_reconciliation_file',{workspace:'sender',id:config.caseId,revision:config.finalRevision,kind});
     const file=await readRetained(exported,'mcp/reconciliation.'+extension);
     need(file.sha256===observations.client.files[kind].sha256,'MCP '+kind+' download differs from the native full file.');
     observations.mcp.files[kind]=file;
+    await checkpoint('mcp-file-'+kind);
   }
+  await checkpoint('mcp-packet','STARTED');
   const retained=await merchant.call('merchant_source_iati_reconciliation_export',{workspace:'sender',id:config.caseId,revision:config.finalRevision});
   observations.mcp.packet=await readRetained(retained,'mcp/reconciliation.zip');
+  await checkpoint('mcp-packet');
   await merchant.close();
   merchant=new MerchantSourceWorkspaces(originalConfig);
+  await checkpoint('mcp-receive','STARTED');
   const received=(await merchant.call('merchant_source_iati_reconciliation_receive',
     {workspace:'receiver',fromWorkspace:'sender',exportId:retained.exportId})).native;
   need(received.state==='COMPLETE','MCP complete retained packet receiving did not complete after reopen.');
@@ -1067,13 +1519,17 @@ try {
     {workspace:'receiver',requestId:config.reviewRequests.changedReview.requestId})).native;
   need(receivingRequest.state==='RECORDED' && same(receivingRequest.case,original),'Received complete packet lost original request replay custody.');
   need(same((await client.history(config.caseId)).history,beforeHistory),'Public-surface operation added a source revision.');
+  await checkpoint('mcp-receive');
 
+  // Publish the complete consumed client/MCP outputs before Chromium starts.
+  await checkpoint('browser-launch','STARTED');
   need(config.playwright && config.chromium,'The original browser continuation needs its installed Playwright and Chromium paths.');
   const {chromium}=await import(pathToFileURL(config.playwright));
   browser=await chromium.launch({executablePath:config.chromium,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
   const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
   const page=await context.newPage();page.setDefaultTimeout(900000);
   const browserErrors=[],views=[],downloads=[];
+  observations.browser={state:'RUNNING',views,downloads,errors:browserErrors};
   page.on('pageerror',error=>browserErrors.push(redacted(error)));
   page.on('response',response=>{
     const url=new URL(response.url());
@@ -1093,14 +1549,25 @@ try {
   need((await page.locator('#rec-case-state').innerText()).includes('Revision '+config.finalRevision),'Browser did not reopen the final original revision.');
   for(const stage of ['sources','matches','review','history']){
     await page.locator('[data-rec-tab="'+stage+'"]').click();
-    await page.screenshot({path:join(output,'browser','reconciliation-'+stage+'.png'),fullPage:false});
-    views.push({stage,revision:config.finalRevision});
+    const path=join(output,'browser','reconciliation-'+stage+'.png');
+    const screenshot=await page.screenshot({path,fullPage:false});
+    const handle=await open(path,'r');try{await handle.sync();}finally{await handle.close();}
+    await syncDirectory(dirname(path));
+    const descriptor={path,...identity(screenshot)};
+    publishedArtifacts.set('browser/reconciliation-'+stage+'.png',descriptor);
+    views.push({stage,revision:config.finalRevision,...descriptor});
+    await checkpoint('browser-'+stage);
   }
   await page.locator('#rec-revision').selectOption(String(config.separateRevision));
   await page.locator('#rec-open-revision').click();await idle();
   need((await page.locator('#rec-case-state').innerText()).includes('Revision '+config.separateRevision),'Browser historical revision did not reopen.');
   await page.locator('[data-rec-tab="review"]').click();
-  await page.screenshot({path:join(output,'browser','separate-value-dates.png'),fullPage:false});
+  const historicalPath=join(output,'browser','separate-value-dates.png');
+  const historicalScreenshot=await page.screenshot({path:historicalPath,fullPage:false});
+  const historicalHandle=await open(historicalPath,'r');try{await historicalHandle.sync();}finally{await historicalHandle.close();}
+  await syncDirectory(dirname(historicalPath));
+  publishedArtifacts.set('browser/separate-value-dates.png',{path:historicalPath,...identity(historicalScreenshot)});
+  await checkpoint('browser-historical-revision');
   await page.locator('#rec-revision').selectOption(String(config.finalRevision));
   await page.locator('#rec-open-revision').click();await idle();
   await page.locator('[data-rec-tab="history"]').click();
@@ -1108,6 +1575,7 @@ try {
   await page.locator('#rec-compare-after').selectOption(String(config.compareRequest.after.revision));
   await page.locator('#rec-compare-submit').click();await idle();
   need((await page.locator('#rec-history-comparison').innerText()).trim().length>0,'Browser omitted the original revision comparison.');
+  await checkpoint('browser-revision-comparison');
   for(const [kind,extension] of [['report','html'],['csv','csv'],['json','json']]){
     const pending=page.waitForEvent('download');
     await page.locator('#rec-file-'+kind).click();
@@ -1116,15 +1584,24 @@ try {
     need(!await download.failure(),'The original browser download failed.');
     const actual=identity(await readFile(path));
     need(actual.sha256===observations.client.files[kind].sha256,'Browser '+kind+' differs from the original native file.');
-    downloads.push({kind,path,...actual});
-    await idle();
+    const downloadHandle=await open(path,'r');try{await downloadHandle.sync();}finally{await downloadHandle.close();}
+    await syncDirectory(dirname(path));
+    const descriptor={kind,path,...actual};
+    downloads.push(descriptor);publishedArtifacts.set('browser/reconciliation.'+extension,descriptor);
+    await idle();await checkpoint('browser-file-'+kind);
   }
   await page.locator('#rec-request-id').fill(config.reviewRequests.changedReview.requestId);
   await page.locator('#rec-request-form button[type="submit"]').click();await idle();
   need((await page.locator('#rec-case-state').innerText()).includes('Revision '+config.finalRevision),'Browser request recovery did not reopen the original result.');
   await page.setViewportSize({width:390,height:844});
   await page.locator('[data-rec-tab="review"]').click();
-  await page.screenshot({path:join(output,'browser','reconciliation-mobile.png'),fullPage:false});
+  const mobilePath=join(output,'browser','reconciliation-mobile.png');
+  const mobileScreenshot=await page.screenshot({path:mobilePath,fullPage:false});
+  const mobileHandle=await open(mobilePath,'r');try{await mobileHandle.sync();}finally{await mobileHandle.close();}
+  await syncDirectory(dirname(mobilePath));
+  publishedArtifacts.set('browser/reconciliation-mobile.png',{path:mobilePath,...identity(mobileScreenshot)});
+  await checkpoint('browser-request-recovery');
+  await checkpoint('browser-receive','STARTED');
   await page.goto((await readFile(config.receiverConnectionFile,'utf8')).trim(),{waitUntil:'domcontentloaded'});await idle();
   await page.locator('#rec-open-view').click();
   await page.locator('#rec-case-select').selectOption(config.caseId);await page.locator('#rec-open').click();await idle();
@@ -1134,11 +1611,14 @@ try {
   need((await page.locator('#rec-case-state').innerText()).includes('Revision '+config.finalRevision),'Browser receiving did not reopen the original complete revision.');
   need(browserErrors.length===0,'Original browser reported '+browserErrors.length+' errors: '+browserErrors.join('; '));
   observations.browser={state:'COMPLETE',views,downloads,errors:browserErrors,receivedRevision:config.finalRevision};
+  await checkpoint('browser-receive');
   observations.state='COMPLETE';
   observations.completedAt=new Date().toISOString();
   await jsonFile('operation-result.json',observations);
+  await checkpoint('complete');
 } catch(error) {
   observations.state='INCOMPLETE';observations.error=redacted(error);
+  await checkpoint(activePhase,'INTERRUPTED').catch(()=>{});
   await jsonFile('operation-result.json',observations).catch(()=>{});
   throw new Error(observations.error);
 } finally {
@@ -1200,6 +1680,9 @@ def continue_operator(args, output, state, requests):
             "receiverConnectionFile": str(private / "receiver.url"),
             "exportsDirectory": str(exports), "outputDirectory": str(merchant_output),
             "caseId": state["caseId"], "selector": state["selector"],
+            "sourceIdentity": {"sourceEdition": state["sourceEdition"],
+                "manifest": {"file": edition_record(state)["installedSource"],
+                             **digest_file(output / edition_record(state)["installedSource"])}},
             "separateRevision": state["separateRevision"], "nominalRevision": state["nominalRevision"],
             "reviewedRevision": state["reviewedRevision"], "changedRevision": state["changedRevision"],
             "finalRevision": state["finalRevision"], "saveRequests": {k: requests[k] for k in ("separate", "nominal", "changed")},
@@ -1252,12 +1735,15 @@ def continue_operator(args, output, state, requests):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Operate actual FCDO financial coverage and complete independent receiving")
-    parser.add_argument("--organisation-source", required=True, help="Original complete 99,013-byte FCDO organisation XML")
-    parser.add_argument("--organisation-acquisition", required=True, help="Original organisation acquisition JSON")
-    parser.add_argument("--activity-source", required=True, help="Original complete FCDO-set-20.xml or its retained gzip")
-    parser.add_argument("--activity-receipt", required=True, help="Original publisher-receipt.json")
+    parser.add_argument("--organisation-source", help="Original complete 99,013-byte FCDO organisation XML, required for initial preparation")
+    parser.add_argument("--organisation-acquisition", help="Original organisation acquisition JSON, required for initial preparation")
+    parser.add_argument("--activity-source", help="Original complete FCDO-set-20.xml or its retained gzip, required for initial preparation")
+    parser.add_argument("--activity-receipt", help="Original publisher-receipt.json, required for initial preparation")
     parser.add_argument("--organisation-packet", help="Receive the existing original assessed organisation packet")
     parser.add_argument("--output", required=True, help="Private operation directory; reuse this directory to resume")
+    parser.add_argument("--restore-checkpoint", help="Complete closed-case ZIP to restore into this new private output")
+    parser.add_argument("--checkpoint-directory", help="Existing persistent destination outside output; defaults to an adjacent checkpoints directory")
+    parser.add_argument("--checkpoint-upload-helper", help="Current complete official Library library_upload.py, used in this same live namespace before the operator and after completion")
     parser.add_argument("--mcp-directory", required=True, help="Original composed mcp-merchant-operator directory")
     parser.add_argument("--actor", default=DEFAULT_ACTOR, help="The actual internal receiving/review operator")
     parser.add_argument("--node", default=os.environ.get("SF30_XML_NODE", "node"))
@@ -1269,6 +1755,8 @@ def main(argv=None):
         require(all(output != root and root not in output.parents
                     for root in (IATI, (IATI.parent / "xml").resolve())),
                 "Keep the private receiving operation outside the installed IATI and XML source trees")
+        if args.restore_checkpoint:
+            restore_case_checkpoint(output, args.restore_checkpoint)
         state_path = output / "operation-state.json"
         state = load_json(state_path.read_bytes()) if state_path.exists() else {
             "schema": SCHEMA, "operation": OPERATION, "state": "IN_PROGRESS",
@@ -1278,6 +1766,7 @@ def main(argv=None):
                 "Use this operation's original receiving directory")
         state["state"] = "IN_PROGRESS"
         checkpoint(state_path, state)
+        continuation_started = False
         try:
             sender = output / "sender-workspace"
             if not sender.exists():
@@ -1287,6 +1776,9 @@ def main(argv=None):
             activate_source_edition(output, state, edition)
             if not any(stage in state["stages"] for stage in (
                     "changed-selection-comparison-saved", "changed-selection-comparison-and-complete-nested-export")):
+                require(all(getattr(args, name) for name in (
+                    "organisation_source", "organisation_acquisition", "activity_source", "activity_receipt")),
+                    "Initial preparation requires all four original publisher inputs; a complete restored case uses its retained sources and requests")
                 requests = prepare(args, output, state)
             else:
                 requests = load_json((output / "reports" / "requests.json").read_bytes())
@@ -1297,21 +1789,31 @@ def main(argv=None):
             else:
                 state["receiving"] = entry["receiving"]
             if "final-independent-request-reopen" not in entry["stages"]:
+                prepared = saved_case_checkpoint(args, output, state, "before-operator")
+                upload_case_checkpoint(args, output, state, prepared)
+                continuation_started = True
                 continue_operator(args, output, state, requests)
+                continuation_started = False
             else:
                 state["operatorResult"] = entry["operatorResult"]
                 state["operatorResultFile"] = entry["operatorResultFile"]
                 state["finalRequestFile"] = entry["finalRequestFile"]
             require_source_edition(output, edition)
             state.pop("lastError", None)
+            state.pop("lastCheckpointError", None)
             state["state"] = "COMPLETE"
             entry["state"] = "COMPLETE"
             edition_phase(output, state, "complete", completedSourceEdition=state["sourceEdition"])
+            completed = saved_case_checkpoint(args, output, state, "complete")
+            upload_case_checkpoint(args, output, state, completed)
             print(json.dumps({"state": "COMPLETE", "operation": OPERATION,
                 "caseId": state["caseId"], "fullYearReviewedRevision": state["reviewedRevision"],
                 "currentReviewedRevision": state["finalRevision"], "receiving": state["receiving"],
                 "sourceEdition": state["sourceEdition"], "packet": state["nativePacket"],
-                "operatorResultFile": state["operatorResultFile"], "output": str(output)}, sort_keys=True), flush=True)
+                "operatorResultFile": state["operatorResultFile"], "output": str(output),
+                "checkpoint": completed,
+                "checkpointUpload": state.get("checkpointUploads", {}).get(completed["sha256"])},
+                sort_keys=True), flush=True)
             return 0
         except Exception as error:
             state["state"] = "CONTINUE"
@@ -1320,6 +1822,21 @@ def main(argv=None):
             state["lastError"] = {"type": type(error).__name__, "message":
                                  re.sub(r"#[A-Za-z0-9_-]{32,256}", "#[redacted]", str(error))}
             checkpoint(state_path, state)
+            if continuation_started and state.get("receiving"):
+                try:
+                    ended = saved_case_checkpoint(args, output, state, "continuation-ended")
+                    upload_case_checkpoint(args, output, state, ended)
+                except Exception as preservation_error:
+                    state["lastCheckpointError"] = {
+                        "type": type(preservation_error).__name__,
+                        "message": re.sub(r"#[A-Za-z0-9_-]{32,256}", "#[redacted]",
+                                          str(preservation_error)),
+                    }
+                    checkpoint(state_path, state)
+                    print(json.dumps({"operation": OPERATION, "phase": "closed-case-checkpoint-continuation",
+                                      "error": state["lastCheckpointError"],
+                                      "checkpoints": state.get("closedCaseCheckpoints", [])},
+                                     sort_keys=True), flush=True)
             raise
 
 
