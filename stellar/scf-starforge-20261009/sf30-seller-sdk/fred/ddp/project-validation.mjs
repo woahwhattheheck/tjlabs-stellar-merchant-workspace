@@ -10,7 +10,7 @@ import { fredDdpReceivingFileManifest, verifyFredDdpReceivingFiles,
 
 export const FRED_DDP_PROJECT_BUNDLE = 'stellar-forge.fred-project-bundle.v5';
 export const FRED_DDP_PROJECT_BUNDLE_MAX_BYTES = 480 * 1024 * 1024;
-export const FRED_DDP_PROJECT_KEYS = Object.freeze(['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings']);
+export const FRED_DDP_PROJECT_KEYS = ['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings'];
 
 function id(value, prefix, label) {
   need(typeof value === 'string' && value.startsWith(prefix) &&

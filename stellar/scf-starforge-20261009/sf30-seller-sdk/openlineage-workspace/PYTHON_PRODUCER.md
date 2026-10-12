@@ -108,6 +108,8 @@ Version 3 workspace exports include this producer, its requirement file, the nat
 
 Use the existing export/receive workflow in [README.md](README.md). The producer's private operation directory and its selected host credentials are configured separately from the lineage project.
 
+The complete cross-language receiving programme is `JAVA_RUNTIME_RECEIVING.mjs`; [JAVA_PRODUCER.md](JAVA_PRODUCER.md#receive-a-complete-runtime-on-another-host) describes its original Python operation relocation, exact pending wire recovery and independent delivered application.
+
 ## Original SDK contract
 
 The implementation uses the released [openlineage-python 1.53.0](https://pypi.org/project/openlineage-python/1.53.0/) package. The original [HTTP transport at tag 1.53.0](https://github.com/OpenLineage/OpenLineage/blob/1.53.0/client/python/src/openlineage/client/transport/http.py), Git blob `b90d33de88803fd8bc8ac65163f2af1e5cb760c1`, defines the supported session injection, compression, custom headers and response handling. The existing workspace producer guide explains its corresponding receiver contract.

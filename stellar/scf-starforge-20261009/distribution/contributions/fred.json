@@ -157,14 +157,20 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/examples/h15-source.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-state.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/workspace.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/qcew.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/WORKSPACE.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/workspace-journey.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving-report.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-cli.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-cli.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-types.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/PROJECT.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/ddp.js",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/http.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/http.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.d.mts"
   ]
 }

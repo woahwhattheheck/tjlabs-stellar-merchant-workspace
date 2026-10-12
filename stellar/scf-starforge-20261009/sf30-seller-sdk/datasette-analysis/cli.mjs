@@ -9,6 +9,7 @@ import { inspectPythonInstallation } from '../../distribution/python-runtime/wor
 import { absolute, canonical, digest, json, need, plain, regular } from '../../distribution/runtime-workspace/storage.mjs';
 
 export const DATASETTE_ANALYSIS_SOURCE = 'stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/';
+export const SUPPLIER_REPORT_SOURCE = 'products/conapi/supplier-report/';
 const SCHEMA = 'stellar-forge.datasette-analysis-python-selection.v1';
 const HASH = /^[a-f0-9]{64}$/;
 const CORE = ['cli.mjs', 'cli.py', 'model.py', 'source.py', 'recipes.py',
@@ -92,6 +93,15 @@ export async function inspectDatasetteAnalysisInstallation(root, {
     if (typeof path !== 'string' || !path.startsWith(DATASETTE_ANALYSIS_SOURCE)) continue;
     const name = path.slice(DATASETTE_ANALYSIS_SOURCE.length);
     if (!/^(?:workflow_[^/]+|WORKFLOW[^/]*\.(?:md|json)|kestra\/.+)$/.test(name)) continue;
+    need(!name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
+      'DATASETTE_ANALYSIS_SOURCE_CHANGED');
+    required.add(path);
+  }
+  // Supplier modules, editable browser, rules and source examples travel in
+  // the original selected product. Bind every selected component member.
+  for (const path of files.keys()) {
+    if (typeof path !== 'string' || !path.startsWith(SUPPLIER_REPORT_SOURCE)) continue;
+    const name = path.slice(SUPPLIER_REPORT_SOURCE.length);
     need(!name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
       'DATASETTE_ANALYSIS_SOURCE_CHANGED');
     required.add(path);

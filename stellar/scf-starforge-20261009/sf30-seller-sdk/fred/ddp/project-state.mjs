@@ -192,11 +192,8 @@ export function createFredDdpProjectExtension({ readProject, transact, readCaptu
   }
   async function acquireFredDdpCrosswalk({ directory, id, expectedRevision, url, signal, fetchImpl } = {}) {
     const original = await readProject(directory);
-    if (url === undefined) {
-      if (original.pending?.id === id && original.pending.kind === 'ddp-crosswalk-capture')
-        url = original.pending.payload.url;
-      else url = original.operations.find(item => item.id === id && item.kind === 'ddp-crosswalk-capture')?.result.url;
-    }
+    if (url === undefined && original.pending?.id === id && original.pending.kind === 'ddp-crosswalk-capture')
+      url = original.pending.payload.url;
     url = crosswalkUrl(url);
     return transact(directory, { id, expectedRevision, kind: 'ddp-crosswalk-capture', payload: { url } },
       async (state, root) => {

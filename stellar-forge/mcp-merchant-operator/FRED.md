@@ -714,6 +714,8 @@ A project containing DDP work without QCEW exports stellar-forge.fred-project-bu
 
 Each raw source file is limited to 256 MiB; a complete DDP source envelope is limited to 384 MiB. Complete project v5 and v6 files are limited to 480 MiB. Workspace configuration maxDdpResponseBytes controls the DDP/project download allowance up to 480 MiB; its default is 480 MiB. Original maxResponseBytes and version 1–4 complete project limits remain 256 MiB. Source import requests have their isolated 384 MiB allowance. The authenticated MCP source import takes a configured host alias or retained source ID, keeping full original bytes outside its argument envelope.
 
+Complete-file inspection validates the original graph in place and hashes canonical JSON in bounded chunks. The receiving command checks the selected file bytes and SHA256, then uses the original native receiver for its single complete graph validation. A received project's returned identity and inventory counts come from that successfully validated bundle. Source input inspection returns compact inventories; imports preserve the complete original input and validate it through the client without an additional parsed-model copy. The original compact identities and pretty-JSON capacity boundaries are unchanged.
+
 Reopen the received directory through the original fred serve command and the same connection-record workflow. The imported project retains all original source identities and saved receiving files.
 
 ### Installed DDP methods and agent tools

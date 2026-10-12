@@ -22,6 +22,7 @@
 <nav aria-label="Migration workspace">
   <button type="button" data-tab="overview" aria-current="page">Overview</button>
   <button type="button" data-tab="records">Records and decisions</button>
+  <button type="button" data-tab="source-cases">Source cases</button>
   <button type="button" data-tab="mapping">Destination mapping</button>
   <button type="button" data-tab="receiving">Native export and files</button>
   <button type="button" data-tab="batches">Batches and delivery</button>
@@ -34,7 +35,8 @@
     <h2>Create a migration from a reviewed repository edition</h2>
     <p>Choose an edition retained by the original repository workspace. Its identifiers, metadata, original response pages and review history stay connected to the migration.</p>
     <form id="create-form">
-      <div class="grid two"><label>Migration title<input name="title" required maxlength="256"></label><label>Selected TIND institution<input name="instance" type="url" placeholder="https://your-institution.tind.io" required></label></div>
+      <p>Open the complete original source edition now. The institution URL can be selected later in Mapping before preparing or receiving its native batches.</p>
+      <div class="grid two"><label>Migration title<input name="title" required maxlength="256"></label><label>TIND institution, when selected<input name="instance" type="url" placeholder="https://your-institution.tind.io"></label></div>
       <label>Reviewed original edition<select name="editionId" id="edition-select" required></select></label>
       <details><summary>Complete initial mapping profile</summary><p>Review exact XML selectors and target MARC fields. You can edit this profile again in Destination mapping.</p><label>Profile JSON<textarea name="profile" id="create-profile" rows="16" spellcheck="false"></textarea></label></details>
       <button type="submit">Create complete migration</button>
@@ -57,6 +59,42 @@
     <h2>Receive prepared staff decisions</h2>
     <p>Receive up to 5,000 complete records per transaction. Each row contains its exact <code>identifier</code> and <code>staff</code> object, including reviewer, note, access, hierarchy and merge choices.</p>
     <form id="bulk-review-form"><label>Staff decisions JSON file<input name="file" type="file" accept=".json,application/json"></label><label>Or paste the complete records array<textarea name="records" rows="8" spellcheck="false"></textarea></label><button type="submit">Receive staff decisions</button></form>
+  </section>
+</section>
+<section data-panel="source-cases" hidden>
+  <section class="panel">
+    <h2>Receive original source observations</h2>
+    <p>Import observed access terms, contributor roles and journal relationships. Cases match the original repository identifiers, landing URLs or DOIs retained in this migration. The collection stays editable and accompanies the full workspace handover.</p>
+    <form id="source-case-import">
+      <label>Source cases JSON file<input name="file" type="file" accept=".json,application/json"></label>
+      <label>Or paste the complete source-cases document<textarea name="document" rows="8" spellcheck="false"></textarea></label>
+      <button type="submit">Receive source cases</button>
+    </form>
+  </section>
+  <section class="panel">
+    <div class="section-heading"><div><h2>Retained source collections</h2><p id="source-collection-count" class="muted"></p></div><button id="refresh-source-cases" type="button">Refresh collections</button></div>
+    <div class="table-scroll"><table><caption class="sr-only">Retained source-case collections</caption><thead><tr><th scope="col">Collection</th><th scope="col">Observed</th><th scope="col">Original edition matches</th><th scope="col">Open</th></tr></thead><tbody id="source-collection-rows"></tbody></table></div>
+    <div class="row"><button id="source-collections-previous" type="button">Previous collections</button><span id="source-collection-page"></span><button id="source-collections-next" type="button">Next collections</button></div>
+  </section>
+  <section class="panel" id="source-case-detail" hidden>
+    <h2 id="source-case-title"></h2><p id="source-case-description"></p>
+    <div class="actions"><a id="source-case-download" class="button" href="#">Download original source cases</a><button id="source-case-select-matched" type="button">Select single matches</button><button id="source-case-clear" type="button">Clear selection</button></div>
+    <div class="table-scroll"><table><caption class="sr-only">Source observations and their original repository matches</caption><thead><tr><th scope="col">Select</th><th scope="col">Original case and facts</th><th scope="col">Actual repository record</th></tr></thead><tbody id="source-case-rows"></tbody></table></div>
+    <div class="actions"><button id="source-case-plan" type="button">Prepare selected staff records</button></div>
+    <details><summary>Continue an editable staff draft</summary><form id="source-case-draft-form"><label>Saved draft JSON<input name="file" type="file" accept=".json,application/json"></label><label>Or paste the complete draft<textarea name="draft" rows="6" spellcheck="false"></textarea></label><button type="submit">Receive this collection's draft</button></form></details>
+    <section id="source-case-review-desk" hidden>
+      <h3>Review complete staff records</h3>
+      <p id="source-case-plan-description"></p>
+      <details><summary>Original observations, proposed changes and current records</summary><div id="source-case-plan-details"></div></details>
+      <form id="source-case-review-form">
+        <div class="grid two"><label>Reviewing operator<input name="reviewer" required maxlength="256"></label><label>Decision note<input name="note" required maxlength="4096"></label></div>
+        <label>Complete editable review input<textarea id="source-case-review-json" name="input" rows="24" spellcheck="false" required></textarea></label>
+        <p>Review every proposed access rule, person, hierarchy and MARC field. In <code>filePolicies</code>, set <code>apply</code> to <code>true</code> for each original file whose role or access should change. The operator and note above are added to each selected staff record. Original source facts and the before/after staff records remain in the review history.</p>
+        <div class="actions"><button type="submit">Save selected case decisions</button><button id="source-case-download-draft" type="button">Download complete draft</button></div>
+      </form>
+    </section>
+    <h3>Retained review history</h3><div id="source-case-review-history"></div>
+    <button id="source-case-review-more" type="button" hidden>Load older reviews</button>
   </section>
 </section>
 <section data-panel="mapping" hidden>

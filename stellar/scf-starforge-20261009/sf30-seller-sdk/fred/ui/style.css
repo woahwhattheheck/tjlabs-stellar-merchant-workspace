@@ -7,3 +7,5 @@
 section[data-panel],.box,.table-wrap,.metric{min-width:0}.metric{overflow-wrap:anywhere}
 
 #ddp-decisions summary{cursor:pointer;font-weight:600;line-height:1.5}#ddp-decisions[open] summary{margin-bottom:18px}[data-panel=ddp] h4{margin-top:25px}[data-panel=ddp] select{width:100%}[data-panel=ddp] .metrics{margin:18px 0}
+
+.qcew-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}.qcew-chart{margin:0;padding:14px;border:1px solid #c4c4bf;background:#fff}.qcew-chart figcaption{font-weight:600;margin-bottom:10px}.qcew-chart svg{display:block;width:100%;height:auto}.qcew-chart text{font:11px system-ui,sans-serif;fill:#333}.qcew-legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px}.qcew-legend span{display:inline-flex;gap:6px;align-items:center}.qcew-legend svg{width:28px;height:12px}.qcew-source-note{font-size:12px;color:#4c4c48}#qcew-page{align-self:center}#qcew-methodology p{font-size:13px}#qcew-recovery{border-color:#666}@media(max-width:1000px){.qcew-charts{grid-template-columns:1fr}}

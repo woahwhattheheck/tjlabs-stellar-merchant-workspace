@@ -4,7 +4,7 @@
 <body>
 <header><div><p class="eyebrow">STELLAR FORGE</p><h1>Economic editions</h1><p id="project-title">Opening project…</p></div><button id="refresh" type="button">Refresh state</button></header>
 <p class="source-notice">This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. By using this application, users agree to the <a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener noreferrer">FRED API Terms of Use</a>.</p>
-<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="releases">Release planner</button><button data-tab="ddp">DDP migration</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
+<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="county">County reports</button><button data-tab="releases">Release planner</button><button data-tab="ddp">DDP migration</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
 <main>
 <div id="message" role="status" aria-live="polite"></div>
 <section id="summary" class="metrics" aria-label="Project summary"></section>
@@ -104,6 +104,93 @@
 </div>
 </section>
 
+
+
+<section data-panel="county" hidden>
+<h2>County wage reports</h2>
+<p>Turn the original BLS Quarterly Census of Employment and Wages into a reusable regional report. Keep the employment, wage, price and disclosure choices together for each reporting quarter.</p>
+<p id="qcew-status" role="status" aria-live="polite">Opening county report production…</p>
+<div id="qcew-summary" class="metrics" aria-label="County report inventory"></div>
+<div id="qcew-recovery" class="box" hidden><h3>Continue your saved action</h3><p id="qcew-recovery-text"></p>
+<div class="buttons"><button id="qcew-resume" type="button">Continue saved action</button><button id="qcew-clear-request" type="button">Clear completed or unsent request</button></div></div>
+
+<div class="box"><h3>1. Retain the original sources</h3>
+<form id="qcew-source-form" class="form-grid">
+<label class="wide">BLS source location<select id="qcew-input-mode"><option value="intake">Complete original intake on this host</option><option value="capture">Sealed source capture file</option></select></label>
+<label id="qcew-intake-field" class="wide">Original intake directory<input id="qcew-intake" placeholder="/absolute/path/to/bls-intake" autocomplete="off"><small>Use the complete source intake produced by the included BLS collector.</small></label>
+<label id="qcew-capture-field" class="wide" hidden>Complete QCEW capture<input id="qcew-capture-file" type="file" accept=".json,application/json"><small>Original compressed CSV members and their complete source manifest stay together.</small></label>
+<div class="wide buttons"><button id="qcew-import" type="submit">Import BLS source</button></div>
+</form>
+<details><summary>Import the original price index</summary><p>Use a complete CPI capture or retained official public-table JSON. Existing economic captures are also available in the production form.</p>
+<form id="qcew-cpi-form" class="form-grid"><label class="wide">Price source file<input id="qcew-cpi-file" type="file" accept=".json,application/json" required></label><div class="wide"><button id="qcew-import-cpi" type="submit">Import price source</button></div></form></details>
+<h4>Retained BLS sources</h4><div id="qcew-source-list" class="table-wrap"></div>
+</div>
+
+<div class="box"><h3>2. Save the report profile</h3>
+<div class="form-grid"><label class="wide">Saved profile<select id="qcew-profile-load"></select></label><div class="wide buttons"><button id="qcew-open-profile" type="button">Use saved profile</button><button id="qcew-default-profile" type="button">Use San Francisco template</button><button id="qcew-download-profile" type="button">Download selected profile</button></div></div>
+<form id="qcew-profile-form" class="form-grid">
+<label>Profile name<input id="qcew-profile-name" maxlength="160" required></label>
+<label class="wide">Report title<input id="qcew-profile-title" maxlength="200" required></label>
+<label>Focus region name<input id="qcew-focus-label" maxlength="120" required></label>
+<label>Focus area codes<input id="qcew-focus-areas" required><small>One or more original five-character BLS area codes, separated by commas.</small></label>
+<label>Comparison year<input id="qcew-baseline" type="number" min="1990" max="2100" required></label>
+<label>History begins<input id="qcew-history-start" type="number" min="1990" max="2100" required></label>
+<label>Employment measure<select id="qcew-employment"><option value="quarter_mean">Mean of the three monthly counts</option><option value="month3">Third-month count</option></select></label>
+<label>Wage measure<select id="qcew-wage-method"><option value="from_totals">Quarterly wages divided by covered employment and 13 weeks</option><option value="published_weighted">Employment-weighted published weekly wages</option></select></label>
+<label>Regional coverage<select id="qcew-coverage"><option value="complete">Require every selected component</option><option value="disclosed_components">Use disclosed components and label incomplete totals</option></select></label>
+<label>Dollar basis<select id="qcew-dollar-basis"><option value="constant">Constant dollars</option><option value="nominal">Nominal dollars</option></select></label>
+<label>Price series<input id="qcew-price-series" maxlength="50" required></label>
+<label>Quarterly price index<select id="qcew-price-quarter"><option value="quarter_end">Quarter-end month</option><option value="quarter_mean">Mean of the three months</option></select></label>
+<label>Publisher<input id="qcew-publisher" maxlength="160" required></label>
+<label>Publisher contact<input id="qcew-publisher-contact" maxlength="240"></label>
+<label>Sponsor name<input id="qcew-sponsor" maxlength="160"></label>
+<label class="wide">Sponsor line<input id="qcew-sponsor-line" maxlength="240"></label>
+<div class="wide"><h4>Regions and industries in this profile</h4><div id="qcew-profile-context" class="table-wrap"></div><div id="qcew-profile-industries" class="table-wrap"></div></div>
+<details class="wide"><summary>Advanced profile definition</summary><p>Use the complete definition to change comparator regions, industry groupings, ownership, historical tables or the fixed price base. Apply it to the form before saving.</p>
+<label>Complete profile JSON<textarea id="qcew-profile-json" rows="16" spellcheck="false"></textarea></label>
+<div class="buttons"><button id="qcew-apply-profile-json" type="button">Apply definition</button></div></details>
+<div class="wide buttons"><button id="qcew-save-profile" type="submit">Save reusable profile</button></div>
+</form></div>
+
+<div class="box"><h3>3. Produce a reporting quarter</h3>
+<form id="qcew-produce-form" class="form-grid">
+<label class="wide">BLS source edition<select id="qcew-produce-source" required></select></label>
+<label class="wide">Saved report profile<select id="qcew-produce-profile" required></select></label>
+<label class="wide">Price-index source<select id="qcew-produce-cpi" required></select></label>
+<label>Reporting year<input id="qcew-report-year" type="number" min="1990" max="2100" required></label>
+<label>Quarter<select id="qcew-report-quarter"><option value="1">Q1</option><option value="2">Q2</option><option value="3">Q3</option><option value="4">Q4</option></select></label>
+<label>Previous edition<select id="qcew-produce-previous"><option value="">First edition</option></select></label>
+<label class="check wide"><input id="qcew-pdf" type="checkbox"> Include a PDF generated from the finished report</label>
+<p id="qcew-pdf-state" class="wide briefing-method"></p>
+<div class="wide buttons"><button id="qcew-produce" type="submit">Produce complete edition</button></div>
+</form></div>
+
+<div class="box" id="qcew-report-panel"><h3>Saved reports and original data</h3>
+<label>Report edition<select id="qcew-edition"></select></label>
+<div class="buttons"><button id="qcew-open-edition" type="button">Open report</button><button id="qcew-use-edition" type="button">Use as the next edition’s predecessor</button></div>
+<p id="qcew-report-status" role="status" aria-live="polite">Produce a reporting quarter or open a saved edition.</p>
+<div id="qcew-report-metrics" class="metrics"></div><div id="qcew-downloads" class="buttons"></div>
+<div id="qcew-charts" class="qcew-charts"></div>
+<div class="form-grid">
+<label>Report table<select id="qcew-section"><option value="overview">Current industry summary</option><option value="matrix">Calculated regional history</option><option value="sources">Original source rows and disclosure</option><option value="files">Original source files</option><option value="changes">Changes from the previous edition</option></select></label>
+<label>Region<select id="qcew-filter-region"><option value="">All regions</option></select></label>
+<label>Industry<select id="qcew-filter-industry"><option value="">All industries</option></select></label>
+<label>Period<select id="qcew-filter-period"><option value="">All periods</option></select></label></div>
+<div id="qcew-report-table" class="table-wrap" role="region" aria-label="County report data" tabindex="0"></div>
+<div class="buttons"><button id="qcew-page-previous" type="button">Previous rows</button><span id="qcew-page"></span><button id="qcew-page-next" type="button">Next rows</button></div>
+<details><summary>Calculation and source context</summary><div id="qcew-methodology"></div></details>
+</div>
+
+<div class="box"><h3>4. Hand over the complete project</h3>
+<p>The handover includes every retained QCEW and price source, saved profile, report edition, comparison and the economic project’s existing work.</p>
+<div class="buttons"><button id="qcew-export-project" type="button">Download complete project</button><button id="qcew-download-original" type="button">Download selected BLS source</button></div>
+<form id="qcew-receive-form" class="form-grid">
+<label class="wide">Complete project handover<input id="qcew-receive-file" type="file" accept=".json,application/json" required></label>
+<label class="wide">Receiving directory on this host<input id="qcew-receive-directory" placeholder="/absolute/path/to/received-project" autocomplete="off" required><small>Choose a new private directory. Continuing the same receiving operation reuses its original result.</small></label>
+<div class="wide buttons"><button id="qcew-receive" type="submit">Receive complete project</button></div></form>
+<p id="qcew-received-status" role="status"></p><div id="qcew-received-detail" class="table-wrap"></div>
+</div>
+</section>
 
 <section data-panel="releases" hidden>
 <h2>Release calendar and vintage capture</h2>

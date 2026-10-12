@@ -170,6 +170,30 @@
           <div class="section-heading"><div><p class="eyebrow">Repeat the complete customer task</p><h3>Recurring customer work</h3></div><div class="actions"><button id="series-new">New series</button><button id="series-refresh">Refresh series</button></div></div>
           <p>Keep the customer, procedure and calendar together. Review each period’s actual source and inputs, then start its original saved workflow. Dates describe the work period; the operator starts each cycle.</p>
           <div id="series-pending" class="panel compact" hidden><h4>Continue a saved series action</h4><div id="series-pending-list"></div></div>
+          <section class="subsection" aria-labelledby="series-agenda-title">
+            <div class="section-heading"><h4 id="series-agenda-title">Customer delivery agenda</h4><button id="series-agenda-export" type="button">Export calendar</button></div>
+            <p class="hint">See due work across every customer series in this profile. Open a saved period to continue it, or plan a proposed period with its actual source and inputs.</p>
+            <form id="series-agenda-form">
+              <div class="columns">
+                <div><label for="series-agenda-from">Due from</label><input id="series-agenda-from" type="date" required></div>
+                <div><label for="series-agenda-to">Due through</label><input id="series-agenda-to" type="date" required></div>
+              </div>
+              <div class="columns">
+                <div><label for="series-agenda-query">Customer, task or source</label><input id="series-agenda-query" type="search" maxlength="160"></div>
+                <div><label for="series-agenda-status">Work status</label><select id="series-agenda-status"><option value="open">Open work</option><option value="all">All work</option><option value="PROPOSED">Periods to plan</option><option value="PLANNED">Planned</option><option value="READY">Ready</option><option value="RUNNING">Running</option><option value="PAUSED">Paused</option><option value="WAITING">Waiting</option><option value="COMPLETE">Complete</option><option value="CANCELLED">Cancelled</option></select></div>
+              </div>
+              <details><summary>Calendar and overdue work</summary>
+                <label for="series-agenda-today">Today for due-date comparison</label><input id="series-agenda-today" type="date" required>
+                <label><input id="series-agenda-overdue" type="checkbox" checked> Include earlier overdue saved work</label>
+                <label><input id="series-agenda-proposed" type="checkbox" checked> Include calendar periods to plan</label>
+                <p class="hint">The selected window covers up to 366 days. Deadlines use whole calendar dates. The export includes every matching period, across all pages.</p>
+              </details>
+              <button id="series-agenda-load" type="submit">Open delivery agenda</button>
+            </form>
+            <p id="series-agenda-summary" class="hint" role="status"></p>
+            <div class="table-wrap"><table><thead><tr><th scope="col">Due</th><th scope="col">Customer work</th><th scope="col">Progress</th><th scope="col">Selected source</th><th scope="col">Continue</th></tr></thead><tbody id="series-agenda-rows"></tbody></table></div>
+            <div class="pager"><button id="series-agenda-previous" type="button">Previous</button><span id="series-agenda-page"></span><button id="series-agenda-next" type="button">Next</button></div>
+          </section>
           <div class="request-layout">
             <div><h4>Customer series</h4><div id="series-list" class="select-list"></div></div>
             <div id="series-editor" hidden>

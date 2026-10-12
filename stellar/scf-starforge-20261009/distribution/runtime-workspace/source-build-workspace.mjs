@@ -4,6 +4,7 @@ import { lstat, realpath, readdir, open } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { openGitSource } from '../git-source.mjs';
+import { enrichProductRequirements, resolveProductRuntimeRequirements } from '../discovery/product-requirements-source.mjs';
 import { distributionPath, contributionPaths, composeDistribution } from '../specification.mjs';
 import { sourceSelectionDirectory, sourceSelectionPath, validateSourceSelection,
   selectedContributionPaths } from '../source-selection.mjs';
@@ -146,13 +147,7 @@ export function describeProductSource(source, { repository, selection = 'all', o
     merchantProviders: Object.keys(spec.merchantProviders ?? {}).sort(),
     features: Object.keys(spec.featurePeers ?? {}).sort(),
     contributions: composed.contributions.map(({ id, path }) => ({ id, path })),
-    ...(includeRequirements ? { runtimeRequirements: {
-      nativePeers: spec.nativePeers ?? {},
-      featurePeers: spec.featurePeers ?? {},
-      runtimePackageManifests: spec.runtimePackageManifests ?? {},
-      featureNames: [...new Set([...Object.keys(spec.featurePeers ?? {}),
-        ...Object.keys(spec.runtimePackageManifests ?? {})])].sort(),
-    } } : {}),
+    ...(includeRequirements ? { runtimeRequirements: resolveProductRuntimeRequirements(source, spec) } : {}),
   };
 }
 export async function sourceBuildCatalog(input) {
@@ -177,7 +172,7 @@ export async function sourceBuildCatalog(input) {
       products.push({ id: null, title: basename(path), path, available: false, error: errorView(error) });
     }
   }
-  return { repository, sourceCommit: source.commit, offline, products };
+  return enrichProductRequirements(source, { repository, sourceCommit: source.commit, offline, products });
 }
 /** Inspect a chosen immutable product without creating a saved review or operation. */
 export async function sourceBuildProduct(input) {
@@ -191,7 +186,7 @@ export async function sourceBuildProduct(input) {
     selection: input.selection, python: input.python, includeRequirements: true });
 }
 
-function validateReview(value, id) {
+export function validateSourceBuildReview(value, id) {
   need(plain(value) && value.schema === SCHEMA && value.reviewId === id &&
     OID.test(value.sourceCommit ?? '') && typeof value.selectionSha256 === 'string',
   'SOURCE_BUILD_REVIEW_INVALID');
@@ -205,7 +200,7 @@ function validateReview(value, id) {
 }
 export async function readSourceBuildReview(root, id) {
   const base = await initializeSourceBuildWorkspace(root);
-  return validateReview(await readJSON(reviewPath(base, id)), id);
+  return validateSourceBuildReview(await readJSON(reviewPath(base, id)), id);
 }
 export async function reviewSourceBuild(root, input) {
   need(plain(input) && Object.keys(input).every(key =>
@@ -219,7 +214,7 @@ export async function reviewSourceBuild(root, input) {
   const base = await initializeSourceBuildWorkspace(root), file = reviewPath(base, reviewId);
   const value = { ...definition, selectionSha256, reviewId, requestId: randomUUID(), reviewedAt: now() };
   try { await saveJSON(file, value); } catch (error) { if (error.code !== 'EEXIST') throw error; }
-  const saved = validateReview(await readJSON(file), reviewId);
+  const saved = validateSourceBuildReview(await readJSON(file), reviewId);
   need(saved.selectionSha256 === selectionSha256, 'SOURCE_BUILD_REVIEW_COLLISION');
   return saved;
 }

@@ -36,7 +36,7 @@ function expanded(name,ns,attribute=false) {
 }
 export function scanFredDdpXml(text,handlers={}, {maxElements=5000000,maxDepth=64,maxAttributes=256,signal}={}) {
   need(typeof text==='string'&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text),'Invalid original XML text.');
-  const stack=[];let i=text.charCodeAt(0)===0xfeff?1:0,count=0,rootCount=0,rootEnded=false;
+  const stack=[];let i=text.charCodeAt(0)===0xfeff?1:0,count=0,rootCount=0,rootEnded=false,declaredRoot=null;
   const emitText=(value,start,end,cdata=false)=>{
     const normalized=cdata?value:decode(value);
     if(stack.length)handlers.text?.(normalized,{start,end},stack.at(-1),stack);
@@ -61,6 +61,15 @@ export function scanFredDdpXml(text,handlers={}, {maxElements=5000000,maxDepth=6
         need(!encoding||/^utf-?8$/i.test(encoding),'This XML capture requires its declared supported UTF-8 encoding.');
       }
       i=end+2;continue;
+    }
+    if(text.startsWith('<!DOCTYPE',i)){
+      // The original Board structure file names its root without an external
+      // identifier or entity subset. Retain that declaration as an exact root
+      // constraint; never load a DTD or expand declared entities.
+      const end=text.indexOf('>',i+9);need(end>=0,'Incomplete original XML document type.');
+      const declaration=text.slice(i,end+1),match=/^<!DOCTYPE\s+([A-Za-z_][A-Za-z0-9_.-]*(?::[A-Za-z_][A-Za-z0-9_.-]*)?)\s*>$/.exec(declaration);
+      need(match&&rootCount===0&&stack.length===0&&declaredRoot===null,'Only a single original bare document type before its root is supported.');
+      declaredRoot=match[1];i=end+1;continue;
     }
     need(!text.startsWith('<!',i),'External declarations and DTD entities are outside the original Board XML profile.');
     const start=i++;
@@ -104,7 +113,8 @@ export function scanFredDdpXml(text,handlers={}, {maxElements=5000000,maxDepth=6
       need(!attributeKeys.has(identity),'Original XML expanded attribute names must be unique.');attributeKeys.add(identity);
     }
     need(stack.length<maxDepth&&++count<=maxElements,'The original XML exceeds its document capacity.');
-    if(!stack.length){need(!rootEnded&&++rootCount===1,'Receive one complete original XML document.');}
+    if(!stack.length){need(!rootEnded&&++rootCount===1,'Receive one complete original XML document.');
+      need(declaredRoot===null||name===declaredRoot,'The original XML document type must name its root.');}
     stack.push(node);handlers.start?.(node,stack);
     if(selfClosing){handlers.end?.(node,stack);stack.pop();if(!stack.length)rootEnded=true;}
   }

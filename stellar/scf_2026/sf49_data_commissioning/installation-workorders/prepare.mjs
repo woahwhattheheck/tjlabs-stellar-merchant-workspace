@@ -4,21 +4,27 @@ import {readFile, mkdir, open, link, unlink, lstat, realpath} from "node:fs/prom
 import {dirname, resolve, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {createHash, randomUUID} from "node:crypto";
+import {spawnSync} from "node:child_process";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const usage = "node prepare.mjs template|prepare --profile cocart|blockscout --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]";
+const usage = "node prepare.mjs template|prepare --profile cocart|blockscout|queryfarm|ars-air-quality|supplier-catalogues|supplier-orders|stellarcarbon|cfce-givecredit --seed ORIGINAL_SEED.json --out PRIVATE_DIRECTORY [--bindings SELECTED_BINDINGS.json]\nnode prepare.mjs sources --selection SOURCE_SELECTION.json --source-root ORIGINAL_FILES --out PRIVATE_DIRECTORY [--python python3]";
 function parse(argv) {
   const [command, ...args] = argv;
-  if (!["template", "prepare"].includes(command)) throw new Error(usage);
+  if (!["template", "prepare", "sources"].includes(command)) throw new Error(usage);
   const result = {command};
   for (let i = 0; i < args.length; i += 2) {
     const key = args[i]?.replace(/^--/, "");
-    if (!["profile", "seed", "out", "bindings"].includes(key) || !args[i + 1] || args[i + 1].startsWith("--") || result[key])
+    if (!(command === "sources" ? ["selection", "source-root", "out", "python"] : ["profile", "seed", "out", "bindings"]).includes(key) || !args[i + 1] || args[i + 1].startsWith("--") || result[key])
       throw new Error(usage);
     result[key] = args[i + 1];
   }
-  if (!["cocart", "blockscout"].includes(result.profile) || !result.seed || !result.out ||
+  if (command === "sources") {
+    if (!result.selection || !result["source-root"] || !result.out) throw new Error(usage);
+    result.python ??= "python3";
+    return result;
+  }
+  if (!["cocart", "blockscout", "queryfarm", "ars-air-quality", "supplier-catalogues", "supplier-orders", "stellarcarbon", "cfce-givecredit"].includes(result.profile) || !result.seed || !result.out ||
       (command === "prepare" && !result.bindings) || (command === "template" && result.bindings)) throw new Error(usage);
   return result;
 }
@@ -66,6 +72,14 @@ async function retain(path, raw) {
 }
 try {
   const args = parse(process.argv.slice(2));
+  if (args.command === "sources") {
+    const result = spawnSync(args.python, [join(here, "source-inputs.py"),
+      "--selection", resolve(args.selection), "--source-root", resolve(args["source-root"]),
+      "--out", resolve(args.out)], {stdio: "inherit", env: process.env});
+    if (result.error) throw result.error;
+    if (result.signal) throw new Error("Original source preparation ended on " + result.signal + ".");
+    process.exitCode = result.status ?? 1;
+  } else {
   const seed = await readJson(args.seed);
   const profile = await readJson(join(here, args.profile + ".json"));
   const out = await privateDirectory(args.out);
@@ -85,5 +99,6 @@ try {
     delete preparation.document; delete preparation.preview;
     const receipt = await retain(join(out, "preparation.json"), encode(preparation));
     console.log(JSON.stringify({...receipt, outputs, selections: result.selections}, null, 2));
+  }
   }
 } catch (error) { console.error(error.message); process.exitCode = 1; }

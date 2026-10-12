@@ -107,23 +107,34 @@ export class MerchantFredWorkspaces {
         ...(value.sha256 ? { configuredSha256: value.sha256 } : {}) })),
       merchantProfiles: Object.entries(entry.merchantProfiles ?? {}).map(([profile, value]) => ({ profile, ...value })) };
   }
-  async #input(alias, name, expectedSha256) {
+  async #input(alias, name, expectedSha256, inspect = false) {
     const input = this.#entry(alias).inputs?.[name];
     if (!input) fail('FRED_MCP_INPUT_NOT_FOUND', 'Choose an original host input alias.');
     const capacity = ['ddp-crosswalk', 'ddp-package'].includes(input.kind) ? FRED_DDP_MAX_SOURCE_BYTES : 64 * 1024 * 1024;
-    const bytes = await readFredHostFile(input.path, capacity, { expectedSha256: expectedSha256 ?? input.sha256 });
-    const sha256 = fredDigest(bytes);
+    let bytes = await readFredHostFile(input.path, capacity, { expectedSha256: expectedSha256 ?? input.sha256 });
+    const sourceBytes = bytes.length, sha256 = fredDigest(bytes);
     if (input.sha256 && input.sha256 !== sha256) fail('FRED_MCP_INPUT_CHANGED', 'The original source differs from its configured SHA256.');
     let value;
     try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_MCP_INPUT_INVALID', 'The original source input must contain complete JSON.'); }
+    bytes = null;
     if (input.kind === 'public-table' && !['commons.retained-public-table.v1', 'commons.retained-public-table-set.v1'].includes(value?.version) ||
         input.kind === 'capture' && !['stellar-forge.fred-capture.v1', 'stellar-forge.fred-public-table-capture.v1',
           'stellar-forge.fred-public-table-set-capture.v1'].includes(value?.schema))
       fail('FRED_MCP_INPUT_INVALID', 'The complete input does not have its declared original source format.');
-    const release = input.kind === 'release-capture' ? inspectFredReleaseCapture(value) : null;
-    const ddp = input.kind === 'ddp-crosswalk' ? inspectFredDdpCrosswalk(value) :
-      input.kind === 'ddp-package' ? inspectFredDdpPackage(value) : null;
-    return { input, bytes, sha256, value, release, ddp };
+    let release = null, ddp = null;
+    if (inspect && input.kind === 'release-capture') {
+      const model = inspectFredReleaseCapture(value);
+      release = { captureSha256: model.captureSha256, source: model.source,
+        counts: { series: model.series.length, releases: model.releases.length,
+          calendar: model.calendar.length, vintages: model.vintages.length, records: value.records.length } };
+    }
+    if (inspect && ['ddp-crosswalk', 'ddp-package'].includes(input.kind)) {
+      const model = input.kind === 'ddp-crosswalk' ? inspectFredDdpCrosswalk(value) : inspectFredDdpPackage(value);
+      ddp = { id: model.id, captureSha256: model.captureSha256, source: model.source, summary: model.summary,
+        ...(model.release !== undefined ? { release: model.release } : {}),
+        ...(model.format !== undefined ? { format: model.format } : {}) };
+    }
+    return { input, sourceBytes, sha256, value, release, ddp };
   }
   async #state(alias, expectedRevision) {
     const value = await this.#client(alias).state();
@@ -139,20 +150,15 @@ export class MerchantFredWorkspaces {
     this.#entry(alias);
     if (name === 'merchant_fred_inputs') return this.#inputs(alias);
     if (name === 'merchant_fred_input_inspect') {
-      const source = await this.#input(alias, args.input), original = source.value;
+      const source = await this.#input(alias, args.input, undefined, true), original = source.value;
       return { workspace: alias, input: args.input, kind: source.input.kind, name: basename(source.input.path),
-        bytes: source.bytes.length, sha256: source.sha256, schema: original.schema ?? original.version,
+        bytes: source.sourceBytes, sha256: source.sha256, schema: original.schema ?? original.version,
         sourceUrl: original.source_url ?? null, retrievedAt: original.retrieved_at ?? null,
         seriesId: original.series_id ?? null, observationCount: original.observation_count ?? null,
         originalTableBytes: original.bytes ?? null, originalTableSha256: original.sha256 ?? null,
         captureSha256: original.captureSha256 ?? null, selection: original.selection ?? null,
-        ...(source.release ? { release: { captureSha256: source.release.captureSha256, source: source.release.source,
-          counts: { series: source.release.series.length, releases: source.release.releases.length,
-            calendar: source.release.calendar.length, vintages: source.release.vintages.length, records: original.records.length } } } : {}),
-        ...(source.ddp ? { ddp: { id: source.ddp.id, captureSha256: source.ddp.captureSha256,
-          source: source.ddp.source, summary: source.ddp.summary,
-          ...(source.ddp.release !== undefined ? { release: source.ddp.release } : {}),
-          ...(source.ddp.format !== undefined ? { format: source.ddp.format } : {}) } } : {}),
+        ...(source.release ? { release: source.release } : {}),
+        ...(source.ddp ? { ddp: source.ddp } : {}),
         tables: Array.isArray(original.tables) ? original.tables.map(table => ({ seriesId: table.series_id,
           sourceUrl: table.source_url, retrievedAt: table.retrieved_at, bytes: table.bytes, sha256: table.sha256 })) : undefined };
     }

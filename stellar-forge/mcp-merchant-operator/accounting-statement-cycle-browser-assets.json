@@ -31,6 +31,13 @@
       ]
     ],
     [
+      "/service-planner.mjs",
+      [
+        "service-planner.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/style.css",
       [
         "style.css",

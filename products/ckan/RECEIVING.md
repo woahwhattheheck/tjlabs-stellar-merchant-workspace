@@ -1,5 +1,9 @@
 # Receive and continue a complete CKAN merchant
 
+
+For the original incident watcher, saved merchant case, portable handoff and
+independent case receiving, follow [CKAN Support](SUPPORT.md). Its native
+receiving programme uses the same complete original workspace archive.
 A receiving operator needs the complete workspace archive, its compressed
 SHA-256, the selected source/runtime and the original project records. The
 archive carries the working product: captures, saved source declarations,

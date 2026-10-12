@@ -5,6 +5,8 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {spawn} from 'node:child_process';
+import {createWriteStream} from 'node:fs';
+import {finished} from 'node:stream/promises';
 
 const here=dirname(fileURLToPath(import.meta.url));
 const raw=process.argv[2];
@@ -22,10 +24,11 @@ const python=args.python??process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3';
 const sourceFile=resolve(args.sourceFile),archiveFile=resolve(args.archiveFile);
 const originalResultFile=resolve(args.originalResult),installer=resolve(args.installer);
 await mkdir(logs,{recursive:true,mode:0o700});
-const selectedSource=await readFile(sourceFile),selectedArchive=await readFile(archiveFile);
+let selectedSource=await readFile(sourceFile),selectedArchive=await readFile(archiveFile);
 need(hash(selectedSource)===args.sourceSha256,'The complete selected source JSON differs from its supplied SHA-256.');
 need(hash(selectedArchive)===args.archiveSha256,'The original publisher workspace archive differs from its supplied SHA-256.');
-const archive=JSON.parse(selectedArchive),original=await readJSON(originalResultFile);
+let archive=JSON.parse(selectedArchive);
+const original=await readJSON(originalResultFile);
 need(original.operationId===operation&&original.complete===true,'Continue the completed original publisher operation.');
 need(archive.schema==='stellar-forge.datagouv-portable-workspace.v1'&&archive.complete===true,'Use the original complete native DataGouv archive.');
 const archivedStage=original.stages.find(stage=>stage.name==='complete_archive_and_independent_receiving');
@@ -35,6 +38,8 @@ need(typeof workspaceId==='string'&&typeof publicationId==='string'&&typeof snap
 const pin={schema:'stellar-forge.datagouv-customer-receiving-pin.v1',operationId:operation,
  sourceSha256:args.sourceSha256,archiveSha256:args.archiveSha256,originalResultSha256:hash(await readFile(originalResultFile)),
  workspaceId,publicationId,snapshot};
+// Keep the verified archive on disk; its full database/source body is no longer needed in the browser process.
+selectedSource=null;selectedArchive=null;archive=null;
 const pinFile=join(root,'source-pin.json');
 if(await exists(pinFile))need(JSON.stringify(await readJSON(pinFile))===JSON.stringify(pin),'Continue this exact selected original source and saved case.');
 else await writeFile(pinFile,encoded(pin),{flag:'wx',mode:0o600});
@@ -83,14 +88,20 @@ async function start(directory,label){
  const tag=String(++sequence).padStart(3,'0')+'-'+label;
  const child=spawn(python,['-B',installer,'serve','--directory',directory,'--node',node,'--port','0'],
   {cwd:root,stdio:['ignore','pipe','pipe'],shell:false});
- const state={child,url:null,stdout:[],stderr:[],closed:null,logTag:tag};
+ const stdoutPath=join(logs,tag+'.stdout'),stderrPath=join(logs,tag+'.stderr');
+ const stdoutLog=createWriteStream(stdoutPath,{flags:'wx',mode:0o600});
+ const stderrLog=createWriteStream(stderrPath,{flags:'wx',mode:0o600});
+ const state={child,url:null,closed:null,logTag:tag,stdoutPath,stderrPath};
+ state.logCompletion=Promise.allSettled([finished(stdoutLog),finished(stderrLog)]);
+ stdoutLog.on('error',()=>child.kill('SIGTERM'));stderrLog.on('error',()=>child.kill('SIGTERM'));
+ child.stdout.pipe(stdoutLog);child.stderr.pipe(stderrLog);
  state.closed=new Promise(resolveExit=>{child.once('close',(code,signal)=>resolveExit({code,signal}));});
- child.stdout.on('data',chunk=>state.stdout.push(chunk));child.stderr.on('data',chunk=>state.stderr.push(chunk));
  const ready=await new Promise((done,reject)=>{
   let text='';const timer=setTimeout(()=>reject(new Error('The installed server did not report its original loopback URL.')),60000);
   child.once('error',error=>{clearTimeout(timer);reject(error);});
   child.once('close',(code,signal)=>{if(!state.url){clearTimeout(timer);reject(new Error('The installed server ended before ready: '+String(code??signal)));}});
   child.stdout.on('data',chunk=>{
+   if(state.url)return;
    text+=chunk.toString('utf8');let at;
    while((at=text.indexOf('\n'))>=0){const line=text.slice(0,at);text=text.slice(at+1);
     try{const value=JSON.parse(line);if(value.state==='SERVING'&&typeof value.url==='string'){
@@ -110,8 +121,9 @@ async function stop(state){
  const finish=await Promise.race([state.closed,new Promise(resolveTimeout=>{timer=setTimeout(()=>resolveTimeout(null),30000);})]);
  clearTimeout(timer);
  if(!finish){state.child.kill('SIGKILL');await state.closed;}
- await writeFile(join(logs,state.logTag+'.stdout'),Buffer.concat(state.stdout),{mode:0o600});
- await writeFile(join(logs,state.logTag+'.stderr'),Buffer.concat(state.stderr),{mode:0o600});
+ const saved=await state.logCompletion;
+ const failed=saved.filter(value=>value.status==='rejected');
+ need(failed.length===0,'The owned original service log could not be saved: '+failed.map(value=>value.reason?.message??String(value.reason)).join('; '));
  need(finish!==null,'The owned original service required forced shutdown; saved output is retained.');
  need(finish.code===0,'The owned original service did not close cleanly: '+String(finish.code??finish.signal));
 }
@@ -124,6 +136,50 @@ async function customer(status,label){
   'The installed customer operation did not receive the complete original publication.');
  return detail;
 }
+
+async function browserDownload(page,selector,filename,label,timeout){
+ const endpoint=new URL(await page.locator(selector).getAttribute('href'),page.url());
+ const observation={label,path:endpoint.pathname,startedAt:new Date().toISOString(),timeoutMs:timeout,
+  serverStdout:service.stdoutPath,serverStderr:service.stderrPath,responses:[],requestFailures:[]};
+ const observationFile=join(logs,label+'.http.json'),pendingBodies=[];
+ await writeFile(observationFile,encoded(observation),{mode:0o600});
+ const matches=value=>{try{return new URL(value).origin===endpoint.origin&&new URL(value).pathname===endpoint.pathname;}catch{return false;}};
+ let rejectHTTP;
+ const failedHTTP=new Promise((unused,reject)=>{rejectHTTP=reject;});
+ const responseListener=response=>{
+  if(!matches(response.url()))return;
+  const entry={status:response.status(),contentType:response.headers()['content-type']??null};
+  observation.responses.push(entry);
+  if(response.status()>=400){
+   const body=response.text().then(text=>{entry.body=text.slice(0,6000);},error=>{entry.bodyError=error.message;})
+    .then(()=>rejectHTTP(new Error('The installed '+label+' returned HTTP '+entry.status+': '+(entry.body??entry.bodyError??'')+'; native output: '+service.stderrPath)));
+   pendingBodies.push(body);
+  }
+ };
+ const requestListener=request=>{
+  if(matches(request.url()))observation.requestFailures.push({error:request.failure()?.errorText??'unknown'});
+ };
+ page.on('response',responseListener);page.on('requestfailed',requestListener);
+ try{
+  const [download]=await Promise.race([
+   Promise.all([page.waitForEvent('download',{timeout}),page.locator(selector).click({timeout,noWaitAfter:true})]),
+   failedHTTP,
+   service.closed.then(exit=>{throw new Error('The original installed service ended during '+label+': '+String(exit.code??exit.signal)+'; native output: '+service.stderrPath);})
+  ]);
+  await download.saveAs(filename);
+  const detail=await lstat(filename);
+  observation.complete=true;observation.bytes=detail.size;observation.filename=filename;
+  return filename;
+ }catch(error){
+  observation.complete=false;observation.error={name:error.name,message:error.message};throw error;
+ }finally{
+  page.off('response',responseListener);page.off('requestfailed',requestListener);
+  await Promise.allSettled(pendingBodies);
+  observation.finishedAt=new Date().toISOString();
+  await writeFile(observationFile,encoded(observation),{mode:0o600});
+ }
+}
+
 async function inspectBrowser(url,leadingCode){
  const require=createRequire(import.meta.url),module=await import(pathToFileURL(require.resolve(args.playwrightModule)));
  const chromium=module.chromium??module.default?.chromium;
@@ -148,8 +204,8 @@ async function inspectBrowser(url,leadingCode){
   await page.waitForSelector('#source-detail:not([hidden])');
   need(await page.locator('#source-rows tbody tr').count()===25,'The installed source preview omitted original rows.');
   await capture('source-detail');
-  const pending=page.waitForEvent('download');await page.locator('#source-csv').click();const download=await pending;
-  const csv=join(directory,'original-'+width+'.csv');await download.saveAs(csv);
+  const csv=join(directory,'original-'+width+'.csv');
+  await browserDownload(page,'#source-csv',csv,'original-source-'+width,60000);
   const bytes=await readFile(csv);need(hash(bytes)==='fec6338a55ea2c4eaaa76d63e8e4d97d9c1e7d8d5666924b8a292eb58a830e05','The installed browser changed its full original source download.');
   downloads.push({kind:'original',width,path:csv,bytes:bytes.length,sha256:hash(bytes)});
   await page.locator('nav a[href="#publications"]').click();await page.getByRole('button',{name:'Open current',exact:true}).click();
@@ -161,8 +217,8 @@ async function inspectBrowser(url,leadingCode){
   await capture('publication-detail');
   if(width===1440){
    await page.locator('nav a[href="#handover"]').click();
-   const pendingExport=page.waitForEvent('download');await page.locator('#export-workspace').click();const exported=await pendingExport;
-   const file=join(directory,'browser-workspace.datawork');await exported.saveAs(file);
+   const file=join(directory,'browser-workspace.datawork');
+   await browserDownload(page,'#export-workspace',file,'complete-workspace-'+width,360000);
    const raw=await readFile(file),body=JSON.parse(raw);
    need(body.schema==='stellar-forge.datagouv-portable-workspace.v1'&&body.complete===true&&body.workspace.id===workspaceId,
     'The browser handover did not export this complete original workspace.');

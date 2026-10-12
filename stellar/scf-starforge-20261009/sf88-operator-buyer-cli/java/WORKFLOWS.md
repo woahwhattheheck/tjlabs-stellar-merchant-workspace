@@ -205,15 +205,22 @@ The archive records its original canonical restore root.
 
 ## Recover the complete application workspace
 
-WorkspaceRecovery exposes the four maintained SF88 operations. Its selection
-adds the Buyer's application state directory to the original native include
-list, so choose a stateRoot containing the application state and all selected
-native dependencies.
+WorkspaceRecovery exposes the four maintained SF88 operations. Select the
+original operator workspace containing its native workspace manifest as
+operatorWorkspaceDirectory. The acquisition workspace selection addresses the
+acquisitions store; the workspace recovery selection addresses the original
+operator workspace. An acquisition backup result retains this operator path in
+its native directory field. The customer configuration also retains the original
+operator selection.
+
+Workspace recovery adds the Buyer's application state directory to the native
+include list. Choose a stateRoot containing the application state and all
+selected native dependencies, including that original operator workspace.
 
 ~~~java
 WorkspaceRecovery recovery = buyer.workspaceRecovery();
 WorkspaceRecovery.Selection selection = new WorkspaceRecovery.Selection(
-    workspaceDirectory, stateRoot, inboxDirectories, additionalDirectories);
+    operatorWorkspaceDirectory, stateRoot, inboxDirectories, additionalDirectories);
 WorkspaceRecoveryResult inspected = recovery.inspect(selection);
 WorkspaceRecoveryResult snapshot = recovery.snapshot(
     selection, bundle, true, "SF88_BACKUP_PASSPHRASE");

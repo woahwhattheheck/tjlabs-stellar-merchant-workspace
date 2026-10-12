@@ -12,6 +12,8 @@ import { pageFredBriefing } from './briefing/model.mjs';
 import { inspectFredReleaseCapture } from './releases/model.mjs';
 import { FRED_DDP_ACTIONS, MAX_DDP_CAPTURE_BYTES, runFredDdpAction, handleFredDdpHttp } from './ddp/http.mjs';
 import { readFredWorkspaceLaunch, FRED_WORKSPACE_STARTUP } from './launch.mjs';
+import { QCEW_WORKSPACE_REQUEST_BYTES, QCEW_WORKSPACE_ACTIONS,
+  readQcewWorkspace, runQcewWorkspaceAction } from './qcew/workspace.mjs';
 import { readFredProject, fredProjectView, getFredCapture, configureFredProject, importFredCapture, acquireFredCapture,
   selectFredCapture, combineFredTables, reviewFredCapture, compareFredCaptures, publishFredReview, exportFredProject,
   selectFredPublication, abandonFredOperation, previewFredBriefing, getFredBriefing, downloadFredBriefing,
@@ -80,6 +82,8 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/releases.js', ['releases.js', 'text/javascript; charset=utf-8']],
     ['/ddp.js', ['ddp.js', 'text/javascript; charset=utf-8']],
     ['/ddp-guide', ['../ddp/PROJECT.md', 'text/plain; charset=utf-8']],
+    ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
+    ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']] ]);
   const assets = new Map();
   for (const [route, [file, type]] of assetMap) assets.set(route, [await readFile(new URL('./ui/' + file, import.meta.url)), type]);
@@ -91,9 +95,11 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   const runtimeView = () => merchant ? { publicationId: runningPublication, url: merchant.url, mode: merchant.mode,
     editionId: merchant.editionId, snapshot: merchant.snapshot, resource: merchant.resource } : null;
   const run = async request => {
+    const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
     if (FRED_DDP_ACTIONS.has(request.action))
       return runFredDdpAction({ request, directory, environment, signal: abort.signal });
-    const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
+    if (QCEW_WORKSPACE_ACTIONS.includes(request.action))
+      return runQcewWorkspaceAction({ directory, projectId: binding.projectId, request, environment });
     switch (request.action) {
       case 'configure': return configureFredProject({ ...common, selection: request.selection });
       case 'capture': return acquireFredCapture({ ...common, environment, signal: abort.signal });
@@ -176,6 +182,10 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       if (req.method === 'GET' && url.pathname === '/api/state')
         return send(res, 200, { project: await fredProjectView(directory), merchant: runtimeView(),
           busy: pending?.action ?? null, buyerConfigured: Boolean(buyer) });
+      if (req.method === 'GET' && url.pathname.startsWith('/api/qcew/')) {
+        const result = await readQcewWorkspace({ directory, projectId: binding.projectId, url, environment });
+        return send(res, 200, result.value, result.contentType, result.filename);
+      }
       if (req.method === 'GET' && url.pathname === '/api/observations') {
         const capture = await getFredCapture(directory, url.searchParams.get('capture')), model = inspectCapture(capture);
         const series = url.searchParams.get('series') ?? '', offset = pageNumber(url.searchParams.get('offset'));
@@ -295,10 +305,12 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
       if (await handleFredDdpHttp({ req, res, url, directory, body, send, execute, busy: () => Boolean(pending) })) return;
-      if (req.method === 'POST' && url.pathname === '/api/action') {
-        const request = await body(req, MAX_DDP_CAPTURE_BYTES);
-        need(FRED_DDP_ACTIONS.has(request?.action) || jsonBytes(request).length <= MAX_CAPTURE_BYTES * 2,
+      if (req.method === 'POST' && ['/api/action', '/api/qcew/action'].includes(url.pathname)) {
+        const countyAction = url.pathname === '/api/qcew/action';
+        const request = await body(req, countyAction ? QCEW_WORKSPACE_REQUEST_BYTES : Math.max(MAX_DDP_CAPTURE_BYTES, MAX_CAPTURE_BYTES * 2));
+        need(countyAction || FRED_DDP_ACTIONS.has(request?.action) || jsonBytes(request).length <= MAX_CAPTURE_BYTES * 2,
           'Request exceeds its original source capacity.', 'FRED_REQUEST_TOO_LARGE', 413);
+        need(!countyAction || QCEW_WORKSPACE_ACTIONS.includes(request?.action), 'Choose a county report action.');
         return send(res, 200, await execute(request));
       }
       return send(res, 404, { code: 'FRED_ROUTE_NOT_FOUND', message: 'Workspace route not found.' });

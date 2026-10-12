@@ -3,6 +3,7 @@ import { constants } from 'node:fs';
 import { open, link, unlink } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { canonicalJSONDigest } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.mjs';
 import { inspectFredReleaseCapture, normalizeFredReleaseSelection } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
 import { validateFredReleaseWatch } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/watch.mjs';
 import { validateFredReleasePlan } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/planner.mjs';
@@ -134,7 +135,7 @@ function successorFile(value, successorId) {
       !Array.isArray(comparison.rows) || comparison.rowCount !== comparison.rows.length)
     fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The full successor file lost its complete original comparison.');
   const { comparisonId, ...identity } = comparison;
-  if (!SHA.test(comparisonId ?? '') || fredDigest(Buffer.from(canonicalFredJSON(identity))) !== comparisonId)
+  if (!SHA.test(comparisonId ?? '') || canonicalJSONDigest(identity, { primitive: canonicalFredJSON }) !== comparisonId)
     fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The complete successor comparison differs from its retained identity.');
   return value;
 }
@@ -252,8 +253,9 @@ function ddpCounts(summary) {
 }
 function ddpIdentity(value, kind) {
   ddpId(value?.id, kind);
-  return { crosswalk: inspectFredDdpCrosswalk, package: inspectFredDdpPackage,
-    migration: validateFredDdpMigrationPlan, receiving: validateFredDdpReceiving }[kind](value);
+  if (kind === 'migration') return validateFredDdpMigrationPlan(value, { copy: false });
+  if (kind === 'receiving') return validateFredDdpReceiving(value, { copy: false });
+  return { crosswalk: inspectFredDdpCrosswalk, package: inspectFredDdpPackage }[kind](value);
 }
 function ddpMigrationInput(input, saved = false) {
   const sourceFields = ['name', 'asOf', 'window', 'decisions', 'bindings', 'pageSize', 'maxRows', 'bookmark', 'note'];
@@ -542,7 +544,7 @@ export class FredWorkspaceClient {
           launch.binding?.schema !== 'stellar-forge.fred-workspace-binding.v1' || launch.binding.projectId !== selected.projectId)
         fail('FRED_CLIENT_PROJECT_CHANGED', 'The selected native server does not belong to the original project.');
       const { sha256, ...core } = launch.binding;
-      if (!SHA.test(sha256 ?? '') || fredDigest(Buffer.from(canonicalFredJSON(core))) !== sha256 ||
+      if (!SHA.test(sha256 ?? '') || canonicalJSONDigest(core, { primitive: canonicalFredJSON }) !== sha256 ||
           selected.bindingSha256 !== undefined && selected.bindingSha256 !== sha256)
         fail('FRED_CLIENT_BINDING_CHANGED', 'The native launch differs from its exact original project and operator binding.');
       if (this.#closed) fail('FRED_CLIENT_CLOSED', 'The client closed during its original launch read.');
@@ -1124,7 +1126,7 @@ function inspectFredReleaseBundle(bundle) {
   const state = bundle.state, summaries = state.releaseCaptures ?? [], watches = state.releaseWatches ?? [],
     plans = state.releasePlans ?? [], catchUps = state.releaseCatchUps ?? [];
   if (![summaries, watches, plans, catchUps].every(Array.isArray) ||
-      summaries.length + watches.length + plans.length + catchUps.length === 0 ||
+      bundle.schema === 'stellar-forge.fred-project-bundle.v4' && summaries.length + watches.length + plans.length + catchUps.length === 0 ||
       summaries.length !== bundle.releaseCaptures.length || plans.length !== bundle.releasePlans.length ||
       !Array.isArray(state.operations) || !Array.isArray(state.captures))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The release project export lost its complete source and plan inventories.');
@@ -1224,7 +1226,7 @@ export function inspectFredProjectBundle(bundle) {
     ...(releases ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}),
     ...(ddpSlots ? Object.fromEntries(ddpKeys.map(key => [key, bundle[key]])) : {}),
     ...(qcew ? { qcew: bundle.qcew } : {}) };
-  if (fredDigest(Buffer.from(canonicalFredJSON(identity))) !== bundle.bundleSha256 ||
+  if (canonicalJSONDigest(identity, { primitive: canonicalFredJSON }) !== bundle.bundleSha256 ||
       bundle.state.schema !== 'stellar-forge.fred-project.v1' || !UUID.test(bundle.state.id ?? '') || bundle.state.pending ||
       !Array.isArray(bundle.state.reviews))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The original completed project bundle identity changed.');
@@ -1259,13 +1261,23 @@ export function inspectFredProjectBundle(bundle) {
       new Set((bundle.briefings ?? []).map(item => item.manifest?.reviewId)).size !== analystReviews.length ||
       (bundle.briefings ?? []).some(item => !analystReviews.some(review => review.id === item.manifest?.reviewId)))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The complete project export lost an original analyst briefing.');
-  return { schema: bundle.schema, projectId: bundle.state.id, revision: bundle.state.revision,
+  if (releases) inspectFredReleaseBundle(bundle);
+  return fredBundleIdentity(bundle);
+}
+
+/** Describe a graph only after its complete inspector or native receiver succeeds. */
+function fredBundleIdentity(bundle) {
+  const version = Number(bundle.schema.slice(bundle.schema.lastIndexOf('v') + 1)), state = bundle.state;
+  const ddpKeys = ['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings'];
+  const ddp = ddpKeys.some(key => (state[key]?.length ?? 0) > 0), qcew = qcewStatePresent(state);
+  return { schema: bundle.schema, projectId: state.id, revision: state.revision,
     bundleSha256: bundle.bundleSha256, captures: bundle.captures.length, publications: bundle.publicationPlans.length,
-    ...(briefing ? { briefings: bundle.briefings.length } : {}),
-    ...(recurring ? { templates: templates.length, successors: successors.length } : {}),
-    ...(releases ? inspectFredReleaseBundle(bundle) : {}),
+    ...(version >= 2 ? { briefings: bundle.briefings.length } : {}),
+    ...(version >= 3 ? { templates: (state.briefingTemplates ?? []).length, successors: (state.briefingSuccessors ?? []).length } : {}),
+    ...(version >= 4 ? { releaseCaptures: bundle.releaseCaptures.length, releaseWatches: (state.releaseWatches ?? []).length,
+      releasePlans: bundle.releasePlans.length, releaseCatchUps: (state.releaseCatchUps ?? []).length } : {}),
     ...(ddp ? Object.fromEntries(ddpKeys.map(key => [key, bundle[key].length])) : {}),
-    ...(qcew ? { qcew: { captures: bundle.qcew.captures.length, profiles: bundle.state.qcew.profiles.length,
+    ...(qcew ? { qcew: { captures: bundle.qcew.captures.length, profiles: state.qcew.profiles.length,
       editions: bundle.qcew.editions.length } } : {}) };
 }
 
@@ -1297,25 +1309,26 @@ export async function saveFredFile(client, selection, destination, options = {})
 
 /** Read one complete original project file and preserve its selected version capacity. */
 async function readFredWorkspaceBundleFile(source, { expectedSha256 } = {}) {
-  const bytes = await readFredHostFile(source, FRED_DDP_MAX_PROJECT_BYTES, { expectedSha256 });
+  let bytes = await readFredHostFile(source, FRED_DDP_MAX_PROJECT_BYTES, { expectedSha256 });
+  const sourceBytes = bytes.length, sourceSha256 = fredDigest(bytes);
   let bundle;
   try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The original project file is not complete JSON.'); }
-  if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6'].includes(bundle.schema) && bytes.length > FRED_CLIENT_MAX_BYTES)
+  bytes = null;
+  if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6'].includes(bundle?.schema) && sourceBytes > FRED_CLIENT_MAX_BYTES)
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The original version 1–4 project retains its 256 MiB file capacity.');
-  const identity = inspectFredProjectBundle(bundle);
-  return { bundle, identity, sourceBytes: bytes.length, sourceSha256: fredDigest(bytes) };
+  return { bundle, sourceBytes, sourceSha256 };
 }
 
 /** Inspect the complete original graph without creating a receiving directory. */
 export async function inspectFredWorkspaceFile(source, options = {}) {
-  const { identity, sourceBytes, sourceSha256 } = await readFredWorkspaceBundleFile(source, options);
-  return { ...identity, sourceBytes, sourceSha256 };
+  const { bundle, sourceBytes, sourceSha256 } = await readFredWorkspaceBundleFile(source, options);
+  return { ...inspectFredProjectBundle(bundle), sourceBytes, sourceSha256 };
 }
 
 /** Reopens a retained source bundle through the maintained local project receiver. */
 export async function receiveFredWorkspaceFile(source, directory, options = {}) {
-  const { bundle, identity, sourceBytes, sourceSha256 } = await readFredWorkspaceBundleFile(source, options);
+  const { bundle, sourceBytes, sourceSha256 } = await readFredWorkspaceBundleFile(source, options);
   const { receiveFredProject } = await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/project.mjs');
   const result = await receiveFredProject({ directory: resolve(directory), bundle });
-  return { ...identity, sourceBytes, sourceSha256, received: result };
+  return { ...fredBundleIdentity(bundle), sourceBytes, sourceSha256, received: result };
 }

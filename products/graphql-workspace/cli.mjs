@@ -19,6 +19,12 @@ const HELP = [
   'starforge graphql-product inspect-files --dir PRIVATE_DIR --export-id RETAINED_TRANSFER_ALIAS',
   'starforge graphql-product receive --dir PRIVATE_DIR --export-id TRANSFER_ALIAS --out PRIVATE_DELIVERY [--selection NATIVE_SELECTION.json] [--manifest-sha256 SHA256]',
   'starforge graphql-product inspect-received --dir PRIVATE_DELIVERY',
+  'starforge graphql-product merchant-preparations --dir PRIVATE_PRODUCT --request EXACT_SELECTION.json',
+  'starforge graphql-product merchant-preparation --dir PRIVATE_PRODUCT --request EXACT_SELECTION.json',
+  'starforge graphql-product prepare-merchant --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product recover-merchant-preparation --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product continue-merchant-preparation --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
+  'starforge graphql-product merchant-preparation-packet --dir PRIVATE_PRODUCT --request EXACT_SELECTION.json',
   'starforge graphql-product prepare-request-set --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
   'starforge graphql-product request-set --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
   'starforge graphql-product recover-request-set --dir PRIVATE_PRODUCT --request EXACT_REQUEST.json',
@@ -104,6 +110,12 @@ export async function main(args = process.argv.slice(2)) {
     return active;
   }
   const requestCommands = {
+    "merchant-preparations": "listMerchantPreparations",
+    "merchant-preparation": "inspectMerchantPreparation",
+    "prepare-merchant": "prepareMerchant",
+    "recover-merchant-preparation": "recoverMerchantPreparation",
+    "continue-merchant-preparation": "continueMerchantPreparation",
+    "merchant-preparation-packet": "prepareMerchantPacket",
     "prepare-request-set": "prepareRequestSet",
     "request-set": "inspectRequestSet",
     "recover-request-set": "recoverRequestSet",

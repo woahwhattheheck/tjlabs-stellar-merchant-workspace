@@ -331,3 +331,21 @@ current draft or baseline returns a conflict and requires a fresh comparison.
 Deployment and host identifiers also resolve only within the named project.
 `POST /api/save` accepts only `id`, `input` and `expectedRevision`; attachment
 references are created by the original preparation actions inside the workspace.
+
+## Saved merchant preparation and recovery
+
+Every browser merchant export and reviewed schema revision now retains its
+original request and native attempt before invoking the existing exporter.
+**Saved merchant preparations** exposes the frozen source, immutable history,
+all partial files and verified completed packages. Recovery recognizes existing
+native output and preserves later draft edits; an explicit continuation uses a
+new attempt directory for the same frozen source.
+
+The installed CLI and six native agent tools share these controls. Prepared
+offline packets pin their exact bytes, and complete project handover retains
+preparation requests, generations, baseline packages and partial attempts for
+the receiving operator. Existing export API/tool bodies remain compatible;
+callers can supply a stable preparation UUID for exact lost-response recovery.
+
+See [MERCHANT_PREPARATION.md](MERCHANT_PREPARATION.md) for the complete browser,
+CLI/client, native API, partial-output recovery and editable receiving workflow.

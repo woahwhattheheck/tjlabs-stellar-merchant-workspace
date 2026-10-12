@@ -120,7 +120,9 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/source_fetch.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/README.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.d.mts"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/index.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.d.mts"
   ],
   "merchantProviders": {
     "fred-workspaces": "stellar-forge/mcp-merchant-operator/providers/fred-workspaces.mjs"

@@ -12,6 +12,7 @@ import { sha256, sealQcewIntakeWithContext, qcewCaptureContextStats, readQcewOri
 import { qcewReportRowSelection } from './calculate.mjs';
 import { importQcewSource, saveQcewProfile, produceQcewEdition, getQcewEdition, viewQcewProject } from './project.mjs';
 import { sealFredPublicTable } from '../source.mjs';
+import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from '../ddp/project-validation.mjs';
 import { initializeFredProject, readFredProject, importFredCapture, exportFredProject, receiveFredProject, getFredCapture } from '../project.mjs';
 const execute=promisify(execFile);
 const OPERATION='NEED-REGIONAL-REPORTS-9B2C-20261012';
@@ -44,7 +45,7 @@ export async function runQcewNativeJourney({directory,intakeDirectory,cpiFile,pr
   try {
     await step('open_original_fred_project',async()=>{
       if(originalProjectBundle) {
-        const original=(await inputJson(resolve(originalProjectBundle),256*1024*1024)).value;
+        const original=(await inputJson(resolve(originalProjectBundle),FRED_DDP_PROJECT_BUNDLE_MAX_BYTES)).value;
         await receiveFredProject({directory:sourceProject,bundle:original,qcewSourceContexts:sourceContexts});
       } else await initializeFredProject({directory:sourceProject,title:'County wage report production',selection:cpiCapture.selection});
       const state=await readFredProject(sourceProject);return {id:state.id,revision:state.revision,captures:state.captures.length};

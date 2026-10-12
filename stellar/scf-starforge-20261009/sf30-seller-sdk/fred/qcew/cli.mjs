@@ -9,6 +9,7 @@ import { importQcewSource, saveQcewProfile, produceQcewEdition, viewQcewProject,
 import { readQcewOriginalMember, MAX_QCEW_CAPTURE_BYTES, sha256 } from './source.mjs';
 import { initializeFredProject, importFredCapture, exportFredProject, receiveFredProject } from '../project.mjs';
 import { sealFredPublicTable } from '../source.mjs';
+import { FRED_DDP_PROJECT_BUNDLE_MAX_BYTES } from '../ddp/project-validation.mjs';
 export const QCEW_USAGE=[
   'County wage reports — original BLS QCEW sources in the saved FRED project','',
   'starforge fred qcew init --project ABS --title TEXT --price-source ORIGINAL_PUBLIC_TABLE_JSON',
@@ -106,7 +107,7 @@ export async function runQcewCli(args=process.argv.slice(2)) {
       result=await output(flags.out,file.bytes);break;
     }
     case 'export':result=await output(flags.out,Buffer.from(JSON.stringify(await exportFredProject({directory}),null,2)+'\n'));break;
-    case 'receive':result=await receiveFredProject({directory,bundle:await jsonFile(flags.source,256*1024*1024)});break;
+    case 'receive':result=await receiveFredProject({directory,bundle:await jsonFile(flags.source,FRED_DDP_PROJECT_BUNDLE_MAX_BYTES)});break;
   }
   console.log(JSON.stringify(result,null,2));return result;
 }

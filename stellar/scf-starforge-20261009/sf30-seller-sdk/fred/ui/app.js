@@ -1,13 +1,14 @@
 import { mountFredBriefing } from './briefing.js';
 import { mountFredRecurring } from './recurring.js';
 import { mountFredReleases } from './releases.js';
+import { mountFredQcew } from './qcew.js';
 import { mountFredDdp } from './ddp.js';
 // MIT. Original economic project controls; source text is rendered as text.
 const $ = id => document.getElementById(id);
 let token = location.hash.slice(1);
 if (token) { sessionStorage.setItem('fred-session', token); history.replaceState(null, '', location.pathname); }
 else token = sessionStorage.getItem('fred-session') ?? '';
-let state, publication, customerPublication, currentPage, comparisonPage, delivery, previous = null;
+let state, publication, customerPublication, currentPage, comparisonPage, delivery, previous = null, workspaceBusy = null;
 let rowOffset = 0, comparisonOffset = 0, selectionDirty = false;
 const freshId = prefix => prefix + '-' + crypto.randomUUID().replaceAll('-', '');
 const defaults = { fields: ['series','date','value','missing','as_of','time_basis','realtime_start','realtime_end','units','frequency','seasonal_adjustment'],
@@ -21,13 +22,14 @@ async function api(path, value) {
     headers: { authorization: 'Bearer ' + token, ...(value === undefined ? {} : { 'content-type': 'application/json' }) },
     ...(value === undefined ? {} : { body: JSON.stringify(value) }) });
   const data = await response.json();
-  if (!response.ok) throw new Error((data.code ? data.code + ': ' : '') + (data.message ?? 'Workspace request failed.'));
+  if (!response.ok) throw Object.assign(new Error((data.code ? data.code + ': ' : '') + (data.message ?? 'Workspace request failed.')), { status: response.status, code: data.code });
   return data;
 }
 async function upload(path, form) {
   const response = await fetch(path, { method: 'POST', headers: { authorization: 'Bearer ' + token }, body: form });
   const value = await response.json();
-  if (!response.ok) throw new Error((value.code ? value.code + ': ' : '') + (value.message ?? 'Source upload failed.'));
+  if (!response.ok) throw Object.assign(new Error((value.code ? value.code + ': ' : '') + (value.message ?? 'Source upload failed.')),
+    { status: response.status, code: value.code });
   return value;
 }
 async function download(path, filename) {
@@ -98,9 +100,11 @@ const ddp = mountFredDdp({ api, upload, download, table, select, getState: () =>
     document.querySelector('[data-tab="releases"]').click(); releases.useSelection(selection);
     $('release-watch-form').scrollIntoView({ block: 'start' });
   } });
+const qcew = mountFredQcew({ api, download, table, select, getState: () => state,
+  getBusy: () => workspaceBusy, refresh, message });
 const labelCapture = item => (item.sourceMode === 'PUBLIC_TABLE' ? item.retrievalWindow ? 'Collected through ' : 'Captured ' : 'Vintage ') + item.selection.asOf + ' · ' + item.selection.series.join(', ') + ' · ' + item.rowCount + ' rows · ' + item.id.slice(0, 10);
 function renderState(value) {
-  state = value.project; $('project-title').textContent = state.title + ' · revision ' + state.revision;
+  state = value.project; workspaceBusy = value.busy ?? null; $('project-title').textContent = state.title + ' · revision ' + state.revision;
   $('summary').replaceChildren();
   for (const [label, number] of [['Captures', state.captures.length], ['Saved reviews', state.reviews.length], ['Publications', state.publications.length], ['Completed actions', state.operations.length]]) {
     const node = document.createElement('div'); node.className = 'metric';
@@ -135,6 +139,7 @@ function renderState(value) {
   briefing.onState();
   recurring.onState();
   releases.onState();
+  qcew.onState();
   ddp.onState();
 }
 async function refresh() { renderState(await api('/api/state')); }
@@ -185,6 +190,7 @@ document.querySelectorAll('[data-tab]').forEach(button => button.addEventListene
   document.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = panel.dataset.panel !== button.dataset.tab; });
   try {
     if (button.dataset.tab === 'editions') await showRows();
+    if (button.dataset.tab === 'county') await qcew.open();
     if (button.dataset.tab === 'ddp') await ddp.onOpen();
     if (button.dataset.tab === 'publication') await showPublication();
     if (button.dataset.tab === 'customer') await showPublication(true);
