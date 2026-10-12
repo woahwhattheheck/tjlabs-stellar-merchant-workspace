@@ -81,7 +81,8 @@ def verify_collection(raw, workspace, read_collection) -> None:
                     raise ValueError("A retained native plan member differs from its original digest.")
 
 
-def assemble(source: Path, workspace_path: Path, programme_path: Path, output: Path, fulfillment_commit: str) -> dict:
+def assemble(source: Path, workspace_path: Path, programme_path: Path, output: Path, fulfillment_commit: str,
+             browser_path: Path | None = None) -> dict:
     selected = verified_source(source)
     provenance = json.loads((source / "FULFILLMENT_SOURCE.json").read_text())
     expected = {DIRECTORY + "/" + name for name in PLANNING_FULFILLMENT}
@@ -107,6 +108,21 @@ def assemble(source: Path, workspace_path: Path, programme_path: Path, output: P
         if sha(raw) != programme.get(field):
             raise ValueError("The original native planning export differs: " + name)
         exports[name] = raw
+    browser = None
+    browser_exports = {}
+    if browser_path is not None:
+        browser = json.loads(browser_path.read_text())
+        if (browser.get("stage") != "PASSED" or browser.get("operatedSourceCommit") != selected["commit"]
+                or browser.get("findings") or browser.get("pageErrors") or not browser.get("closedAndReopened")):
+            raise ValueError("Use the completed original-source browser customer operation.")
+        for row in browser.get("downloads", []):
+            name = row["file"]
+            if len(safe_relative(name).parts) != 1 or name in browser_exports:
+                raise ValueError("The browser operation contains duplicate or unsafe download names.")
+            raw = (browser_path.parent / "downloads" / name).read_bytes()
+            if len(raw) != row["bytes"] or sha(raw) != row["sha256"]:
+                raise ValueError("The original browser customer download differs: " + name)
+            browser_exports[name] = raw
     if not (workspace_path / "planning.sqlite3").is_file():
         raise ValueError("Choose the existing operated native planning workspace.")
     sys.path.insert(0, str(source / FAMILY / "workspace"))
@@ -128,12 +144,22 @@ def assemble(source: Path, workspace_path: Path, programme_path: Path, output: P
                 raise ValueError("A retained original source BLOB differs from the planning programme.")
         if current[programme["independentPlanId"]]["revision"] < programme["restoredCustomerPlanRevisions"]:
             raise ValueError("Retain the original independently edited customer history.")
+        if browser is not None:
+            for field in ("customerEdit", "descriptionCorrection"):
+                edition = browser.get(field)
+                if edition and workspace.read(edition["planId"], edition["revision"])["contentSha256"] != edition["contentSha256"]:
+                    raise ValueError("The saved browser customer edition differs from its complete native history.")
+            intake = browser["sourceIntake"]
+            if current.get(intake["planId"], {}).get("source", {}).get("sha256") != intake["sourceSha256"]:
+                raise ValueError("The browser source intake is absent from the retained native project.")
         native_digest = sha("\n".join(workspace.db.iterdump()).encode())
         identity = {"schema": "stellar-forge.scf-planning-fulfillment-input.v1",
                     "sourceSelectionSha256": sha((source / "SOURCE_SELECTION.json").read_bytes()),
                     "fulfillmentSourceSha256": sha((source / "FULFILLMENT_SOURCE.json").read_bytes()),
                     "fulfillmentCommit": fulfillment_commit, "nativeStateSha256": native_digest,
                     "programmeSha256": sha(programme_path.read_bytes()),
+                    "browserResultSha256": sha(browser_path.read_bytes()) if browser_path else None,
+                    "browserExports": {name: sha(raw) for name, raw in browser_exports.items()},
                     "nativeExports": {name: sha(raw) for name, raw in exports.items()},
                     "licenseGitBlob": LICENSE_BLOB}
         retained = output / "ASSEMBLY.json"
@@ -195,6 +221,10 @@ def assemble(source: Path, workspace_path: Path, programme_path: Path, output: P
                  for item in current.values()]
         put("results/current-plans.json", json_bytes({"plans": plans}), "native-current-plans")
         put("receiving/planning-result.json", programme_path.read_bytes(), "native-receiving-evidence")
+        if browser_path is not None:
+            put("receiving/browser-result.json", browser_path.read_bytes(), "browser-receiving-evidence")
+            for name, raw in browser_exports.items():
+                put("results/browser-downloads/" + name, raw, "native-browser-download")
         counts = {name: workspace.db.execute("SELECT COUNT(*) FROM " + name).fetchone()[0]
                   for name in ("plans", "revisions", "requests")}
         handover = {"schema": "stellar-forge.scf-planning-customer-handover.v1", "operation": "original-source-planning-restore",
@@ -208,6 +238,11 @@ def assemble(source: Path, workspace_path: Path, programme_path: Path, output: P
                     "nativeStateSha256": native_digest, "platform": "Linux", "python": "Python3.12",
                     "applicationLicense": {"file": "LICENSE", "originalCommit": selected["commit"],
                                            "sha256": sha(license_raw), "gitBlob": git_blob(license_raw)}}
+        if browser is not None:
+            handover["browserOperation"] = {"record": "receiving/browser-result.json",
+                "customerEdit": browser["customerEdit"], "sourceIntake": browser["sourceIntake"],
+                "descriptionCorrection": browser.get("descriptionCorrection"),
+                "closedAndReopened": browser["closedAndReopened"], "downloads": len(browser_exports)}
         put("HANDOVER.json", json_bytes(handover), "customer-handover")
         rows = [{"path": relative, "bytes": (bundle / relative).stat().st_size,
                  "sha256": sha((bundle / relative).read_bytes()), "role": roles[relative]} for relative in sorted(roles)]
@@ -229,11 +264,12 @@ def assemble(source: Path, workspace_path: Path, programme_path: Path, output: P
         workspace.close()
 
 
-def build(source: Path, workspace: Path, programme: Path, output: Path, fulfillment_commit: str) -> dict:
+def build(source: Path, workspace: Path, programme: Path, output: Path, fulfillment_commit: str,
+          browser: Path | None = None) -> dict:
     output.mkdir(parents=True, exist_ok=True, mode=0o700)
     with (output / ".assembly.lock").open("a") as lease:
         fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return assemble(source, workspace, programme, output, fulfillment_commit)
+        return assemble(source, workspace, programme, output, fulfillment_commit, browser)
 
 
 def main(argv=None):
@@ -243,12 +279,15 @@ def main(argv=None):
     parser.add_argument("--programme", required=True, type=Path, help="Completed original-source planning result with its sibling native ZIP exports")
     parser.add_argument("--output", required=True, type=Path, help="New delivery parent, or identical-input recovery parent")
     parser.add_argument("--fulfillment-commit", required=True, help="Complete published Git revision of all six fulfillment leaves")
+    parser.add_argument("--browser-result", type=Path,
+                        help="Completed original browser result with its exact downloads/ siblings, when included")
     args = parser.parse_args(argv)
     if not re.fullmatch(r"[0-9a-f]{40}", args.fulfillment_commit):
         parser.error("--fulfillment-commit requires a complete published Git revision")
     try:
         result = build(args.source.expanduser().resolve(strict=True), args.workspace.expanduser().resolve(strict=True),
-                       args.programme.expanduser().resolve(strict=True), args.output.expanduser().resolve(), args.fulfillment_commit)
+                       args.programme.expanduser().resolve(strict=True), args.output.expanduser().resolve(), args.fulfillment_commit,
+                       args.browser_result.expanduser().resolve(strict=True) if args.browser_result else None)
     except (OSError, ValueError, KeyError, TypeError, sqlite3.Error, zipfile.BadZipFile) as error:
         print(json.dumps({"stage": "ERROR", "message": str(error)}), file=sys.stderr)
         return 1

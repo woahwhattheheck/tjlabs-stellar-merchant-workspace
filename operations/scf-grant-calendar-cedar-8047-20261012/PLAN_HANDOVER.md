@@ -1,16 +1,21 @@
 # Open and continue the SCF planning workspace
 
 This package delivers the complete native grant-planning application and an
-editable workspace with two saved plans, their consecutive revision histories,
+editable workspace with saved plans, their consecutive revision histories,
 the original scenario attachments and the recorded native requests. The
 application uses its original Decimal calculator and is pinned to
 `fae53095a8f31467f6916378320acd02f28bdcc4`.
 
-The delivered baseline **Current SCF delivery plan** requests **$38,000** and
-retains revision 1. **Independent original-source restore programme** retains
-four revisions and currently requests **$38,760**. The package's exact plan
-IDs, current revisions, source digests and native record counts are in
-`HANDOVER.json` and `results/current-plans.json`.
+The original exercised handover retained **three plans, eight saved revisions
+and eight native requests**. Its baseline **Current SCF delivery plan** requested
+**$38,000** at revision 1. **Independent original-source restore programme**
+reached revision 6 and **$39,140**. **Received original SCF source** retained the
+complete browser intake of the original $38,000 scenario at revision 1.
+
+`HANDOVER.json` and `results/current-plans.json` provide the exact plan IDs,
+current revisions, award requests, source digests and native record counts for
+this particular package, including any subsequent saved edits or added plans
+included by its builder.
 
 Use Linux, Python 3.10 or newer and a current browser. The native application
 uses Python's standard library, SQLite and an operating-system workspace lock.
@@ -28,8 +33,8 @@ python3 application/stellar/scf_2026/sf47_budget_model/workspace/server.py \
 
 The restore command verifies every packaged file's length and SHA-256, checks
 the native SQLite backup, and creates a new private workspace containing
-`planning.sqlite3`. It preserves the two plan IDs, all five saved revision
-rows, the five recorded native requests and both original scenario BLOBs.
+`planning.sqlite3`. It preserves all packaged plan IDs, saved revision rows,
+recorded native requests and original scenario BLOBs.
 An existing destination is preserved; use a new name for another independent
 copy.
 
@@ -39,8 +44,9 @@ follow **Open the retained local workspace**. The application's sign-in screen
 also accepts the workspace access key from the private access file. Keep the
 server running while using the browser.
 
-Choose either delivered plan in **Saved plan**. The baseline and independent
-plan names above identify the current delivered records. The application
+Choose a delivered plan in **Saved plan** using the current plan index. The
+baseline, independent and received-source names above identify the original
+exercised records. The application
 shows the selected plan's saved revision, source-bound scenario, native
 calculations and complete planning sections.
 
@@ -70,7 +76,7 @@ When changing the total request, adjust the relevant cost items to that same
 total before calculating and saving. The delivered independent edit changed
 both sides together; its original $38,000 source attachment remains retained.
 
-The native programme changed the original
+The original exercised native and browser programme changed the original
 `T1-merchant-resource-integration` work package at its retained **$95 per hour**
 rate. Its complete saved sequence is:
 
@@ -81,10 +87,19 @@ rate. Its complete saved sequence is:
 | Independent revision 2 | 84 | $7,980 | $38,380 |
 | Independent revision 3, historical restore | 80 | $7,600 | $38,000 |
 | Independent revision 4, restored-customer edit | 88 | $8,360 | $38,760 |
+| Independent revision 5, browser customer edit | 92 | $8,740 | $39,140 |
+| Independent revision 6, current description correction | 92 | $8,740 | $39,140 |
+| Received original SCF source revision 1 | 80 | $7,600 | $38,000 |
 
-To continue that same budget item, select the independent plan, review the
-work package and its current eight-hour increase, and change both its cost and
+To continue that same budget item, select the independent plan, review its
+current work-package hours and cost, and change both its cost and
 the award total together. Calculate the draft before retaining a new revision.
+
+The exercised independent revision-6 scenario description records **412 prospective hours
+at the retained $95/hour rate over 150 days**. Revision 6 corrected that
+editable description after reviewing the displayed report and kept revision
+5's budget and costs. The original source descriptions remain in their source
+attachments and earlier saved histories.
 
 **Reopen saved** reloads the selected saved revision. **Copy saved plan**
 creates a named alternative from the reviewed current plan. The native history
@@ -96,7 +111,10 @@ or plan ZIP through the original importer.
 
 `results/current-plans.json` records the current delivered editions. The two
 retained programme exports and their independent native request replay are
-recorded in `receiving/planning-result.json`. The independent plan remains
+recorded in `receiving/planning-result.json`; that earlier native stage retained
+two plans, five revisions and five requests. `receiving/browser-result.json`
+records the subsequent full browser review, original-source intake, budget edit,
+description correction, saved downloads and independent reopening. The independent plan remains
 editable after restoration, and new saves retain their own revision notes and
 request identities.
 
@@ -104,16 +122,20 @@ request identities.
 
 - `native/planning-workspace.sqlite3` is the full database backup used by the
   restore command, including original source attachments and request records.
-- `results/all-plans.zip` contains both current plans as complete original
+- `results/all-plans.zip` contains all packaged current plans as complete original
   native ZIPs, each with its consecutive history and original source.
 - `results/current-plans.json` contains the plan names, IDs, current revisions,
   award requests and source identities for the delivered workspace.
-- `results/original-plan-history.zip` retains the native programme's complete
-  original plan history export.
-- `results/independent-customer-plan.zip` retains its independently edited
-  customer plan export.
+- `results/original-plan-history.zip` retains the earlier native programme's
+  complete original plan history export.
+- `results/independent-customer-plan.zip` retains its earlier independently
+  edited customer plan export. `all-plans.zip` contains the current editions.
 - `receiving/planning-result.json` records the original native backup,
   independent restore, complete exports and same-request edit replay.
+- `receiving/browser-result.json` records the complete customer browser
+  operation and the exact saved editions used by each download.
+- `results/browser-downloads/` retains all seven original browser downloads
+  with their complete native, CSV and JSON contents.
 
 The whole database restore opens the delivered local IDs together. A complete
 plan or collection import adds native receiving records to the chosen
@@ -190,6 +212,28 @@ for source in sources:
 PY
 ```
 
+Prepare the delivered browser record and its exact download siblings once:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+import os, shutil
+root = Path.cwd()
+browser = root / 'rebuild-browser'
+browser.mkdir(mode=0o700)
+downloads = browser / 'downloads'
+downloads.mkdir(mode=0o700)
+sources = [(root / 'receiving/browser-result.json', browser / 'browser-result.json')]
+sources.extend((source, downloads / source.name)
+               for source in (root / 'results/browser-downloads').iterdir()
+               if source.is_file())
+for source, destination in sources:
+    with source.open('rb') as incoming, destination.open('xb') as outgoing:
+        os.fchmod(outgoing.fileno(), 0o600)
+        shutil.copyfileobj(incoming, outgoing)
+PY
+```
+
 Then invoke the maintained builder with the packaged source, restored
 workspace, retained programme, a new output parent and the exact recorded
 fulfillment revision:
@@ -200,21 +244,30 @@ python3 application/operations/scf-grant-calendar-cedar-8047-20261012/build_plan
   --source "$PWD/application" \
   --workspace "$PWD/rebuild-workspace" \
   --programme "$PWD/rebuild-programme/planning-result.json" \
+  --browser-result "$PWD/rebuild-browser/browser-result.json" \
   --output "$PWD/rebuilt-scf-planning-handover" \
   --fulfillment-commit "$SCF_PLAN_FULFILLMENT"
 ```
 
 The builder verifies the complete original source, all six published planning
 fulfillment leaves, retained programme exports, SQLite integrity and the
-original plan BLOBs. It packages a complete native backup and reopens each
+original plan BLOBs. It also verifies the exact browser downloads, original
+source intake, customer edit and description-correction editions against the
+complete retained native history. It packages a complete native backup and reopens each
 nested current plan export to verify its full history and member digests.
 
-After interruption, repeat the same builder command with all five arguments.
+After interruption, repeat the same builder command with all six arguments.
 The retained assembly identity and file lease resume identical source and
 native inputs. A completed customer ZIP is verified member by member and
 reopened with its existing digest. The output parent contains
 `SCF_Editable_Planning_Customer_Handover.zip` and
 `customer-handover-result.json`.
+
+To deliver later native saves or additional plans, close that retained
+workspace and supply its directory as `--workspace`, with a new output parent.
+The newly built package indexes its actual current plans and record counts in
+`HANDOVER.json` and `results/current-plans.json`. The complete original
+programme and browser editions remain available in its retained history.
 
 ### Receive the exact source from Git on another host
 
