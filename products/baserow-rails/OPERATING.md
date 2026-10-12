@@ -193,7 +193,9 @@ native Ruby package and the Baserow files.
 Select the original receiving host's absolute Ruby, Python and Node executable
 paths. Preserve a Python environment's selected path, including its venv
 directory. The original receiver retains those paths with its source and
-request. Ruby/Bundler inherits the current application's normal environment.
+request. The complete customer continuation in [RECEIVING.md](RECEIVING.md)
+runs this flow through the managed private Ruby bundle. The direct commands
+below use the current application's configured compatible Ruby environment.
 
 The product command forwards to the original Ruby customer CLI:
 
@@ -289,17 +291,34 @@ removal state. An explicit archive-column policy is available.
 
 The original whole-source continuation in [RECEIVING.md](RECEIVING.md) creates
 the complete commissioning application and verifies its copied recipient.
-Open that application with the installed product:
+Register that complete delivered directory through **Ruby environments →
+Applications**, or use the installed command:
 
 ~~~sh
-starforge baserow-rails operator --ruby "$RUBY" -- \
-  --directory "$DELIVERED_APPLICATION" --port 9292
+starforge ruby-runtime register --directory "$RUBY_RUNTIME" \
+  --id customer-app --title "Customer data" --environment-id customer \
+  --application-directory "$DELIVERED_APPLICATION" \
+  --request-id "$APPLICATION_REQUEST_UUID" --wait
+
+starforge ruby-runtime launch --directory "$RUBY_RUNTIME" \
+  --id customer-app --operation-id "$APPLICATION_LAUNCH_UUID" --port 9292
 ~~~
 
-The original Rails installer binds loopback and reads the application's retained
-private access-key file. It serves the original operator and its received
-database/source. Existing production applications keep their own authentication,
-routing and durable ActiveJob configuration.
+Open the current returned address. The managed runtime copies and operates the
+complete original application in its own working directory, keeps the exact
+private bundle and original Rails authentication, and retains startup, stop and
+output. Existing production applications keep their own authentication, routing
+and durable ActiveJob configuration.
+
+**Verify stopped application** checks every mapped current target value and
+edition receipt. **Export environment and stopped application** includes the
+complete source, lock, dependency cache, database and files. The receiving desk
+or command installs that archive offline on a compatible Ruby host and opens
+its independently received working copy. The [receiving guide](RECEIVING.md)
+provides the complete commands and original-customer continuation.
+
+An existing configured Ruby application can also use the original direct
+starforge baserow-rails operator command and its retained access-key file.
 
 Deliver the complete source client and the full customer/application folders.
 Keep the manifests, original source/version/query identities and complete result
@@ -316,7 +335,10 @@ receipt and every current target value after a directory move.
 | Ruby receiving job | receive … resume with the original job |
 | Rails preview/import | Reopen the saved review/business operation and original receipt |
 | Full application continuation | commission … resume with the original phase |
-| Complete copied application | commission … reopen, or the original operator Commission.reopen API |
+| Complete copied application | Original operator Commission.reopen API, or the managed fixed customer entry with the original reopen arguments |
+| Managed private Ruby installation or application export | ruby-runtime operation/resume with its original UUID |
+| Runtime archive upload and receiving | Reopen the same saved transfer and native receiving UUID |
+| Running managed application | Its saved current operation, Stop, then original application state |
 
 The [full source contracts](../../stellar/scf-starforge-20261009/sf30-seller-sdk/baserow/customer/README.md#api-reference)
 identify exact manifests, file limits, logical membership and error codes.
