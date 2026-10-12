@@ -339,3 +339,11 @@ The source retains the demo's returned site context and report definitions. Thes
 ## Saved Applications and native agent operation
 
 The same original workspace can be selected by the maintained Applications loader and the merchant MCP host. The complete [Applications and agent guide](../../../../stellar-forge/mcp-merchant-operator/MATOMO_WORKSPACES.md) covers source-bound saved launch, exact operation/revision recovery, typed reviews, SF82 controls, full source publication and native customer receiving. The product-owned contribution preserves the original CLI and exposes the native provider through the existing shared registry; use a selected distribution that actually includes that contribution. The saved Application kind is `matomo-authoring`; the source-owned merchant provider is `matomo-workspaces`. Its initializer binds the original workspace and SF82 store, and the native agent owner cancels/drains the same model on close.
+
+## Remote customer and retained artifact transfer
+
+Use [the complete remote client guide](CLIENT.md) for the installed `starforge matomo-remote` command and typed JavaScript APIs. The source-owned client exposes the same 52 original MCP tools, retains exact revision-bound requests before dispatch, and reconciles an unconfirmed response through the original action instead of repeating it. Its artifact selection binds the original workspace UUID/source identity and file SHA; the maintained file writer resumes that exact payload, and the original Python customer receives/reopens the complete handover. The original Apps, MCP provider, capture, publisher, release and receiving owners remain in use.
+
+## Complete editable workspace receiving
+
+The installed `matomo-product` command exports the complete closed authoring workspace and receives an independently editable native source workspace. Original source tables, hierarchy, editions and reviews survive alongside the byte-exact archive and original commercial/action history. The original browser and typed MCP tools inspect those records and explicitly adopt a saved merchant draft through the local native compiler. See [WORKSPACE_RECEIVING.md](WORKSPACE_RECEIVING.md) for streaming limits, same-operation recovery, exact APIs and the full operating sequence.

@@ -18,6 +18,7 @@ roadmap, native acceptance and complete customer handover in one source.
 
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
+| Capture and review Matomo reports, publish a merchant and receive the complete editable source workspace | **Applications → Matomo reports and delivery**, `starforge matomo-product`, `starforge matomo-source` and [the complete operating guide](products/matomo/OPERATING.md) | Exact report/subtable source, typed editions and reviews, original merchant/customer files, full retained history and independently editable workspace receiving |
 | Carry a governed purchase through expense review and accountant handover | **Applications → Buyer expenses**, `starforge buyer-expenses` and [the complete operating guide](products/buyer-expenses/OPERATING.md) | Original shared-ledger source, exact allocation and issued periods, accountant returns, SDK/MCP operation and complete private project receiving |
 | Review exact economic series and source revisions | **Applications → DBnomics economic workspace** or `starforge dbnomics` | Original provider responses, precise native periods and values, saved analyst reports, reviewed publication and complete editable/customer receiving |
 | Receive an official World Bank edition through customer analysis | `starforge worldbank-product` and the original `worldbank-agent` Applications entry | Complete retained source, reviewed merchant edition, reports, typed workbook and reopened customer workspace |
