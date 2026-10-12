@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import signal
 import socket
 import sqlite3
 import ssl
@@ -449,19 +450,107 @@ def start(config, *, api_port=0, console_port=0):
     integer(api_port, 0, 65535, "INVALID_API_PORT")
     integer(console_port, 0, 65535, "INVALID_CONSOLE_PORT")
     capability = secrets.token_urlsafe(32)
-    api = LimitedServer(("127.0.0.1", api_port), Handler, config=config)
+    entries = []
+    session = {"_lifecycle": {"entries": entries, "lock": threading.RLock()}}
     try:
-        console = LimitedServer(("127.0.0.1", console_port), Handler, config=config,
-                                console=True, capability=capability)
-    except BaseException:
-        api.server_close()
+        for key, port, console in (("api", api_port, False), ("console", console_port, True)):
+            server = LimitedServer(("127.0.0.1", port), Handler, config=config,
+                                   console=console, capability=capability if console else None)
+            session[key] = server
+            entries.append({"server": server, "thread": None, "started": False,
+                            "stopped": False, "closed": False, "joined": False})
+        for entry in entries:
+            thread = threading.Thread(target=entry["server"].serve_forever, daemon=True)
+            entry["thread"] = thread
+            try:
+                thread.start()
+            finally:
+                # A start interrupted after the thread began still owns that thread.
+                entry["started"] = thread.ident is not None
+        session.update(apiUrl="http://127.0.0.1:" + str(session["api"].server_port),
+                       consoleUrl="http://127.0.0.1:" + str(session["console"].server_port) + "/#" + capability)
+        return session
+    except BaseException as error:
+        try:
+            stop(session)
+        except BaseException as cleanup_error:
+            error.close = lambda: stop(session)
+            error.cleanup_error = cleanup_error
         raise
-    for server in (api, console):
-        threading.Thread(target=server.serve_forever, daemon=True).start()
-    return {"api": api, "console": console, "apiUrl": "http://127.0.0.1:" + str(api.server_port),
-            "consoleUrl": "http://127.0.0.1:" + str(console.server_port) + "/#" + capability}
+
 
 def stop(session):
-    for key in ("api", "console"):
-        session[key].shutdown()
-        session[key].server_close()
+    lifecycle = session["_lifecycle"]
+    with lifecycle["lock"]:
+        problem = None
+        # Both listeners stop admitting before either original request thread drains.
+        for entry in lifecycle["entries"]:
+            if entry["stopped"]:
+                continue
+            try:
+                if entry["started"]:
+                    entry["server"].shutdown()
+                entry["stopped"] = True
+            except BaseException as error:
+                if problem is None:
+                    problem = error
+        if problem is not None:
+            raise problem
+        for entry in lifecycle["entries"]:
+            try:
+                if not entry["closed"]:
+                    entry["server"].server_close()
+                    entry["closed"] = True
+                if not entry["joined"]:
+                    if entry["started"]:
+                        entry["thread"].join()
+                    entry["joined"] = True
+            except BaseException as error:
+                if problem is None:
+                    problem = error
+        if problem is not None:
+            raise problem
+
+
+def serve(config, *, api_port=0, console_port=0, on_ready, stopping=None):
+    """Own one CLI gateway through readiness, both signals and actual request drain."""
+    if not callable(on_ready):
+        raise TypeError("Gateway readiness callback required")
+    stopping = stopping if stopping is not None else threading.Event()
+    previous = {}
+    session = None
+    problem = None
+    cleanup = None
+    def stop_signal(*_):
+        stopping.set()
+    try:
+        for signum in (signal.SIGINT, signal.SIGTERM):
+            old = signal.signal(signum, stop_signal)
+            previous[signum] = old
+        session = start(config, api_port=api_port, console_port=console_port)
+        if not stopping.is_set():
+            on_ready(session)
+        stopping.wait()
+    except BaseException as error:
+        problem = error
+        cleanup = getattr(error, "close", None)
+    finally:
+        if session is not None:
+            cleanup = lambda: stop(session)
+        while callable(cleanup):
+            try:
+                cleanup()
+                break
+            except BaseException as error:
+                if problem is None:
+                    problem = error
+                # Keep the same acquired servers and handlers until they finish.
+                time.sleep(1)
+        for signum, handler in previous.items():
+            try:
+                signal.signal(signum, handler)
+            except BaseException as error:
+                if problem is None:
+                    problem = error
+    if problem is not None:
+        raise problem

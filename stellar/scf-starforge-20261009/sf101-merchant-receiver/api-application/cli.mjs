@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // MIT. Operate original application functions through purchased SF101 allowance.
 import { request as httpRequest } from 'node:http';
-import { spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openJobStore } from '../../sf30-seller-sdk/jobs/store.mjs';
 import { canonical, digest, jobError } from '../../sf30-seller-sdk/jobs/config.mjs';
-import { configureApplication, KEY_HEADER, KEY_ENV, OPERATION } from './configuration.mjs';
+import { configureApplication, KEY_HEADER, OPERATION } from './configuration.mjs';
 import { startApplication, executionView, executionExport, validateExecution, cancelUnstartedExecution, CONTROL_PATH } from './worker.mjs';
 import { allowance } from './allowance-client.mjs';
+import { startServices } from './workspace/native.mjs';
 import { readApplicationRuntime, snapshotApplication, inspectApplicationSnapshot, restoreApplication,
   encryptApplicationSnapshot, restoreEncryptedApplication } from './recovery.mjs';
 
@@ -193,37 +193,50 @@ async function cancel(runtime, id, current, options) {
 async function runService(runtime, options, withGateway) {
   const apiPort = withGateway ? integer(options['api-port'], 0, 0, 65535, 'APP_API_PORT_REQUIRED') : 0;
   const consolePort = withGateway ? integer(options['console-port'], 0, 0, 65535, 'APP_CONSOLE_PORT_REQUIRED') : 0;
-  const service = await startApplication(runtime, { python: options.python });
-  print({ status: 'API_APPLICATION_RUNNING', privateWorkerOrigin: service.origin,
-    profile: runtime.profilePath, routes: runtime.routes.map(route => ({ id: route.id, functionId: route.functionId, path: route.path })),
-    source: runtime.source.identity });
-  let child = null, childDone = Promise.resolve(), stopping = null, finish;
+  let owner = null, problem = null, requested = false, finish;
   const ended = new Promise(resolve => { finish = resolve; });
-  async function stop(code = 0) {
-    if (stopping) return stopping;
-    stopping = (async () => {
-      child?.kill('SIGTERM');
-      await service.stop();
-      await childDone;
-      process.exitCode = code; finish();
-    })();
-    return stopping;
+  const stop = () => { requested = true; finish(); };
+  const fault = error => { problem ??= error; stop(); };
+  const publish = value => new Promise((resolve, reject) => {
+    process.stdout.write(JSON.stringify(value, null, 2) + '\n', error => error ? reject(error) : resolve());
+  });
+  try {
+    // Signals and output failures retain the acquired owner through all cleanup.
+    process.on('SIGINT', stop); process.on('SIGTERM', stop);
+    process.stdout.on('error', fault);
+    if (!requested) {
+      owner = withGateway
+        ? await startServices({ python: options.python || process.env.PYTHON || 'python3' },
+          runtime.profilePath, apiPort, { consolePort, onFault: fault })
+        : await startApplication(runtime, { python: options.python });
+    }
+    if (!requested) {
+      await publish({ status: 'API_APPLICATION_RUNNING', privateWorkerOrigin: runtime.profile.origin,
+        profile: runtime.profilePath, routes: runtime.routes.map(route =>
+          ({ id: route.id, functionId: route.functionId, path: route.path })), source: runtime.source.identity });
+      if (withGateway && !requested) {
+        const value = owner.view();
+        await publish({ status: 'API_PASS_GATEWAY_RUNNING', apiUrl: value.apiUrl,
+          privateConsoleUrl: value.consoleUrl });
+      }
+    }
+    if (!requested) await ended;
+  } catch (error) {
+    problem ??= error;
+    owner ??= error.recoveryService ?? (typeof error.close === 'function' ? { stop: error.close.bind(error) } : null);
+  } finally {
+    // The same complete gateway -> worker -> job store closes in dependency order.
+    // A failed close never drops its owner or either sustained signal handler.
+    while (owner) {
+      try { await owner.stop(); break; }
+      catch (error) { problem ??= error; await new Promise(resolve => setTimeout(resolve, 1000)); }
+    }
+    process.off('SIGINT', stop); process.off('SIGTERM', stop);
+    process.stdout.off('error', fault);
   }
-  const signal = () => { stop().catch(error => { process.stderr.write(JSON.stringify({ ok: false, error: error.code || 'APP_STOP_FAILED' }) + '\n'); process.exitCode = 1; finish(); }); };
-  process.once('SIGINT', signal); process.once('SIGTERM', signal);
-  if (withGateway) {
-    const cli = fileURLToPath(new URL('../api-access/cli.py', import.meta.url));
-    child = spawn(options.python || process.env.PYTHON || 'python3', [cli, 'serve',
-      '--config', runtime.profile.gateway, '--api-port', String(apiPort), '--console-port', String(consolePort)], {
-      env: { ...process.env, [KEY_ENV]: runtime.capability, PYTHONDONTWRITEBYTECODE: '1' }, stdio: ['ignore', 'inherit', 'inherit'],
-    });
-    childDone = new Promise(resolve => { child.once('close', resolve); child.once('error', resolve); });
-    child.once('error', () => { stop(1).catch(() => finish()); });
-    child.once('close', (code, signal) => { if (!stopping) stop(code ?? (signal ? 1 : 0)).catch(() => finish()); });
-  }
-  try { await ended; }
-  finally { process.off('SIGINT', signal); process.off('SIGTERM', signal); await service.stop(); }
+  if (problem) throw problem;
 }
+
 export async function main(argv = process.argv.slice(2)) {
   const { command, options } = parse([...argv]);
   if (['help', '--help', '-h'].includes(command)) { process.stdout.write(help); return; }

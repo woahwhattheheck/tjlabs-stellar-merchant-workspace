@@ -141,7 +141,7 @@ export async function startApplication(runtime, { env = process.env, python } = 
     environment[name] = path;
   }
   const store = await openJobStore(runtime.profile.store, runtime.source);
-  let running = true, pumping = null, stopping = null, lastFault = null;
+  let running = true, pumping = null, stopping = null, stopped = false, listenerStop = null, lastFault = null;
   const pending = new Map(), active = new Map(), admissions = new Map(), requests = new Set(), sockets = new Set();
   const queue = [];
   let server;
@@ -332,6 +332,12 @@ export async function startApplication(runtime, { env = process.env, python } = 
   }
   async function waitFor(row, response) {
     if (row.state !== 'QUEUED' && !active.has(row.id)) return row;
+    if (!running && !active.has(row.id)) {
+      // An already accepted socket can finish reading after the stop snapshot.
+      // Cancel its original unstarted row directly; never add a new queue waiter.
+      await cancelUnstarted(row.id, { reason: 'Worker stopped before native execution.' });
+      return get(row.id);
+    }
     const entry = entryFor(row.id);
     const closed = () => {
       entry.listeners.delete(response);
@@ -399,7 +405,7 @@ export async function startApplication(runtime, { env = process.env, python } = 
     try {
       authorize(runtime, request);
       const url = new URL(request.url, runtime.profile.origin);
-      if (url.origin !== runtime.profile.origin) fail('APP_ORIGIN_DENIED', 403);
+      if (url.origin !== new URL(runtime.profile.origin).origin) fail('APP_ORIGIN_DENIED', 403);
       if (url.pathname.startsWith(CONTROL_PATH + '/')) return await control(request, response, url);
       const route = runtime.routes.find(item => item.path === url.pathname);
       if (!route || request.method !== 'POST' || url.search) fail('APP_ROUTE_NOT_FOUND', 404);
@@ -441,13 +447,31 @@ export async function startApplication(runtime, { env = process.env, python } = 
       server.once('error', reject);
       server.listen(runtime.profile.port, '127.0.0.1', () => { server.off('error', reject); resolve(); });
     });
-  } catch (error) { running = false; await store.close(); throw error; }
+  } catch (error) {
+    try { await stop(); }
+    catch (cleanupError) {
+      Object.defineProperty(error, 'close', { value: stop, configurable: true });
+      Object.defineProperty(error, 'cleanupError', { value: cleanupError, configurable: true });
+    }
+    throw error;
+  }
+  function stopListener() {
+    if (!server) return Promise.resolve();
+    if (listenerStop) return listenerStop;
+    listenerStop = new Promise((resolve, reject) => {
+      server.close(error => error && error.code !== 'ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve());
+    }).catch(error => { listenerStop = null; throw error; });
+    return listenerStop;
+  }
   async function stop() {
+    if (stopped) return;
     if (stopping) return stopping;
+    running = false;
     stopping = (async () => {
-      running = false;
-      const closed = new Promise(resolve => server.close(resolve));
-      server.closeIdleConnections?.();
+      const closed = stopListener();
+      // Its result is awaited after the original requests have finished.
+      closed.catch(() => {});
+      server?.closeIdleConnections?.();
       await pumping;
       await Promise.allSettled([...admissions.values()]);
       for (const entry of [...pending.values()]) {
@@ -460,8 +484,8 @@ export async function startApplication(runtime, { env = process.env, python } = 
       await Promise.allSettled([...active.values()].map(slot => slot.promise));
       for (const socket of sockets) socket.destroy();
       await Promise.allSettled([...requests]); await closed;
-      await store.close();
-    })();
+      await store.close(); stopped = true;
+    })().catch(error => { stopping = null; throw error; });
     return stopping;
   }
   return Object.freeze({ origin: runtime.profile.origin, status, stop });
