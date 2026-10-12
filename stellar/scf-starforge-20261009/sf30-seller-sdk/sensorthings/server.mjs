@@ -5,6 +5,8 @@ import {join} from 'node:path';
 import {readOwned} from '../stellar-expert/store.mjs';
 import {openSensorThingsWorkspace} from './core.mjs';
 import {createFileAccess} from './files.mjs';
+import {createAnalysisHttp} from './analysis/http.mjs';
+import {createAnalysisDeployment} from './analysis/deployment/server.mjs';
 import {plain,fields,integer,text,json,sha,identity,fault} from './contract.mjs';
 const JSON_LIMIT=2*1024*1024,RESPONSE_LIMIT=24*1024*1024;
 const HASH=/^[a-f0-9]{64}$/;
@@ -112,8 +114,10 @@ async function download(req,res,url,files,workspaceId){
 /** Trusted UI code may be served by staticHandler. It never receives the token.
  * The handler owns only HTTP/file reads; it does not open or close another store. */
 export function createSensorThingsHandler({workspace,token,origin,staticHandler=null,extraApiHandler=null,files=createFileAccess(workspace)}){
+  if(extraApiHandler!==null&&typeof extraApiHandler!=='function')throw fault('API_EXTENSION','Use the host-selected API handler function.');
   if(typeof token!=='string'||!/^[A-Za-z0-9_-]{32,200}$/.test(token))throw fault('API_TOKEN','Use the original host-selected private session token.');
   const allowed=new URL(origin),workspaceId=workspace.schema().workspaceId,pending=new Set();let closing=false,closePromise=null;
+  const analysisHttp=createAnalysisHttp({workspace}),deployment=createAnalysisDeployment({workspace,origin:allowed.origin});
   async function route(req,res){
     if(closing)throw fault('API_CLOSING','The original workspace API is closing.',503);
     if(req.headers.host!==allowed.host)throw fault('API_HOST','Use the original selected workspace origin.',403);
@@ -123,6 +127,8 @@ export function createSensorThingsHandler({workspace,token,origin,staticHandler=
     if(url.origin!==allowed.origin)throw fault('API_ORIGIN','Use this original workspace URL.',403);
     if(!url.pathname.startsWith('/api/')){
       if(req.method!=='GET'&&req.method!=='HEAD')throw fault('API_METHOD','Use the advertised application route.',405);
+      if(await deployment.staticHandler(req,res,{url,workspaceId}))return;
+      if(await analysisHttp.staticHandler(req,res,{url,workspaceId}))return;
       if(staticHandler&&await staticHandler(req,res,{url,workspaceId}))return;
       if(url.pathname==='/'){headers(res,workspaceId);res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});res.end('SensorThings native workspace API. Open the maintained Operations Desk or use the original CLI/MCP connection.');return;}
       throw fault('API_ROUTE','The requested application route is not available.',404);
@@ -131,8 +137,14 @@ export function createSensorThingsHandler({workspace,token,origin,staticHandler=
     if(url.pathname!=='/api/schema'&&req.headers['x-sensorthings-workspace']!==workspaceId)
       throw fault('API_WORKSPACE','Bind the request to the original workspace UUID from its schema.',409);
     headers(res,workspaceId);
-    // Trusted Desk receiving uses the original authenticated workspace boundary.
-    if(extraApiHandler&&await extraApiHandler(req,res,{url,workspaceId}))return;
+    if(url.pathname.startsWith('/api/analysis')){
+      if(await deployment.handleApi(req,res,{url,workspaceId}))return;
+      if(await analysisHttp.handleApi(req,res,{url,workspaceId}))return;
+    }
+    // Host-selected extensions run after the original session/UUID checks and
+    // before the JSON parser, so a bounded inbox can stream its original bytes.
+    // Schema retains the sole existing pre-UUID discovery exception.
+    if(url.pathname!=='/api/schema'&&extraApiHandler&&await extraApiHandler(req,res,{url,workspaceId}))return;
     if(req.method==='GET'){
       if(url.pathname==='/api/schema')return send(res,200,workspace.schema(),workspaceId);
       if(url.pathname==='/api/view')return send(res,200,await workspace.view(),workspaceId);
@@ -191,7 +203,7 @@ export function createSensorThingsHandler({workspace,token,origin,staticHandler=
   }
   function close(){
     if(closePromise)return closePromise;closing=true;
-    closePromise=(async()=>{await Promise.allSettled([...pending]);await files.close();})();
+    closePromise=(async()=>{await Promise.allSettled([...pending]);await deployment.close();await analysisHttp.close();await files.close();})();
     void closePromise.catch(()=>{closePromise=null;});return closePromise;
   }
   return {handle,close,workspaceId,origin:allowed.origin};
