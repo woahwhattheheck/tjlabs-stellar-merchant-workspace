@@ -1,0 +1,49 @@
+{
+  "status": "COMPLETE",
+  "coverage": {
+    "selection": "explicit_manifest",
+    "input_count": 1,
+    "selected_files": 371,
+    "reconstructed_files": 371,
+    "reconstructed_bytes": 4445068,
+    "carrier_records": 1,
+    "ignored_json_records": 0
+  },
+  "issues": [],
+  "sourceCommit": "1a1de98824ac82991a7420375c8a2eaf7362b949",
+  "sourceTree": "8c2d69460c73b48b70303dccef17db84cd7d3ee6",
+  "reader": {
+    "repository": "woahwhattheheck/commons",
+    "files": [
+      {
+        "path": "host/receive_source_carriers.cjs",
+        "gitBlob": "b0fe6c9917bbd23c5f40ff404cfaecc7e179ce7d",
+        "bytes": 7806,
+        "sha256": "17790481d5591392a20841b4e2c3a92dbe952c72a2bc972d6d9a2c684ece316a"
+      },
+      {
+        "path": "host/connected_source_carriers.cjs",
+        "gitBlob": "42b66f170df0db5b5a9210ee70e04e79ef005128",
+        "bytes": 19928,
+        "sha256": "3dfce9d19f247f739be0c477aeff3c15cad92ceb0654a722b01ed4b6ce9df7ae"
+      },
+      {
+        "path": "host/connected_sha256.cjs",
+        "gitBlob": "ecebbae56a92e9e28e98a34d710e1a1e9352aafc",
+        "bytes": 18007,
+        "sha256": "bbc213d478d520611bf20fffea0759b9130b3c48d24c257d49542f0833e27b48"
+      },
+      {
+        "path": "host/connected_slack_pages.cjs",
+        "gitBlob": "81c4ad09d204bc9c7968f0941b8e6159dd8b55f7",
+        "bytes": 92883,
+        "sha256": "32469e47bb9494a58957e115fa4dc03f541540ce498aba51728e3d3086266d5d"
+      }
+    ]
+  },
+  "carrier": {
+    "bytes": 6029818,
+    "sha256": "b36551e073c89dd5d4af9a438d31aede6a57ed8911ea54deb018c7ed321c72c5"
+  },
+  "kind": "Original maintained source-carrier reader executed in V8; exact text-byte reconstruction"
+}

@@ -24,6 +24,20 @@
       ]
     ],
     [
+      "/operator/workflow-reports.mjs",
+      [
+        "workflow-reports.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/operator/workflow-report-format.mjs",
+      [
+        "workflow-report-format.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/operator/workflow-recipes.mjs",
       [
         "workflow-recipes.mjs",
