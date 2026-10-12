@@ -97,6 +97,11 @@ class HarvestWorkspace:
             CREATE TABLE IF NOT EXISTS oai_catalog(repository_id TEXT NOT NULL,kind TEXT NOT NULL,
                 name TEXT NOT NULL,request_id TEXT NOT NULL,body TEXT NOT NULL,
                 PRIMARY KEY(repository_id,kind,name));
+            CREATE TABLE IF NOT EXISTS oai_selection_members(selection_id TEXT NOT NULL,
+                observation_id TEXT NOT NULL,identifier TEXT NOT NULL,
+                PRIMARY KEY(selection_id,observation_id));
+            CREATE INDEX IF NOT EXISTS oai_selection_identifiers
+                ON oai_selection_members(selection_id,identifier,observation_id);
             CREATE TABLE IF NOT EXISTS oai_previews(id TEXT PRIMARY KEY,body TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS oai_candidates(preview_id TEXT NOT NULL,identifier TEXT NOT NULL,
                 before_id TEXT,after_id TEXT,kind TEXT NOT NULL,conflicts TEXT NOT NULL,
@@ -170,6 +175,8 @@ class HarvestWorkspace:
         if baseline is not None:
             if verb != "ListRecords": raise InputError("A record edition baseline belongs to ListRecords")
             prior=self._get("oai_editions",baseline)
+            if prior["selection"].get("kind")=="explicit-identifiers":
+                raise InputError("Use a record selection baseline with another explicit record selection")
             if prior["repository"]["id"]!=repository_id or prior["selection"].get("metadataPrefix")!=arguments.get("metadataPrefix") or prior["selection"].get("set")!=arguments.get("set"):
                 raise InputError("Choose a baseline for the same repository, metadata format and set")
         if verb in {"ListRecords", "ListIdentifiers", "GetRecord"}:

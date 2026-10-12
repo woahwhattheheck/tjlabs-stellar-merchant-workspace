@@ -84,6 +84,8 @@ class Console:
         if name=="run": return self.run(p["id"])
         if name=="cancel": ws.cancel.set();return {"operationId":ws.active,"cancelling":True}
         if name=="restart": return ws.restart(p["id"],p["expectedRevision"])
+        if name=="select-records":
+            return ws.select_records(p["sourceOperationIds"],p["operationId"],p.get("baseline"),p.get("label"))
         if name=="preview": return ws.preview(p["operationId"],p.get("choices"))
         if name=="review": return ws.review(p["id"],p["expectedDigest"],p["reviewer"],p["note"])
         if name=="mapping": return ws.save_mapping(p["plan"])
@@ -171,7 +173,7 @@ def serve(root,port=0,*,expected_binding=None,startup_format=None):
                 if url.path=="/api/changes":return self.send(200,ws.changes(q["preview"],q.get("kind"),offset,limit))
                 if url.path=="/api/records":return self.send(200,ws.records(q["edition"],offset,limit,q.get("query","")))
                 if url.path=="/api/history":return self.send(200,ws.history(q["kind"],offset,limit))
-                if url.path=="/api/default-mapping":return self.send(200,ws.default_mapping())
+                if url.path=="/api/default-mapping":return self.send(200,ws.default_mapping(edition_id=q.get("edition")))
                 if url.path=="/api/metadata-mapping":return self.send(200,ws.metadata_mapping(q["edition"]))
                 if url.path=="/api/object":
                     kind=q["kind"];ident=q["id"]
