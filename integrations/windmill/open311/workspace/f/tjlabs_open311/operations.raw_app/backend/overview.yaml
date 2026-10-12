@@ -1,0 +1,10 @@
+{
+  "type": "script",
+  "path": "f/tjlabs_open311/workspace",
+  "fields": {
+    "action": {
+      "type": "static",
+      "value": "overview"
+    }
+  }
+}

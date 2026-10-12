@@ -1,0 +1,43 @@
+{
+  "schema": "tjlabs.windmill.open311.source.v1",
+  "operationId": "WINDMILL-OPEN311-IMPLEMENTATION-9B2C-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "baseCommit": "aa88ce408cc46b091edaaaac9f7bef1a74505416",
+  "originalCore": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/server.mjs",
+      "bytes": 9448,
+      "gitSha1": "65bab9f8240cd65645e5df97adb954a248037cef"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/workspace.mjs",
+      "bytes": 42137,
+      "gitSha1": "10f1a1548dc0e9a7f26673db824e0eb236855e5a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/client.mjs",
+      "bytes": 17281,
+      "gitSha1": "98a5171a7168507c272a89db666a941803f8d376"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/open311/domain.mjs",
+      "bytes": 11680,
+      "gitSha1": "d0bee3658c498b466cfeb832e26be7bc40489919"
+    }
+  ],
+  "retainedSource": {
+    "path": "fixtures/helsinki-retained-source.json",
+    "bytes": 9730,
+    "gitSha1": "4053496f8b6e2920f8bd9726193aa0399c9f8c24",
+    "originalOperationId": "OPEN311-ORIGINAL-SOURCE-20261012-8E5F",
+    "sourcePage": "https://app.notion.com/p/3f7dd772310081d0ae6ffd59fb8facb5"
+  },
+  "upstream": {
+    "repository": "windmill-labs/windmill",
+    "openapiVersion": "1.830.0",
+    "appTemplateBlob": "00d7594386c14e1c8320f92b1e86a6ccba08cfd7",
+    "appPolicyBlob": "ca84b39a4b1f8d7cfb83de080e492867dd469539",
+    "readAt": "2026-10-12"
+  },
+  "coordination": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791821584323269"
+}

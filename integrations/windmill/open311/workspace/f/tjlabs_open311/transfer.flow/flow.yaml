@@ -1,0 +1,117 @@
+{
+  "summary": "Receive and reopen a portable workspace",
+  "description": "Validate the original workspace export, receive it into the independent empty destination, and reopen its original records.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "runKey": {
+        "type": "string",
+        "description": "Stable identifier for this operator action; reuse it when continuing the same flow.",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,119}$"
+      },
+      "source": {
+        "type": "boolean",
+        "default": true
+      },
+      "bundle": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "default": null
+      }
+    },
+    "required": [
+      "runKey"
+    ]
+  },
+  "value": {
+    "modules": [
+      {
+        "id": "plan",
+        "summary": "Prepare the complete workspace transfer",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "prepare_receive"
+            },
+            "target": {
+              "type": "static",
+              "value": "receiver"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({runKey:flow_input.runKey,source:flow_input.source,bundle:flow_input.bundle})"
+            }
+          }
+        }
+      },
+      {
+        "id": "receive",
+        "summary": "Receive original records",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "apply_plan"
+            },
+            "target": {
+              "type": "static",
+              "value": "receiver"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({plan:results.plan})"
+            }
+          }
+        }
+      },
+      {
+        "id": "reopen",
+        "summary": "Reopen the receiving workspace",
+        "value": {
+          "type": "script",
+          "path": "f/tjlabs_open311/workspace",
+          "input_transforms": {
+            "action": {
+              "type": "static",
+              "value": "overview"
+            },
+            "target": {
+              "type": "static",
+              "value": "receiver"
+            },
+            "args": {
+              "type": "javascript",
+              "expr": "({})"
+            }
+          }
+        }
+      },
+      {
+        "id": "result",
+        "summary": "Return received workspace",
+        "value": {
+          "type": "rawscript",
+          "language": "bun",
+          "content": "export async function main(receive:any,reopen:any){return {schema:\"tjlabs.windmill.open311.transfer.v1\",receive,reopen};}\n",
+          "input_transforms": {
+            "receive": {
+              "type": "javascript",
+              "expr": "results.receive"
+            },
+            "reopen": {
+              "type": "javascript",
+              "expr": "results.reopen"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
