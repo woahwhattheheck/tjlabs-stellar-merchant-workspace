@@ -582,8 +582,8 @@ export class ApiPassWorkspace extends EventEmitter{
  async close({beforeRelease}={}){
   check(beforeRelease===undefined||typeof beforeRelease==='function','WORKSPACE_CLOSE_CALLBACK_REQUIRED');
   if(this.closeCallback!==undefined&&beforeRelease!==undefined)check(this.closeCallback===beforeRelease,'WORKSPACE_CLOSE_CALLBACK_CHANGED',409);
-  if(this.closed)return;
   if(this.closeStarted&&beforeRelease!==undefined&&this.closeCallback===undefined)check(!this.closeStages?.callback,'WORKSPACE_CLOSE_CALLBACK_TOO_LATE',409);
+  if(this.closed)return;
   if(beforeRelease!==undefined)this.closeCallback=beforeRelease;
   this.closing=true;this.closeStarted=true;this.closeStages??={};
   if(this.closingPromise)return this.closingPromise;
