@@ -21,13 +21,29 @@ export interface RecordsPage<C extends PreparationCollection=PreparationCollecti
 }
 export interface RecordsOptions extends RequestOptions {offset?:number;limit?:number;expectedStateSha256?:string}
 export type ResultFile='result.csv'|'result.jsonl'|'schema.json';
-export type DeliveryRequest={operationId:string;expectedStateSha256:string}&(
+export type NativeDeliveryRequest={operationId:string;expectedStateSha256:string}&(
  {kind:'project'}|{kind:'merchant';runId:string;label?:string}|{kind:'report';runId:string}|{kind:'result';runId:string;file?:ResultFile}
 );
+export type PipelineDeliveryRequest={operationId:string;expectedStateSha256:string;expectedPipelineSha256:string}&(
+ {kind:'pipeline-project'}|
+ {kind:'pipeline-results'|'pipeline-report';executionId:string}|
+ {kind:'pipeline-merchant';executionId:string;stageId:string;label?:string}|
+ {kind:'pipeline-result';executionId:string;stageId:string;file?:ResultFile}
+);
+export type DeliveryRequest=NativeDeliveryRequest|PipelineDeliveryRequest;
+export interface PipelineStatus {
+ schema:'stellar-forge.preparation-pipelines.v1';label:string;stateSha256:string;pipelineStateSha256:string;
+ pipelines:number;editions:number;executions:number;events:number;running:number;
+}
+export interface ManagedReceivedPipeline {
+ id:string;label:string;path:string;archiveSha256:string;bytes:number;createdAt:string;
+ pipelines:number;executions:number;sources:number;nativeRuns:number;
+ origin:string;url:string;connectionFile:string;workspaceSha256:string;instanceId:string;
+}
 export interface DeliveryRecord {
  schema:'stellar-forge.data-preparation-delivery.v1';fileId:string;operationId:string;kind:DeliveryRequest['kind'];
  workspaceSha256:string;stateSha256:string;request:DeliveryRequest;createdAt:string;
- filename:string;mediaType:string;bytes:number;sha256:string;reused?:boolean;
+ filename:string;mediaType:string;bytes:number;sha256:string;reused?:boolean;pipelineStateSha256?:string;
 }
 export interface PreparationDownloadLink {url:string;expiresInSeconds:300;instanceId:string}
 export interface ReceivedPreparation {
@@ -54,6 +70,11 @@ export class PreparationWorkspaceClient extends PreparationClient {
  status(options?:RequestOptions):Promise<PreparationStatus>;
  records<C extends PreparationCollection>(collection:C,options?:RecordsOptions):Promise<RecordsPage<C>>;
  browser():Promise<PreparationConnection&{url:string}>;
+ pipelineBrowser():Promise<PreparationConnection&{url:string}>;
+ pipelineStatus(options?:RequestOptions):Promise<PipelineStatus>;
+ exportPipelineDelivery(request:PipelineDeliveryRequest,options?:RequestOptions):Promise<DeliveryRecord>;
+ receivePipelineProject(file:string,options:{requestKey:string;expectedSha256?:string;signal?:AbortSignal}):Promise<ManagedReceivedPipeline>;
+ downloadOriginal(relative:string,destination:string,options?:RequestOptions&{sha256?:string;bytes?:number}):Promise<{path:string;sha256:string;bytes:number}>;
  importFile(file:string,options:{alias:string;format?:'csv'|'jsonl';label?:string;nullToken?:string;expectedSha256?:string;signal?:AbortSignal}):Promise<Source>;
  exportDelivery(request:DeliveryRequest,options?:RequestOptions):Promise<DeliveryRecord>;
  downloadLink(originalUrlOrPath:string,options?:RequestOptions):Promise<PreparationDownloadLink>;
