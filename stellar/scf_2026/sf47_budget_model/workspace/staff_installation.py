@@ -224,17 +224,23 @@ def launcher_boot_files(source_directory):
 
 
 
-def python_source_dependencies(path, raw):
-    """Follow original local Python imports and literal file-relative paths."""
-    try:
-        tree = ast.parse(raw, filename=str(path))
-    except (SyntaxError, UnicodeError) as error:
-        fail("The installed Python source cannot be read: " + str(path),
-             "STAFF_SOURCE_ENCODING")
-    bindings = {"__file__": path}
-    search = [path.parent]
+def python_source_dependencies(path, raw, repository, observed, cache=None):
+    """Follow each entry point's ordered imports without rewalking function trees."""
+    cache = cache if cache is not None else {}
+    parsed = cache.setdefault("parsed", {})
+    scheduled = cache.setdefault("deferred", set())
+    source_bytes = cache.setdefault("source_bytes", {})
     dependencies = set()
-    imports = []
+    deferred = []
+
+    def search_identity(search):
+        # Repeated path entries select the same first source and need no new walk.
+        return tuple(dict.fromkeys(search))
+
+    def source(candidate):
+        if candidate not in source_bytes:
+            source_bytes[candidate] = stable_bytes(candidate)
+        return source_bytes[candidate]
 
     def literal(node, scope):
         if isinstance(node, ast.Constant) and isinstance(node.value, (str, int)):
@@ -270,7 +276,7 @@ def python_source_dependencies(path, raw):
                                     else value.joinpath(*args) if node.func.attr == "joinpath" else None)
         return None
 
-    def inspect(node, scope):
+    def inspect(node, scope, search):
         value = literal(node, scope)
         if isinstance(value, Path) and value.suffix in SOURCE_SUFFIXES:
             dependencies.add(value)
@@ -282,69 +288,164 @@ def python_source_dependencies(path, raw):
                 and node.args):
             directory = literal(node.args[-1], scope)
             if isinstance(directory, Path):
-                if directory in search:
-                    search.remove(directory)
                 if node.func.attr == "append":
                     search.append(directory)
                 else:
                     index = literal(node.args[0], scope) if len(node.args) > 1 else 0
                     search.insert(index if type(index) is int else 0, directory)
+        # Statement blocks are visited with their own execution context below.
+        # Walking a function body here would apply a deferred sys.path mutation
+        # before its caller, and inspecting it again would apply it twice.
         for child in ast.iter_child_nodes(node):
-            inspect(child, scope)
+            if not isinstance(child, ast.stmt):
+                inspect(child, scope, search)
 
-    def visit(statements, scope):
-        for node in statements:
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                imports.append((node, tuple(search)))
-            if isinstance(node, (ast.Assign, ast.AnnAssign)):
-                value = literal(node.value, scope)
-                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-                for target in targets:
-                    if isinstance(target, ast.Name) and value is not None:
-                        scope[target.id] = value
-            if (isinstance(node, ast.For) and isinstance(node.target, ast.Name)
-                    and isinstance(node.iter, (ast.Tuple, ast.List))):
-                values = [literal(item, scope) for item in node.iter.elts]
-                if values and all(isinstance(value, str) for value in values):
-                    for value in values:
-                        visit(node.body, {**scope, node.target.id: value})
-                    visit(node.orelse, scope.copy())
+    def checked_source(candidate):
+        if candidate.is_symlink():
+            fail("The installed application contains a source symlink.", "STAFF_SOURCE_SYMLINK")
+        selected = candidate.resolve()
+        try:
+            selected.relative_to(repository)
+        except ValueError:
+            fail("An installed source dependency leaves its original repository.", "STAFF_SOURCE_LAYOUT")
+        return selected
+
+    def scan(entry, data, search, loaded):
+        entry = checked_source(entry)
+        identity = (len(data), sha(data))
+        previous = observed.setdefault(entry, identity)
+        if previous != identity:
+            fail("An imported source changed during its backup.", "STAFF_SOURCE_CHANGED", 409)
+        if entry in loaded:
+            return
+        loaded.add(entry)
+        if entry not in parsed:
+            try:
+                parsed[entry] = ast.parse(data, filename=str(entry))
+            except (SyntaxError, UnicodeError):
+                fail("The installed Python source cannot be read: " + str(entry), "STAFF_SOURCE_ENCODING")
+        tree = parsed[entry]
+        source_bytes.setdefault(entry, data)
+
+        def receive_module(candidate, import_search, imported):
+            selected = checked_source(candidate)
+            dependencies.add(selected)
+            if selected not in imported:
+                scan(selected, source(selected), import_search, imported)
+            return selected
+
+        def imports(node, search, loaded):
+            if isinstance(node, ast.Import):
+                modules = [(name.name, 0) for name in node.names]
+            elif node.module:
+                modules = [(node.module, node.level)]
+            else:
+                modules = [(name.name, node.level) for name in node.names if name.name != "*"]
+            for module, level in modules:
+                if not level and module.split(".", 1)[0] in sys.stdlib_module_names:
                     continue
-            inspect(node, scope)
-            for field in ("body", "orelse", "finalbody"):
-                block = getattr(node, field, None)
-                if isinstance(block, list):
-                    visit(block, scope.copy())
-            for handler in getattr(node, "handlers", ()):
-                visit(handler.body, scope.copy())
+                roots = list(search)
+                if level:
+                    base = entry.parent
+                    for _ in range(level - 1):
+                        base = base.parent
+                    roots = [base]
+                suffix = Path(*module.split("."))
+                candidates = [candidate for root in roots for candidate in
+                              (root / suffix.with_suffix(".py"), root / suffix / "__init__.py")]
+                selected = next((candidate for candidate in candidates if candidate.is_file()), None)
+                if selected is None:
+                    if level or len(search) > 1:
+                        fail("Complete the original local Python import " + module + " in " + str(entry) +
+                             "; searched " + ", ".join(str(candidate) for candidate in candidates),
+                             "STAFF_SOURCE_INCOMPLETE")
+                    continue
+                # A package initializer executes before its selected submodule.
+                for root in roots:
+                    try:
+                        relative = selected.relative_to(root)
+                    except ValueError:
+                        continue
+                    for index in range(1, len(relative.parts)):
+                        initializer = root.joinpath(*relative.parts[:index], "__init__.py")
+                        if initializer.is_file() and initializer != selected:
+                            receive_module(initializer, search, loaded)
+                    break
+                selected = receive_module(selected, search, loaded)
+                if selected.name == "__init__.py" and isinstance(node, ast.ImportFrom):
+                    for name in node.names:
+                        if name.name == "*":
+                            continue
+                        for child in (selected.parent / (name.name + ".py"),
+                                      selected.parent / name.name / "__init__.py"):
+                            if child.is_file():
+                                receive_module(child, search, loaded)
+                                break
 
-    visit(tree.body, bindings)
-    for node, directories in imports:
-        if isinstance(node, ast.Import):
-            modules = [(name.name, 0) for name in node.names]
-        elif node.module:
-            modules = [(node.module, node.level)]
-        else:
-            modules = [(name.name, node.level) for name in node.names if name.name != "*"]
-        for module, level in modules:
-            if not level and module.split(".", 1)[0] in sys.stdlib_module_names:
-                continue
-            roots = list(directories)
-            if level:
-                base = path.parent
-                for _ in range(level - 1):
-                    base = base.parent
-                roots = [base]
-            suffix = Path(*module.split("."))
-            candidates = [candidate for root in roots for candidate in
-                          (root / suffix.with_suffix(".py"), root / suffix / "__init__.py")]
-            selected = next((candidate for candidate in candidates if candidate.is_file()), None)
-            if selected is not None:
-                dependencies.add(selected)
-            elif level or len(directories) > 1:
-                fail("Complete the original local Python import " + module + " in " + str(path) +
-                     "; searched " + ", ".join(str(candidate) for candidate in candidates),
-                     "STAFF_SOURCE_INCOMPLETE")
+        def visit(statements, scope, search, loaded):
+            for node in statements:
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    # The imported module's literal top-level path changes are
+                    # visible to the following import in this same entry point.
+                    imports(node, search, loaded)
+                    continue
+                inspect(node, scope, search)
+                if isinstance(node, (ast.Assign, ast.AnnAssign)):
+                    value = literal(node.value, scope)
+                    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                    for target in targets:
+                        if isinstance(target, ast.Name):
+                            if value is None:
+                                scope.pop(target.id, None)
+                            else:
+                                scope[target.id] = value
+                if (isinstance(node, ast.For) and isinstance(node.target, ast.Name)
+                        and isinstance(node.iter, (ast.Tuple, ast.List))):
+                    values = [literal(item, scope) for item in node.iter.elts]
+                    if values and all(value is not None for value in values):
+                        for value in values:
+                            scope[node.target.id] = value
+                            visit(node.body, scope, search, loaded)
+                        visit(node.orelse, scope, search, loaded)
+                        continue
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    # A definition does not execute its imports. Queue the body
+                    # after the module's ordered imports have finished, retaining
+                    # its own mutable module context until that point.
+                    deferred.append((entry, node, visit, scope, search, loaded))
+                    continue
+                if isinstance(node, ast.ClassDef):
+                    visit(node.body, scope.copy(), search, loaded)
+                    continue
+                # Conditional/deferred paths retain their local imports without
+                # changing an unrelated sibling product's module-search context.
+                for field in ("body", "orelse", "finalbody"):
+                    block = getattr(node, field, None)
+                    if isinstance(block, list):
+                        visit(block, scope.copy(), search.copy(), loaded.copy())
+                for handler in getattr(node, "handlers", ()):
+                    visit(handler.body, scope.copy(), search.copy(), loaded.copy())
+
+        visit(tree.body, {"__file__": entry}, search, loaded)
+
+    scan(path, raw, [path.parent], set())
+    cursor = 0
+    while cursor < len(deferred):
+        entry, node, visit, enclosing, search, loaded = deferred[cursor]
+        cursor += 1
+        local = enclosing.copy()
+        arguments = [*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs]
+        for argument in arguments:
+            local.pop(argument.arg, None)
+        for argument in (node.args.vararg, node.args.kwarg):
+            if argument is not None:
+                local.pop(argument.arg, None)
+        roots = search_identity(search)
+        identity = (entry, node.lineno, node.col_offset, roots, tuple(sorted(local.items())))
+        if identity in scheduled:
+            continue
+        scheduled.add(identity)
+        visit(node.body, local, list(roots), loaded.copy())
     return dependencies
 
 
@@ -372,7 +473,7 @@ def source_inventory(source_directory=None):
                 pending.append(path)
     pending.extend(path for path in selected.parent.iterdir()
                    if path.is_file() and not path.name.startswith(".") and path.suffix in SOURCE_SUFFIXES)
-    files, missing = {}, set()
+    files, missing, observed_python, python_cache = {}, set(), {}, {}
     while pending:
         path = pending.pop()
         if path.is_symlink():
@@ -391,7 +492,7 @@ def source_inventory(source_directory=None):
         raw = stable_bytes(path)
         files[member] = raw
         if path.suffix == ".py":
-            pending.extend(python_source_dependencies(path, raw))
+            pending.extend(python_source_dependencies(path, raw, repository, observed_python, python_cache))
         if path.suffix not in (".mjs", ".js", ".mts", ".ts"):
             continue
         try:

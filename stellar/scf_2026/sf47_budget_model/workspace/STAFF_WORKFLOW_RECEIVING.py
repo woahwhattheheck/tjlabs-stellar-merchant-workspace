@@ -10,9 +10,13 @@ from uuid import uuid4
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from server import create_server
+from server import create_server, atomic_private as write_private
 from STAFF_INSTALLATION_RECEIVING import receive_workspace
-from staff_installation import export_installation, private_json, write_private
+from staff_installation import export_installation, private_json as encode_private_json
+
+def private_json(path, value):
+    """Update the same retained output through the original private atomic writer."""
+    write_private(path, encode_private_json(value))
 
 def require(value, message):
     if not value:
