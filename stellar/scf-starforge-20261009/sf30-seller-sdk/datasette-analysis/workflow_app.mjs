@@ -73,6 +73,15 @@ function renderDetail(detail) {
   const result = detail.result;
   $('result-summary').textContent = result ? (result.analysis?.status === 'PARTIAL' ? 'The native report returned a partial outcome. Review its query limits and report details below.' : 'Complete native files from this original source and report operation.') : 'Run or continue the request to acquire its source and reports.';
   $('edition').textContent = pretty(result?.edition); $('analysis').textContent = pretty(result?.analysis); $('native-ids').textContent = pretty(result?.nativeIds);
+  const supplier = result?.supplier;
+  $('supplier-review').hidden = !supplier;
+  $('supplier-comparison').replaceChildren();
+  if (supplier) $('supplier-comparison').append(table(
+    ['Supplier request', 'Comparison', 'Revision', 'Review status'],
+    [[supplier.requestId, supplier.comparisonId, supplier.revision, supplier.status]]
+  ));
+  $('export-supplier').disabled = !result;
+
   filesView($('result-files'), detail.requestId, result ? [...(result.files || []), ...(result.archive ? [result.archive] : [])] : []);
   filesView($('exports'), detail.requestId, detail.exports || []);
   $('export').disabled = !result; $('prepare-jms').disabled = !result || !state.configuration?.jms;
@@ -147,7 +156,11 @@ $('successor').addEventListener('click', () => {
   $('parent-request-id').value = request.requestId; storeDraft(); intake();
 });
 $('run').addEventListener('click', () => act('run', async id => { await api(route(id, 'run'), {}); message('The original native operation is running. Source and report progress remains in its history.'); }));
-$('export').addEventListener('click', () => act('export', async id => { message('Preparing the complete editable project…'); const value = await api(route(id, 'export'), {}); await download(id, {...value.archive, contentType: 'application/zip'}); }));
+for (const control of ['export', 'export-supplier']) $(control).addEventListener('click', () => act(control, async id => {
+  message('Preparing the complete editable project…');
+  const value = await api(route(id, 'export'), {});
+  await download(id, {...value.archive, contentType: 'application/zip'});
+}));
 $('prepare-jms').addEventListener('click', () => act('prepare-jms', async id => {
   const existing = state.detail.publications.find(p => p.kind === 'JMS' && p.status === 'PREPARED');
   const attemptId = existing?.attemptId || 'jms-' + crypto.randomUUID();

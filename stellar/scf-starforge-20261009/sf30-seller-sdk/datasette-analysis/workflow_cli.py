@@ -74,6 +74,18 @@ def parser():
     configure.add_argument("--source-handover", help="Complete native source handover JSON file")
     configure.add_argument("--related-handover", action="append", default=[], metavar="ALIAS=PATH",
                            help="Bind a named related source to its complete handover")
+    configure.add_argument("--source-csv", help="Complete original CSV; retain key and publisher fields from the template")
+    configure.add_argument("--related-csv", action="append", default=[], metavar="ALIAS=PATH",
+                           help="Bind a named companion source to its original CSV")
+    configure.add_argument("--source-metadata", help="Original publisher metadata for the main CSV source")
+    configure.add_argument("--related-metadata", action="append", default=[], metavar="ALIAS=PATH",
+                           help="Bind a named CSV source to its original publisher metadata")
+    configure.add_argument("--supplier-component", help="Complete installed products/conapi/supplier-report directory")
+    configure.add_argument("--supplier-workspace", help="Complete original supplier comparison and review workspace")
+    configure.add_argument("--supplier-table-name", help="Accepted-row SQL table name used by the original supplier exporter")
+    configure.add_argument("--supplier-pricing", help="Original pricing CSV for catalogue coverage")
+    configure.add_argument("--supplier-catalogue", help="Original service catalogue CSV for catalogue coverage")
+    configure.add_argument("--supplier-metadata", help="Original publisher metadata for catalogue coverage")
     configure.add_argument("--analysis-workspace", help="Existing native Analysis workspace")
     configure.add_argument("--operation-id", help="Original native Analysis operation ID (32 hexadecimal characters)")
     configure.add_argument("--flow-delivery", help="Complete rendered native Kestra flow delivery JSON")
@@ -86,39 +98,126 @@ def configure(args):
     if not isinstance(configuration, dict) or not configuration.get("profile"):
         raise WorkflowError("WORKFLOW_CONFIGURATION", "Select the complete installed profile template.")
     configuration["schema"] = CONFIG_SCHEMA
+
+    def original_file(value, label):
+        if isinstance(value, str):
+            value = {"path": value}
+        if not isinstance(value, dict) or not value.get("path"):
+            raise WorkflowError("WORKFLOW_CONFIGURATION_FILE", "Select the complete original " + label + ".")
+        return {**value, **file_descriptor(value["path"], expected_sha256=value.get("sha256"),
+                                          expected_bytes=value.get("bytes"))}
+
+    def assignment(value):
+        alias, separator, path = value.partition("=")
+        if not separator or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,49}", alias) or not path:
+            raise WorkflowError("WORKFLOW_RELATED_SOURCE", "Bind each complete related source as ALIAS=PATH.")
+        return alias, path
+
+    if args.source_handover and args.source_csv:
+        raise WorkflowError("WORKFLOW_SOURCE_SELECTION", "Select one original main source kind.")
     if args.source_handover:
         configuration["source"] = {"kind": "handover", "path": args.source_handover}
+    if args.source_csv:
+        original = configuration.get("source", {})
+        if original.get("kind") not in {None, "csv"}:
+            raise WorkflowError("WORKFLOW_SOURCE_SELECTION", "Use the original CSV profile with its reviewed key and publisher fields.")
+        configuration["source"] = {**original, "kind": "csv", "path": args.source_csv}
     if args.analysis_workspace:
         configuration.setdefault("analysis", {})["workspace"] = str(Path(args.analysis_workspace).expanduser().resolve(strict=True))
     if args.operation_id:
         if not re.fullmatch(r"[a-f0-9]{32}", args.operation_id):
             raise WorkflowError("WORKFLOW_OPERATION_ID", "Use the original native Analysis operation ID.")
         configuration.setdefault("analysis", {})["operationId"] = args.operation_id
-    for assignment in args.related_handover:
-        alias, separator, path = assignment.partition("=")
-        if not separator or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,49}", alias) or not path:
-            raise WorkflowError("WORKFLOW_RELATED_SOURCE", "Bind each complete related source as ALIAS=PATH.")
-        configuration.setdefault("relatedSources", {})[alias] = {"kind": "handover", "path": path}
+    assigned = set()
+    for kind, values in (("handover", args.related_handover), ("csv", args.related_csv)):
+        for value in values:
+            alias, path = assignment(value)
+            if alias in assigned:
+                raise WorkflowError("WORKFLOW_RELATED_SOURCE", "Bind each original related source once.")
+            assigned.add(alias)
+            related = configuration.setdefault("relatedSources", {})
+            original = related.get(alias, {})
+            if kind == "csv":
+                if original.get("kind") not in {None, "csv"}:
+                    raise WorkflowError("WORKFLOW_SOURCE_SELECTION", "Use the named CSV profile with its reviewed key and publisher fields.")
+                related[alias] = {**original, "kind": "csv", "path": path}
+            else:
+                related[alias] = {"kind": kind, "path": path}
+    if args.source_metadata:
+        if configuration.get("source", {}).get("kind") != "csv":
+            raise WorkflowError("WORKFLOW_SOURCE_METADATA", "Select the original CSV source for this publisher metadata.")
+        configuration["source"]["metadata"] = args.source_metadata
+    metadata_aliases = set()
+    for value in args.related_metadata:
+        alias, path = assignment(value)
+        source = configuration.get("relatedSources", {}).get(alias)
+        if alias in metadata_aliases or not isinstance(source, dict) or source.get("kind") != "csv":
+            raise WorkflowError("WORKFLOW_SOURCE_METADATA", "Bind metadata once to an existing named CSV source.")
+        metadata_aliases.add(alias)
+        source["metadata"] = path
+
+    supplier_options = (args.supplier_component, args.supplier_workspace, args.supplier_table_name,
+                        args.supplier_pricing, args.supplier_catalogue, args.supplier_metadata)
+    supplier = configuration.get("delivery", {}).get("supplier")
+    if supplier is not None or any(value is not None for value in supplier_options):
+        supplier = configuration.setdefault("delivery", {}).setdefault("supplier", {})
+        if not isinstance(supplier, dict):
+            raise WorkflowError("WORKFLOW_SUPPLIER_CONFIGURATION", "Select the original supplier delivery profile.")
+        if args.supplier_component:
+            supplier["component"] = args.supplier_component
+        if supplier.get("component"):
+            component = Path(supplier["component"]).expanduser().resolve(strict=True)
+            if not component.is_dir():
+                raise WorkflowError("WORKFLOW_SUPPLIER_COMPONENT", "Select the complete installed supplier software directory.")
+            for filename in ("supplier-report.mjs", "supplier-report-cli.mjs",
+                             "catalogue-coverage.mjs", "supplier_attachments.py"):
+                file_descriptor(component / filename)
+            supplier["component"] = str(component)
+        if args.supplier_workspace:
+            supplier["workspace"] = args.supplier_workspace
+        if "workspace" in supplier:
+            supplier["workspace"] = original_file(supplier["workspace"], "supplier review workspace")
+        if args.supplier_table_name:
+            supplier["tableName"] = args.supplier_table_name
+        for field, value in (("pricing", args.supplier_pricing), ("catalogue", args.supplier_catalogue),
+                             ("metadata", args.supplier_metadata)):
+            if value is not None:
+                supplier.setdefault("coverage", {})[field] = value
+        if "coverage" in supplier:
+            coverage = supplier["coverage"]
+            if not isinstance(coverage, dict):
+                raise WorkflowError("WORKFLOW_SUPPLIER_COVERAGE", "Select the complete original catalogue coverage profile.")
+            for field in ("pricing", "catalogue", "metadata"):
+                if field in coverage:
+                    coverage[field] = original_file(coverage[field], "supplier coverage " + field)
+
     sources = [configuration.get("source", {}), *configuration.get("relatedSources", {}).values()]
     for source in sources:
-        if source.get("kind") in {"handover", "native-edition"}:
-            field = "path" if source["kind"] == "handover" else "edition"
-            original = file_descriptor(source[field], expected_sha256=source.get("sha256"))
-            source[field], source["sha256"] = original["path"], original["sha256"]
+        kind = source.get("kind")
+        if kind in {"handover", "native-edition", "csv"}:
+            field = "edition" if kind == "native-edition" else "path"
+            original = file_descriptor(source[field], expected_sha256=source.get("sha256"),
+                                       expected_bytes=source.get("bytes"))
+            source[field], source["sha256"], source["bytes"] = original["path"], original["sha256"], original["bytes"]
+        if kind == "csv":
+            if "metadata" in source:
+                source["metadata"] = original_file(source["metadata"], "CSV publisher metadata")
+            parser_path = source.get("parser")
+            if parser_path is None and isinstance(supplier, dict) and supplier.get("component"):
+                parser_path = str(Path(supplier["component"]) / "supplier-report.mjs")
+            if parser_path is None:
+                raise WorkflowError("WORKFLOW_CSV_PARSER", "Select the original installed supplier component or CSV parser.")
+            selected_parser = file_descriptor(parser_path, expected_sha256=source.get("parserSha256"))
+            source["parser"], source["parserSha256"] = selected_parser["path"], selected_parser["sha256"]
+
     if args.source_archive:
-        configuration["sourceArchive"] = file_descriptor(args.source_archive)
-    elif isinstance(configuration.get("sourceArchive"), str):
-        configuration["sourceArchive"] = file_descriptor(configuration["sourceArchive"])
-    elif isinstance(configuration.get("sourceArchive"), dict):
-        selected = configuration["sourceArchive"]
-        configuration["sourceArchive"] = file_descriptor(selected["path"], expected_sha256=selected.get("sha256"))
+        configuration["sourceArchive"] = args.source_archive
+    if "sourceArchive" in configuration:
+        configuration["sourceArchive"] = original_file(configuration["sourceArchive"], "built product source archive")
     if args.flow_delivery:
         configuration["flowDelivery"] = args.flow_delivery
-    if isinstance(configuration.get("flowDelivery"), str):
-        configuration["flowDelivery"] = file_descriptor(configuration["flowDelivery"])
-    elif isinstance(configuration.get("flowDelivery"), dict):
-        selected = configuration["flowDelivery"]
-        configuration["flowDelivery"] = file_descriptor(selected["path"], expected_sha256=selected.get("sha256"))
+    if "flowDelivery" in configuration:
+        configuration["flowDelivery"] = original_file(configuration["flowDelivery"], "rendered native flow delivery")
     atomic_json(args.output, configuration)
     return {"schema": SCHEMA, "profile": configuration["profile"],
             "configuration": file_descriptor(args.output)}
