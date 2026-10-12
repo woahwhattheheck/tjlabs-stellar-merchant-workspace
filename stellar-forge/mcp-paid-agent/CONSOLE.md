@@ -29,14 +29,22 @@ transport, including initialization and the advertised tools list.
 
 ## Discover and review the exact invocation
 
-Search the configured live catalog. Optional network, asset and maximum amount
+Browse the configured live catalog or search it with the customer's words.
+Resource type, recipient, network, scheme, asset, extension and maximum amount
 filters use the original advertised values. Inspect a resource to read its
 complete declaration, source observation, input schema and payment alternatives.
-The catalog's continuation cursor loads another page without replacing existing
-rows.
+Load another page through the original operation's complete continuation;
+existing rows remain visible. The console shows source coverage, filtered or
+invalid row counts, partial results and any unusable continuation. Apply edited
+search or filter values to start a new discovery operation; page continuation
+keeps the last applied selection until then. See
+[the complete discovery workflow](DISCOVERY.md) for the native tools and typed client.
 
 Choose an original payment alternative and enter the actual tool arguments as
-a JSON object. HTTP resources use the declared query object with string values.
+a JSON object. HTTP resources use the declared query object with string values,
+or arrays of strings for declared array parameters. The parameter list includes
+schema-only optional fields, required names, descriptions and the seller's
+form/explode encoding. The original seller codec prepares the final query pairs.
 The form does not copy examples or defaults into a request. IDs and decimal
 values declared as strings remain strings. Integers outside JavaScript's safe
 range are rejected before preview instead of being silently rounded; use the
