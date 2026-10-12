@@ -334,10 +334,16 @@ export function customerFundsView(data, customers, adjustments, {customerId, asO
     receipts, eligibleFunding, targetInvoices,
     availableAdjustments: adjustments.filter(row => receiptIds.has(row.receiptId))};
 }
+function verifiedRefundReturnFingerprints(returned) {
+  const verified = (returned.observations ?? []).filter(observation =>
+    observation.verification?.status === 'VERIFIED');
+  if (!verified.length) return [];
+  return [sha(returned.transaction), ...verified.flatMap(observation =>
+    requestTransactionFingerprints(observation.verification))];
+}
 export function refundTransferFingerprints(row) {
   return [...new Set([...(row.payoutRecord ? requestTransactionFingerprints(row.payoutRecord) : []),
-    ...(row.returns ?? []).flatMap(returned => [sha(returned.transaction),
-      ...(returned.observations ?? []).flatMap(observation => requestTransactionFingerprints(observation.verification))])])];
+    ...(row.returns ?? []).flatMap(verifiedRefundReturnFingerprints)])];
 }
 export function requireUniqueRefundTransfer(data, workspaceAdjustments, row, returned, verification) {
   const network = row.proposal.payout.network, aliases = new Set(requestTransactionFingerprints(verification));
@@ -353,8 +359,11 @@ export function requireUniqueRefundTransfer(data, workspaceAdjustments, row, ret
   }
   for (const request of data.paymentRequests ?? []) if (request.proposal.network === network) {
     for (const reference of request.returns ?? []) {
-      const fingerprints = [sha(reference.transaction),
-        ...(reference.observations ?? []).flatMap(item => requestTransactionFingerprints(item.verification))];
+      const accepted = (reference.observations ?? []).filter(observation =>
+        observation.status === 'RECORDED' || observation.status === 'TESTNET_VERIFIED');
+      if (!reference.receiptId && !accepted.length) continue;
+      const fingerprints = [sha(reference.transaction), ...accepted.flatMap(observation =>
+        requestTransactionFingerprints(observation.verification))];
       need(!fingerprints.some(value => aliases.has(value)), 'REFUND_TRANSACTION_ALREADY_ASSIGNED',
         'This transaction already belongs to an original invoice collection reference.', 409);
     }
@@ -367,8 +376,7 @@ export function requireUniqueRefundTransfer(data, workspaceAdjustments, row, ret
   }
   for (const reference of row.returns ?? []) {
     if (reference.id === returned?.id) continue;
-    const fingerprints = [sha(reference.transaction),
-      ...(reference.observations ?? []).flatMap(item => requestTransactionFingerprints(item.verification))];
+    const fingerprints = verifiedRefundReturnFingerprints(reference);
     need(!fingerprints.some(value => aliases.has(value)), 'REFUND_RETURN_ALIAS_REUSED',
       'Recover the original reference for this same refund transaction.', 409);
   }

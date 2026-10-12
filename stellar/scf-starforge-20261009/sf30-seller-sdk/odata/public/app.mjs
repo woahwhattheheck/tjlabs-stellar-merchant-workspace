@@ -229,3 +229,6 @@ $('live-receive').onsubmit=event=>{event.preventDefault();action('Receive origin
 
 await refresh().then(()=>notify('Workspace ready.')).catch(error=>notify(error.message,true));
 setInterval(()=>{if(state?.running.length)refresh().catch(error=>notify(error.message,true));else if(!$('live').hidden&&liveProducts.some(row=>row.runtime))refreshLive().catch(error=>notify(error.message,true));},2000);
+
+// The configured subscription operator shares this original source console.
+void api('/api/subscriptions-connection').then(value=>{const link=$('subscriptions-link');if(link&&value.configured){link.href=value.url;link.hidden=false;}}).catch(error=>notify(error.message,true));

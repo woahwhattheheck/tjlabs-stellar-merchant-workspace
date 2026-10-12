@@ -101,6 +101,7 @@ export function createPublisherPanel({getState, perform, download, handle, notic
     render(getState());
     return result;
   }
+  const facilitatorPanel = createPublisherFacilitatorPanel({call, download, handle, notice, getPublisher:pub});
   function showView(name) {
     document.querySelectorAll('[data-publisher-panel]').forEach(panel => { panel.hidden = panel.dataset.publisherPanel !== name; });
     document.querySelectorAll('[data-publisher-view]').forEach(control => {
@@ -284,6 +285,7 @@ export function createPublisherPanel({getState, perform, download, handle, notic
   function controls(value = locked) {
     locked = value;
     const unavailable = locked || Boolean(pub()?.running);
+    facilitatorPanel.controls(unavailable);
     const connected = Boolean(pub()?.target?.connected), selected = selectedDraft();
     const gate = (id, ready) => { $(id).disabled = unavailable || !ready; };
     gate('pub-open', true);
@@ -331,6 +333,7 @@ export function createPublisherPanel({getState, perform, download, handle, notic
     ]) : node('p', 'Open the publisher to inspect its retained versions, releases and customer sessions.', 'muted'));
     $('pub-state-details').textContent = model ? json(model) : 'Open the publisher.';
     renderExport(); renderVersions(); renderDrafts(); renderReleases(); renderBuyers(); renderPreview(); renderBuyerReview();
+    facilitatorPanel.render();
     controls(locked);
   }
   document.querySelectorAll('[data-publisher-view]').forEach(control => control.addEventListener('click', () => showView(control.dataset.publisherView)));
@@ -450,4 +453,218 @@ export function createPublisherPanel({getState, perform, download, handle, notic
     if (control.dataset.pubDownloadSession) handle(() => download(control.dataset.pubKind,control.dataset.pubDownloadSession));
   });
   return {render,controls,showView};
+}
+
+/** Provider choices and retained full reviews share the original Publisher owner.
+ * The panel is in this existing asset because other source workspaces reuse it. */
+function createPublisherFacilitatorPanel({call, download, handle, notice, getPublisher}) {
+  const host = document.querySelector('[data-publisher-panel="release"]');
+  if (!host) return {render(){}, controls(){}};
+  const section = node('section', undefined, 'panel');
+  section.hidden = true;
+  const heading = node('div', undefined, 'panel-heading'), stateLabel = node('span', '', 'badge');
+  heading.append(node('h3', 'Facilitator providers'), stateLabel);
+  const introduction = node('p',
+    'Review another provider against the same retained release. Inspect every native payment alternative, then stage the reviewed release. Select and start it with the release controls above.',
+    'help');
+  const configuration = node('p', '', 'help');
+  const form = node('form', undefined, 'form-grid');
+  const field = (caption, control) => {
+    const label = node('label', caption); label.append(control); form.append(label); return control;
+  };
+  const provider = field('Host provider', node('select'));
+  const release = field('Retained source release', node('select'));
+  const proposed = field('New release ID', node('input'));
+  proposed.required = true; proposed.pattern = '[a-z0-9][a-z0-9_-]{0,63}'; proposed.maxLength = 64;
+  proposed.placeholder = 'hpd-periplo-1';
+  const label = field('New release label', node('input'));
+  label.maxLength = 240; label.placeholder = 'Same source with selected provider';
+  const providerDetails = node('div', undefined, 'span-2');
+  const formActions = node('div', undefined, 'actions span-2');
+  const reviewButton = node('button', 'Review provider'); reviewButton.type = 'submit';
+  formActions.append(reviewButton); form.append(providerDetails, formActions);
+  const reviewArea = node('div');
+  const reviewActions = node('div', undefined, 'actions');
+  const stage = node('button', 'Stage reviewed release'); stage.type = 'button';
+  const exportReview = node('button', 'Download complete review'); exportReview.type = 'button';
+  reviewActions.append(stage, exportReview);
+  const stageReason = node('p', '', 'help');
+  const historyHeading = node('div', undefined, 'panel-heading');
+  const historyCount = node('span', '', 'badge');
+  historyHeading.append(node('h4', 'Retained reviews'), historyCount);
+  const historyArea = node('div');
+  const pageActions = node('div', undefined, 'actions');
+  const firstPage = node('button', 'Refresh first page'); firstPage.type = 'button';
+  const nextPage = node('button', 'Next page'); nextPage.type = 'button';
+  pageActions.append(firstPage, nextPage);
+  section.append(heading, introduction, configuration, form, reviewArea, reviewActions,
+    stageReason, historyHeading, historyArea, pageActions);
+  host.append(section);
+  let locked = true, selected = null, page = null, after = null;
+  const model = () => getPublisher()?.facilitators;
+  const releases = () => getPublisher()?.releases?.releases || [];
+  const generation = () => getPublisher()?.releases?.state?.generation;
+  function populate(control, rows, preferred) {
+    const previous = control.value;
+    control.replaceChildren();
+    for (const [value, caption] of rows) {
+      const choice = node('option', caption); choice.value = value; control.append(choice);
+    }
+    if (!rows.length) { const empty = node('option', 'No retained selection'); empty.value = ''; control.append(empty); }
+    control.value = rows.some(([value]) => value === previous) ? previous :
+      rows.some(([value]) => value === preferred) ? preferred : rows[0]?.[0] || '';
+  }
+  function input() {
+    return {provider:provider.value, releaseId:release.value, id:proposed.value,
+      ...(label.value.trim() ? {label:label.value.trim()} : {})};
+  }
+  function sameInput() {
+    const value = input();
+    return selected && value.provider === selected.proposed.provider.alias &&
+      value.releaseId === selected.source.releaseId && value.id === selected.proposed.id &&
+      (value.label || value.id) === selected.proposed.label;
+  }
+  function providerSame() {
+    const declared = model()?.providers?.find(item => item.alias === selected?.proposed?.provider?.alias);
+    const previous = selected?.proposed?.provider;
+    return declared && previous && ['alias','label','url','timeoutMs','allowLocalFacilitator']
+      .every(key => declared[key] === previous[key]);
+  }
+  function renderProvider() {
+    const value = model()?.providers?.find(item => item.alias === provider.value);
+    providerDetails.replaceChildren(value ? facts([
+      ['Endpoint', value.url], ['Read timeout', value.timeoutMs + ' ms'],
+      ['Local facilitator enabled', value.allowLocalFacilitator ? 'Yes' : 'No']
+    ]) : node('p', 'Choose a provider declared by the host.', 'help'));
+  }
+  function renderReview() {
+    reviewArea.replaceChildren();
+    if (!selected) {
+      reviewArea.append(node('p', 'Review the current provider or reopen a retained review below.', 'empty'));
+      return;
+    }
+    const review = selected;
+    reviewArea.append(facts([
+      ['Review ID', review.id], ['Observed at', review.observedAt],
+      ['Native compatibility', review.compatible ? 'All retained alternatives supported' : 'Review returned an incompatibility'],
+      ['Original SDK', review.nativeSdk], ['Source release', review.source.releaseId],
+      ['Source release digest', review.source.releaseDigest], ['Source public origin', review.source.publicOrigin],
+      ['Proposed release', review.proposed.id], ['Provider', review.proposed.provider.url],
+      ['Selection generation', review.generation], ['Supported body SHA-256', review.supportedSha256]
+    ]));
+    if (review.error) reviewArea.append(node('p',
+      text(review.error.code) + ': ' + text(review.error.message), 'error-detail'));
+    for (const route of review.nativePayments || []) {
+      const title = [route.routeId ?? route.id, route.method, route.path].filter(Boolean).join(' ') || 'Native route';
+      reviewArea.append(node('h4', title));
+      const table = node('table'), header = node('tr'), body = node('tbody'), head = node('thead');
+      for (const name of ['Option', 'Scheme', 'Network', 'Atomic amount', 'Asset', 'Recipient', 'Native fields'])
+        header.append(node('th', name));
+      head.append(header);
+      for (const [index, payment] of (route.nativePayment || []).entries()) {
+        const row = node('tr');
+        for (const value of [index, payment.scheme, payment.network, payment.amount ?? payment.maxAmountRequired,
+          payment.asset, payment.payTo]) row.append(node('td', value));
+        const native = node('td'); native.append(detail('Complete alternative', payment)); row.append(native); body.append(row);
+      }
+      table.append(head, body);
+      const scroll = node('div', undefined, 'table-scroll'); scroll.append(table); reviewArea.append(scroll);
+      reviewArea.append(detail('Stored terms and all native changes', {storedPayment:route.storedPayment,changes:route.changes}));
+    }
+    reviewArea.append(detail('Complete original review', review));
+  }
+  function renderHistory() {
+    historyArea.replaceChildren();
+    const value = page || {items:[],total:0,nextCursor:null};
+    historyCount.textContent = value.items.length + ' shown / ' + value.total + ' retained';
+    for (const item of value.items) {
+      const card = node('article', undefined, 'publisher-card');
+      const title = node('div', undefined, 'panel-heading');
+      title.append(node('strong', item.label || item.proposedReleaseId),
+        node('span', item.compatible ? 'Compatible' : 'Incompatible', 'badge'));
+      const inspect = node('button', 'Open complete review'); inspect.type = 'button';
+      inspect.dataset.facilitatorReviewId = item.id;
+      card.append(title, facts([['Review', item.id], ['Observed', item.observedAt],
+        ['Source release', item.releaseId], ['Provider', item.provider?.label || item.provider?.alias],
+        ['Native SDK', item.nativeSdk]]), inspect);
+      historyArea.append(card);
+    }
+    if (!value.items.length) historyArea.append(node('p', 'No reviews on this retained page.', 'empty'));
+  }
+  function controls(value = locked) {
+    locked = value;
+    const configured = Boolean(model()?.configured), available = !locked;
+    reviewButton.disabled = !available || !configured || !provider.value || !release.value ||
+      !proposed.checkValidity() || proposed.value === release.value;
+    const staged = selected && releases().find(item => item.id === selected.proposed.id);
+    const alreadyStaged = staged?.derivedFrom?.reviewId === selected?.id;
+    const source = selected && releases().find(item => item.id === selected.source.releaseId);
+    const current = source?.digest === selected?.source?.releaseDigest && generation() === selected?.generation;
+    const ready = selected?.compatible && configured && providerSame() && sameInput() && (alreadyStaged || current);
+    stage.disabled = !available || !ready;
+    stage.textContent = alreadyStaged ? 'Reconcile staged release' : 'Stage reviewed release';
+    stageReason.textContent = !selected ? 'A retained complete review is required for staging.' :
+      !selected.compatible ? 'This review remains available with its native incompatibility. Select a compatible provider to stage.' :
+      !sameInput() ? 'The form now differs from the displayed review. Review these new selections.' :
+      !providerSame() ? 'The configured provider changed. Review its current endpoint and capabilities.' :
+      !alreadyStaged && !current ? 'The retained release or selection generation changed. Review the current source again.' :
+      'Staging verifies the original source and current provider response. Activation and seller process ownership remain in the release controls.';
+    exportReview.disabled = !available || !selected;
+    firstPage.disabled = !available || !model();
+    nextPage.disabled = !available || !page?.nextCursor;
+    for (const control of historyArea.querySelectorAll('button')) control.disabled = !available;
+    for (const control of [provider,release,proposed,label]) control.disabled = !available || !configured;
+  }
+  function render() {
+    section.hidden = !model();
+    if (!model()) return;
+    stateLabel.textContent = model().configured ? model().providers.length + ' host providers' : 'Profiles not configured';
+    configuration.textContent = model().configured
+      ? 'Provider URLs and timeouts come from the host configuration. Retained review files reopen with this Publisher.'
+      : 'Open the operator with --facilitators FILE, or set facilitatorConnection in its host workspace configuration. Existing retained reviews can still be inspected and downloaded.';
+    const active = getPublisher()?.releases?.state?.active;
+    const activeId = typeof active === 'string' ? active : active?.id;
+    populate(provider, (model().providers || []).map(item => [item.alias, item.label + ' (' + item.alias + ')']));
+    populate(release, releases().map(item => [item.id, item.label || item.id]), activeId);
+    if (after === null) page = model().reviews;
+    renderProvider(); renderReview(); renderHistory(); controls(locked);
+  }
+  function selectReview(review) {
+    selected = review;
+    provider.value = review.proposed.provider.alias;
+    release.value = review.source.releaseId;
+    proposed.value = review.proposed.id; label.value = review.proposed.label;
+    renderProvider(); renderReview(); controls(locked);
+  }
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    handle(async () => {
+      const review = await call('publisher.facilitators.review', input());
+      selectReview(review);
+      notice(review.compatible ? 'The full native provider review is retained. Inspect its alternatives before staging.'
+        : 'The native incompatibility is retained with the full provider response.', review.compatible ? undefined : 'error');
+    });
+  });
+  for (const control of [provider,release,proposed,label]) control.addEventListener('input', () => {
+    renderProvider(); controls(locked);
+  });
+  stage.addEventListener('click', () => handle(async () => {
+    if (stage.disabled || !selected) return;
+    await call('publisher.facilitators.stage', {reviewId:selected.id});
+    notice('The reviewed provider release is retained. Select it using Activate release, then use the original seller controls.');
+    controls(locked);
+  }));
+  exportReview.addEventListener('click', () => handle(() => download('facilitator-review', selected.id)));
+  historyArea.addEventListener('click', event => {
+    const control = event.target.closest('[data-facilitator-review-id]');
+    if (control) handle(async () => selectReview(await call('publisher.facilitators.inspect',
+      {reviewId:control.dataset.facilitatorReviewId})));
+  });
+  const readPage = async cursor => {
+    const result = await call('publisher.facilitators.history', {after:cursor,limit:25});
+    after = cursor; page = result; renderHistory(); controls(locked);
+  };
+  firstPage.addEventListener('click', () => handle(() => readPage(null)));
+  nextPage.addEventListener('click', () => handle(() => readPage(page.nextCursor)));
+  return {render,controls};
 }

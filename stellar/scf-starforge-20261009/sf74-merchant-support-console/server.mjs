@@ -66,6 +66,7 @@ const ASSETS = Object.freeze({
   '/runtime-desk.mjs': ['runtime-desk.mjs', 'text/javascript; charset=utf-8'],
   '/handoff-desk.mjs': ['handoff-desk.mjs', 'text/javascript; charset=utf-8'],
   '/incident-desk.mjs': ['incident-desk.mjs', 'text/javascript; charset=utf-8'],
+  '/incident-recovery-desk.mjs': ['incident-recovery-desk.mjs', 'text/javascript; charset=utf-8'],
   '/incident-desk.css': ['incident-desk.css', 'text/css; charset=utf-8'],
   '/renewals': ['renewals.html', 'text/html; charset=utf-8'],
   '/renewals.mjs': ['renewals.mjs', 'text/javascript; charset=utf-8'],
@@ -274,6 +275,21 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
         if(route==='/api/incidents/profiles'&&req.method==='GET') {
           if(url.search)throw new TypeError('Unexpected incident profile query');
           json(res,200,incidentDesk.profiles());return;
+        }
+        const recoveryMatch=/^\/api\/incidents\/([a-z0-9][a-z0-9_-]{0,63})\/recovery(?:\/(snapshot|inspect-snapshot|receive|open|abandon-snapshot|reconcile))?$/.exec(route);
+        if(recoveryMatch) {
+          const [,source,action]=recoveryMatch;
+          if(req.method==='GET'&&!action) {
+            if([...url.searchParams.keys()].some(key=>!['offset','limit'].includes(key)))
+              throw new TypeError('Unexpected recovery list filter');
+            const input=Object.fromEntries(url.searchParams);
+            for(const key of ['offset','limit'])if(key in input)input[key]=Number(input[key]);
+            json(res,200,await incidentDesk.recoveryOverview(source,input));return;
+          }
+          if(req.method!=='POST'||!action){json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
+          if(url.search)throw new TypeError('Unexpected recovery operation query');
+          const envelope=await boundedBody(req,65_536);
+          json(res,200,await incidentDesk.recoveryOperation(source,action,envelope));return;
         }
         const match=/^\/api\/incidents\/([a-z0-9][a-z0-9_-]{0,63})(?:\/(configure|destination|inspect-object|start|stop)|\/notifications\/([a-f0-9-]{36})\/(retry|cancel)|\/([a-f0-9-]{36})(?:\/(ack|notify|case))?)?$/.exec(route);
         if(!match){json(res,404,{error:'NOT_FOUND'});return;}

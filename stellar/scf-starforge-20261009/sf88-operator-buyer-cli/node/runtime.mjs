@@ -5,6 +5,7 @@ import { join, dirname } from 'node:path';
 import { absolute, privateDirectory, readBytes, parseJson, jsonBytes, object, need, BuyerError, safeCode, currentFileReservation, digest, writeBytes, withFileReservation, now } from './store.mjs';
 import { normalizeNativeFileReservation, createNativeFileReservation } from './file-reservation.mjs';
 import { captureChildProcessIdentity } from './process-identity.mjs';
+import { normalizeInboxDiagnostic } from './inbox-diagnostics.mjs';
 
 
 async function allocateOutput(fileHandle, path, kind, bytes, signal, reserveFile) {
@@ -229,7 +230,7 @@ export class NativeRuntime {
         localError ??= 'NATIVE_OUTPUT_RESERVATION_RELEASE_FAILED';
       }
     }
-    let output = null, nativeError = null, unavailable = false;
+    let output = null, nativeError = null, nativeDiagnostic = null, unavailable = false;
     try { const value = parseJson(await readBytes(resultFile, resultLimit)); if (object(value)) output = value; }
     catch { unavailable = true; }
     try {
@@ -237,8 +238,10 @@ export class NativeRuntime {
       const line = raw.toString('utf8').trim().split('\n').at(-1);
       const parsed = JSON.parse(line);
       nativeError = safeCode(parsed?.error, null);
+      nativeDiagnostic = normalizeInboxDiagnostic(parsed?.diagnostic);
     } catch { /* Raw stderr is private, never an exception message. */ }
-    return { exitCode, exitSignal, errorCode: localError ?? nativeError ?? (unavailable ? 'NATIVE_RESULT_UNAVAILABLE' : null), output };
+    return { exitCode, exitSignal, errorCode: localError ?? nativeError ?? (unavailable ? 'NATIVE_RESULT_UNAVAILABLE' : null),
+      output, diagnostic:nativeDiagnostic };
   }
 
   async checked(args, { stateDirectory, mode, signal, entryFile } = {}) {

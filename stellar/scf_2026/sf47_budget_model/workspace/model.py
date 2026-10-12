@@ -144,9 +144,12 @@ def prepare(scenario, raw_planning=None):
     if not isinstance(planning, dict):
         raise Problem("Planning settings must be an object.")
     allowed = {"calendarStart", "capitalUsd", "capitalNote", "contributors", "assignments",
-               "pricing", "payments", "deliveryNotes", "notes"}
+               "pricing", "payments", "deliveryNotes", "notes", "sourceTables"}
     if set(planning) - allowed:
         raise Problem("Unknown planning setting: " + ", ".join(sorted(set(planning) - allowed)))
+    if "sourceTables" in planning:
+        from source_tables import validate_source_tables
+        planning["sourceTables"] = validate_source_tables(planning["sourceTables"])
     pricing = planning.get("pricing", {})
     payments = planning.get("payments", {})
     if not isinstance(pricing, dict) or not isinstance(payments, dict):

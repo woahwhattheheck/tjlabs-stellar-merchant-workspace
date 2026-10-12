@@ -1,0 +1,8 @@
+{
+  "schema": "stellar-forge.openaq-study.v1",
+  "project": {
+    "name": "OpenAQ station source study",
+    "customer": "Research operations",
+    "purpose": "Review attributed station observations, retain the exact source edition and deliver a reproducible customer study."
+  }
+}

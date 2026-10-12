@@ -10,6 +10,7 @@ import { normalizeFredBriefing, buildFredBriefingModel, pageFredBriefing } from 
 import { prepareFredBriefingFiles, readFredBriefingFiles, readFredBriefingMember, exportFredBriefingFiles, receiveFredBriefingFiles } from './briefing/files.mjs';
 
 import { createFredBriefingTemplate, validateFredBriefingTemplate, materializeFredBriefingTemplate,
+  FRED_BRIEFING_MATERIALIZATION, FRED_BRIEFING_MATERIALIZATION_V1,
   compareFredBriefingSuccessor, pageFredBriefingChanges, createFredBriefingSuccessorRecord,
   validateFredBriefingSuccessorRecord } from './briefing/templates.mjs';
 import { renderFredBriefingSuccessor, fredBriefingSuccessorCsv } from './briefing/template-report.mjs';
@@ -269,7 +270,7 @@ function successorInput({ templateId, captureId, anchorDate = null, baselineRevi
   need(typeof note === 'string' && note.length <= 8000, 'Review note exceeds 8000 characters.');
   return { templateId, captureId, anchorDate, baselineReviewId, previousSuccessorId, note };
 }
-async function successorContext(state, input, modelFor, reportFor) {
+async function successorContext(state, input, modelFor, reportFor, schema = FRED_BRIEFING_MATERIALIZATION) {
   const template = templateFromState(state, input.templateId);
   const origin = state.reviews.find(item => item.id === template.origin.reviewId);
   need(origin?.briefing && origin.captureId === template.origin.captureId,
@@ -288,7 +289,7 @@ async function successorContext(state, input, modelFor, reportFor) {
     'Choose the original template review or one of its saved successors as baseline.');
   const model = await modelFor(input.captureId);
   const materialization = materializeFredBriefingTemplate({ template, model, captureId: input.captureId,
-    anchorDate: input.anchorDate });
+    anchorDate: input.anchorDate, schema });
   const identity = fredReviewIdentity({ captureId: input.captureId, policy: origin.policy,
     note: input.note, briefing: materialization.selection });
   const reviewId = digest(identity), after = originalReport({ id: reviewId, ...identity }, model);
@@ -301,10 +302,10 @@ async function successorContext(state, input, modelFor, reportFor) {
   return { previewId, template, materialization, baselineReviewId, previousSuccessorId: input.previousSuccessorId,
     reviewId, identity, after, comparison };
 }
-function liveContext(directory, state, input) {
+function liveContext(directory, state, input, schema = FRED_BRIEFING_MATERIALIZATION) {
   return successorContext(state, input,
     async captureId => validateCapture(await getFredCapture(directory, captureId)),
-    async reviewId => (await getFredBriefing(directory, reviewId)).report);
+    async reviewId => (await getFredBriefing(directory, reviewId)).report, schema);
 }
 export async function listFredBriefingTemplates({ directory } = {}) {
   const state = await readFredProject(directory);
@@ -341,14 +342,20 @@ export async function saveFredBriefingSuccessor({ directory, id, expectedRevisio
   // Reject an obsolete preview before recording a pending mutation.
   const original = await readFredProject(directory);
   const prior = original.operations.find(item => item.id === id);
+  let schema = FRED_BRIEFING_MATERIALIZATION;
   if (!prior) {
-    const checked = await liveContext(directory, original, input);
+    let checked = await liveContext(directory, original, input, schema);
+    if (checked.previewId !== previewId) {
+      // A pre-upgrade preview or interrupted save retains its original title and identity.
+      checked = await liveContext(directory, original, input, FRED_BRIEFING_MATERIALIZATION_V1);
+      schema = FRED_BRIEFING_MATERIALIZATION_V1;
+    }
     need(checked.previewId === previewId, 'The recurring briefing selection changed; preview its current values.',
       'FRED_SUCCESSOR_PREVIEW_CHANGED', 409);
   }
   return transact(directory, { id, expectedRevision, kind: 'successor-save',
     payload: { ...input, previewId } }, async (state, root) => {
-    const value = await liveContext(root, state, input);
+    const value = await liveContext(root, state, input, schema);
     need(value.previewId === previewId, 'The recurring briefing selection changed; preview its current values.',
       'FRED_SUCCESSOR_PREVIEW_CHANGED', 409);
     const saved = await retainFredReview(state, root, value.identity);
@@ -369,7 +376,8 @@ async function retainedSuccessor(directory, successorId) {
   const value = await liveContext(directory, state, successorInput({ templateId: successor.templateId,
     captureId: successor.captureId, anchorDate: successor.materialization.window.anchorBasis === 'explicit'
       ? successor.materialization.window.anchorDate : null,
-    baselineReviewId: successor.beforeReviewId, previousSuccessorId: successor.previousSuccessorId, note: review.note }));
+    baselineReviewId: successor.beforeReviewId, previousSuccessorId: successor.previousSuccessorId, note: review.note }),
+    successor.materialization.schema);
   const saved = await getFredBriefing(directory, review.id);
   need(value.reviewId === review.id && value.after.reportId === saved.manifest.reportId,
     'The retained successor review differs from its original template and selection.');
@@ -428,7 +436,7 @@ async function validateRecurringBundle(state, captures) {
       captureId: successor.captureId, anchorDate: successor.materialization.window.anchorBasis === 'explicit'
       ? successor.materialization.window.anchorDate : null,
       baselineReviewId: successor.beforeReviewId, previousSuccessorId: successor.previousSuccessorId, note: review.note }),
-      modelFor, reportFor);
+      modelFor, reportFor, successor.materialization.schema);
     need(value.reviewId === review.id, 'The successor review differs from its original materialized selection.');
     const report = await reportFor(review.id);
     const expected = createFredBriefingSuccessorRecord({ template: value.template, materialization: value.materialization,

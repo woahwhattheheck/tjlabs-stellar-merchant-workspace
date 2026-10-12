@@ -1,0 +1,54 @@
+{
+  "state": "COMPLETE",
+  "original": {
+    "bytes": 184552,
+    "sha256": "2f8f9fe20f7b98093c3dfc046d3400854ac298686b9ce46fecb3b3385ca86e1b",
+    "gitBlob": "d242a2f652d434daec1838421fddec80fdb68928"
+  },
+  "proposed": {
+    "bytes": 210340,
+    "sha256": "a0e141c349c04265babf5a1cf367cd6cafa1040f5d4d9fe4e543962ad7286994",
+    "gitBlob": "6feeb260e1a1fceacc9946aa4e0c3c286e502ae2"
+  },
+  "chapter": {
+    "bytes": 24578,
+    "sha256": "b6c0639785d317e33e377549d255f0b63bc02beaab4ae73ca8a057791e8c1001",
+    "gitBlob": "4cf2268d4895d9fff91e70adfcdef17211271e3a"
+  },
+  "originalSections": 30,
+  "retainedSections": [
+    "Build application · SCF #46 · Open Track",
+    "1. Customer problem and commercial model",
+    "2. Product architecture and control",
+    "3. Why Stellar and the ecosystem fit",
+    "4. Completed development work",
+    "5. Funded work and acceptance",
+    "6. Customer selection and repeat use",
+    "Recurring economic-report installation",
+    "Coastal model-input installation",
+    "7. Threat response and useful-outcome measurement",
+    "8. Capacity and cash plan",
+    "9. Applicant, delivery experience and assistance",
+    "Federal awards: complete funding research, workshares and receiving",
+    "Environmental provider intake: complete source editions, commissioning and receiving",
+    "Datasette editions and customer analysis",
+    "Webhook customer adoption: complete event tasks and operator handover",
+    "OpenFn: paid workflow commissioning and complete receiving",
+    "Referral implementation: source changes, returned outcomes and complete receiving",
+    "Recurring subscription delivery and streaming-data commissioning",
+    "Current demonstration and operator journey",
+    "Source monitoring: useful editions and complete reviewer handover",
+    "Prepaid API: one acquired pass, useful calls and later work",
+    "Environmental data installations",
+    "Groundwater scenario modelling and receiving",
+    "Service recovery that reaches the buyer’s books",
+    "Portable map releases and customer commissioning",
+    "Merchant settlement, customer billing and accountant receiving",
+    "Wholesale order commissioning and complete ERP receiving",
+    "Public Assistance portfolio commissioning and recurring review",
+    "10. Open the existing work"
+  ],
+  "addedSection": "Customer deployment and acceptance",
+  "reconstructedOriginalByteIdentical": true,
+  "onlyExistingReplacement": "paid-purchases-customer-tasks-and-prepaid-use"
+}
