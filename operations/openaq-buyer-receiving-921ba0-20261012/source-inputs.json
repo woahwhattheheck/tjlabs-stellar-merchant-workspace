@@ -10,7 +10,8 @@
   "dependencyProfile": {
     "package": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
     "lockfile": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package-lock.json",
-    "lockGitBlob": "320cee72638cf1d4bc0fc1e48c4fe9b8547dc223"
+    "lockGitBlob": "320cee72638cf1d4bc0fc1e48c4fe9b8547dc223",
+    "readiness": "dependency-ready.json is exact-bound to the original package and lock SHA256, published only after the original npm ci child exits successfully. An interrupted unmarked reproducible tree is rebuilt by that same npm ci; the canonical Dataset operation is unchanged."
   },
   "study": {
     "file": "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/study.tgz",
@@ -32,9 +33,9 @@
     },
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/receive.py",
-      "bytes": 34897,
-      "sha256": "59aca8c6d4a7dedc54c117a268749d7972438325cc77af49c1a337e612fe4894",
-      "gitBlob": "2c59ab261d4de476297d44da5697a383cdd390fb"
+      "bytes": 35465,
+      "sha256": "a0f7276b2982494a9dd2a59d67bb855001e7c3acb1b193eac19c56d253620c27",
+      "gitBlob": "08806a44aa8a372325c4ace3461d75e7538b84b4"
     },
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-unpaid-repairs.json",
