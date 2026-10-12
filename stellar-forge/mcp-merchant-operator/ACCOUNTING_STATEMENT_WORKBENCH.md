@@ -81,7 +81,7 @@ Open Saved cycles and select a prepared cycle.
 | Refresh delivered statements | Reconciles the same retained statements and updates their current status snapshots and delivery indexes |
 | Prepare changed rows | Starts a new review for rows whose sources changed after the earlier review |
 
-Each customer's progress remains visible while the cycle runs. The progress reader observes saved atomic customer states without competing for the cycle writer lease. Workbench jobs against the same workspace execute in sequence. Closing the browser leaves the server operation running.
+Each customer's progress remains visible while the cycle runs. The progress reader observes saved atomic customer states without competing for the cycle writer lease. Statement issuance jobs against the same workspace execute in sequence. Review preparation starts immediately and saves the original request before opening its merchant connection. Closing the browser leaves the server operation running.
 
 If the server is stopped, restart it with the same directory and workspace and open the saved cycle. Resume uses the original stable request IDs and retained statement identities. A source change that invalidates a review remains visible on that customer row; select the appropriate current records and prepare the changed row again.
 

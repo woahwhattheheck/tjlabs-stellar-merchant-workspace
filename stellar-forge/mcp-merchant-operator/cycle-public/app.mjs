@@ -205,7 +205,7 @@ async function prepareCycle(){
   $('prepare').disabled=true;saveDraft({changed:false});notice('Preparing and saving every complete customer statement review…');
   try{
     const result=await api('/api/cycles',{requestId:state.requestId,label,selections:state.selections});
-    state.key=result.key;view('cycles');await refreshCycles();await loadCycle(result.key);notice('The closing cycle is saved. Review its statements before issuing.');
+    state.key=result.key;view('cycles');await refreshCycles();await loadCycle(result.key);notice('The closing cycle is preparing. Its complete customer reviews will appear here.');
   }catch(error){showError(error);notice('Your customer selections are saved in this browser. Retrying this preparation keeps its request identity.');}
   finally{$('prepare').disabled=!state.selections.length;}
 }
