@@ -9,7 +9,7 @@ import time
 import urllib.parse
 import uuid
 from datetime import datetime, timezone
-from commission import HERE, FOLDER, SCRIPT, Api, api_for, read_json, write_json, now
+from commission import HERE, FOLDER, SCRIPT, APP, Api, api_for, app_source, app_matches, built_app, read_json, write_json, now
 
 def check(ok, message):
     if not ok:
@@ -28,24 +28,34 @@ class Journey:
         self.started=now()
     def job(self, job_id, missing=False):
         return self.api.call("GET",self.prefix+"/jobs_u/get/"+job_id,missing=missing)
-    def submit(self, name, kind, path, arguments):
+    def submit(self, name, kind, path, arguments, launch=None):
         receipt=self.root/"jobs"/(name+"-submission.json")
-        if receipt.exists():
-            request=read_json(receipt)
-            check(request["path"]==path and request["kind"]==kind and request["arguments"]==arguments,"Continue the saved "+name+" submission with its original inputs.")
+        saved=read_json(receipt) if receipt.exists() else None
+        job_id=saved["jobId"] if saved else str(uuid.uuid4())
+        desired={**arguments,"runKey":"app-"+job_id.lower()} if launch else arguments
+        if saved:
+            request=saved
+            check(request["path"]==path and request["kind"]==kind and request["arguments"]==desired
+                  and request.get("launch")==launch,"Continue the saved "+name+" submission with its original inputs.")
         else:
-            request={"name":name,"kind":kind,"path":path,"arguments":arguments,"jobId":str(uuid.uuid4()),"preparedAt":now()}
+            request={"name":name,"kind":kind,"path":path,"arguments":desired,"jobId":job_id,"launch":launch,"preparedAt":now()}
             write_json(receipt,request)
-        job_id=request["jobId"]
         existing=self.job(job_id,missing=True)
         if existing is None:
-            endpoint=self.prefix+("/jobs/run/f/"if kind=="flow"else"/jobs/run/p/")+path+"?job_id="+job_id
             try:
-                returned=self.api.call("POST",endpoint,arguments)
-                check(returned==job_id,"Windmill assigned another job identity.")
+                if launch:
+                    launched=self.call(name+"-launch","launch",arguments={"kind":launch,"jobId":job_id,"input":desired})
+                    check(launched["jobId"]==job_id and launched["path"]==path,"The saved launcher returned another flow identity.")
+                else:
+                    endpoint=self.prefix+("/jobs/run/f/"if kind=="flow"else"/jobs/run/p/")+path+"?job_id="+job_id
+                    returned=self.api.call("POST",endpoint,desired)
+                    check(returned==job_id,"Windmill assigned another job identity.")
             except Exception:
                 if self.job(job_id,missing=True) is None:
                     raise
+            existing=self.job(job_id)
+        check(existing["id"]==job_id and existing.get("script_path")==path and existing.get("args")==desired,
+              "The native job identity belongs to another path or input: "+job_id)
         self.jobs[name]=job_id
         return job_id
     def wait(self,name,job_id,approval=False):
@@ -85,8 +95,8 @@ class Journey:
     def call(self,name,action,target="source",arguments=None):
         args={"action":action,"target":target,"args":arguments or {}}
         return self.wait(name,self.submit(name,"script",SCRIPT,args))
-    def flow(self,name,flow,args,approval=False):
-        return self.wait(name,self.submit(name,"flow","f/"+FOLDER+"/"+flow,args),approval=approval)
+    def flow(self,name,flow,args,approval=False,launch=False):
+        return self.wait(name,self.submit(name,"flow","f/"+FOLDER+"/"+flow,args,launch=flow if launch else None),approval=approval)
     def files(self,delivery,directory):
         destination=self.root/directory
         destination.mkdir(parents=True,exist_ok=True)
@@ -97,13 +107,28 @@ class Journey:
             (destination/file["filename"]).write_bytes(content)
     def run(self):
         check((self.private/"deployment.json").exists(),"Deploy the complete scripts, flows and built app first.")
+        deployment=read_json(self.private/"deployment.json")
+        value,policy=app_source()
+        installed=self.api.call("GET",self.prefix+"/apps/get/p/"+APP)
+        check(app_matches(installed,value,policy),"Deploy the current complete app source and backend bindings before commissioning.")
+        compiled=built_app(self.private,self.api,self.prefix,installed)
+        prior=deployment.get("builtApp")
+        if prior:
+            check(compiled["version"]==prior["version"] and compiled["sourceSha256"]==prior["sourceSha256"]
+                  and compiled["files"]==prior["files"],"The served app bundle differs from the deployed version.")
+        write_json(self.root/"built-app.json",compiled)
         initial=self.call("initial","overview")
         receiver_initial=self.call("receiver-initial","overview","receiver")
         check(not initial["captures"] and not initial["reviews"],"Use a fresh source installation for this complete commissioning journey.")
         check(not receiver_initial["captures"] and not receiver_initial["connections"],"Use a fresh receiving destination.")
         capture_args={"runKey":"windmill-native-initial","connectionId":"helsinki-public","servicesQuery":{"locale":"en"},
                       "requestsQuery":{"start_date":"2026-10-08T08:00:00Z","end_date":"2026-10-08T12:00:00Z","extensions":True}}
-        capture=self.flow("capture","refresh",capture_args)
+        capture=self.flow("capture","refresh",capture_args,launch=True)
+        capture_ticket=read_json(self.root/"jobs/capture-submission.json")
+        launch_replay=self.call("capture-launch-replay","launch",arguments={"kind":"refresh","jobId":capture_ticket["jobId"],
+                                                                          "input":capture_ticket["arguments"]})
+        check(launch_replay["jobId"]==capture_ticket["jobId"] and launch_replay["path"]==capture_ticket["path"]
+              and launch_replay["replayed"] is True,"Reopening the saved launch created another native flow.")
         capture_id=capture["requests"]["capture"]["id"]
         source=self.call("original-requests","capture",arguments={"captureId":capture_id})
         services=self.call("services","services",arguments={"connectionId":"helsinki-public"})
@@ -154,7 +179,11 @@ class Journey:
                  "services":len(services["items"]),"requests":len(source["items"]),"reviews":len(reopened["reviews"]),
                  "captures":len(reopened["captures"]),"unchangedRequests":len(comparison["unchanged"]),
                  "approval":{"flowJobId":self.jobs["review"],"decisionSaved":(self.root/"jobs/review-approval-submitted.json").exists()},
-                 "jobs":self.jobs,"downloads":[{k:v for k,v in f.items()if k!="body"}for f in delivery["files"]]}
+                 "launch":{"flowJobId":self.jobs["capture"],"launcherJobId":self.jobs.get("capture-launch"),
+                           "replayJobId":self.jobs["capture-launch-replay"],"replayed":launch_replay["replayed"]},
+                 "deployedSources":{"sourceCommit":deployment.get("sourceCommit"),"scriptHash":deployment["script"]["hash"],
+                                    "flowVersions":{name:flow.get("version_id")for name,flow in deployment["flows"].items()}},
+                 "builtApp":compiled,"jobs":self.jobs,"downloads":[{k:v for k,v in f.items()if k!="body"}for f in delivery["files"]]}
         write_json(self.root/"result.json",summary)
         print(json.dumps(summary),flush=True)
         return summary

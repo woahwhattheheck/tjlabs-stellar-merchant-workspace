@@ -205,9 +205,64 @@ async function overview(target: Target): Promise<Json> {
   const requests = latest ? await http(target, "/api/requests?" + query({ capture: latest.id, limit: 100, sort: "updated" })) : { items: [], total: 0, offset: 0, limit: 100 };
   return { ...value, target, latestRequestCapture: latest || null, requests, observedAt: stamp() };
 }
+
+async function launchFlow(args: Json): Promise<Json> {
+  const paths: Record<string, string> = {
+    refresh: "f/tjlabs_open311/refresh",
+    review_delivery: "f/tjlabs_open311/review_delivery",
+    transfer: "f/tjlabs_open311/transfer"
+  };
+  check(Object.hasOwn(paths, args.kind), "Select capture, review and delivery, or transfer.");
+  check(typeof args.jobId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(args.jobId), "Supply the saved Windmill job UUID.");
+  check(args.input && typeof args.input === "object" && !Array.isArray(args.input), "Supply the saved flow input.");
+  const jobId = args.jobId.toLowerCase(), path = paths[args.kind];
+  const input = { ...args.input, runKey: "app-" + jobId };
+  canonical(input);
+  const workspace = process.env.WM_WORKSPACE, token = process.env.WM_TOKEN;
+  const origin = process.env.BASE_INTERNAL_URL || process.env.BASE_URL;
+  check(workspace && token && origin, "Run this launch through the installed Windmill worker.");
+  const base = origin.replace(/\/+$/, "") + "/api/w/" + encodeURIComponent(workspace);
+  async function request(route: string, options: RequestInit = {}): Promise<Response> {
+    return fetch(base + route, {
+      ...options,
+      headers: { authorization: "Bearer " + token, "content-type": "application/json", ...options.headers },
+      signal: AbortSignal.timeout(35000)
+    });
+  }
+  async function existing(): Promise<Json | null> {
+    const response = await request("/jobs_u/get/" + jobId);
+    if (response.status === 404) return null;
+    check(response.ok, "Windmill could not reopen saved job " + jobId + " (HTTP " + response.status + ").");
+    const job = await response.json();
+    check(job.id === jobId && job.script_path === path && same(job.args, input), "The saved Windmill job UUID belongs to another flow or input.");
+    return { jobId, path, state: job.type === "CompletedJob" ? (job.success ? "Completed" : "Failed") : (job.running ? "Running" : "Queued"), replayed: true };
+  }
+  const prior = await existing();
+  if (prior) return prior;
+  try {
+    const response = await request("/jobs/run/f/" + path + "?job_id=" + encodeURIComponent(jobId), {
+      method: "POST", body: JSON.stringify(input)
+    });
+    if (!response.ok) {
+      const retained = await existing();
+      if (retained) return retained;
+      throw new Error("Windmill did not accept saved job " + jobId + " (HTTP " + response.status + "). " + (await response.text()).slice(0,1000));
+    }
+    const accepted = (await response.text()).trim().replace(/^"|"$/g, "");
+    check(accepted === jobId, "Windmill returned a different job UUID. Reopen saved job " + jobId + ".");
+    return { jobId, path, state: "Queued", replayed: false };
+  } catch (error: any) {
+    const retained = await existing().catch(() => null);
+    if (retained) return retained;
+    error.message += " Resume the retained submission for job " + jobId + ".";
+    throw error;
+  }
+}
+
 export async function main(action: string = "overview", target: Target = "source", args: Json = {}): Promise<any> {
   targetName(target);
   check(args && typeof args === "object" && !Array.isArray(args), "Supply an args object.");
+  if (action === "launch") return launchFlow(args);
   if (action === "overview") return overview(target);
   if (action === "services") return http(target, "/api/services?" + query({ connection: args.connectionId }));
   if (action === "requests") return http(target, "/api/requests?" + query({ capture: args.captureId, q: args.q, status: args.status, sort: args.sort, order: args.order, offset: args.offset ?? 0, limit: args.limit ?? 100 }));

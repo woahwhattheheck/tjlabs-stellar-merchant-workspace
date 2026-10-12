@@ -37,7 +37,10 @@
     "openapiVersion": "1.830.0",
     "appTemplateBlob": "00d7594386c14e1c8320f92b1e86a6ccba08cfd7",
     "appPolicyBlob": "ca84b39a4b1f8d7cfb83de080e492867dd469539",
-    "readAt": "2026-10-12"
+    "readAt": "2026-10-12",
+    "openapiBlob": "ae019301823745e00ab9800fdd8f5fded3ca7e91",
+    "openflowBlob": "e3759ee6a66b576f6d8cb881c6fc1e69d72cc400",
+    "typescriptClientBlob": "da957239cf3f7768213a19cf4b5008a7acbfb624"
   },
   "coordination": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791821584323269"
 }

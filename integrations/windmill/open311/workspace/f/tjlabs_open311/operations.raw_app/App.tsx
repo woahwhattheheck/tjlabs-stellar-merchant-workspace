@@ -1,24 +1,63 @@
 import React, { useEffect, useRef, useState } from "react";
-import { backend, backendAsync, getJob, waitJob } from "./wmill";
+import { backend, getJob, waitJob } from "./wmill";
 
 type Data = Record<string, any>;
 type Target = "source" | "receiver";
 type Run = { id: string; kind: string; label: string; status: string; createdAt: string; error?: string; result?: any; approval?: string };
+type Launch = { id: string; kind: string; label: string; createdAt: string; input: Data };
 const ctx = (window as any).ctx ?? {};
 const workspace = ctx.workspace || "open311_operations";
-const storageKey = "tjlabs.open311.runs." + workspace;
+const storageKey = "tjlabs.open311.runs." + workspace + "." + (ctx.ctx?.username || ctx.ctx?.email || "operator");
+const instanceOrigin = window.location.origin !== "null" ? window.location.origin : new URL(document.referrer).origin;
 const requestQuery = { start_date: "2026-10-08T08:00:00Z", end_date: "2026-10-08T12:00:00Z", extensions: true };
 const newKey = (kind: string) => kind + "-" + crypto.randomUUID();
 const label = (value: any, empty = "—") => value === null || value === undefined || value === "" ? empty : String(value);
 const date = (value: any) => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC" : label(value);
 const errorText = (e: any) => e?.message || String(e);
 const active = (run: Run) => !["Completed", "Failed"].includes(run.status);
-function retainedRuns(): Run[] {
-  try { return JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch { return []; }
+function trimRuns(values: Run[]): Run[] {
+  let completed = 0;
+  const seen = new Set<string>();
+  return values.filter(run => {
+    if (seen.has(run.id)) return false;
+    seen.add(run.id);
+    return active(run) || completed++ < 30;
+  });
 }
-function download(file: Data) {
+function retainedRuns(): Run[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    return Array.isArray(value) ? trimRuns(value.filter(run => run && typeof run.id === "string" && typeof run.kind === "string" && typeof run.status === "string")) : [];
+  } catch { return []; }
+}
+let launchDatabase: Promise<IDBDatabase> | undefined;
+function database(): Promise<IDBDatabase> {
+  if (!launchDatabase) launchDatabase = new Promise((resolve, reject) => {
+    const request = indexedDB.open(storageKey + ".submissions", 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("launches", { keyPath: "id" });
+    request.onsuccess = () => { request.result.onversionchange = () => request.result.close(); resolve(request.result); };
+    request.onerror = () => reject(request.error || new Error("Could not open the saved action journal."));
+  });
+  return launchDatabase;
+}
+async function journal(method: "put" | "get" | "delete" | "getAll", value?: Launch | string): Promise<any> {
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("launches", method === "get" || method === "getAll" ? "readonly" : "readwrite");
+    const store = tx.objectStore("launches");
+    const request = method === "put" ? store.put(value as Launch) : method === "delete" ? store.delete(value as string) : method === "get" ? store.get(value as string) : store.getAll();
+    tx.oncomplete = () => resolve(request.result);
+    tx.onerror = () => reject(tx.error || request.error || new Error("Could not retain the original action."));
+    tx.onabort = () => reject(tx.error || new Error("The original action was not saved."));
+  });
+}
+async function download(file: Data) {
   const bytes = Uint8Array.from(atob(file.body), c => c.charCodeAt(0));
   if (bytes.byteLength !== file.bytes) throw new Error("The download length changed.");
+  if (file.sha256) {
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), byte => byte.toString(16).padStart(2, "0")).join("");
+    if (digest !== file.sha256) throw new Error("The download differs from its saved original.");
+  }
   const url = URL.createObjectURL(new Blob([bytes], { type: file.contentType || "application/octet-stream" }));
   const link = document.createElement("a"); link.href = url; link.download = file.filename; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -54,6 +93,7 @@ export default function App() {
   const [fileName, setFileName] = useState("");
   const [recoveredId, setRecoveredId] = useState("");
   const mounted = useRef(true);
+  const busyRef = useRef(false);
   const targetRef = useRef(target);
   const pollInProgress = useRef(false);
   const runsRef = useRef(runs);
@@ -61,13 +101,21 @@ export default function App() {
   useEffect(() => { runsRef.current = runs;
     try { localStorage.setItem(storageKey, JSON.stringify(runs.map(({result, approval, ...run}) => run))); } catch {}
   }, [runs]);
-  useEffect(() => () => { mounted.current = false; }, []);
+  useEffect(() => {
+    mounted.current = true;
+    journal("getAll").then((saved: Launch[]) => {
+      if (!mounted.current || !saved.length) return;
+      setRuns(current => trimRuns([...saved.map(item => ({id:item.id,kind:item.kind,label:item.label,createdAt:item.createdAt,status:"Submission pending"})), ...current]));
+      setNotice("Saved actions are available in Activity. Resume a submission to reopen the same Windmill job.");
+    }).catch(e => { if (mounted.current) setError(errorText(e)); });
+    return () => { mounted.current = false; };
+  }, []);
   useEffect(() => { targetRef.current = target; }, [target]);
 
   async function action(fn: () => Promise<void>) {
-    if (busy) return;
-    setBusy(true); setError(""); setNotice("");
-    try { await fn(); } catch (e) { setError(errorText(e)); } finally { if (mounted.current) setBusy(false); }
+    if (busyRef.current) return;
+    busyRef.current = true; setBusy(true); setError(""); setNotice("");
+    try { await fn(); } catch (e) { setError(errorText(e)); } finally { busyRef.current = false; if (mounted.current) setBusy(false); }
   }
   async function reload() {
     const epoch = ++fetchEpoch.current, selectedTarget = targetRef.current;
@@ -80,7 +128,7 @@ export default function App() {
     } catch(e) { if (mounted.current && epoch === fetchEpoch.current) setError(errorText(e)); }
     finally { if (mounted.current && epoch === fetchEpoch.current) setLoading(false); }
   }
-  useEffect(() => { setSnapshot(null); setCaptureId(""); setSelected({}); setDetail(null); setCapture(null); setComparison(null); setOffset(0); reload(); }, [target]);
+  useEffect(() => { setSnapshot(null); setCaptureId(""); setSelected({}); setDetail(null); setCapture(null); setComparison(null); setBefore(""); setAfter(""); setOperation(null); setOffset(0); reload(); }, [target]);
   useEffect(() => { if (refresh) reload(); }, [refresh]);
   useEffect(() => {
     if (!captureId) { setRows({items: [], total: 0, limit: 100}); return; }
@@ -102,25 +150,39 @@ export default function App() {
       pollInProgress.current = true;
       try {
         for (const run of pending) {
-          const job: any = await getJob(run.id);
-          if (!mounted.current) return;
-          if (job.type === "CompletedJob") {
-            const result: any = await waitJob(run.id).catch(e => ({ error:{message:errorText(e)} }));
-            const failed = job.success === false;
-            setRuns(current => current.map(item => item.id === run.id ? {...item,status:failed?"Failed":"Completed",result,error:failed?errorText(result.error || result):undefined} : item));
-            if (!failed && result?.delivery) setDelivery(result.delivery);
-            setRefresh(n => n + 1);
-            if (!failed) setNotice(run.label + " completed.");
-          } else {
-            const modules = job.flow_status?.modules || [];
-            const waiting = modules.some((m:Data)=>m.type === "WaitingForEvents") || Boolean(job.suspend);
-            let approval: string | undefined;
-            const approvalStep = modules.find((m:Data)=>m.id === "approval" && m.job);
-            if (approvalStep) {
-              const approvalJob: any = await getJob(approvalStep.job);
-              approval = approvalJob.result?.approvalPage;
+          try {
+            const job: any = await getJob(run.id);
+            if (!mounted.current) return;
+            if (["Submitting", "Submission pending"].includes(run.status)) {
+              await journal("delete",run.id);
             }
-            setRuns(current => current.map(item => item.id === run.id ? {...item,status:waiting?"Awaiting approval":job.running?"Running":"Queued",approval:approval||item.approval} : item));
+            if (job.type === "CompletedJob") {
+              const failed = job.success === false;
+              let result: any;
+              try { result = await waitJob(run.id); }
+              catch(e) {
+                if (!failed) throw e;
+                result = job.result || {error:{message:errorText(e)}};
+              }
+              setRuns(current => trimRuns(current.map(item => item.id === run.id ? {...item,status:failed?"Failed":"Completed",result,error:failed?errorText(result.error || result):undefined} : item)));
+              if (!failed && result?.delivery) setDelivery(result.delivery);
+              setRefresh(n => n + 1);
+              if (!failed) setNotice(run.label + " completed.");
+            } else {
+              const modules = job.flow_status?.modules || [];
+              const waiting = modules.some((m:Data)=>m.type === "WaitingForEvents") || Boolean(job.suspend);
+              let approval: string | undefined;
+              const approvalStep = modules.find((m:Data)=>m.id === "approval" && m.job);
+              if (approvalStep) {
+                const approvalJob: any = await getJob(approvalStep.job);
+                approval = approvalJob.result?.approvalPage;
+              }
+              setRuns(current => current.map(item => item.id === run.id ? {...item,status:waiting?"Awaiting approval":job.running?"Running":"Queued",approval:approval||item.approval,error:undefined} : item));
+            }
+          } catch(e) {
+            if (mounted.current && !["Submitting","Submission pending"].includes(run.status)) {
+              setRuns(current => current.map(item => item.id === run.id ? {...item,error:"Refresh: "+errorText(e)} : item));
+            }
           }
         }
       } catch(e) { if (mounted.current) setError("Job refresh: " + errorText(e)); }
@@ -128,11 +190,33 @@ export default function App() {
     }, 2000);
     return () => clearInterval(timer);
   }, []);
+  async function submit(ticket: Launch) {
+    setRuns(current => trimRuns([{id:ticket.id,kind:ticket.kind,label:ticket.label,status:"Submitting",createdAt:ticket.createdAt},...current]));
+    try {
+      const result = await (backend as any).launch({target:"source",args:{kind:ticket.kind,jobId:ticket.id,input:ticket.input}});
+      if (result.jobId !== ticket.id) throw new Error("The returned job differs from the saved action.");
+      await journal("delete",ticket.id);
+      setRuns(current => current.map(run => run.id === ticket.id ? {...run,status:"Queued",error:undefined} : run));
+      setNotice(ticket.label + (result.replayed ? " reopened." : " started.") + " Its progress is in Activity.");
+    } catch(e) {
+      setRuns(current => current.map(run => run.id === ticket.id ? {...run,status:"Submission pending",error:errorText(e)} : run));
+      setTab("Activity");
+      throw e;
+    }
+  }
   async function launch(kind: string, title: string, args: Data) {
-    const id = String(await (backendAsync as any)[kind](args));
-    setRuns(current => [{id,kind,label:title,status:"Queued",createdAt:new Date().toISOString()},...current].slice(0,30));
-    setNotice(title + " started. Its progress is in Activity.");
+    const id = crypto.randomUUID();
+    const ticket: Launch = {id,kind,label:title,createdAt:new Date().toISOString(),input:{...args,runKey:"app-"+id}};
+    await journal("put",ticket);
+    await submit(ticket);
     if (kind === "review_delivery") setTab("Activity");
+  }
+  async function resumeSubmission(id: string) {
+    const ticket: Launch | undefined = await journal("get",id);
+    if (ticket) return submit(ticket);
+    const job: any = await getJob(id);
+    setRuns(current => current.map(run => run.id === id ? {...run,status:"Queued",error:undefined} : run));
+    setNotice("Saved job " + job.id + " reopened.");
   }
   async function inspectRequest(row: Data) {
     const value = await (backend as any).request({target,args:{captureId,serviceRequestId:row.serviceRequestId}});
@@ -140,19 +224,19 @@ export default function App() {
   }
   async function exportOne(kind: string, id = captureId) {
     const file = await (backend as any).export({target,args:{kind,captureId:id}});
-    download(file); setNotice(file.filename + " downloaded.");
+    await download(file); setNotice(file.filename + " downloaded.");
   }
   const captures = snapshot?.captures || [];
   const requestCaptures = captures.filter((c:Data)=>["requests","request"].includes(c.kind));
   const selection = Object.values(selected);
   const hasPending = (kind:string) => runs.some(run=>run.kind===kind && active(run));
   const selectedSummary = requestCaptures.find((c:Data)=>c.id===captureId);
-  const viewedRunLink = (id:string) => "/run/" + encodeURIComponent(id) + "?workspace=" + encodeURIComponent(workspace);
+  const viewedRunLink = (id:string) => instanceOrigin + "/run/" + encodeURIComponent(id) + "?workspace=" + encodeURIComponent(workspace);
   return <main className="app">
     <header className="header">
       <div><p className="eyebrow">TJLabs / Operations</p><h1>Service operations</h1><p className="muted">Helsinki published feedback · 8 October 2026 · 08:00–12:00 UTC</p></div>
       <div className="header-controls">
-        <label>Workspace<select value={target} onChange={e=>setTarget(e.target.value as Target)}><option value="source">Source workspace</option><option value="receiver">Received workspace</option></select></label>
+        <label>Workspace<select disabled={busy} value={target} onChange={e=>setTarget(e.target.value as Target)}><option value="source">Source workspace</option><option value="receiver">Received workspace</option></select></label>
         <button disabled={loading||busy} onClick={()=>action(reload)}>{loading?"Loading…":"Refresh"}</button>
       </div>
     </header>
@@ -210,9 +294,9 @@ export default function App() {
       {delivery&&<article className="panel"><h3>Delivery files</h3><p>Revision {delivery.revision} · {date(delivery.createdAt)}</p><div className="table-scroll" role="region" aria-label="Delivery files" tabIndex={0}><table><thead><tr><th>File</th><th>Bytes</th><th></th></tr></thead><tbody>{delivery.files.map((file:Data)=><tr key={file.filename}><td>{file.filename}</td><td>{file.bytes.toLocaleString()}</td><td><button onClick={()=>action(async()=>download(file))}>Download</button></td></tr>)}</tbody></table></div><button onClick={()=>action(async()=>download({filename:"open311-delivery-manifest.json",contentType:"application/json",body:btoa(unescape(encodeURIComponent(JSON.stringify({...delivery,files:delivery.files.map(({body,...file}:Data)=>file)},null,2)))) ,bytes:new TextEncoder().encode(JSON.stringify({...delivery,files:delivery.files.map(({body,...file}:Data)=>file)},null,2)).length})))}>Download delivery manifest</button></article>}
     </section>}
 
-    {tab==="Activity"&&<section><h2>Activity</h2><p className="muted">Open the native Windmill run for approval, logs and continuation from a saved step.</p>
-      <div className="panel"><label>Reopen an existing Windmill job<input value={recoveredId} placeholder="Job UUID" onChange={e=>setRecoveredId(e.target.value)}/></label><button disabled={busy||!recoveredId} onClick={()=>action(async()=>{const job:any=await getJob(recoveredId.trim());if(job.workspace_id&&job.workspace_id!==workspace)throw new Error("That job belongs to another workspace.");setRuns(current=>[{id:job.id,kind:"recovered",label:job.script_path||"Recovered job",status:"Queued",createdAt:job.created_at},...current.filter(r=>r.id!==job.id)].slice(0,30));setRecoveredId("");})}>Reopen job</button></div>
-      {runs.length?<div className="table-scroll" role="region" aria-label="Windmill job activity" tabIndex={0}><table><thead><tr><th>Operation</th><th>Started</th><th>Status</th><th>Open</th></tr></thead><tbody>{runs.map(run=><tr key={run.id}><td>{run.label}<small className="break">{run.id}</small>{run.error&&<p className="flag">{run.error}</p>}</td><td>{date(run.createdAt)}</td><td>{run.status}</td><td><a href={viewedRunLink(run.id)} target="_blank" rel="noreferrer">Windmill run</a>{run.approval&&<a className="block" href={run.approval} target="_blank" rel="noreferrer">Review approval</a>}{run.status==="Completed"&&<button className="link block" onClick={()=>action(async()=>{const result:any=run.result||await waitJob(run.id);if(result.delivery){setDelivery(result.delivery);setTab("Transfer");}else setOperation(result);})}>Open result</button>}</td></tr>)}</tbody></table></div>:<div className="empty">Capture a source or prepare a review to see its progress here.</div>}
+    {tab==="Activity"&&<section><h2>Activity</h2><p className="muted">Open the native Windmill run for approval, logs and continuation. Interrupted submissions retain their original input and job identity in this browser.</p>
+      <div className="panel"><label>Reopen an existing Windmill job<input value={recoveredId} placeholder="Job UUID" onChange={e=>setRecoveredId(e.target.value)}/></label><button disabled={busy||!recoveredId} onClick={()=>action(async()=>{const job:any=await getJob(recoveredId.trim());if(job.workspace_id&&job.workspace_id!==workspace)throw new Error("That job belongs to another workspace.");setRuns(current=>[{id:job.id,kind:"recovered",label:job.script_path||"Recovered job",status:"Queued",createdAt:job.created_at},...current.filter(r=>r.id!==job.id)]);setRecoveredId("");})}>Reopen job</button></div>
+      {runs.length?<div className="table-scroll" role="region" aria-label="Windmill job activity" tabIndex={0}><table><thead><tr><th>Operation</th><th>Started</th><th>Status</th><th>Open</th></tr></thead><tbody>{runs.map(run=><tr key={run.id}><td>{run.label}<small className="break">{run.id}</small>{run.error&&<p className="flag">{run.error}</p>}</td><td>{date(run.createdAt)}</td><td>{run.status}</td><td><a href={viewedRunLink(run.id)} target="_blank" rel="noreferrer">Windmill run</a>{run.approval&&<a className="block" href={run.approval} target="_blank" rel="noreferrer">Review approval</a>}{["Submitting","Submission pending"].includes(run.status)&&<button className="link block" disabled={busy} onClick={()=>action(()=>resumeSubmission(run.id))}>Resume submission</button>}{run.status==="Completed"&&<button className="link block" onClick={()=>action(async()=>{const result:any=run.result||await waitJob(run.id);if(result.delivery){setDelivery(result.delivery);setTab("Transfer");}else setOperation(result);})}>Open result</button>}</td></tr>)}</tbody></table></div>:<div className="empty">Capture a source or prepare a review to see its progress here.</div>}
       <h3>Saved workspace operations</h3><div className="table-scroll" role="region" aria-label="Saved workspace operations" tabIndex={0}><table><thead><tr><th>Operation</th><th>Kind</th><th>State</th><th>Updated</th></tr></thead><tbody>{snapshot?.operations?.map((op:Data)=><tr key={op.requestId}><td><button className="link break" onClick={()=>action(async()=>setOperation(await(backend as any).operation({target,args:{requestId:op.requestId}})))}>{op.requestId}</button></td><td>{op.kind}</td><td>{op.state}</td><td>{date(op.updatedAt)}</td></tr>)}</tbody></table></div>
       {operation&&<article className="panel"><div className="section-heading"><h3>Saved result</h3><button onClick={()=>setOperation(null)}>Close</button></div><JsonView value={operation}/></article>}
     </section>}

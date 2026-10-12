@@ -1,8 +1,15 @@
 name: tjlabs-open311-windmill
+x-logging: &native-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+    compress: "true"
 services:
   db:
     image: ${POSTGRES_IMAGE:?Run commission.py prepare first}
     restart: unless-stopped
+    logging: *native-logging
     shm_size: 1g
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
@@ -18,6 +25,7 @@ services:
   server:
     image: ${WINDMILL_IMAGE:?Run commission.py prepare first}
     restart: unless-stopped
+    logging: *native-logging
     environment:
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:?}@db/windmill?sslmode=disable
       MODE: server
@@ -25,6 +33,8 @@ services:
       SUPERADMIN_SECRET: ${WINDMILL_BOOTSTRAP_SECRET:?}
     ports:
       - "127.0.0.1:${WINDMILL_PORT:-8079}:8000"
+    volumes:
+      - worker-logs:/tmp/windmill/logs
     depends_on:
       db:
         condition: service_healthy
@@ -33,6 +43,7 @@ services:
     image: ${NODE_IMAGE:?Run commission.py prepare first}
     init: true
     restart: unless-stopped
+    logging: *native-logging
     working_dir: /source/integrations/windmill/open311
     command: ["node", "start-workspaces.mjs"]
     environment:
@@ -50,6 +61,7 @@ services:
   worker:
     image: ${WINDMILL_IMAGE:?}
     restart: unless-stopped
+    logging: *native-logging
     network_mode: service:open311
     privileged: true
     environment:

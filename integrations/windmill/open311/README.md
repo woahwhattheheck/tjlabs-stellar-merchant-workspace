@@ -13,7 +13,7 @@ The project installs one maintained Bun script, three Windmill flows and a full-
 5. Capture the same source window again and use **Comparison** to inspect added, changed, unchanged and missing rows. The original workspace decides whether the query scopes support a missing-row comparison.
 6. Receive the complete workspace into the independent destination and open **Received workspace**. Captures, reviews, history and original operations remain available under the original workspace identity.
 
-**Activity** keeps the native job links. Reopen a job by UUID after a browser refresh or return to its original Windmill step to continue it. A partially completed assignment batch retains one original operation per request.
+**Activity** keeps native job links and interrupted submissions. Before dispatch, the app saves the complete input and a new job UUID in this browser's IndexedDB. Its launch action reopens that exact job or submits the declared flow with that UUID, checking the saved flow path and input. A browser refresh restores pending actions; select **Resume submission** to continue the original action. Once Windmill confirms the job, the app removes the local input and retains the job link. The app retains every active job and the 30 most recent completed jobs. A partially completed assignment batch retains one original operation per request.
 
 ## Included source
 
@@ -21,7 +21,7 @@ The project installs one maintained Bun script, three Windmill flows and a full-
 | --- | --- |
 | compose.yaml | Private Windmill server, worker, PostgreSQL and original Open311 services |
 | start-workspaces.mjs | Starts the original source and receiver with separate persistent directories |
-| workspace/f/tjlabs_open311/workspace.ts | Original HTTP operations, prepared actions, review plans, exports and receiving |
+| workspace/f/tjlabs_open311/workspace.ts | Original HTTP operations, retained native job launch, prepared actions, review plans, exports and receiving |
 | workspace/f/tjlabs_open311/refresh.flow | Service and request capture |
 | workspace/f/tjlabs_open311/review_delivery.flow | Review, native approval, assignments and complete delivery |
 | workspace/f/tjlabs_open311/transfer.flow | Original workspace receive and reopen |
@@ -93,7 +93,7 @@ Prepared capture inputs include the original request ID, workspace UUID, observe
 
 Review plans retain selected source hashes and prior review identities before approval. Application checks current source and review identities before each mutation. Completed rows replay their original operation result if a batch resumes.
 
-The app's read backends fix their action in Windmill's execution policy. Mutating app buttons call the declared capture, review or transfer flow. The native approval uses the community approval mechanism; the assignment form is part of this React app.
+The app's backends fix their action in Windmill's execution policy. Read bindings expose the selected original read operation. The launch binding permits only the declared capture, review and transfer paths. It fixes the flow run key to the saved job UUID and verifies any existing job's path and full input before continuing. Worker credentials come from Windmill's native job environment. The native approval uses the community approval mechanism; the assignment form is part of this React app.
 
 Receiving uses the original complete-workspace format and validation. It requires an empty destination. After receiving, the destination exposes the original workspace UUID; refresh or reopen the receiving view before the next operation.
 
