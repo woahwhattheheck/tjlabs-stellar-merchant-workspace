@@ -170,10 +170,10 @@ export function openCaseServiceRenewals({caseStore, commercialDesk, workspaceId}
       });
       const savedValue = {...saved.case, currentRevision: saved.case.revision};
       const updated = {...loaded, service: changed.record, value: savedValue};
-      return {...view(updated), renewal: changed.renewal, termsChanged: changed.terms, reused: false};
+      return {...view(updated), renewal: changed.renewal, termsChanged: changed.terms, reused: saved.unchanged === true};
     } catch (error) {
-      if (error.code !== 'CASE_CONFLICT') throw error;
-      const latest = await load(args.id);
+      let latest;
+      try { latest = await load(args.id); } catch { throw error; }
       if (!latest.service.renewals.some(row => row.requestId === input.requestId)) throw error;
       const retained = await operation(latest.service, input, latest.context);
       need(retained.reused && retained.renewal.caseId === args.id,
@@ -270,9 +270,12 @@ export function openCaseServiceRenewals({caseStore, commercialDesk, workspaceId}
     }
     const accepted = loaded.service.renewals.filter(row => row.id === renewal.id && row.state === 'accepted')
       .sort((a, b) => b.revision - a.revision)[0] ?? null;
+    // A sealed historical handover depends only on its selected saved case.
+    const retainedCase = summary(loaded.value);
+    delete retainedCase.currentRevision;
     const body = {
       schema: SERVICE_RENEWAL_HANDOVER_SCHEMA,
-      case: summary(loaded.value), renewal: copy(renewal),
+      case: retainedCase, renewal: copy(renewal),
       renewalHistory: copy(loaded.service.renewals), termsHistory: copy(loaded.service.terms), acceptedHead: ref(accepted),
       sourceTerms: copy(sourceTerms), proposedContinuation: copy(proposedContinuation),
       activeTerms: activeTerms ? copy(activeTerms) : null,

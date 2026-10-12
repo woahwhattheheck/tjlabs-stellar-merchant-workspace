@@ -13,7 +13,9 @@ The case remains the storage and revision boundary. Renewals are retained in the
 5. Record the customer's response through the original commercial receiving workflow. Accept the renewal using the latest retained accepted response to its exact quote. The renewal decision's `observedAt` is the original response timestamp. The resulting active edition preserves the reviewed continuation's period and service commitments.
 6. Export the handover for the financial workflow. It carries source, proposed, activated, and current terms; the original quote and response documents; exact material bytes; and their case, agreement, document, and hash joins.
 
-Declining retains the proposal and the recorded decision. Closing records an explanatory note while preserving earlier decisions and acceptance. A terms amendment concurrent with an open proposal requires reopening the current terms before changing or accepting that proposal; closing remains available to resolve the old work.
+Declining retains the proposal and its recorded decision. Closing records an explanatory note while preserving earlier decisions and acceptance. If the agreement is amended while a proposal is open, close or decline the old proposal, then reopen the case and its current terms before creating a replacement.
+
+A replacement uses a fresh renewal UUID and the current proposed terms revision and hash. The latest retained active or ended agreement must be the exact original source anchored by the closed or declined renewal. The replacement carries forward the amended owner, dates, and service targets under the current case and terms guards, and retains a fresh proposed edition. Publish a quote of that new edition and record its own customer acceptance before activation.
 
 ## Case API
 
@@ -122,3 +124,24 @@ Reusing a request ID with changed inputs is a conflict. A new change must use a 
 The complete original case terms and renewal histories are included as `termsHistory` and `renewalHistory`. `acceptedHead` selects the exact accepted renewal edition from that history, including after the current renewal has been closed; it is null before acceptance.
 
 The handover's `sha256` is the service canonical hash of the complete object before adding that final field. A selected historical case revision produces the renewal and documents available at that revision. The export includes the current agreement head at that selected revision alongside the exact edition activated by this renewal.
+
+## Financial ingestion
+
+Validate the complete handover before consuming it outside the case console. The exported helper checks the original terms and renewal histories, the selected accepted edition, every joined reference, the exact quote and response bytes, and the outer content hash. It returns the validated envelope with its original fields and seal.
+
+~~~javascript
+import {readFile} from 'node:fs/promises';
+import {validateServiceRenewalHandover} from './service-renewals.mjs';
+
+const handover = await validateServiceRenewalHandover(
+  JSON.parse(await readFile('renewal-handover.json', 'utf8'))
+);
+if (!handover.acceptedHead) throw new Error('Choose an accepted renewal for financial ingestion.');
+const quoteContent = Buffer.from(handover.materials.quote.data, 'base64').toString('utf8');
+const responseContent = Buffer.from(handover.materials.acceptance.data, 'base64').toString('utf8');
+const renewalJson = JSON.stringify(handover);
+~~~
+
+Pass `quoteContent` and `responseContent` as the original UTF-8 document strings. Preserve those bytes when retaining them; the material hashes identify the original encoding. Keep `renewalJson` alongside the financial record so its service continuation and acceptance remain available to downstream consumers.
+
+`financialJoin.agreementId` is the original service terms UUID, equal to `sourceTerms.id`. A financial agreement can have its own UUID; retain that relationship explicitly. `acceptedHead` identifies the accepted renewal edition by `{id, revision, sha256}`, while `renewal` is the selected renewal's current full snapshot and can record a later closure.
