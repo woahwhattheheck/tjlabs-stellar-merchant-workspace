@@ -304,7 +304,9 @@ def _preview(context, inputs):
             original = marker["nativeAccount"]
             same_alias = marker.get("accountId") == config["accountId"] and original.get("currency") == config["currency"]
             if same_alias and (original.get("accountReference") != native["accountReference"]
-                    or original.get("bankId") and native.get("bankId") and original["bankId"] != native["bankId"]):
+                    or original.get("bankId") and native.get("bankId") and original["bankId"] != native["bankId"]
+                    or original.get("identitySha256") and native.get("nativeAccountSha256")
+                       and original["identitySha256"] != native["nativeAccountSha256"]):
                 findings.append({"code": "BANK_ACCOUNT_BINDING_CONFLICT",
                     "message": "Account ID " + config["accountId"] + " already retains a different original bank account. Select its stable account ID."})
             if retained_source["id"] not in active_sources or retained_source["sha256"] != source["sha256"]:
@@ -472,7 +474,7 @@ def _preview(context, inputs):
     unchanged = bool(known_edition and not counts["NEW"] and not counts["CONFLICT"])
     retained_bytes = sum(row["bytes"] for row in context["sources"].values())
     if not unchanged and (len(context["sources"]) + 2 > 200 or retained_bytes + len(raw) >= 24 * 1024 * 1024):
-        findings.append({"code": "STATEMENT_SOURCE_LIMIT", "message": "The original CSV and complete review require two available source slots within the case's 24 MiB / 200-source limit."})
+        findings.append({"code": "STATEMENT_SOURCE_LIMIT", "message": "The original statement and complete review require two available source slots within the case's 24 MiB / 200-source limit."})
     if context["program"]["state"] != "OPEN":
         findings.append({"code": "OPERATIONS_CLOSED", "message": "Reopen this closed operations case before receiving a statement."})
     result = {"schema": SCHEMA, "caseId": context["program"]["id"], "expectedVersion": context["program"]["version"],
@@ -486,7 +488,7 @@ def _preview(context, inputs):
               "unchanged": unchanged, "retainedSourceId": known_edition["id"] if known_edition else None}
     if bank:
         result["bank"] = bank["summary"]
-    # Account for the retained complete interpretation, not just the CSV bytes.
+    # Account for the retained complete interpretation and original native report.
     estimated_envelope = {
         "schema": SCHEMA + ".review", "caseId": context["program"]["id"], "caseVersion": context["program"]["version"] + 1,
         "recordedBy": "x" * 1800, "recordedAt": "2000-01-01T00:00:00.000000+00:00",
@@ -556,7 +558,8 @@ def receive(ops, context, data, actor, version):
         marker.update({"sourceFormat": inputs["sourceFormat"], "statementId": bank["summary"]["statementId"],
             "statementOptionsSha256": digest(bank_formats.options(inputs)[1]),
             "nativeAccount": {**{key: bank["summary"].get(key) for key in ("accountReference", "bankId", "kind")},
-                              "currency": candidate["source"]["currency"]}})
+                              "currency": candidate["source"]["currency"],
+                              "identitySha256": bank["summary"].get("nativeAccountSha256")}})
     csv_source = annotate_source(ops, program_id, csv_source, marker)
     review_source = annotate_source(ops, program_id, review_source, {"schema": SCHEMA, "role": "REVIEW",
         "accountId": source["accountId"], "editionSha256": source["editionSha256"], "csvSourceId": csv_source["id"]})

@@ -95,22 +95,27 @@ def _ofx_sections(report):
         account = native["account"]
         for currency in retained["currencies"]:
             section = _section(native["kind"], account["ACCTID"], currency, account.get("BANKID"))
+            section["nativeAccountSha256"] = account_key
+            section["id"] = digest({"sourceFormat": "OFX", "nativeAccountSha256": account_key, "currency": currency})
             section["accountType"] = account.get("ACCTTYPE")
+            section["label"] += "".join(" · " + account[key] for key in ("ACCTTYPE", "BRANCHID") if account.get(key))
             section["cashEligible"] = native["kind"] == "BANK" and account.get("ACCTTYPE") != "CREDITLINE"
             if not section["cashEligible"]:
                 section["findings"].append(issue("BANK_ACCOUNT_IS_LIABILITY",
                     "This original credit account records liabilities. Use Supplier accounts for its obligations.", "ERROR"))
-            statements = []
-            for statement in parsed["statements"]:
+            statements, statement_refs = [], set()
+            for index, statement in enumerate(parsed["statements"]):
                 identity = dict(statement["account"])
                 if statement["kind"] == "BANK":
                     identity.pop("ACCTKEY", None)
                 if statement["kind"] == native["kind"] and identity == account and statement["currency"] == currency:
                     statements.append(statement)
+                    statement_refs.add("source.ofx:statement:" + str(index + 1))
             windows = [s["download_window"] for s in statements if "download_window" in s]
             section["from"] = min((w["start"]["local_date"] for w in windows), default=None)
             section["until"] = max((w["end"]["local_date"] for w in windows), default=None)
-            section["balanceSnapshots"] = deepcopy(retained["snapshots"])
+            section["balanceSnapshots"] = [deepcopy(snapshot) for snapshot in retained["snapshots"]
+                                           if snapshot["source"] in statement_refs]
             if len(statements) == 1:
                 balance = statements[0]["ledger_balance"]
                 section["closingBalance"] = {"date": balance["asof"]["local_date"], "amount": balance["amount"]}
@@ -145,6 +150,7 @@ def _ofx_sections(report):
                     "nativeIdentity": metadata, "problems": problems})
             source_refs = {item["ref"] for item in posted}
             source_refs.update(item["ref"].split(":posted:", 1)[0] for item in posted)
+            source_refs.update(statement_refs)
             source_refs.update("source.ofx:" + str(statement["response"]["line"]) for statement in statements)
             source_refs.update((account_key, "source.ofx"))
             for finding in report["findings"]:
@@ -195,7 +201,12 @@ def _mt_sections(report, settings):
                 native = {"sourceFormat": "MT940", "statementIdentity": deepcopy(page["identity"]),
                     "ordinal": row["ordinal"], "pageSha256": page["page_sha256"],
                     "originalEntryMonthDay": row["entry_mmdd"], "originalFields": deepcopy(row),
-                    "originalSourceOccurrences": deepcopy(page["occurrences"])}
+                    "originalSourceOccurrences": [
+                        {**{key: deepcopy(value) for key, value in original.items()
+                            if key not in ("transaction_lines", "transport")},
+                         "transaction_line": original["transaction_lines"][row["ordinal"] - 1],
+                         "transportSha256": digest(original["transport"])}
+                        for original in page["occurrences"]]}
                 # Page identity and ordinal are supplied positions, independent of money or descriptions.
                 positional = {"statementIdentity": page["identity"], "ordinal": row["ordinal"]}
                 reference = "mt940:" + digest(positional)
@@ -273,7 +284,8 @@ def select(raw, metadata, inputs):
         details[row["rowNumber"]] = deepcopy(row)
     summary = {"sourceFormat": compiled["sourceFormat"], "statementId": selected, "parserProfile": compiled["parserProfile"],
         "parserReportSha256": compiled["parserReportSha256"], "accountReference": section["accountReference"],
-        "bankId": section["bankId"], "kind": section["kind"], "dateBasis": "OFX_DTPOSTED" if compiled["sourceFormat"] == "OFX" else "MT940_VALUE_DATE",
+        "bankId": section["bankId"], "kind": section["kind"],
+        "nativeAccountSha256": section.get("nativeAccountSha256"), "dateBasis": "OFX_DTPOSTED" if compiled["sourceFormat"] == "OFX" else "MT940_VALUE_DATE",
         "sourceOpeningBalance": section["openingBalance"], "sourceClosingBalance": section["closingBalance"],
         "pendingCount": section["pendingCount"], "balanceSnapshots": section.get("balanceSnapshots", []),
         "findings": section["findings"]}
@@ -341,7 +353,7 @@ def validate_review(metadata, review, candidate, raw):
     account = text(inputs.get("accountId"), "Stable statement account ID", 100, True)
     currency = text(inputs.get("currency"), "Original account currency", 40, True).upper()
     native_account = {**{key: retained["summary"].get(key) for key in ("accountReference", "bankId", "kind")},
-                      "currency": currency}
+                      "currency": currency, "identitySha256": retained["summary"].get("nativeAccountSha256")}
     if (not isinstance(marker, dict) or not isinstance(source, dict)
             or marker.get("role") != "ORIGINAL"
             or marker.get("sourceFormat") != inputs.get("sourceFormat")
