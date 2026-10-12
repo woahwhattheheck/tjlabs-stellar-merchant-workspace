@@ -150,3 +150,38 @@ The ZIP envelope uses the Python standard library with Zip64. Its two members ar
 Capture rows and preparation receipts are additive tables in the existing private content-search database. Prepared complete archives live under that library's private reading-handovers directory. Existing search/build rows, source stores and financial operations are untouched. Protect the retained source archives like the original resource library.
 
 Canonical source owners: READ12 reading workspace in merchant PR 426; SEARCH12 research desk in merchant PR 437; original Python collection lifecycle in merchant PR 433. The exchange composes these existing applications and their full original writers.
+
+## Install the complete resource-reading product
+
+The maintained distribution's `resource-reading` selection carries the research desk, Python reading operator and reading-exchange commands together. It includes the complete original resource-library component and every retained Python/bridge dependency used by this workflow.
+
+Build from an available immutable checkout using the original package builder:
+
+```sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/checkout --ref COMMIT \
+  --selection resource-reading --out /absolute/new-package-directory --offline
+```
+
+The archive needs Node 22.16 or newer and Python 3.11 or newer. Its reading commands use those runtimes' standard libraries. After unpacking the completed archive, install its complete source into a private managed home with the original installer:
+
+```sh
+node /absolute/package/source/stellar/scf-starforge-20261009/distribution/cli.mjs \
+  installation install /absolute/package --home /absolute/reading-home
+```
+
+The resulting `forge.mjs` is the stable launcher. Its original command map contains `buyer-research`, `reading` and `reading-exchange`; arguments pass unchanged to each operator:
+
+```sh
+node /absolute/reading-home/forge.mjs run buyer-research -- --help
+node /absolute/reading-home/forge.mjs run reading -- --help
+node /absolute/reading-home/forge.mjs run reading-exchange -- --help
+node /absolute/reading-home/forge.mjs run reading-exchange -- \
+  receive-return /absolute/reading-return.zip /absolute/received-reading
+node /absolute/reading-home/forge.mjs run reading -- \
+  serve /absolute/received-reading/project
+```
+
+An existing npm installation exposes the same selected commands directly as `starforge buyer-research`, `starforge reading` and `starforge reading-exchange`. Managed installation retains source selection, staged releases, activation and rollback through the original manager; reading projects remain in their own chosen private directories.
+
+The package keeps its source commit and exact selection in the original distribution manifest. It exposes the maintained typed Node modules at `./buyer/research`, `./buyer/reading-exchange`, `./buyer/reading-exchange/client` and `./buyer/reading-exchange/server`. This selection chooses the complete-file research implementation; the separate literature-research product retains its own original source selection and exports.
