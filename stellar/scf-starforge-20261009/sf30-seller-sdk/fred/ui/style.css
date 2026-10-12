@@ -3,3 +3,5 @@
 .source-notice{font-size:.85rem;line-height:1.5;color:#444;padding:0 2rem;max-width:100rem;margin:1rem auto}.source-notice a{color:inherit;text-decoration:underline}
 
 .briefing-editor{margin:20px 0;padding:18px 0;border-top:1px solid #bcbcb8;border-bottom:1px solid #bcbcb8}.check{display:flex;flex-direction:row;gap:8px;align-items:center;font-weight:500;margin:0!important}.check input{width:auto;margin:0;accent-color:#333}#briefing-series .check{white-space:nowrap}#briefing-controls{margin-top:18px}#briefing-report-panel .metrics{margin:18px 0}.briefing-method{font-size:13px;color:#4c4c48}#briefing-view-state{overflow-wrap:anywhere}#briefing-series td{min-width:110px}#briefing-series td:first-child{min-width:250px}
+
+section[data-panel],.box,.table-wrap,.metric{min-width:0}.metric{overflow-wrap:anywhere}

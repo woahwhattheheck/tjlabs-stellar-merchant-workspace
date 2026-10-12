@@ -218,6 +218,9 @@ def archive_operation(command, data):
     return result
 
 def main():
+    # pathlib creates intermediate parents with the process umask, not mkdir(mode).
+    # Keep every new snapshot/receiving directory inside this private operation 0700.
+    os.umask(0o077)
     raw = sys.stdin.buffer.read(32 * 1024**2 + 1)
     if len(raw) > 32 * 1024**2:
         fail("REQUEST_TOO_LARGE")

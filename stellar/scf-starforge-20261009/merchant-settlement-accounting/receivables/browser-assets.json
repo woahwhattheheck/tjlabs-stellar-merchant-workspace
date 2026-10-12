@@ -50,6 +50,13 @@
         "config.json",
         "application/json; charset=utf-8"
       ]
+    ],
+    [
+      "/receivables/payment-requests.mjs",
+      [
+        "payment-requests.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

@@ -1,8 +1,8 @@
-# CanadaBuys awards and supply arrangements: complete issuer source
+# CanadaBuys tenders, awards and supply arrangements: complete issuer source
 
 This source delivery joins the original `SCF-CANADABUYS-PROCUREMENT-9FCD-20261012` product. It supplies both complete Open Government resource catalogs, both complete issuer dictionaries, the source-support page and the April 2026 restructuring notice, together with one original-file receiving command.
 
-The native receiving command downloads the complete current awards and SOSA files, preserves every original response byte and header, counts complete CSV records, and selects an actual row with useful agreement, supplier and contract identifiers. The same private operation retains completed source captures across another invocation.
+The native receiving command downloads the complete current open-tender, awards and SOSA files, preserves every original response byte and header, counts complete CSV records, and selects an actual row with useful agreement, supplier and contract identifiers. The same private operation retains completed source captures across another invocation.
 
 ## Receive the original files
 
@@ -15,7 +15,7 @@ python3 experiments/canadabuys-source-acquisition-6cf6-20261012/receive-original
 
 The program uses Python 3's standard library. It streams whole files, handles quoted multiline descriptions and UTF-8 byte-order marks, raises the CSV field-size limit for the issuer's long descriptions, preserves numeric text and source identifiers, and checks actual columns against the complete issuer dictionary. It retains the original HTTP body separately when content encoding requires decompression.
 
-Return the entire operation directory: the two complete `originals/*.csv` files, their original HTTP bodies, `source-receiving.json` and the six complete issuer source files under `issuer/`. The result records the requested and final URLs, HTTP status and original headers, capture times, body/CSV sizes and SHA256s, ordered columns, row counts and one complete original sample row for each source.
+Return the entire operation directory: the three complete `originals/*.csv` files, their original HTTP bodies, `source-receiving.json` and the six complete issuer source files under `issuer/`. The result records the requested and final URLs, HTTP status and original headers, capture times, body/CSV sizes and SHA256s, ordered columns, row counts and one complete original sample row for each source.
 
 The current source catalogs and dictionaries below have already been received in full and their byte identities are recorded in `source-manifest.json`. The command completes the large original CSV receiving on the existing native source host.
 
@@ -23,6 +23,7 @@ The current source catalogs and dictionaries below have already been received in
 
 | Source | Issuer resource |
 | --- | --- |
+| Currently open tender notices | [Complete open tenders CSV](https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv), selected by the original CanadaBuys product owner in the same receiving operation |
 | Complete current awards | [All CanadaBuys award notices, 2022-08-08 onwards](https://canadabuys.canada.ca/opendata/pub/awardNoticeComplete-avisAttributionComplet.csv), resource `ff4414ba-7d0b-40a4-8bd0-d102e83d9f32` |
 | Active standing offers and supply arrangements | [Active SOSA CSV](https://sosa.canadabuys.canada.ca/cds/opendata/tpsgc-pwgsc_ocama-sosa.csv), resource `e5dcaf48-87d6-4ce1-b17a-35607916b640` |
 | Awards catalog | [Complete issuer catalog](https://open.canada.ca/data/en/dataset/a1acb126-9ce8-40a9-b889-5da2b1dd20cb), 12 published resources retained |
@@ -58,7 +59,7 @@ The issuer uses delivery codes `FD` (Foreign), `NA` (National—Canada) and `NC`
 
 ## Integration into the existing product
 
-`source-contract.json` contains every exact bilingual dictionary label, complete original descriptions, declared data types and published patterns, plus the two issuer-selected CSV inputs. Published patterns are preserved as source text for the existing importer to review. Actual CSV columns and row counts are produced from the full native input.
+`source-contract.json` contains every exact bilingual dictionary label, complete original descriptions, declared data types and published patterns, plus the three issuer-selected CSV inputs. Published patterns are preserved as source text for the existing importer to review. Actual CSV columns and row counts are produced from the full native input.
 
 9FCD retains `sf30-seller-sdk/canadabuys/**`, the original source/edition/review authority, CLI/client/MCP and distribution. Its existing operator builder retains the complete industrial application. This source acquisition feeds that same workflow: original refresh → bilingual notice/amendment review → explicit tender/award/SOSA link → deadline and qualified workshare → complete report and portable receiving.
 
@@ -67,3 +68,28 @@ Original source request and receiving: https://tokenjunkielabs.slack.com/archive
 Source-acquisition claim: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791821192578209?thread_ts=1791730220.899469
 
 The source datasets identify the [Open Government Licence—Canada](https://open.canada.ca/en/open-government-licence-canada). Retain the original issuer URLs and source attribution with exports.
+
+## Full original CSV receiving on 12 October 2026
+
+The original source reader completed HTTP200 captures of both the full currently open tender file and the full current award file. `native-source-observations.json` contains their ordered headers, exact source metadata and one complete original source row each. Every observed column appears in the maintained issuer dictionary.
+
+| Complete source | Records | Columns | Bytes | SHA256 |
+| --- | ---: | ---: | ---: | --- |
+| Open tender notices | 908 | 67 | 6360099 | `c1f2273a6b7cc2d6da4c3d9d17baf5d4dce1ee49f3e11644cd568e683e473a21` |
+| Current award notices | 28717 | 80 | 103213893 | `c16d484ad257427a1eb64713cf4a2b0edcf9ef6a866882843b4cba7401e8b5c8` |
+
+These full source bodies were received twice with identical bytes during the same source acquisition. The open-tender edition also matches the original project owner's earlier capture. The full tender file, complete native result and full three-feed acquisition source were saved for the original product; the full award file uses a compressed original-byte archive for transport. The SOSA origin returned HTTP502 and remains the third input of the same acquisition. The original source receiver reuses completed source files after their byte identities agree.
+
+## Save the complete source operation on a native host
+
+The103MBawardfile is transported as a ZIP containing the complete original CSV and its source metadata. `preserve-original-csvs.py` runs the same receiving command, packages each completed input, and saves all complete source archives, the full native result and source code in one ordered Library operation before returning. This carries completed tender/award sources even while another origin is unavailable. It reuses completed original source files and their compressed archives.
+
+Supply the directory containing the three complete current Library helpers (`library_upload.py`, `library_file_transfer.py`, `library_hosted_apps.py`) from the current Library skill:
+
+```sh
+python3 preserve-original-csvs.py \
+  --directory /actual/private/canadabuys-source-operation \
+  --library-helper-directory /actual/current/library-helpers
+```
+
+Inspect each saved result. The archive contains the raw CSV, its exact source record and the original HTTP body when that body differs from the decoded CSV. A retained successful save is reused; an explicit failed transfer resumes only its failed paths.

@@ -2,8 +2,27 @@
   "schema": "commons.canadabuys.public-source-contract.v1",
   "operation_id": "SCF-CANADABUYS-PROCUREMENT-9FCD-20261012",
   "captured_on": "2026-10-12",
-  "source_scope": "Current complete award-notice file and the active SOSA source, with every catalog resource and both complete issuer dictionaries retained.",
+  "source_scope": "Complete currently open tender notices, complete current award notices and active SOSA, with both catalog resources and both complete issuer dictionaries retained.",
   "requested_csv_inputs": [
+    {
+      "id": "open-tenders",
+      "title": "Complete currently open CanadaBuys tender notices",
+      "url": "https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv",
+      "dictionary": "canadabuys",
+      "required_identifiers": [
+        "referenceNumber-numeroReference",
+        "solicitationNumber-numeroSollicitation",
+        "tenderClosingDate-appelOffresDateCloture"
+      ],
+      "sample_identifiers": [
+        "referenceNumber-numeroReference",
+        "solicitationNumber-numeroSollicitation",
+        "title-titre-eng",
+        "tenderClosingDate-appelOffresDateCloture",
+        "tenderDescription-descriptionAppelOffres-eng"
+      ],
+      "selection_source": "https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791821504921899"
+    },
     {
       "id": "awards",
       "dataset_id": "a1acb126-9ce8-40a9-b889-5da2b1dd20cb",

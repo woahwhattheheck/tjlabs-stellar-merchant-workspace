@@ -1,8 +1,10 @@
 # Merchant receivables and service billing
 
+Follow the [complete merchant financial workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md) for original Stellar reconciliation, customer billing, dated payment plans, Xero handover and full operating recovery in this same accounting workspace.
+
 Operate a merchant's complete invoice and customer-payment cycle in the original private accounting workspace. The product brings customer records, service quotations, issued invoices, payment allocation, credit notes and dated account delivery into one installed operator.
 
-The maintained `merchant-receivables` selection includes the invoice and quotation workflow, customer payment plans, dated collections, accounting and support commands, their explicit package exports and managed Applications adapters. It uses the existing accounting writer and customer UUIDs, the SF74 quotation engine and the source distribution's installation, lifecycle and recovery. `starforge registrations` shows the inventory in the installed source edition.
+The maintained `merchant-receivables` selection includes the invoice and quotation workflow, typed HTTP and MCP clients, Stellar wallet collection, customer payment plans, dated collections, accounting and support commands, their explicit package exports and managed Applications adapters. It uses the existing accounting writer and customer UUIDs, the SF74 quotation engine and the source distribution's installation, lifecycle and recovery. `starforge registrations` shows the inventory in the installed source edition.
 
 ## Install the selected product
 
@@ -25,7 +27,7 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
   --out /private/receivables-release --status
 ~~~
 
-The original Runtime workspace also discovers this recipe in **Build a product**. Select **Merchant receivables and service billing**, review its exact source, then open the completed archive in **Source & profile**. The package version includes both the source commit and `selection.merchant-receivables`.
+The original Runtime workspace also discovers this recipe in **Build a product**. Select **Merchant receivables and Stellar invoice collection**, review its exact source, then open the completed archive in **Source & profile**. The package version includes both the source commit and `selection.merchant-receivables`.
 
 The complete installed accounting, quotation and managed-operator profile uses the existing Linux runtime: Node 22.16+, Python 3.11+, npm, `flock` and the original archive utilities. Prepare the selected original dependencies through the maintained installer:
 
@@ -33,7 +35,7 @@ The complete installed accounting, quotation and managed-operator profile uses t
 node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs prepare \
   --dir /private/receivables-runtime \
   --archive /absolute/returned-package.tgz --sha256 RETURNED_ARCHIVE_SHA256 \
-  --native --feature schema --feature openapi --operator
+  --native --feature schema --feature openapi --feature mcp --operator
 
 node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs install \
   --dir /private/receivables-runtime
@@ -42,7 +44,7 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs inspect
   --dir /private/receivables-runtime --load --source
 ~~~
 
-The native feature equips the existing Stellar verification/recovery paths; schema and OpenAPI belong to the original source and quotation-support workflows. The installer selects their actual declared versions. An already retained matching dependency graph can be received with its original lock and the installer's `--adopt-existing` option. Use `resume --dir /private/receivables-runtime` to continue that same prepared installation.
+The native feature equips the existing Stellar verification/recovery paths; schema and OpenAPI belong to the original source and quotation-support workflows. The MCP feature equips the original merchant agent host and its HTTP and stdio interfaces. The installer selects their actual declared versions. An already retained matching dependency graph can be received with its original lock and the installer's `--adopt-existing` option. Use `resume --dir /private/receivables-runtime` to continue that same prepared installation.
 
 The installed package stays in `/private/receivables-runtime/package/`, beside the selected `node_modules/`. Run its original command through that layout:
 
@@ -93,6 +95,27 @@ starforge runtime-workspace serve \
 Choose **Merchant receivables**, select the initialized accounting directory, and use Review, Save, Start and Open. The source-owned adapter binds the original workspace ID and source configuration and rechecks them inside the accounting lease. **Merchant accounting** opens the maintained reconciliation/connection workflow; **Merchant support** opens the existing cases and quotation workflow.
 
 One process owns an accounting directory at a time. Use the running process's customer, receivables and **Payment plans** views together. **Customer payment plans** in Applications opens the same combined server directly at its collection desk. Stop that process through its original application before opening the directory with another owner.
+
+## Close customer statements from the merchant connection
+
+**Customer statements** in Applications opens the complete customer closing workbench included in this merchant receivables package. Select the original running merchant MCP address, its accounting workspace alias, the named operator and a private folder for saved customer closing work. The access token stays in the original environment or a private environment file.
+
+Review, save, start and open that application through the existing Runtime workspace. The original startup records the local opening address with the reviewed merchant connection and saved-work folder. Reopen the same folder after a restart or package upgrade.
+
+~~~sh
+starforge customer-closing \
+  --directory /private/merchant/customer-closes \
+  --url http://127.0.0.1:8787/mcp \
+  --workspace accounting --actor operator --port 4419
+~~~
+
+Use **Customers and service** to create or edit billing profiles, assign original order references, compare them with a retained accounting run and import configured service captures. Every change is reviewed and saved before application. The same saved request can be reconciled or resumed after an interrupted reply.
+
+Choose customers, accounting runs and the original opening and closing service captures in **Compose a cycle**. Review each customer's complete native statement before issuing the selected closing cycle. Progress, original statement identities and completed files stay available during a resumed close. **Download customer delivery** provides that customer's full original files; the whole-cycle download preserves the complete operator folder for continued work.
+
+Issued statements expose the original customer details, complete history and retained files. Prepare a correction from that original statement to retain its customer, sources and period; withdrawals record an explicit reason while preserving its original files and history. Customer profile edits update the source customer while issued documents keep their original billing details.
+
+The [complete customer closing guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_STATEMENT_WORKBENCH.md) covers customer intake, capture configuration, closing cycles, correction, withdrawal, saved-operation recovery, file delivery and the typed interfaces. The workbench uses the original accounting writer through the existing MCP host.
 
 ## From service quotation to invoice
 
@@ -219,8 +242,44 @@ For an upgrade, prepare a new runtime for the selected new source archive, retai
 | `@tokenjunkielabs/starforge-merchant/merchant/receivables/quote-import` | Pure original quotation/response-to-draft compilation. |
 | `@tokenjunkielabs/starforge-merchant/merchant/receivables/client` | Typed HTTP client for the same operation and file contracts. |
 | `@tokenjunkielabs/starforge-merchant/merchant/receivables/server` | Complete loopback server or handler over the existing open workspace. |
+| `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables` | Typed client for invoices, collection, customer files and request recovery through the existing accounting MCP owner. |
+| `@tokenjunkielabs/starforge-merchant/merchant/accounting-receivables/operations` | Durable operation preparation, execution, reconciliation and original file downloads. |
 
 Use the actual package name shown by the installed `package.json` and retain the suffixes above. The original distribution exports are explicit; `starforge registrations --source merchant-receivables` prints this product's command, client, browser and Applications registrations.
+
+## Collect an invoice through a Stellar wallet
+
+Open an issued invoice and use **Stellar payment requests** to prepare collection terms. The review binds the request to the original customer, invoice document and current amount due. Choose the public network or test network, the merchant's exact receiving account, the asset and amount in Stellar units, and the amount of the commercial invoice that the transfer will settle. When the asset value differs from the invoice currency, retain the agreed valuation in the request.
+
+Issue the reviewed request, then share its wallet link or original `payment-request.html` document. Each request has its own invoice-bound memo. The operator can issue separate partial collection requests, inspect saved returns, cancel replaced instructions and download the original request and full receiving record.
+
+After the customer sends the payment, record the transaction hash returned by their wallet and use **Receive**. The native verifier uses the original Stellar RPC catalogue and official SDK to check the ledger transaction's network, destination, payer constraint when selected, asset issuer, exact amount, memo and successful operation result. It supports classic payments, strict-send and strict-receive path payments, and fee-bump transactions reported by either their inner or outer hash.
+
+A verified public-network transfer produces an original customer receipt and dated invoice allocation. Both fee-bump hash identities participate in duplicate detection. Full native proof is retained as original private files and hydrated for downloads; the accounting journal keeps a compact reference. Test-network receiving remains visible as a verified test observation. All original invoice documents retain their issued content as payments and balances change.
+
+The [complete payment request guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/PAYMENT_REQUESTS.md) covers browser operation, CLI requests, the typed HTTP client, exact file names and recovery of interrupted work.
+
+## Operate receivables through the merchant agent interface
+
+The original merchant MCP host now exposes the same invoice and collection workflow through 24 `merchant_accounting_receivables_*` operations. A configured accounting workspace supplies the original customers, journal, private exports and source aliases. The agent can import a service quotation, prepare and issue an invoice, create reviewed Stellar wallet instructions, receive a returned transaction, apply receipts or credits and deliver the dated customer account in that one owner.
+
+The installed client command uses the host's configured endpoint, workspace alias and access-token environment variable:
+
+~~~sh
+starforge merchant-accounting-receivables sources \
+  --url "$MERCHANT_MCP_URL" --workspace "$MERCHANT_WORKSPACE" \
+  --token-env MCP_ACCESS_TOKEN
+
+starforge merchant-accounting-receivables status \
+  --url "$MERCHANT_MCP_URL" --workspace "$MERCHANT_WORKSPACE" \
+  --token-env MCP_ACCESS_TOKEN
+~~~
+
+Use complete native previews for invoice issue and payment-request creation. The client retains the full original document or wallet proposal and its review SHA. Durable `prepare`, `execute` and `reconcile` commands keep the original arguments, request ID, source revision and connection in a private operation directory. An interrupted reply is reconciled against the existing accounting journal; configured quotation aliases reconcile to the exact source bytes archived by the original import.
+
+Native invoice and credit files, quotation sources, preview files, wallet instructions, transaction proofs and the complete customer account are available through the existing retained file reader. Downloads retain their original selectors, read ID and SHA through every chunk. Ordinary client commands drain their own retained reads; `close` explicitly finishes the accounting owner.
+
+The [complete agent interface guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING_RECEIVABLES.md) includes configured source aliases, customer and issuer intake, an invoice-to-payment workflow, all 24 tools, typed client examples, file selectors and durable operation recovery. Use the original [merchant accounting host guide](../../stellar-forge/mcp-merchant-operator/ACCOUNTING.md) to configure and start that owner.
 
 ## Original native exercise
 

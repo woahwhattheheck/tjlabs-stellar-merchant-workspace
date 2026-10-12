@@ -4,6 +4,27 @@ Continue **SCF-USASPENDING-AWARD-TRANSACTIONS-64B7-20261012** from the same comp
 
 This package retains the complete canonical source cache at **a8ebea9d6f08086db7ec7d2ee62dc26dadb273d8**, its original Git commit and complete tree, the maintained Git object receiver, and one installed continuation. The cache contains 1,836 original files (26,503,614 bytes). The original federal-awards recipe initially selects 760 files; the maintained native builder resolves the final static module and served browser asset closure.
 
+## Download the complete source on the receiving host
+
+From this operation directory, run:
+
+~~~sh
+python3 binary/receive-published-source.py --directory /ABSOLUTE/PRIVATE/CARRIER
+~~~
+
+The receiver downloads the immutable published manifest, original assembler and
+all nine binary parts. It verifies the original Git identities and digests, then
+uses the unchanged assembler to retain the complete 7,205,397-byte ZIP and
+extract every source-transfer member. Matching completed files are reused when
+continuing in the same carrier directory.
+
+The resulting installed source directory is
+`/ABSOLUTE/PRIVATE/CARRIER/source/federal-awards-installed/`. Run the workflow
+below from that directory. Its `receive-installed.py` receiver validates the
+original operating inputs and invokes the original `receive-installed.mjs`
+driver. The complete [binary carrier guide](binary/README.md) also describes
+receiving through Git file-content tools.
+
 ## Run the complete installed workflow
 
 Unpack this directory's complete source-transfer.json, source-metadata.json, both receiving programmes and source-parts/ together. Use the existing ROOT from the original three-stage operation:

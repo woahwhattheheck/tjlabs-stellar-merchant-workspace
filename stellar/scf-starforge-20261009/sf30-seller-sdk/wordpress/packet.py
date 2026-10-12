@@ -22,6 +22,7 @@ MAX_FILE = 536_870_912
 MAX_TOTAL = 4_294_967_296
 MAX_FILES = 100_000
 CHUNK_BYTES = 49_152
+REFRESH_ACTIONS = frozenset({"refresh.plan.save", "refresh.run.start", "refresh.run.advance", "refresh.run.review", "refresh.run.export"})
 
 class PacketError(ValueError):
     pass
@@ -45,6 +46,12 @@ def allowed(name):
     if name == "workspace.json":
         return True
     if re.fullmatch(r"(sources|mappings|merchants)/" + UUID + r"\.json", name):
+        return True
+    if re.fullmatch(r"refresh/(plans|runs|events|decisions|exports)/" + UUID + r"\.json", name):
+        return True
+    if re.fullmatch(r"refresh/reviews/" + UUID + r"/(review\.json|changes\.jsonl|changes\.csv|changes\.index\.json)", name):
+        return True
+    if re.fullmatch(r"operations/" + UUID + r"\.(intent|result)\.json", name):
         return True
     if re.fullmatch(r"cache/" + HASH + r"/source\.json", name):
         return True
@@ -111,9 +118,45 @@ def atomic(path, raw):
         if os.path.exists(temporary):
             os.unlink(temporary)
 
+def validate_refresh_operations(workspace, read, members=None):
+    """Keep the same source-only refresh intents; host publication/process operations stay private."""
+    operations = workspace.get("operations", [])
+    require(isinstance(operations, list) and len(operations) <= MAX_FILES, "WORDPRESS_PACKET_REFRESH_OPERATIONS")
+    seen = set()
+    for row in operations:
+        require(isinstance(row, dict) and re.fullmatch(UUID, row.get("id", "")) and row["id"] not in seen
+                and row.get("action") in REFRESH_ACTIONS and re.fullmatch(HASH, row.get("intentSha256", ""))
+                and type(row.get("expectedRevision")) is int and 0 <= row["expectedRevision"] <= 9007199254740991,
+                "WORDPRESS_PACKET_REFRESH_OPERATION")
+        seen.add(row["id"])
+        intent_name = "operations/" + row["id"] + ".intent.json"
+        result_name = "operations/" + row["id"] + ".result.json"
+        if members is not None:
+            require(intent_name in members, "WORDPRESS_PACKET_REFRESH_INTENT")
+        intent = json.loads(read(intent_name))
+        require(intent.get("id") == row["id"] and intent.get("action") == row["action"]
+                and intent.get("intentSha256") == row["intentSha256"] and isinstance(intent.get("input"), dict)
+                and type(intent.get("expectedRevision")) is int and intent["expectedRevision"] == row["expectedRevision"],
+                "WORDPRESS_PACKET_REFRESH_INTENT")
+        result_present = members is not None and result_name in members
+        if row.get("status") == "complete":
+            require(re.fullmatch(HASH, row.get("resultSha256", "")), "WORDPRESS_PACKET_REFRESH_RESULT")
+        if row.get("resultSha256") or result_present:
+            raw = read(result_name)
+            result = json.loads(raw)
+            require(result.get("schema") == "stellar-forge.wordpress-operation-result.v1"
+                    and result.get("intentSha256") == row["intentSha256"], "WORDPRESS_PACKET_REFRESH_RESULT")
+            if row.get("resultSha256"):
+                require(hashlib.sha256(raw).hexdigest() == row["resultSha256"], "WORDPRESS_PACKET_REFRESH_RESULT")
+    if members is not None:
+        for name in members:
+            if name.startswith("operations/"):
+                require(name.split("/", 1)[1].split(".", 1)[0] in seen, "WORDPRESS_PACKET_REFRESH_OPERATION_FILE")
+    return True
+
 def projection(workspace):
     result = json.loads(json.dumps(workspace))
-    result["operations"] = []
+    result["operations"] = [row for row in result.get("operations", []) if row.get("action") in REFRESH_ACTIONS]
     result["packets"] = []
     result["exports"] = [row for row in result.get("exports", []) if row.get("delivery") != "source-files"]
     result["receivedFrom"] = result.get("receivedFrom")
@@ -121,8 +164,9 @@ def projection(workspace):
 
 def selected_files(root, workspace):
     export_ids = {row["id"] for row in workspace["exports"]}
+    operation_ids = {row["id"] for row in workspace["operations"]}
     result = []
-    for folder in ("sources", "cache", "mappings", "editions", "merchants", "exports"):
+    for folder in ("sources", "cache", "mappings", "editions", "merchants", "exports", "refresh", "operations"):
         path = root / folder
         if not path.exists():
             continue
@@ -134,6 +178,8 @@ def selected_files(root, workspace):
                     continue
                 member = (Path(current) / name).relative_to(root).as_posix()
                 if folder == "exports" and member.split("/")[1] not in export_ids:
+                    continue
+                if folder == "operations" and name.split(".", 1)[0] not in operation_ids:
                     continue
                 require(allowed(member), "WORDPRESS_PACKET_UNDECLARED_SOURCE:" + member)
                 result.append(member)
@@ -154,16 +200,23 @@ def create(root, output, request):
     require(value["id"] == request.get("workspaceId") and value["revision"] == request.get("revision"),
             "WORDPRESS_PACKET_WORKSPACE_CHANGED")
     portable = projection(value)
+    selected = selected_files(root, portable)
+    def read_original(name):
+        with opened(root / name) as stream:
+            return stream.read()
+    validate_refresh_operations(portable, read_original, selected)
     portable_bytes = json_bytes(portable)
     members = [{"path": "workspace.json", "bytes": len(portable_bytes),
                 "sha256": hashlib.sha256(portable_bytes).hexdigest()}]
-    for name in selected_files(root, portable):
+    for name in selected:
         members.append({"path": name, **hash_file(root / name)})
     require(len(members) <= MAX_FILES and sum(item["bytes"] for item in members) <= MAX_TOTAL,
             "WORDPRESS_PACKET_SIZE")
     manifest = {"schema": SCHEMA, "workspaceId": value["id"], "revision": value["revision"],
                 "createdAt": request["createdAt"], "operationId": request["operationId"],
                 "sourceWorkspaceSha256": original_hash, "files": members}
+    if portable.get("refreshPlans") or portable.get("refreshRuns") or portable.get("operations"):
+        manifest["capabilities"] = ["refresh-plans"]
     manifest_bytes = json_bytes(manifest)
     manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
     if output.exists():
@@ -240,8 +293,9 @@ def read_archive(path):
             require(length == item["bytes"] and digest.hexdigest() == item["sha256"], "WORDPRESS_PACKET_MEMBER_CHANGED:" + name)
         workspace = json.loads(archive.read("workspace.json"))
         require(workspace.get("schema") == WORKSPACE_SCHEMA and workspace.get("id") == value["workspaceId"] and
-                workspace.get("revision") == value["revision"] and not workspace.get("operations") and not workspace.get("packets"),
+                workspace.get("revision") == value["revision"] and not workspace.get("packets"),
                 "WORDPRESS_PACKET_WORKSPACE_BINDING")
+        validate_refresh_operations(workspace, archive.read, expected)
         return source, archive, value, raw
     except BaseException:
         source.close()

@@ -1,0 +1,27 @@
+{
+  "summary": "Open311 workspace operations",
+  "description": "Uses the original loopback Open311 service. Flow preparation retains exact revisions and request IDs; app read bindings fix each action in the execution policy.",
+  "kind": "script",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "default": "overview"
+      },
+      "target": {
+        "type": "string",
+        "enum": [
+          "source",
+          "receiver"
+        ],
+        "default": "source"
+      },
+      "args": {
+        "type": "object",
+        "default": {}
+      }
+    },
+    "required": []
+  }
+}

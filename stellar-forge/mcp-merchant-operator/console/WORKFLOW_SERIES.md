@@ -200,4 +200,24 @@ node stellar-forge/mcp-merchant-operator/receiving/workflow-series-journey.mjs \
 
 The original programme completes first and reopens its completed outputs on a continuation. Recurring work then adds a complete second OpenAPI source edition, plans the first calendar period in the browser, recovers an accepted Start response under the original saved action, and commissions the next period through the typed client. Both periods use the installed original eight-step native workflow. Each produces and receives its complete six-file customer. The receiver captures the complete recurring profile and both customers, imports through the other original Console, and closes and reopens both workspaces with the same original run and customer identities.
 
-Continue an interrupted attempt with the same directory. The full frozen requests and current progress are in `workflow-series-receiving-checkpoint.json`; completion is retained in `workflow-series-native-run.json`. Native customer archives, all individual customer files, the full profile, desktop/mobile views and reopened receiving view stay alongside the original operation.
+Continue an interrupted attempt with the same directory. The full frozen requests and current progress are in `workflow-series-receiving-checkpoint.json`; completion is retained in `workflow-series-native-run.json`. Native customer archives, all individual customer files and the full profile stay alongside the original operation. Browser inspection images are transient and are recorded separately under `inspections`; mandatory `artifacts` contain the files needed for customer receiving and restoration. Older completed reports remain unchanged, and their exact named browser inspection images are optional when reopened.
+
+### Restore the complete native workspace
+
+Keep the full merchant configuration, release store and customer-export store, both Console directories, retained merchant inputs, all required customer/profile files and the complete native reports. The source receiver's archive includes these directories. Restore the archive at its recorded original receiving path, so the saved operation, profiles, workflow and customer identifiers remain the same.
+
+The local `native-access-token` is an execution credential and is supplied separately from the customer archive. If it is absent after restoration, the native entry generates a fresh private local token and passes it through the real `startMerchantMcp` launcher as `MCP_ACCESS_TOKEN`. Saved calls and completed reports keep their original identities and bytes.
+
+Running the same completed recurring entry opens both restored Consoles on fresh loopback ports. It reads the original 24 recipe/recurring calls and seven baseline calls, both completed periods, the original installation editions, all four complete customer archives and each of their six files, and the thirteen-file recurring handover. The reopened result is written separately to `workflow-series-reopened.json`; the completed programme reports are preserved. This receiving path does not need the earlier browser inspection images.
+
+The original `run-series-native.py` source receiver also accepts `--restore-archive`. Select the complete packet that matches the archive manifest and the original paths recorded there:
+
+```sh
+python3 run-series-native.py --source-packet series-source-map.json \
+  --restore-archive merchant-original-native-artifacts.tar.gz \
+  --work-dir ORIGINAL_WORK_DIRECTORY --directory ORIGINAL_RECEIVING_DIRECTORY \
+  --node ACTUAL_NODE --node-modules ACTUAL_INSTALLED_NODE_MODULES \
+  --chromium ACTUAL_CHROMIUM_EXECUTABLE --playwright-module ACTUAL_PLAYWRIGHT_MODULE
+```
+
+The receiver keeps an existing workspace as a private backup, streams the exact archived files into the original receiving path, restores any original configured source inputs, and runs the completed entry through its actual launch and customer APIs. A fresh native completion follows this same archive extraction and reopen path before producing the customer delivery summary.

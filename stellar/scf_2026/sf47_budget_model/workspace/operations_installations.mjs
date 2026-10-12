@@ -1,4 +1,5 @@
 // Complete customer installations in the original SF47 operating case.
+import { workflowBoundCheck, workflowReportView, workflowIntakePanel } from './operations_installation_workflows.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const copy=value=>structuredClone(value);
 const title=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
@@ -44,14 +45,15 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     let stored;
     try{stored=JSON.parse(sessionStorage.getItem(storageKey)||'null');}catch{}
     if(stored?.schema==='sf47.installation-editor.v1'&&stored.caseId===caseId){
-      for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake'])if(Object.hasOwn(stored,key))session[key]=stored[key];
+      for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake'])if(Object.hasOwn(stored,key))session[key]=stored[key];
     }
     session.initialized=true;
   }
   for(const [key,value] of Object.entries({drafts:{},draftKey:null,selected:null,mode:'saved',pending:null,accepted:null,
-    inflight:null,notice:'',error:'',filter:'',workshareIntake:{open:false,sourceId:'',packetSourceId:'',caseId:'',target:'new'}}))if(!Object.hasOwn(session,key))session[key]=value;
+    inflight:null,notice:'',error:'',filter:'',workshareIntake:{open:false,sourceId:'',packetSourceId:'',caseId:'',target:'new'},
+    workflowIntake:{open:false,sourceId:'',target:'new',cycleIds:[]}}))if(!Object.hasOwn(session,key))session[key]=value;
   let active=true,hostBusy=false,busy=false,generation=0,caseValue=current,selectedRow=null,historyRows=[],nextBefore=null;
-  let preview=null,previewDraft=null,loading=false,workshareInventory=null;
+  let preview=null,previewDraft=null,loading=false,workshareInventory=null,workflowInventory=null;
   const $=selector=>root.querySelector(selector),available=()=>active&&root.isConnected;
   const draft=()=>session.draftKey?session.drafts[session.draftKey]:null;
   const editable=()=>caseValue.program.state==='OPEN'&&!hostBusy;
@@ -62,7 +64,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   const deployments=roles=>caseValue.records.deployments.filter(row=>roles.includes(row.role)).map(row=>[row.id,row.name+' · '+row.operator]);
   function persist(){
     const body={schema:'sf47.installation-editor.v1',caseId};
-    for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake'])body[key]=session[key];
+    for(const key of ['drafts','draftKey','selected','mode','pending','accepted','notice','workshareIntake','workflowIntake'])body[key]=session[key];
     try{sessionStorage.setItem(storageKey,JSON.stringify(body));}
     catch{session.storageNotice='The browser could not retain another local draft copy. Download the complete draft before closing this browser.';}
   }
@@ -71,7 +73,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     if(!available())return;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
-      const isInput=el.matches('[data-installation-field],[data-installation-note]');
+      const isInput=el.matches('[data-installation-field],[data-installation-coordination],[data-installation-note]');
       const save=el.dataset.installationAction==='save';
       el.disabled=el.dataset.installationFixed==='true'||hostBusy||
         (save&&(!preview||!same(previewDraft?.document,draft()?.document)||previewDraft?.expectedRevision!==draft()?.expectedRevision))||
@@ -92,6 +94,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       else if(path==='merchantDeploymentId'||path==='workorder.sourceId'||/\.observedAt$/.test(path)||path==='payment.priceAtomic'||path==='payment.taskBudgetAtomic')selected=selected===''?null:selected;
       assign(value.document,path,selected);
     }
+    captureCoordination(value);
     value.note=$('[data-installation-note]')?.value??value.note;
     value.dirty=true;
     if(previewDraft&&!same(previewDraft.document,value.document))preview=null;
@@ -101,9 +104,82 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     return '<div class="installation-heading"><div><h3>'+esc(label)+'</h3><p>'+esc(description)+'</p></div><div class="installation-actions">'+actions+'</div></div>';
   }
   function group(title,content){return '<fieldset><legend>'+esc(title)+'</legend><div class="installation-fields">'+content+'</div></fieldset>';}
+  function coordinationFields(document){
+    const assigned=document.coordination||{},overrides=new Map((assigned.steps||[]).map(row=>[row.checkId,row]));
+    const cf=(label,path,value,options={})=>field(label,path,value,options).replace('data-installation-field=','data-installation-coordination=');
+    return '<fieldset class="installation-coordination" data-installation-coordination-panel><legend>Delivery assignment and sequencing</legend>'+
+      '<p>Set responsibility and target dates for setup and acceptance work. Blank step fields use the installation assignment below.</p>'+
+      '<div class="installation-fields">'+
+      cf('Installation delivery assignee','owner',assigned.owner||'',{max:500,help:'The person responsible for coordinating this delivery.'})+
+      cf('Target delivery date','dueDate',assigned.dueDate||'',{type:'date'})+
+      cf('Delivery priority','priority',assigned.priority||'NORMAL',{choices:choices('URGENT','HIGH','NORMAL','LOW')})+
+      cf('Delivery instructions','note',assigned.note||'',{area:true,wide:true,max:8000})+'</div>'+
+      document.checks.map((check,index)=>{
+        const step=overrides.get(check.id)||{},path='steps.'+index+'.';
+        const dependencies=document.checks.filter(row=>row.id!==check.id).map(row=>[row.id,row.title||row.id]);
+        return '<details class="installation-entry" data-coordination-step="'+esc(check.id)+'" data-coordination-index="'+index+'"><summary>'+
+          esc(check.title||'Acceptance step '+(index+1))+' · '+esc(step.owner||assigned.owner||'Unassigned')+'</summary><div class="installation-fields">'+
+          cf('Step delivery assignee',path+'owner',step.owner||'',{max:500,help:'Leave blank to use the installation assignee.'})+
+          cf('Step target date',path+'dueDate',step.dueDate||'',{type:'date',help:'Leave blank to use the installation target date.'})+
+          cf('Step priority',path+'priority',step.priority||'INHERIT',{choices:[['INHERIT','Use installation priority'],...choices('URGENT','HIGH','NORMAL','LOW')]})+
+          cf('Finish these steps first',path+'dependsOn',step.dependsOn||[],{choices:dependencies,multiple:true,wide:true,help:'Select the other acceptance steps that must finish before this one is ready.'})+
+          cf('Step delivery instructions',path+'note',step.note||'',{area:true,wide:true,max:4000,help:'Leave blank to use the installation instructions.'})+
+          '</div></details>';
+      }).join('')+'</fieldset>';
+  }
+  function captureCoordination(value){
+    const panel=$('[data-installation-coordination-panel]');if(!panel)return;
+    const previous=value.document.coordination;
+    const next={owner:'',dueDate:null,priority:'NORMAL',note:'',steps:[]},renamed=new Map();
+    for(const details of panel.querySelectorAll('[data-coordination-step]')){
+      const index=Number(details.dataset.coordinationIndex),check=value.document.checks[index];
+      if(check)renamed.set(details.dataset.coordinationStep,check.id);
+    }
+    for(const input of panel.querySelectorAll('[data-installation-coordination]')){
+      const path=input.dataset.installationCoordination,bits=path.split('.');
+      let selected=input.multiple?[...input.selectedOptions].map(row=>renamed.get(row.value)||row.value):input.value;
+      if(bits.at(-1)==='dueDate')selected=selected||null;
+      if(bits[0]==='steps'){
+        const index=Number(bits[1]),check=value.document.checks[index];if(!check)continue;
+        next.steps[index]??={checkId:check.id,owner:'',dueDate:null,priority:'INHERIT',dependsOn:[],note:''};
+        next.steps[index][bits[2]]=selected;
+      }else next[path]=selected;
+    }
+    const previousIds=new Set((previous?.steps||[]).map(row=>renamed.get(row.checkId)||row.checkId));
+    next.steps=next.steps.filter(row=>row&&(previousIds.has(row.checkId)||row.owner||row.dueDate||
+      row.priority!=='INHERIT'||row.dependsOn.length||row.note));
+    for(const row of next.steps)row.dependsOn.sort();
+    next.steps.sort((a,b)=>a.checkId<b.checkId?-1:a.checkId>b.checkId?1:0);
+    if(previous||next.owner||next.dueDate||next.priority!=='NORMAL'||next.note||next.steps.length)
+      value.document.coordination=next;
+  }
+  function coordinationView(document){
+    const coordination=document.coordination;
+    if(!coordination)return note('Delivery assignments have not been set for this edition.');
+    const byId=new Map((coordination.steps||[]).map(row=>[row.checkId,row])),names=new Map(document.checks.map(row=>[row.id,row.title]));
+    return '<h4>Delivery assignment and sequencing</h4>'+
+      table(['Installation assignee','Target date','Priority'],[[esc(coordination.owner||'Unassigned'),esc(coordination.dueDate||'Undated'),esc(title(coordination.priority))]])+
+      (coordination.note?note(coordination.note):'')+
+      table(['Acceptance step','Delivery assignee / target','Priority / prerequisites'],document.checks.map(check=>{
+        const step=byId.get(check.id)||{};
+        return [esc(check.title)+(step.note?'<p>'+esc(step.note)+'</p>':''),
+          esc(step.owner||coordination.owner||'Unassigned')+'<br>'+esc(step.dueDate||coordination.dueDate||'Undated'),
+          esc(title(step.priority&&step.priority!=='INHERIT'?step.priority:coordination.priority))+'<p>'+
+          esc(step.dependsOn?.length?step.dependsOn.map(id=>names.get(id)||id).join(', '):'No prerequisite steps selected')+'</p>'];
+      }));
+  }
+  function focusCoordination(taskId){
+    const panel=$('[data-installation-coordination-panel]');if(!panel)return;
+    let target=panel;
+    for(const details of panel.querySelectorAll('[data-coordination-step]')){
+      if(details.dataset.coordinationStep===taskId){details.open=true;target=details;break;}
+    }
+    target.scrollIntoView({block:'start'});
+    target.querySelector('[data-installation-coordination]')?.focus({preventScroll:true});
+  }
   function draftFields(value){
     const d=value.document;
-    const boundCheck=check=>!!d.workshare?.phaseChecks.some(row=>row.checkId===check.id);
+    const boundCheck=check=>!!d.workshare?.phaseChecks.some(row=>row.checkId===check.id)||workflowBoundCheck(d,check);
     const f=(label,path,options={})=>{
       const match=/^checks\.(\d+)\.(id|title|criterion|required)$/.exec(path);
       const locked=(path.startsWith('workorder.')&&!!d.workshare)||(match&&boundCheck(d.checks[Number(match[1])]));
@@ -119,6 +195,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       f('Workorder reference','workorder.reference')+f('Commissioning payer','workorder.payer')+
       f('Whole implementation assignment','workorder.scope',{area:true,wide:true})+
       f('Original commercial terms','workorder.terms',{area:true,wide:true}));
+    html+=coordinationFields(d);
     html+=group('Useful customer task',
       f('Task name','task.name')+f('Customer purpose','task.purpose',{area:true})+
       f('Complete original request','task.request',{area:true,wide:true,rows:4})+
@@ -189,6 +266,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       '</strong></div><div><span>Selected source files</span><strong>'+report.sourceFiles+
       '</strong></div><div><span>Entered task amount</span><strong>'+esc(report.pricedTaskAtomic??'Unentered')+'</strong><small>Original atomic units</small></div></div>'+
       (report.findings.length?table(['Field or step','Current decision or observation'],report.findings.map(row=>[esc(row.field),esc(row.message)])):note('All entered configuration decisions and required acceptance steps are complete.'))+
+      workflowReportView(value)+
       '<h4>Original work and funded packages</h4>'+
       table(['Funding basis','Work package','Recorded hours','Accepted hours'],report.work.map(row=>[esc(row.fundingBasis),esc(row.costId||'Unassigned'),esc(row.recordedHours),esc(row.acceptedHours)]))+
       table(['Package','Tranche','Original planned hours','Original planned USD'],report.packages.map(row=>[esc(row.id),esc(row.tranche),esc(row.estimated_hours),esc(row.amount_usd)]))+
@@ -204,7 +282,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       button('Use this edition as a draft','edit','',!editable()||!!session.pending||!!session.accepted)+
       button('Export complete handover','export','')+button('Download saved input','saved-input'))+
       note(row.note)+(row.current?.selectedRecordsChanged?note('The operating case has later selected-record changes. This edition keeps the original observations; use it as a draft to review the current records.'):'')+
-      reportView(row.preview)+
+      reportView(row.preview)+coordinationView(d)+
       (d.workshare?'<h4>Original commercial Workshare</h4>'+
         pairs(d.workshare,[['caseId','Commercial case'],['planSha256','Complete original plan SHA-256'],
           ['sourceId','Original commissioning file'],['packetSourceId','Original receiving packet']])+
@@ -240,9 +318,10 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     const draftKeys=Object.keys(session.drafts);
     root.innerHTML=heading('Customer installations','Keep the whole task, source, terms, receiving application and original funded work together.',
       button('New installation','new','',!editable()||!!session.pending||!!session.accepted)+
-      button('Receive commercial Workshare','workshare-open','',!editable()||!!session.pending||!!session.accepted))+
+      button('Receive commercial Workshare','workshare-open','',!editable()||!!session.pending||!!session.accepted)+
+      button('Receive customer periods','workflow-open','',!editable()||!!session.pending||!!session.accepted))+
       '<p class="installation-message" role="'+(session.error?'alert':'status')+'" aria-live="polite">'+esc(session.error||session.notice)+'</p>'+
-      (session.storageNotice?note(session.storageNotice):'')+worksharePanel()+
+      (session.storageNotice?note(session.storageNotice):'')+worksharePanel()+workflowPanel()+
       (session.pending?'<div class="installation-recovery"><h4>Original save request retained</h4><p>Recover this exact request before saving another edition. Your later form edits stay in their draft.</p>'+button('Recover original save','recover')+'<code>'+esc(session.pending.body.requestId)+'</code></div>':'')+
       (session.accepted?'<div class="installation-recovery"><h4>Edition saved; readback is pending</h4>'+button('Open saved result','readback')+'</div>':'')+
       '<div class="installation-layout"><aside><label>Find installation<input type="search" data-installation-filter value="'+esc(session.filter)+'"></label>'+
@@ -396,6 +475,85 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     }
     persist();
   }
+  function workflowSelection(value=session.workflowIntake){
+    const source=caseValue.sources.find(row=>row.id===value.sourceId);
+    if(!source)throw new Error('Select the complete original recurring-work source from this case’s Sources.');
+    return {sourceId:source.id,expectedSourceSha256:source.sha256};
+  }
+  function workflowPanel(){
+    const targets=[['new','Create a new installation']];
+    if(session.mode==='edit'&&draft())targets.push(['draft','Update the complete open draft']);
+    if(session.mode==='saved'&&selectedRow)targets.push(['saved','Prepare the selected installation’s next edition']);
+    if(!targets.some(([key])=>key===session.workflowIntake.target))session.workflowIntake.target='new';
+    return workflowIntakePanel({state:session.workflowIntake,inventory:workflowInventory,sources:sourceOptions(),
+      targets,button,editable:editable(),pending:!!session.pending||!!session.accepted,onSources:!!onSources});
+  }
+  function openWorkflow(){
+    capture();const binding=(session.mode==='edit'?draft()?.document:selectedRow?.preview.document)?.workflowPeriods;
+    const value=session.workflowIntake;
+    if(binding){
+      value.sourceId=binding.sourceId;value.cycleIds=binding.periods.map(row=>row.cycleId);
+      value.target=session.mode==='edit'?'draft':'saved';
+    }
+    value.open=true;workflowInventory=null;persist();
+  }
+  async function readWorkflows(){
+    capture();const epoch=++generation,value=copy(session.workflowIntake);
+    await reloadCase();if(!own(epoch))return;
+    const selection=workflowSelection(value);
+    const result=await api(prefix+'/installation-workflows',{expectedVersion:caseValue.program.version,...selection});
+    if(!own(epoch)||session.workflowIntake.sourceId!==value.sourceId)return;
+    if(result.source?.caseId!==caseId||!same(result.selection,selection)||!Array.isArray(result.periods))
+      throw new Error('Reopen the exact complete recurring-work source.');
+    workflowInventory=result;
+    session.workflowIntake.cycleIds=session.workflowIntake.cycleIds.filter(id=>result.periods.some(row=>row.cycleId===id));
+    if(!session.workflowIntake.cycleIds.length&&result.periods.length===1)
+      session.workflowIntake.cycleIds=[result.periods[0].cycleId];
+    session.notice='Read '+result.periods.length+' complete original customer periods from '+result.profile.name+'.';
+    persist();
+  }
+  async function prepareWorkflow(){
+    capture();
+    const value=copy(session.workflowIntake),inventory=workflowInventory;
+    const cycleIds=(inventory?.periods??[]).filter(row=>value.cycleIds.includes(row.cycleId)).map(row=>row.cycleId);
+    if(!inventory||!cycleIds.length)throw new Error('Read and select the original customer periods first.');
+    const originalDraft=value.target==='draft'?copy(draft()):null;
+    const originalSaved=value.target==='saved'?selectedRow:null;
+    if(value.target==='draft'&&!originalDraft||value.target==='saved'&&!originalSaved)
+      throw new Error('Reopen the complete Installation destination.');
+    const epoch=++generation,selection=copy(inventory.selection);
+    await reloadCase();if(!own(epoch))return;
+    if(!same(workflowSelection(value),selection))throw new Error('Read the selected original recurring source again.');
+    const installationId=originalDraft?.installationId??originalSaved?.id??null;
+    const expectedRevision=originalDraft?.expectedRevision??
+      (originalSaved?list().find(row=>row.id===originalSaved.id)?.revision:0);
+    if(expectedRevision===undefined)throw new Error('Reopen the current saved Installation edition.');
+    const document=originalDraft?.document??originalSaved?.preview.document;
+    const result=await api(prefix+'/installation-workflow-seed',{expectedVersion:caseValue.program.version,
+      ...selection,cycleIds,installationId,expectedRevision,...(document?{document}:{})});
+    if(!own(epoch))return;
+    const binding=result.document?.workflowPeriods;
+    if(result.source?.caseId!==caseId||result.installationId!==installationId||result.expectedRevision!==expectedRevision||
+      binding?.sourceId!==selection.sourceId||binding?.sourceSha256!==selection.expectedSourceSha256||
+      binding?.profileId!==inventory.profile.id||!cycleIds.every(id=>binding.periods.some(row=>row.cycleId===id)))
+      throw new Error('Reopen the original customer source and selected Installation.');
+    capture();
+    const live=originalDraft?session.drafts[originalDraft.key]:null;
+    const laterEdits=originalDraft&&(!live||live.token!==originalDraft.token||
+      !same(live.document,originalDraft.document)||live.note!==originalDraft.note);
+    const key=originalDraft&&!laterEdits?originalDraft.key:'workflow-'+crypto.randomUUID();
+    session.drafts[key]={key,token:crypto.randomUUID(),label:inventory.profile.name+' · operating periods',
+      installationId,expectedRevision,document:result.document,
+      note:originalDraft?.note||'Receive original customer operating periods from '+inventory.profile.name,dirty:true};
+    session.notice='Prepared '+binding.periods.length+' complete original periods for the Installation’s next edition.'+
+      (result.workflow.resetCycleIds.length?' Changed original periods now have open acceptance steps.':'')+
+      (laterEdits?' Your later form edits remain in the open draft; the received periods are in a separate retained draft.':'');
+    if(!laterEdits){
+      session.draftKey=key;session.mode='edit';session.selected=null;selectedRow=null;
+      preview=null;previewDraft=null;session.workflowIntake.open=false;
+    }
+    persist();
+  }
   async function newDraft(){
     capture();const epoch=++generation,seeded=await api(prefix+'/installation-seed',{expectedVersion:caseValue.program.version});
     if(!own(epoch))return;
@@ -405,6 +563,9 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     session.draftKey=key;session.mode='edit';session.selected=null;selectedRow=null;preview=null;previewDraft=null;persist();
   }
   async function editSaved(){
+    if(session.pending||session.accepted||session.inflight)
+      throw new Error('Recover the original saved request before opening another installation draft.');
+    if(!editable())throw new Error('Reopen the operating case to change its installation.');
     const row=selectedRow;if(!row)return;
     const epoch=++generation,existing=session.drafts[row.id];
     await reloadCase();if(!own(epoch))return;
@@ -514,10 +675,22 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
   }
   root.addEventListener('submit',event=>{if(event.target.matches('[data-installation-editor]')){event.preventDefault();run(previewDraftInput);}});
   root.addEventListener('input',event=>{
-    if(event.target.matches('[data-installation-field],[data-installation-note]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination],[data-installation-note]')){capture();controls();}
     if(event.target.matches('[data-installation-filter]')){session.filter=event.target.value;const start=event.target.selectionStart;render();const input=$('[data-installation-filter]');input.focus();try{input.setSelectionRange(start,start);}catch{}}
   });
   root.addEventListener('change',event=>{
+    if(event.target.matches('[data-workflow-period-field],[data-workflow-period-cycle]')){
+      capture();
+      if(event.target.matches('[data-workflow-period-field]')){
+        const key=event.target.dataset.workflowPeriodField;session.workflowIntake[key]=event.target.value;
+        if(key==='sourceId'){workflowInventory=null;session.workflowIntake.cycleIds=[];}
+      }else{
+        const id=event.target.dataset.workflowPeriodCycle;
+        session.workflowIntake.cycleIds=event.target.checked?[...new Set([...session.workflowIntake.cycleIds,id])]:
+          session.workflowIntake.cycleIds.filter(value=>value!==id);
+      }
+      persist();render();return;
+    }
     if(event.target.matches('[data-workshare-field]')){
       capture();
       const key=event.target.dataset.workshareField;
@@ -525,7 +698,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       if(key==='sourceId'||key==='packetSourceId'){workshareInventory=null;session.workshareIntake.caseId='';}
       persist();render();return;
     }
-    if(event.target.matches('[data-installation-field]')){capture();controls();}
+    if(event.target.matches('[data-installation-field],[data-installation-coordination]')){capture();controls();}
     if(event.target.matches('[data-installation-file]')&&event.target.files[0])run(()=>importDraft(event.target.files[0]));
   });
   root.addEventListener('click',event=>{
@@ -537,6 +710,12 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     }
     run(async()=>{
       if(action==='new')return newDraft();
+      if(action==='workflow-open')return openWorkflow();
+      if(action==='workflow-close'){capture();session.workflowIntake.open=false;persist();return;}
+      if(action==='workflow-sources'){capture();persist();onSources?.();return;}
+      if(action==='workflow-read')return readWorkflows();
+      if(action==='workflow-prepare')return prepareWorkflow();
+
       if(action==='workshare-open')return openWorkshare();
       if(action==='workshare-close'){capture();session.workshareIntake.open=false;persist();return;}
       if(action==='workshare-sources'){capture();persist();onSources?.();return;}
@@ -571,16 +750,47 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
         tranche:null,required:true,state:'OPEN',operator:'',observedAt:null,note:'',sourceIds:[],workIds:[],purchaseIds:[],outcomeIds:[]});
       if(action==='remove-check'){
         const index=Number(target.dataset.index),check=value.document.checks[index];
+        if(workflowBoundCheck(value.document,check))
+          throw new Error('Receive the complete original customer periods to update their acceptance steps.');
         if(value.document.workshare?.phaseChecks.some(row=>row.checkId===check?.id))
           throw new Error('Receive the revised original Workshare to change its commercial phases.');
         value.document.checks.splice(index,1);
+        if(value.document.coordination){
+          value.document.coordination.steps=value.document.coordination.steps.filter(row=>row.checkId!==check.id)
+            .map(row=>({...row,dependsOn:row.dependsOn.filter(id=>id!==check.id)}));
+        }
       }
       value.dirty=true;preview=null;previewDraft=null;persist();
     });
   });
+  async function openQueueRequest(request){
+    if(!request.id){delete session.requestOpen;render();return;}
+    if(!Number.isSafeInteger(request.revision)||request.revision<1)
+      throw new Error('Refresh the delivery queue and select the original saved edition.');
+    await reloadCase();if(!available())return;
+    const head=list().find(row=>row.id===request.id);
+    if(!head)throw new Error('Refresh the delivery queue to reopen the current installation.');
+    await openEdition(request.id,request.edit?head.revision:request.revision);
+    if(!available()||session.requestOpen!==request||selectedRow?.id!==request.id||
+      selectedRow.revision!==(request.edit?head.revision:request.revision))return;
+    if(request.edit&&caseValue.program.state==='OPEN'){
+      // Review the current head when a queue row has aged; retain any existing local draft.
+      await editSaved();if(!available())return;
+      session.notice=draft()?.expectedRevision!==head.revision?
+        'Reopened your retained draft. The installation has a newer saved edition; keep your edits and review the current edition before saving.':
+        request.revision!==head.revision?'The installation changed after the queue was read. Opened current edition '+head.revision+' for delivery planning.':
+        'Opened the installation delivery assignment. Review and save the complete edition when ready.';
+    }else if(request.edit)session.notice='This operating case is closed. Opened the saved edition for review.';
+    delete session.requestOpen;persist();render();
+    if(session.mode==='edit')focusCoordination(request.taskId);
+  }
   async function initialize(){
     if(session.inflight)await session.inflight.catch(()=>{});
     if(session.accepted){await acceptReadback();return;}
+    if(session.requestOpen){
+      if(session.pending){session.notice='Recover the retained installation save to continue the selected delivery assignment.';persist();render();return;}
+      await openQueueRequest(session.requestOpen);return;
+    }
     if(session.mode==='edit'&&draft()){render();return;}
     const selected=session.selected;
     if(selected?.id){await openEdition(selected.id,selected.revision??undefined);return;}

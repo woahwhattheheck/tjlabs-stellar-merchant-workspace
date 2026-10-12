@@ -8,11 +8,12 @@
   "sharedFileConstructor": "5a131ffa83968cdd539902913da3a35e8ac05334",
   "application": {
     "repository": "woahwhattheheck/public-commons-sprint-2026",
-    "path": "deliveries/wqx-paired-scientific-editions-20261012/WQX_Paired_Scientific_Editions_20261012.zip",
-    "bytes": 4382486,
-    "sha256": "01809aa463c82a06837f2bd040f016e060958efa3a826f1f44cb87753d556823",
-    "gitBlob": "489321dfad23bc60cdece59afc4329cc70eb649b",
-    "publicationCommit": "29111a3767d6026ad07f92782b28f44745e705d8"
+    "path": "deliveries/wqx-paid-scientific-editions-20261012/WQX_Paired_Scientific_Paid_Delivery_20261012.zip",
+    "bytes": 4399184,
+    "sha256": "766dcf7be104a2904a498432a21dc8df89d68e2db005a78ea7093aab01a91d30",
+    "gitBlob": "467634bfc7932b8a425f5b7d903afaab272ac629",
+    "publicationCommit": "082ba3c4dafbc998da4cbef30a4ad1c30502eed0",
+    "sourceFiles": 668
   },
   "files": [
     {
@@ -143,10 +144,10 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/wqx-water-quality.json",
-      "previousGitBlob": "c81ee3e0e304013db849d889251480b80fe6812d",
-      "gitBlob": "23dbf4d09fdd72faadb1cb309a9f16519de19186",
-      "bytes": 6502,
-      "sha256": "273858da41bc1ec56f9d99a4d6edbc54808aed96aa0a20a4b19c6b1784f23477"
+      "previousGitBlob": "23dbf4d09fdd72faadb1cb309a9f16519de19186",
+      "gitBlob": "3a672a34aa7c725832e44f27ffd5210c83c02f8e",
+      "bytes": 7370,
+      "sha256": "882180ac21ed5e698fd35f4436ade0251db32a205e82fc0d1c622c65766489e1"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/analysis.mjs",
@@ -182,6 +183,69 @@
       "gitBlob": "1ba8e27697aae59acbf6587878ca8899dd6fb1e7",
       "bytes": 14834,
       "sha256": "f46a79bbda9c171870f2e87fb9931b111b3d78dceddfbba798d6b5b8360f342b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/application.mjs",
+      "previousGitBlob": "35f5823140c4eee973997799d00f2d38efad4c26",
+      "gitBlob": "22b7265dbc553904877de7fcb10dea8f3b1595e7",
+      "bytes": 15992,
+      "sha256": "61858a8c64cbc8a119887e614bda0da2e7567b0be1fee828de7be90821016afe"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/merchant.example.json",
+      "previousGitBlob": "3fa091893996c313ad26aaa500db29b40ef29acb",
+      "gitBlob": "fd98db692efe9eefc3574ff21323d04276a3ddc8",
+      "bytes": 3858,
+      "sha256": "db9dae3fd8670407b37550fafc1324e057b1229094b17bd1617a024555a710d2"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/PAIRED_SCIENTIFIC.md",
+      "previousGitBlob": null,
+      "gitBlob": "4ba4c83afaaf46118910f969d264507fba6518a8",
+      "bytes": 9817,
+      "sha256": "8d39bbd855b264e14979b6d6b8b6f00444610c3d3e5b7a706ae433dfc5051748"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/README.md",
+      "previousGitBlob": "497eb93f59adb4a19e848b44599f71781ddadcf1",
+      "gitBlob": "fe36975b8e8ab4fd7d11af5788a2db688cda4c55",
+      "bytes": 16718,
+      "sha256": "5547f7f4f9cd920b2cc9b905d9ebb8ef185fea9cdf1fb8320ab98f1642998141"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/receive-scientific.mjs",
+      "previousGitBlob": null,
+      "gitBlob": "adbe607338ea9e2801018b0d0badcbac122d700e",
+      "bytes": 13772,
+      "sha256": "5f819c1e8ede5e87e1e035d6a47b575a6256e45c88dcda58153bc9a159fe7c7d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/receive.mjs",
+      "previousGitBlob": "eadc858f2e1a787abcaf9801e368c5ff566ea1f8",
+      "gitBlob": "6b19bef3399d1b330486021b4d56ac4a493d6e93",
+      "bytes": 17977,
+      "sha256": "83b36569c77e28e9651264748d9f878c8d58aa1fcd44632a913b96e66ccb7ba9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/scientific-input.example.json",
+      "previousGitBlob": null,
+      "gitBlob": "0cca12cbe04d9141d2bf0c0153cba28c892ec68b",
+      "bytes": 349,
+      "sha256": "59d75a415713bf3f42141ba779fd6da8addc26770d87a23030da7eeb2330d688"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/scientific.mjs",
+      "previousGitBlob": null,
+      "gitBlob": "9d44c133cc2abe7dcdf056d016291b61f0f98d30",
+      "bytes": 8906,
+      "sha256": "374504c6e22547292fe2cbafd8206a71a4a8db10b44dc881387e97d57d7c599d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/jobs/verify-result.py",
+      "previousGitBlob": "2fff6a83bada27c3d1fa39b603b4329a4e20eec7",
+      "gitBlob": "1dfb385151b96f4f48cfb3e3dbf0c6e8770ff1ca",
+      "bytes": 6780,
+      "sha256": "56987913136758bc47dde78b2a2948b521b368aed6a928d1b5290586a1d024b5"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/wqx-water-quality/managed.mjs",
@@ -357,5 +421,24 @@
     "native": "Prepared same-operation four-phase receiver; no native completion claimed by this source integration.",
     "sourceCalculation": "Complete original source modules and 1,035-row cohort executed in connected V8."
   },
-  "integrationBaseCommit": "7c22040659b275010b03753ad2ca1479e0afac03"
+  "integrationBaseCommit": "926fdb499568bfd541ee2058ab5bd8380ce9d306",
+  "previousApplication": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "path": "deliveries/wqx-paired-scientific-editions-20261012/WQX_Paired_Scientific_Editions_20261012.zip",
+    "bytes": 4382486,
+    "sha256": "01809aa463c82a06837f2bd040f016e060958efa3a826f1f44cb87753d556823",
+    "gitBlob": "489321dfad23bc60cdece59afc4329cc70eb649b",
+    "publicationCommit": "29111a3767d6026ad07f92782b28f44745e705d8"
+  },
+  "paidScientific": {
+    "publicHead": "24c4c2e08fce1703b93d5ba94a1bf81cbf6dec36",
+    "publicMerge": "26b448ce5b841fbed5de50fee2c21230d6a4dc2c",
+    "pullRequest": 2367,
+    "function": "waterQualityReview",
+    "route": "/water-quality-review",
+    "mode": "scientific",
+    "exports": 7,
+    "expectedScientificReviewSha256": "Required exact saved identity",
+    "nativeReceiving": "Prepared original worker, independent receive and cold seven-export comparison; execution receipt remains pending."
+  }
 }

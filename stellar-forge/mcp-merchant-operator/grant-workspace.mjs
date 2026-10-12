@@ -405,7 +405,7 @@ export class MerchantGrantWorkspaces {
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', cases:'cases', case:'case',
       case_report:'case-report', case_history:'case-history', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
-      installations:'installations',installation:'installation',installation_history:'installation-history'};
+      delivery_queue:'delivery-queue',installations:'installations',installation:'installation',installation_history:'installation-history'};
     let original;
     if (Object.hasOwn(reads, verb)) original = await client.read(reads[verb], rest);
     else if (['plan_estimate','plan_save','plan_restore','plan_clone'].includes(verb)) {
@@ -421,6 +421,15 @@ export class MerchantGrantWorkspaces {
       const hasDocument=inputs!==undefined||input!==undefined||inputPointer!==undefined||expectedInputSha256!==undefined;
       if(hasDocument)body.document=await this.#modelInputs(alias,args,'Installation');
       original=await client.installationWorkshareSeed(caseId,body);
+    }
+    else if (verb === 'installation_workflows') {
+      const {caseId,...body}=rest; original=await client.installationWorkflows(caseId,body);
+    }
+    else if (verb === 'installation_workflow_seed') {
+      const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;
+      if(inputs!==undefined||input!==undefined||inputPointer!==undefined||expectedInputSha256!==undefined)
+        body.document=await this.#modelInputs(alias,args,'Installation');
+      original=await client.installationWorkflowSeed(caseId,body);
     }
     else if (verb === 'installation_preview'||verb === 'installation_save') {
       const {caseId,inputs,input,inputPointer,expectedInputSha256,...body}=rest;

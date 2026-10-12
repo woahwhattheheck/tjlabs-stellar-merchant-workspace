@@ -7,6 +7,7 @@ import { digest, projectName, validateVersion, plain } from './store.mjs';
 import { readExport, verifyExport, verifyFiles } from './merchant.mjs';
 import { readDeployment } from './deployment.mjs';
 import { readPreview } from './authoring.mjs';
+import { collectNativeRequestClosure, collectRequestClosure } from './request-files.mjs';
 import { readComparison, comparisonReference, comparisonRelativeFile, validateComparisonRecord, verifyComparisonSources } from './comparison.mjs';
 import { WORKSPACE_PATHS_SCHEMA, pathContext, readProjectPaths, referenceDirectory, usedPathRoots, workspaceOrigin } from './paths.mjs';
 
@@ -130,7 +131,15 @@ function allowedFile(filename, project, revision) {
     return parts.length >= 3 && parts[1].startsWith(project + '-');
   if (parts[0] === 'comparisons') return parts.length === 3 && UUID.test(parts[1])
     && /^[1-9]\d*\.json$/.test(parts[2]) && Number(parts[2].slice(0, -5)) <= 256;
-  return parts[0] === 'previews' && parts.length === 2 && UUID.test(parts[1].slice(0, -5)) && parts[1].endsWith('.json');
+  if (parts[0] === 'request-sets') return parts.length === 2 && UUID.test(parts[1].slice(0, -5)) && parts[1].endsWith('.json');
+  if (parts[0] === 'request-runs' && UUID.test(parts[1] ?? '')) {
+    if (parts.length === 3) return /^[1-9]\d*\.json$/.test(parts[2]) && Number(parts[2].slice(0, -5)) <= 256;
+    return parts.length === 4 && ['attempts', 'controls'].includes(parts[2])
+      && new RegExp('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}' +
+        (parts[2] === 'attempts' ? '(?:\\.done)?' : '') + '\\.json$').test(parts[3]);
+  }
+  return parts[0] === 'previews' && parts.length === 2
+    && new RegExp('^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}(?:\\.pending)?\\.json$').test(parts[1]);
 }
 function indexOf(bytes, expectedSha256) {
   if (!SHA.test(expectedSha256 ?? '') || digest(bytes) !== expectedSha256 || bytes.length > 65000)
@@ -167,7 +176,11 @@ export async function describeProjectHandover(store, { project, revision } = {})
   const selectedName = 'projects/' + project + '/' + revision + '.json';
   const selectedSha256 = digest(await bytesAt(store.root, selectedName));
   const cache = await directory(join(store.root, 'handover-indexes'), true);
-  const cacheName = digest(json({ project, revision, selectedSha256, root: store.root, closureVersion: 2 })) + '.json';
+  const versions = [];
+  for (let number = 1; number <= revision; number++) versions.push(await store.read(project, number));
+  const requestClosure = await collectNativeRequestClosure(store, versions);
+  const requestFilesSha256 = digest(json([...requestClosure.files.values()].map(item => item.file).sort((a, b) => a.name.localeCompare(b.name))));
+  const cacheName = digest(json({ project, revision, selectedSha256, root: store.root, closureVersion: 3, requestFilesSha256 })) + '.json';
   try {
     const bytes = await bytesAt(cache, cacheName), sha256 = digest(bytes), index = indexOf(bytes, sha256);
     if (index.project.id !== project || index.project.revision !== revision || index.project.inputDigest !== selected.inputDigest
@@ -180,6 +193,7 @@ export async function describeProjectHandover(store, { project, revision } = {})
       if (head.length !== file.bytes || digest(head) !== file.sha256) fail('The selected handover head changed.');
       return head;
     } }]));
+    await put(cache, sha256 + '.json', bytes);
     return { index, bytes, sha256, loaders };
   } catch (error) { if (error.code !== 'ENOENT') throw error; }
   const loaders = new Map(), roots = new Set([store.root]);
@@ -192,7 +206,7 @@ export async function describeProjectHandover(store, { project, revision } = {})
   const addGroup = async (root, files) => { for (const file of files) await add(join(root, name(file.name)), file); };
   const exports = new Map(), deployments = new Map(), previews = new Map(), comparisons = new Map(), comparisonCache = new Map();
   for (let number = 1; number <= revision; number++) {
-    const saved = await store.read(project, number);
+    const saved = versions[number - 1];
     usedPathRoots(saved, context, roots);
     await add(join(store.root, 'projects', project, number + '.json'));
     for (const reference of saved.exports) {
@@ -235,20 +249,50 @@ export async function describeProjectHandover(store, { project, revision } = {})
         { bytes: retained.raw.length, sha256: retained.sha256 });
     }
   }
+  for (const item of requestClosure.files.values()) await add(join(store.root, item.file.name), item.file);
   const head = json({ id: project, revision, inputDigest: selected.inputDigest }), headName = 'projects/' + project + '/head.json';
   loaders.set(headName, { file: entry(headName, head), load: async () => head });
   const index = { schema: PROJECT_HANDOVER_SCHEMA,
     project: { id: project, revision, inputDigest: selected.inputDigest, title: selected.input.title, updatedAt: selected.updatedAt },
     roots: [...roots].sort(), files: [...loaders.values()].map(item => item.file).sort((a, b) => a.name.localeCompare(b.name)),
     counts: { revisions: revision, merchantRecords: exports.size, deploymentGenerations: deployments.size, completedPreviews: previews.size,
-      comparisonGenerations: comparisons.size },
+      comparisonGenerations: comparisons.size, ...requestClosure.counts },
     deploymentBinding: 'Retained packets preserve their original installed adapter and host. Prepare a new local packet through the original deployment compiler.' };
   const bytes = json(index), sha256 = digest(bytes);
   indexOf(bytes, sha256);
   // One create-only index pins the complete selection. Each later file read
   // checks that file's exact bytes instead of hashing the whole project again.
   await put(cache, cacheName, bytes);
+  await put(cache, sha256 + '.json', bytes);
   return { index, bytes, sha256, loaders };
+}
+/** Read a pinned index/file after the original source run or project advances. */
+export async function readProjectHandoverFile(store, selection, handoverSha256, filename, expected) {
+  if (!SHA.test(handoverSha256 ?? '')) fail('Select the original prepared handover hash.', 409);
+  let bytes;
+  try { bytes = await bytesAt(store.root, 'handover-indexes/' + handoverSha256 + '.json'); }
+  catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    const retained = await describeProjectHandover(store, selection);
+    if (retained.sha256 !== handoverSha256)
+      fail('The original handover selection no longer matches this retained file descriptor.', 409);
+    bytes = retained.bytes;
+  }
+  const index = indexOf(bytes, handoverSha256);
+  if (index.project.id !== selection.project || index.project.revision !== selection.revision)
+    fail('The retained handover index belongs to another saved project selection.', 409);
+  if (filename === PROJECT_HANDOVER_FILE) {
+    if (expected && (bytes.length !== expected.bytes || digest(bytes) !== expected.sha256))
+      fail('The original handover index differs from the selected transfer manifest.', 409);
+    return bytes;
+  }
+  const file = index.files.find(item => item.name === name(filename));
+  if (!file || expected && (file.bytes !== expected.bytes || file.sha256 !== expected.sha256))
+    fail('The requested handover file differs from its original prepared index.', 409);
+  if (filename !== 'projects/' + index.project.id + '/head.json') return bytesAt(store.root, filename, file);
+  const head = json({ id: index.project.id, revision: index.project.revision, inputDigest: index.project.inputDigest });
+  if (head.length !== file.bytes || digest(head) !== file.sha256) fail('The selected handover head changed.', 409);
+  return head;
 }
 function view(index, sha256) {
   return { schema: PROJECT_HANDOVER_SCHEMA, project: index.project, handoverSha256: sha256,
@@ -274,12 +318,12 @@ async function verifyClosure(index, load) {
     for (const item of entries) requireFile(originalPath(index, join(root, name(item.name))), item);
   };
   const exported = new Map(), deployed = new Map(), previewed = new Map(), compared = new Map(), comparisonRecords = new Map();
-  let last;
+  let last; const versions = [];
   for (let number = 1; number <= index.project.revision; number++) {
     const file = requireFile('projects/' + index.project.id + '/' + number + '.json');
     const saved = validateVersion(decode(await load(file)), index.project.id);
     if (saved.revision !== number) fail('The handover revision order changed.');
-    last = saved;
+    last = saved; versions.push(saved);
     for (const reference of saved.exports) {
       if (seenReference(exported, reference, 'merchant')) continue;
       const record = await recordJson(originalPath(index, join(dirname(reference.directory), 'workspace-export.json')), reference.recordSha256);
@@ -330,6 +374,26 @@ async function verifyClosure(index, load) {
       return original.record;
     },
   });
+  const requestClosure = await collectRequestClosure(versions, {
+    includeUnattached: true,
+    load: async (filename, sha256) => load(requireFile(filename, sha256 ? { sha256 } : undefined)),
+    maybe: async filename => files.has(filename) ? load(requireFile(filename)) : null,
+    generations: async id => [...files.keys()].filter(filename => filename.startsWith('request-runs/' + id + '/'))
+      .map(filename => filename.split('/')).filter(parts => parts.length === 3 && /^[1-9]\d*\.json$/.test(parts[2]))
+      .map(parts => Number(parts[2].slice(0, -5))),
+    auxiliary: async run => {
+      const result = [];
+      for (const filename of files.keys()) {
+        const parts = filename.split('/');
+        if (parts.length !== 4 || parts[0] !== 'request-runs' || parts[1] !== run.id ||
+            !['attempts', 'controls'].includes(parts[2])) continue;
+        const raw = await load(files.get(filename));
+        result.push({ name: filename, raw, record: decode(raw), sha256: digest(raw) });
+      }
+      return result;
+    },
+  });
+  for (const item of requestClosure.files.values()) requireFile(item.file.name, item.file);
   const head = decode(await load(requireFile('projects/' + index.project.id + '/head.json')));
   if (head.id !== index.project.id || head.revision !== index.project.revision || head.inputDigest !== last.inputDigest
       || last.inputDigest !== index.project.inputDigest || last.input.title !== index.project.title
@@ -337,8 +401,8 @@ async function verifyClosure(index, load) {
     fail('The handover head does not match its selected original revision.');
   if (required.size !== files.size) fail('The handover includes files outside the selected committed project closure.');
   const counts = { revisions: index.project.revision, merchantRecords: exported.size,
-    deploymentGenerations: deployed.size, completedPreviews: previewed.size, comparisonGenerations: compared.size };
-  if (!plain(index.counts) || Object.entries(counts).some(([key, count]) => (key === 'comparisonGenerations' ? index.counts[key] ?? 0 : index.counts[key]) !== count))
+    deploymentGenerations: deployed.size, completedPreviews: previewed.size, comparisonGenerations: compared.size, ...requestClosure.counts };
+  if (!plain(index.counts) || Object.entries(counts).some(([key, count]) => (key === 'comparisonGenerations' || key.startsWith('request') ? index.counts[key] ?? 0 : index.counts[key]) !== count))
     fail('The handover totals do not match its original committed history.');
   return last;
 }
@@ -374,11 +438,49 @@ export async function inspectProjectHandover(store, { directory: source, handove
 /** Retain a local portable folder through the same native writer. */
 export async function prepareProjectHandover(store, { id, project, revision } = {}) {
   if (!UUID.test(id ?? '')) fail('Use a caller-chosen handover UUID.');
+  projectName(project);
+  if (!Number.isSafeInteger(revision) || revision < 1) fail('Select a committed project revision.');
   return store.exclusive(async () => {
-    const value = await describeProjectHandover(store, { project, revision });
     const root = await directory(join(store.root, 'handovers'), true), target = await directory(join(root, id), true);
-    const intent = { schema: PREPARED, id, project, revision, handoverSha256: value.sha256 };
-    await put(target, 'intent.json', json(intent));
+    let intent, value;
+    try { intent = decode(await bytesAt(target, 'intent.json')); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    if (intent) {
+      if (intent.schema !== PREPARED || intent.id !== id || intent.project !== project || intent.revision !== revision
+          || !SHA.test(intent.handoverSha256 ?? ''))
+        fail('This handover UUID already retains another selected project revision.', 409);
+      let bytes;
+      try { bytes = await bytesAt(target, PROJECT_HANDOVER_FILE); }
+      catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        try { bytes = await bytesAt(store.root, 'handover-indexes/' + intent.handoverSha256 + '.json'); }
+        catch (missing) {
+          if (missing.code !== 'ENOENT') throw missing;
+          // A pre-upgrade preparation may only have the original revision cache.
+          const original = await describeProjectHandover(store, { project, revision });
+          if (original.sha256 !== intent.handoverSha256)
+            fail('Continue the original handover with its retained index; its selected request history has advanced.', 409);
+          bytes = original.bytes;
+        }
+      }
+      const index = indexOf(bytes, intent.handoverSha256);
+      if (index.project.id !== project || index.project.revision !== revision)
+        fail('The prepared handover index changed its original project selection.', 409);
+      const headName = 'projects/' + project + '/head.json';
+      const head = json({ id: project, revision, inputDigest: index.project.inputDigest });
+      const loaders = new Map(index.files.map(file => [file.name, { file, load: async () => {
+        try { return await bytesAt(target, file.name, file); }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
+        if (file.name !== headName) return bytesAt(store.root, file.name, file);
+        if (head.length !== file.bytes || digest(head) !== file.sha256) fail('The prepared project head changed.', 409);
+        return head;
+      } }]));
+      value = { index, bytes, sha256: intent.handoverSha256, loaders };
+    } else {
+      value = await describeProjectHandover(store, { project, revision });
+      intent = { schema: PREPARED, id, project, revision, handoverSha256: value.sha256 };
+      await put(target, 'intent.json', json(intent));
+    }
     for (const item of value.loaders.values()) await put(target, item.file.name, await item.load());
     await put(target, PROJECT_HANDOVER_FILE, value.bytes);
     const result = { ...view(value.index, value.sha256), id, directory: target, state: 'PREPARED' };

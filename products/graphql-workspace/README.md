@@ -82,7 +82,7 @@ starforge graphql-product receive --dir /srv/private/stellar-graphql \
 starforge graphql-product inspect-received --dir /srv/private/received-merchant-r12
 ~~~
 
-Receiving uses the original resumable downloader and native manifest. It delivers selected draft, preview, merchant, evolution, deployment, host or complete project-handover files with their original byte identities and nested paths. Offline inspection reopens those files after the source process closes. For continued authoring on a receiving host, select kind handover and use the original browser's Project handover actions or inspect-handover / reopen-handover. The [complete handover guide](HANDOVER.md) covers original history, interrupted receiving, source rebinding and local deployment preparation.
+Receiving uses the original resumable downloader and native manifest. It delivers selected draft, preview, merchant, evolution, deployment, host, response-comparison, saved-request or complete project-handover files with their original byte identities and nested paths. Offline inspection reopens those files after the source process closes. For continued authoring on a receiving host, select kind handover and use the original browser's Project handover actions or inspect-handover / reopen-handover. The [complete handover guide](HANDOVER.md) covers original history, interrupted receiving, source rebinding and local deployment preparation.
 
 See [OPERATING.md](OPERATING.md) for the complete source-to-merchant workflow, stable request recovery, receiving selections and application ownership.
 
@@ -102,3 +102,23 @@ continue reviews and author the next merchant revision.
 The [retained response review guide](../../stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/RESPONSE_REVIEW.md)
 covers actual browser operation, exact request templates, full-value inspection,
 original-result recovery, offline files and continued review after receiving.
+
+## Save cases, run the original requests, compare and receive
+
+The **Saved request sets and runs** browser panel retains named operation/variable
+cases against an exact saved source revision. A set can contain up to 32 cases;
+the eight-operation/24-case engagement can therefore keep all of its selected
+cases together. Each deliberate connected run allocates original preview UUIDs
+before it sends a request. Run progress, pause/cancel, explicit continuation,
+completed responses and unresolved original requests remain in the same writer.
+
+The installed client and ten dedicated CLI commands operate these same saved
+sets and native attempts. Baseline/candidate run selection feeds the existing
+response comparison and reviewer workflow without additional source queries.
+Prepared packets pin their selected bytes so an interrupted transfer can finish
+even after a later run or local edit. Full project handover retains the complete
+set/run history, original requests and responses for the receiving operator.
+
+See [REQUEST_SETS.md](../../stellar/scf-starforge-20261009/sf105-subquery-graphql-merchant/workspace/REQUEST_SETS.md)
+for the whole browser and installed-client workflow, exact request shapes,
+source-selection rules, request recovery and continued work after receiving.

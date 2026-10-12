@@ -154,3 +154,31 @@ The final private handover includes:
 - Any original failure artifacts and the actual successful continuation.
 
 A source parse or a prepared ready file is not a completed browser or full portable-case result. Report each stage according to its actual native receipt.
+
+### Continue a preserved prepared archive
+
+When the original preparation passed and a later receiving step stopped, retain the complete closed operation archive, its exact byte length and SHA-256, and the SHA-256 of its original `NATIVE_READY.json`. Confirm the previous process has ended before taking the same operation's lock. The existing held driver accepts an optional `resumePrepared` object in its complete intake:
+
+```json
+{
+  "resumePrepared": {
+    "archivePath": "/absolute/persistent/original-INTERRUPTED.zip",
+    "archiveBytes": 123456,
+    "archiveSha256": "<the original archive's full SHA-256>",
+    "readySha256": "<the original NATIVE_READY.json SHA-256>",
+    "sourceCorrections": [],
+    "priorExecution": {
+      "state": "FAILED_AFTER_PREPARATION",
+      "note": "Preserve the actual first failure and any unresolved delivery receipt."
+    }
+  }
+}
+```
+
+The numbers and digests above are placeholders. Supply the actual retained values. Keep the same execution base used by the saved configuration so every native source, SQLite and request path remains bound to its original identity.
+
+The driver verifies the complete archive before restoring regular files, rejects conflicting existing bytes, and checks the original ready state, operation, case, plan and version. It verifies all selected product source pins, reuses the successful preparation, then runs the original browser and fresh-process verification. It does not import a new business case or regenerate saved forecast and Portfolio identities.
+
+If a concrete receiving defect requires a companion correction, provide that complete corrected companion in the intake and add one `sourceCorrections` entry with `path`, `beforeBytes`, `beforeSha256`, `beforeGitBlob` and `reason`. The path must be one of the declared receiving companions. The original product source pins cannot change through this seam. The driver verifies the exact before-image, retains its complete bytes plus the before/after identities, then applies the correction atomically. The continuation receipt retains the parent archive, original ready SHA and every receiving-source change.
+
+Keep the first failure and any uncertain upload result explicit. A subsequent complete-case archive has its own actual delivery identity; creating that archive does not retrospectively establish whether an earlier interrupted upload succeeded.

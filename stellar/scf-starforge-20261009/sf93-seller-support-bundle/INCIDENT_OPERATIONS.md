@@ -2,6 +2,20 @@
 
 Run the original SF93 collector continuously, retain an actionable incident, notify the configured operator, acknowledge it from another terminal, and bring its original baseline and recovery captures into the existing SF74 case desk. The watcher owns its process and private state. Existing seller, operations and SF98 delivery processes retain their own lifecycle.
 
+## Watch an original Object buyer
+
+The same watcher accepts a reviewed saved ObjectSession alongside existing seller
+registrations. Use `review-object` to bind its exact session file, configuration and
+original intent, then apply that selection through the existing configuration
+revision. The watcher reads original per-request finalization views and verifies
+saved output without purchasing, assembling or finalizing anything.
+
+The [complete Object monitoring guide](OBJECT_MONITORING.md) covers bounded source
+review, the five incident conditions, original notification handling and the full
+SF74 case export/reopen flow. A missing view is not a zero payment or a completed
+delivery; financial state, verified output and process observations remain
+separate.
+
 ## Register and start
 
 Requirements are Node 22 or newer, Linux with util-linux `flock`, the original SF30 seller plus its operations listener, and a private directory on a local filesystem supporting file locks, atomic rename and fsync. Run the watcher as the same operating-system user as its private files. A foreground invocation can also be supervised by the deployment's existing process manager; configure it to send SIGTERM and allow current bounded requests/state writes to finish.

@@ -56,6 +56,11 @@ export async function start({directory,port=0,environment=process.env,python='py
           if(path==='/api/source')return send(response,200,await workspace.source(url.searchParams.get('id')));
           if(path==='/api/mapping')return send(response,200,await workspace.mapping(url.searchParams.get('id')));
           if(path==='/api/edition')return send(response,200,await workspace.edition(url.searchParams.get('id')));
+          if(path==='/api/refresh-plan')return send(response,200,await workspace.refreshPlan(url.searchParams.get('id')));
+          if(path==='/api/refresh-run')return send(response,200,await workspace.refreshRun(url.searchParams.get('id')));
+          if(path==='/api/refresh-changes')return send(response,200,await workspace.refreshChanges(url.searchParams.get('id'),{
+            offset:integerParam(url,'offset',0),limit:integerParam(url,'limit',50),kind:url.searchParams.get('kind')??'all'}));
+          if(path==='/api/refresh-record')return send(response,200,await workspace.refreshRecord(url.searchParams.get('id'),url.searchParams.get('key')));
           if(path==='/api/projection')return send(response,200,await workspace.suggestedProjection(url.searchParams.get('sourceId'),url.searchParams.get('id')));
           if(path==='/api/compare')return send(response,200,await workspace.compare(url.searchParams.get('before'),url.searchParams.get('after'),{
             offset:integerParam(url,'offset',0),limit:integerParam(url,'limit',50)}));

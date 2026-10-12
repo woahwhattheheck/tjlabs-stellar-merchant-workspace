@@ -200,3 +200,6 @@ export async function compareEditions(beforeDirectory,afterDirectory,{offset=0,l
     sameCollections:identity(before.projection.collections)===identity(after.projection.collections),
     counts,offset,limit,changes:changes.slice(offset,offset+limit),changeCount:changes.length,nextOffset:offset+limit<changes.length?offset+limit:null};
 }
+
+// Refresh comparison uses these original duplicate-selection and position rules.
+export { selectedRows, rowPosition };

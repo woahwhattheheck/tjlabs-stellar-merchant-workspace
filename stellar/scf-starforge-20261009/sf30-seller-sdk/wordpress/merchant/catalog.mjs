@@ -8,6 +8,7 @@ const ws={workspace:alias},exp={...ws,exportId:sha};
 export const wordpressActionNames=Object.freeze([
   'source.save','source.select','source.discover','capture.start','capture.resume','capture.pause',
   'mapping.save','edition.build','merchant.save','edition.export','product.select','source.packet','source.files',
+  'refresh.plan.save','refresh.run.start','refresh.run.advance','refresh.run.review','refresh.run.export',
   'publisher.status','publisher.prepare','publisher.preview','publisher.reviewDraft','publisher.publish',
   'publisher.activateSnapshot','publisher.collect','publisher.release.stage','publisher.release.inspect',
   'publisher.release.activate','publisher.release.rollback','publisher.release.start','publisher.release.stop',
@@ -21,6 +22,10 @@ export const wordpressActionContract=Object.freeze({
   'edition.build':['mappingId','dataset','review'],'merchant.save':['editionId','origin','path','payment','reviewer','note'],
   'edition.export':['editionId','merchantId','productId','productLabel','reviewer','note'],
   'product.select':['productId'],'source.packet':[],
+  'refresh.plan.save':['editionId','expectedSnapshot','label','note','merchantId','productId','limits','previousPlanId'],
+  'refresh.run.start':['planId','label','baselineEditionId'],'refresh.run.advance':['runId'],
+  'refresh.run.review':['runId','expectedReviewSha256','expectedCaptureSha256','decision','reviewer','note'],
+  'refresh.run.export':['runId','reviewer','note','merchantId','productId'],
   'source.files':['packetId','merchantId','productId','productLabel','name','reviewer','note'],
   'publisher.status':['productId'],'publisher.prepare':['productId','exportId'],
   'publisher.preview':['productId','target','query'],
@@ -62,6 +67,13 @@ tool('edition','Read the exact retained edition and native dataset snapshot.',{.
 tool('projection','Suggest a projection from the exact completed original capture.',{...ws,sourceId:uuid,id:uuid},['workspace','sourceId','id']);
 tool('compare','Compare two retained editions by their original native record IDs.',
   {...ws,before:uuid,after:uuid,offset:uint('Change offset.'),limit:uint('Changes in this page.',200,1)},['workspace','before','after']);
+tool('refresh_plan','Read the complete saved refresh plan, original edition, source selection and retained merchant choices.',{...ws,id:uuid},['workspace','id']);
+tool('refresh_run','Read the same refresh run, original discovery/capture, complete comparison identity, explicit decision and retained exports.',{...ws,id:uuid},['workspace','id']);
+tool('refresh_changes','Page the complete retained added/changed/removed comparison. Follow the exact returned global nextOffset, including under a kind filter.',
+  {...ws,id:uuid,offset:uint('Original global change ordinal.'),limit:uint('Changes returned on this page.',200,1),
+    kind:{type:'string',enum:['all','added','removed','changed']}},['workspace','id']);
+tool('refresh_record','Read both retained native and projected versions of one exact comparison key. Complete original response files remain available when previews are clipped.',
+  {...ws,id:uuid,key:str('Original comparison record key.',{minLength:1,maxLength:500})},['workspace','id','key']);
 tool('preview','Review a proposed projection against actual retained source records.',
   {...ws,sourceId:uuid,captureId:uuid,projection:{type:'object',additionalProperties:true},
     offset:uint('Record offset.'),limit:uint('Rows in this preview.',100,1)},['workspace','sourceId','captureId','projection']);
@@ -74,7 +86,7 @@ tool('act','Perform one original source, publication or buyer action with the cu
 tool('cancel','Ask the original workspace to cancel its currently active operation UUID. Inspect the original operation/job for actual completion.',
   {...ws,operationId:uuid},['workspace','operationId'],true);
 tool('artifact','Retain the complete original source/response/edition/export/packet file, streamed with bounded memory. A source packet preserves its full ZIP and exact digest.',
-  {...ws,kind:{type:'string',enum:['source','response','edition','export','packet']},id:uuid,
+  {...ws,kind:{type:'string',enum:['source','response','edition','export','packet','refresh']},id:uuid,
     name:str('Declared original member or response sequence.',{minLength:1,maxLength:4096}),sourceId:uuid},
   ['workspace','kind','id'],true);
 tool('publisher_artifact','Retain a complete original publisher review, customer configuration, acquisition manifest or delivered file.',

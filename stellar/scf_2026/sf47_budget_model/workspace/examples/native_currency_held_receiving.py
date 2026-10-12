@@ -82,6 +82,70 @@ try {
 }
 """
 
+
+def restore_prepared_archive(base, resume, operation):
+    """Restore the exact closed operation; never create a replacement case."""
+    require(isinstance(resume, dict), "A prepared continuation needs its original archive binding.")
+    archive = Path(resume["archivePath"]).resolve()
+    require(archive.is_file() and not archive.is_relative_to(base), "Keep the original archive outside its restored operation.")
+    raw = archive.read_bytes()
+    require(len(raw) == resume["archiveBytes"] and digest(raw) == resume["archiveSha256"],
+            "The closed original operation archive differs.")
+    with zipfile.ZipFile(archive) as saved:
+        members = saved.infolist()
+        require(len(members) <= 20000 and sum(x.file_size for x in members) <= 256 * 1024 * 1024,
+                "The selected original operation archive is outside the receiving bound.")
+        names = set()
+        for member in members:
+            require(member.filename not in names and "\\" not in member.filename,
+                    "Duplicate or ambiguous original archive member.")
+            names.add(member.filename)
+            mode = member.external_attr >> 16
+            require(not stat.S_ISLNK(mode) and (member.is_dir() or stat.S_IFMT(mode) in (0, stat.S_IFREG)),
+                    "Restore only regular original operation files.")
+            target = relative(base, member.filename)
+            if member.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+            else:
+                atomic(target, saved.read(member))
+    ready_path = base / "receiving" / "NATIVE_READY.json"
+    ready_raw = ready_path.read_bytes()
+    require(digest(ready_raw) == resume["readySha256"], "The prepared original case binding differs.")
+    ready = json.loads(ready_raw)
+    require(ready.get("state") == "READY_FOR_BROWSER" and ready.get("operationId") == operation,
+            "Continue only this original prepared case.")
+    return {"archivePath": str(archive), "archiveBytes": len(raw), "archiveSha256": digest(raw),
+            "readySha256": digest(ready_raw), "caseId": ready["caseId"], "planId": ready["planId"],
+            "version": ready["version"], "priorExecution": resume.get("priorExecution")}
+
+def replace_receiving_source(base, target, item, raw, correction):
+    """Retain a source-checked receiving fix beside its complete before-image."""
+    before = target.read_bytes()
+    require(len(before) == correction["beforeBytes"] and digest(before) == correction["beforeSha256"]
+            and git_blob(before) == correction["beforeGitBlob"], "The receiving correction preimage differs.")
+    require(isinstance(correction.get("reason"), str) and correction["reason"].strip(),
+            "Retain the concrete receiving finding.")
+    retained = relative(base / "receiving" / "source-corrections" / digest(before), item["path"])
+    atomic(retained, before)
+    receipt = {"path": item["path"], "reason": correction["reason"],
+               "before": {"path": str(retained), "bytes": len(before), "sha256": digest(before), "gitBlob": git_blob(before)},
+               "after": {"bytes": len(raw), "sha256": digest(raw), "gitBlob": git_blob(raw)}}
+    write_json(retained.with_name(retained.name + ".correction.json"), receipt)
+    fd, name = tempfile.mkstemp(prefix="." + target.name + ".correction.", dir=target.parent)
+    try:
+        with os.fdopen(fd, "wb") as out:
+            out.write(raw); out.flush(); os.fsync(out.fileno())
+        require(target.read_bytes() == before, "Receiving source changed during its correction.")
+        os.replace(name, target)
+        directory = os.open(target.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        Path(name).unlink(missing_ok=True)
+    return receipt
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True)
@@ -136,6 +200,15 @@ def main():
                 require(git_blob(raw) == item["gitBlob"], "Private Git source differs: " + item["path"])
             raw_private.append((item, raw))
         require(len({x["path"] for x, _ in raw_files}) == len(raw_files), "Duplicate product source intake.")
+        resume = intake.get("resumePrepared")
+        resumed = restore_prepared_archive(base, resume, operation) if resume is not None else None
+        source_corrections = resume.get("sourceCorrections", []) if resume is not None else []
+        require(isinstance(source_corrections, list), "Use a list of exact receiving source corrections.")
+        correction_by_path = {x["path"]: x for x in source_corrections}
+        require(len(correction_by_path) == len(source_corrections), "Duplicate receiving source correction.")
+        companion_paths = {x["path"] for x in intake["companions"]}
+        require(set(correction_by_path) <= companion_paths, "A receiving continuation cannot replace product source.")
+        correction_receipts = []
         cfg = json.loads(next(raw for item, raw in raw_private if item["path"] == "CONFIG.json"))
         original_base = Path(private["baseDirectory"])
         require(Path(cfg["repositoryRoot"]) == original_base / "source", "Original repository root differs.")
@@ -160,7 +233,15 @@ def main():
                 "The original complete case archive differs.")
         for item, raw in raw_files:
             target = relative(base / "source", item["path"])
-            atomic(target, raw)
+            correction = correction_by_path.get(item["path"])
+            if correction is not None:
+                require(target.is_file() and target.read_bytes() != raw, "The selected receiving correction is not applicable.")
+                correction_receipts.append(replace_receiving_source(base, target, item, raw, correction))
+            else:
+                atomic(target, raw)
+        if resumed is not None:
+            resumed["sourceCorrections"] = correction_receipts
+            write_json(base / "receiving" / "continuations" / (resumed["archiveSha256"] + ".json"), resumed)
         for item, raw in raw_private:
             if item["path"] != "CONFIG.json":
                 atomic(relative(base, item["path"]), raw)
@@ -332,11 +413,18 @@ def main():
                 tail=(base/(phase+".stderr")).read_text(errors="replace")[-12000:]
                 raise RuntimeError(phase + " exited " + str(code) + "\n" + tail)
         try:
-            run_phase("prepare",[python,"-B",str(caller),"--config",str(base/"CONFIG.json"),"--output",str(receiving),"--phase","prepare"])
+            if resumed is None:
+                run_phase("prepare",[python,"-B",str(caller),"--config",str(base/"CONFIG.json"),"--output",str(receiving),"--phase","prepare"])
+            else:
+                require(digest((receiving/"NATIVE_READY.json").read_bytes()) == resumed["readySha256"],
+                        "The original prepared case changed before browser continuation.")
+                outcome["preparedContinuation"] = resumed
+                emit({"state":"PHASE_REUSED","phase":"prepare","operationId":operation,**resumed})
             ready = json.loads((receiving/"NATIVE_READY.json").read_bytes())
             emit({"state":"NATIVE_READY","caseId":ready["caseId"],"legacyForecasts":len(ready["legacy"]["forecasts"]),
                 "legacyPortfolios":len(ready["legacy"]["portfolios"]),"readySha256":digest((receiving/"NATIVE_READY.json").read_bytes())})
-            publish("PREPARED")
+            if resumed is None:
+                publish("PREPARED")
             run_phase("browser",[node,"--max-old-space-size=256",str(base/"run-browser.mjs"),playwright,chromium,
                 str(callback),str(receiving/"NATIVE_READY.json"),str(receiving/"browser"),python])
             run_phase("verify",[python,"-B",str(caller),"--config",str(base/"CONFIG.json"),"--output",str(receiving),

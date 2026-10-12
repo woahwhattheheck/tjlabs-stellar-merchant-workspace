@@ -24,14 +24,35 @@ async function writeAtomic(filename,bytes,{replace=false}={}){
     await syncDirectory(path.dirname(filename));
   }finally{await fs.unlink(temporary).catch(error=>{if(error.code!=='ENOENT')throw error;});}
 }
-async function fingerprint(pid){
+const PROC_IDENTITY='sf47.procfs-identity.v1';
+function sameProcessIdentity(left,right){
+  return left?.schema===PROC_IDENTITY&&right?.schema===PROC_IDENTITY&&
+    left.procPid===right.procPid&&left.boot===right.boot&&
+    left.start===right.start&&left.namespace===right.namespace;
+}
+async function fingerprint(selector){
+  assert(selector==='self'||Number.isSafeInteger(selector)&&selector>0,'Use a self-observed procfs identity.');
+  const root='/proc/'+selector;
   try{
-    const [boot,stat]=await Promise.all([fs.readFile('/proc/sys/kernel/random/boot_id','utf8'),fs.readFile('/proc/'+pid+'/stat','utf8')]);
-    const fields=stat.slice(stat.lastIndexOf(')')+2).split(' ');
-    return {pid:Number(pid),boot:boot.trim(),start:fields[19],state:fields[0]};
+    const [boot,stat,namespace]=await Promise.all([
+      fs.readFile('/proc/sys/kernel/random/boot_id','utf8'),
+      fs.readFile(root+'/stat','utf8'),fs.readlink(root+'/ns/pid')]);
+    const close=stat.lastIndexOf(')'),fields=stat.slice(close+1).trim().split(/\s+/);
+    const procPid=Number(stat.slice(0,stat.indexOf(' ')));
+    assert(close>0&&Number.isSafeInteger(procPid)&&procPid>0&&
+      (selector==='self'||procPid===selector)&&/^[0-9]+$/.test(fields[19]||'')&&
+      /^[0-9]+$/.test(fields[1]||'')&&boot.trim()&&/^pid:\[[0-9]+\]$/.test(namespace),
+      'Incomplete native procfs process identity.');
+    return {schema:PROC_IDENTITY,procPid,boot:boot.trim(),start:fields[19],
+      state:fields[0],parentProcPid:Number(fields[1]),namespace};
   }catch(error){if(error.code==='ENOENT'||error.code==='ESRCH')return null;throw error;}
 }
-async function matches(identity){if(!identity)return false;const current=await fingerprint(identity.pid);return !!current&&current.state!=='Z'&&current.boot===identity.boot&&current.start===identity.start;}
+async function matches(identity){
+  assert(identity?.schema===PROC_IDENTITY&&Number.isSafeInteger(identity.procPid)&&
+    identity.procPid>0,'Legacy namespace-only process identity is ambiguous; preserve its original service owner.');
+  const current=await fingerprint(identity.procPid);
+  return !!current&&current.state!=='Z'&&sameProcessIdentity(current,identity);
+}
 async function hashFile(filename){
   const hash=createHash('sha256');let bytes=0;
   for await(const chunk of createReadStream(filename)){hash.update(chunk);bytes+=chunk.length;}
@@ -67,7 +88,8 @@ export async function receiveNativeCurrency({readyFile,outputDirectory,browser,p
   }
   let queue=Promise.resolve(),service=null,context=null,page=null,currentPhase='',routeJobs=new Set(),errors=[];
   const persist=patch=>{queue=queue.then(async()=>{if(patch)Object.assign(journal,patch);await writeAtomic(journalFile,json(journal),{replace:true});});return queue;};
-  const parentIdentity=await fingerprint(process.pid);
+  const selfIdentity=await fingerprint('self');
+  const parentIdentity=selfIdentity?{...selfIdentity,apiPid:process.pid}:null;
   assert(parentIdentity,'This original receiving needs its Linux process identity.');
   await writeAtomic(path.join(directory,'NATIVE_READY.json'),readyBytes);
   await persist();
@@ -77,50 +99,102 @@ export async function receiveNativeCurrency({readyFile,outputDirectory,browser,p
     const record={path:relative,bytes:bytes.length,sha256:digest,...source};
     journal.artifacts[name]=record;await persist();return record;
   }
-  async function stopService(record){
-    if(!record||!record.identity)return;
-    if(await matches(record.identity)){
-      process.kill(record.identity.pid,'SIGTERM');
-      const until=Date.now()+20000;while(await matches(record.identity)&&Date.now()<until)await sleep(75);
-      if(await matches(record.identity)){process.kill(record.identity.pid,'SIGKILL');const killUntil=Date.now()+5000;while(await matches(record.identity)&&Date.now()<killUntil)await sleep(75);}
-      assert(!(await matches(record.identity)),'The original Python service did not close; preserve its workspace.');
+  async function waitOwnedExit(owned,milliseconds){
+    let timer;
+    try{return await Promise.race([
+      owned.exited.then(outcome=>({ended:true,outcome})),
+      new Promise(resolve=>{timer=setTimeout(()=>resolve({ended:false}),milliseconds);})]);
+    }finally{clearTimeout(timer);}
+  }
+  async function reapOwnedChild(owned){
+    assert(owned?.child&&owned.exited,'Retain the actual original ChildProcess handle.');
+    const child=owned.child;
+    // Node's handle/API PID and the procfs PID can belong to different views.
+    // Only this held child object may receive a signal. Stored procfs identities
+    // are read-only recovery evidence and are never signal targets.
+    if(!owned.ended&&child.exitCode===null&&child.signalCode===null)child.kill('SIGTERM');
+    let observed=await waitOwnedExit(owned,20000);
+    if(!observed.ended){
+      if(!owned.ended&&child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');
+      observed=await waitOwnedExit(owned,5000);
     }
-    if(service?.record===record&&service.exited){
-      const ended=await Promise.race([service.exited.then(()=>true),sleep(5000).then(()=>false)]);
-      assert(ended,'The original child exit has not been reaped. Preserve its retained state.');
+    assert(observed.ended,'The original owned Python child has not exited; preserve its workspace and handle.');
+    return observed.outcome;
+  }
+  async function stopService(record){
+    if(!record)return;
+    if(service?.record===record){
+      await reapOwnedChild(service);
+    }else{
+      assert(record.identity,'The original service has no unambiguous retained identity.');
+      // The gate installs PDEATHSIG before GO. After an interrupted parent
+      // disappears, allow that original child to close; never guess a signal PID.
+      const until=Date.now()+5000;
+      while(await matches(record.identity)&&Date.now()<until)await sleep(75);
+      assert(!(await matches(record.identity)),
+        'The original service is still alive without its held ChildProcess handle; retain its original owner before continuing.');
     }
     record.state='CLOSED';record.closedAt=new Date().toISOString();await persist();
   }
   async function reconcileServices(){
     for(const record of journal.services){
       if(record.state==='CLOSED')continue;
-      if(await matches(record.parent)&&record.parent.pid!==process.pid)throw new Error('The original browser receiver still owns its Python service.');
+      if(await matches(record.parent)&&!sameProcessIdentity(record.parent,parentIdentity))
+        throw new Error('The original browser receiver still owns its Python service.');
       await stopService(record);
     }
   }
   async function startService(label){
     await reconcileServices();
     const command=[pythonExecutable,'-B',path.join(ready.sourceRoot,'server.py'),'--workspace',ready.workspaceRoot,'--port','0'];
-    const gate='import json,os,sys\nargv=json.loads(sys.argv[1])\nif sys.stdin.readline()!="RUN\\n": raise SystemExit(3)\nos.execv(argv[0],argv)\n';
-    const child=spawn(pythonExecutable,['-u','-c',gate,JSON.stringify(command)],{stdio:['pipe','pipe','pipe'],shell:false,env:{...process.env,PYTHONDONTWRITEBYTECODE:'1'}});
-    let stdout='',stderr='',settled=false;
-    const exited=new Promise(resolve=>{child.once('exit',(code,signal)=>resolve({code,signal}));child.once('error',error=>resolve({error:error.message}));});
-    service={record:null,child,exited};
-    const announcement=new Promise((resolve,reject)=>{
-      const timer=setTimeout(()=>{if(!settled){settled=true;reject(new Error('Original Python service did not announce its private URL.'));}},30000);
-      child.once('error',error=>{clearTimeout(timer);if(!settled){settled=true;reject(error);}});
-      child.once('exit',(code,signal)=>{clearTimeout(timer);if(!settled){settled=true;reject(new Error('Original Python service exited '+code+'/'+signal+': '+stderr.slice(-3000)));}});
-      child.stderr.on('data',chunk=>{stderr=(stderr+chunk).slice(-20000);});
-      child.stdout.on('data',chunk=>{
-        stdout+=chunk;
-        for(const line of stdout.split('\n'))try{const value=JSON.parse(line);if(value.url&&!settled){clearTimeout(timer);settled=true;resolve(value);break;}}catch{}
+    const gate="import ctypes,json,os,signal,sys\nargv=json.loads(sys.argv[1])\ngate_id=sys.argv[2]\nexpected=json.loads(sys.argv[3])\ndef identity(selector):\n    root=\"/proc/\"+str(selector)\n    with open(root+\"/stat\",encoding=\"utf-8\") as f: stat=f.read()\n    fields=stat[stat.rfind(\")\")+1:].strip().split()\n    with open(\"/proc/sys/kernel/random/boot_id\",encoding=\"utf-8\") as f: boot=f.read().strip()\n    value={\"schema\":\"sf47.procfs-identity.v1\",\"procPid\":int(stat.split(\" \",1)[0]),\n           \"boot\":boot,\"start\":fields[19],\"state\":fields[0],\n           \"parentProcPid\":int(fields[1]),\"namespace\":os.readlink(root+\"/ns/pid\")}\n    if not boot or not value[\"start\"].isdigit(): raise RuntimeError(\"Incomplete child procfs identity\")\n    return value\nparent_api=os.getppid()\nlibc=ctypes.CDLL(None,use_errno=True)\ntry: prctl=libc.prctl\nexcept AttributeError as error: raise RuntimeError(\"Native Linux PR_SET_PDEATHSIG is required before this original service can run\") from error\nprctl.argtypes=[ctypes.c_int,ctypes.c_ulong,ctypes.c_ulong,ctypes.c_ulong,ctypes.c_ulong]\nprctl.restype=ctypes.c_int\nif prctl(1,int(signal.SIGTERM),0,0,0)!=0:\n    code=ctypes.get_errno()\n    raise OSError(code,\"Native Linux PR_SET_PDEATHSIG failed; original service was not dispatched\")\nif os.getppid()!=parent_api: raise RuntimeError(\"Original Node parent changed before the service gate\")\ncurrent=identity(\"self\")\nif current[\"parentProcPid\"]!=expected[\"procPid\"]: raise RuntimeError(\"Original procfs Node parent changed\")\nparent=identity(expected[\"procPid\"])\nfor field in (\"schema\",\"procPid\",\"boot\",\"start\",\"namespace\"):\n    if parent[field]!=expected[field]: raise RuntimeError(\"Original Node parent identity changed: \"+field)\nprint(json.dumps({\"sf47_gate\":{\"gateId\":gate_id,\"identity\":current,\n      \"apiPid\":os.getpid(),\"parentApiPid\":parent_api,\"parentDeathSignal\":\"SIGTERM\"}}),flush=True)\nif sys.stdin.readline()!=\"RUN\\n\": raise SystemExit(3)\nif os.getppid()!=parent_api: raise RuntimeError(\"Original Node parent changed before service dispatch\")\nos.execv(argv[0],argv)\n",gateId=randomUUID();
+    const child=spawn(pythonExecutable,['-u','-c',gate,JSON.stringify(command),gateId,JSON.stringify(parentIdentity)],
+      {stdio:['pipe','pipe','pipe'],shell:false,env:{...process.env,PYTHONDONTWRITEBYTECODE:'1'}});
+    let stdout='',stderr='',announceDone=false,gateDone=false,announcementTimer,gateTimer;
+    let resolveGate,rejectGate,resolveAnnouncement,rejectAnnouncement;
+    const gated=new Promise((resolve,reject)=>{resolveGate=resolve;rejectGate=reject;});
+    const announcement=new Promise((resolve,reject)=>{resolveAnnouncement=resolve;rejectAnnouncement=reject;});
+    const rejectPending=error=>{
+      clearTimeout(gateTimer);clearTimeout(announcementTimer);
+      if(!gateDone){gateDone=true;rejectGate(error);}
+      if(!announceDone){announceDone=true;rejectAnnouncement(error);}
+    };
+    const exited=new Promise(resolve=>{
+      child.once('exit',(code,signal)=>{
+        resolve({code,signal});
+        rejectPending(new Error('Original Python service exited '+code+'/'+signal+': '+stderr.slice(-3000)));
       });
+      child.once('error',error=>{resolve({error:error.message});rejectPending(error);});
     });
-    announcement.catch(()=>{});
+    const owned={record:null,child,exited,ended:null};
+    exited.then(value=>{owned.ended=value;});
+    service=owned;gated.catch(()=>{});announcement.catch(()=>{});
+    gateTimer=setTimeout(()=>rejectPending(new Error('Original Python child did not report its own procfs identity: '+stderr.slice(-3000))),30000);
+    child.stderr.on('data',chunk=>{stderr=(stderr+chunk).slice(-20000);});
+    child.stdout.on('data',chunk=>{
+      stdout+=chunk;
+      let newline;
+      while((newline=stdout.indexOf('\n'))>=0){
+        const line=stdout.slice(0,newline);stdout=stdout.slice(newline+1);
+        let value;try{value=JSON.parse(line);}catch{continue;}
+        if(value.sf47_gate&&!gateDone){
+          gateDone=true;clearTimeout(gateTimer);resolveGate(value.sf47_gate);
+        }else if(value.url&&!announceDone){
+          announceDone=true;clearTimeout(announcementTimer);resolveAnnouncement(value);
+        }
+      }
+    });
     if(!child.pid)await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});
-    const identity=await fingerprint(child.pid);assert(identity,'The gated Python service has no stable process identity.');
-    const record={label,command,identity,parent:parentIdentity,state:'GATED',createdAt:new Date().toISOString()};
+    const reported=await gated,identity=reported.identity;
+    assert(reported.gateId===gateId&&reported.parentDeathSignal==='SIGTERM'&&
+      identity?.schema===PROC_IDENTITY&&identity.parentProcPid===parentIdentity.procPid&&
+      identity.boot===parentIdentity.boot&&await matches(identity),
+      'The gated Python child did not report its exact original process identity.');
+    const record={label,command,identity,parent:parentIdentity,handlePid:child.pid,
+      reportedApiPid:reported.apiPid,reportedParentApiPid:reported.parentApiPid,
+      gateId,parentDeathSignal:reported.parentDeathSignal,state:'GATED',createdAt:new Date().toISOString()};
     service.record=record;journal.services.push(record);await persist();
+    announcementTimer=setTimeout(()=>rejectPending(new Error('Original Python service did not announce its private URL: '+stderr.slice(-3000))),30000);
     child.stdin.end('RUN\n');
     record.state='STARTED';await persist();
     const value=await announcement,base=new URL(value.url);
@@ -187,8 +261,7 @@ export async function receiveNativeCurrency({readyFile,outputDirectory,browser,p
         if(service.record)await stopService(service.record);
         else{
           service.child.stdin.destroy();
-          const ended=await Promise.race([service.exited.then(()=>true),sleep(5000).then(()=>false)]);
-          assert(ended,'The original gated child did not exit after its input closed.');
+          await reapOwnedChild(service);
         }
         service=null;
       }catch(error){failures.push(error);}

@@ -301,3 +301,92 @@ Another declared IATI console can import a retained portfolio using `merchant_so
 The operator-facing files are server.py, cli.py/cli.mjs, managed.py, client.mjs/client.d.mts and the three public assets. They import the maintained iati_source.py/iati_workspace.py and original XML workspace/server/native engine. The shared source-workspace adapter adds format and route registrations plus bounded complete archive reads.
 
 The full source semantics, canonical mapping and portfolio construction are in [README](README.md) and [DOMAIN](DOMAIN.md). Original primary references include [IATI2.03 activity standard](https://iatistandard.org/en/iati-standard/203/activity-standard/), [transaction types](https://iatistandard.org/en/iati-standard/203/codelists/transactiontype/) and [budget definitions](https://iatistandard.org/en/iati-standard/203/activity-standard/iati-activities/iati-activity/budget/). The operator report retains those interpretation boundaries with its original source records.
+
+
+## Organisation planning and complete customer handover
+
+Choose **Organisation planning** in the running original console. Retain the
+complete publisher organisation XML through its source intake, then select the
+source and the exact organisation entries returned by its profile. The workspace
+stores the original bytes under their SHA-256 alongside the existing activity
+sources. Every plan retains the acquisition URL, retrieval date and licence when
+supplied.
+
+The four views cover the complete operation:
+
+1. **Plan** selects the original source, organisations, actual assessment date,
+   fiscal-year start, forward horizon and methodology. Save the complete
+   selection with an operator name and useful planning notes.
+2. **Records** pages all budgets, expenditure records, document links and findings.
+   Opening a row displays its original XML and supported correction targets.
+   A selected element exposes that element's exact XML. Attribute removal, text
+   correction, complete element replacement and ordered append use the native
+   source-bound targets. Queue all intended corrections, inspect the complete
+   cumulative draft, and save a new revision.
+3. **Review and release** displays the full dated assessment, exact validation,
+   country evidence and document findings. A reviewer records the decision,
+   explanation and each required acknowledgement. Release selects that accepted
+   review and returns the original XML, candidate XML, full CSVs and report.
+4. **Delivery and comparison** compares selected saved revisions, downloads every
+   original file or the complete portable ZIP, and receives an existing handover.
+   The comparison retains the original amount strings and compatible financial
+   context. The returned record totals govern pagination; delivery includes all
+   records in the selected edition.
+
+Browser mutation requests are retained in IndexedDB for that original workspace
+before sending. An interrupted request is reopened through the request lookup and
+continued with its unchanged input. Request readback returns the exact original
+result even after newer revisions exist. The browser opens that historical result
+explicitly so the operator can see which edition the action produced.
+
+### Command and typed client
+
+All commands remain under the installed `dataset-iati` entry point:
+
+~~~bash
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/iati source --file /private/organisation.xml --label "Original organisation publication"
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/iati organisation-profile --source SOURCE_SHA256
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/iati organisation-save --file /private/plan-request.json
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/iati organisation-rows --id PLAN_SHA256 --revision 1 --section documents
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/iati organisation-review --file /private/review-request.json
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/iati organisation-release --file /private/release-request.json
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/iati organisation-export --id PLAN_SHA256 --revision 3 --out /private/organisation-handover.zip
+starforge dataset-iati --python /usr/bin/python3 --workspace /private/receiver organisation-receive --file /private/organisation-handover.zip
+~~~
+
+Use the actual returned IDs and revisions in these examples. Create a new private
+receiver with the existing `init` command first. A running console owns its
+workspace lease; use its HTTP/client interface until it closes, then reopen the
+same workspace with a command.
+
+`organisation-detail` takes the same exact source or saved revision and
+`--row-id`; optional `--target-id` returns one selected element's exact XML.
+`organisation-file` takes `--kind source|candidate|report|budgets|documents`
+and `--out`. The command streams and hashes the full file, then atomically
+makes the completed destination available. Repeating the command accepts an
+already complete matching file.
+
+The existing `IatiWorkspaceClient` exposes `organisationStatus`,
+`organisationProfile`, `organisationPlan`, `organisationHistory`,
+`organisationRequest`, `organisationRows`, `organisationDetail`,
+`organisationSave`, `organisationReview`, `organisationRelease`,
+`organisationCompare`, `organisationExport`, `organisationFile` and
+`organisationReceive`. Detailed native result types are included in the
+existing client export. Full downloads return the original response stream and
+its complete native byte/hash headers.
+
+Merchant Source Workspaces exposes the same fourteen operations under
+`merchant_source_iati_organisation_`. It retains complete downloads in its
+existing export store. The original file reader can release a temporary read,
+reopen the same export ID at its saved offset, and finish the full file after an
+MCP restart. Receiving uses the existing configured source-workspace alias.
+
+### Complete original delivery
+
+[The domain guide](organisation/GUIDE.md) defines the dated assessment,
+schema/codelist sources, exact correction rules and complete packet contents.
+[The FCDO receiving programme](receiving/ORGANISATION.md) gives a reproducible
+whole workflow using a retained publisher file and real retrieval record.
+Installed source binding includes both the organisation module and all current
+saved-refresh dependencies in Python and Applications. The same source edition
+therefore operates through the console, command and configured merchant.

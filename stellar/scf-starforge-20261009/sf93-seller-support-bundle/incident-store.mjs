@@ -8,6 +8,7 @@ import {compileConfig,configHash,hash,activeIncident,kinds} from './incident-con
 import {freshMerchant,pruneRecords} from './incident-model.mjs';
 import {checkPayload} from './notifications.mjs';
 import {slackTimestamp,validSlackReceipt,validSlackRequest} from './notifications-slack.mjs';
+import {OBJECT_FILES,readObjectObservationFiles} from './object-observation.mjs';
 
 export const STATE_SCHEMA='stellar-forge.seller-incidents.v1';
 const CAPTURE_SCHEMA='stellar-forge.seller-incident-capture.v1';
@@ -102,14 +103,16 @@ function references(state) {
 function parseCapture(bytes,id) {
   if(hash(bytes)!==id)fail('CAPTURE_DIGEST_MISMATCH');
   const value=decode(bytes);
-  if(value?.schema!==CAPTURE_SCHEMA||!value.files||Object.keys(value.files).length!==PACKET_FILES.length||
-      PACKET_FILES.some(name=>typeof value.files[name]!=='string'))fail('CAPTURE_INVALID');
+  const names=value?.kind==='OBJECT_SESSION'?OBJECT_FILES:PACKET_FILES;
+  if(value?.schema!==CAPTURE_SCHEMA||(value.kind!==undefined&&value.kind!=='OBJECT_SESSION')||!value.files||
+      Object.keys(value.files).length!==names.length||names.some(name=>typeof value.files[name]!=='string'))fail('CAPTURE_INVALID');
   const files={};
-  for(const name of PACKET_FILES) {
+  for(const name of names) {
     const data=Buffer.from(value.files[name],'base64');
     if(data.length>2_000_000||!data.length||data.toString('base64')!==value.files[name])fail('CAPTURE_INVALID');
     files[name]=data;
   }
+  if(value.kind==='OBJECT_SESSION')readObjectObservationFiles(files);
   return files;
 }
 export async function openIncidentStore(directory) {
@@ -170,8 +173,10 @@ export async function openIncidentStore(directory) {
       const io={
         async capture(packet) {
           if(readonly)fail('READ_ONLY_TRANSACTION');
-          const files=Object.fromEntries(PACKET_FILES.map(name=>[name,packet.files[name].toString('base64')]));
-          const bytes=Buffer.from(JSON.stringify({schema:CAPTURE_SCHEMA,files})+'\n'),id=hash(bytes);
+          const object=packet.kind==='OBJECT_SESSION',names=object?OBJECT_FILES:PACKET_FILES;
+          const files=Object.fromEntries(names.map(name=>[name,packet.files[name].toString('base64')]));
+          const bytes=Buffer.from(JSON.stringify({schema:CAPTURE_SCHEMA,...(object?{kind:'OBJECT_SESSION'}:{}),files})+'\n'),id=hash(bytes);
+          if(object)parseCapture(bytes,id);
           if(bytes.length>MAX_CAPTURE)fail('CAPTURE_SIZE_LIMIT');
           const path=join(captureDirectory,'capture-'+id+'.json');
           let exists=false;
@@ -185,7 +190,8 @@ export async function openIncidentStore(directory) {
             } catch(error) {await unlink(temporary).catch(()=>{});throw error;}
             census.bytes+=bytes.length;census.count++;
           }
-          return {id,bytes:bytes.length,generatedAt:packet.report.generatedAt,sessionId:packet.report.observation.sessionId};
+          return {id,bytes:bytes.length,generatedAt:packet.report.generatedAt,sessionId:packet.report.observation.sessionId,
+            ...(object?{kind:'OBJECT_SESSION'}:{})};
         },
         async readCapture(ref) {
           if(!ref||!/^[a-f0-9]{64}$/.test(ref.id??''))fail('CAPTURE_REFERENCE_INVALID');

@@ -6,6 +6,7 @@ import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { MerchantWorkflowSeriesClient, writeWorkflowSeriesFile } from './workflow-series-client.mjs';
 import { reopenWorkflowSeriesHandover } from './workflow-series-handover.mjs';
+import { exportWorkflowInstallation } from './workflow-installation-handover.mjs';
 import { fail } from './records.mjs';
 
 const HELP = [
@@ -14,7 +15,7 @@ const HELP = [
   'Original profiles: host, profiles, profile, profile-save, bind, profile-export, profile-import',
   'Recurring work: list, series, save, calendar, prepare, plan, start-prepare, start, cycle, cancel',
   'Original execution: run, resume, pause, resolve, handover',
-  'Whole customer receiving: capture, receive, reopen',
+  'Whole customer receiving: capture, receive, reopen, installation',
   '',
   '--input FILE          Complete original JSON request, saved review or profile',
   '--output FILE         New private output filename; identical completed retries reopen',
@@ -25,6 +26,7 @@ const HELP = [
   '--limit N             Cycle history page size, default 50, maximum 100',
   '--directory PATH      One private complete customer handover directory',
   '--delivery ID         Customer delivery to capture; repeat for selected deliveries',
+  '--python PATH         Original installed Python for Installation source packaging',
   '--token-env NAME      Original Console bearer environment variable; default MCP_ACCESS_TOKEN',
   '--wait                Wait for the original active native work to settle',
   '--timeout-ms N        Maximum wait, default 120000',
@@ -42,11 +44,15 @@ const HELP = [
   'receive opens the whole directory and imports the profile through its original',
   'Console API. reopen reads the same complete customer files offline; no URL needed.',
   'Use a new directory to capture a later completed period or changed source.',
+  'installation --directory PATH --input selection.json --output FILE.zip receives',
+  'the complete original profile, native reports and customer files for Grant',
+  'Operations. Input is {periods:[{cycleId,deliveryIds:[]}]}; keep explicit original',
+  'cycle and customer delivery identities. This command needs no Console URL.',
   ''
 ].join('\n');
 const COMMANDS = new Set(['host','profiles','profile','profile-save','bind','profile-export','profile-import',
   'list','series','save','calendar','prepare','plan','start-prepare','start','cycle','cancel',
-  'run','resume','pause','resolve','handover','capture','receive','reopen']);
+  'run','resume','pause','resolve','handover','capture','receive','reopen','installation']);
 async function readInput(path, maximum = 32 * 1024 * 1024) {
   if (typeof path !== 'string' || !path) throw fail('CONSOLE_SERIES_INPUT_FILE', 'Select the complete original JSON file with --input.', 400);
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
@@ -66,7 +72,7 @@ function receivingSummary(value) {
 }
 export async function main(args = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args, allowPositionals: true, options: {
-    url: { type: 'string' }, input: { type: 'string' }, output: { type: 'string' }, id: { type: 'string' },
+    python: { type: 'string' }, url: { type: 'string' }, input: { type: 'string' }, output: { type: 'string' }, id: { type: 'string' },
     profile: { type: 'string' }, revision: { type: 'string' }, offset: { type: 'string' }, limit: { type: 'string' },
     directory: { type: 'string' }, delivery: { type: 'string', multiple: true }, 'token-env': { type: 'string' },
     wait: { type: 'boolean', default: false }, 'timeout-ms': { type: 'string' }, help: { type: 'boolean', default: false }
@@ -75,9 +81,9 @@ export async function main(args = process.argv.slice(2)) {
   const command = positionals[0];
   if (positionals.length !== 1 || !COMMANDS.has(command))
     throw fail('CONSOLE_SERIES_COMMAND', 'Choose one recurring-work command; use --help for the complete workflow.', 400);
-  if (['prepare','start-prepare','profile-export'].includes(command) && !values.output)
+  if (['prepare','start-prepare','profile-export','installation'].includes(command) && !values.output)
     throw fail('CONSOLE_SERIES_OUTPUT', 'Retain this complete original review or profile with --output before continuing.', 400);
-  const client = command === 'reopen' ? null : new MerchantWorkflowSeriesClient({
+  const client = ['reopen','installation'].includes(command) ? null : new MerchantWorkflowSeriesClient({
     url: values.url, tokenEnv: values['token-env'] ?? 'MCP_ACCESS_TOKEN'
   });
   const waiting = { timeoutMs: Number(values['timeout-ms'] ?? 120000) };
@@ -123,6 +129,8 @@ export async function main(args = process.argv.slice(2)) {
       })); break;
       case 'receive': result = receivingSummary(await client.receive({ directory: values.directory })); break;
       case 'reopen': result = receivingSummary(await reopenWorkflowSeriesHandover({ directory: values.directory })); break;
+      case 'installation': result = await exportWorkflowInstallation({directory:values.directory,input:await readInput(values.input),
+        output:values.output,...(values.python?{python:values.python}:{})}); outputWritten=true; break;
     }
     if (values.output && !outputWritten) {
       const file = await writeWorkflowSeriesFile(values.output, result);

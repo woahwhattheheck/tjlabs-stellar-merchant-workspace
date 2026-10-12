@@ -10,6 +10,7 @@ import { gunzipSync } from 'node:zlib';
 import { startMerchantMcp } from '../serve.mjs';
 import { canonical } from '../console/records.mjs';
 import { receiveMerchantWorkflow } from './workflow-journey.mjs';
+import { verifyNativeArtifacts, prepareNativeArtifactReport, retainNativeInspection, nativeReceivingAccessToken } from './workflow-native-artifacts.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
@@ -35,7 +36,7 @@ export async function receiveMerchantWorkflowRecipes({directory,chromiumPath,pla
   const checkpoint=join(directory,'workflow-recipes-receiving-checkpoint.json'),completed=join(directory,'workflow-recipes-native-run.json');
   const prior=await optional(completed);
   if(prior?.result==='PASS'){
-    for(const file of prior.artifacts){const bytes=await readFile(join(directory,file.name));assert.equal(bytes.length,file.bytes);assert.equal(sha(bytes),file.sha256);}
+    await verifyNativeArtifacts(directory,prior);
     return {...prior,reused:true};
   }
   const suffix=sha(directory).slice(0,18),libraryProfile='recipe-library-'+suffix,targetProfile='recipe-target-'+suffix;
@@ -46,6 +47,7 @@ export async function receiveMerchantWorkflowRecipes({directory,chromiumPath,pla
     libraryProfile,targetProfile,ports:{...baseline.ports},workspaces:{...baseline.workspaces},
     phases:{},stages:[],requests:{},artifacts:[],browserErrors:[],result:'RUNNING'
   };
+  prepareNativeArtifactReport(report);
   assert.equal(report.directory,directory);assert.equal(report.libraryProfile,libraryProfile);assert.equal(report.targetProfile,targetProfile);
   assert.equal(report.baseline.runId,baseline.run.id);assert.equal(report.baseline.customerArchiveSha256,baseline.customerArchive.sha256);
   if(report.sourceSelections.at(-1)?.commit!==sourceCommit)report.sourceSelections.push({commit:sourceCommit,selectedAt:new Date().toISOString()});
@@ -67,7 +69,7 @@ export async function receiveMerchantWorkflowRecipes({directory,chromiumPath,pla
     const file=report.artifacts.find(file=>file.name===name);assert.ok(file,'Original produced artifact '+name);
     const bytes=await readFile(join(directory,name));assert.equal(bytes.length,file.bytes);assert.equal(sha(bytes),file.sha256);return bytes;
   };
-  const token=(await readFile(join(directory,'native-access-token'),'utf8')).trim();
+  const token=await nativeReceivingAccessToken(directory);
   const open=async role=>{
     const host=await openSession({configPath:join(directory,'merchant','merchant-mcp.json'),port:report.ports[role]??0,
       environment:{...process.env,MCP_ACCESS_TOKEN:token},consoleDirectory:join(directory,role+'-console')});
@@ -109,7 +111,7 @@ export async function receiveMerchantWorkflowRecipes({directory,chromiumPath,pla
   };
   const screenshot=async(page,name,viewport)=>{
     if(viewport)await page.setViewportSize(viewport);
-    await artifact(name,await page.screenshot({fullPage:true,animations:'disabled'}));
+    await retainNativeInspection(directory,report,name,await page.screenshot({fullPage:true,animations:'disabled'}));await save();
   };
   const exportProfile=async(host,name)=>{
     const bytes=await api(host,'export/'+targetProfile,{raw:true});await artifact(name,bytes);return JSON.parse(bytes);

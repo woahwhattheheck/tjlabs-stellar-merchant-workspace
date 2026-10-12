@@ -2,7 +2,7 @@
 
 This package contains the original Merchant Support product selected from the source commit and `merchant-support` recipe recorded in `manifest.json`.
 
-Operate the same saved merchant case through incidents, implementation, native source editions, Service commitments, native adjustments, buyer credit coding, period close, accountant handoff, commercial quotations, accepted change orders and complete customer receiving. The browser, command line and installed Support agent use the original case and native delivery engines.
+Operate the same saved merchant case through incidents, implementation, native source editions, Service commitments, native adjustments, buyer credit coding, period close, accountant handoff, recorded usage and customer pricing revisions, commercial quotations, accepted change orders and complete customer receiving. The browser, command line and installed Support agent use the original case and native delivery engines.
 
 ## Open the complete guides
 
@@ -16,6 +16,8 @@ Operate the same saved merchant case through incidents, implementation, native s
 - [Commercial pricing-workspace receiving](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/RECEIVING.md)
 - [Tariff quotation and complete customer receiving](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/TARIFFS.md)
 - [Supplier costs, original tariff planning and pricing adoption](source/products/merchant-economics/OPERATING.md)
+- [Recorded usage, complete performance source and native pricing proposals](source/stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/performance/README.md)
+- [Performance-backed customer quote revisions](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/PERFORMANCE.md)
 - [Accepted quotations, implementation and change orders](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/COMMERCIAL_IMPLEMENTATION.md)
 
 Every linked guide is included as an original file under `source/`.
@@ -46,9 +48,19 @@ Continue the accepted quotation into implementation and receiving. The complete 
 
 The maintained commands are `starforge merchant-tariffs`, `starforge merchant-commercial tariffs` and the original `merchant-mcp pricing` and Support tools. The linked tariff guide provides the complete capture, three-request attachment, download, export and restoration inputs.
 
+## Recorded usage through the next customer quotation
+
+Use the original Pricing console's **Performance** page to compare a completed tariff selection with a saved usage source. The observed period, exact count basis, saved uniform quote and original tariff curve remain explicit. Save the review and export its complete original source.
+
+In **Merchant support → Commercial quotations → Usage and revisions**, receive that full source against the measured original quote. Select the retained review, enter an explicit monthly request volume and choose the existing or a newer received native tariff for the same route. Prepare the ordinary quote draft, then complete its original review, publication, customer-response and accepted-work flow.
+
+The full customer case carries the performance source as an original material. Its receiving case can inspect and export that source immediately. Complete native continuation uses an original Pricing workspace backup captured after the review and proposal operations, plus the full tariff portfolio. Restore that backup, receive the portfolio through its original owner and reopen Performance to recover the same saved proposal and selection requests.
+
+The package includes `starforge merchant-performance`, `starforge merchant-commercial performance`, the typed `./merchant/performance-client` and `./merchant/commercial-performance-client` exports, and the original Pricing and Support MCP methods. Both linked performance guides describe the exact inputs, source identities, native request UUIDs, downloads and continuation.
+
 ## Commands
 
-The installed `starforge` command includes `support-console`, `support-watch`, `merchant-implementation`, `merchant-services`, `merchant-commercial`, `merchant-tariffs`, `merchant-support-agent`, `merchant-service-adjustments`, `merchant-service-adjustment-receiving`, `merchant-accounting-adjustments`, `buyer-expenses`, the original merchant MCP launchers, and the maintained runtime installation and transfer commands.
+The installed `starforge` command includes `support-console`, `support-watch`, `merchant-implementation`, `merchant-services`, `merchant-commercial`, `merchant-tariffs`, `merchant-performance`, `merchant-support-agent`, `merchant-service-adjustments`, `merchant-service-adjustment-receiving`, `merchant-accounting-adjustments`, `buyer-expenses`, the original merchant MCP launchers, and the maintained runtime installation and transfer commands.
 
 Read the setup command's original options:
 
