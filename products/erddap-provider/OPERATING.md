@@ -372,6 +372,28 @@ python3 -B "$ERDDAP/delivery/browser-owner.py" \
 
 Use Playwright 1.51 or later for the original IndexedDB draft-recovery phase. For another actual source, supply its complete reviewed direct profile with --profile instead of selecting the NDBC reference recipe. Keep the original operation directory across interruption: the helper retains its source, request, native workspaces, profile and accepted export/receiving checkpoints.
 
+## Explicit source choice and preserved provider history
+
+The dataset mapping and the provider intake profile express two separate choices. The dataset mapping's `csvPolicy` selects how the retained JSON and CSV representations are checked for a queryable edition. The profile's `dataEdition` records the provider's disclosed source policy. Neither field rewrites the original response bodies.
+
+Both maintained receiving drivers accept `--csv-policy require-equivalent|canonical-json`, defaulting to `require-equivalent`. The browser selects that policy in the visible mapping form and verifies it in the actual saved plan. It separately displays and saves the supplied profile's `dataEdition`. Continue a retained operation with its original choice; a changed browser checkpoint policy is rejected.
+
+The original 144-row NDBC provider operation explicitly selected `canonical-json` for its dataset edition. When continuing that operation, add `--csv-policy canonical-json` to both the provider-native and browser-owner commands above. Preserve its existing source, operation directory, direct profile and checkpoints. Its original profile selected `require-equivalent`; changing a provider source policy is a new reviewed profile revision against the current head. Keep the prior profile and exported reviews intact, and pass the separately retained new direct profile to `--handoff-profile` only after that revision has actually been accepted.
+
+The full retained comparison found 46 numeric spelling differences, such as `13` and `13.0`, with no numeric value difference. The current Decimal comparator treats those pairs as equivalent while preserving both original lexical representations. Empty and declared missing fields retain the source semantics. The five included capture files and their original response/license/acquisition bytes remain unchanged.
+
+### Receiving reviews after a parser upgrade
+
+New provider reviews declare `stellar-forge.erddap-provider-evaluation.v1`, readiness version `1.0.0` and comparison version `decimal-v1`. The declaration participates in the new revision identity, saved report and bundle manifest. An identical source/profile/parent evaluated under a different supported version cannot silently reuse a new versioned revision ID.
+
+Existing unversioned reviews retain their original identity, report and export bytes. The receiver deterministically regenerates the complete report under the supported historical `lexical-v1` and `decimal-v1` evaluators and requires an exact match, then reconstructs and checks every bundle member. A sender-provided hash is not sufficient to establish the evaluator's result. Unknown versions and altered reports are rejected.
+
+Exact-save recovery first resolves and validates the already saved source/profile/parent request, even if the current evaluator has changed. Deliberate reevaluation is a new review whose parent is the current head. Historical reads, export regeneration, lost export-receipt recovery, independent receiving, re-download and reopened receipt inspection use the same version routing. Legacy exports omit new evaluator markers so their original ZIP bytes remain reproducible.
+
+The original NDBC native operation completed dataset publication and independent receiving for all 144 rows, plus two provider revisions and their working-review bundles. A subsequent focused continuation preserved both historical bundles byte-for-byte, exact-save retry and the complete original head/history; it also received current declared-Decimal and known unversioned-Decimal records from the same original capture/profile. A rehashed altered review and an unknown evaluator were rejected. The compact source manifest records the original result identities. Full browser and selected installed-product receiving remain separate phases of that same retained operation.
+
+The separately appointed scientific contact remains an explicit intake question. Working-review receiving is complete without inventing that appointment; a ready bundle is available only when the actual review permits it.
+
 ## Source, rights and operating limits
 
 [PRIMARY_SOURCES.md](source/stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/PRIMARY_SOURCES.md) records the original NOAA endpoints, ERDDAP writer/version identities and scientific semantics used by this adapter. Read the actual retained source license, attribution, restrictions and history for the selected dataset. NOAA hosting does not erase third-party notices carried by the dataset.
