@@ -144,6 +144,10 @@ grant operations --workspace "$GRANT_DATA" command --case CASE_ID --expected-ver
 
 Source-intake packets use the original [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) and native source-intake workflow. Inspect their full actual scope before import; a quoted workshare does not become paid cash through intake.
 
+## Review the operating period against the pinned budget
+
+Open **Delivery operations → Budget performance** for opening, period and closing cash/invoice positions, complete package and category budget comparisons, contributor activity, invoice aging and source-linked work/payment rows. Select the actual reporting dates; the report keeps the current case version and original recognition dates together. **Export complete handover** carries the full report, every CSV row, offline HTML and complete original case. Importing that ZIP reopens the case at its selected dates. The [Budget performance guide](../../stellar/scf_2026/sf47_budget_model/workspace/PERFORMANCE.md) covers the exact business arithmetic, source basis, browser, CLI and Merchant client.
+
 ## 5. Forecast cash and allocate the whole remaining workload
 
 Open the same case's Forecast view. Select the actual opening-cash basis and review existing obligations, paid invoice allocations, grant conditions and customer commercial assumptions. The original forecast keeps planning costs, committed obligations and conditional commercial receipts distinguishable.

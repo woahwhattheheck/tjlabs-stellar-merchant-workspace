@@ -210,6 +210,10 @@ Python callers can import `Workspace` from `model.py` or use `create_server(work
 
 Use the saved plan's source digest, revision number, change note and complete exported source when coordinating the next staffing, milestone or application decision.
 
+## Budget performance and period management
+
+**Delivery operations → Budget performance** connects a selected reporting period to the pinned package budget, original contributor work, issued invoices, payment/refund allocations and native asset quantities. Review opening/period/closing positions, package and contributor performance, invoice aging and full source rows. The complete handover includes JSON/CSV/offline HTML and the original operating case; importing it reopens the selected dates. Use [PERFORMANCE.md](PERFORMANCE.md) for the browser, CLI, HTTP, typed client and Merchant workflow.
+
 ## Original currencies, customer payment credits and portfolio cash
 
 Use [Original currencies in operating forecasts](CURRENCY.md) to keep quoted amounts, delivery estimates, explicit dated exchange rates and native payment credits through Forecast and Portfolio. The complete [loadable input example](examples/native-currency-forecast.json) demonstrates a foreign quote, a USD estimate, event-dependent terms and exact milestone rounding. Original cash records retain their recorded USD values; the cash and allocation views expose incomplete financial coverage alongside operational scheduling.

@@ -21,6 +21,7 @@ import operations_completion as completion
 import operations_cohort as cohort
 import operations_installations as installations
 import operations_dispatch as dispatch
+import operations_performance as performance
 import operations_implementation as implementation
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
@@ -662,6 +663,21 @@ class Operations:
             context = self._context(identifier(program_id, "operation"))
             return installations.preview(self, context, body)
 
+    def performance(self, program_id, start_date=None, end_date=None, expected_version=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            if expected_version is not None and domain.integer(expected_version, "Reviewed case version", 1, 10000000) != context["program"]["version"]:
+                domain.fail("The case changed. Refresh the report to read its current version.", "VERSION_CONFLICT", 409)
+            return performance.build(context, start_date, end_date)
+
+    def export_performance(self, program_id, start_date, end_date, expected_version, expected_report_sha256):
+        with self._snapshot():
+            report = self.performance(program_id, start_date, end_date,
+                domain.integer(expected_version, "Reviewed case version", 1, 10000000))
+            if domain.sha(expected_report_sha256, "Reviewed performance report", False) != report["reportSha256"]:
+                domain.fail("Refresh the selected period before exporting its complete handover.", "PERFORMANCE_SOURCE_CHANGED", 409)
+            return performance.export_bundle(report, self.export(program_id))
+
     def delivery_queue(self, program_id, as_of=None):
         with self._snapshot():
             context = self._context(identifier(program_id, "operation"))
@@ -868,7 +884,8 @@ class Operations:
                 if existing[0] != digest(original_payload):
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
-        native_raw, delivery_queue = dispatch.unwrap_bundle(raw)
+        native_raw, performance_report = performance.unwrap_bundle(raw)
+        native_raw, delivery_queue = dispatch.unwrap_bundle(native_raw)
         document, files = self._unpack(native_raw)
         source_program, plan = document["program"], document["plan"]
         if not isinstance(source_program, dict) or not isinstance(plan, dict):
@@ -944,6 +961,7 @@ class Operations:
         saved_installations = document.get("installations", [])
         installations.validate_import(context, saved_installations, events, source_program["version"], files)
         dispatch.validate_received(delivery_queue, document)
+        performance.validate_received(performance_report, document)
         implementation.validate_import(context, reviews, events, saved_installations, files)
         refs = installations.latest_refs(saved_installations)
         if document.get("installationRefs", []) != refs:
@@ -1021,6 +1039,8 @@ class Operations:
             pid, stamp = generated("operation"), now()
             origin = {"programId": source_program["id"], "planId": source_program["planId"],
                       "archiveSha256": hashlib.sha256(raw).hexdigest(), "importedAt": stamp, "importedBy": actor}
+            if performance_report:
+                origin["performance"] = performance.received_selection(performance_report)
             self.db.execute("INSERT INTO ops_programs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (pid, imported["id"], plan["revision"], source_program["version"], source_program["state"],
                  name, source_program["mode"], source_program.get("calendarStart"), canonical(pinned),
@@ -1046,7 +1066,8 @@ class Operations:
                 self.db.execute("INSERT INTO ops_portfolios VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             return {"id": pid, "version": source_program["version"], "action": "import", "planId": imported["id"], "mode": source_program["mode"],
                     **({"selectedInstallation": selected_installation} if selected_installation else {}),
-                    **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {})}
+                    **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),
+                    **({"performance": performance.received_selection(performance_report)} if performance_report else {})}
         with self.workspace.mutex:
             # Reuse the original receipt table before the original plan import.
             # A rejected reuse or invalid request cannot create an extra plan.
