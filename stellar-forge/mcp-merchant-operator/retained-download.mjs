@@ -60,6 +60,18 @@ export async function openMerchantFileClient({ url, tokenEnv = 'MCP_ACCESS_TOKEN
         const error = failure(/^[A-Z][A-Z0-9_]+$/.test(value?.code ?? '') ? value.code : errorPrefix + '_DOWNLOAD_TOOL_FAILED',
           typeof value?.reason === 'string' ? value.reason : 'The original retained-file operation failed.');
         if (value?.applied === false) error.applied = false;
+        for (const flag of ['outcomeUnknown', 'reopenRequired']) {
+          if (typeof value?.[flag] === 'boolean') error[flag] = value[flag];
+        }
+        if (Number.isInteger(value?.status) && value.status >= 400 && value.status <= 599) error.status = value.status;
+        if (plain(value?.commitUncertainty)) {
+          error.commitUncertainty = {};
+          for (const key of ['at', 'action', 'causeCode']) {
+            if (typeof value.commitUncertainty[key] === 'string') error.commitUncertainty[key] = value.commitUncertainty[key];
+          }
+          if (Number.isSafeInteger(value.commitUncertainty.revision)) error.commitUncertainty.revision = value.commitUncertainty.revision;
+        }
+        if (plain(value?.details)) error.details = structuredClone(value.details);
         throw error;
       }
       if (!plain(value)) throw failure(errorPrefix + '_DOWNLOAD_REPLY_INVALID', 'The retained-file tool returned no structured result.');

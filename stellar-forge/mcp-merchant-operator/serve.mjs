@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { merchantInstructions } from './instructions.mjs';
+import { merchantOperationError } from './operation-error.mjs';
 // MIT. Original authenticated MCP transport with the original merchant lifecycle.
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
@@ -253,7 +254,7 @@ export async function startMerchantMcp({ configPath, port = 3211, tokenEnv = 'MC
     const handler = createMcpToolHandler(operator, { ...access.transportOptions, maxRequestBytes: operator.maxRequestBytes,
       allowedClientOrigins: String(environment.MCP_CLIENT_ORIGINS ?? '').split(',').map(value => value.trim()).filter(Boolean),
       serverName: 'starforge-merchant-operator', serverVersion: '0.1.0',
-      instructions: merchantInstructions(operator.tools) });
+      instructions: merchantInstructions(operator.tools), toolErrorView: merchantOperationError });
     if (consoleBinding !== undefined && consoleDirectory === undefined)
       throw failure('CONFIGURATION_ERROR', 'A managed console binding requires its original console directory.');
     if(consoleDirectory!==undefined){
