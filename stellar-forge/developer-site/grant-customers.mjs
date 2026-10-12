@@ -32,8 +32,18 @@ export function projectGrantMarkdown(markdown, { application = false } = {}) {
       .replace(/§9A connects this task to the existing six funded packages\./g,
         'The [complete customer workflow](./product-and-finance.md#environmental-provider-intake-complete-source-editions-commissioning-and-receiving) connects this task to the existing six funded packages.')
       .replace(/operating sequence and six-package linkage are included in §9A\./g,
-        'operating sequence and six-package linkage are included in the [product and financing companion](./product-and-finance.md#federal-awards-complete-funding-research-workshares-and-receiving).');
+        'operating sequence and six-package linkage are included in the [product and financing companion](./product-and-finance.md#federal-awards-complete-funding-research-workshares-and-receiving).')
+      .replace('The complete A2A customer chapter defines the service operator',
+        'The [complete A2A customer chapter](./product-and-finance.md#a2a-analytical-services-complete-agent-work-merchant-delivery-and-customer-receiving) defines the service operator')
+      .replace('included in the OpenLineage customer chapter.',
+        'included in the [OpenLineage customer chapter](./product-and-finance.md#openlineage-service-operations-and-complete-customer-receiving).');
   }
+  // Restore shell option indentation changed by Canvas rich-text whitespace.
+  // Limit normalization to option-leading whitespace inside explicit shell examples.
+  value = value.replace(/(^|\n)(\x60{3,}|~{3,})(sh|bash|shell)[ \t]*\n([\s\S]*?)\n\2(?=\n|$)/g,
+    (whole, lead, fence, language, body) => lead + fence + language + '\n' +
+      body.replace(/^([ \u00a0]*\u00a0[ \u00a0]*)(?=--[A-Za-z0-9-]+(?:[ \t]|$))/gm,
+        indentation => indentation.replaceAll('\u00a0', ' ')) + '\n' + fence);
   return clean(value);
 }
 
@@ -98,6 +108,13 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
   let companion = clean(productAndFinanceMarkdown);
   for (const incoming of acceptedCustomerSections(manuscript)) {
     companion = installSection(companion, incoming.heading, projectGrantMarkdown(incoming.text));
+  }
+  for (const heading of [
+    '## Current alternatives, commercial units and customer value',
+    '## Customer value and delivery economics',
+  ]) {
+    const incoming = section(manuscript, heading);
+    if (incoming) companion = installSection(companion, heading, projectGrantMarkdown(incoming.text));
   }
   const incoming = OPENFN_PARAGRAPHS.map(prefix => paragraph(manuscript, prefix));
   need(incoming.every(Boolean) || incoming.every(value => value === null), 'Select both accepted OpenFn paragraphs from the complete canonical manuscript.');
@@ -176,10 +193,20 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-payment-plans\/README\.md)/, billing);
   receive('merchant-xero-customer-receiving', 'Accountant document receiving and complete customer handover',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/merchant-settlement-accounting\/receivables\/xero\/README\.md)/, billing);
-  receive('merchant-service-renewal-operation', 'Merchant service renewal and accepted continuation',
+  receive('merchant-service-renewal-operation', 'Accepted customer service renewal and merchant support operation',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf-starforge-\d{8}\/sf74-merchant-support-console\/SERVICE_RENEWALS\.md)/, billing);
-  receive('merchant-accepted-service-calendar', 'Accepted service renewal financial calendar and receiving',
+  receive('merchant-accepted-service-calendar', 'Accepted renewal periods and complete financial receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/merchant-service-agreements\/README\.md)#accepted-service-renewals/, billing);
+  receive('grant-operating-case', 'Grant Operations complete delivery, cash and customer receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/grant-operations\/OPERATING\.md)/, companion);
+  receive('grant-supplier-accounts', 'Original supplier work, invoices and dated account receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/PAYABLES\.md)/, companion);
+  receive('grant-account-statements', 'Reviewed original account statements and cash movements',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/STATEMENTS\.md)/, companion);
+  receive('grant-installation-portfolio', 'Dated installation capacity and original operating forecast',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(stellar\/scf_2026\/sf47_budget_model\/workspace\/PORTFOLIO\.md)/, companion);
+  receive('grant-application-handoff', 'Complete grant case and saved Application customer handoff',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/grant-operations\/HANDOFF\.md)/, companion);
   const lineage = section(companion, OPENLINEAGE)?.text || '';
   receive('openlineage-installed-operations', 'OpenLineage operations — installed product',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/openlineage\/OPERATING\.md)/, lineage);
