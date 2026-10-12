@@ -88,6 +88,21 @@ export async function openOAuthConnectionRegistry({
   const environment = { ...env }, entries = new Map(), directories = new Set();
   const ownerUid = process.geteuid?.() ?? process.getuid?.();
   let closed = false, closing = null;
+  const active = new Set();
+  function close() {
+    if (closing) return closing;
+    closed = true;
+    closing = (async () => {
+      await Promise.allSettled([...active]);
+      const results = await Promise.allSettled([...entries].map(async ([alias, entry]) => {
+        await entry.core.close();
+        entries.delete(alias);
+      }));
+      if (results.some(result => result.status === 'rejected'))
+        throw problem('OAUTH_HOST_CLOSE_FAILED', 'An OAuth connection did not close cleanly.');
+    })().catch(error => { closing = null; throw error; });
+    return closing;
+  }
   async function inspect(entry) {
     need(!closed, 'OAUTH_HOST_CLOSED', 'The OAuth connection registry is closed.');
     const current = await inspectOAuthHostDirectory(entry.directory, { directoryEnv: entry.directoryEnv, ownerUid });
@@ -111,7 +126,8 @@ export async function openOAuthConnectionRegistry({
       entries.set(item.alias, { ...item, directory, identity, core });
     }
   } catch (error) {
-    await Promise.allSettled([...entries.values()].map(entry => entry.core.close()));
+    try { await close(); }
+    catch (closeError) { closeError.cause ??= error; closeError.close = close; throw closeError; }
     throw error;
   }
   const registry = {
@@ -147,22 +163,22 @@ export async function openOAuthConnectionRegistry({
       compileOAuthConnection(binding, { resourceOrigin, allowLoopback });
       return binding;
     },
-    close() {
-      if (closing) return closing;
-      closed = true;
-      closing = (async () => {
-        const results = await Promise.allSettled([...entries.values()].map(entry => entry.core.close()));
-        entries.clear();
-        if (results.some(result => result.status === 'rejected'))
-          throw problem('OAUTH_HOST_CLOSE_FAILED', 'An OAuth connection did not close cleanly.');
-      })();
-      return closing;
-    },
+    close,
   };
   for (const method of ['begin', 'complete', 'approve', 'discard', 'refresh', 'disconnect', 'revoke']) {
     registry[method] = async (alias, args) => {
       const entry = await selected(alias);
       return entry.core[method](args);
+    };
+  }
+  for (const [name, method] of Object.entries(registry)) {
+    if (name === 'close') continue;
+    registry[name] = async (...args) => {
+      need(!closed, 'OAUTH_HOST_CLOSED', 'The OAuth connection registry is closed.');
+      const result = Promise.resolve(method(...args));
+      active.add(result);
+      try { return await result; }
+      finally { active.delete(result); }
     };
   }
   return Object.freeze(registry);

@@ -1,0 +1,8 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "stac-workspace-product",
+  "description": "Complete imagery, processing, Applications and customer receiving operating guide with original private request examples.",
+  "components": [
+    "products/stac-workspace"
+  ]
+}
