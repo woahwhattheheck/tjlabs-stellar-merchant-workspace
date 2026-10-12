@@ -2,7 +2,7 @@
 
 Build a retained economic data product from the official FRED API, review revisions across vintages, publish the reviewed observations through the maintained Stellar Forge merchant, and receive the same edition through the original customer.
 
-The private operator application includes source selection and acquisition, source import, observation inspection, saved reviews, exact vintage comparisons, merchant publication and lifetime, native customer preparation and delivery recovery, and portable project receiving. The installed command is `starforge fred`; the source entrypoint is `node stellar/scf-starforge-20261009/sf30-seller-sdk/fred/cli.mjs`.
+The private operator application includes source selection and acquisition, source import, observation inspection, saved reviews, recurring briefings, release and vintage planning, exact vintage comparisons, merchant publication and lifetime, native customer preparation and delivery recovery, and portable project receiving. The installed command is `starforge fred`; the source entrypoint is `node stellar/scf-starforge-20261009/sf30-seller-sdk/fred/cli.mjs`.
 
 
 This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.
@@ -19,7 +19,7 @@ starforge fred init --project /absolute/private/economic-project \
 starforge fred serve --project /absolute/private/economic-project --port 0
 ```
 
-Open the private URL printed by the command. It belongs to that running session. The operator interface has five sections: Source, Editions & review, Merchant, Customer, and History & handover. The original source remains available after stopping and reopening the same project.
+Open the private URL printed by the command. It belongs to that running session. The operator interface has seven sections: Source, Editions & review, Recurring briefings, Release planner, Merchant, Customer, and History & handover. The original source remains available after stopping and reopening the same project.
 
 Source acquisition uses the operator’s existing FRED API key through the `FRED_API_KEY` process environment variable. Choose a different reference with `init --api-key-env NAME`. The project retains that variable name; the value is inserted only into the request sent to the official API. Source receipts retain a key-free request descriptor. Imported captures, reviews, comparisons, publication, source exports and project receiving work from the retained bytes.
 
@@ -82,6 +82,16 @@ starforge fred receiver --project /absolute/private/economic-project \
 
 The private configuration selects the existing operator resources. The included complete UNRATE table is the default input; the macro source starter can compose all three original series. The receiver retains the original project and selected native intents at every step. After an interrupted host, repeat the same command or use `--phase browser` to finish the actual browser/download/reopen portion of a completed native operation. Browser settings can change independently of the retained payment operation.
 
+
+## Follow releases and update a briefing
+
+The **Release planner** follows the official release definitions, calendar dates and original vintage dates for a saved set of series. A watch can use the series from a recurring briefing template or an independent series selection. The watch retains its observation interval, starting vintage and choice of all available missed vintages or the latest available vintage.
+
+Capture the calendar and vintage history through the existing FRED API connection, or import a complete retained release-source JSON file. The source view exposes the original series metadata, release definitions, calendar entries and vintage dates. Compare a current source with an earlier retained source, inspect the proposed observation captures, and save the plan before acquiring a selected vintage. Published calendar dates describe the release schedule; each observation capture is selected from the original available vintage history. The planner also exposes late-discovered dates, changed series meaning and incomplete history coverage.
+
+A completed acquisition becomes an ordinary retained observation capture in this project. Open its observations or use the linked recurring template to preview and save the next analyst briefing. The normal review and merchant workflow remains the publication path. Export carries the original release sources, watches, saved plans, catch-up history and observation captures together, so the received project can continue the same work.
+
+The complete source model, native commands and PPIACO selection examples are in the [release source guide](releases/README.md). Use `starforge fred --help` for project commands and `starforge fred releases --help` for standalone release acquisition and planning. The browser and installed agent client use these same project operations.
 
 ## Select the source and vintage
 
