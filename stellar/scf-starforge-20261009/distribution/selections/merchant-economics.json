@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-economics",
   "title": "Merchant economics",
-  "description": "Original API merchant supplier costs and tariff pricing through customer quotation, accepted implementation, Service adjustments, full customer receiving and seller-release continuation.",
+  "description": "Original API merchant supplier costs, tariff pricing and recorded usage performance through customer quotation, accepted implementation, Service adjustments, full customer receiving and seller-release continuation.",
   "base": {
     "commands": [
       "installation",
@@ -145,6 +145,7 @@
     "merchant-provider-tools",
     "merchant-route-worksheet",
     "merchant-tariffs",
+    "merchant-performance",
     "oauth-connection-setup",
     "openapi",
     "merchant-support",
@@ -229,7 +230,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Merchant economics: supplier costs, exact tariff pricing, complete customer quotations and implementation, original Service and buyer/accountant continuation, workspace receiving and seller releases.",
+    "description": "Merchant economics: supplier costs, exact tariff pricing and recorded usage performance, complete customer quotations and implementation, original Service and buyer/accountant continuation, workspace receiving and seller releases.",
     "readme": "products/merchant-economics/OPERATING.md"
   }
 }

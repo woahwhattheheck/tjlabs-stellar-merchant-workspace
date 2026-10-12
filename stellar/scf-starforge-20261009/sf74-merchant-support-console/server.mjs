@@ -36,6 +36,10 @@ const ASSETS = Object.freeze({
   '/commercial': ['commercial.html', 'text/html; charset=utf-8'],
   '/commercial/receiving-desk.mjs': ['commercial/receiving-desk.mjs', 'text/javascript; charset=utf-8'],
   '/commercial/receiving-desk.css': ['commercial/receiving-desk.css', 'text/css; charset=utf-8'],
+  '/commercial/performance-desk.mjs': ['commercial/performance-desk.mjs', 'text/javascript; charset=utf-8'],
+  '/commercial/performance-client.mjs': ['commercial/performance-client.mjs', 'text/javascript; charset=utf-8'],
+  '/commercial/performance.css': ['commercial/performance.css', 'text/css; charset=utf-8'],
+  '/commercial/PERFORMANCE.md': ['commercial/PERFORMANCE.md', 'text/markdown; charset=utf-8'],
   '/commercial/tariff-desk.mjs': ['commercial/tariff-desk.mjs', 'text/javascript; charset=utf-8'],
   '/commercial/tariff-client.mjs': ['commercial/tariff-client.mjs', 'text/javascript; charset=utf-8'],
   '/commercial/tariff-desk.css': ['commercial/tariff-desk.css', 'text/css; charset=utf-8'],
@@ -389,7 +393,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
           }
           json(res,200,result);return;
         }
-        const commercial=/^\/api\/cases\/([a-f0-9-]+)\/commercial(?:\/(preview|preview-implementation|adopt-implementation|save-draft|publish|receive|receive-pricing|compare|download|receiving-status|receiving-capture|receiving-inspect|receiving-attach|receiving-case|receiving-restore|tariff-status|tariff-catalog|tariff-selection|tariff-capture|tariff-inspect|tariff-attach|tariff-case|tariff-restore|tariff-download))?$/.exec(route);
+        const commercial=/^\/api\/cases\/([a-f0-9-]+)\/commercial(?:\/(preview|preview-implementation|adopt-implementation|save-draft|publish|receive|receive-pricing|compare|download|receiving-status|receiving-capture|receiving-inspect|receiving-attach|receiving-case|receiving-restore|tariff-status|tariff-catalog|tariff-selection|tariff-capture|tariff-inspect|tariff-attach|tariff-case|tariff-restore|tariff-download|performance-preview|performance-receive|performance-revision|performance-download))?$/.exec(route);
         if(commercial) {
           if(!commercialDesk){json(res,503,{error:'COMMERCIAL_DISABLED',detail:'Open the original merchant workspace with its private case directory.'});return;}
           if(req.method==='GET'&&!commercial[2]) {
@@ -422,9 +426,11 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
             json(res,200,await commercialReceivingDesk.call(action,{id:commercial[1],...input}));return;
           }
           const method={'save-draft':'saveDraft','receive-pricing':'receivePricing',
+            'performance-preview':'previewPerformance','performance-receive':'receivePerformance',
+            'performance-revision':'preparePerformanceRevision','performance-download':'downloadPerformance',
             'preview-implementation':'previewImplementation','adopt-implementation':'adoptImplementation'}[commercial[2]]??commercial[2];
           const result=await commercialDesk[method]({id:commercial[1],...input});
-          if(method==='download') {
+          if(method==='download'||method==='downloadPerformance') {
             const file=result.descriptor;
             res.writeHead(200,{'content-type':file.mediaType,'content-length':file.bytes,
               'content-disposition':'attachment; filename="'+file.filename+'"',
