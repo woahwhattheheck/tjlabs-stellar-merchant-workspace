@@ -47,6 +47,43 @@
 <label class="inline-file">Open task<input id="task-file" type="file" accept=".json,application/json"></label></div>
 </form>
 </section>
+<section aria-labelledby="funding-title">
+<h2 id="funding-title">Channel funds</h2>
+<p>Read the selected channel balance, add funds for later work, or start returning the remaining balance to its funder.</p>
+<div id="channel-balances" class="table-wrap"></div>
+<div class="split"><div>
+<label>Original channel<select id="funder-channel"></select></label>
+<button id="load-funder" type="button">Load funding profile</button>
+<form id="funder-form">
+<h3>Accountable funder</h3>
+<div class="grid">
+<label>Profile title<input name="title" required></label>
+<label>Funder account<input name="account" readonly required></label>
+<label>Accountable operator<input name="operator" required></label>
+<label>Maximum transaction fee · stroops<input name="maximumFeeStroops" inputmode="numeric" pattern="[1-9][0-9]*" required></label>
+<label>Signer environment variable<input name="keyEnv" required></label>
+<label>SDK dependency directory<input name="dependencyRoot" required></label>
+</div>
+<p id="funder-summary" class="hint">Load an original channel or open its saved funding profile.</p>
+<button type="submit">Save funding edition</button>
+<label class="file">Open saved funding profile<input id="funder-file" type="file" accept=".json,application/json"></label>
+</form>
+<div id="funders" class="table-wrap"></div>
+</div><div>
+<form id="funding-form">
+<h3>Funding operation</h3>
+<label>Selected funding profile<select name="stream" id="funding-stream" required></select></label>
+<label>Action<select name="action" id="funding-action"><option value="top_up">Add funds</option><option value="close_start">Start refund waiting period</option><option value="refund">Return remaining balance</option></select></label>
+<label>Operation ID<input name="fundingId" required placeholder="Stable ID for this funding operation"></label>
+<label id="funding-amount-label">Amount to add · token base units<input name="amountAtomic" inputmode="numeric" pattern="[1-9][0-9]*" required></label>
+<button type="submit">Prepare funding operation</button>
+</form>
+<p class="hint">The funder authorizes the selected action and maximum transaction fee in the workspace terminal. Adding funds keeps the task’s separately selected budget. Starting a refund stops new commitments; the contract’s ledger deadline determines when remaining funds can return.</p>
+<label>Archival RPC for transaction recovery · optional<input id="archive-rpc" type="url" placeholder="https://your-selected-stellar-rpc.example"></label>
+<p class="hint">Use this when an older saved transaction needs more history. Reconciliation uses its original Stellar network and transaction.</p>
+</div></div>
+<h3>Funding and refunds</h3><div id="funding-operations" class="table-wrap"></div>
+</section>
 <section aria-labelledby="purchases-title"><h2 id="purchases-title">Paid work and responses</h2>
 <form id="purchase-form"><div class="grid">
 <label>Task<select name="taskId" id="purchase-task" required></select></label>
@@ -56,7 +93,7 @@
 </div><label>JSON request body · leave empty for no body<textarea name="json" rows="4" spellcheck="false"></textarea></label>
 <button type="submit">Prepare original purchase</button></form>
 <div id="purchases" class="table-wrap"></div></section>
-<section aria-labelledby="merchant-title"><h2 id="merchant-title">Merchant delivery and channel close</h2>
+<section aria-labelledby="merchant-title"><h2 id="merchant-title">Merchant delivery and collection</h2>
 <div class="split"><div>
 <form id="merchant-form"><label>Complete merchant profile<input name="file" type="file" accept=".json,application/json" required></label>
 <p class="hint">Select the actual channel, authorized source, priced routes and installed JSON file or handler. A profile correction preserves existing deliveries and commitments.</p>
@@ -65,17 +102,18 @@
 <label>Local merchant port<input id="merchant-port" type="number" min="0" max="65535" value="8789"></label>
 </div><div>
 <form id="close-form"><label>Selected merchant channel<select name="stream" id="close-stream" required></select></label>
-<label>Close operation ID<input name="settlementId" required placeholder="Use a stable close operation ID"></label>
-<button type="submit">Prepare channel close</button></form>
-<p class="hint">Close collects the original accepted commitment. The recipient authorizes its transaction fee in the controlling terminal. Resume keeps the saved Stellar envelope and transaction identity.</p>
+<label>Action<select name="operation" id="settlement-action"><option value="collection">Collect earned amount and keep open</option><option value="close">Collect and close channel</option></select></label>
+<label>Operation ID<input name="settlementId" required placeholder="Stable ID for this collection or close"></label>
+<button id="settlement-prepare" type="submit">Prepare collection</button></form>
+<p class="hint">Collection withdraws the earned part of the highest accepted commitment and keeps the channel open for later work. Close also ends the channel. The recipient authorizes the selected action and fee in the workspace terminal; Resume continues its original saved transaction.</p>
 </div></div>
 <h3>Deliveries</h3><div id="deliveries" class="table-wrap"></div>
-<h3>Channel close</h3><div id="settlements" class="table-wrap"></div></section>
+<h3>Collections and close</h3><div id="settlements" class="table-wrap"></div></section>
 <section aria-labelledby="receiving-title"><h2 id="receiving-title">Move the complete operating channel</h2>
 <div class="split"><form id="handover-form">
 <label>Original channel<select name="stream" id="handover-stream" required></select></label>
 <label>Handover ID<input name="handoverId" required placeholder="Stable ID for this move"></label>
-<p>The handover includes task editions, reservations, commitments, paid responses, merchant delivery, close transactions, source code and required input files. Creating it transfers operation from this workspace; receiving resumes the same history.</p>
+<p>The handover includes task editions, reservations, commitments, paid responses, merchant delivery, funding and refund operations, collection and close transactions, source code and required input files. Creating it transfers operation from this workspace; receiving resumes the same history.</p>
 <button type="submit">Create operating handover</button></form>
 <form id="receive-form"><label>Complete handover file<input name="file" type="file" accept=".json,application/json" required></label>
 <label>Receiving SDK dependency directory<input name="dependencyRoot" required placeholder="/absolute/installed/native-dependencies"></label>

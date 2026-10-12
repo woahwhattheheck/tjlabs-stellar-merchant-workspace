@@ -8,7 +8,7 @@ import { bindingFacts } from '../mpp-charge/config.mjs';
 import { responseRecord, storedResponse } from '../mpp-charge/merchant.mjs';
 import { requireValue as need, hash, stable, now } from '../mpp-charge/storage.mjs';
 import { merchantConfig, profileKey, humanAmount, MAX_BODY, streamKey } from './config.mjs';
-import { loadChannelNative, observeChannel, assertFreshCommitment, nativeStore, merchantCumulativeKey, settlingKey, closedKey } from './runtime.mjs';
+import { loadChannelNative, observeChannel, assertFreshCommitment, outstandingAtomic, nativeStore, merchantCumulativeKey, settlingKey, closedKey } from './runtime.mjs';
 import { groups, serialChannel, deliveryView } from './state.mjs';
 export function merchantContract(config) {
   return {schema:'stellar-forge.mpp-channel-contract.v1',title:config.title,origin:config.publicOrigin,
@@ -36,16 +36,18 @@ export async function createMerchant({workspace,profile,environment=process.env}
     get:store.get,delete:store.delete,
     put:(key,value)=>store.update(key,current=>({op:'set',value:owns(key,value,current),result:undefined})),
     update:async(key,fn)=>{
+      let observation,delivery;
       if(key===cumulativeKey) {
         // The SDK reaches this atomic acceptance only after native signature and replay checks.
-        const row=context.getStore();
-        need(row, 'MPP_CHANNEL_NATIVE_DELIVERY_CONTEXT_REQUIRED');
-        const observation=await observeChannel(native,config.channel);
-        const outstanding=assertFreshCommitment(observation,row.amountAtomic);
-        Object.assign(row,{observation,outstandingAtomic:outstanding,updatedAt:now()});
-        await workspace.put(groups.deliveries,row.id,row);
+        delivery=context.getStore();
+        need(delivery, 'MPP_CHANNEL_NATIVE_DELIVERY_CONTEXT_REQUIRED');
+        observation=await observeChannel(native,config.channel);
+        Object.assign(delivery,{observation,outstandingAtomic:outstandingAtomic(observation,delivery.amountAtomic),updatedAt:now()});
+        await workspace.put(groups.deliveries,delivery.id,delivery);
       }
       return store.update(key,current=>{
+        if(key===cumulativeKey)assertFreshCommitment(observation,delivery.amountAtomic,delivery.challenge.request.amount);
+        // The native callback checks the current stored cumulative plus this same authenticated price.
         const change=fn(current); return change.op==='set'?{...change,value:owns(key,change.value,current)}:change;
       });
     }

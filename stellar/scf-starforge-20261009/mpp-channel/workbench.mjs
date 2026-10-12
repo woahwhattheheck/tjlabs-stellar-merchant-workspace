@@ -141,6 +141,7 @@ export function createChannelWorkbench({workspace,environment=process.env}) {
   async function refreshChannel(body) {
     const config=await selectedChannelProfile(body.stream);
     return serialChannel(workspace,config.channel,async()=>{
+      await assertOperating(workspace,config.channel);
       const native=await loadChannelNative(await dependencyRootFor(workspace,config));
       const observation=await observeChannel(native,config.channel);
       return rememberObservation(workspace,config.channel,observation,{operation:'channel-observe'});

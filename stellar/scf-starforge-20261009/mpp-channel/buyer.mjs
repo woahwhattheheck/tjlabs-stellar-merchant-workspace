@@ -77,7 +77,7 @@ export async function executePurchase({workspace,purchaseId,environment=process.
       if(!row.credentialHeader) {
         reviewChallenge(row.challenge,config,{fresh:row.phase!=='SIGNING'});
         const observation=await observeChannel(native,config.channel);
-        assertFreshCommitment(observation,row.reservation.cumulativeAtomic);
+        assertFreshCommitment(observation,row.reservation.cumulativeAtomic,row.reservation.amountAtomic);
         const key=native.sdk.Keypair.fromSecret(environment[config.signer.keyEnv] ?? '');
         need(key.publicKey()===config.channel.commitmentKey, 'MPP_CHANNEL_COMMITMENT_SIGNER_MISMATCH');
         const stored=await store.get(clientCumulativeKey(config.channel));

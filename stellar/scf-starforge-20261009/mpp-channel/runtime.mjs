@@ -106,11 +106,12 @@ export function outstandingAtomic(observation,cumulativeAtomic) {
   const withdrawn=BigInt(amount(observation.withdrawnAtomic,{zero:true}));
   return (cumulative>withdrawn?cumulative-withdrawn:0n).toString();
 }
-export function assertFreshCommitment(observation,cumulativeAtomic) {
+export function assertFreshCommitment(observation,cumulativeAtomic,requestedAtomic) {
   const cumulative=BigInt(amount(cumulativeAtomic)),withdrawn=BigInt(amount(observation.withdrawnAtomic,{zero:true}));
   need(observation.closeEffectiveAtLedger===null, 'MPP_CHANNEL_CLOSING',409);
   need(cumulative>withdrawn, 'MPP_CHANNEL_ORIGINAL_CUMULATIVE_HISTORY_REQUIRED',409);
   const outstanding=cumulative-withdrawn;
+  need(outstanding>=BigInt(amount(requestedAtomic)), 'MPP_CHANNEL_UNPAID_INCREMENT_TOO_SMALL',409);
   need(outstanding<=BigInt(amount(observation.balanceAtomic,{zero:true})),
     'MPP_CHANNEL_OUTSTANDING_EXCEEDS_BALANCE',409);
   return outstanding.toString();
