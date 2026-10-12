@@ -22,19 +22,19 @@ import sys
 import tempfile
 import urllib.request
 
-SOURCE_COMMIT = "71d0118d3cc86f72689dbd9ed4c70c86113a3241"
-PACKET_COMMIT = "fbc01112d2c1e9579c2153411c66d49a75c9bb9f"
+SOURCE_COMMIT = "7f010cbc26344f840c8b864ea59edbabec5d02d5"
+PACKET_COMMIT = "c4cbb88ac0e0bbca596bad7bec0430ff19cc5722"
 RELATIVE = "stellar/scf-starforge-20261009/sf30-seller-sdk/iati"
 PACKET_URL = ("https://raw.githubusercontent.com/woahwhattheheck/"
               "tjlabs-stellar-merchant-workspace/" + PACKET_COMMIT + "/" +
-              RELATIVE + "/results/delivery/complete-source-71d0118d.json.gz")
-PACKET_BYTES = 561108
-PACKET_SHA256 = "f4359d6d9fe1574dbe02054e5bf531e28a78461dd050384aa989bbe436fe6eac"
-DECODED_BYTES = 2651007
-DECODED_SHA256 = "b9a6e6ab6959e3a8cbdf575d01fb5cf548bca1d868a4e4c109fcbc3706c08a65"
+              RELATIVE + "/results/delivery/complete-source-7f010cbc.json.gz")
+PACKET_BYTES = 607463
+PACKET_SHA256 = "9958ed8f0883c38a7c9f2e3f6e4a4576d7b3bbffecf8015d0eddae52c1663f41"
+DECODED_BYTES = 2855136
+DECODED_SHA256 = "61daa005c5f6ef900e0dcbbb1bcc7affa5c2f896a6887b4fd77ea5d594ba6be3"
 SCHEMA = "stellar-forge.iati-results-complete-source.v1"
-FILE_COUNT = 136
-SOURCE_BYTES = 2508700
+FILE_COUNT = 142
+SOURCE_BYTES = 2703727
 BINARY_COUNT = 1
 BINARY_BYTES = 17001
 
