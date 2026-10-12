@@ -59,9 +59,17 @@ The case remains the shared source of record. Contributors see their current inv
 
 ## Coordinate simultaneous work
 
-A form uses the case version it read. If someone saves another change first, the original server returns a conflict. Refresh the case, examine that saved change and reapply the intended edit to the current record. The older request stays distinct; the application does not silently overwrite another person's saved version.
+The contributor desk keeps an open work, invoice or source draft when **Refresh work** reads a newer case. Entered values, invoice lines, attachment selections and the selected original file remain in place. When another person changed something else in the case, the draft uses that current case version on its next save.
 
-The Team client keeps an uncertain mutation's request ID for the same body during the current page session. An exact replay resolves to the original result. This applies to profile changes as well as work and invoices.
+When the same work or invoice record changed, the desk shows its current saved values beside the retained draft. Review them and choose **Keep my draft on the current record** to apply your intended values, then save. **Cancel** leaves the current saved record in place and asks before discarding changed draft values. A submitted or otherwise advanced record must use its original review and correction lifecycle before the contributor can edit it again.
+
+A save that reaches an older case version returns the original conflict and refreshes the same draft. Review its current status and save again when ready. A newer concurrent change still receives the server's original version check.
+
+If a save response is lost, the submit control becomes **Receive original save**. It keeps the complete original request, version, request ID and selected upload on that page. Receiving submits that exact request to the existing transaction journal, which returns the original result if the save already completed. A work or invoice entry and an uploaded source therefore keep their original identities. The pending fields stay fixed until that response is received. If the session expired, sign in as the original contributor and receive the original save.
+
+The page warns before closing a changed or unresolved draft. Keep it open until the original save has been received. Draft values and pending upload content are held in that page's memory; they are released after a completed save or an explicitly discarded draft.
+
+The Team client retains compact SHA-256 fingerprints and request IDs for the same mutation body during the current page session. Completed upload bodies are released instead of being retained in the retry index. Exact replay also applies to profile changes.
 
 A staff code is displayed once when a profile is created or a code is reissued. Replaying that request returns the saved profile and the fact that a code was issued. Use **Reissue code** if the first code was lost. The code does not appear in the retained request or event history.
 
