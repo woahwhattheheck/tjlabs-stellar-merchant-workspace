@@ -2,6 +2,7 @@ import { platformDefinitions, platformFileNames, base, readOnly, realmId, view, 
 export { platformFileNames, platformDefinitions } from './catalog/accounting-platforms.mjs';
 // MIT. Customer operations over the original QuickBooks and Xero accountant controllers.
 import { createHash } from 'node:crypto';
+import { MerchantSourceChanges } from './accounting-source-changes.mjs';
 import { resolve } from 'node:path';
 import { openMerchantQuickBooksConnection } from './accounting-quickbooks-oauth.mjs';
 import { XeroWorkspace } from '../../stellar/scf-starforge-20261009/merchant-settlement-accounting/workspace/xero-workspace.mjs';
@@ -53,8 +54,10 @@ function qboPostBrief(value) {
     attempts: attempts.slice(-5) };
 }
 function qboBrief(value) {
-  const { eventIds, responses, nativePost, ...record } = value;
-  return { ...record, eventCount: eventIds?.length ?? 0, responseCount: responses?.length ?? 0,
+  const { eventIds, buyerSourceLineIds, buyerEconomicIds, responses, nativePost, ...record } = value;
+  return { ...record, eventCount: eventIds?.length ?? 0,
+    ...(value.sourceKind === 'buyer-expense-period' ? { allocationCount: buyerSourceLineIds?.length ?? 0, economicSourceCount: buyerEconomicIds?.length ?? 0 } : {}),
+    responseCount: responses?.length ?? 0,
     responses: (responses ?? []).slice(-10), nativePost: qboPostBrief(nativePost) };
 }
 function companyView(company, args = {}) {
@@ -63,7 +66,7 @@ function companyView(company, args = {}) {
     ...(args.view === 'accounts' ? { page: pageOf(accounts, args, 'accounts') } : {}) };
 }
 function planView(detail, args = {}) {
-  const { rows = [], journalEntry = {}, companySnapshot, ...plan } = detail.plan;
+  const { rows = [], excluded = [], journalEntry = {}, companySnapshot, ...plan } = detail.plan;
   const record = qboBrief(detail.record), responses = detail.responses ?? detail.record.responses ?? [];
   const files = [
     ...(detail.record.files ?? []).map(file => ({ ...file, planId: detail.record.id })),
@@ -73,12 +76,12 @@ function planView(detail, args = {}) {
       ({ ...file, planId: detail.record.id, nativePost: true, attemptId: attempt.id })))
   ];
   const result = { revision: detail.revision, expectedParentId: detail.expectedParentId, record,
-    plan: { ...plan, rowCount: rows.length, journalEntry: { ...journalEntry, Line: undefined },
+    plan: { ...plan, rowCount: rows.length, ...(plan.sourceKind === 'buyer-expense-period' ? { excludedCount: excluded.length } : {}), journalEntry: { ...journalEntry, Line: undefined },
       lineCount: journalEntry.Line?.length ?? 0,
       companySnapshot: companySnapshot ? companyView(companySnapshot) : null },
-    counts: { rows: rows.length, lines: journalEntry.Line?.length ?? 0, responses: responses.length, files: files.length, accounts: companySnapshot?.accounts?.length ?? 0, nativeAttempts: detail.record.nativePost?.attempts?.length ?? 0 } };
+    counts: { rows: rows.length, excluded: excluded.length, lines: journalEntry.Line?.length ?? 0, responses: responses.length, files: files.length, accounts: companySnapshot?.accounts?.length ?? 0, nativeAttempts: detail.record.nativePost?.attempts?.length ?? 0 } };
   const selected = args.view ?? 'summary';
-  if (selected !== 'summary') result.page = pageOf({ rows, lines: journalEntry.Line ?? [], responses, files, accounts: companySnapshot?.accounts ?? [], 'native-attempts': detail.record.nativePost?.attempts ?? [] }[selected], args, selected);
+  if (selected !== 'summary') result.page = pageOf({ rows, excluded, lines: journalEntry.Line ?? [], responses, files, accounts: companySnapshot?.accounts ?? [], 'native-attempts': detail.record.nativePost?.attempts ?? [] }[selected], args, selected);
   return result;
 }
 function qboResult(value) {
@@ -259,6 +262,7 @@ export class MerchantPlatforms {
       client: new QboHttpClient(definition.qbo ?? { realmId: '', environment: 'sandbox', minorVersion: null }) });
     this.definition = definition;
     this.oauthRuntime = { ...quickbooksOAuth, environment };
+    this.sourceChanges = null;
     this.qboOAuth = null; this.opening = null; this.closing = null; this.disposal = null; this.closed = false;
     this.xero = new XeroWorkspace(workspace, accountant, { client: new XeroHttpClient({ tokenEnv: definition.xero?.tokenEnv ?? XERO_ACCESS_TOKEN_ENV }) });
   }
@@ -271,14 +275,18 @@ export class MerchantPlatforms {
           this.qbo = new QboWorkspace(this.workspace, this.accountant, { client: this.qboOAuth.client });
         }
         await this.qbo.recover(); await this.xero.init();
+        this.sourceChanges = new MerchantSourceChanges(this.workspace, { qbo: this.qbo, xero: this.xero,
+          readInput: args => this.input(args) });
       } catch (error) { await this.dispose().catch(() => {}); throw error; }
     })();
     return this.opening;
   }
   dispose() {
     if (!this.disposal) this.disposal = (async () => {
+      const errors = [];
+      try { await this.sourceChanges?.close(); } catch (error) { errors.push(error); }
       const outcomes = await Promise.allSettled([this.qbo, this.xero].filter(Boolean).map(owner => owner.close()));
-      const errors = outcomes.filter(value => value.status === 'rejected').map(value => value.reason);
+      errors.push(...outcomes.filter(value => value.status === 'rejected').map(value => value.reason));
       try { await this.qboOAuth?.close(); } catch (error) { errors.push(error); }
       if (errors.length) throw Object.assign(new AggregateError(errors, 'The owned accounting platform runtimes did not close cleanly.'),
         { code: 'ACCOUNTING_PLATFORMS_CLOSE_FAILED' });
@@ -476,6 +484,7 @@ export class MerchantPlatforms {
   }
 
   async file(args) {
+    if (['qbo-source-change', 'xero-source-change'].includes(args.kind)) return this.sourceChanges.file(args);
     if (args.kind === 'xero') {
       if (!args.planId || typeof args.file !== 'string' || args.file.length > 100 ||
           !args.file.split('/').every(part => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(part) && part !== '.' && part !== '..'))
@@ -496,6 +505,7 @@ export class MerchantPlatforms {
     return this.qbo.file(args.planId, args.file, args.responseId);
   }
   async call(operation, args) {
+    if (operation.includes('_source_change_')) return this.sourceChanges.call(operation, args);
     if (operation.startsWith('merchant_accounting_xero_')) return this.xeroCall(operation, args);
     switch (operation) {
       case 'merchant_accounting_qbo_connection':
@@ -548,7 +558,10 @@ export class MerchantPlatforms {
         const { value, pins } = await this.qboInput(args), preview = await this.qbo.preview(value);
         const request = { workspace: args.workspace, ...pins, revision: preview.revision, previewSha256: preview.previewSha256 };
         const detail = { revision: preview.revision, expectedParentId: value.expectedParentId ?? null, plan: preview.plan,
-          record: { id: preview.plan.id, integrity: preview.plan.integrity, status: 'PREVIEW', eventIds: preview.plan.rows?.map(row => row.eventId) ?? [], responses: [], files: [] } };
+          record: { id: preview.plan.id, integrity: preview.plan.integrity, status: 'PREVIEW',
+            ...(preview.plan.sourceKind === 'buyer-expense-period' ? { sourceKind: preview.plan.sourceKind, eventIds: [],
+              buyerSourceLineIds: preview.plan.rows.map(row => row.sourceLineId), buyerEconomicIds: [...new Set(preview.plan.rows.map(row => row.economicId))] }
+              : { eventIds: preview.plan.rows?.map(row => row.eventId) ?? [] }), responses: [], files: [] } };
         return { ...planView(detail, args), ...pins, previewSha256: preview.previewSha256,
           binding: { planId: preview.plan.id, actor: preview.plan.actor, createdAt: preview.plan.createdAt, previewSha256: preview.previewSha256 },
           command: command('merchant_accounting_qbo_create', request) };

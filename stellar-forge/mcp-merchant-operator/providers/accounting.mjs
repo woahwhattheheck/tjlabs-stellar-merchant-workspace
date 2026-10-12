@@ -11,6 +11,11 @@ export default defineMerchantProvider({
     read: async (value, { base, config, hostPath }) => value == null ? null : (await import("../accounting.mjs")).normalizeAccountingConfig(value, base) },
   tools: accountingTools,
   instructions: [
+    ...['qbo', 'xero'].map(platform => ({
+      prefix: 'merchant_accounting_' + platform + '_source_change_',
+      text: 'For chart changes, inspect the original plan and target source, then preview complete mappings and explicit valuations through the native engine. Retain the exact preview before source_change_prepare. Read the saved review and prepare its application with the current revision, original application UUID and all three operator confirmations. After a lost reply, reconcile that same review or application before reading changed source aliases. Resume only its retained cancellation/successor intent; completed or rejected requests retain their original outcome. Receive the complete chart-change handoff through the original accounting file reader. Release the original MCP workspace before opening that same directory in Applications.',
+      order: 44
+    })),
     {
       prefix: 'merchant_accounting_portfolio_',
       text: 'For a client portfolio, open the original coordinator and its configured client aliases. Commission exact client procedure editions and real source revisions, preview named staff capacity, then retain the complete prepared coordinator request before execute. A command save retains a separate original child UUID; read the complete saved command before execute_command and reconcile that same client operation after an uncertain reply. Responsibility changes use the original assignment digest and a complete handover note. Capture full selected client periods, receive their separate packets into their original destination workspaces, and adopt explicit local aliases before creating the next period. Close the coordinator and all explicitly opened client sessions before starting the same complete selection in Applications.',

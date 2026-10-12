@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. Prepared customer operations for the original QuickBooks and Xero controllers.
 import { constants } from 'node:fs';
-import { open, mkdir, lstat, realpath, rename, unlink } from 'node:fs/promises';
+import { open, mkdir, lstat, realpath, rename, unlink, link } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -118,7 +118,7 @@ async function withOperation(directory, run) {
   } finally { await lease.close(); }
 }
 
-/** Reconcile original records; both modes may finish an already-retained accountant return. */
+/** Reconcile original records; both modes may finish an already-retained return or chart-change application. */
 export async function runAccountingPlatformOperation({ directory, execute = false, client: providedClient,
   environment = process.env, maxWaitMs = 30000, pollMs = 1000, signal } = {}) {
   need(typeof execute === 'boolean' && Number.isSafeInteger(maxWaitMs) && maxWaitMs >= 0 && maxWaitMs <= 300000 &&
@@ -191,7 +191,34 @@ export async function runAccountingPlatformOperation({ directory, execute = fals
 }
 
 export const downloadAccountingPlatformFile = downloadAccountingMaintenanceFile;
-const HELP = "Starforge QuickBooks and Xero customer operations\n\n  actions --platform qbo|xero\n  sources|open|close --url MCP_URL --workspace ALIAS --platform qbo|xero [--token-env NAME]\n  status ... [--view NATIVE_VIEW] [--offset N] [--limit N]\n  plan ... --plan-id UUID [--view NATIVE_VIEW] [--offset N] [--limit N] [--journal-index N]\n  read ... --action NATIVE_READ_ACTION [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --action ACTION --request PRIVATE_ARGUMENTS_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  prepare --dir PRIVATE_OPERATION --url MCP_URL --workspace ALIAS --platform qbo|xero\n      --preview PRIVATE_PREVIEW_JSON [--token-env NAME]\n  execute|reconcile --dir PRIVATE_OPERATION [--wait-ms N] [--poll-ms N]\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE [--chunk-bytes N]\n\nQuickBooks preview actions: create, review, cancel, response-save, response-resume,\npost and post-resume.\nXero preview actions: context-import, context-capture, create, cancel, operate,\nresponse-import, return-apply, return-resume. Read action names use hyphens,\nfor example connection, company-fetch, company-preview, handoff, context, source,\ncomparison and operation.\nactions prints the complete actual input fields. Each platform keeps its native phases.\n\nNative previews return the exact command and binding. Inline review/cancel/operate/\nresume/capture choices inspect the original records and retain the caller's exact\narguments; they create no accounting job. IDs, source aliases, digests, tenant and\nparent choices are explicit. prepare is local and never submits a merchant command.\nAn existing preparation can reopen only its same exact preview/destination.\n\nexecute first reconciles original IDs, then may send the retained command.\nreconcile creates no new plan, import, provider request or journal operation.\nA pending native QuickBooks post-resume needs explicit execute; reconcile never\ninvokes that provider continuation. An existing BOOKED native post is only adopted.\nEither mode may finish the same retained PENDING QuickBooks accountant response or\nXero return intent; that recovery command is recorded separately before dispatch.\nAfter an ambiguous native Xero context capture, the same operation directory only\nlooks for its existing context. It never repeats that provider read automatically.\nXero RUNNING/COMPLETE/FAILED/INTERRUPTED describe the original operation, not whether\neach journal was posted. Read its native comparison and accountant-return outcome.\nQuickBooks response FAULT/PENDING/SAVED and plan DRAFT/REVIEWED/BOOKED/CANCELLED stay\nnative. Native posting PREPARED/RUNNING/UNCERTAIN/RETRYABLE/RECEIVED needs observation\nor explicit resume; BOOKED is retained completion and FAULT/CONFLICT needs review.\n\nOrdinary commands disconnect only caller-owned file readers. Explicit close drains\nand closes the original workspace, whose controller owns its native operations.\nKeep tokens in their named environment variable. Output files are private; existing\ndownloads and previews are not replaced. Save the whole private operation directory.\nExit 0: preparation/read/observed; 3: pending/not observed; 2: native fault/error.\n";
+
+/** Complete one original chart-change handoff through the owned, SHA-pinned file reader. */
+export async function downloadAccountingSourceChange({ client, changeId, output, expectedSha256, chunkBytes = 65536, signal } = {}) {
+  need(client && ['qbo', 'xero'].includes(client.platform), 'Use the original selected platform client.');
+  need(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(changeId ?? ''), 'Keep the retained source-change UUID.');
+  need(typeof output === 'string' && output.length > 0, 'Choose a new private output filename.');
+  output = resolve(output);
+  await privateDirectory(dirname(output));
+  const temporary = join(dirname(output), '.source-change-' + randomUUID() + '.partial');
+  const handle = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+  let file, written = 0, closed = false;
+  try {
+    for await (const chunk of client.fileChunks({ kind: client.platform + '-source-change', changeId },
+      { expectedSha256, chunkBytes, signal })) {
+      file ??= chunk.file;
+      await handle.writeFile(chunk.bytes); written += chunk.bytes.length;
+    }
+    need(file && written === file.bytes, 'The original complete source-change file was not received.', 'FILE_REPLY');
+    await handle.sync(); await handle.close(); closed = true;
+    // Publish only complete verified bytes, without replacing an existing output.
+    await link(temporary, output); await syncDirectory(dirname(output));
+    return { output, file, complete: true, platform: client.platform, changeId };
+  } finally {
+    if (!closed) await handle.close();
+    await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; });
+  }
+}
+const HELP = "Starforge QuickBooks and Xero customer operations\n\n  actions --platform qbo|xero\n  sources|open|close --url MCP_URL --workspace ALIAS --platform qbo|xero [--token-env NAME]\n  status ... [--view NATIVE_VIEW] [--offset N] [--limit N]\n  plan ... --plan-id UUID [--view NATIVE_VIEW] [--offset N] [--limit N] [--journal-index N]\n  read ... --action NATIVE_READ_ACTION [--request PRIVATE_ARGUMENTS_JSON]\n  preview ... --action ACTION --request PRIVATE_ARGUMENTS_JSON --out NEW_PRIVATE_PREVIEW_JSON\n  prepare --dir PRIVATE_OPERATION --url MCP_URL --workspace ALIAS --platform qbo|xero\n      --preview PRIVATE_PREVIEW_JSON [--token-env NAME]\n  execute|reconcile --dir PRIVATE_OPERATION [--wait-ms N] [--poll-ms N]\n  download ... --selection PRIVATE_JSON --sha256 SHA256 --out NEW_PRIVATE_FILE [--chunk-bytes N]\n  download-source-change ... --change-id UUID --out NEW_PRIVATE_JSON [--sha256 SHA256] [--chunk-bytes N]\n\nQuickBooks preview actions: create, review, cancel, response-save, response-resume,\npost and post-resume.\nXero preview actions: context-import, context-capture, create, cancel, operate,\nresponse-import, return-apply, return-resume. Read action names use hyphens,\nfor example connection, company-fetch, company-preview, handoff, context, source,\ncomparison and operation.\nBoth platforms also support source-change-prepare, source-change-apply and\nsource-change-resume. Read source-change-status, source-change-inspect and\nsource-change-detail through read. The native source-change input belongs to a\nhost-declared platformInputs alias; it preserves its original workspace binding,\nreview/successor UUIDs, exact chart sources, mappings and valuation decisions.\nThe apply preview requires all three explicit confirmations and the current revision.\nDownloaded chart-change handoffs preserve complete native source and original files.\nactions prints the complete actual input fields. Each platform keeps its native phases.\n\nNative previews return the exact command and binding. Inline review/cancel/operate/\nresume/capture choices inspect the original records and retain the caller's exact\narguments; they create no accounting job. IDs, source aliases, digests, tenant and\nparent choices are explicit. prepare is local and never submits a merchant command.\nAn existing preparation can reopen only its same exact preview/destination.\n\nexecute first reconciles original IDs, then may send the retained command.\nreconcile creates no new plan, import, provider request or journal operation.\nA pending native QuickBooks post-resume needs explicit execute; reconcile never\ninvokes that provider continuation. An existing BOOKED native post is only adopted.\nEither mode may finish the same retained PENDING QuickBooks accountant response or\nXero return intent, or the same retained chart-change application; that recovery\ncommand is recorded separately before dispatch. PREPARED is a saved chart review;\nAPPLYING and CANCELLED_PENDING_SUCCESSOR retain one original application;\nCOMPLETED means its predecessor cancellation and original successor are retained.\nA recorded rejection is terminal for that application UUID. If the native owner\nrequires reopening after an uncertain durable save, close/open the original\nworkspace, then reconcile the same private operation directory.\nAfter an ambiguous native Xero context capture, the same operation directory only\nlooks for its existing context. It never repeats that provider read automatically.\nXero RUNNING/COMPLETE/FAILED/INTERRUPTED describe the original operation, not whether\neach journal was posted. Read its native comparison and accountant-return outcome.\nQuickBooks response FAULT/PENDING/SAVED and plan DRAFT/REVIEWED/BOOKED/CANCELLED stay\nnative. Native posting PREPARED/RUNNING/UNCERTAIN/RETRYABLE/RECEIVED needs observation\nor explicit resume; BOOKED is retained completion and FAULT/CONFLICT needs review.\n\nOrdinary commands disconnect only caller-owned file readers. Explicit close drains\nand closes the original workspace, whose controller owns its native operations.\nKeep tokens in their named environment variable. Output files are private; existing\ndownloads and previews are not replaced. Save the whole private operation directory.\nExit 0: preparation/read/observed; 3: pending/not observed; 2: native fault/error.\n";
 function options(args, allowed) {
   const values = new Map();
   for (let index = 0; index < args.length; index += 2) {
@@ -227,8 +254,9 @@ export async function main(args = process.argv.slice(2)) {
     const extra = { sources: [], open: [], close: [], status: ['--view', '--offset', '--limit'],
       plan: ['--plan-id', '--view', '--offset', '--limit', '--journal-index'],
       read: ['--action', '--request'], preview: ['--action', '--request', '--out'],
-      download: ['--selection', '--sha256', '--out', '--chunk-bytes'] }[command];
-    need(extra !== undefined, 'Choose actions, sources, open, close, status, plan, read, preview, prepare, execute, reconcile or download.');
+      download: ['--selection', '--sha256', '--out', '--chunk-bytes'],
+      'download-source-change': ['--change-id', '--sha256', '--out', '--chunk-bytes'] }[command];
+    need(extra !== undefined, 'Choose actions, sources, open, close, status, plan, read, preview, prepare, execute, reconcile, download or download-source-change.');
     const values = options(rest, [...connectionFields, ...extra]);
     const client = await connectAccountingPlatformClient({ url: required(values, '--url'), workspace: required(values, '--workspace'),
       platform: required(values, '--platform'), tokenEnv: values.get('--token-env') ?? 'MCP_ACCESS_TOKEN' });
@@ -247,6 +275,9 @@ export async function main(args = process.argv.slice(2)) {
         const preview = await client.preview(required(values, '--action'), await readJson(resolve(required(values, '--request')), 65536));
         await writePrivate(output, preview); await syncDirectory(dirname(output)); result = { output, preview, submitted: false };
       }
+      if (command === 'download-source-change') result = await downloadAccountingSourceChange({ client,
+        changeId: required(values, '--change-id'), output: required(values, '--out'),
+        expectedSha256: values.get('--sha256'), chunkBytes: numeric(values, '--chunk-bytes', 65536) });
       if (command === 'download') result = await downloadAccountingPlatformFile({ client,
         selection: await readJson(resolve(required(values, '--selection')), 65536), expectedSha256: required(values, '--sha256'),
         output: required(values, '--out'), chunkBytes: numeric(values, '--chunk-bytes', 65536) });
@@ -258,7 +289,7 @@ export async function main(args = process.argv.slice(2)) {
   }
   process.stdout.write(JSON.stringify(result) + '\n');
   if (result?.pending === true || result?.found === false || result?.operation?.status === 'RUNNING') process.exitCode = 3;
-  else if (['FAILED', 'INTERRUPTED'].includes(result?.operation?.status) || result?.response?.status === 'FAULT' ||
+  else if (result?.rejected === true || ['FAILED', 'INTERRUPTED'].includes(result?.operation?.status) || result?.response?.status === 'FAULT' ||
     ['FAULT', 'CONFLICT'].includes(result?.nativePost?.status)) process.exitCode = 2;
   return result;
 }
