@@ -6,7 +6,7 @@ The installed command is **graphql-product**. Its source-owned Applications entr
 
 ## Install and initialize
 
-Use the complete installed Stellar merchant distribution with its original schema runtime dependencies. The root [operating guide](../merchant-workspace/OPERATING.md) contains the original build and runtime-install commands. Do not install this product by copying its CLI alone: it consumes the retained SF105, merchant MCP, source registry and file transport from that same package.
+Build the complete **graphql-workspace** source selection and install its original **schema, openapi, graphql and mcp** feature groups with native payment and operator support. [PACKAGING.md](PACKAGING.md) carries the full build → READY installation → customer setup → merchant/deployment → project handover → receiving-machine workflow. The full Stellar merchant distribution remains compatible with the same product. Both editions retain SF105, merchant MCP, the source registry and file transport together.
 
 Run this from the existing installed command:
 

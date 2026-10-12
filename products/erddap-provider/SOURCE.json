@@ -1,0 +1,408 @@
+{
+  "schema": "stellar-forge.erddap-standalone-source.v1",
+  "selection": "erddap-provider",
+  "original": {
+    "repository": "woahwhattheheck/public-commons-sprint-2026",
+    "implementationMerge": "3585e7620cc8e8c6f7fed24a5eb031415195c078",
+    "executionHead": "00acbcddd9a5646f3006b46a6e87d8f17d452162",
+    "completeSourceCommit": "caebdc296a8768b0982c57a4600cdf40781d6976",
+    "erddapTree": "4f2173b4946f5a528be1cdf9588b3575e8d6eb5f"
+  },
+  "destination": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "c858a418877eda76f474293389464a81c19357bf"
+  },
+  "sourceFiles": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/application-provider.mjs",
+      "bytes": 4955,
+      "sha256": "39f30e2c3f69f1326c09e784c49b4fffdfb78d370d330281751b7892aec806bf",
+      "gitBlob": "df6b6764afd7ddb27182a5fb8fcbddb2ff6b2c05",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/cli.mjs",
+      "bytes": 1631,
+      "sha256": "3ef8874820a415b0aa72c13d88328064b68659b3f33ccdfb446dfff06c07bf27",
+      "gitBlob": "aed1664a75a371a1c44be9a030c71d4a277ee756",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/cli.py",
+      "bytes": 9748,
+      "sha256": "98c9eeb98ed6a428ac0919ec099ba2aa9db7e5b0ad0cf39b798b30f1ed5df66e",
+      "gitBlob": "3ae36a5eecc58b52433c6b691793120c9c3c80c9",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/customer.mjs",
+      "bytes": 8222,
+      "sha256": "a8b3596a4a0ef5bd66d4d582885c11cceed448079efb444fbdbf79ea6bcc451c",
+      "gitBlob": "acd7428ba6869dd526d6b6793ed3b536ceb6cf13",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/acquire_noaa.py",
+      "bytes": 7459,
+      "sha256": "152c578106bcb8b4c9405594acd9b0022912c7cf83715c63d959eec8abe94f19",
+      "gitBlob": "faa48002d8068c401cf1ef135dd2ba623b81ba47",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/assemble_captures.py",
+      "bytes": 8922,
+      "sha256": "6b779c733a1f29c3ed336f8432e1ecc4c5949fa89361c6c96be394dd9438dda4",
+      "gitBlob": "cc8988d6b4dde8399b1fcfa7a4b8adf078e31659",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/browser-owner.py",
+      "bytes": 16469,
+      "sha256": "1a85fcf502c76b9ac0bcf67ce2e6e2858ae58a76969b56ac7753894caddf2314",
+      "gitBlob": "ec707127dcd66b37c195b3653626456dbc9682dc",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/browser-phase.cjs",
+      "bytes": 39923,
+      "sha256": "2eb50abaabbdecec837af218e71206dcf287f2376683e5ce3ac834b652089015",
+      "gitBlob": "693f8e0f3a5bed767e8d055788202962178605ce",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/CAPTURE_IMPORT.md",
+      "bytes": 10293,
+      "sha256": "4efb83271374376e2cf4d3d145ebe75c384c938f28c8ced25c4336138ae2d00b",
+      "gitBlob": "df7c380c8b0089e208430c413d1e98ad0ccaf852",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/acquisition-receipts.json",
+      "bytes": 74880,
+      "sha256": "ff73fb9d3bb0c49cf45acccc85d70961c27cc3e7760b1b9ebdce794ccf835233",
+      "gitBlob": "d4ae3903d86c69f0dc8afa2d92721783fcc6192e",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/ndbc-46042-june-2023.erddap.zip",
+      "bytes": 76522,
+      "sha256": "e52246a67df21d4acf58749e9b08ec76f32cc9d36f9d0595ed4f6040c4c48540",
+      "gitBlob": "1a0e920f39ea21d822c47d69f7afc1d7013c17f2",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/ndbc-46042-three-days-june-2023.erddap.zip",
+      "bytes": 120162,
+      "sha256": "2e1ee02cde8c3e8afe3ffc1b3c68718364e98da7373de6b29eea5e774fe5f57c",
+      "gitBlob": "86f2badc794692ece6d37cdeb71945e4a818b1d1",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-46042-nearby-june-2023/data.csv",
+      "bytes": 1575,
+      "sha256": "3cb4a6f806f52fda52ce0b4ec9b249d5db9785afee1d3db7965a84d4afadba8a",
+      "gitBlob": "4c4da051e8f7ff596fabec12c8f06e8ba391ba20",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-46042-nearby-june-2023/data.json",
+      "bytes": 2274,
+      "sha256": "abfe4c77a51b1defbe6a884179ee0fb7e21e8873e4ebe889666de0f147d8af22",
+      "gitBlob": "fcdf9b489dc072325def2ca650e6c92162855e22",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-sst-june-2023/data.csv",
+      "bytes": 1544,
+      "sha256": "47ec4dcab309cfd6bbfb1b9b56476cdba22d1d482e6af34f3785eeaaf4227ccd",
+      "gitBlob": "1910f8420dd31aec91ffa3735e278f32746a19b3",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-sst-june-2023/data.json",
+      "bytes": 2207,
+      "sha256": "1cb010a51644cb1a7679618166f1d86558e04405c824cec11f955609a49ecafe",
+      "gitBlob": "4bdaec3ec69b37b77ad058cf34e73b07b5912029",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-sst-june-2025/data.csv",
+      "bytes": 1555,
+      "sha256": "fc7fe25acfbf6c81de1c5a63fd945275c16645904712b9c74bf0d0d57dbba7b4",
+      "gitBlob": "1cc4013e159341034e8434b00c72e88c80bd22de",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-sst-june-2025/data.json",
+      "bytes": 2218,
+      "sha256": "7153dbfc274dfb6992f8a7fd8e583b5b157c8bcfa7eaaed3ed81e8c60af4b916",
+      "gitBlob": "605967d4c18644094b64c95f01279b2733815935",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-sst-june-2025/dataset.dds",
+      "bytes": 1105,
+      "sha256": "5dea0ab5eac5fc588958836f665db3754f3cd1849700ca53e10f9592f4d7be39",
+      "gitBlob": "f95af69e4f161e1061bde1a3f66b0fd6d9720b8d",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/mur-sst-june-2025/metadata.json",
+      "bytes": 13031,
+      "sha256": "e1113a36866801767f84a554e3fe9db022e591824473a0ecaa8855df5b6854dc",
+      "gitBlob": "37e9bf1bb6a387091173d29a2f1946bb08a1ed9b",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/ndbc-46042-june-2023/data.csv",
+      "bytes": 9526,
+      "sha256": "cd599a295ebaa45cb763eddfd029e0bba7334a261067518ed85c7bde1c7cca25",
+      "gitBlob": "cbff8e387707356c59652d2d8f9b6357b73fb505",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/ndbc-46042-june-2023/data.json",
+      "bytes": 12798,
+      "sha256": "522cbe07e2ebd9774c5478ad0b655eafb3d5474e3cfefbfdba736d51ab98e11e",
+      "gitBlob": "c9121d0421605a4d97402f8cacc1e91ab5fc36d5",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/ndbc-46042-june-2025/dataset.das",
+      "bytes": 17775,
+      "sha256": "d697fcd27ee8134977f77ecf57b173df0586bcb2c3de5e1c5cd2891098747935",
+      "gitBlob": "c9d97c6bc23118277072b5a16ef2a24679e640d5",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/ndbc-46042-june-2025/dataset.dds",
+      "bytes": 650,
+      "sha256": "3f1cd1c441616e4e2707aa1c2137900c046665c6e00c037c85924eb5a5cb36d4",
+      "gitBlob": "0538ec2e50583c6b201df72cf2fb14cc548fd4e5",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/ndbc-46042-june-2025/metadata.json",
+      "bytes": 27486,
+      "sha256": "49f85fbc755c175e222373c3e0b64e6e3278b4206ccfcf12e6fd364088e12001",
+      "gitBlob": "6fec1d71e8e89d9b320c2789efd2b90694a0535c",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/ndbc-46042-three-days-june-2023/data.csv",
+      "bytes": 28339,
+      "sha256": "dd60fd807805b84d7b0b55320fe306352889d434656fcc589df2040543db17d1",
+      "gitBlob": "5a4a7dcc90bbba920c1872c15a7c9ae766635ccc",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/raw/ndbc-46042-three-days-june-2023/data.json",
+      "bytes": 37598,
+      "sha256": "d377139fd673b015d1d2ed84e4277a0ed8e24730e1f53ab48378e33ff248374b",
+      "gitBlob": "6b7d330e33c837680cbe808f2a4de3a5c1426f45",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/native-receive.py",
+      "bytes": 16975,
+      "sha256": "7fbec8672453d7a325267e48cd65afdb55e372a8d6ef536cd1102a1e1044a33d",
+      "gitBlob": "af689e4a5df0e67f76c8e65402f95bb91cb60016",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/noaa-selection.json",
+      "bytes": 2793,
+      "sha256": "c1679272ac04b2764db059483faafae1bfda90a71bc2061abd02282c34daf993",
+      "gitBlob": "f586d16aced2150f8cb21104e1a528038c62f114",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/provider-native-receive.py",
+      "bytes": 28410,
+      "sha256": "d7eadf7634f30facd79ea5bc18c03f3da1b848318a8f132e7abc4876d549d2f1",
+      "gitBlob": "75a9530bd4365a201ef4ad2e7973a6810dcc5869",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/erddap_server.py",
+      "bytes": 18470,
+      "sha256": "95e4c5bd91dd6a47ffd1ce743a57e50882c113d96cbdc763042d2c27588defc8",
+      "gitBlob": "b72b6b62e8e65ba3dd2d15636308b06e7682047f",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/erddap_source.py",
+      "bytes": 31992,
+      "sha256": "19dc91f4fe6aabd7a36f789a8c17d7f57a03f860025367c592cf1d4788f79730",
+      "gitBlob": "b8b51d5e6301a75c9730faf78493930aed70a216",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/erddap_workspace.py",
+      "bytes": 28610,
+      "sha256": "4b01ecdee8c63d2ae23d2f318519afb751f290a7b4e3244d30e007282b20fc77",
+      "gitBlob": "591f465417931dc59a47994ca2fa573a1a197e54",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/HTTP_API.md",
+      "bytes": 9204,
+      "sha256": "7b7f105ba10fb8bae49908b04def94227335c492027227442239217fe4160875",
+      "gitBlob": "b6c185f63a7fae05848d0b809f320cb96eb38cbd",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/mcp-catalog.mjs",
+      "bytes": 9345,
+      "sha256": "ac9f67dccf9682c80ab14ce535774efa26d91c64780c4e51ce3a1ff4d4adc7c0",
+      "gitBlob": "ab5f41013397a3603327a115bb6e7e9f1ed68bab",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/mcp-client.mjs",
+      "bytes": 20564,
+      "sha256": "7464fc981d0da3bfee71400d0c1e126e92f3afe086e2e250a9ce485b1d9710f6",
+      "gitBlob": "2f33ef29e1acd35c21192d2054032560fdf4a5b0",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/mcp-setup.mjs",
+      "bytes": 3239,
+      "sha256": "753faf3e60166f824c080bc09af2508af1ce969715778f7ad8bd1acb6cb4584a",
+      "gitBlob": "f90f4817e1e1b6b242d8a1a04c55c1fe707e0538",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/mcp.mjs",
+      "bytes": 14179,
+      "sha256": "13a5e7cf014ac7d5f8a443dbc5a7cb5bf2cc818b53b54a941fd1b64e446592e3",
+      "gitBlob": "0ac24f41af5a751197831dbdb1e1698aebf976de",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/merchant-provider.mjs",
+      "bytes": 2368,
+      "sha256": "0c36b188d121df376f3bbb7b2e13fedef0b9a1873c84e137a9b2e323c916ad60",
+      "gitBlob": "874046cb586cc5a2d91ac0ce516cc4a6ca5384c4",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/merchant.mjs",
+      "bytes": 24898,
+      "sha256": "1d9c0048bc8fa704b1f822ee50cf0356448bccb4c2c021e667f5c6f17bdb594d",
+      "gitBlob": "513bacb7b62aae32f2141b959fef16f1dc5d87a7",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/PRIMARY_SOURCES.md",
+      "bytes": 7208,
+      "sha256": "a7d47024de9b6ec14751e8cd5723fcbba0df28c5c69dc63f386a81414b75232f",
+      "gitBlob": "40b0a5f23381395b5b59cdb7c5c02d00265e96ff",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/PROVIDER_CLIENT.md",
+      "bytes": 13896,
+      "sha256": "75f3439a79d67ab9b4b6667e3ec0f86ff875beed7f3acddb55f4f8530c60f316",
+      "gitBlob": "46deb144a53eda2f54bffb10dd81c452aa9edfab",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/provider_handoff_cli.py",
+      "bytes": 7537,
+      "sha256": "8e28d4992caa6553d6ec244700c2993fb9035eb55b0e1a55f2fde92e175100e6",
+      "gitBlob": "220346b8290ad113dda9f613301cc7da471185e7",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/provider_handoff_workspace.py",
+      "bytes": 13140,
+      "sha256": "74c024be4db116de3c2b5885cfdeb841af83fdd6f72050ff7efc3ed5fc219c41",
+      "gitBlob": "c12d13a07d870148ec7bdb8ea3890a3d4bcabb0d",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/PROVIDER_HANDOFF.md",
+      "bytes": 17894,
+      "sha256": "a9f875a46553b07427c1541fc5091a3283bdaef970ab475ae55fe20b837cdca2",
+      "gitBlob": "151ac05c25c1f54ecc37b8a433a0cf1009569c6f",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/provider_handoff.py",
+      "bytes": 46575,
+      "sha256": "fb3676d6201c0b933adc45e1a2ba04a36e0f1cf36ae3aa30692e083472bce392",
+      "gitBlob": "c170ad931f6478e2633be2ba1ab95d6ab41d934e",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/provider-handoff-client.mjs",
+      "bytes": 2885,
+      "sha256": "71160361c9ee4549837537b9b61cd81322670751bf6802f04a82b4aa7eec3ec8",
+      "gitBlob": "4955799b596c9c24b5991dd17f2059f84a8a9fd2",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/provider-handoff.mjs",
+      "bytes": 565,
+      "sha256": "c0131413cea8c26a321dbfc2d044a7aa1171b2244c8f628056effb89bab06a57",
+      "gitBlob": "9737d3cf5d98c6aa0820197a115604efcb792eba",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/public/app.js",
+      "bytes": 97741,
+      "sha256": "29f79e88f88a9a08d83bea3a8cc742a6287442add45098e94d2d8cf616e29d40",
+      "gitBlob": "a445be4c6879836960ea460fe7e9ee582c473066",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/public/index.html",
+      "bytes": 1807,
+      "sha256": "50b4dfa8e8cb7299c5a733db59dfc1d7fcc5631cba13283c303baf3d75781006",
+      "gitBlob": "fc62bd57e422a9fc91a9210d625303f6d90b137d",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/public/style.css",
+      "bytes": 9796,
+      "sha256": "4b9ffbcab976276b87cf4d621ed1f7c5d3531de80a8a684d11a2351923e62932",
+      "gitBlob": "f5277bc3e1208f311f2e5c4cb990231d6b2b9ee6",
+      "mode": "100644"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/README.md",
+      "bytes": 23732,
+      "sha256": "323fc7dffff9aabb80fc697d5cd2317cf50b659e5b1eeaec6b919eaa24f595dd",
+      "gitBlob": "f4dc4d6ae2a161913d608a43b26f3175c06f7380",
+      "mode": "100644"
+    }
+  ],
+  "selectedReference": {
+    "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/captures/ndbc-46042-june-2023.erddap.zip",
+    "bytes": 76522,
+    "sha256": "e52246a67df21d4acf58749e9b08ec76f32cc9d36f9d0595ed4f6040c4c48540",
+    "rows": 144,
+    "sourceDate": "2023-06-01",
+    "station": "46042"
+  },
+  "preservedXmlDependencies": [
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/workspace.py",
+      "gitBlob": "24c4fb7ccf08f6d350bcfb4eae6accc251a60a4e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/xml_source.py",
+      "gitBlob": "8f02d9545ae2959f354cff555ddb0e8595f1b8e0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/xml/native.mjs",
+      "gitBlob": "b335d4148f82cc40b3d5bdb08891c0d6b98f67ac"
+    }
+  ],
+  "receiving": {
+    "nativeHelper": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/provider-native-receive.py",
+    "browserOwner": "stellar/scf-starforge-20261009/sf30-seller-sdk/erddap/delivery/browser-owner.py",
+    "status": "Use the maintained native helper and browser owner with the same retained operation directory, source ZIP and saved profile. Preserve each completed phase when reopening."
+  }
+}

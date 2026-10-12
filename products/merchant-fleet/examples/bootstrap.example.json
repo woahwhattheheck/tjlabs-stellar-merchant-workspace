@@ -1,0 +1,42 @@
+{
+  "schema": "stellar-forge.fleet-bootstrap.v1",
+  "gateway": {
+    "port": 8400,
+    "adminPort": 8401
+  },
+  "merchantPortStart": 8521,
+  "slots": [
+    "blue",
+    "green"
+  ],
+  "tenants": [
+    {
+      "id": "catalog",
+      "host": "catalog.example.com",
+      "packages": {
+        "current": {
+          "workspace": "/srv/starforge/merchant-inputs/catalog"
+        }
+      },
+      "initial": {
+        "package": "current",
+        "releaseId": "initial",
+        "label": "Reviewed initial catalog release"
+      }
+    },
+    {
+      "id": "reports",
+      "host": "reports.example.com",
+      "packages": {
+        "current": {
+          "workspace": "/srv/starforge/merchant-inputs/reports"
+        }
+      },
+      "initial": {
+        "package": "current",
+        "releaseId": "initial",
+        "label": "Reviewed initial reports release"
+      }
+    }
+  ]
+}
