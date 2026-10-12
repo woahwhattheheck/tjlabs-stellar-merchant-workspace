@@ -53,6 +53,7 @@ def verify_project(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', required=True, type=Path)
+    parser.add_argument('--source-commit', required=True, help='Full immutable maintained source commit')
     parser.add_argument('--package', required=True, type=Path,
         help='Unchanged Starforge_Data_Preparation_2026-10-12.zip from the original PREP12 case')
     parser.add_argument('--directory', required=True, type=Path, help='New private receiving directory')
@@ -86,7 +87,7 @@ def main():
         write(directory/'inputs/orders.csv', project.read('originals/'+orders['sha256']))
     write(directory/'original-manifest.json', json.dumps(original, ensure_ascii=False).encode())
     options = {
-        'packageSha256': PACKAGE_SHA, 'projectSha256': PROJECT_SHA,
+        'packageSha256': PACKAGE_SHA, 'projectSha256': PROJECT_SHA, 'sourceCommit': args.source_commit,
         'playwrightModule': args.playwright_module, 'chromiumExecutable': args.chromium,
     }
     write(directory/'receiving-options.json', json.dumps(options).encode())
@@ -125,6 +126,8 @@ def main():
     description = json.loads(inspected.stdout)
     if description['rowCount'] != 6:
         raise ValueError('Original merchant loading did not receive the whole prepared result')
+    received['sourceCommit'] = args.source_commit
+    received['sourceRepository'] = 'woahwhattheheck/tjlabs-stellar-merchant-workspace'
     received['merchantDataset'] = description
     received['verifiedOriginalFiles'] = len(original['members'])
     received['verifiedCompleteProjectArchives'] = 4
@@ -140,23 +143,26 @@ def main():
         'editions and the original review. The new managed result and independently edited customer result are '
         'included as complete editable project archives.\n\n'
         '## Open the delivered customer project\n\n'
-        'Python 3.11+ and Node 22.16+ on a POSIX host are required. From this extracted directory:\n\n'
-        '    python3 source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/cli.py '
+        'Use the installed data-preparation-workspace product. Python 3.11+ and Node 22.16+ on a POSIX host '
+        'are required. Set PREPARATION_SOURCE_ROOT to the READY installation source root. From this extracted directory:\n\n'
+        '    python3 "$PREPARATION_SOURCE_ROOT/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/cli.py" '
         '--workspace /ABSOLUTE/PRIVATE/new-customer receive downloads/customer-edited-project.zip\n'
-        '    node source/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed.mjs '
+        '    node "$PREPARATION_SOURCE_ROOT/stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/managed.mjs" '
         '--workspace /ABSOLUTE/PRIVATE/new-customer --port 0\n\n'
         'Open the private link printed by the actual listener. The original Inputs, Recipes, Results and Handover '
         'sections share the same saved native state with the typed client and merchant adapters.\n\n'
         '## Complete contents\n\n'
-        '- source/: original preparation engine, browser, managed product, typed interfaces and actual support files.\n'
         '- downloads/: complete browser project, managed project, independently edited customer project, '
         'merchant dataset ZIP, selected result and readable report.\n'
         '- merchant-dataset/: complete dataset.csv, dataset.json, mapping.json and README for the original SF30 loader.\n'
         '- original-project.zip: exact retained PREP12 project before this continuation.\n'
         '- receiving-result.json: actual native operating result, original IDs, full file hashes and desktop/phone outcomes.\n\n'
-        'The installed distribution workflow and 21 typed tools are documented in '
-        'source/products/data-preparation/OPERATING.md. Use the maintained repository selection '
-        'data-preparation-workspace for the complete cumulative merchant runtime.\n'
+        '## Maintained operating source\n\n'
+        'The complete product source, installation selection, 21 typed tools and operating guide are maintained at:\n\n'
+        'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/'+args.source_commit+
+        '/products/data-preparation\n\n'
+        'Use selection data-preparation-workspace to install the complete cumulative merchant runtime. '
+        'This customer data delivery remains independently editable with that original runtime.\n'
     )
     write(directory/'START_HERE.md', guide.encode())
     output = directory/(title+'.zip')
@@ -167,13 +173,6 @@ def main():
             for path in sorted((directory/folder).rglob('*')):
                 if path.is_file():
                     archive.write(path, path.relative_to(directory))
-        # These are the exact selected runtime files received by the caller. Native
-        # generated caches, dependency installations and private workspace state stay out.
-        for path in sorted(source.rglob('*')):
-            if path.is_file() and not path.is_symlink() and not any(
-                part in {'node_modules', '__pycache__', '.git'} for part in path.relative_to(source).parts
-            ):
-                archive.write(path, Path('source')/path.relative_to(source))
     output.chmod(0o600)
     final = {
         'schema': 'stellar-forge.data-preparation-managed-delivery.v1',

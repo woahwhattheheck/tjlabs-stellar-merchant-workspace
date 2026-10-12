@@ -353,6 +353,7 @@ The complete native receiving programme is products/data-preparation/receiving.p
 ~~~sh
 python3 "$PREPARATION_SOURCE_ROOT/products/data-preparation/receiving.py" \
   --source-root "$PREPARATION_SOURCE_ROOT" \
+  --source-commit FULL_40_CHARACTER_COMMIT \
   --package /absolute/private/Starforge_Data_Preparation_2026-10-12.zip \
   --directory /absolute/private/new-managed-receiving \
   --node /absolute/existing/node \
@@ -360,4 +361,4 @@ python3 "$PREPARATION_SOURCE_ROOT/products/data-preparation/receiving.py" \
   --chromium /absolute/existing/chromium
 ~~~
 
-The original package is 1,143,288 bytes with SHA-256 38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577. Its existing attachment is F0C8Q7QV5G9 in the original preparation Slack case. Use the existing full package and an empty receiving directory under an owned private parent. The programme retains its original operation directory on failure so the same customer state can be inspected. Its complete output includes source, the original project, complete delivered files, independently editable customer project and the actual operating result.
+The original package is 1,143,288 bytes with SHA-256 38b52c9837c81177d691127e07587894de7ae52bd6ef74013b02a18578814577. Its existing attachment is F0C8Q7QV5G9 in the original preparation Slack case. Use the existing full package and an empty receiving directory under an owned private parent. The programme retains its original operation directory on failure so the same customer state can be inspected. Its complete output links the maintained source and includes the original project, complete delivered files, independently editable customer project and the actual operating result.
