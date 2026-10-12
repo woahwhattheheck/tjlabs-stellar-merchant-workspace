@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const O = {value:null, version:0, navigation:0, jsonDirty:false, preview:null, saved:null,
-    tableKey:null, inspection:null, documents:[], editions:[], plans:[], catalog:null, retained:null, preparing:false};
+    tableKey:null, inspection:null, documents:[], editions:[], plans:[], catalog:null, retained:null, preparing:false, pending:new Map()};
   const panel = h('section',{id:'view-property-onboarding',hidden:true});
   panel.innerHTML = [
     '<div class="heading"><div><h1>Survey spreadsheets</h1><p>Map retained CSV and XLSX exports into the same survey, change review and comparable-selection workflow.</p></div></div>',
@@ -16,7 +16,8 @@
     '<select id="po-plans" aria-label="Saved mapping"></select><button id="po-open-plan">Open saved mapping</button>',
     '<select id="po-editions" aria-label="Existing survey edition"></select><button id="po-use-study">Use existing study</button>',
     '<button id="po-open-retained">Open retained row map</button><button id="po-continue">Continue revised source</button><button id="po-new">New mapping</button></div>',
-    '<div id="po-study" class="form-grid"></div><div class="onboarding-actions"><button id="po-add-properties">Add property table</button>',
+    '<div id="po-study" class="form-grid"></div><div class="onboarding-actions"><button id="po-apply-fields">Apply field edits</button><button id="po-reset-fields">Reset field edits</button><span id="po-field-state" role="status"></span></div>',
+    '<div class="onboarding-actions"><button id="po-add-properties">Add property table</button>',
     '<button id="po-add-units">Add schedule table</button><button id="po-add-comparables">Add published-purpose table</button></div>',
     '<div id="po-tables" class="onboarding-tabs"></div><div id="po-table"></div>',
     '<details class="onboarding-json"><summary>Complete mapping JSON and retained source bindings</summary>',
@@ -43,7 +44,32 @@
   const choice = () => O.value?.tables.find(t=>t.key===O.tableKey);
   const stamp = () => ({navigation:O.navigation,version:O.version,token:state.token});
   const current = x => x.navigation===O.navigation && x.version===O.version && x.token===state.token;
-  function cleanJSON(){if(O.jsonDirty)throw Error('Apply or reset the visible JSON edits first.');}
+  function cleanJSON(){
+    if(O.jsonDirty)throw Error('Apply or reset the visible JSON edits first.');
+    if(O.pending.size)throw Error('Apply or reset the visible field edits first.');
+  }
+  function editor(control,label,parseValue,apply){
+    const reserve=()=>{
+      O.pending.set(control,()=>{const value=parseValue(control.value);return()=>apply(value);});
+      invalidate();el('field-state').textContent='Unapplied field edits. Finish the field or choose Apply field edits.';
+    };
+    control.oninput=reserve;
+    control.onchange=()=>run(label,()=>{if(!O.pending.has(control))reserve();applyFields();});
+    return control;
+  }
+  function applyFields(){
+    if(O.jsonDirty)throw Error('Apply or reset the visible JSON edits first.');
+    if(!O.pending.size)return;
+    const actions=[...O.pending.values()].map(prepare=>prepare());
+    for(const action of actions)action();
+    O.pending.clear();invalidate();syncJSON();renderStudy();renderTables();
+    el('field-state').textContent='Field edits applied to this mapping.';
+  }
+  function resetFields(){
+    O.pending.clear();invalidate();renderStudy();renderTables();
+    if(!O.jsonDirty)syncJSON();
+    el('field-state').textContent='Visible fields restored from the current mapping.';
+  }
   function invalidate(){
     O.version++;O.preview=null;O.saved=null;O.inspection=null;
     el('preview-summary').textContent='Mapping changed. Preview the current source and save its mapping before receiving.';
@@ -53,10 +79,15 @@
   function changed(action){cleanJSON();action();invalidate();syncJSON();renderStudy();renderTables();}
   function syncJSON(){el('json').value=JSON.stringify(O.value,null,2);O.jsonDirty=false;el('json-state').textContent='JSON matches the visible mapping.';buttons();}
   function buttons(){
-    el('prepare').disabled=O.preparing||O.jsonDirty||!O.preview?.ready||!O.saved||
+    const dirty=O.jsonDirty||O.pending.size>0;
+    el('prepare').disabled=O.preparing||dirty||!O.preview?.ready||!O.saved||
       O.saved.plan_sha256!==O.preview.plan_sha256;
-    el('preview').disabled=!O.value||O.jsonDirty;
-    el('save').disabled=!O.value||O.jsonDirty;
+    el('preview').disabled=!O.value||dirty;
+    el('save').disabled=!O.value||dirty;
+    el('apply-fields').disabled=!O.pending.size||O.jsonDirty;
+    el('reset-fields').disabled=!O.pending.size;
+    el('apply-json').disabled=O.pending.size>0;
+    el('json').readOnly=O.pending.size>0;
   }
   function selectOptions(select,values,getValue,getLabel,empty){
     const previous=select.value;select.replaceChildren(h('option',{value:''},empty),
@@ -66,7 +97,7 @@
   async function refresh(){
     const selected=stamp();
     const [data,plans,catalog]=await Promise.all([api('property.status'),api('property.onboarding.plans'),api('property.onboarding.fields')]);
-    if(!current(selected))return;
+    if(!current(selected)||O.pending.size||O.jsonDirty)return;
     O.documents=data.documents;O.editions=data.editions;O.plans=plans.plans;O.catalog=catalog;
     selectOptions(el('plans'),O.plans,x=>x.document_id,x=>x.label+' · '+short(x.document_id),'Choose retained mapping');
     selectOptions(el('editions'),O.editions,x=>x.id,x=>x.label+' · '+short(x.id),'Choose survey edition');
@@ -74,7 +105,7 @@
   }
   function reset(value,saved=null){
     O.navigation++;O.version++;O.value=copy(value);O.saved=saved;O.preview=null;O.retained=null;O.inspection=null;
-    O.tableKey=O.value.tables[0]?.key||null;O.jsonDirty=false;
+    O.tableKey=O.value.tables[0]?.key||null;O.jsonDirty=false;O.pending.clear();el('field-state').textContent='';
     syncJSON();renderStudy();renderTables();el('preview-summary').textContent='Preview every selected source row before receiving.';
     for(const id of ['preview-rows','preview-page','changes','changes-page','result','retained-summary','retained-rows','retained-page'])el(id).replaceChildren();
   }
@@ -84,7 +115,7 @@
       document_ids:{},previous_id:null,omitted_records:'review_removed',note:'',tables:[]});
   }
   function labelInput(title,value,apply,type='text'){
-    const input=h('input',{type,value:value??'',onchange:()=>run('Update mapping',()=>changed(()=>apply(input.value)))});
+    const input=editor(h('input',{type,value:value??''}),'Apply mapping field',value=>value,apply);
     return h('label',{},title,input);
   }
   function renderStudy(){
@@ -128,19 +159,18 @@
         else{delete binding.constant;binding.column=Number(source.value);}
       }));
       const value=Object.hasOwn(binding,'constant')?h('textarea',{rows:2,value:JSON.stringify(binding.constant),spellcheck:false}):h('span',{className:'muted'},'Original column '+binding.column);
-      if(Object.hasOwn(binding,'constant'))value.onchange=()=>run('Change mapped constant',()=>changed(()=>{binding.constant=JSON.parse(value.value);}));
+      if(Object.hasOwn(binding,'constant'))editor(value,'Apply mapped constant',JSON.parse,parsed=>t.fields[field].constant=parsed);
       const settings=h('textarea',{rows:3,spellcheck:false,value:JSON.stringify(Object.fromEntries(Object.entries(binding).filter(([k])=>!['column','constant'].includes(k))),null,2)});
-      settings.onchange=()=>run('Update conversion settings',()=>changed(()=>{
-        const next=JSON.parse(settings.value);if(!next||Array.isArray(next)||typeof next!=='object')throw Error('Use a conversion object.');
-        t.fields[field]={...(Object.hasOwn(binding,'constant')?{constant:binding.constant}:{column:binding.column}),...next};
-      }));
+      editor(settings,'Apply conversion settings',value=>{
+        const next=JSON.parse(value);if(!next||Array.isArray(next)||typeof next!=='object')throw Error('Use a conversion object.');return next;
+      },next=>{const actual=t.fields[field];t.fields[field]={...(Object.hasOwn(actual,'constant')?{constant:actual.constant}:{column:actual.column}),...next};});
       return [target,source,value,settings,button('Remove',()=>changed(()=>delete t.fields[field]),true)];
     });
   }
   function renderTables(){
-    if(!O.value)return;
+    if(!O.value||O.pending.size)return;
     el('tables').replaceChildren(...O.value.tables.map(t=>h('button',{className:t.key===O.tableKey?'active':'',
-      onclick:()=>{O.tableKey=t.key;O.inspection=null;renderTables();}},t.kind+' · '+t.key)));
+      onclick:()=>run('Select mapping table',()=>{cleanJSON();O.navigation++;O.tableKey=t.key;O.inspection=null;renderTables();})},t.kind+' · '+t.key)));
     const t=choice();if(!t){el('table').replaceChildren(h('p',{className:'empty'},'Add property, schedule or published-purpose tables. A flat export can be mapped twice with separate property and schedule fields.'));return;}
     const sources=O.documents.filter(d=>/\.(csv|txt|xlsx)$/.test(d.files[0]?.path||''));
     const source=h('select',{'aria-label':'Retained source export'});
@@ -157,9 +187,11 @@
         {kind:'csv',encoding:'utf-8-sig',delimiter:',',quotechar:'"',escapechar:null,doublequote:true,header_row:1,start_row:2,end_row:null,first_column:1,last_column:null};
     }));
     const reader=h('textarea',{rows:6,spellcheck:false,value:JSON.stringify(t.reader,null,2)});
-    reader.onchange=()=>run('Update source range',()=>changed(()=>t.reader=JSON.parse(reader.value)));
+    editor(reader,'Apply source range',value=>{const next=JSON.parse(value);if(!next||Array.isArray(next)||typeof next!=='object'||!['csv','xlsx'].includes(next.kind))throw Error('Use a CSV or XLSX reader object.');return next;},value=>t.reader=value);
     const selection=h('textarea',{rows:5,spellcheck:false,value:JSON.stringify({hidden:t.hidden,...t.selection},null,2)});
-    selection.onchange=()=>run('Update row selection',()=>changed(()=>{const v=JSON.parse(selection.value);t.hidden=v.hidden;delete v.hidden;t.selection=v;}));
+    editor(selection,'Apply row selection',value=>{
+      const v=JSON.parse(value);if(!v||Array.isArray(v)||typeof v!=='object')throw Error('Use a row selection object.');return v;
+    },v=>{t.hidden=v.hidden;delete v.hidden;t.selection=v;});
     const add=h('select',{'aria-label':'Add target field'});
     add.append(h('option',{value:''},'Choose a field'),...Object.keys(O.catalog?.fields[t.kind]||{}).filter(f=>!Object.hasOwn(t.fields,f)).map(f=>h('option',{value:f},f)));
     el('table').replaceChildren(
@@ -292,7 +324,7 @@
     if(!current(selected))return;
     O.retained=result;
     el('retained-summary').replaceChildren(h('p',{},'Edition '+edition_id),h('pre',{},JSON.stringify(result.binding,null,2)),
-      button('Open this mapping',()=>reset(result.plan.value,result.plan),true),
+      button('Open this mapping',()=>{cleanJSON();reset(result.plan.value,result.plan);},true),
       button('Download complete row map',()=>{
         const doc=O.documents.find(x=>x.id===result.binding.row_map_document_id);
         return download({kind:'property_document',id:result.binding.row_map_document_id,path:doc?.files[0].path||'original.jsonl'},'survey-source-rows.jsonl');
@@ -322,10 +354,13 @@
     await refresh();
   });};
   el('json').oninput=()=>{O.jsonDirty=true;O.version++;O.preview=null;O.saved=null;buttons();el('json-state').textContent='Unapplied JSON edits. Apply or reset before using the mapping.';};
-  el('apply-json').onclick=()=>run('Apply complete mapping JSON',()=>{const value=JSON.parse(el('json').value);if(value?.schema!=='stellar-forge.property-onboarding-plan.v1'||!Array.isArray(value.tables))throw Error('Use a complete survey onboarding plan.');reset(value);});
+  el('apply-json').onclick=()=>run('Apply complete mapping JSON',()=>{if(O.pending.size)throw Error('Apply or reset visible field edits first.');const value=JSON.parse(el('json').value);if(value?.schema!=='stellar-forge.property-onboarding-plan.v1'||!Array.isArray(value.tables))throw Error('Use a complete survey onboarding plan.');reset(value);});
   el('reset-json').onclick=()=>syncJSON();
   el('download-json').onclick=()=>run('Download complete mapping',()=>{cleanJSON();const url=URL.createObjectURL(new Blob([JSON.stringify(O.value,null,2)],{type:'application/json'}));const a=h('a',{href:url,download:'survey-onboarding-plan.json'});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-  el('json-file').onchange=()=>run('Open mapping JSON',async()=>{const file=el('json-file').files[0];if(!file)return;if(file.size>3*1024*1024)throw Error('Mapping exceeds 3 MiB.');O.navigation++;const selected=stamp();const value=JSON.parse(await file.text());if(!current(selected))return;if(value?.schema!=='stellar-forge.property-onboarding-plan.v1'||!Array.isArray(value.tables))throw Error('Use a complete survey onboarding plan.');reset(value);});
+  el('json-file').onchange=()=>run('Open mapping JSON',async()=>{cleanJSON();const file=el('json-file').files[0];if(!file)return;if(file.size>3*1024*1024)throw Error('Mapping exceeds 3 MiB.');O.navigation++;const selected=stamp();const value=JSON.parse(await file.text());if(!current(selected))return;if(value?.schema!=='stellar-forge.property-onboarding-plan.v1'||!Array.isArray(value.tables))throw Error('Use a complete survey onboarding plan.');reset(value);});
+  el('apply-fields').onclick=()=>run('Apply all visible mapping fields',applyFields);
+  el('reset-fields').onclick=()=>run('Reset visible mapping fields',resetFields);
+  for(const id of ['plans','editions'])el(id).onchange=()=>{O.navigation++;};
   el('refresh').onclick=()=>run('Refresh original survey work',refresh);
   el('new').onclick=()=>run('New survey mapping',()=>{cleanJSON();newPlan();});
   el('add-properties').onclick=()=>run('Add property mapping',()=>addTable('properties'));

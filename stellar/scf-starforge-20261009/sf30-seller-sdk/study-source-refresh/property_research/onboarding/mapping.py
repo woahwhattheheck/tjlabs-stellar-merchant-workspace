@@ -137,10 +137,12 @@ def normalize(value):
                               "rows": raw_selection.get("rows", []), "exclude": raw_selection.get("exclude", [])}
         selection = table["selection"]
         if (selection["mode"] not in ("all", "only") or not isinstance(selection["rows"], list) or
-                len(selection["rows"]) > MAX_ROWS or len(selection["rows"]) != len(set(selection["rows"]))):
+                len(selection["rows"]) > MAX_ROWS):
             fail("PROPERTY_ROW_SELECTION")
         for row in selection["rows"]:
             integer(row, "selected row", 1, 1048576)
+        if len(selection["rows"]) != len(set(selection["rows"])):
+            fail("PROPERTY_ROW_SELECTION")
         if selection["mode"] == "only" and not selection["rows"]:
             fail("PROPERTY_SELECTED_ROWS_REQUIRED")
         if not isinstance(selection["exclude"], list) or len(selection["exclude"]) > MAX_ROWS:
@@ -405,6 +407,7 @@ def compile_plan(service, value, row_output, *, offset=0, limit=30, changes_offs
             continue
         properties[pkey]["units"].append(unit)
     packet = {"schema": property_model.SCHEMA, "study": clone(plan["study"]),
+              "documents": [clone(documents[key]) for key in sorted(documents)],
               "properties": list(properties.values()), "source_comparables": list(comparable_rows.values())}
     normalized_packet = None
     try:

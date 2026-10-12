@@ -136,6 +136,8 @@ class Onboarding:
                 if item["key"] in document_ids and document_ids[item["key"]] != item["id"]:
                     fail("PROPERTY_ONBOARDING_DOCUMENT_KEY_CONFLICT")
                 document_ids[item["key"]] = item["id"]
+                if item["key"] not in plan["document_ids"]:
+                    packet["documents"].append(clone(item["metadata"]))
             packet["study"]["onboarding"] = {
                 "schema": PROJECTION, "plan_document_id": plan_id,
                 "row_map_document_id": row_doc["id"], "projection_document_id": projection_doc["id"],
@@ -177,6 +179,29 @@ class Onboarding:
                 fail("PROPERTY_ONBOARDING_SOURCE_BINDING_CHANGED", document_key=key)
         base_packet = clone(packet)
         base_packet["study"].pop("onboarding", None)
+        authored = {}
+        expected_ids = clone(plan["value"]["document_ids"])
+        for field in ("plan_document_id", "row_map_document_id", "projection_document_id"):
+            item = self.property.document(binding[field])
+            if item["key"] in expected_ids and expected_ids[item["key"]] != item["id"]:
+                fail("PROPERTY_ONBOARDING_DOCUMENT_KEY_CONFLICT")
+            expected_ids[item["key"]] = item["id"]
+            if item["key"] not in plan["value"]["document_ids"]:
+                authored[item["key"]] = item["metadata"]
+        if expected_ids != edition["document_ids"]:
+            fail("PROPERTY_ONBOARDING_SOURCE_BINDING_CHANGED")
+        source_declarations, observed = [], set()
+        for declaration in base_packet.get("documents", []):
+            key = declaration.get("key")
+            if key in authored:
+                if key in observed or declaration != authored[key]:
+                    fail("PROPERTY_ONBOARDING_AUTHORED_DECLARATION_CHANGED")
+                observed.add(key)
+            else:
+                source_declarations.append(declaration)
+        if observed != set(authored):
+            fail("PROPERTY_ONBOARDING_AUTHORED_DECLARATION_CHANGED")
+        base_packet["documents"] = source_declarations
         if identity(base_packet) != projection["projection"]["packet_sha256"]:
             fail("PROPERTY_ONBOARDING_PROJECTED_PACKET_CHANGED")
         row_doc, _ = self._file(binding["row_map_document_id"])

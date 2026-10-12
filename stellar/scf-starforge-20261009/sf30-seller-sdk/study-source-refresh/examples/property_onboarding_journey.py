@@ -95,6 +95,10 @@ def run(args):
     documents, c = original(args.documents)
     selection_plan, d = original(args.selections)
     input_identity = {"baseline": a, "candidate": b, "documents": c, "selections": d}
+    if args.study_package:
+        supplied_package = Path(args.study_package).expanduser().resolve(strict=True)
+        input_identity["study_package"] = {"path": str(supplied_package),
+            "manifest_sha256": identity(verify_package(supplied_package))}
     result_path = out / "onboarding-result.json"
     if result_path.exists():
         result = parse(read(result_path, 64 * 1024 * 1024))
@@ -328,7 +332,7 @@ def run(args):
                 target = Workspace(out / "generic-recovery-workspace")
                 recovered = export_package(target, manifest["comparison_id"], expected_version=spec["review_version"],
                     operator=operator, label="Original completed-rename recovery", destination=destination)
-                archived = archive_package(target, recovered["id"])
+                archived = call(target, "export.archive", {"export_id": recovered["id"]})
                 if not recovered["reopened"]:
                     raise AssertionError("Original complete rename was not adopted")
                 return {"package_id": recovered["id"], "archive": archived, "boundary": "actual filesystem rename / injected SQLite commit failure"}
