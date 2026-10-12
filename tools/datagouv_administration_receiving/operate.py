@@ -6,6 +6,15 @@ SCHEMA = "datagouv.linux-administration-receiving/v1"
 INPUT_SCHEMA = "datagouv.linux-administration-receiving-input/v1"
 INVENTORY = "products/datagouv/application-files.json"
 ADMIN = "products/datagouv/admin/publisher_admin.py"
+REQUIRED_CURRENT_SOURCES = (
+    "stellar-forge/mcp-merchant-operator/host-profile.mjs",
+    "stellar-forge/mcp-merchant-operator/operation-error.mjs",
+    "stellar-forge/mcp-merchant-operator/service-agreements-errors.mjs",
+    "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+    "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+    "stellar/scf-starforge-20261009/sf103-native-buyer-signer/diagnostics.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-location.mjs",
+)
 
 def sha(raw):
     return hashlib.sha256(raw).hexdigest()
@@ -293,6 +302,8 @@ class Receiving:
                                 "--output", str(packages / ("after-" + s["after_inventory"]["sha256"] + ".tar.gz")))
         preflight = call("preflight", "preflight", "--node", str(pathlib.Path(s["node"]).resolve()),
                          "--user", user.pw_name, "--port", str(s.get("port", 8429)))
+        require(len(after_pins) >= 189 and set(REQUIRED_CURRENT_SOURCES) <= set(after_pins),
+                "The selected complete current edition is required before installation or upgrade")
         existing = lifecycle["existing"]
         fresh = lifecycle["mode"] == "fresh_selected"
         if fresh:

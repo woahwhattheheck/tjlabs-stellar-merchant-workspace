@@ -23,7 +23,7 @@ those exact dependency paths and produces the 189-file inventory. Packaging a
 177- or 182-file archive demonstrates its byte integrity; it does not demonstrate
 that its native entry point can initialize. A fresh installation therefore
 initializes the selected complete current edition. It does not try to initialize
-the historical177 release first.
+the historical 177 release first.
 
 PR499's exact source head f21a832148266fca295e1113ba3be2c5b8c64b26 contains the earlier
 administration source, even though current main subsequently retains PR493's
@@ -42,7 +42,7 @@ For a current or later complete edition, supply all four of:
 
 The capsule must use datactivist.customer-source.v1, provide complete UTF-8 content
 and byte/hash pins for every member, and exactly match its own
-products/datagouv/application-files.json. It must retain every original182 path,
+products/datagouv/application-files.json. It must retain every original 182 path,
 include the seven known dependency paths, and preserve the reviewed
 administration source after the exact correction. An inventory count alone is
 insufficient. No download, unsigned source substitution, package installation or
@@ -59,8 +59,8 @@ second instance of the original publisher programme to run this receiver.
 
 The host needs:
 
-* Linux and Python3.10 or later with the standard library.
-* Node24 or later with node:sqlite, at an actual absolute executable path.
+* Linux and Python 3.10 or later with the standard library.
+* Node 24 or later with node:sqlite, at an actual absolute executable path.
 * The existing util-linux flock executable.
 * An existing mapped unprivileged service account. A passwd entry alone does
   not establish that its UID and primary GID exist in the current user namespace.
@@ -70,7 +70,7 @@ The host needs:
   backup, receiving evidence and complete result ZIP.
 
 The production administrator checks the current UID/GID maps before creating
-an installation. A container that maps only UID/GID0 cannot complete service
+an installation. A container that maps only UID/GID 0 cannot complete service
 commissioning with another passwd account. SERVICE_ACCOUNT_UNMAPPED means that
 no installation or workspace was initialized. Keep the complete saved artifact
 and move this same pre-install operation to an accepting host where the selected
@@ -78,10 +78,10 @@ unprivileged identity is actually mapped. A root service is not a substitute.
 
 The root selected with --root must have an existing ordinary parent, use no
 symlink path component and be owned by the invoking administrator. The receiver
-creates it with mode0755. Source/operator directories are0755 with0444 source
-files. Control, evidence, source capsules, upload journals and history are0700;
-their ordinary private files are0600. The maintained administrator creates the
-service-owned0700 workspace parent and keeps its own administrator-owned source,
+creates it with mode 0755. Source/operator directories are 0755 with 0444 source
+files. Control, evidence, source capsules, upload journals and history are 0700;
+their ordinary private files are 0600. The maintained administrator creates the
+service-owned 0700 workspace parent and keeps its own administrator-owned source,
 control files and locks. Source parents must be traversable by the selected
 service account; do not broadly relax unrelated filesystem permissions.
 
@@ -112,7 +112,7 @@ its member count.
 ## Prepare the complete original selection
 
 Select the exact existing receiving artifact, its hash and size. The original
-v0 package is1,296,091 bytes, SHA-256
+v0 package is 1,296,091 bytes, SHA-256
 b14bff25681e4108eac987b2bad18913733ca2ba952ea739e91af9f3e5577103.
 A later artifact must be selected using its actual returned identity.
 
@@ -144,7 +144,7 @@ record and an explicit handoff or pre-dispatch source amendment.
 
 PREPARED is source preparation only. It is not a native preflight, installation,
 service start or upgrade result. Preparation without a later capsule preserves
-the historical177/182 source and is useful for custody; that historical selection
+the historical 177/182 source and is useful for custody; that historical selection
 cannot be dispatched as a current functional installation.
 
 A retained after-selected capsule is reused with its own complete selection
@@ -172,7 +172,7 @@ The original native workflow then:
 
 A fresh install has no existing initialized predecessor workspace. Its result
 therefore explicitly reports upgrade_coverage.status:not_exercised. It retains
-the original177/182 source evidence without manufacturing an upgrade result or
+the original 177/182 source evidence without manufacturing an upgrade result or
 requiring startup of an edition already known to have missing imports.
 
 The native installer journals initialization attempts before creating them.
@@ -295,7 +295,7 @@ outcome:
 | RECEIVER_INCOMPLETE | Intake, materialization or outer execution failed; usable source and observed evidence are preserved |
 
 Packaging does not promote an incomplete outcome to PASS. The result also
-records the actual source file counts and exact current selection. A189-file
+records the actual source file counts and exact current selection. A 189-file
 input, a correctly constructed release, and successful native installation are
 separate facts.
 
