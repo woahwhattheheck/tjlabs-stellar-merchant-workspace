@@ -1,6 +1,6 @@
 # Data preparation workspace
 
-Retain original CSV and JSON Lines editions, join them with saved SQL recipes, review complete results, and hand over a project that another operator can reopen and edit. Applications, the original browser, the typed Node client and 21 merchant tools share one native Python/SQLite workspace.
+Retain original CSV and JSON Lines editions, join them with saved SQL recipes, review complete results, and hand over a project that another operator can reopen and edit. Applications, the original browser, the typed Node client and 40 merchant tools share one native Python/SQLite workspace.
 
 | Entry | Customer workflow |
 | --- | --- |
@@ -11,6 +11,7 @@ Retain original CSV and JSON Lines editions, join them with saved SQL recipes, r
 | **merchant_preparation_*** | Declared input import, native SQL, complete delivery and customer receiving |
 | **./seller/data-preparation/connection** | Typed attachment, original row pages and streamed complete downloads |
 | **./seller/data-preparation/managed** | Original receiving and installed Python launcher |
+| **./seller/data-preparation/pipelines/connection** | Original pipeline client on the same private Applications attachment |
 | **./seller/data-preparation/mcp** | Typed host configuration, tool arguments and merchant class |
 | **starforge dataset** | Original SF30 inspection of a prepared merchant dataset |
 
@@ -184,7 +185,7 @@ starforge merchant-mcp-stdio \
   --config /absolute/private/preparation/merchant/merchant-mcp.json
 ~~~
 
-The initializer creates the original release store and merchant configuration with the source-owned preparationWorkspaceConnection input. Ordinary merchant configuration resolves it to the preparationWorkspaces provider family. Existing stdio and HTTP hosts use the same 21 tools.
+The initializer creates the original release store and merchant configuration with the source-owned preparationWorkspaceConnection input. Ordinary merchant configuration resolves it to the preparationWorkspaces provider family. Existing stdio and HTTP hosts use the same 40 tools.
 
 ## Complete agent workflow
 
@@ -322,6 +323,141 @@ starforge data-preparation \
   run ACTUAL_NEW_RECIPE_ID
 ~~~
 
+## Saved pipelines on the same Applications workspace
+
+Choose **Open preparation pipelines** in the original browser, or call merchant_preparation_pipeline_browser for the connected workspace. The pipeline editor opens on that same private listener and uses its original sources, saved SQL recipes and complete result files.
+
+The original **Original inputs**, **Pipelines**, **Executions**, **Compare runs** and **Handover** sections provide the complete workflow:
+
+1. Select the retained source editions and create a definition from a saved SQL recipe, or compose named stages. Each SQL alias selects an original input or a completed upstream stage. The engine checks dependencies and retains the stage order with the saved edition.
+2. Save the complete definition and retain its ID and revision. A later edit uses that ID and its current expected revision, preserving the previous edition.
+3. Enqueue with a stable request key, the exact saved edition and the complete named input selection. Start the returned execution. Repeating the same request key and selection returns its original execution.
+4. Inspect each completed stage, its native run, complete rows, original input lineage and retained attempts. Stage execution uses the existing preparation engine, so each new attempt retains its own native recipe and run alongside the original project history.
+5. Record the selected stage's review, compare complete executions, and export the whole editable project, selected result files, report or merchant dataset. The complete project carries both the original preparation state and the pipeline journal.
+6. Receive that project and open its independent editor. The original receipt retains the accepted archive identity. Applications creates a private connection file for the received workspace and owns that child listener until Stop.
+
+**Resume** retains completed stages and continues the original unfinished execution. **Recover** obtains the original executor lease before marking abandoned work interrupted. **Cancel** requests cancellation through the same pipeline and native SQL engine. Inspect a WAITING result and start or resume its saved execution when the original executor becomes available.
+
+A new execution may explicitly select reuseExecution from an earlier saved execution. The original engine verifies its native source identity, frozen stage definition, inputs and complete retained result before reuse. It records the selected earlier execution and stage in the new journal. Preserve those returned IDs and decisions when continuing an operation after a lost response.
+
+Stopping the parent Applications entry closes its received-project listeners, requests cancellation of their owned jobs and drains their active transfers. The complete received files, recipes, pipeline editions, executions and reviews remain saved. Reopening the parent and choosing a retained receiving reopens that exact private child. A received workspace can also be selected directly as its own Applications entry once the previous listener has closed.
+
+### Typed pipeline operation
+
+This example starts from an existing saved native SQL recipe in the operator workspace. Supply the actual recipe ID and revision as the two script arguments. It uses the READY installation's source root defined above.
+
+~~~js
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {mkdir} from 'node:fs/promises';
+
+const sourceRoot = process.env.PREPARATION_SOURCE_ROOT;
+const product = 'stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/';
+const fromSource = path => import(pathToFileURL(join(sourceRoot, product, path)).href);
+const {PreparationWorkspaceClient} = await fromSource('connection.mjs');
+const {PreparationPipelineClient} = await fromSource('pipeline-connection.mjs');
+
+const recipeId = process.argv[2];
+const recipeRevision = Number(process.argv[3]);
+if (!recipeId || !Number.isSafeInteger(recipeRevision) || recipeRevision < 1) {
+  throw Error('Supply an existing saved recipe ID and its revision.');
+}
+const preparation = await PreparationWorkspaceClient.connect(
+  '/absolute/private/preparation/operator/preparation-connection.json'
+);
+let customer;
+try {
+  const pipelines = new PreparationPipelineClient(preparation);
+  const definition = await pipelines.fromRecipe(recipeId, {revision: recipeRevision});
+  const saved = await pipelines.save(definition);
+  const queued = await pipelines.enqueue(saved.id, 'customer-pipeline-' + saved.id, {
+    revision: saved.revision
+  });
+  console.log({pipelineId: saved.id, revision: saved.revision, executionId: queued.id});
+  await pipelines.execute(queued.id);
+  const execution = await pipelines.wait(queued.id);
+  if (execution.status !== 'COMPLETE') throw Error(execution.message || execution.status);
+
+  for await (const row of pipelines.allRows(execution.id, 'prepare')) {
+    console.log(row);
+  }
+  const review = await pipelines.review(execution.id, 'prepare', {
+    decision: 'accept', reviewer: 'Customer preparation',
+    note: 'Reviewed the complete saved result.', expectedRevision: 0
+  });
+  console.log({nativeRun: execution.stages.prepare.nativeRun, review});
+
+  const destination = '/absolute/private/preparation/pipeline-delivery';
+  await mkdir(destination, {recursive: true, mode: 0o700});
+  const current = await pipelines.status();
+  const project = await pipelines.exportDelivery({
+    operationId: 'pipeline-project-' + execution.id, kind: 'pipeline-project',
+    expectedStateSha256: current.stateSha256,
+    expectedPipelineSha256: current.pipelineStateSha256
+  });
+  const archive = join(destination, project.filename);
+  await preparation.downloadDelivery(project, archive);
+  const received = await pipelines.receiveProject(archive, {
+    requestKey: 'customer-receive-' + execution.id,
+    expectedSha256: project.sha256
+  });
+  console.log(received);
+
+  customer = await PreparationWorkspaceClient.connect(received.connectionFile, {
+    workspaceSha256: received.workspaceSha256,
+    expectedInstanceId: received.instanceId
+  });
+  const customerPipelines = new PreparationPipelineClient(customer);
+  const restored = await customerPipelines.definition(saved.id, {revision: saved.revision});
+  const {id, revision, createdAt, order, ...editableDefinition} = restored;
+  const customerEdition = await customerPipelines.save({
+    ...editableDefinition, label: restored.label + ' — customer edition'
+  }, {pipelineId: id, expectedRevision: revision});
+  console.log({receivedProject: received.id, customerEdition});
+} finally {
+  if (customer) await customer.close();
+  await preparation.close();
+}
+~~~
+
+Retain the returned pipeline ID/revision, execution ID, review revision, receiving request key and complete delivery record in the calling operation. After an interrupted invocation, inspect those records and continue the same saved stage; creating another definition starts a new customer operation. Enqueue and receiving request keys bind their exact original selections, while updates and reviews require the current expected revision.
+
+The PreparationPipelineClient is a view over its owning PreparationWorkspaceClient. Its inherited original methods preserve the original metadata and execution model. Closing that attachment drains the view's requests and complete-file streams; Applications owns the actual listener lifecycle.
+
+Pipeline resultURL returns a protected API path. Use pipelines.download(path, absoluteDestination, {sha256, bytes}) for a complete create-only file, or pipelines.downloadLink(path) for an authenticated single-use browser link. The original exportProject, report, deliver and merchant methods return a complete native download record; pass its download field to those same managed download methods.
+
+### Pipeline tools and complete receiving
+
+The following tools join the existing preparation catalog. Every name has the merchant_preparation_pipeline_ prefix and uses the same declared workspace alias.
+
+| Tools | Original operation |
+| --- | --- |
+| status, browser | Inspect both current state digests and open the private pipeline editor |
+| list, definition, from_recipe, save | Page saved editions, inspect a complete definition, start from a saved recipe and save an explicit edition |
+| enqueue, execute, execution, events | Retain the original request selection, operate its saved execution and read complete attempt/event history |
+| rows, review, compare | Page original stage results, record their native review and compare complete executions |
+| cancel, recover | Cooperatively cancel or recover the original execution |
+| export | Retain a complete project, results archive, report, merchant dataset or result file |
+| receive, received, open_received | Receive a complete project and reopen its original independently editable private workspace |
+
+For pipeline export, inspect status immediately before selecting a new operationId and include both expectedStateSha256 and expectedPipelineSha256. Choose:
+
+- **pipeline-project:** the complete original preparation project and pipeline journal.
+- **pipeline-results:** all original selected output stages of executionId.
+- **pipeline-report:** the complete readable report for executionId.
+- **pipeline-merchant:** the selected executionId and stageId as an original merchant dataset.
+- **pipeline-result:** one original result.csv, result.jsonl or schema.json for executionId and stageId.
+
+The original exporters hold their own native and pipeline locks. Managed publication checks both reviewed states before and after the full export and retains its complete file record. If an active writer changes either state, inspect the current project before preparing a new delivery. Completed operation retries reopen their existing verified content.
+
+Use the existing merchant_preparation_exports and merchant_preparation_file tools for those retained files, including after Applications stops or the merchant host restarts. The full delivery record carries both source state digests, the actual byte length and complete SHA-256.
+
+The original pipeline receiver retains its 20 GiB complete-archive and expanded-project allowance. The preparation host's maxExpandedBytes configures native preparation receiving; maxFileBytes also bounds declared project inputs and retained file readers.
+
+Pipeline receiving accepts exactly one declared project sourceInput or retained pipeline-project fileId, plus expectedSourceSha256 and a stable requestKey. It uses the original receiver's saved receiving directory and archive receipt. Repeating the same request preserves the original received project, including independent edits made after it was received. The returned connectionFile, workspaceSha256 and instanceId identify its private attachment; origin and url are the browser's full opening URL.
+
+For subsequent agent work in the received project, declare its returned private directory as another workspace alias in the host configuration and initialize the merchant host with that complete configuration. The same original preparation and pipeline tools then operate that customer workspace. Applications may own it through the parent receiving listener, or as its own selected entry after that listener closes.
+
 ## Merchant handover and data semantics
 
 The merchant ZIP comes from the original merchant_delivery implementation. Keep dataset.csv, dataset.json and mapping.json together. After extracting that complete native dataset into a separate directory, inspect it through the installed original handler:
@@ -343,7 +479,7 @@ The managed layer preserves the original SQL-preparation files. Declarative clea
 
 The original SQL engine, browser, typed client and transfer workflow are the 13-file PREP12 contribution from maintained PR415, merge 08caff5379d3111260b72738d481c0625abedb5b. Its original exercise and operating results are retained in the preparation case, including the 120,012-input-row, three-source project and independently editable receiving.
 
-This managed contribution adds Applications, instance-bound attachment, source-owned registrations, 21 typed tools and durable delivery around that engine. Its selection adopts the original data-preparation contribution and keeps the native Python/SQLite source in the installed product. The original guide remains at sf30-seller-sdk/data-preparation/README.md.
+This managed contribution adds Applications, instance-bound attachment, source-owned registrations, 40 typed tools and durable delivery around that engine and its original saved pipelines. Its selection adopts the original data-preparation contribution and keeps the native Python/SQLite source in the installed product. The original guide remains at sf30-seller-sdk/data-preparation/README.md.
 
 
 ## Continue the retained original customer project

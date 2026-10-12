@@ -43,13 +43,15 @@ export async function preparationOpenFile(value,{privateOnly=false,maximum=Numbe
     return {path,handle,info,bytes:Number(info.size)};
   }catch(error){await handle.close();throw error;}
 }
-export async function preparationHashFile(source){
+export async function preparationHashFile(source,signal){
   const hash=createHash('sha256'),buffer=Buffer.alloc(1024*1024);let position=0;
   while(position<source.bytes){
+    signal?.throwIfAborted();
     const {bytesRead}=await source.handle.read(buffer,0,Math.min(buffer.length,source.bytes-position),position);
     preparationNeed(bytesRead>0,'PREPARATION_FILE_CHANGED','The original file ended before its declared length.',409);
     hash.update(buffer.subarray(0,bytesRead));position+=bytesRead;
   }
+  signal?.throwIfAborted();
   const after=await source.handle.stat({bigint:true}),before=source.info;
   preparationNeed(['dev','ino','size','mtimeNs','ctimeNs'].every(key=>before[key]===after[key]),
     'PREPARATION_FILE_CHANGED','The original file changed during reading.',409);
@@ -195,22 +197,25 @@ export class PreparationWorkspaceClient extends PreparationClient {
     preparationNeed(PREPARATION_HASH.test(fileId??''),'PREPARATION_FILE_ID_INVALID','Choose a completed native file ID.');
     return this.downloadLink('/api/managed/file/'+fileId,options);
   }
-  async importFile(file,{alias,format='csv',label=basename(file),nullToken,expectedSha256,signal}={}){
+  async importFile(file,{alias,format='csv',filename=basename(file),label=filename,nullToken,expectedSha256,signal}={}){
     preparationNeed(expectedSha256===undefined||PREPARATION_HASH.test(expectedSha256),'PREPARATION_SOURCE_SHA_INVALID','Use the original source SHA-256.');
-    const source=await preparationOpenFile(file,{maximum:2*1024**3});let stream;
-    try{
-      const sha256=await preparationHashFile(source);
-      preparationNeed(expectedSha256===undefined||sha256===expectedSha256,'PREPARATION_SOURCE_CHANGED','The declared source changed before import.',409);
-      const query=new URLSearchParams({alias,format,label,filename:basename(file)});
-      if(nullToken!==undefined)query.set('nullToken',nullToken);
-      stream=source.handle.createReadStream({autoClose:false,start:0});
-      const value=await this.request('/api/import?'+query,{method:'POST',headers:{
-        'Content-Type':'application/octet-stream','Content-Length':String(source.bytes),
-        'X-Preparation-Request':'1','X-Preparation-Source-SHA256':sha256
-      },body:stream,duplex:'half',signal});
-      preparationNeed(value.sha256===sha256,'PREPARATION_SOURCE_CHANGED','The retained native source differs from the selected input.',409);
-      return value;
-    }finally{stream?.destroy();await source.handle.close();}
+    return this.#perform(async active=>{
+      active.throwIfAborted();
+      const source=await preparationOpenFile(file,{maximum:2*1024**3});let stream;
+      try{
+        const sha256=await preparationHashFile(source,active);
+        preparationNeed(expectedSha256===undefined||sha256===expectedSha256,'PREPARATION_SOURCE_CHANGED','The declared source changed before import.',409);
+        const query=new URLSearchParams({alias,format,label,filename});
+        if(nullToken!==undefined)query.set('nullToken',nullToken);
+        stream=source.handle.createReadStream({autoClose:false,start:0});
+        const value=await jsonBody(await this.#fetch('/api/import?'+query,{method:'POST',headers:{
+          'Content-Type':'application/octet-stream','Content-Length':String(source.bytes),
+          'X-Preparation-Request':'1','X-Preparation-Source-SHA256':sha256
+        },body:stream,duplex:'half'},active));
+        preparationNeed(value.sha256===sha256,'PREPARATION_SOURCE_CHANGED','The retained native source differs from the selected input.',409);
+        return value;
+      }finally{stream?.destroy();await source.handle.close();}
+    },signal);
   }
   async pipelineBrowser(){
     await this.inspect();return {url:this.origin+'/pipelines/#'+this.#record.value.token,...this.connection};
@@ -221,20 +226,23 @@ export class PreparationWorkspaceClient extends PreparationClient {
     preparationNeed(typeof requestKey==='string'&&requestKey.trim().length>0&&requestKey.length<=200&&
       (expectedSha256===undefined||PREPARATION_HASH.test(expectedSha256)),
     'PREPARATION_PIPELINE_RECEIVING','Use a stable original receiving request key and complete project SHA-256.');
-    const source=await preparationOpenFile(file,{maximum:PREPARATION_DEFAULT_RECEIVING_BYTES});let stream;
-    try{
-      const sha256=await preparationHashFile(source);
-      preparationNeed(expectedSha256===undefined||sha256===expectedSha256,
-        'PREPARATION_SOURCE_CHANGED','The declared complete project changed before receiving.',409);
-      stream=source.handle.createReadStream({autoClose:false,start:0});
-      const result=await this.request('/api/pipelines/receive?'+new URLSearchParams({requestKey}),{
-        method:'POST',headers:{'Content-Type':'application/octet-stream','Content-Length':String(source.bytes),
-          'X-Preparation-Request':'1','X-Preparation-Source-SHA256':sha256},body:stream,duplex:'half',signal
-      });
-      preparationNeed(result.archiveSha256===sha256&&result.bytes===source.bytes,
-        'PREPARATION_PIPELINE_RECEIVING_CHANGED','The received project differs from the selected full archive.',409);
-      return result;
-    }finally{stream?.destroy();await source.handle.close();}
+    return this.#perform(async active=>{
+      active.throwIfAborted();
+      const source=await preparationOpenFile(file,{maximum:PREPARATION_DEFAULT_RECEIVING_BYTES});let stream;
+      try{
+        const sha256=await preparationHashFile(source,active);
+        preparationNeed(expectedSha256===undefined||sha256===expectedSha256,
+          'PREPARATION_SOURCE_CHANGED','The declared complete project changed before receiving.',409);
+        stream=source.handle.createReadStream({autoClose:false,start:0});
+        const result=await jsonBody(await this.#fetch('/api/pipelines/receive?'+new URLSearchParams({requestKey}),{
+          method:'POST',headers:{'Content-Type':'application/octet-stream','Content-Length':String(source.bytes),
+            'X-Preparation-Request':'1','X-Preparation-Source-SHA256':sha256},body:stream,duplex:'half'
+        },active));
+        preparationNeed(result.archiveSha256===sha256&&result.bytes===source.bytes,
+          'PREPARATION_PIPELINE_RECEIVING_CHANGED','The received project differs from the selected full archive.',409);
+        return result;
+      }finally{stream?.destroy();await source.handle.close();}
+    },signal);
   }
   downloadOriginal(relative,destination,{sha256,bytes:expectedBytes,signal}={}){
     preparationNeed(typeof relative==='string'&&(

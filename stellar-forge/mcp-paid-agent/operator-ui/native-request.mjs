@@ -1,4 +1,7 @@
 /** MIT. Native HTTP request desk for the original SF43/SF88 buyer workspace. */
+import { canUseHttpRoute, matchesHttpRoute } from './http-path.mjs';
+import { createHttpPathFields, httpRecord } from './path-form.mjs';
+
 const TOOL = 'sf43_discover_review_and_pay';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const positive = value => typeof value === 'string' && /^[1-9][0-9]*$/.test(value);
@@ -158,7 +161,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
   function workspaceSelector({value = state.workspaceId, label = 'Native HTTP service', choices = [...state.workspaces.values()], onChange}) {
     const select = node('select', {'aria-label':label}, choices.map(workspace =>
       node('option', {value:workspace.workspaceId, text:workspace.workspaceLabel + ' · ' + workspace.route.method + ' ' +
-        workspace.route.origin + workspace.route.pathname})));
+        workspace.route.origin + (workspace.route.routeTemplate ?? workspace.route.pathname)})));
     select.value = value;
     select.addEventListener('change', async () => {
       const generation = state.generation;
@@ -191,19 +194,23 @@ export function createNativeRequestDesk({client, ui, onView}) {
       ]),
       ...(state.workspaceError ? [node('p', {className:'notice error', text:errorText(state.workspaceError)})] : []),
       facts([['Service', value.workspaceLabel], ['Service ID', value.workspaceId],
-        ['Method', value.route.method], ['Resource', value.route.origin + value.route.pathname],
+        ['Method', value.route.method], ['Resource', value.route.origin + (value.route.routeTemplate ?? value.route.pathname)],
         ['Content-Type', value.route.contentType], ['Network', value.payment.network],
         ['Asset', value.payment.asset], ['Recipient', value.payment.payTo], ['Service ceiling', value.payment.maxAtomic]]),
       detail('Service limits and available actions', {limits:value.limits, actions:value.actions}));
   }
-  function routeError(value, workspace, paymentIndex) {
+  function routeError(value, workspace, paymentIndex, concreteURL) {
     let selected;
     try { selected = new URL(value.resource.url); } catch { return 'The selected resource has no usable HTTP URL.'; }
     if (Number.isSafeInteger(value.source?.pageBytes) && value.source.pageBytes > workspace.limits.sourcePageBytes)
       return 'The complete original provider page exceeds the native source-page limit. Explore with a smaller provider page size, then select the original offer again.';
     const route = workspace.route, method = value.preview.method;
-    if (selected.origin !== route.origin || selected.pathname !== route.pathname || method !== route.method)
-      return 'This native workspace is configured for ' + route.method + ' ' + route.origin + route.pathname + '.';
+    try {
+      const compatible = concreteURL === undefined ? canUseHttpRoute(httpRecord(value), route) :
+        matchesHttpRoute(concreteURL, method, route);
+      if (!compatible) return 'This native workspace is configured for ' + route.method + ' ' +
+        route.origin + (route.routeTemplate ?? route.pathname) + '.';
+    } catch (error) { return error.message; }
     const choice = value.accepts[paymentIndex], terms = workspace.payment;
     if (!choice || ['scheme','network','asset','payTo'].some(key => choice[key] !== terms[key]))
       return 'Select a payment option matching the native workspace network, asset, recipient, and scheme.';
@@ -233,6 +240,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
     const choices = compatible.length ? compatible : [...workspaces.values()];
     let workspace = choices.find(item => item.workspaceId === state.workspaceId) ??
       choices.find(item => item.workspaceId === state.defaultWorkspaceId) ?? choices[0];
+    const pathFields = createHttpPathFields(value, {node, empty});
     const method = value.preview.method, bodyAllowed = !['GET','HEAD'].includes(method);
     const options = node('select', {'aria-label':'Native payment option'}, value.accepts.map((item, index) =>
       node('option', {value:index, text:(index + 1) + ' · ' + item.amount + ' ' + item.asset + ' · ' + item.network})));
@@ -272,7 +280,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
         node('label', {text:'Original payment option'}, [options]),
         node('label', {text:'Maximum payment in original asset base units'}, [maximum]),
       ]),
-      selectedTerms,
+      selectedTerms, pathFields.element,
       node('label', {text:'Query values (JSON object)'}, [query]),
       node('p', {className:'field-note', text:'Use explicit strings or nonempty arrays of strings. The published query encoding applies; unselected fixed URL values remain intact.'}),
       node('label', {text:'Request body'}, [bodyMode]), bodyLabel, byteCount, contentType,
@@ -287,11 +295,14 @@ export function createNativeRequestDesk({client, ui, onView}) {
       contentType.textContent = 'Content-Type supplied by ' + workspace.workspaceLabel + ': ' +
         (workspace.route.contentType ?? 'none') + '.';
       selectedTerms.replaceChildren(facts(Object.entries(value.accepts[Number(options.value)] ?? {})));
-      const why = routeError(value, workspace, Number(options.value));
+      let why;
+      try { why = routeError(value, workspace, Number(options.value), pathFields.concrete().href); }
+      catch (error) { why = error.message; }
       eligibility.textContent = why ?? 'The selected offer matches ' + workspace.workspaceLabel + '.';
       eligibility.classList.toggle('error', Boolean(why));
       submit.disabled = Boolean(why) || !workspace.actions.includes('request-prepare');
     }
+    pathFields.onChange(update);
     for (const element of [maximum, query, body]) element.addEventListener('input', update);
     options.addEventListener('change', update); bodyMode.addEventListener('change', update);
     choosePayment(); update();
@@ -305,7 +316,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
       if (!current(generation) || !isCurrent()) { message('Inspect the selected resource again before saving its request.', true); return; }
       if (controls.disabled) return;
       try {
-        const acceptIndex = Number(options.value), routeFailure = routeError(value, workspace, acceptIndex);
+        const acceptIndex = Number(options.value), routeFailure = routeError(value, workspace, acceptIndex, pathFields.concrete().href);
         if (routeFailure) throw new Error(routeFailure);
         const maxAtomic = maximum.value;
         if (!positive(maxAtomic)) throw new Error('Enter a positive integer maximum in the asset’s original base units.');
@@ -313,7 +324,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
           throw new Error('The maximum must cover the selected original amount.');
         if (BigInt(maxAtomic) > BigInt(workspace.payment.maxAtomic))
           throw new Error('The maximum exceeds this native service’s configured ceiling.');
-        const input = {query:queryInput(query.value)};
+        const input = {path:pathFields.read(), query:queryInput(query.value)};
         if (bodyMode.value === 'text') {
           input.body = exactText(body.value);
           if (bytesOf(input.body).length > workspace.limits.bodyBytes) throw new Error('The complete body exceeds the native service body limit.');
@@ -324,7 +335,7 @@ export function createNativeRequestDesk({client, ui, onView}) {
         if (!submission || submission.key !== key) submission = {key, intentId:intentName()};
         const args = {action:'request-prepare', intentId:submission.intentId, ...selection};
         if (requestBytes(args) > workspace.limits.toolRequestBytes)
-          throw new Error('The complete encoded request exceeds the server’s ' + size(workspace.limits.toolRequestBytes) + ' limit. Shorten this request body or query before saving.');
+          throw new Error('The complete encoded request exceeds the server’s ' + size(workspace.limits.toolRequestBytes) + ' limit. Shorten this request body, path values or query before saving.');
         const intentId = submission.intentId, boundKey = requestKey(workspaceId, intentId);
         const selectedRevision = revision, requestSelection = state.selection;
         state.preparations.set(boundKey, {workspaceId, workspaceLabel, intentId, arguments:structuredClone(args), state:'PREPARING'});

@@ -115,6 +115,10 @@
     {
       "server": "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
       "manifest": "stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json"
+    },
+    {
+      "server": "stellar-forge/mcp-paid-agent/operator-console.mjs",
+      "manifest": "stellar-forge/mcp-paid-agent/operator-ui/browser-assets.json"
     }
   ],
   "supportFiles": [

@@ -17,7 +17,7 @@ try {
   // No vendor SDK, live service, user workspace, credentials or cache is packaged.
   for(const filename of ['preparation.py','transfer.py'])
     await cp(join(here,'..',filename),join(staging,filename));
-  for(const filename of ['engine.py','delivery.py','server.py','cli.py','cli.mjs',
+  for(const filename of ['engine.py','delivery.py','reuse.py','interop.py','pipeline.py','pipeline_transfer.py','receiving.py','server.py','cli.py','cli.mjs',
     'client.mjs','client.d.mts','index.html','app.js','style.css','README.md','LICENSE'])
     await cp(join(here,filename),join(staging,'pipelines',filename));
   await cp(join(here,'README.md'),join(staging,'README.md'));

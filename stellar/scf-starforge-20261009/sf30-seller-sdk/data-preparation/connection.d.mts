@@ -75,7 +75,7 @@ export class PreparationWorkspaceClient extends PreparationClient {
  exportPipelineDelivery(request:PipelineDeliveryRequest,options?:RequestOptions):Promise<DeliveryRecord>;
  receivePipelineProject(file:string,options:{requestKey:string;expectedSha256?:string;signal?:AbortSignal}):Promise<ManagedReceivedPipeline>;
  downloadOriginal(relative:string,destination:string,options?:RequestOptions&{sha256?:string;bytes?:number}):Promise<{path:string;sha256:string;bytes:number}>;
- importFile(file:string,options:{alias:string;format?:'csv'|'jsonl';label?:string;nullToken?:string;expectedSha256?:string;signal?:AbortSignal}):Promise<Source>;
+ importFile(file:string,options:{alias:string;format?:'csv'|'jsonl';label?:string;filename?:string;nullToken?:string;expectedSha256?:string;signal?:AbortSignal}):Promise<Source>;
  exportDelivery(request:DeliveryRequest,options?:RequestOptions):Promise<DeliveryRecord>;
  downloadLink(originalUrlOrPath:string,options?:RequestOptions):Promise<PreparationDownloadLink>;
  resultDownloadLink(runId:string,file?:ResultFile,options?:RequestOptions):Promise<PreparationDownloadLink>;

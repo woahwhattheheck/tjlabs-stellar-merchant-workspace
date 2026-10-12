@@ -30,11 +30,13 @@ def main():
     a.add_argument("--receipt",required=True,help="Complete original relay receipt JSON with exact source URL, byte count and SHA-256")
     a=sub.add_parser("import-relay-request");a.add_argument("--request",required=True,
         help="Complete request downloaded by the browser, including original XML and receipt")
+    a=sub.add_parser("select-records");a.add_argument("--request",required=True,
+        help="Complete stellar-forge.oai-record-selection-request.v1 JSON with stable ID and original GetRecord operation IDs")
     a=sub.add_parser("preview");a.add_argument("--id",required=True);a.add_argument("--choices")
     a=sub.add_parser("review");a.add_argument("--id",required=True);a.add_argument("--expected",required=True)
     a.add_argument("--reviewer",required=True);a.add_argument("--note",required=True)
     a=sub.add_parser("mapping");a.add_argument("--plan",required=True)
-    sub.add_parser("default-mapping")
+    a=sub.add_parser("default-mapping");a.add_argument("--record-source",choices=("ListRecords","GetRecord"),default="ListRecords");a.add_argument("--edition")
     a=sub.add_parser("metadata-mapping");a.add_argument("--edition",required=True)
     a=sub.add_parser("build");a.add_argument("--edition",required=True);a.add_argument("--mapping",required=True)
     a=sub.add_parser("query");a.add_argument("--build",required=True);a.add_argument("--parameters",required=True)
@@ -80,10 +82,15 @@ def main():
                 with tempfile.NamedTemporaryFile(dir=ws.area/"tmp") as original:
                     original.write(body);original.flush()
                     result=ws.ingest_relay(request["operationId"],original.name,request["receipt"])
+            elif c=="select-records":
+                request=document(args.request)
+                if not isinstance(request,dict) or request.get("schema")!="stellar-forge.oai-record-selection-request.v1" or set(request)-{"schema","operationId","sourceOperationIds","baseline","label"}:
+                    raise InputError("Choose a complete original record selection request")
+                result=ws.select_records(request["sourceOperationIds"],request["operationId"],request.get("baseline"),request.get("label"))
             elif c=="preview":result=ws.preview(args.id,document(args.choices) if args.choices else None)
             elif c=="review":result=ws.review(args.id,args.expected,args.reviewer,args.note)
             elif c=="mapping":result=ws.save_mapping(document(args.plan))
-            elif c=="default-mapping":result=ws.default_mapping()
+            elif c=="default-mapping":result=ws.default_mapping(record_verb=args.record_source,edition_id=args.edition)
             elif c=="metadata-mapping":result=ws.metadata_mapping(args.edition)
             elif c=="build":result=ws.build(args.edition,args.mapping)
             elif c=="query":result=ws.query(args.build,document(args.parameters))

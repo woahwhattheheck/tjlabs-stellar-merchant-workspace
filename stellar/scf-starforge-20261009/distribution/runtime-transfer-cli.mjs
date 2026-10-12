@@ -5,15 +5,16 @@ import { MAX_MANIFEST_BYTES } from './runtime-transfer-lock.mjs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { reviewRuntimeTransfer, exportRuntimeTransfer, inspectRuntimeTransfer, beginRuntimeTransferReceive,
-  receiveRuntimeTransferPart, completeRuntimeTransferReceive, installReceivedRuntime } from './runtime-transfer.mjs';
+  receiveRuntimeTransferPart, completeRuntimeTransferReceive, copyRuntimeTransferPart, installReceivedRuntime } from './runtime-transfer.mjs';
 
 const HELP = 'Original runtime offline transfer\n\n' +
   '  runtime-transfer review --runtime READY_DIRECTORY\n' +
   '  runtime-transfer export --runtime READY_DIRECTORY --directory NEW_TRANSFER --cache NPM_CACHE\n' +
-  '      [--expect-lock SHA256] [--online] [--part-bytes BYTES] [--npm EXECUTABLE]\n' +
+  '      [--expect-lock SHA256] [--online] [--part-bytes BYTES] [--storage parts|files] [--npm EXECUTABLE]\n' +
   '  runtime-transfer inspect --directory TRANSFER_DIRECTORY [--verify]\n' +
+  '  runtime-transfer download-part --directory TRANSFER_DIRECTORY --index NUMBER --file PART_FILE\n' +
   '  runtime-transfer receive --directory NEW_RECEIVER --manifest MANIFEST_JSON --sha256 SHA256\n' +
-  '      [--parts PART_DIRECTORY] [--npm EXECUTABLE]\n' +
+  '      [--parts PART_DIRECTORY] [--storage parts|files] [--npm EXECUTABLE]\n' +
   '  runtime-transfer receive-part --directory RECEIVER --index NUMBER --file PART_FILE\n' +
   '  runtime-transfer complete --directory RECEIVER [--files-only] [--npm EXECUTABLE]\n' +
   '  runtime-transfer install --directory RECEIVER --runtime NEW_RUNTIME [--prepare-only]\n' +
@@ -23,13 +24,17 @@ const HELP = 'Original runtime offline transfer\n\n' +
   'Export reopens its own partial directory and retains the reviewed original source/profile/lock.\n' +
   'Export uses the selected populated npm cache offline; --online explicitly permits missing public tarballs.\n' +
   'Copy manifest.json and its declared part files. The receiver requires the exact manifest SHA256.\n' +
+  'Storage files retains original files and generates parts on demand; use download-part for offline copies.\n' +
+  'A receiver with storage files retires duplicate parts after their complete files are retained.\n' +
+  'Omit --storage to preserve an existing transfer mode; new transfers otherwise default to parts.\n' +
   'Receive with --parts imports available parts, completes intact cohorts, and populates its private cache.\n' +
   'The original installer owns native preparation and readiness. Native build inputs stay host-selected.\n';
 const FIELDS = {
   review: ['--runtime'],
-  export: ['--runtime', '--directory', '--cache', '--expect-lock', '--online', '--part-bytes', '--npm'],
+  export: ['--runtime', '--directory', '--cache', '--expect-lock', '--online', '--part-bytes', '--storage', '--npm'],
   inspect: ['--directory', '--verify'],
-  receive: ['--directory', '--manifest', '--sha256', '--parts', '--npm'],
+  'download-part': ['--directory', '--index', '--file'],
+  receive: ['--directory', '--manifest', '--sha256', '--parts', '--storage', '--npm'],
   'receive-part': ['--directory', '--index', '--file'],
   complete: ['--directory', '--files-only', '--npm'],
   install: ['--directory', '--runtime', '--prepare-only', '--node-headers', '--python', '--npm'],
@@ -62,15 +67,18 @@ export async function main(argv = process.argv.slice(2)) {
   const directory = resolve(required(values, '--directory'));
   if (command === 'export') return exportRuntimeTransfer({
     runtimeDirectory: resolve(required(values, '--runtime')), directory,
-    cache: resolve(required(values, '--cache')), npm, offline: !values['--online'],
+    cache: resolve(required(values, '--cache')), npm, offline: !values['--online'], storage: values['--storage'],
     ...(values['--expect-lock'] ? { expectedLockSha256: values['--expect-lock'] } : {}),
     ...(values['--part-bytes'] ? { partBytes: integer(values['--part-bytes'], '--part-bytes') } : {}),
   });
   if (command === 'inspect') return inspectRuntimeTransfer({ directory, verify: !!values['--verify'] });
+  if (command === 'download-part') return copyRuntimeTransferPart({
+    directory, index: integer(required(values, '--index'), '--index'), file: resolve(required(values, '--file')),
+  });
   if (command === 'receive') {
     const manifestFile = resolve(required(values, '--manifest'));
     const manifest = await regular(manifestFile, MAX_MANIFEST_BYTES), manifestSha256 = required(values, '--sha256');
-    let received = await beginRuntimeTransferReceive({ directory, manifest, manifestSha256 });
+    let received = await beginRuntimeTransferReceive({ directory, manifest, manifestSha256, storage: values['--storage'] });
     if (values['--parts']) {
       const parts = resolve(values['--parts']);
       for (const index of received.missingParts) {
@@ -100,3 +108,4 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     process.exitCode = 1;
   });
 }
+

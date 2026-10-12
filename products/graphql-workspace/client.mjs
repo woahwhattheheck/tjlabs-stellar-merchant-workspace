@@ -69,6 +69,12 @@ export class GraphqlProductClient {
     }
     return client.call(name, selected, options);
   }
+  async listMerchantPreparations(selection) { return this.call('merchant_graphql_preparations', selection); }
+  async inspectMerchantPreparation(selection) { return this.call('merchant_graphql_preparation', selection); }
+  async prepareMerchant(request) { return this.call('merchant_graphql_preparation_prepare', request); }
+  async recoverMerchantPreparation(request) { return this.call('merchant_graphql_preparation_recover', request); }
+  async continueMerchantPreparation(request) { return this.call('merchant_graphql_preparation_continue', request); }
+  async prepareMerchantPacket(selection) { return this.call('merchant_graphql_preparation_packet', selection); }
   async prepareRequestSet(request) { return this.call('merchant_graphql_request_set_prepare', request); }
   async inspectRequestSet(selection) { return this.call('merchant_graphql_request_set', selection); }
   async recoverRequestSet(request) { return this.call('merchant_graphql_request_set_recover', request); }

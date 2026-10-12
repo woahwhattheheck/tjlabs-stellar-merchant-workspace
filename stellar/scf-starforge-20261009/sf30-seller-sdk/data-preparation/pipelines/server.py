@@ -27,6 +27,8 @@ class OperatorServer(ThreadingHTTPServer):
         self.workspace = workspace
         self.jobs = {}
         self.job_lock = threading.Lock()
+        self.receiving_lock = threading.Lock()
+        self.received_servers = {}
         self.downloads = workspace.root / 'pipeline-deliveries'
         self.downloads.mkdir(mode=0o700, exist_ok=True)
         super().__init__(('127.0.0.1', port), OperatorHandler)
@@ -69,7 +71,33 @@ class OperatorServer(ThreadingHTTPServer):
                         (execution_id, dumps({'type': status, 'at': row['updatedAt'], 'details': {}})))
             db.execute('COMMIT')
 
+    def receive_project(self, archive, request_key):
+        from receiving import receive_project_request
+        record = receive_project_request(self.workspace, archive, request_key)
+        return self.open_received(record['id'])
+
+    def open_received(self, identifier):
+        from receiving import received_project
+        record = received_project(self.workspace, identifier)
+        with self.receiving_lock:
+            existing = self.received_servers.get(identifier)
+            if existing is None:
+                child = OperatorServer(PipelineWorkspace(record['path']), 0)
+                thread = threading.Thread(target=child.serve_forever, name='received-' + identifier, daemon=False)
+                self.received_servers[identifier] = child, thread
+                thread.start()
+            else:
+                child, thread = existing
+        return {**record, 'origin': child.origin}
+
     def server_close(self):
+        with self.receiving_lock:
+            children = list(self.received_servers.values())
+        for child, thread in children:
+            child.shutdown()
+            child.server_close()
+            thread.join()
+
         with self.job_lock:
             jobs = list(self.jobs.items())
         for execution_id, worker in jobs:
@@ -135,6 +163,9 @@ class OperatorHandler(BaseHTTPRequestHandler):
             if path in {'/', '/app.js', '/style.css'}:
                 filename = 'index.html' if path == '/' else path[1:]
                 return self.file(HERE / filename, {'index.html': 'text/html; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8', 'style.css': 'text/css; charset=utf-8'}[filename])
+            if path == '/api/received':
+                from receiving import received_projects
+                return self.answer({'items': received_projects(self.ws)})
             if path == '/api/state': return self.answer(self.ws.state())
             if path == '/api/list': return self.answer(self.ws.list(query.get('collection', 'pipelines'), int(query.get('offset', 0)), int(query.get('limit', 100))))
             if path == '/api/definition': return self.answer(self.ws.definition(query['id'], int(query['revision']) if 'revision' in query else None))
@@ -170,6 +201,18 @@ class OperatorHandler(BaseHTTPRequestHandler):
         try:
             self.check_origin(True)
             parsed = urlsplit(self.path)
+            if parsed.path == '/api/receive':
+                query = {k: v[-1] for k, v in parse_qs(parsed.query).items()}
+                remaining = self.content_length(20 * 1024**3)
+                with tempfile.TemporaryDirectory(dir=self.ws.root / 'staging', prefix='receiving-') as temp:
+                    archive = Path(temp) / 'project.zip'
+                    with archive.open('xb') as output:
+                        while remaining:
+                            block = self.rfile.read(min(1024 * 1024, remaining))
+                            if not block: raise PreparationError('The project upload ended before all declared bytes arrived')
+                            output.write(block); remaining -= len(block)
+                    result = self.server.receive_project(archive, query.get('requestKey'))
+                return self.answer(result, 201)
             if parsed.path == '/api/upload':
                 query = {k: v[-1] for k, v in parse_qs(parsed.query, keep_blank_values=True).items()}
                 remaining = self.content_length(1024**3)
@@ -192,6 +235,7 @@ class OperatorHandler(BaseHTTPRequestHandler):
             body = parse_json(raw.decode('utf-8'))
             if not isinstance(body, dict): raise PreparationError('Command must be an object')
             path = parsed.path
+            if path == '/api/open-received': return self.answer(self.server.open_received(body['id']))
             if path == '/api/save': return self.answer(self.ws.save(**body), 201)
             if path == '/api/from-recipe': return self.answer(self.ws.from_recipe(**body))
             if path == '/api/enqueue': return self.answer(self.ws.enqueue(**body), 201)
