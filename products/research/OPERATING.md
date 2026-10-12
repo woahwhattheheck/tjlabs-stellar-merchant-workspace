@@ -10,8 +10,9 @@ This product supports a complete working sequence:
 4. Review a completed original Document or prepare and continue its managed processing Pipeline.
 5. Prepare or resume the original Crossref request for DOI metadata and update review.
 6. Receive the reviewed edition and preserve the question's earlier notes, selections and findings.
-7. Write the source-linked analysis, then deliver the complete report, original files and portable dossier.
-8. Reopen the exported dossier on the receiving workspace with its original history.
+7. Review registered citation updates, save the complete evidence and finding decisions, and select the intended report revision.
+8. Write the source-linked analysis, then deliver the complete report, original files and portable dossier.
+9. Reopen the exported dossier on the receiving workspace with its original history.
 
 ## Open the original workspace
 
@@ -297,6 +298,60 @@ After a lost reply, inspect the original dossier and operation. The receiver can
 
 Original response receiving, configured provider references and retained OpenAlex editions use the same client's `receive`, `reference` and `receive-openalex` commands. Full raw-source exports retain exact original bytes, including an original UTF-8 byte-order mark.
 
+## Review registered citation updates
+
+Open the saved dossier and choose **Update review**. The list connects each registered source notice to the selected evidence and affected findings across the dossier's research questions. **All notices**, **Pending and follow up**, and **Reviewed** select the current list. The source-coverage section preserves the received edition's actual coverage and missing results.
+
+Open the notice's original assertions before editing. Each assertion keeps its DOI, registered update type, source edition and original result key. **Inspect original record**, **Download original result record** and **Download original edition** open the retained source. Original HTTP captures and retained source documents keep their own source bindings and supplied provenance.
+
+Enter the reviewer, overall decision and reason. Edit each affected evidence occurrence's selection, classification and complete note. Review every affected finding's full title, text and citation occurrences. A finding receives one explicit disposition:
+
+| Disposition | Complete saved change |
+| --- | --- |
+| Unchanged | Preserve the finding's title, text and citations and record why |
+| Revised | Save an actual change to its title, text or citations |
+| Affected citations removed | Remove every affected citation from that finding and retain the reason |
+| Follow up | Record the additional review needed and any explicit edits made now |
+
+**Save complete review** saves that entire selection in one dossier revision. The current revision and notice fingerprint bind the decision to the reviewed source. The saved history keeps the author, reason, finding dispositions, source bindings and exact before/after changes.
+
+The browser saves complete draft versions in IndexedDB. A refresh restores the selected draft, and **Other retained draft versions** preserves earlier branches. If another analyst edits the dossier, **Compare draft with current revision** displays the original, current and working values. Resolve the fields changed in both versions and choose **Use resolved draft on revision …**. The earlier draft remains available. **Download draft** saves the complete editable content; the page also offers that download when browser storage cannot acknowledge a write.
+
+A submitted save retains its exact request before transmission. After an interrupted reply, **Retry original save** reopens that original result. Keep that request while reconciling its outcome, including if the dossier has since advanced. The complete [citation review operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md) describes draft recovery, concurrent edits and saved review selection.
+
+Use the same workflow through the installed client:
+
+~~~sh
+starforge research-client citation-updates \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research --id DOSSIER_ID \
+  --status pending --limit 30
+
+starforge research-client citation-updates \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research --id DOSSIER_ID \
+  --revision RETURNED_REVISION --notice NOTICE_ID
+
+starforge research-client citation-review \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research --id DOSSIER_ID \
+  --input /srv/starforge/private/original-citation-review.json
+~~~
+
+Carry the returned revision and next offset through notice pages. The original request object contains the complete evidence changes, finding changes and disposition for every affected finding. Its exact field contract is in [citation review source and receiving](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION_REVIEW.md).
+
+A saved review gives access to the original, reviewed and current dossier revisions. Choose the intended revision before exporting its report or portable:
+
+~~~sh
+starforge research-client export \
+  --connection-file /srv/starforge/private/research-connection.json \
+  --directory /srv/starforge/research --id DOSSIER_ID \
+  --revision SELECTED_REVISION --format html \
+  --out /srv/starforge/delivery/selected-citation-review.html
+~~~
+
+The same selection supports Markdown, JSON and compressed JSON. The report includes the citation review and its source-linked decisions. The portable contains the selected revision's complete original editions and history, so the receiving workspace reopens the same evidence, findings and saved reviews.
+
 ## Attach merchant and agent tools
 
 Create a private host selection pointing at the existing Research listener:
@@ -328,6 +383,8 @@ starforge merchant-mcp serve \
 An existing merchant may instead add `researchWorkspaceConnection` to its original configuration. The provider loads when a configured Research tool first needs it.
 
 The Research tool family lists the declared aliases, attaches to the original listener, reads paged dossiers and findings, operates the saved Crossref and managed Pipeline lifecycles, receives reviewed Documents and source editions, and retains complete files. Tools use the returned attachment ID and original dossier, question and operation IDs. Host-declared source handles select exact private files and hashes.
+
+The citation tools expose `merchant_research_citation_updates`, `merchant_research_citation_update` and `merchant_research_citation_review`. They use this same attachment and the reviewed dossier revision. The ordinary `merchant_research_export` accepts the selected revision for complete reports and portable dossiers.
 
 The Documents tools expose list, review, elements and receive. The Pipelines tools expose list, prepare, operation, submit, refresh, cancel, provider jobs, reconcile, retain, review, elements and receive. A Pipeline preparation selects `pipeline-input` handles from this same private configuration. Declare each original file path, reviewed hash and optional filename/media type under `sources`, then pass those source names as `inputSources`.
 
@@ -403,6 +460,8 @@ Merchant exports use the same complete sources. `merchant_research_exports` list
 
 ## Operating source
 
+- [Citation update review, complete browser drafts and selected reports](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CITATION-REVIEW-OPERATOR.md)
+- [Retained original Crossref documents and complete edition creation](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/CROSSREF_DOCUMENTS.md)
 - [Python document analysis, complete typed exports, workbook and workspace archive](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH_DOCUMENTS.md)
 - [Selected-product installation, Applications and complete receiving](RECEIVING.md)
 - [Original Documents and managed Pipelines client, CLI and merchant workflow](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_DOCUMENTS.md)
