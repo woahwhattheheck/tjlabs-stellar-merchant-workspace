@@ -2,6 +2,10 @@
 import { timingSafeEqual } from 'node:crypto';
 import { explainFailure } from '../../stellar/scf-starforge-20261009/sf33-failure-contract/contract.mjs';
 export const MCP_VERSION='2025-11-25';
+// Explicitly configured complete native portfolios include a JSON-RPC envelope.
+// Original small-workspace defaults remain unchanged.
+export const MAX_MCP_REQUEST_BYTES=65*1024*1024;
+export const MAX_MCP_REPLY_BYTES=128*1024*1024;
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 
 const jsonErr=(code,message,id=null)=>({jsonrpc:'2.0',id,error:{code,message}});
@@ -19,8 +23,8 @@ export function createMcpToolHandler(provider,{bearerToken,authorization,allowed
   instructions='Search, describe and preview are read-only. Describe a search handle to inspect declared inputs before preview. Calls need out-of-band operator approval and an external x402 signer.'}={}){
   if(!provider || typeof provider.call!=='function' || !Array.isArray(provider.tools) || !provider.tools.length)
     throw new TypeError('A fixed tool catalog and call function are required');
-  if(!Number.isSafeInteger(maxRequestBytes)||maxRequestBytes<1||maxRequestBytes>32*1024*1024)
-    throw new RangeError('maxRequestBytes must be an integer from 1 to 33554432');
+  if(!Number.isSafeInteger(maxRequestBytes)||maxRequestBytes<1||maxRequestBytes>MAX_MCP_REQUEST_BYTES)
+    throw new RangeError('maxRequestBytes must be an integer from 1 to '+MAX_MCP_REQUEST_BYTES);
   const tools=structuredClone(provider.tools),names=new Set();
   for(const tool of tools){
     if(!plain(tool)||!/^[-A-Za-z0-9_.]{1,128}$/.test(tool.name)||names.has(tool.name)||!plain(tool.inputSchema))

@@ -263,7 +263,8 @@ export class MerchantPublisher {
     do {
       const status = entry.publisher.status({ limit: 100, historyOffset: offset });
       recorded = status.history.find(event => event.kind === 'BUYER_HANDOFF_PREPARED' &&
-        event.run === runId && event.data.path === path);
+        event.run === runId && (event.data.path === path ||
+          event.data.relativePath === 'runs/' + runId + '/buyer-' + handoffId + '.json'));
       offset = status.pages.history.next;
     } while (!recorded && offset !== null);
     if (!recorded) throw failure('BUYER_HANDOFF_NOT_FOUND', 'Choose a handoff UUID recorded in this original run history.');

@@ -1,5 +1,18 @@
 /// <reference types="node" />
 import type { Buffer } from 'node:buffer';
+import type { FredBriefingSelection, FredBriefingPage } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/model.mjs';
+export type { FredBriefingSelection, FredBriefingPage, FredBriefingComparison, FredBriefingModel, FredBriefingReport, FredBriefingExpandedMeasure } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/model.mjs';
+
+import type {
+  FredBriefingTemplate, FredBriefingTemplateWindow, FredBriefingMaterialization,
+  FredBriefingChangesPage, FredBriefingSuccessorRecord,
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/templates.mjs';
+export type {
+  FredBriefingTemplate, FredBriefingTemplateWindow, FredBriefingTemplateAnchor,
+  FredBriefingMaterialization, FredBriefingSourceCoverage, FredBriefingMeaningChange,
+  FredBriefingChangeRow, FredBriefingChangeKind, FredBriefingChanges, FredBriefingChangesPage,
+  FredBriefingSuccessorRecord,
+} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/briefing/templates.mjs';
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type JsonObject = { [key: string]: Json };
@@ -35,6 +48,7 @@ export interface FredProject {
   selection: JsonObject; revision: number; createdAt: string; selectedCapture: string | null;
   captures: NativeRecord[]; reviews: NativeRecord[]; publications: NativeRecord[]; operations: NativeRecord[];
   pending: JsonObject | null; acquisition?: JsonObject | null;
+  briefingTemplates?: FredBriefingTemplate[]; briefingSuccessors?: FredBriefingSuccessorRecord[];
 }
 export interface FredState { project: FredProject; merchant: JsonObject | null; busy: string | null; buyerConfigured: boolean }
 export interface FredClientMetadata {
@@ -60,10 +74,17 @@ export interface FredConfiguredResult extends FredRevisionResult { selection: Js
 export interface FredCaptureResult extends FredRevisionResult { captureId: string; rowCount: number; missing: number }
 export interface FredCombinedResult extends FredCaptureResult { originalCaptures: string[] }
 export interface FredSelectedResult extends FredRevisionResult { captureId: string }
-export interface FredReviewedResult extends FredSelectedResult { reviewId: string }
+export interface FredReviewedResult extends FredSelectedResult { reviewId: string; briefing?: FredSavedBriefing }
+export interface FredSavedBriefing { reportId: string; manifestSha256: string; files: FredFileMetadata[] }
+export interface FredBriefingManifest {
+  schema: 'stellar-forge.fred-briefing-files.v1'; captureId: string; reviewId: string; reportId: string;
+  calculationVersion: 'FRED_EXACT_PERIOD_V1'; rendererVersion: 'FRED_OFFLINE_REPORT_V1';
+  files: FredFileMetadata[]; manifestSha256: string;
+}
+export interface FredSavedBriefingPage extends FredBriefingPage { reportId: string; reviewId: string; manifest: FredBriefingManifest; files: FredFileMetadata[] }
 export interface FredPublishedResult extends FredRevisionResult {
   publicationId: string; reviewId: string; captureId: string; snapshot: string;
-  editionId: string; resource: string; publicOrigin: string;
+  editionId: string; resource: string; publicOrigin: string; briefing?: Pick<FredSavedBriefing, 'reportId' | 'manifestSha256'>;
 }
 export interface FredFileMetadata { path: string; bytes: number; sha256: string; contentType: string; role: string }
 export interface FredAdvertisedFile extends FredFileMetadata { resource: string }
@@ -90,7 +111,7 @@ export interface FredSelectionInput extends FredJournalInput { selection: JsonOb
 export interface FredImportInput extends FredJournalInput { capture: JsonObject }
 export interface FredCombineInput extends FredJournalInput { captureIds: string[] }
 export interface FredCaptureInput extends FredJournalInput { captureId: string }
-export interface FredReviewInput extends FredCaptureInput { policy?: JsonObject; note?: string }
+export interface FredReviewInput extends FredCaptureInput { policy?: JsonObject; note?: string; briefing?: FredBriefingSelection | null }
 export interface FredPublishInput extends FredJournalInput { reviewId: string; origin: string; path?: string; payment: JsonObject }
 export interface FredAbandonInput extends FredJournalInput { pendingId: string }
 export interface FredPublicationInput { publicationId: string }
@@ -98,16 +119,50 @@ export interface FredIntentInput extends FredPublicationInput { intentId: string
 export interface FredPrepareInput extends FredIntentInput {
   query?: string; file?: string | null; previous?: JsonObject | null; acceptIndex?: number;
 }
+export interface FredBriefingTemplateInventory {
+  projectId: string; revision: number; templates: FredBriefingTemplate[]; successors: FredBriefingSuccessorRecord[];
+}
+export interface FredBriefingTemplateSaveInput extends FredJournalInput {
+  reviewId: string; name?: string; window?: Partial<FredBriefingTemplateWindow>; previousTemplateId?: string | null;
+}
+export interface FredBriefingTemplateSaveResult extends FredRevisionResult {
+  templateId: string; template: FredBriefingTemplate;
+}
+export interface FredBriefingSuccessorSelection {
+  templateId: string; captureId: string; anchorDate?: string | null; baselineReviewId?: string | null;
+  previousSuccessorId?: string | null; note?: string;
+}
+export interface FredBriefingSuccessorPageOptions { offset?: number; limit?: number; changesOnly?: boolean }
+export interface FredBriefingSuccessorPreview {
+  previewId: string; template: FredBriefingTemplate; materialization: FredBriefingMaterialization;
+  baselineReviewId: string; previousSuccessorId: string | null; reviewId: string;
+  briefing: FredBriefingPage; comparison: FredBriefingChangesPage;
+}
+export interface FredBriefingSuccessorSaveInput extends FredBriefingSuccessorSelection, FredJournalInput {
+  previewId: string;
+}
+export interface FredBriefingSuccessorSaveResult extends FredRevisionResult {
+  successorId: string; reviewId: string; captureId: string; templateId: string;
+  briefing: FredSavedBriefing; summary: JsonObject;
+}
+export interface FredBriefingSuccessorView {
+  successor: FredBriefingSuccessorRecord; template: FredBriefingTemplate;
+  materialization: FredBriefingMaterialization; comparison: FredBriefingChangesPage;
+  briefing: { reviewId: string; reportId: string; manifest: FredBriefingManifest };
+}
+
 export interface FredRequestOptions { signal?: AbortSignal }
 export interface FredFileOptions extends FredRequestOptions { expectedSha256?: string }
 export type FredFileSelection =
   { kind: 'source'; captureId: string } |
   { kind: 'comparison'; before: string; after: string } |
   { kind: 'project' } |
+  { kind: 'briefing'; reviewId: string; format: 'html' | 'csv' | 'json' | 'manifest' } |
+  { kind: 'briefing-successor'; successorId: string; format: 'html' | 'csv' | 'json' } |
   { kind: 'customer'; publicationId: string; intentId: string };
 export interface FredBundleIdentity {
-  schema: 'stellar-forge.fred-project-bundle.v1'; projectId: string; revision: number;
-  bundleSha256: string; captures: number; publications: number;
+  schema: 'stellar-forge.fred-project-bundle.v1' | 'stellar-forge.fred-project-bundle.v2' | 'stellar-forge.fred-project-bundle.v3'; projectId: string; revision: number;
+  bundleSha256: string; captures: number; publications: number; briefings?: number; templates?: number; successors?: number;
 }
 export interface FredDownloadedFile {
   name: string; type: string; bytes: Buffer; sha256: string; status: number; projectId: string; bundle?: FredBundleIdentity;
@@ -124,7 +179,7 @@ export declare function fredDigest(bytes: string | Uint8Array): string;
 export declare function canonicalFredJSON(value: Json): string;
 export declare class FredWorkspaceError extends Error {
   code: string; status?: number; ambiguous?: boolean; operationId?: string; projectId?: string;
-  responseReceived?: boolean; responseBytes?: number; responseSha256?: string; retryAt?: string;
+  responseReceived?: boolean; responseBytes?: number; responseSha256?: string; retryAt?: string; inspectOriginalOperation?: boolean;
   constructor(code: string, message: string, details?: Record<string, unknown>);
 }
 export declare function readFredHostFile(path: string, maximum?: number,
@@ -139,6 +194,15 @@ export declare class FredWorkspaceClient {
   operation(id: string, options?: FredRequestOptions): Promise<FredOperation>;
   observations(input: { captureId: string; series?: string; offset?: number }, options?: FredRequestOptions): Promise<FredObservedPage>;
   compare(input: { before: string; after: string; offset?: number }, options?: FredRequestOptions): Promise<FredComparisonPage>;
+  previewBriefing(input: { captureId: string; briefing: FredBriefingSelection; offset?: number }, options?: FredRequestOptions): Promise<FredBriefingPage & { previewId: string }>;
+  briefing(input: { reviewId: string; offset?: number }, options?: FredRequestOptions): Promise<FredSavedBriefingPage>;
+  briefingTemplates(options?: FredRequestOptions): Promise<FredBriefingTemplateInventory>;
+  saveBriefingTemplate(input: FredBriefingTemplateSaveInput, options?: FredRequestOptions): Promise<FredBriefingTemplateSaveResult>;
+  previewBriefingSuccessor(input: FredBriefingSuccessorSelection & FredBriefingSuccessorPageOptions,
+    options?: FredRequestOptions): Promise<FredBriefingSuccessorPreview>;
+  saveBriefingSuccessor(input: FredBriefingSuccessorSaveInput, options?: FredRequestOptions): Promise<FredBriefingSuccessorSaveResult>;
+  briefingSuccessor(input: { successorId: string } & FredBriefingSuccessorPageOptions,
+    options?: FredRequestOptions): Promise<FredBriefingSuccessorView>;
   publication(publicationId: string, options?: FredRequestOptions): Promise<FredPublication>;
   preview(input: { publicationId: string; query?: string }, options?: FredRequestOptions): Promise<JsonObject>;
   configure(input: FredSelectionInput, options?: FredRequestOptions): Promise<FredConfiguredResult>;

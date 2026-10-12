@@ -1,8 +1,26 @@
-# Operate supplier costs, pricing and receiving
+# Operate supplier costs, tariffs, pricing and receiving
 
-Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, pricing decisions and receiving. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
+Use one saved merchant pricing workspace from its original traffic capture through supplier-source review, cost allocation, graduated and volume tariff comparisons, pricing decisions and receiving. The browser, merchant MCP and CLI use the same sources, immutable editions and revision checks.
 
-This workflow is included in the Stellar merchant product as `revenue-workspace` and `merchant-mcp pricing`. Its source and browser use the existing SF97 engine. The MCP interface uses the original merchant MCP runtime. Select the merchant’s existing payment, database or provider runtime separately when starting that merchant.
+This workflow is included in the Stellar merchant product as `revenue-workspace`, `merchant-tariffs` and `merchant-mcp pricing`. Its source and browser use the existing SF97 engine. The MCP interface uses the original merchant MCP runtime. Select the merchant’s existing payment, database or provider runtime separately when starting that merchant.
+
+## Install the complete Merchant economics product
+
+In the maintained runtime workspace, choose **Build a product**, select the reviewed canonical source commit and **Merchant economics**, then use the resulting original archive in **Source & profile**. The committed `merchant-economics` recipe includes the original API merchant, supplier costs, Pricing application, tariff operator, scenario/repricing modules, typed HTTP client and seller-release workflow. It retains the original OpenAPI merchant source and package dependencies used by release staging.
+
+The same existing builder accepts this selection:
+
+~~~sh
+node stellar/scf-starforge-20261009/distribution/build.mjs \
+  --repo /absolute/canonical-merchant-checkout \
+  --ref REVIEWED_CANONICAL_COMMIT \
+  --selection merchant-economics \
+  --out /absolute/merchant-economics-release
+~~~
+
+Use the reviewed full commit in `--ref` and keep the original output for its subsequent resume. The package records its source commit, exact recipe, complete file inventory and archive hash. Continue through the existing [source build](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md) and [runtime installation](../../stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md) workflow. Select the native SDK and the original `schema`, `openapi` or `mcp` runtime features required by the intended merchant operation. The tariff calculations and local operator use the installed Node runtime and original saved source.
+
+After installation, `starforge registrations --source merchant-tariffs` shows the installed command and original package exports. `starforge merchant-tariffs --help` gives the complete direct-workspace command surface. Existing runtime ownership, private merchant inputs and saved workspace directories carry forward through the same installation.
 
 ## 1. Open the merchant’s original pricing workspace
 
@@ -76,7 +94,72 @@ When a seller price change is intended, use the original repricing workflow. Sel
 
 For deployment, the pricing workspace can also be opened with its original `--source-package`, existing `--release-store` and selected `--release-runtime` file. Supply that complete source/release selection together. Continue the saved repricing decision through the original retained-release stage, comparison, selection and restart workflow. An economics backup preserves pricing work; external merchant releases and runtimes keep their own operating records.
 
-## 5. Attach the same workspace to an agent
+## 5. Compare graduated and volume tariffs
+
+Start from an original saved pricing review for this merchant. Open **Tariffs** from the Pricing workspace, or **Tariff planning** from its managed Applications entry. You can also launch the same tariff operator directly:
+
+~~~sh
+starforge merchant-tariffs \
+  --config /srv/starforge/config/merchant-seller.json \
+  --snapshot /srv/starforge/observations/merchant-traffic.json \
+  --state /srv/starforge/state/merchant-pricing \
+  --port 0
+~~~
+
+Use the same original pricing directory. It contains the saved pricing versions, scenario history and tariff plans used by this workflow. The command prints the actual private launch URL. Its `#token=...` fragment authorizes that operator session; keep the complete URL with its operator.
+
+Select a saved pricing version and its original route. Name each tariff, choose its mode, and enter ordered tier caps with an open final tier. Prices are nonnegative USD strings with at most six fractional digits. Quantities are whole request counts; canonical integer strings retain their exact value.
+
+| Tariff mode | Calculation |
+| --- | --- |
+| `graduated` | Charge each used band at that band's price, then add the band subtotals. |
+| `volume` | Find the tier containing the total quantity and charge every request at that tier's price. |
+
+The review compares every selected tariff and quantity with the saved original baseline. It shows exact tariff revenue, fulfilled-request variable costs, contribution and margin where the original inputs support them. The tier-boundary review also exposes an all-units discount that would reduce total gross revenue after an additional request.
+
+A graduated total and its chosen uniform quote are separate results. The exact effective unit price retains a numerator and denominator with twelve-decimal display bounds. The selected **UNIFORM** quote rounds upward to six decimal places per request. Review the uniform gross projection and its rounding difference before using that price in the original scenario and pricing workflows. At zero quantity the review remains readable and offers no scenario selection.
+
+### Save a complete tariff plan
+
+The CLI accepts the same input as the browser. A preview JSON contains `version`, `tariffs` and `volumes`. Each tariff contains `id`, `label`, `routeId`, `mode` and `tiers`; each tier contains `upTo` and `unitPriceUsd`. The final `upTo` is `null`. Use the exact saved version and route from the original source.
+
+~~~sh
+starforge merchant-tariffs preview \
+  --config /srv/starforge/config/merchant-seller.json \
+  --snapshot /srv/starforge/observations/merchant-traffic.json \
+  --state /srv/starforge/state/merchant-pricing \
+  --input /srv/starforge/reviews/tariff-preview-input.json \
+  --output /srv/starforge/reviews/tariff-preview.json
+~~~
+
+The returned envelope is `{version,sourceLabel,sellerChanged,review}`. To save, retain the original input, add a nonempty `label` and one original request UUID, and set `tariffReviewSha256` to `preview.review.tariffReviewSha256`. Pass that complete JSON to `merchant-tariffs save` with the same workspace flags. The saved plan retains its source, tariff definitions, quantity comparisons and original review hash. Reopen it with `load --plan PLAN_ID`, or use the browser's saved-plan selector.
+
+Each saved plan provides `plan.json`, `tariffs.json` and `comparison.csv`. Use `download --plan PLAN_ID --name comparison.csv --output NEW_FILE` with the same merchant flags to receive the complete original file. Explicit output files are created exclusively; choose a new destination for a new result.
+
+### Carry the selected plan through original pricing
+
+Choose a positive-quantity comparison, then choose **Review**. Inspect the current pricing against the selected source, the original scenario review and the proposed pricing change. The prepared selection binds both original workspaces and their expected revisions.
+
+Commit that exact prepared selection with the two distinct original request UUIDs: `planRequestId` and `pricingRequestId`. The original scenario and pricing writers return their saved results. If a response is interrupted, keep the same selection and both UUIDs so the original requests can be reconciled and replayed. A changed merchant source or pricing revision needs a current review.
+
+The selected USD quotation then continues through the original repricing actions. Open the saved pricing source, retain every ordered payment option's original route, index, amount and asset scale, and explicitly value the quoted USD against atomic units. Review and save the resulting price decision with its original `reviewSha256`, expected decision revision, label and request UUID. The operator can reopen that saved decision and download its original files. With the original API package and release store configured, stage the retained decision, then use the existing seller-release selection and restart workflow.
+
+The tariff operator exposes the complete source/preview/save/stage continuation through `repricing-source`, `repricing-preview`, `repricing-save` and `repricing-stage`, plus `repricing-download` and `pricing-download` for their original files. The [full tariff operator guide](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/README.md) contains exact request examples, the 17 HTTP methods, TypeScript imports and same-request recovery.
+
+### Use the installed typed client
+
+Import the original HTTP client from the installed package:
+
+~~~js
+import { createTariffClient } from "@tokenjunkielabs/starforge-merchant/merchant/tariff-client";
+
+const client = createTariffClient({ url: privateLaunchUrl });
+const { review } = await client.preview(previewInput);
+~~~
+
+The client captures the launch URL at construction and sends its bearer token to that loopback origin. Its public TypeScript declarations preserve decimal strings and the preview envelope. HTTP errors retain the complete response body, status and headers. Original request IDs and saved workspace bindings pass unchanged to the server.
+
+## 6. Attach the same workspace to an agent
 
 Keep the browser’s existing state directory, seller configuration and observation selection in one private pricing connection file. The connection schema is `stellar-forge.pricing-workspace-connection.v1`; its `workspaces` map gives each selected merchant a stable alias.
 
@@ -134,11 +217,13 @@ starforge merchant-mcp pricing cost-input --url "$MCP_URL" --workspace merchant 
 
 Inspect the alias’s exact byte count and hash before upload. Save a private request JSON containing the selected alias, inspected identity, truthful metadata and one generated lowercase request UUID, then pass it to `cost-upload --url "$MCP_URL" --input REQUEST_JSON`. Reuse that exact UUID and request after an uncertain response. A committed source reopens from retained bytes even when its authoring file moves.
 
+The same configured `pricing` provider also exposes the complete tariff workflow through `merchant-mcp pricing tariff-*`. It opens the original Pricing model under the same merchant alias and uses the same saved versions, request IDs, review hashes and original file downloader. The [tariff MCP guide](../../stellar-forge/mcp-merchant-operator/TARIFFS.md) gives all 17 operations, its typed client, complete portfolio file receiving and original pricing continuation.
+
 The [complete cost MCP guide](../../stellar-forge/mcp-merchant-operator/COSTS.md) supplies every upload, mapping, weight, book, proposal, apply and export request schema. Use `cost-source` for paged source review, `cost-mapping` for explicit mappings and `cost-weights` for native allocation. A small complete book can be inline; larger books use the inspected host `BOOK` alias and its exact hash and bytes. Preview and save the same selected book against the current economics revision.
 
 After an ambiguous source, edition or export save, use `cost-request` with its original request UUID and kind `SOURCE`, `EDITION` or `EXPORT`. Pricing application has its own revision and recovery: inspect the original pricing history and the edition’s `pricingLinks`. Keep the cost and pricing identities distinct.
 
-## 6. Receive the complete result and continue work
+## 7. Receive the complete result and continue work
 
 Choose the handoff required for the actual recipient:
 
@@ -147,6 +232,7 @@ Choose the handoff required for the actual recipient:
 | Original source download | Exact original bytes and its transport manifest |
 | Cost-edition download or TAR | Complete native edition, original selected source evidence and native report/export files appropriate to that selection |
 | Full workspace backup TAR | Captured pricing versions, repricing decisions, scenarios, cost sources, books, editions and their linked histories |
+| Tariff portfolio JSON | Complete saved tariff plans and retained selection intents/results, with their original pricing source references |
 
 The original cost-edition download has eight native files plus `edition-manifest.json`; its transfer also has `manifest.json`. Use the native manifest to select the complete file set. A full workspace backup is bounded by its captured pricing, decision and cost revisions and referenced editions. Previous generated archives and live credentials are excluded. Retain external merchant deployment files and the selected runtime separately.
 
@@ -188,6 +274,33 @@ The launcher restores before opening the workspace. The same archive and destina
 
 Use the normal close action when handing ownership to a different process. Keep original request UUIDs, immutable source and edition IDs, saved revisions, archive hashes and completed receive directories with the operating state. These are the continuation points for source correction, pricing review, transfer recovery and the next product runtime.
 
+### Receive tariff plans with their original pricing workspace
+
+Capture the original full workspace backup and the complete tariff portfolio from the same finished merchant selection. Keep both originals together. The portfolio retains tariff definitions, source inputs and reviews plus both original selection request bodies/results. The original pricing, scenario and price-decision files travel in **WORKSPACE_BACKUP**.
+
+Export the complete portfolio from the browser or use the same workspace directly:
+
+~~~sh
+starforge merchant-tariffs export \
+  --config /srv/starforge/config/merchant-seller.json \
+  --snapshot /srv/starforge/observations/merchant-traffic.json \
+  --state /srv/starforge/state/merchant-pricing \
+  --output /srv/starforge/received/merchant-tariff-portfolio.json
+~~~
+
+First inspect and restore the complete original backup using the receiving workflow above and its reviewed archive hash. Reopen that received pricing directory with its original seller and source selection. Then use **Tariff planning → Receive portfolio**, or pass the complete portfolio JSON to the CLI:
+
+~~~sh
+starforge merchant-tariffs receive \
+  --config /srv/starforge/config/merchant-seller.json \
+  --snapshot /srv/starforge/observations/merchant-traffic.json \
+  --state /srv/starforge/state/received-merchant-pricing \
+  --input /srv/starforge/received/merchant-tariff-portfolio.json \
+  --output /srv/starforge/received/tariff-receive-result.json
+~~~
+
+The receiver matches each referenced original pricing version and the exact source, request and manifest identities before receiving the plans and selections. Reopen a saved tariff plan, download its original JSON/CSV, reopen the selected original scenario and pricing version, then inspect any saved price decision and its files. Continue ordinary editing and next pricing review in that received directory. An interrupted portfolio receive retains the same complete input and original identities for continuation.
+
 ## Continue the original complete receiving operation
 
 The [merchant economics receiving operation](../../operations/merchant-economics-receiving-20261012/README.md) retains the portable driver, exact published source-file manifest, original request identities, input hashes and continuation procedure for the completed Linkup quotation workspace. It restores the original full backup, exercises the native MCP and CLI cost/pricing/file workflows, and reopens the received state. The operation uses the retained observations and original cost allocation; its own saved report records each receiving stage and the actual outcome.
@@ -198,5 +311,6 @@ The [merchant economics receiving operation](../../operations/merchant-economics
 - [Supplier-source, cost-book and archive contracts](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/economics/README.md)
 - [MCP and CLI costs, files and recovery](../../stellar-forge/mcp-merchant-operator/COSTS.md)
 - [Original pricing, scenario and repricing operations](../../stellar-forge/mcp-merchant-operator/PRICING.md)
+- [Tariff planning, typed client and original pricing continuation](../../stellar/scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/README.md)
 - [Applications inspection, receiving and normal reopen](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 - [Whole merchant product](../merchant-workspace/OPERATING.md)

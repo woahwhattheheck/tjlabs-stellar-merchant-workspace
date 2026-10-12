@@ -335,3 +335,65 @@ setInterval(async () => {
   try { const result = await api('/api/runtime'); state.runtime = result.runtime; renderRuntime(); }
   catch { /* Keep the current work visible; the next explicit action reports connection state. */ }
 }, 5000);
+
+
+// Trusted product UI hooks reuse this exact editor and its original API session.
+// The captured draft includes unfinished endpoint fields; it never stores a capability.
+const draftFields = ['release-id','release-label','public-origin','endpoint-id','route-path','route-method',
+  'service-name','endpoint-description','max-rows','max-bytes','timeout-ms'];
+export const mysqlWorkspaceController = Object.freeze({
+  request: api, notice, work,
+  get busy() { return state.busy; },
+  get selected() { return state.selected ? structuredClone(state.selected) : null; },
+  get runtime() { return state.runtime ? structuredClone(state.runtime) : null; },
+  captureDraft() {
+    return { schema: 'stellar-forge.mysql-editor-draft.v1',
+      fields: Object.fromEntries(draftFields.map(id => [id, $(id).value])),
+      table: $('table-select').value, schemaFingerprint: state.relation?.fingerprint ?? null,
+      columns: [...$('column-rows').querySelectorAll('input:checked')].map(input => input.value),
+      endpoints: structuredClone(state.endpoints), filters: structuredClone(state.filters),
+      orders: structuredClone(state.orders), payments: structuredClone(state.payments),
+      editing: state.editing, endpointDirty: state.endpointDirty };
+  },
+  async restoreDraft(value) {
+    if (!value || value.schema !== 'stellar-forge.mysql-editor-draft.v1' ||
+        !value.fields || draftFields.some(id => typeof value.fields[id] !== 'string') || !Array.isArray(value.endpoints) || value.endpoints.length > 64 ||
+        !Array.isArray(value.filters) || value.filters.length > 16 ||
+        !Array.isArray(value.orders) || value.orders.length > 4 ||
+        !Array.isArray(value.payments) || value.payments.length > 8 ||
+        !Array.isArray(value.columns) || value.columns.length > 64)
+      throw new Error('Choose a saved draft from this original MySQL editor.');
+    const warnings = [];
+    state.endpoints = structuredClone(value.endpoints);
+    state.payments = structuredClone(value.payments);
+    state.editing = value.editing ?? null;
+    state.relation = null; state.filters = []; state.orders = [];
+    await refreshCatalog();
+    if (value.table) {
+      if ([...$('table-select').options].some(option => option.value === value.table)) {
+        await loadTable(value.table);
+        const current = new Set(state.relation.columns.map(column => column.name));
+        const allowed = new Set(filterable().map(column => column.name));
+        renderColumns(value.columns.filter(name => current.has(name)));
+        state.filters = structuredClone(value.filters.filter(item => allowed.has(item.column)));
+        state.orders = structuredClone(value.orders.filter(item => allowed.has(item.column)));
+        if (value.schemaFingerprint !== state.relation.fingerprint ||
+            value.columns.some(name => !current.has(name)) ||
+            value.filters.length !== state.filters.length || value.orders.length !== state.orders.length)
+          warnings.push('The database schema differs from the retained draft. Its original version remains saved. Inspect the current fields, filters and order before adding or reviewing this endpoint.');
+      } else warnings.push('The draft table is no longer in the current catalog. Choose its intended current table; the complete original draft remains saved.');
+    }
+    for (const id of draftFields) {
+      if (typeof value.fields[id] !== 'string') throw new Error('The saved draft contains an invalid editor field.');
+      $(id).value = value.fields[id];
+    }
+    state.endpointDirty = Boolean(value.endpointDirty || warnings.length);
+    $('save-endpoint').textContent = state.editing ? 'Save endpoint changes' : 'Add endpoint to release';
+    invalidateReview(); renderOrders(); renderFilters(); renderPayments(); renderEndpoints(); setView('build');
+    notice(warnings.join(' ') || 'Reopened the complete saved draft. A fresh source review is required before preparing another release.',
+      warnings.length ? 'error' : '');
+    return { restored: true, warnings };
+  },
+  async selectRelease(releaseId) { await openRelease(releaseId); return structuredClone(state.selected); },
+  async refresh() { await listReleases(); return state.selected ? structuredClone(state.selected) : null; },
+});
