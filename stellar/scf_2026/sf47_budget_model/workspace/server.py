@@ -33,6 +33,8 @@ STATIC.update({
     "/plan_comparison.mjs": ("plan_comparison.mjs", "text/javascript; charset=utf-8"),
     "/plan_comparison.css": ("plan_comparison.css", "text/css; charset=utf-8"),
 })
+import source_tables
+source_tables.register_static(STATIC)
 
 
 def atomic_private(path, data):
