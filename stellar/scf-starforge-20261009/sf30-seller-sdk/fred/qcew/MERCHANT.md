@@ -199,11 +199,35 @@ The paid report package retains the report's full original files and source refe
 
 ## Programme integration
 
-The original-data **native-journey.mjs** creates the full saved county project from the complete retained source intake and CPI capture. **workspace-journey.mjs** opens the same complete original report editions, downloads the report and original source files, traverses history and comparisons, and receives the full project through the browser.
+The original-data **native-journey.mjs** creates the full saved county project from the complete retained source intake and CPI capture. **workspace-journey.mjs** opens those complete editions, downloads original report and source files, traverses history and comparisons, and receives the full project through the browser.
 
-The paid merchant continuation should use that original project with the actual installation's public origin, public payment file, configured SF88 Buyer, facilitator, fixed merchant port, Chromium and Playwright module. It exercises publication and native purchase through the same Merchant and Customer desks, reopens the original purchase after a restart, receives every original report edition and compares the complete received package with the original paid bytes.
+**merchant-journey.mjs** continues that same native directory using the installation's actual testnet merchant and Buyer. It selects the last actual native report and follows its entire predecessor chain. Supply the existing public HTTPS proxy origin, public payment JSON, private Buyer configuration, facilitator, fixed merchant port, Chromium and Playwright module:
 
-Retain those original configuration selections with the programme operation. On continuation, recover its original publication and intents before attempting further work. The programme's journal belongs alongside the existing source intake, native-result.json and browser receiving outputs.
+~~~sh
+node fred/qcew/merchant-journey.mjs \
+  --directory /absolute/original-operation/native \
+  --chromium /absolute/installed/chromium \
+  --playwright-module /absolute/installed/playwright/index.js \
+  --buyer-config /absolute/private/buyer.json \
+  --payment /absolute/public-payment.json \
+  --origin https://your-merchant.example \
+  --path /county-reports \
+  --facilitator https://your-configured-facilitator.example \
+  --merchant-port 8091 \
+  --accept-index 0
+~~~
+
+Run the command from the installed seller source directory or use the complete absolute programme path. The existing local facilitator option is **--allow-local-facilitator**. The supplied payment JSON must name **stellar:testnet**; the configured native Buyer retains its original approval and signing behaviour.
+
+The programme operates the real Merchant publication and Customer preparation, purchase, recovery and receiving controls. It purchases every current advertised resource once, including the complete gzip, and preserves each original Buyer result and downloaded bytes. It withholds the actual complete-package purchase response from the browser, starts a new private workspace origin and browser profile, and recovers that same native intent. It repeats that receiving recovery with the original customer destination.
+
+Every predecessor and current report member is reopened and downloaded. A separate report recipient receives the purchased gzip through the maintained package receiver. The programme then exports the complete outer-v6 economic project through the browser, receives it into its original selected project destination, and reopens the exact merchant plan, original gzip and report files there.
+
+All public terms, publication selections, payment intents and receiving destinations are selected durably before their browser dispatches. A repeated invocation reads those original selections and existing Buyer operations. One rejected payment-alternative preparation also exercises reopening the original request catalogue after a preparation directory was created.
+
+Outputs remain under **native/merchant-workspace**: **journey.json**, **merchant-result.json**, the public payment file, complete native Buyer result records, purchased downloads, all received report members, desktop and phone screenshots, the independent report receiver, and the complete project transfer. The journal records the original launch binding and Buyer settings SHA256; the private Buyer configuration remains in its existing installation.
+
+The original **run_native.py** controller accepts a complete **--merchant-packet** and its **--merchant-packet-sha256** plus these launch options. The default command runs source acquisition, report production, browser receiving and then the paid continuation. **--paid-only** appends the paid phase to the same already-completed native and browser operation. The controller retains its original packet and source, stages the complete paid source separately, and preserves the whole operation archive after completion or interruption.
 
 ## Module interface
 
