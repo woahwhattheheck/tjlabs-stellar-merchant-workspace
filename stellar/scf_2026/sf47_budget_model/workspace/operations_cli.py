@@ -83,6 +83,13 @@ def register(subparsers, common):
         target.add_argument("--expected-revision", type=int, required=True)
         target.add_argument("--document", help="Complete intake document JSON; omission uses the current saved edition")
         target.add_argument("--expected-preview-sha256", required=verb == "apply")
+    command("amendments", "Read saved plan revisions, amendment editions and applied baseline history", case=True, output=True)
+    target = command("amendment-show", "Read one complete original amendment and its native history", case=True, output=True)
+    target.add_argument("--amendment", required=True)
+    target.add_argument("--revision", type=int)
+    target = command("amendment-preview", "Compare a selected native planning revision against the same recorded case", case=True, output=True)
+    target.add_argument("--inputs", required=True)
+    target.add_argument("--expected-version", type=int, required=True)
     target = command("performance", "Read period cash, invoices, work and pinned budget performance", case=True, output=True)
     target.add_argument("--start-date", help="First included business date; omission includes all prior dates")
     target.add_argument("--end-date", required=True, help="Last included business date, YYYY-MM-DD")
@@ -449,6 +456,16 @@ def operate(workspace, args):
         else:
             result = ops.command(args.case, {"expectedVersion": args.expected_version, "requestId": args.request_id,
                 "actor": args.actor, "note": args.note, "action": action.replace("work-intake-", "work-intake."), "data": data})
+    elif action == "amendments":
+        result = ops.amendments(args.case)
+    elif action == "amendment-show":
+        result = ops.amendment(args.case, args.amendment, args.revision)
+    elif action == "amendment-preview":
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Use complete UTF-8 amendment inputs.", 422, "INVALID_AMENDMENT") from exc
+        result = ops.preview_amendment(args.case, {"expectedVersion": args.expected_version, "inputs": inputs})
     elif action == "performance":
         result = ops.performance(args.case, args.start_date, args.end_date, args.expected_version)
     elif action == "performance-export":

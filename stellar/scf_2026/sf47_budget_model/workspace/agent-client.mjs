@@ -485,6 +485,9 @@ export class GrantWorkspaceClient {
       'case-report':() => '/api/operations/' + cid() + '/report',
       'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
+      amendments:() => '/api/operations/' + cid() + '/amendments',
+      amendment:() => '/api/operations/' + cid() + '/amendments/' + id(args.amendmentId, 'amendment') +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision, 'Amendment edition', 1, 300)),
       'ledger-intake':() => '/api/operations/' + cid() + '/ledger-intake',
       'ledger-intake-original':() => '/api/operations/' + cid() + '/ledger-intakes/' + id(args.sourceId, 'source'),
       'case-history':() => '/api/operations/' + cid() + '/history?after=' + integer(args.after ?? 0, 'History cursor', 0) +
@@ -598,6 +601,11 @@ export class GrantWorkspaceClient {
     if (data.expectedPreviewSha256 !== undefined) sha(data.expectedPreviewSha256);
     return this.command(caseId, {expectedVersion, requestId, actor, ...(note === undefined ? {} : {note}),
       action:'work-intake.' + action, data});
+  }
+  amendmentPreview(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Amendment inputs');
+    return this.#request('/api/operations/' + caseId + '/amendment-preview',
+      {body:{expectedVersion, inputs}, mutation:false});
   }
   forecastPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Forecast inputs');
