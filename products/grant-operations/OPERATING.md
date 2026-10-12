@@ -146,7 +146,7 @@ Source-intake packets use the original [Workshare intake](../../stellar/scf_2026
 
 ### Receive account statements into the same cash records
 
-Open **Delivery operations → Statements** and choose the original UTF-8 CSV. Give the account a stable, nonsecret key and map its exact source headings, separator, date order and number format. Select one signed amount column or separate debit and credit columns. Keep one currency per file; a foreign-currency row can carry an explicit source USD valuation and its basis.
+Open **Delivery and cash operations → Account statements** and choose the original UTF-8 CSV. Give the account a stable, nonsecret key and map its exact source headings, separator, date order and number format. Select one signed amount column or separate debit and credit columns. Keep one currency per file; a foreign-currency row can carry an explicit source USD valuation and its basis.
 
 Preview the complete file before importing. The review shows original physical source lines, transaction references, new and existing cash records, and exact statement inflow, outflow and net movement. When the source supplies opening and closing balances, enter both: the comparison includes every original movement, including explicitly excluded rows. Record a reason for each exclusion. Classify grant receipts and their tranches, customer cash and supplier payments; allocate supplier payments to retained invoices.
 
