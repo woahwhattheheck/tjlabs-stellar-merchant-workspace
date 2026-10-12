@@ -12,11 +12,13 @@ import {connectAccountingStatementClient, accountingStatementPreview, accounting
 import {prepareAccountingStatementCycle, runAccountingStatementCycle, observeAccountingStatementCycle} from './accounting-statement-cycle.mjs';
 
 import {createCustomerSetupRoutes} from './accounting-statement-setup.mjs';
+import {inspectAccountingStatementCustomerDossiers, exportAccountingStatementCustomerDossier, readAccountingStatementCustomerDossier} from './accounting-statement-customer-dossier.mjs';
 import {readBrowserAssets} from '../../stellar/scf-starforge-20261009/distribution/browser-assets.mjs';
 import {acquireStateLease} from '../../stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs';
 
 const UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const KEY=/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/;
+const SHA256=/^[a-f0-9]{64}$/;
 const STATIC=await readBrowserAssets(new URL('./accounting-statement-cycle-browser-assets.json',import.meta.url));
 const TYPE={'.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.csv':'text/csv; charset=utf-8','.md':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8'};
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -78,18 +80,18 @@ async function* verifiedFile(file){
   need(observed===file.bytes&&(!file.sha256||hash.digest('hex')===file.sha256),
     'A saved customer file differs from its recorded contents. Resume the original cycle to recover its files.',409,'WORKBENCH_FILE_CHANGED');
 }
-async function* tarStream(files,lease){
+async function* tarStream(files,assertReadable){
   const directories=new Set();
   for(const file of files){
     const parts=file.name.split('/');
     for(let index=1;index<parts.length;index++){
       const name=parts.slice(0,index).join('/')+'/';
-      if(!directories.has(name)){lease.assertHeld();yield tarHeader(name,0,{directory:true});directories.add(name);}
+      if(!directories.has(name)){assertReadable();yield tarHeader(name,0,{directory:true});directories.add(name);}
     }
-    lease.assertHeld();yield tarHeader(file.name,file.bytes);yield* verifiedFile(file);
+    assertReadable();yield tarHeader(file.name,file.bytes);yield* verifiedFile(file);
     const padding=(512-file.bytes%512)%512;if(padding)yield Buffer.alloc(padding);
   }
-  lease.assertHeld();yield Buffer.alloc(1024);
+  assertReadable();yield Buffer.alloc(1024);
 }
 
 /** Every write uses the original statement operation or cycle engine. The listener binds to loopback. */
@@ -105,7 +107,7 @@ export async function startAccountingStatementCycleWorkbench({
   await mkdir(directory,{recursive:true,mode:0o700});const root=await realpath(directory);
   const rootInfo=await stat(root);
   need(rootInfo.isDirectory()&&!(rootInfo.mode&0o077)&&(!process.getuid||rootInfo.uid===process.getuid()),'Use a private cycle directory owned by this operator (mode 0700).',400,'WORKBENCH_DIRECTORY');
-  const csrfToken=randomBytes(32).toString('hex'),jobs=new Map(),controller=new AbortController();let clientPromise,inventoryPromise,closing=false,origin,workQueue=Promise.resolve();
+  const csrfToken=randomBytes(32).toString('hex'),jobs=new Map(),dossierExports=new Map(),dossierQueues=new Map(),controller=new AbortController();let clientPromise,inventoryPromise,closing=false,origin,workQueue=Promise.resolve();
   const connection=async()=>{
     if(!clientPromise)clientPromise=(async()=>{
       const client=providedClient??await connectAccountingStatementClient({url,workspace,tokenEnv,environment,signal:controller.signal});
@@ -142,7 +144,7 @@ export async function startAccountingStatementCycleWorkbench({
     const previous=jobs.get(key);if(['QUEUED','RUNNING'].includes(previous?.phase))return previous;
     const job={kind,phase:'QUEUED',error:null,startedAt:new Date().toISOString(),finishedAt:null,promise:null};
     jobs.set(key,job);
-    const predecessor=kind==='RUN'?workQueue:Promise.resolve();
+    const predecessor=Promise.all([kind==='RUN'?workQueue:Promise.resolve(),dossierQueues.get(key)?.catch(()=>{})??Promise.resolve()]);
     job.promise=predecessor.then(()=>{controller.signal.throwIfAborted();job.phase='RUNNING';return work();}).then(()=>{job.phase='FINISHED';},error=>{job.phase='ERROR';job.error=cleanError(error);})
       .finally(()=>{job.finishedAt=new Date().toISOString();});
     if(kind==='RUN')workQueue=job.promise;
@@ -184,6 +186,52 @@ export async function startAccountingStatementCycleWorkbench({
     }
     return files;
   }
+
+  function customerId(value){need(typeof value==='string'&&UUID.test(value),'Choose a customer from this closing cycle.');return value;}
+  const dossierRoot=(key,id)=>join(root,'.customer-dossiers',safeKey(key),customerId(id));
+  function dossierView(key,snapshot){
+    const base='/api/cycles/'+encodeURIComponent(key)+'/customers/'+snapshot.customer.customerId+'/snapshots/'+snapshot.snapshotSha256;
+    const {schema,cycle,customer,snapshotSha256,observedAt,complete,counts,statements,totalBytes}=snapshot;
+    return {schema,cycle,customer,snapshotSha256,observedAt,complete,counts,statements,totalBytes,reused:snapshot.reused===true,
+      indexHref:base+'/file/index.html',downloadHref:base+'/download',
+      files:snapshot.files.map(file=>({...file,href:base+'/file/'+file.path.split('/').map(encodeURIComponent).join('/')+'?download=1'}))};
+  }
+  async function prepareCustomerDossier(key,id){
+    customerId(id);need(!closing,'The workbench is shutting down.',503,'WORKBENCH_CLOSING');
+    const identity=key+'\0'+id,existing=dossierExports.get(identity);if(existing)return existing;
+    need(!['QUEUED','RUNNING'].includes(jobs.get(key)?.phase),'Wait for the active closing operation before preparing the customer packet.',409,'WORKBENCH_ACTIVE');
+    const predecessor=dossierQueues.get(key)??Promise.resolve();
+    const promise=predecessor.catch(()=>{}).then(async()=>{
+      controller.signal.throwIfAborted();
+      need(!['QUEUED','RUNNING'].includes(jobs.get(key)?.phase),'Wait for the active closing operation before preparing the customer packet.',409,'WORKBENCH_ACTIVE');
+      await compatible(key);
+      const snapshot=await exportAccountingStatementCustomerDossier({directory:cyclePath(key),customerId:id,outputDirectory:dossierRoot(key,id),signal:controller.signal});
+      need(snapshot.customer?.customerId===id&&SHA256.test(snapshot.snapshotSha256??''),'The customer packet does not match the saved selection.',409,'WORKBENCH_CUSTOMER_DOSSIER');
+      return dossierView(key,snapshot);
+    });
+    dossierExports.set(identity,promise);dossierQueues.set(key,promise);
+    const clear=()=>{if(dossierExports.get(identity)===promise)dossierExports.delete(identity);if(dossierQueues.get(key)===promise)dossierQueues.delete(key);};
+    promise.then(clear,clear);return promise;
+  }
+  async function customerDossierFiles(key,id,snapshotSha256){
+    customerId(id);need(SHA256.test(snapshotSha256),'Choose a saved customer packet.');
+    controller.signal.throwIfAborted();
+    const request=await compatible(key),directory=await inside(root,join(dossierRoot(key,id),snapshotSha256));
+    const snapshot=await readAccountingStatementCustomerDossier({directory,signal:controller.signal});
+    need(snapshot.snapshotSha256===snapshotSha256&&snapshot.customer?.customerId===id&&snapshot.cycle?.cycleId===request.cycleId&&snapshot.cycle?.workspace===workspace,
+      'The saved customer packet belongs to a different closing cycle or customer.',409,'WORKBENCH_CUSTOMER_DOSSIER');
+    const files=[];
+    for(const file of snapshot.files){
+      const name=file.path;
+      need(typeof name==='string'&&!name.includes('\\')&&!name.split('/').some(part=>!part||part==='.'||part==='..')&&
+        SHA256.test(file.sha256??'')&&Number.isSafeInteger(file.bytes)&&file.bytes>=0,'The saved customer packet contains an invalid file entry.',409,'WORKBENCH_CUSTOMER_DOSSIER');
+      const path=await inside(directory,join(directory,name)),info=await stat(path);
+      need(info.isFile()&&info.size===file.bytes,'A saved customer packet file differs from its recorded contents. Prepare the customer packet again from the original cycle.',409,'WORKBENCH_FILE_CHANGED');
+      files.push({name,path,bytes:file.bytes,sha256:file.sha256});
+    }
+    return {snapshot,files};
+  }
+
   const customerSetup=await createCustomerSetupRoutes({directory:root,url,workspace,actor,tokenEnv,connection,signal:controller.signal,bodyJson,sendJson,
     enqueue:work=>{const promise=workQueue.then(()=>{controller.signal.throwIfAborted();return work();});workQueue=promise.catch(()=>{});return promise;}
   });
@@ -255,6 +303,32 @@ export async function startAccountingStatementCycleWorkbench({
           const job=begin(key,'PREPARE',async()=>prepareAccountingStatementCycle({directory:cyclePath(key),url,workspace,actor:original.actor,label:original.label,selections:original.selections,tokenEnv:original.tokenEnv,environment,signal:controller.signal,client:providedClient}));
           sendJson(response,202,{key,job:jobView(job)});return;
         }
+
+        if(request.method==='GET'&&action==='customers'){
+          await compatible(key);sendJson(response,200,await inspectAccountingStatementCustomerDossiers({directory:cyclePath(key),signal:controller.signal}));return;
+        }
+        const customerExport=action.match(/^customers\/([^/]+)\/export$/);
+        if(request.method==='POST'&&customerExport){
+          await bodyJson(request);sendJson(response,200,await prepareCustomerDossier(key,customerId(customerExport[1])));return;
+        }
+        const customerSnapshot=action.match(/^customers\/([^/]+)\/snapshots\/([^/]+)\/(download|file\/(.+))$/);
+        if(request.method==='GET'&&customerSnapshot){
+          const id=customerId(customerSnapshot[1]),snapshotSha256=customerSnapshot[2];
+          const {files}=await customerDossierFiles(key,id,snapshotSha256);
+          if(customerSnapshot[3]==='download'){
+            need(files.length,'This customer packet has no files to download.',409,'WORKBENCH_CUSTOMER_DOSSIER');
+            const filename=key+'-customer-'+id+'-'+snapshotSha256.slice(0,12)+'.tar.gz';
+            response.writeHead(200,{'Content-Type':'application/gzip','Content-Disposition':'attachment; filename="'+filename+'"'});
+            await pipeline(Readable.from(tarStream(files,()=>controller.signal.throwIfAborted())),createGzip(),response);return;
+          }
+          const name=customerSnapshot[4],file=files.find(item=>item.name===name);
+          need(file,'Choose a file from this saved customer packet.',404);
+          const type=TYPE[extname(name)]??'application/octet-stream',view=address.searchParams.get('download')!=='1'&&extname(name)==='.html';
+          if(view)response.setHeader('Content-Security-Policy',"sandbox allow-same-origin allow-downloads; default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'");
+          response.writeHead(200,{'Content-Type':type,'Content-Length':file.bytes,'Content-Disposition':(view?'inline':'attachment')+'; filename="'+name.split('/').at(-1).replace(/["\r\n]/g,'')+'"'});
+          await pipeline(Readable.from(verifiedFile(file)),response);return;
+        }
+
         const reviewMatch=action.match(/^items\/([1-9][0-9]*)\/review$/);
         if(request.method==='GET'&&reviewMatch){
           const index=Number(reviewMatch[1])-1,report=await record(key),row=report.rows[index];need(row,'Choose a customer review in this cycle.',404);
@@ -274,7 +348,7 @@ export async function startAccountingStatementCycleWorkbench({
             const filename=key+(index===undefined?'':'-customer-'+(index+1))+'.tar.gz';
             const archiveFiles=index===undefined?files:files.map(file=>({...file,name:file.name.split('/').at(-1)}));
             response.writeHead(200,{'Content-Type':'application/gzip','Content-Disposition':'attachment; filename="'+filename+'"'});
-            await pipeline(Readable.from(tarStream(archiveFiles,lease)),createGzip(),response);
+            await pipeline(Readable.from(tarStream(archiveFiles,()=>lease.assertHeld())),createGzip(),response);
           }finally{await lease.close();}
           return;
         }
@@ -306,7 +380,7 @@ export async function startAccountingStatementCycleWorkbench({
   return Object.freeze({url:origin,server,directory:root,async close(){
     if(!closePromise){closing=true;controller.abort();closePromise=(async()=>{
       await new Promise((done,reject)=>server.close(error=>error?reject(error):done()));
-      await Promise.allSettled([...jobs.values()].map(job=>job.promise));
+      await Promise.allSettled([...jobs.values()].map(job=>job.promise).concat([...dossierExports.values()]));
       await customerSetup.close();
       if(clientPromise&&!providedClient)await (await clientPromise).disconnect();
     })();}return closePromise;
