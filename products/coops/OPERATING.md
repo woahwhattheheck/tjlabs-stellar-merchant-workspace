@@ -2,21 +2,23 @@
 
 Operate a coastal source study from the original NOAA response through source
 review, receiving conventions, analytical workbooks, native publication and
-complete customer files. The browser, command line and 39 coastal merchant tools
+complete customer files. The browser, command line and 48 coastal merchant tools
 share the same private workspace, station profiles, immutable editions and saved
 operations.
 
 The application retains the requested station, products, dates, datum, units and
 time basis with every source edition. Staff can compare later observations,
 review original datum and quality evidence, prepare a model-input convention,
-and carry that exact convention into the existing dataset query and merchant
-release.
+compose a reviewed study from several stations and receive its complete returned
+files. The same original source also feeds analytical workbooks, native dataset
+queries and merchant releases.
 
 ## Choose an entry point
 
 | Work | Entry point | Saved result |
 | --- | --- | --- |
 | Capture, review and operate a study | **Applications → Coastal source operations** or `starforge coops-workspace` | Original coastal workspace, source responses, reviews and releases |
+| Prepare a study and receive its returned files | **Studies & receiving**, `starforge coops study-preview` and `starforge coops study-return` | Exact station/edition windows, reviewed mapping, full source delivery and saved receiving decision |
 | Run an explicit source operation | `starforge coops` | The same capture, archive, mapping, dataset or receiving operation |
 | Build the complete analytical delivery | **Build coastal workbook** or `starforge coops analyse` | Offline HTML, editable workbook, all numerical/source files and manifest |
 | Reproduce a downloaded workbook | `starforge coops-analysis` | A complete new delivery directory from its original input |
@@ -266,6 +268,163 @@ The prepared dataset retains its original mapping revision, incoming mapping
 file, source edition, CSV, query description and snapshot. Later convention
 changes leave that earlier dataset and its native query identity intact.
 
+## Prepare and deliver a coastal study
+
+Open **Studies & receiving** after retaining the source editions and saving the
+receiving mapping. A study binds one observation or prediction table to ordered
+windows from up to five stations, 64 editions and five calendar years. Historical
+capture parts enter as their original editions. Each saved revision retains the
+engineering question, responsible team, selected mapping revision, source hashes,
+station evidence and the review of native units, datum and time basis.
+
+### Select the source and receiving convention
+
+Choose a saved mapping for the study's table. It must include the original
+source identity, station, product, time, quantity basis, value state and quality
+fields. The application lists missing required fields before saving. The full
+[study guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/coops/STUDIES.md)
+describes every required column and complete native action.
+
+The included
+[study column convention](../../stellar/scf-starforge-20261009/sf30-seller-sdk/coops/examples/study-input-columns.json)
+is an explicit reference exchange format. Import it through **Model-input
+mappings** when that convention suits the receiving work, or retain the actual
+supplied project mapping through the same original input-file review. The saved
+mapping keeps its exact headings and source-file revision.
+
+Enter the study name, project reference, engineering question and responsible
+team. For each member, select its exact retained edition, inclusive first and
+last calendar dates and products. Move members to establish output order.
+Use **Load older retained editions** to select historical work beyond the
+initial archive page.
+
+**Preview exact selection** compares the mapping, source windows and native
+bases. The preview lists the source response hashes and the original request
+outcomes. It separates the coverage of each complete source edition from the
+rows selected for this study. Overlapping windows for the same station, product
+and native basis must be narrowed or replaced with one chosen edition.
+
+Matching datum labels at different stations require a station-specific vertical
+reference review. The study carries each station's original basis with every
+row. If the selected requests use different datum, unit, time or prediction
+interval settings, choose compatible editions or select the explicitly separated
+mixed-basis form and review its warning.
+
+### Save and review the exact study revision
+
+**Save this reviewed selection** retains the preview digest and selected mapping
+revision. Editing a study appends the previous full revision. The saved study,
+earlier versions and their original row previews remain selectable.
+
+Open **Review this revision**, inspect the source and mapping, then enter the
+reviewer, decision and explanation. A Reviewed decision acknowledges each
+generated source or basis warning. A Follow-up decision records the unresolved
+work and remains the current decision until another review is saved. The saved
+review binds the exact study ID, revision and digest.
+
+When a later staff change is detected, compare the retained draft with the
+current saved record. The console preserves entered fields and offers the
+current version for review. After a lost reply, reopen the pending original
+operation and apply its saved result before continuing.
+
+### Deliver all selected rows and original source
+
+**Create immutable delivery** streams the reviewed study into complete files.
+Choose each file from **Immutable deliveries**, or use its original export ID
+with the CLI or retained-file Merchant tools.
+
+| File | Complete receiving content |
+| --- | --- |
+| CSV | Ordered selected rows using the saved headings and original string values |
+| JSONL | The same mapped rows with exact string values and one object per line |
+| HTML | Standalone study, source, review, basis warnings and actual row/value counts |
+| Manifest JSON | Study and mapping identity, review, original response inventory and member hashes |
+| Source TAR | The complete selected editions, accepted and failed response bodies, original mapping input when supplied, and the mapped files and report |
+
+The source TAR includes whole selected source editions, even when a member
+selects a narrower date window. Its manifest records each retained response and
+each archive member. Shared original response bodies are included once by their
+content hash. The delivery retains separate counts for selected rows, populated
+numerical values and original request outcomes.
+
+CSV users should import columns as text to preserve identifiers and decimal
+precision. JSONL carries the same original string-valued fields directly.
+Returned and generated files remain attached to their selected release.
+
+### Receive and compare a returned file
+
+Select **Retain a returned CSV or JSONL** on the exact immutable delivery. Enter
+the source and purpose of the returned file, select its original file and format,
+then retain its bytes. The browser records sequential one-MiB chunks and the
+same pending request. Pause or reload can continue the original intake after
+reselecting the file; the retained prefix is checked before more chunks are
+accepted.
+
+After all bytes are present, choose **Compare complete returned file**. The
+application compares every released and returned row using the saved source
+identity:
+
+- `editionId`
+- `recordId`
+- `sourcePageSha256`
+- `sourceRecord`
+
+Changed fields appear against that identity. Changed identity fields appear as
+an added and a missing row. Row order may differ. Duplicate identities remain
+ambiguous in the complete comparison. CSV headings and order must match the
+saved mapping; JSONL objects retain exactly the same headings and string values.
+
+Download the full comparison for every difference, together with the exact
+returned original and comparison summary. The page shows examples while the
+complete file holds the full result. Format and capacity failures retain the
+original returned bytes and the reason the comparison needs further work.
+
+Open **Inspect and record receiving**, enter the receiving operator, decision and
+note, and save the result. Acceptance records the reviewed changes, additions
+or missing content against that exact comparison. An incomplete or ambiguous
+comparison requires a Follow-up decision. Prior receiving decisions remain
+available with the original file and release.
+
+The source, returned and export file limit is 1 GiB. The comparison uses temporary
+identity partitions within the same private workspace; each side of a partition
+is limited to 16 MiB and each logical returned record to 2 MiB. When those limits
+require a smaller study, retain the completed original intake and prepare the
+next explicit source window.
+
+### Operate the same study from the installed command line
+
+Use the original private console descriptor for the running workspace. The
+`starforge` wrapper below is the installed wrapper defined earlier in this guide.
+
+~~~sh
+starforge coops --session /private/coastal-startup.json study-preview \
+  --file /selected/study-selection.json
+
+starforge coops --session /private/coastal-startup.json action \
+  --request /selected/original-study-save.json
+
+starforge coops --session /private/coastal-startup.json study-rows \
+  --study-id ACTUAL_SAVED_STUDY_ID --study-revision 1 --offset 0 --limit 100
+
+starforge coops --session /private/coastal-startup.json study-return \
+  --study-release-id ACTUAL_SAVED_RELEASE_ID --format csv \
+  --file /selected/returned.csv --operation-id original-study-return-20261012 \
+  --note "Actual returned-file source and receiving purpose"
+
+starforge coops --session /private/coastal-startup.json download \
+  --export-id ACTUAL_SAVED_EXPORT_ID --output /selected/new-complete-output
+~~~
+
+Replace the example IDs with the actual saved selections. Keep the same return
+operation prefix, file and release on a continuation. The CLI checks the retained
+prefix, complete file hash and original open-file identity before finishing.
+A saved comparison resumes its original native finish operation.
+
+The installed Merchant catalog exposes `merchant_coops_study_preview`,
+`merchant_coops_study_rows`, the seven study write actions, and the existing
+complete retained-file tools. The browser, CLI and agent use the same source
+edition, study revision, review, export and receiving records.
+
 ## Build and receive the coastal workbook
 
 Open a retained edition and choose **Build coastal workbook**, or use
@@ -479,7 +638,10 @@ starforge coops-receive \
   --browser-profile /absolute/private/coastal-browser \
   --playwright-module /absolute/selected-runtime/playwright/index.mjs \
   --chrome /absolute/selected-runtime/chrome \
-  --operator "Responsible receiving team"
+  --operator "Responsible receiving team" \
+  --selection /absolute/source/stellar/scf-starforge-20261009/sf30-seller-sdk/coops/examples/coastal-receiving-selection.json \
+  --review-response /absolute/private/coastal-operator/independent-source-review.json \
+  --study-review-response /absolute/private/coastal-operator/independent-study-review.json
 ~~~
 
 Choose those actual runtime files and retain the same operation, three separate
@@ -503,6 +665,27 @@ The default reference uses the seven-day La Jolla water-level selection followed
 by the declared 2024–2025 hourly-height study. Select another supported source
 window before the first run with `--selection ORIGINAL_SELECTION.json`.
 The first checkpoint retains that selection and original mapping file.
+
+The [complete coastal reference selection](../../stellar/scf-starforge-20261009/sf30-seller-sdk/coops/examples/coastal-receiving-selection.json)
+adds the saved Study workflow to that same source and historical receiving.
+It selects the original La Jolla editions, imports the full study column
+convention, saves the actual study, and writes
+`independent-study-review-request.json`. Inspect that packet, mapping and complete
+source files before writing the separate study decision. The response binds
+the packet hash, study ID, revision and digest, reviewer, time, explanation and
+each acknowledged warning.
+
+After that review is saved, the original browser creates and downloads every
+study delivery file. It verifies the complete source TAR, retains the downloaded
+JSONL through the real return form, compares every row and records the internal
+receiving decision. This returned file is the original internal exchange file.
+The result identifies that purpose and preserves its complete comparison.
+
+The final same-origin reopen retains both the reviewed original study and its
+later working revision, together with the original release, returned file,
+receiving decision and selected rows. Follow the
+[complete receiving response and continuation contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/coops/STUDIES.md#joined-original-operator-receiving)
+when operating the full selected journey.
 
 Keep the completed `coops-operator-result.json`, checkpoint, source files,
 review, mapping revisions, complete exports and native query results together.

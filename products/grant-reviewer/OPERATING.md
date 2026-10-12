@@ -1,4 +1,4 @@
-# Review a retained grant purchase and hand it over
+# Read the SCF application and operate its retained grant purchase
 
 Open the original public purchase as an operating reviewer workspace. Review its
 source and terms, read both complete native results, export a closed Buyer view,
@@ -8,6 +8,44 @@ This workflow uses the retained purchase. The original transaction, quote
 identities, seller outcomes and source documents remain part of that packet.
 Opening, reading, exporting and receiving it do not dispatch another payment
 or refresh the source data.
+
+## Read the complete application and financing
+
+The selected package includes the manuscript author's reviewed application,
+the product and financing companion, the original six-package budget and the
+source index. Open them through the shared source server:
+
+~~~sh
+starforge grant-application --port 8787
+~~~
+
+Open the exact local URL printed at startup, normally
+`http://127.0.0.1:8787/grant.html`. Choose `--port 0` when another service already
+uses that port. If the same package's `cocart-setup` listener is already open,
+read `/grant.html` at its existing origin.
+
+The application page provides the complete original Markdown downloads,
+`budget.csv`, `source-index.json`, the preserved economic briefing and the
+published presentation links. The four direct local downloads are:
+
+| Download | Local path |
+| --- | --- |
+| Primary application | `/grant-data/application.md` |
+| Product and financing companion | `/grant-data/product-and-finance.md` |
+| Six-package budget | `/grant-data/budget.csv` |
+| Source and measure index | `/grant-data/source-index.json` |
+
+These six original grant files come from the reviewed source at
+`f7fe93c07355b1688a550bbcd349a5590fa1d680`; their contents remain unchanged.
+The source index retains the underlying manuscript and financial source
+identities. Read the published film and editable companion at the original
+release links on the page. The local package contains the application and
+economic-report source downloads.
+
+Ctrl+C closes this reader. Reopen the same command to read the same installed
+source. For a checkout, the original entry is
+`node stellar-forge/developer-site/grant.mjs --port 8787`.
+The retained purchase workbench below keeps its own saved packet and lifecycle.
 
 ## Open the reviewer
 

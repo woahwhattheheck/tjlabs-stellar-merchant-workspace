@@ -8,6 +8,59 @@ The product calls the original merchant file transport and native manifest
 readers. Files keep their original bytes and nested layout. Reopening a
 received export works after the original server has closed.
 
+## Receive through the installed Merchant Console
+
+The product's returned `operatorUrl` and **Merchant operator** Applications
+link open the original persistent Console. Select a named profile, inspect and
+bind the current Host, then open **Customer files → gRPC / Customer workspace**.
+Choose the original configured workspace and already-retained preparation,
+revision, call, upgrade review or health observation.
+
+Inspect the returned export manifest before **Receive complete files**.
+The retained receiving selection binds the original workspace alias, export ID,
+complete manifest SHA-256, profile and configured host fingerprint. The native
+file transport uses the same export ID and original file selections. A paused
+transfer resumes its byte checkpoint after reopen.
+
+Completed receiving exposes individual original files and a complete tar.gz
+archive. That archive has this native layout:
+
+| Archive path | Original content |
+| --- | --- |
+| grpc/grpc-workspace-export.json | The complete original export manifest bytes |
+| grpc/methods.json and grpc/openapi.json | Native generated customer definitions |
+| grpc/client/ | All five original generated client package files |
+| grpc/grpc-revision.json | Complete captured source and merchant plan for a revision export |
+| grpc/grpc-attempt.json and, when present, grpc/grpc-stream.ndjson | Original call metadata and durable stream bytes |
+| grpc/grpc-upgrade-*.json | The four original contract review/base/candidate/plan files |
+| grpc/grpc-health.json | Complete selected frozen service-health history |
+
+Each archive contains the members declared by its selected native export.
+The checkpoint's internal flat transport names stay inside the downloader;
+the delivered archive restores each original native `files[].path`.
+
+After extracting a completed archive, the original product inspector accepts
+its `grpc/` directory directly:
+
+~~~sh
+starforge grpc-product inspect-received --out /srv/private/received-archive/grpc \
+  --export-id ORIGINAL_EXPORT_SHA256 --manifest-sha256 ORIGINAL_MANIFEST_SHA256
+~~~
+
+The inspector reads `grpc-workspace-export.json`, hashes every complete original
+member and invokes the native health or upgrade reader when selected. It works
+after the merchant and Console have closed.
+
+The four saved customer/source, contract-upgrade, health and retained-call
+procedures pause at the original manifests so receiving can complete before
+continuation. Profile export/import preserves the exact retained manifest text
+and its identity alongside the workflow and customer record. The receiving
+Console uses its own private download directory for those original files.
+
+The [Console customer guide](../../stellar-forge/mcp-merchant-operator/console/CUSTOMER_GRPC.md)
+describes saved requests, snapshot paging, recipe review and complete archive
+delivery.
+
 ## Create the original export
 
 The browser's customer download uses its original preparation. Through the
@@ -157,8 +210,8 @@ Keep the source archive, its exact SHA-256, selected runtime profile/lock and
 received customer export together. The original runtime transfer command carries
 an equipped installation through its own manifest and recovery process.
 
-The private native workspace contains operational history beyond a single
-customer/source export. Reopen that **same original workspace** when continuing
+The private native workspace and the product's `operator-console/` retain
+operational history beyond a single customer/source export. Reopen that **same original workspace** when continuing
 its operation. A customer export, revision export, upgrade review and health
 snapshot each state their exact scope above; use their native receiving
 operation and original IDs.

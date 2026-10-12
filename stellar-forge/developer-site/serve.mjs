@@ -31,11 +31,12 @@ function selectedPort(value) {
   throw new TypeError('Choose an integer local port from 0 to 65535.');
 }
 
-export async function startSetupServer({ port = 8787 } = {}) {
+export async function startSetupServer({ port = 8787, entry = '/cocart.html' } = {}) {
   port = selectedPort(port);
   const assets = await readBrowserAssets(manifest);
-  if (!assets.has('/') || !assets.has('/cocart.html'))
-    throw new TypeError('The original CoCart setup entry is missing from its asset manifest.');
+  if (typeof entry !== 'string' || !entry.startsWith('/') || !assets.has('/') ||
+      !assets.has(entry) || !assets.get(entry).type.startsWith('text/html'))
+    throw new TypeError('Choose an original HTML entry declared by the setup asset manifest.');
   let actualPort;
   const server = createServer(async (request, response) => {
     const base = {
@@ -88,8 +89,8 @@ export async function startSetupServer({ port = 8787 } = {}) {
     server.closeIdleConnections?.();
   });
   return {
-    server, stop, url: 'http://127.0.0.1:' + actualPort + '/cocart.html',
-    port: actualPort, assets: assets.size,
+    server, stop, url: 'http://127.0.0.1:' + actualPort + entry,
+    port: actualPort, entry, assets: assets.size,
   };
 }
 

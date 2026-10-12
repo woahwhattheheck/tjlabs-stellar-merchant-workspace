@@ -133,3 +133,12 @@ starforge registrations --source merchant-provider-cocart-workspaces
 ~~~
 
 Copyright TokenJunkieLabs. Original source and third-party notices are retained.
+
+## Read the reviewed SCF application
+
+The same local setup listener also serves the complete reviewed application at
+`/grant.html`. Open that path at its printed origin to read the manuscript,
+product and financing companion, six-package budget, source index and retained
+economic briefing. Its downloads are the original reviewed source files.
+The standalone `grant-reviewer` selection also exposes
+`starforge grant-application` and the complete retained purchase workflow.
