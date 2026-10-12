@@ -244,7 +244,53 @@ def receive_source(source):
    finally:
     if terminal_state is not None:termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,terminal_state)
 
-def main(journey,stream_source=False):
+SOURCE_ASSETS_SHA="6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc"
+SOURCE_ASSET_COUNT=19
+def receive_assets(source,raw=None):
+ import select
+ retained=CONTROL/"source-assets.json"
+ if raw is None and retained.exists():raw=retained.read_bytes()
+ if raw is None:
+  terminal_state=None;pending=bytearray()
+  try:
+   if sys.stdin.isatty():
+    terminal_state=termios.tcgetattr(sys.stdin.fileno());settings=list(terminal_state);settings[3]&=~(termios.ECHO|termios.ICANON)
+    termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,settings)
+   say({"phase":"READY_FOR_ORIGINAL_ASSETS","files":SOURCE_ASSET_COUNT,"sha256":SOURCE_ASSETS_SHA})
+   deadline=time.monotonic()+180
+   while b"\n" not in pending:
+    if requested:raise RuntimeError("ORIGINAL_RECEIVING_INTERRUPTED")
+    remaining=deadline-time.monotonic()
+    if remaining<=0:raise TimeoutError("ORIGINAL_ASSET_INPUT_DEADLINE")
+    if not select.select([sys.stdin.fileno()],[],[],min(remaining,1))[0]:continue
+    chunk=os.read(sys.stdin.fileno(),65536)
+    if not chunk:raise RuntimeError("ORIGINAL_ASSET_INPUT_CLOSED")
+    pending.extend(chunk)
+    if len(pending)>1024*1024:raise RuntimeError("ORIGINAL_ASSET_RECORD_TOO_LARGE")
+   boundary=pending.index(10)+1
+   if boundary!=len(pending):raise RuntimeError("ORIGINAL_ASSET_TRAILING_BYTES")
+   raw=bytes(pending)
+  finally:
+   if terminal_state is not None:termios.tcsetattr(sys.stdin.fileno(),termios.TCSANOW,terminal_state)
+ if digest(raw)!=SOURCE_ASSETS_SHA:raise RuntimeError("ORIGINAL_SOURCE_ASSETS_CHANGED")
+ value=json.loads(raw)
+ if value["schema"]!="stellar-forge.openaq-buyer-native-source-assets.v1" or value["repository"]!="woahwhattheheck/tjlabs-stellar-merchant-workspace" or value["commit"]!=COMMIT or value["baseManifestSha256"]!=SOURCE_MANIFEST_SHA or len(value["files"])!=SOURCE_ASSET_COUNT:raise RuntimeError("ORIGINAL_SOURCE_ASSET_SELECTION_CHANGED")
+ if len({f["path"] for f in value["files"]})!=SOURCE_ASSET_COUNT:raise RuntimeError("ORIGINAL_SOURCE_ASSET_REPEATED")
+ for item in value["files"]:
+  if item["encoding"]!="utf-8":raise RuntimeError("ORIGINAL_SOURCE_ASSET_ENCODING")
+  body=item["content"].encode("utf-8")
+  if len(body)!=item["bytes"] or digest(body)!=item["sha256"] or hashlib.sha1(b"blob "+str(len(body)).encode()+b"\0"+body).hexdigest()!=item["gitBlob"]:raise RuntimeError("ORIGINAL_SOURCE_ASSET_BODY_CHANGED")
+  target=source_parent(source,item["path"])
+  if not verify_source_file(target,item):exact(target,body)
+ exact(retained,raw)
+ base=source_manifest((CONTROL/"source-manifest.json").read_bytes())
+ additions=[{k:f[k] for k in ("path","gitBlob","bytes","sha256")} for f in value["files"]]
+ if {f["path"] for f in additions}&{f["path"] for f in base["files"]}:raise RuntimeError("ORIGINAL_SOURCE_ASSET_OVERLAP")
+ selection={"schema":"stellar-forge.openaq-buyer-complete-source.v1","commit":COMMIT,"baseManifestSha256":SOURCE_MANIFEST_SHA,"assetsSha256":SOURCE_ASSETS_SHA,"files":base["files"]+additions}
+ exact(source/"SOURCE-ASSETS.json",encoded(selection))
+ say({"phase":"ORIGINAL_RUNTIME_ASSETS_READY","files":SOURCE_ASSET_COUNT,"totalSourceFiles":SOURCE_FILE_COUNT+SOURCE_ASSET_COUNT,"sha256":SOURCE_ASSETS_SHA})
+
+def main(journey,stream_source=False,assets=None):
  CONTROL.mkdir(mode=0o700,exist_ok=True);owned(CONTROL)
  fd=os.open(CONTROL/"operation.lock",os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
  fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -285,7 +331,7 @@ def main(journey,stream_source=False):
   else:
    say({"phase":"ORIGINAL_SOURCE_ACQUISITION","bulk":str(bulk),"commit":COMMIT})
    if stream_source:
-    source.mkdir(mode=0o700,exist_ok=True);owned(source);receive_source(source)
+    source.mkdir(mode=0o700,exist_ok=True);owned(source);receive_source(source);receive_assets(source,assets)
    else:
     if not source.exists():
      source.mkdir(mode=0o700);run(["git","init","--quiet",str(source)],str(bulk),guard_fd=fd)
@@ -360,4 +406,4 @@ if __name__=="__main__":
  source=Path(__file__).with_name("native-journey.mjs").read_bytes()
  if digest(source)!="96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6":raise RuntimeError("ORIGINAL_JOURNEY_SOURCE_CHANGED")
  if sys.argv[1:] not in ([],["--source-stdin"]):raise RuntimeError("ORIGINAL_RECEIVER_ARGUMENT_INVALID")
- main(source,stream_source=bool(sys.argv[1:]))
+ main(source,stream_source=bool(sys.argv[1:]),assets=Path(__file__).with_name("source-assets.json").read_bytes() if sys.argv[1:] else None)

@@ -6,7 +6,7 @@
   "parentSellerCommit": "3c9063c0872e835c25cb1e95c00ab27bd30326a2",
   "productPullRequest": 593,
   "originalSellerPullRequest": 517,
-  "sourceAcquisition": "Exact selected 808-file source stream with per-file Git blob/SHA256 verification and durable compressed source reopen; original configured Git fetch remains available.",
+  "sourceAcquisition": "Exact selected 808-file source stream plus 19 original runtime assets, all Git blob/SHA256 verified; compressed base source and retained assets reopen under the original operation lock.",
   "dependencyProfile": {
     "package": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
     "lockfile": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package-lock.json",
@@ -32,9 +32,9 @@
     },
     {
       "path": "operations/openaq-buyer-receiving-921ba0-20261012/receive.py",
-      "gitBlob": "c539f2999b215079abe11cdb851c4e02e28fcf4a",
-      "bytes": 21457,
-      "sha256": "69877b683c8e688ab83fb577de4bf2865b7c5432406e4ba30de3f50494ac9a14"
+      "gitBlob": "29340b6c4aebb61002c386d603a2f8aad5a33077",
+      "bytes": 24778,
+      "sha256": "18e4253b7d4a43870d109b7c5e5d83e68e2b596e4b1871f2d8bdd64f3e852e01"
     }
   ],
   "nativeContinuation": {
@@ -57,5 +57,15 @@
     "sourceBytes": 10510654,
     "canonicalCapsule": "/dev/shm/921ba0-openaq-buyer-native-20261012/source-capsule.gz",
     "mode": "python3 receive.py --source-stdin < source-stream.jsonl"
+  },
+  "runtimeAssets": {
+    "path": "source-assets.json",
+    "gitBlob": "96a79df978ba07fc4298f6be8dd5a34903d1bbb5",
+    "bytes": 263175,
+    "sha256": "6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc",
+    "files": 19,
+    "sourceBytes": 253313,
+    "completeSourceFiles": 827,
+    "baseManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c"
   }
 }

@@ -4,15 +4,15 @@ This operation uses the original historical Del Norte study and the selected pro
 
 ## Open the original operation
 
-Keep `receive.py`, `native-journey.mjs`, `source-inputs.json`, `source-manifest.json` and `source-stream.jsonl` together. On the original Linux host, run:
+Keep `receive.py`, `native-journey.mjs`, `source-inputs.json`, `source-manifest.json`, `source-stream.jsonl` and `source-assets.json` together. On the original Linux host, run:
 
 ```sh
 python3 receive.py --source-stdin < source-stream.jsonl
 ```
 
-The stream contains the complete selected 808-file source, including the original OpenAQ study, browser assets, native worker modules and SF88 package files. It carries 10,510,654 source bytes from the exact selected product commit. The receiver verifies the fixed manifest, each file's Git blob identity, length and SHA256 before that source can run. Exact existing files reopen; different existing bytes stop the operation.
+The base stream contains 808 selected source files, including the original OpenAQ study, native workers and SF88 package files. The adjacent `source-assets.json` supplies 19 original files that complete the eagerly loaded seller developer assets and declared runtime browser roots. Together these provide 827 files and 10,763,967 source bytes from the exact selected product commit. The receiver verifies the fixed manifest, each file's Git blob identity, length and SHA256 before that source can run. The asset packet has its own fixed SHA256 and binds the same commit and base manifest; each asset also retains its original Git blob, length and SHA256. Exact existing files reopen; different existing bytes stop the operation.
 
-The receiver retains its canonical operation in `/dev/shm/921ba0-openaq-buyer-native-20261012` and mutable native records in its `native/` subdirectory. Reproducible source and dependencies use `/dev/921ba0-openaq-runtime-20261012`. The first complete stream is compressed into the canonical `source-capsule.gz`, so the same command can restore the exact source if an invocation-private `/dev` mount disappears. It then reopens the original native requests. Both the retained manifest and `source/SOURCE-SELECTION.json` are checked on every complete-source reopen.
+The receiver retains its canonical operation in `/dev/shm/921ba0-openaq-buyer-native-20261012` and mutable native records in its `native/` subdirectory. Reproducible source and dependencies use `/dev/921ba0-openaq-runtime-20261012`. The first complete stream is compressed into the canonical `source-capsule.gz`, so the same command can restore the exact source if an invocation-private `/dev` mount disappears. It then reopens the original native requests. Both the retained manifest and `source/SOURCE-SELECTION.json` are checked on every complete-source reopen. The original 808-file capsule remains intact; `CONTROL/source-assets.json` restores the additional asset leaves, and `source/SOURCE-ASSETS.json` records the combined selection.
 
 The original operation's file lock covers source intake, installation, execution and packaging. Each original child inherits that same held descriptor. The receiver retains the child, its process group and output through actual retirement; an abruptly lost intermediary therefore does not free the original lock while its direct child still owns it. Run one continuation on the original host and preserve its canonical directory. A restored copy on another host requires an explicit transfer of this same operation after its original execution owner has retired.
 
@@ -45,6 +45,6 @@ The historical sample is Del Norte, Albuquerque, 2022-05-03: 140 measurements fr
 
 ## Retained execution state
 
-The original source intake, publication/release and authenticated handoff phases have completed under this operation. The Buyer preparation and execution phases remain pending native continuation at this source update. The next source-stream admission has no completion result merely because its source is published. `NATIVE_RESULT.json` and `package.json` record the actual final outcome when the original programme completes.
+The original source intake, publication/release and authenticated handoff phases have completed under this operation. The Buyer preparation and execution phases remain pending native continuation at this source update. The exact source stream and original 46-package dependency installation have also run. The subsequent import reported the omitted seller developer asset; this complete 19-file asset addition resolves that selected-source omission. Remaining native continuation retains the same operation. `NATIVE_RESULT.json` and `package.json` record the actual final outcome when the original programme completes.
 
 The selected source is commit `c7ac4399e3bb419fafd42395841bace7d089036a`; product PR593 is merged as `ece595782a2ece95485200e4cb6f573ed1aefbab`. This receiving correction preserves the selected source, original programme hash, native operation, study and request identities.
