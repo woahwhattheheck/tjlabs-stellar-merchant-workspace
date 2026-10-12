@@ -1,10 +1,10 @@
 /** Service agreements HTTP client. Preserve the complete original mutation request. */
 export class ServiceAgreementClientError extends Error {
   constructor(message, {status = 0, code = 'SERVICE_AGREEMENT_REQUEST_FAILED', details = null,
-    uncertain = false, method = '', url = '', requestId = null, response = null, cause} = {}) {
+    uncertain = false, reopenRequired = false, method = '', url = '', requestId = null, response = null, cause} = {}) {
     super(message, cause === undefined ? undefined : {cause});
     this.name = 'ServiceAgreementClientError';
-    Object.assign(this, {status, code, details, uncertain, method, url, requestId, response});
+    Object.assign(this, {status, code, details, uncertain, reopenRequired, method, url, requestId, response});
     this.billingId = typeof details?.billingId === 'string' ? details.billingId : null;
   }
 }
@@ -111,13 +111,17 @@ export function createServiceAgreementClient({baseUrl, fetch: fetcher = globalTh
       const problem = object(payload?.error) ? payload.error : object(payload) ? payload : {};
       const details = problem.details ?? payload?.details ?? null;
       const prepared = details?.agreementBillingPrepared === true;
+      const durableUnknown = problem.code === 'WORKSPACE_COMMIT_UNKNOWN' ||
+        problem.outcomeUnknown === true || details?.outcomeUnknown === true;
+      const reopenRequired = durableUnknown || problem.reopenRequired === true || details?.reopenRequired === true;
       const requestId = prepared && typeof details.requestId === 'string' ? details.requestId :
         originalRequestId ?? problem.requestId ?? payload?.requestId ?? response.headers.get('x-request-id');
       const message = typeof problem.message === 'string' ? problem.message :
         typeof payload?.error === 'string' ? payload.error : 'The service-agreement request failed (' + response.status + ').';
       throw error(message, {status: response.status,
         code: typeof problem.code === 'string' ? problem.code : 'SERVICE_AGREEMENT_REQUEST_FAILED',
-        details, uncertain: mutation && (response.status >= 500 || prepared), requestId, response: payload});
+        details, uncertain: mutation && (response.status >= 500 || prepared || durableUnknown || reopenRequired),
+        reopenRequired, requestId, response: payload});
     }
     if (!object(payload)) throw error('The service-agreement response is incomplete. Retain this original request.', {
       status: response.status, code: 'INVALID_RESPONSE', uncertain: mutation, response: payload});

@@ -115,6 +115,8 @@ A period marked `PREPARING` has an original staged billing operation. Its previe
 
 If an invoice importer reports an error after the agreement's billing operation was prepared, its error details include `agreementBillingPrepared`, `billingId` and the original `requestId`. The client marks that outcome uncertain even for an HTTP 4xx response, preserving the staged operation for continuation.
 
+An original durable-save failure can return `WORKSPACE_COMMIT_UNKNOWN` with HTTP 409 after the file rename has already occurred. The client preserves `reopenRequired` and marks that mutation uncertain. Keep its complete pending request, close and reopen the original accounting workspace, and reconcile the same request identity against the retained state.
+
 A revision conflict requires reviewing the current state. An obsolete preview requires a fresh preview of the selected period. Do not rewrite an uncertain request into a new operation before reconciling its retained identity.
 
 The HTTP API accepts at most 2,000,000 UTF-8 bytes per complete request, including both quotation documents and JSON structure. Use the complete original quotation and accepted response within that limit.

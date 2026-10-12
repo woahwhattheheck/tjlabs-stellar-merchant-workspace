@@ -114,12 +114,12 @@ export interface PreparedAgreementBillingDetails {
   agreementBillingPrepared: true; billingId: string; requestId: string; [key: string]: unknown;
 }
 export interface ServiceAgreementClientErrorOptions {
-  status?: number; code?: string; details?: unknown; uncertain?: boolean;
+  status?: number; code?: string; details?: unknown; uncertain?: boolean; reopenRequired?: boolean;
   method?: string; url?: string; requestId?: string | null; response?: unknown; cause?: unknown;
 }
 export class ServiceAgreementClientError extends Error {
   constructor(message: string, options?: ServiceAgreementClientErrorOptions);
-  status: number; code: string; details: unknown; uncertain: boolean;
+  status: number; code: string; details: unknown; uncertain: boolean; reopenRequired: boolean;
   method: string; url: string; requestId: string | null; billingId: string | null; response: unknown;
 }
 export interface ServiceAgreementClient {

@@ -93,8 +93,11 @@ export class ServiceAgreementWorkspace {
       this.workspace.expected(value.revision);
       const result = await work(actor, requestId), record = {id: requestId, action, actor, at: at(), intentSha256, result};
       data.requests.push(record);
+      // Validate the complete resulting calendar while the original serial
+      // transaction can still restore its previous state.
+      const response = this._result(result);
       await this.workspace.commit('service_agreements_' + action, actor, {requestId, ...result});
-      return {...this._result(result), operation: {...clone(record), replayed: false}};
+      return {...response, revision: this.workspace.state.revision, operation: {...clone(record), replayed: false}};
     });
   }
   async _edition(agreement, value, fromMonth, fallback, actor, reason) {
