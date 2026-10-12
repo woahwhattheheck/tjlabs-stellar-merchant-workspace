@@ -20,6 +20,9 @@ const need = (condition, code, message) => {
   if (!condition) throw Object.assign(new Error(message), {code});
 };
 const atomic = value => typeof value === 'string' && /^(0|[1-9][0-9]*)$/.test(value);
+const samePathValues = (a, b) => plain(a) && plain(b) &&
+  Object.keys(a).length === Object.keys(b).length &&
+  Object.entries(a).every(([name, value]) => Object.hasOwn(b, name) && b[name] === value);
 const identity = resource => JSON.stringify([resource.resource?.url, resource.resourceType,
   resource.method, resource.toolName]);
 function failure(error) {
@@ -182,7 +185,7 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
             prepared.preparation.rowIndex === description.source.rowIndex &&
             prepared.request.url === selectedPath.requestUrl &&
             prepared.preparation.pathBinding?.requestUrl === selectedPath.requestUrl &&
-            JSON.stringify(prepared.preparation.pathBinding.values) === JSON.stringify(selectedPath.pathBinding.values),
+            samePathValues(prepared.preparation.pathBinding.values, selectedPath.pathBinding.values),
           'CATALOG_JOURNEY_SOURCE_CHANGED', 'The retained native request differs from its original selected page.');
           report.native = prepared;
         }

@@ -62,13 +62,14 @@ export function prepareReview(raw, selection) {
   need(Array.isArray(row.accepts) && row.accepts.length >= 1 && row.accepts.length <= 32 &&
     acceptIndex < row.accepts.length && object(row.accepts[acceptIndex]), 'DISCOVERY_ACCEPT_NOT_FOUND');
   need(row.type === undefined || row.type === 'http', 'HTTP_RESOURCE_REQUIRED');
-  const advertised = https(typeof row.resource === 'string' ? row.resource : row.resource?.url);
+  const advertisedURL = typeof row.resource === 'string' ? row.resource : row.resource?.url;
+  const advertised = https(advertisedURL);
   const requested = https(url);
   const input = row.extensions?.bazaar?.info?.input;
   // The original listing remains intact. Its published template must bind the
   // exact concrete request that the native approval and signer will receive.
-  const pathBinding = bindHttpPath({resource:{url:advertised.href},
-    input:{...input, method:input?.method ?? method}, bazaar:row.extensions?.bazaar}, requested.href);
+  const pathBinding = bindHttpPath({resource:{url:advertisedURL},
+    input:{...input, method:input?.method ?? method}, bazaar:row.extensions?.bazaar}, url);
   need(input?.type === undefined || input.type === 'http', 'HTTP_RESOURCE_REQUIRED');
   need(input?.method === undefined || input.method === method, 'DISCOVERED_METHOD_MISMATCH');
   const accepted = row.accepts[acceptIndex];

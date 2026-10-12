@@ -35,20 +35,22 @@ export function createHttpPathFields(description, {node, empty}) {
   else if (!declaration?.advertisedKeys.length) element.append(empty('This resource uses its advertised fixed path.'));
   else {
     element.append(node('p', {className:'mono', text:declaration.routeTemplate}),
-      node('p', {className:'field-note', text:'Enter raw values. Each value becomes one encoded URL segment. Existing concrete URL values remain unless overridden.'}));
+      node('p', {className:'field-note', text:'Enter raw values for unresolved parameters. Each becomes one encoded URL segment. Values already present in the advertised URL remain fixed.'}));
     for (const parameter of declaration.parameters) {
       const input = node('input', {type:'text', autocomplete:'off', spellcheck:'false',
         required:parameter.required, maxlength:declaration.maxValueLength,
         'aria-label':'Path parameter ' + parameter.name});
       const hasFixed = Object.hasOwn(declaration.fixedValues, parameter.name);
-      if (hasFixed) input.placeholder = declaration.fixedValues[parameter.name];
-      fields.set(parameter.name, input);
-      element.append(node('label', {text:parameter.name + (parameter.required ? ' · required' : ' · optional override')}, [input]));
+      if (hasFixed) {
+        input.value = declaration.fixedValues[parameter.name];
+        input.readOnly = true;
+      } else fields.set(parameter.name, input);
+      element.append(node('label', {text:parameter.name + (hasFixed ? ' · fixed URL value' : ' · required')}, [input]));
       if (parameter.title || parameter.description) element.append(node('p', {className:'field-note',
         text:[parameter.title, parameter.description].filter(Boolean).join(' — ')}));
       if (hasFixed) element.append(node('p', {className:'field-note mono',
         text:'Current URL value: ' + declaration.fixedValues[parameter.name]}));
-      input.addEventListener('input', refresh);
+      if (!hasFixed) input.addEventListener('input', refresh);
     }
   }
   element.append(preview); refresh();

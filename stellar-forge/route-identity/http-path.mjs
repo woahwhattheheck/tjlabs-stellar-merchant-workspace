@@ -107,14 +107,14 @@ export function describeHttpPath(record) {
       {keys:declared.filter(name => !keys.includes(name)), advertisedKeys:keys});
   if (required.some(name => !keys.includes(name)))
     fail('PATH_SCHEMA_UNSUPPORTED', 'Required path names must belong to the published route template.');
-  let fixedValues = {};
-  if (decodedPath(advertisedUrl.pathname) !== selected.canonicalPath) {
-    const bound = identity(advertisedUrl, record.input?.method, selected.canonicalPath);
-    if (bound.status !== 'accepted' || bound.canonicalRouteTemplate !== selected.canonicalPath)
-      fail('PATH_TEMPLATE_MISMATCH', 'The advertised resource does not belong to its published route template.',
-        {reason:bound.reason ?? 'TEMPLATE_PATH_MISMATCH'});
-    fixedValues = Object.fromEntries(Object.entries(bound.pathParams));
-  }
+  const bound = identity(advertisedUrl, record.input?.method, selected.canonicalPath);
+  if (bound.status !== 'accepted' || bound.canonicalRouteTemplate !== selected.canonicalPath)
+    fail('PATH_TEMPLATE_MISMATCH', 'The advertised resource does not belong to its published route template.',
+      {reason:bound.reason ?? 'TEMPLATE_PATH_MISMATCH'});
+  // A partially concrete advertisement can fix one segment while retaining
+  // another declared placeholder. Only actual values become fixed bindings.
+  const fixedValues = Object.fromEntries(Object.entries(bound.pathParams)
+    .filter(([name, value]) => value !== ':' + name));
   const keysSource = properties ? 'bazaar.schema.properties.input.properties.pathParams.properties'
     : Object.keys(examples).length ? 'bazaar.info.input.pathParams' : 'bazaar.routeTemplate';
   return {routeTemplate:selected.canonicalPath, advertisedKeys:[...keys],
@@ -149,6 +149,10 @@ export function bindHttpPath(record, requestedURL, claimedValues) {
   if (bound.status !== 'accepted' || bound.canonicalRouteTemplate !== declaration.routeTemplate)
     fail('PATH_TEMPLATE_MISMATCH', 'The concrete path must match the selected published route template.',
       {reason:bound.reason ?? 'TEMPLATE_PATH_MISMATCH'});
+  const conflicting = Object.keys(declaration.fixedValues).filter(name =>
+    bound.pathParams[name] !== declaration.fixedValues[name]);
+  if (conflicting.length) fail('PATH_TEMPLATE_MISMATCH', 'The request must preserve concrete values in the advertised URL.',
+    {keys:conflicting, fixedValues:declaration.fixedValues});
   if (requested.pathname.length > HTTP_PATH_LIMITS.maxEncodedPathBytes)
     fail('PATH_INPUT_INVALID', 'The complete encoded path exceeds 2 KiB.');
   return {routeTemplate:declaration.routeTemplate, values:Object.fromEntries(Object.entries(bound.pathParams)),
@@ -178,6 +182,10 @@ export function prepareHttpPath(record, input = {}) {
   const unknown = Object.keys(path).filter(name => !declaration.advertisedKeys.includes(name));
   if (unknown.length) fail('PATH_INPUT_NOT_ADVERTISED', 'Path names must belong to the selected seller declaration.',
     {keys:unknown, advertisedKeys:declaration.advertisedKeys, keysSource:declaration.keysSource});
+  const conflicting = Object.keys(path).filter(name => own(declaration.fixedValues, name) &&
+    path[name] !== declaration.fixedValues[name]);
+  if (conflicting.length) fail('PATH_TEMPLATE_MISMATCH', 'Path inputs must preserve concrete values in the advertised URL.',
+    {keys:conflicting, fixedValues:declaration.fixedValues});
   const values = {...declaration.fixedValues, ...path};
   const missing = declaration.advertisedKeys.filter(name => !own(values, name));
   if (missing.length) fail('PATH_INPUT_REQUIRED', 'Supply the required path inputs.',
@@ -209,9 +217,14 @@ export function canUseHttpRoute(record, route) {
   if (!object(route) || advertised.origin !== route.origin || record.input?.method !== route.method) return false;
   const declaration = describeHttpPath(record);
   if (!declaration.routeTemplate) return matchesHttpRoute(advertised.href, record.input?.method, route);
-  const permitted = route.routeTemplate === undefined || route.routeTemplate === null
-    ? decodedPath(resourceURL(route.origin + route.pathname).pathname) : template(route.routeTemplate).canonicalPath;
+  const dynamicRoute = route.routeTemplate !== undefined && route.routeTemplate !== null;
+  const permitted = dynamicRoute ? template(route.routeTemplate).canonicalPath
+    : decodedPath(resourceURL(route.origin + route.pathname).pathname);
   const left = declaration.routeTemplate.split('/'), right = permitted.split('/');
-  return left.length === right.length && left.every((part, index) =>
-    part === right[index] || PARAMETER.test(part) || PARAMETER.test(right[index]));
+  return left.length === right.length && left.every((part, index) => {
+    const parameter = PARAMETER.exec(part);
+    const fixed = parameter && own(declaration.fixedValues, parameter[1]);
+    const value = fixed ? declaration.fixedValues[parameter[1]] : part;
+    return parameter && !fixed || dynamicRoute && PARAMETER.test(right[index]) || value === right[index];
+  });
 }

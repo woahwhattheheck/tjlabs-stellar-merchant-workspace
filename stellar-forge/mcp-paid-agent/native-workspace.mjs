@@ -162,7 +162,7 @@ function normalizedPurchase(args, manifest, current, {enforceCaps = true} = {}) 
   need(typeof args.search === 'string' && args.search.trim().length > 0 && args.search.length <= 256,
     'MCP_NATIVE_SEARCH_REQUIRED');
   const url = https(args.targetResourceURL), method = args.targetMethod ?? 'GET';
-  need(matchesHttpRoute(url.href, method, manifest.route), 'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
+  need(matchesHttpRoute(args.targetResourceURL, method, manifest.route), 'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
   need(typeof args.maxAtomic === 'string' && /^[1-9][0-9]{0,18}$/.test(args.maxAtomic),
     'MCP_NATIVE_SPEND_CAP_EXCEEDED');
   need(!enforceCaps || BigInt(args.maxAtomic) <= BigInt(current.config.operation.expect.maxAtomic) &&
@@ -506,9 +506,9 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
       const input = row?.extensions?.bazaar?.info?.input;
       need(Array.isArray(catalog?.resources) && object(row) && object(accepted) &&
         input?.type === 'http', 'MCP_NATIVE_HTTP_REQUIRED');
-      const advertised = https(typeof row.resource === 'string' ? row.resource : row.resource?.url);
+      https(typeof row.resource === 'string' ? row.resource : row.resource?.url);
       need(body === null || !['GET','HEAD'].includes(input.method), 'MCP_NATIVE_BODY_INVALID');
-      const selectedUrl = prepareHttpQuery({resource:{url:advertised.href}, input,
+      const selectedUrl = prepareHttpQuery({resource:row.resource, input,
         bazaar:row.extensions.bazaar}, {path:request.path, query:request.query});
       need(matchesHttpRoute(selectedUrl.href, input.method, manifest.route),
         'MCP_NATIVE_WORKSPACE_ROUTE_MISMATCH');
@@ -555,7 +555,7 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
         const input = row.extensions?.bazaar?.info?.input;
         if (input?.type !== 'http' || input.method !== specification.targetMethod) continue;
         try {
-          bindHttpPath({resource:{url:url.href}, input, bazaar:row.extensions.bazaar},
+          bindHttpPath({resource:row.resource, input, bazaar:row.extensions.bazaar},
             specification.targetResourceURL);
         } catch { continue; }
         // Fixed advertised query values cannot be removed or changed by a selected request.
