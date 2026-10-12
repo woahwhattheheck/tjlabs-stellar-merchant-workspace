@@ -10,6 +10,15 @@ else token = sessionStorage.getItem('fred-session') ?? '';
 let state, publication, customerPublication, currentPage, comparisonPage, delivery, previous = null, workspaceBusy = null;
 let rowOffset = 0, comparisonOffset = 0, selectionDirty = false;
 let buyerConfigured = false, countyReceiving = null, publicationDraftProject = null;
+let merchantPublicationRead = 0, customerPublicationRead = 0, countyReceivingRead = 0;
+function customerSelection() {
+  return { publicationId: $('customer-publication').value, intentId: $('intent').value,
+    file: $('customer-file').value, query: $('customer-query').value, acceptIndex: $('accept-index').value };
+}
+function sameCustomerSelection(selection) {
+  const current = customerSelection();
+  return Object.keys(selection).every(key => current[key] === selection[key]);
+}
 const freshId = prefix => prefix + '-' + crypto.randomUUID().replaceAll('-', '');
 const defaults = { fields: ['series','date','value','missing','as_of','time_basis','realtime_start','realtime_end','units','frequency','seasonal_adjustment'],
   filters: ['series','missing'], ranges: ['date'], sorts: ['date','series'], defaultLimit: 25, maxLimit: 100 };
@@ -39,7 +48,10 @@ function event(id, work, type = 'click') {
     if (button.tagName === 'BUTTON') button.disabled = true;
     message();
     try { await work(event); } catch (error) { message(error.message, true); }
-    finally { if (button.tagName === 'BUTTON') button.disabled = false; }
+    finally {
+      if (button.tagName === 'BUTTON') button.disabled = false;
+      if (['prepare','buy','recover','download-customer','open-request','county-receive-purchase-form'].includes(id)) syncCustomerResource();
+    }
   });
 }
 function table(id, rows, columns) {
@@ -183,14 +195,19 @@ function restorePublicationDraft() {
       if (typeof saved[id] === 'string') $(id).value = saved[id];
   } catch {}
 }
-function clearCountyReceiving() {
-  countyReceiving = null; $('county-purchase-directory').value = '';
+function clearCountyReceiving({ keepDirectory = false } = {}) {
+  countyReceivingRead++; countyReceiving = null;
+  if (!keepDirectory) $('county-purchase-directory').value = '';
   $('county-customer-downloads').replaceChildren(); $('county-customer-receipt').replaceChildren();
   $('county-customer-status').textContent = ''; $('county-received-edition').replaceChildren();
 }
 function syncCustomerResource() {
-  const county = customerPublication?.kind === 'QCEW';
-  $('customer-query').disabled = county || Boolean($('customer-file').value);
+  const current = customerPublication?.plan.publicationId === $('customer-publication').value;
+  const county = current && customerPublication.kind === 'QCEW';
+  $('prepare').disabled = !current;
+  $('buy').disabled = $('recover').disabled = $('download-customer').disabled = !buyerConfigured || !current;
+  $('open-request').disabled = !current || !customerPublication.requests.length;
+  $('customer-query').disabled = !current || county || Boolean($('customer-file').value);
   $('next-customer-page').disabled = county;
   $('customer-rows').hidden = county;
   $('county-purchase-receiving').hidden = !county;
@@ -198,23 +215,32 @@ function syncCustomerResource() {
     $('customer-file').value !== 'report-package.json.gz';
 }
 async function showPublication(customer = false) {
-  const id = $(customer ? 'customer-publication' : 'publication-select').value;
+  const control = $(customer ? 'customer-publication' : 'publication-select'), id = control.value;
+  const request = customer ? ++customerPublicationRead : ++merchantPublicationRead;
+  const selected = () => control.value === id && request === (customer ? customerPublicationRead : merchantPublicationRead);
+  if (customer && customerPublication && customerPublication.plan.publicationId !== id) {
+    if (customerPublication.requests.some(item => item.intentId === $('intent').value)) $('intent').value = freshId('economic');
+    previous = null; delivery = null; clearCountyReceiving();
+  }
+  const originalSelection = customer ? customerSelection() : null;
+  const receivingDirectory = customer ? $('county-purchase-directory').value.trim() : null;
+  if (customer) syncCustomerResource();
   if (!id) return null;
-  const value = await api('/api/publication?' + new URLSearchParams({ publication: id }));
+  let value;
+  try { value = await api('/api/publication?' + new URLSearchParams({ publication: id })); }
+  catch (error) { if (!selected()) return null; throw error; }
+  if (!selected()) return null;
   const county = value.kind === 'QCEW';
   if (customer) {
-    if (customerPublication && customerPublication.plan.publicationId !== value.plan.publicationId) {
-      if (customerPublication.requests.some(item => item.intentId === $('intent').value)) $('intent').value = freshId('economic');
-      previous = null; delivery = null; clearCountyReceiving();
-    }
     customerPublication = value;
     select('customer-file', [...(county ? [] : [['','Observation page']]),
       ...value.plan.downloads.map(item => [item.path,
         (item.path === 'report-package.json.gz' ? 'Complete report package' : item.path) + ' · ' + item.bytes + ' bytes'])]);
     select('request-select', value.requests.map(item => [item.intentId,item.intentId + ' · ' + item.url]));
-    $('customer-result').textContent = JSON.stringify({ editionId: value.edition.editionId,
-      ...(county ? { title: value.edition.title, period: value.edition.period } : { selection: value.edition.selection }),
-      payment: value.plan.payment, resource: value.plan.resource, sourceFiles: value.plan.downloads }, null, 2);
+    if (sameCustomerSelection(originalSelection) && receivingDirectory === $('county-purchase-directory').value.trim())
+      $('customer-result').textContent = JSON.stringify({ editionId: value.edition.editionId,
+        ...(county ? { title: value.edition.title, period: value.edition.period } : { selection: value.edition.selection }),
+        payment: value.plan.payment, resource: value.plan.resource, sourceFiles: value.plan.downloads }, null, 2);
     syncCustomerResource();
   } else {
     publication = value;
@@ -234,17 +260,21 @@ async function showPublication(customer = false) {
 }
 function paintCountyReceiving() {
   const root = $('county-customer-downloads'); root.replaceChildren();
-  if (!countyReceiving) return;
-  const edition = countyReceiving.editions.find(item => item.manifest.editionId === $('county-received-edition').value);
+  const receiving = countyReceiving;
+  if (!receiving || receiving.publicationId !== $('customer-publication').value ||
+    receiving.intentId !== $('intent').value || receiving.directory !== $('county-purchase-directory').value.trim()) return;
+  const edition = receiving.editions.find(item => item.manifest.editionId === $('county-received-edition').value);
   if (!edition) return;
   const files = [{ name: 'report-package.json.gz', label: 'Complete received report package' },
     ...edition.manifest.files.map(file => ({ name: file.name, label: file.name }))];
   for (const file of files) {
     const button = document.createElement('button'); button.type = 'button'; button.textContent = file.label;
     button.addEventListener('click', async () => {
+      if (countyReceiving !== receiving || receiving.publicationId !== $('customer-publication').value ||
+        receiving.intentId !== $('intent').value || receiving.directory !== $('county-purchase-directory').value.trim()) return;
       button.disabled = true;
       try { await download('/api/customer-received?' + new URLSearchParams({
-        publication: countyReceiving.publicationId, intent: countyReceiving.intentId,
+        publication: receiving.publicationId, intent: receiving.intentId,
         edition: edition.manifest.editionId, file: file.name }), file.name); }
       catch (error) { message(error.message, true); }
       finally { button.disabled = false; }
@@ -253,8 +283,14 @@ function paintCountyReceiving() {
   }
 }
 async function showCountyReceiving() {
-  const publicationId = $('customer-publication').value, intentId = $('intent').value;
-  const value = await api('/api/customer-received?' + new URLSearchParams({ publication: publicationId, intent: intentId }));
+  const selection = customerSelection(), { publicationId, intentId } = selection;
+  const directory = $('county-purchase-directory').value.trim(), request = ++countyReceivingRead;
+  const selected = () => request === countyReceivingRead && sameCustomerSelection(selection) &&
+    directory === $('county-purchase-directory').value.trim();
+  let value;
+  try { value = await api('/api/customer-received?' + new URLSearchParams({ publication: publicationId, intent: intentId })); }
+  catch (error) { if (!selected()) return null; throw error; }
+  if (!selected()) return null;
   countyReceiving = { ...value, publicationId, intentId };
   $('county-purchase-directory').value = value.directory;
   $('county-customer-status').textContent = value.receipt.title + ' is received in ' + value.directory + '.';
@@ -362,18 +398,25 @@ event('new-customer-request', () => {
 });
 $('customer-query').addEventListener('input', () => { previous = null; });
 $('intent').addEventListener('input', () => { previous = null; delivery = null; clearCountyReceiving(); });
+$('county-purchase-directory').addEventListener('input', () => clearCountyReceiving({ keepDirectory: true }));
 event('prepare', async () => {
-  const result = await action('prepare', { publicationId: $('customer-publication').value, intentId: $('intent').value,
-    query: $('customer-file').value ? '' : $('customer-query').value, file: $('customer-file').value || null, previous,
-    acceptIndex: Number($('accept-index').value) });
+  const selection = customerSelection();
+  const result = await action('prepare', { publicationId: selection.publicationId, intentId: selection.intentId,
+    query: selection.file ? '' : selection.query, file: selection.file || null, previous,
+    acceptIndex: Number(selection.acceptIndex) });
+  if (!sameCustomerSelection(selection)) return;
+  const selected = await showPublication(true);
+  if (!selected || !sameCustomerSelection(selection)) return;
   $('customer-result').textContent = JSON.stringify({ intentId: result.intentId, url: result.url, expectedTerms: result.config.operation.expect,
     purchaseSha256: result.purchaseSha256, originalSource: result.captureSha256, expectedFile: result.expected }, null, 2);
-  const selected = await api('/api/publication?' + new URLSearchParams({ publication: $('customer-publication').value }));
-  customerPublication = selected; select('request-select', selected.requests.map(item => [item.intentId,item.intentId + ' · ' + item.url]), result.intentId);
+  $('request-select').value = result.intentId;
   message('Original request prepared. Review its terms before executing.');
 });
 async function purchaseAction(kind) {
-  delivery = await action(kind, { publicationId: $('customer-publication').value, intentId: $('intent').value });
+  const selection = customerSelection();
+  const result = await action(kind, { publicationId: selection.publicationId, intentId: selection.intentId });
+  if (!sameCustomerSelection(selection)) return;
+  delivery = result;
   const { page, ...summary } = delivery; $('customer-result').textContent = JSON.stringify(summary, null, 2);
   table('customer-rows', page?.rows ?? []);
   message(delivery.state === 'DELIVERED' ? 'Original delivery is available.' : 'Original operation state: ' + delivery.state);
@@ -401,12 +444,16 @@ event('open-request', async () => {
   });
 });
 event('county-receive-purchase-form', async () => {
-  const intentId = $('intent').value;
-  const result = await action('receive-county-purchase', { publicationId: $('customer-publication').value, intentId,
-    receivingDirectory: $('county-purchase-directory').value.trim() || null });
+  const selection = customerSelection(), directory = $('county-purchase-directory').value.trim();
+  const stillSelected = () => sameCustomerSelection(selection) && $('county-purchase-directory').value.trim() === directory;
+  const result = await action('receive-county-purchase', { publicationId: selection.publicationId, intentId: selection.intentId,
+    receivingDirectory: directory || null });
+  if (!stillSelected()) return;
+  const selected = await showPublication(true);
+  if (!selected || !stillSelected()) return;
   $('county-purchase-directory').value = result.directory;
-  await showPublication(true); $('request-select').value = intentId;
-  await showCountyReceiving(); message('The purchased county report and original predecessor files were received.');
+  $('request-select').value = selection.intentId;
+  if (await showCountyReceiving()) message('The purchased county report and original predecessor files were received.');
 }, 'submit');
 event('county-open-receiving', () => showCountyReceiving());
 event('county-received-edition', paintCountyReceiving, 'change');

@@ -299,7 +299,9 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         const requests = [];
         for (const name of names) {
           if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(name)) continue;
-          const saved = await readPrivateJson(join(selected.directory, 'customer-requests', name, 'prepared.json'), 131072);
+          let saved;
+          try { saved = await readPrivateJson(join(selected.directory, 'customer-requests', name, 'prepared.json'), 131072); }
+          catch (error) { if (error.code === 'ENOENT') continue; throw error; }
           requests.push({ intentId: saved.intentId, url: saved.url, file: saved.file, purchaseSha256: saved.purchaseSha256 });
         }
         const { directory: privateDirectory, ...publicEdition } = edition;

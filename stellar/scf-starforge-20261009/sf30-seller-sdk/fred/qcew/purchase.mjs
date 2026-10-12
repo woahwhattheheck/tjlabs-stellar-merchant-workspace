@@ -202,7 +202,9 @@ export async function listQcewPurchases(directory) {
   const requests = [];
   for (const name of names.sort()) {
     if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(name)) continue;
-    const value = await readPrivateJson(join(root, name, 'prepared.json'), 131072);
+    let value;
+    try { value = await readPrivateJson(join(root, name, 'prepared.json'), 131072); }
+    catch (error) { if (error.code === 'ENOENT') continue; throw error; }
     need(value.schema === QCEW_PURCHASE && value.intentId === name && value.purchaseSha256 === digest(identity(value)),
       'A retained original county request changed.');
     requests.push({ intentId: value.intentId, publicationId: value.publicationId, editionId: value.editionId,
