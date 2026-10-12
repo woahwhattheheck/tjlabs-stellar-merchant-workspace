@@ -27,6 +27,7 @@ function isRuntimeFile(path, explicitRuntime = false) {
   // declared data gets this exception; executable fixtures stay excluded.
   const declaredData = explicitRuntime && /\.(?:csv|json|txt|parquet)$/i.test(path);
   // Explicit scientific references include original PDF, R/Rd and package metadata.
+  // A declared upstream license can retain its original project_LICENSE name.
   // Keep these formats out of the automatic runtime-directory expansion.
   return !parts.some(part => part.startsWith('.') ||
     (excludedDirs.has(part) && !(part === 'fixtures' && declaredData))) &&
@@ -34,7 +35,8 @@ function isRuntimeFile(path, explicitRuntime = false) {
     (supported.test(path) || (explicitRuntime && /\.(?:zip|parquet|pdf|r|rd|gz|rst|conf)$/i.test(path)) ||
       ['LICENSE', 'go.mod', 'Cargo.lock'].includes(parts.at(-1)) ||
       (explicitRuntime && (['COPYING', 'DESCRIPTION', 'metadat-DESCRIPTION'].includes(parts.at(-1)) ||
-        /^(?:LICENSE|NOTICE)[.-][A-Za-z0-9][A-Za-z0-9._-]*$/i.test(parts.at(-1)))));
+        (/^(?:LICENSE|NOTICE)[.-][A-Za-z0-9][A-Za-z0-9._-]*$/i.test(parts.at(-1)) ||
+          /^[A-Za-z0-9][A-Za-z0-9._-]*_(?:LICENSE|NOTICE)$/i.test(parts.at(-1))))));
 }
 function valuesDeep(value) {
   return typeof value === 'string' ? [value] : Object.values(value).flatMap(valuesDeep);
