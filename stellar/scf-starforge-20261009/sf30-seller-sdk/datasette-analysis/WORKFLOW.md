@@ -121,9 +121,12 @@ A complete workflow handover places these files together under
 `delivery/supplier/` using their original basenames. The CLI manifest remains
 beside `workspace.json`, `review.html`, original sources, rules and report files.
 The Source and report tab shows the original supplier comparison, revision and review
-status and can download the complete project directly. After `workflow receive`, open
-`RECEIVED_WORKSPACE/received/delivery/supplier/review.html` and load the adjacent
-`workspace.json` to continue review. Export that complete reviewed workspace through
+status and can download the complete project directly. After `workflow receive`, run
+`node RECEIVED_WORKSPACE/received/delivery/supplier/supplier-report-cli.mjs serve --port 8765`,
+open the printed localhost address, and load the adjacent `workspace.json` to continue
+review. The supplier manifest retains every original data file and all editor, CLI,
+coverage and attachment source files so this received directory can export the next
+complete reviewed edition. Export that complete reviewed workspace through
 the installed supplier CLI, then select its new original workspace for a successor
 business request. Re-exporting the received workflow preserves this directory layout,
 its original manifest and every complete attachment.

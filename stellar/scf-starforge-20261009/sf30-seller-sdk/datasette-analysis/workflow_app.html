@@ -19,11 +19,15 @@
 <details class="inbox"><summary>Received results</summary><div id="inbox"></div></details>
 </aside>
 <main>
+<section id="configuration" hidden>
+<details id="configuration-details"><summary id="configuration-title">Installed workflow</summary><div id="installed-profile"></div></details>
+</section>
 <section id="intake" hidden>
 <h2>Receive a business request</h2><p class="muted">Use the original request and correlation from the customer's API or messaging workflow.</p>
 <form id="intake-form">
 <div class="form-grid"><label>Request ID<input id="request-id" required maxlength="200" autocomplete="off"></label><label>Correlation ID<input id="correlation-id" maxlength="200" autocomplete="off" placeholder="Uses the request ID when empty"></label></div>
-<label>Business parameters<textarea id="parameters" rows="7" spellcheck="false">{}</textarea></label>
+<label>Business parameters<textarea id="parameters" rows="7" spellcheck="false" aria-describedby="parameter-help">{}</textarea></label>
+<p id="parameter-help" class="muted"></p>
 <input id="parent-request-id" type="hidden">
 <div class="actions"><button type="submit">Receive request</button><button id="cancel-intake" type="button" class="secondary">Close</button></div>
 </form>
@@ -36,13 +40,12 @@
 <div class="actions"><button id="run" type="button">Run or continue</button><button id="successor" type="button" class="secondary">Prepare a successor</button></div>
 <div id="operation-error" class="error" hidden></div>
 <h3>Original business request</h3><pre id="request-body"></pre>
-<details><summary>Installed source and query</summary><pre id="installed-query"></pre></details>
 </section>
 <section id="tab-result" role="tabpanel" hidden>
 <p id="result-summary" class="muted"></p>
 <section id="supplier-review" hidden>
 <h3>Supplier review</h3><div id="supplier-comparison"></div>
-<p class="muted">The complete project keeps the editable review, original sources, rules and reports together. After receiving it, open received/delivery/supplier/review.html and load the adjacent workspace.json.</p>
+<p class="muted">The complete project keeps the editable review, original sources, rules and reports together. After receiving it, run the supplied supplier-report-cli.mjs with serve, open its localhost address and load the adjacent workspace.json.</p>
 <div class="actions"><button id="export-supplier" type="button">Download complete project</button></div>
 </section>
 <div id="result-files"></div>

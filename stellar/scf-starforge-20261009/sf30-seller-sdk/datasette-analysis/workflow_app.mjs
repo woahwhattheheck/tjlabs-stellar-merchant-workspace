@@ -43,6 +43,55 @@ function table(headers, rows) {
   for (const row of rows) { const tr = body.insertRow(); for (const value of row) { const td = tr.insertCell(); if (value instanceof Node) td.append(value); else td.textContent = String(value ?? ''); } }
   wrap.append(grid); return wrap;
 }
+
+function configuredQueries() {
+  const configuration = state.configuration;
+  if (Array.isArray(configuration?.queries) && configuration.queries.length) return configuration.queries;
+  return configuration?.query ? [configuration.query] : [];
+}
+function requiredParameterNames() {
+  return [...new Set(configuredQueries().flatMap(query => Array.isArray(query.parameterNames) ? query.parameterNames : []).filter(name => typeof name === 'string' && name.length))];
+}
+function renderConfiguration() {
+  const configuration = state.configuration, host = $('installed-profile');
+  host.replaceChildren();
+  $('configuration').hidden = !configuration?.configured;
+  const required = requiredParameterNames();
+  $('parameter-help').textContent = required.length
+    ? 'Required JSON keys: ' + required.join(', ') + '. Values are passed unchanged to the installed queries.'
+    : 'Enter a JSON object. The installed queries do not require named parameters.';
+  if (!configuration?.configured) return;
+  const queries = configuredQueries(), sources = Array.isArray(configuration.sources) ? configuration.sources : [];
+  $('configuration-title').textContent = (configuration.title || configuration.profile || 'Installed workflow') +
+    ' · ' + sources.length + ' sources · ' + queries.length + ' queries';
+  if (sources.length) {
+    host.append(textNode('h3', 'Original sources'));
+    host.append(table(['Alias', 'Source type', 'Title'], sources.map(source => [source.alias, source.kind, source.title])));
+  }
+  if (queries.length) {
+    host.append(textNode('h3', 'Installed queries'));
+    host.append(table(['Query', 'Required parameters', 'Row limit', 'Definition'], queries.map(query => {
+      const definition = document.createElement('details');
+      definition.append(textNode('summary', 'SQL'), textNode('pre', query.sql || ''));
+      if (query.note) definition.append(textNode('p', query.note, 'muted'));
+      const names = Array.isArray(query.parameterNames) ? query.parameterNames : [];
+      return [query.title || query.name || 'Source query', names.length ? names.join(', ') : 'None', query.maxRows ?? 'Profile default', definition];
+    })));
+  }
+  if (configuration.report) {
+    host.append(textNode('h3', 'Report'));
+    if (configuration.report.title) host.append(textNode('p', configuration.report.title));
+    if (configuration.report.introduction) host.append(textNode('p', configuration.report.introduction));
+    if (configuration.report.note) host.append(textNode('p', configuration.report.note, 'muted'));
+  }
+  if (configuration.supplier?.enabled) {
+    const bindings = configuration.supplier.sourceBindings || {};
+    host.append(textNode('h3', 'Supplier review'));
+    if (Object.keys(bindings).length) host.append(table(['Source alias', 'Review edition'], Object.entries(bindings)));
+    if (configuration.supplier.coverage) host.append(textNode('p', 'Catalogue coverage is included with the original price and catalogue sources.', 'muted'));
+  }
+}
+
 function filesView(element, id, files) {
   element.replaceChildren();
   if (!files.length) { element.append(textNode('p', 'The original operation will place its complete files here.', 'muted')); return; }
@@ -68,7 +117,6 @@ function renderDetail(detail) {
   $('title').textContent = detail.requestId; $('request-meta').textContent = 'Correlation: ' + detail.correlationId + ' · Updated ' + timestamp(detail.updatedAt);
   $('state').textContent = detail.status === 'RUNNING' && !detail.active ? 'Continue required' : labels[detail.status] || detail.status;
   $('request-body').textContent = pretty(detail.request);
-  $('installed-query').textContent = pretty({profile: state.configuration?.profile, source: state.configuration?.sourceKind, query: state.configuration?.query});
   $('operation-error').hidden = !detail.error;
   $('operation-error').textContent = detail.error ? detail.error.message : '';
   $('run').disabled = !state.configuration?.configured || Boolean(detail.active) || Boolean(detail.result);
@@ -128,7 +176,7 @@ async function refresh(silent = false) {
   } catch (error) { if (!silent) message(error.message, true); }
   finally { state.loading = false; }
 }
-function intake(open = true) { $('intake').hidden = !open; if (open) $('request-id').focus(); }
+function intake(open = true) { $('intake').hidden = !open; if (open) { $('configuration-details').open = true; $('request-id').focus(); } }
 function readDraft() { try { return JSON.parse(localStorage.getItem(draftKey) || '{}'); } catch { return {}; } }
 function storeDraft() { try { localStorage.setItem(draftKey, JSON.stringify({id: $('request-id').value, correlation: $('correlation-id').value, parameters: $('parameters').value, parent: $('parent-request-id').value})); } catch {} }
 async function act(name, action) {
@@ -153,6 +201,9 @@ $('intake-form').addEventListener('submit', async event => {
   const request = {schema: 'stellar-forge.source-workflow-request.v1', requestId: $('request-id').value.trim(), profile: state.configuration?.profile, parameters: {}};
   try {
     request.parameters = JSON.parse($('parameters').value);
+    if (!request.parameters || typeof request.parameters !== 'object' || Array.isArray(request.parameters)) throw new Error('Business parameters must be a JSON object.');
+    const missing = requiredParameterNames().filter(name => !Object.prototype.hasOwnProperty.call(request.parameters, name));
+    if (missing.length) throw new Error('Add the required business parameter' + (missing.length === 1 ? ': ' : 's: ') + missing.join(', ') + '. Your draft is retained.');
     if ($('correlation-id').value.trim()) request.correlationId = $('correlation-id').value.trim();
     if ($('parent-request-id').value) request.parentRequestId = $('parent-request-id').value;
     const priorDraft = JSON.stringify(readDraft());
@@ -197,9 +248,11 @@ async function start() {
     $('profile').textContent = state.configuration.title || 'Receiver';
     $('installation').textContent = state.configuration.configured ? 'Installed workflow: ' + state.configuration.profile + ' · Source: ' + state.configuration.sourceKind : 'This operator can receive results and reopen delivered projects.';
     $('new-request').disabled = !state.configuration.configured;
+    renderConfiguration();
     const draft = readDraft(); $('request-id').value = draft.id || ''; $('correlation-id').value = draft.correlation || ''; $('parameters').value = draft.parameters || '{}'; $('parent-request-id').value = draft.parent || '';
     await refresh();
     if (state.requests.length) await select(state.requests[0].requestId);
+    else $('configuration-details').open = true;
     setInterval(() => { if (!document.hidden) refresh(true); }, 5000);
   } catch (error) { message(error.message, true); }
 }
