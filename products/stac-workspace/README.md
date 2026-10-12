@@ -33,3 +33,9 @@ For source interfaces and complete configuration, use the
 [Applications reference](../../stellar/scf-starforge-20261009/distribution/runtime-workspace/STAC_APPLICATIONS.md),
 [eoAPI guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/stac/eoapi/ONBOARDING.md)
 and [Prescient guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/stac/prescient/OPERATOR.md).
+
+The installed source also packages the complete
+[imagery and processing client receiving workflow](../../stellar-forge/mcp-merchant-operator/STAC_RECEIVING.md)
+and [Prescient client continuation](../../stellar-forge/mcp-merchant-operator/PRESCIENT_CONTINUATION.md).
+These use the selected original case through Node, the command line and MCP,
+including full file receiving and reconnection after a host restart.
