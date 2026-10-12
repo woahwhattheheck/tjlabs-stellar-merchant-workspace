@@ -234,7 +234,7 @@ export function installQualityDesk({ getState, action, mutate, refresh, notify, 
       if (metrics.length) card.append(element("h4", {}, "Reported metrics"),
         table(["Metric path", "Original value", "Value status"], metrics.map(metric => [
           element("code", { className: "q-mono" }, metric.path), display(metric.value),
-          metric.valid === true ? "Reported" : metric.valid === false ? "Invalid value" : "Unreported"
+          metric.valid === true ? "Reported" : metric.valid === false ? "Not evaluated" : "Unreported"
         ]), "Original quality metrics"));
       if (assertions.length) card.append(element("h4", {}, "Original assertions"),
         table(["Assertion / column", "Result", "Severity", "Expected", "Actual"], assertions.map(assertion => [
@@ -329,8 +329,10 @@ export function installQualityDesk({ getState, action, mutate, refresh, notify, 
       for (const control of assertionFields.querySelectorAll("input,select")) control.disabled = assertionFields.hidden;
     }
     updateRuleKind();
-    form.append(element("h3", {}, draft.id ? "Edit saved rule" : "New quality rule"), ruleDraftNotice(),
-      paragraph("Rules compare original observations. A missing value stays unknown unless you explicitly require failure.", "q-help"),
+    form.append(element("h3", {}, draft.id ? "Edit saved rule" : "New quality rule"));
+    const draftNotice = ruleDraftNotice();
+    if (draftNotice) form.append(draftNotice);
+    form.append(paragraph("Rules compare original observations. A missing value stays unknown unless you explicitly require failure.", "q-help"),
       field("Rule title", title), field("Dataset", dataset),
       element("div", { className: "q-form-grid" }, field("Rule kind", kind), field("Facet scope", scope)),
       metricFields, assertionFields,
@@ -543,7 +545,7 @@ export function installQualityDesk({ getState, action, mutate, refresh, notify, 
     if (ui.overview && !ui.loading && !ui.error) {
       pieces.push(summary());
       if (ui.overview.counts.invalidFacets) pieces.push(element("p", { className: "q-notice" },
-        display(ui.overview.counts.invalidFacets) + " quality facets have source diagnostics. Their supplied values and complete originals remain visible in Observations."));
+        display(ui.overview.counts.invalidFacets) + (ui.overview.counts.invalidFacets === 1 ? " quality facet has source diagnostics." : " quality facets have source diagnostics.") + " Supplied values and complete originals remain visible in Observations."));
       pieces.push(tabs([["observations", "Observations"], ["rules", "Rules"], ["evaluation", "Evaluation"], ["decisions", "Decisions"]],
         ui.tab, value => { ui.tab = value; ui.feedback = ""; paint(); }));
       const content = element("section", { id: "quality-content", role: "tabpanel", "aria-labelledby": "quality-tab-" + ui.tab },

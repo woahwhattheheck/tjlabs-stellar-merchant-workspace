@@ -5,6 +5,7 @@ const assets = new Map([
   ['/console/', ['index.html', 'text/html; charset=utf-8']],
   ['/console/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/console/client.mjs', ['client.mjs', 'text/javascript; charset=utf-8']],
+  ['/console/native-request.mjs', ['native-request.mjs', 'text/javascript; charset=utf-8']],
   ['/console/style.css', ['style.css', 'text/css; charset=utf-8']],
 ]);
 const security = {
