@@ -25,6 +25,7 @@ They retain its original dependency manifests and lock.
 | Accounting provider operations | The existing merchant MCP runtime and original selected QuickBooks/Xero workspace configuration |
 | Merchant pricing, supplier costs and scenario planning | The same installed merchant runtime, original seller configuration and selected operations source or retained exports |
 | Material catalog | The catalog guide's original runtime feature and provider configuration |
+| Retained grant purchase review and native Buyer results | Native Stellar packages, `mcp`, operator support and the original private workbench; receiving makes no new payment |
 | Kafka event datasets and complete customer clients | Python 3.11 or later; `confluent-kafka==2.16.0` in that Python environment for broker work; Node 22.16 or later for browser/client and the merchant's selected runtime features |
 
 Use `starforge registrations` to inspect the selected package's actual command
@@ -720,3 +721,24 @@ members and recovery commands. The
 [customer download guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/kafka/MERCHANT-DOWNLOAD.md)
 covers SDK receiving, cancellation, remote restart, complete-file reopening and
 the same retained file transfer.
+
+## 11. Review a retained grant purchase and hand it over
+
+Choose **Grant purchase reviewer** in Applications, select the reviewed runtime
+and a private workbench, then Review, Save, Connect and Start. Review the bundled
+original packet or an exact receiving export before restoring its native Buyer
+records. Source and query retain the original selection and document downloads;
+Buyer results reads both complete original result files through the native
+client.
+
+**Close Buyer and export packet** drains the complete original Buyer before
+exporting its full quote transitions and saved results. A second operator
+reviews that exact packet and digest in a new private workbench, receives the
+original records, and opens the complete result. Stop and subsequent Start use
+the same saved Applications record and private workbench. Response recovery
+retains original action IDs and accepted export bytes.
+
+The [complete grant reviewer guide](../grant-reviewer/OPERATING.md) connects
+installation, private access, source review, full result reading, closed export,
+independent receiving and managed recovery. These operations reuse the retained
+purchase and do not add a transaction or provider data acquisition.
