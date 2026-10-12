@@ -38,18 +38,30 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
  apiPassChecked(workspace,API_PASS_ALIAS,'workspace alias');if(workspaceId!==undefined)apiPassChecked(workspaceId,API_PASS_UUID,'original workspace ID');
  apiPassNeed(typeof call==='function','Supply the existing structured MCP call.','API_PASS_CLIENT_CONFIGURATION');
  let selectedId=workspaceId,closing=false,closePromise;const pending=new Set();
- async function wire(kind,input={},options){
+ function capture(kind,input={},options){
   apiPassNeed(apiPassPlain(input)&&!Object.hasOwn(input,'workspace'),'Use this caller’s selected workspace alias.');
   const args=apiPassArguments(kind,{...input,workspace}),name=kind.startsWith(API_PASS_PREFIX)?kind:API_PASS_PREFIX+kind;
+  return {name,args,options:options===undefined?undefined:{...options}};
+ }
+ async function dispatch({name,args,options}){
   const result=nativeReply(await call(name,args,options),workspace,selectedId);selectedId??=result.workspaceId;return result.native;
+ }
+ function wire(kind,input={},options){return dispatch(capture(kind,input,options));}
+ function request(kind,input={},options){
+  const captured=capture(kind,input,options);
+  return tracked(()=>dispatch(captured));
+ }
+ function trackedOptions(options,work){
+  const captured=options===undefined?undefined:{...options};
+  return tracked(()=>work(captured));
  }
  function tracked(work){
   apiPassNeed(!closing,'This caller is draining or closed.','API_PASS_CLIENT_CLOSING');
   const promise=Promise.resolve().then(work);pending.add(promise);promise.finally(()=>pending.delete(promise)).catch(()=>{});return promise;
  }
  const client={workspace,get workspaceId(){return selectedId;},endpoint,
-  invoke:(kind,args={},options)=>tracked(()=>wire(kind,args,options)),
-  allPasses:(options={})=>tracked(async()=>{
+  invoke:(kind,args={},options)=>request(kind,args,options),
+  allPasses:(options={})=>trackedOptions(options,async options=>{
    const items=[];let offset=0,observed;
    for(;;){
     const result=await wire('passes',{offset,limit:200,...(observed===undefined?{}:{expectedRevision:observed})},options);
@@ -60,7 +72,7 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
     apiPassNeed(result.nextOffset===offset+result.items.length&&result.nextOffset>offset&&result.nextOffset<result.total,'The original pass page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
    }
   }),
-  allPortfolio:(options={})=>tracked(async()=>{
+  allPortfolio:(options={})=>trackedOptions(options,async options=>{
    const passes=[],seen=new Set();let offset=0,observed,head,total;
    for(;;){
     const result=await wire('portfolio',{offset,limit:20,...(observed===undefined?{}:{expectedRevision:observed})},options),selection=result.passPagination;
@@ -82,7 +94,7 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
      'The original portfolio page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=selection.nextOffset;
    }
   }),
-  allPortfolioRequests:(options={})=>tracked(async()=>{
+  allPortfolioRequests:(options={})=>trackedOptions(options,async options=>{
    const items=[],seen=new Set();let offset=0,observed,total;
    for(;;){
     const result=await wire('portfolio_requests',{offset,limit:200,...(observed===undefined?{}:{expectedRevision:observed})},options);
@@ -99,7 +111,7 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
      'The original attention page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
    }
   }),
-  allHistory:({profileId,view},options={})=>tracked(async()=>{
+  allHistory:({profileId,view},options={})=>trackedOptions(options,async options=>{
    const items=[];let offset=0,observed,total;
    for(;;){
     const result=await wire('history',{profileId,view,offset,limit:200,...(observed===undefined?{}:{expectedRevision:observed})},options);
@@ -110,7 +122,7 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
     apiPassNeed(result.nextOffset===offset+result.items.length&&result.nextOffset>offset&&result.nextOffset<total,'The history page did not advance.','API_PASS_CLIENT_PAGE_CHANGED');offset=result.nextOffset;
    }
   }),
-  downloadExport:options=>tracked(async()=>{
+  downloadExport:options=>trackedOptions(options,async options=>{
    apiPassNeed(typeof endpoint==='string'&&endpoint.length>0,'Retain this MCP connection’s stable endpoint identity before downloading.','API_PASS_CLIENT_ENDPOINT_REQUIRED');
    const transfer=fileTransport({workspace,workspaceId:selectedId,connect:async options=>({get endpoint(){apiPassChecked(selectedId,API_PASS_UUID,'original workspace ID');return endpoint+'#api-pass-workspace='+encodeURIComponent(workspace)+'&workspace-id='+selectedId;},
     call:(name,args,request)=>wire(name,args,{requestSignal:options.signal,...request})})});
@@ -118,7 +130,7 @@ export function createApiPassWorkspaceClient({workspace,workspaceId,call,endpoin
   }),
   disconnect(){if(!closePromise){closing=true;closePromise=(async()=>{await Promise.allSettled([...pending]);})();}return closePromise;}
  };
- for(const [method,kind]of Object.entries(METHODS))client[method]=(args={},options)=>tracked(()=>wire(kind,args,options));
+ for(const [method,kind]of Object.entries(METHODS))client[method]=(args={},options)=>request(kind,args,options);
  return Object.freeze(client);
 }
 export async function connectApiPassWorkspaceClient({workspace,workspaceId,...options}={}){
