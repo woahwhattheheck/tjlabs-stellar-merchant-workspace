@@ -188,7 +188,7 @@ async function child(argv){
 }
 export async function initializeDatabase(input){
   const config=validateConfig(input);await privateDirectory(config.directory,{create:true});
-  const lease=acquireDatasetLease(config.directory),paths=statePaths(config);
+  const lease=await acquireDatasetLease(config.directory),paths=statePaths(config);
   try{
     await privateDatabase(paths.database,{required:false});
     const oldMask=process.umask(0o077);
@@ -214,7 +214,7 @@ export async function checkConfiguration(input){
 
 export async function openAnalysisServer(input,{environment=process.env}={}){
   const config=validateConfig(input);await privateDirectory(config.directory);
-  const authenticate=authentication(config,environment),lease=acquireDatasetLease(config.directory);
+  const authenticate=authentication(config,environment),lease=await acquireDatasetLease(config.directory);
   let db,native,executor,server,closing=false;
   try{
     const path=statePaths(config).database;await privateDatabase(path);
