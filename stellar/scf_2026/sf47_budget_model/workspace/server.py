@@ -35,6 +35,9 @@ STATIC.update({
 })
 import source_tables
 source_tables.register_static(STATIC)
+import staff_http
+from staff_access import StaffAccess
+staff_http.register_static(STATIC)
 
 
 def atomic_private(path, data):
@@ -59,6 +62,7 @@ class Server(ThreadingHTTPServer):
 
     def __init__(self, port, workspace, token):
         self.workspace, self.token = workspace, token
+        self.staff = StaffAccess(workspace, token)
         super().__init__(("127.0.0.1", port), Handler)
         authority = "127.0.0.1" if self.server_port == 80 else f"127.0.0.1:{self.server_port}"
         self.origin = "http://" + authority
@@ -78,7 +82,9 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_args):
         pass
 
-    def send(self, status, body, content_type="application/json; charset=utf-8", filename=None):
+    def send(self, status, body, content_type="application/json; charset=utf-8", filename=None, *, headers=None):
+        body = staff_http.filter_response(self, status, body)
+        staff_http.record_operation(self, status, body)
         if isinstance(body, (dict, list)):
             body = (canonical(body) + "\n").encode()
         if isinstance(body, str):
@@ -92,6 +98,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if filename:
             self.send_header("Content-Disposition", 'attachment; filename="' + filename + '"')
+        for key, value in (headers or {}).items():
+            self.send_header(key, value)
         self.end_headers()
         if self.command != "HEAD":
             try:
@@ -108,11 +116,15 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get("Sec-Fetch-Site") == "cross-site" and api:
             raise Problem("Open the workspace through its local access link.", 403, "CROSS_SITE")
         if api:
-            supplied = self.headers.get("Authorization", "")
-            if not hmac.compare_digest(supplied, "Bearer " + self.server.token):
-                raise Problem("Use the private access link to open this workspace.", 401, "ACCESS_REQUIRED")
+            staff_http.authorize(self)
+
+    def recording_actor(self, supplied):
+        principal = getattr(self, "principal", None)
+        return principal["actor"] if principal and principal["role"] != "owner" else supplied
 
     def raw_body(self):
+        if hasattr(self, "_raw_cache"):
+            return self._raw_cache
         if self.headers.get("Transfer-Encoding"):
             raise Problem("Send the request with a Content-Length.", 400, "BODY_LENGTH")
         try:
@@ -124,9 +136,12 @@ class Handler(BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         if len(body) != length:
             raise Problem("The request body was incomplete.", 400, "INCOMPLETE_BODY")
+        self._raw_cache = body
         return body
 
     def json_body(self):
+        if hasattr(self, "_json_cache"):
+            return self._json_cache
         if self.headers.get_content_type() != "application/json":
             raise Problem("Send JSON for this operation.", 415)
         try:
@@ -135,9 +150,13 @@ class Handler(BaseHTTPRequestHandler):
             raise Problem("The request JSON is invalid.", 400, "INVALID_JSON") from exc
         if not isinstance(value, dict):
             raise Problem("The request must be a JSON object.")
+        self._json_cache = value
         return value
 
     def execute(self, operation):
+        self.__dict__.pop("_json_cache", None)
+        self.__dict__.pop("_raw_cache", None)
+        self.principal = None
         try:
             operation()
         except Problem as exc:
@@ -156,12 +175,18 @@ class Handler(BaseHTTPRequestHandler):
         self.execute(self.read)
 
     def read(self):
+        with self.server.workspace.mutex:
+            return self.read_authorized()
+
+    def read_authorized(self):
         parsed = urlsplit(self.path)
         path = parsed.path
         self.guard(api=path.startswith("/api/"))
         if path in STATIC:
             filename, mime = STATIC[path]
             return self.send(200, (HERE / filename).read_bytes(), mime)
+        if staff_http.read(self, parsed):
+            return
         if operations_http.read(self, parsed):
             return
         if plan_comparison.read_http(self, parsed):
@@ -205,8 +230,15 @@ class Handler(BaseHTTPRequestHandler):
         self.execute(self.write)
 
     def write(self):
+        # Revocation and a case write have one order under the original mutex.
+        with self.server.workspace.mutex:
+            return self.write_authorized()
+
+    def write_authorized(self):
         path = urlsplit(self.path).path
         self.guard(api=True)
+        if staff_http.write(self, urlsplit(self.path)):
+            return
         if operations_http.write(self, urlsplit(self.path)):
             return
         workspace = self.server.workspace
