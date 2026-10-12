@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-support-product",
+  "description": "Complete Merchant Support installation, native agent configuration and customer receiving",
+  "components": [
+    "products/merchant-support"
+  ],
+  "commands": {
+    "merchant-support-agent": "products/merchant-support/agent-setup.mjs"
+  },
+  "commandDescriptions": {
+    "merchant-support-agent": "Configure or inspect the original Merchant Support agent against existing case, source and package stores"
+  },
+  "exports": {
+    "./merchant/support-setup": "./source/products/merchant-support/agent-setup.mjs"
+  }
+}
