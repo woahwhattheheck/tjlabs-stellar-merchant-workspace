@@ -18,19 +18,20 @@ starforge doctor --native --feature schema --feature openapi --feature mcp
 
 The original Runtime workspace owns installation preparation, run/inspect, source selection and the READY runtime. Attach that returned runtime to Applications. Save the SensorThings application against its actual existing workspace, source inbox and buyer workspace. Review Start, Start and Open use the original managed application. Stop and subsequent Start retain the same workspace UUID and operation journal. The source-owned Applications provider and browser assets belong to the same SensorThings contribution.
 
-When an operator owns the listener directly, use the included original command with a private directory and session-file parent:
+The complete Desk is included as `sensorthings-desk` and as the source-owned `sensorthings` Applications provider. Its six sections are Sources and selection; Capture and continuation; Editions and review; Publish and receive; Delivery and receiving; and History and recovery. The full interface, private session, upload and original-operation recovery guide is `source/stellar/scf-starforge-20261009/sf30-seller-sdk/sensorthings/desk/OPERATOR.md`.
+
+When an operator owns the Desk listener directly, select its private directories and retain the startup record privately:
 
 ```sh
 umask 077
-starforge sensorthings serve \
+starforge sensorthings-desk \
   --workspace /absolute/private/observations \
   --source-inbox /absolute/private/source-inbox \
   --buyer-workspace /absolute/private/buyer-inbox \
-  --port 8467 \
-  --session-file /absolute/private/sensorthings-session.url
+  --port 8467 > /absolute/private/sensorthings-startup.json
 ```
 
-Retain the original startup record privately. It reports schema `stellar-forge.sensorthings-workspace-startup.v1`, the persistent `workspaceId`, origin, private URL and process identity. The running application owns its writer. Use the Desk or connected client while it runs; one-shot direct commands acquire the original writer themselves.
+Retain the original startup record privately. It reports schema `stellar-forge.sensorthings-workspace-startup.v1`, the persistent `workspaceId`, origin, private URL and process identity. The running application owns its writer. Open the private URL from that original startup record in the browser, or use the connected client while it runs. The Desk removes the private session fragment from the displayed address and holds it in browser memory. Managed Applications retains the same launch privately and returns its original application URL file. One-shot direct commands acquire the original writer themselves. The separate `sensorthings serve` command remains available when the operator needs the original API-only listener.
 
 ## Bind the original merchant and agent client
 
