@@ -1565,7 +1565,7 @@
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
-      "projector_git_blob": "f981f220f260667a11b7be5b10574e8c355fb606",
+      "projector_git_blob": "6e71ffbe2f2ba5ef3333754a540659e9c4e06daa",
       "demo_source": {
         "carrier_git_blob": "6f3dd33ab358fee08e2ee3b6131a0cd8946a62c2",
         "path": "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",

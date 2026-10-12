@@ -80,7 +80,7 @@ The receiving record is `grant-a2a-receiving.json`. These are source projection 
 
 ## Receiving the current cumulative reader
 
-R24C joined this source contribution to the serial publisher's current complete reader at commit `2487c444d3041b40bb93d9c1edbb48f29dc81233` on 12 October 2026. The join preserves the current customer-source mapper, finance-section receiving, current nine answers, funded delivery plan, submission and review state, and the complete companion.
+R24C joined this source contribution to the serial publisher's current complete reader at commit `57706ed86c8a51fd1f4f29bac0fbd56357fe8c99` on 12 October 2026. The join preserves the current customer-source mapper, finance-section receiving, current nine answers, funded delivery plan, submission and review state, and the complete companion.
 
 The public source projector removes private URLs while retaining their exact repository, commit and path. The A2A receiver now recognizes that retained identity when it receives the already-projected reader. Its original dated observation uses the immutable receipt identity, so that observation survives public projection and subsequent composition. An attempt to rebind an immutable dated source to a different commit still fails. A later source selection continues to retire only the old matching byte witness and preserves separately measured current values.
 
