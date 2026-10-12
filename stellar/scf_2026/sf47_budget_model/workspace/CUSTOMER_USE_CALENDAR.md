@@ -196,7 +196,7 @@ For an allowance-use schedule, choose the original prepaid groups for each selec
 
 ### Retain the original save through access failures
 
-An uncertain Installation save stays available under **Recover original save**. An uncertain Cohort freeze stays available under **Continue original freeze**. Access failures, route failures and interrupted responses retain the exact original request ID and body for recovery after access returns. An accepted save uses the existing exact-result readback.
+An uncertain Installation save stays available under **Recover original save**. An uncertain Cohort freeze stays available under **Continue original freeze**. Access failures, route failures and interrupted responses retain the exact original request ID and body for recovery after access returns. An accepted save uses the existing exact-result readback. A queued Calendar or Installation handoff remains available through **Open selected edition**, including after reloading the browser or resolving the earlier save.
 
 A native validation, version-conflict or unsupported-input rejection clears the pending dispatch and keeps the edited draft. Refresh the original source, review the entered changes and prepare the corrected request through the normal writer.
 

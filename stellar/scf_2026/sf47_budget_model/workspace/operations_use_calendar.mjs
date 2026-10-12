@@ -278,6 +278,7 @@ export function mountCustomerUseCalendar({container,current,api,session,onOpenIn
     if(response.schema!==SCHEMA+'.selection'||response.source.caseId!==caseId||response.source.caseVersion!==current.program.version)
       throw new Error('Reopen the original case and selected Installation editions.');
     view=response;session.selection=copy(response.selection);session.asOfDate=asOfDate;
+    for(const row of response.selection)session.editionChoices[row.id]={selected:true,revision:String(row.revision)};
     if(!view.groups.some(row=>row.id===session.groupId))session.groupId=view.groups[0]?.id||'';
     persist();
   }

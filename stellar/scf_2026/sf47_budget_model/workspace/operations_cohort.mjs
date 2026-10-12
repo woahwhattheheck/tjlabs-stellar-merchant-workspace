@@ -68,7 +68,7 @@ export function mountCohort({container,current,saveApi,session,mutationId,record
   function draftOrigin(value){
     const originalCaseId=Object.hasOwn(value,'originalCaseId')?value.originalCaseId:caseValue.program.id;
     const sourceVersion=Object.hasOwn(value,'sourceVersion')?value.sourceVersion:value.baseVersion;
-    if(typeof originalCaseId!=='string'||originalCaseId.length>100||! /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(originalCaseId)||
+    if(typeof originalCaseId!=='string'||originalCaseId.length>100||!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(originalCaseId)||
       !Number.isSafeInteger(sourceVersion)||sourceVersion<0)
       throw new Error('Retain the original draft case identity and whole source version.');
     return {originalCaseId,sourceVersion};

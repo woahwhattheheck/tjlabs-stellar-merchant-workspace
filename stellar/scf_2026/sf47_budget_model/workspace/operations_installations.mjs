@@ -337,6 +337,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       (session.storageNotice?note(session.storageNotice):'')+worksharePanel()+workflowPanel()+
       (session.pending?'<div class="installation-recovery"><h4>Original save request retained</h4><p>Recover this exact request before saving another edition. Your later form edits stay in their draft.</p>'+button('Recover original save','recover')+'<code>'+esc(session.pending.body.requestId)+'</code></div>':'')+
       (session.accepted?'<div class="installation-recovery"><h4>Edition saved; readback is pending</h4>'+button('Open saved result','readback')+'</div>':'')+
+      (session.requestOpen&&!session.pending&&!session.accepted?'<div class="installation-recovery"><h4>Selected Installation handoff retained</h4><p>'+esc(session.requestOpen.id)+' · source edition '+esc(session.requestOpen.revision)+'</p>'+button('Open selected edition','queued-open')+'</div>':'')+
       '<div class="installation-layout"><aside><label>Find installation<input type="search" data-installation-filter value="'+esc(session.filter)+'"></label>'+
       '<div class="installation-list">'+visible.map(row=>'<button type="button" data-installation-action="open" data-id="'+row.id+'"'+
         (session.selected?.id===row.id&&session.mode==='saved'?' aria-current="page"':'')+'><strong>'+esc(row.name)+'</strong><span>Edition '+row.revision+' · '+esc(title(row.stage))+
@@ -809,6 +810,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
       const input=$('[data-installation-file]');input.value='';input.click();return;
     }
     run(async()=>{
+      if(action==='queued-open'&&session.requestOpen)return openQueueRequest(session.requestOpen);
       if(action==='new')return newDraft();
       if(action==='workflow-open')return openWorkflow();
       if(action==='workflow-close'){capture();session.workflowIntake.open=false;persist();return;}
@@ -886,7 +888,7 @@ export function mountInstallations({container,current,api,saveApi,session,mutati
     });
   });
   async function openQueueRequest(request){
-    if(!request.id){delete session.requestOpen;render();return;}
+    if(!request.id){delete session.requestOpen;persist();render();return;}
     if(!Number.isSafeInteger(request.revision)||request.revision<1)
       throw new Error('Refresh the delivery queue and select the original saved edition.');
     await reloadCase();if(!available())return;
