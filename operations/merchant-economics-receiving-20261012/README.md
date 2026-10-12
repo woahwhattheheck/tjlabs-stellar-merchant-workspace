@@ -43,6 +43,23 @@ Obtain these original files through the existing authorized case handoff. Their 
 
 The original full backup contains 42 native files and preserves the pricing versions, supplier source, allocations, cost edition, linked pricing and saved scenario. The failed predecessor report remains byte-identical; the continuation writes a separate `output/cost-mcp-journey-02.json`. The complete private case files are delivered separately from this public source directory.
 
+### Recover the source inputs from the original full backup
+
+The helper [prepare-inputs.py](prepare-inputs.py) prepares the same six files from the original private report envelope and full backup. It uses Python 3.10 or later on POSIX and the standard library. It starts no merchant service or receiving operation.
+
+The saved source version is `8852829e-2636-4135-b8a4-82edf1ffe1b7`. The original pricing model retained its input bytes in `versions/<version>/seller.json` and `versions/<version>/snapshot.json`; both are members of the complete 42-file backup. The helper checks the entire 422,912-byte TAR against its recorded SHA-256, reads its complete member manifest, and verifies the selected source members against the seller and traffic hashes in the table above. It then copies those exact bytes to the existing receiving paths. It does not reconstruct a traffic report from counters.
+
+Obtain the existing private full backup and the internal original-input envelope through their authorized receiving surface. The envelope must include the completed economics report, failed MCP01 report, and original native merchant report. An included seller or traffic file is checked against the same saved member. The helper accepts the exact JSON envelope or its Canvas markdown; base64 preserves each original file byte.
+
+```bash
+python3 prepare-inputs.py \
+  --case /absolute/private/merchant-economics-receiving \
+  --envelope /absolute/private/original-inputs.json \
+  --backup /absolute/private/2778d971-f352-4f10-a958-af6e299fa10a.tar
+```
+
+The output is `INPUTS_READY` with all six file hashes and a retained `receiving-inputs.json` receipt. Matching originals are reused. A conflicting existing input remains unchanged and requires an explicit source choice. A retry after an interrupted copy reuses only matching completed files. This preparation result does not report MCP acceptance or register MCP02. Continue through the existing native admission and the exact `execute.mjs` command below; all five request IDs remain unchanged.
+
 ## Execute the one continuation
 
 The existing execution owner first reconciles any retained record for operation 02. Continue that same operation if it already exists. Once its receiving host and original files are ready, submit this exact selected command through that host's existing job/foreground facility:
