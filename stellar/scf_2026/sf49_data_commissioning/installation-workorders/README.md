@@ -1,6 +1,6 @@
 # Complete customer installation workorders
 
-This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained CoCart, Blockscout, Query.Farm or ARS air-quality programme. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
+This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained CoCart, Blockscout, Query.Farm, ARS air-quality, supplier-catalogue or supplier-order programme. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
 
 The profiles describe the whole useful customer task, the actual source contract, merchant-priced unit, receiving application, maintenance and interruption recovery. Customer selections stay in local bindings: original merchant/buyer IDs, approved source edition and rights, actual receiving host/engineer and original payment terms.
 
@@ -17,9 +17,13 @@ The maintained commercial importer remains the entry for an original customer Wo
 | blockscout.json | Whole selected explorer request → paid exact response → operator/Node/Python → original receiving task |
 | queryfarm.json | Complete result acquisition → retained VGI/SQL use → deliberate next edition → original receiving task |
 | ars-air-quality.json | Complete source intake → named air-quality review → client report/delivery → correction and original receiving task |
+| supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
+| supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
+| source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
+| SUPPLIER_WORKSHARES.md | Full source preparation, phase-ID correction, commissioning, original native receiving and commercial/funding treatment |
 | CUSTOMER_PROGRAMMES.md | Customer task selection, source semantics, recurring-use cadence and original-case commissioning for Query.Farm and ARS |
 
-The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. All four complete profiles and their operating guide are included in its selected source.
+The installed Grant Operations product exposes the same CLI as `starforge grant-installation-workorder` and the pure module as `./grant/installation-workorders`. All six complete profiles and their operating guide are included in its selected source.
 
 Use the repository's maintained Linux/Node runtime. The preparation CLI uses Node's standard library and makes no service calls. The selected customer applications retain their own native runtime/dependency requirements.
 
@@ -153,6 +157,25 @@ Query.Farm covers the complete acquired data result, original VGI catalog/worker
 
 Use [Customer programmes](CUSTOMER_PROGRAMMES.md) for the full operating journeys, first-installation commands, existing-installation updates and a recurring-use calendar grounded in the actual source cadence.
 
+## Supplier catalogue and order workshares
+
+Use [Supplier workshares](SUPPLIER_WORKSHARES.md) for complete original proposal
+intake and actual customer commissioning. The catalogue profile covers full
+source editions, selected PIM import and complete recipient catalogue delivery.
+The order profile covers selected customer profile/mapping, original document
+workflow, configured HTTPS, complete customer receiving and return.
+
+`starforge grant-installation-workorder sources` retains every original packet
+and document, verifies explicit phase-effort pointers and the quoted total, and
+calls the original Workshare reader before publishing the accepted commissioning,
+complete packet group and `SUPPLIER_RECEIVING.json`. The existing
+`grant-installation-receive` then continues the original Operations case.
+
+The professional fee, phase plan and commissioning state remain in the original
+Workshare. Paid service amounts and deployment/receiving authority remain actual
+customer selections. An accepted phase-ID-only amendment retains the exact
+original source and its reversible mapping.
+
 ## Funding and meaningful cohort work
 
 Installation assignments reference the pinned original funded packages. They do not add hours or alter the application request. Retain separately priced commercial work in its original Workshare. Record each actual engineering hour once, with its real funding basis; commercial implementation and grant-funded future development use their original respective work records.
@@ -171,9 +194,9 @@ The tool uses the existing native schema. Its complete output continues through 
 
 ## Complete native receiving in one operation
 
-The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and all four complete profiles.
+The installed command **starforge grant-installation-receive** runs the original Workshare and Installation workflow end to end. Direct source use is **node receive.mjs**. Keep this file with the existing core and all six complete profiles.
 
-Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. The private CoCart/Zeeve commissioning package supplies its filled input and all four original files. Query.Farm and ARS use their own complete original commissioning sources and receiving packets with their matching profile IDs.
+Supply a complete local receiving input with schema **stellar-forge.installation-workshare-receiving.v1**. It selects each original customer Workshare, the original canonical plan digest, its full commissioning file, its optional complete matching packet and any additional original source files. Each source descriptor has its original filename, complete-file SHA256, source URL and observation time. Optional bytes verifies the exact original length; optional mediaType retains an additional source document's actual type (application/json remains the default). Commissioning and packet roles use application/json. The private CoCart/Zeeve commissioning package supplies its filled input and all four original files. Query.Farm and ARS use their own complete original commissioning sources and receiving packets with their matching profile IDs.
 
 ~~~sh
 starforge grant-installation-receive \

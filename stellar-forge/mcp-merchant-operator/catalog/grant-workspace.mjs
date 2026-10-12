@@ -51,6 +51,70 @@ const statementInput={type:'object',additionalProperties:false,
       allOf:[{if:{properties:{action:{const:'EXCLUDE'}},required:['action']},then:{required:['reason'],properties:{reason:nonempty(4000)}}}]}}
   },required:['source','accountId','currency','format','columns']};
 const statementModelInput={...modelInput,inputs:statementInput};
+// Contributor Engagements reuse the original reviews, retained sources and allocators.
+const engagementId = {type:'string', pattern:'^[a-z][a-z0-9-]{1,99}$'};
+const engagementDate = {type:'string', pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
+const engagementHours = {type:'string', description:'Exact nonnegative native hours as decimal text, at most four decimal places.'};
+const engagementUsd = {type:'string', description:'Exact nonnegative USD amount as decimal text, at most two decimal places.'};
+const engagementEvidence = {sourceIds:{type:'array', items:id('source'), uniqueItems:true}, sourceNote:str(12000)};
+const engagementPaymentMode = {enum:['original','accrual','completion']};
+const engagementReviewRef = {reviewId:id('review'), reviewSha256:digest};
+const engagementAllocation = {type:'object', additionalProperties:false,
+  properties:{costId:engagementId, remainingHours:engagementHours, remainingCostUsd:engagementUsd, note:str(12000)},
+  required:['costId','remainingHours','remainingCostUsd','note']};
+const engagementPayment = {type:'object', additionalProperties:false,
+  properties:{costId:engagementId, paymentMode:engagementPaymentMode, note:str(12000)},
+  required:['costId','paymentMode','note']};
+const engagementAgreement = {type:'object', additionalProperties:false, properties:{
+  id:engagementId, contributorId:{...nonempty(12000),description:'Original retained contributor ID; the native case lookup remains authoritative for imported IDs.'}, role:nonempty(12000), scope:str(12000),
+  startDate:engagementDate, endDate:engagementDate, ...engagementEvidence,
+  availability:{type:'object', additionalProperties:false, properties:{
+    hoursByWeekday:{type:'array', minItems:7, maxItems:7, items:{anyOf:[engagementHours,{type:'null'}]},
+      description:'Monday through Sunday. null is unentered; zero is explicitly unavailable.'},
+    hoursByDate:{type:'object', additionalProperties:engagementHours, description:'YYYY-MM-DD native civil date overrides.'},
+    note:str(12000), ...engagementEvidence},
+    required:['hoursByWeekday','hoursByDate','note','sourceIds','sourceNote']},
+  compensation:{type:'object', additionalProperties:false, properties:{
+    basis:{enum:['HOURLY','FIXED','IN_KIND','UNSPECIFIED']},
+    rateUsd:{type:['string','null'], description:'Exact original hourly USD rate as decimal text, at most four decimal places.'},
+    totalUsd:{anyOf:[engagementUsd,{type:'null'}]}, paymentTerms:str(12000),
+    paymentMode:engagementPaymentMode, note:str(12000), ...engagementEvidence},
+    required:['basis','rateUsd','totalUsd','paymentTerms','paymentMode','note','sourceIds','sourceNote']},
+  acceptance:{type:'object', additionalProperties:false, properties:{
+    status:{enum:['PROPOSED','CONFIRMED','DECLINED','WITHDRAWN']}, by:str(12000),
+    at:{type:['string','null'], description:'Actual original ISO acceptance timestamp; CONFIRMED also requires the named accepting person.'},
+    note:str(12000), ...engagementEvidence},
+    required:['status','by','at','note','sourceIds','sourceNote'],
+    allOf:[{if:{properties:{status:{const:'CONFIRMED'}}},then:{properties:{by:nonempty(12000),at:nonempty(200)}}}]},
+  allocations:{type:'array', items:engagementAllocation, description:'Explicit remaining package assignments. An empty array is valid.'}
+}, required:['id','contributorId','role','scope','startDate','endDate','availability','compensation',
+  'acceptance','allocations','sourceIds','sourceNote']};
+const engagementDocument = {type:'object', additionalProperties:false, properties:{
+  schema:{const:'stellar-forge.sf47-contributor-engagements.v1'}, name:nonempty(12000),
+  asOfDate:engagementDate, agreements:{type:'array', items:engagementAgreement}, note:str(12000),
+  supersedes:{anyOf:[{type:'null'},{type:'object',additionalProperties:false,
+    properties:engagementReviewRef,required:['reviewId','reviewSha256']}]}
+}, required:['schema','name','asOfDate','agreements','note','supersedes']};
+const engagementForecastSelection = {type:'object', additionalProperties:false, properties:{
+  ...engagementReviewRef, forecastId:id('forecast'), agreementIds:{type:'array',items:engagementId,uniqueItems:true},
+  remainders:{type:'array',items:engagementAllocation,
+    description:'When present, covers every affected package. Omission uses the complete native derived remainders.'},
+  paymentModes:{type:'array',items:engagementPayment,
+    description:'When present, covers every affected package. Differing agreement modes require an explicit reviewed package choice.'},
+  name:nonempty(12000),note:str(12000)
+}, required:['reviewId','reviewSha256','forecastId','agreementIds','name','note']};
+const engagementPortfolioSelection = {type:'object', additionalProperties:false, properties:{
+  ...engagementReviewRef, forecastId:id('forecast'), agreementIds:{type:'array',items:engagementId,uniqueItems:true},
+  resourceMap:{type:'array',items:{type:'object',additionalProperties:false,
+    properties:{engagementId,resourceId:engagementId},required:['engagementId','resourceId']},
+    description:'Cover each selected contributor once, retaining selected original resources or distinct new resource IDs.'},
+  inputs:{...object,description:'Complete native Portfolio draft with all explicit alternatives, Installation selections and phase plans.'},
+  name:nonempty(12000),note:str(12000)
+}, required:['reviewId','reviewSha256','forecastId','agreementIds','resourceMap','name','note']};
+const engagementReceivingData = {type:'object', additionalProperties:false, properties:{
+  ...engagementReviewRef,forecastId:id('forecast'),portfolioId:id('portfolio'),
+  forecastSelection:engagementForecastSelection,portfolioSelection:engagementPortfolioSelection
+}, required:['reviewId','reviewSha256','forecastId','portfolioId','forecastSelection','portfolioSelection']};
 const currencyCode = {type:'string', pattern:'^[A-Z]{3}$'};
 const nativeMoney = {type:'object', additionalProperties:false,
   properties:{
@@ -255,6 +319,24 @@ export const grantWorkspaceTools = [
   tool('work_intake_apply', 'Apply the complete reviewed work/invoice intake in one original transaction. The exact preview SHA, case version, intake edition and request ID preserve all native created/matched records and original source links.',
     {...ws,...caseSelection,...originalRequest,intakeId:id('intake'),expectedRevision:integer,...intakeModelInput,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','intakeId','expectedRevision','expectedPreviewSha256']),
+  tool('engagements', 'Read every original Contributor Engagements edition and its retained receiving summaries. Full source documents and response bytes remain available through the original native snapshots.',
+    {...ws,caseId:id('operation')}, ['workspace','caseId'], true),
+  tool('engagement', 'Reopen one complete immutable Contributor Engagements review, its source, report, current source comparison and prior Forecast/Portfolio receiving records.',
+    {...ws,caseId:id('operation'),reviewId:id('review')}, ['workspace','caseId','reviewId'], true),
+  tool('engagement_seed', 'Create an editable native agreement document from actual case contributors, packages and sources, optionally superseding one saved edition. This neither confirms an agreement nor writes the case.',
+    {...ws,...caseSelection,reviewId:id('review')}, ['workspace','caseId','expectedVersion'], true),
+  tool('engagement_preview', 'Preview the complete sourced agreement book through its native engine. Retain real roles, dates, availability, rates, terms, allocations and acceptance evidence. Supply inputs inline or one verified file/snapshot/transfer reference; inputPointer /document selects the original seed document.',
+    {...ws,...caseSelection,...modelInput,inputs:engagementDocument}, ['workspace','caseId','expectedVersion'], true),
+  tool('engagement_prepare', 'Freeze the exact reviewed agreement document with original engagement.prepare. Requires a nonempty recorded note, current case version, preview SHA256 and stable request ID. Confirmed acceptance must already be supported by its actual person, timestamp and evidence.',
+    {...ws,...caseSelection,...modelInput,inputs:engagementDocument,...originalRequest,note:nonempty(12000),expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
+  tool('engagement_forecast', 'Preview the native Forecast handover from CONFIRMED agreements and the exact review SHA. Book and base Forecast dates must match. Retain normalized remainders and payment-mode choices, then save returned /inputs with original forecast_save.',
+    {...ws,...caseSelection,...modelInput,inputs:engagementForecastSelection}, ['workspace','caseId','expectedVersion'], true),
+  tool('engagement_portfolio', 'Preview the native Portfolio handover using the newly saved Forecast, selected agreements and complete resource map. Full draft and alternatives retain original Installation phases. Native findings remain visible; save returned /inputs with original portfolio_save.',
+    {...ws,...caseSelection,...modelInput,inputs:engagementPortfolioSelection}, ['workspace','caseId','expectedVersion'], true),
+  tool('engagement_receiving', 'Record the validated original engagement-to-Forecast-to-Portfolio join once. Inputs retain exact book SHA, saved Forecast/Portfolio IDs and both complete normalized selections. Requires current case version, stable request ID and nonempty note. Exploratory alternatives retain their actual readiness findings.',
+    {...ws,...caseSelection,...modelInput,inputs:engagementReceivingData,...originalRequest,note:nonempty(12000)},
+    ['workspace','caseId','expectedVersion','requestId','actor','note']),
   tool('forecasts', 'Read all original immutable forecast summaries for a case.',
     {...ws, caseId:id('operation')}, ['workspace','caseId'], true),
   tool('forecast', 'Reopen the complete saved forecast, source snapshot and current source-change comparison.',
@@ -452,8 +534,8 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','performance','supplier-account','cash-account','commercial']},
+  tool('export', 'For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','performance','supplier-account','cash-account','commercial','engagement']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:id('review'),
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),billingId:commercialIdentifier,revision:installationRevision,sha256:digest,asOfDate:supportDate,
