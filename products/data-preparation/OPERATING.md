@@ -303,6 +303,8 @@ try {
 }
 ~~~
 
+For a streamed browser download, call resultDownloadLink(runId, filename), preparedDownloadLink(relativeUrl), or deliveryDownloadLink(fileId), then open the returned URL once within five minutes. These methods authenticate the ticket request and bind the chosen complete file to the actual listener. The inherited resultURL and downloadURL helpers are protected API locators; pass one to downloadLink when converting it into a browser download. downloadDelivery remains the full SHA-checked, create-only local file receiving path.
+
 The managed client inherits the original typed preparation client, including source/result pages, recipes, run operations, reviews and full-state inspection. Managed methods add instance binding, persistent deliveries, complete streaming and explicit detach. A shared writer can leave a newly requested run queued; inspect it and use start(runId) when the original writer is available.
 
 The original Python CLI remains a customer interface on that same received workspace:

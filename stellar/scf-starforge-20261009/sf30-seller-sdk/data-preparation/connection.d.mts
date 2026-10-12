@@ -29,6 +29,7 @@ export interface DeliveryRecord {
  workspaceSha256:string;stateSha256:string;request:DeliveryRequest;createdAt:string;
  filename:string;mediaType:string;bytes:number;sha256:string;reused?:boolean;
 }
+export interface PreparationDownloadLink {url:string;expiresInSeconds:300;instanceId:string}
 export interface ReceivedPreparation {
  schema:'stellar-forge.data-preparation-received.v1';sourceSha256:string;receivedAt:string;originalStateSha256:string;
  directory:string;stateSha256:string;workspaceSha256:string;counts:Record<PreparationCollection,number>;
@@ -55,6 +56,10 @@ export class PreparationWorkspaceClient extends PreparationClient {
  browser():Promise<PreparationConnection&{url:string}>;
  importFile(file:string,options:{alias:string;format?:'csv'|'jsonl';label?:string;nullToken?:string;expectedSha256?:string;signal?:AbortSignal}):Promise<Source>;
  exportDelivery(request:DeliveryRequest,options?:RequestOptions):Promise<DeliveryRecord>;
+ downloadLink(originalUrlOrPath:string,options?:RequestOptions):Promise<PreparationDownloadLink>;
+ resultDownloadLink(runId:string,file?:ResultFile,options?:RequestOptions):Promise<PreparationDownloadLink>;
+ preparedDownloadLink(relative:string,options?:RequestOptions):Promise<PreparationDownloadLink>;
+ deliveryDownloadLink(fileId:string,options?:RequestOptions):Promise<PreparationDownloadLink>;
  downloadDelivery(record:DeliveryRecord,destination:string,options?:RequestOptions):Promise<DeliveryRecord&{path:string}>;
  close():Promise<void>;
 }

@@ -459,6 +459,8 @@ def main():
     args = parser.parse_args()
     if args.command == 'serve':
         need(0 <= args.port <= 65535, 'Use a port from 0 to 65535'); serve_managed(args); return
+    def cancel_receiving(_signum, _frame): raise KeyboardInterrupt('The original receiving process is stopping')
+    signal.signal(signal.SIGTERM, cancel_receiving)
     result = receive_original(args.archive,args.workspace,args.sha256,args.max_bytes) if args.command == 'receive' else received_info(args.workspace)
     print(dumps(result),flush=True)
 

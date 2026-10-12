@@ -180,6 +180,21 @@ export class PreparationWorkspaceClient extends PreparationClient {
   }
   async browser(){await this.inspect();return {url:this.#record.value.url,...this.connection};}
   exportDelivery(value,options){return this.post('/api/managed/export',value,options);}
+  async downloadLink(value,options){
+    const target=new URL(value,this.origin);
+    preparationNeed(target.origin===this.origin&&!target.username&&!target.password&&!target.hash,
+      'PREPARATION_DOWNLOAD_ROUTE','Choose an original local result or prepared file.');
+    const ticket=await this.post('/api/managed/ticket',{path:target.pathname+target.search},options);
+    preparationNeed(/^\/managed-download\/[a-f0-9]{64}$/.test(ticket.url)&&ticket.expiresInSeconds===300,
+      'PREPARATION_DOWNLOAD_ROUTE','The original single-use download link changed.');
+    return {url:this.origin+ticket.url,expiresInSeconds:ticket.expiresInSeconds,instanceId:this.#record.value.instanceId};
+  }
+  resultDownloadLink(runId,file='result.jsonl',options){return this.downloadLink(super.resultURL(runId,file),options);}
+  preparedDownloadLink(relative,options){return this.downloadLink(super.downloadURL(relative),options);}
+  deliveryDownloadLink(fileId,options){
+    preparationNeed(PREPARATION_HASH.test(fileId??''),'PREPARATION_FILE_ID_INVALID','Choose a completed native file ID.');
+    return this.downloadLink('/api/managed/file/'+fileId,options);
+  }
   async importFile(file,{alias,format='csv',label=basename(file),nullToken,expectedSha256,signal}={}){
     preparationNeed(expectedSha256===undefined||PREPARATION_HASH.test(expectedSha256),'PREPARATION_SOURCE_SHA_INVALID','Use the original source SHA-256.');
     const source=await preparationOpenFile(file,{maximum:2*1024**3});let stream;

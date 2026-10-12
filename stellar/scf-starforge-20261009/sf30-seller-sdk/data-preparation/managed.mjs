@@ -28,21 +28,29 @@ export function preparationPython(){return process.env.STARFORGE_PYTHON||'python
 export function runPreparationNative(args,{signal,maxOutputBytes=2*1024*1024}={}){
   return new Promise((accept,reject)=>{
     const child=spawn(preparationPython(),[engine,...args],{stdio:['ignore','pipe','pipe'],shell:false,signal});
-    const stdout=[],stderr=[];let output=0,error;
+    const stdout=[],stderr=[];let output=0,error,settled=false;
     const receive=parts=>chunk=>{
+      if(error)return;
       output+=chunk.length;
       if(output>maxOutputBytes){error=Object.assign(new Error('The original receiving response exceeded its metadata allowance.'),{code:'PREPARATION_NATIVE_OUTPUT'});child.kill('SIGTERM');return;}
       parts.push(chunk);
     };
     child.stdout.on('data',receive(stdout));child.stderr.on('data',receive(stderr));
-    child.once('error',reject);
-    child.once('close',code=>{
+    const finish=code=>{
+      if(settled)return;settled=true;
       if(error)return reject(error);
       const text=Buffer.concat(stdout).toString('utf8').trim();
       if(code!==0){let detail;try{detail=JSON.parse(Buffer.concat(stderr).toString('utf8').trim()).error;}catch{}
         return reject(Object.assign(new Error(detail||'The original preparation command failed.'),{code:'PREPARATION_NATIVE_FAILED',exitCode:code}));}
       try{accept(JSON.parse(text));}catch(cause){reject(Object.assign(new Error('The original command returned invalid receiving metadata.'),{cause,code:'PREPARATION_NATIVE_RESPONSE'}));}
+    };
+    child.once('error',failure=>{
+      error??=failure;
+      // An aborted child still owns receiving until its actual close. A launch
+      // failure without a PID never created a native process to drain.
+      if(!child.pid)queueMicrotask(()=>finish(null));
     });
+    child.once('close',finish);
   });
 }
 export async function receivePreparationWorkspace({archive,directory,expectedSha256,maxBytes=PREPARATION_DEFAULT_RECEIVING_BYTES,signal}){
