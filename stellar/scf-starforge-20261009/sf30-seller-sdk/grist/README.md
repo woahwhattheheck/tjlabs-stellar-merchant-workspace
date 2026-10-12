@@ -11,6 +11,7 @@ The capture reads the complete typed records response twice. It retains both ful
 | Step | Product action | Retained result |
 | --- | --- | --- |
 | Connect | Declare an existing read-token environment reference, or explicitly allow anonymous access to a public document. | Private connection selection and original document identity. |
+| Select table | List native document metadata through a declared connection, then explicitly choose an actual table ID. | Original raw document/catalog bytes, account binding, catalog UUID/hash and native table reference. |
 | Discover | Inspect actual document/table metadata through the original reader. | Field IDs, complete Grist type names, visible schema and a request UUID. |
 | Capture | Select actual fields and native order ending in row ID; read the original typed API. | Both complete record responses, surrounding metadata/history, exact bytes and SHA256. |
 | Author | Choose public aliases, scalar or typed encodings, and null/empty handling. | Draft revision with the fixed original capture binding. |
@@ -120,7 +121,7 @@ Use the returned current request and draft revision when continuing. The literal
 
 In the browser, inspect the saved fields, save the draft, validate every row, enter the reviewer/change note and freeze the version. Then use Open original publisher. The publisher browser and the Grist operator share the same publisher and native lease.
 
-For live setup, use WORKSPACE.md and PROVIDER_INPUT.md. The official public Task Management sample is a candidate input, not an already executed result. Its actual returned table IDs, column types, document heads, row count and capture hashes must be retained by the real reader before any receiving claim.
+For live setup, use WORKSPACE.md and PROVIDER_INPUT.md. The browser's List document tables action and the workspace CLI document command begin with the actual document ID and declared connection; a table ID is selected from the retained native catalog before field discovery. Search/reopen/export use the saved metadata without contacting Grist. The official public Task Management sample is a candidate input, not an already executed result. Its actual returned table IDs, column types, document heads, row count and capture hashes must be retained by the real reader before any receiving claim.
 
 ## Data and authority boundaries
 
