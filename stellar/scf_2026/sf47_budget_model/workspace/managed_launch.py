@@ -18,6 +18,20 @@ SELECTION_SCHEMA = "stellar-forge.sf47.workspace-selection.v1"
 SOURCE = Path(__file__).resolve().parent
 # Keep the original managed Python/Node source selection identical.
 BOOT_FILES = (
+    "grant_procedures.mjs",
+    "grant_procedures.d.mts",
+    "grant_procedures_native.mjs",
+    "grant_procedures_native.d.mts",
+    "grant_procedures_cli.mjs",
+    "grant_procedures_receiving.mjs",
+    "operations_procedures.mjs",
+    "operations_procedures.css",
+    "GRANT_PROCEDURES.md",
+    "GRANT_PROCEDURES_RECEIVING.md",
+    "../../../scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+    "../../../scf-starforge-20261009/distribution/discovery/operating-plan.d.mts",
+    "../../../scf-starforge-20261009/distribution/discovery/catalog.mjs",
+    "../../../scf-starforge-20261009/distribution/discovery/catalog.d.mts",
     "../budget.py",
     "cli.py",
     "server.py",

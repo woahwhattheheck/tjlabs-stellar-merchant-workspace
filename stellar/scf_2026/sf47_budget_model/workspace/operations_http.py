@@ -13,6 +13,15 @@ from operations_commercial_http import handle as commercial_http
 
 
 def register_static(static):
+    static.update({
+        "/operations_procedures.mjs": ("operations_procedures.mjs", "text/javascript; charset=utf-8"),
+        "/operations_procedures.css": ("operations_procedures.css", "text/css; charset=utf-8"),
+        "/grant_procedures.mjs": ("grant_procedures.mjs", "text/javascript; charset=utf-8"),
+        "/scf-starforge-20261009/distribution/discovery/operating-plan.mjs":
+            ("../../../scf-starforge-20261009/distribution/discovery/operating-plan.mjs", "text/javascript; charset=utf-8"),
+        "/scf-starforge-20261009/distribution/discovery/catalog.mjs":
+            ("../../../scf-starforge-20261009/distribution/discovery/catalog.mjs", "text/javascript; charset=utf-8"),
+    })
     static.update({"/operations_task_outcomes.mjs": ("operations_task_outcomes.mjs", "text/javascript; charset=utf-8"),
                    "/operations_task_outcomes.css": ("operations_task_outcomes.css", "text/css; charset=utf-8")})
     static.update({"/operations_account_reconciliation.mjs": ("operations_account_reconciliation.mjs", "text/javascript; charset=utf-8"),
