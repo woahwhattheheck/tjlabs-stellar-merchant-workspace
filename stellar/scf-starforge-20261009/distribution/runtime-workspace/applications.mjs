@@ -257,7 +257,7 @@ async function applicationCommand(type, settings, runtimeDirectory, context = {}
     ...context, runtimeDirectory, inputPath, selectedExecutable, applicationEnvironment,
   });
   const inputs = [], createDirectories = [], args = [];
-  let terminalPython, eventFeed, apiPassWorkspace, mppBinding, selectedResourceKey, jobResultReceiver, stellarApplication, openapi;
+  let terminalPython, eventFeed, apiPassWorkspace, mppBinding, selectedResourceKey, jobResultReceiver, stellarApplication, openapi, applicationReview;
   const path = async (name, kind = 'directory', missing = false, privateOnly = false) => {
     if (!settings[name]) return;
     const value = await inputPath(settings[name], kind, missing, privateOnly); inputs.push(value); return value;
@@ -363,6 +363,7 @@ async function applicationCommand(type, settings, runtimeDirectory, context = {}
   } else if (type.id === 'merchant-pricing') {
     const prepared = await preparePricingApplication(settings, { ...context, inputPath, runtimeDirectory });
     args.push(...prepared.args); inputs.push(...prepared.inputs); createDirectories.push(...prepared.createDirectories);
+    applicationReview = prepared.applicationReview;
   } else if (type.id === 'browser-wallet') {
     const original = await prepareBrowserWalletApplication(settings, inputPath, runtimeDirectory);
     args.push(...original.args); inputs.push(...original.inputs);
@@ -531,6 +532,7 @@ async function applicationCommand(type, settings, runtimeDirectory, context = {}
     ...(apiPassWorkspace ? { apiPassWorkspace } : {}),
     ...(mppBinding ? { mppBinding } : {}),
     ...(openapi ? { openapi } : {}),
+    ...(applicationReview ? { applicationReview } : {}),
     ...(stellarApplication ? { stellarApplication } : {}),
     ...(jobResultReceiver ? { jobResultReceiver } : {}),
     ...(selectedResourceKey ? { resourceKey: selectedResourceKey } : {}),

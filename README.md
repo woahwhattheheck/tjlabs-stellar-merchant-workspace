@@ -5,7 +5,8 @@ clients, retained source results, deployment releases, and an operator workspace
 
 The product brings together captured HTTP API and GraphQL service authoring,
 satellite imagery and processing history, searchable material catalogs, merchant
-incident work, and QuickBooks or Xero accounting operations. Each workflow keeps
+incident work, supplier-cost allocation and pricing decisions, and QuickBooks or
+Xero accounting operations. Each workflow keeps
 its original saved records from source selection through delivery and reopening.
 
 ## Choose a workflow
@@ -17,6 +18,7 @@ its original saved records from source selection through delivery and reopening.
 | Turn an existing GraphQL query service into a merchant | `starforge graphql-workspace` or the merchant MCP tools | Reviewed operations, actual source previews, buyer clients, versioned merchant packages and deployment releases |
 | Prepare imagery and processing data for customers | `starforge stac` | Retained scene editions and assets, Cirrus or FilmDrop history, original merchant/customer delivery and a portable GIS explorer |
 | Operate a searchable material catalog | `starforge-materials` | The maintained catalog, source review, operator workspace, query service and customer receiving |
+| Allocate supplier costs and operate merchant pricing | **Applications → Merchant pricing and scenario planning** or `starforge revenue-workspace` | Original bills and quotes, exact route allocations, cost-linked pricing and scenarios, reviewed seller changes and complete workspace receiving |
 | Manage incidents and follow-up | `starforge support-console` and `starforge support-watch` | Saved merchant cases, actual runtime captures, operator ownership, notification history and complete support handoffs |
 | Work with a selected accounting destination | `starforge merchant-accounting-platforms` | Original QuickBooks or Xero plans, reviewed requests, provider responses and accountant returns |
 
@@ -30,7 +32,10 @@ follows capture intake, operation decisions, the route worksheet, merchant
 compilation, agent operation and receiving in one retained product. The
 [purchased API customer guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/products/api-customer/OPERATING.md)
 opens existing access or a saved purchase through the browser, generated agent
-settings and exact request client.
+settings and exact request client. The
+[pricing and supplier-cost guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
+connects original supplier sources, allocation, saved pricing reviews, scenario
+planning and complete backup receiving through that same Applications lifecycle.
 
 ## Open the source product
 
@@ -171,7 +176,9 @@ Use the product's original export and receiving commands for a handover. Imagery
 deliveries include a local scene explorer and retained selected assets. Captured API
 handoffs keep the native capture or refresh directory, immutable reviews, full
 merchant package and pricing worksheet. GraphQL exports include the generated
-client and exact deployment files. Support
+client and exact deployment files. Pricing and supplier-cost handoffs use the
+original complete workspace backup to retain supplier originals, cost editions,
+pricing reviews, scenario comparisons and price decisions together. Support
 handoffs carry the original captures and saved case. Accounting operations keep
 their original request and response identities through reconciliation.
 
@@ -189,6 +196,7 @@ the replacement is operating as intended.
 - [Imagery operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/README.md)
 - [Cirrus and FilmDrop processing](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/processing/PROCESSING.md)
 - [Portable GIS receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf30-seller-sdk/stac/receiving/PORTABLE_GIS.md)
+- [Supplier costs, pricing and complete workspace receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/runtime-workspace/PRICING_APPLICATIONS.md)
 - [Merchant incident desk](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/sf74-merchant-support-console/INCIDENT_SOURCES.md)
 - [QuickBooks and Xero operations](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/mcp-merchant-operator/ACCOUNTING-PLATFORMS-CLIENT.md)
 
