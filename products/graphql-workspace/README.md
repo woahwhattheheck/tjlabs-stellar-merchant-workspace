@@ -82,6 +82,6 @@ starforge graphql-product receive --dir /srv/private/stellar-graphql \
 starforge graphql-product inspect-received --dir /srv/private/received-merchant-r12
 ~~~
 
-Receiving uses the original resumable downloader and native manifest. It delivers all selected draft, preview, merchant, evolution, deployment or host files, with original byte identities and nested paths. Offline inspection reopens those same files after the source process closes. It does not convert a file package into a new writable private workspace.
+Receiving uses the original resumable downloader and native manifest. It delivers selected draft, preview, merchant, evolution, deployment, host or complete project-handover files with their original byte identities and nested paths. Offline inspection reopens those files after the source process closes. For continued authoring on a receiving host, select kind handover and use the original browser's Project handover actions or inspect-handover / reopen-handover. The [complete handover guide](HANDOVER.md) covers original history, interrupted receiving, source rebinding and local deployment preparation.
 
 See [OPERATING.md](OPERATING.md) for the complete source-to-merchant workflow, stable request recovery, receiving selections and application ownership.

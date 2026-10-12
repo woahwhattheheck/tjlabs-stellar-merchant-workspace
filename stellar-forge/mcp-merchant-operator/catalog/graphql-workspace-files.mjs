@@ -12,7 +12,7 @@ function graphqlFileTools(tool) {
   return [
     tool('merchant_graphql_export_prepare', 'Retain one exact original project/file-set identity for transfer. Use a caller-chosen exportId and the native saved IDs. Keeps original files in place; the same intent/id reuses its immutable descriptor.',
       { workspace: aliasSchema, exportId: aliasSchema, project: { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$' },
-        revision: { type: 'integer', minimum: 1 }, kind: { enum: ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host'] },
+        revision: { type: 'integer', minimum: 1 }, kind: { enum: ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover'] },
         merchantExportId: uuidSchema, deploymentId: uuidSchema, previewId: uuidSchema,
         hostId: { type: 'string', pattern: '^host-[1-9][0-9]*-[a-f0-9]{8}$' } },
       ['workspace', 'exportId', 'project', 'revision', 'kind'], { idempotent: true }),

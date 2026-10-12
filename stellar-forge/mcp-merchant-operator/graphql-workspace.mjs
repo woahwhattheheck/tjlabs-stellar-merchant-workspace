@@ -419,6 +419,29 @@ export class MerchantGraphqlWorkspaces {
     }
     const entry = this.#entry(args.workspace);
     switch (name) {
+      case 'merchant_graphql_handover_receivings': {
+        exact(args, ['workspace', 'offset', 'limit', 'expectedSnapshotSha256'], ['workspace']);
+        const query = new URLSearchParams();
+        for (const key of ['offset', 'limit', 'expectedSnapshotSha256']) if (args[key] !== undefined) query.set(key, String(args[key]));
+        return this.#request(entry, '/api/handover/receivings?' + query);
+      }
+      case 'merchant_graphql_handover_prepare': {
+        exact(args, ['workspace', 'id', 'project', 'revision'], ['workspace', 'id', 'project', 'revision']);
+        return this.#request(entry, '/api/handover/prepare', { id: originalUuid(args.id),
+          project: originalProject(args.project), revision: revision(args.revision) });
+      }
+      case 'merchant_graphql_handover_inspect': {
+        exact(args, ['workspace', 'directory', 'handoverSha256'], ['workspace', 'directory']);
+        return this.#request(entry, '/api/handover/inspect', { directory: args.directory,
+          ...(args.handoverSha256 === undefined ? {} : { handoverSha256: digest(args.handoverSha256) }) });
+      }
+      case 'merchant_graphql_handover_receive': {
+        exact(args, ['workspace', 'id', 'directory', 'handoverSha256', 'expectedRevision'],
+          ['workspace', 'id', 'handoverSha256', 'expectedRevision']);
+        return this.#request(entry, '/api/handover/receive', { id: originalUuid(args.id),
+          ...(args.directory === undefined ? {} : { directory: args.directory }),
+          handoverSha256: digest(args.handoverSha256), expectedRevision: revision(args.expectedRevision, true) });
+      }
       case 'merchant_graphql_projects': return page((await this.#request(entry, '/api/projects')).projects, args);
       case 'merchant_graphql_project': return projectView(await this.#project(entry, args), args);
       case 'merchant_graphql_history': {

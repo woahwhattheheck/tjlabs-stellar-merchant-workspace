@@ -95,6 +95,17 @@ function graphqlWorkspaceTools(tool) {
         releaseId: aliasSchema, expectedDigest: shaSchema, expectedGeneration: generationSchema,
         reason: textSchema, instanceId: { type: 'string', minLength: 1, maxLength: 64 } },
       ['workspace', 'project', 'expectedRevision', 'deploymentId', 'action']),
+    tool('merchant_graphql_handover_receivings', 'Page original retained receiving requests and completed receipts after browser or MCP restart. Continue the exact request UUID/hash/revision; listing never replays a write.',
+      { workspace: aliasSchema, ...rangeSchema }, ['workspace'], read),
+    tool('merchant_graphql_handover_prepare', 'Prepare one complete selected-project folder through the original writer. Retains every committed revision through the selected revision plus referenced completed previews, merchants, schema evolution, deployment and host files. Repeat the same UUID/selection to recover preparation.',
+      { ...common, revision: revisionSchema, id: uuidSchema }, ['workspace', 'project', 'revision', 'id'], { idempotent: true }),
+    tool('merchant_graphql_handover_inspect', 'Inspect a downloaded original project handover and compare its full revision history with this target workspace. Returns the exact hash and expected target revision for receiving; no project is changed.',
+      { workspace: aliasSchema, directory: { type: 'string', minLength: 1, maxLength: 4096 }, handoverSha256: shaSchema },
+      ['workspace', 'directory'], read),
+    tool('merchant_graphql_handover_receive', 'Reopen the inspected original project in this same writer with its original IDs/history and local path resolution. Retains the exact receiving UUID/request before writes. Repeating that request preserves later local edits and can finish already retained bytes after the input directory is lost. Target deployment preparation uses the original compiler.',
+      { workspace: aliasSchema, id: uuidSchema, directory: { type: 'string', minLength: 1, maxLength: 4096 },
+        handoverSha256: shaSchema, expectedRevision: generationSchema },
+      ['workspace', 'id', 'handoverSha256', 'expectedRevision'], { idempotent: true }),
     ...graphqlFileTools(tool),
   ];
 }

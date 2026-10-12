@@ -69,6 +69,17 @@ export class GraphqlProductClient {
     }
     return client.call(name, selected, options);
   }
+  async prepareHandover({ id, project, revision } = {}) {
+    return this.call('merchant_graphql_handover_prepare', { id, project, revision });
+  }
+  async inspectHandover({ directory, handoverSha256 } = {}) {
+    return this.call('merchant_graphql_handover_inspect', { directory,
+      ...(handoverSha256 === undefined ? {} : { handoverSha256 }) });
+  }
+  async receiveHandover({ id, directory, handoverSha256, expectedRevision } = {}) {
+    return this.call('merchant_graphql_handover_receive', { id, handoverSha256, expectedRevision,
+      ...(directory === undefined ? {} : { directory }) });
+  }
   async inspectFiles(exportId) {
     await this.ready();
     const inspected = await inspectGraphqlWorkspaceFiles({ client: this, exportId });

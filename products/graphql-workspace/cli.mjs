@@ -19,6 +19,9 @@ const HELP = [
   'starforge graphql-product inspect-files --dir PRIVATE_DIR --export-id RETAINED_TRANSFER_ALIAS',
   'starforge graphql-product receive --dir PRIVATE_DIR --export-id TRANSFER_ALIAS --out PRIVATE_DELIVERY [--selection NATIVE_SELECTION.json] [--manifest-sha256 SHA256]',
   'starforge graphql-product inspect-received --dir PRIVATE_DELIVERY',
+  'starforge graphql-product prepare-handover --dir PRIVATE_PRODUCT --id UUID --project PROJECT --revision N',
+  'starforge graphql-product inspect-handover --dir RECEIVING_PRODUCT --from PRIVATE_HANDOVER [--handover-sha256 SHA256]',
+  'starforge graphql-product reopen-handover --dir RECEIVING_PRODUCT --id UUID --handover-sha256 SHA256 --expected-revision N [--from PRIVATE_HANDOVER]',
   '',
   'Start with the same original source, saved project and request IDs. Source credentials and MCP tokens remain in the server/client environment.',
 ].join('\n') + '\n';
@@ -83,6 +86,29 @@ export async function main(args = process.argv.slice(2)) {
     }).catch(error => { closing = null; process.stderr.write(error.code + ': ' + error.message + '\n'); process.exitCode = 1; });
     for (const name of ['SIGINT', 'SIGTERM']) process.on(name, stop);
     return active;
+  }
+  if (['prepare-handover', 'inspect-handover', 'reopen-handover'].includes(command)) {
+    const allowed = command === 'prepare-handover' ? ['--dir', '--id', '--project', '--revision']
+      : command === 'inspect-handover' ? ['--dir', '--from', '--handover-sha256']
+        : ['--dir', '--id', '--from', '--handover-sha256', '--expected-revision'];
+    const values = parse(rest, allowed), client = new GraphqlProductClient({
+      connectionFile: join(resolve(required(values, '--dir')), 'connection.json') });
+    const number = key => {
+      const text = required(values, key);
+      if (!/^(0|[1-9]\d*)$/.test(text) || !Number.isSafeInteger(Number(text)))
+        throw failure('GRAPHQL_PRODUCT_ARGUMENTS', 'Supply the original integer revision.');
+      return Number(text);
+    };
+    let result;
+    if (command === 'prepare-handover') result = await client.prepareHandover({ id: required(values, '--id'),
+      project: required(values, '--project'), revision: number('--revision') });
+    if (command === 'inspect-handover') result = await client.inspectHandover({
+      directory: resolve(required(values, '--from')),
+      ...(values.has('--handover-sha256') ? { handoverSha256: values.get('--handover-sha256') } : {}) });
+    if (command === 'reopen-handover') result = await client.receiveHandover({ id: required(values, '--id'),
+      handoverSha256: required(values, '--handover-sha256'), expectedRevision: number('--expected-revision'),
+      ...(values.has('--from') ? { directory: resolve(values.get('--from')) } : {}) });
+    output(result); return result;
   }
   if (['projects', 'call', 'inspect-files', 'receive'].includes(command)) {
     const allowed = ['--dir'];
