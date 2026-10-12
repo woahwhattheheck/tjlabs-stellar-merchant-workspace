@@ -68,6 +68,7 @@ the original `0.1.0-source.g0123456789ab` version form.
 
 | Selection | Product | Original Applications | Complete installed workflow |
 | --- | --- | --- | --- |
+| `haystack-turnover` | Native building grids, source-local equipment and points, typed tag review, saved editions and complete editable turnover receiving | Haystack building turnover; Runtime management | [Complete installed operator guide](../../../products/haystack/OPERATING.md) |
 | `groundwater-reports` | Original groundwater sources, scenarios and native results, frozen report publication, buyer receiving, Operations association and complete scientific/desk handover | Groundwater scientific and Report Desk browsers; Buyer runbook; Merchant console | [Complete installation and operation](../../../products/groundwater/OPERATING.md) |
 | `source-tables` | Complete CSV and TSV source authoring, typed field meaning, retained editions and comparisons, native merchant resources and editable customer handover | Source Tables; Runtime management | [Complete installation and operation](../../../products/source-tables/OPERATING.md) |
 | `openlineage-operations` | Native Python and Java producer intake, original compressed/source bytes, job/run/dataset lineage, saved reviews and complete editable customer receiving | OpenLineage operations; Runtime management | [Complete installed operation and producer guide](../../../products/openlineage/OPERATING.md) |
@@ -160,6 +161,7 @@ its dependency profile from the complete installed workflow linked above:
 
 | Selected product | Profile flags for the complete installed edition |
 | --- | --- |
+| `haystack-turnover` | `--operator`; install the selected product with `--offline` |
 | `merchant-receivables`, `merchant-payment-plans` | `--native --feature schema --feature openapi --operator` |
 | `study-research` | `--native --feature schema --feature openapi --feature mcp --feature postgres --operator` |
 | `webdav-operator` | `--native --feature schema --feature openapi --feature mcp --operator` |
@@ -325,3 +327,24 @@ The original builder includes each financial server's declared browser manifest,
 - [Invoices, payments and refunds](../../../products/merchant-receivables/README.md)
 - [Service agreements and recurring billing](../../../products/merchant-service-agreements/README.md)
 
+## Haystack building turnover
+
+Build `--selection haystack-turnover` to retain the native grid codec, source-local
+equipment and point index, reviewed tag proposals, saved source editions, full
+reports and complete editable receiving application. The selected
+`haystack-workspace` contribution supplies the `haystack` and `haystack-mcp`
+commands, typed native exports, original browser route map, managed Applications
+entry and `haystack-workspaces` Merchant provider.
+
+The complete source component includes the original Charlie grid, its source
+metadata, the upstream license, operator guides and `RECEIVING.mjs`. The
+application, managed Applications lifecycle and registered Haystack Merchant
+provider use Node builtins and the maintained local helpers. Select `--operator`
+through the original runtime installer for this dependency-free product. The
+complete operator guide describes separately selected wider host integrations.
+
+Continue the [complete native operator and receiving workflow](../../../products/haystack/OPERATING.md)
+against the same saved building project. A customer package retains every
+source byte, proposal and review, saved edition, original request outcome and
+portable application file; the received application reopens that original
+workspace for continued work.
