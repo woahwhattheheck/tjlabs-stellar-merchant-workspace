@@ -88,10 +88,10 @@ export class MerchantReleaseOperator {
     this.#options = { stellarExpert, woocommerce, mpp, opensearch, grpc, openapi, accounting, arcgis, opencage };
     this.#tools = structuredClone(merchantToolCatalog(config));
     this.#definitions = new Map(this.#tools.map(value => [value.name, value]));
-    // API mutations retain their original workspace operation and revision guards.
+    // API and Research mutations retain their original workspace operation and revision guards.
     // Let cancellation and exact-request recovery reach that existing owner.
     this.#mutations = new Set(this.#tools.filter(value => !value.annotations.readOnlyHint &&
-      merchantToolFamily(value.name) !== 'apiPassWorkspaces').map(value => value.name));
+      !['apiPassWorkspaces', 'researchWorkspaces'].includes(merchantToolFamily(value.name))).map(value => value.name));
   }
   get tools() { return structuredClone(this.#tools); }
   get maxRequestBytes() {
@@ -99,7 +99,8 @@ export class MerchantReleaseOperator {
       if (this.#config.graphqlWorkspaces) return 8 * 1024 * 1024;
       return this.#config.mpp ? 3 * 1024 * 1024 : (this.#config.opensearchWorkspaces || this.#config.grpcWorkspaces || this.#config.usgsWorkspaces) ? 2 * 1024 * 1024 : this.#config.grantsWorkspaces ? 512 * 1024 : 128 * 1024;
     })();
-    return Math.max(configuredMaximum, this.#config.feedsWorkspaces ? 16 * 1024 * 1024 + 65536 : 0);
+    return Math.max(configuredMaximum, this.#config.feedsWorkspaces ? 16 * 1024 * 1024 + 65536 : 0,
+      this.#config.researchWorkspaces ? 2 * 1024 * 1024 : 0);
   }
   async #status() {
     const result = await (await import('../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs')).releaseStatus(this.#config.releaseStore);
