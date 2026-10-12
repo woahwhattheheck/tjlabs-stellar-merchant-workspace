@@ -244,7 +244,7 @@ export async function receiveCurrentBudgetWorkbookHandover(directory,options={})
   try{
     const response=await fetch(service.url+'/api/plans/'+id+'/export.zip?revision='+original.revision,
       {headers:{Authorization:'Bearer '+service.token}});
-    need(response.ok(),'The original listener must export the exact earlier saved revision.');
+    need(response.ok,'The original listener must export the exact earlier saved revision.');
     const bytes=new Uint8Array(await response.arrayBuffer()),receipt=await receivePlanningFile(bytes,{filename:'planning.zip',
       inflate:(raw,max)=>new Uint8Array(inflateRawSync(raw,{maxOutputLength:Math.max(1,max)}))});
     need(receipt.document.currentRevision===original.revision,'The earlier saved export must remain selected after a newer native save.');
