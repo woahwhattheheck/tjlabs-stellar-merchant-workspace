@@ -197,9 +197,13 @@ export class WordPressConnection{
     }catch(error){
       done();
       if(error.code)throw error;
-      throw failure(input?'WORDPRESS_MERCHANT_REQUEST_UNCERTAIN':'WORDPRESS_MERCHANT_CONNECTION_UNAVAILABLE',
-        input?'The original request may have completed. Read its original operation UUID or repeat that exact UUID and input.':
-          'Read the current original Applications listener or explicitly reopen the configured controller.',
+      const mutation=method==='POST'&&['/api/act','/api/cancel','/api/receive'].includes(path);
+      throw failure(mutation?'WORDPRESS_MERCHANT_REQUEST_UNCERTAIN':'WORDPRESS_MERCHANT_CONNECTION_UNAVAILABLE',
+        path==='/api/receive'
+          ?'Repeat the same source-packet export, manifest and receiver selection. The original receiver verifies or resumes that packet.'
+          :input?.operationId
+            ?'The original request may have completed. Read its original operation UUID or repeat that exact UUID and input.'
+            :'Read the current original Applications listener or reopen the configured controller, then repeat the same read-only request.',
         {workspaceId:original?.workspaceId??this.#known.workspaceId,
           ...(input?.operationId?{operationId:input.operationId}:{}),cause:error.name});
     }
@@ -211,9 +215,13 @@ export class WordPressConnection{
       return {bytes,value:decode(bytes),contentType:original.response.headers.get('content-type')??'application/json',
         workspaceId:original.workspaceId,workspaceIdentity:original.workspaceIdentity,instanceId:original.instanceId};
     }catch(error){
-      if(input)throw failure('WORDPRESS_MERCHANT_REQUEST_UNCERTAIN',
-        'The original response ended after dispatch. Read its saved operation UUID before any different action.',
-        {operationId:input.operationId,workspaceId:original.workspaceId,cause:error.code??error.name});
+      if(method==='POST'&&['/api/act','/api/cancel','/api/receive'].includes(path))
+        throw failure('WORDPRESS_MERCHANT_REQUEST_UNCERTAIN',
+          path==='/api/receive'
+            ?'The original response ended after dispatch. Repeat the same source-packet export, manifest and receiver selection.'
+            :'The original response ended after dispatch. Read its saved operation UUID before any different action.',
+          {...(input?.operationId?{operationId:input.operationId}:{}),
+            workspaceId:original.workspaceId,cause:error.code??error.name});
       throw error;
     }finally{await original.dispose();}
   }

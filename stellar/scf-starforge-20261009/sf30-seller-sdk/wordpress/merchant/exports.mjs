@@ -169,7 +169,8 @@ export class WordPressExports{
     else if(typeof original==='string'){total=original.length;value=original.slice(offset,offset+limit);type='string';count=value.length;}
     else {need(offset===0,'WORDPRESS_MERCHANT_POINTER_RANGE');total=1;value=original;type=typeof original;count=1;}
     need(offset<=total,'WORDPRESS_MERCHANT_POINTER_RANGE');
-    const response={exportId:args.exportId,manifestSha256:saved.sha256,file:args.file,
+    const response={workspace:alias,workspaceId:saved.manifest.workspaceId,workspaceIdentity:saved.manifest.workspaceIdentity,
+      exportId:args.exportId,manifestSha256:saved.sha256,file:args.file,
       pointer:args.pointer??'',type,offset,total,value,nextOffset:offset+count<total?offset+count:null};
     return Buffer.byteLength(JSON.stringify(response))<=65536?response:{...response,value:undefined,
       valueAvailableInOriginalFile:true,message:'Download the complete original file for this large selected value.'};
