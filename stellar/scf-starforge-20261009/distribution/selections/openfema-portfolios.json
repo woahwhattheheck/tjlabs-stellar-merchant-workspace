@@ -83,6 +83,7 @@
     "stellar/scf-starforge-20261009/sf54-buyer-governor-intent",
     "stellar/scf-starforge-20261009/sf59-operator-reservation-gate",
     "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery",
+    "stellar-forge/mcp-merchant-operator/console",
     "stellar-forge/mcp-paid-agent",
     "stellar/scf-starforge-20261009/sf43-agent-commerce",
     "products/openfema"

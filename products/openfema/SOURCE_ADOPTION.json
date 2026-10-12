@@ -468,9 +468,9 @@
   "productFiles": [
     {
       "path": "stellar/scf-starforge-20261009/distribution/selections/openfema-portfolios.json",
-      "gitBlob": "bca564790dff445d83f53b4e48c958c8e0ff8576",
-      "bytes": 5731,
-      "sha256": "9404e2b91581cba655e2d9ae00c0d7a8d512320ff87bb7da5ba31be7490482a7"
+      "gitBlob": "4e39a0963995429031a041103395568e01fbedb1",
+      "bytes": 5782,
+      "sha256": "6cf3fcc84d44f38332ebbd1a0f36902097d99c97aed45591aa2bb8b95e4fbcdc"
     },
     {
       "path": "products/openfema/OPERATING.md",
