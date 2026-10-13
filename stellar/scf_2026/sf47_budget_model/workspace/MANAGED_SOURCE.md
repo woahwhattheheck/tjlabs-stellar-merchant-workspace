@@ -31,8 +31,8 @@ manifest and complete file hashes before that launch can be accepted.
    to the ordered **files** array in managed-source.json. Keep the existing names
    and order. Paths are relative to this workspace; the existing explicit
    leading ../ paths retain their original repository locations.
-2. Keep the manifest itself, both launchers and the shared distribution reader in
-   that inventory. Do not maintain a second list in launch.mjs or managed_launch.py.
+2. Keep the manifest itself, both launchers, managed_source.py and the shared
+   distribution reader in that inventory. Do not maintain a second list in launch.mjs or managed_launch.py.
 3. Keep the capability's normal application, browser-route, command and product
    registrations. The managed inventory selects complete files; those existing
    registrations determine what the application exposes.
@@ -72,6 +72,20 @@ continues to sort object keys; array order is kept for the returned source
 inventory. The new manifest and reader are ordinary source changes, so they
 produce a new reviewed source identity rather than silently changing a prior
 selection.
+
+## Existing source preparation and receiving
+
+The Delivery Risk source preparer and execution owner, and the Engagements source
+preparer, read this same manifest through the pure managed_source.py admission
+helper. They inspect the selected Python launcher's literal manifest declarations
+without importing or executing that selected application. Their existing complete
+source bytes, hashes, path boundaries and publication checks still apply. The
+manifest itself is captured and checked with the rest of the source selection.
+
+Previously pinned editions with a literal BOOT_FILES declaration keep their
+original admission path. Their retained source, requests and receiving operations
+remain reproducible. A new manifest edition uses the original receiving owner and
+workspace; it does not replace an already selected native operation in flight.
 
 ## Recovery
 

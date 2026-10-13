@@ -376,6 +376,7 @@
     "../../sf49_data_commissioning/installation-workorders/ENVIRONMENTAL_INSTALLATIONS.md",
     "managed-source.json",
     "../../../scf-starforge-20261009/distribution/managed-source.mjs",
-    "MANAGED_SOURCE.md"
+    "MANAGED_SOURCE.md",
+    "managed_source.py"
   ]
 }

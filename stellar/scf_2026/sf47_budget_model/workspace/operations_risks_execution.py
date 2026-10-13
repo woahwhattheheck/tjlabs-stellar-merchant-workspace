@@ -382,8 +382,18 @@ def verify_source(config, execution_continuation=None):
     module = ast.parse(source)
     values = [node.value for node in module.body if isinstance(node, ast.Assign)
               and any(isinstance(target, ast.Name) and target.id == "BOOT_FILES" for target in node.targets)]
-    require(len(values) == 1, "Use the original literal managed source selection.")
-    boot = ast.literal_eval(values[0])
+    if values:
+        require(len(values) == 1, "Use the original literal managed source selection.")
+        boot = ast.literal_eval(values[0])
+    else:
+        from managed_source import manifest_selector
+        def selected_manifest():
+            name = workspace_path + "/managed-source.json"
+            raw = read(root / name)[0]
+            require(name in actual and len(raw) == actual[name]["bytes"] and
+                    sha(raw) == actual[name]["sha256"], "The selected managed manifest changed.")
+            return raw
+        boot, _manifest_raw = manifest_selector(source, selected_manifest)
     for name in boot:
         selected = (workspace / name).resolve(strict=True)
         require(selected.is_relative_to(root), "Managed source lies outside the selected repository.")

@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from model import Problem, canonical
+from managed_source import manifest_files
 
 SCHEMA = "stellar-forge.sf47.workspace-launch.v1"
 SELECTION_SCHEMA = "stellar-forge.sf47.workspace-selection.v1"
@@ -46,42 +47,10 @@ def managed_source(directory):
     except (ValueError, UnicodeError) as error:
         raise Problem("Select the complete managed source manifest.", 422,
                       "GRANT_SOURCE_MANIFEST_INVALID") from error
-    valid = (isinstance(value, dict) and set(value) == {"schema", "basePath", "files"} and
-             value["schema"] == "stellar-forge.managed-source-manifest.v1" and
-             value["basePath"] == SOURCE_BASE_PATH and isinstance(value["files"], list) and
-             0 < len(value["files"]) <= 4096)
-    if not valid:
-        raise Problem("Select the complete managed source inventory.", 422,
-                      "GRANT_SOURCE_MANIFEST_INVALID")
-    names, resolved = [], set()
-    for name in value["files"]:
-        if (not isinstance(name, str) or not 0 < len(name) <= 1024 or
-                not re.fullmatch(r"[A-Za-z0-9._/-]+", name)):
-            raise Problem("Select an explicit managed source filename.", 422,
-                          "GRANT_SOURCE_MANIFEST_INVALID")
-        root = SOURCE_BASE_PATH.split("/")
-        file_started = False
-        for part in name.split("/"):
-            if not part or part == ".":
-                raise Problem("Managed source paths must be normalized.", 422,
-                              "GRANT_SOURCE_MANIFEST_INVALID")
-            if part == "..":
-                if file_started or not root:
-                    raise Problem("Managed source leaves its selected repository.", 422,
-                                  "GRANT_SOURCE_MANIFEST_INVALID")
-                root.pop()
-            else:
-                file_started = True
-                root.append(part)
-        path = "/".join(root)
-        if not file_started or name in names or path in resolved:
-            raise Problem("Select each explicit managed source once.", 422,
-                          "GRANT_SOURCE_MANIFEST_INVALID")
-        names.append(name)
-        resolved.add(path)
-    if SOURCE_MANIFEST not in names:
-        raise Problem("The inventory must retain its own manifest.", 422,
-                      "GRANT_SOURCE_MANIFEST_INVALID")
+    try:
+        names = manifest_files(value)
+    except ValueError as error:
+        raise Problem(str(error), 422, "GRANT_SOURCE_MANIFEST_INVALID") from error
     hashes = {name: hashlib.sha256(raw).hexdigest() if name == SOURCE_MANIFEST
               else file_sha(directory / name, 1024 * 1024) for name in names}
     if file_sha(directory / SOURCE_MANIFEST, 1024 * 1024) != hashes[SOURCE_MANIFEST]:
