@@ -5,8 +5,13 @@ import { inspectOperatingPlan, compareOperatingPlan, receiveOperatingPlan,
   operatingPlanRevision, renderOperatingPlanMarkdown, renderOperatingPlanHTML }
   from '../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 
+import {recordSupportOperatingWork,createSupportOperatingReturn,inspectSupportOperatingReturn,
+  compareSupportOperatingReturn,reviseSupportOperatingReturn,decideSupportOperatingReturn,
+  applySupportOperatingReturn,renderSupportOperatingReturnHTML}
+  from '../../stellar/scf-starforge-20261009/distribution/discovery/support-operating-return.mjs';
+
 const PREFIX='merchant_support_operating_';
-const ACTIONS=new Set(['inspect','create','record','compare','receive','render']);
+const ACTIONS=new Set(['inspect','create','record','compare','receive','render','record_work','return_create','return_inspect','return_compare','return_details','return_decide','return_apply','return_render']);
 const LIMIT=32*1024*1024;
 export function handlesSupportOperating(name) {
   return typeof name==='string' && name.startsWith(PREFIX) && ACTIONS.has(name.slice(PREFIX.length));
@@ -17,10 +22,10 @@ function keys(value,allowed,required){
   if(!plain(value)||Object.keys(value).some(key=>!allowed.includes(key))||required.some(key=>!Object.hasOwn(value,key)))
     fail('SUPPORT_OPERATING_INPUT','Supply the exact required Support operating request fields.');
 }
-function bounded(value){
+function bounded(value,maximum=LIMIT){
   const text=JSON.stringify(value);
-  if(text===undefined||new TextEncoder().encode(text).length>LIMIT)
-    fail('SUPPORT_OPERATING_SIZE','The complete Support operating value exceeds32MiB.');
+  if(text===undefined||new TextEncoder().encode(text).length>maximum)
+    fail('SUPPORT_OPERATING_SIZE','The complete Support operating value exceeds its '+Math.floor(maximum/1024/1024)+' MiB limit.');
   return value;
 }
 function originalTime(value){
@@ -32,11 +37,36 @@ function selection(args) {
   return {revision:args.revision};
 }
 /** No network, files, case mutation or native action is performed by this handler. */
-export function callSupportOperating(name,args) {
+export async function callSupportOperating(name,args) {
   if(!handlesSupportOperating(name))fail('TOOL_NOT_FOUND','Unknown Support operating procedure action.');
-  bounded(args);
+  const maximum=name.slice(PREFIX.length).startsWith('return_')?128*1024*1024:LIMIT;
+  bounded(args,maximum);
   let result;
   switch(name.slice(PREFIX.length)){
+    case 'record_work':
+      keys(args,['plan','input'],['plan','input']);originalTime(args.input?.savedAt);
+      result=await recordSupportOperatingWork(args.plan,args.input);break;
+    case 'return_create':
+      keys(args,['current','incoming','input'],['current','incoming','input']);
+      result=await createSupportOperatingReturn(args.current,args.incoming,args.input);break;
+    case 'return_inspect':
+      keys(args,['value'],['value']);result=await inspectSupportOperatingReturn(args.value);break;
+    case 'return_compare':
+      keys(args,['value'],['value']);result=await compareSupportOperatingReturn(args.value);break;
+    case 'return_details':
+      keys(args,['value','updates'],['value','updates']);result=await reviseSupportOperatingReturn(args.value,args.updates);break;
+    case 'return_decide':
+      keys(args,['value','key','decision'],['value','key','decision']);
+      result=await decideSupportOperatingReturn(args.value,args.key,args.decision);break;
+    case 'return_apply':
+      keys(args,['value','current','savedAt'],['value','current','savedAt']);originalTime(args.savedAt);
+      result=await applySupportOperatingReturn(args.value,{current:args.current,savedAt:args.savedAt});break;
+    case 'return_render':
+      keys(args,['value','format'],['value','format']);
+      if(args.format==='json')result={format:'json',value:await inspectSupportOperatingReturn(args.value)};
+      else if(args.format==='html')result={format:'html',text:await renderSupportOperatingReturnHTML(args.value)};
+      else fail('SUPPORT_OPERATING_FORMAT','Use json or html for complete returned work.');
+      break;
     case 'inspect':
       keys(args,['source'],['source']);
       result=inspectSupportOperatingSource(args.source);break;
@@ -63,5 +93,5 @@ export function callSupportOperating(name,args) {
       break;
     }
   }
-  return bounded(result);
+  return bounded(result,maximum);
 }
