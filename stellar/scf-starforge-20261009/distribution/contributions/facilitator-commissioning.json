@@ -8,12 +8,14 @@
   "commands": {
     "facilitator-commissioning": "products/facilitator-commissioning/cli.mjs",
     "facilitator-commissioning-customer": "products/facilitator-commissioning/agent-cli.mjs",
-    "facilitator-installation": "products/facilitator-commissioning/installation-cli.mjs"
+    "facilitator-installation": "products/facilitator-commissioning/installation-cli.mjs",
+    "facilitator-installation-receive": "products/facilitator-commissioning/installation-receiving-cli.mjs"
   },
   "commandDescriptions": {
     "facilitator-commissioning": "Prepare, operate, receive and hand over one complete retained service on two original facilitator profiles",
     "facilitator-commissioning-customer": "Operate the complete configured commissioning customer and receive exact original files through the same authenticated host",
-    "facilitator-installation": "Prepare and independently inspect the complete original paired-service Customer Installation"
+    "facilitator-installation": "Prepare and independently inspect the complete original paired-service Customer Installation",
+    "facilitator-installation-receive": "Review, save, export and independently receive the exact original paired-service Installation"
   },
   "exports": {
     "./facilitator/commissioning": "./source/products/facilitator-commissioning/commissioning.mjs",
@@ -30,7 +32,9 @@
       "types": "./source/products/facilitator-commissioning/installation.d.mts",
       "import": "./source/products/facilitator-commissioning/installation.mjs"
     },
-    "./facilitator/installation-core": "./source/products/facilitator-commissioning/installation-core.mjs"
+    "./facilitator/installation-core": "./source/products/facilitator-commissioning/installation-core.mjs",
+    "./facilitator/installation-receiving": "./source/products/facilitator-commissioning/installation-receiving.mjs",
+    "./facilitator/installation-receiving-source": "./source/products/facilitator-commissioning/installation-receiving-source.mjs"
   },
   "merchantProviders": {
     "facilitator-commissioning-customer": "products/facilitator-commissioning/agent-provider.mjs"
@@ -42,6 +46,7 @@
     "products/facilitator-commissioning/agent-customer.d.mts",
     "products/facilitator-commissioning/INSTALLATION.md",
     "products/facilitator-commissioning/installation.d.mts",
-    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json"
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json",
+    "products/facilitator-commissioning/INSTALLATION_RECEIVING.md"
   ]
 }
