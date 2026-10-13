@@ -7,9 +7,11 @@ import {createHash,randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {openText,canonical} from './core.mjs';
 import {openRecipientReview} from './review.mjs';
+import {openAuthorWorklist} from './author-worklist.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url)),sha=value=>createHash('sha256').update(value).digest('hex');
 const pretty=value=>JSON.stringify(value,null,2)+'\n';
-const sourcePaths=['receive-installed.mjs','review.mjs','core.mjs','sha256.mjs',
+const sourcePaths=['receive-installed.mjs','review.mjs','core.mjs','sha256.mjs','author-worklist.mjs',
+ '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/catalog-author-worklist.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/server.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/app.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/public/catalog.mjs',
@@ -99,6 +101,23 @@ export async function receiveInstalledRecipientReturn({page,serverUrl,directory:
   const working=await download('author-review-choices.json','Save author review choices');
   const saved=JSON.parse(working.bytes);assert.equal(saved.reviewText,input.returned.toString('utf8'));assert.equal(canonical(saved.comparison),canonical(comparison));
   assert.deepEqual(saved.choices,Object.fromEntries(comparison.rows.map(row=>[row.id,'keep'])));
+  const worklistDownload=await download('complete-author-worklist.json','Download complete author worklist');
+  const worklist=openAuthorWorklist(worklistDownload.bytes.toString('utf8'));
+  assert.equal(worklist.workspaceId,intent.workspaceId);
+  const retainedReturn=worklist.items.find(item=>item.returnText===input.returned.toString('utf8'));
+  assert.ok(retainedReturn,'The complete selected return is retained.');assert.equal(canonical(retainedReturn.draft.comparison),canonical(comparison));
+  assert.deepEqual(retainedReturn.draft.choices,saved.choices);
+  // Recompare the exact return: retain one complete item, with no new catalogue mutation.
+  const [duplicatePreview]=await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/catalog/recipient-preview'),
+   page.getByRole('button',{name:'Compare with current catalogue',exact:true}).click()]);
+  assert.ok(duplicatePreview.ok());
+  const sameWork=await download('complete-author-worklist-deduplicated.json','Download complete author worklist');
+  const deduplicated=openAuthorWorklist(sameWork.bytes.toString('utf8'));
+  assert.equal(deduplicated.items.filter(item=>item.id===retainedReturn.id).length,1);
+  assert.equal(deduplicated.items.length,worklist.items.length);
+  assert.deepEqual(deduplicated.items.find(item=>item.id===retainedReturn.id).draft.choices,saved.choices);
+  await page.locator('#author-worklist-status').filter({hasText:/Saved .* complete returns in this browser/}).waitFor();
+
   const shot=async(name,width)=>{
    await page.setViewportSize({width,height:1000});const output=join(attempt,name+'.png');await page.screenshot({path:output,fullPage:true});
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,'Horizontal overflow: '+name);
@@ -109,6 +128,16 @@ export async function receiveInstalledRecipientReturn({page,serverUrl,directory:
   await page.reload();await page.locator('#cat-catalog').waitFor({state:'attached'});
   await page.getByRole('button',{name:'Material catalogs',exact:true}).click();await page.locator('#cat-catalog').selectOption(intent.catalogId);
   await page.getByRole('tab',{name:'Returned customer reviews',exact:true}).click();
+  const retainedButton=page.locator('[data-author-open="'+retainedReturn.id+'"]');
+  await retainedButton.waitFor();await retainedButton.click();
+  await page.locator('#recipient-rows [data-recipient-context]').first().waitFor();
+  assert.equal(await page.locator('#recipient-request').isDisabled(),true,'A retained comparison must be explicitly refreshed before new adoption.');
+  await page.getByLabel('Merge a complete saved author worklist',{exact:true}).setInputFiles(worklistDownload.path);
+  await page.locator('#author-worklist-status').filter({hasText:/Saved .* complete returns in this browser/}).waitFor();
+  const coldWork=await download('complete-author-worklist-reopened.json','Download complete author worklist');
+  const reopenedList=openAuthorWorklist(coldWork.bytes.toString('utf8'));
+  const reopenedItem=reopenedList.items.find(item=>item.id===retainedReturn.id);
+  assert.equal(reopenedItem.returnText,retainedReturn.returnText);assert.deepEqual(reopenedItem.draft.choices,saved.choices);
   await page.getByLabel('Reopen saved author review choices',{exact:true}).setInputFiles(working.path);
   await page.locator('#recipient-rows [data-recipient-context]').first().waitFor();
   const reopened=await download('author-review-cold.json','Save author review choices');assert.ok(reopened.bytes.equals(working.bytes));
@@ -124,7 +153,7 @@ export async function receiveInstalledRecipientReturn({page,serverUrl,directory:
   const afterText=await get(exportRoute);sameBundle(beforeBundle,openText(afterText,{name:'installed-after.jsonl'}));
   record.downloads.push(await retain(join(attempt,'installed-after.jsonl'),afterText));
   await shot('replayed-outcome-desktop',1440);await shot('replayed-outcome-narrow',390);
-  assert.equal(browserErrors.length,0);record.steps.push('complete-comparison-choice-file-cold-open-original-ui-replay-and-fresh-full-export');
+  assert.equal(browserErrors.length,0);record.steps.push('complete-worklist-deduplication-portable-merge-browser-cold-open-stale-choice-guard','complete-comparison-choice-file-cold-open-original-ui-replay-and-fresh-full-export');
   record.status='COMPLETE';record.completedAt=new Date().toISOString();await save();return record;
  }catch(error){if(record){record.status='ERROR';record.error={code:error.code??error.name,message:error.message};await retain(path,pretty(record),{replace:true});}throw error;}
  finally{page.off('pageerror',observe);await guard.close();}
