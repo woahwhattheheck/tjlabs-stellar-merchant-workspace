@@ -412,7 +412,7 @@
     const decisions = [...$("feature-rows").children].map(row => ({feature: row.dataset.feature,
       decision: row.querySelector("select").value, reason: row.querySelector("textarea").value}));
     await command("configuration.review", {edition, decisions, note: data.note,
-      expected: entity("configuration-review", edition)?.revision || null});
+      expected: form.dataset.revision || null});
     dirty.delete(form.id); await refresh(); renderConfiguration(true); message("Complete configuration review saved.");
   });
   registerForm("change-form", async (data, _, form) => {
@@ -449,7 +449,7 @@
     const decisions = [...$("result-review-rows").children].map(row => ({id: row.dataset.operation,
       decision: row.querySelector("select").value, reason: row.querySelector("textarea").value}));
     const result = await command("programme.review", {programme, decisions, note: data.note,
-      expected: entity("programme-review", programme)?.revision || null});
+      expected: form.dataset.revision || null});
     dirty.delete(form.id); await refresh(); renderProgramme(true);
     message(result.data.accepted ? "Every selected native outcome is accepted. The programme can support its current deployment."
       : "Complete review saved with the required application changes.");
