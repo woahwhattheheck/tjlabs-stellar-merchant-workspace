@@ -82,9 +82,9 @@ function uploadView(value,expected,uploadBatchChunks){
  need(object(value)&&value.sha256===expected&&Number.isSafeInteger(value.bytes)&&value.bytes>0&&value.bytes<=MAX_PACKAGE&&Number.isSafeInteger(value.offset)&&value.offset>=0&&value.offset<=value.bytes&&typeof value.complete==='boolean','MCP_DELIVERY_UPLOAD_CHANGED');
  return {sha256:value.sha256,bytes:value.bytes,filename:value.filename,offset:value.offset,complete:value.complete,uploadBatchChunks};
 }
-function uploadBatchLimit(status){
+function uploadBatchLimit(status,maximum){
  const count=status.uploadBatchChunks;
- return Number.isSafeInteger(count)&&count>=1?Math.min(count,nativeCollectionDeliveryUploadBatchChunks):1;
+ return Number.isSafeInteger(count)&&count>=1?Math.min(count,maximum):1;
 }
 function checkedChunk(value){
  fields(value,['offset','base64','chunkSha256']);
@@ -100,8 +100,9 @@ function resultView(value,files){
    responseCount:value.manifest.rows.length,sourceFiles:value.manifest.source.files.length,files}: {})};
 }
 /** Trusted host registration binds paths. Remote operations select only that alias. */
-export function createNativeCollectionDelivery({manifest,isClosed=()=>false}={}){
+export function createNativeCollectionDelivery({manifest,isClosed=()=>false,maxUploadBatchChunks=1}={}){
  need(object(manifest),'MCP_DELIVERY_NATIVE_WORKSPACE_REQUIRED');
+ need(Number.isSafeInteger(maxUploadBatchChunks)&&maxUploadBatchChunks>=1&&maxUploadBatchChunks<=nativeCollectionDeliveryUploadBatchChunks,'MCP_DELIVERY_HOST_UPLOAD_LIMIT');
  const nativeRoot=absolute(manifest.directory),root=join(nativeRoot,'collection-delivery'),aliases=join(root,'workspaces');
  const reader=createSavedFileReader(),shutdown=new AbortController(),pending=new Set();let closed=false;
  const available=()=>need(!closed&&!isClosed(),'MCP_NATIVE_WORKSPACE_CLOSING');
@@ -246,7 +247,7 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false}={})
    if(prior)return result(operation==='received-file'?await receivedFile(record,prior,body):receivedView(prior,body));
   }
   const connection=await connect(record,context.signal),get=route=>request(connection,route,undefined,context.signal),post=(route,v)=>request(connection,route,v,context.signal);
-  const uploadBatchChunks=uploadBatchLimit(connection.status);
+  const uploadBatchChunks=uploadBatchLimit(connection.status,maxUploadBatchChunks);
   if(operation==='status')return result({mode:record.mode,source:publicRegistration(record).source,uploadBatchChunks,...page(connection.status.deliveries,body)});
   if(operation==='preview'||operation==='prepare'){
    const selected=originalRequest(body,record),directory=await savedDirectory(record,selected.id);
