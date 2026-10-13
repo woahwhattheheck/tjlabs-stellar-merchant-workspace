@@ -102,3 +102,54 @@ Record the actual reviewer, observations, source corrections and repeated action
 The additive executables are comparison/browser-receiving.mjs and comparison/foreground-receiving.mjs. Keep this guide as comparison/FOREGROUND_RECEIVING.md. Include all three in the maintained Research contribution/source closure; the selection already includes the full SF88 subtree.
 
 An equipped caller can import reviewComparisonBrowser({page,url,receipt,directory,reviewer,openReceived}) when it already owns the browser/listener lifetime. Its openReceived callback receives the private directory and complete portable file and returns the original receiving listener URL with an owned close method. Preserve the same operation and accepted request; do not start another backend course or replace its inspected source.
+
+## Original-output preparation desk: complete following phase
+
+This source edition extends the same original receiving operation with the complete original-output desk merged in PR 1790 at 961acf4896be9f64286de44bf9e86dd19f1b1a5d. Select the complete maintained Research application containing that desk, its source preparation and request verification routes, browser storage, static assets and all earlier comparison features before accepting the immutable foreground source tree. Copying only the course files onto an older application is insufficient.
+
+### Original fixture and meaning
+
+The input is the actual saved native receiving fixture already accepted by comparison/receive.mjs. The course verifies the original run, observation CSV and frozen report byte counts and SHA-256 values before using them. It transcribes the original two metrics into a quoted CRLF CSV and builds a complete preparation plan from the original case definition, source references and run identity. The literal defined value stays 1.2500. The undefined metric stays null with its original reason. Each original denominator object is retained as JSON text in the mapped denominator field. The original run JSON and observation CSV are also included as original attachments.
+
+This is an explicitly identified TRAINING_FIXTURE software receiving course. It does not claim a scientific model execution, new arithmetic, financial evaluation or customer result. The candidate and run limitations state that distinction, and the original runtime.actualExecution flag remains false.
+
+### Operated browser sequence
+
+Every new control is scoped to .output-desk. The original comparison forms also contain actor labels and similarly named buttons, so unscoped selectors are incorrect.
+
+1. Open New original output in the original case and the explicitly selected original protocol version. Preserve the exact new draft ID before continuing; if the response is lost, reconcile the saved browser inventory instead of preparing another draft.
+2. Use Select original output table, Add original workbooks, reports or logs, and Open existing complete preparation plan. Select the complete original files before importing the plan so the desk can verify every descriptor. Populate Operator identifier and Operator name, operate the Original numeric value mapping, and reopen saved browser work to verify complete durable inputs.
+3. Open the undefined row review, enter a named reason and exclude it. Prepare and review complete output must show all two source rows, one selected value and one explicitly reviewed exclusion. Download the whole review. This is a real temporary review operation, not an omitted row.
+4. Explicitly remove that exclusion and prepare again. The final review must show two source rows, one selected value, one selected undefined metric, zero exclusions and zero outstanding review rows. Verify the literal numeric string, undefined explanation, complete denominator strings and source identities.
+5. Download the complete mapping review, prepared raw run, complete preparation plan and complete output working copy. Reopen that working copy through Open complete output working copy on the SAME original workspace and dossier, then reload and select the retained draft. Inspect desktop and 390 px phone controls.
+6. Freeze and prepare candidate request. Retain its entire exact request before dispatch. Apply or receive original candidate while the course deliberately interrupts one observed accepted HTTP response. Recover the same request and original operation; never substitute a new request ID or silently change its basis.
+7. Prepare original output import, retain the entire exact run request, then Apply or receive original run. Reopen the complete working copy again after both original acceptances. The desk verifies the retained preparation and matches the accepted native hashes without changing its original saved basis.
+8. Inspect the accepted run on the original protocol. Download its complete raw run and every original artifact, and verify exact bytes and hashes. Download the displayed HTML, JSON and CSV report using the model/revision retained in each download journal, preserving the existing report-generation rules.
+9. Export the separately named complete desk continuation, receive it through the existing native portable receiver, reopen the same original dossier and protocol, and verify the accepted run, preparation and all original files. Inspect desktop and 390 px layouts and switch to the other protocol to verify that the accepted run has not leaked into its population.
+10. Open every final desk file literally: HTML in the browser, complete JSON/CSV and retained text source members in their recorded viewer, and the later portable generation in the received application. Captures document these actions; they do not substitute for the named reviewer's actual visual inspection.
+
+### Same-workspace working copies and complete native receiving
+
+The desk's browser working-copy import deliberately binds the original workspace ID and dossier ID. The course reopens it on that original workspace. The accepted dossier's full native portable export is the transfer used for cold receiving; the course does not change the browser working copy's workspace identity to make it import somewhere else.
+
+Each working-copy reopen phase retains the selected file identity and original browser commit before importing. It then records the actual durable successor and whether the UI return was observed. A lost return after a completed import is recovered by comparing the complete retained draft, source files, preparation, original basis, requests, attempts and receipts. Only volatile commit/update fields are excluded from that semantic equality check. Real later changes are rejected for review, not overwritten or silently rebound. This prevents a retry from creating a second working copy after the first import already completed.
+
+### Preserve the first export and every original request
+
+The earlier browser-complete-dossier.json portable generation remains unchanged. New accepted desk records travel in the distinct desk-complete-dossier.json generation under the separate output-desk-portable-export phase and its own first-completed-download journal. The cold listener selects that later descriptor. An interrupted earlier download is reconciled under its original intent; a newer complete export cannot replace its original bytes.
+
+All prepared requests are persisted in the original browser journal and retained as full files before POST. Dispatch intention, an actual HTTP response, deliberate response interruption and recovered original operation are distinct records. HTTP 201 is an accepted first response and HTTP 200 can be the original duplicate response. An intention written before dispatch does not prove the server received it. A durable original receipt permits recovery without inventing a duplicate result.
+
+If a different receiving installation already completed the earlier browser edition, this successor preserves its completed result and requires an explicit reviewed following source/course selection before adding the desk. It must not relabel that older completed result as proof that the desk operated. No earlier native/browser course has executed in the present R103D operation.
+
+### Retained outputs and inspection
+
+The additional files include the original fixture table/plan/attachments, both reviewed and final preparation reports, the prepared raw run and complete plan, pre-acceptance/frozen/post-acceptance working copies, exact candidate/run requests, accepted raw run and every artifact, report HTML/JSON/CSV, the distinct later portable export, and cold-received original members. Each descriptor is retained in the same browser progress/result with byte count and SHA-256. Screenshots use distinct attempt paths.
+
+The existing owner instruction applies to ALL ATTACHMENTS: literally view, play or use every final HTML, PDF, report, map, archive and extracted project as applicable. Open the complete exported dossier in the actual receiving application. Inspect both desktop and 390 px phone behavior, long identifiers, row coverage, source labels, protocol context, disabled controls and full downloads. Record the actual reviewer and findings before a rendered-ready claim.
+
+### Verification already performed versus pending execution
+
+Source validation parsed the complete browser successor. A controlled run of the actual production preparation/contracts functions using the original native fixture and byte/crypto/path/UTF-8 adapters verified both literal metrics, complete row coverage, named exclusion and exact restoration. A controlled run of the actual working-copy reopen function verified fresh import, a lost return after one completed import, and rejection of a changed complete draft. These are source-function checks, not a browser, native model or filesystem operating result.
+
+The sole original equipped-worker intake and operation remain unchanged. Actual full foreground execution, portable cold receiving and literal rendered inspection are still pending until an equipped receiver accepts that original operation.
