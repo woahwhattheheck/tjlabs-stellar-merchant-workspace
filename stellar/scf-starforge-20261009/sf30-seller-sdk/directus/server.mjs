@@ -168,6 +168,7 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
         if(u.pathname.startsWith('/api/agent/')){
           if(req.method==='POST'&&u.pathname.startsWith('/api/agent/requests/')&&nativeOperations.active)throw fault('DIRECTUS_NATIVE_RUNNING','Continue the original native request before new customer work.',409);
           if(u.pathname.startsWith('/api/agent/cancel/')){
+            if(pendingSelection)throw fault('OPERATOR_PROJECT_TRANSITION','Continue the original pending project selection or close the operator.',409);
             for(const [header,actual]of [['x-directus-operator',registry.id],['x-directus-instance',instanceId],['x-directus-project',registry.selected],['x-directus-workspace',currentWorkspaceId]])
               if(req.headers[header]!==actual)throw fault('DIRECTUS_AGENT_SCOPE','Bind the original operator, instance and project before cancelling.',409);
             await agent.routes(req,res,u.pathname,u);return;

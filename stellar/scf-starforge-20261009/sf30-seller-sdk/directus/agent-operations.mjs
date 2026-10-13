@@ -103,6 +103,7 @@ export class DirectusAgentOperations{
  constructor({environment=process.env}={}){this.jobs=new Map();this.closed=false;this.environment=environment;}
  get active(){return [...this.jobs.values()].filter(v=>v.state==='running').length;}
  start({workspace,request,connection,merchant,upload}){
+  request=structuredClone(request);connection=structuredClone(connection);
   if(this.closed)throw fault('DIRECTUS_AGENT_CLOSING','The original operator is closing.',409);
   const requestedId=agentId(request?.input?.operationId);
   if(this.active&&!workspace.meta(key(requestedId)))throw fault('DIRECTUS_AGENT_RUNNING','Continue the current saved customer operation before preparing another.',409);
@@ -111,11 +112,13 @@ export class DirectusAgentOperations{
   if(saved.workspaceDirectory!==workspace.directory)throw fault('DIRECTUS_AGENT_RELOCATED','Prepare new work in this received project; an incomplete original request retains its former runtime.',409);
   if(saved.connectionBaseUrl&&saved.connectionBaseUrl!==connection.baseUrl)throw fault('DIRECTUS_AGENT_CONNECTION_CHANGED','Resume against the same original Directus service.',409);
   if(this.active)throw fault('DIRECTUS_AGENT_RUNNING','Continue the current saved customer operation before starting another.',409);
-  const controller=new AbortController(),job={state:'running',controller};this.jobs.set(jobKey,job);
   const input=structuredClone(saved.request.input),action=saved.request.action;
+  const controller=new AbortController(),job={state:'running',controller};
   workspace.setMeta(key(id),{...saved,state:'running',updatedAt:new Date().toISOString()});
-  job.pending=(async()=>{
+  this.jobs.set(jobKey,job);
+  job.pending=Promise.resolve().then(async()=>{
    try{
+    controller.signal.throwIfAborted();
     let result;
     if(DIRECTUS_NATIVE_ACTIONS.includes(action)){const{expectedRevision,...nativeInput}=input;result=await performDirectusOperation({workspace,connection:{...connection},action,input:nativeInput,signal:controller.signal});}
     else if(['import-source','save-edition','review-edition','select-edition','compare-editions'].includes(action)){
@@ -141,11 +144,15 @@ export class DirectusAgentOperations{
      result=await receiveDirectusBuyer({directory:selected.directory,sessionDirectory,destination:join(workspace.directory,'project-runtime','agent','deliveries',id),includeSourceCaptures:input.includeSourceCaptures??false,workspace});
     }else throw fault('DIRECTUS_AGENT_ACTION','Choose an original customer operation.');
     const record={...saved,state:'complete',result,updatedAt:new Date().toISOString()};workspace.setMeta(key(id),record);job.state='complete';
-   }catch(error){job.state='failed';workspace.setMeta(key(id),{...saved,state:'resumable',error:{code:error.code??'DIRECTUS_AGENT_FAILURE',message:error.message},updatedAt:new Date().toISOString()});}
-  })();
+   }catch(error){
+    job.state='failed';job.error={code:error.code??'DIRECTUS_AGENT_FAILURE',message:error.message};
+    try{workspace.setMeta(key(id),{...saved,state:'resumable',error:job.error,updatedAt:new Date().toISOString()});}
+    catch(persistence){job.persistenceError={code:persistence.code??'DIRECTUS_AGENT_STATE_WRITE',message:persistence.message};}
+   }
+  });
   return this.describe(workspace,id);
  }
- describe(workspace,id){const saved=agentRequest(workspace,id),job=this.jobs.get(workspace.directory+'\n'+workspace.meta('workspace_id')+'\n'+id);return{...saved,state:job?.state==='running'?'running':saved.state==='running'?'resumable':saved.state};}
+ describe(workspace,id){const saved=agentRequest(workspace,id),job=this.jobs.get(workspace.directory+'\n'+workspace.meta('workspace_id')+'\n'+id);return{...saved,state:job?.state==='running'?'running':saved.state==='running'?'resumable':saved.state,...(job?.error?{error:job.error}:{}),...(job?.persistenceError?{persistenceError:job.persistenceError}:{})};}
  cancel(workspace,id){const saved=agentRequest(workspace,id),job=this.jobs.get(workspace.directory+'\n'+workspace.meta('workspace_id')+'\n'+id);job?.controller.abort();return{operationId:id,state:job?.state??saved.state,cancelRequested:Boolean(job&&job.state==='running')};}
  requestClose(){this.closed=true;for(const job of this.jobs.values())job.controller.abort();}
  async close(){this.requestClose();await Promise.allSettled([...this.jobs.values()].map(job=>job.pending));}

@@ -447,19 +447,33 @@ export async function receiveDirectusWorkspace({file,directory:root}={}){
   const identity={schema:'stellar-forge.directus-receiving.v1',...await hashFile(sourceFile)};
   directory(targetRoot);
   const receivingLease=acquireDatasetLease(targetRoot),finalFile=path.join(targetRoot,FILE);
-  let source,target;
+  let source,target,receivingLeaseClosed=false,cleanupAttempt=null;
+  // Keep every original receiving resource reachable until its own close succeeds.
+  // A failed database close retains the outer receiving lease for that same stage.
+  const cleanup={directory:targetRoot,async close(){
+    if(cleanupAttempt)return cleanupAttempt;
+    cleanupAttempt=(async()=>{
+      let failure;
+      if(target){try{await target.close();target=null;}catch(error){failure??=error;}}
+      if(source){try{source.close();source=null;}catch(error){failure??=error;}}
+      if(!target&&!source&&!receivingLeaseClosed){
+        try{await receivingLease.close();receivingLeaseClosed=true;}catch(error){failure??=error;}
+      }
+      if(failure)throw failure;
+    })();
+    try{return await cleanupAttempt;}finally{cleanupAttempt=null;}
+  }};
+  let receivingFailure;
   try{
     // The database becomes visible only after all original records and bytes validate.
     // A retry after publication reopens the same workspace, including later edits.
     if(fs.existsSync(finalFile)){
       regular(finalFile);
-      const existing=new DatabaseSync(finalFile,{readOnly:true});
-      try{
-        existing.exec('PRAGMA trusted_schema=OFF');
-        const row=existing.prepare('SELECT value FROM meta WHERE key=?').get('receiving_source');
-        if(!row||canonical(JSON.parse(row.value))!==canonical(identity))
-          throw fault('DIRECTUS_RECEIVING_EXISTS','This destination already contains a different original workspace.',409);
-      }finally{existing.close();}
+      source=new DatabaseSync(finalFile,{readOnly:true});
+      source.exec('PRAGMA trusted_schema=OFF');
+      const row=source.prepare('SELECT value FROM meta WHERE key=?').get('receiving_source');
+      if(!row||canonical(JSON.parse(row.value))!==canonical(identity))
+        throw fault('DIRECTUS_RECEIVING_EXISTS','This destination already contains a different original workspace.',409);
     }else{
       await writeExact(path.join(targetRoot,'receiving-intent.json'),json(identity));
       source=new DatabaseSync(sourceFile,{readOnly:true});
@@ -545,7 +559,14 @@ export async function receiveDirectusWorkspace({file,directory:root}={}){
       // Both names referred to the validated SQLite bytes. Retire only our own stage.
       await fsp.unlink(path.join(stage,FILE));
     }
-  }finally{try{await target?.close();}finally{try{source?.close();}finally{await receivingLease.close();}}}
+  }catch(error){receivingFailure=error;}
+  try{await cleanup.close();}
+  catch(secondary){
+    receivingFailure??=secondary;
+    Object.defineProperty(receivingFailure,'directusWorkspaceCleanup',{value:cleanup,configurable:true});
+    if(receivingFailure!==secondary)receivingFailure.cleanupFailure={code:secondary.code??'DIRECTUS_CLOSE_INCOMPLETE',message:secondary.message};
+  }
+  if(receivingFailure)throw receivingFailure;
   const received=await openDirectusWorkspace({directory:targetRoot});
   try{
     await restoreDirectusProjectRuntime(received);
