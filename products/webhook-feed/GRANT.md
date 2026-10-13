@@ -127,7 +127,7 @@ operation retain their original commercial treatment.
 
 ## Funded work and acceptance
 
-The original programme remains 400 prospective hours / USD38,000 /150 days from
+The original programme remains 400 prospective hours / USD 38,000 / 150 days from
 actual award acceptance. Its six package allocations cover both selected
 merchant installations together:
 
@@ -141,7 +141,7 @@ merchant installations together:
 | T3 production recovery and handover | 70 | 6,650 | Off-host retention, rotation, receiving-host restore, later reconciliation and independent Support case |
 | Total | 400 | 38,000 | Two maintainable independent merchant installations |
 
-T1 completes by day30, T2 by day90 and T3 by day150. T2 requires at least ten useful
+T1 completes by day 30, T2 by day 90 and T3 by day 150. T2 requires at least ten useful
 testnet purchases by two independent buyers in seven consecutive calendar days,
 both merchants represented and the same useful service successfully completed
 through both selected facilitators. T3 requires thirty useful purchases in
@@ -159,7 +159,7 @@ the installed commands used by that receiving engineer.
 
 The product contribution adopts the existing source ID
 webhook-customer-commissioning, keeping its original repository and path. Its
-current edition selects merged490c84f1b933c5a9733bb1e204c97cabefca6fbb.
+current edition selects merged commit 490c84f1b933c5a9733bb1e204c97cabefca6fbb.
 The same declaration adds the original subscriber, projector and installed
 Analysis guide at that merge, then the native programme, browser, coordinator,
 private HTTP integration and browser guide at
