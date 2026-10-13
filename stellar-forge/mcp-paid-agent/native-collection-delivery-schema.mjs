@@ -9,6 +9,9 @@ const request={id,collectionId:{type:'string',minLength:1,maxLength:80},expected
  title:{type:'string',minLength:1,maxLength:160},note:{type:'string',maxLength:10000},
  intentIds:{type:'array',minItems:1,maxItems:100,uniqueItems:true,items:{type:'string',pattern:'^[A-Za-z0-9._:-]{1,128}$'}},
  maxVerifyBytes:{type:'integer',minimum:0,maximum:1073741824},allowIncomplete:{type:'boolean'}};
+// Two complete 64 KiB parts, including the MCP envelope, fit the original 256 KiB request budget.
+export const nativeCollectionDeliveryUploadBatchChunks=2;
+const chunk={offset:{type:'integer',minimum:0},base64:{type:'string',maxLength:87384},chunkSha256:hash};
 const spec=(required,properties,description)=>({required,properties,description});
 export const nativeCollectionDeliveryOperations=Object.freeze({
  workspaces:spec([],page,'List original host-registered customer delivery senders and recipients.'),
@@ -27,6 +30,9 @@ export const nativeCollectionDeliveryOperations=Object.freeze({
  'upload-status':spec(['sha256'],{sha256:hash},'Read the contiguous original committed upload offset.'),
  'upload-chunk':spec(['sha256','offset','base64','chunkSha256'],{sha256:hash,offset:{type:'integer',minimum:0},
   base64:{type:'string',maxLength:87384},chunkSha256:hash},'Append one original bounded chunk. Exact committed chunk replay is read-only.'),
+ 'upload-chunks':spec(['sha256','chunks'],{sha256:hash,chunks:{type:'array',minItems:1,maxItems:nativeCollectionDeliveryUploadBatchChunks,
+  items:{type:'object',additionalProperties:false,required:Object.keys(chunk),properties:chunk}}},
+  'Append up to two contiguous original chunks within the existing request limit. Every committed replay must match its retained bytes.'),
  'upload-finish':spec(['sha256'],{sha256:hash},'Verify and seal the complete original package without receiving it.'),
  receive:spec(['sha256'],{sha256:hash},'Receive the same completed package into the original selected recipient. Reopen the same digest after uncertainty.'),
  received:spec(['sha256'],{sha256:hash,...page},'Verify the received original members and page their full inventory.'),
