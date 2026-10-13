@@ -93,6 +93,9 @@ export function canadaBuysReplayPolicy(tool, args = {}) {
   if (['bidder_create', 'bidder_update'].includes(request.name.slice(CANADABUYS_TOOL_PREFIX.length))
       && typeof request.arguments.commandId === 'string' && request.arguments.commandId.trim())
     return { replayable: true, basis: 'ORIGINAL_BIDDER_COMMAND_ID', commandId: request.arguments.commandId };
+  if (request.name === CANADABUYS_TOOL_PREFIX + 'bidder_intake')
+    return { replayable: true, basis: 'ORIGINAL_INTAKE_COMMAND_AND_INPUT_SHA256',
+      commandId: request.arguments.commandId, inputSha256: request.arguments.expectedSha256 };
   if (request.name === CANADABUYS_TOOL_PREFIX + 'capture' && request.arguments.captureId)
     return { replayable: true, basis: 'ORIGINAL_CAPTURE_ID', captureId: request.arguments.captureId };
   return { replayable: false, basis: 'RETAIN_ORIGINAL_OUTCOME_BEFORE_ANOTHER_MUTATION' };
@@ -196,6 +199,8 @@ export class CanadaBuysMerchantClient {
   createWorkshare(args, options) { return this.call('workshare_create', args, options); }
   updateWorkshare(args, options) { return this.call('workshare_update', args, options); }
   qualify(args, options) { return this.call('qualify', args, options); }
+  inspectEvidenceIntake(args, options) { return this.call('bidder_intake_inspect', args, options); }
+  intakeEvidence(args, options) { return this.call('bidder_intake', args, options); }
   bidderStatus(options) { return this.call('bidder_status', {}, options); }
   bidderList(args, options) { return this.call('bidder_list', args, options); }
   bidderRecord(args, options) { return this.call('bidder_record', args, options); }

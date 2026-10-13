@@ -10,9 +10,10 @@ import { inspectCanadaBuysPublication, downloadCanadaBuysPublication, verifyCana
 import { canadaBuysCustomerConnectionTemplate, normalizeCanadaBuysCustomerConnection,
   readCanadaBuysCustomerJson, bindCanadaBuysCustomerConnection, prepareCanadaBuysOperation,
   showCanadaBuysOperation, executeCanadaBuysOperation, adoptCanadaBuysPublication,
+  prepareCanadaBuysEvidenceIntake, refreshCanadaBuysEvidenceIntake, prepareCanadaBuysIntakeOperation,
   CANADABUYS_CUSTOMER_OPERATION_SCHEMA } from './canadabuys-operations.mjs';
 
-export const HELP = "CanadaBuys customer\n\n  canadabuys-customer tools [--out tools.json]\n  canadabuys-customer connection-template --out connection.json\n  canadabuys-customer bind --connection connection.json --out bound-connection.json\n  canadabuys-customer read --connection bound-connection.json --tool status\n    [--args request.json] [--all] [--out result.json]\n  canadabuys-customer plan --connection bound-connection.json --directory operation\n    --operation-id original-id --tool bidder_create --args request.json [--out plan.json]\n  canadabuys-customer show --directory operation [--out observation.json]\n  canadabuys-customer run --directory operation [--timeout-ms 120000] [--out response.json]\n  canadabuys-customer publication-selection --directory operation --out selection.json\n  canadabuys-customer adopt-publication --directory operation --evidence selection.json [--out response.json]\n  canadabuys-customer inspect-publication --connection bound-connection.json\n    --publication-id original-uuid [--out manifest-inspection.json]\n  canadabuys-customer download --connection bound-connection.json --publication-id original-uuid\n    --directory original-download [--manifest-sha256 reviewed-sha] [--chunk-size 196608] [--out receipt.json]\n  canadabuys-customer verify --directory original-download --publication-id original-uuid\n    [--manifest-sha256 reviewed-sha] [--out receipt.json]\n  canadabuys-customer receive --directory original-download --publication-id original-uuid\n    --workspace-directory original-customer-workspace --expected-revision 0\n    [--manifest-sha256 reviewed-sha] [--operator customer] [--title \"Procurement desk\"] [--out receipt.json]\n\nThe connection contains only the existing endpoint, environment variable name,\nconfigured alias and observed native workspace UUID. Keep JSON inputs private\n(mode 0600). bind opens that existing alias; it does not create host configuration.\n\nread permits only original read-only tools. --all completes one stable revision\nof a paged collection. Changes use plan/run: review the exact retained request,\nthen run it. The original commandId gives bidder creates/updates their native\ndeduplication. An unknown non-idempotent export remains unresolved until you\nselect its already-published UUID; publication adoption never exports again.\n\ndownload saves every original listed file and a complete client manifest.\nverify and receive work offline. receive uses the original native SQLite model\n(Node 24 or later) and retains conflicts and later local decisions. Linux flock\n(util-linux) owns the local operation/download lease. An output file is created\nexclusively; choose a new output path for a later observation. Disconnecting this\nclient closes its read leases, not the saved application or merchant.\n";
+export const HELP = "CanadaBuys customer\n\n  canadabuys-customer tools [--out tools.json]\n  canadabuys-customer connection-template --out connection.json\n  canadabuys-customer bind --connection connection.json --out bound-connection.json\n  canadabuys-customer read --connection bound-connection.json --tool status\n    [--args request.json] [--all] [--out result.json]\n  canadabuys-customer plan --connection bound-connection.json --directory operation\n    --operation-id original-id --tool bidder_create --args request.json [--out plan.json]\n  canadabuys-customer show --directory operation [--out observation.json]\n  canadabuys-customer run --directory operation [--timeout-ms 120000] [--out response.json]\n  canadabuys-customer publication-selection --directory operation --out selection.json\n  canadabuys-customer adopt-publication --directory operation --evidence selection.json [--out response.json]\n  canadabuys-customer inspect-publication --connection bound-connection.json\n    --publication-id original-uuid [--out manifest-inspection.json]\n  canadabuys-customer download --connection bound-connection.json --publication-id original-uuid\n    --directory original-download [--manifest-sha256 reviewed-sha] [--chunk-size 196608] [--out receipt.json]\n  canadabuys-customer verify --directory original-download --publication-id original-uuid\n    [--manifest-sha256 reviewed-sha] [--out receipt.json]\n  canadabuys-customer receive --directory original-download --publication-id original-uuid\n    --workspace-directory original-customer-workspace --expected-revision 0\n    [--manifest-sha256 reviewed-sha] [--operator customer] [--title \"Procurement desk\"] [--out receipt.json]\n  canadabuys-customer intake-template --out documents.json\n  canadabuys-customer prepare-intake --connection bound-connection.json\n    --manifest documents.json --request-out native-intake.json [--out preparation.json]\n  canadabuys-customer refresh-intake --connection bound-connection.json\n    --request native-intake.json --request-out native-intake-refreshed.json [--out refresh.json]\n  canadabuys-customer intake-plan --connection bound-connection.json --input declared-intake\n    --directory original-intake-operation --operation-id original-id\n    [--expected-sha256 inspected-file-sha] [--out plan.json]\n\nThe connection contains only the existing endpoint, environment variable name,\nconfigured alias and observed native workspace UUID. Keep JSON inputs private\n(mode 0600). bind opens that existing alias; it does not create host configuration.\n\nread permits only original read-only tools. --all completes one stable revision\nof a paged collection. Changes use plan/run: review the exact retained request,\nthen run it. The original commandId gives bidder creates/updates their native\ndeduplication. An unknown non-idempotent export remains unresolved until you\nselect its already-published UUID; publication adoption never exports again.\n\ndownload saves every original listed file and a complete client manifest.\nverify and receive work offline. receive uses the original native SQLite model\n(Node 24 or later) and retains conflicts and later local decisions. Linux flock\n(util-linux) owns the local operation/download lease. An output file is created\nexclusively; choose a new output path for a later observation. Disconnecting this\nclient closes its read leases, not the saved application or merchant.\n";
 const need = (value, message) => { if (!value) throw canadaBuysClientError('CLI', message); };
 const integer = (value, label, fallback) => {
   if (value === undefined) return fallback;
@@ -75,6 +76,35 @@ export async function main(argv = process.argv.slice(2), { environment = process
       'Use plan/run for the original effectful operation.');
     return connected(a.connection, environment, signal, async client => output(a.all
       ? await client.collect(name, args, { signal }) : await client.call(name, args, { signal }), a.out, stdout));
+  }
+  if (command === 'intake-template') {
+    const a = flags(remaining, ['out'], ['out']);
+    return output({ noticeId: 'REPLACE_WITH_ORIGINAL_NOTICE_ID', commandId: 'customer-documents-original-001',
+      capturedAt: 'REPLACE_WITH_ACTUAL_CAPTURE_TIMESTAMP', sourceUrl: '',
+      documents: [{ path: './rfp.pdf', title: 'Original request for proposals', kind: 'OTHER', language: 'en',
+        pageOrSection: '', notes: '' }] }, a.out, stdout);
+  }
+  if (command === 'prepare-intake') {
+    const a = flags(remaining, ['connection', 'manifest', 'request-out', 'out'],
+      ['connection', 'manifest', 'request-out']);
+    return connected(a.connection, environment, signal, async client => output(
+      await prepareCanadaBuysEvidenceIntake({ client, manifestPath: resolve(a.manifest),
+        outputPath: resolve(a['request-out']), signal }), a.out, stdout));
+  }
+  if (command === 'refresh-intake') {
+    const a = flags(remaining, ['connection', 'request', 'request-out', 'out'],
+      ['connection', 'request', 'request-out']);
+    return connected(a.connection, environment, signal, async client => output(
+      await refreshCanadaBuysEvidenceIntake({ client, requestPath: resolve(a.request),
+        outputPath: resolve(a['request-out']), signal }), a.out, stdout));
+  }
+  if (command === 'intake-plan') {
+    const a = flags(remaining, ['connection', 'input', 'directory', 'operation-id', 'expected-sha256', 'out'],
+      ['connection', 'input', 'directory', 'operation-id']);
+    return connected(a.connection, environment, signal, async (client, connection) => output(
+      await prepareCanadaBuysIntakeOperation({ client, connection, input: a.input,
+        directory: resolve(a.directory), operationId: a['operation-id'],
+        expectedSha256: a['expected-sha256'], signal }), a.out, stdout));
   }
   if (command === 'plan') {
     const a = flags(remaining, ['connection', 'directory', 'operation-id', 'tool', 'args', 'out'],

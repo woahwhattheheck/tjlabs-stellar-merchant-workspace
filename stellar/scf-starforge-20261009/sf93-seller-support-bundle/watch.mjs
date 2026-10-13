@@ -8,8 +8,10 @@ import {prepareSlackRequest} from './notifications-slack.mjs';
 import {collectObjectObservation} from './object-source.mjs';
 import {collectCkanObservation} from './ckan-source.mjs';
 import {collectOAuthObservation} from './oauth-source.mjs';
+import {collectX402Observation} from './x402-source.mjs';
 
 async function collectMerchant(merchant,signal,environment) {
+  if(merchant.x402)return collectX402Observation(merchant,signal,environment);
   if(merchant.object)return collectObjectObservation(merchant,signal);
   if(merchant.ckan)return collectCkanObservation(merchant,signal);
   if(merchant.oauth)return collectOAuthObservation(merchant,signal,environment);
