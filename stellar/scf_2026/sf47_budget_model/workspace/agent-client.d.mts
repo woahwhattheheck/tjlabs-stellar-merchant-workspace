@@ -3784,6 +3784,96 @@ export interface GrantReadSelection {
 export type GrantOtherReadView =
   | 'plans' | 'plan' | 'plan-history' | 'cases' | 'case-report' | 'case-history' | 'expenses'
   | 'forecasts' | 'forecast' | 'portfolios' | 'portfolio' | 'review' | 'completion';
+/** One exact saved native check attributed to an original tranche work package. */
+export interface CompletionInstallationSelection {
+  costId: string;
+  installationId: string;
+  revision: number;
+  sha256: string;
+  checkId: string;
+  requirePaidPurchase: boolean;
+}
+export type GrantCompletionInstallationSelection = CompletionInstallationSelection;
+export interface GrantCompletionAssignment {
+  costId: string;
+  ownerIds: string[];
+  startDate: GrantCivilDate | null;
+  endDate: GrantCivilDate | null;
+  state: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETE';
+  completedOn: GrantCivilDate | null;
+  workIds: string[];
+  deploymentIds: string[];
+  sourceIds: string[];
+  note: string;
+  completionNote: string;
+}
+/** Complete original assignments; selected evidence does not mark a package complete. */
+export interface GrantCompletionInputs extends GrantObject {
+  tranche: 1 | 2 | 3;
+  items: GrantCompletionAssignment[];
+  note: string;
+  installationSelections?: CompletionInstallationSelection[];
+}
+export type CompletionInputs = GrantCompletionInputs;
+export interface GrantCompletionInstallationEvidence {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  selections: CompletionInstallationSelection[];
+  /** Full immutable native editions, excluding their current display metadata. */
+  installations: Array<Omit<GrantInstallationEdition, 'current'>>;
+  sha256: string;
+}
+export interface GrantCompletionInstallationReport {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  evidence: GrantCompletionInstallationEvidence;
+  asOfDate: GrantCivilDate;
+  rows: Array<{
+    selection: CompletionInstallationSelection;
+    installationName: string;
+    check: GrantInstallationCheck;
+    sourceIds: string[];
+    /** Complete original native purchase observations, retaining decimal strings. */
+    purchases: GrantObject[];
+    usefulPaidPurchaseIds: string[];
+    currentEdition: GrantInstallationRef | null;
+  }>;
+  summary: {
+    selectedChecks: number;
+    acceptedChecks: number;
+    notApplicableChecks: number;
+    distinctUsefulPaidPurchases: number;
+    purchaseObservations: GrantObject[];
+    /** Observations do not imply independent adoption or issuer acceptance. */
+    meaning: string;
+  };
+  issues: Array<{code: string; costId: string; installationId: string; checkId: string; message: string}>;
+  ready: boolean;
+}
+export interface GrantCompletionInstallationCatalogue {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  caseId: string;
+  version: number;
+  tranche: 1 | 2 | 3;
+  installations: Array<GrantInstallationRef & {
+    name: string; stage: GrantInstallationStage; costIds: string[]; checks: GrantInstallationCheck[];
+  }>;
+}
+export interface GrantCompletionInstallationTransfer {
+  schema: 'stellar-forge.sf47-completion-installations.v1';
+  source: {caseId: string; version: number; planContentSha256: string};
+  originalInputs: GrantCompletionInputs;
+  proposedInputs: GrantCompletionInputs;
+  suggestions: Array<{
+    costId: string;
+    completedOn: GrantCivilDate | null;
+    completionNote: string;
+    acceptanceRecorded: boolean;
+    excludedLinks: Array<{kind: 'work' | 'deployment'; id: string; reason: string}>;
+    meaning: string;
+  }>;
+  report: GrantCompletionInstallationReport;
+  previewSha256: string;
+}
+
 /** A saved correction assessment is not an issuer acceptance or a deadline extension. */
 export type GrantCompletionCorrectionState = 'OPEN' | 'IN_PROGRESS' | 'ADDRESSED' | 'NOT_APPLICABLE';
 export interface GrantCompletionCorrectionFinding {
@@ -4056,6 +4146,9 @@ export class GrantWorkspaceClient {
   completionCorrectionsSeed<T = GrantCompletionCorrectionsSeed>(caseId: string, expectedVersion: number, outcomeId: string, reviewId?: string): Promise<GrantJsonResponse<T>>;
   completionCorrectionsPreview<T = GrantCompletionCorrectionsPreview>(caseId: string, expectedVersion: number, inputs: GrantCompletionCorrectionInputs, asOfDate?: GrantCivilDate): Promise<GrantJsonResponse<T>>;
   completionCorrectionsSave<T = GrantCompletionCorrectionsReceipt>(caseId: string, body: GrantCompletionCorrectionsSaveInput): Promise<GrantJsonResponse<T>>;
+  completionInstallations<T = GrantCompletionInstallationCatalogue>(caseId: string, body: {expectedVersion: number; tranche: 1 | 2 | 3}): Promise<GrantJsonResponse<T>>;
+  completionInstallationsPreview<T = GrantCompletionInstallationTransfer>(caseId: string, body: {expectedVersion: number; inputs: GrantCompletionInputs; asOfDate?: GrantCivilDate}): Promise<GrantJsonResponse<T>>;
+  completionSave<T = GrantObject>(caseId: string, body: GrantOperationRequest & {inputs: GrantCompletionInputs}): Promise<GrantJsonResponse<T>>;
   completionSeed<T = GrantObject>(caseId: string, expectedVersion: number, tranche: 1 | 2 | 3): Promise<GrantJsonResponse<T>>;
   completionPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantObject & {correctionReviewId?: string}): Promise<GrantJsonResponse<T>>;
   completionSave<T = GrantObject>(caseId: string, body: GrantOperationRequest & { inputs: GrantObject }): Promise<GrantJsonResponse<T>>;
