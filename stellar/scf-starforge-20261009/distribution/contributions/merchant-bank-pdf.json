@@ -28,7 +28,9 @@
     "stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-client.d.mts",
     "stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-cli.mjs",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/REVIEW.md",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-source.json"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-source.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-editor.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-editor.css"
   ],
   "exports": {
     "./merchant/bank-pdf/model": {

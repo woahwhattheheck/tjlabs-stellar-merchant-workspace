@@ -43,3 +43,7 @@ records, plus explicit recovery of saved competing drafts. The installed
 workflow. Financial preview and receiving continue through the original PDF/Bank
 actions. Read [the complete review guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/REVIEW.md) for the original
 receiving course, capacities and exact outgoing inspection requirements.
+
+### Guided recipient interpretation
+
+The named PDF review includes labeled account, table-region, transaction, balance and page-coverage forms. Retain a complete proposal, then apply it through the original reviewer/reason controls. Exact source geometry, printed values, raw advanced edits, form drafts and author return choices remain in the same complete record. Historical source projects stay readable; current exports include the complete guided editor and retain the received original source separately. See the existing [review operating guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/REVIEW.md) for installed, offline and recovery flows.

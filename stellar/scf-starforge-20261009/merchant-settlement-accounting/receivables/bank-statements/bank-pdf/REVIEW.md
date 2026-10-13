@@ -82,6 +82,8 @@ variable; the review issue, working copy, return and author decision never acqui
 a password field. The full source bytes and interpretation are confidential
 financial material. Keep them in the intended private recipient channel.
 
+The installed retained-operation CLI uses Linux and the existing process-held `flock` lease; ensure `flock` is available in that original runtime. The pure domain/client and browser do not acquire that filesystem lease.
+
 The CLI requires existing private parent directories (0700) and private input
 files (0600). It rejects symlinked or changing source files. Outputs are
 create-only. Use a new filename for each new recipient edition; preserve earlier
@@ -150,7 +152,7 @@ copy and decision through Files and recovery before retaining a CLI application.
 Do not strip fields from the whole desk record to make a different format.
 
 The offline HTML contains the exact original review modules, stylesheet, page and
-guide through the full eight-source manifest, together with the whole selected
+guide through the full ten-source manifest, together with the whole selected
 desk. It displays the embedded original PDF through the browser's native document
 viewer alongside complete original text and geometry. If embedded display is
 unavailable, open or download that same original PDF. The installed PDF desk
@@ -652,3 +654,51 @@ Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/arch
 ### Literal attachment clarification
 
 ALL ATTACHMENTS count. Literally open, view, play and use the final delivered HTML, PDF, report, slides, spreadsheet, map, image, video, audio, archive and project as its recipient would. For archives, extract and open the actual contained deliverables and working project. Tests, checklists and screenshots merely captured are not substitutes. Use available high-quality generative media models and natural voice generation/TTS for videos; avoid robotic default voices. Watch and listen to the final export for pronunciation, pacing, timing and audio alignment. Keep building and fixing; inspection is not review/test performance theatre.
+
+## Guided interpretation forms and complete source editions
+
+The Source and interpretation tab has labeled forms for accounts, table regions,
+transaction rows, balances and page coverage. Choose an existing record or New.
+Existing records preserve their complete original fields and source references.
+New proposals receive one stable local identity. Money stays exact decimal text;
+page rectangles and column edges use the original displayed-page coordinates.
+Select original text items beside their page geometry for transaction and balance
+evidence. Region changes continue to invalidate affected row reviews through the
+original PDF engine.
+
+Field entry is a local form draft. **Retain proposed edit** saves its complete
+action/value into the same advanced draft used by the original workflow. Name the
+reviewer, enter a reason and choose **Apply interpretation** to run the original
+edit engine. Retaining a form alone does not change an interpretation. A recipient edition cannot be saved or submitted while an active guided form has unapplied changes; retain and apply it, or deliberately preserve/discard it first. The complete
+advanced JSON remains available in its expandable section; while that draft is
+unapplied, it remains authoritative and guided edits are disabled.
+
+Whole guided form snapshots are saved with the same review's original PDF,
+extraction, working revision, selection, source/raw values and browser CAS state.
+Reload reopens that form. Explicit switching, discard and successful retention
+keep the former complete snapshot under Files and recovery → Retained guided form
+drafts. Download or reopen an earlier form there. A form from another revision
+stays visible and downloadable, but cannot apply until the reviewer explicitly
+starts from the current selection. A storage conflict does not silently rebase it.
+
+The current complete source manifest contains ten files: the original eight plus
+review-editor.mjs and review-editor.css. Complete historical eight-file projects
+remain readable. Opening a project adopts its original full working record and
+retains its complete incoming source manifest as a separately downloadable input,
+with the original project's name, byte count and SHA-256 in the receiving record.
+It does not replace the running application's source selection. Hosted exports
+use the installed current complete manifest; an offline HTML edition uses its
+own embedded complete manifest. Files and recovery offers the received original
+source separately, while Download source files returns the selected running
+edition. Neither edition is relabeled as the other.
+
+The same original browser companion now operates the guided account form, reloads
+its full local draft, retains its complete advanced proposal, and explicitly
+preserves/discards that unapplied proposal before the supplied original engine
+course. It does not create a new account or add invented financial facts.
+The source-only six-edit mapping course covers all five collections; actual
+recipient readiness still requires opening the exact outgoing version and
+operating every important form with the original receiver. Inspect both desktop
+and narrow screens, original-page evidence, blocked-storage recovery, exported
+form JSON, complete project and offline reopening under the full owner instruction
+above. No additional native issuer is introduced.
