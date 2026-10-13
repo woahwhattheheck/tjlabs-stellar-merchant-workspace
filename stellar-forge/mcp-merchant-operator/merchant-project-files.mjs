@@ -115,3 +115,5 @@ export class MerchantProjectFiles {
   release(readId){return this.#reads.release(this.#definition.selectionSha256,readId);}
   close(){return this.#reads.close();}
 }
+
+export {save as retainMerchantArtifactBytes,sync as syncMerchantArtifactDirectory};
