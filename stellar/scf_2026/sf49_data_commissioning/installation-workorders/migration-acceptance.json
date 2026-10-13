@@ -119,6 +119,14 @@
     {
       "path": "products/migration-acceptance/workbench/vendor/dlt/runtime/runtime.mjs",
       "blob": "d4bbd77230c7a4d4d07b9bd18211feb19a9149dd"
+    },
+    {
+      "path": "products/migration-acceptance/receiving.mjs",
+      "blob": "b87b0d23197b6fb70a0fdf8248355412efdb151a"
+    },
+    {
+      "path": "products/migration-acceptance/RECEIVING.md",
+      "blob": "e03621a6b6fc332c263f49dd3e1d529dee62b590"
     }
   ]
 }
