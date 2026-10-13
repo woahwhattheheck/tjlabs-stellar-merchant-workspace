@@ -1,9 +1,9 @@
 {
   "schema": "stellar-forge.grant-nine-answer-source-map.v1",
-  "edition": "2026-10-13-commercial-adoption-and-buyer-course",
+  "edition": "2026-10-13-commercial-adoption-and-buyer-course-cumulative-676",
   "scope": "Complete following reviewer working edition using the existing four-role source package and original nine saved-answer IDs.",
-  "sourceCommit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
-  "sourceRows": 523,
+  "sourceCommit": "d5fc53e286ba023f48708be97dfc7c645a7ee8da",
+  "sourceRows": 676,
   "answer": {
     "path": "stellar-forge/developer-site/dist/grant-data/application-reviewer.md",
     "bytes": 22348,
@@ -20,23 +20,23 @@
     {
       "role": "application",
       "path": "stellar-forge/developer-site/dist/grant-data/application.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/application.md",
-      "gitBlob": "15c2a09c49fc72e63179e17211ff7395c756955d",
-      "bytes": 47684,
-      "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37"
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d5fc53e286ba023f48708be97dfc7c645a7ee8da/stellar-forge/developer-site/dist/grant-data/application.md",
+      "gitBlob": "9effe01efa36863f97c7c079d5799a37e998ef3a",
+      "bytes": 50459,
+      "sha256": "8b9e86948815c342e5faeb745963fabdbd67c6aaffb1478ef516a995eb50ddbf"
     },
     {
       "role": "source-index",
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "gitBlob": "871dc34934f3493ca96fde8210d0e1a80aebb62f",
-      "bytes": 650196,
-      "sha256": "a6439b66f02f83ebe50521ce506ad0b9d1167786d42b1609b810d197538f2412"
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d5fc53e286ba023f48708be97dfc7c645a7ee8da/stellar-forge/developer-site/dist/grant-data/source-index.json",
+      "gitBlob": "d259827ec1956a640ca9798d64d9bbae17858295",
+      "bytes": 862892,
+      "sha256": "2ea50726ca3f13912cdedbaf6f21c426510f6d6c895dc8147f77256ac43dabd6"
     },
     {
       "role": "budget",
       "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/budget.csv",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d5fc53e286ba023f48708be97dfc7c645a7ee8da/stellar-forge/developer-site/dist/grant-data/budget.csv",
       "gitBlob": "c62afa352e881c2cf81fe937649fe63fea3ceab5",
       "bytes": 597,
       "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00"
@@ -44,10 +44,10 @@
     {
       "role": "product-and-finance",
       "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e438c436fcad65c816866074bb56dd6d1b96d97e/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "gitBlob": "9adc345d8a59849d2586898f7a6f0d40454d0b18",
-      "bytes": 997464,
-      "sha256": "00eb69e4b7212587df452e5dd2a170560091517b5b08b5d8c7cb9117ff54084e"
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d5fc53e286ba023f48708be97dfc7c645a7ee8da/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "gitBlob": "8f783789e450a13c1faf1c841ea3631373f5cbf2",
+      "bytes": 1132085,
+      "sha256": "f571b2a58e6e12f97160f7172e59a7ca928e12e99cb507272bcd4fb556427f1b"
     }
   ],
   "previousReviewer": {
@@ -294,7 +294,28 @@
     "Every current original sources[] row is retained exactly by the maintained composer.",
     "The same nine answer identities map to current saved edits through explicit Source editions receiving.",
     "No native customer case, issuer form, purchase, payment, award or eligibility decision is created by this editorial publication.",
-    "A later canonical union must be composed from its complete current four-role tuple; it must not reuse this dated523-row source as if it contained a later chapter."
+    "A following canonical union must be composed from its complete current four-role tuple; this dated 676-row source is retained as its own immutable receiving edition."
   ],
-  "compositionObservation": "Current e438c436 source projection contains 523 source entries and the complete 997,464-byte companion after removal of private Page links. The pending Saved projects canonical union remains a following edition; its installed application/142-route manifest are preserved by this five-file publication."
+  "compositionObservation": "The original publisher's immutable d5fc53e286ba023f48708be97dfc7c645a7ee8da edition contains 676 source records and 80 companion chapters. This complete reviewer refresh preserves every record and all other canonical index fields except the existing application/narrative_source/submission_workspace routing. The 22,348-byte approved answers and 9,416-byte buyer course remain unchanged. The canonical 50,459-byte application adds merchant invoice intake and the separately operated HTTP/MCP and invoice-wallet examples, while financing citations now point to immutable public Git source. These current observations remain in the complete retained canonical application and 1,132,085-byte companion; no funding request, price, cash assumption or independent-adoption target changed.",
+  "cumulativeRefresh": {
+    "sourceCommit": "d5fc53e286ba023f48708be97dfc7c645a7ee8da",
+    "previousConsumerMerge": "145b2972ebf12df7ca07081b09f223b0c92750c9",
+    "previousSourceCommit": "e438c436fcad65c816866074bb56dd6d1b96d97e",
+    "previousSourceRows": 523,
+    "sourceRows": 676,
+    "chapters": 80,
+    "originalApplicationChanges": [
+      "Merchant invoice intake description.",
+      "Completed HTTP/MCP eight-workflow and invoice-wallet seven-workflow observations, with controlled RPC and official XDR boundaries retained.",
+      "Financing-basis links use immutable public Git source."
+    ],
+    "editorialDecision": "Retain the approved concise answers and buyer course exactly. The full canonical originals and new operation records are available inside this complete selected source package.",
+    "package": {
+      "path": "stellar-forge/developer-site/dist/grant-data/reviewer-working-source.json",
+      "bytes": 2790536,
+      "sha256": "4a03882cbca84fe1c6cb621c9c538f05786f11adfe0ff4442149ff31e04514f0",
+      "bundleId": "4309a04e5c2a7dc97f2291bc31da967ef6c2d2de25476e9a52c622859adeb0ed"
+    },
+    "receiving": "Use the unchanged Source editions compare/receive flow for this exact bundle. Existing manual answers, issuer fields, reviews, operating plans and native history remain with the original operator."
+  }
 }
