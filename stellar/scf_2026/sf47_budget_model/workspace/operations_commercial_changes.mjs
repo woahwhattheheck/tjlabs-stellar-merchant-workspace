@@ -6,6 +6,39 @@ const day=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffse
 const download=(blob,name)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);};
 const human=value=>String(value||'').toLowerCase().replaceAll('_',' ').replace(/^./,s=>s.toUpperCase());
 
+/** Resolve only the exact retained action from the authoritative saved journal. */
+export function reconcileCommercialChangeAction(original,row){
+  if(!original||!row||original.changeId!==row.id||!original.body||
+      original.body.expectedProposalSha256!==row.proposalSha256||
+      String(original.body.actor||'').trim()!==row.proposal?.actor||!Array.isArray(row.commands))return null;
+  const commands=row.commands,proposal=row.proposal;
+  if(commands.some(c=>c.state==='PENDING'))return null;
+  if(original.action==='apply'){
+    const steps=proposal.steps;
+    if(!Array.isArray(steps)||!commands.length||commands.length>steps.length||
+       commands.some((c,i)=>c.index!==i||c.action!==steps[i].action||c.requestId!==row.id+'-step-'+(i+1)))return null;
+    if(row.state==='APPLIED'&&commands.length===steps.length&&commands.every(c=>c.state==='ACKNOWLEDGED'))
+      return {outcome:'ACKNOWLEDGED',commands:copy(commands)};
+    // A partially applied replacement must continue its remaining original step.
+    if(['PREPARED','RUNNING'].includes(row.state)&&commands.every(c=>c.state==='REJECTED'&&c.lastError?.code))
+      return {outcome:'REJECTED',commands:copy(commands)};
+  }
+  if(original.action==='issue'){
+    const command=commands.find(c=>c.action==='issue');
+    if(!command||command.requestId!==row.id+'-issue'||command.body?.invoiceId!==row.activeInvoiceId||
+       command.review?.issuePreviewSha256!==original.body.expectedIssuePreviewSha256||
+       String(command.body?.creditDecisionId||'')!==String(original.body.creditDecisionId||'').trim())return null;
+    if(command.state==='ACKNOWLEDGED'||command.state==='REJECTED'&&command.lastError?.code)
+      return {outcome:command.state,commands:[copy(command)]};
+  }
+  if(original.action==='cancel'&&row.state==='CANCELLED'){
+    const record=row.history?.find(h=>h.action==='cancelled'&&h.requestId===original.body.requestId&&
+      h.actor===String(original.body.actor||'').trim());
+    if(record)return {outcome:'ACKNOWLEDGED',commands:[],cancellation:copy(record)};
+  }
+  return null;
+}
+
 /** Source-backed changes remain within the original case and native account. */
 export function mountCommercialChanges({container,current,billing,milestone,api,saveApi,mutationId,recordingActor,staffContext,onClose,onSources}){
   if(!document.querySelector('link[data-commercial-changes-style]')){
@@ -55,6 +88,17 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
     if(!expected||op.endpoint!==expected)throw Error('This action belongs to another customer or milestone.');
     assertStaffRequestActor(op.body,context);return op;
   }
+  function reconcilePending(row){
+    const original=session.pending,resolution=reconcileCommercialChangeAction(original,row);
+    if(!resolution)return false;
+    validateAction(original);
+    const entry={...copy(original),resolution:{...resolution,changeId:row.id,proposalSha256:row.proposalSha256,receivedAt:new Date().toISOString()}};
+    const before=session;
+    session={...copy(session),pending:null,lastRequest:entry,resolvedActions:[...(session.resolvedActions||[]),entry]};
+    try{persist(true);}catch(error){session=before;throw error;}
+    state.issue=null;state.review=null;
+    return true;
+  }
   async function sendOriginal(op=null){
     if(op){if(session.pending)throw Error('Resume the original retained action first.');validateAction(op);session.pending={...copy(op),createdAt:new Date().toISOString()};}
     const original=validateAction(session.pending);persist(true);
@@ -69,7 +113,11 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
       if(original.action==='prepare'&&[400,409,413,415,422].includes(e.status)&&e.code!=='REQUEST_CONFLICT'){
         session.lastRequest=copy(original);session.pending=null;
       }
-      persist();throw e;
+      persist();
+      if(original.changeId){try{reconcilePending(await api(selectedPath(original.changeId)));}catch(recoveryError){
+        original.recoveryError={message:recoveryError.message||String(recoveryError)};persist();
+      }}
+      throw e;
     }
   }
   async function refresh(wanted=session.selected){
@@ -77,6 +125,10 @@ export function mountCommercialChanges({container,current,billing,milestone,api,
     state.current=program;state.items=listing.items;state.head=listing.previousChangeId;
     const found=state.items.find(x=>x.id===wanted)||state.items.at(-1);
     session.selected=found?.id||null;state.row=found?await api(selectedPath(found.id)):null;
+    if(session.pending?.changeId){
+      const journal=state.row?.id===session.pending.changeId?state.row:await api(selectedPath(session.pending.changeId));
+      reconcilePending(journal);
+    }
     if(state.row){const fresh=await saveApi(selectedPath(state.row.id)+'/refresh',{});state.row=fresh;}
   }
   function snapshot(){return {schema:SCHEMA,caseId:current.program.id,preparedId:billing.id,milestoneId:milestone.milestoneId,session:copy(session)};}

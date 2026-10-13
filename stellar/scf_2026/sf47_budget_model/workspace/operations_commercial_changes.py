@@ -94,6 +94,18 @@ def _optional(value, label, limit):
     return value
 
 
+def _native_optional(value, label, limit):
+    """Match original Receivables field(): ECMAScript trim and UTF-16 length."""
+    if not isinstance(value, str) or re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", value):
+        _fail(label + " must use the original native text contract.", status=422)
+    prepared = value.strip("\u0009\u000a\u000b\u000c\u000d\u0020\u00a0\u1680"
+                           "\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"
+                           "\u2028\u2029\u202f\u205f\u3000\ufeff")
+    if len(prepared.encode("utf-16-le", "surrogatepass")) // 2 > limit:
+        _fail(label + " must be text within its published native limit.", status=422)
+    return prepared
+
+
 def _compile_steps(proposal):
     """Rebuild exact native requests from the retained reviewed source."""
     detail = _object(proposal.get("nativeBefore"), "Original native detail")
@@ -175,9 +187,14 @@ def _assert_changed_document(proposal, document):
     if expected is None:
         _fail("The change has no reviewed draft.")
     for key in ("customerId", "currency", "issueDate", "dueDate", "purchaseOrder", "note", "sourceReference", "replacesId"):
-        if document.get(key) != expected.get(key):
+        native_expected = expected.get(key)
+        if key in ("purchaseOrder", "note"):
+            # Compare the native rendition of retained earlier raw requests without
+            # changing their proposal, request body, fingerprint or original hash.
+            native_expected = _native_optional(native_expected or "", key, 300 if key == "purchaseOrder" else 6000)
+        if document.get(key) != native_expected:
             # Native normalizes omitted optional text/links to null or empty.
-            if key not in ("purchaseOrder", "note", "replacesId") or (document.get(key) or "") != (expected.get(key) or ""):
+            if key not in ("purchaseOrder", "note", "replacesId") or (document.get(key) or "") != (native_expected or ""):
                 _fail("The changed draft differs from its reviewed commercial terms.")
     if document.get("customer", {}).get("id") != proposal["customerId"]:
         _fail("The changed invoice identifies another customer.")
@@ -490,8 +507,8 @@ class CommercialChanges:
         proposal.update({"targetAmount": target, "description": label,
                          "issueDate": issue_date, "dueDate": due_date,
                          "effectiveDate": effective_date, "resolution": resolution,
-                         "purchaseOrder": _optional(body.get("purchaseOrder", draft.get("purchaseOrder", "")), "Purchase order", 300),
-                         "note": _optional(body.get("note", draft.get("note", "")), "Invoice note", 6000),
+                         "purchaseOrder": _native_optional(body.get("purchaseOrder", draft.get("purchaseOrder", "")), "Purchase order", 300),
+                         "note": _native_optional(body.get("note", draft.get("note", "")), "Invoice note", 6000),
                          "nativeBefore": detail, "nativeBeforeSha256": digest(detail),
                          "nativeFingerprint": _fingerprint(detail)})
         steps = _compile_steps(proposal)
@@ -631,7 +648,7 @@ class CommercialChanges:
             self._assert_head(row)
             if body.get("expectedProposalSha256") != row["proposalSha256"]:
                 _fail("Use this change's complete original reviewed proposal.")
-            if body.get("actor") != row["proposal"]["actor"]:
+            if _required(body.get("actor"), "Recording operator", 300) != row["proposal"]["actor"]:
                 _fail("Resume with the original recording operator.", "COMMERCIAL_CHANGE_ACTOR")
             if row["state"] == "CANCELLED":
                 _fail("This prepared change was cancelled.")
@@ -745,7 +762,7 @@ class CommercialChanges:
         with self.workspace.mutex:
             row = self._read(program_id, ident)
             self._assert_head(row)
-            if body.get("actor") != row["proposal"]["actor"]:
+            if _required(body.get("actor"), "Recording operator", 300) != row["proposal"]["actor"]:
                 _fail("Use the original recording operator.", "COMMERCIAL_CHANGE_ACTOR")
             existing = next((c for c in row["commands"] if c["action"] == "issue"), None)
         if existing:
