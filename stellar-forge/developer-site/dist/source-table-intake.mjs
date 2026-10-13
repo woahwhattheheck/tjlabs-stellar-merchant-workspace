@@ -5,6 +5,7 @@ export const DOCUMENT_INTAKE_PACKET_SCHEMA = 'stellar-forge.document-table-intak
 const clone = value => JSON.parse(JSON.stringify(value));
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const canonical = value => value === null || typeof value !== 'object' ? JSON.stringify(value) : Array.isArray(value) ? '[' + value.map(canonical).join(',') + ']' : '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + canonical(value[key])).join(',') + '}';
 const fail = message => { throw Object.assign(new Error(message), { code: 'DOCUMENT_INTAKE_INVALID' }); };
 const need = (value, message) => { if (!value) fail(message); };
 const FIELD_LIMITS = Object.freeze({headerRows:1048576,dataRows:1048576,columns:16384,exclusions:4194304,mergedCells:20,whitespace:20,filename:500,target:300});
@@ -98,7 +99,7 @@ export async function receiveDocumentIntakePacket(current, originals, packet) {
   for(const source of packet.sources) {
     await validateDocumentTableSource(source);
     const found=sources.find(row=>row.id===source.id);
-    need(!found || same(found,source),'A retained extraction identity describes different source content.');
+    need(!found || canonical(found)===canonical(source),'A retained extraction identity describes different source content.');
     if(!found)sources.push(clone(source));
   }
   let intake=clone(current);
