@@ -278,6 +278,7 @@ class BrowserReceiving{
     await this.page.locator('[data-source-new-title]').waitFor({state:'visible'});
     await this.idle();
     if(this.report.browserDraftId){
+      await this.recoverWorkingCopy();
       await this.recoverPending();
       const selected=this.page.locator('[data-source-action="draft-open"][data-id="'+this.report.browserDraftId+'"]');
       if(await selected.count()&&await selected.getAttribute('aria-current')!=='page'){await selected.click();await this.idle();}
@@ -296,6 +297,72 @@ class BrowserReceiving{
   async tab(name){await this.click('tab','[data-tab="'+name+'"]');}
   async field(name,value){const node=this.page.locator('[data-source-field="'+name+'"]');
     if(await node.evaluate(el=>el.tagName)==='SELECT')await node.selectOption(String(value??''));else await node.fill(String(value??''));}
+  async recoverWorkingCopy(){
+    const copy=this.page.locator('[data-source-copy-id][data-source-scope]');
+    if(!await copy.count())return;
+    need(await copy.count()===1,'Select the one original Source Desk working copy.');
+    const active=await copy.evaluate(el=>({draftId:el.dataset.sourceDraftId,pendingId:el.dataset.sourcePendingId,
+      scope:JSON.parse(el.dataset.sourceScope)}));
+    need(active.scope?.caseId===this.input.caseId&&active.scope.planId===this.input.planId,
+      'Keep the complete working copy in its original operating case and plan.');
+    if(active.draftId===this.report.browserDraftId){
+      need(!active.pendingId||this.report.requests[active.pendingId],
+        'Keep another operator’s pending source request with its original receiving owner.');
+      return;
+    }
+    const legacy=this.page.locator('[data-source-action="working-open-legacy"]');
+    if(!await legacy.count()||await legacy.getAttribute('data-legacy-draft-id')!==this.report.browserDraftId)return;
+    need(!active.pendingId||this.report.requests[active.pendingId],
+      'Retain the other pending working copy with its existing receiving owner.');
+    const prior=await this.page.evaluate(scope=>new Promise((resolveResult,reject)=>{
+      const key=scope.caseId+':'+scope.planId+':'+scope.createdAt;
+      let failed=false;const fail=error=>{failed=true;reject(error);};
+      const opening=indexedDB.open('sf47.installation-source-desk',1);
+      opening.onupgradeneeded=()=>{opening.transaction.abort();fail(new Error('Keep the original retained source journal.'));};
+      opening.onerror=()=>fail(opening.error||new Error('The original source journal could not reopen.'));
+      opening.onblocked=()=>fail(new Error('The original source journal is busy.'));
+      opening.onsuccess=()=>{
+        const db=opening.result;if(failed){db.close();return;}let value=null,request=null,problem=null;
+        const tx=db.transaction('records','readonly'),store=tx.objectStore('records'),read=store.get(key+':working');
+        read.onsuccess=()=>{value=read.result;if(value?.pendingId){
+          const pending=store.get(key+':request:'+value.pendingId);pending.onsuccess=()=>{request=pending.result;};
+          pending.onerror=()=>{problem=pending.error;tx.abort();};}};
+        read.onerror=()=>{problem=read.error;tx.abort();};
+        tx.oncomplete=()=>{db.close();resolveResult({value,request});};
+        tx.onabort=()=>{db.close();reject(problem||tx.error||new Error('The complete original source journal read failed.'));};
+        tx.onerror=()=>{};
+      };
+    }),active.scope);
+    need(prior.value?.schema===DESK_SCHEMA&&same(prior.value.scope,active.scope)&&
+      prior.value.draftId===this.report.browserDraftId,
+      'Keep the original complete source working copy and its case identity.');
+    if(prior.value.pendingId){
+      const record=this.report.requests[prior.value.pendingId],request=prior.request;
+      need(record&&request?.schema===DESK_SCHEMA&&request.caseId===this.input.caseId&&
+        request.draftId===this.report.browserDraftId&&request.body?.requestId===prior.value.pendingId&&
+        request.requestSha256===sha(Buffer.from(stable({schema:DESK_SCHEMA,caseId:request.caseId,
+          draftId:request.draftId,body:request.body}))),
+        'Recover the complete original retained source request before receiving this working copy.');
+      const entry=await object(record.requestPath);
+      need(record.requestSha256===sha(pretty(entry))&&same(entry.body,request.body)&&
+        entry.path===this.deskPrefix+'/'+request.draftId,
+        'The retained source request differs from the original receiving operation.');
+    }
+    const raw=pretty({schema:'stellar-forge.installation-source-legacy-receiving.v1',scope:active.scope,...prior});
+    need(raw.length<=MAX,'Keep the complete original legacy working-copy input within the receiving limit.');
+    const source=resolve(this.networkRoot,'legacy-working-'+sha(raw)+'.json');
+    await retain(source,raw);const original=await this.remember(source);
+    const preceding=await this.downloads(()=>this.click('working-open-legacy'),[null],
+      'working-before-legacy-'+basename(this.attempt)+'-'+randomUUID());
+    const opened=await copy.evaluate(el=>({draftId:el.dataset.sourceDraftId,pendingId:el.dataset.sourcePendingId,
+      scope:JSON.parse(el.dataset.sourceScope)}));
+    need(opened.draftId===this.report.browserDraftId&&same(opened.scope,active.scope)&&
+      (opened.pendingId||null)===(prior.value.pendingId||null),
+      'Receiving must preserve the complete original draft and pending request identities.');
+    this.report.workingCopyRecoveries??=[];
+    this.report.workingCopyRecoveries.push({original,preceding,pendingId:prior.value.pendingId??null,
+      draftId:this.report.browserDraftId,at:new Date().toISOString()});await this.save();
+  }
   async recoverPending(){
     const status=this.page.locator('[data-source-action="request-status"]');
     if(!await status.count()){await this.reconcileSourceReceipts();return;}
