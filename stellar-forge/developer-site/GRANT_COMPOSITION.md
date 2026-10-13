@@ -397,6 +397,10 @@ Use the original 4BF5/Actions BLS case for its actual native and browser result.
 
 ## Independent product source contributions
 
+The legacy customer-link receiver discovers and updates source records that have not been assigned to a product declaration. Once a record has `source_registration`, that declaration owns its selected repository, commit, path and measured file identity. Re-reading an older narrative link preserves the complete registered record, including when a caller composes only another product or omits product declarations. To advance that source, receive its original product declaration with the complete accepted chapter through the same composer. Its existing optional `commit` selects a particular immutable edition when the chapter also contains historical links; its measured `editions` supply the matching file identities. The original product receiver still applies these intentional updates and retains every unrelated source. Commit hashes are identities, not an ordering of releases.
+
+For an unregistered narrative source, such as the original Request Collections authoring guide, a changed repository, commit or path still updates the same source ID. The receiver clears the old `git_blob`, `sha256`, `bytes` and `product_byte_identity` together, so no measurement from the previous file travels with the new selection. An unchanged source identity retains its measurements even when the public URL representation changes.
+
 [Product registration and complete receiving](GRANT_PRODUCT_SOURCES.md) describes the default `grant-products/*.json` declarations, optional additional received files, original source-ID continuity and exact measured-edition binding. The existing `grant-compose` command receives these definitions before its current public projection and writes the same four reader outputs. A product author can maintain its own complete source declaration alongside the accepted H2 without adding another block to the shared customer projector.
 
 ## IATI customer operating procedures

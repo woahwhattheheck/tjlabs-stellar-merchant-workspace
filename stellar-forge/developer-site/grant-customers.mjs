@@ -289,14 +289,24 @@ export function receiveGrantCustomerSources(index, companion) {
     if (!found) return;
     const [url, commit, path] = found, at = index.sources.findIndex(item => item.id === id);
     const previous = at < 0 ? {} : index.sources[at];
+    // A product declaration owns its selected edition and measured file identity.
+    // An older link elsewhere in the narrative must not replace that selection.
+    // The original product receiver applies an intentional owned update afterward.
+    if (previous.source_registration !== undefined) {
+      need(typeof previous.source_registration === 'string' &&
+        /^[a-z0-9][a-z0-9._-]{0,119}$/.test(previous.source_registration),
+        'Retain a valid original product registration for source ' + id + '.');
+      return;
+    }
     const source = { ...previous, id, kind: 'published-source', label: previous.label || title,
       repository: url.split('/').slice(3, 5).join('/'), commit, path, url };
-    // A projected register retains the repository, commit and path even when its
-    // private URL is omitted. Compare those identities before reusing a blob pin.
-    if ((previous.url && previous.url !== url) ||
-        (previous.commit && previous.commit !== commit) ||
-        (previous.path && previous.path !== path) ||
-        (previous.repository && previous.repository !== source.repository)) delete source.git_blob;
+    // A projected register may omit the private URL. File measurements belong to
+    // the repository, commit and path, rather than a public link representation.
+    const identityChanged = at >= 0 &&
+      (previous.repository !== source.repository || previous.commit !== commit || previous.path !== path);
+    if (identityChanged) {
+      for (const key of ['git_blob', 'sha256', 'bytes', 'product_byte_identity']) delete source[key];
+    }
     if (previous.access === 'authenticated-source') {
       delete source.access;
       delete source.reader_url;
