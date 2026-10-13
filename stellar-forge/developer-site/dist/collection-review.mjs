@@ -4,6 +4,8 @@ import { createCollectionWorkspace,validateCollectionWorkspace,addCollectionSour
  retainCollectionWorkingCopy,emptyReview,canonical } from './collection-review-workspace.mjs';
 import { renderCollectionReview } from './collection-review-report.mjs';
 import { mountCollectionEditionReview } from './collection-review-edition-ui.mjs';
+import { mountMuseumDelivery } from './museum-ui.mjs';
+import { collectMuseumState } from './museum-delivery.mjs';
 const $=id=>document.getElementById(id), clone=value=>structuredClone(value), json=value=>JSON.stringify(value,null,2)+'\n';
 const S={workspace:null,draft:null,pending:null,slot:null,revision:0,db:null,write:Promise.resolve(),storageError:null,busy:false,selected:null,mode:'open'};
 const say=(value,error=false)=>{$('notice').textContent=value;$('notice').classList.toggle('error',error);};
@@ -32,8 +34,9 @@ function persist(){
 function changed(){persist().catch(()=>{});renderPending();}
 async function flush(){await S.write;if(S.storageError)throw S.storageError;}
 async function act(operation,{recoverStorage=false}={}){if(S.busy)return;S.busy=true;const controls=[...document.querySelectorAll('main button,main input,main textarea,main select')],old=controls.map(el=>[el,el.disabled]);for(const el of controls)el.disabled=true;
- try{if(recoverStorage)await S.write.catch(()=>{});else await flush();await operation();}catch(error){say(error.message,true);}finally{S.busy=false;for(const [el,disabled]of old)if(el.isConnected)el.disabled=disabled;renderPending();}}
-function newDraft(workspace,base=workspace.headId,state=collectionDraft(workspace,base),actor=''){return {baseRevision:base,state:clone(state),rawText:null,actor,note:'',aux:{relationFrom:'',relationTo:'',relationKind:'',relationNote:'',sourceURL:'',sourceTime:new Date().toISOString(),sourceFormat:'archiveblack-html'}};}
+ try{if(recoverStorage)await S.write.catch(()=>{});else await flush();await operation();}catch(error){say(error.message,true);}finally{S.busy=false;for(const [el,disabled]of old)if(el.isConnected)el.disabled=disabled;renderPending();museumUI.refreshAvailability();}}
+function preserveMuseumHistory(workspace,state){const result=clone(state);if(result.museum||workspace.revisions.some(r=>r.state.museum))result.museum=collectMuseumState(workspace,result);return result;}
+function newDraft(workspace,base=workspace.headId,state=collectionDraft(workspace,base),actor=''){return {baseRevision:base,state:preserveMuseumHistory(workspace,state),rawText:null,actor,note:'',aux:{relationFrom:'',relationTo:'',relationKind:'',relationNote:'',sourceURL:'',sourceTime:new Date().toISOString(),sourceFormat:'archiveblack-html'}};}
 async function openWorkspace(workspace,provided=null){
  S.workspace=await validateCollectionWorkspace(workspace);S.draft=provided?.draft||newDraft(S.workspace);S.pending=provided?.pending||null;S.selected=provided?.selected||null;
  S.slot=crypto.randomUUID();S.revision=0;S.storageError=null;S.write=Promise.resolve();location.hash=S.slot;await persist();render();await catalog();
@@ -54,7 +57,7 @@ function render(){
  for(const [id,key]of [['story-title','title'],['story-intro','introduction'],['story-note','note']])$(id).value=S.draft.state.story[key];
  for(const [id,key]of [['relation-kind','relationKind'],['relation-note','relationNote'],['source-url','sourceURL'],['source-time','sourceTime'],['source-format','sourceFormat']])$(id).value=S.draft.aux?.[key]||'';
  $('raw-state').value=S.draft.rawText??json(S.draft.state);
- renderCollections();renderEntries();renderStory();renderRelations();renderHistory();renderEditor();renderPending();editionUI.render().catch(error=>say(error.message,true));
+ renderCollections();renderEntries();renderStory();renderRelations();renderHistory();renderEditor();renderPending();editionUI.render().catch(error=>say(error.message,true));museumUI.render().catch(error=>say(error.message,true));
 }
 function renderCollections(){
  const root=$('collections');root.replaceChildren();
@@ -99,7 +102,7 @@ function renderHistory(){
 }
 async function saveReview(){
  if(S.draft.rawText!==null)throw Error('Apply the complete raw draft JSON or keep it as a downloadable unfinished working copy before saving a review.');
- if(!S.pending){S.pending={id:crypto.randomUUID(),expectedRevision:S.draft.baseRevision,createdAt:new Date().toISOString(),actor:S.draft.actor,note:S.draft.note,state:clone(S.draft.state)};await persist();}
+ if(!S.pending){S.draft.state=preserveMuseumHistory(S.workspace,S.draft.state);S.pending={id:crypto.randomUUID(),expectedRevision:S.draft.baseRevision,createdAt:new Date().toISOString(),actor:S.draft.actor,note:S.draft.note,state:clone(S.draft.state)};await persist();}
  await recover();
 }
 async function recover(){
@@ -129,7 +132,7 @@ function bind(){
  const raw=JSON.parse(await file.text()),envelope=raw.schema==='stellar-forge.collection-browser-copy.v1'?raw.value:null;
  let w=envelope?await validateCollectionWorkspace(envelope.workspace):await openCollectionPacket(raw);
  if(S.mode==='receive'&&envelope?.draft){const d=envelope.draft;w=(await retainCollectionWorkingCopy(w,{baseRevision:d.baseRevision,stateText:d.rawText??json(d.state),structuredState:d.state,browserDraft:d,actor:d.actor,note:d.note,pending:envelope.pending||null})).workspace;}
- if(S.mode==='receive'){const result=await receiveCollectionWorkspace(S.workspace,w);S.workspace=result.workspace;await persist();render();say('Received complete source/history. Your local review and unfinished draft remain selected. Received head: '+result.receivedHeadId);}
+ if(S.mode==='receive'){const result=await receiveCollectionWorkspace(S.workspace,w);S.workspace=result.workspace;S.draft.state=preserveMuseumHistory(S.workspace,S.draft.state);await persist();render();say('Received complete source/history. Your local review and unfinished draft remain selected. Received head: '+result.receivedHeadId);}
  else{await openWorkspace(w,envelope);say('Opened the complete source/history as a separate browser copy.');}
  $('packet-file').value='';},{recoverStorage:true});
  $('open-saved').onclick=()=>act(async()=>{if(!$('saved').value)throw Error('Choose a saved browser copy.');await openSaved($('saved').value);},{recoverStorage:true});
@@ -149,7 +152,7 @@ function bind(){
  $('relation-add').onclick=()=>act(async()=>{const a=S.draft.aux;if(!a.relationFrom||!a.relationTo||a.relationFrom===a.relationTo||!a.relationKind.trim()||!a.relationNote.trim())throw Error('Select two occurrences and describe the proposed relationship and basis.');
  S.draft.state.relationships.push({id:crypto.randomUUID(),from:a.relationFrom,to:a.relationTo,kind:a.relationKind,note:a.relationNote});await persist();renderRelations();});
  $('raw-state').oninput=()=>{S.draft.rawText=$('raw-state').value;changed();};
- $('apply-raw').onclick=()=>act(async()=>{const state=JSON.parse($('raw-state').value);
+ $('apply-raw').onclick=()=>act(async()=>{const state=preserveMuseumHistory(S.workspace,JSON.parse($('raw-state').value));
  // Original model validates the whole proposed state; no revision is committed here.
  const request={id:crypto.randomUUID(),expectedRevision:S.workspace.headId,actor:S.draft.actor||'Draft validation',note:'Draft validation only',createdAt:new Date().toISOString(),state};
  await saveCollectionRevision(S.workspace,request);S.draft.state=state;S.draft.rawText=null;S.selected=null;await persist();render();say('Applied the complete draft. Save review to retain a new revision.');});
@@ -157,12 +160,16 @@ function bind(){
  $('review-history').onclick=()=>act(()=>showReport($('history').value));$('preview').onclick=()=>act(()=>showReport(S.workspace.headId));
  $('draft-history').onclick=()=>act(async()=>{await completeWorkingCopy();const id=$('history').value;S.draft=newDraft(S.workspace,S.workspace.headId,collectionDraft(S.workspace,id),S.draft.actor);S.selected=null;await persist();render();say('Copied the chosen saved revision into a new draft against the current local head. The replaced working text remains in history.');});
  $('restore-working').onclick=()=>act(async()=>{const selected=$('working-copies').value,draft=S.workspace.workingCopies.find(x=>x.id===selected);if(!draft)throw Error('Choose a retained working copy.');await completeWorkingCopy();
- S.draft=newDraft(S.workspace,S.workspace.headId,draft.structuredState||collectionDraft(S.workspace),draft.actor);S.draft.rawText=draft.stateText;S.draft.note=draft.note;if(draft.browserDraft?.aux)S.draft.aux=clone(draft.browserDraft.aux);if(draft.browserDraft?.edition)S.draft.edition=clone(draft.browserDraft.edition);S.selected=null;await persist();render();say('Restored original working text. Its original pending request stays in the retained copy; it is not dispatched automatically.');});
+ S.draft=newDraft(S.workspace,S.workspace.headId,draft.structuredState||collectionDraft(S.workspace),draft.actor);S.draft.rawText=draft.stateText;S.draft.note=draft.note;if(draft.browserDraft?.aux)S.draft.aux=clone(draft.browserDraft.aux);if(draft.browserDraft?.edition)S.draft.edition=clone(draft.browserDraft.edition);if(draft.browserDraft?.museumUI)S.draft.museumUI=clone(draft.browserDraft.museumUI);S.selected=null;await persist();render();say('Restored original working text. Its original pending request stays in the retained copy; it is not dispatched automatically.');});
  for(const [id,native]of [['export',false],['native-export',true]])$(id).onclick=()=>act(async()=>{const w=await completeWorkingCopy(),result=await createCollectionArchive(w,w.headId,{native});download('collection-review.zip',result.bytes,'application/zip');say('Exported complete saved review, all source/history and the current unfinished working copy.');});
  window.addEventListener('beforeunload',event=>{if(S.busy||S.storageError){event.preventDefault();event.returnValue='';}});
 }
 const editionUI=mountCollectionEditionReview({read:()=>S,changed,act,render,download,say,preserveDraft:completeWorkingCopy,saveRequest:async request=>{
  if(S.pending)throw Error('Recover the original pending request before saving this edition.');
+ S.pending=request;await persist();await recover();
+}});
+const museumUI=mountMuseumDelivery({read:()=>S,changed,act,render,persistDraft:persist,download,say,saveRequest:async request=>{
+ if(S.pending)throw Error('Recover the original pending request before saving museum work.');
  S.pending=request;await persist();await recover();
 }});
 bind();

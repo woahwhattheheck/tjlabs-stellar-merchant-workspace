@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "collection-review",
-  "description": "Retain institutional collection sources, review editorial changes and story order, and reopen complete collection workspaces",
+  "description": "Retain original collections and editorial work, approve visitor releases, carry current withdrawals through offline delivery, and receive complete media/source and commissioning records",
   "supportFiles": [
     "stellar-forge/developer-site/collection-review-cli.mjs",
     "stellar-forge/developer-site/dist/collection-review-source.mjs",
@@ -40,7 +40,14 @@
     "products/collection-review/examples/source-editions/Source_Edition_Basis.json",
     "products/collection-review/examples/source-editions/README.md",
     "products/collection-review/examples/source-editions/Export_Manifest.json",
-    "products/collection-review/examples/source-editions/Operation_Result.json"
+    "products/collection-review/examples/source-editions/Operation_Result.json",
+    "stellar-forge/developer-site/dist/museum-delivery.mjs",
+    "stellar-forge/developer-site/dist/museum-package.mjs",
+    "stellar-forge/developer-site/dist/museum-commissioning.mjs",
+    "stellar-forge/developer-site/dist/museum-ui.mjs",
+    "stellar-forge/developer-site/dist/museum-visitor.mjs",
+    "stellar-forge/developer-site/museum-directory.mjs",
+    "products/collection-review/MUSEUM_COMMISSIONING.md"
   ],
   "commands": {
     "collection-review": "stellar-forge/developer-site/collection-review-cli.mjs"
@@ -54,7 +61,10 @@
     "./collection-review/report": "./source/stellar-forge/developer-site/dist/collection-review-report.mjs",
     "./collection-review/publication": "./source/stellar-forge/developer-site/dist/collection-review-publication.mjs",
     "./collection-review/editions": "./source/stellar-forge/developer-site/dist/collection-review-editions.mjs",
-    "./collection-review/edition-report": "./source/stellar-forge/developer-site/dist/collection-review-edition-report.mjs"
+    "./collection-review/edition-report": "./source/stellar-forge/developer-site/dist/collection-review-edition-report.mjs",
+    "./collection-review/museum": "./source/stellar-forge/developer-site/dist/museum-delivery.mjs",
+    "./collection-review/museum-package": "./source/stellar-forge/developer-site/dist/museum-package.mjs",
+    "./collection-review/commissioning": "./source/stellar-forge/developer-site/dist/museum-commissioning.mjs"
   },
   "browserAssets": [
     {

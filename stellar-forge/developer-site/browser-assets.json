@@ -1065,6 +1065,41 @@
         "woo.html",
         "text/html; charset=utf-8"
       ]
+    ],
+    [
+      "/museum-delivery.mjs",
+      [
+        "museum-delivery.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/museum-package.mjs",
+      [
+        "museum-package.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/museum-commissioning.mjs",
+      [
+        "museum-commissioning.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/museum-ui.mjs",
+      [
+        "museum-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/museum-visitor.mjs",
+      [
+        "museum-visitor.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

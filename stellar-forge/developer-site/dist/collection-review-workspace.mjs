@@ -1,4 +1,5 @@
 // MIT. Complete source occurrences, immutable editorial revisions and portable receiving.
+import { validateMuseumState, validateMuseumWorkspace, assertMuseumContinuity } from './museum-delivery.mjs';
 import { sha256, createProject, addDocument, freezeReview, createTableWorkspace } from './source-table-workspace.mjs';
 import { zipWorkspace } from './onboarding.mjs';
 import { createCollectionSource, verifyCollectionSource, collectionURL } from './collection-review-source.mjs';
@@ -62,6 +63,7 @@ function checkState(state,sources) {
     relations.add(relation.id);text(relation.kind,'Relationship kind',160);text(relation.note,'Relationship evidence/note');
     if(!relation.kind.trim()||!relation.note.trim())fail('COLLECTION_RELATIONSHIP','Describe the proposed relationship and its evidence or question.');
   }
+  validateMuseumState(state.museum);
   return copy(state);
 }
 function checkRequest(request){
@@ -114,6 +116,7 @@ export async function validateCollectionWorkspace(input) {
       seen.add(r.id);r=revisions.get(r.parentId);
     }
   }
+  await validateMuseumWorkspace(w);
   const drafts=new Set();
   for(const draft of array(w.workingCopies||[],'Retained working copies',1000)){
     if(!plain(draft)||!revisions.has(draft.baseRevision))fail('COLLECTION_DRAFT','A retained working copy lacks its original basis.');
@@ -147,7 +150,9 @@ export async function saveCollectionRevision(workspace,request) {
   if(old){if(!same(old.request,request))fail('COLLECTION_REQUEST_CONFLICT','This original request UUID already owns another exact editorial input.');return {workspace:w,revision:copy(old),reused:true};}
   if(request.expectedRevision!==w.headId)fail('COLLECTION_CHANGED','The saved review changed. Keep this draft and compare the newer selected revision.');
   if(w.revisions.length>=LIMITS.revisions)fail('COLLECTION_LIMIT','The retained review limit is reached.');
+  assertMuseumContinuity(revisionFor(w).state.museum,request.state.museum);
   const revision=await buildRevision(request,sourceMap(w));w.revisions.push(revision);w.headId=revision.id;
+  await validateMuseumWorkspace(w);
   if(encoder.encode(json(w)).length>LIMITS.workspaceBytes)fail('COLLECTION_SIZE','This complete review would exceed the 64 MiB workspace limit. Keep the previous workspace and draft.');
   return {workspace:w,revision,reused:false};
 }

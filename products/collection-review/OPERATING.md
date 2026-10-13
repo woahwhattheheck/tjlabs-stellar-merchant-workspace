@@ -1,6 +1,6 @@
 # Collection review
 
-Collection review is a proposed, platform-neutral preparation workflow for an institutional collection inventory. It preserves the actual source catalogue while an operator reviews descriptions, records rights/access evidence, proposes relationships and arranges a story. It does not replace ArchiveBlack, connect to an institutional CMS, publish a story, establish permission or fetch linked media.
+Collection review is a proposed, platform-neutral preparation workflow for an institutional collection inventory. It preserves the actual source catalogue while an operator reviews descriptions, records rights/access evidence, proposes relationships and arranges a story. It preserves existing institutional catalogues and does not infer rights or fetch linked media. The optional Museum delivery section continues the same saved editorial workspace through explicit release approval, local visitor packages, current withdrawal controls, media handover and commissioning records.
 
 The complete workflow is available in the local browser, installed CLI and shared JavaScript exports. The same source records, review requests and complete receiving validator are used throughout.
 
@@ -151,3 +151,31 @@ See the [complete field and source guide](../../stellar-forge/developer-site/dis
 ## Publish an example safely
 
 Private editable exports retain the complete supplied source. Before committing or distributing an example, use the explicit publication workflow in [PUBLICATION.md](PUBLICATION.md). `collection-review publish` validates the complete packet and refuses recognizable Google API key candidates without logging or using them. `collection-review publication-check --file PATH` inspects a full decoded UTF-8/JSON artifact. The distribution builder applies the same check to every selected Collection Review example before creating a new package. These checks do not redact an original source in place, establish credential validity, or replace the credential owner's restriction/rotation work.
+
+## Museum delivery
+
+Open the Museum delivery section in the same Collection Review page after saving the complete editorial selection. Register original media files and exact endpoint profiles; retain staff rights and approval evidence in this workspace. Prepare a visitor release from a saved, explicitly ordered and permission-recorded review. Its public title/summary come from that exact saved review. Record the actual final decision against the resulting immutable release before preparing a deployment.
+
+Visitor packages contain only selected public text, credits, accessibility fields, permitted media and public withdrawal targets. They exclude catalogue source pages, staff notes, permission evidence and the private project. The private editable handover is a separate complete directory. File identities alone are not media custody: packaging verifies every actual supplied member.
+
+The browser ZIP allowance is 256 MiB for the complete selected package. Use the maintained streaming directory commands for larger original media and two independent handover copies. A proposed project inventory is not measured capacity; preserve the actual runtime/destination results.
+
+Restrictions remain effective across every retained revision and received branch. An older release is filtered through current controls when it is packaged, and the visitor keeps the restrictions it has received when another control or release is opened. A disconnected display remains outstanding until its actual update is applied; each package has an explicit display expiry and requires a correctly set device clock. Keep the original deployment request and use its same-input recovery after interruption.
+
+Read [Museum content release and commissioning](MUSEUM_COMMISSIONING.md) for the full installed commands, record shapes, user course, offline controls, complete handover and observed commissioning workflow. Original source-edition and receiving controls continue to apply. Historical revisions and working copies remain intact.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
