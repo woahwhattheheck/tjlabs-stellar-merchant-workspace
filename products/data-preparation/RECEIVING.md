@@ -13,7 +13,7 @@ Use the original Starforge_Data_Preparation_2026-10-12.zip from the PREP12 work 
 - Original Slack case: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791829516730339.
 - Product repository: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace.
 
-Keep receiving.py, receiving.mjs, receiving-source.json and this guide together. The source manifest records the immutable source commit and the byte length, SHA-256 and Git blob identity of every complete selected file. It also records the exact receiving driver. Select those full files from that commit in SOURCE_ROOT; the receiver checks them and freezes a complete copy before starting the customer operation.
+Keep receiving.py, receiving.mjs, receiving-source.json, restore-receiving.py and this guide together. The source manifest records the immutable source commit and the byte length, SHA-256 and Git blob identity of every complete selected file. It also records the exact receiving driver. Select those full files from that commit in SOURCE_ROOT; the receiver checks them and freezes a complete copy before starting the customer operation.
 
 The source selection includes the original pipeline engine, delivery and receiving modules, private managed listener, both original browser applications, typed clients, all merchant tools, Applications provider, and original seller dataset loader. It preserves the source preparation engine and the original pipeline owner’s execution, stage reuse and received-project contracts.
 
@@ -59,7 +59,34 @@ The continuation verifies the exact original inputs and manifest in that directo
 
 The preparation phase is preserved when complete, including its full downloads and customer edit. The subsequent pipeline phase resumes the same operation. Each invocation freezes its own selected source and records its own process outcome, so an improved source selection can continue the retained case without replacing its inputs or workspaces.
 
-Keep the operation at its existing canonical path when using --continue. For a customer receiving the finished work at another location, use the full project archive through the product’s normal receiving command.
+Use --continue directly at the operation's current canonical path. To move the complete original operation and continue at a new location, use the closed-checkpoint receiver below. A customer receiving only the finished editable project can use the product's normal project receiving command.
+
+## Restore the original operation on another Linux host
+
+Select the complete closed customer or checkpoint ZIP produced by this receiver and its full SHA-256 from the saved receiving result. The archive includes files.json, the unchanged original package/project, both preparation workspaces, any received pipeline child, every retained invocation, and the operation's saved progress. Use this complete case to continue the same operation on another Linux host or at a different canonical path.
+
+Supply the maintained receiver files and their complete selected source, the new host's Python, Node, Playwright and Chromium, and the same five delivery helpers when available. Choose a new directory under an owned mode-0700 parent. The following single command verifies and restores the case, then enters the original receiving.py --continue operation:
+
+~~~bash
+python3 /ABSOLUTE/SOURCE_ROOT/products/data-preparation/restore-receiving.py \
+  --checkpoint /ABSOLUTE/Starforge_Data_Preparation_Pipelines_Checkpoint.zip \
+  --expected-sha256 COMPLETE_CHECKPOINT_SHA256 \
+  --directory /ABSOLUTE/PRIVATE/restored-preparation \
+  --source-root /ABSOLUTE/SOURCE_ROOT \
+  --source-commit SOURCE_COMMIT \
+  --node /ABSOLUTE/node \
+  --playwright-module /ABSOLUTE/node_modules/playwright \
+  --chromium /ABSOLUTE/chromium \
+  --save-helper /ABSOLUTE/helpers/library_upload.py
+~~~
+
+The receiver verifies the whole selected ZIP and every original inventory member, including the complete source and result files and the empty directories. It checks the unchanged PREP12 package and native project and their full 120,012-row source population. Only after those checks does it publish the verified directory through Linux create-only rename, with private directory/file permissions. An existing unrelated destination is preserved.
+
+Saved SQL, source files, recipes, execution histories, reviews, delivery request keys and the original operation ID remain together. The receiver updates the saved preparation download and browser-capture locations to their corresponding verified files in the new directory. Previous progress and restore receipts remain in receiving-restorations/<restore-id>/ alongside the exact source inventory and the complete old/new artifact map. Historical process results and events retain the paths they originally recorded.
+
+For earlier completed preparation checkpoints, the original location is derived from the saved project download path. If that earlier case needs an explicit old location, add --original-directory /ORIGINAL/PRIVATE/operation. Add --restore-only to verify and receive the whole case without starting its continuation; the same full command can subsequently reuse that completed restore and enter the original operation lock. It verifies the original inputs and operation identity before reuse and retains later customer edits.
+
+Each following customer/checkpoint ZIP carries the restored history, current restore receipt and complete restore helper. The same case can therefore move again after a later closed invocation. Select the SHA-256 of that later complete archive. The native receiving operation, its existing saved stage ledger and its process cleanup remain the same.
 
 ## Complete customer journey
 

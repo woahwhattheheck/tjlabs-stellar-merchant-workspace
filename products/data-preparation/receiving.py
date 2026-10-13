@@ -307,6 +307,7 @@ def main():
     write(attempt/'receiving.mjs', driver)
     write(attempt/'receiving.py', Path(__file__).read_bytes())
     write(attempt/'RECEIVING.md', Path(__file__).with_name('RECEIVING.md').read_bytes())
+    write(attempt/'restore-receiving.py', Path(__file__).with_name('restore-receiving.py').read_bytes())
     (directory/'inputs').mkdir(mode=0o700, exist_ok=True)
     private_parent(directory/'inputs')
     (attempt/'downloads').mkdir(mode=0o700)
@@ -482,7 +483,12 @@ def main():
             'and export identities. The unchanged original-package.zip and original-project.zip remain '
             'beside the closed operator/ and customer/ directories. The operator also retains its '
             'independently received pipeline customer tree. Keep these complete directories together.\n\n'
-            'The included RECEIVING.md gives the exact invocation. receiving-source.json binds every full '
+            'To continue the same operation on another Linux host or at a new path, use the included '
+            'restore-receiving.py with the complete closed checkpoint and its recorded SHA-256. It restores '
+            'the whole original case, preserves its native identities and updates the saved artifact paths '
+            'before continuing with the selected source and that host’s installed runtimes. '
+            'receiving-restorations/ retains every original progress file, source inventory and relocation. '
+            'The included RECEIVING.md gives both exact invocations. receiving-source.json binds every full '
             'selected source file and the JavaScript receiving driver. files.json covers every file and '
             'empty directory in this delivery. Private listener connection files are removed when their '
             'own Applications process stops; reopen the work to obtain a new private connection.\n\n'
@@ -500,9 +506,9 @@ def main():
             if path.is_dir():
                 selected.extend(sorted(path.rglob('*')))
         for name in ['original-package.zip', 'original-project.zip', 'original-manifest.json',
-                     'managed-receiving-progress.json']:
+                     'managed-receiving-progress.json', 'managed-receiving-restore.json']:
             select(directory/name)
-        for folder in ['operator', 'customer', 'inputs', 'downloads']:
+        for folder in ['operator', 'customer', 'inputs', 'downloads', 'receiving-restorations']:
             select(directory/folder)
         for previous in sorted(attempts.iterdir()):
             if not previous.is_dir() or previous.is_symlink():
@@ -511,6 +517,7 @@ def main():
             for name in ['source', 'downloads', 'browser', 'merchant-dataset-preparation', 'merchant-dataset-pipeline']:
                 select(previous/name)
             for name in ['START_HERE.md', 'RECEIVING.md', 'receiving.py', 'receiving.mjs', 'receiving-source.json',
+                         'restore-receiving.py',
                          'receiving-options.json', 'native-entry.mjs', 'native-process-identity.json',
                          'native-process.json', 'receiving-result.json',
                          title+'_Receiving.json', title+'_Checkpoint.json']:
