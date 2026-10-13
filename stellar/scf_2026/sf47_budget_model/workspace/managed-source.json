@@ -666,6 +666,8 @@
     "operations_statement_review_worklist.mjs",
     "STATEMENT_REVIEW_WORKLIST.md",
     "commercial_effort_example.py",
-    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs"
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs",
+    "../../../../stellar-forge/developer-site/dist/source-table-corrections.mjs",
+    "../sf10_current_candidate.json"
   ]
 }
