@@ -25,6 +25,7 @@ import zipfile
 from model import Problem, canonical, digest, now, short_id, text
 import operations_workshare_installations as workshares
 import operations_installation_commissioning as merchant_commissioning
+import operations_installation_commissioning_archive as commissioning_archive
 
 SCHEMA = "stellar-forge.installation-source-desk.v1"
 PREPARATION = "stellar-forge.installation-source-desk-preparation.v1"
@@ -626,6 +627,9 @@ class SourceDesk:
                                       ("id", "draftRevision", "selectionSha256", "preparedAt", "state", "kind")})
         return result
 
+    def commissioning_archive_inspect(self, case_id, draft_id, body):
+        return commissioning_archive.inspect(self, case_id, draft_id, body)
+
     def commissioning_inspect(self, case_id, draft_id, body):
         return merchant_commissioning.inspect(self, case_id, draft_id, body)
 
@@ -692,7 +696,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -774,6 +778,8 @@ class SourceDesk:
                           ("fileId", "expectedSha256", "expectedEngineSha256", "expectedProfileSha256"),
                           "complete native source-package receiving")
                     result = self._receive_native(state, context, data)
+                elif action == "commissioning.archive.receive":
+                    result = commissioning_archive.receive(self, state, context, data)
                 elif action == "commissioning.attach":
                     result = merchant_commissioning.attach(self, state, context, data)
                 elif action == "attach":
@@ -797,6 +803,8 @@ class SourceDesk:
             if isinstance(returned, dict) and returned.get("state") == "PREPARED_SOURCE":
                 need(self._preparation(draft["caseId"], draft["id"], returned["id"]) == returned,
                      "The complete original preparation receipt differs.", "INSTALLATION_SOURCE_CHANGED", 409)
+            elif isinstance(returned, dict) and returned.get("state") == "RECEIVED_COMMISSIONING_ARCHIVE":
+                commissioning_archive.verify_receipt(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_COMMISSIONING":
                 merchant_commissioning.verify_receipt(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_SOURCES":
@@ -841,12 +849,13 @@ def handle(handler, parsed, operations, method):
     from urllib.parse import parse_qs, unquote
     commissioning_path = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/installation-sources/"
-        r"(source-desk-[a-f0-9]{32})/commissioning/(inspect|preview)", parsed.path)
+        r"(source-desk-[a-f0-9]{32})/commissioning/(inspect|preview|archive-inspect)", parsed.path)
     if commissioning_path:
         need(method == "POST" and not parsed.query, "Review one original commissioning capture.", status=405)
         case_id, draft_id, action = commissioning_path.groups()
         desk = SourceDesk(operations)
-        read = desk.commissioning_inspect if action == "inspect" else desk.commissioning_preview
+        read = {"inspect": desk.commissioning_inspect, "preview": desk.commissioning_preview,
+                "archive-inspect": desk.commissioning_archive_inspect}[action]
         handler.send(200, read(case_id, draft_id, handler.json_body()))
         return True
     global_path = "/api/operations/installation-source-profiles"

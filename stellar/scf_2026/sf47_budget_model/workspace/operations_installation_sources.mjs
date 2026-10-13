@@ -153,7 +153,7 @@ export function mountInstallationSources(root,bridge){
       };
       node.disabled=(Object.hasOwn(liveDisabled,action)?liveDisabled[action]:node.dataset.sourceFixed==='true')||busy||hostBusy||
         (node.matches('[data-source-edit]')&&!editing())||
-        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply','commissioning-open','commissioning-inspect','commissioning-preview','commissioning-attach'].includes(action));
+        (!!state.pendingId&&['new','upload','remove','save-selection','prepare','native-receive','attach','case-add','case-remove','case-new','case-edit','profile-seed','profile-apply','commissioning-open','commissioning-inspect','commissioning-preview','commissioning-attach','commissioning-archive-inspect','commissioning-archive-receive'].includes(action));
     }
   }
   function checkContext(){
