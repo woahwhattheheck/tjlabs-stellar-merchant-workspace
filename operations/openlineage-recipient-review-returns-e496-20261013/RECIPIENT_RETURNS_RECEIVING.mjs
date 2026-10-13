@@ -75,6 +75,20 @@ function selectedSource(bundle, input) {
   for (const required of ["review-return.mjs", "review-return-store.mjs", "review-return-ui.mjs", "review-return-editor.mjs"])
     need(bundle.application.has(required), "The received application is missing " + required);
 }
+async function verifyReceivedFiles(receivePath, full) {
+  await directory(receivePath);
+  const received = JSON.parse(await ordinary(join(receivePath, "received.json")));
+  need(received.packageSha256 === full.packageSha256 && received.payloadSha256 === full.payloadSha256,
+    "Preserve a different existing independent receiving.");
+  await directory(join(receivePath, "objects"));
+  for (const [id, expected] of full.objects)
+    need((await ordinary(join(receivePath, "objects", id))).equals(expected),
+      "The retained received object differs from the complete export: " + id);
+  if (full.application.size) await directory(join(receivePath, "application"));
+  for (const [name, expected] of full.application)
+    need((await ordinary(join(receivePath, "application", name))).equals(expected),
+      "The retained received application differs from the complete export: " + name);
+}
 function originalStateUnchanged(before, after, request, response) {
   const omit = state => Object.fromEntries(Object.entries(state).filter(([key]) =>
     !["revision", "updatedAt", "operations", "customerReviewReturns"].includes(key)));
@@ -199,7 +213,9 @@ export async function receiveReviewReturns({
       "The retained completed receiver belongs to a different input.");
     for (const [label] of Object.entries(journal.files)) await readSaved(label);
     const full = store.verifyBundle(await readSaved("complete-workspace")); selectedSource(full, input);
-    const receiver = new store.LineageWorkspace(join(root, "received-workspace"));
+    const receivePath = join(root, "received-workspace");
+    await verifyReceivedFiles(receivePath, full);
+    const receiver = new store.LineageWorkspace(receivePath);
     need(equal(await receiver.read(), full.state), "The retained independent workspace differs from the complete export.");
     await remember(completePath); return prior;
   }
@@ -410,10 +426,7 @@ export async function receiveReviewReturns({
   need(equal(complete.checked.state, after), "The final complete export differs from the operated workspace.");
   const receivePath = join(root, "received-workspace");
   if (!await exists(receivePath)) await store.receiveBundle(complete.bytes, receivePath);
-  else {
-    await directory(receivePath); const received = JSON.parse(await ordinary(join(receivePath, "received.json")));
-    need(received.packageSha256 === complete.checked.packageSha256, "Preserve a different existing independent receiving.");
-  }
+  await verifyReceivedFiles(receivePath, complete.checked);
   const receivingStore = await import(pathToFileURL(join(receivePath, "application", "store.mjs")).href);
   const independent = new receivingStore.LineageWorkspace(receivePath);
   need(equal(await independent.read(), after), "The received original workspace changed state or history.");
