@@ -661,3 +661,66 @@ The owner release handoff at https://tokenjunkielabs.slack.com/archives/C0BU51F1
 The complete [workbook colleague-review course](../../products/webhook-feed/receiving/WORKBOOK_COLLEAGUE_REVIEW.md) is now installed as `/buyer/event-workbook-colleague-course`. It takes the actual saved `WORKBOOK_COLUMN_CHOICES_REQUIRED` action from the original Analysis workspace, retains the whole native proposal, issues independent full producer/reviewer files, freezes actual returned work against the current producer, consumes explicit whole-array conflict decisions, and invokes this guide's original typed Apply helper. Its complete action snapshots, fresh native delivery, all indexed files and saved HTML/source copies reopen independently.
 
 The callable functions use the existing parent's client, cancellation signal, lease and browser ownership. The original Mercury Applications case does not automatically establish an Analysis proposal; its Analysis owner supplies the real alias, programme and saved action. Each producer/reviewer edit and conflict decision comes from the operating person or authorized original course. The current native receiving ceilings remain 16 MiB for complete working-review evidence and 512 KiB for canonical arrays, while standalone working/review files retain the original 128 MiB allowance. Use the linked full course for interruption recovery, Saved actions, original restore and fresh delivery. Keep the rendered-product instruction and current local-browser owner state in the producing parent's actual receiving guide. The original noon local-browser reservation was explicitly released in the [owner handoff quoting Bryce at 16:29 UTC](https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791908979290839); preserve his tabs, saved state and any newer direction.
+
+## Receive complete mapping work through the named agent
+
+Use the installed `event-mapping-receiving` command or the typed
+`./buyer/mcp/analysis-events-mapping` helper to continue the original complete
+mapping comparison. The full operating guide is
+[`EVENT_MAPPING_RECEIVING.md`](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_RECEIVING.md).
+
+Capture preparation retains the exact selected comparison, optional complete
+unfinished draft, and the original installed parser/model/composer/controller.
+The named `event-mapping-source` operation retains both full accepted/current
+NDJSON files and manifests with the same comparison. Its complete record alone
+permits 192 MiB; ordinary records retain their existing 64 MiB limit. The
+original range writer receives every byte under its existing checkpoint and
+lease, then produces the full working JSON and editable HTML plus all four
+independently readable originals. A completed local transfer can finish its
+derived outputs without the producer files or service. Offline reopening
+checks the whole source, pinned implementation and each complete output.
+
+Both capture selections and native Review requests can exceed an ordinary MCP
+message because they include every mapping field and attributed reason.
+`event-mapping-request-create`, `event-mapping-request-chunk` and
+`event-mapping-request-source` retain the entire compact request by its exact
+ID, byte count and SHA-256. They receive contiguous 64 KiB chunks and verify
+the whole digest before completion. The source ID is the first 32 hexadecimal
+characters of that digest; the full digest and bytes remain required. The
+complete compact request is bounded at 1,046,528 bytes, preserving 2 KiB for
+the original native envelope. The final source or Review call selects it with
+`mapping_request_source:{id,bytes,sha256}`; the ordinary agent transport
+limit is unchanged.
+
+Review preparation independently reopens that capture, verifies the returned
+working document against its exact original windows, retains the entire
+returned file and original implementation, and derives the same native
+mapping-review request. The original parser recomputes the selected
+comparison; every required reason and original UTF-8 attribution limit must
+be satisfied. The full 192 MiB working history remains local while the
+complete compact decision travels through the retained request source.
+The same original native Review checks current revision and accepted baseline.
+
+Keep the selected action and operation IDs. After an uncertain reply,
+`review-receive` reads the existing saved action without another Review.
+Every full action snapshot retains its own digest and descriptor; select that
+digest explicitly with `review-reopen` for independent offline inspection.
+A native ERROR or INTERRUPTED action resumes only with its unchanged original
+request and explicit `--resume true`. Continue any subsequent Apply, report,
+workbook and complete delivery through the existing original programme.
+
+The command provides `capture-prepare`, `capture`, `capture-reopen`,
+`review-prepare`, `review`, `review-receive` and `review-reopen`.
+All require the actual registered alias, workspace, programme, input and private
+destination. The reviewed whole guide supplies every command and retained
+filename. Full runtime registration exposes this agent continuation; the
+compact Analysis-only selection keeps its existing file-only mapping editor.
+
+Join this whole course to the same original Mercury/22B7 operation and actual
+selected comparison. The producing operator opens and LOOKS at the exact
+working HTML, exercises both source windows, field/value controls, attribution,
+required reasons, explicit checkpoint recovery and complete downloads at
+desktop and narrow width, then reopens the saved JSON/HTML and original saved
+action. Carry actual images and full resulting files back through that
+operation. The existing owner meeting-end release applies; preserve the
+user's current browser tabs and all other owner instructions.

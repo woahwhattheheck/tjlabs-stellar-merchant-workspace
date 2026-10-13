@@ -5,6 +5,8 @@ export const EVENT_DOWNLOAD_SCHEMA='stellar-forge.analysis-event-downloads.v1';
 export const EVENT_INDEX_NAME='event-download-index.json';
 export const EVENT_MAX_FILE=1024*1024*1024;
 export const EVENT_MAX_RECORD=64*1024*1024;
+export const EVENT_MAPPING_SOURCE_LIMIT=192*1024*1024;
+export const eventRecordLimit=kind=>kind==='mapping-source'?EVENT_MAPPING_SOURCE_LIMIT:EVENT_MAX_RECORD;
 export const EVENT_ID=/^[a-f0-9]{32}$/;
 export const EVENT_HASH=/^[a-f0-9]{64}$/;
 export const EVENT_NAME=/^[A-Za-z][A-Za-z0-9_]{0,23}$/;

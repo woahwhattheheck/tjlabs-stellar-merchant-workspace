@@ -35,7 +35,7 @@ export interface EventInputReceipt {
 export interface EventRecordIdentity {
  schema: 'stellar-forge.analysis-event-record.v1';
  workspace_id: string;
- kind: 'overview' | 'programme' | 'action' | 'fields' | 'values' | 'mapping';
+ kind: 'overview' | 'programme' | 'action' | 'fields' | 'values' | 'mapping' | 'mapping-source';
  record_id: string;
  bytes: number;
  sha256: string;

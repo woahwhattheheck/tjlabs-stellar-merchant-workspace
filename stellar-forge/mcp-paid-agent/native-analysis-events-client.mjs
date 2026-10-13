@@ -5,7 +5,7 @@ import {openMerchantFileClient} from '../mcp-merchant-operator/retained-download
 import {initializationDirectory as directory,initializationBytes as bytes,optionalInitializationBytes as optionalBytes,
  retainInitializationFile as retainFile,retainInitializationRecord as retainRecord}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/initialization.mjs';
-import {EVENT_ID,EVENT_NAME,EVENT_HASH,EVENT_MAX_RECORD,eventObject as object,eventNeed as need,eventHash as sha,eventCanonical}
+import {EVENT_ID,EVENT_NAME,EVENT_HASH,EVENT_MAX_RECORD,eventRecordLimit,eventObject as object,eventNeed as need,eventHash as sha,eventCanonical}
  from './native-analysis-events-contract.mjs';
 const NATIVE='stellar-forge.mcp-native-analysis.v1',INPUT='stellar-forge.analysis-event-input-receiving.v1';
 const ALIAS=/^[A-Za-z][A-Za-z0-9_-]{0,63}$/,LIMITS={ndjson:33554432,manifest:4194304};
@@ -106,7 +106,7 @@ export async function readNativeAnalysisEventRecord(options={}){
  const client=await nativeEventConnection(options),selected=options.record;
  need(object(selected)&&selected.schema==='stellar-forge.analysis-event-record.v1'&&
  EVENT_ID.test(selected.workspace_id??'')&&EVENT_HASH.test(selected.sha256??'')&&
- Number.isSafeInteger(selected.bytes)&&selected.bytes>=1&&selected.bytes<=EVENT_MAX_RECORD,'RECORD_REQUIRED');
+ Number.isSafeInteger(selected.bytes)&&selected.bytes>=1&&selected.bytes<=eventRecordLimit(selected.kind),'RECORD_REQUIRED');
  const chunks=[];let offset=0;
  while(offset<selected.bytes){
  options.signal?.throwIfAborted();const size=Math.min(65536,selected.bytes-offset);
