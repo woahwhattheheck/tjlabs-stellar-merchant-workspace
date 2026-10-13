@@ -63,13 +63,57 @@ def hxl_tag(value):
     return tag + "".join("+" + a for a in sorted(attributes))
 
 
+class JsonNumber:
+    """Original valid JSON numeric lexeme; conversion belongs to the explicit column type."""
+    __slots__ = ("raw",)
+
+    def __init__(self, raw):
+        if len(raw) > MAX_CELL:
+            raise InputError("A JSON numeric cell exceeds one million characters")
+        self.raw = raw
+
+    def __str__(self):
+        return self.raw
+
+
+def _table_json(data):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise InputError("Duplicate JSON field: " + key)
+            result[key] = value
+        return result
+    def constant(_):
+        raise InputError("Non-finite JSON values are not accepted")
+    try:
+        return json.loads(data, object_pairs_hook=pairs, parse_int=JsonNumber,
+                          parse_float=JsonNumber, parse_constant=constant)
+    except (UnicodeError, ValueError, json.JSONDecodeError) as error:
+        raise InputError("Invalid complete UTF-8 JSON table") from error
+
+
+def _json_cell(value):
+    if isinstance(value, JsonNumber):
+        return value.raw
+    if isinstance(value, dict):
+        return "{" + ",".join(json.dumps(k, ensure_ascii=False) + ":" + _json_cell(v)
+                              for k, v in sorted(value.items())) + "}"
+    if isinstance(value, list):
+        return "[" + ",".join(_json_cell(v) for v in value) + "]"
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
+
 def cell_text(value):
     if value is None:
         return ""
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, (dict, list)):
-        return json_bytes(value).decode().rstrip("\n")
+        result = _json_cell(value)
+        if len(result) > MAX_CELL:
+            raise InputError("A table cell exceeds one million characters")
+        return result
     if isinstance(value, float) and not math.isfinite(value):
         raise InputError("Non-finite table values are not accepted")
     result = str(value)
@@ -145,7 +189,7 @@ def _json_rows(stream):
     data = stream.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
         raise InputError("JSON source exceeds 100 MiB")
-    value = load_json(data.decode("utf-8-sig"))
+    value = _table_json(data.decode("utf-8-sig"))
     if isinstance(value, dict) and set(value) == {"columns", "rows"}:
         columns, rows = value["columns"], value["rows"]
         if (not isinstance(columns, list) or not all(isinstance(c, str) for c in columns)
@@ -216,7 +260,10 @@ def iter_table(stream, table="data"):
         sheet = _xml(archive, sheets[table])
         last = 0
         for row in sheet.findall(NS + "sheetData/" + NS + "row"):
-            number = int(row.get("r", last + 1))
+            try:
+                number = int(row.get("r", last + 1))
+            except (ValueError, TypeError) as error:
+                raise InputError("Workbook row number is invalid") from error
             if number <= last or number > MAX_ROWS + 100:
                 raise InputError("Workbook row numbers must be ordered and within the row limit")
             last, result, used = number, [], set()
@@ -239,6 +286,8 @@ def iter_table(stream, table="data"):
                 value = cell.findtext(NS + "v", "")
                 if kind == "s":
                     try:
+                        if not re.fullmatch(r"0|[1-9][0-9]*", value):
+                            raise ValueError()
                         value = strings[int(value)]
                     except (ValueError, IndexError) as e:
                         raise InputError("Workbook shared-string index is invalid") from e
@@ -320,6 +369,8 @@ def validate_plan(raw):
         if not isinstance(column, dict) or set(column) - {"name", "index", "label", "type", "nullable", "trim", "hxl", "unit"}:
             raise InputError("Unknown mapping-column field")
         name = column.get("name")
+        if not isinstance(name, str):
+            raise InputError("Reporting column requires a string name")
         if name in RESERVED:
             raise InputError("Reporting column name is reserved: " + str(name))
         index = column.get("index")
@@ -338,6 +389,9 @@ def validate_plan(raw):
     for key in ("filters", "ranges", "sorts", "maxRows", "maxBytes", "maxCellChars", "defaultLimit", "maxLimit", "allowEmpty"):
         if key in raw:
             base[key] = raw[key]
+    for key in ("maxRows", "maxBytes"):
+        if key in base and (type(base[key]) is not int or base[key] < 1):
+            raise InputError(key + " must be a positive integer")
     base["maxRows"] = min(base.get("maxRows", MAX_ROWS), MAX_ROWS)
     base["maxBytes"] = min(base.get("maxBytes", MAX_BYTES), MAX_BYTES)
     normalized = xml_plan(base)

@@ -133,7 +133,8 @@ def _offline(directory, review, report, previews, database_link):
         pieces.append('<h2>' + e(descriptor["title"]) + ' · edition ' + str(descriptor["edition"]) + '</h2><p>' +
                       str(descriptor["rows"]) + ' output rows; ' + str(coverage["includedRows"]) + ' included source rows; ' +
                       str(coverage["excludedRows"]) + ' source rows require correction. <a href="outputs/' + e(prefix) + '.csv">Complete CSV</a> · ' +
-                      '<a href="outputs/' + e(prefix) + '.hxl.csv">Complete HXL CSV</a> · <a href="outputs/' + e(prefix) + '.excel.csv">Excel import CSV</a></p>')
+                      ('<a href="outputs/' + e(prefix) + '.hxl.csv">Complete HXL CSV</a> · ' if any(c["hxl"] for c in descriptor["columns"]) else '') +
+                      '<a href="outputs/' + e(prefix) + '.excel.csv">Excel import CSV</a></p>')
         preview = previews[(descriptor["edition"], descriptor["output"])]
         pieces.append('<div class="scroll"><table><thead><tr>' + "".join('<th>' + e(c["label"]) + '</th>' for c in descriptor["columns"]) +
                       '</tr></thead><tbody>' + "".join('<tr>' + "".join('<td>' + e(cell_text(v)) + '</td>' for v in row) + '</tr>' for row in preview) +
@@ -195,7 +196,8 @@ def _report_assets(ws, review, directory, *, include_database=True, database_lin
             prefix = "edition_" + str(edition) + "_" + output_id
             headers, types = [c["label"] for c in columns], [c["type"] for c in columns]
             _csv(directory / "outputs" / (prefix + ".csv"), headers, records(), types=types)
-            _csv(directory / "outputs" / (prefix + ".hxl.csv"), headers, records(), hxl=[c["hxl"] for c in columns], types=types)
+            if any(c["hxl"] for c in columns):
+                _csv(directory / "outputs" / (prefix + ".hxl.csv"), headers, records(), hxl=[c["hxl"] for c in columns], types=types)
             excel_escapes[prefix] = _csv(directory / "outputs" / (prefix + ".excel.csv"), headers, records(), types=types, excel=True)
             previews[(edition, output_id)] = [load_json(r[0]) for r in db.execute(
                 "SELECT values_json FROM layout_rows WHERE edition=? AND output=? ORDER BY ordinal LIMIT 50", (edition, output_id))]

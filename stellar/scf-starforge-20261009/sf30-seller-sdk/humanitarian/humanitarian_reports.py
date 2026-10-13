@@ -29,7 +29,7 @@ def fields_for(plan):
                "hxl": s["hxl"], "unit": s["unit"]} for s in plan["selectors"]]
     tags = {"admin_code": "", "admin_name": "", "period": "#date"}
     for name, kind in GENERATED.items():
-        tag = ("#" + name.split("_")[0] + ("+code" if name.endswith("_code") else "+name")
+        tag = ("#" + ("country" if name.startswith("adm0_") else name.split("_")[0]) + ("+code" if name.endswith("_code") else "+name")
                if name.startswith("adm") and name[3:4].isdigit() else tags.get(name, ""))
         result.append({"name": name, "type": kind, "label": name.replace("_", " "),
                        "hxl": tag, "unit": ""})
@@ -344,6 +344,10 @@ def compile_report(ws, definition, revision, reference, mappings, decisions, des
             edition_results.append({"id": edition_number, "source": edition["source"], "mapping": mapping["id"],
                                     "build": native["id"], "label": edition["label"], "period": edition["period"],
                                     "counts": coverage, "duplicateKeys": len(duplicates)})
+        for edition_number, mapping in enumerate(mappings):
+            selects = [expression(field["name"]) + ' AS "' + field["name"] + '"' for field in mapping["fields"]]
+            db.execute("CREATE VIEW edition_" + str(edition_number) + " AS SELECT " + ",".join(selects) +
+                       " FROM rows WHERE edition=" + str(edition_number))
         db.commit()
         for row in db.execute("SELECT edition,source_row,k,valid,values_json,resolution_json,issues_json FROM rows ORDER BY edition,source_row"):
             encoded = json_bytes({"edition": row["edition"], "source_row": row["source_row"],

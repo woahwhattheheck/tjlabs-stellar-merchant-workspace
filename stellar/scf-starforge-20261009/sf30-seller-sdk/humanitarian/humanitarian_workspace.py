@@ -5,6 +5,7 @@ import _bootstrap
 import os
 from pathlib import Path
 import shutil
+import sqlite3
 import time
 
 from workspace import (Workspace, SourceFormat, InputError, json_bytes, load_json, digest,
@@ -40,13 +41,20 @@ class HumanitarianWorkspace(Workspace):
                 raise InputError("Reporting directories must be private and owned by the operator")
             self.db.executescript("""
                 CREATE TABLE IF NOT EXISTS human_objects(kind TEXT NOT NULL,id TEXT NOT NULL,body TEXT NOT NULL,
-                    created REAL NOT NULL,PRIMARY KEY(kind,id));
+                    created REAL NOT NULL,summary TEXT NOT NULL,PRIMARY KEY(kind,id));
                 CREATE TABLE IF NOT EXISTS human_reports(id TEXT PRIMARY KEY,body TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS human_reviews(id TEXT NOT NULL,revision INTEGER NOT NULL,
                     request_id TEXT NOT NULL UNIQUE,body TEXT NOT NULL,PRIMARY KEY(id,revision));
                 CREATE TABLE IF NOT EXISTS human_requests(id TEXT PRIMARY KEY,kind TEXT NOT NULL,
                     input_sha256 TEXT NOT NULL,input TEXT NOT NULL,result TEXT NOT NULL);
             """)
+            if "summary" not in {r[1] for r in self.db.execute("PRAGMA table_info(human_objects)")}:
+                with self.db:
+                    self.db.execute("ALTER TABLE human_objects ADD COLUMN summary TEXT NOT NULL DEFAULT '{}'")
+                    for row in self.db.execute("SELECT kind,id,body FROM human_objects"):
+                        body = load_json(row["body"])
+                        self.db.execute("UPDATE human_objects SET summary=? WHERE kind=? AND id=?",
+                                        (json_bytes(self._object_summary(row["kind"], body)).decode(), row["kind"], row["id"]))
         except BaseException:
             super().close()
             raise
@@ -61,12 +69,22 @@ class HumanitarianWorkspace(Workspace):
             raise InputError("Retained " + kind + " identity changed")
         return body
 
+    @staticmethod
+    def _object_summary(kind, body):
+        if kind == "reference":
+            return {"id": body["id"], "name": body["definition"]["name"], "source": body["source"],
+                    "counts": body["counts"], "provenance": body["definition"]["provenance"]}
+        if kind == "mapping":
+            return {key: body[key] for key in ("id", "name", "reference", "plan", "outputs")}
+        return body
+
     def _save_object(self, kind, body):
         encoded = json_bytes(body).decode()
         existing = self.db.execute("SELECT body FROM human_objects WHERE kind=? AND id=?", (kind, body["id"])).fetchone()
         if existing and existing["body"] != encoded:
             raise InputError("An existing immutable object has different complete bytes")
-        self.db.execute("INSERT OR IGNORE INTO human_objects VALUES(?,?,?,?)", (kind, body["id"], encoded, time.time()))
+        self.db.execute("INSERT OR IGNORE INTO human_objects VALUES(?,?,?,?,?)",
+                        (kind, body["id"], encoded, time.time(), json_bytes(self._object_summary(kind, body)).decode()))
         return body
 
     def _mutation(self, kind, raw, operation):
@@ -108,13 +126,12 @@ class HumanitarianWorkspace(Workspace):
     def state(self):
         with self.mutex:
             references, mappings, aliases = [], [], []
-            for row in self.db.execute("SELECT kind,id FROM human_objects ORDER BY created DESC,id"):
-                obj = self._object(row["kind"], row["id"])
+            for row in self.db.execute("SELECT kind,summary FROM human_objects ORDER BY created DESC,id"):
+                obj = load_json(row["summary"])
                 if row["kind"] == "reference":
-                    references.append({"id": obj["id"], "name": obj["definition"]["name"], "source": obj["source"],
-                                       "counts": obj["counts"], "provenance": obj["definition"]["provenance"]})
+                    references.append(obj)
                 elif row["kind"] == "mapping":
-                    mappings.append({key: obj[key] for key in ("id", "name", "reference", "plan", "outputs")})
+                    mappings.append(obj)
                 else:
                     aliases.append(obj)
             return {"schema": self.version,
@@ -372,6 +389,50 @@ class HumanitarianWorkspace(Workspace):
                 raise InputError("Choose an edition in this review")
             return row_page(self.root / "reports" / review["report"] / "rows.sqlite",
                             ident, review["revision"], edition, offset, limit, issues)
+
+    @staticmethod
+    def _page(offset, limit):
+        if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 1000:
+            raise InputError("Select a nonnegative offset and a page limit from one to one thousand")
+
+    def output_rows(self, ident, revision=None, edition=0, output=None, offset=0, limit=50):
+        self._page(offset, limit)
+        identifier(output, "Output ID")
+        with self.mutex:
+            review = self.review(ident, revision)
+            if type(edition) is not int or not 0 <= edition < review["editionCount"]:
+                raise InputError("Choose an edition in this review")
+            report = self._report(review["report"])
+            selected = next((o for o in report["outputs"] if o["edition"] == edition and o["output"] == output), None)
+            if selected is None:
+                raise InputError("Choose an output retained in this edition")
+            path = self.root / "reports" / report["id"] / "rows.sqlite"
+            db = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+            try:
+                rows = [{"ordinal": r[0], "values": load_json(r[1])} for r in db.execute(
+                    "SELECT ordinal,values_json FROM layout_rows WHERE edition=? AND output=? ORDER BY ordinal LIMIT ? OFFSET ?",
+                    (edition, output, limit, offset))]
+                return {"schema": "stellar-forge.humanitarian-output-rows.v1", "review": ident, "revision": review["revision"],
+                        "edition": edition, "output": output, "offset": offset, "limit": limit, "total": selected["rows"],
+                        "columns": selected["columns"], "coverage": selected["coverage"], "rows": rows}
+            finally:
+                db.close()
+
+    def comparison_rows(self, ident, revision=None, offset=0, limit=50):
+        self._page(offset, limit)
+        with self.mutex:
+            review = self.review(ident, revision)
+            report = self._report(review["report"])
+            path = self.root / "reports" / report["id"] / "rows.sqlite"
+            db = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+            try:
+                total = db.execute("SELECT COUNT(*) FROM changes").fetchone()[0]
+                rows = [{"ordinal": r[0]} | load_json(r[1]) for r in db.execute(
+                    "SELECT ordinal,body FROM changes ORDER BY ordinal LIMIT ? OFFSET ?", (limit, offset))]
+                return {"schema": "stellar-forge.humanitarian-comparison-rows.v1", "review": ident, "revision": review["revision"],
+                        "offset": offset, "limit": limit, "total": total, "comparison": report["comparison"], "rows": rows}
+            finally:
+                db.close()
 
     def export_review(self, ident, output, revision=None):
         from humanitarian_handover import export_review
