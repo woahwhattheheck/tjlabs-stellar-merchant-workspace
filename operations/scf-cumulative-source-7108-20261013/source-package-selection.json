@@ -1,0 +1,71 @@
+{
+  "schema": "commons.scf-complete-source-package.v1",
+  "operationId": "SCF-CUMULATIVE-SOURCE-JOIN-7108-20261013",
+  "producerCommit": "85d898a7c9d84cc13f529f72027980409948d141",
+  "sourceCount": 183,
+  "bytes": 1072556,
+  "sha256": "d67839c0620b0fb0d9ec80480fc6e56388ac233a461e0cdc721784d3aae9a904",
+  "gitBlob": "7e1ae1e559732d8a39d03462acffbe4993f4a2f8",
+  "bundle": {
+    "schema": "stellar-forge.grant-reviewer-source-bundle.v1",
+    "id": "1ee8d742244772158d06648ed0bbfdb6a88d04fb3d3ef7b9c96d9bc7ad828604",
+    "body": {
+      "applicationSha256": "eb38a06560794272e8edc2c98322741fd2eb7467c98ea67a9b9eb743bf7a3296",
+      "receivedAt": "2026-10-13T02:17:41.000Z",
+      "files": [
+        {
+          "role": "application",
+          "name": "application.md",
+          "originalName": "application.md",
+          "mediaType": "text/markdown;charset=utf-8",
+          "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/85d898a7c9d84cc13f529f72027980409948d141/stellar-forge/developer-site/dist/grant-data/application.md",
+          "bytes": 53498,
+          "sha256": "eb38a06560794272e8edc2c98322741fd2eb7467c98ea67a9b9eb743bf7a3296",
+          "identityBasis": "Verified against original source-index application SHA-256, byte count and Git blob."
+        },
+        {
+          "role": "source-index",
+          "name": "source-index.json",
+          "originalName": "source-index.json",
+          "mediaType": "application/json",
+          "sourceUrl": "",
+          "bytes": 193008,
+          "sha256": "7190ba5432d66c0bf78288a908d6c7b835ee41a030a68062cf3772979e844c63",
+          "identityBasis": "Complete received source-index bytes; its own digest is a receiving identity."
+        },
+        {
+          "role": "budget",
+          "name": "budget.csv",
+          "originalName": "budget.csv",
+          "mediaType": "text/csv;charset=utf-8",
+          "sourceUrl": "",
+          "bytes": 597,
+          "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+          "identityBasis": "Complete received budget bytes; this source index declares no independent budget-file digest."
+        },
+        {
+          "role": "product-and-finance",
+          "name": "product-and-finance.md",
+          "originalName": "product-and-finance.md",
+          "mediaType": "text/markdown;charset=utf-8",
+          "sourceUrl": "",
+          "bytes": 514921,
+          "sha256": "2d998dc33f7e9e18aec4905809cf28e7c5bb1057eb0fa7c4394a1f158f57ac4e",
+          "identityBasis": "Verified against original source-index product_and_finance SHA-256, byte count and Git blob."
+        }
+      ]
+    }
+  },
+  "originalBudget": {
+    "role": "budget",
+    "name": "budget.csv",
+    "originalName": "budget.csv",
+    "mediaType": "text/csv;charset=utf-8",
+    "sourceUrl": "https://raw.githubusercontent.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/b412f1ea76bd3f243c2ef78eeb4360730b65ef80/stellar-forge/developer-site/dist/grant-data/budget.csv",
+    "bytes": 597,
+    "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+    "identityBasis": "Complete received budget bytes; this source index declares no independent budget-file digest.",
+    "originalPackageGit": "8851546bec67414c1305c83fea4410a333d04c6d"
+  },
+  "verification": "Unchanged current makeSource/createSourceBundle/createReviewerSourcePackage/openReviewerSourcePackage; complete source identities verified and budget identical to prior accepted package."
+}
