@@ -160,4 +160,20 @@ The format work follows the published ISO message structures and bank implementa
 
 Eight original Nordea example archives were received on 13 October 2026, preserving their exact ZIP and XML bytes, original and final URLs, lengths and SHA-256 values. They contain 109,613 bytes of original XML across the standard and extended Denmark, Finland, Norway and Sweden examples. The complete source inventory is retained with the receiving operation.
 
+
+### Goldman Sachs .08 published examples
+
+The following original XML examples were received from Goldman Sachs Transaction Banking's published HTML code blocks on 13 October 2026. The retained source contains every XML line, original comment and field value; retrieval line labels and the surrounding page presentation were removed. The receiving record keeps the complete retrieved page windows and the exact resulting XML identity.
+
+| Published example | Original XML bytes | Actual source outcome |
+| --- | ---: | --- |
+| [CBPR sample](https://developer.gs.com/docs/services/transaction-banking/camt053-cbpr-sample) | 14,015 | One USD statement, two entries and two transaction details. Booked net is -25.95 and the original page balances agree. Page 1 is nonfinal and its closing balance is intermediate, so the complete account-period close stays ineligible. |
+| [Itemized European sample](https://developer.gs.com/docs/services/transaction-banking/camt-053-itemized-eu-txn) | 56,930 | Three EUR statements with 3, 10 and 0 entries. Their original booked nets are 190, 1511.6 and 0. Each complete 5 November 2024 reporting period has an eligible original opening/closing pair. Five original entries retain reversal metadata. |
+| [Structured remittance sample](https://developer.gs.com/docs/services/transaction-banking/camt-053-v8-struct-remi) | 14,926 | The published XML opens `AdrType` and closes `PstlAdr` without closing that element. The unchanged reader returns `CAMT_XML_CLOSE`, retaining both original tag names. |
+
+The Itemized example includes a signed entry amount of -10 and a transaction-detail amount of 50. The entry remains the bank cash movement; selecting the detail check retains the informational difference. The zero-entry account retains its original 4200 opening and closing balances and complete statement period. CBPR's detail-level bank references and UETR remain source details, separate from entry-level duplicate identity.
+
+The merged source parser received all four valid statements, 15 cash entries and 15 details. The unchanged workspace preview and CAMT renderer then received those complete reports, preserving statement metadata, all five reversal flags and the original close classifications. These source and consumer runs used the connected JavaScript runtime. The complete HTTP, account, CLI, statement-close and cold-reopen operation is maintained in [the issuer-example receiving directory](../../../../../operations/merchant-bank-camt053-receiving-dff77-20261013/README.md); its saved result records the actual native application outcome.
+
+
 The installed application supports the explicitly named .02/.08 message structures. The ISO catalogue's newer message versions are separate structures and do not change the interpretation of a file that declares an older version.
