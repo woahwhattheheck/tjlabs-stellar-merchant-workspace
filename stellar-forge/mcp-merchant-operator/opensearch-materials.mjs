@@ -798,6 +798,9 @@ export class MerchantOpenSearchMaterials {
           return boundedRecord(recordAt(model,'decision',args.decisionId,args.revision));
         case 'merchant_opensearch_material_source':
           return boundedRecord(model.catalog.source(identifier(args.sourceId,'source ID')));
+        case 'merchant_opensearch_material_bmecat_profile':
+          if(args.sourceId!==undefined)identifier(args.sourceId,'source ID');
+          return boundedRecord(model.catalog.bmecatInputProfile(request));
         case 'merchant_opensearch_material_edition':
           return boundedRecord(model.catalog.edition(identifier(args.editionId,'edition ID')));
         case 'merchant_opensearch_material_rows':

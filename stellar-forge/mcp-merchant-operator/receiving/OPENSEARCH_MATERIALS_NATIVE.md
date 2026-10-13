@@ -26,6 +26,7 @@ The two directories must be separate canonical paths owned by the current operat
 | --directory | Private material MCP receiving directory containing the control state, host configuration, customer workspace and downloads. |
 | --supplier-operation | Original supplier operation ID; defaults to supplier-etim-2769. Preserve it on continuation. |
 | --operation | Material receiving operation ID; defaults to opensearch-materials-2769. Preserve it on continuation. |
+| --input-format | Original intake: jsonl (default) or bmecat-xml. Preserve the chosen format on continuation. |
 | --inputs | Optional directory containing the original supplier example inputs. Passed unchanged to the original supplier delivery program. |
 | --python | Optional selected Python executable for the original supplier program. |
 | --help | Print the command and continuation requirements. |
@@ -47,6 +48,33 @@ const report = await runOpenSearchMaterialsReceiving({
 ~~~
 
 The program calls the original runSupplierDeliveryJourney. If that operation has already completed, its own retained report and output verification are used. The following material workflow continues the same receiver and original product; it does not initialize a second supplier producer.
+
+## Receive the original BMEcat XML directly
+
+The same complete course accepts `--input-format bmecat-xml`. It sends the publisher's original XML through the declared source alias, original streaming importer, full-document staging and the typed MCP client. The existing `jsonl` default preserves earlier operation directories. Keep the selected format unchanged on continuation; use the original BMEcat supplier directory and operation if that first course has already completed.
+
+~~~sh
+node stellar-forge/mcp-merchant-operator/receiving/opensearch-materials-native.mjs \
+  --supplier-directory /private/receiving/supplier-bmecat \
+  --directory /private/receiving/bmecat-mcp \
+  --supplier-operation supplier-bmecat-original \
+  --operation bmecat-mcp-ee290 \
+  --input-format bmecat-xml
+~~~
+
+The four unchanged files in `opensearch/examples/supplier-etim/` are selected by the original supplier course and verified before use. Pass `--inputs` only when that same four-file fixture is already retained elsewhere. The original XML SHA-256 is `50568f0357c982a853eaf523475d18d6f2a594d0c8a392143a4df50007cddf8e`; its one material is `411061` with all 30 published ETIM features. Python `lxml` validates the original full XML outputs against the retained publisher XSD. No search-engine deployment is needed by this catalogue and supplier receiving course.
+
+The course calls `materialBMEcatProfile()` for the maintained default mapping and supplier bindings. In XML mode it also calls `materialBMEcatProfile({sourceId})` and compares the retained header, transaction, product count and complete source metadata. Both original agreement flags remain false until explicitly supplied by the operator. Original material identity, price lexemes, units and source tree remain bound to the full XML hash.
+
+Every source alias and format passes through the actual MCP schema and typed client. The rest of the existing course continues unchanged: original catalog and units, customer match approvals, supplier plan/corrections/reviews, all complete material and supplier exports, interrupted download continuation, CLI export/history, receiving newer customer work and replaying the older bundle.
+
+### Reopen the final outgoing attachment
+
+After the customer makes its retained decisions and corrections, the program exports its latest `catalog-bundle.jsonl`. It declares those exact downloaded bytes as `etim-final-delivery`, imports them into the distinct `final-recipient-workspace`, closes the complete MCP host and all opened workspaces, and reopens the recipient. It compares the actual current catalog/edition/material, decision, supplier plan/correction/review, original product and source identity. XML mode also compares the complete BMEcat metadata and source-derived profile. The final report records this recipient and the exact outgoing bundle SHA-256; the earlier initial-customer import remains part of the same course.
+
+Keep `control/receiving-state.json`, all three workspaces, declared input files and complete exports together. A resumed operation uses the same input selection, saved requests, final attachment and recipient; it does not manufacture a replacement customer journey.
+
+A completed native report covers the native/typed/CLI delivery. Before customer-facing delivery, open the exact resulting browser and offline-recipient artifacts, exercise their important controls at desktop and narrow widths, inspect generated downloads, and visually inspect the actual screenshots. The original EE290 browser receiving owner retains that following step.
 
 ## Original product and source selection
 

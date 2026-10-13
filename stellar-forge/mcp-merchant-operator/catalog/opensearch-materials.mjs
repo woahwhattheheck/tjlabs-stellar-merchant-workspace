@@ -17,7 +17,7 @@ const savedCatalog = {requestId:id,catalogId:id,expectedRevision:revision};
 const index = {type:'string',pattern:'^[a-z0-9][a-z0-9._-]{0,199}$'};
 const readId = {type:'string',minLength:1,maxLength:160};
 const inputFormat = {type:'object',properties:{
-  kind:{type:'string',enum:['csv','tsv','jsonl','json','xchange-json']},
+  kind:{type:'string',enum:['csv','tsv','jsonl','json','xchange-json','bmecat-xml']},
   delimiter:{type:'string',minLength:1,maxLength:1},hasHeader:{type:'boolean'},
   columns:{type:'array',minItems:1,maxItems:512,uniqueItems:true,items:text(512)},
   rowsPath:{type:'string',maxLength:2048}
@@ -38,6 +38,7 @@ export function openSearchMaterialTools(tool) {
     make('material_history','Page original catalog mapping or customer-decision revisions, newest first. Continue returned nextRevision as beforeRevision.',{kind:{type:'string',enum:['catalog','decision']},...history},['kind','id']),
     make('material_decision_get','Read one full current customer decision or original immutable historical revision, including its customer description, material hash and review note.',{decisionId:id,revision},['decisionId']),
     make('material_source','Read an original retained source manifest, format, provenance, columns and sample. Complete original bytes are included in catalog-bundle.jsonl.',{sourceId:id},['sourceId']),
+    make('material_bmecat_profile','Read the original BMEcat catalogue mapping and supplier bindings. Optional sourceId supplies the retained original header/profile and transaction modes; review it before saving a submission.',{sourceId:id}),
     make('material_edition','Read a complete immutable edition review, original source/dependency hashes, material root and change counts.',{editionId:id},['editionId']),
     make('material_rows','Page the complete saved edition by original material identifier. The optional search matches saved identifiers and titles.',{editionId:id,...page,search:{type:'string',maxLength:2000}},['editionId']),
     make('material_changes','Page original added, removed and changed material records against the edition’s retained comparison base.',{editionId:id,...page},['editionId']),
