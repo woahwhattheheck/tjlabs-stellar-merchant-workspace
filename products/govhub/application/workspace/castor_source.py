@@ -909,11 +909,21 @@ def receive_command_receipt(session, receipt_path):
     s = session
     from native_adapter import _file as artifact
     incoming_path = Path(receipt_path)
+    accepted = s.state.setdefault("source_received_command_receipts", {})
+    selected_path = str(incoming_path)
+    for prior in accepted.values():
+        if prior.get("selected_path") == selected_path:
+            retained = Path(s.private_path(prior["retained_path"]))
+            if _file(retained)["sha256"] != prior["sha256"]:
+                raise ValueError("The already received original native receipt changed.")
+            for item in prior["outputs"].values():
+                if _file(s.private_path(item["path"])) != {"bytes": item["size"], "sha256": item["sha256"]}:
+                    raise ValueError("An accepted original command output changed.")
+            return prior
     if not incoming_path.is_absolute() or incoming_path.is_symlink() or not incoming_path.is_file():
         raise ValueError("Select the actual complete original native Git command receipt.")
     raw = incoming_path.read_bytes()
     receipt_sha256 = _digest(raw)
-    accepted = s.state.setdefault("source_received_command_receipts", {})
     previous = next((row for row in accepted.values() if row["sha256"] == receipt_sha256), None)
     if previous is not None:
         return previous
@@ -933,9 +943,11 @@ def receive_command_receipt(session, receipt_path):
     retained = directory / (receipt_sha256 + ".json")
     _stable_file(retained, raw)
     completed = json.loads(raw)
-    for field in ("argv", "cwd", "started_at", "mutating", "stdin", "pid"):
+    for field in ("argv", "cwd", "started_at", "mutating", "stdin"):
         if completed.get(field) != original.get(field):
             raise ValueError("The received native completion differs from original " + field + ".")
+    if original.get("pid") is not None and completed.get("pid") != original["pid"]:
+        raise ValueError("The completed receipt names another original native process.")
     if (completed.get("phase") != "complete" or type(completed.get("returncode")) is not int
             or not completed.get("completed_at") or not isinstance(completed.get("pid"), int)):
         raise ValueError("The native receipt must retain the actual observed command exit.")
@@ -958,7 +970,8 @@ def receive_command_receipt(session, receipt_path):
     _stable_file(directory / (label + ".original.json"), original_raw)
     completed.update(outputs)
     _atomic(original_path, completed)
-    outcome = {"label": label, "sha256": receipt_sha256, "retained_path": str(retained),
+    outcome = {"label": label, "sha256": receipt_sha256, "selected_path": selected_path,
+               "retained_path": str(retained),
                "received_at": _now(), "returncode": completed["returncode"],
                "outputs": outputs}
     accepted[label] = outcome
