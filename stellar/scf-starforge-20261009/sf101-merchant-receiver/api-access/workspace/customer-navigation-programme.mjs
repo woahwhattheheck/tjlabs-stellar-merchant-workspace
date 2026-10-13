@@ -27,7 +27,7 @@ export async function runCustomerNavigationProgramme(input){
  const original=await readFile(statePath),state=JSON.parse(original);
  need(state.id===expectedWorkspaceId&&state.revision===expectedRevision,'The retained customer changed before this read-only programme.');
  need(!state.tasks.some(x=>['QUEUED','RUNNING','CANCELLING'].includes(x.status)),'Continue the original active work before navigation.');
- let app,browser;const artifacts=[],visits=[],failures=[],blocked=[],downloads=[];
+ let app,browser;const artifacts=[],visits=[],failures=[],blocked=[],downloads=[],portfolioPages=[];
  const retain=async(name,bytes)=>{const path=join(directory,name);await writeFile(path,bytes,{mode:0o600});const row={name,bytes:bytes.length,sha256:hash(bytes)};artifacts.push(row);return row;};
  try{
   app=await serveConfiguredWorkspace({configFile,approvalMode:'terminal',expectedWorkspaceSha256:hash(original)});
@@ -51,23 +51,52 @@ export async function runCustomerNavigationProgramme(input){
    visits.push({label,...measured});need(measured.scrollWidth<=measured.width+1&&measured.clipped.length===0,'Customer controls extend outside the viewport: '+label);
   };
   const go=async route=>{await page.goto(app.origin+'/#'+route);await ready();await page.waitForTimeout(80);};
-  await page.goto(app.url);await ready();await page.locator('.portfolio-pass').first().waitFor();
-  await checkLayout('portfolio-desktop');
-  await retain('portfolio-desktop.png',await page.screenshot({fullPage:true}));
-  const active=state.profiles.filter(p=>!p.archived);
-  if(active.length){
-   const selection=page.locator('.portfolio-pass input[type=checkbox]').first();await selection.check();
-   await page.waitForFunction(()=>document.querySelector('#portfolio-refresh-selected').textContent.includes('(1)'));
-   await page.reload();await ready();await page.locator('.portfolio-pass input[type=checkbox]').first().waitFor();
-   need(await page.locator('.portfolio-pass input[type=checkbox]').first().isChecked(),'Selection did not survive reload.');
-   await page.getByLabel('Find a pass',{exact:true}).fill(active[0].label);
-   await page.reload();await ready();
-   need(await page.getByLabel('Find a pass',{exact:true}).inputValue()===active[0].label,'Portfolio search did not survive reload.');
+  const inspectPortfolio=async(status,expectedIds)=>{
    await page.getByLabel('Find a pass',{exact:true}).fill('');
+   await page.getByLabel('Availability',{exact:true}).selectOption(status);
+   const wanted=new Set(expectedIds),seen=new Set();need(wanted.size===expectedIds.length,'Retained pass identities are repeated.');
+   const counts=expectedIds.length?Math.ceil(expectedIds.length/25):1;
+   let previous=[];
+   for(let index=0;index<counts;index++){
+    const count=Math.min(25,Math.max(0,expectedIds.length-index*25));
+    await page.waitForFunction(({count,total,all,previous})=>{
+     const ids=[...document.querySelectorAll('.portfolio-pass')].map(e=>e.dataset.profileId);
+     const label=document.querySelector('#portfolio-result-count')?.textContent??'';
+     return ids.length===count&&label.startsWith(total+' of '+all+' passes')&&
+      (!previous.length||ids.some(id=>!previous.includes(id)));
+    },{count,total:expectedIds.length,all:state.profiles.length,previous});
+    const ids=await page.locator('.portfolio-pass').evaluateAll(rows=>rows.map(row=>row.dataset.profileId));
+    for(const id of ids){need(wanted.has(id)&&!seen.has(id),'The portfolio page repeats or substitutes an original pass.');seen.add(id);}
+    portfolioPages.push({status,page:index+1,profileIds:ids});
+    await checkLayout('portfolio-'+status.toLowerCase()+'-page-'+(index+1));
+    const next=page.getByRole('button',{name:'Next page',exact:true});
+    if(index+1<counts){need(await next.count()===1,'The original portfolio has no next page.');previous=ids;await next.click();}
+    else need(await next.count()===0,'The portfolio contains an unexplained further page.');
+   }
+   need(seen.size===wanted.size,'The complete original pass selection was not received.');
+  };
+  await page.goto(app.url);await ready();
+  const active=state.profiles.filter(p=>!p.archived);
+  await inspectPortfolio('ACTIVE',active.map(p=>p.id));
+  await retain('portfolio-desktop.png',await page.screenshot({fullPage:true}));
+  if(active.length){
+   // Page order comes from the actual portfolio projection, not the source
+   // array's position. Select an original active pass visible on this page.
+   const card=page.locator('.portfolio-pass').first(),selectedId=await card.getAttribute('data-profile-id');
+   const selected=active.find(p=>p.id===selectedId);need(selected,'The active portfolio selects an unknown pass.');
+   await page.getByRole('button',{name:'Clear selection',exact:true}).click();
+   await card.locator('input[type=checkbox]').check();
+   await page.waitForFunction(()=>document.querySelector('#portfolio-refresh-selected').textContent.includes('(1)'));
+   const visible=await page.locator('.portfolio-pass').evaluateAll(rows=>rows.map(row=>row.dataset.profileId));
+   await page.reload();await ready();
+   await page.waitForFunction(ids=>JSON.stringify([...document.querySelectorAll('.portfolio-pass')].map(e=>e.dataset.profileId))===JSON.stringify(ids),visible);
+   const retained=page.locator('.portfolio-pass').filter({has:page.locator('input[type=checkbox]:checked')});
+   need(await retained.count()===1&&await retained.getAttribute('data-profile-id')===selectedId,'Selection or the original page did not survive reload.');
+   await page.getByLabel('Find a pass',{exact:true}).fill(selected.label);
+   await page.reload();await ready();
+   need(await page.getByLabel('Find a pass',{exact:true}).inputValue()===selected.label,'Portfolio search did not survive reload.');
   }
-  await page.getByLabel('Availability',{exact:true}).selectOption('ALL');
-  await page.locator('.portfolio-pass').nth(state.profiles.length-1).waitFor();
-  need(await page.locator('.portfolio-pass').count()===Math.min(25,state.profiles.length),'The page omits retained passes.');
+  await inspectPortfolio('ALL',state.profiles.map(p=>p.id));
   for(const size of [{width:1280,height:900},{width:768,height:900},{width:390,height:844}]){
    await page.setViewportSize(size);await checkLayout('portfolio-'+size.width);
    await retain('portfolio-'+size.width+'.png',await page.screenshot({fullPage:true}));
@@ -116,7 +145,7 @@ export async function runCustomerNavigationProgramme(input){
   await context.close();await browser.close();browser=null;await app.close();app=null;
   const reopened=await readFile(statePath);need(reopened.equals(original),'The original workspace bytes changed during navigation.');
   const result={schema:input.schema,inputSha256,complete:true,workspaceId:state.id,revision:state.revision,
-   stateSha256:hash(original),profiles:state.profiles.length,visits,downloads,artifacts,browserErrors:failures,
+   stateSha256:hash(original),profiles:state.profiles.length,portfolioPages,visits,downloads,artifacts,browserErrors:failures,
    blockedRequests:blocked,apiCalls:0,purchases:0,refreshes:0,customerStateUnchanged:true,completedAt:new Date().toISOString()};
   await publish(resultPath,result);return result;
  }catch(error){
