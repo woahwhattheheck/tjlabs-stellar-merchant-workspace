@@ -46,6 +46,7 @@ import operations_account_reconciliation as account_reconciliation
 import operations_workflows as operating_workflows
 import operations_implementation as implementation
 import operations_engagements as engagements
+import engagement_working
 import operations_risks as risks
 import operations_risk_comparison as risk_comparison
 import engagement_handover
@@ -908,6 +909,10 @@ class Operations:
 
     def export_risks(self, program_id, review_id):
         return self.export(identifier(program_id, "operation"), risk_register_id=identifier(review_id, "review"))
+
+    def engagement_request(self, program_id, body):
+        with self._snapshot():
+            return engagement_working.lookup(self, identifier(program_id, "operation"), body)
 
     def seed_engagement(self, program_id, body):
         with self._snapshot():
