@@ -288,6 +288,13 @@
         "operation-history-model.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/application-result-sets.mjs",
+      [
+        "application-result-sets.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

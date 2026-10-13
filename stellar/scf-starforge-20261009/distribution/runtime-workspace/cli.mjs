@@ -8,6 +8,7 @@ import { workspaceBackupCommands, workspaceBackupHelp, runWorkspaceBackupCommand
 import { runtimeProcedureCommands, runtimeProcedureHelp, runRuntimeProcedureCommand } from './operating-procedures-cli.mjs';
 import { applicationInputCommands, applicationInputHelp, runApplicationInputCommand } from './application-inputs-cli.mjs';
 import { applicationInputSetCommands, applicationInputSetHelp, runApplicationInputSetCommand } from './application-input-sets-cli.mjs';
+import { applicationResultSetCommands, applicationResultSetHelp, runApplicationResultSetCommand } from './application-result-sets-cli.mjs';
 import { applicationInputEditionCommands, applicationInputEditionHelp, runApplicationInputEditionCommand } from './application-input-set-editions-cli.mjs';
 import { writeApplicationOutputDownload } from './application-output.mjs';
 import { readJSON } from './storage.mjs';
@@ -101,6 +102,7 @@ ${runtimeProcedureHelp}
 ${applicationInputHelp}
 ${applicationInputSetHelp}
 ${applicationInputEditionHelp}
+${applicationResultSetHelp}
 ${dcatReceivingHelp}
 
 The private browser receives an original archive or reuses an existing runtime,
@@ -117,6 +119,7 @@ const allowed = {
   ...applicationInputCommands,
   ...applicationInputSetCommands,
   ...applicationInputEditionCommands,
+  ...applicationResultSetCommands,
   'source-plans': ['--workspace', '--query', '--limit', '--cursor', '--receiving-query', '--receiving-status', '--receiving-limit', '--receiving-cursor'],
   'source-plan-inspect': ['--document'],
   'source-plan-save': ['--workspace', '--request'],
@@ -225,6 +228,7 @@ export async function main(argv = process.argv.slice(2)) {
   else if (Object.hasOwn(workspaceBackupCommands, command)) result = await runWorkspaceBackupCommand(model, command, options);
   else if (Object.hasOwn(runtimeProcedureCommands, command)) result = await runRuntimeProcedureCommand(model, command, options);
   else if (Object.hasOwn(applicationInputEditionCommands, command)) result = await runApplicationInputEditionCommand(model, command, options);
+  else if(Object.hasOwn(applicationResultSetCommands,command))result=await runApplicationResultSetCommand(model,command,options);
   else if (Object.hasOwn(applicationInputSetCommands, command)) result = await runApplicationInputSetCommand(model, command, options);
   else if (Object.hasOwn(applicationInputCommands, command)) result = await runApplicationInputCommand(model, command, options);
   else if (command === 'application-setup-export') {
