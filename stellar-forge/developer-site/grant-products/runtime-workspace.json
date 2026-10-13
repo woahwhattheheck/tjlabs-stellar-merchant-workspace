@@ -747,13 +747,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs",
-      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "commit": "abb216a6ae654471a03028961e64bc4313f44832",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
           "bytes": 50646,
           "sha256": "37ba4e2250f0be79246e7c47b893d15ceaf9bcd5306cbce856d2741aed3f3b87",
           "git_blob": "03f17d8980f40e9ca97f69f94cd9ccede4dad870"
+        },
+        {
+          "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+          "bytes": 53664,
+          "sha256": "e69751388833bc53d9d008ade7b3961bdbc3f28b9f3ba6532fb0b7dd07282e24",
+          "git_blob": "6947c4baa9649019c8c5c1b7bdc1288825e10fd6"
         }
       ]
     },
@@ -875,13 +881,19 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OPERATION_HISTORY_RECEIVE.mjs",
-      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "commit": "abb216a6ae654471a03028961e64bc4313f44832",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
           "bytes": 11820,
           "sha256": "57357735e448c0e891586382eebba0fd77bba1509bb9013d39e7ca7d186028f3",
           "git_blob": "75c705cfe290268507636d7206812ca23fe5bf04"
+        },
+        {
+          "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+          "bytes": 13084,
+          "sha256": "3a6a3aff12e8c34fd29bbe110f036755b0fbbb1513275ecf41a0cf9f732fd51e",
+          "git_blob": "0a57bcdd0126acae1f206625d92677fd993aff7a"
         }
       ]
     },
@@ -891,13 +903,83 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OPERATION_HISTORY.md",
-      "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
+      "commit": "abb216a6ae654471a03028961e64bc4313f44832",
       "editions": [
         {
           "commit": "e07ef01647688b04fd4d9e433aa130fe8a03c73f",
           "bytes": 10553,
           "sha256": "1dcd824942216e3c8906500a4ab8dac0e1435e44e493c0166d04ac4d20c3f7c7",
           "git_blob": "93745cbba4fabc80d2899bc2d74fe80b6bab2c06"
+        },
+        {
+          "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+          "bytes": 12146,
+          "sha256": "3497621e99edd6d383432a53fad324cb5ae5f6386293268ffb9e4208c0992e8b",
+          "git_blob": "041cc1187def06a6069d03102c5d0db7049dfd6e"
+        }
+      ]
+    },
+    {
+      "id": "runtime-receiving-read-context",
+      "label": "Validated restored-workspace identity, indexed original selections and fresh mutation guards",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
+      "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+      "editions": [
+        {
+          "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+          "bytes": 26053,
+          "sha256": "fc22435e5e7aacecaa052f9d543d189df9de29e7d969559ae4474e4d39cd7c94",
+          "git_blob": "5c415753c4c2dc50a2c2f8acf1bb6568ec0c7b6c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-receiving-observations",
+      "label": "Original live observation scheduling with one short-lived receiving context",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operation-observations.mjs",
+      "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+      "editions": [
+        {
+          "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+          "bytes": 5182,
+          "sha256": "d30f74230353ab89bf77d3e996ecce6fe332903acdbbbd04d300d3a1252030ee",
+          "git_blob": "a10056fdff4a57553a07f5e4229df27cb4906938"
+        }
+      ]
+    },
+    {
+      "id": "runtime-receiving-application-reads",
+      "label": "Complete Application overview and history with current original head bytes",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/applications-core.mjs",
+      "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+      "editions": [
+        {
+          "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+          "bytes": 32665,
+          "sha256": "05e97457ceb6bd925cb8b3a283b8e52f41cd65a0b48d30b564c4953eab862077",
+          "git_blob": "aa8b5e2bc5e9ee887650c42b638a95c0e055ab17"
+        }
+      ]
+    },
+    {
+      "id": "runtime-receiving-managed-reads",
+      "label": "Retained managed-home selection and current-host review projection",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-workspace.mjs",
+      "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+      "editions": [
+        {
+          "commit": "abb216a6ae654471a03028961e64bc4313f44832",
+          "bytes": 28404,
+          "sha256": "2f4144b8d13615712a1452b41f80695cab794003068798a98b969c88546179ca",
+          "git_blob": "5e7265ce775410cbf98da506ae644ff86f2bd105"
         }
       ]
     }
