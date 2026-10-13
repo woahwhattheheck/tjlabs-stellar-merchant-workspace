@@ -44,8 +44,10 @@ export function customerDeliveryRoutes({getCollections,receivingDirectory,mutate
    else need(false,'CUSTOMER_DELIVERY_ROUTE_NOT_FOUND');
    return true;
   }
-  match=/^received\/([a-f0-9]{64})(?:\/(member))?$/.exec(path);
+  if(path==='received'&&request.method==='GET'){send(await desk.listReceived());return true;}
+  match=/^received\/([a-f0-9]{64})(?:\/(member|file))?$/.exec(path);
   if(match&&request.method==='GET'&&!match[2]){send(await desk.received(match[1]));return true;}
+  if(match?.[2]==='file'&&request.method==='GET'){await download(response,await desk.receivedPackage(match[1]));return true;}
   if(match?.[2]==='member'&&request.method==='POST'){const input=fields(await jsonBody(request),['path']);await download(response,await desk.member(match[1],input.path));return true;}
   need(false,'CUSTOMER_DELIVERY_ROUTE_NOT_FOUND');
  }
