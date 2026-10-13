@@ -176,6 +176,38 @@
         }
       ],
       "required": false
+    },
+    {
+      "id": "ckan-fresh-datastore-acquisition",
+      "label": "Scheduled fresh DataStore selection, original run recovery and whole workspace receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CAPTURE_PLANS.md",
+      "commit": "9c944085c9c01aee008a68f2336e9c22e215ab36",
+      "editions": [
+        {
+          "commit": "9c944085c9c01aee008a68f2336e9c22e215ab36",
+          "bytes": 15984,
+          "git_blob": "5373df516786011f3235d50ec0232996faf06428"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "ckan-fresh-acquisition-engine",
+      "label": "Original plan versions, deterministic source periods and reviewed refresh integration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/capture-plans.mjs",
+      "commit": "9c944085c9c01aee008a68f2336e9c22e215ab36",
+      "editions": [
+        {
+          "commit": "9c944085c9c01aee008a68f2336e9c22e215ab36",
+          "bytes": 29310,
+          "git_blob": "581e653720b768f8fff47518cee69dbb6e5e5e6d"
+        }
+      ],
+      "required": false
     }
   ]
 }
