@@ -150,3 +150,78 @@ before selecting any following release.
 The existing browser, CLI, MCP and Applications interfaces share the same saved
 source, acquisition, review and release identities. The complete archive
 retains those histories for the next operator.
+
+## Complete browser and independent receiving in one invocation
+
+The maintained caller in this same directory now carries the entire operation:
+original live acquisition and following-edition review → original authenticated
+server → browser source/history/accepted-decision review → complete browser
+archive → server drain and project close → original independent receiving →
+received-project server and browser reopen → close and retain every result.
+
+Read [Browser receiving](BROWSER_RECEIVING.md) for the original browser phases
+and the explicit accepted-decision/corrected-candidate selection. The caller
+uses the exact archive produced after the browser's saved review. The earlier
+domain archive remains a separately retained checkpoint.
+
+Prepare a private JSON file using this actual installed source and the existing
+saved customer project. Choose real host paths for its already-selected Python,
+Playwright and Chromium; these examples denote operator-selected paths:
+
+~~~json
+{
+  "sourceRoot": "/absolute/installed/source",
+  "projectDirectory": "/absolute/private/existing-customer-project",
+  "outputDirectory": "/absolute/private/new-recurring-operation",
+  "python": "/absolute/selected/python",
+  "runtimeProfile": "portable-python312",
+  "playwrightModule": "/absolute/existing/playwright/index.mjs",
+  "chromiumPath": "/absolute/existing/chrome-headless-shell",
+  "publicSourceUrl": "https://gsa.gov/data.json",
+  "label": "GSA following publisher edition",
+  "reuseMappingIndexes": [],
+  "normalizeV3": false,
+  "rehearseRelease": true
+}
+~~~
+
+The file must be owner-only (0600), and the output directory is a new private
+directory outside the project. Close the preceding project owner first. Invoke
+the complete same-process entrypoint with the actual selected Node executable:
+
+~~~sh
+node operations/dcat-recurring-catalog-390e-20261013/run-complete-recurring.mjs \
+  --input /absolute/private/recurring-operation.json
+~~~
+
+The sourceRoot contains the full installed original application, engine,
+vendor definitions and dependencies from the chosen product edition. It must
+include merged recurring source PR1103 and the current complete operating
+directory. This command uses its original model, server, JSON codec and
+workspace receiver; it does not substitute source files or an earlier frozen
+customer model.
+
+Optional sourceId continues an existing retained publisher source. An omitted
+baselineReleaseId selects the saved active release; explicit null means an
+initial review without an accepted predecessor. reuseMappingIndexes selects
+only original indexes from that release's inspected complete report.
+normalizeV3 applies to both the domain and browser review by default.
+
+An optional browserReview object may explicitly override only
+baselineReleaseId, reuseMappingIndexes, candidateId and normalizeV3 for the
+browser's new saved review. Use candidateId to inspect a complete corrected
+document already retained in the same project. The selected candidate bytes
+remain unchanged. No private startup URL belongs in the configuration:
+the original server supplies it in-process, and the caller drains the listener
+before releasing that project's lease.
+
+The programme retains domain/, browser/ and reopen/ outputs plus both original
+archive inspections/receiving records and complete-result.json. The final
+workspaceArchive is the actual post-browser .ckanw file and its SHA-256.
+A successful browser inspection remains distinct from a completed publisher
+acquisition: overall complete is true only when the original domain, full
+browser and independent reopened browser all complete. CLI exit 0 represents
+that complete outcome; exit 2 retains a complete continuation result with its
+remaining original outcome, while exit 1 identifies an input or initial caller
+failure. Preserve the whole operation directory with the surrounding native
+operation's existing durable artifact delivery.
