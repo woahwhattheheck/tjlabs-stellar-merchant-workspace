@@ -64,7 +64,13 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-columns.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-returns.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.js"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/workbook-editor.js",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/analysis-source.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/analysis-source-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working-html.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working-ui.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working-cli.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

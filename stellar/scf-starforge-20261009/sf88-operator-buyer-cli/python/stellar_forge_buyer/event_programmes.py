@@ -273,6 +273,18 @@ class EventProgrammes:
                 "baseline_operation_id": accepted["operation_id"],
                 "receiver": {"cli_sha256": sha(cli_raw), "core_sha256": sha(core_raw)}}
 
+    def mapping_source(self, programme, input_id, mapping, expected):
+        """Receive both exact complete windows after an explicit current comparison."""
+        from .event_mapping_working import source_package
+        programme, input_id = name(programme), identifier(input_id)
+        need(isinstance(mapping, dict) and isinstance(mapping.get("fields"), list) and
+             len(mapping["fields"]) <= 100 and len(raw(mapping).encode()) <= 1024 * 1024,
+             "FIELD_MAPPING_REQUIRED")
+        with self._lock:
+            need(not self._closed, "CLOSED")
+            future = self._executor.submit(source_package, self, programme, input_id, mapping, expected)
+        return future.result()
+
     def _review_mapping(self, programme, request):
         selection = request["mapping_review"]
         need(isinstance(selection, dict) and set(selection) ==
