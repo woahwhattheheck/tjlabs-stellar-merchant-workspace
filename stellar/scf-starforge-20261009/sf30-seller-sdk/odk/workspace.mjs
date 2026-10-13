@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { mkdir } from 'node:fs/promises';
 import { parsePage } from '../odata/source.mjs';
 import { createCentralSource, decodeCentralCatalog, compileCentralQuery, normalizeScope, repeatRelations,
-  formPath, formVersionPath, submissionPath, originalSpreadsheet, segment, CENTRAL_SOURCE } from './source.mjs';
+  formPath, formVersionPath, submissionPath, originalSpreadsheet, segment, CENTRAL_SOURCE, normalizeCodespacesTokenEnv } from './source.mjs';
 import { openCentralStore } from './store.mjs';
 import { digest, fault, formatted, identifier, now, stable } from '../odata/state.mjs';
 import { analyzeCapture, compareCaptures, exportCentralDataset, createCentralReport } from './analysis.mjs';
@@ -62,9 +62,12 @@ export async function openCentralWorkspace({directory,fetchImpl=globalThis.fetch
   async function connect(input={}) {
     ensureOpen();const id=identifier(input.id||randomUUID(),'connection ID');
     const selected={id,name:String(input.name||id).slice(0,128),url:input.url,authEnv:input.authEnv,allowLoopback:input.allowLoopback===true};
-    const source=sourceFor(selected);selected.url=source.baseUrl;
+    const source=sourceFor({...selected,codespacesTokenEnv:input.codespacesTokenEnv});selected.url=source.baseUrl;
+    const proxyEnv=normalizeCodespacesTokenEnv(input.codespacesTokenEnv,selected.url,selected.authEnv);
+    if(proxyEnv!==undefined)selected.codespacesTokenEnv=proxyEnv;
     const old=store.get('connection',id,false);
-    if(old){if(stable({...selected})!==stable(Object.fromEntries(Object.keys(selected).map(key=>[key,old[key]]))))
+    if(old){if(old.codespacesTokenEnv!==selected.codespacesTokenEnv||
+        stable({...selected})!==stable(Object.fromEntries(Object.keys(selected).map(key=>[key,old[key]]))))
       throw fault('CENTRAL_CONNECTION_EXISTS','This connection ID already identifies another Central server or credential reference.',409);return old;}
     const user=await source.json('users/current'),projects=await source.json('projects');
     array(projects.value,'projects');
