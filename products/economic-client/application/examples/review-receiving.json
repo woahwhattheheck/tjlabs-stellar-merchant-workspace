@@ -1,0 +1,11 @@
+{
+  "operation_id": "economic-client-customer-review",
+  "work_directory": "/absolute/private/review-operation",
+  "source_project": "/absolute/private/economic-client-source",
+  "customer_project": "/absolute/private/received-reviewed-project",
+  "briefing_id": "ORIGINAL_SAVED_BRIEFING_ID",
+  "recipient": "Selected customer reviewer",
+  "label": "Client economic briefing review",
+  "return_file": "/absolute/private/returned-review.json",
+  "resolution_file": "/absolute/private/review-dispositions.json"
+}
