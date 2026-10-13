@@ -19,6 +19,8 @@ import operations_domain as domain
 
 SCHEMA = "scf.operations.buyer-receiving.v1"
 NODE_SCHEMA = "stellar-forge.node-operation-accounting-export.v1"
+CUSTOMER_USE_SCHEMA = "stellar-forge.sf88.customer-use-return.v1"
+MAX_CUSTOMER_USE_HANDOFF = 16 * 1024 * 1024
 MAX_HANDOFF = 8 * 1024 * 1024
 MAX_READER_OUTPUT = 16 * 1024 * 1024
 HELPER = Path(__file__).resolve().with_name("buyer_handoff.mjs")
@@ -37,14 +39,14 @@ def fields(value, allowed, label):
 
 
 def handoff_bytes(value):
-    if not isinstance(value, str) or len(value) > ((MAX_HANDOFF + 2) // 3) * 4:
-        raise Problem("Select an original buyer handoff up to 8 MiB.", 413, "BUYER_HANDOFF_SIZE")
+    if not isinstance(value, str) or len(value) > ((MAX_CUSTOMER_USE_HANDOFF + 2) // 3) * 4:
+        raise Problem("Select an original buyer handoff up to 8 MiB, or a customer-use return up to 16 MiB.", 413, "BUYER_HANDOFF_SIZE")
     try:
         raw = base64.b64decode(value, validate=True)
     except (ValueError, TypeError) as exc:
         raise Problem("The original buyer source encoding is invalid.", 422, "BUYER_HANDOFF_INVALID") from exc
-    if not raw or len(raw) > MAX_HANDOFF or base64.b64encode(raw).decode("ascii") != value:
-        raise Problem("Select an original buyer handoff up to 8 MiB.", 413, "BUYER_HANDOFF_SIZE")
+    if not raw or len(raw) > MAX_CUSTOMER_USE_HANDOFF or base64.b64encode(raw).decode("ascii") != value:
+        raise Problem("Select an original buyer handoff up to 8 MiB, or a customer-use return up to 16 MiB.", 413, "BUYER_HANDOFF_SIZE")
     return raw
 
 
@@ -56,6 +58,14 @@ def filename(value):
 
 
 def inspect(raw):
+    try:
+        decoded_source = json.loads(raw)
+        wrapper = isinstance(decoded_source, dict) and decoded_source.get("schema") == CUSTOMER_USE_SCHEMA
+        del decoded_source
+    except (UnicodeError, ValueError, TypeError):
+        wrapper = False
+    if not raw or len(raw) > (MAX_CUSTOMER_USE_HANDOFF if wrapper else MAX_HANDOFF):
+        raise Problem("The selected original buyer source exceeds its own carrier bound.", 413, "BUYER_HANDOFF_SIZE")
     selected = os.environ.get("SF47_BUYER_NODE") or shutil.which("node")
     if not selected or not Path(selected).is_absolute() or not Path(selected).is_file():
         raise Problem("The installed grant workspace needs its Node executable to read the original buyer product.",
@@ -73,7 +83,7 @@ def inspect(raw):
         except OSError as exc:
             raise Problem("The installed original buyer reader could not start.",
                           503, "BUYER_READER_UNAVAILABLE") from exc
-        if len(process.stdout) > MAX_READER_OUTPUT:
+        if len(process.stdout) > (2 * MAX_READER_OUTPUT if wrapper else MAX_READER_OUTPUT):
             raise Problem("Select fewer original buyer jobs for this source handoff.", 413, "BUYER_REVIEW_SIZE")
         try:
             result = json.loads(process.stdout)
@@ -86,7 +96,8 @@ def inspect(raw):
             raise Problem("The original buyer source needs review: " + code + ".", 422, code)
         report = result.get("report")
         if (result.get("schema") != "scf.operations.buyer-reader.v1" or not isinstance(report, dict)
-                or report.get("schema") not in ("stellar-forge.sf88.operations-handoff.v1", NODE_SCHEMA)
+                or report.get("schema") not in ("stellar-forge.sf88.operations-handoff.v1", NODE_SCHEMA, CUSTOMER_USE_SCHEMA)
+                or (report.get("schema") == CUSTOMER_USE_SCHEMA) != wrapper
                 or report.get("source", {}).get("sha256") != hashlib.sha256(raw).hexdigest()
                 or report.get("source", {}).get("bytes") != len(raw)
                 or not isinstance(report.get("rows"), list) or not 1 <= len(report["rows"]) <= 100
@@ -183,7 +194,90 @@ def node_observations(context):
     return sorted(groups.values(), key=lambda item: item["sourceIdentitySha256"])
 
 
-def preview(context, body):
+
+def _customer_use_context(context, report, loader):
+    """Bind every original use to an immutable edition held by this exact case."""
+    if report.get("schema") != CUSTOMER_USE_SCHEMA:
+        return None
+    try:
+        selected, buyer_source = report["customerUse"], report["buyerSource"]
+        if (not isinstance(selected, dict) or not isinstance(buyer_source, dict)
+                or buyer_source.get("schema") != "stellar-forge.sf88.operations-handoff.v1"):
+            raise ValueError("Original inner Inbox source is missing")
+        rows = {row["jobId"]: row for row in report["rows"]}
+        if len(rows) != len(report["rows"]):
+            raise ValueError("Repeated native job")
+        source_case = text(selected["source"]["caseId"], "Original Calendar case", 100, True)
+        binding_ids, jobs, editions = set(), {}, {}
+        bindings = selected["bindings"]
+        if not isinstance(bindings, list) or not bindings:
+            raise ValueError("No original use bindings")
+        for binding in bindings:
+            if binding["id"] in binding_ids:
+                raise ValueError("Repeated original binding")
+            binding_ids.add(binding["id"])
+            ref = binding["entry"]
+            key = (ref["installationId"], ref["revision"])
+            if key not in editions:
+                editions[key] = loader(*key)
+            edition = editions[key]
+            if (edition["id"] != key[0] or edition["revision"] != key[1]
+                    or edition["sha256"] != ref["installationSha256"]
+                    or digest({name: value for name, value in edition.items() if name != "sha256"}) != edition["sha256"]):
+                raise ValueError("Historical Installation identity differs")
+            calendar = edition["preview"]["document"]["useCalendar"]
+            entries = [entry for entry in calendar["entries"] if entry["id"] == ref["entryId"]]
+            if len(entries) != 1 or canonical(entries[0]) != canonical(binding["use"]):
+                raise ValueError("The complete historical Calendar entry differs")
+            buyer_id = entries[0]["buyerDeploymentId"]
+            if not isinstance(buyer_id, str) or not buyer_id:
+                raise ValueError("Original use buyer is missing")
+            if binding["kind"] not in ("PERIOD_REQUESTS", "RETAINED_RESPONSES"):
+                raise ValueError("Unknown original binding kind")
+            requests = binding["requests"]
+            if not isinstance(requests, list) or not requests:
+                raise ValueError("No original native requests")
+            for request in requests:
+                native = rows.get(request["jobId"])
+                if (native is None or native["intentId"] != request["intentId"]
+                        or native["configSha256"] != request["configSha256"]
+                        or native["sourceConfigSha256"] != request["sourceConfigSha256"]):
+                    raise ValueError("A Calendar binding differs from its original Inbox job")
+                previous = jobs.get(request["jobId"])
+                if previous is not None and previous != buyer_id:
+                    raise ValueError("One native job cannot change its original buyer")
+                jobs[request["jobId"]] = buyer_id
+        if set(jobs) != set(rows):
+            raise ValueError("The return includes unrelated native jobs")
+        original_ids = {edition["preview"]["source"]["caseId"] for edition in editions.values()}
+        origin = context["program"].get("origin", {})
+        if isinstance(origin, dict) and origin.get("programId"):
+            original_ids.add(origin["programId"])
+        state = ("CURRENT_CASE" if source_case == context["program"]["id"]
+                 else "RETAINED_CASE_LINEAGE" if source_case in original_ids
+                 else "HISTORICAL_INSTALLATIONS")
+        # Exact scoped immutable editions retain custody across new case IDs.
+        return {"caseBinding": state, "sourceCaseId": source_case,
+                "receivingCaseId": context["program"]["id"], "deployments": jobs}
+    except Problem:
+        raise
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise Problem("The customer-use return differs from its complete retained Installation and Inbox bindings.",
+                      422, "BUYER_CUSTOMER_USE_BINDING") from exc
+
+
+def _customer_use_live(context, report, operations):
+    if report.get("schema") != CUSTOMER_USE_SCHEMA:
+        return None
+    if operations is None:
+        raise Problem("Use the original Operations host to review these retained Installations.",
+                      503, "BUYER_CUSTOMER_USE_HOST_REQUIRED")
+    import operations_installations as installations
+    return _customer_use_context(context, report, lambda ident, revision:
+        installations.get(operations, context["program"]["id"], ident, revision))
+
+
+def preview(context, body, *, operations=None):
     fields(body, ("expectedVersion", "filename", "contentBase64"), "buyer preview")
     expected = domain.integer(body.get("expectedVersion"), "Reviewed operations version", 1, 10000000)
     if context["program"]["version"] != expected:
@@ -192,6 +286,7 @@ def preview(context, body):
     name = filename(body.get("filename"))
     native = inspect(handoff_bytes(body.get("contentBase64")))
     report = native["report"]
+    customer_use_binding = _customer_use_live(context, report, operations)
     rows = []
     for source in report["rows"]:
         matches = _matches(context, source)
@@ -231,11 +326,14 @@ def preview(context, body):
             for value in context["records"]["purchases"] if value["state"] != "VOID"],
         "retainedSourceIds": [row["id"] for row in context["sources"].values()
                               if row["sha256"] == report["source"]["sha256"]]}
+    if customer_use_binding is not None:
+        result.update({"customerUse": deepcopy(report["customerUse"]),
+            "buyerSource": deepcopy(report["buyerSource"]), "customerUseBinding": customer_use_binding})
     result["previewSha256"] = digest(result)
     return result
 
 
-def _source(operations, context, raw, name, observed, media, kind="purchase"):
+def _source(operations, context, raw, name, observed, media, kind="purchase", *, maximum=MAX_HANDOFF):
     identity = hashlib.sha256(raw).hexdigest()
     for value in context["sources"].values():
         if value["sha256"] == identity and value["bytes"] == len(raw):
@@ -245,7 +343,7 @@ def _source(operations, context, raw, name, observed, media, kind="purchase"):
                 return value
     row = operations._source_add(context["program"]["id"], {"filename": name, "mediaType": media,
         "kind": kind, "sourceUrl": "", "observedAt": observed,
-        "contentBase64": base64.b64encode(raw).decode("ascii")})
+        "contentBase64": base64.b64encode(raw).decode("ascii")}, _maximum=maximum)
     context["sources"][row["id"]] = row
     return row
 
@@ -268,7 +366,7 @@ def receive(operations, context, data, actor, version):
     fields(data, ("filename", "contentBase64", "expectedPreviewSha256", "deploymentId", "deployment", "selections"),
            "buyer receiving command")
     reviewed = preview(context, {"expectedVersion": context["program"]["version"],
-        "filename": data.get("filename"), "contentBase64": data.get("contentBase64")})
+        "filename": data.get("filename"), "contentBase64": data.get("contentBase64")}, operations=operations)
     if reviewed["previewSha256"] != domain.sha(data.get("expectedPreviewSha256"), "Reviewed buyer preview", False):
         raise Problem("The buyer source or operations case changed. Review the retained selection again.",
                       409, "BUYER_PREVIEW_CONFLICT")
@@ -324,6 +422,10 @@ def receive(operations, context, data, actor, version):
         raise Problem("Associate the Inbox with a buyer or combined merchant/buyer deployment.",
                       422, "BUYER_DEPLOYMENT_ROLE_REQUIRED")
     for row, previous in staged:
+        required_buyer = reviewed.get("customerUseBinding", {}).get("deployments", {}).get(row["jobId"])
+        if required_buyer is not None and deployment_id != required_buyer:
+            raise Problem("Receive this original Calendar use into its retained buyer deployment.",
+                          409, "BUYER_CUSTOMER_USE_DEPLOYMENT")
         if any(link["deploymentId"] != deployment_id for link in row["operationMatches"]):
             raise Problem("This Node operation already belongs to its retained deployment. Select that deployment.",
                           409, "BUYER_ORIGINAL_DEPLOYMENT_REQUIRED")
@@ -344,7 +446,8 @@ def receive(operations, context, data, actor, version):
     prefix = "buyer-" + reviewed["source"]["sha256"][:20]
     source_kind = "deployment" if reviewed["source"]["schema"] == NODE_SCHEMA else "purchase"
     original = _source(operations, context, raw, prefix + "--" + reviewed["source"]["filename"][:170],
-                       reviewed["source"]["capturedAt"], "application/json", source_kind)
+                       reviewed["source"]["capturedAt"], "application/json", source_kind,
+                       maximum=MAX_CUSTOMER_USE_HANDOFF if reviewed["source"]["schema"] == CUSTOMER_USE_SCHEMA else MAX_HANDOFF)
     report = _source(operations, context, report_raw, prefix + ".native.html",
                      reviewed["source"]["capturedAt"], "text/html", source_kind)
     source_ids = [original["id"], report["id"]]
@@ -437,6 +540,9 @@ def receive(operations, context, data, actor, version):
             "commandId": reviewed["source"]["commandId"], "contextSha256": reviewed["source"]["contextSha256"]}
            if reviewed["source"]["schema"] == NODE_SCHEMA
            else {"inboxSha256": reviewed["source"]["inboxSha256"]}),
+        **({"sourceSchema": CUSTOMER_USE_SCHEMA, "customerUse": deepcopy(reviewed["customerUse"]),
+            "buyerSource": deepcopy(reviewed["buyerSource"])}
+           if reviewed["source"]["schema"] == CUSTOMER_USE_SCHEMA else {}),
         "capturedAt": reviewed["source"]["capturedAt"],
         "totalSourceJobs": len(rows), "rows": sorted(received.values(), key=lambda row: row["jobId"]),
         "reports": reports, "reader": reviewed["reader"]})
@@ -625,3 +731,126 @@ def node_report(context):
                                    for item in row["editions"]) for row in rows),
         "rows": rows,
         "basis": "Unique original Node operation identities and every explicitly received source edition. Unpaid observations create no purchase, approved-payment intent, cash entry or independent-customer count."}
+
+
+def validate_customer_use_import(context, events, reviews, files, saved_installations):
+    """Receive original Calendar/Inbox custody with the native case importer.
+
+    The caller has already validated every immutable Installation edition and
+    its complete original history. No fresh case, purchase or request is made.
+    """
+    editions = {(row["id"], row["revision"]): row for row in saved_installations}
+    inspected, found = {}, set()
+    sources = context["sources"]
+
+    def rejected(message):
+        raise Problem(message, 422, "BUYER_CUSTOMER_USE_RECEIVING_SOURCE")
+
+    def validate(source, snapshot):
+        association = source.get("buyerHandoff")
+        if not isinstance(association, dict):
+            return
+        possible = (association.get("sourceSchema") == CUSTOMER_USE_SCHEMA
+                    or "customerUse" in association or "buyerSource" in association)
+        if not possible:
+            return
+        found.add(source["id"])
+        retained = sources.get(source["id"])
+        if not retained or (retained["sha256"], retained["bytes"]) != (source["sha256"], source["bytes"]):
+            rejected("A customer-use source edition differs from its complete original bytes.")
+        if source["id"] not in inspected:
+            raw = files.get("sources/" + source["id"])
+            if not isinstance(raw, bytes):
+                rejected("The complete original customer-use carrier is missing.")
+            native = inspect(raw)
+            report = native["report"]
+            if report["schema"] != CUSTOMER_USE_SCHEMA:
+                rejected("This association requires the distinct native customer-use return.")
+            scoped = _customer_use_context(context, report, lambda ident, revision: editions[(ident, revision)])
+            inspected[source["id"]] = (report, scoped)
+        report, scoped = inspected[source["id"]]
+        if (association.get("schema") != SCHEMA
+                or association.get("sourceSchema") != CUSTOMER_USE_SCHEMA
+                or association.get("sourceSha256") != source["sha256"]
+                or association.get("inboxSha256") != report["buyerSource"]["inboxSha256"]
+                or association.get("capturedAt") != report["source"]["capturedAt"]
+                or association.get("customerUse") != report["customerUse"]
+                or association.get("buyerSource") != report["buyerSource"]
+                or association.get("reader") != report["reader"]
+                or type(association.get("totalSourceJobs")) is not int
+                or association["totalSourceJobs"] != len(report["rows"])):
+            rejected("The retained customer-use metadata differs from its exact original carrier.")
+        filename(association.get("originalFilename"))
+        links, reports = association.get("rows"), association.get("reports")
+        if not isinstance(links, list) or not 1 <= len(links) <= len(report["rows"]):
+            rejected("Retain the selected original customer-use source rows.")
+        if not isinstance(reports, list) or not reports or len(reports) > 200:
+            rejected("Retain the original customer-use review files.")
+        seen_reports = set()
+        for descriptor in reports:
+            if not isinstance(descriptor, dict) or set(descriptor) != {"sourceId", "sha256"}:
+                rejected("A customer-use review file descriptor is incomplete.")
+            selected = sources.get(descriptor["sourceId"])
+            raw_report = files.get("sources/" + descriptor["sourceId"])
+            if (not selected or selected["sha256"] != descriptor["sha256"]
+                    or selected["id"] in seen_reports or not isinstance(raw_report, bytes)
+                    or hashlib.sha256(raw_report).hexdigest() != descriptor["sha256"]):
+                rejected("A customer-use review file differs from its retained bytes.")
+            seen_reports.add(selected["id"])
+        rows = {row["jobId"]: row for row in report["rows"]}
+        deployments = {row["id"]: row for row in snapshot["records"]["deployments"]}
+        purchases = {row["id"]: row for row in snapshot["records"]["purchases"]}
+        seen = set()
+        for link in links:
+            if not isinstance(link, dict) or link.get("jobId") not in rows or link["jobId"] in seen:
+                rejected("Each received customer-use source job must appear once.")
+            seen.add(link["jobId"])
+            original = rows[link["jobId"]]
+            fixed = ("jobId", "intentId", "configSha256", "sourceRecordSha256")
+            if (set(link) != set(fixed) | {"purchaseId", "deploymentId"}
+                    or any(link[name] != original[name] for name in fixed)
+                    or not original["canReceive"] or original["purchase"] is None):
+                rejected("A received customer-use job differs from the original Inbox observation.")
+            if (link["deploymentId"] not in deployments
+                    or link["deploymentId"] != scoped["deployments"][link["jobId"]]):
+                rejected("The received job lost its original Calendar buyer deployment.")
+            purchase = purchases.get(link["purchaseId"])
+            if (not purchase or purchase["deploymentId"] != link["deploymentId"]
+                    or _conflicts(original["purchase"], purchase)):
+                rejected("The received purchase differs from its original native identity.")
+
+    try:
+        for source in sources.values():
+            validate(source, context)
+        for review in reviews:
+            snapshot = review.get("snapshot", {})
+            if not isinstance(snapshot, dict) or not isinstance(snapshot.get("sources", []), list):
+                continue
+            for source in snapshot.get("sources", []):
+                if isinstance(source, dict):
+                    validate(source, snapshot)
+        # Reconcile every prior source association, including the incremental
+        # selected-job history, against the same original native source.
+        for event in events:
+            change = event.get("sourceChange")
+            if event.get("action") != "buyer.receive" or not isinstance(change, dict):
+                continue
+            for name in ("before", "after"):
+                source = change.get(name)
+                if isinstance(source, dict):
+                    validate(source, context)
+        for source_id in found:
+            source = sources[source_id]
+            changes = [event["sourceChange"]["after"] for event in events
+                       if event.get("action") == "buyer.receive"
+                       and isinstance(event.get("sourceChange"), dict)
+                       and isinstance(event["sourceChange"].get("after"), dict)
+                       and event["sourceChange"]["after"].get("id") == source_id]
+            if not changes or changes[-1] != source:
+                rejected("The current customer-use association differs from its original receiving event.")
+        return bool(found)
+    except Problem:
+        raise
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise Problem("The complete original customer-use receiving history is invalid.",
+                      422, "BUYER_CUSTOMER_USE_RECEIVING_SOURCE") from exc

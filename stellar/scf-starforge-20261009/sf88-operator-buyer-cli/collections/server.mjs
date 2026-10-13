@@ -8,6 +8,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readBrowserAssets } from '../../distribution/browser-assets.mjs';
 import { openCollections } from './model.mjs';
 import { openCollectionComposer } from '../collection-composer/model.mjs';
+import { openCustomerUseCommissioning } from '../collection-composer/customer-use-model.mjs';
+import { routeCustomerUse } from '../collection-composer/customer-use-http.mjs';
 import { openCollectionRecovery } from './recovery-jobs.mjs';
 import { collectionBundleFiles } from './recovery.mjs';
 import { createCollectionBrowserRunner } from './browser-run.mjs';
@@ -114,6 +116,11 @@ export async function serveCollections(collections, {
     need(collections, 'COLLECTION_RECOVERY_SOURCE_NOT_OPEN', 409);
     return composer ??= openCollectionComposer({ collections });
   };
+  let customerUse = null;
+  const customerUseController = () => {
+    need(collections, 'COLLECTION_RECOVERY_SOURCE_NOT_OPEN', 409);
+    return customerUse ??= openCustomerUseCommissioning({ collections, composer: collectionComposer() });
+  };
   let recovery;
   try { recovery = await openCollectionRecovery({
     directory: receivingDirectory ?? join(collections.directory, 'recovery'),
@@ -209,7 +216,8 @@ export async function serveCollections(collections, {
           recoveryBusy: recovery.busy, busy: mutation || recovery.busy || Boolean(runner?.busy), paymentApproval:
             approvals ? 'original-browser' : 'original-terminal',
           command: 'buyer-collections', exportRoot: collections ? resolve(collections.directory, 'exports') : null,
-            agentApi: 1, recoveryApi: 1, connectionApi: 1, composerApi: 1 });
+            agentApi: 1, recoveryApi: 1, connectionApi: 1, composerApi: 1, customerUseApi: 1 });
+      if (await routeCustomerUse({request,response,url,controller:customerUseController,mutate,send})) return;
       if (url.pathname.startsWith('/api/composer/')) {
         const authoring = collectionComposer();
         if (url.pathname === '/api/composer/catalog') {
@@ -473,7 +481,8 @@ export async function serveCollections(collections, {
     const operation = handle().catch(error => {
       if (response.headersSent || response.destroyed) response.destroy();
       else send({ error: /^[A-Z0-9_]{1,100}$/.test(String(error.code ?? ''))
-        ? error.code : 'COLLECTION_OPERATION_FAILED' }, errorStatus(error));
+        ? error.code : 'COLLECTION_OPERATION_FAILED',
+        ...(String(error.code??'').startsWith('CUSTOMER_USE_')?{message:error.message,...(error.details?{details:error.details}:{})}:{}) }, errorStatus(error));
     });
     work.add(operation);
     operation.finally(() => work.delete(operation));
@@ -509,6 +518,7 @@ export async function serveCollections(collections, {
           server.close(done);
           server.closeAllConnections?.();
         });
+        await customerUse?.close();
         for (const model of adopted) await model.close();
         composer?.close();
         reviews.clear(); exports.clear();

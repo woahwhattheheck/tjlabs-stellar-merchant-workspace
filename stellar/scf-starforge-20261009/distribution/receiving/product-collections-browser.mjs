@@ -325,6 +325,57 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
     await capture(current, name, root.locator('.composer-period-review'));
     return value;
   }
+
+  async function showCustomerUse(current, selected, name, returnedSelection) {
+    await current.locator('#open-customer-use').click();
+    const root = current.locator('#customer-use-panel');
+    await root.waitFor({ state: 'visible' });
+    const savedList = byName(root, 'Saved commissions');
+    if (await savedList.isVisible()) await savedList.click();
+    const listing = await responseFor(current, '/api/customer-use/commissions', 'GET',
+      () => byName(root, 'Refresh saved work').click());
+    const index = listing.commissions.findIndex(row => row.id === selected.id);
+    need(index >= 0, 'RECEIVING_CUSTOMER_USE_COMMISSION_NOT_VISIBLE');
+    const head = listing.commissions[index];
+    let view = await responseFor(current, '/api/customer-use/commissions/' + selected.id + '/revisions/' + head.sha256,
+      'GET', () => byName(root, 'Open').nth(index).click());
+    await root.getByLabel('Saved history', { exact: true }).waitFor({ state: 'visible' });
+    if (head.sha256 !== selected.sha256) {
+      view = await responseFor(current, '/api/customer-use/commissions/' + selected.id + '/revisions/' + selected.sha256,
+        'GET', () => root.getByLabel('Saved history', { exact: true }).selectOption(selected.sha256));
+    }
+    need(view.selected.id === selected.id && view.selected.sha256 === selected.sha256
+      && view.selected.documentSha256 === selected.documentSha256,
+    'RECEIVING_VISIBLE_CUSTOMER_USE_REVISION_CHANGED');
+    need(await root.getByLabel('Stable commission reference', { exact: true }).inputValue() === selected.id,
+      'RECEIVING_VISIBLE_CUSTOMER_USE_REFERENCE_CHANGED');
+    await byName(root, 'Useful tasks').click();
+    await capture(current, name + '-uses', root);
+    await byName(root, 'Periods and review').click();
+    await capture(current, name + '-periods', root);
+    await byName(root, 'Buyer results').click();
+    await capture(current, name + '-buyer-results', root);
+    if (returnedSelection) {
+      const returned = view.returns.find(row => row.requestId === returnedSelection.requestId);
+      need(returned?.state === 'RETURNED' && returned.file.sha256 === returnedSelection.returnSha256,
+        'RECEIVING_VISIBLE_ORIGINAL_RETURN_MISSING');
+      const row = root.getByRole('row').filter({ hasText: returnedSelection.returnSha256 });
+      need(await row.count() === 1, 'RECEIVING_VISIBLE_ORIGINAL_RETURN_AMBIGUOUS');
+      const file = await download(current, row, 'Download exact return', name + '-buyer-return.json');
+      need(file.sha256 === returnedSelection.returnSha256 && file.bytes === returned.file.bytes,
+        'RECEIVING_BROWSER_ORIGINAL_RETURN_CHANGED');
+    }
+    const exported = await download(current, root, 'Export saved JSON', name + '-commission.json');
+    const payload = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(exported.raw));
+    need(payload.selectedSha256 === selected.sha256
+      && payload.revisions.some(row => row.sha256 === selected.sha256),
+    'RECEIVING_BROWSER_COMMISSION_EXPORT_CHANGED');
+    return { selected: view.selected, calendar: view.calendar.metadata,
+      periods: view.periods.map(row => ({ collectionId: row.selection.collectionId,
+        phase: row.native?.phase ?? null, error: row.error })), returns: view.returns,
+      downloaded: { path: exported.path, bytes: exported.bytes, sha256: exported.sha256 } };
+  }
+
   async function showRecovery(current, requestId, name) {
     const root = current.locator('#recovery-panel');
     let history = await responseFor(current, '/api/recovery/history', 'POST',
@@ -343,7 +394,7 @@ export async function openProductCollectionsBrowser({ playwrightModule, executab
   }
   return { page, capture, runtimePage, sourceDiscovery, reopenSource, runtimeReady,
     collectionsPage, library, savePlan, openPlan, inspectSavedCatalog, preparePeriod, openEdition,
-    createPeriod, showCollection, showPrepared, showRecovery,
+    createPeriod, showCollection, showPrepared, showRecovery, showCustomerUse,
     async finish() {
       await writeFile(join(outputDirectory, 'browser-observations.json'),
         JSON.stringify({ artifacts: [...new Map(artifacts.map(item => [item.path, item])).values()],
