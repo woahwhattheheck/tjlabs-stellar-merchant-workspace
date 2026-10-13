@@ -386,8 +386,12 @@ class Workflow:
             if row["result_json"]:
                 return self.status(request_id)
             if adapter_factory is None:
-                from workflow_analysis import NativeWorkflowAdapter
-                adapter_factory = NativeWorkflowAdapter
+                if cfg.get("adapter") == "bdnb":
+                    from bdnb_workflow import BdnbWorkflowAdapter
+                    adapter_factory = BdnbWorkflowAdapter
+                else:
+                    from workflow_analysis import NativeWorkflowAdapter
+                    adapter_factory = NativeWorkflowAdapter
             directory = self._directory(row) / "native"
             directory.mkdir(mode=0o700, parents=True, exist_ok=True)
             with self.db:
