@@ -17,6 +17,7 @@ import {normalizeOAuthSource,readOAuthObservationFiles,createOAuthObservation,oa
 import {initializeIncidentStore,openIncidentStore} from './incident-store.mjs';
 import {acknowledgeIncident} from './incident-operator.mjs';
 import {runIncidentWatch} from './watch.mjs';
+import {acquireOAuthProgrammeLease,retainOAuthReceiveContext} from './oauth-receive-context.mjs';
 
 const iso=()=>new Date().toISOString();
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -35,7 +36,7 @@ function requestFor(token){return {url:'/mcp',method:'POST',headers:{authorizati
  * receive(context) continues in the original SF74 console while the same source
  * host is still available. Credentials stay inside this one native process.
  */
-export async function runOAuthNativeProgramme({directory,receive,signal,browser}={}) {
+export async function runOAuthNativeProgramme({directory,receive,receivingModule,signal,browser}={}) {
   signal?.throwIfAborted();
   if(typeof directory!=='string'||!directory)throw new TypeError('An explicit fresh native output directory is required');
   if(receive!==undefined&&typeof receive!=='function')throw new TypeError('The receiving continuation must be a function');
@@ -46,8 +47,8 @@ export async function runOAuthNativeProgramme({directory,receive,signal,browser}
     startedAt:iso(),status:'RUNNING',runtime:{node:process.version},phases:[]};
   const resultPath=join(root,'oauth-native-result.json');
   async function retain(){const temporary=resultPath+'.tmp';await writeFile(temporary,JSON.stringify(result,null,2)+'\n',{mode:0o600});await rename(temporary,resultPath);}
-  async function phase(name,details={}){owner.signal.throwIfAborted();result.phases.push({name,at:iso(),...details});await retain();process.stdout.write(JSON.stringify({phase:name,...details})+'\n');}
-  const owner=new AbortController(),stop=new AbortController();let keyServer,hookServer,mcpServer,host,callbackResource,watcher,watchError;
+  async function phase(name,details={}){owner.signal.throwIfAborted();programmeLease?.assertHeld();result.phases.push({name,at:iso(),...details});await retain();process.stdout.write(JSON.stringify({phase:name,...details})+'\n');}
+  const owner=new AbortController(),stop=new AbortController();let keyServer,hookServer,mcpServer,host,callbackResource,watcher,watchError,programmeLease;
   const abortFromCaller=()=>owner.abort(signal.reason);
   owner.signal.addEventListener('abort',()=>stop.abort(owner.signal.reason),{once:true});
   signal?.addEventListener('abort',abortFromCaller,{once:true});
@@ -55,6 +56,7 @@ export async function runOAuthNativeProgramme({directory,receive,signal,browser}
   const hookReceipts=[],jwksReads=[];
   let keyMode='HEALTHY',providerCalls=0;
   try {
+    programmeLease=await acquireOAuthProgrammeLease(root,{signal:owner.signal});
     const joseEntry=createRequire(new URL('../../../stellar-forge/mcp-paid-agent/package.json',import.meta.url)).resolve('jose');
     const {generateKeyPair,exportJWK,SignJWT}=await import(pathToFileURL(joseEntry).href);
     const joseManifest=JSON.parse(await readFile(resolve(dirname(joseEntry),'../../package.json'),'utf8'));
@@ -237,7 +239,12 @@ export async function runOAuthNativeProgramme({directory,receive,signal,browser}
     const finalSource=await collectOAuthObservation(merchant,undefined,environment);
     const finalRead=readOAuthObservationFiles(finalSource.packet.files);
     assert.equal(finalRead.summary.coverage,'COMPLETE');
-    await writeFile(join(root,'oauth-final-source.json'),finalSource.packet.files['oauth-source.json'],{mode:0o600});
+    result.receivingContext=await retainOAuthReceiveContext({root,lease:programmeLease,
+      incidentDirectory,incidentIds,incidentConfig,merchant,selection,sourceOrigin:origin,
+      sourceFiles:finalSource.packet.files,producer:fileURLToPath(import.meta.url),report:result,
+      receive,receivingModule,browser,signal:owner.signal});
+    await phase('original-support-inputs-retained',{context:result.receivingContext,
+      sourceSessionId:finalRead.source.sessionId,sourceSequence:finalRead.source.sequence});
     if(receive) {
       const received=await receive({root,incidentDirectory,incidentIds,incidentConfig,merchant,selection,environment,
         sourceOrigin:origin,sourceFiles:finalSource.packet.files,report:result,signal:owner.signal,browser});
@@ -251,8 +258,19 @@ export async function runOAuthNativeProgramme({directory,receive,signal,browser}
   finally{
     signal?.removeEventListener('abort',abortFromCaller);owner.abort();
     stop.abort();if(watcher)await watcher.catch(()=>{});
-    await callbackResource?.close();await host?.close();
-    await Promise.allSettled([stopServer(mcpServer),stopServer(keyServer),stopServer(hookServer)]);
+    // Join every original child before releasing the kernel lease to a cold continuation.
+    const closed=await Promise.allSettled([
+      Promise.resolve().then(()=>callbackResource?.close()),Promise.resolve().then(()=>host?.close()),
+      stopServer(mcpServer),stopServer(keyServer),stopServer(hookServer)
+    ]);
+    const closeErrors=closed.filter(row=>row.status==='rejected').map(row=>row.reason);
+    result.cleanup={state:closeErrors.length?'FAILED':'CLOSED',at:iso(),
+      errors:closeErrors.map(error=>({name:error.name,code:error.code??null,message:String(error.message).slice(0,2000)}))};
+    if(closeErrors.length){result.status='FAILED';result.failedAt??=iso();
+      result.error??={name:'AggregateError',message:'Original owner cleanup failed.',code:null};}
+    try {await retain();}catch(error){closeErrors.push(error);}
+    finally {await programmeLease?.close();}
+    if(closeErrors.length)throw new AggregateError(closeErrors,'The original OAuth programme cleanup or its result retention failed.');
   }
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
@@ -269,7 +287,8 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
     controller.signal.throwIfAborted();
     let receive;if(receiver){const module=await import(pathToFileURL(resolve(receiver)).href);
       controller.signal.throwIfAborted();receive=module.receiveOAuthSupport;}
-    const {resultPath,result}=await runOAuthNativeProgramme({directory,receive,signal:controller.signal,browser});
+    const {resultPath,result}=await runOAuthNativeProgramme({directory,receive,
+      receivingModule:receiver?resolve(receiver):undefined,signal:controller.signal,browser});
     process.stdout.write(JSON.stringify({status:result.status,resultPath,incidents:result.incidents.map(x=>({id:x.id,kind:x.kind,status:x.status}))})+'\n');
   } finally {process.removeListener('SIGINT',onStop);process.removeListener('SIGTERM',onStop);}
 }

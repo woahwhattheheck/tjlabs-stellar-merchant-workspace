@@ -14,13 +14,67 @@ node stellar/scf-starforge-20261009/sf93-seller-support-bundle/oauth-native-prog
 
 Use the actual reviewed Node, Playwright, Chromium, and output locations selected by the original programme owner. Both browser arguments are required together; omitting both performs the same native API and portable receiving work without claiming browser execution.
 
-The original programme creates its output directory once. Do not rerun it against an existing directory or choose another directory to hide an unknown result. Reconcile the original process, result file, incident state, and retained customer selection first. The receiving function can revalidate its original work when called by that same programme with the same selected inputs; it does not recreate an OAuth host or restart a watcher.
+The original programme creates its output directory once. Do not rerun it against an existing directory or choose another directory to hide an unknown result. Reconcile the original process, result file, incident state, and retained customer selection first. Before calling the receiver, the producer now retains both complete final source files and a private, immutable receiving context. The retained-only command below continues that same Support request after the producer has ended; it never recreates an OAuth host or restarts a watcher.
+
+## Producer preservation and the retained-only continuation
+
+The complete original producer holds the existing Linux kernel state lease in root/receiving-input, separate from SF93's own transaction and worker leases. That lease remains held through its original verifier, host, watcher, Support receiving and final child cleanup. A cold continuation acquires the same lease. It cannot overlap a live producer or another continuation. The lease uses the maintained merchant-fleet-gateway/state-lease.mjs implementation and releases when the owning descriptor closes or its process ends; it introduces no PID guessing or stale-lock deletion.
+
+After the original watcher has recorded STOPPED and the final complete source has been validated, the producer publishes these private files using the original retainCaseArtifact helper:
+
+| Path beneath the original programme root | Purpose |
+| --- | --- |
+| receiving-input/oauth-observation.json | The exact original SF93 metadata bytes, including the original file hash and recomputable summary. |
+| receiving-input/oauth-source.json | The exact complete original OAuth observation JSON bytes, with the original session, sequence, authority, counters, and minute rows. |
+| receiving-input/CONTEXT.json | The complete normalized selection, original merchant/configuration, source origin, selected incident IDs/revisions and capture references, stopped watcher identity, both final file descriptors, producer and receiver source identities, optional browser paths, and original Node identity. |
+| receiving-input/lease.lock | The existing kernel lease's persistent lock file. Its presence is not evidence that a process owns it; the maintained acquisition checks the actual kernel lock. |
+| oauth-final-source.json | The prior programme's source-only output path, retained as the same complete original bytes for compatibility. |
+
+CONTEXT.json is published only after both full source files and all original selected before/after capture envelopes have been verified. Its bytes, SHA-256 and path are recorded in the original programme's receivingContext result and original-support-inputs-retained phase before receiveOAuthSupport is called. There is no case mutation before this producer input boundary.
+
+The context stores environment variable names already present in the original selected configuration, such as the operator token and notification credential references. It contains no OAuth token, notification secret, private key, environment value, subject list, or tool argument. Source host and issuer addresses remain historical source identity. Their presence does not mean those services are still live.
+
+For an interrupted or failed customer receiving stage, use the exact context path and SHA-256 returned by the original producer:
+
+```sh
+node stellar/scf-starforge-20261009/sf93-seller-support-bundle/oauth-receive-context.mjs \
+  --context /absolute/private/original-oauth-native-output/receiving-input/CONTEXT.json \
+  --expected-context-sha256 ORIGINAL_CONTEXT_SHA256
+```
+
+This is a concrete entrypoint into the original receiveOAuthSupport export. It performs these checks before starting its local Support listeners:
+
+1. Acquires the original producer/receiving kernel lease. A still-active owner causes a busy result; the command does not kill or replace that owner.
+2. Reads the complete private context and compares its exact SHA-256 with the explicitly selected producer receipt.
+3. Verifies the actual producer, context helper and receiver module bytes against the frozen source descriptors, and requires the original selected Node executable/version and browser paths.
+4. Reopens the original incident store, acquires its existing worker lease to prevent a new watcher during receiving, and checks the unchanged original stopped-worker/configuration/incident selection.
+5. Reads and validates every selected original before/after capture envelope and both complete final source files using the existing SF93 codec.
+6. Checks the original producer result's identity and retained completed phase prefix. Its current status may be FAILED, COMPLETED, or the last RUNNING record left by a process that has ended; the held kernel lease, not that text status, establishes current ownership.
+7. Imports the exact selected receiver, checks its source again, and calls it with the original paths, IDs, source bytes and browser selection. Its credential environment is an empty object.
+
+The original receiver's runtime inspect/review/export/import APIs consume retained file bytes. Its incident list/profile/prepare APIs consume the original store and capture envelopes. Configuring the named OAuth source does not resolve its credential reference or contact its endpoint. This continuation does not call inspect-oauth, start a watcher, send a webhook, generate a JWT, or open the original source host. The only listeners it starts are its two original, owned Support consoles; both are closed before its receiving result completes.
+
+The original incident store, full application dependency closure, writable private customer directories and optional installed browser must remain present. This context is an input handoff within that retained original installation, not a standalone replacement for the incident store or a promise that a moved installation can use its old absolute paths. If the original incident revisions, stopped-worker identity, capture references, selected configuration, source files or implementation have changed, the command refuses that changed selection. A deliberate correction requires a reviewed continuation; it must not bypass these guards.
+
+Each explicit continuation records a distinct private attempt under root/receiving-continuations/<attempt-id>/:
+
+| File | Meaning |
+| --- | --- |
+| STARTED.json | Exact context descriptor, original producer-result descriptor/status, original operation, and the retained-only attempt identity. |
+| COMPLETE.json | The complete actual original receiver result after its own listeners and cold CaseStore checks have finished. |
+| FAILED.json | The observed error when the receiving attempt failed and its failure record could be retained. |
+
+The command never rewrites oauth-native-result.json. A successful retained receiving attempt therefore does not relabel an earlier FAILED or interrupted producer as if it had completed in one invocation. Its receipt binds the actual producer result it observed. Existing root/customer/SELECTION.json, case IDs, saved revisions, generatedAt-bound exports and later case heads remain authoritative under the original receiver's normal recovery logic.
+
+The programme's JavaScript interface also accepts receivingModule, the absolute module path for the function passed as receive. Its CLI supplies the exact --receiving path automatically. A directly imported canonical receiveOAuthSupport function can use its original default module path. A different embedding callback must name the actual module exporting that same receiveOAuthSupport function; the preservation helper will not claim an unrelated function can be resumed from another file.
+
+When no receiver was selected, the original producer still saves both final files and the context with receiver:null. The retained-only command explicitly refuses that context because no receiving continuation was authorized by that original producer invocation.
 
 ## What the complete programme operates
 
 The existing native programme runs real JOSE signing and verification, the original MCP HTTP handler, the original protected observation endpoint, its original host callback, and a controlled TLS key dependency. It exercises ordinary enforcement denials separately from a real unavailable key dependency. SF93 opens, acknowledges, and recovers the same incidents from actual source observations and retains their before and after captures. Its recovery uses the real minute boundary and successful original checks.
 
-After the original watcher has stopped, the programme calls receiveOAuthSupport while its original service host remains available. The consumer:
+After the original watcher has stopped and the complete receiving inputs have been saved, the programme calls receiveOAuthSupport while its original service host remains available. The same receiver can also run through the retained-only entrypoint after that host closes. The consumer:
 
 1. Opens the original Support server with an original private incident-source profile and a source CaseStore.
 2. Verifies the original named incident source and the exact current console assets.
@@ -119,7 +173,7 @@ The exact before-source queue remains a historical source-bound queue even after
 
 ## Lifecycle and interruption
 
-The native CLI installs one SIGINT/SIGTERM AbortController before importing the receiving continuation. A stop after that import is checked before starting new work. The programme's separate owner signal remains live when its watcher-specific signal is intentionally stopped before receiving.
+The native CLI installs one SIGINT/SIGTERM AbortController before importing the receiving continuation. A stop after that import is checked before starting new work. The programme's separate owner signal remains live when its watcher-specific signal is intentionally stopped before receiving. It checks its maintained kernel lease at phase boundaries. Final cleanup joins all original host/server owners, records the actual cleanup outcome, and releases the producer lease last. The retained-only CLI has its own single cooperative stop controller and releases its worker/receiving leases only after the original receiver has joined its cleanup.
 
 Each Support acquisition is retained as an in-flight promise. A stop during startup waits for the same late listener and closes it through its original close method. Each original close is joined before another Support listener opens. The browser similarly retains its pending browser and context acquisitions, closes late owners, and joins all cleanup.
 
@@ -133,4 +187,4 @@ COMPLETED means the executed receiving invocation verified the selected source f
 
 Browser state is separately COMPLETED or NOT_REQUESTED. When requested, the result records the actual desktop console and customer report screenshots, script errors, and mobile viewport/document widths. Those measurements are observations of the selected render; they are not a certification, accessibility audit, or a claim that every interaction on every device was tested.
 
-Source review and syntax checks alone do not constitute this native completion. The original programme result and root/customer/COMPLETE.json are the actual receiving receipts. Keep credential-bearing private host files and environment values outside customer sharing. Retain the complete application source and original component guides using the existing delivery workflow; this component introduces no separate package or external publication mechanism.
+Source review and syntax checks alone do not constitute this native completion. The original programme result and root/customer/COMPLETE.json are the actual receiving receipts. If receiving completed in a retained-only continuation, also retain that exact receiving-continuations attempt's COMPLETE.json and its bound producer result; their distinct outcomes must remain visible. Keep credential-bearing private host files and environment values outside customer sharing. Retain the complete application source and original component guides using the existing delivery workflow; this component introduces no separate package or external publication mechanism.
