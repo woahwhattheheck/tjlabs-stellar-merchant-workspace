@@ -8,14 +8,19 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import shutil
-import signal
 import stat
-import subprocess
 import sys
 import tempfile
 import time
 import uuid
 import zipfile
+
+sys.dont_write_bytecode = True
+from scf_native_process import (
+    preserve_console, record_runtime_selection, retain_runtime_edition, run_receiving_program,
+)
+
+OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 
 def digest(body):
     return hashlib.sha256(body).hexdigest()
@@ -50,7 +55,8 @@ def unpack_case(archive, destination, native_review=False):
         selected_names = None
         if native_review:
             config = json.loads(bundle.read("config.json"))
-            selected_names = {"config.json", "review-continuation-native.json"}
+            selected_names = {"config.json", "review-continuation-native.json",
+                              "review-continuation-config.json", "runtime-selection.json"}
             selected_names.update("source/" + str(relative_path(row["path"])) for row in config["files"])
             if config.get("retainedReviewPath"):
                 selected_names.add(str(relative_path(config["retainedReviewPath"])))
@@ -62,7 +68,9 @@ def unpack_case(archive, destination, native_review=False):
             selected_names.update("receiving/review-continuation/" + name for name in (
                 "Current_Review_Checkpoint.json", "native-process.log", "progress.json",
                 "INCOMPLETE.json", "Failure.html", "RESULT.json", "prepared-native-progress.json",
-                "PREPARED_REVIEW_INCOMPLETE.json", "prepared-native-review-record.json"))
+                "PREPARED_REVIEW_INCOMPLETE.json", "prepared-native-review-record.json",
+                "native-process.json", "javascript-parse.log", "node-version.log",
+                "browser-version.log", "independent-native-receiving.log", "producer-console.log"))
         materialized = 0
         for item in members:
             relative = relative_path(item.filename.rstrip("/") if item.is_dir() else item.filename)
@@ -83,7 +91,7 @@ def unpack_case(archive, destination, native_review=False):
             materialized += 1
     return len(members), materialized
 
-def archive_case(original, case, archive, output):
+def archive_case(original, case, archive, output, retired):
     replacements = {}
     for file in sorted(case.rglob("*")):
         if file.is_symlink():
@@ -95,7 +103,7 @@ def archive_case(original, case, archive, output):
     with zipfile.ZipFile(original) as retained:
         with zipfile.ZipFile(archive, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:
             for item in retained.infolist():
-                if item.filename in replacements:
+                if item.filename in replacements or item.filename in retired:
                     continue
                 if item.is_dir():
                     bundle.writestr(copy.copy(item), b"")
@@ -107,33 +115,17 @@ def archive_case(original, case, archive, output):
                 bundle.write(file, name)
     with zipfile.ZipFile(original) as retained, zipfile.ZipFile(archive) as complete:
         incoming, final = set(retained.namelist()), set(complete.namelist())
-        if not incoming.issubset(final) or len(final) != len(complete.namelist()):
-            raise ValueError("Retain every original member once in the complete continued case")
+        expected = {retired.get(name, name) for name in incoming}
+        if not expected.issubset(final) or len(final) != len(complete.namelist()):
+            raise ValueError("Retain every original member in the complete continued case")
+        for original_name, history_name in retired.items():
+            if original_name not in incoming:
+                raise ValueError("An archived prior attempt must name its original member")
+            before, after = retained.getinfo(original_name), complete.getinfo(history_name)
+            if (before.file_size, before.CRC) != (after.file_size, after.CRC):
+                raise ValueError("The original attempt changed while moving to history: " + original_name)
 
 
-def observations():
-    answer = {}
-    for name in ("memory.events", "memory.current", "memory.max", "memory.peak"):
-        source = Path("/sys/fs/cgroup") / name
-        try:
-            answer[name] = source.read_text().strip()
-        except OSError:
-            pass
-    return answer
-
-def stop_owned(process):
-    try:
-        os.killpg(process.pid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
-    try:
-        return process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        return process.wait(timeout=10)
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -175,6 +167,7 @@ def main():
     case, private, temporary = root / "case", root / "private", root / "tmp"
     for directory in (case, private, temporary):
         directory.mkdir(mode=0o700)
+    preserve_console(root / "producer-console.log")
     print("SCF_REVIEW_CASE_PREPARE " + json.dumps({"root": str(root), "engine": args.engine}), flush=True)
     members, materialized = unpack_case(args.case, case, native_review=args.engine == "native")
     runtime, previous = case / "runtime", case / "receiving"
@@ -191,29 +184,41 @@ def main():
             raise ValueError("Continue the original complete reader and saved draft: " + str(selected))
 
     attempt = output / "attempts" / (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-" + uuid.uuid4().hex[:8])
-    retained = ("native-process.log", "progress.json", "INCOMPLETE.json", "Failure.html", "RESULT.json",
-                "prepared-native-progress.json", "PREPARED_REVIEW_INCOMPLETE.json", "prepared-native-review-record.json")
-    for name in retained:
-        source = output / name
+    retired = {}
+
+    def retain_attempt(source, name):
         if source.is_file():
             attempt.mkdir(parents=True, exist_ok=True, mode=0o700)
-            shutil.copyfile(source, attempt / name)
-    old_native = case / "review-continuation-native.json"
-    if old_native.is_file():
-        attempt.mkdir(parents=True, exist_ok=True, mode=0o700)
-        shutil.copyfile(old_native, attempt / "native-result.json")
-    # Both engines import the same full checkpoint and retain matching judgments.
+            target = attempt / name
+            retired[source.relative_to(case).as_posix()] = target.relative_to(case).as_posix()
+            source.replace(target)
+
+    retained = (
+        "native-process.log", "native-process.json", "progress.json", "INCOMPLETE.json",
+        "Failure.html", "RESULT.json", "javascript-parse.log", "node-version.log",
+        "browser-version.log", "producer-console.log", "independent-native-receiving.log",
+        "prepared-native-progress.json", "PREPARED_REVIEW_INCOMPLETE.json",
+        "prepared-native-review-record.json",
+    )
+    for name in retained:
+        retain_attempt(output / name, name)
+    retain_attempt(case / "review-continuation-native.json", "native-result.json")
+    retain_attempt(case / "review-continuation-config.json", "review-continuation-config.json")
+    retain_attempt(case / "runtime-selection.json", "runtime-selection.json")
+    # Both engines continue the same complete checkpoint and its matching decisions.
+    preceding_runtime = retain_runtime_edition(runtime, case)
     runtime_versions = []
-    for name in ("receive-review-continuation.cjs", "receive-prepared-review.mjs", "receive_review.py", "receive_current.py", "README.md"):
+    for name in (
+        "receive-review-continuation.cjs", "receive-prepared-review.mjs",
+        "receive_review.py", "receive_current.py", "scf_native_process.py", "README.md",
+    ):
         latest = Path(__file__).with_name(name)
         target = runtime / name
         selected_body = latest.read_bytes()
-        if target.is_file() and target.read_bytes() != selected_body:
-            attempt.mkdir(parents=True, exist_ok=True, mode=0o700)
-            shutil.copyfile(target, attempt / ("prior-runtime-" + name))
         target.write_bytes(selected_body)
         target.chmod(0o600)
         runtime_versions.append({"path": name, "bytes": len(selected_body), "sha256": digest(selected_body)})
+    actual_runtime = record_runtime_selection(runtime, case, preceding_runtime)
     driver = runtime / ("receive-prepared-review.mjs" if args.engine == "native" else "receive-review-continuation.cjs")
     config.update(sourceRoot=str(case / "source"), outputDirectory=str(output),
                   previousOutputDirectory=str(previous), temporaryDirectory=str(temporary),
@@ -224,77 +229,52 @@ def main():
     environment = dict(os.environ)
     environment.update(TMPDIR=str(temporary), TEMP=str(temporary), TMP=str(temporary),
                        PYTHONDONTWRITEBYTECODE="1")
-    parse = subprocess.run([str(args.node), "--check", str(driver)],
-                           capture_output=True, text=True, timeout=30, env=environment)
-    if parse.returncode:
-        raise ValueError("The native parser rejected the retained review programme: " + parse.stderr)
-    browser_version = None
-    if args.engine == "browser":
-        browser_probe = subprocess.run([str(args.chromium), "--version"], capture_output=True,
-                                       text=True, timeout=30, env=environment)
-        if browser_probe.returncode:
-            raise ValueError("The selected host browser did not start")
-        browser_version = browser_probe.stdout.strip()
     print("SCF_REVIEW_RESUME_START " + json.dumps({
-        "root": str(root), "engine": args.engine, "retainedMembers": members, "materializedMembers": materialized,
-        "sourceCommit": config["sourceCommit"], "browserVersion": browser_version}), flush=True)
-    before, started, timed_out = observations(), time.monotonic(), False
-    log_path = output / "native-process.log"
-    phases = []
-    commands = [[str(args.node), str(driver), str(config_path)]]
-    if args.engine == "native":
-        native_command = [str(args.node), "--max-old-space-size=256", "--expose-gc", str(driver), str(config_path)]
-        commands = [native_command, native_command + ["--verify"]]
-    returncode = None
-    with log_path.open("wb") as log:
-        for index, command in enumerate(commands):
-            phase_started = time.monotonic()
-            phase_name = "independent-native-receiving" if index else args.engine + "-review"
-            position = log.tell()
-            process = subprocess.Popen(command, cwd=case, env=environment, stdin=subprocess.DEVNULL,
-                                       stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-            while process.poll() is None:
-                with log_path.open("r", errors="replace") as inp:
-                    inp.seek(position)
-                    text = inp.read()
-                    position = inp.tell()
-                    if text:
-                        print(text, end="", flush=True)
-                if time.monotonic() - started > args.timeout_seconds:
-                    timed_out = True
-                    stop_owned(process)
-                    break
-                time.sleep(0.4)
-            returncode = process.wait()
-            with log_path.open("r", errors="replace") as inp:
-                inp.seek(position)
-                text = inp.read()
-                if text:
-                    print(text, end="", flush=True)
-            phases.append({"phase": phase_name, "processExit": returncode,
-                           "durationSeconds": round(time.monotonic() - phase_started, 3)})
-            if returncode or timed_out:
-                break
-    complete = output / "RESULT.json"
-    result = json.loads(complete.read_text()) if complete.is_file() else None
-    state = "COMPLETE" if returncode == 0 and result and result.get("state") == "COMPLETE" else "INCOMPLETE"
-    native = {
-        "schema": "stellar-forge.review-continuation-native.v1", "state": state,
-        "processExit": returncode, "timedOut": timed_out, "engine": args.engine, "phases": phases,
-        "durationSeconds": round(time.monotonic() - started, 3),
+        "operationId": OPERATION, "root": str(root), "engine": args.engine,
+        "retainedMembers": members, "materializedMembers": materialized,
+        "sourceCommit": config["sourceCommit"],
+        "nativeRecord": str(output / "native-process.json"),
+        "previousRuntime": preceding_runtime,
+    }), flush=True)
+    native, result = run_receiving_program(
+        OPERATION, root, output,
+        {"source_commit": config["sourceCommit"],
+         "original_case": {"bytes": original_case_bytes, "sha256": selected_hash},
+         "runtime_selection": actual_runtime, "retained_attempt": str(attempt),
+         "retired_members": retired,
+         "original_review_id": "SCF-TECHNICAL-BUYER-REVIEW-7108-20261012",
+         "original_publication_operation": "SCF-GRANT-REVIEWER-PUBLICATION-8910-20261012",
+         "library_replacement": {
+             "library_file_id": args.replace_library_file_id,
+             "expected_version": args.expected_library_version,
+         }},
+        args.node, args.chromium, driver, config_path, case, environment,
+        args.timeout_seconds, args.engine + "-review", engine=args.engine,
+    )
+    state = native["state"]
+    process_phases = native["phases"]
+    native.update({
+        "process_phases": process_phases,
+        "phases": [
+            {"phase": name, **phase, "processExit": phase["exit_code"],
+             "durationSeconds": phase.get("duration_seconds")}
+            for name, phase in process_phases.items()
+            if name in (args.engine + "-review", "independent-native-receiving")
+        ],
+        "schema": "stellar-forge.review-continuation-native.v1",
         "sourceCommit": config["sourceCommit"], "sourceFiles": len(config["files"]),
         "originalCase": {"bytes": original_case_bytes, "sha256": selected_hash},
         "runtime": runtime_versions, "retainedMembers": members, "materializedMembers": materialized,
         "nodeMaxResidentSetKiB": result.get("maxResidentSetKiB") if result else None,
-        "cgroupBefore": before, "cgroupAfter": observations(),
-        "browser": str(args.chromium) if args.engine == "browser" else None, "browserVersion": browser_version,
+        "cgroupBefore": native["memory_before"], "cgroupAfter": native["memory_after"],
+        "browser": str(args.chromium) if args.engine == "browser" else None,
         "originalDraftId": result.get("originalDraftId") if result else None,
         "originalReviewId": result.get("originalReviewId") if result else None,
         "reviewActions": result.get("reviewActions") if result else None,
-    }
+    })
     write_json(case / "review-continuation-native.json", native)
     archive = root / ("SCF-Current-Application-and-Review" + ("" if state == "COMPLETE" else "-Partial") + ".zip")
-    archive_case(args.case, case, archive, output)
+    archive_case(args.case, case, archive, output, retired)
     meta = {"path": str(archive), "bytes": archive.stat().st_size,
             "sha256": file_digest(archive)}
     print("SCF_REVIEW_RESUME_RESULT " + json.dumps({**native, "archive": meta}), flush=True)
