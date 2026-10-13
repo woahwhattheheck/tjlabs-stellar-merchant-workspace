@@ -12,6 +12,7 @@ import { ProtocolError } from './protocol.mjs';
 import {readMerchantObservation} from './observation.mjs';
 import {readMerchantObservationSummary, merchantSummaryHistorySequence, merchantSummaryPrefixRows} from './observation-summary.mjs';
 import {readInvoiceRegister,invoiceRegisterQuery,createInvoiceRegisterExport} from './invoice-register.mjs';
+import {previewInvoiceDelivery,createInvoiceDeliveryExport} from './invoice-delivery.mjs';
 import { merchantInputFiles, reviewMerchantInputs, verifyMerchantInputFingerprint, readMerchantInput } from './application-inputs.mjs';
 import { createMerchantProject, resolveMerchantProjectSource } from './portable.mjs';
 import {inspectMerchantIntakeSource,merchantIntakeContext,prepareMerchantIntake,readMerchantIntake,exportMerchantIntake,listMerchantIntakes,runMerchantIntake} from './invoice-intake.mjs';
@@ -21,6 +22,7 @@ const ASSETS = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/payment-desk.mjs', ['payment-desk.mjs', 'text/javascript; charset=utf-8']],
+  ['/customer-delivery.mjs', ['customer-delivery.mjs', 'text/javascript; charset=utf-8']],
   ['/invoice-intake.mjs', ['invoice-intake.mjs', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']]
 ]);
@@ -77,7 +79,7 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
   if (typeof operatorToken !== 'string' || operatorToken.length < 32 || /[\u0000-\u0020\u007f]/.test(operatorToken)) fail('OPERATOR_TOKEN_REQUIRED');
   if (!Number.isInteger(port) || port < 0 || port > 65535) fail('PORT_INVALID');
   if (!Number.isInteger(intervalMs) || intervalMs < 100 || intervalMs > 2147483647) fail('WORKER_INTERVAL_INVALID');
-  let stopping = false, tick = null, closePromise = null;
+  let stopping = false, tick = null, closePromise = null, invoiceExportsPreparing = 0;
   const inFlight = new Set(), assets = new Map(), invoiceDownloads = new Map();
   function discardInvoiceDownload(id) {
     const item=invoiceDownloads.get(id);if(!item)return;
@@ -167,12 +169,29 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
       return respond(response,200,{...readInvoiceRegister(workspace,invoiceRegisterQuery(parsed.searchParams)),
         config:workspace.publicConfig(),mode:workspace.readOnly?'review':'live'});
     if(request.method==='GET'&&path==='/api/register/export') {
-      if(invoiceDownloads.size>=8)fail('INVOICE_REGISTER_DOWNLOAD_LIMIT',429);
+      if(invoiceDownloads.size+invoiceExportsPreparing>=8)fail('INVOICE_REGISTER_DOWNLOAD_LIMIT',429);
       const selected=invoiceRegisterQuery(parsed.searchParams,{exporting:true});
       if(!selected.revision)fail('INVOICE_REGISTER_REVIEW_SELECTION_REQUIRED');
       const exported=createInvoiceRegisterExport(workspace,selected);
       if(response.destroyed){exported.cleanup();return;}
       return respond(response,200,retainInvoiceDownload(exported));
+    }
+    const delivery=/^\/api\/orders\/([0-9a-f-]{36})\/delivery(?:\/(export))?$/i.exec(path);
+    if(delivery&&request.method==='GET') {
+      if(!delivery[2]) {
+        if(parsed.search)fail('QUERY_NOT_SUPPORTED');
+        return respond(response,200,previewInvoiceDelivery(workspace,delivery[1]));
+      }
+      const entries=[...parsed.searchParams.entries()];
+      if(entries.length!==1||entries[0][0]!=='revision')fail('INVOICE_DELIVERY_REVIEW_REQUIRED');
+      if(invoiceDownloads.size+invoiceExportsPreparing>=8)fail('INVOICE_REGISTER_DOWNLOAD_LIMIT',429);
+      const controller=new AbortController(),abort=()=>{if(!response.writableFinished)controller.abort();};
+      response.once('close',abort);invoiceExportsPreparing++;
+      try {
+        const exported=await createInvoiceDeliveryExport(workspace,{invoiceId:delivery[1],revision:entries[0][1],signal:controller.signal});
+        if(response.destroyed||controller.signal.aborted){exported.cleanup();return;}
+        return respond(response,200,retainInvoiceDownload(exported));
+      } finally {invoiceExportsPreparing--;response.off('close',abort);}
     }
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
     if(path==='/api/invoice-intake/context'&&request.method==='GET')return respond(response,200,merchantIntakeContext(workspace));
