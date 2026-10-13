@@ -34,7 +34,11 @@ The existing paid-jobs Request application owns merchant discovery, function and
 
 A complete existing Request can be continued after reopening the customer workspace. Preserve its original reference, request ID, sealed attachment descriptors, checkout and job. Do not create another purchase merely because a browser tab was closed.
 
-The native Request handoff is composed through jobs/request-handoff.mjs and its fixed CLI companion when included with this product. The host selects an existing private customer workspace; the prepared order selects an observed merchant catalog and a stable reference. The helper validates the current original customer launch and uses the original authenticated intake HTTP routes to retain the same draft and seal both whole prepared files. The original Request page then opens at that saved request. It does not advance spending approval.
+In the prepared order's Merchant requests section, select a host-declared existing customer, enter the merchant origin and retain a readable reference and label. Choose **Review merchant catalog**. The complete current executePipeline function's amount, network, asset and payee are displayed, and its entire catalog can be opened for review. Choose **Create Request with both complete files** to retain the original draft and seal the selected files. **Open original Request** opens that exact customer request for its existing ticket, checkout and approval flow.
+
+A stopped upload offers **Continue same original Request**. The original helper derives the same request from merchant origin and reference, reads it before drafting, and resumes its original missing chunks. It does not post a new ordinary input after the first attachment changed the request. Each merchant request has a separate saved identity, so another merchant can be reviewed against the same prepared order without changing its files.
+
+The native Request handoff is composed through jobs/request-handoff.mjs and its fixed CLI companion. The host selects an existing private customer workspace; the prepared order selects an observed merchant catalog and a stable reference. The helper validates the current original customer launch and uses the original authenticated intake HTTP routes to retain the same draft and seal both whole prepared files. The original Request page then opens at that saved request. It does not advance spending approval.
 
 ## Receive complete purchased work
 
@@ -67,12 +71,13 @@ Orders and receivings remain under the original preparation workspace:
 
 - pipeline-commissioning/orders/OPERATION_ID
 - pipeline-commissioning/receivings/OPERATION_ID
+- pipeline-commissioning/requests/OPERATION_ID
 
 Each operation has one immutable intent and a separate current state. A changed intent requires a new operation. Browser session storage only keeps the selected rows and unacknowledged request identities; the private saved files remain authoritative.
 
 An interrupted preparation continues with its original exported source.zip and original prepared directory. An interrupted upload is reselected by complete byte count and SHA-256. An interrupted receiving continues with the same original package and editable destinations. Reopen checks those destinations instead of creating another copy.
 
-The list is paginated with complete operation rows. More saved rows remain available through **Load more orders** and **Load more receivings**. Long operations display their current state and can be stopped. The stop signal goes to the original Node CLI, whose AbortController drains the original Python helper process group before the operation finishes.
+The list is paginated by saved operation identity and current state. Selecting a row reads its complete retained result; file bodies remain available through full downloads. More saved rows remain available through **Load more orders** and **Load more receivings**. Long operations display their current state and can be stopped. The stop signal goes to the original Node CLI, whose AbortController drains the original Python helper process group before the operation finishes.
 
 Two application lifetimes attempting the same saved operation are reconciled through its local file lock. The application never replaces another active owner's journal merely because this lifetime did not start that worker.
 
@@ -82,6 +87,23 @@ Use the maintained Data preparation Jobs installation and its declared source cl
 
 SF30_PREPARATION_NODE optionally selects the installed absolute Node executable. Otherwise the application uses Node from its inherited PATH. The Python helper uses the current owned interpreter, preserving the installed native modules. Browser requests never supply an executable, shell command or arbitrary destination path.
 
+To make an existing Request workspace selectable, point SF30_PREPARATION_JOB_CUSTOMERS at an absolute, operator-owned JSON file with mode0600 in a private directory. It maps aliases to a label and the original customer selection:
+
+```json
+{
+  "existing_customer": {
+    "label": "Existing Jobs customer",
+    "customer": {
+      "directory": "/absolute/original/customer",
+      "runtimeDirectory": "/absolute/installed/sf88-operator-buyer-cli",
+      "operatorWorkspace": "/absolute/original/operator"
+    }
+  }
+}
+```
+
+Use the original operatorWorkspace or operatorProfile selection where configured. The helper validates the customer's current saved launch through readJobWorkspaceLaunch. An optional expectedInstanceId selects one exact currently running instance. The saved merchant operation retains its original private customer selection even if the host later edits the alias; the public alias list exposes only labels and aliases. The selected original customer application must already be running through its maintained owner.
+
 The managed page inherits the existing bearer token, exact instance ID, same-origin checks and private owner. Complete downloads use the existing single-use download-ticket route. The standalone original loopback application inherits its existing Host and Origin checks. No additional root HTTP socket is opened.
 
 ## HTTP interface
@@ -90,7 +112,7 @@ All paths below are under the original /api/commissioning prefix. In a managed A
 
 | Method and path | Effect |
 | --- | --- |
-| GET orders or receivings | Read a complete page using offset and limit |
+| GET orders, receivings or requests | Read a complete page using offset and limit |
 | GET record?kind=…&id=… | Read the saved intent, current state and complete helper result |
 | GET file?kind=…&id=…&file=… | Download a complete named file after original identity checks |
 | POST prepare | Save an explicit order and prepare its original complete input |
@@ -100,9 +122,13 @@ All paths below are under the original /api/commissioning prefix. In a managed A
 | POST receive | Run the original complete package receiver |
 | POST reopen | Verify the retained original package and editable project |
 | POST open | Open the verified editable project through the original owner |
+| GET customers | Read the configured existing customer aliases and labels |
+| POST catalog | Save one merchant request identity and read the full original catalog |
+| POST seed | Retain that exact reviewed Request and seal its two complete files |
+| POST refresh-catalog | Continue an unselected original catalog read |
 | POST cancel | Stop this lifetime's current operation and drain its native helper |
 
-Commands accept JSON bodies within 1 MiB. The result upload uses its exact Content-Length and the retained package identity. Existing preparation and pipeline routes retain their original behavior.
+Commands accept JSON bodies within 1 MiB. Complete Request helper outputs allow up to 8 MiB, with retained catalog and request records limited to 9 MiB. The result upload uses its exact Content-Length and the retained package identity. Existing preparation and pipeline routes retain their original behavior.
 
 ## Source review
 

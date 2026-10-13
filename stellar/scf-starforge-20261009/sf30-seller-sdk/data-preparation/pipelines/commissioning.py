@@ -28,6 +28,7 @@ HERE = Path(__file__).resolve().parent
 ID = re.compile(r"[a-f0-9]{32}")
 HASH = re.compile(r"[a-f0-9]{64}")
 MAX_JSON = 1048576
+MAX_RECORD = 9 * MAX_JSON
 MAX_PACKAGE = 64 * 1024 * 1024
 PREPARED = ("project.zip", "selection.json", "input.json", "review.html", "prepared.json")
 
@@ -59,7 +60,7 @@ def read(path, maximum=MAX_JSON):
 
 
 def obj(path):
-    return parse_json(read(path).decode("utf-8"))
+    return parse_json(read(path, MAX_RECORD).decode("utf-8"))
 
 
 def identity(path, maximum=MAX_PACKAGE):
@@ -85,7 +86,7 @@ def identity(path, maximum=MAX_PACKAGE):
 def write(path, value, replace=False):
     path = Path(path)
     raw = (dumps(value) + "\n").encode("utf-8")
-    need(len(raw) <= MAX_JSON, "The complete retained record exceeds its allowance")
+    need(len(raw) <= MAX_RECORD, "The complete retained record exceeds its allowance")
     fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".commissioning-")
     try:
         with os.fdopen(fd, "wb") as output:
@@ -114,14 +115,15 @@ class CommissioningDesk:
         self.root = private(owner.workspace.root / "pipeline-commissioning")
         self.orders = private(self.root / "orders")
         self.receivings = private(self.root / "receivings")
+        self.requests = private(self.root / "requests")
         self.lock = threading.RLock()
         self.workers = {}
         self.closed = False
 
     def directory(self, kind, identifier, create=False):
-        need(kind in {"orders", "receivings"} and isinstance(identifier, str) and ID.fullmatch(identifier),
+        need(kind in {"orders", "receivings", "requests"} and isinstance(identifier, str) and ID.fullmatch(identifier),
              "Select an original saved order or receiving")
-        path = (self.orders if kind == "orders" else self.receivings) / identifier
+        path = getattr(self, kind) / identifier
         if create:
             return private(path)
         need(path.is_dir() and not path.is_symlink(), "The original saved operation was not found")
@@ -145,20 +147,103 @@ class CommissioningDesk:
         output = {"id": identifier, "kind": kind, "intent": intent, **state, "active": running}
         if (folder / "result.json").exists():
             output["result"] = obj(folder / "result.json")
+        if kind == "requests" and (folder / "selection.json").exists():
+            output["selectedCatalogSha256"] = obj(folder / "selection.json")["catalogSha256"]
         if kind == "receivings":
             output["uploaded"] = (folder / "result.zip").is_file()
         return output
 
-    def list(self, kind, offset=0, limit=50):
-        need(kind in {"orders", "receivings"} and offset >= 0 and 1 <= limit <= 100,
+    def list(self, kind, offset=0, limit=50, order_id=None):
+        need(kind in {"orders", "receivings", "requests"} and offset >= 0 and 1 <= limit <= 100,
              "Choose a collection and a page of 1–100 operations")
-        root = self.orders if kind == "orders" else self.receivings
+        root = getattr(self, kind)
         names = sorted((p.name for p in root.iterdir() if ID.fullmatch(p.name) and p.is_dir()
                         and not p.is_symlink() and (p / "intent.json").is_file()), reverse=True)
+        if order_id is not None:
+            self.directory("orders", order_id)
+            names = [name for name in names if obj(root / name / "intent.json").get("orderId") == order_id]
         # Rows retain the complete selected identity; large file bodies use downloads.
-        rows = [self.get(kind, name) for name in names[offset:offset + limit]]
+        rows = []
+        for name in names[offset:offset + limit]:
+            value = self.get(kind, name)
+            result = value.get("result", {})
+            if kind == "requests":
+                catalog = result.get("catalog")
+                handoff = result.get("handoff")
+                value["result"] = {
+                    **({"catalog": {"catalogSha256": catalog["catalogSha256"],
+                                    "functions": [{k: v for k, v in f.items() if k in {"id", "label", "payment"}}
+                                                  for f in catalog["functions"] if f["id"] == "executePipeline"]}}
+                       if catalog else {}),
+                    **({"handoff": {k: handoff[k] for k in ("requestId", "reference", "requestUrl", "requestRevision", "catalogSha256")}}
+                       if handoff else {})}
+            elif kind == "orders" and result.get("prepared"):
+                value["result"] = {"prepared": {k: result["prepared"][k] for k in ("pipeline", "functionId")}}
+            elif kind == "receivings" and result.get("received"):
+                value["result"] = {"received": {k: result["received"][k] for k in ("pipeline", "job", "status", "executionId")}}
+            rows.append(value)
         return {"items": rows, "offset": offset, "limit": limit, "total": len(names),
                 "nextOffset": offset + limit if offset + limit < len(names) else None}
+
+    def customers(self, selected=None):
+        filename = os.environ.get("SF30_PREPARATION_JOB_CUSTOMERS")
+        if not filename:
+            need(selected is None, "Select an existing private Jobs customer in the host configuration")
+            return []
+        path = Path(filename)
+        need(path.is_absolute(), "The host customer configuration must use an absolute path")
+        info = path.lstat()
+        need(stat.S_ISREG(info.st_mode) and not path.is_symlink() and
+             not info.st_mode & 0o077 and info.st_uid == os.getuid(),
+             "Use an operator-owned private Jobs customer configuration")
+        aliases = obj(path)
+        need(isinstance(aliases, dict), "Use a named map of original Jobs customers")
+        public = []
+        for alias, value in aliases.items():
+            need(re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", alias) and isinstance(value, dict)
+                 and set(value) == {"label", "customer"} and isinstance(value["label"], str)
+                 and 1 <= len(value["label"]) <= 120 and isinstance(value["customer"], dict),
+                 "Each host customer requires an alias, label and original customer selection")
+            public.append({"alias": alias, "label": value["label"]})
+        if selected is None:
+            return public
+        need(selected in aliases, "Select an existing host-declared Jobs customer")
+        return aliases[selected]["customer"]
+
+    def catalog_intent(self, body):
+        need(isinstance(body, dict) and set(body) ==
+             {"id", "orderId", "customerAlias", "merchantOrigin", "reference", "label"},
+             "Select a prepared order, existing customer, merchant and stable request reference")
+        order = self.get("orders", body["orderId"])
+        need(order.get("result", {}).get("prepared") and not order["active"],
+             "Finish the original complete preparation before selecting its merchant")
+        for name in ("customerAlias", "merchantOrigin", "reference", "label"):
+            need(isinstance(body[name], str) and 1 <= len(body[name]) <= 2048 and
+                 not any(ord(c) < 32 for c in body[name]), "Use complete single-line merchant request fields")
+        with self.lock:
+            self.alive()
+            folder = self.directory("requests", body["id"], True)
+            customer = self.customers(body["customerAlias"])
+            # The saved private target stays fixed if the host later edits its alias.
+            write(folder / "customer.json", customer)
+            write(folder / "intent.json", body)
+        return self.start("requests", body["id"], "catalog")
+
+    def seed_request(self, body):
+        need(isinstance(body, dict) and set(body) == {"id", "catalogSha256"}
+             and isinstance(body["catalogSha256"], str) and HASH.fullmatch(body["catalogSha256"]),
+             "Review the exact original merchant catalog before creating its request")
+        folder = self.directory("requests", body["id"])
+        value = self.get("requests", body["id"])
+        need(not value["active"] and value.get("result", {}).get("catalog"),
+             "Wait for the original full merchant catalog")
+        need(value["result"]["catalog"]["catalogSha256"] == body["catalogSha256"] or
+             value.get("selectedCatalogSha256") == body["catalogSha256"],
+             "Review this original saved catalog selection")
+        with self.lock:
+            self.alive()
+            write(folder / "selection.json", {"catalogSha256": body["catalogSha256"]})
+        return self.start("requests", body["id"], "seed")
 
     def prepare(self, body):
         need(isinstance(body, dict) and set(body) <=
@@ -236,7 +321,8 @@ class CommissioningDesk:
 
     def start(self, kind, identifier, action):
         need((kind == "orders" and action == "prepare") or
-             (kind == "receivings" and action in {"receive", "reopen"}),
+             (kind == "receivings" and action in {"receive", "reopen"}) or
+             (kind == "requests" and action in {"catalog", "seed"}),
              "Choose an original preparation or receiving action")
         folder = self.directory(kind, identifier)
         with self.lock:
@@ -256,6 +342,10 @@ class CommissioningDesk:
                         raise Busy("The same saved operation is active in another owner") from exc
                     write(folder / "state.json", {"status": "RUNNING", "action": action, "updatedAt": now()}, True)
                     intent = obj(folder / "intent.json")
+                    if kind == "requests" and action == "catalog":
+                        need(not (folder / "selection.json").exists(),
+                             "Continue the original saved Request selection or create a separate merchant request")
+                    script = HERE.parent / "jobs" / "cli.mjs"
                     if kind == "orders":
                         source = folder / "source.zip"
                         source_record = folder / "source.json"
@@ -276,17 +366,35 @@ class CommissioningDesk:
                             args += ["--inputs", str(folder / "inputs.json")]
                         if intent.get("reuseExecution"):
                             args += ["--reuse-execution", intent["reuseExecution"]]
+                    elif kind == "requests":
+                        script = HERE.parent / "jobs" / "request-handoff-cli.mjs"
+                        args = [action if action == "seed" else "catalog", "--customer", str(folder / "customer.json"),
+                                "--merchant-origin", intent["merchantOrigin"]]
+                        if action == "seed":
+                            order_folder = self.directory("orders", intent["orderId"])
+                            prepared = self.download("orders", intent["orderId"], "prepared.json")[0]
+                            args += ["--order-directory", str(order_folder / "prepared"),
+                                     "--expected-order-sha256", identity(prepared)["sha256"],
+                                     "--expected-catalog-sha256", obj(folder / "selection.json")["catalogSha256"],
+                                     "--reference", intent["reference"], "--label", intent["label"]]
                     else:
                         args = [action, "--package-directory", str(folder / "package"), "--directory", str(folder / "editable"),
                                 "--expected", str(folder / "expected.json"), "--job", str(folder / "job.json")]
                         if action == "receive":
                             need(identity(folder / "result.zip") == intent["package"], "Upload the complete selected result before receiving")
                             args += ["--source", str(folder / "result.zip")]
-                    result = self.native(args, folder, record)
+                    result = self.native(args, folder, record, script)
                     if kind == "orders":
                         files = {name: identity(folder / "prepared" / name, 28 * 1024 * 1024) for name in PREPARED}
                         value = {"prepared": result, "files": files}
+                    elif kind == "requests":
+                        prior = obj(folder / "result.json") if (folder / "result.json").exists() else {}
+                        value = {**prior, "catalog" if action == "catalog" else "handoff": result}
                     else:
+                        original_package = result["package"]
+                        result = result["workspace"]
+                        need(isinstance(original_package, dict) and isinstance(result, dict),
+                             "The original customer helper must return its complete package and editable workspace")
                         if intent.get("orderId"):
                             order_folder = self.directory("orders", intent["orderId"])
                             selected = self.download("orders", intent["orderId"], "selection.json")[0]
@@ -298,7 +406,7 @@ class CommissioningDesk:
                             actual = parse_json(read(execution_file["path"], 2 * MAX_JSON).decode("utf-8"))
                             need(actual["selection"] == original,
                                  "This result differs from the selected project, input editions, SQL, parameters or reuse choice")
-                        value = {"received": result}
+                        value = {"received": result, "package": original_package}
                     write(folder / "result.json", value, True)
                     write(folder / "state.json", {"status": "COMPLETE", "action": action, "updatedAt": now()}, True)
                 except BaseException as exc:
@@ -314,11 +422,13 @@ class CommissioningDesk:
             record["thread"].start()
         return self.get(kind, identifier)
 
-    def native(self, args, folder, record):
+    def native(self, args, folder, record, script):
         node = os.environ.get("SF30_PREPARATION_NODE") or shutil.which("node")
         need(node and Path(node).is_absolute(), "Select the installed Node executable with SF30_PREPARATION_NODE")
-        script = HERE.parent / "jobs" / "cli.mjs"
+        need(script in {HERE.parent / "jobs" / "cli.mjs", HERE.parent / "jobs" / "request-handoff-cli.mjs"},
+             "Use the original fixed customer helper")
         need(script.is_file(), "Install the complete Data preparation Jobs selection")
+        maximum = 8 * MAX_JSON if script.name == "request-handoff-cli.mjs" else MAX_JSON
         if record["cancel"].is_set():
             raise PreparationError("The saved operation was stopped")
         # Fixed native CLI, fixed absolute paths, and the current owned interpreter.
@@ -326,7 +436,8 @@ class CommissioningDesk:
         with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
             with self.lock:
                 self.alive()
-                child = subprocess.Popen([node, str(script), *args, "--python", sys.executable],
+                native_args = [*args, "--python", sys.executable] if script.name == "cli.mjs" else args
+                child = subprocess.Popen([node, str(script), *native_args],
                                          stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
                                          cwd=folder, close_fds=True)
                 record["process"] = child
@@ -334,7 +445,7 @@ class CommissioningDesk:
                     child.send_signal(signal.SIGTERM)
             stopped = False
             while child.poll() is None:
-                if (record["cancel"].is_set() or os.fstat(stdout.fileno()).st_size > MAX_JSON
+                if (record["cancel"].is_set() or os.fstat(stdout.fileno()).st_size > maximum
                         or os.fstat(stderr.fileno()).st_size > 65536) and not stopped:
                     child.send_signal(signal.SIGTERM)
                     stopped = True
@@ -344,8 +455,8 @@ class CommissioningDesk:
                 record["process"] = None
             stdout.seek(0)
             stderr.seek(0)
-            raw, error = stdout.read(MAX_JSON + 1), stderr.read(65537)
-            need(len(raw) <= MAX_JSON and len(error) <= 65536, "The original helper output exceeded its allowance")
+            raw, error = stdout.read(maximum + 1), stderr.read(65537)
+            need(len(raw) <= maximum and len(error) <= 65536, "The original helper output exceeded its allowance")
             need(child.returncode == 0, error.decode("utf-8", errors="replace").strip() or "The original helper stopped")
             value = parse_json(raw.decode("utf-8"))
             need(isinstance(value, dict), "The original helper did not return its complete result")
@@ -381,6 +492,7 @@ class CommissioningDesk:
             selected = value["result"]["files"][filename]
             path = folder / "prepared" / filename
         else:
+            need(kind == "receivings", "Choose a prepared or received original file")
             receipt = value["result"]["received"]
             selected = next((f for f in receipt["files"] if f["filename"] == filename), None)
             need(selected is not None, "Choose an original verified named result")
@@ -424,8 +536,10 @@ def route(handler, parsed, method):
     suffix = parsed.path.removeprefix("/api/commissioning/")
     query = {k: v[-1] for k, v in parse_qs(parsed.query).items()}
     if method == "GET":
-        if suffix in {"orders", "receivings"}:
-            handler.answer(current.list(suffix, int(query.get("offset", 0)), int(query.get("limit", 50))))
+        if suffix in {"orders", "receivings", "requests"}:
+            handler.answer(current.list(suffix, int(query.get("offset", 0)), int(query.get("limit", 50)), query.get("orderId")))
+        elif suffix == "customers":
+            handler.answer({"items": current.customers()})
         elif suffix == "record":
             handler.answer(current.get(query["kind"], query["id"]))
         elif suffix == "file":
@@ -443,6 +557,13 @@ def route(handler, parsed, method):
     need(isinstance(body, dict), "Choose one original commissioning command")
     if suffix == "prepare":
         result = current.prepare(body)
+    elif suffix == "catalog":
+        result = current.catalog_intent(body)
+    elif suffix == "seed":
+        result = current.seed_request(body)
+    elif suffix == "refresh-catalog":
+        need(set(body) == {"id"}, "Select one saved merchant catalog")
+        result = current.start("requests", body["id"], "catalog")
     elif suffix == "receive-intent":
         result = current.receive_intent(body)
     elif suffix in {"receive", "reopen"}:

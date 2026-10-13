@@ -278,14 +278,18 @@ try {
   const saved=JSON.parse(sessionStorage.getItem(commissioningSession)||'null');
   if(saved&&typeof saved==='object')Object.assign(commission,{
     order:saved.order??null,receiving:saved.receiving??null,
-    pendingOrder:saved.pendingOrder??null,pendingReceiving:saved.pendingReceiving??null});
+    pendingOrder:saved.pendingOrder??null,pendingReceiving:saved.pendingReceiving??null,pendingRequest:saved.pendingRequest??null});
 } catch {}
 function saveCommissioning(){
   sessionStorage.setItem(commissioningSession,JSON.stringify({
     order:commission.order,receiving:commission.receiving,
-    pendingOrder:commission.pendingOrder,pendingReceiving:commission.pendingReceiving}));
+    pendingOrder:commission.pendingOrder,pendingReceiving:commission.pendingReceiving,pendingRequest:commission.pendingRequest}));
 }
 const orderId=()=>unique().replaceAll('-','');
+const commissionStable=value=>JSON.stringify((function sorted(v){
+  return Array.isArray(v)?v.map(sorted):v&&typeof v==='object'
+    ?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sorted(v[k])])):v;
+})(value));
 const commissionAPI=(path,body)=>request('/api/commissioning/'+path,body);
 const completeFile=(kind,id,file)=>'/api/commissioning/file?'+new URLSearchParams({kind,id,file});
 function commissionLinks(kind,id,files){
@@ -347,14 +351,14 @@ function renderCommissionDefinition(){
     '<p>Named outputs: '+esc(d.outputs.join(', '))+'</p></details>'+
     '<div class="toolbar"><button id="commission-prepare" class="primary">Prepare this complete order</button></div>';
   $('#commission-prepare').onclick=()=>action(async()=>{
-    const button=$('#commission-prepare'),inputs={};
+    const button=$('#commission-prepare'),inputs=Object.create(null);
     document.querySelectorAll('[data-commission-input]').forEach(select=>inputs[select.dataset.commissionInput]=select.value);
     const reportName=$('#commission-report').value.trim(),reuse=$('#commission-reuse').value;
     if(!reportName)throw Error('Choose a report name.');
     const intent={pipelineId:d.id,revision:d.revision,reportName,inputs,...(reuse?{reuseExecution:reuse}:{})};
     const old=commission.pendingOrder;
     const prior=old&&Object.fromEntries(Object.entries(old).filter(([k])=>k!=='id'));
-    const same=prior&&JSON.stringify(prior)===JSON.stringify(intent);
+    const same=prior&&commissionStable(prior)===commissionStable(intent);
     const body=same?old:{id:orderId(),...intent};
     commission.pendingOrder=body;saveCommissioning();button.disabled=true;
     try{
@@ -394,7 +398,7 @@ async function refreshCommissioning(reset=false){
   clearTimeout(poll);
   await Promise.all([loadCommissionRows('orders',reset),loadCommissionRows('receivings',reset)]);
   await Promise.all([renderCommissionRecord('orders'),renderCommissionRecord('receivings')]);
-  if(ui.view==='commissioning'&&[...commission.orders,...commission.receivings].some(v=>v.active))
+  if(ui.view==='commissioning'&&(commission.requestActive||[...commission.orders,...commission.receivings].some(v=>v.active)))
     poll=setTimeout(()=>action(()=>refreshCommissioning(true)),1200);
 }
 async function renderCommissionRecord(kind){
@@ -455,11 +459,11 @@ async function receiveCommissionFile(){
     const selectedOrder=$('#commission-order-binding').value;
     const intent={...(selectedOrder?{orderId:selectedOrder}:{}),expected,job,package:{bytes:raw.byteLength,sha256:digest}};
     const old=commission.pendingReceiving,prior=old&&Object.fromEntries(Object.entries(old).filter(([k])=>k!=='id'));
-    let body=prior&&JSON.stringify(prior)===JSON.stringify(intent)?old:{id:orderId(),...intent};
+    let body=prior&&commissionStable(prior)===commissionStable(intent)?old:{id:orderId(),...intent};
     if(commission.receiving){
       const current=await commissionAPI('record?'+new URLSearchParams({kind:'receivings',id:commission.receiving}));
       const comparable=Object.fromEntries(Object.entries(current.intent).filter(([k])=>k!=='id'));
-      if(JSON.stringify(comparable)===JSON.stringify(intent))body=current.intent;
+      if(commissionStable(comparable)===commissionStable(intent))body=current.intent;
     }
     commission.pendingReceiving=body;saveCommissioning();
     await commissionAPI('receive-intent',body);
@@ -474,9 +478,89 @@ async function receiveCommissionFile(){
 }
 async function renderCommissionRequest(panel,value){
   if(!panel)return;
-  panel.innerHTML='<h4>Merchant request</h4><p>The prepared files retain the exact ordinary input and two attachment slots. Open the original Request workspace to select its merchant, seal both files, and review the quoted price.</p>'+
-    '<pre>'+esc(JSON.stringify(value.result.prepared.input,null,2))+'</pre>'+
-    '<p>Attach <strong>project.zip</strong> to <strong>project</strong> and <strong>selection.json</strong> to <strong>selection</strong>.</p>';
+  const version=commission.epoch;
+  const [customers,page]=await Promise.all([
+    commissionAPI('customers'),
+    commissionAPI('requests?'+new URLSearchParams({orderId:value.id,offset:0,limit:50}))
+  ]);
+  if(!panel.isConnected||version!==commission.epoch)return;
+  if(commission.requestOrder!==value.id){commission.requestOrder=value.id;commission.requestRows=[];commission.requestDraft={};}
+  commission.requestRows=page.items;commission.requestNext=page.nextOffset;
+  commission.requestActive=page.items.some(r=>r.active);
+  const draft=commission.requestDraft||{};
+  panel.innerHTML='<h4>Merchant requests</h4><p>Choose an existing customer workspace and review the merchant’s current function and price. The original Request application will retain this order and both sealed input files.</p>'+
+    (customers.items.length?'<div class="grid"><div class="field"><label for="commission-customer">Existing customer workspace</label><select id="commission-customer">'+
+      customers.items.map(c=>'<option value="'+esc(c.alias)+'" '+(draft.customerAlias===c.alias?'selected':'')+'>'+esc(c.label)+'</option>').join('')+'</select></div>'+
+      '<div class="field"><label for="commission-merchant">Merchant origin</label><input id="commission-merchant" type="url" placeholder="https://merchant.example" value="'+esc(draft.merchantOrigin||'')+'"></div>'+
+      '<div class="field"><label for="commission-reference">Request reference</label><input id="commission-reference" value="'+esc(draft.reference||'')+'" placeholder="Assigned when saved"></div>'+
+      '<div class="field"><label for="commission-label">Request label</label><input id="commission-label" maxlength="300" value="'+esc(draft.label||value.intent.reportName)+'"></div></div>'+
+      '<div class="toolbar"><button id="commission-catalog">Review merchant catalog</button></div>':
+      '<p class="hint">An existing Jobs customer can be selected in the application’s host configuration. The complete files below also work in its original Request page.</p>')+
+    '<div data-commission-request-rows></div><button data-commission-request-more hidden>Load more merchant requests</button>'+
+    '<details><summary>Prepared input and attachment slots</summary><pre>'+esc(JSON.stringify(value.result.prepared.input,null,2))+
+    '</pre><p>Attach project.zip to project and selection.json to selection.</p></details>';
+  const button=panel.querySelector('#commission-catalog');
+  if(button){
+    const readDraft=()=>({customerAlias:$('#commission-customer').value,merchantOrigin:$('#commission-merchant').value.trim(),
+      reference:$('#commission-reference').value.trim(),label:$('#commission-label').value.trim()});
+    panel.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{commission.requestDraft=readDraft();}));
+    button.onclick=()=>action(async()=>{
+      const draft=readDraft();
+      if(!draft.merchantOrigin||!draft.label)throw Error('Choose a merchant origin and request label.');
+      const old=commission.pendingRequest;
+      const intent={orderId:value.id,...draft};
+      if(!intent.reference)intent.reference=old&&old.orderId===value.id&&old.customerAlias===draft.customerAlias&&
+        old.merchantOrigin===draft.merchantOrigin?old.reference:'pipeline_'+orderId();
+      const previous=old&&Object.fromEntries(Object.entries(old).filter(([k])=>k!=='id'));
+      const body=previous&&commissionStable(previous)===commissionStable(intent)?old:{id:orderId(),...intent};
+      commission.pendingRequest=body;commission.requestDraft={...draft,reference:intent.reference};saveCommissioning();
+      button.disabled=true;
+      try{await commissionAPI('catalog',body);commission.pendingRequest=null;saveCommissioning();await refreshCommissioning(true);}
+      finally{if(button.isConnected)button.disabled=false;}
+    });
+  }
+  function renderRows(){
+    const rows=panel.querySelector('[data-commission-request-rows]');
+    rows.innerHTML=commission.requestRows.map(row=>{
+      const catalog=row.result?.catalog,handoff=row.result?.handoff,definition=catalog?.functions?.find(f=>f.id==='executePipeline');
+      const payment=definition?.payment;
+      return '<article class="stage"><div class="section-title"><strong>'+esc(row.intent.label)+'</strong>'+status(row.status)+'</div>'+
+        '<p>'+esc(row.intent.merchantOrigin)+' · '+esc(row.intent.reference)+'</p>'+
+        (payment?'<p><strong>'+esc(payment.amount)+'</strong> · '+esc(payment.network)+'</p><p>Asset: '+esc(payment.asset)+'<br>Payee: '+esc(payment.payTo)+'</p>':'')+
+        (row.message?'<p>'+esc(row.message)+'</p>':'')+
+        '<div class="toolbar">'+(row.active?'<button data-request-cancel="'+row.id+'">Stop current file operation</button>':
+          '<button data-request-review="'+row.id+'">Review complete catalog and request</button>'+
+          (handoff?'<a data-request-open="'+row.id+'" href="'+esc(handoff.requestUrl)+'">Open original Request</a>':
+           catalog?'<button class="primary" data-request-seed="'+row.id+'" data-catalog="'+esc(row.selectedCatalogSha256||catalog.catalogSha256)+'">'+
+            (row.selectedCatalogSha256?'Continue same original Request':'Create Request with both complete files')+'</button>':
+            '<button data-request-catalog="'+row.id+'">Continue catalog read</button>'))+'</div>'+
+        '<div data-request-detail="'+row.id+'"></div></article>';
+    }).join('')||'<p class="hint">No merchant requests for this prepared order.</p>';
+    rows.querySelectorAll('[data-request-review]').forEach(button=>button.onclick=()=>action(async()=>{
+      const id=button.dataset.requestReview,record=await commissionAPI('record?'+new URLSearchParams({kind:'requests',id}));
+      if(!button.isConnected)return;
+      const target=rows.querySelector('[data-request-detail="'+id+'"]');
+      target.innerHTML='<pre>'+esc(JSON.stringify(record.result||record,null,2))+'</pre>';
+    }));
+    rows.querySelectorAll('[data-request-seed],[data-request-catalog],[data-request-cancel]').forEach(button=>button.onclick=()=>action(async()=>{
+      button.disabled=true;
+      try{
+        if(button.dataset.requestSeed)await commissionAPI('seed',{id:button.dataset.requestSeed,catalogSha256:button.dataset.catalog});
+        else if(button.dataset.requestCatalog)await commissionAPI('refresh-catalog',{id:button.dataset.requestCatalog});
+        else await commissionAPI('cancel',{kind:'requests',id:button.dataset.requestCancel});
+        await refreshCommissioning(true);
+      }finally{if(button.isConnected)button.disabled=false;}
+    }));
+    const more=panel.querySelector('[data-commission-request-more]');more.hidden=commission.requestNext===null;
+  }
+  panel.querySelector('[data-commission-request-more]').onclick=()=>action(async()=>{
+    const page=await commissionAPI('requests?'+new URLSearchParams({orderId:value.id,offset:commission.requestNext,limit:50}));
+    if(!panel.isConnected)return;
+    const seen=new Map(commission.requestRows.map(r=>[r.id,r]));page.items.forEach(r=>seen.set(r.id,r));
+    commission.requestRows=[...seen.values()];commission.requestNext=page.nextOffset;
+    commission.requestActive=commission.requestRows.some(r=>r.active);renderRows();
+  });
+  renderRows();
 }
 
 document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>action(async()=>{if(ui.view==='pipelines'&&ui.draft&&$('#editor'))readEditor();await show(button.dataset.view);}));
