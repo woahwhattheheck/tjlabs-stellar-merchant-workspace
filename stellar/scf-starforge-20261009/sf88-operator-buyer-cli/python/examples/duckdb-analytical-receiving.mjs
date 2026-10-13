@@ -5,10 +5,11 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {receiveBrowserWorkspace} from './duckdb-browser-workspace-receiving.mjs';
 const input=JSON.parse(await readFile(process.argv[2],'utf8'));
-const output={schema:'stellar-forge.duckdb-analytical-node-receiving.v1',workspace_id:input.workspace_id,steps:{}};
+const output={schema:'stellar-forge.duckdb-analytical-node-receiving.v1',workspace_id:input.workspace_id,state:'RUNNING',steps:{}};
 const need=(value,message)=>{if(!value)throw Error(message);};
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const save=async()=>writeFile(join(input.directory,'node-receiving.json'),JSON.stringify(output,null,2)+'\n',{mode:0o600});
+await save();
 const {createNativeDuckDB}=await import(pathToFileURL(join(input.source_root,'stellar-forge/mcp-paid-agent/native-duckdb.mjs')));
 await mkdir(input.native_root,{recursive:true,mode:0o700});
 const native=createNativeDuckDB({manifest:{directory:input.native_root}});
@@ -110,10 +111,13 @@ try{
  need(output.steps.browser_workspace.state==='COMPLETE','Complete original browser workspace receiving did not finish');
  output.steps.mcp.calls=calls;
  output.steps.browser.screens=[...visited,'browser'];
- await page.screenshot({path:join(input.directory,'analytical-workbooks.png'),fullPage:true});
+ await save();
+ await page.screenshot({path:join(input.directory,'analytical-workbooks-browser-workspace.png'),fullPage:true});
+ output.steps.browser.workspace_screenshot='analytical-workbooks-browser-workspace.png';
  need(errors.length===0&&network.length===0,'Original browser continuation emitted a retained page/network error');
- output.state='COMPLETE';output.completed_at=new Date().toISOString();await save();
+ await save();
  await context.close();
 }finally{await browser.close();}
 }finally{await native.close();}
+output.state='COMPLETE';output.completed_at=new Date().toISOString();await save();
 console.log(JSON.stringify({state:output.state,steps:Object.keys(output.steps),workspace_id:output.workspace_id}));
