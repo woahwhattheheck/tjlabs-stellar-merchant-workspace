@@ -198,7 +198,7 @@ async function compare(offset=0){
 }
 on('compare',()=>compare());on('compare-prev',()=>compare(Math.max(0,comparison.offset-100)));on('compare-next',()=>compare(comparison.offset+100));
 submit('release-form',()=>perform('release.prepare',{datasetId:$('dataset-selected').value,origin:$('release-origin').value,path:$('release-path').value,payment:JSON.parse($('release-payment').value)}));
-on('dataset-query-run',async()=>{$('dataset-query-result').textContent=pretty(await read('dataset.query',{datasetId:$('dataset-selected').value,query:JSON.parse($('dataset-query').value)}));});
+on('dataset-query-run',async()=>{$('dataset-query-result').textContent=pretty(await read('dataset.query',{datasetId:$('dataset-selected').value,query:$('dataset-query').value}));});
 on('release-inspect',async()=>{nativeState=await read('release.inspect',{releaseId:$('release-selected').value});$('release-state').textContent=pretty(nativeState);eligibility();});
 $('release-selected').addEventListener('change',()=>{nativeState=null;eligibility();});
 for(const action of ['activate','start','stop','rollback'])on('release-'+action,async()=>{

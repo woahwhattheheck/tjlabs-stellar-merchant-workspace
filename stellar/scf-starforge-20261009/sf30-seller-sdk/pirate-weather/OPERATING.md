@@ -195,7 +195,7 @@ The HTML report is an offline printable output. CSV prefixes formula-like source
 
 dataset.prepare accepts reportId, reviewId and an actual dataset name. The native dataset is a string table; the original response files, report, approval, source digest and coverage are included as provenance. Its rows remain tied to the original report.
 
-Read dataset.query with datasetId and an original native query object. The SF30 engine controls supported filters, ranges, sorting and pagination.
+Read dataset.query with datasetId and query as the original URL query string, such as limit=50&offset=0. The SF30 engine controls supported filters, ranges, sorting and pagination.
 
 release.prepare takes datasetId, the actual merchant origin/path and the original payment configuration. Supply the real existing configuration; this product does not invent a network, asset, amount, merchant destination or approval. The result retains the native SF82 release identity, source digest and original delivery handoff.
 
