@@ -583,6 +583,13 @@
           "git_blob": "02757a9f08139ab6eea38a387626a08712ba231f",
           "bytes": 6666,
           "sha256": "16bd5d62d6cbd07b9c9d16c4ab57620d2618ccc08669e04a31da792c9a6f0257"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "b64858741cead497d77f426f35df023879c48034",
+          "bytes": 7909,
+          "sha256": "966b032cbb4d9efaf46a7460fb3a03627ca60c6794cc1e21e12d50cf8bebb11c"
         }
       ]
     },
@@ -635,6 +642,13 @@
           "git_blob": "0e7fdfb80094712afd332d4dd9f482774a76222a",
           "bytes": 22439,
           "sha256": "893b75d9400ec25ed1bd30f4b7c18f37dce2c8bcbf91224163f1a8719465d71d"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "898b1cf25280de00f618e57658424018b5e37937",
+          "bytes": 24864,
+          "sha256": "5ca3d7d40c9fe20c1a68f9d5023f6bd40af21c2562cc26927271cd5a9cf83385"
         }
       ]
     },
@@ -881,6 +895,13 @@
           "git_blob": "40848fd7ab688e5a8326c95b6134c77b30ac316d",
           "bytes": 25144,
           "sha256": "1c3fc69480c2d51c66fe70328be55849d837b5be57c9827ac8c2b41f44aefad4"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "b04a5fdf3aedfab2fdf5758456a3f38c3b0f69cc",
+          "bytes": 35389,
+          "sha256": "e9487de4e0ded5d5c54fa614ca700856a11194829c19ba32dd40b80105a469cf"
         }
       ]
     },
@@ -947,6 +968,13 @@
           "git_blob": "879c747b155091ac9548b9e3913713bba4e401d0",
           "bytes": 3157,
           "sha256": "4afa6406a74e3690203c4cb40cff95aed8175891332fe2118faad5032fa9fb19"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "0b8832e375f91d26a695e46c2f04a3ccc746e144",
+          "bytes": 3396,
+          "sha256": "65a5abbc7a7960583a2939505530c50d5c902febc316a42ff3da883f5cd231ed"
         }
       ]
     },
@@ -1528,6 +1556,13 @@
           "git_blob": "db0de4232ce536aeb70a21bbb3e8332643b8c2ba",
           "bytes": 5364,
           "sha256": "39ae1fd8bee6643768dd03872ebbf9756d7925e2f205af9b29bd032fa54b2130"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "061e9345c63c1b74268fe86fa3d8b6f903a11b3a",
+          "bytes": 16076,
+          "sha256": "40add27f16f22a3098f7660709d43e3b08abca7bced6fde9cc040fb2668f110b"
         }
       ]
     },
@@ -1587,6 +1622,13 @@
           "git_blob": "eaff6470e8752f8a5f14f9899aee6928aaf86c30",
           "bytes": 26801,
           "sha256": "6467098555c2fcdaf4fd0ee530be8bff2166a5cbdd001e029e10de23792b2b32"
+        },
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "b959447f2de387e723c5526e34b72fe7acf6b34f",
+          "bytes": 40488,
+          "sha256": "811c751b1befad0164c60e3ee0ce70a6e368c5429508908fc283bd2bb6663b54"
         }
       ]
     },
@@ -1721,6 +1763,74 @@
           "git_blob": "1ccb9e4a682cfe01aa9a0cf8ebc1c12aae33c9e0",
           "bytes": 3754,
           "sha256": "bfe58fc8247759fd2bf105f5e872865839d0326557aabc2a7aba3556cae6356c"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-workbook-agent-source",
+      "label": "Complete immutable workbook review source receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-workbook-source.mjs",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "d254c59ea7d5cea28646bd37d791568477c5c030",
+          "bytes": 5474,
+          "sha256": "8c47744a2f071d17324ebf916120ca77b0a8251e840224181de9e61136b270f3"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-workbook-agent-receiving",
+      "label": "Complete original workbook review preparation, Apply, receiving and independent reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-workbook.mjs",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "8894e5671804ef4863131926390c5cd499084833",
+          "bytes": 12363,
+          "sha256": "576107d84f119d27019d3cfe750f72f98fde453e082dd088125ea6914facab45"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-workbook-agent-types",
+      "label": "Typed original workbook review receiving interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis-events-workbook.d.mts",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "6d40c319b51c922abbc36ffdce3ad350d528baea",
+          "bytes": 2320,
+          "sha256": "218d6b0cad213159e893987240d3633884d9bb74026da903e241e354f0dfd7d0"
+        }
+      ]
+    },
+    {
+      "id": "webhook-event-agent-parent",
+      "label": "Original Analysis parent service and explicit reviewed-request allowance",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-paid-agent/native-analysis.mjs",
+      "required": false,
+      "editions": [
+        {
+          "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+          "commit": "0762b76c074e46db57e681b7851a2ccbe37bfa2f",
+          "git_blob": "364c6fe520af37cdb139f8564290803d63773122",
+          "bytes": 24776,
+          "sha256": "960a49ce65b2628201c6e8c8c784e0fcf51b2322c5f1a40740a1c5cd18033626"
         }
       ]
     }
