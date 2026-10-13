@@ -88,14 +88,30 @@ export function validateGrantProductRegistrations(registrations) {
   });
 }
 
-function selectedSource(text, spec) {
+function declaredSourceCommit(spec, commit) {
+  return !spec.commit || spec.commit === commit ||
+    (spec.editions || []).some(edition => edition.commit === commit);
+}
+
+function selectedSource(text, spec, previous) {
   const root = 'https://github.com/' + spec.repository + '/' + spec.kind + '/';
   const path = spec.path ? '/' + spec.path : '';
   const pattern = new RegExp(quote(root) + '([a-f0-9]{40})' + quote(path) +
     '(?:#[^\\s<>)\\]]+)?(?=$|[\\s<>)\\]])', 'g');
-  const matches = [...text.matchAll(pattern)].filter(match => !spec.commit || match[1] === spec.commit);
-  const commits = [...new Set(matches.map(match => match[1]))];
-  need(commits.length <= 1, 'Select one current source edition for ' + spec.id + '; use a separate ID for a historical edition.');
+  const linked = [...new Set([...text.matchAll(pattern)].map(match => match[1]))];
+  // A complete current chapter may retain links to its earlier editions.
+  // Prefer the explicitly pinned current source whenever that link is present.
+  let commits = spec.commit && linked.includes(spec.commit) ? [spec.commit] :
+    linked.filter(commit => declaredSourceCommit(spec, commit));
+  // Cold receiving can select one explicitly linked, measured historical
+  // edition. A previously received edition may resolve multiple historical
+  // links only when its exact repository, path and kind are still selected.
+  if (spec.commit && commits.length > 1 && previous?.repository === spec.repository &&
+      previous.path === spec.path &&
+      (previous.source_kind || 'source-file') === (spec.kind === 'tree' ? 'source-tree' : 'source-file') &&
+      commits.includes(previous.commit)) commits = [previous.commit];
+  need(commits.length <= 1, 'Select one current source edition for ' + spec.id +
+    '; multiple historical links need the exact retained source selection or separate source IDs.');
   if (!commits.length) return null;
   return { repository: spec.repository, commit: commits[0], path: spec.path,
     url: root + commits[0] + path,
@@ -133,12 +149,12 @@ export function receiveGrantProductSources(index, markdown, registrations = []) 
       need(positions.length <= 1, 'Keep one original source record for ' + spec.id + '.');
       const at = positions.length ? positions[0] : -1;
       const previous = at < 0 ? null : sources[at];
-      let selected = selectedSource(section, spec);
+      let selected = selectedSource(section, spec, previous);
       // The established public projection omits private URLs but retains their
       // exact repository, commit and path. Reuse only that actual projection.
       if (!selected && previous?.access === 'authenticated-source' && previous.url === undefined &&
           previous.repository === spec.repository && previous.path === spec.path &&
-          sha(previous.commit) && (!spec.commit || spec.commit === previous.commit) &&
+          sha(previous.commit) && declaredSourceCommit(spec, previous.commit) &&
           (!previous.source_kind || previous.source_kind === (spec.kind === 'tree' ? 'source-tree' : 'source-file'))) {
         selected = { repository: previous.repository, commit: previous.commit, path: previous.path,
           source_kind: spec.kind === 'tree' ? 'source-tree' : 'source-file' };

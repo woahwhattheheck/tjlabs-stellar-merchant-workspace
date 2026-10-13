@@ -103,6 +103,12 @@ The existing demonstration introduction, dedicated economic/coastal/Datasette re
 
 A declaration whose chapter is absent leaves the current index unchanged. Once its chapter is present, each required source must select its immutable original Git URL. If a chapter cites more than one edition of the same path, its declaration can select one full `commit`; a separately identified historical source retains its own ID.
 
+When a current `commit` is pinned, its link takes priority over retained historical links in that chapter. Reopening an earlier complete chapter can instead select its one explicitly linked historical commit if that commit has a measured entry in `editions`. Its own complete byte identity is restored; the current edition's measurements never follow it backward. A commit absent from both the current pin and measured editions is not a historical fallback. A source without a current pin keeps its existing one-linked-edition rule.
+
+If several measured historical links remain while the current pin is absent, the exact already received repository, path, kind and commit can retain the prior selection. Cold receiving without that original selection requires a single historical link or separately identified sources. The same declared-edition rule permits reopening an existing authenticated private projection without restoring its private URL to the public reader.
+
+New source IDs added after a historical chapter should use `required: false` when absent from that chapter. That optionality and historical edition selection solve different cases: the former preserves chapters predating a source, while the latter preserves the earlier bytes of a source already present. The current complete chapter continues to select every explicitly linked source.
+
 Source registration first retains the complete repository, commit and path from the original manuscript. The existing public projection then handles its reader links. For a previously projected private source, the registry can continue the exact retained authenticated-source identity. A new private source is received from its original manuscript link through the same intake.
 
 Existing source IDs can migrate into their product declaration. Keep their original repository and path when adopting them from the legacy receiver. The same declaration owner can subsequently update its path or edition, retaining the source ID and unrelated source-index records. Each source remembers its product registration, so another product cannot silently take over that ID.
