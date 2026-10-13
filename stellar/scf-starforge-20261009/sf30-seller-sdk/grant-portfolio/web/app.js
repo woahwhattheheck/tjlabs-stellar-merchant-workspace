@@ -203,15 +203,22 @@ async function upload(file) {
 }
 function sourceCard(source) {
   const card = panel(source.label);
-  card.append(node("span", source.standard === "iati" ? "IATI" : "360Giving", "tag"),
+  card.append(node("span", ({ iati: "IATI", "360giving": "360Giving", businesscentral: "Business Central" })[source.standard] || source.standard, "tag"),
     node("p", source.coverage.statement, "coverage"));
-  const line = node("p", null, "small"), link = node("a", "Publisher source");
+  const line = node("p", null, "small"), link = node("a", "Original source");
   link.href = source.coverage.sourceUrl; link.target = "_blank"; link.rel = "noreferrer";
   line.append(link, node("span", " · " + source.coverage.observedAt + " · " + source.coverage.license));
   card.append(line);
   const metrics = node("div", null, "metrics");
   metrics.append(metric(source.counts.entities, "records and organizations"), metric(source.counts.financial, "financial records"));
   card.append(metrics);
+  if (source.standard === "businesscentral") {
+    const native = source.native, summary = native.summary;
+    card.append(node("p", native.period.from + " to " + native.period.to + " · "
+      + native.scope.companyId + " · " + (summary.ready ? "Reconciliation ready" : "Financial review required"), "small"));
+    card.append(node("p", summary.row_count + " original rows · " + summary.findings.length
+      + " findings · separate local and project currency views", "small"));
+  }
   const buttons = node("div", null, "actions");
   buttons.append(button("Original source packet", () => download("/api/object?sha256=" + source.object.sha256, source.label.replace(/[^a-z0-9]+/gi, "_") + ".zip")),
     button("Source details", async () => {
@@ -221,19 +228,34 @@ function sourceCard(source) {
   card.append(buttons); return card;
 }
 function sourcesView(container) {
-  container.append(heading("Source editions", "Receive complete IATI or 360Giving handoffs with their original coverage and capture."));
+  container.append(heading("Source editions", "Receive complete IATI, 360Giving or Business Central handoffs with their original coverage and capture."));
   const form = node("form", null, "panel"), grid = node("div", null, "form-grid");
   form.append(node("h2", "Receive a source edition"));
-  const standard = field("Standard", "select", "iati", [["iati", "IATI"], ["360giving", "360Giving"]]);
-  const label = field("Publisher and edition label", "text");
-  const sourceUrl = field("Original publisher URL", "url");
+  const standard = field("Standard", "select", "iati", [["iati", "IATI"], ["360giving", "360Giving"], ["businesscentral", "Business Central"]]);
+  const label = field("Source and edition label", "text");
+  const sourceUrl = field("Original publisher or company API URL", "url");
   const observedAt = field("Captured at", "text", new Date().toISOString());
-  const license = field("Published license", "text");
+  const license = field("License or source access terms", "text");
   const selection = field("Native build", "select", "original", [["original", "Original publisher records"], ["candidate", "Explicit reviewed 360Giving candidate"]]);
+  const reconciliation = field("Original financial reconciliation SHA-256", "text");
+  reconciliation.input.pattern = "[0-9a-f]{64}";
+  reconciliation.input.placeholder = "Select the full saved reconciliation identity";
+  const switchSource = () => {
+    const businesscentral = standard.input.value === "businesscentral";
+    reconciliation.wrapper.hidden = !businesscentral;
+    reconciliation.wrapper.style.display = businesscentral ? "" : "none";
+    reconciliation.input.disabled = !businesscentral;
+    reconciliation.input.required = businesscentral;
+    selection.wrapper.hidden = standard.input.value !== "360giving";
+    selection.wrapper.style.display = standard.input.value === "360giving" ? "" : "none";
+    selection.input.disabled = standard.input.value !== "360giving";
+  };
+  standard.input.addEventListener("change", switchSource);
+  switchSource();
   const coverage = field("Coverage of this edition", "textarea");
   coverage.wrapper.classList.add("full");
   const file = field("Complete native ZIP handoff", "file"); file.input.accept = ".zip,application/zip"; file.wrapper.classList.add("full");
-  for (const item of [standard, label, sourceUrl, observedAt, license, selection, coverage, file]) grid.append(item.wrapper);
+  for (const item of [standard, label, sourceUrl, observedAt, license, selection, reconciliation, coverage, file]) grid.append(item.wrapper);
   for (const item of [label, sourceUrl, observedAt, license, coverage, file]) item.input.required = true;
   form.append(grid);
   const submit = node("button", "Receive complete source", "primary"); submit.type = "submit";
@@ -244,7 +266,9 @@ function sourcesView(container) {
       const selected = { standard: standard.input.value, label: label.input.value,
         coverage: { statement: coverage.input.value, sourceUrl: sourceUrl.input.value,
           observedAt: observedAt.input.value, license: license.input.value },
-        selection: standard.input.value === "360giving" ? { build: selection.input.value } : {} };
+        selection: standard.input.value === "businesscentral"
+          ? { reconciliationId: reconciliation.input.value.trim() }
+          : standard.input.value === "360giving" ? { build: selection.input.value } : {} };
       const original = await upload(file.input.files[0]);
       await action("source.receive", { ...selected, object: original.sha256 });
     } catch (error) { failure(error); } finally { submit.disabled = false; }
@@ -442,7 +466,7 @@ function filters(container, options = {}) {
   const status = node("select"), standard = node("select");
   for (const value of ["", ...(options.statuses || [])]) { const o = node("option", value || "All states"); o.value = value; status.append(o); }
   status.value = S.status;
-  for (const [value, text] of [["", "Both standards"], ["iati", "IATI"], ["360giving", "360Giving"]]) {
+  for (const [value, text] of [["", "All standards"], ["iati", "IATI"], ["360giving", "360Giving"], ["businesscentral", "Business Central"]]) {
     const o = node("option", text); o.value = value; standard.append(o);
   }
   standard.value = S.standard;
@@ -490,7 +514,7 @@ async function ledgerView(container, epoch) {
   container.append(heading("Financial ledger", "Amounts retain their original decimal text, source, currency, dates and financial meaning."));
   if (needPortfolio(container)) return;
   const p = S.portfolio, totals = p.financialTotals.slice(S.totalsOffset, S.totalsOffset + 50), summary = panel("Independent financial groups");
-  summary.append(node("p", "Awards, application requests, commitments, disbursements and budgets remain separate. Confirmed links keep both source records visible.", "small"));
+  summary.append(node("p", "Awards, requests, commitments, disbursements, budget cost, billable amounts, usage cost and sales retain separate meanings. Business Central local and project currency bases are separate views of the same native records. Included amounts may be partial where excluded or missing records remain.", "small"));
   summary.append(table(["Source edition", "Meaning and original dimensions", "Amount", "Included", "Excluded / missing"],
     totals.map(row => [sourceName(row.dimensions.sourceId), JSON.stringify(Object.fromEntries(Object.entries(row.dimensions).filter(([key]) => key !== "sourceId"))),
       { text: row.amount ?? "Missing", className: "number" }, row.includedRecords, row.excludedRecords + " / " + row.missingRecords])));
@@ -498,7 +522,7 @@ async function ledgerView(container, epoch) {
     nextOffset: S.totalsOffset + totals.length < p.financialTotals.length ? S.totalsOffset + totals.length : null },
     offset => { S.totalsOffset = offset; return render(); }));
   container.append(summary);
-  filters(container, { statuses: ["award", "application-request", "transactions", "budgets"] });
+  filters(container, { statuses: ["award", "application-request", "transactions", "budgets", "budget_cost", "billable_amount", "usage_cost", "sale_amount", "source-disposition"] });
   const result = await page("financial"); if (epoch !== S.epoch) return;
   container.append(table(["Original record", "Source edition", "Meaning", "Amount", "Currency", "Eligibility", "Original dimensions", "Detail"],
     result.rows.map(row => [row.originalId, sourceName(row.sourceId), row.kind, { text: row.value ?? "Missing", className: "number" },
