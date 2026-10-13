@@ -1,0 +1,472 @@
+{
+  "schema": "commons.highway-field-grant-source-receiving.v1",
+  "sourceProductCommit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+  "sourceModulesCommit": "fb03cab9ac92643a6bb48a59a2f607e1997b6ae5",
+  "originalApplicationGit": "a22b640c7b26814c78386385ec2389c27a9787f8",
+  "originalCompanionGit": "d2985531a4c70c965e2c7cf57c5956936b8f17db",
+  "originalIndexGit": "86d1665625d7ed405aa3d1838e6fe113f6b730df",
+  "composition": {
+    "before": 105,
+    "after": 105,
+    "changed": [
+      "## Highway field operations: original assets, field work, crew dispatch and source-native reconciliation"
+    ],
+    "bytes": 2006600,
+    "sha256": "6f8ce96edc1e7931f0cffc098fa254f445ea3992d7f401aaa6f2937630f1eb7e"
+  },
+  "sourcesBefore": 1506,
+  "sourcesAfter": 1513,
+  "changedPriorSources": [],
+  "unrelatedFieldsPreserved": true,
+  "package": {
+    "bytes": 5485331,
+    "sha256": "85196842cca5e72e3152116d0454ac4c5f956ea4a4d16b22489ca2a978e2bfd6",
+    "bundleId": "7c983c7cb589e71877dd006402aa49f0a26fb4fa69c6ec560e939b1af4fbcce7",
+    "files": [
+      {
+        "role": "application",
+        "bytes": 62202,
+        "sha256": "2db42872ced56cff5d3116c2de1c6df2c4fe1fdcfc0717f21eb064a3c8129a03"
+      },
+      {
+        "role": "source-index",
+        "bytes": 1995525,
+        "sha256": "c2861d9d9cefbd8b7e292207d00da225b78a7cf84974fbb6e6bd4ce4ff18f1d6"
+      },
+      {
+        "role": "budget",
+        "bytes": 597,
+        "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00"
+      },
+      {
+        "role": "product-and-finance",
+        "bytes": 2006600,
+        "sha256": "6f8ce96edc1e7931f0cffc098fa254f445ea3992d7f401aaa6f2937630f1eb7e"
+      }
+    ],
+    "sameReopen": true
+  },
+  "registration": {
+    "schema": "stellar-forge.grant-product-registration.v1",
+    "id": "highway-field-operations",
+    "heading": "## Highway field operations: original assets, field work, crew dispatch and source-native reconciliation",
+    "sources": [
+      {
+        "id": "highway-field-operator",
+        "label": "Complete staff, source and independent receiving workflow",
+        "repository": "woahwhattheheck/commons",
+        "kind": "blob",
+        "path": "opportunities/geocove_highway_field_operations_20261013/OPERATING.md",
+        "editions": [
+          {
+            "commit": "1f079bc12859cb9baff21cdf8bdb92c8a6e25342",
+            "bytes": 14331,
+            "sha256": "55fa56fb73e392fb57bedbe242e5b47f49898e2fce82ef6ed8b62b7a98a0057f",
+            "git_blob": "2b9539a9907343484241463701ab376b92916cee"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-domain",
+        "label": "Typed field inspection, supervisor decisions and source refresh",
+        "repository": "woahwhattheheck/commons",
+        "kind": "blob",
+        "path": "opportunities/geocove_highway_field_operations_20261013/DOMAIN_GUIDE.md",
+        "editions": [
+          {
+            "commit": "1f079bc12859cb9baff21cdf8bdb92c8a6e25342",
+            "bytes": 9468,
+            "sha256": "81858df0c21cf986e389c2c71d9d5d6c364e59029aba2141a138b68b857315c9",
+            "git_blob": "8cc3a495c3b7b9cd9cdfa488863058c16673a512"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-dispatch",
+        "label": "Crew assignments, actual effort and supervisor follow-through",
+        "repository": "woahwhattheheck/commons",
+        "kind": "blob",
+        "path": "opportunities/geocove_highway_field_operations_20261013/DISPATCH_OPERATING.md",
+        "editions": [
+          {
+            "commit": "1f079bc12859cb9baff21cdf8bdb92c8a6e25342",
+            "bytes": 6573,
+            "sha256": "326ae34d063a25749d8fc980a8b73f7b2eb28706a368a474e7d02bab25c3d493",
+            "git_blob": "f00030f9568833e3ef4c4406ad628794669a7057"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-paired",
+        "label": "Original paired dataset engine and complete native receiving",
+        "repository": "woahwhattheheck/commons",
+        "kind": "blob",
+        "path": "opportunities/geocove_highway_field_operations_20261013/PAIRED_REVIEW.md",
+        "editions": [
+          {
+            "commit": "1f079bc12859cb9baff21cdf8bdb92c8a6e25342",
+            "bytes": 6981,
+            "sha256": "3fe5bdf334c9572b3cc5ee3cb53a648c3e7429b84affd33b354300ec536f7502",
+            "git_blob": "76db3018eaca9114db385392fc0de276a64c07e8"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-producer",
+        "label": "Original SF30 CSV and SF100 finalized delivery contracts",
+        "repository": "woahwhattheheck/commons",
+        "kind": "blob",
+        "path": "opportunities/geocove_highway_field_operations_20261013/ORIGINAL_LOCAL_DATASET_PRODUCER.md",
+        "editions": [
+          {
+            "commit": "1f079bc12859cb9baff21cdf8bdb92c8a6e25342",
+            "bytes": 5651,
+            "sha256": "5f5ca859960b13feeb3421650ec72f6777f27415f9bb7b2975f53217076e7ebf",
+            "git_blob": "ce51fd9c8da91d01c403b0d4629d23229a5ee561"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-capture",
+        "label": "Complete original ArcGIS source acquisition and recovery",
+        "repository": "woahwhattheheck/commons",
+        "kind": "blob",
+        "path": "opportunities/geocove_highway_field_operations_20261013/highway/CAPTURE.md",
+        "editions": [
+          {
+            "commit": "1f079bc12859cb9baff21cdf8bdb92c8a6e25342",
+            "bytes": 9673,
+            "sha256": "e104f4bdc937363d1354fe33b8e189dd7796e0d4cdfba663118ab5c07071bbea",
+            "git_blob": "6c0a84a8ed0dba90c44150596eec7aa660acf6c7"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-installed-operating",
+        "label": "Complete installed field, dispatch and independent receiving workflow",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "products/highway-field-operations/OPERATING.md",
+        "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+        "editions": [
+          {
+            "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+            "bytes": 28669,
+            "sha256": "a0da13c8482e610218ff60823d87a6ab1a31784af8f552eea288f4e8b7857fa3",
+            "git_blob": "287765e397522bc565e6162cecd491a5052765ca"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-installed-sdk",
+        "label": "Installed typed client and merchant-agent field exchange",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "products/highway-field-operations/SDK.md",
+        "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+        "editions": [
+          {
+            "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+            "bytes": 14513,
+            "sha256": "69b9d67607e71d1c8ec156a1a27b43afbd2e3191f820a739e83ab511f8789fee",
+            "git_blob": "25be6e8589b9809a3bb755e4962ddd7d9adf4b3f"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-complete-exchange",
+        "label": "Complete issue, offline draft, named editions and supervisor return guide",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "products/highway-field-operations/app/FIELD_EXCHANGE.md",
+        "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+        "editions": [
+          {
+            "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+            "bytes": 18158,
+            "sha256": "dd8e21db9bf4f98a5d2003abfbc88c03de3691df755e5f6190ed83fc27d7d1ce",
+            "git_blob": "9266ea0e22fb0c6d62d907e883d37d27c92d7b16"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-exchange-domain",
+        "label": "Original typed field return and atomic supervisor adoption",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "products/highway-field-operations/app/highway/field_exchange.py",
+        "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+        "editions": [
+          {
+            "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+            "bytes": 33330,
+            "sha256": "95d4e64a56ea32b61e1e66b313084172b0b3d6ae80840e4ea3d82c667e26d1ee",
+            "git_blob": "cb1dae9deb13bfc18b719e3508bf77ee64bb4701"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-independent-editor",
+        "label": "Complete independently editable offline field copy",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "products/highway-field-operations/app/public/field-copy.js",
+        "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+        "editions": [
+          {
+            "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+            "bytes": 52172,
+            "sha256": "f68fa59b5bbdb477f4bcab96c24bf539854a74d0256989f0eb4b608a6ce4b3d0",
+            "git_blob": "f54ec95736043d68b3dc9ab96723599c34a94447"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-following-receiving",
+        "label": "Complete following field, browser and cold receiving programme",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "products/highway-field-operations/app/tools/FIELD_RECEIVING.md",
+        "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+        "editions": [
+          {
+            "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+            "bytes": 24099,
+            "sha256": "95c67c7130aa8b314b7205309a97f111088095d79b422710a238d85b1c737374",
+            "git_blob": "1ec3200430835fd0095f70a6ea7405411557321c"
+          }
+        ]
+      },
+      {
+        "id": "highway-field-installation-workorder",
+        "label": "Original customer Installation workorder with complete field exchange",
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "kind": "blob",
+        "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/highway-field-operations.json",
+        "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+        "editions": [
+          {
+            "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+            "bytes": 19344,
+            "sha256": "f38edb3c1918e8778cf27a8d1fea60fc4aa723cf399f68d4b65b539f8b7e3838",
+            "git_blob": "914dc87cb48172f5d160fdb50476658cef4e9ae3"
+          }
+        ]
+      }
+    ],
+    "definition": {
+      "path": "grant-products/highway-field-operations.json",
+      "bytes": 8381,
+      "sha256": "5c7e94b7cc708a202b356c7d17c2b1a682e123333a738aa2b4f013060c86063c",
+      "git_blob": "5f0744ab58f6936a25b88ae3ef80ad98d23b83e1"
+    }
+  },
+  "sourceModules": [
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-source.mjs",
+      "git_blob": "3db68884bf975d349d965bd57267c7f3967ccd3a",
+      "bytes": 36804,
+      "sha256": "57c484c9cbc24e18a4a5429948f1b4f667b03e8a562af292f871d8b042fab32d"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-customers.mjs",
+      "git_blob": "0b56d1646f9296156a5c5bea1f9a67ecd8ac0e27",
+      "bytes": 74222,
+      "sha256": "43e019c34e11c3024dff5c6769231f898cec0ab51c3272c00e7027195f635717"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-product-sources-core.mjs",
+      "git_blob": "71ba59bf246ed856d679096f85929aec51ddeead",
+      "bytes": 13857,
+      "sha256": "c65296b54e7dc7cf199d2622255d19bf704a551ffc6e90d1bf669e28e8375af4"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-requirement-review-core.mjs",
+      "git_blob": "3bb96a398a44248ac68fd7288e60218e6a08591d",
+      "bytes": 12505,
+      "sha256": "a12e2afcda87b535cda70a743eb1771ef11865a84d70a3f77ad531bd1d106f6b"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-product-authoring-core.mjs",
+      "git_blob": "b7c75473378648d104af8449f7749effdede4e41",
+      "bytes": 17538,
+      "sha256": "8ed66361a2dc696e73f859034de4bea7b667f1b83d31f8a09984c872dbd24338"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-issuer-source.mjs",
+      "git_blob": "7205abfac9a078a1e5bc47676cce03b797a1ef12",
+      "bytes": 32733,
+      "sha256": "d69a2aa77086e018ab863f9c57c6d8111f351f9372c0267e53794dced9ea94a1"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-issuer-core.mjs",
+      "git_blob": "4b242aebd08210502eac365aa24fe4dfc8e4cea6",
+      "bytes": 11873,
+      "sha256": "9f74e8ebcf3a082934ea9298fb5793ff0817ba48273ada98cd5953672d8bec2a"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-submission-core.mjs",
+      "git_blob": "cd5a149b96842f048cef642474428fdbcd1b563b",
+      "bytes": 26453,
+      "sha256": "4bceacfa042d71717b30b0680118adaee4f4b26b65acc6c177456a54e6119fa1"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-source.mjs",
+      "git_blob": "11e6031949285e4fc1696312c13531db69d12f98",
+      "bytes": 16082,
+      "sha256": "b3a3b7fd479f4325fb384adbbf0eef68784f59732d9b0353b8379e9d6a394da3"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-handover-core.mjs",
+      "git_blob": "180b7560143b6eeaf0074a442750d6db107a94e4",
+      "bytes": 18875,
+      "sha256": "f80b56d2c9a3663a368c6fc25ebafe06358fb5e93cacd040633a471fe4dda898"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-companion.mjs",
+      "git_blob": "40ce84c80b07b8cfb4c9cc44efe7fd47e8f63708",
+      "bytes": 3426,
+      "sha256": "0f0d03b20a17bac4aebc1328eee1e7c1a6d37914e77eb0795bb60a6ae94394b6"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-a2a.mjs",
+      "git_blob": "835eaf91ab8ba65a3b2eed4433e79153c9d0af71",
+      "bytes": 20888,
+      "sha256": "11088a306322589c366026b846fbf9fa5f91c0c2703c6805bd5dc668ebbdc5c0"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-product-sources.mjs",
+      "git_blob": "ff0c7f74e29909ebb4b0e8c26a4974e47624be5b",
+      "bytes": 133,
+      "sha256": "a791241c586da48c9507e03a3d6ce90b25086eb32aa4f3c64e8d69b0b5da6b01"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-operating-plan-core.mjs",
+      "git_blob": "715ac34e87c412d719102cf26b5b7d367872cee0",
+      "bytes": 25359,
+      "sha256": "97a63121e610b95279b02f0a394bfff1e4d774b77e458bd9011b8a0d0ef7d3a0"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-update-core.mjs",
+      "git_blob": "5854d9d0844d75ee55a13636bd16b7fbef4cc3b0",
+      "bytes": 23254,
+      "sha256": "cc22e4ede64259442cc1ddbd2f0a338a0881a77a23f388143d846190fca90837"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-plan-core.mjs",
+      "git_blob": "fae208fb0628f22731cbe1aa8fe2b9d9191f8ae6",
+      "bytes": 16831,
+      "sha256": "7beaa9d586803a130992e34a49b3ea6fc5a2325c3063aa6d760335824efc1381"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+      "git_blob": "c954923293713f0a470e1cfa1edf50bf45ae8539",
+      "bytes": 42636,
+      "sha256": "458cc01f602ee54c24ceeba06673332d3285e3ad5d6a70c03dbb583fbc9a443a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
+      "git_blob": "8dd299083341fedb1eebc1e0303b297953a0c1a7",
+      "bytes": 28838,
+      "sha256": "fa41752b3a9a34fe2a8d5a517ae9f4dda76868c0b9f9fbd69117ad57947f98d1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/catalog.mjs",
+      "git_blob": "6e768c2c90c4881366e147884c3debb45558f0fa",
+      "bytes": 11267,
+      "sha256": "7d569fd76605074532e777fca763543b42cd021b4509d92010f3dd9ee5156971"
+    }
+  ],
+  "generatedAt": "2026-10-13T16:03:45.000Z",
+  "currentReviewerCommit": "600e8a0ff4b7b985783e501a238c22fb9abf28c4",
+  "currentReviewerInputs": [
+    {
+      "name": "application.md",
+      "bytes": 62202,
+      "sha256": "2db42872ced56cff5d3116c2de1c6df2c4fe1fdcfc0717f21eb064a3c8129a03",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/600e8a0ff4b7b985783e501a238c22fb9abf28c4/stellar-forge/developer-site/dist/grant-data/application.md"
+    },
+    {
+      "name": "source-index.json",
+      "bytes": 1962944,
+      "sha256": "cb28a5aa7b7737056710b594de979881c4d0b2d1a17bbd9d0833cca8924b29b9",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/600e8a0ff4b7b985783e501a238c22fb9abf28c4/stellar-forge/developer-site/dist/grant-data/source-index.json"
+    },
+    {
+      "name": "budget.csv",
+      "bytes": 597,
+      "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/600e8a0ff4b7b985783e501a238c22fb9abf28c4/stellar-forge/developer-site/dist/grant-data/budget.csv"
+    },
+    {
+      "name": "product-and-finance.md",
+      "bytes": 1964135,
+      "sha256": "230efd6275564d8dc52ae2c87148d04b807f493fe54ff27bd8fafc6080eef009",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/600e8a0ff4b7b985783e501a238c22fb9abf28c4/stellar-forge/developer-site/dist/grant-data/product-and-finance.md"
+    }
+  ],
+  "acceptedPriorDeliveries": {
+    "currentMain": "600e8a0ff4b7b985783e501a238c22fb9abf28c4",
+    "beforeChapters": 103,
+    "afterChapters": 105,
+    "changedExisting": [],
+    "sourcesBefore": 1488,
+    "sourcesAfter": 1506,
+    "received": [
+      "b46c1b8f65c22022326fd078a29fbe43712fa8ae",
+      "c21279fe3194faf278d5adf9c098dfab13987a48"
+    ],
+    "registrations": [
+      {
+        "id": "curriculum-migration-workbench",
+        "definition": {
+          "path": "grant-products/curriculum-migration-workbench.json",
+          "bytes": 5646,
+          "sha256": "7eef32d10a641b759a8a1d5197d5e815d4b842fe43380ef21f804e963586240f",
+          "git_blob": "afaae83e06a8b7cd6172534f94e6dc015de36fac"
+        }
+      },
+      {
+        "id": "mpc-recovery-operations",
+        "definition": {
+          "path": "grant-products/mpc-recovery-operations.json",
+          "bytes": 5471,
+          "sha256": "314f38fead9c94807e497614db9e6d5e7bbe61341ac5a156efb2ef7f04efbeb5",
+          "git_blob": "d4b5ff526eb8d3a2e10e32c173aada3d9576219c"
+        }
+      }
+    ]
+  },
+  "composedFiles": [
+    {
+      "path": "products/curriculum-migration-workbench/GRANT.md",
+      "bytes": 14813,
+      "sha256": "cf5b6c1db09229261219c70dff4bfe99e6ed162dcfc6d6e48710281cf3a21e16"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/curriculum-migration-workbench.json",
+      "bytes": 5646,
+      "sha256": "7eef32d10a641b759a8a1d5197d5e815d4b842fe43380ef21f804e963586240f"
+    },
+    {
+      "path": "products/mpc-recovery-operations/GRANT.md",
+      "bytes": 17161,
+      "sha256": "ad45788a9c4554c1089ba3c2ff7d8f24a0d9b13f3fc1f4fd9743890b641729dd"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/mpc-recovery-operations.json",
+      "bytes": 5471,
+      "sha256": "314f38fead9c94807e497614db9e6d5e7bbe61341ac5a156efb2ef7f04efbeb5"
+    },
+    {
+      "path": "stellar-forge/developer-site/GRANT_HIGHWAY_FIELD_OPERATIONS.md",
+      "bytes": 42352,
+      "sha256": "bb615cb82c7fd695141c0b7bb9975239fba119444d39f9dee4cc6604f7bc887b"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/highway-field-operations.json",
+      "bytes": 8381,
+      "sha256": "5c7e94b7cc708a202b356c7d17c2b1a682e123333a738aa2b4f013060c86063c"
+    }
+  ]
+}

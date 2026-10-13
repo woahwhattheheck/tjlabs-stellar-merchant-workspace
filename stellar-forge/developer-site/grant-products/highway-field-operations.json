@@ -92,6 +92,118 @@
           "git_blob": "6c0a84a8ed0dba90c44150596eec7aa660acf6c7"
         }
       ]
+    },
+    {
+      "id": "highway-field-installed-operating",
+      "label": "Complete installed field, dispatch and independent receiving workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/highway-field-operations/OPERATING.md",
+      "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+      "editions": [
+        {
+          "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+          "bytes": 28669,
+          "sha256": "a0da13c8482e610218ff60823d87a6ab1a31784af8f552eea288f4e8b7857fa3",
+          "git_blob": "287765e397522bc565e6162cecd491a5052765ca"
+        }
+      ]
+    },
+    {
+      "id": "highway-field-installed-sdk",
+      "label": "Installed typed client and merchant-agent field exchange",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/highway-field-operations/SDK.md",
+      "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+      "editions": [
+        {
+          "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+          "bytes": 14513,
+          "sha256": "69b9d67607e71d1c8ec156a1a27b43afbd2e3191f820a739e83ab511f8789fee",
+          "git_blob": "25be6e8589b9809a3bb755e4962ddd7d9adf4b3f"
+        }
+      ]
+    },
+    {
+      "id": "highway-field-complete-exchange",
+      "label": "Complete issue, offline draft, named editions and supervisor return guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/highway-field-operations/app/FIELD_EXCHANGE.md",
+      "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+      "editions": [
+        {
+          "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+          "bytes": 18158,
+          "sha256": "dd8e21db9bf4f98a5d2003abfbc88c03de3691df755e5f6190ed83fc27d7d1ce",
+          "git_blob": "9266ea0e22fb0c6d62d907e883d37d27c92d7b16"
+        }
+      ]
+    },
+    {
+      "id": "highway-field-exchange-domain",
+      "label": "Original typed field return and atomic supervisor adoption",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/highway-field-operations/app/highway/field_exchange.py",
+      "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+      "editions": [
+        {
+          "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+          "bytes": 33330,
+          "sha256": "95d4e64a56ea32b61e1e66b313084172b0b3d6ae80840e4ea3d82c667e26d1ee",
+          "git_blob": "cb1dae9deb13bfc18b719e3508bf77ee64bb4701"
+        }
+      ]
+    },
+    {
+      "id": "highway-field-independent-editor",
+      "label": "Complete independently editable offline field copy",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/highway-field-operations/app/public/field-copy.js",
+      "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+      "editions": [
+        {
+          "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+          "bytes": 52172,
+          "sha256": "f68fa59b5bbdb477f4bcab96c24bf539854a74d0256989f0eb4b608a6ce4b3d0",
+          "git_blob": "f54ec95736043d68b3dc9ab96723599c34a94447"
+        }
+      ]
+    },
+    {
+      "id": "highway-field-following-receiving",
+      "label": "Complete following field, browser and cold receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/highway-field-operations/app/tools/FIELD_RECEIVING.md",
+      "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+      "editions": [
+        {
+          "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+          "bytes": 24099,
+          "sha256": "95c67c7130aa8b314b7205309a97f111088095d79b422710a238d85b1c737374",
+          "git_blob": "1ec3200430835fd0095f70a6ea7405411557321c"
+        }
+      ]
+    },
+    {
+      "id": "highway-field-installation-workorder",
+      "label": "Original customer Installation workorder with complete field exchange",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/highway-field-operations.json",
+      "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+      "editions": [
+        {
+          "commit": "fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4",
+          "bytes": 19344,
+          "sha256": "f38edb3c1918e8778cf27a8d1fea60fc4aa723cf399f68d4b65b539f8b7e3838",
+          "git_blob": "914dc87cb48172f5d160fdb50476658cef4e9ae3"
+        }
+      ]
     }
   ]
 }

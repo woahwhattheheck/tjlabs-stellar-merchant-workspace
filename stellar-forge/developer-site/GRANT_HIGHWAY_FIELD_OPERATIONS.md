@@ -299,3 +299,67 @@ Grant reporting references the same original maintained source and observed work
 Deliver the full selected source and licenses; the original and received working directories or their complete validated archives; source/capture and native package inventories; full reports; actual browser/agent observations; and the named support owners. Keep private connection files and tokens in the appropriate operating configuration.
 
 The next operator should be able to identify an original asset, follow its inspection and assignment decisions, inspect the proposed edit and paired comparison, reopen the complete case and continue a legitimate later change. Record the customer's actual acceptance in the existing Installation and retain the agreed maintenance and correction procedure with that same case.
+
+### Complete offline field work and reviewed return
+
+The following installed release extends the same Highway application through an issued field copy, independently editable offline work, returned editions and supervisor adoption. Its [installed operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4/products/highway-field-operations/OPERATING.md), [complete field guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4/products/highway-field-operations/app/FIELD_EXCHANGE.md) and [typed client and merchant-agent guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4/products/highway-field-operations/SDK.md) cover the complete selected release. The preceding installed source and its original six source records remain available for their respective editions.
+
+A field worker can receive a complete HTML file, open it without a running staff service, retain unfinished observations, name complete editions and return the whole file. The supervisor sees the issued baseline, the selected returned edition and the current local inspection together. Explicit receiving choices determine the next inspection draft. This supplies an ordinary crew-to-supervisor handoff for an existing GIS-backed installation, including work performed while the field device is disconnected.
+
+#### Issue the actual assignment
+
+Open **Field exchange** in the staff application, enter the recipient and instructions, and select the saved inspections. Preparing the issue freezes the selected original workspace revision and state, complete inspection views, source bindings, form definitions, assignment and crew context, required capture files and original attachment bytes. The issued JSON and independently editable HTML have retained byte identities. Their first request and result remain in the same command history as the existing inspection and dispatch work.
+
+The issue must fit the complete-file capacities before publication. The initial unfinished return must fit its draft and complete-return allowance as well. The application measures the actual payload before committing an issued receipt, so the recipient obtains a file the maintained editor and return receiver can open.
+
+The [native field exchange implementation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4/products/highway-field-operations/app/highway/field_exchange.py) applies the original typed source, form, subtype, geometry and attachment rules. Source fields remain tied to their issued definitions. The operator can inspect the complete original context before changing observations.
+
+#### Continue on the field device
+
+The [complete offline editor](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4/products/highway-field-operations/app/public/field-copy.js) provides Assignments, Field form, Named editions, Sources & files, Receive & recover and the operating guide. Its plain industrial interface keeps the original source visible alongside the work.
+
+| Field task | Retained outcome |
+| --- | --- |
+| Start or resume observations | The editable draft retains typed answers, geometry, attachments, the field note and arbitrary unfinished text. The device retains its working-copy identity and saved revision. |
+| Add a photograph or document | The complete attachment body travels with its byte length, digest and original metadata. It can be reopened and downloaded from the received file. |
+| Name an edition | The operator records a label, attribution and observed time. A complete immutable edition contains every issued inspection and retains its parent edition identity. |
+| Continue later work | Later draft changes leave the named edition intact. The operator may inspect an earlier edition or select the intended complete edition for the supervisor. |
+| Transfer unfinished work | A return can contain zero named editions and a complete unfinished draft. The recipient can continue that work and later name a valid complete edition. |
+| Recover two-tab work | A saved-revision conflict retains the complete saved version and incoming candidate. Both can be downloaded and reopened; the candidate can become its own editable copy. |
+| Deliver the field file | Save complete HTML and return JSON. Both retain the exact original issue, all named editions, selected edition, unfinished draft and additional attachment bytes. |
+
+The same-copy check compares the actual saved revision and previous value in one IndexedDB transaction. Device recovery retains the complete versions before replacing an editor's working value. When device persistence is unavailable, the active editor keeps its full recoverable work and clearly identifies the need to download it. The whole exported file remains the portable receiving unit.
+
+The documented allowances are 64 MiB per complete return, 4 MiB for the unfinished draft and 1,000 named editions. The original workspace also keeps its established source, history and archive allowances. A capacity error leaves the existing complete work available for correction or a deliberately smaller issued assignment.
+
+#### Receive, compare and adopt
+
+The staff operator selects the complete returned JSON or HTML. Intake reads the inert data payload and checks the full original issue binding, edition lineage, source types, attachment bodies and chronological relationships. The original incoming bytes and all included attachment bodies are retained before the command records the return. An unfinished file enters the same history and remains available to reopen.
+
+For a named edition, **Compare with current inspections** presents the issued, current and returned values. Independent changes combine automatically. Conflicting answers, geometry, attachment set or note require an explicit choice. Each inspection receives an apply-or-keep decision and a reason, with an overall receiving explanation. A changed source or form binding remains visible for the operator's source review.
+
+The comparison is bound to the exact current workspace revision and complete comparison digest. If another operator advances the workspace, the local draft keeps the previous choices while the operator reviews the new comparison. The final adoption uses one retained request identity and one atomic original command. Reopening or continuing that request returns its original committed result.
+
+Adoption uses the maintained inspection save or correction operation. Changed observations become a new draft inspection edition; previous submissions, supervisor decisions, source history and assignments stay available. The original inspection submission and supervisor decision controls govern any later approval.
+
+After adoption, **Open original receiving comparison** reads the complete original state from the retained history, recreates its exact issued/current/returned values and displays the saved decisions. It checks the original state digest and saved comparison digest. This view remains useful after later local edits and complete workspace receiving. Its original review revision and the current receiver's revision are reported separately.
+
+The host, command line, typed client and merchant-agent methods expose this same behavior. The client provides issue, original-file download, returned-file retention, comparison and the original command envelope; an optional adoption identity opens a historical comparison. Complete pending requests remain attached to their physical workspace directory so a received copy can be operated independently.
+
+#### Operate and hand over the selected customer installation
+
+The [complete following receiving programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4/products/highway-field-operations/app/tools/FIELD_RECEIVING.md) uses the original Highway programme and its owned execution resources. It first exports the selected existing staff history through the maintained exporter and receives a named following workspace. The field issue, offline edits, returned files and supervisor decisions occur on that independent physical branch. The original interrupted source acquisition keeps its original source, input, journal and business history.
+
+The course operates independent field-device profiles, unfinished work, two named editions, a complete source attachment, a real same-copy conflict and both recovery versions. It continues through an independent HTML reopening, a concurrent supervisor edit, explicit three-way receiving choices, historical comparison reopening and complete returned-file downloads. Desktop and narrow layouts are included in the actual browser journey.
+
+The resulting complete staff archive is received on another physical workspace through the original receiver. That workspace reopens the same issued and returned bytes, inspection history and comparison; a legitimate later draft edit is saved there and travels through a second complete export and independent receiving. The programme preserves its exact effect inputs, first results, source selection and generated files through interruption and continuation.
+
+The producing and receiving operator opens the outgoing product and every attachment, uses the actual controls, views the captured rendered output and repairs observed layout or workflow defects. The complete owner instruction is included in the field guide and receiving guidance. The release's native operating record supplies the observed result of this course.
+
+The [customer Installation workorder](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fe0bf7f6906dfbe38fad392862fd0e5005e4f5c4/stellar/scf_2026/sf49_data_commissioning/installation-workorders/highway-field-operations.json) carries the selected original source, field recipient, issued inspections, supervisor responsibilities, receiving destination and support owner into the same customer job. The complete guide, source, editable HTML, JSON returns, attachments, inspection history and received staff workspace travel together.
+
+#### Customer value and prospective funded adaptation
+
+A commissioned field handoff can be evaluated through the time to prepare an assignment, complete usable observations, resolve supervisor differences and return an accepted working case. The selected Installation records the previous task and comparable population, actual operator effort, correction work, elapsed receiving time and the resulting useful output. The original commercial workshare retains its agreed scope, hours, price and support terms.
+
+Within the unchanged grant plan, the existing installation package binds the customer's actual GIS source, source edition, forms, recipients and approved output. The integration and recurring-use packages connect the complete operating task to its selected merchant resource, buyer approval, original payment and delivery records. The recovery and handover packages provide the selected release, complete saved field/staff work and independently usable received installation. New customer adaptation is allocated once to the existing six-package plan; the request remains **400 prospective hours / USD38,000 /150 days from actual award acceptance**.
