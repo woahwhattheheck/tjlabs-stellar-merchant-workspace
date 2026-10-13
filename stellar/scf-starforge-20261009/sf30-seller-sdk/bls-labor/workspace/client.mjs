@@ -63,6 +63,11 @@ export async function openBlsLaborWorkspaceClient({connectionFile,expectedWorksp
     observations:options=>json(query('/api/observations',options)),
     note:subject=>json(query('/api/note',{subject})),
     report:options=>json(query('/api/report',options)),
+    regionalDefinition:id=>json(query('/api/regional-definition',{id})),
+    receiveRegionalDefinition(document){
+      const raw=JSON.stringify(document);need(typeof raw==='string'&&Buffer.byteLength(raw)<=8*1024*1024,'Use a complete regional definition up to 8 MiB.');
+      return json('/api/regional-definition/receive',{method:'POST',body:raw,headers:{'Content-Type':'application/json'}});
+    },
     operation:id=>json(query('/api/operation',{id})),
     request:id=>json(query('/api/request',{id})),
     nativeState:id=>json(query('/api/native-state',{id})),

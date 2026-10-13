@@ -6,7 +6,7 @@ import type {GrantWorkspaceClient,GrantJsonResponse,
 import type {CohortPlan,CohortPlanDocument,CohortPlanReport,CohortPlanComparison,
   NativeCohortPlanningSeed,PlanningDeliveryScheduling,PlanningComparisonOptions,
   TimestampText,DateText} from './cohort_planning.mjs';
-import type {CohortDeliverySchedule} from './cohort_planning_scheduling.mjs';
+import type {CohortDeliverySchedule,DeliveryAllocationOptions} from './cohort_planning_scheduling.mjs';
 
 export const COHORT_PLAN_EDITION_SCHEMA: 'stellar-forge.sf47-cohort-plan-edition.v1';
 export const COHORT_ADOPTION_SEED_SCHEMA: 'stellar-forge.sf47-cohort-adoption-seed.v1';
@@ -121,8 +121,12 @@ export function reviewGrantCohortAdoption(client:CohortAdoptionClient,caseId:str
   document:CohortAdoptionDocument|unknown):Promise<CohortAdoptionReview>;
 export function editCohortAdoption(document:CohortAdoptionDocument|unknown,changes:CohortAdoptionEdit[],
   options?:Pick<PlanningComparisonOptions,'title'|'note'>):CohortAdoptionReview;
-export function scheduleCohortAdoption(input:{document:CohortAdoptionDocument|unknown;
-  constraints?:PlanningDeliveryScheduling;name?:string}):CohortDeliverySchedule;
+export interface CohortAdoptionSchedulingInput extends DeliveryAllocationOptions {
+  document:CohortAdoptionDocument|unknown;
+  constraints?:PlanningDeliveryScheduling;
+}
+/** The selected method and complete competing-group decisions travel with the original allocation. */
+export function scheduleCohortAdoption(input:CohortAdoptionSchedulingInput):CohortDeliverySchedule;
 export function compareCohortAdoption(input:{beforeDocument:CohortAdoptionDocument|unknown;
   afterDocument:CohortAdoptionDocument|unknown;options?:PlanningComparisonOptions}):CohortPlanComparison;
 export function rebaseGrantCohortAdoption(client:CohortAdoptionClient,caseId:string,expectedVersion:number,

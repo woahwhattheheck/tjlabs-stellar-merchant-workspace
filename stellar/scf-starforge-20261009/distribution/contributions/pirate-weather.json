@@ -1,0 +1,42 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "pirate-weather",
+  "description": "Original Pirate Weather response capture, reviewed 48-hour customer reports, native dataset releases and complete project receiving",
+  "commands": {
+    "pirate-weather": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/cli.mjs"
+  },
+  "commandDescriptions": {
+    "pirate-weather": "Retain exact forecasts, review customer report editions, operate original dataset releases and reopen complete projects."
+  },
+  "exports": {
+    "./seller/pirate-weather": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/core.mjs",
+    "./seller/pirate-weather/client": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/client.mjs",
+    "./seller/pirate-weather/contract": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/contract.mjs",
+    "./seller/pirate-weather/reports": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/reports.mjs",
+    "./seller/pirate-weather/server": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/server.mjs",
+    "./seller/pirate-weather/package": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/package.mjs",
+    "./merchant/mcp/pirate-weather": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/operator.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/client.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/source-files.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/portable.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/SOURCE_CONTRACT.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+    "stellar/scf-starforge-20261009/distribution/runtime-unpack.py"
+  ],
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/server.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/browser-assets.json"
+    }
+  ],
+  "applicationProviders": {
+    "pirate-weather": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "pirate-weather": "stellar/scf-starforge-20261009/sf30-seller-sdk/pirate-weather/operator-provider.mjs"
+  }
+}

@@ -47,6 +47,26 @@
       "id": "aisa-custom-agent",
       "url": "https://aisa.one/docs/guides/tutorials/use-aisa-in-your-custom-agents",
       "use": "Existing authenticated API gateway."
+    },
+    {
+      "id": "blockrun-contact",
+      "url": "https://blockrun.ai/contact",
+      "use": "Published professional contact hello@blockrun.ai."
+    },
+    {
+      "id": "blockrun-platform",
+      "url": "https://blockrun.ai/platforms",
+      "use": "Current embedded platform integration offering and enterprise route."
+    },
+    {
+      "id": "blockrun-account",
+      "url": "https://blockrun.ai/docs/getting-started/enterprise-api",
+      "use": "Account balances, original row-level ledger, cursors, window limits, media/correction rows and partial summary coverage."
+    },
+    {
+      "id": "blockrun-responses",
+      "url": "https://blockrun.ai/docs/api-reference/responses",
+      "use": "Actual background/allowlist and original response/event continuation limits."
     }
   ],
   "implementation": {
@@ -57,9 +77,17 @@
       "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-delivery.mjs",
       "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/application.mjs",
       "operations/openaq-buyer-receiving-921ba0-20261012/OPERATING.md"
-    ]
+    ],
+    "completedOpenaq": {
+      "commit": "15f10909932a8c37bf020c8da8129895b69fa18a",
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/NATIVE_RESULT.json",
+      "mode": "NO_PAYMENT_REQUIRED",
+      "phases": 8,
+      "rows": 140,
+      "httpRequests": 4
+    }
   },
-  "sampleProvenance": "examples.json is authored demonstration data, not a native service response.",
-  "providerExecution": "No Nevermined or AIsa API request or payment was performed in producing this source.",
-  "verification": "Projection functions executed in V8 using the complete source, including exact signed-integer formatting, overlap rejection, unsafe-number rejection, account-scope rejection and missing-billing-model rejection."
+  "sampleProvenance": "examples.json and blockrun-example.json are authored documentation captures.",
+  "providerExecution": "No Nevermined, AIsa or BlockRun API request or payment was performed in producing these reference projections.",
+  "verification": "Projection functions executed in V8 using the complete source, including exact signed-integer formatting, overlap rejection, unsafe-number rejection, account-scope rejection and missing-billing-model rejection. BlockRun's full projection was also executed in V8 for its complete exact-decimal example, partial/missing-day/cutoff view, pending-cost view and original cursor rejection."
 }

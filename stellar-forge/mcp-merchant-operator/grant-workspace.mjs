@@ -823,7 +823,9 @@ export class MerchantGrantWorkspaces {
             expectedInputSha256:args.expectedConstraintsSha256,inputPointer:args.constraintsPointer},
             'Complete delivery constraints',GRANT_MAX_BUNDLE_BYTES);
           value=scheduleCohortAdoption({document,...(constraints===undefined?{}:{constraints}),
-            ...(args.name===undefined?{}:{name:args.name})});
+            ...(args.name===undefined?{}:{name:args.name}),
+            ...(args.method===undefined?{}:{method:args.method}),
+            ...(args.maxSearchSteps===undefined?{}:{maxSearchSteps:args.maxSearchSteps})});
         } else if (verb === 'adoption_compare') {
           const candidate=await this.#modelInputs(alias,{inputs:args.candidate,input:args.candidateInput,
             expectedInputSha256:args.expectedCandidateSha256,inputPointer:args.candidatePointer},

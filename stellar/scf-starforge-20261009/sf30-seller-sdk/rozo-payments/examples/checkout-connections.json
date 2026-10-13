@@ -1,0 +1,12 @@
+{
+  "schema": "stellar-forge.rozo-connections.v1",
+  "connections": {
+    "checkout": {
+      "type": "checkout-mpp-0.1.21",
+      "publisher": "RozoAI/rozo-checkout-skill",
+      "sourceRoot": "/private/publishers/checkout",
+      "mppBase": "https://apiserver.mpprouter.dev/v1/services/rozo-agent-api",
+      "intentsBase": "https://intentapiv4.rozo.ai/functions/v1/payment-api"
+    }
+  }
+}

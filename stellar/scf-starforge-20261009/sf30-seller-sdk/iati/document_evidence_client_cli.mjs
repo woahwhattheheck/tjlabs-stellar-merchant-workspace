@@ -15,7 +15,7 @@ const CHUNK = 1024 * 1024;
 const SHA = /^[0-9a-f]{64}$/;
 const ACTIONS = new Set(['save', 'note', 'observe', 'review', 'compare']);
 const COMMANDS = {
-  status: [], plan: ['id', 'revision'], history: ['id'], request: ['request-id'],
+  status: [], plan: ['id', 'revision'], 'operating-source': ['id', 'revision'], history: ['id'], request: ['request-id'],
   rows: ['id', 'revision', 'offset', 'limit', 'expected-snapshot', 'all'],
   detail: ['id', 'revision', 'row-id', 'expected-snapshot'],
   observation: ['id'], comparison: ['id'], correction: ['id', 'revision'],
@@ -31,6 +31,7 @@ const HELP = [
   'Reads:',
   '  status',
   '  plan --id SHA [--revision N]',
+  '  operating-source --id SHA [--revision N]',
   '  history --id SHA',
   '  request --request-id ORIGINAL_ID',
   '  rows --id SHA --revision N [--offset N --limit 1..500 --expected-snapshot SHA] [--all]',
@@ -273,6 +274,7 @@ export async function runDocumentEvidenceCli(argv = process.argv.slice(2)) {
     } else switch (command) {
       case 'status': value = await api.status(requestOptions); break;
       case 'plan': value = await api.plan(requireOption(options, 'id'), { ...requestOptions, revision: selectedRevision(options) }); break;
+      case 'operating-source': value = await api.operatingSource(requireOption(options, 'id'), { ...requestOptions, revision: selectedRevision(options) }); break;
       case 'history': value = await api.history(requireOption(options, 'id'), requestOptions); break;
       case 'request': value = await api.request(requireOption(options, 'request-id'), requestOptions); break;
       case 'rows': {

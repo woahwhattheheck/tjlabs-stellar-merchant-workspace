@@ -14,6 +14,75 @@ Read `client.read('delivery-queue', {caseId, asOfDate})` and download the comple
 
 The original Merchant owner now carries native case or Calendar source through whole-plan authoring, pricing, shared capacity scheduling, full comparison, durable source saving and reopening. Use the eleven adoption tools or the typed `grant/cohort-agent` module described in [Complete adoption work through Merchant MCP](COHORT-PLANNING.md#complete-adoption-work-through-merchant-mcp). Full inputs, original funding groups and the native save request remain attached throughout the operation.
 
+### Compare and save competing delivery dates
+
+Use `merchant_grant_adoption_schedule` on the original complete plan, reviewed
+document or saved source. Its optional `method` is `FIRST_FIT` (the default) or
+`RESOLVE_CONFLICTS`. The latter revisits complete service groups sharing possible
+delivery capacity. Enter `maxSearchSteps` only with `RESOLVE_CONFLICTS`; it is a
+whole number from 1 through 1,000,000, defaulting to 100,000. The existing
+`constraints` or verified `constraintsInput` selection carries the actual service
+windows, priorities, spacing and entered daily availability.
+
+Calculate both methods from the same original input and constraints before
+choosing the full successor. The resolved result carries `resolution.method`,
+`maxSearchSteps`, `visitedSteps`, group totals and every component's original
+occurrence identities, outcome and date changes. `RESOLVED` means the whole
+competing set was placed. `SEARCH_LIMIT` retains the prior complete allocation
+after the selected search effort; `NO_COMPLETE_PLACEMENT` retains it after the
+available alternatives were exhausted. The assignment's complete `issues` and
+`rejectedDates` identify the remaining capacity or service constraint. Edit the
+same original plan or choices to calculate another alternative.
+
+The typed operation uses the original public module:
+
+~~~ts
+import {
+  scheduleCohortAdoption,
+  compareCohortAdoption
+} from '@tokenjunkielabs/starforge-merchant/grant/cohort-agent';
+import type {
+  CohortAdoptionSchedulingInput
+} from '@tokenjunkielabs/starforge-merchant/grant/cohort-agent';
+
+const selection: CohortAdoptionSchedulingInput = {
+  document: originalSavedDocument,
+  constraints: enteredServiceChoices,
+  method: 'RESOLVE_CONFLICTS',
+  maxSearchSteps: 100000
+};
+const originalOrder = scheduleCohortAdoption({
+  document: originalSavedDocument,
+  constraints: enteredServiceChoices
+});
+const resolved = scheduleCohortAdoption(selection);
+const completeComparison = compareCohortAdoption({
+  beforeDocument: originalOrder,
+  afterDocument: resolved,
+  options: {
+    title: 'Delivery dates under the same service constraints',
+    note: 'Compare both complete allocations before selecting the successor.'
+  }
+});
+~~~
+
+Through MCP, keep the two complete schedule snapshots and call
+`merchant_grant_adoption_compare` with their original verified input references.
+For the selected allocation, run `adoption_review`, then `adoption_prepare`
+and `adoption_save` with the same case version, original request ID and complete
+prepared source. Preparation keeps the full original allocation and its
+baseline-to-successor comparison in one saved edition. The usual
+`adoption_request` resumes its accepted operation and `adoption_open` opens the
+exact saved source. Reopening recalculates the retained method and effort.
+
+`adoption_export` returns the whole selected JSON, allocation CSV or readable
+HTML. CSV carries the method, effort, component outcome and prior allocation
+date on each occurrence. HTML presents the complete competing-group decisions,
+remaining constraints and original editable document together. Its funding
+groups, source dates and original amounts remain in the retained plan and source.
+The saved source also opens in the existing Customer adoption desk and remains
+available to the recorded Cohort delivery workflow.
+
 ## Original merchant settlements
 
 The browser, CLI and typed client now receive original merchant accounting, period-close and accountant sources into the same case. Use settlementPreview for source inspection and a full selected cash preview, settlementReceive for the original atomic save, and settlementCorrectionPreview/settlementCorrect for reviewed corrections. Read saved editions with read('settlements') and read('settlement'); download('settlement') returns their complete source handover. Adjacent TypeScript declarations retain exact decimal strings, settlement IDs, original cash records and both preview shapes.

@@ -202,3 +202,21 @@ through the original receiver's final save.
 The complete original archive is 10,843,745 bytes and expands to 52,658,994
 bytes before additional source, operating files and exports. Reserve space
 for the whole continuation when selecting its physical work location.
+
+## Resume a complete saved case after an interrupted native run
+
+The [saved-case continuation guide](SAVED-CHECKPOINT-CONTINUATION.md) connects the
+whole updated archive, its original native result and journal history, an
+explicitly selected Performance source entry, and the existing financial run.
+`receive-saved-checkpoint.py` restores that original case before the caller starts.
+The optional `performanceContinuation` input keeps the original 411-file source
+graph available and builds a separate complete graph with the selected maintained
+entry.
+
+The Performance producer retains its completed commercial work in
+`commercial-phase.json` before continuing its original Pricing interfaces. On
+reopen it verifies the saved request files, case revisions and complete quotation
+and receiving material, then uses the original interface requests. The whole
+case, original source, selected source and final exports are retained by the
+existing private save. Follow the linked guide when continuing an actual failed
+application result through the original shared native operator.

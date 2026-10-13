@@ -1,0 +1,2 @@
+order_number,description,chain,token,amount,fulfilment_reference
+ORIGINAL-001,Original merchant order,REPLACE_CHAIN,REPLACE_TOKEN,5.000000,REPLACE_ORIGINAL_REFERENCE

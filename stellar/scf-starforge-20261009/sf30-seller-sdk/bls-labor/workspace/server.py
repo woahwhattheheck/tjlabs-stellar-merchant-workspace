@@ -20,6 +20,9 @@ REQUEST_LIMIT = 8 * 1024**2
 UPLOAD_LIMIT = 8 * 1024**3
 ASSETS = {"/": ("index.html", "text/html; charset=utf-8"),
           "/browser.mjs": ("browser.mjs", "text/javascript; charset=utf-8"),
+          "/regional-browser.mjs": ("regional-browser.mjs", "text/javascript; charset=utf-8"),
+          "/regional-chart.mjs": ("regional-chart.mjs", "text/javascript; charset=utf-8"),
+          "/regional-guide.md": ("REGIONAL_ANALYSIS.md", "text/plain; charset=utf-8"),
           "/style.css": ("style.css", "text/css; charset=utf-8")}
 
 
@@ -99,6 +102,8 @@ def serve(workspace, port=0, expected_binding=None):
                         json.loads(query.get("filters", "{}")), int(query.get("offset", "0")), int(query.get("limit", "100"))))
                 if path == "/api/note":
                     return self.response(200, workspace.note(query["subject"]))
+                if path == "/api/regional-definition":
+                    return self.response(200, read_json(workspace.file("report", query["id"], "regional-definition.json")))
                 if path == "/api/report":
                     return self.response(200, workspace.report_rows(query["id"], int(query.get("offset", "0")),
                                                                     int(query.get("limit", "100"))))
@@ -127,11 +132,14 @@ def serve(workspace, port=0, expected_binding=None):
             try:
                 self.authenticate()
                 path, query = self.route()
-                require(not query and path == "/api/operation", "Use the original workspace operation route.")
+                require(not query and path in ("/api/operation", "/api/regional-definition/receive"), "Use an original workspace route.")
                 require(self.headers.get("Content-Type", "").split(";", 1)[0].strip() == "application/json",
                         "Use a JSON operation body.")
                 request = json.loads(self.read_body().decode("utf-8"),
                                     parse_constant=lambda _: (_ for _ in ()).throw(ValueError("Non-finite JSON.")))
+                if path == "/api/regional-definition/receive":
+                    from regional_workspace import definition_request
+                    return self.response(200, definition_request(workspace, request))
                 result = workspace.begin(request, background=True)
                 self.response(200 if result["state"] == "complete" else 202, result)
             except (ValueError, KeyError, OSError, json.JSONDecodeError) as error:

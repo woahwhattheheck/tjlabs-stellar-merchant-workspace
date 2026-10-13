@@ -1,0 +1,49 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "taskerarmy",
+  "description": "Complete Tasker notification installations, original native services and MCP operations",
+  "commands": {
+    "taskerarmy": "products/taskerarmy/cli.mjs"
+  },
+  "commandDescriptions": {
+    "taskerarmy": "Prepare, operate and independently receive complete Tasker notification installations"
+  },
+  "exports": {
+    "./merchant/tasker": {
+      "types": "./source/products/taskerarmy/client.d.mts",
+      "import": "./source/products/taskerarmy/client.mjs"
+    },
+    "./merchant/mcp/tasker": {
+      "types": "./source/products/taskerarmy/workspace.d.mts",
+      "import": "./source/products/taskerarmy/workspace.mjs"
+    }
+  },
+  "applicationProviders": {
+    "taskerarmy": "products/taskerarmy/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "tasker-workspaces": "products/taskerarmy/merchant-provider.mjs"
+  },
+  "components": [
+    "products/taskerarmy"
+  ],
+  "supportFiles": [
+    "products/taskerarmy/OPERATOR.md",
+    "products/taskerarmy/README.md",
+    "products/taskerarmy/SCF.md",
+    "products/taskerarmy/client.d.mts",
+    "products/taskerarmy/configuration.empty.json",
+    "products/taskerarmy/native/API.md",
+    "products/taskerarmy/native/PROVENANCE.json",
+    "products/taskerarmy/native/README.md",
+    "products/taskerarmy/native/archive.py",
+    "products/taskerarmy/native/launch_operator.py",
+    "products/taskerarmy/native/manage.py",
+    "products/taskerarmy/native/operations.py",
+    "products/taskerarmy/notification_outbox.py",
+    "products/taskerarmy/operator.html",
+    "products/taskerarmy/operator_server.py",
+    "products/taskerarmy/workspace.d.mts",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/taskerarmy-notifications.json"
+  ]
+}

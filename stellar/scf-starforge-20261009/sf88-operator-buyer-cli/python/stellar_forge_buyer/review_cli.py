@@ -11,6 +11,8 @@ from .errors import BuyerError
 from .review_library import ResourceLibrary, ReviewError, ReviewTransferError
 from .storage import parse, read
 from .review_serve import browser_arguments, serve_foreground
+from .review_journal_cli import add_journal_commands, execute_journal
+from .review_location import remember_receipt
 
 
 def _print(value):
@@ -49,8 +51,11 @@ def parser():
     receive.add_argument("--operation-id", required=True, help="Reuse the same identity to recover a lost reply")
     receive.add_argument("--sha256")
     receive.add_argument("--stage-return", action="store_true", help="Stage against a comparison already present here")
+    receive.add_argument("--return-format", choices=["auto", "incoming", "returned"], default="auto",
+        help="Auto keeps incoming handovers and recognizes complete journal envelopes")
+    receive.add_argument("--label", help="Label for an explicitly staged full-journal return")
     receive.add_argument("--serve", action="store_true", help="Continue directly into the original browser")
-    browser_arguments(receive)
+    browser_arguments(receive, selection=False)
     commands.add_parser("status")
     commands.add_parser("capabilities", help="Actual selected native engine features and action names")
     commands.add_parser("scan")
@@ -100,11 +105,11 @@ def parser():
     collection_receive.add_argument("--out", required=True, help="New private collection source directory")
     collection_receive.add_argument("--resume", action="store_true", help="Continue receipt of this same original archive")
     collection_receive.add_argument("--serve", action="store_true")
-    browser_arguments(collection_receive)
+    browser_arguments(collection_receive, selection=False)
     collection_open = collections.add_parser("open", help="Reopen the same original received directory")
     collection_open.add_argument("--directory", required=True)
     collection_open.add_argument("--serve", action="store_true")
-    browser_arguments(collection_open)
+    browser_arguments(collection_open, selection=False)
     compare = commands.add_parser("compare").add_subparsers(dest="subcommand", required=True)
     run = compare.add_parser("run", help="Begin and finish the original worker in this process")
     run.add_argument("--before", required=True)
@@ -173,6 +178,7 @@ def parser():
             c.add_argument("--operation-id", required=True)
         elif command == "export":
             _download(c, formats=True)
+    add_journal_commands(commands, page_arguments=_page, download_arguments=_download)
     return root
 
 
@@ -215,11 +221,14 @@ def execute(library, a):
     if command == "serve":
         return serve_foreground(library, a)
     if command == "receive":
-        if a.stage_return:
-            received = library.stage_return(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
-        else:
-            received = library.import_review(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
-        return serve_foreground(library, a, received=received) if a.serve else received
+        reception = library.receive_review(a.input, operation_id=a.operation_id,
+            expected_sha256=a.sha256, stage_return=a.stage_return,
+            return_format=a.return_format, label=a.label)
+        received = reception.observed
+        remember_receipt(library, received, return_format=reception.format)
+        return serve_foreground(library, a, received=received, return_format=reception.format) if a.serve else received
+    if command == "review-returns":
+        return execute_journal(library, a, json_file=_json_file, all_items=_all)
     if command in ("init", "status"):
         return library.status()
     if command == "capabilities":
@@ -273,7 +282,10 @@ def execute(library, a):
         if sub == "export":return c.export(a.out, format=a.format,
             transfer_directory=a.transfer_directory, chunk_bytes=a.chunk_bytes)
     if command == "return":
-        if sub == "stage":return library.stage_return(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
+        if sub == "stage":
+            received = library.stage_return(a.input, operation_id=a.operation_id, expected_sha256=a.sha256).observed
+            remember_receipt(library, received, return_format="incoming")
+            return received
         if sub == "list":return library.returns(comparison_id=a.comparison_id, offset=a.offset, limit=a.limit)
         r = library.review_return(a.id)
         if sub == "show":return r.observed
@@ -308,7 +320,8 @@ def main(argv=None):
                 library = ResourceLibrary.from_collection(**options, directory=args.directory)
             else:
                 library = ResourceLibrary.receiver(**options)
-        elif args.command == "receive" or (args.command == "serve" and args.receiver):
+        elif (args.command == "receive" or (args.command == "serve" and args.receiver)
+                or (args.command == "review-returns" and args.subcommand in ("receive", "verify"))):
             library = ResourceLibrary.receiver(**options)
         elif args.command == "init":
             if args.receiver:
