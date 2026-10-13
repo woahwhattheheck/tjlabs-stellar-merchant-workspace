@@ -224,7 +224,7 @@ in the original receiving call; the selection records every source file used.
 - dist/payment-editor.mjs: ordered per-route choice editing, independent/default terms, copy/reorder, original-field review and editable extra JSON.
 - dist/drafts.mjs: IndexedDB records and atomic optimistic revision checks.
 - dist/app.mjs: original offer inspector/walkthrough and component index.
-- dist/recipes.mjs: 14 maintained workflows with copyable and downloadable commands, source guides and expected behavior.
+- dist/recipes.mjs: 19 maintained workflows with copyable and downloadable commands, source guides and expected behavior.
 - dist/offer.mjs: original x402 JSON/Base64 decoder, unchanged.
 - dist/woo.html, dist/woo.css and dist/woo-setup.mjs: saved Woo product import, connection review, packet export and operating interface.
 - dist/woo-onboarding.mjs: browser-local route validation, exact-file packet composition and complete merchant/buyer instructions.
@@ -462,3 +462,10 @@ An author can receive the complete application, prepare the actual issuer fields
 Use the [review-round guide](GRANT_REVIEW_ROUNDS.md), [handover guide](GRANT_HANDOVER.md) and [complete composition/receiving guide](GRANT_COMPOSITION.md). The original grant-reviewer installation contains both complete modules, their existing-page callbacks and original source-model examples. Source Tables remains available through its existing product navigation and `source-tables` selection.
 
 The cumulative manuscript owner supplies the current nine answers and detailed companion. The existing publisher retains the selected Site, and the original receiving owner supplies the actual source-bound browser and exported-work outcomes.
+
+
+## Material Catalog: supplier source to customer Installation
+
+The existing front door now includes **Material catalogues** in Other sources, its original workflow selector and the searchable Components index. The shortcut selects the same recipe used by the selector; Copy and Download retain its full source-build and original-host commands. All earlier workflows and the separate Vellar/Atlas catalogue remain available.
+
+[MATERIAL_CATALOG.md](MATERIAL_CATALOG.md) is the complete opening guide: original supplier intake, full or explicit-base delta review, verified frozen bundle, the Source Desk, source-bound commercial Workshare, original Installation Save, recipient proposals/following-edition re-review, author decisions and full export/reopen. It links actual source and usable reader files, the complete material-catalogue-installation selection and the measured88-source chapter. It also carries the complete owner rendered-product instruction and the concrete existing-publisher receiving course. Source publication retains the original pending38F0 native/browser operation; it does not establish viewed pixels or customer acceptance.

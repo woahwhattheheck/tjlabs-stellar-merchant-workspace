@@ -4,6 +4,20 @@
 // No browser network request, payment operation or credential handling occurs here.
 
 export const ROLES = Object.freeze({
+  "materials": {
+    "meta": "MATERIAL CATALOG / SUPPLIER TO CUSTOMER",
+    "title": "Carry a supplier catalogue into a complete customer handover.",
+    "description": "Retain original files, review full or explicit-base updates, freeze a complete catalogue and prepare its source-bound Workshare and Customer Installation. Customers can review and return proposals, then re-review a following edition.",
+    "checklist": [
+      "Choose your starting input: original supplier files, a complete catalogue bundle, or a saved recipient working review. Follow the same complete opening guide.",
+      "Use the existing catalogue host and Operations case. Review the mapping, preview and edition before freezing its complete bundle and attaching those exact bytes.",
+      "Prepare the original Workshare/Installation, save through its existing editor, and keep complete customer exports and independent reopening with the recipient review."
+    ],
+    "docs": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/MATERIAL_CATALOG.md",
+    "label": "TERMINAL / COMPLETE MATERIAL CUSTOMER SOURCE",
+    "command": "# Complete supplier intake + recipient review + Customer Installation source.\n# Use Node.js 22.16+ and the original Python/runtime setup in the guide.\ngit clone https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace.git material-catalog-source\ncd material-catalog-source\ngit checkout --detach 3722647aa837fe0aa1cad461577470e2f9538130\n\nnode stellar/scf-starforge-20261009/distribution/build.mjs \\\n  --repo . \\\n  --ref 3722647aa837fe0aa1cad461577470e2f9538130 \\\n  --selection material-catalogue-installation \\\n  --out /absolute/new-material-customer-release\n\n# Receive the printed archive + SHA using the maintained runtime installer.\n# The guide links its exact installation and original-workspace opening steps.\n# Existing source/operator alternative, after configuring the original files:\nnode stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/workspace/server.mjs \\\n  --source /absolute/private/source.json \\\n  --plan /absolute/private/merchant-plan.json \\\n  --workspace /absolute/private/original-material-catalog --port 8447\n\n# In a second terminal, with that actual workspace/case in the connection file:\nGRANT_MATERIAL_CATALOGUE_CONNECTIONS=/absolute/private/material-connections.json \\\n  python3 stellar/scf_2026/sf47_budget_model/workspace/server.py \\\n  --workspace /absolute/private/original-grant-workspace --port 8790\n\n# Open the selected case -> original Installation draft -> Material catalogue.\n# Choose Original supplier intake. Preserve any already-running workspace host.",
+    "result": "The selected package includes the original catalogue, supplier intake, Source Desk, Customer Installation and complete recipient source. The operator supplies its actual source declaration, case, Workshare and connection. The guide covers exact request recovery, full exports and reopening."
+  },
   "fred": {
     "meta": "FRED / ECONOMIC BRIEFING",
     "title": "Read a complete economic briefing.",

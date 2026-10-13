@@ -90,6 +90,9 @@ function renderRole(name) {
   $('example-open').href = FRED_EXAMPLE.reportHref;
 }
 $('workflow-select').addEventListener('change', event => renderRole(event.target.value));
+document.querySelectorAll('[data-workflow]').forEach(link => link.addEventListener('click', () => {
+  renderRole(link.dataset.workflow);
+}));
 $('example-cancel').addEventListener('click', cancelExample);
 $('example-download').addEventListener('click', async () => {
   if (pageClosed || currentRole !== 'fred' || exampleDownload) return;
@@ -316,6 +319,14 @@ const components = [
     "kind": "buyer",
     "description": "Prepare a native customer workspace from its original profile or receiving file; keep cart, checkout, handoff, complete export and managed reopening together.",
     "url": "/cocart.html"
+  },
+  {
+    "id": "17",
+    "title": "Material Catalog customer workflow",
+    "code": "SUPPLIER / REVIEW / INSTALLATION",
+    "kind": "operations",
+    "description": "Import original CSV, JSON, ETIM xChange or BMEcat; review full or delta editions, freeze the catalogue, prepare its Workshare/Installation, and retain customer returns, following-edition renewal and complete exports.",
+    "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/MATERIAL_CATALOG.md"
   }
 ];
 let filter='all';
