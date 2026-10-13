@@ -23,6 +23,7 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace attach --workspace DIRECTORY --runtime EXISTING_RUNTIME [--label NAME]
   runtime-workspace serve --workspace DIRECTORY [--port 8465]
   runtime-workspace status --workspace DIRECTORY [--runtime-id ID]
+  runtime-workspace operations --workspace DIRECTORY [--query TEXT --filter all|active|attention|completed --runtime-id ID --limit 20 --cursor TOKEN]
   runtime-workspace operation-status --workspace DIRECTORY --operation-id UUID
   runtime-workspace operation-log --workspace DIRECTORY --operation-id UUID
   runtime-workspace source-plans --workspace DIRECTORY [--query TEXT --limit 30 --cursor ID] [--receiving-query TEXT --receiving-status all --receiving-limit 30 --receiving-cursor ID]
@@ -166,6 +167,7 @@ const allowed = {
   'managed-config': ['--workspace', '--home-id', '--path'],
   init: ['--workspace', '--runtime-home'], attach: ['--workspace', '--runtime', '--label'],
   serve: ['--workspace', '--port'], status: ['--workspace', '--runtime-id'], handoff: ['--workspace', '--runtime-id'],
+  operations: ['--workspace', '--query', '--filter', '--runtime-id', '--limit', '--cursor'],
   'operation-status': ['--workspace', '--operation-id'], 'operation-log': ['--workspace', '--operation-id'],
 };
 export async function main(argv = process.argv.slice(2)) {
@@ -228,6 +230,16 @@ export async function main(argv = process.argv.slice(2)) {
   } else if (command === 'application-setup-save') {
     if (!options['--operation']) fail('APPLICATION_SETUP_OPERATION_REQUIRED');
     result = await saveApplicationSetup(model, { operation: options['--operation'] });
+  } else if (command === 'operations') {
+    if (options['--limit'] !== undefined && !/^(?:[1-9][0-9]?|100)$/.test(options['--limit']))
+      fail('RUNTIME_OPERATION_HISTORY_LIMIT_INVALID');
+    result = await model.operationHistory({
+      ...(options['--query'] !== undefined ? { query: options['--query'] } : {}),
+      ...(options['--filter'] !== undefined ? { filter: options['--filter'] } : {}),
+      ...(options['--runtime-id'] !== undefined ? { runtimeId: options['--runtime-id'] } : {}),
+      ...(options['--limit'] !== undefined ? { limit: Number(options['--limit']) } : {}),
+      ...(options['--cursor'] !== undefined ? { cursor: options['--cursor'] } : {}),
+    });
   } else if (command === 'source-plans') result = await model.sourcePlansState({
     ...(options['--query'] !== undefined ? { query: options['--query'] } : {}),
     ...(options['--limit'] !== undefined ? { limit: Number(options['--limit']) } : {}),
