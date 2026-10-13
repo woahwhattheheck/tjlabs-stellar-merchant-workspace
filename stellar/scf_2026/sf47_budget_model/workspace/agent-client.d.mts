@@ -21,7 +21,7 @@ export type GrantCaseAction =
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
   | 'cash.record' | 'cash.void' | 'settlement.receive' | 'settlement.correct' | 'statement.receive' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
-  | 'engagement.prepare' | 'engagement.receiving'
+  | 'engagement.prepare' | 'engagement.receiving' | 'risk-register.save'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
   | 'amendment.save' | 'amendment.review' | 'amendment.apply'
   | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision'
@@ -2683,6 +2683,218 @@ export interface GrantTaskOutcomeReceipt {
   taskOutcomes: GrantTaskOutcomeSummary;
 }
 
+/** Human-recorded delivery risks and issues in the original case review history. */
+export type GrantRiskStatus = 'OPEN' | 'MONITORING' | 'MITIGATING' | 'RESOLVED' | 'CLOSED';
+export type GrantRiskCategory = 'DELIVERY' | 'STAFFING' | 'CUSTOMER' | 'FUNDING' | 'TECHNICAL' | 'SECURITY' | 'EXTERNAL' | 'OTHER';
+export type GrantRiskLikelihood = 'UNASSESSED' | 'UNLIKELY' | 'POSSIBLE' | 'LIKELY' | 'NOT_APPLICABLE';
+export type GrantRiskImpact = 'UNASSESSED' | 'MINOR' | 'MODERATE' | 'MAJOR';
+export type GrantRiskPriority = 'UNASSESSED' | 'LOW' | 'MEDIUM' | 'HIGH';
+export type GrantRiskActionStatus = 'PLANNED' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';
+export interface GrantRiskEvidence {
+  sourceIds: string[];
+  sourceNote: string;
+  /** Recomputed by the native engine from the actual attachment references. */
+  sourceBasis?: 'ATTACHED_SOURCE' | 'OPERATOR_ENTRY';
+}
+export interface GrantRiskAction extends GrantRiskEvidence {
+  /** Stable [a-z][a-z0-9-]{1,99} identifier, preserved in successor editions. */
+  id: string;
+  title: string;
+  description: string;
+  /** Original case contributor ID; null explicitly records an unassigned action. */
+  ownerId: string | null;
+  ownerNote: string;
+  status: GrantRiskActionStatus;
+  dueOn: GrantCivilDate | null;
+  completedOn: GrantCivilDate | null;
+  progress: string;
+}
+export interface GrantRiskRecord extends GrantRiskEvidence {
+  /** Stable [a-z][a-z0-9-]{1,99} identifier, preserved in successor editions. */
+  id: string;
+  kind: 'RISK' | 'ISSUE';
+  title: string;
+  description: string;
+  category: GrantRiskCategory;
+  identifiedOn: GrantCivilDate;
+  ownerId: string | null;
+  ownerNote: string;
+  status: GrantRiskStatus;
+  /** Issues use NOT_APPLICABLE; risk likelihood is explicitly recorded by the operator. */
+  likelihood: GrantRiskLikelihood;
+  impact: GrantRiskImpact;
+  priority: GrantRiskPriority;
+  assessmentNote: string;
+  trigger: string;
+  nextReviewOn: GrantCivilDate | null;
+  costIds: string[];
+  review: { on: GrantCivilDate | null; by: string; note: string };
+  resolution: { on: GrantCivilDate | null; note: string };
+  actions: GrantRiskAction[];
+}
+export interface GrantRiskReviewRef {
+  reviewId: string;
+  reviewSha256: string;
+}
+export interface GrantRiskDocument {
+  schema: 'stellar-forge.sf47-delivery-risks.v1';
+  name: string;
+  asOfDate: GrantCivilDate;
+  note: string;
+  supersedes: GrantRiskReviewRef | null;
+  /** Complete register, including retained resolved and closed entries; at most 200. */
+  risks: GrantRiskRecord[];
+}
+export interface GrantRiskSource extends GrantForecastSource {
+  bindingSha256: string;
+}
+export interface GrantRiskCounts {
+  total: number;
+  open: number;
+  monitoring: number;
+  mitigating: number;
+  resolved: number;
+  closed: number;
+  risks: number;
+  issues: number;
+  unassigned: number;
+  overdueReviews: number;
+  overdueActions: number;
+}
+export interface GrantRiskOwner {
+  id: string;
+  name: string;
+  kind: 'PERSON' | 'ORGANIZATION' | 'TEAM' | 'ROLE';
+  contact: string;
+}
+export interface GrantRiskReportEntry {
+  id: string;
+  title: string;
+  kind: 'RISK' | 'ISSUE';
+  category: GrantRiskCategory;
+  status: GrantRiskStatus;
+  likelihood: GrantRiskLikelihood;
+  impact: GrantRiskImpact;
+  priority: GrantRiskPriority;
+  owner: GrantRiskOwner | null;
+  costs: { id: string; label: string; current: boolean }[];
+  nextReviewOn: GrantCivilDate | null;
+  reviewOverdue: boolean;
+  actions: {
+    id: string;
+    title: string;
+    status: GrantRiskActionStatus;
+    owner: GrantRiskOwner | null;
+    dueOn: GrantCivilDate | null;
+    completedOn: GrantCivilDate | null;
+    overdue: boolean;
+  }[];
+  sourceIds: string[];
+  findings: { code: string; message: string; actionId?: string }[];
+}
+export interface GrantRiskReport {
+  schema: 'stellar-forge.sf47-delivery-risks.v1.report';
+  name: string;
+  asOfDate: GrantCivilDate;
+  mode: 'OPERATIONS' | 'WALKTHROUGH';
+  counts: GrantRiskCounts;
+  entries: GrantRiskReportEntry[];
+  notice: string;
+}
+export interface GrantRiskSummary {
+  id: string;
+  version: number;
+  createdAt: string;
+  actor: string;
+  note: string;
+  purpose: 'DELIVERY_RISK_REGISTER';
+  sha256: string;
+  businessSha256: string;
+  name: string;
+  asOfDate: GrantCivilDate;
+  counts: GrantRiskCounts;
+  supersedes: GrantRiskReviewRef | null;
+}
+export interface GrantRiskList {
+  schema: 'stellar-forge.sf47-delivery-risks.v1';
+  source: GrantRiskSource;
+  current: GrantRiskSummary | null;
+  /** Complete saved editions, newest first. */
+  editions: GrantRiskSummary[];
+}
+export interface GrantRiskSeed {
+  document: GrantRiskDocument;
+  source: GrantRiskSource;
+  contributors: GrantObject[];
+  packages: GrantObject[];
+  sources: GrantObject[];
+  previous: GrantRiskSummary | null;
+}
+export interface GrantRiskPreview {
+  schema: 'stellar-forge.sf47-delivery-risks.v1';
+  engineVersion: 1;
+  source: GrantRiskSource;
+  document: GrantRiskDocument;
+  report: GrantRiskReport;
+  previewSha256: string;
+}
+export interface GrantRiskReview {
+  id: string;
+  version: number;
+  createdAt: string;
+  actor: string;
+  note: string;
+  purpose: 'DELIVERY_RISK_REGISTER';
+  businessSha256: string;
+  snapshot: GrantObject;
+  report: GrantObject;
+  riskRegister: GrantRiskPreview;
+  sha256: string;
+}
+export interface GrantRiskRegister {
+  review: GrantRiskReview;
+  document: GrantRiskDocument;
+  source: GrantRiskSource;
+  report: GrantRiskReport;
+  previewSha256: string;
+  current: {
+    programId: string;
+    version: number;
+    sourceChanged: boolean;
+    reason: string | null;
+    retainedOriginalProgramId: string;
+  };
+}
+export interface GrantRiskHistory {
+  schema: 'stellar-forge.sf47-delivery-risks.v1.history';
+  riskId: string;
+  entries: { edition: GrantRiskSummary; risk: GrantRiskRecord }[];
+  current: GrantRiskRecord | null;
+}
+export interface GrantRiskSaveInput extends GrantOperationRequest {
+  note: string;
+  document: GrantRiskDocument;
+  expectedPreviewSha256: string;
+}
+export interface GrantRiskSaveCommand extends GrantOperationRequest {
+  note: string;
+  action: 'risk-register.save';
+  data: { document: GrantRiskDocument; expectedPreviewSha256: string };
+}
+export interface GrantRiskSaveReceipt {
+  id: string;
+  version: number;
+  action: 'risk-register.save';
+  kind: 'review';
+  recordId: string;
+  reviewSha256: string;
+  riskRegister: GrantRiskSummary;
+}
+/** Exact original command lookup, including its reviewed version, document and preview. */
+export type GrantRiskRequest =
+  | { found: false; requestId: string }
+  | { found: true; requestId: string; fingerprint: string; result: GrantRiskSaveReceipt };
+
 /** Exact native decimal text; hours use at most four and USD at most two decimals. */
 export type GrantEngagementHours = string;
 export type GrantEngagementUsd = string;
@@ -3267,6 +3479,7 @@ export interface GrantDownloadSelections {
   completion: { caseId: string; reviewId: string };
   cohort: { caseId: string; reviewId: string };
   engagement: { caseId: string; reviewId: string };
+  'risk-register': { caseId: string; reviewId: string };
   implementation: { caseId: string; reviewId: string };
   'implementation-original': { caseId: string; sourceId: string; sha256: string };
 }
@@ -3307,6 +3520,9 @@ export class GrantWorkspaceClient {
   read(view: 'installations', selection: { caseId: string }): Promise<GrantJsonResponse<{ installations: GrantObject[] }>>;
   read(view: 'installation', selection: { caseId: string; installationId: string; revision?: number }): Promise<GrantJsonResponse<GrantInstallationEdition>>;
   read(view: 'installation-history', selection: { caseId: string; installationId: string; before?: number; limit?: number }): Promise<GrantJsonResponse<{ editions: GrantObject[]; nextBefore: number | null }>>;
+  read(view: 'risks', selection: { caseId: string }): Promise<GrantJsonResponse<GrantRiskList>>;
+  read(view: 'risk-register', selection: { caseId: string; reviewId: string }): Promise<GrantJsonResponse<GrantRiskRegister>>;
+  read(view: 'risk-history', selection: { caseId: string; riskId: string }): Promise<GrantJsonResponse<GrantRiskHistory>>;
   read(view: 'engagements', selection: { caseId: string }): Promise<GrantJsonResponse<GrantEngagementList>>;
   read(view: 'engagement', selection: { caseId: string; reviewId: string }): Promise<GrantJsonResponse<GrantEngagementBook>>;
   read(view: 'forecast', selection: { caseId: string; forecastId: string }): Promise<GrantJsonResponse<GrantSavedForecast>>;
@@ -3343,6 +3559,10 @@ export class GrantWorkspaceClient {
   fundingSeed(caseId: string, body: {expectedVersion: number; revision?: number}): Promise<GrantJsonResponse<GrantFundingSeed>>;
   fundingPreview(caseId: string, body: {expectedVersion: number; inputs: GrantFundingInputs}): Promise<GrantJsonResponse<GrantFundingPreview>>;
   fundingSave(caseId: string, body: GrantFundingSaveInput): Promise<GrantJsonResponse<GrantFundingReceipt>>;
+  riskSeed(caseId: string, body: { expectedVersion: number; reviewId?: string }): Promise<GrantJsonResponse<GrantRiskSeed>>;
+  riskPreview(caseId: string, body: { expectedVersion: number; document: GrantRiskDocument }): Promise<GrantJsonResponse<GrantRiskPreview>>;
+  riskSave(caseId: string, body: GrantRiskSaveInput): Promise<GrantJsonResponse<GrantRiskSaveReceipt>>;
+  riskRequest(caseId: string, body: { command: GrantRiskSaveCommand }): Promise<GrantJsonResponse<GrantRiskRequest>>;
   taskOutcomesSeed(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<{inputs: GrantTaskOutcomeInputs; case: {id: string; version: number}}>>;
   taskOutcomesPreview(caseId: string, body: {expectedVersion: number; inputs: GrantTaskOutcomeInputs}): Promise<GrantJsonResponse<GrantTaskOutcomePreview>>;
   taskOutcomesSave(caseId: string, body: GrantTaskOutcomeSaveInput): Promise<GrantJsonResponse<GrantTaskOutcomeReceipt>>;

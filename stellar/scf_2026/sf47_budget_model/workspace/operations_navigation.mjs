@@ -24,6 +24,7 @@ const sectionDetails = {
   portfolio:['planning','Allocate original delivery resources across saved forecast alternatives.','resource staffing capacity allocation alternative'],
   contributors:['people','Find the people, teams and suppliers attached to recorded work and invoices.','person organization supplier contact'],
   engagements:['people','Retain contributor agreements, acceptance and availability with their original sources.','agreement contract engagement availability acceptance'],
+  risks:['delivery','Review dated delivery risks, current issues, owners, mitigation actions and their original source evidence.','risk issue mitigation action assessment likelihood impact priority overdue resolution register'],
   work:['people','Record and review completed contributor work against the original work packages.','timesheet time hours task effort'],
   invoices:['people','Record supplier invoices, original lines and links to completed work.','bill invoice expense liability'],
   'supplier-account':['people','Inspect supplier balances, invoice payments and the original account history.','accounts payable supplier balance dispute payment'],
@@ -156,6 +157,7 @@ function subtitle(row,keys) {
 }
 function reviewSection(row) {
   const purpose=text(row.purpose);
+  if(purpose==='DELIVERY_RISK_REGISTER')return 'risks';
   if(purpose==='TRANCHE_COMPLETION')return 'completion';
   if(purpose==='COHORT_EVALUATION')return 'cohort';
   if(purpose.includes('IMPLEMENTATION'))return 'implementation';
