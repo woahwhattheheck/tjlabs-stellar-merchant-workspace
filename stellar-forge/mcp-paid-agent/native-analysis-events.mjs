@@ -13,6 +13,7 @@ const INPUT_LIMITS={ndjson:32*1024*1024,manifest:4*1024*1024};
 const check=(value,pattern,code)=>{need(typeof value==='string'&&pattern.test(value),code);return value;};
 const integer=(value,min=0,max=Number.MAX_SAFE_INTEGER)=>{need(Number.isSafeInteger(value)&&value>=min&&value<=max,'INTEGER_INVALID');return value;};
 const copy=value=>structuredClone(value);
+const preview=value=>{let part=value.slice(0,160);return /[\uD800-\uDBFF]$/.test(part)?part.slice(0,-1):part;};
 const pick=(value,keys)=>Object.fromEntries(keys.filter(key=>Object.hasOwn(value??{},key)).map(key=>[key,copy(value[key])]));
 const query=value=>{const list=Object.entries(value).filter(([,v])=>v!==undefined);return list.length?'?'+new URLSearchParams(list.map(([k,v])=>[k,String(v)])):'';};
 function fields(value,required,optional=[]){
@@ -167,7 +168,7 @@ export function createNativeEventActions({reads,parse}={}){
  Array.isArray(row.examples),'FIELD_COVERAGE_CHANGED');
  integer(row.present,0,value.events);integer(row.missing,0,value.events);
  need(row.present+row.missing===value.events,'FIELD_COVERAGE_CHANGED');
- return {...pick(row,['present','missing','types','selectable','examples']),pointer:row.selectable?row.pointer:row.pointer.slice(0,160),
+ return {...pick(row,['present','missing','types','selectable','examples']),pointer:row.selectable?row.pointer:preview(row.pointer),
  pointer_preview:!row.selectable};
  })};
  });
@@ -185,8 +186,8 @@ export function createNativeEventActions({reads,parse}={}){
  return {...original,...pick(value,['pointer','offset','limit','total','next_offset']),rows:value.rows.map(row=>{
  need(object(row)&&object(row.event)&&['missing','null','string','number','boolean','object','array'].includes(row.state)&&
  (row.text===null||typeof row.text==='string'),'FIELD_VALUES_CHANGED');
- return {...pick(row,['index','event','state','value_bytes','value_sha256']),text_preview:row.text===null?null:row.text.slice(0,160),
- text_truncated:typeof row.text==='string'&&row.text.length>160};
+ return {...pick(row,['index','event','state','value_bytes','value_sha256']),text_preview:row.text===null?null:preview(row.text),
+ text_truncated:typeof row.text==='string'&&preview(row.text)!==row.text};
  })};
  });
  }
