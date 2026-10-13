@@ -2,6 +2,21 @@
 
 Use the original native facilitator from a local operator screen: review a profile, retain its original JSON file, start the SDK backend, inspect its accounts and payment state, drain it, and reopen the same configuration. The browser and original CLI use the same configuration schema and runtime. The same screen retains optional durable Bazaar publication, its original merchant bindings and its committed discovery resources.
 
+## Installed Applications and typed client
+
+The [complete selected installation and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/selections/NATIVE_FACILITATOR_OPERATOR.md)
+packages this same operator as `native-facilitator-operator`. The source-owned
+Applications provider opens it through the original Review, Save, Connect,
+Review Start, Start, Open and Stop/recovery lifecycle. Saved Applications retain
+the original host directories, managed operation and selected source.
+
+The same guide documents the typed Node client at
+`@tokenjunkielabs/starforge-merchant/facilitator/operator/client`. It reviews and
+saves native profiles, probes readiness, controls the original runtime and
+receives complete catalog views through this authenticated operator. Its
+`receiveCatalog` and the browser share the same original pagination and
+fixed-revision receiving implementation.
+
 ## Start the workspace
 
 Choose a private workspace and the **same shared signer ownership directory used by the other native facilitator processes on this host**. Keep those paths canonical and absolute. Use the existing configured Stellar accounts and secret environment-variable names. Set the actual secrets in the host environment before launching.
@@ -126,3 +141,18 @@ Use **Drain and stop** before choosing another profile or port. The original tra
 An edited policy is a new immutable named file. Start it only after the previous runtime finishes draining. Restarting the operator process reopens the saved files with no automatic payment or backend action. The original CLI and a prepared customer session can consume the same files, using that same shared ownership directory.
 
 Ctrl-C closes the management listener and drains its owned native backend. Keep the original process running while accepted SDK work is completing. See the parent `OPERATIONS.md` for readiness, signing-account custody and payment reconciliation.
+
+## Agent operations and durable receiving
+
+The original merchant MCP host can attach this operator through private
+host-declared aliases. Its source-owned provider adds profile review/save,
+native start/drain, catalog reads and complete export receiving. See
+[MERCHANT_AGENT.md](./MERCHANT_AGENT.md) for the complete installed connection,
+setup, 17 agent tools and resumable download workflow.
+
+The same native client now offers `streamCatalog(selection, {write})` for
+awaited per-page receiving; `receiveCatalog` and `exportCatalog` retain their
+existing collector interface. A durable catalog capture stores every original
+resource together with the exact selected native profile, original instance,
+network, resource version and first catalog/queue observation. The merchant
+receiver continues that retained export after its agent session ends.

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // MIT. Xero document handovers use the original accounting workspace owner.
 import {constants} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {open, mkdir, lstat} from 'node:fs/promises';
 import {isAbsolute, join, resolve, dirname, basename} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -9,9 +10,11 @@ import {accountingWorkspaceBinding} from '../../workspace/binding.mjs';
 import {ReceivablesWorkspace} from '../store.mjs';
 import {renderCustomerTar, json, need} from '../core.mjs';
 import {XeroReceivablesWorkspace} from './store.mjs';
+import {xeroCashCaptureArguments} from './client.mjs';
 
 const REQUEST_BYTES = 32 * 1024 * 1024;
-const COMMANDS = new Set(['serve', 'state', 'profile', 'preview', 'prepare', 'detail', 'receive', 'correct', 'file', 'export']);
+const COMMANDS = new Set(['serve', 'state', 'profile', 'preview', 'prepare', 'detail', 'receive', 'correct', 'file', 'export',
+  'cash-preview', 'cash-prepare', 'cash-capture', 'cash-cycles', 'cash-cycle', 'cash-file', 'cash-export']);
 const HELP = 'Xero customer invoice and credit handovers\n\n' +
   'starforge receivables-xero serve --directory /private/accounting [--port 8449]\n' +
   'starforge receivables-xero state --directory /private/accounting [--as-of YYYY-MM-DD]\n' +
@@ -24,6 +27,19 @@ const HELP = 'Xero customer invoice and credit handovers\n\n' +
   'starforge receivables-xero correct --directory /private/accounting --id UUID --input /private/reviewed-correction.json\n' +
   'starforge receivables-xero file --directory /private/accounting --id UUID --name invoices.csv --out /private/new-invoices.csv\n' +
   'starforge receivables-xero export --directory /private/accounting --id UUID --out /private/new-handover [--format directory|tar|json]\n\n' +
+  'Cash commissioning and successive saved cycles:\n' +
+  'starforge receivables-xero cash-preview --directory /private/accounting --id PACKAGE_UUID --input /private/cash-selection.json --out /private/new-cash-preview.json\n' +
+  '  Add an original provider response with --file /private/Payments.json --observed-at UTC_TIMESTAMP.\n' +
+  'starforge receivables-xero cash-prepare --id PACKAGE_UUID --input /private/cash-selection.json --preview /private/new-cash-preview.json --actor OPERATOR --request-id STABLE_ID --out /private/new-cash-capture.json\n' +
+  'starforge receivables-xero cash-capture --directory /private/accounting --id PACKAGE_UUID --input /private/new-cash-capture.json\n' +
+  'starforge receivables-xero cash-cycles --directory /private/accounting --id PACKAGE_UUID\n' +
+  'starforge receivables-xero cash-cycle --directory /private/accounting --id PACKAGE_UUID --cycle CYCLE_UUID\n' +
+  'starforge receivables-xero cash-file --directory /private/accounting --id PACKAGE_UUID --cycle CYCLE_UUID --name cash-review.json --out /private/new-review.json\n' +
+  'starforge receivables-xero cash-export --directory /private/accounting --id PACKAGE_UUID --cycle CYCLE_UUID --out /private/new-cash-handover [--format directory|tar|json]\n\n' +
+  'Cash selections retain asOf, packageIds, original importIds/additionalSources, matches and sourceBindings.\n' +
+  'Set baselineCycleId in the next selection to compare two immutable cycles. Save differences as part of the review.\n' +
+  'cash-prepare keeps the original provider bytes; use the same --file and --observed-at used for preview when supplied as flags.\n' +
+  'cash-capture submits once. Keep the capture JSON and retry that same original requestId if its response is interrupted.\n\n' +
   'Mutation JSON includes revision, actor and a stable requestId. Profile updates also include expectedVersion.\n' +
   'Prepare and correct include previewSha256 from a successful preview of the same profile and documents.\n' +
   'File flags read the original source bytes into {name,dataBase64}; explicit result-column mappings remain in the request JSON.\n' +
@@ -35,6 +51,7 @@ export function parseXeroReceivablesArguments(argv) {
   const [command = 'help', ...rest] = argv, flags = {};
   const known = new Set(['directory', 'outbox', 'proof-dir', 'terms', 'recovered-dir', 'port', 'as-of', 'id',
     'input', 'invoice-template', 'credit-template', 'file', 'name', 'out', 'format',
+    'cycle', 'preview', 'actor', 'request-id', 'observed-at',
     'expected-workspace-id', 'expected-sources-sha256']);
   for (let i = 0; i < rest.length; i += 2) {
     need(/^--[a-z-]+$/.test(rest[i]) && known.has(rest[i].slice(2)) && rest[i + 1] !== undefined && !rest[i + 1].startsWith('--'),
@@ -81,10 +98,39 @@ function requestSize(value) {
   need(Buffer.byteLength(JSON.stringify(value)) <= REQUEST_BYTES, 'XERO_REQUEST_TOO_LARGE',
     'The encoded request exceeds the request limit.');
 }
+async function cashInput(flags) {
+  const value = await requestInput(flags.input);
+  if (flags.file) {
+    need(typeof flags['observed-at'] === 'string' && flags['observed-at'].length > 0,
+      'XERO_CASH_OBSERVATION_REQUIRED', 'Keep the original provider response observation time with --observed-at.');
+    need(value.additionalSources === undefined || Array.isArray(value.additionalSources),
+      'INVALID_XERO_CASH_SOURCES', 'Keep additionalSources as the original source array.');
+    value.additionalSources = [...(value.additionalSources ?? []), {
+      file: await sourceFile(flags.file, 8 * 1024 * 1024), observedAt: flags['observed-at'],
+    }];
+  } else {
+    need(!flags['observed-at'], 'XERO_CASH_SOURCE_REQUIRED', 'Use --observed-at with an original --file.');
+  }
+  requestSize(value);
+  return value;
+}
 export async function runXeroReceivablesCli(argv = process.argv.slice(2)) {
   const {command, flags} = parseXeroReceivablesArguments(argv);
   if (command === 'help' || command === '--help') { process.stdout.write(HELP); return; }
   need(COMMANDS.has(command), 'UNKNOWN_XERO_COMMAND', 'Choose a documented Xero handover command.');
+  if (command === 'cash-prepare') {
+    need(typeof flags.id === 'string' && flags.id.length > 0, 'XERO_PACKAGE_REQUIRED',
+      'Keep the original package identifier for the cash capture.');
+    const selection = await cashInput(flags), preview = await requestInput(flags.preview);
+    const value = xeroCashCaptureArguments(selection, preview, {actor: flags.actor, requestId: flags['request-id']});
+    requestSize(value);
+    const bytes = Buffer.from(json(value));
+    await newFile(flags.out, bytes);
+    const result = {path: flags.out, packageId: flags.id, action: 'xero_cash_cycle_captured',
+      requestId: value.requestId, revision: value.revision, previewSha256: value.previewSha256,
+      bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex')};
+    process.stdout.write(json(result)); return result;
+  }
   const options = {directory: absolute(flags.directory, 'accounting workspace')};
   for (const [flag, key] of [['outbox','outboxDir'], ['proof-dir','proofDir'], ['terms','termsFile'], ['recovered-dir','recoveredDir']])
     if (flags[flag]) options[key] = absolute(flags[flag], flag);
@@ -111,6 +157,26 @@ export async function runXeroReceivablesCli(argv = process.argv.slice(2)) {
     let result;
     if (command === 'state') result = await controller.state({asOf: flags['as-of']});
     else if (command === 'detail') result = await controller.detail(flags.id);
+    else if (command === 'cash-cycles') result = await controller.cashCycles(flags.id);
+    else if (command === 'cash-cycle') result = await controller.cashCycle(flags.id, flags.cycle);
+    else if (command === 'cash-preview' || command === 'cash-capture') {
+      const value = await cashInput(flags);
+      result = command === 'cash-preview' ? await controller.cashPreview(flags.id, value) :
+        await controller.cashCapture(flags.id, value);
+      if (flags.out) {
+        try { await newFile(flags.out, Buffer.from(json(result))); }
+        catch (error) {
+          if (command === 'cash-capture') {
+            const cause = error.message;
+            error.code = 'XERO_CASH_CAPTURE_OUTPUT_FAILED';
+            error.message = 'The cash cycle was saved, but its local output file could not be written.';
+            error.details = {packageId: flags.id, cashCycleId: result.cashCycle?.id,
+              revision: result.revision, operation: result.operation, output: flags.out, cause};
+          }
+          throw error;
+        }
+      }
+    }
     else if (['profile', 'preview', 'prepare', 'receive', 'correct'].includes(command)) {
       const value = await requestInput(flags.input);
       if (command === 'profile') {
@@ -130,14 +196,17 @@ export async function runXeroReceivablesCli(argv = process.argv.slice(2)) {
       else if (command === 'prepare') result = await controller.prepare(value);
       else if (command === 'receive') result = await controller.receive(flags.id, value);
       else result = await controller.correct(flags.id, value);
-    } else if (command === 'file') {
-      const selected = await controller.file(flags.id, flags.name);
+    } else if (command === 'file' || command === 'cash-file') {
+      const selected = command === 'cash-file' ? await controller.cashFile(flags.id, flags.cycle, flags.name) :
+        await controller.file(flags.id, flags.name);
       await newFile(flags.out, selected.bytes);
-      result = {path: flags.out, name: selected.name, bytes: selected.bytes.length, type: selected.type};
-    } else if (command === 'export') {
+      result = {path: flags.out, name: selected.name, bytes: selected.bytes.length, type: selected.type,
+        sha256: createHash('sha256').update(selected.bytes).digest('hex')};
+    } else if (command === 'export' || command === 'cash-export') {
       const format = flags.format || 'directory';
       need(['directory', 'tar', 'json'].includes(format), 'INVALID_XERO_EXPORT_FORMAT', 'Choose directory, tar or json.');
-      const output = absolute(flags.out, 'handover export'), bundle = await controller.export(flags.id);
+      const output = absolute(flags.out, 'handover export'), bundle = command === 'cash-export' ?
+        await controller.cashExport(flags.id, flags.cycle) : await controller.export(flags.id);
       const names = new Set();
       for (const file of bundle.files) {
         need(typeof file.name === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(file.name) && !names.has(file.name),
@@ -152,13 +221,17 @@ export async function runXeroReceivablesCli(argv = process.argv.slice(2)) {
         await mkdir(output, {mode: 0o700});
         for (const selected of bundle.files) await newFile(join(output, selected.name), selected.bytes);
       }
-      result = {path: output, format, packageId: flags.id, files: bundle.files.map(file => ({name: file.name, bytes: file.bytes.length}))};
+      result = {path: output, format, packageId: flags.id, ...(command === 'cash-export' ? {cycleId: flags.cycle} : {}),
+        files: bundle.files.map(file => ({name: file.name, bytes: file.bytes.length,
+          sha256: createHash('sha256').update(file.bytes).digest('hex')}))};
     }
     process.stdout.write(json(result)); return result;
   } finally { await workspace.close(); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
   runXeroReceivablesCli().catch(error => {
-    process.stderr.write(json({error: {code: error.code ?? 'XERO_HANDOVER_FAILED', message: error.message}}));
+    process.stderr.write(json({error: {code: error.code ?? 'XERO_HANDOVER_FAILED', message: error.message,
+      ...(error.details === undefined ? {} : {details: error.details}),
+      ...(error.requestId === undefined ? {} : {requestId: error.requestId})}}));
     process.exitCode = 1;
   });

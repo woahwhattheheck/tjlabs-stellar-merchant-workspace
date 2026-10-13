@@ -1,4 +1,5 @@
 import {ExactNumber, parseExactJSON, stringifyExactJSON} from "/vector/json.mjs";
+import {mappingWorkbookPanel, savedWorkbookPanel, downloadMappingRegister} from "/workbook.mjs";
 const $ = selector => document.querySelector(selector);
 const clone = value => parseExactJSON(stringifyExactJSON(value));
 const text = value => value === null || value === undefined ? "" : String(value);
@@ -329,7 +330,8 @@ async function sourcesView() {
   holder.append(panel(h("div",{class:"row"},field("Saved source",select(captureId,captures.map(r=>[r.id,recordLabel(r)]),async value=>{
     current.captureId=value;current.layerId="";current.offsets.source=0;await stash();await render();
   })),btn("Create mapping draft",async()=>{const next=await api("draft",{captureId});await retainPreviousPlan();
-    draft.plan=next;draft.planOriginal=null;draft.optionsText={};await navigate("mapping");}))));
+    draft.plan=next;draft.planOriginal=null;draft.optionsText={};draft.planCaptureId=next.captureId;
+    draft.workbookSource=null;draft.workbookReview=null;await navigate("mapping");}))));
   const capture=await api("document",{kind:"capture",id:captureId});
   const layerId=capture.inspection.layers.some(r=>r.id===current.layerId)?current.layerId:capture.inspection.layers[0]?.id;
   if(current.captureId===captureId)current.layerId=layerId||"";
@@ -366,7 +368,8 @@ async function sourcesView() {
 }
 function planDraftCheckpoint() {
   return clone({schema:"migration-complete-plan-draft.v1",plan:draft.plan,
-    planOriginal:draft.planOriginal||null,optionsText:draft.optionsText||{}});
+    planOriginal:draft.planOriginal||null,optionsText:draft.optionsText||{},
+    workbookSource:draft.workbookSource||null,workbookReview:draft.workbookReview||null});
 }
 async function retainPreviousPlan() {
   if(draft.plan)await put(key("previous-plan-draft"),planDraftCheckpoint());
@@ -396,6 +399,8 @@ async function recoverPreviousPlan() {
   draft.plan=clone(plan);
   draft.planOriginal=complete?clone(prior.planOriginal||null):null;
   draft.optionsText=complete?clone(prior.optionsText||{}):{};
+  draft.workbookSource=complete?clone(prior.workbookSource||null):null;
+  draft.workbookReview=complete?clone(prior.workbookReview||null):null;
   if(displaced)await put(key("previous-plan-draft"),displaced);
   await stash();await render();
 }
@@ -410,7 +415,8 @@ async function mappingView() {
     btn("Create / rebase draft",async()=>{
       await retainPreviousPlan();
       draft.plan=await api("draft",{captureId:draft.planCaptureId,predecessorPlanId:draft.predecessor||null});
-      draft.planOriginal=null;draft.optionsText={};current.offsets.fields=0;await stash();await render();
+      draft.planOriginal=null;draft.optionsText={};draft.workbookSource=null;draft.workbookReview=null;
+      current.offsets.fields=0;await stash();await render();
     })),
     h("div",{class:"toolbar"},field("Import editable original plan",h("input",{type:"file",accept:".json,application/json",onchange:event=>run(async()=>{
       const original=await imported(event.target.files[0]);
@@ -419,9 +425,19 @@ async function mappingView() {
       if(!validPlan(original.value))
         throw new Error("Choose a complete migration plan with layers and project definitions.");
       await retainPreviousPlan();
-      draft.plan=original.value;draft.planOriginal=original;delete draft.failedPlanImport;draft.optionsText={};await stash();await render();
+      draft.plan=original.value;draft.planOriginal=original;delete draft.failedPlanImport;draft.optionsText={};
+      draft.workbookSource=null;draft.workbookReview=null;await stash();await render();
     })})),
     btn("Recover previous draft",recoverPreviousPlan))));
+  holder.append(await mappingWorkbookPanel({h,panel,field,btn,select,table,cell,pager,detail,api,stash,render,
+    downloadText,draft,plans:previous,run,onAdopt:async(proposed,source)=>{
+      await retainPreviousPlan();
+      draft.plan=clone(proposed.plan);draft.plan.predecessorPlanId=proposed.basePlanId;
+      draft.planOriginal={value:clone(proposed.plan),originalBase64:proposed.planBase64,
+        filename:"workbook-proposed-plan.json",parseError:null};
+      draft.workbookSource=clone(source);draft.workbookReview=clone(proposed);draft.optionsText={};
+      draft.planCaptureId=proposed.captureId;current.offsets.fields=0;await stash();await render();
+    }}));
   if(draft.recoveredDraft)holder.append(panel(h("h3",{},"Original editor state retained"),
     h("p",{},"A prior draft had incomplete editor rows. The complete saved state remains available while this editor opens with usable controls."),
     btn("Download retained editor state",()=>downloadText("migration-original-editor-state.json",json(draft.recoveredDraft)))));
@@ -529,7 +545,8 @@ async function mappingView() {
       field("Decision and disposition",area(row.decision||"",changed(v=>row.decision=v),{rows:2}))))));
   holder.append(h("div",{class:"toolbar"},btn("Save plan & review every source row",async()=>{
     const complete=assembledPlan();
-    const result=await mutate("save-plan",{plan:complete,originalBase64:draft.planOriginal?.originalBase64||null});
+    const result=await mutate("save-plan",{plan:complete,originalBase64:draft.planOriginal?.originalBase64||null,
+      ...(draft.workbookSource?{workbookSource:clone(draft.workbookSource)}:{})});
     current.planId=result.plan.id;await navigate("plans");
   },"primary"),btn("Save editable draft",()=>downloadText("migration-plan-draft.json",json(assembledPlan()))),
     btn("Save complete editor state",()=>downloadText("migration-plan-editor.json",json(planDraftCheckpoint())))));
@@ -552,13 +569,17 @@ async function plansView() {
     h("p",{class:"code"},id),h("p",{},opened.review.valid?"Every saved source constraint passed.":opened.review.issues+" complete source issues require correction."),
     h("div",{class:"toolbar"},
       btn("Copy into editable revision",async()=>{await retainPreviousPlan();
-        draft.plan=clone(plan);draft.plan.predecessorPlanId=id;draft.planOriginal=null;draft.optionsText={};await navigate("mapping");}),
+        draft.plan=clone(plan);draft.plan.predecessorPlanId=id;draft.planOriginal=null;draft.optionsText={};
+        draft.workbookSource=null;draft.workbookReview=null;await navigate("mapping");}),
       btn("Complete saved plan",()=>detail("Saved original plan",plan)),
       btn("Download plan",()=>download(opened.record.file.path)),
+      btn("Export mapping register",()=>downloadMappingRegister(api,id)),
       btn("Complete source review",()=>detail("Every source constraint and native field map",opened.review))),
     table(["Layer","Features","Issues","Native field mapping"],opened.review.layers.map(row=>h("tr",{},
       cell(row.sourceLayerId),cell(row.features),cell(row.issues),
       cell(btn("Open all formats / fields",()=>detail("Original-to-native field mapping",row.fields),"small")))))));
+  const workbooks=savedWorkbookPanel({h,panel,table,cell,btn,download,inputs:await all("inputs"),planId:id});
+  if(workbooks)holder.append(workbooks);
   if(opened.review.issues){
     const issuePage=await api("issues",{planId:id,offset:current.offsets.issues||0,limit:50,
       ...(draft.issueLayer?{layerId:draft.issueLayer}:{})});

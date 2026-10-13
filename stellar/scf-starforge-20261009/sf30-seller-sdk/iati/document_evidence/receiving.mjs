@@ -247,9 +247,38 @@ export async function runDocumentEvidence(input,{write=value=>process.stdout.wri
     }
     need(rows.length===native.selectedDocumentRows,'The selected native document register is incomplete.');
     report.documents=rows.length;
-    await retained('history',await sdk.history(selected.id));
-    await retained('comparison',await sdk.comparison(native.comparisonId));
-    await retained('correction',await sdk.correction(selected.id,{revision:selected.revision}));
+    const clientHistory=await sdk.history(selected.id), merchantHistory=[];
+    need(Array.isArray(clientHistory.history),'The complete SDK history is missing.');
+    let historyOffset=0,historySnapshot,historyTotal;
+    for(;;){
+      const page=await call('sender','history',{id:selected.id,offset:historyOffset,limit:100,
+        ...(historySnapshot?{expectedSnapshot:historySnapshot}:{})});
+      need(Array.isArray(page.items)&&page.offset===historyOffset&&SHA.test(page.snapshot??'')&&
+        Number.isSafeInteger(page.total)&&page.total>=0&&
+        (historySnapshot===undefined||page.snapshot===historySnapshot)&&
+        (historyTotal===undefined||page.total===historyTotal),
+        'The original Merchant history page changed.');
+      historySnapshot??=page.snapshot;historyTotal??=page.total;
+      merchantHistory.push(...page.items);
+      need(merchantHistory.length<=historyTotal,'The Merchant history exceeded its selected inventory.');
+      if(page.nextOffset===null){
+        need(merchantHistory.length===historyTotal,'The complete Merchant history ended early.');
+        break;
+      }
+      need(page.items.length>0&&page.nextOffset===historyOffset+page.items.length,
+        'The Merchant history cursor did not advance exactly.');
+      historyOffset=page.nextOffset;
+    }
+    need(equivalent(clientHistory.history,merchantHistory),'Complete SDK and Merchant histories differ.');
+    await retained('history',clientHistory);
+    for(const [name,clientValue,merchantValue] of [
+      ['comparison',await sdk.comparison(native.comparisonId),await call('sender','comparison',{id:native.comparisonId})],
+      ['correction',await sdk.correction(selected.id,{revision:selected.revision}),
+        await call('sender','correction',{id:selected.id,revision:selected.revision})]
+    ]){
+      need(equivalent(clientValue,merchantValue),'Complete '+name+' differs across SDK and Merchant.');
+      await retained(name,clientValue);
+    }
     progress('same-original-request-replay');
     const requestDirectory=join(config.caseDirectory,'requests');
     const {readdir}=await import('node:fs/promises');
@@ -277,11 +306,38 @@ export async function runDocumentEvidence(input,{write=value=>process.stdout.wri
     for(const observation of native.observations){
       const actual=await sdk.observation(observation.id);
       need(actual.documentComplete===observation.documentComplete&&equivalent(actual.body,observation.body),'Native observation identity changed.');
+      need(equivalent(actual,await call('sender','observation',{id:actual.id})),
+        'The full captured observation differs across SDK and Merchant.');
       if(!actual.body)continue;
-      report.downloads.push(await responseFile(await sdk.body(actual.id),join(files,'client-body-'+actual.id+'.bin')));
+      const clientBody=await responseFile(await sdk.body(actual.id),join(files,'client-body-'+actual.id+'.bin'));
+      need(clientBody.bytes===actual.body.bytes&&clientBody.sha256===actual.body.sha256,
+        'The complete SDK body differs from the original native capture.');
+      report.downloads.push(clientBody);
       const body=await call('sender','body',{observationId:actual.id});
-      need(body.bodyComplete===actual.body.complete&&body.documentComplete===actual.documentComplete,'MCP lost complete versus prefix semantics.');
-      report.downloads.push(await download(body,'merchant-body-'+actual.id+'.bin'));
+      need(body.bodyComplete===actual.body.complete&&body.documentComplete===actual.documentComplete&&
+        body.bytes===actual.body.bytes&&body.sha256===actual.body.sha256,
+        'The Merchant body differs from the native capture or its complete versus prefix semantics.');
+      const merchantBody=await download(body,'merchant-body-'+actual.id+'.bin');
+      need(merchantBody.bytes===clientBody.bytes&&merchantBody.sha256===clientBody.sha256,
+        'The two complete connected body downloads differ.');
+      report.downloads.push(merchantBody);
+      if(native.following?.observationId===actual.id){
+        need(actual.documentComplete===true&&actual.body.complete===true&&actual.body.bytes>0&&
+          native.following.nativeBody.bytes===clientBody.bytes&&native.following.nativeBody.sha256===clientBody.sha256,
+          'The following connected programme requires the same complete public document body.');
+        report.following={base:native.following.base,observationId:actual.id,publishedUrl:actual.publishedUrl,
+          nativeBody:native.following.nativeBody,clientBody,merchantBody,reviewDecision:'deferred'};
+      }
+    }
+    if(native.following){
+      need(report.following?.observationId===native.following.observationId,
+        'The complete following document was not received through both connected interfaces.');
+      const old=await sdk.plan(native.following.originalRecipient.id,{revision:native.following.originalRecipient.revision});
+      need(equivalent(identity(old),native.following.originalRecipient),
+        'The original recipient local-note edition changed during connected receiving.');
+      const detail=await sdk.detail(selected.id,{revision:selected.revision,rowId:native.following.rowId});
+      need(detail.row.decision?.decision==='deferred'&&detail.row.decision.observationId===native.following.observationId,
+        'The following capture lost its named deferred review.');
     }
     progress('portable-export-prefix-reopen-and-receive');
     const exported=await selectedExport();

@@ -293,13 +293,14 @@ function argumentsFor(argv) {
 
 export async function runGrantComposition(argv = process.argv.slice(2)) {
   const options = argumentsFor(argv), directory = resolve(options['--directory'] || DEFAULT_DIRECTORY);
-  const [applicationMarkdown, productAndFinanceMarkdown, templateHtml, indexText, composerSource, customerSource, deliverySource] = await Promise.all([
+  const [applicationMarkdown, productAndFinanceMarkdown, templateHtml, indexText, composerSource, customerSource, a2aSource, deliverySource] = await Promise.all([
     readFile(join(directory, 'grant-data/application.md'), 'utf8'),
     readFile(join(directory, 'grant-data/product-and-finance.md'), 'utf8'),
     readFile(join(directory, 'grant.html'), 'utf8'),
     readFile(join(directory, 'grant-data/source-index.json'), 'utf8'),
     readFile(fileURLToPath(import.meta.url), 'utf8'),
     readFile(new URL('./grant-customers.mjs', import.meta.url), 'utf8'),
+    readFile(new URL('./grant-a2a.mjs', import.meta.url), 'utf8'),
     readFile(new URL('./grant-delivery-plan.mjs', import.meta.url), 'utf8'),
   ]);
   const index = JSON.parse(indexText);
@@ -321,7 +322,7 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   const selectedApplication = manuscript ? extractReviewerApplication(manuscript) : applicationMarkdown;
   index.narrative_source = { ...index.narrative_source, composition: {
     ...index.narrative_source?.composition,
-    renderer_git_blob: gitBlob(composerSource), projector_git_blob: gitBlob(customerSource), delivery_plan_git_blob: gitBlob(deliverySource),
+    renderer_git_blob: gitBlob(composerSource), projector_git_blob: gitBlob(customerSource), a2a_projector_git_blob: gitBlob(a2aSource), delivery_plan_git_blob: gitBlob(deliverySource),
     ...(manuscript ? { canonical_front_sha256: digest(selectedApplication), canonical_front_bytes: bytes(selectedApplication) } : {}),
   } };
   const result = composeGrantApplication({

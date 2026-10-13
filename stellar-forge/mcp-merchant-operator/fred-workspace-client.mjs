@@ -3,14 +3,26 @@ import { constants } from 'node:fs';
 import { open, link, unlink } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { canonicalJSONDigest } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/canonical-stream.mjs';
 import { inspectFredReleaseCapture, normalizeFredReleaseSelection } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
 import { validateFredReleaseWatch } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/watch.mjs';
 import { validateFredReleasePlan } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/planner.mjs';
 export { inspectFredReleaseCapture } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/releases/model.mjs';
+import { inspectFredDdpCrosswalk } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/crosswalk.mjs';
+import { inspectFredDdpPackage } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/package.mjs';
+import { ddpBoardUrl } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/files.mjs';
+import { normalizeFredDdpMigrationInput, validateFredDdpMigrationPlan } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/migration.mjs';
+import { validateFredDdpReceiving, FRED_DDP_RECEIVING_STATUSES } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/receiving.mjs';
+import { validateFredDdpProjectBundle, validateFredDdpProjectState } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ddp/project-validation.mjs';
+export { inspectFredDdpCrosswalk, inspectFredDdpPackage };
+import { validateQcewState, qcewStatePresent } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/state.mjs';
+import { validateQcewExtension } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/bundle.mjs';
 
 export const FRED_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.fred-workspace-connection.v1';
 export const FRED_CLIENT_MAX_BYTES = 256 * 1024 * 1024;
 export const FRED_CLIENT_MAX_REQUEST_BYTES = 128 * 1024 * 1024;
+export const FRED_DDP_MAX_SOURCE_BYTES = 384 * 1024 * 1024;
+export const FRED_DDP_MAX_PROJECT_BYTES = 480 * 1024 * 1024;
 export const fredDigest = bytes => createHash('sha256').update(bytes).digest('hex');
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const SHA = /^[a-f0-9]{64}$/;
@@ -123,7 +135,7 @@ function successorFile(value, successorId) {
       !Array.isArray(comparison.rows) || comparison.rowCount !== comparison.rows.length)
     fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The full successor file lost its complete original comparison.');
   const { comparisonId, ...identity } = comparison;
-  if (!SHA.test(comparisonId ?? '') || fredDigest(Buffer.from(canonicalFredJSON(identity))) !== comparisonId)
+  if (!SHA.test(comparisonId ?? '') || canonicalJSONDigest(identity, { primitive: canonicalFredJSON }) !== comparisonId)
     fail('FRED_CLIENT_SUCCESSOR_CHANGED', 'The complete successor comparison differs from its retained identity.');
   return value;
 }
@@ -202,6 +214,86 @@ function releaseSavedResponse(value, input, valid) {
   return value;
 }
 
+const DDP_KINDS = ['crosswalks', 'packages', 'migrations', 'receivings'];
+const DDP_PREFIXES = { crosswalk: 'fred-ddp-crosswalk-', package: 'fred-ddp-package-',
+  migration: 'fred-ddp-migration-plan-', receiving: 'fred-ddp-receiving-' };
+const DDP_STATUSES = FRED_DDP_RECEIVING_STATUSES;
+function ddpId(value, kind) {
+  const prefix = DDP_PREFIXES[kind];
+  if (!prefix || typeof value !== 'string' || !value.startsWith(prefix) || !SHA.test(value.slice(prefix.length)))
+    fail('FRED_CLIENT_INPUT_INVALID', 'Select the complete retained DDP ' + kind + ' ID.');
+  return value;
+}
+function ddpPaging(input) {
+  return { offset: integer(input.offset ?? 0, 0, Number.MAX_SAFE_INTEGER, 'DDP row offset'),
+    limit: integer(input.limit ?? 100, 1, 500, 'DDP page size') };
+}
+function ddpRows(value, paging) {
+  if (!Number.isSafeInteger(value?.total) || value.total < 0 || !Array.isArray(value.rows) ||
+      value.offset !== paging.offset || value.limit !== paging.limit ||
+      value.rows.length !== Math.min(paging.limit, Math.max(0, value.total - paging.offset)) ||
+      value.nextOffset !== (paging.offset + value.rows.length < value.total ? paging.offset + value.rows.length : null))
+    fail('FRED_CLIENT_DDP_CHANGED', 'The selected original DDP page is incomplete or its continuation changed.');
+  return value;
+}
+function ddpEnvelope(value, projectId) {
+  if (value?.projectId !== projectId || !Number.isSafeInteger(value.revision) || value.revision < 1)
+    fail('FRED_CLIENT_PROJECT_CHANGED', 'The DDP response belongs to another original project or revision.');
+  return value;
+}
+function ddpSeriesId(value, label = 'package series ID') {
+  if (value !== null && value !== undefined) text(value, label, 1000);
+  return value ?? null;
+}
+function ddpCounts(summary) {
+  return plain(summary) && Object.entries(summary).every(([key, value]) => key === 'ready'
+    ? typeof value === 'boolean' : key === 'counts'
+      ? plain(value) && Object.entries(value).every(([status, count]) => DDP_STATUSES.includes(status) && Number.isSafeInteger(count) && count >= 0)
+      : Number.isSafeInteger(value) && value >= 0);
+}
+function ddpIdentity(value, kind) {
+  ddpId(value?.id, kind);
+  if (kind === 'migration') return validateFredDdpMigrationPlan(value, { copy: false });
+  if (kind === 'receiving') return validateFredDdpReceiving(value, { copy: false });
+  return { crosswalk: inspectFredDdpCrosswalk, package: inspectFredDdpPackage }[kind](value);
+}
+function ddpMigrationInput(input, saved = false) {
+  const sourceFields = ['name', 'asOf', 'window', 'decisions', 'bindings', 'pageSize', 'maxRows', 'bookmark', 'note'];
+  fields(input, ['packageId', 'crosswalkId', ...sourceFields,
+    ...(saved ? ['id', 'expectedRevision', 'previewId'] : ['section', 'offset', 'limit'])], 'DDP migration selection');
+  ddpId(input.packageId, 'package'); ddpId(input.crosswalkId, 'crosswalk');
+  const original = normalizeFredDdpMigrationInput(Object.fromEntries(
+    sourceFields.filter(key => input[key] !== undefined).map(key => [key, input[key]])));
+  const result = { packageId: input.packageId, crosswalkId: input.crosswalkId, ...original };
+  if (saved) {
+    result.id = operation(input.id); result.expectedRevision = revision(input.expectedRevision);
+    result.previewId = digest(input.previewId, 'reviewed migration preview ID');
+  } else {
+    result.section = input.section ?? 'series';
+    if (!['series', 'acquisitions', 'mappings'].includes(result.section))
+      fail('FRED_CLIENT_INPUT_INVALID', 'Choose series, acquisitions or mappings in the complete migration plan.');
+    Object.assign(result, ddpPaging(input));
+  }
+  return result;
+}
+function ddpMigrationPage(value, input) {
+  ddpId(value?.id, 'migration');
+  if (input.migrationId !== undefined && value.id !== input.migrationId ||
+      input.packageId !== undefined && value.packageId !== input.packageId ||
+      input.crosswalkId !== undefined && value.crosswalkId !== input.crosswalkId ||
+      value.section !== input.section || !ddpCounts(value.summary) || !plain(value.input))
+    fail('FRED_CLIENT_DDP_CHANGED', 'The migration page differs from the selected original package, crosswalk or section.');
+  ddpId(value.packageId, 'package'); ddpId(value.crosswalkId, 'crosswalk');
+  digest(value.packageSha256, 'original package digest'); digest(value.crosswalkSha256, 'original crosswalk digest');
+  return ddpRows(value, input);
+}
+function ddpSaved(value, input, valid) {
+  if (!valid || !Number.isSafeInteger(value?.revision) || value.revision < 1)
+    fail('FRED_CLIENT_DDP_CHANGED', 'The saved DDP result differs from its original operation selection.',
+      { operationId: input.id, ambiguous: true, inspectOriginalOperation: true });
+  return value;
+}
+
 function fields(value, allowed, label) {
   object(value, label);
   if (Object.keys(value).some(key => !allowed.includes(key)))
@@ -221,7 +313,7 @@ export function canonicalFredJSON(value) {
 
 /** Reads the complete original regular file through one stable descriptor. */
 export async function readFredHostFile(path, maximum = FRED_CLIENT_MAX_BYTES, { privateFile = false, expectedSha256 } = {}) {
-  integer(maximum, 1, FRED_CLIENT_MAX_BYTES, 'file capacity');
+  integer(maximum, 1, FRED_DDP_MAX_PROJECT_BYTES, 'file capacity');
   if (expectedSha256 !== undefined) digest(expectedSha256);
   const handle = await open(resolve(text(path, 'file path', 8192)),
     constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
@@ -252,7 +344,7 @@ export async function readFredWorkspaceConfiguration(path) {
   for (const [alias, value] of Object.entries(raw.workspaces)) {
     if (!ALIAS.test(alias)) fail('FRED_CONNECTION_INVALID', 'Use a lowercase workspace alias.');
     fields(value, ['label', 'consoleUrlFile', 'consoleUrlEnv', 'projectId', 'expectedBindingSha256',
-      'timeoutMs', 'maxResponseBytes', 'inputs', 'merchantProfiles'], 'Workspace');
+      'timeoutMs', 'maxResponseBytes', 'maxDdpResponseBytes', 'inputs', 'merchantProfiles'], 'Workspace');
     if (Boolean(value.consoleUrlFile) === Boolean(value.consoleUrlEnv))
       fail('FRED_CONNECTION_INVALID', 'Select exactly one original consoleUrlFile or consoleUrlEnv.');
     const entry = { label: text(value.label ?? alias, 'workspace label', 240),
@@ -268,7 +360,7 @@ export async function readFredWorkspaceConfiguration(path) {
       entry.projectId = value.projectId;
     }
     if (value.expectedBindingSha256 !== undefined) entry.expectedBindingSha256 = digest(value.expectedBindingSha256, 'launch binding SHA256');
-    for (const [key, maximum] of [['timeoutMs', 30 * 60 * 1000], ['maxResponseBytes', FRED_CLIENT_MAX_BYTES]])
+    for (const [key, maximum] of [['timeoutMs', 30 * 60 * 1000], ['maxResponseBytes', FRED_CLIENT_MAX_BYTES], ['maxDdpResponseBytes', FRED_DDP_MAX_PROJECT_BYTES]])
       if (value[key] !== undefined) entry[key] = integer(value[key], 1, maximum, key);
     if (value.inputs !== undefined) {
       object(value.inputs, 'Host inputs');
@@ -276,7 +368,7 @@ export async function readFredWorkspaceConfiguration(path) {
       for (const [name, input] of Object.entries(value.inputs)) {
         if (!ALIAS.test(name)) fail('FRED_CONNECTION_INVALID', 'Use a lowercase input alias.');
         fields(input, ['path', 'kind', 'label', 'sha256'], 'Host input');
-        if (!['public-table', 'capture', 'release-capture'].includes(input.kind))
+        if (!['public-table', 'capture', 'release-capture', 'ddp-crosswalk', 'ddp-package'].includes(input.kind))
           fail('FRED_CONNECTION_INVALID', 'Select an original public-table wrapper, observation capture or complete release capture.');
         entry.inputs[name] = { path: resolve(base, text(input.path, 'original source path', 8192)),
           kind: input.kind, label: text(input.label ?? name, 'input label', 240),
@@ -385,6 +477,7 @@ export class FredWorkspaceClient {
     this.#definition = { ...definition }; this.#environment = environment; this.#fetch = fetchImpl;
     this.timeoutMs = integer(definition.timeoutMs ?? 120000, 1, 30 * 60 * 1000, 'request timeout');
     this.maxResponseBytes = integer(definition.maxResponseBytes ?? FRED_CLIENT_MAX_BYTES, 1, FRED_CLIENT_MAX_BYTES, 'response capacity');
+    this.maxDdpResponseBytes = integer(definition.maxDdpResponseBytes ?? FRED_DDP_MAX_PROJECT_BYTES, 1, FRED_DDP_MAX_PROJECT_BYTES, 'DDP file response capacity');
     if (definition.projectId !== undefined && !UUID.test(definition.projectId))
       fail('FRED_CONNECTION_INVALID', 'Use the exact original project ID.');
     if (definition.expectedBindingSha256 !== undefined) digest(definition.expectedBindingSha256);
@@ -393,7 +486,7 @@ export class FredWorkspaceClient {
   get metadata() {
     return { projectId: this.#boundId ?? null, connected: Boolean(this.#bound), closed: this.#closed,
       bindingSha256: this.#bound?.launch.binding.sha256 ?? null, instanceId: this.#bound?.launch.instanceId ?? null,
-      timeoutMs: this.timeoutMs, maxResponseBytes: this.maxResponseBytes, hostOwnership: 'ORIGINAL_FRED_WORKSPACE' };
+      timeoutMs: this.timeoutMs, maxResponseBytes: this.maxResponseBytes, maxDdpResponseBytes: this.maxDdpResponseBytes, hostOwnership: 'ORIGINAL_FRED_WORKSPACE' };
   }
   async #connection() {
     if (this.#closed) fail('FRED_CLIENT_CLOSED', 'The FRED workspace client is closed.');
@@ -408,7 +501,9 @@ export class FredWorkspaceClient {
     let encoded;
     if (body !== undefined) {
       encoded = JSON.stringify(body);
-      if (Buffer.byteLength(encoded) > FRED_CLIENT_MAX_REQUEST_BYTES)
+      const requestCapacity = path === '/api/action' && ['ddp-crosswalk-import', 'ddp-package-import'].includes(body?.action)
+        ? FRED_DDP_MAX_SOURCE_BYTES : FRED_CLIENT_MAX_REQUEST_BYTES;
+      if (Buffer.byteLength(encoded) > requestCapacity)
         fail('FRED_CLIENT_REQUEST_TOO_LARGE', 'The complete original request exceeds the native workspace capacity.');
       headers['content-type'] = 'application/json';
     }
@@ -449,7 +544,7 @@ export class FredWorkspaceClient {
           launch.binding?.schema !== 'stellar-forge.fred-workspace-binding.v1' || launch.binding.projectId !== selected.projectId)
         fail('FRED_CLIENT_PROJECT_CHANGED', 'The selected native server does not belong to the original project.');
       const { sha256, ...core } = launch.binding;
-      if (!SHA.test(sha256 ?? '') || fredDigest(Buffer.from(canonicalFredJSON(core))) !== sha256 ||
+      if (!SHA.test(sha256 ?? '') || canonicalJSONDigest(core, { primitive: canonicalFredJSON }) !== sha256 ||
           selected.bindingSha256 !== undefined && selected.bindingSha256 !== sha256)
         fail('FRED_CLIENT_BINDING_CHANGED', 'The native launch differs from its exact original project and operator binding.');
       if (this.#closed) fail('FRED_CLIENT_CLOSED', 'The client closed during its original launch read.');
@@ -476,6 +571,8 @@ export class FredWorkspaceClient {
     const value = await this.#json('/api/state', options);
     if (value?.project?.schema !== 'stellar-forge.fred-project.v1' || value.project.id !== this.#boundId)
       fail('FRED_CLIENT_PROJECT_CHANGED', 'The selected workspace no longer exposes its original project.');
+    validateFredDdpProjectState(value.project);
+    validateQcewState(value.project);
     return value;
   }
   async operation(id, options = {}) {
@@ -715,6 +812,234 @@ export class FredWorkspaceClient {
       /^fred-release-watch-[a-f0-9]{64}$/.test(value.watchId ?? ''));
   }
 
+  async publishedOperations({ offset = 0, limit = 100 } = {}, options) {
+    integer(offset,0,Number.MAX_SAFE_INTEGER,'publication offset'); integer(limit,1,500,'publication page size');
+    const value = await this.#json('/api/ddp-publications?' + new URLSearchParams({offset:String(offset),limit:String(limit)}),options);
+    if(value?.projectId !== this.#boundId || value.offset !== offset || value.limit !== limit || !Array.isArray(value.items))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original publication inventory changed.');
+    return value;
+  }
+  async publishedOperation({ id }, options) {
+    operation(id);
+    const value = await this.#json('/api/ddp-publication?' + new URLSearchParams({operation:id}),options);
+    if(value?.projectId !== this.#boundId || value.id !== id || value.schema !== 'stellar-forge.fred-ddp-publication-operation.v1' ||
+      !['RUNNING','INTERRUPTED','FAILED','COMPLETE'].includes(value.state) || !Array.isArray(value.files))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original publication operation changed.');
+    return value;
+  }
+  async startPublishedOperation(input, options) {
+    fields(input,['id','expectedRevision','migrationId'],'complete current-publication operation');
+    operation(input.id); revision(input.expectedRevision); ddpId(input.migrationId,'migration');
+    const value = await this.#json('/api/action',{...options,method:'POST',operationId:input.id,body:{action:'ddp-published-run',...input}});
+    if(value?.projectId !== this.#boundId || value.id !== input.id || value.migrationId !== input.migrationId ||
+      value.expectedRevision !== input.expectedRevision || !SHA.test(value.requestSha256))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The retained publication acknowledgement differs from its original request.',
+        {operationId:input.id,ambiguous:true});
+    return value;
+  }
+  async publishedReport({ id, offset = 0, limit = 100, query = '' }, options) {
+    operation(id); integer(offset,0,Number.MAX_SAFE_INTEGER,'series offset'); integer(limit,1,500,'series page size');
+    if(typeof query !== 'string' || query.length > 500) fail('FRED_CLIENT_INPUT_INVALID','Choose a source series query of at most 500 characters.');
+    const value = await this.#json('/api/ddp-publication-report?' + new URLSearchParams({operation:id,offset:String(offset),limit:String(limit),query}),options);
+    if(value?.projectId !== this.#boundId || value.operationId !== id || value.basis !== 'CURRENT_PUBLICATION_RETRIEVAL' ||
+      value.offset !== offset || value.limit !== limit || value.query !== query || !Array.isArray(value.rows))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original publication report changed.');
+    return value;
+  }
+  async publishedRows({ id, comparisonId, offset = 0, limit = 100, seriesId = null, status = null }, options) {
+    operation(id); text(comparisonId,'original comparison identity',120);
+    integer(offset,0,Number.MAX_SAFE_INTEGER,'original row offset'); integer(limit,1,500,'original row page size');
+    if(seriesId !== null) text(seriesId,'original source series ID',500);
+    if(status !== null && !['EQUAL','DIFFERENT','BOTH_MISSING','MISSING_CHANGED','SOURCE_ONLY','TARGET_ONLY'].includes(status))
+      fail('FRED_CLIENT_INPUT_INVALID','Choose an original publication comparison status.');
+    const value = await this.#json('/api/ddp-publication-rows?' + new URLSearchParams({operation:id,comparison:comparisonId,
+      offset:String(offset),limit:String(limit),...(seriesId === null ? {} : {series:seriesId}),...(status === null ? {} : {status})}),options);
+    if(value?.projectId !== this.#boundId || value.operationId !== id || value.comparisonId !== comparisonId ||
+      value.offset !== offset || value.limit !== limit || value.seriesId !== seriesId || value.status !== status || !Array.isArray(value.rows))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original observation cursor or comparison selection changed.');
+    return value;
+  }
+  async publishedFileChunk({ id, name, expectedSha256, offset = 0, limit = 192 * 1024 }, options) {
+    operation(id); text(name,'listed edition file',240); digest(expectedSha256);
+    integer(offset,0,Number.MAX_SAFE_INTEGER,'original file offset'); integer(limit,1,192 * 1024,'file chunk size');
+    const value = await this.#json('/api/ddp-publication-file-chunk?' + new URLSearchParams({operation:id,name,sha256:expectedSha256,
+      offset:String(offset),limit:String(limit)}),options);
+    if(value?.projectId !== this.#boundId || value.operationId !== id || value.file?.name !== name || value.file.sha256 !== expectedSha256 ||
+      value.offset !== offset || value.encoding !== 'base64' || typeof value.base64 !== 'string')
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The original publication file selection changed.');
+    const bytes = Buffer.from(value.base64,'base64');
+    if(bytes.length !== value.bytes || bytes.toString('base64') !== value.base64 || fredDigest(bytes) !== value.chunkSha256 ||
+      value.bytes > limit || offset + value.bytes > value.file.bytes ||
+      value.nextOffset !== (offset + value.bytes < value.file.bytes ? offset + value.bytes : null))
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original file chunk changed.');
+    return value;
+  }
+  async downloadPublishedFile({ id, name, expectedSha256 }, destination, options = {}) {
+    operation(id); text(name,'listed edition file',240); digest(expectedSha256); text(destination,'new download destination',4096);
+    const original = await this.publishedOperation({id},options), descriptor = original.files.find(file => file.name === name);
+    if(original.state !== 'COMPLETE' || !descriptor || descriptor.sha256 !== expectedSha256)
+      fail('FRED_CLIENT_PUBLISHED_CHANGED','Select the exact complete file listed in the original publication.');
+    const selected = await this.#connect(options.signal), path = '/api/ddp-publication-file?' + new URLSearchParams({operation:id,name,sha256:expectedSha256});
+    const signal = AbortSignal.any([this.#lifetime.signal,AbortSignal.timeout(30 * 60 * 1000),...(options.signal ? [options.signal] : [])]);
+    const response = await this.#fetch(selected.origin + path,{headers:{authorization:'Bearer ' + selected.token,origin:selected.origin},
+      redirect:'error',signal});
+    if(!response.ok) {
+      let error; try { error = JSON.parse((await responseBytes(response,65536)).toString('utf8')); } catch { error = {}; }
+      fail(error.code ?? 'FRED_CLIENT_DOWNLOAD_FAILED',error.message ?? 'The original publication download did not open.',{status:response.status});
+    }
+    if(response.headers.get('x-content-sha256') !== expectedSha256 ||
+      Number(response.headers.get('content-length')) !== descriptor.bytes) {
+      await response.body?.cancel(); fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original file response changed.');
+    }
+    const output = resolve(destination), temporary = output + '.' + randomUUID() + '.part';
+    let handle, bytes = 0; const hash = createHash('sha256');
+    try {
+      handle = await open(temporary,constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,0o600);
+      for await(const chunk of response.body) {
+        const part = Buffer.from(chunk); bytes += part.length;
+        if(bytes > descriptor.bytes) fail('FRED_CLIENT_PUBLISHED_CHANGED','The original download exceeds its listed length.');
+        hash.update(part); let cursor = 0;
+        while(cursor < part.length) { const result = await handle.write(part,cursor,part.length - cursor);
+          if(result.bytesWritten < 1) fail('FRED_CLIENT_DOWNLOAD_FAILED','The original destination stopped accepting bytes.');
+          cursor += result.bytesWritten; }
+      }
+      const actual = hash.digest('hex');
+      if(bytes !== descriptor.bytes || actual !== expectedSha256) fail('FRED_CLIENT_PUBLISHED_CHANGED','The complete original download identity changed.');
+      await handle.sync(); await handle.close(); handle = null; await link(temporary,output);
+      const parent = await open(dirname(output),constants.O_RDONLY); try { await parent.sync(); } finally { await parent.close(); }
+      return {projectId:original.projectId,operationId:id,destination:output,name,bytes,sha256:actual,contentType:descriptor.contentType};
+    } finally { await response.body?.cancel().catch(() => {}); await handle?.close();
+      await unlink(temporary).catch(error => { if(error.code !== 'ENOENT') throw error; }); }
+  }
+  async ddpSources(options = {}) {
+    const value = ddpEnvelope(await this.#json('/api/ddp-sources', options), this.#boundId);
+    for (const [index, kind] of DDP_KINDS.entries()) {
+      if (!Array.isArray(value[kind])) fail('FRED_CLIENT_DDP_CHANGED', 'The complete DDP source and receiving inventory is missing.');
+      const seen = new Set(), idKind = ['crosswalk', 'package', 'migration', 'receiving'][index];
+      for (const item of value[kind]) {
+        ddpId(item?.id, idKind);
+        if (seen.has(item.id) || !plain(item.summary))
+          fail('FRED_CLIENT_DDP_CHANGED', 'The DDP inventory repeats or loses an original source or saved result.');
+        seen.add(item.id);
+      }
+    }
+    return value;
+  }
+  async ddpCrosswalk({ crosswalkId, release = null, query = '', offset = 0, limit = 100 }, options) {
+    ddpId(crosswalkId, 'crosswalk'); ddpSeriesId(release, 'release');
+    if (typeof query !== 'string' || query.length > 500)
+      fail('FRED_CLIENT_INPUT_INVALID', 'Use a crosswalk query of at most 500 characters.');
+    const paging = ddpPaging({ offset, limit });
+    const params = new URLSearchParams({ crosswalk: crosswalkId, query, offset: String(paging.offset), limit: String(paging.limit),
+      ...(release === null ? {} : { release }) });
+    const result = ddpEnvelope(await this.#json('/api/ddp-crosswalk?' + params, options), this.#boundId);
+    if (result.crosswalk?.id !== crosswalkId || result.crosswalk.filter?.release !== release ||
+        result.crosswalk.filter?.query !== query || !plain(result.crosswalk.source) || !plain(result.crosswalk.summary))
+      fail('FRED_CLIENT_DDP_CHANGED', 'The original crosswalk page differs from the selected source or filter.');
+    ddpRows(result.crosswalk, paging);
+    return result;
+  }
+  async importDdpCrosswalk(input, options) {
+    fields(input, ['id', 'expectedRevision', 'capture', 'crosswalkId'], 'DDP crosswalk source import');
+    const body = { ...input };
+    if (input.capture != null) {
+      const model = inspectFredDdpCrosswalk(input.capture);
+      if (input.crosswalkId !== undefined && input.crosswalkId !== model.id)
+        fail('FRED_CLIENT_INPUT_INVALID', 'The complete crosswalk source and selected ID must agree.');
+      body.crosswalkId = model.id;
+    } else ddpId(body.crosswalkId, 'crosswalk');
+    const value = await this.#action('ddp-crosswalk-import', body, options);
+    return ddpSaved(value, input, value?.crosswalkId === body.crosswalkId && value.source?.id === body.crosswalkId);
+  }
+  async acquireDdpCrosswalk(input, options) {
+    fields(input, ['id', 'expectedRevision', 'url'], 'Official DDP crosswalk acquisition');
+    if (input.url !== undefined) ddpBoardUrl(input.url);
+    const value = await this.#action('ddp-crosswalk-capture', input, options);
+    return ddpSaved(value, input, typeof value?.crosswalkId === 'string' &&
+      value.crosswalkId.startsWith(DDP_PREFIXES.crosswalk) && SHA.test(value.crosswalkId.slice(DDP_PREFIXES.crosswalk.length)) &&
+      value.source?.id === value.crosswalkId && typeof value.acquisitionId === 'string' && typeof value.url === 'string');
+  }
+  async ddpPackage({ packageId, section = 'series', seriesId = null, frequency = null, query = '', offset = 0, limit = 100 }, options) {
+    ddpId(packageId, 'package'); ddpSeriesId(seriesId); ddpSeriesId(frequency, 'original package frequency');
+    if (typeof query !== 'string' || query.length > 500) fail('FRED_CLIENT_INPUT_INVALID', 'Use a package query of at most 500 characters.');
+    if (!['series', 'observations'].includes(section))
+      fail('FRED_CLIENT_INPUT_INVALID', 'Choose original DDP package series or observations.');
+    const paging = ddpPaging({ offset, limit }), params = new URLSearchParams({ package: packageId, section,
+      offset: String(paging.offset), limit: String(paging.limit), query,
+      ...(frequency === null ? {} : { frequency }), ...(seriesId === null ? {} : { seriesId }) });
+    const value = ddpEnvelope(await this.#json('/api/ddp-package?' + params, options), this.#boundId);
+    if (value.package?.id !== packageId || value.package.section !== section || value.package.seriesId !== seriesId ||
+        value.package.filter?.frequency !== (section === 'series' ? frequency : null) ||
+        value.package.filter?.query !== (section === 'series' ? query : '') || !Array.isArray(value.package.frequencies) ||
+        !plain(value.package.source) || !plain(value.package.summary))
+      fail('FRED_CLIENT_DDP_CHANGED', 'The package page differs from the selected complete original source, series or section.');
+    ddpRows(value.package, paging); return value;
+  }
+  async importDdpPackage(input, options) {
+    fields(input, ['id', 'expectedRevision', 'capture', 'packageId'], 'DDP package source import');
+    const body = { ...input };
+    if (input.capture != null) {
+      const model = inspectFredDdpPackage(input.capture);
+      if (input.packageId !== undefined && input.packageId !== model.id)
+        fail('FRED_CLIENT_INPUT_INVALID', 'The complete original package source and selected ID must agree.');
+      body.packageId = model.id;
+    } else ddpId(body.packageId, 'package');
+    const value = await this.#action('ddp-package-import', body, options);
+    return ddpSaved(value, input, value?.packageId === body.packageId && value.source?.id === body.packageId);
+  }
+  async previewDdpMigration(input, options) {
+    const body = ddpMigrationInput(input);
+    const value = ddpEnvelope(await this.#json('/api/ddp-migration-preview',
+      { ...options, method: 'POST', readOnly: true, body }), this.#boundId);
+    digest(value.previewId, 'reviewed migration preview ID');
+    if (value.migrationId !== value.migration?.id)
+      fail('FRED_CLIENT_DDP_CHANGED', 'The preview lost its complete immutable migration identity.');
+    ddpMigrationPage(value.migration, body); return value;
+  }
+  async saveDdpMigration(input, options) {
+    const body = ddpMigrationInput(input, true), value = await this.#action('ddp-migration-save', body, options);
+    return ddpSaved(value, input, typeof value?.migrationId === 'string' &&
+      value.migrationId.startsWith(DDP_PREFIXES.migration) && SHA.test(value.migrationId.slice(DDP_PREFIXES.migration.length)) &&
+      value.migration?.id === value.migrationId && value.migration.packageId === body.packageId &&
+      value.migration.crosswalkId === body.crosswalkId);
+  }
+  async ddpMigration({ migrationId, section = 'series', offset = 0, limit = 100 }, options) {
+    ddpId(migrationId, 'migration');
+    if (!['series', 'acquisitions', 'mappings'].includes(section))
+      fail('FRED_CLIENT_INPUT_INVALID', 'Choose original migration series, acquisitions or mappings.');
+    const paging = ddpPaging({ offset, limit }), params = new URLSearchParams({ migration: migrationId, section,
+      offset: String(paging.offset), limit: String(paging.limit) });
+    const value = ddpEnvelope(await this.#json('/api/ddp-migration?' + params, options), this.#boundId);
+    ddpMigrationPage(value.migration, { migrationId, section, ...paging });
+    if (!Array.isArray(value.receivings) || value.receivings.some(item => item.planId !== migrationId))
+      fail('FRED_CLIENT_DDP_CHANGED', 'The saved migration lost its original completed receiving records.');
+    return value;
+  }
+  async acquireDdpMigration(input, options) {
+    fields(input, ['id', 'expectedRevision', 'migrationId'], 'DDP migration acquisition');
+    ddpId(input.migrationId, 'migration');
+    const value = await this.#action('ddp-migration-acquire', input, options);
+    return ddpSaved(value, input, value?.migrationId === input.migrationId &&
+      typeof value.receivingId === 'string' && value.receivingId.startsWith(DDP_PREFIXES.receiving) &&
+      SHA.test(value.receivingId.slice(DDP_PREFIXES.receiving.length)) && value.receiving?.id === value.receivingId &&
+      Array.isArray(value.captureIds) && value.captureIds.every(id => SHA.test(id)) &&
+      new Set(value.captureIds).size === value.captureIds.length && typeof value.acquisitionId === 'string' &&
+      typeof value.reusedReceiving === 'boolean');
+  }
+  async ddpReceiving({ receivingId, changesOnly = true, seriesId = null, offset = 0, limit = 100 }, options) {
+    ddpId(receivingId, 'receiving'); ddpSeriesId(seriesId);
+    if (typeof changesOnly !== 'boolean') fail('FRED_CLIENT_INPUT_INVALID', 'Choose a boolean changesOnly receiving filter.');
+    const paging = ddpPaging({ offset, limit }), params = new URLSearchParams({ receiving: receivingId,
+      changesOnly: changesOnly ? '1' : '0', offset: String(paging.offset), limit: String(paging.limit),
+      ...(seriesId === null ? {} : { seriesId }) });
+    const value = ddpEnvelope(await this.#json('/api/ddp-receiving?' + params, options), this.#boundId);
+    if (value.receiving?.id !== receivingId || value.receiving.filter?.changesOnly !== changesOnly ||
+        value.receiving.filter?.seriesId !== seriesId || !ddpCounts(value.receiving.summary) ||
+        !Array.isArray(value.receiving.meanings) || !Array.isArray(value.receiving.captures))
+      fail('FRED_CLIENT_DDP_CHANGED', 'The receiving page lost its original result, meaning or source selection.');
+    ddpRows(value.receiving, paging); return value;
+  }
+
   publication(publicationId, options) {
     return this.#json('/api/publication?' + new URLSearchParams({ publication: digest(publicationId, 'publication ID') }), options);
   }
@@ -806,11 +1131,35 @@ export class FredWorkspaceClient {
       fields(selection, ['kind', 'planId'], 'Complete release plan file');
       path = '/api/release-plan?' + new URLSearchParams({ plan: releaseId(selection.planId, 'plan'), download: '1' });
       fallback = selection.planId + '.json';
-    } else fail('FRED_CLIENT_INPUT_INVALID', 'Choose an original source, release source or plan, comparison, briefing, successor, project or customer file.');
-    const { response, bytes } = await this.#request(path, options);
+    } else if (selection.kind === 'ddp-crosswalk' || selection.kind === 'ddp-package') {
+      const isCrosswalk = selection.kind === 'ddp-crosswalk', key = isCrosswalk ? 'crosswalkId' : 'packageId';
+      fields(selection, ['kind', key], 'Complete original DDP source file');
+      const id = ddpId(selection[key], isCrosswalk ? 'crosswalk' : 'package');
+      path = '/api/' + selection.kind + '?' + new URLSearchParams({ [isCrosswalk ? 'crosswalk' : 'package']: id, download: '1' });
+      fallback = id + '.json';
+    } else if (selection.kind === 'ddp-migration') {
+      fields(selection, ['kind', 'migrationId'], 'Complete DDP migration plan file');
+      path = '/api/ddp-migration?' + new URLSearchParams({ migration: ddpId(selection.migrationId, 'migration'), download: '1' });
+      fallback = selection.migrationId + '.json';
+    } else if (selection.kind === 'ddp-receiving') {
+      fields(selection, ['kind', 'receivingId', 'format'], 'Complete DDP receiving file');
+      ddpId(selection.receivingId, 'receiving');
+      if (!['json', 'csv', 'html'].includes(selection.format))
+        fail('FRED_CLIENT_INPUT_INVALID', 'Choose the complete receiving JSON, CSV or HTML report.');
+      const inventory = await this.ddpSources(options), saved = inventory.receivings.find(item => item.id === selection.receivingId);
+      expectedMember = saved?.files?.find(file => file.path?.endsWith('.' + selection.format));
+      if (!expectedMember || !SHA.test(expectedMember.sha256 ?? '') || !Number.isSafeInteger(expectedMember.bytes) || expectedMember.bytes < 1)
+        fail('FRED_CLIENT_DDP_CHANGED', 'The saved DDP receiving file descriptor is missing from its original result.');
+      path = '/api/ddp-receiving?' + new URLSearchParams({ receiving: selection.receivingId, format: selection.format });
+      fallback = selection.receivingId + '.' + selection.format;
+    } else fail('FRED_CLIENT_INPUT_INVALID', 'Choose a complete original source, plan, DDP receiving, comparison, briefing, project or customer file.');
+    const maximum = selection.kind === 'project' ? this.maxDdpResponseBytes :
+      selection.kind.startsWith('ddp-') ? Math.min(this.maxDdpResponseBytes, FRED_DDP_MAX_SOURCE_BYTES) : undefined;
+    const { response, bytes } = await this.#request(path, { ...options, ...(maximum === undefined ? {} : { maximum }) });
     const sha256 = fredDigest(bytes);
     if (expectedMember && (sha256 !== expectedMember.sha256 || bytes.length !== expectedMember.bytes))
-      fail('FRED_CLIENT_BRIEFING_CHANGED', 'The complete original briefing differs from its saved source review.', { sha256, bytes: bytes.length });
+      fail(selection.kind === 'ddp-receiving' ? 'FRED_CLIENT_DDP_CHANGED' : 'FRED_CLIENT_BRIEFING_CHANGED',
+        'The complete original report differs from its saved source review.', { sha256, bytes: bytes.length });
     if (options.expectedSha256 !== undefined && digest(options.expectedSha256) !== sha256)
       fail('FRED_CLIENT_FILE_CHANGED', 'The complete original download differs from its reviewed SHA256.', { sha256, bytes: bytes.length });
     if (selection.kind === 'briefing-successor' && selection.format === 'json') {
@@ -829,15 +1178,26 @@ export class FredWorkspaceClient {
       } else if (validateFredReleasePlan(value).id !== selection.planId)
         fail('FRED_CLIENT_RELEASE_CHANGED', 'The complete release plan differs from the selected saved descriptor.');
     }
+    if (selection.kind.startsWith('ddp-') && (selection.kind !== 'ddp-receiving' || selection.format === 'json')) {
+      let value;
+      try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+      catch { fail('FRED_CLIENT_DDP_CHANGED', 'The complete original DDP source, migration or receiving file is not JSON.'); }
+      const kind = selection.kind.slice(4), key = kind + 'Id';
+      if (ddpIdentity(value, kind).id !== selection[key])
+        fail('FRED_CLIENT_DDP_CHANGED', 'The full DDP file differs from its original selected identity.');
+    }
     const proposed = (response.headers.get('content-disposition') ?? '').match(/filename="([^"]*)"/)?.[1] ?? fallback;
     const name = basename(proposed).replace(/[\x00-\x1f\x7f"\\/]/g, '_').slice(0, 180) || fallback;
     const result = { name, type: response.headers.get('content-type') ?? 'application/octet-stream', bytes, sha256,
       status: response.status, projectId: this.#boundId,
       ...(selection.kind === 'release-source' ? { releaseCaptureId: selection.releaseCaptureId } : {}),
-      ...(selection.kind === 'release-plan' ? { planId: selection.planId } : {}) };
+      ...(selection.kind === 'release-plan' ? { planId: selection.planId } : {}),
+      ...Object.fromEntries(['crosswalkId', 'packageId', 'migrationId', 'receivingId'].filter(key => selection[key] !== undefined).map(key => [key, selection[key]])) };
     if (selection.kind === 'project') {
       let bundle;
       try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The complete project export is not JSON.'); }
+      if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6'].includes(bundle.schema) && bytes.length > FRED_CLIENT_MAX_BYTES)
+        fail('FRED_CLIENT_BUNDLE_INVALID', 'The original version 1–4 project retains its 256 MiB file capacity.');
       result.bundle = inspectFredProjectBundle(bundle);
       if (result.bundle.projectId !== this.#boundId) fail('FRED_CLIENT_PROJECT_CHANGED', 'The export belongs to another original project.');
     }
@@ -865,7 +1225,7 @@ function inspectFredReleaseBundle(bundle) {
   const state = bundle.state, summaries = state.releaseCaptures ?? [], watches = state.releaseWatches ?? [],
     plans = state.releasePlans ?? [], catchUps = state.releaseCatchUps ?? [];
   if (![summaries, watches, plans, catchUps].every(Array.isArray) ||
-      summaries.length + watches.length + plans.length + catchUps.length === 0 ||
+      bundle.schema === 'stellar-forge.fred-project-bundle.v4' && summaries.length + watches.length + plans.length + catchUps.length === 0 ||
       summaries.length !== bundle.releaseCaptures.length || plans.length !== bundle.releasePlans.length ||
       !Array.isArray(state.operations) || !Array.isArray(state.captures))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The release project export lost its complete source and plan inventories.');
@@ -933,7 +1293,9 @@ function inspectFredReleaseBundle(bundle) {
 }
 
 export function inspectFredProjectBundle(bundle) {
-  const releases = bundle?.schema === 'stellar-forge.fred-project-bundle.v4';
+  const qcewVersion = bundle?.schema === 'stellar-forge.fred-project-bundle.v6';
+  const extended = qcewVersion || bundle?.schema === 'stellar-forge.fred-project-bundle.v5';
+  const releases = extended || bundle?.schema === 'stellar-forge.fred-project-bundle.v4';
   const recurring = releases || bundle?.schema === 'stellar-forge.fred-project-bundle.v3';
   const briefing = recurring || bundle?.schema === 'stellar-forge.fred-project-bundle.v2';
   if ((!briefing && bundle?.schema !== 'stellar-forge.fred-project-bundle.v1') || !plain(bundle.state) ||
@@ -943,13 +1305,33 @@ export function inspectFredProjectBundle(bundle) {
         bundle.releaseCaptures !== undefined || bundle.releasePlans !== undefined ||
         ['releaseCaptures', 'releaseWatches', 'releasePlans', 'releaseCatchUps'].some(key => (bundle.state[key]?.length ?? 0) > 0)))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the complete original versioned FRED project bundle.');
+  const ddpKeys = ['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings'];
+  validateFredDdpProjectState(bundle.state);
+  validateQcewState(bundle.state);
+  const ddp = ddpKeys.some(key => (bundle.state[key]?.length ?? 0) > 0), qcew = qcewStatePresent(bundle.state);
+  if (qcewVersion && !qcew)
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'A version 6 project retains its complete original QCEW family.');
+  if (extended ? !ddp && !qcew : ddp || qcew)
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'Use the original version 5 or 6 identity for a complete DDP or QCEW project family.');
+  const ddpSlots = qcewVersion || ddp;
+  if (ddpSlots ? ddpKeys.some(key => !Array.isArray(bundle[key])) : ddpKeys.some(key => bundle[key] !== undefined))
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'Retain all four DDP arrays in version 6 and exactly when DDP work is present in earlier project versions.');
+  if (qcewVersion && !ddp && ddpKeys.some(key => bundle[key].length > 0))
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'The version 6 DDP slots must be empty when its original project has no DDP activity.');
+  if (qcew ? !plain(bundle.qcew) : bundle.qcew !== undefined)
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'Retain the complete QCEW original-source and report extension exactly when its project family is present.');
   const identity = { schema: bundle.schema, state: bundle.state, captures: bundle.captures, publicationPlans: bundle.publicationPlans,
     ...(briefing ? { briefings: bundle.briefings } : {}),
-    ...(releases ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}) };
-  if (fredDigest(Buffer.from(canonicalFredJSON(identity))) !== bundle.bundleSha256 ||
+    ...(releases ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}),
+    ...(ddpSlots ? Object.fromEntries(ddpKeys.map(key => [key, bundle[key]])) : {}),
+    ...(qcew ? { qcew: bundle.qcew } : {}) };
+  if (canonicalJSONDigest(identity, { primitive: canonicalFredJSON }) !== bundle.bundleSha256 ||
       bundle.state.schema !== 'stellar-forge.fred-project.v1' || !UUID.test(bundle.state.id ?? '') || bundle.state.pending ||
       !Array.isArray(bundle.state.reviews))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The original completed project bundle identity changed.');
+  if (qcew) validateQcewExtension(bundle.qcew, bundle.state, bundle.captures);
+  if (ddp) validateFredDdpProjectBundle({ state: bundle.state, captures: bundle.captures,
+    ...Object.fromEntries(ddpKeys.map(key => [key, bundle[key]])) });
   const templates = bundle.state.briefingTemplates ?? [], successors = bundle.state.briefingSuccessors ?? [];
   if (!Array.isArray(templates) || !Array.isArray(successors) || recurring && !releases && templates.length === 0 ||
       !recurring && (templates.length > 0 || successors.length > 0))
@@ -978,11 +1360,24 @@ export function inspectFredProjectBundle(bundle) {
       new Set((bundle.briefings ?? []).map(item => item.manifest?.reviewId)).size !== analystReviews.length ||
       (bundle.briefings ?? []).some(item => !analystReviews.some(review => review.id === item.manifest?.reviewId)))
     fail('FRED_CLIENT_BUNDLE_INVALID', 'The complete project export lost an original analyst briefing.');
-  return { schema: bundle.schema, projectId: bundle.state.id, revision: bundle.state.revision,
+  if (releases) inspectFredReleaseBundle(bundle);
+  return fredBundleIdentity(bundle);
+}
+
+/** Describe a graph only after its complete inspector or native receiver succeeds. */
+function fredBundleIdentity(bundle) {
+  const version = Number(bundle.schema.slice(bundle.schema.lastIndexOf('v') + 1)), state = bundle.state;
+  const ddpKeys = ['ddpCrosswalks', 'ddpPackages', 'ddpMigrations', 'ddpReceivings'];
+  const ddp = ddpKeys.some(key => (state[key]?.length ?? 0) > 0), qcew = qcewStatePresent(state);
+  return { schema: bundle.schema, projectId: state.id, revision: state.revision,
     bundleSha256: bundle.bundleSha256, captures: bundle.captures.length, publications: bundle.publicationPlans.length,
-    ...(briefing ? { briefings: bundle.briefings.length } : {}),
-    ...(recurring ? { templates: templates.length, successors: successors.length } : {}),
-    ...(releases ? inspectFredReleaseBundle(bundle) : {}) };
+    ...(version >= 2 ? { briefings: bundle.briefings.length } : {}),
+    ...(version >= 3 ? { templates: (state.briefingTemplates ?? []).length, successors: (state.briefingSuccessors ?? []).length } : {}),
+    ...(version >= 4 ? { releaseCaptures: bundle.releaseCaptures.length, releaseWatches: (state.releaseWatches ?? []).length,
+      releasePlans: bundle.releasePlans.length, releaseCatchUps: (state.releaseCatchUps ?? []).length } : {}),
+    ...(ddp ? Object.fromEntries(ddpKeys.map(key => [key, bundle[key].length])) : {}),
+    ...(qcew ? { qcew: { captures: bundle.qcew.captures.length, profiles: state.qcew.profiles.length,
+      editions: bundle.qcew.editions.length } } : {}) };
 }
 
 /** Publishes the complete original bytes without replacing an existing file. */
@@ -997,25 +1392,42 @@ export async function saveFredFile(client, selection, destination, options = {})
     try { await link(temporary, destination); }
     catch (error) {
       if (error.code !== 'EEXIST') throw error;
-      const existing = await readFredHostFile(destination, FRED_CLIENT_MAX_BYTES, { expectedSha256: result.sha256 });
+      const existing = await readFredHostFile(destination, Math.max(FRED_CLIENT_MAX_BYTES, result.bytes.length), { expectedSha256: result.sha256 });
       if (existing.length !== result.bytes.length) fail('FRED_CLIENT_FILE_CHANGED', 'The existing download has a different original byte count.');
       return { path: destination, name: result.name, type: result.type, bytes: result.bytes.length, sha256: result.sha256,
         projectId: result.projectId, reused: true, ...(result.bundle ? { bundle: result.bundle } : {}),
-        ...(result.releaseCaptureId ? { releaseCaptureId: result.releaseCaptureId } : {}), ...(result.planId ? { planId: result.planId } : {}) };
+        ...(result.releaseCaptureId ? { releaseCaptureId: result.releaseCaptureId } : {}), ...(result.planId ? { planId: result.planId } : {}),
+        ...Object.fromEntries(['crosswalkId', 'packageId', 'migrationId', 'receivingId'].filter(key => result[key] !== undefined).map(key => [key, result[key]])) };
     }
     return { path: destination, name: result.name, type: result.type, bytes: result.bytes.length, sha256: result.sha256,
       projectId: result.projectId, reused: false, ...(result.bundle ? { bundle: result.bundle } : {}),
-        ...(result.releaseCaptureId ? { releaseCaptureId: result.releaseCaptureId } : {}), ...(result.planId ? { planId: result.planId } : {}) };
+        ...(result.releaseCaptureId ? { releaseCaptureId: result.releaseCaptureId } : {}), ...(result.planId ? { planId: result.planId } : {}),
+        ...Object.fromEntries(['crosswalkId', 'packageId', 'migrationId', 'receivingId'].filter(key => result[key] !== undefined).map(key => [key, result[key]])) };
   } finally { await handle?.close(); await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
 }
 
-/** Reopens a retained source bundle through the maintained local project receiver. */
-export async function receiveFredWorkspaceFile(source, directory, { expectedSha256 } = {}) {
-  const bytes = await readFredHostFile(source, FRED_CLIENT_MAX_BYTES, { expectedSha256 });
+/** Read one complete original project file and preserve its selected version capacity. */
+async function readFredWorkspaceBundleFile(source, { expectedSha256 } = {}) {
+  let bytes = await readFredHostFile(source, FRED_DDP_MAX_PROJECT_BYTES, { expectedSha256 });
+  const sourceBytes = bytes.length, sourceSha256 = fredDigest(bytes);
   let bundle;
   try { bundle = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { fail('FRED_CLIENT_BUNDLE_INVALID', 'The original project file is not complete JSON.'); }
-  const identity = inspectFredProjectBundle(bundle);
+  bytes = null;
+  if (!['stellar-forge.fred-project-bundle.v5', 'stellar-forge.fred-project-bundle.v6'].includes(bundle?.schema) && sourceBytes > FRED_CLIENT_MAX_BYTES)
+    fail('FRED_CLIENT_BUNDLE_INVALID', 'The original version 1–4 project retains its 256 MiB file capacity.');
+  return { bundle, sourceBytes, sourceSha256 };
+}
+
+/** Inspect the complete original graph without creating a receiving directory. */
+export async function inspectFredWorkspaceFile(source, options = {}) {
+  const { bundle, sourceBytes, sourceSha256 } = await readFredWorkspaceBundleFile(source, options);
+  return { ...inspectFredProjectBundle(bundle), sourceBytes, sourceSha256 };
+}
+
+/** Reopens a retained source bundle through the maintained local project receiver. */
+export async function receiveFredWorkspaceFile(source, directory, options = {}) {
+  const { bundle, sourceBytes, sourceSha256 } = await readFredWorkspaceBundleFile(source, options);
   const { receiveFredProject } = await import('../../stellar/scf-starforge-20261009/sf30-seller-sdk/fred/project.mjs');
   const result = await receiveFredProject({ directory: resolve(directory), bundle });
-  return { ...identity, sourceBytes: bytes.length, sourceSha256: fredDigest(bytes), received: result };
+  return { ...fredBundleIdentity(bundle), sourceBytes, sourceSha256, received: result };
 }

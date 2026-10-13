@@ -1,5 +1,6 @@
 // MIT. Xero document handovers share the original accounting lease and request log.
 import {randomUUID} from 'node:crypto';
+import {XeroCashCommissioningWorkspace} from './cash-workspace.mjs';
 import {constants} from 'node:fs';
 import {open,mkdir,lstat} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -68,6 +69,7 @@ export class XeroReceivablesWorkspace {
       'XERO_RECEIVABLES_OWNER_REQUIRED','Use the original initialized receivables controller.');
     this.receivables=receivables;
     this.workspace=receivables.workspace;
+    this.cashCommissioning=new XeroCashCommissioningWorkspace(this);
   }
   data() {
     this.workspace.lease.assertHeld();
@@ -224,7 +226,7 @@ export class XeroReceivablesWorkspace {
       profileVersion:record.selection.profileVersion,organisation:record.organisation,asOf:record.selection.asOf,
       parentId:record.selection.parentId??null,documentCount:record.documents.length,state,resolvedCount,
       unresolvedCount:record.documents.length-resolvedCount,correctableCount:resolutions.filter(row=>row.canCorrect).length,
-      totals:clone(record.totals)};
+      totals:clone(record.totals),cashCycleCount:this.cashCommissioning.data().filter(row=>row.packageIds.includes(record.id)).length};
   }
   _relatedImports(record,index=this._receivingIndex()) {
     const keys=new Set(record.documents.map(row=>sourceKey({documentId:row.id,sourceSha256:row.sourceSha256})));
@@ -242,7 +244,8 @@ export class XeroReceivablesWorkspace {
     return {...this._summary(record,index),schema:XERO_PACKAGE_SCHEMA,selection:clone(record.selection),
       documents:clone(record.documents),files:clone(record.files),profile:clone(record.profile),
       sourceFingerprint:record.sourceFingerprint,previewSha256:record.previewSha256,
-      imports,resolutions:record.documents.map(doc=>this._resolution(record,doc,index)),history:clone(record.history),family};
+      imports,resolutions:record.documents.map(doc=>this._resolution(record,doc,index)),history:clone(record.history),family,
+      cashCycles:this.cashCommissioning.summaries(record.id)};
   }
   async state(query={}) {
     return this.workspace.serial(async()=>{
@@ -427,6 +430,12 @@ export class XeroReceivablesWorkspace {
     need(item,'XERO_FILE_NOT_FOUND','Choose an original file listed in this package or one of its returned results.',404);
     return this._retainedFile(item,name);
   }
+  async cashPreview(id,value) {return this.cashCommissioning.preview(id,value);}
+  async cashCapture(id,value) {return this.cashCommissioning.capture(id,value);}
+  async cashCycles(id) {return this.cashCommissioning.cycles(id);}
+  async cashCycle(id,cycleId) {return this.cashCommissioning.detail(id,cycleId);}
+  async cashFile(id,cycleId,name) {return this.cashCommissioning.file(id,cycleId,name);}
+  async cashExport(id,cycleId) {return this.cashCommissioning.export(id,cycleId);}
   async file(id,name) {return this.workspace.serial(async()=>this._file(id,name));}
   async export(id) {
     return this.workspace.serial(async()=>{

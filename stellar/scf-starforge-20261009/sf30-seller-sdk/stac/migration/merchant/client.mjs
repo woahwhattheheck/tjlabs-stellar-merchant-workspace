@@ -22,11 +22,11 @@ const NATIVE_COMMANDS = new Set(['state','records','document','draft','source-ro
   'capture','receive-capture','save-plan','review-plan','compare-captures','build-edition','build-projects',
   'export','receive','cartography.inventory','cartography.preview','cartography.operation',
   'cartography.publication','cartography.download','cartography.save-plan','cartography.publish',
-  'cartography.reopen']);
+  'cartography.reopen','mapping-register','workbook-propose']);
 const READ_COMMANDS = new Set(['state','records','document','draft','source-rows','issues',
   'comparison-rows','history','operation','files','native-info','qgis-info','verify','native-reopen',
   'cartography.inventory','cartography.preview','cartography.operation','cartography.publication',
-  'cartography.download','cartography.reopen']);
+  'cartography.download','cartography.reopen','mapping-register','workbook-propose']);
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 export const migrationFailure = (code, message, details) =>
   Object.assign(new Error(message), {code:'MIGRATION_' + code, ...(details === undefined ? {} : {details})});
@@ -635,7 +635,7 @@ export class MerchantMigrationWorkspaces {
       return {workspace:alias,exportId:args.exportId,...result};
     }
     let command=action.startsWith('cartography_')?'cartography.'+action.slice('cartography_'.length).replaceAll('_','-'):action.replaceAll('_','-');
-    const {workspace,wait,input,expectedSha256,destination,planJson,specJson,...payload}=args;
+    const {workspace,wait,input,expectedSha256,destination,planJson,specJson,sourceJson,workbookSourceJson,...payload}=args;
     if(action==='capture'){
       const original=this.#input(alias,input,['selection']);
       need(original.sha256===expectedSha256,'INPUT_CHANGED','Use the original selected-source SHA-256.');
@@ -650,7 +650,9 @@ export class MerchantMigrationWorkspaces {
     if(action==='save_plan'){
       need(Buffer.byteLength(planJson)<=MAX_MIGRATION_REQUEST_BYTES,'REQUEST_TOO_LARGE','Keep the complete reviewed mapping within the native request limit.');
       payload.plan=parseExactJSON(planJson);payload.originalBase64=Buffer.from(planJson).toString('base64');
+      if(workbookSourceJson!==undefined)payload.workbookSource=parseExactJSON(workbookSourceJson);
     }
+    if(action==='workbook_propose')payload.source=parseExactJSON(sourceJson);
     if(action==='cartography_preview'||action==='cartography_save_plan')payload.spec=parseExactJSON(specJson);
     if(action==='receive'){
       const original=this.#input(alias,input,['handover']),target=entry.destinations[destination];

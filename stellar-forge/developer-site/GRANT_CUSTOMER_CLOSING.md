@@ -2,6 +2,8 @@
 
 The existing reviewer page now carries the full customer service continuation beside its original retained-purchase opening. The application and product-and-finance companion explain the same installed Customer statements workflow: setup, original captures, explicit service-period selection, native reviews, saved cycle, correction or withdrawal, and a complete customer handover.
 
+The [complete presentation and acceptance guide](../../operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md) retains the eight-minute HPD demonstration and its customer discussion, followed by this service continuation. Use that same guide when presenting the combined operation.
+
 ## Open the customer's existing application
 
 Use the merchant receivables installation and its existing **Applications → Customer statements** entry. Select the original private closing directory, merchant MCP address, accounting workspace alias and operator. Applications retains the selected command and returned private opening address.

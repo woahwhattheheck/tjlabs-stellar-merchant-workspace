@@ -2,6 +2,8 @@
 
 Receive an original remittance CSV into the existing merchant receivables desk. The workflow matches exact saved customer references and invoice numbers, reuses an existing matching receipt or records an operator-entered receipt, previews every allocation, and saves the complete batch through the original accounting writer.
 
+[Native MCP receiving](../../../../stellar-forge/mcp-merchant-operator/ACCOUNTING_REMITTANCES.md) provides the same complete workflow through configured source files, the typed accounting client, durable operation preparation and original source downloads.
+
 ## Open and receive
 
 Start the maintained receivables application, then choose **Remittance receiving**:

@@ -7,6 +7,36 @@ const choice=values=>values.map(value=>[value,value]);
 const label=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
 const maximumSource=8*1024*1024;
 const pageSize=50;
+const bankFormat=input=>input?.sourceFormat==='OFX'||input?.sourceFormat==='MT940';
+const scaleText=value=>Object.entries(value||{USD:2}).map(([currency,places])=>currency+': '+places).join('\n');
+export function statementCurrencyScales(value){
+  const rows=String(value||'').split(/[,;\n]/).map(row=>row.trim()).filter(Boolean);
+  if(!rows.length||rows.length>32)throw new Error('Declare one to 32 original currency precisions, such as USD: 2.');
+  const scales={};
+  for(const row of rows){const match=/^([A-Z]{3})\s*[:=]\s*([0-6])$/.exec(row);
+    if(!match)throw new Error('Use uppercase currency codes and 0 to 6 decimal places, such as EUR: 2.');
+    if(Object.hasOwn(scales,match[1]))throw new Error('Declare each source currency precision once.');
+    scales[match[1]]=Number(match[2]);
+  }
+  return scales;
+}
+const editingInput=value=>{const result=clone(value);if(result.decisions===undefined)result.decisions=[];return result;};
+const nativeDefaults=()=>({profile:'TEXT_BODY',encoding:'UTF-8',debitCreditProfile:'CD_ONLY',yearWindowStart:1970,dateBasis:'VALUE_DATE',currencyScales:{USD:2}});
+function usableInspection(value,inputs,caseId){
+  return !!value&&bankFormat(inputs)&&value.schema==='stellar-forge.sf47-bank-statements.v1'&&value.caseId===caseId&&
+    value.source?.sourceFormat===inputs.sourceFormat&&value.source?.filename===inputs.source?.filename&&
+    /^[a-f0-9]{64}$/.test(value.inspectionSha256||'')&&Array.isArray(value.statements)&&value.statements.every(row=>
+      !!row&&/^[a-f0-9]{64}$/.test(row.id||'')&&typeof row.currency==='string'&&typeof row.label==='string'&&
+      typeof row.accountReference==='string'&&typeof row.cashEligible==='boolean'&&Number.isInteger(row.rowCount)&&row.rowCount>=0&&
+      Number.isInteger(row.pendingCount)&&row.pendingCount>=0&&Array.isArray(row.findings)&&row.findings.every(item=>
+        !!item&&typeof item.message==='string'&&['ERROR','REVIEW','INFO'].includes(item.severity))&&
+      (row.balanceSnapshots===undefined||Array.isArray(row.balanceSnapshots)));
+}
+function draftInput(value,complete=false){
+  if(!value||typeof value!=='object'||(value.decisions!==undefined&&!Array.isArray(value.decisions)))return false;
+  if(bankFormat(value))return (value.sourceFormat!=='MT940'||!!value.statementOptions&&typeof value.statementOptions==='object')&&(!complete||typeof value.statementId==='string'&&!!value.statementId);
+  return (!value.sourceFormat||value.sourceFormat==='CSV')&&!!value.format&&!!value.columns;
+}
 const statuses={NEW:'New cash movement',EXISTING:'Already recorded',EXCLUDED:'Excluded',CONFLICT:'Needs correction'};
 const definitive=error=>[400,409,413,415,422].includes(error?.status)&&typeof error?.code==='string';
 
@@ -92,13 +122,15 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   const defaults=()=>({source:null,accountId:'',accountLabel:'',currency:'USD',format:{delimiter:',',decimalMark:'.',groupMark:'',dateFormat:'YYYY-MM-DD',amountMode:'SIGNED',positiveDirection:'IN'},columns:{date:'',reference:'',description:'',amount:'',debit:'',credit:''},defaultCategory:'OTHER',decisions:[]});
-  const values={inputs:defaults(),headers:[],preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',pending:null,accepted:null,inflight:null,error:'',notice:'',allocationRow:null,allocationDraft:[]};
+  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',pending:null,accepted:null,inflight:null,error:'',notice:'',allocationRow:null,allocationDraft:[]};
   for(const [key,value] of Object.entries(values))if(!Object.hasOwn(session,key))session[key]=value;
+  session.currentCaseVersion=current.program.version;
   const source=()=>session.inputs.source;
+  const native=()=>bankFormat(session.inputs);
   const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted;
   const editable=()=>!locked()&&caseValue.program.state==='OPEN';
   const rowDecision=number=>session.inputs.decisions.find(row=>row.rowNumber===number);
-  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),originalInputHandoff:clone(session.originalInputHandoff||null)};}
+  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),originalInputHandoff:clone(session.originalInputHandoff||null)};}
   async function persist(critical=false){
     const value=snapshot();
     persistQueue=persistQueue.catch(()=>{}).then(()=>storeDraft(current.program.id,value));
@@ -120,7 +152,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(importButton)importButton.disabled=!editable()||session.dirty||!session.confirmed||!session.preview?.canImport;
     const warning=$('[data-statement-stale]');if(warning)warning.hidden=!session.dirty;
   }
-  function changed(){session.dirty=true;session.confirmed=false;session.error='';schedulePersist();controls();}
+  function changed(){session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();controls();}
   function setDecision(number,patch){
     let decision=rowDecision(number);
     if(!decision){decision={rowNumber:number,action:'IMPORT'};session.inputs.decisions.push(decision);}
@@ -133,6 +165,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     finally{busy=false;void persist();if(available())render();}
   }
   function headersFromSource(guess=false){
+    if(native()){session.headers=[];return;}
     session.headers=source()?statementHeaders(sourceText(source().contentBase64),session.inputs.format.delimiter):[];
     const aliases={date:['date','transactiondate','posteddate','bookingdate'],reference:['transactionid','reference','id','fitid','transactionreference'],description:['description','memo','details','narrative'],amount:['amount','transactionamount'],debit:['debit','debits','withdrawal','withdrawals'],credit:['credit','credits','deposit','deposits'],currency:['currency','ccy'],usdValue:['usdvalue','amountusd']};
     const names=session.headers.map(name=>[name,name.toLowerCase().replace(/[^a-z0-9]/g,'')]);
@@ -140,40 +173,106 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(guess||!session.headers.includes(session.inputs.columns[key]))session.inputs.columns[key]=names.find(([,normal])=>aliases[key].includes(normal))?.[0]||'';
     }
   }
+  function resetInterpretation(){
+    session.inputs.decisions=[];session.preview=null;session.inspection=null;session.page=0;
+    session.allocationRow=null;session.allocationDraft=[];delete session.inputs.statementId;
+    delete session.inputs.openingBalance;delete session.inputs.closingBalance;changed();
+  }
+  function chooseFormat(format){
+    if(!['CSV','OFX','MT940'].includes(format))throw new Error('Choose CSV, OFX / QFX or MT940.');
+    const input=session.inputs;input.sourceFormat=format;
+    if(format==='CSV'){input.format=clone(defaults().format);input.columns=clone(defaults().columns);delete input.statementOptions;}
+    else {delete input.format;delete input.columns;if(format==='MT940'){input.statementOptions=nativeDefaults();session.nativeScalesText=scaleText(input.statementOptions.currencyScales);}else delete input.statementOptions;}
+    session.optionsError='';resetInterpretation();headersFromSource(true);
+    session.notice=native()?'Inspect the original file and select its source account before previewing.':'Review the original CSV columns and number format.';
+  }
   async function chooseFile(file){
     if(!file)return;
-    if(file.size===0||file.size>maximumSource)throw new Error('Choose a nonempty UTF-8 CSV statement up to 8 MiB.');
+    if(file.size===0||file.size>maximumSource)throw new Error('Choose a nonempty original statement file up to 8 MiB.');
     const buffer=await file.arrayBuffer();if(!available())return;
-    new TextDecoder('utf-8',{fatal:true}).decode(buffer);
+    if(!native())new TextDecoder('utf-8',{fatal:true}).decode(buffer);
     session.inputs.source={filename:file.name,contentBase64:base64(buffer),sourceUrl:'',observedAt:new Date().toISOString()};
-    session.inputs.decisions=[];session.preview=null;session.page=0;session.dirty=true;session.confirmed=false;headersFromSource(true);
-    session.notice='Read the source file. Review its account, currency and column mapping before previewing.';
+    resetInterpretation();headersFromSource(true);
+    session.notice=native()?'Read the original bytes. Inspect the native account sections and format choices.':'Read the source file. Review its account, currency and column mapping before previewing.';
     await persist();
   }
   function captureMapping(form){
-    const data=new FormData(form),input=session.inputs;
-    for(const name of ['accountId','accountLabel','currency','defaultCategory'])input[name]=String(data.get(name)||'').trim();
+    const data=new FormData(form),input=session.inputs,oldOptions=JSON.stringify(input.statementOptions);
+    for(const name of ['accountId','accountLabel','currency','defaultCategory'])if(data.has(name))input[name]=String(data.get(name)||'').trim();
     input.currency=input.currency.toUpperCase();
-    for(const name of ['openingBalance','closingBalance','valuationNote']){const value=String(data.get(name)||'').trim();if(value)input[name]=value;else delete input[name];}
-    for(const name of ['delimiter','decimalMark','groupMark','dateFormat','amountMode','positiveDirection'])input.format[name]=String(data.get('format.'+name)??input.format[name]);
-    for(const key of ['date','reference','description','amount','debit','credit','currency','usdValue']){const value=data.get('columns.'+key);if(value!==null)input.columns[key]=String(value);}
-    if(input.source)input.source.sourceUrl=String(data.get('sourceUrl')||'').trim();
+    for(const name of ['openingBalance','closingBalance','valuationNote','sourceReviewNote'])if(data.has(name)){const value=String(data.get(name)||'').trim();if(value)input[name]=value;else delete input[name];}
+    if(!native()){
+      for(const name of ['delimiter','decimalMark','groupMark','dateFormat','amountMode','positiveDirection'])input.format[name]=String(data.get('format.'+name)??input.format[name]);
+      for(const key of ['date','reference','description','amount','debit','credit','currency','usdValue']){const value=data.get('columns.'+key);if(value!==null)input.columns[key]=String(value);}
+    }else if(input.sourceFormat==='MT940'){
+      const options=input.statementOptions||nativeDefaults();
+      for(const key of ['profile','encoding','debitCreditProfile'])if(data.has('native.'+key))options[key]=String(data.get('native.'+key));
+      if(data.has('native.yearWindowStart'))options.yearWindowStart=Number(data.get('native.yearWindowStart'));
+      if(data.has('native.currencyScales'))session.nativeScalesText=String(data.get('native.currencyScales'));
+      try{options.currencyScales=statementCurrencyScales(session.nativeScalesText);session.optionsError='';}catch(error){options.currencyScales={};session.optionsError=error.message;}
+      options.dateBasis='VALUE_DATE';input.statementOptions=options;
+      if(oldOptions!==JSON.stringify(options)){session.inspection=null;delete input.statementId;input.decisions=[];session.preview=null;delete input.openingBalance;delete input.closingBalance;}
+    }
+    if(input.source&&data.has('sourceUrl'))input.source.sourceUrl=String(data.get('sourceUrl')||'').trim();
     changed();
+  }
+  function inspectionInputs(){
+    if(!native()||!source())throw new Error('Select an original OFX / QFX or MT940 file.');
+    if(session.optionsError)throw new Error(session.optionsError);
+    const input={sourceFormat:session.inputs.sourceFormat,source:clone(source())};
+    if(input.sourceFormat==='MT940'){
+      const options=clone(session.inputs.statementOptions||nativeDefaults());
+      options.currencyScales=statementCurrencyScales(session.nativeScalesText);
+      if(!Number.isInteger(options.yearWindowStart)||options.yearWindowStart<1900||options.yearWindowStart>2000)throw new Error('Choose a century window start from 1900 through 2000.');
+      input.statementOptions=options;
+    }
+    return input;
+  }
+  async function inspect(){
+    const inputs=inspectionInputs(),expectedVersion=caseValue.program.version,revision=session.editRevision;
+    const result=await saveApi(prefix+'/statement-inspect',{expectedVersion,inputs});
+    if(!usableInspection(result,inputs,current.program.id)||result.expectedVersion!==expectedVersion)throw new Error('The original bank inspection differs from this case, source or account selection.');
+    if(session.editRevision!==revision||session.currentCaseVersion!==expectedVersion)return;
+    session.inspection=result;session.preview=null;session.dirty=true;session.confirmed=false;
+    if(!result.statements.some(row=>row.id===session.inputs.statementId&&row.cashEligible))delete session.inputs.statementId;
+    session.notice='Inspected '+result.statements.length+' original account and currency sections. Select the account to reconcile.';
+    await persist();
+  }
+  function selectAccount(id){
+    const inspection=session.inspection,row=inspection?.statements.find(value=>value.id===id);
+    resetInterpretation();session.inspection=inspection;
+    if(!row){session.notice='Select an inspected original account.';return;}
+    // Preserve the original inspection while changing only its selected section.
+    if(!row.cashEligible)throw new Error('This original credit account belongs in Supplier accounts.');
+    session.inputs.statementId=row.id;session.inputs.currency=row.currency;
+    if(row.openingBalance?.amount!==undefined&&row.closingBalance?.amount!==undefined){
+      session.inputs.openingBalance=row.openingBalance.amount;session.inputs.closingBalance=row.closingBalance.amount;
+    }
+    session.notice='Selected '+row.label+'. Review its account alias, movements and original balances.';
   }
   function reviewedInputs(){
     const input=clone(session.inputs);
-    if(!input.source)throw new Error('Choose the original statement CSV.');
+    if(!input.source)throw new Error('Choose the original statement file.');
     if(!input.accountId||!input.accountLabel)throw new Error('Enter a stable account key and a readable account label.');
     if(!input.currency)throw new Error('Enter the statement’s currency or asset symbol.');
-    if(!input.columns.date||!input.columns.reference)throw new Error('Map the date and original transaction reference columns.');
-    if(input.format.amountMode==='SIGNED'&&!input.columns.amount)throw new Error('Map the signed amount column.');
-    if(input.format.amountMode==='DEBIT_CREDIT'&&(!input.columns.debit||!input.columns.credit))throw new Error('Map both debit and credit columns.');
+    if(bankFormat(input)){
+      const inspected=session.inspection?.statements.find(row=>row.id===input.statementId&&row.cashEligible);
+      if(!inspected)throw new Error('Inspect the original file and select a cash account before previewing.');
+      if(inspected.currency!==input.currency)throw new Error('The selected account currency changed. Select its original source account again.');
+      const original=inspectionInputs();if(original.statementOptions)input.statementOptions=original.statementOptions;else delete input.statementOptions;
+      delete input.format;delete input.columns;
+    }else{
+      if(!input.columns.date||!input.columns.reference)throw new Error('Map the date and original transaction reference columns.');
+      if(input.format.amountMode==='SIGNED'&&!input.columns.amount)throw new Error('Map the signed amount column.');
+      if(input.format.amountMode==='DEBIT_CREDIT'&&(!input.columns.debit||!input.columns.credit))throw new Error('Map both debit and credit columns.');
+    }
     return input;
   }
   async function preview(){
-    const inputs=reviewedInputs(),expectedVersion=caseValue.program.version;
+    const inputs=reviewedInputs(),expectedVersion=caseValue.program.version,revision=session.editRevision;
     const result=await saveApi(prefix+'/statement-preview',{expectedVersion,inputs});
     if(result.caseId!==current.program.id||result.expectedVersion!==expectedVersion||result.schema!=='stellar-forge.sf47-statements.v1'||!Array.isArray(result.rows))throw new Error('The preview belongs to another case or version. Refresh the case and preview again.');
+    if(session.editRevision!==revision||session.currentCaseVersion!==expectedVersion)return;
     session.preview=result;session.dirty=false;session.confirmed=false;session.page=0;session.allocationRow=null;session.allocationDraft=[];
     session.notice='Reviewed '+result.rows.length+' source rows against the current cash records.';
     await persist();
@@ -181,7 +280,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   async function refresh(){
     const next=await saveApi(prefix);
     if(next.program.id!==current.program.id)throw new Error('The refreshed case has another identity.');
-    caseValue=next;
+    caseValue=next;session.currentCaseVersion=next.program.version;
     if(session.preview?.expectedVersion!==next.program.version){session.dirty=true;session.confirmed=false;}
     return next;
   }
@@ -226,35 +325,73 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     await sendPending();
   }
 
+  function nativeSourcePage(){
+    const input=session.inputs,inspection=session.inspection,selected=inspection?.statements.find(row=>row.id===input.statementId);
+    let html='';
+    if(input.sourceFormat==='MT940'){
+      const options=input.statementOptions||nativeDefaults();
+      html+='<h4>2. Choose the original MT940 interpretation</h4><div class="statement-fields">'+
+        field('Original transport','native.profile',options.profile,{options:[['TEXT_BODY','Statement text body'],['FIN_ENVELOPE','FIN envelope']]})+
+        field('Original encoding','native.encoding',options.encoding,{options:choice(['ASCII','UTF-8','ISO-8859-1'])})+
+        field('Debit and reversal marks','native.debitCreditProfile',options.debitCreditProfile,{options:[['CD_ONLY','C / D'],['CD_REVERSALS','C / D with RC / RD reversals']]})+
+        field('Century window starts','native.yearWindowStart',options.yearWindowStart,{type:'number',attrs:'min="1900" max="2000" step="1"',help:'Resolve original two-digit years within this explicit 100-year window.'})+
+        field('Currency decimal places','native.currencyScales',session.nativeScalesText,{area:true,help:'One original precision per currency, such as USD: 2 or JPY: 0. Separate entries with lines or commas.'})+
+        '<p class="statement-native-note">The original full value date supplies each cash date. Entry month and day remain separate source fields.</p></div>';
+    }else html+='<h4>2. Inspect the original OFX / QFX accounts</h4><p>The native reader uses the file’s original declared encoding, FITID identities and posted dates.</p>';
+    html+='<div class="statement-actions">'+button('Inspect original accounts','inspect',!source())+'</div>';
+    if(!inspection)return html+'<p class="statement-empty">Inspect the original file to select an account and review its source balances.</p>';
+    html+=field('Original account and currency','statementId',input.statementId||'',{wide:true,options:[['','Choose an original cash account'],...inspection.statements.filter(row=>row.cashEligible).map(row=>[row.id,row.label])]});
+    html+=table(['Original account','Currency / dates','Posted / pending','Original balances','Use'],inspection.statements.map(row=>[
+      '<strong>'+esc(row.label)+'</strong><small>'+esc(row.accountReference)+'</small>',
+      esc(row.currency)+'<small>'+esc(row.from||'—')+' → '+esc(row.until||'—')+'</small>',
+      esc(row.rowCount)+' posted<small>'+esc(row.pendingCount)+' pending observations</small>',
+      (row.openingBalance?'Opening '+amount(row.openingBalance.amount,row.currency)+'<small>'+esc(row.openingBalance.date)+'</small>':'Opening not supplied')+
+        (row.closingBalance?'<small>Closing '+amount(row.closingBalance.amount,row.currency)+' · '+esc(row.closingBalance.date)+'</small>':''),
+      row.cashEligible?'Cash observations':'Supplier accounts'
+    ]));
+    if(selected){
+      html+='<div class="statement-native-selection"><strong>Selected original account:</strong> '+esc(selected.label)+
+        '<p>Review '+esc(selected.rowCount)+' posted movements. '+esc(selected.pendingCount)+' pending observations remain in the original report.</p>'+
+        (selected.findings?.length?'<ul>'+selected.findings.map(item=>'<li><strong>'+esc(label(item.severity))+':</strong> '+esc(item.message)+'</li>').join('')+'</ul>':'')+
+        (selected.balanceSnapshots?.length?detail('Original dated balance snapshots',selected.balanceSnapshots):'')+'</div>';
+    }
+    return html;
+  }
   function sourcePage(){
-    const input=session.inputs,format=input.format,columns=input.columns,options=[['','Select a column'],...session.headers.map(name=>[name,name])];
+    const input=session.inputs,isNative=native(),format=input.format||defaults().format,columns=input.columns||{},options=[['','Select a column'],...session.headers.map(name=>[name,name])];
     const optional=[['','Not mapped'],...session.headers.map(name=>[name,name])];
     const mapping=(text,key,required=true)=>field(text,'columns.'+key,columns[key]||'',{options:required?options:optional,required});
+    const accept=input.sourceFormat==='OFX'?'.ofx,.qfx,application/x-ofx':input.sourceFormat==='MT940'?'.mt940,.sta,.stm,.txt,text/plain':'.csv,.tsv,text/csv,text/tab-separated-values';
+    const selected=session.inspection?.statements.find(row=>row.id===input.statementId&&row.cashEligible);
     return '<section class="statement-panel"><h4>1. Choose the statement and account</h4>'+
-      '<label>Original statement CSV<input type="file" data-statement-file accept=".csv,.tsv,text/csv,text/tab-separated-values"><small>UTF-8, including a UTF-8 byte-order mark. The original bytes are retained when imported.</small></label>'+
-      (source()?'<p class="statement-file"><strong>'+esc(source().filename)+'</strong> · '+esc(session.headers.length)+' columns loaded.</p>':'<p class="statement-empty">Choose a statement to map its columns.</p>')+
       '<form data-statement-mapping><div class="statement-fields">'+
-      field('Account key','accountId',input.accountId,{required:true,help:'A stable, nonsecret name for this account. Reuse it for overlapping statements; use a different key for each account.'})+
+      field('Original statement format','sourceFormat',input.sourceFormat||'CSV',{options:[['CSV','CSV / delimited text'],['OFX','OFX / QFX'],['MT940','MT940']]})+
+      '<label class="statement-wide">Original statement file<input type="file" data-statement-file accept="'+accept+'"><small>'+esc(isNative?'The original bank bytes and complete native reader report are retained when imported.':'UTF-8, including a UTF-8 byte-order mark. The original bytes are retained when imported.')+'</small></label>'+
+      (source()?'<p class="statement-file statement-wide"><strong>'+esc(source().filename)+'</strong> · '+esc(isNative?'Original bank source':session.headers.length+' columns loaded')+'.</p>':'<p class="statement-empty statement-wide">Choose the original statement file.</p>')+
+      field('Account key','accountId',input.accountId,{required:true,help:'A stable, nonsecret name for this account. Reuse it for overlapping statements and use a different key for each account.'})+
       field('Account label','accountLabel',input.accountLabel,{required:true,help:'A readable label, such as Project operating account.'})+
-      field('Statement currency / asset','currency',input.currency,{required:true,help:'One currency per file. Quantities remain in this original currency.'})+
+      field('Statement currency / asset','currency',input.currency,{required:true,attrs:isNative?'readonly':'',help:isNative?'Selected from the original account section below.':'One currency per file. Quantities remain in this original currency.'})+
       field('Original source URL','sourceUrl',source()?.sourceUrl||'',{wide:true,help:'Optional public or authorized source location, without credentials in the URL.'})+
-      '</div><h4>2. Map the source format</h4><div class="statement-fields">'+
+      '</div>'+
+      (isNative?nativeSourcePage():'<h4>2. Map the source format</h4><div class="statement-fields">'+
       field('Column separator','format.delimiter',format.delimiter,{options:[[',','Comma'],[';','Semicolon'],['\t','Tab'],['|','Pipe']]})+
       field('Decimal mark','format.decimalMark',format.decimalMark,{options:[['.','Period (1234.56)'],[',','Comma (1234,56)']]})+
-      field('Grouping mark','format.groupMark',format.groupMark,{options:[['','None'],[',','Comma'],['.','Period'],[' ','Space'],["'","Apostrophe"]]})+
+      field('Grouping mark','format.groupMark',format.groupMark,{options:[['','None'],[',','Comma'],['.','Period'],[' ','Space'],['\u00a0','Nonbreaking space'],["'","Apostrophe"]]})+
       field('Date format','format.dateFormat',format.dateFormat,{options:choice(['YYYY-MM-DD','MM/DD/YYYY','DD/MM/YYYY','YYYY/MM/DD'])})+
       field('Amount columns','format.amountMode',format.amountMode,{options:[['SIGNED','One signed amount'],['DEBIT_CREDIT','Separate debit and credit']]})+
       field('Positive signed amounts','format.positiveDirection',format.positiveDirection,{options:[['IN','Money received'],['OUT','Money paid']]})+
-      mapping('Transaction date','date')+mapping('Original transaction reference','reference')+
-      mapping('Description','description',false)+
+      mapping('Transaction date','date')+mapping('Original transaction reference','reference')+mapping('Description','description',false)+
       (format.amountMode==='SIGNED'?mapping('Signed amount','amount'):mapping('Debit amount','debit')+mapping('Credit amount','credit'))+
-      mapping('Currency column','currency',false)+
-      field('Default cash category','defaultCategory',input.defaultCategory,{options:categories.map(value=>[value,label(value)])})+
-      (input.currency!=='USD'?mapping('Recorded USD value','usdValue',false)+field('USD valuation basis','valuationNote',input.valuationNote||'',{wide:true,area:true,help:'Optional explicit valuation from the source. The importer does not calculate an exchange rate.'}):'')+
+      mapping('Currency column','currency',false)+(input.currency!=='USD'?mapping('Recorded USD value','usdValue',false):'')+'</div>')+
+      '<div class="statement-fields">'+field('Default cash category','defaultCategory',input.defaultCategory,{options:categories.map(value=>[value,label(value)])})+
+      (input.currency!=='USD'?field('USD valuation basis','valuationNote',input.valuationNote||'',{wide:true,area:true,help:'Retain an explicit source valuation when one is supplied. Original bank currency amounts remain separate.'}):'')+
+      (isNative?field('Source review note','sourceReviewNote',input.sourceReviewNote||'',{wide:true,area:true,attrs:'maxlength="4000"',help:'Retain the original correction or source interpretation decision. Row-specific reasons remain with each movement.'}):'')+
       '</div><h4>3. Reconcile the statement balances</h4><div class="statement-fields">'+
-      field('Opening balance','openingBalance',input.openingBalance||'',{attrs:'inputmode="decimal"',help:'Optional signed amount in the statement currency and selected number format.'})+
-      field('Closing balance','closingBalance',input.closingBalance||'',{attrs:'inputmode="decimal"',help:'Provide both balances to compare the complete statement movement.'})+
-      '</div><div class="statement-actions">'+button('Preview statement','preview',!source(),'class="statement-primary"')+button('Download recovery copy','draft-export',!source(),'data-statement-recovery="true"')+button('Open recovery copy','draft-import',!!(session.pending||session.accepted),'data-statement-recovery="true"')+'</div></form></section>';
+      field('Opening balance','openingBalance',input.openingBalance||'',{attrs:'inputmode="decimal"',help:isNative?'Original signed amount, with a period decimal mark and no grouping.':'Optional signed amount in the statement currency and selected number format.'})+
+      field('Closing balance','closingBalance',input.closingBalance||'',{attrs:'inputmode="decimal"',help:'Provide both balances to compare the complete supplied movement.'})+
+      '</div>'+
+      (isNative?'<p class="statement-native-note">Original snapshots keep their own dates. Pending observations stay in the report. OFX totals describe the supplied posted occurrences, including replacements or repeated occurrences.</p>':'')+
+      '<div class="statement-actions">'+button('Preview statement','preview',!source()||(isNative&&!selected),'class="statement-primary"')+button('Download recovery copy','draft-export',!source(),'data-statement-recovery="true"')+button('Open recovery copy','draft-import',!!(session.pending||session.accepted),'data-statement-recovery="true"')+'</div></form></section>';
   }
   function rowState(row){return {rowNumber:row.rowNumber,action:row.action||'IMPORT',category:row.category,tranche:row.tranche,allocations:row.allocations||[],...rowDecision(row.rowNumber)};}
   function rowTable(){
@@ -270,7 +407,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       (rows.length?table(['Source row / reference','Date / description','Movement','Cash classification','Review / action'],rows.map(row=>{
         const decision=rowState(row),unchanged=row.status==='EXISTING',category=decision.category||row.category;
         return [
-          '<strong>Row '+esc(row.rowNumber)+'</strong><small>'+esc(row.reference||'Missing reference')+'</small>',
+          '<strong>Row '+esc(row.rowNumber)+'</strong><small>'+esc(row.reference||'Missing reference')+'</small>'+(row.sourceLine!==undefined?'<small>Original source line '+esc(row.sourceLine)+'</small>':'')+(row.providerReference?'<small>Provider reference '+esc(row.providerReference)+'</small>':''),
           esc(row.date||'—')+'<small>'+esc(row.description||'')+'</small>',
           esc(label(row.direction))+' '+amount(row.amount,row.currency)+(row.currency!=='USD'?'<small>Recorded value: '+amount(row.usdValue,'USD')+'</small>':''),
           '<label>Category<select data-row-category="'+row.rowNumber+'"'+(unchanged?' disabled data-statement-fixed="true"':'')+'>'+categories.map(value=>'<option value="'+value+'"'+(category===value?' selected':'')+'>'+esc(label(value))+'</option>').join('')+'</select></label>'+
@@ -280,7 +417,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
           (row.problems||[]).map(problem=>'<small>'+esc(problem)+'</small>').join('')+
           '<label>Use row<select data-row-action="'+row.rowNumber+'"><option value="IMPORT"'+(decision.action!=='EXCLUDE'?' selected':'')+'>Include in review</option><option value="EXCLUDE"'+(decision.action==='EXCLUDE'?' selected':'')+'>Exclude</option></select></label>'+
           '<label>Reason / note<input data-row-reason="'+row.rowNumber+'" value="'+esc(decision.reason||'')+'"></label>'+
-          (row.recordId?detail('Existing cash record',{recordId:row.recordId}):'')
+          (row.corrected?'<small>Reconciled through the original cash correction.</small>':'')+(row.recordId?detail('Existing cash record',{recordId:row.recordId,...(row.corrected?{originalRecordId:row.originalRecordId,correctionSourceIds:row.correctionSourceIds,current:row.correctedRecord}: {})}):'')+(row.nativeIdentity?detail('Original movement fields',{sourceLine:row.sourceLine,identityBasis:row.identityBasis,providerReference:row.providerReference,identity:row.nativeIdentity}):'')
         ];
       })):'<p class="statement-empty">No statement rows match this filter.</p>');
   }
@@ -311,6 +448,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       '<div class="statement-notice"><strong>'+esc(balances[balance.status]||balance.status)+'</strong>'+
       (balance.status==='NOT_PROVIDED'?'':'<p>Opening '+amount(balance.openingBalance,currency)+' · Calculated closing '+amount(balance.calculatedBalance,currency)+' · Source closing '+amount(balance.closingBalance,currency)+' · Difference '+amount(balance.difference,currency)+'</p>')+'</div>'+
       (preview.findings?.length?'<ul>'+preview.findings.map(finding=>'<li>'+esc(finding.rowNumber?'Row '+finding.rowNumber+': ':'')+esc(finding.message)+'</li>').join('')+'</ul>':'')+
+      (preview.bank?'<div class="statement-native-selection"><strong>'+esc(preview.bank.sourceFormat)+' original account:</strong> '+esc(preview.bank.accountReference)+'<p>'+esc(preview.bank.pendingCount)+' pending observations retained in the original report.</p>'+(preview.bank.findings?.length?'<ul>'+preview.bank.findings.map(item=>'<li>'+esc(label(item.severity))+': '+esc(item.message)+'</li>').join('')+'</ul>':'')+detail('Original native account and balance interpretation',preview.bank)+'</div>':'')+
       rowTable()+allocationPage()+
       '<label class="statement-confirm"><input type="checkbox" data-statement-confirm'+(session.confirmed?' checked':'')+'>I reviewed the account, currency, source rows and cash classifications shown above.</label>'+
       '<div class="statement-actions">'+button('Preview updated decisions','preview')+button('Import reviewed cash movements','import',!preview.canImport||session.dirty||!session.confirmed,'class="statement-primary" data-statement-write="true"')+button('Download review','review-export',false,'data-statement-recovery="true"')+'</div>'+
@@ -319,19 +457,22 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   async function openOriginalInputs(){
     const selected=session.originalInputHandoff;if(!selected)return;
     if(session.pending||session.accepted||session.inflight)throw new Error('Resume the retained original import before opening the selected source. Both complete inputs remain saved.');
-    if(selected.caseId!==current.program.id||!selected.inputs?.source?.contentBase64||!selected.inputs?.format||!selected.inputs?.columns||!Array.isArray(selected.inputs.decisions))throw new Error('The selected original statement needs its complete source bytes and mapping in this case.');
+    if(selected.caseId!==current.program.id||!selected.inputs?.source?.contentBase64||!draftInput(selected.inputs,true))throw new Error('The selected original statement needs its complete source bytes and interpretation in this case.');
     if(selected.inputs.source.contentBase64.length>(maximumSource+2)*4/3+16)throw new Error('The selected original statement exceeds the native 8 MiB source size.');
-    const incoming=clone(selected.inputs),headers=statementHeaders(sourceText(incoming.source.contentBase64),incoming.format.delimiter);
+    const incoming=editingInput(selected.inputs),headers=bankFormat(incoming)?[]:statementHeaders(sourceText(incoming.source.contentBase64),incoming.format.delimiter);
     if(source()&&JSON.stringify(session.inputs)!==JSON.stringify(incoming))download(snapshot(),'statement-before-original-source.json');
-    session.inputs=incoming;session.headers=headers;session.preview=null;session.dirty=true;session.confirmed=false;
+    session.inputs=incoming;session.headers=headers;session.inspection=null;session.nativeScalesText=scaleText(incoming.statementOptions?.currencyScales);
+    session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.editRevision++;
     session.page=0;session.status='ALL';session.query='';session.allocationRow=null;session.allocationDraft=[];
     session.originalInputHandoff=null;
-    session.notice='Opened the exact retained statement source and original mapping. Review any corrections against the current case.';
+    await persist();
+    if(native())await inspect();
+    session.notice='Opened the exact retained statement source and original interpretation. Review corrections against the current case.';
     await persist();
   }
   function originalInputPage(){
     const selected=session.originalInputHandoff;if(!selected)return '';
-    return '<section class="statement-panel"><h4>Selected original statement</h4><p>'+esc(selected.inputs?.source?.filename||selected.statementSourceId||'Original source')+' is retained with its complete original mapping.</p><div class="statement-actions">'+
+    return '<section class="statement-panel"><h4>Selected original statement</h4><p>'+esc(selected.inputs?.source?.filename||selected.statementSourceId||'Original source')+' is retained with its complete original interpretation.</p><div class="statement-actions">'+
       button('Open selected original statement','original-input',!!(session.pending||session.accepted||session.inflight))+
       button('Download selected original inputs','original-input-export',false,'data-statement-recovery="true"')+'</div></section>';
   }
@@ -342,7 +483,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   function render(){
     if(!available())return;
-    root.innerHTML='<div class="statement-header"><div><h3>Statement receiving</h3><p class="statement-subtitle">Map an original statement, reconcile its balances and import reviewed cash movements into this grant case.</p></div><div class="statement-actions">'+button('Refresh case','refresh',false,'data-statement-recovery="true"')+button('Open cash records','cash',false,'data-statement-recovery="true"')+'</div></div>'+
+    root.innerHTML='<div class="statement-header"><div><h3>Statement receiving</h3><p class="statement-subtitle">Read original CSV, OFX / QFX or MT940 statements, reconcile their balances and import reviewed cash movements into this grant case.</p></div><div class="statement-actions">'+button('Refresh case','refresh',false,'data-statement-recovery="true"')+button('Open cash records','cash',false,'data-statement-recovery="true"')+'</div></div>'+
       (loading?'<p role="status">Opening the retained statement draft…</p>':'')+
       (session.error?'<p class="statement-error" role="alert">'+esc(session.error)+'</p>':'')+
       (session.notice?'<p class="statement-notice" role="status" aria-live="polite">'+esc(session.notice)+'</p>':'')+
@@ -361,19 +502,21 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(session.pending||session.accepted||session.inflight)throw new Error('Finish the retained import before opening another recovery copy.');
     if(file.size>64*1024*1024)throw new Error('Select a complete statement recovery copy up to 64 MiB.');
     const saved=JSON.parse(await file.text());
-    if(saved.schema!=='sf47.statement-draft.v1'||saved.caseId!==current.program.id||!saved.inputs?.format||!saved.inputs?.columns||!Array.isArray(saved.inputs.decisions))throw new Error('Choose a statement recovery copy for this original case.');
+    if(saved.schema!=='sf47.statement-draft.v1'||saved.caseId!==current.program.id||!draftInput(saved.inputs))throw new Error('Choose a statement recovery copy for this original case.');
     if(saved.inputs.source?.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The recovery copy contains a statement larger than 8 MiB.');
     if(saved.pending&&saved.accepted)throw new Error('The recovery copy contains conflicting import states.');
     for(const request of [saved.pending?.payload,saved.accepted?.payload].filter(Boolean)){
-      if(request.action!=='statement.receive'||typeof request.requestId!=='string'||!request.data?.inputs?.source||!request.data.inputs.format||!request.data.inputs.columns||!Array.isArray(request.data.inputs.decisions)||typeof request.data.expectedPreviewSha256!=='string')throw new Error('The original import request in this recovery copy is invalid.');
+      if(request.action!=='statement.receive'||typeof request.requestId!=='string'||!request.data?.inputs?.source||!draftInput(request.data.inputs,true)||typeof request.data.expectedPreviewSha256!=='string')throw new Error('The original import request in this recovery copy is invalid.');
       if(request.data.inputs.source.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The retained import contains a statement larger than 8 MiB.');
     }
-    if(saved.originalInputHandoff&&(saved.originalInputHandoff.caseId!==current.program.id||!saved.originalInputHandoff.inputs?.source?.contentBase64||!saved.originalInputHandoff.inputs.format||!saved.originalInputHandoff.inputs.columns||!Array.isArray(saved.originalInputHandoff.inputs.decisions)||saved.originalInputHandoff.inputs.source.contentBase64.length>(maximumSource+2)*4/3+16))throw new Error('The queued original statement needs its complete source bytes and mapping in this case.');
+    if(saved.originalInputHandoff&&(saved.originalInputHandoff.caseId!==current.program.id||!saved.originalInputHandoff.inputs?.source?.contentBase64||!draftInput(saved.originalInputHandoff.inputs,true)||saved.originalInputHandoff.inputs.source.contentBase64.length>(maximumSource+2)*4/3+16))throw new Error('The queued original statement needs its complete source bytes and interpretation in this case.');
     session.originalInputHandoff=clone(saved.originalInputHandoff||null);
     const original=saved.pending?.payload||saved.accepted?.payload;
-    session.inputs=clone(original?.data.inputs||saved.inputs);session.pending=clone(saved.pending||null);session.accepted=clone(saved.accepted||null);
-    session.preview=null;session.dirty=true;session.confirmed=false;session.page=0;headersFromSource();
-    session.notice='Opened the source and mapping. Resume a retained request or preview a new review against the current case.';
+    session.inputs=editingInput(original?.data.inputs||saved.inputs);session.pending=clone(saved.pending||null);session.accepted=clone(saved.accepted||null);
+    session.inspection=usableInspection(saved.inspection,session.inputs,current.program.id)?clone(saved.inspection):null;
+    session.nativeScalesText=original?scaleText(session.inputs.statementOptions?.currencyScales):saved.nativeScalesText??scaleText(session.inputs.statementOptions?.currencyScales);
+    session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.page=0;session.editRevision++;session.allocationRow=null;session.allocationDraft=[];headersFromSource();
+    session.notice='Opened the original source and interpretation. Resume a retained request or inspect and preview against the current case.';
     await persist(true);
   }
   root.addEventListener('input',event=>{
@@ -387,11 +530,17 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(event.target.matches('[data-statement-file]')){void run(()=>chooseFile(event.target.files?.[0]));return;}
     const mapping=event.target.closest('[data-statement-mapping]');
     if(mapping){
-      const oldDelimiter=session.inputs.format.delimiter;captureMapping(mapping);
-      if(oldDelimiter!==session.inputs.format.delimiter){
+      const oldDelimiter=session.inputs.format?.delimiter,oldInspection=session.inspection;captureMapping(mapping);
+      if(event.target.name==='sourceFormat'){
+        try{chooseFormat(event.target.value);}catch(error){session.headers=[];session.error=error.message;}
+        render();
+      }else if(event.target.name==='statementId'){
+        try{selectAccount(event.target.value);}catch(error){session.error=error.message;}
+        render();
+      }else if(!native()&&oldDelimiter!==session.inputs.format.delimiter){
         try{headersFromSource();session.inputs.decisions=[];session.preview=null;}catch(error){session.headers=[];session.preview=null;session.error=error.message;}
         render();
-      }else if(['format.amountMode','currency'].includes(event.target.name))render();
+      }else if(['format.amountMode','currency'].includes(event.target.name)||oldInspection!==session.inspection)render();
       return;
     }
     if(event.target.matches('[data-statement-confirm]')){session.confirmed=event.target.checked;controls();return;}
@@ -402,7 +551,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(event.target.closest('[data-statement-allocations]'))captureAllocations(event.target.closest('form'));
   });
   root.addEventListener('submit',event=>{
-    if(event.target.matches('[data-statement-mapping]')){event.preventDefault();captureMapping(event.target);void run(preview);}
+    if(event.target.matches('[data-statement-mapping]')){event.preventDefault();captureMapping(event.target);void run(native()&&!session.inspection?inspect:preview);}
     if(event.target.matches('[data-statement-allocations]')){
       event.preventDefault();captureAllocations(event.target);setDecision(session.allocationRow,{allocations:clone(session.allocationDraft)});session.allocationRow=null;render();
     }
@@ -410,10 +559,11 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   root.addEventListener('click',event=>{
     const target=event.target.closest('[data-statement-action]');if(!target||target.disabled)return;
     const action=target.dataset.statementAction;
-    if(action==='preview'){const form=$('[data-statement-mapping]');if(form)captureMapping(form);}
+    if(action==='preview'||action==='inspect'){const form=$('[data-statement-mapping]');if(form)captureMapping(form);}
     if(['add-allocation','remove-allocation'].includes(action)){const form=$('[data-statement-allocations]');if(form)captureAllocations(form);}
     void run(async()=>{
-      if(action==='preview')await preview();
+      if(action==='inspect')await inspect();
+      else if(action==='preview')await preview();
       else if(action==='import')await importReviewed();
       else if(action==='retry')await sendPending();
       else if(action==='readback')await finishAccepted();
@@ -446,7 +596,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(!session.loadingDraft)session.loadingDraft=(async()=>{
         try{
           const saved=await storeDraft(current.program.id);
-          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id){session.inputs=saved.inputs;session.headers=saved.headers||[];session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.originalInputHandoff=saved.originalInputHandoff||null;}
+          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.originalInputHandoff=saved.originalInputHandoff||null;}
         }catch{session.storageWarning='This browser could not open its saved draft. A downloaded recovery copy can be opened here.';}
         session.loaded=true;
       })();

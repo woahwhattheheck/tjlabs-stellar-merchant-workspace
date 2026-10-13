@@ -447,7 +447,7 @@ def seed(context):
 
 
 def preview(operations, context, body):
-    object_value(body, ("expectedVersion", "installationId", "expectedRevision", "document"), "installation preview")
+    object_value(body, ("expectedVersion", "installationId", "expectedRevision", "document", "returnReview"), "installation preview")
     _current(context, body.get("expectedVersion"))
     ident = body.get("installationId")
     expected_revision = revision(body.get("expectedRevision", 0), True)
@@ -475,14 +475,18 @@ def preview(operations, context, body):
              "source": _source(context), "document": document, "snapshot": snapshot, "report": report(snapshot, document),
              "previous": None if previous is None else {"id": previous["id"], "revision": previous["revision"], "sha256": previous["sha256"]},
              "changes": differences(previous["preview"]["document"], document) if previous else []}
+    if body.get("returnReview") is not None:
+        import operations_installation_returns as receiving
+        value["returnReview"] = receiving.verify_stage_application(operations, context, body["returnReview"], previous, document)
     value["previewSha256"] = digest(value)
     return value
 
 
 def save(operations, context, data, actor, version, note):
-    object_value(data, ("installationId", "expectedRevision", "document", "expectedPreviewSha256"), "installation save")
+    object_value(data, ("installationId", "expectedRevision", "document", "expectedPreviewSha256", "returnReview"), "installation save")
     candidate = preview(operations, context, {"expectedVersion": context["program"]["version"],
-        **{key: data.get(key) for key in ("installationId", "expectedRevision", "document")}})
+        **{key: data.get(key) for key in ("installationId", "expectedRevision", "document")},
+        **({"returnReview": data["returnReview"]} if data.get("returnReview") is not None else {})})
     if candidate["previewSha256"] != domain.sha(data.get("expectedPreviewSha256"), "Reviewed installation", False):
         fail("The selected input or original records changed. Review the current installation.", "INSTALLATION_PREVIEW_CONFLICT", 409)
     count, distinct = operations.db.execute(
@@ -571,7 +575,7 @@ def validate_import(context, rows, events, source_version, source_files=None, *,
             fail("A retained installation edition differs from its complete identity.")
         candidate = row.get("preview")
         object_value(candidate, ("schema", "installationId", "expectedRevision", "source", "document", "snapshot",
-            "report", "previous", "changes", "previewSha256"), "saved installation preview")
+            "report", "previous", "changes", "previewSha256", "returnReview"), "saved installation preview")
         if candidate.get("schema") != SCHEMA or candidate.get("expectedRevision") != number - 1:
             fail("A retained installation uses a different edition contract.")
         if digest({key: value for key, value in candidate.items() if key != "previewSha256"}) != candidate.get("previewSha256"):

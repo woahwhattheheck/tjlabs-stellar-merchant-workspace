@@ -1,0 +1,92 @@
+/* MIT. Dossier return review uses the existing Research palette and controls. */
+#view-dossier-returns { padding: 24px 0 40px; color: var(--dark, #252b31); }
+#view-dossier-returns [hidden] { display: none !important; }
+.dr-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.dr-heading h2 { margin: 0 0 8px; font-size: 24px; font-weight: 650; letter-spacing: -.02em; }
+.dr-heading p { margin: 0 0 8px; max-width: 78ch; line-height: 1.6; }
+.dr-eyebrow { color: var(--muted, #616870); font-size: 11px; letter-spacing: .12em; font-weight: 650; }
+.dr-source, .dr-draft-tools, .dr-pending, .dr-history, .dr-review-editor, .dr-comparison { margin: 0 0 24px; }
+.dr-source, .dr-draft-tools, .dr-history, .dr-review-editor { padding: 20px; border: 1px solid var(--line, #d9dde1); border-radius: 4px; background: var(--surface, #fff); }
+.dr-source h3, .dr-history h3, .dr-pending h3, .dr-review-editor h3 { margin: 0 0 12px; font-size: 17px; }
+.dr-source > p { max-width: 92ch; line-height: 1.6; }
+.dr-field { display: flex; flex-direction: column; gap: 7px; margin: 14px 0; font-size: 13px; }
+.dr-field > span { font-weight: 600; }
+.dr-field input, .dr-field select, .dr-field textarea, .dr-history input { max-width: 100%; box-sizing: border-box; min-height: 38px; padding: 9px 11px; border: 1px solid #b9c0c7; border-radius: 4px; color: inherit; background: #fff; font: inherit; }
+.dr-field textarea { resize: vertical; line-height: 1.5; }
+.dr-field input[type="file"] { padding: 8px; }
+.dr-field input:focus-visible, .dr-field select:focus-visible, .dr-field textarea:focus-visible, .dr-history input:focus-visible, .dr-value-dialog textarea:focus-visible { outline: 2px solid #536a80; outline-offset: 2px; }
+.dr-field input:disabled, .dr-field textarea:disabled, .dr-field select:disabled { color: #525962; background: #f4f5f6; opacity: 1; }
+.dr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 6px; }
+.dr-actions button, .dr-pagination button { min-height: 36px; font-size: 12px; }
+.dr-meta { color: var(--muted, #616870); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.dr-digest { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; word-break: break-word; }
+.dr-notice, .dr-warning, .dr-error, .dr-success { margin: 12px 0; padding: 11px 13px; border-left: 3px solid #697a88; background: #f2f5f7; line-height: 1.6; font-size: 13px; overflow-wrap: anywhere; }
+.dr-warning { border-color: #8b6b26; background: #faf6eb; color: #574419; }
+.dr-error { border-color: #9d4545; background: #fcf2f2; color: #742e2e; }
+.dr-success { border-color: #42705a; background: #f1f6f3; color: #31533f; }
+.dr-storage:empty, .dr-pending:empty, .dr-comparison:empty { display: none; }
+.dr-storage:not(:empty) { margin: 0 0 24px; border: 1px solid #ccbc95; border-radius: 4px; padding: 16px; background: #fdfbf5; }
+.dr-storage h3 { font-size: 15px; margin: 0 0 8px; }
+.dr-recovery-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 0; border-top: 1px solid #e2d8c0; font-size: 12px; overflow-wrap: anywhere; }
+.dr-recovery-row > span { flex: 1 1 340px; }
+.dr-recovery-row button { font-size: 12px; }
+.dr-request { padding: 16px; border: 1px solid var(--line, #d9dde1); border-left: 3px solid #617382; margin: 12px 0; border-radius: 3px; background: #fafbfc; }
+.dr-request h4 { margin: 0 0 8px; font-size: 14px; }
+.dr-request p { margin: 6px 0; }
+.dr-comparison > h2 { margin: 28px 0 12px; font-size: 22px; }
+.dr-identities { width: 100%; margin: 16px 0; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.dr-identities th, .dr-identities td { padding: 10px 12px; border: 1px solid var(--line, #d9dde1); vertical-align: top; text-align: left; }
+.dr-identities thead { background: var(--soft, #f2f4f5); }
+.dr-identities th:first-child { width: 24%; }
+.dr-identities th:nth-child(2) { width: 11%; }
+.dr-original { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 16px; padding: 12px; border: 1px solid var(--line, #d9dde1); background: #fafbfc; font-size: 12px; }
+.dr-original .dr-digest { flex-basis: 100%; }
+.dr-pagination { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin: 20px 0 14px; font-size: 12px; color: var(--muted, #616870); }
+.dr-item { margin: 0 0 18px; border: 1px solid #cdd2d7; border-radius: 4px; background: #fff; }
+.dr-item > header { display: flex; gap: 16px; align-items: baseline; justify-content: space-between; padding: 15px 16px 9px; }
+.dr-item h3 { margin: 0; font-size: 15px; line-height: 1.5; }
+.dr-item > p, .dr-item-identity { margin: 0 16px 12px; }
+.dr-item-identity summary { cursor: pointer; font-size: 12px; color: #54616d; }
+.dr-item-identity p { margin: 7px 0; }
+.dr-tag { display: inline-block; padding: 3px 6px; font-size: 10px; color: #4b555d; background: #edf0f2; border: 1px solid #dfe3e6; border-radius: 3px; line-height: 1.4; }
+.dr-sides { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line, #d9dde1); border-bottom: 1px solid var(--line, #d9dde1); }
+.dr-side { min-width: 0; padding: 14px; border-right: 1px solid var(--line, #d9dde1); }
+.dr-side:last-child { border-right: 0; }
+.dr-side h4 { margin: 0 0 9px; font-size: 12px; }
+.dr-side .dr-actions { align-items: stretch; }
+.dr-side .dr-actions button { flex: 1 1 auto; }
+.dr-summary { font-size: 12px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dr-choices { margin: 0; border: 0; padding: 14px 16px 16px; min-width: 0; }
+.dr-choices legend { padding-top: 13px; font-size: 12px; font-weight: 600; }
+.dr-radio { display: inline-flex; align-items: flex-start; gap: 7px; margin: 5px 22px 5px 0; font-size: 12px; line-height: 1.5; }
+.dr-radio input { margin: 2px 0 0; accent-color: #354957; }
+.dr-effect { padding: 10px 12px; border-left: 2px solid #8a969f; color: #3f4b54; background: #f4f6f7; font-size: 12px; line-height: 1.6; }
+.dr-choices textarea { width: 100%; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+.dr-requirements { padding: 12px 12px 12px 30px; background: #fcf2f2; border: 1px solid #e8caca; font-size: 12px; overflow-wrap: anywhere; }
+.dr-requirements li { margin: 6px 0; }
+.dr-history-row { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 18px; padding: 13px 0; border-bottom: 1px solid var(--line, #d9dde1); font-size: 12px; }
+.dr-history-row .dr-digest { flex-basis: 100%; margin: 0; }
+.dr-empty { border: 1px dashed var(--line, #d9dde1); padding: 32px; text-align: center; color: var(--muted, #616870); }
+.dr-value-dialog { width: min(1050px, calc(100vw - 48px)); max-height: calc(100vh - 48px); box-sizing: border-box; padding: 22px; border: 1px solid #b9c0c7; border-radius: 5px; color: var(--dark, #252b31); background: #fff; }
+.dr-value-dialog::backdrop { background: rgba(20, 28, 35, .4); }
+.dr-value-dialog header { display: flex; gap: 20px; justify-content: space-between; align-items: flex-start; }
+.dr-value-dialog h2 { margin: 0; font-size: 18px; }
+.dr-value-dialog textarea { width: 100%; height: min(56vh, 620px); box-sizing: border-box; padding: 12px; border: 1px solid #c8cfd5; background: #fafbfc; font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; resize: vertical; }
+@media (max-width: 1050px) {
+  .dr-sides { grid-template-columns: 1fr; }
+  .dr-side { border-right: 0; border-bottom: 1px solid var(--line, #d9dde1); }
+  .dr-side:last-child { border-bottom: 0; }
+  .dr-side .dr-actions { justify-content: flex-start; }
+  .dr-side .dr-actions button { flex: 0 1 auto; }
+}
+@media (max-width: 650px) {
+  #view-dossier-returns { padding-top: 16px; }
+  .dr-heading { flex-direction: column; gap: 10px; }
+  .dr-source, .dr-draft-tools, .dr-history, .dr-review-editor { padding: 14px; }
+  .dr-identities th, .dr-identities td { padding: 8px 6px; }
+  .dr-identities th:first-child { width: 32%; }
+  .dr-identities th:nth-child(2) { width: 16%; }
+  .dr-pagination { flex-wrap: wrap; }
+  .dr-radio { display: flex; margin-right: 0; }
+  .dr-value-dialog { width: calc(100vw - 20px); max-height: calc(100vh - 20px); padding: 14px; }
+}
