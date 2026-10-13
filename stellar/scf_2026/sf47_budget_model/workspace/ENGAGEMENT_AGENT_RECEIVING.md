@@ -248,6 +248,55 @@ An interruption before the closed marker keeps the original journal. Resume the 
 
 The CLI retains both signal handlers and stdout/stderr error handlers through owner drain and queued output. A stop freezes further work and waits for already accepted native calls. The SDK's original bounded HTTP deadline remains in force. Failed closes retry the same actual client/provider/FileHandle objects at a paced interval; the original first cleanup diagnostic is preserved. The child has no SIGKILL timer for an external host. The parent likewise must retain the original child through actual close.
 
+## Explicit continuation after a connection-admission failure
+
+The maintained client's `open()` and `inspect()` responses report host ownership in `connection`. The MCP provider forwards that same response. This companion requires `connection === "BORROWED_ORIGINAL_SERVICE"` from each interface and checks that their original listener identities match. The provider-reopen receipt retains the observed connection value in its own `state` field.
+
+An already selected receiving source edition remains immutable. If the original course has completed but its companion stopped during connection admission, the parent can select a complete corrected Python caller and Node companion through the explicit `agentExecutionContinuation` contract. This narrow continuation is admitted only when the retained predecessor agent journal is `INTERRUPTED`, all prior attempts are interrupted, and both its steps and downloads are empty. It preserves the complete native case and the original native and agent source manifests. It does not replace a completed agent observation or absorb an unrelated source change.
+
+The Python parent passes the optional keyword `agent_execution_continuation` to `receive(config, *, host_url=None, receiving_url=None, agent_execution_continuation=None)`. It passes the corresponding `agentExecutionContinuation` field to Node:
+
+~~~json
+{
+  "agentExecutionContinuation": {
+    "path": "/absolute/private/execution-continuation.json",
+    "bytes": 12345,
+    "sha256": "<exact complete sidecar SHA-256>"
+  }
+}
+~~~
+
+These paths and counts illustrate the shape. The original parent constructs the actual sidecar from retained files and reviewed complete postimages. The sidecar schema is `stellar-forge.sf47-engagement-agent-execution-continuation.v1`. It has exactly these top-level fields:
+
+| Field | Required retained value |
+| --- | --- |
+| `schema` | The execution-continuation schema above |
+| `operationId` | The same original native receiving operation |
+| `reason` | A nonempty explanation of this concrete source correction |
+| `original` | The complete predecessor selection and file identities described below |
+| `corrections` | Exactly the selected `python` and `node` prior/current file pairs |
+
+`original` contains `sourceManifest`, `agentSourceManifest`, `nativeSelectionSha256`, `agentSelectionSha256`, `native`, and `agentJournal`. Each manifest or journal reference contains the original absolute `path`, full `bytes`, and `sha256`. `native` retains the exact original outcome and frozen native journal descriptors. The native selection digest uses canonical JSON without a final newline; the Node selection digest uses canonical JSON followed by a newline. `agentJournal` identifies the actual interrupted `agent/JOURNAL.json` before this continuation was admitted.
+
+Each correction is `{prior, current}`. Both file descriptors contain `path`, `bytes`, `sha256`, and numeric permission `mode`. The prior descriptors must match the exact Python and Node rows in the original complete source manifest, including their original absolute repository paths. Current descriptors identify two complete reviewed execution files outside the original repository source directory. The parent verifies that it is executing the selected current Python file; Node verifies its actual `import.meta.url` against the current Node file. Both validate the complete selected correction bytes and modes. Every original manifest member is still read and checked unchanged.
+
+The sidecar is an additional execution record. It is excluded from the frozen native input and Node `SELECTION.json`; those original values and their hashes remain unchanged. Before another connection is opened, Node preserves two exact files:
+
+~~~text
+agent/execution-continuations/<sidecar SHA>/execution-continuation.json
+agent/execution-continuations/<sidecar SHA>/prior-agent-journal.json
+~~~
+
+The first is the complete selected sidecar. The second is the complete original interrupted agent journal, including its failed attempt. Both are published under the existing inherited parent guard and synchronized before the continuing journal is saved. The live Node journal records `executionContinuation: {reference, document}`, with the exact external sidecar descriptor and its full parsed document. A retry after partial publication verifies the same existing bytes; a later retry reads the retained predecessor journal instead of expecting the now-progressed live journal to have its old hash.
+
+If initial admission fails before these records and the adopted journal are durable, the general interruption handler leaves the original journal unchanged. The first error still reaches the parent. Once admission succeeds, ordinary step and attempt recording continues under the same guard.
+
+The corrected observation, drained marker, result, and frozen `journalBasis` retain that same `executionContinuation` object. It is absent during ordinary source execution. Local completed-result inspection requires the same continuation reference and full correction files, and verifies the exact retained predecessor and sidecar along with the ordinary complete output inventory.
+
+The parent keeps its original guard, provider configuration, source directory, native outcome, frozen original request journal, and stable agent phase selection. Its next child input and attempt explicitly name this continuation. The native business course remains completed; the existing agent course resumes against that same case. The original accepted command IDs and returned native results remain the only admitted writes.
+
+The complete local `Contributor_Engagements_Complete_Receiving.zip` includes both corrected execution files under `source/execution-continuations/<sidecar SHA>/`, alongside the unchanged original source selection. Its source receipt records the correction files separately with their full bytes, SHA-256 and permission modes. The normal complete ZIP verification checks every correction member and rejects a collision with an original member. The saved private outer case excludes repository-backed source copies and this source-containing local ZIP; it retains the execution-selection records and an explicit repository, commit and blob receipt for reacquiring the same complete sources.
+
 ## Explicit bounds and receiving evidence
 
 The input uses the original 65,536-byte transfer/file-read page size or a smaller selected byte-read limit. Source selection is bounded at 16,384 files and 512 MiB; native frozen artifacts at 1 GiB; original SDK/MCP responses at their maintained 64 MiB limit; individual retained files at 256 MiB; and the complete private observation at 2 GiB. JSON parsing is strict UTF-8, rejects duplicate keys and non-finite numbers, and has explicit depth/value bounds. Original native request files must retain an exact JSON representation that the maintained JavaScript client can replay without changing values or request hashes. There is no source, row or attachment truncation to fit a bound.
