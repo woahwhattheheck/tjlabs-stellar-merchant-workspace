@@ -89,6 +89,7 @@ def parser():
     configure.add_argument("--analysis-workspace", help="Existing native Analysis workspace")
     configure.add_argument("--operation-id", help="Original native Analysis operation ID (32 hexadecimal characters)")
     configure.add_argument("--flow-delivery", help="Complete rendered native Kestra flow delivery JSON")
+    configure.add_argument("--bdnb-plan", help="Complete reviewed BDNB actions/publication_id/pack_id JSON plan")
     configure.add_argument("--output", required=True)
     return root
 
@@ -98,6 +99,15 @@ def configure(args):
     if not isinstance(configuration, dict) or not configuration.get("profile"):
         raise WorkflowError("WORKFLOW_CONFIGURATION", "Select the complete installed profile template.")
     configuration["schema"] = CONFIG_SCHEMA
+
+    if args.bdnb_plan:
+        plan = read_json(args.bdnb_plan)
+        if (not isinstance(plan, dict) or set(plan) != {"actions", "publication_id", "pack_id"}
+                or not isinstance(plan["actions"], list) or not plan["actions"]):
+            raise WorkflowError("BDNB_WORKFLOW_PLAN", "Supply the complete original BDNB action plan.")
+        configuration["adapter"] = "bdnb"
+        configuration["source"] = {"kind": "bdnb-installed-source-descriptors"}
+        configuration["bdnb"] = plan
 
     def original_file(value, label):
         if isinstance(value, str):
