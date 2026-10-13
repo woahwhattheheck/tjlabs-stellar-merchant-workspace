@@ -48,7 +48,7 @@ If the operator process is interrupted, reopen the existing application and its 
 
 ## Continue live operation
 
-The received project retains its original activation configuration separately from review. Follow [Portable project receiving](PORTABLE_PROJECT.md) to prepare the existing live configuration and credentials, then use the existing **Merchant workspace** application against the same received workspace. Stop the review application before starting live work.
+The received project retains its original activation configuration separately from review. Follow [Portable project receiving](PORTABLE_PROJECT.md) to prepare the existing live configuration and credentials, then use the existing **Merchant invoices** application against the same received workspace. Stop the review application before starting live work.
 
 A later review shows the current received-runtime invoices and files while keeping the original receiving receipt and source edition as its identity. The complete receiving verifier checks the retained publication and source without resetting current locks, partial results or business progress.
 
@@ -69,7 +69,7 @@ The source provider retains both application kinds:
 
 | Application | Command | Original resource |
 | --- | --- | --- |
-| Merchant workspace | `x402api-merchant serve` | Selected live workspace |
+| Merchant invoices | `x402api-merchant serve` | Selected live workspace |
 | Received merchant review | `x402api-merchant-review` | The completed project's received workspace |
 
 The receiving programme `received-review-receiving.mjs` operates one original completed project through the actual installed Applications model, authenticated invoice/file review, desktop and phone browser views, stop and cold reopen. Keep the same project, Applications workspace, output directory and programme arguments when continuing an interrupted run. Its retained request IDs and original command results control continuation.
