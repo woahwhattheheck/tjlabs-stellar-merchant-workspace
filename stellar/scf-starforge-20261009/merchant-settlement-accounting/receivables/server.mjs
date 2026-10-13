@@ -16,6 +16,8 @@ import {customerStatementAsset, handleCustomerStatementRequest} from '../custome
 
 const STATIC = await readBrowserAssets(new URL('./browser-assets.json', import.meta.url));
 
+// Original response files remain capped at 1.5 MB; JSON escaping needs a larger wire envelope.
+const CUSTOMER_ACCOUNT_REQUEST_BYTES = 4_000_000;
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 const DOCUMENT_NAMES = new Set(['invoice.json', 'invoice.html', 'invoice.csv', 'manifest.json', 'status.json', 'credit.json', 'credit.html', 'credit.csv']);
 
@@ -123,7 +125,7 @@ export async function receivablesAsset(path, {apiPath = '/api/receivables', uiPa
   apiPath = basePath(apiPath, '/api/receivables'); uiPath = basePath(uiPath, '/receivables');
   if (path !== uiPath && !path.startsWith(uiPath + '/')) return null;
   const name = path === uiPath ? 'index.html' : path.slice(uiPath.length + 1) || 'index.html';
-  if (name === 'config.json') return {bytes: Buffer.from(JSON.stringify({apiPath, uiPath, requestBytes: RECEIVABLE_REQUEST_BYTES})), type: 'application/json; charset=utf-8'};
+  if (name === 'config.json') return {bytes: Buffer.from(JSON.stringify({apiPath, uiPath, requestBytes: RECEIVABLE_REQUEST_BYTES, customerAccountRequestBytes: CUSTOMER_ACCOUNT_REQUEST_BYTES})), type: 'application/json; charset=utf-8'};
   const entry = STATIC.get('/receivables/' + name);
   return entry ? {bytes: await readFile(entry.url), type: entry.type} : null;
 }
@@ -373,6 +375,8 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
     try { url = new URL(request.url || '/', 'http://localhost'); } catch { return false; }
     const api = url.pathname === apiPath || url.pathname.startsWith(apiPath + '/');
     const ui = url.pathname === uiPath || url.pathname.startsWith(uiPath + '/');
+    const customerAccountIntake = url.pathname === apiPath + '/customer-accounts/responses' ||
+      url.pathname === apiPath + '/customer-accounts/responses/preview';
     const customer = statements && (url.pathname === '/customer-statements' || url.pathname.startsWith('/customer-statements/') ||
       url.pathname === '/api/customer-statements' || url.pathname.startsWith('/api/customer-statements/'));
     const planUi = url.pathname === '/payment-plans' || url.pathname.startsWith('/payment-plans/');
@@ -397,7 +401,7 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
         }
       }
       if (request.method !== 'GET' && request.method !== 'POST') throw problem('METHOD_NOT_ALLOWED', 'Use a supported workspace operation.', 405);
-      const value = mutation ? await body(request, bankRequest ? BANK_REQUEST_BYTES : planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
+      const value = mutation ? await body(request, bankRequest ? BANK_REQUEST_BYTES : planRequest ? PAYMENT_PLAN_REQUEST_BYTES : customer ? STATEMENT_REQUEST_BYTES : customerAccountIntake ? CUSTOMER_ACCOUNT_REQUEST_BYTES : RECEIVABLE_REQUEST_BYTES) : undefined;
       const parameters = {method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams), value, apiPath,
         expectedWorkspaceId: request.headers['x-accounting-workspace-id'],
         expectedSourcesSha256: request.headers['x-accounting-sources-sha256']};
