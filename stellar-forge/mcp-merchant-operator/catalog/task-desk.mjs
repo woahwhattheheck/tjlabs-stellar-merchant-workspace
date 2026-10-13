@@ -17,6 +17,20 @@ const selection={type:'object',properties:{intentId:text,role:text,sourceEdition
 const task={type:'object',properties:Object.fromEntries(['system','id','revision','title','purpose','service'].map(k=>[k,text])),
  required:['system','id','revision','title','purpose','service'],additionalProperties:false};
 const draft={task,selections:{type:'array',minItems:1,maxItems:256,items:selection},predecessorId:sha};
+
+const path={type:'string',minLength:1,maxLength:4096};
+const deliveryId={type:'string',minLength:1,maxLength:100,pattern:'^(?!\\.{1,2}$)[A-Za-z0-9._-]+$'};
+const customerSelection={type:'object',properties:{
+ id:deliveryId,title:{type:'string',minLength:1,maxLength:160},
+ note:{type:'string',maxLength:10000},
+ intentIds:{type:'array',minItems:1,maxItems:100,items:{type:'string',minLength:1,maxLength:128,pattern:'^[A-Za-z0-9._:-]+$'}},
+ sourceRoot:path,sourceManifest:path
+},required:['id','title','note','intentIds','sourceRoot','sourceManifest'],additionalProperties:false};
+const customerRequest={type:'object',properties:{...customerSelection.properties,
+ kind:{type:'string',enum:['inbox-task']},packetDirectory:path,expectedTaskSha256:sha},
+ required:[...customerSelection.required,'kind','packetDirectory','expectedTaskSha256'],additionalProperties:false};
+const reviewedCustomer={request:customerRequest,expectedPreviewSha256:sha};
+
 export function taskDeskTools(tool){
  return [
   tool('merchant_task_desks','List host-configured original InboxTask desk aliases. Does not start another desk.',{},[],read),
@@ -59,6 +73,24 @@ export function taskDeskTools(tool){
     {...base,...live,intentId:text,sourceReadId:text,responseSha256:sha,readId:text,
       expectedSha256:sha,offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:MAX_RETAINED_CHUNK_BYTES}},
     ['desk','intentId','sourceReadId','responseSha256'],read),
+  tool('merchant_task_desk_customer_source','Create the original complete native source census at the selected destination outside the source tree. This writes that original manifest; review its full files and SHA before preview.',
+    {...base,...live,sourceRoot:path,destination:path},['desk','expectedInstanceId','sourceRoot','destination'],{idempotent:true}),
+  tool('merchant_task_desk_customer_task','Inspect the full original task packet for customer delivery, preserving each native outcome and recovered read identity.',
+    selected,['desk','taskId','expectedTaskSha256'],read),
+  tool('merchant_task_desk_customer_deliveries','List this original task’s named customer deliveries and receiving issues.',
+    selected,['desk','taskId','expectedTaskSha256'],read),
+  tool('merchant_task_desk_customer_preview','Preview a named complete customer delivery from the original packet and complete source census. Retain the returned request unchanged with previewSha256.',
+    {...selected,...live,selection:customerSelection},['desk','taskId','expectedTaskSha256','expectedInstanceId','selection'],read),
+  tool('merchant_task_desk_customer_prepare','Prepare or explicitly continue this exact reviewed native customer-delivery request. Keep its original ID and preview SHA after uncertainty; no implicit retry or replacement request.',
+    {...selected,...live,...reviewedCustomer},['desk','taskId','expectedTaskSha256','expectedInstanceId','request','expectedPreviewSha256'],{idempotent:true}),
+  tool('merchant_task_desk_customer_inspect','Open one existing native delivery by original ID, with its actual request, preview and complete package metadata. Use customer_reconcile to match a caller’s retained review.',
+    {...selected,deliveryId},['desk','taskId','expectedTaskSha256','deliveryId'],read),
+  tool('merchant_task_desk_customer_reconcile','Read the original named delivery and require both its exact retained request and preview SHA before returning it as this caller’s result. A mismatched ID retains both identities in the error.',
+    {...selected,...reviewedCustomer},['desk','taskId','expectedTaskSha256','request','expectedPreviewSha256'],read),
+  tool('merchant_task_desk_customer_file','Read the entire original customer/source NDJSON archive in retained SHA-pinned ranges. Requires the exact reviewed request, preview, complete package SHA and manifest SHA; first range requires the live instance.',
+    {...selected,...live,...reviewedCustomer,packageSha256:sha,manifestSha256:sha,
+     readId:text,expectedSha256:sha,offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:MAX_RETAINED_CHUNK_BYTES}},
+    ['desk','taskId','expectedTaskSha256','request','expectedPreviewSha256','packageSha256','manifestSha256'],read),
   tool('merchant_task_desk_file_release','Release this bridge’s temporary full-file read. The original desk and its saved task/packet remain open.',
     {...base,readId:text},['desk','readId'],read),
  ];

@@ -1,6 +1,8 @@
 import type {
  TaskDeskStatus,TaskDeskDraft,TaskDeskTaskDetail,TaskDeskComparison,TaskPreview,
- TaskDeskOperationReply,TaskDeskPacket,TaskDeskRpcResponse,TaskDeskRpcReads
+ TaskDeskOperationReply,TaskDeskPacket,TaskDeskRpcResponse,TaskDeskRpcReads,
+ TaskDeskCustomerInspection,TaskDeskCustomerSelection,TaskDeskCustomerRequest,
+ TaskDeskCustomerPreview,TaskDeskCustomerDelivery,TaskDeskCustomerHistory,TaskDeskCustomerSourceManifest
 } from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/client.mjs';
 export interface TaskDeskConnectionDefinition{
  label:string;connectionFile:string;roots:TaskDeskStatus['roots'];maxFileBytes:number;
@@ -25,6 +27,15 @@ export interface TaskDeskPacketFileSelection extends TaskDeskFileSelection{
 export interface TaskDeskRpcFileSelection extends TaskDeskFileSelection{
  intentId:string;sourceReadId:string;responseSha256:string;
 }
+
+export interface TaskDeskCustomerTaskSelection {desk:string;taskId:string;expectedTaskSha256:string}
+export interface TaskDeskCustomerReviewedSelection extends TaskDeskCustomerTaskSelection {
+ request:TaskDeskCustomerRequest;expectedPreviewSha256:string;
+}
+export interface TaskDeskCustomerFileSelection extends TaskDeskFileSelection,TaskDeskCustomerReviewedSelection {
+ packageSha256:string;manifestSha256:string;
+}
+
 export type TaskDeskMerchantDraft=Omit<TaskDeskDraft,'selections'>&{
  selections:(Omit<TaskDeskDraft['selections'][number],'rpcResult'>&{
    rpcResult?:{readId:string;responseSha256:string}
@@ -50,6 +61,15 @@ export class MerchantTaskDesks{
  call(name:'merchant_task_desk_recover',args:{desk:string;expectedInstanceId:string;taskId:string;expectedTaskSha256:string;intentId:string;requestId:string}):Promise<MerchantTaskDeskResult<TaskDeskOperationReply<'recover'>>>;
  call(name:'merchant_task_desk_receive',args:{desk:string;expectedInstanceId:string;taskId:string;expectedTaskSha256:string;requestId:string}):Promise<MerchantTaskDeskResult<TaskDeskOperationReply<'receive'>>>;
  call(name:'merchant_task_desk_compare',args:{desk:string;taskId:string;expectedTaskSha256:string;previousId:string;expectedPreviousTaskSha256:string}):Promise<MerchantTaskDeskResult<TaskDeskComparison>>;
+
+ call(name:'merchant_task_desk_customer_source',args:{desk:string;expectedInstanceId:string;sourceRoot:string;destination:string}):Promise<MerchantTaskDeskResult<TaskDeskCustomerSourceManifest>>;
+ call(name:'merchant_task_desk_customer_task',args:TaskDeskCustomerTaskSelection):Promise<MerchantTaskDeskResult<TaskDeskCustomerInspection>>;
+ call(name:'merchant_task_desk_customer_deliveries',args:TaskDeskCustomerTaskSelection):Promise<MerchantTaskDeskResult<TaskDeskCustomerHistory>>;
+ call(name:'merchant_task_desk_customer_preview',args:TaskDeskCustomerTaskSelection&{expectedInstanceId:string;selection:TaskDeskCustomerSelection}):Promise<MerchantTaskDeskResult<TaskDeskCustomerPreview>>;
+ call(name:'merchant_task_desk_customer_prepare',args:TaskDeskCustomerReviewedSelection&{expectedInstanceId:string}):Promise<MerchantTaskDeskResult<TaskDeskCustomerDelivery>>;
+ call(name:'merchant_task_desk_customer_inspect',args:TaskDeskCustomerTaskSelection&{deliveryId:string}):Promise<MerchantTaskDeskResult<TaskDeskCustomerDelivery>>;
+ call(name:'merchant_task_desk_customer_reconcile',args:TaskDeskCustomerReviewedSelection):Promise<MerchantTaskDeskResult<TaskDeskCustomerDelivery>>;
+ call(name:'merchant_task_desk_customer_file',args:TaskDeskCustomerFileSelection):Promise<TaskDeskFileRead>;
  call(name:string,args?:Record<string,unknown>):Promise<unknown>;
  close():Promise<void>;
 }

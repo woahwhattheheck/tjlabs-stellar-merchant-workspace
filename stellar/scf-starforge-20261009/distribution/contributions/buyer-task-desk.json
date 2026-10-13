@@ -1,14 +1,14 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "buyer-task-desk",
-  "description": "Local caller-task desk with original Inbox execution, complete result packets and reviewed customer delivery",
+  "description": "Original caller-task desk, Merchant tools and complete reviewed customer/source delivery",
   "commands": {
     "buyer-task-desk": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/agents/task-desk/cli.mjs",
     "merchant-task-desk": "stellar-forge/mcp-merchant-operator/task-desk-cli.mjs"
   },
   "commandDescriptions": {
     "buyer-task-desk": "Select, review, operate, receive and prepare complete customer task deliveries",
-    "merchant-task-desk": "Operate the original running InboxTask desk and receive complete files"
+    "merchant-task-desk": "Operate original tasks, prepare named customer deliveries and receive complete original archives"
   },
   "exports": {
     "./buyer/node/agents/task-desk": {
@@ -22,6 +22,10 @@
     "./merchant/task-desk": {
       "types": "./source/stellar-forge/mcp-merchant-operator/task-desk.d.mts",
       "import": "./source/stellar-forge/mcp-merchant-operator/task-desk.mjs"
+    },
+    "./merchant/task-desk/cli": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/task-desk-cli.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/task-desk-cli.mjs"
     }
   },
   "browserAssets": [
