@@ -89,47 +89,59 @@ def small_member(archive, name, limit):
     return raw
 
 
-def link_target(output, row):
-    scope = output + "/installation-receiving"
-    path = destination(output, row["path"])
-    target = row["target"]
+def link_components(scope, path, target):
     require(isinstance(target, str) and target and "\x00" not in target,
             "A retained link has no literal target")
-    result = os.path.normpath(target if target.startswith("/")
-                              else os.path.join(os.path.dirname(path), target))
-    require(within(scope, result), "A retained link escapes the owned installation: " + row["path"])
-    return result
+    if target.startswith("/"):
+        require(within(scope, target), "An absolute link target leaves the owned installation")
+        return scope.split("/")[1:], target[len(scope):].split("/")
+    return os.path.dirname(path).split("/")[1:], target.split("/")
 
 
 def validate_links(output, rows):
     scope = output + "/installation-receiving"
+    floor = len(scope.split("/")[1:])
     links = {destination(output, row["path"]): row for row in rows.values()
              if row["type"] == "symlink"}
     for origin, row in links.items():
         require(origin.startswith(scope + "/"), "Links are allowed only inside installation-receiving")
         require(row["mode"] == 0o777, "This Linux restore cannot preserve a nonstandard symlink mode")
-        pending, visited = link_target(output, row), set()
-        for _ in range(64):
-            require(pending not in visited, "A retained symbolic-link chain cycles: " + row["path"])
-            visited.add(pending)
-            components = pending[len(scope):].strip("/").split("/") if pending != scope else []
-            changed = False
-            for index in range(len(components)):
-                prefix = scope + "/" + "/".join(components[:index + 1])
-                if prefix in links:
-                    tail = components[index + 1:]
-                    pending = os.path.normpath(os.path.join(link_target(output, links[prefix]), *tail))
-                    require(within(scope, pending), "A retained link chain escapes the installation")
-                    changed = True
-                    break
-            if not changed:
-                break
-        else:
-            raise ValueError("A retained link chain exceeds the supported traversal depth")
-        # Include any existing, unlisted target components in the read-only check.
-        require(within(scope, os.path.realpath(pending)),
-                "An existing link target escapes the owned installation: " + row["path"])
-
+        components, pending = link_components(scope, origin, row["target"])
+        traversals = 0
+        while pending:
+            part = pending.pop(0)
+            if part in ("", "."):
+                continue
+            if part == "..":
+                # Linux applies '..' after expanding the preceding link component.
+                require(len(components) > floor,
+                        "A link traversal leaves the owned installation: " + row["path"])
+                components.pop()
+                continue
+            components.append(part)
+            candidate = "/" + "/".join(components)
+            require(within(scope, candidate), "A link traversal leaves the owned installation")
+            retained = links.get(candidate)
+            literal = retained["target"] if retained is not None else None
+            if retained is None:
+                # Existing unlisted components must obey the same scope rule.
+                # The parent descriptor walk never follows a symlink.
+                with parent_fd(candidate) as (parent, name):
+                    if parent is not None:
+                        try:
+                            info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                        except FileNotFoundError:
+                            pass
+                        else:
+                            if stat.S_ISLNK(info.st_mode):
+                                literal = os.readlink(name, dir_fd=parent)
+            if literal is not None:
+                traversals += 1
+                require(traversals <= 64, "A symbolic-link chain cycles or exceeds the traversal limit")
+                components, replacement = link_components(scope, candidate, literal)
+                pending = replacement + pending
+        require(within(scope, "/" + "/".join(components)),
+                "A retained link resolves outside the owned installation: " + row["path"])
 
 def validate_archive(archive, output):
     infos = archive.infolist()
