@@ -7,6 +7,8 @@ import { createHash, createHmac, timingSafeEqual, createCipheriv, createDecipher
 import { pipeline } from 'node:stream/promises';
 import { Transform, Writable } from 'node:stream';
 import { promisify } from 'node:util';
+import { continueSnapshotRestore, inspectSnapshotRestoreOperation } from './restore-operation.mjs';
+export { inspectSnapshotRestoreOperation } from './restore-operation.mjs';
 
 const scrypt = promisify(scryptCb);
 const SCHEMA = 'stellar-forge.merchant-recovery.v1';
@@ -28,25 +30,29 @@ const isObject = x => x && typeof x === 'object' && !Array.isArray(x);
 
 function argumentsOf(argv) {
   const [command, ...rest] = argv;
-  if (!['snapshot', 'verify', 'restore'].includes(command)) fail('Usage: recover.mjs snapshot|verify|restore --plan|--bundle PATH --out PATH --pass-env NAME [--quiesced]');
+  if (!['snapshot', 'verify', 'restore', 'restore-status'].includes(command)) fail('Usage: recover.mjs snapshot|verify|restore --plan|--bundle PATH --out PATH --pass-env NAME [--quiesced]');
   const opts = {};
   for (let i = 0; i < rest.length; i++) {
     let k = rest[i];
     if (k === '--quiesced') { if (opts[k]) fail('Duplicate --quiesced'); opts[k] = true; continue; }
-    if (!['--plan', '--bundle', '--out', '--pass-env', '--capture-id', '--expected-plan-sha256'].includes(k) || !rest[i+1] || rest[i+1].startsWith('--') || own(opts,k)) fail('Invalid/duplicate option '+k);
+    if (!['--plan', '--bundle', '--out', '--pass-env', '--capture-id', '--expected-plan-sha256', '--operation', '--expected-manifest-sha256', '--python'].includes(k) || !rest[i+1] || rest[i+1].startsWith('--') || own(opts,k)) fail('Invalid/duplicate option '+k);
     opts[k] = rest[++i];
   }
   const allowed = command === 'snapshot' ? ['--plan','--out','--pass-env','--quiesced','--capture-id','--expected-plan-sha256'] :
-    command === 'restore' ? ['--bundle','--out','--pass-env'] : ['--bundle','--pass-env'];
-  if (Object.keys(opts).some(k => !allowed.includes(k)) || !opts['--pass-env'] ||
+    command === 'restore' ? ['--bundle','--out','--pass-env','--operation','--expected-manifest-sha256','--python'] :
+    command === 'restore-status' ? ['--operation','--expected-manifest-sha256'] : ['--bundle','--pass-env'];
+  if (Object.keys(opts).some(k => !allowed.includes(k)) || (command !== 'restore-status' && !opts['--pass-env']) ||
      (command === 'snapshot' && (!opts['--plan'] || !opts['--out'] || !opts['--quiesced'])) ||
      (command === 'restore' && (!opts['--bundle'] || !opts['--out'])) ||
-     (command === 'verify' && !opts['--bundle'])) fail('Missing or unsupported arguments for '+command);
+     (command === 'verify' && !opts['--bundle']) ||
+     (command === 'restore-status' && (!opts['--operation'] || !opts['--expected-manifest-sha256']))) fail('Missing or unsupported arguments for '+command);
   if (Boolean(opts['--capture-id']) !== Boolean(opts['--expected-plan-sha256']) ||
       (opts['--capture-id'] && (!/^[a-f0-9]{64}$/.test(opts['--capture-id']) ||
        !/^[a-f0-9]{64}$/.test(opts['--expected-plan-sha256'])))) fail('Capture identity requires its exact original plan SHA-256');
-  if (!/^[A-Z][A-Z0-9_]{4,63}$/.test(opts['--pass-env'])) fail('Passphrase env variable name must be uppercase');
-  for (const key of ['--plan','--bundle','--out']) if (opts[key] && !isAbsolute(opts[key])) fail(key+' must be absolute');
+  if (command === 'restore' && (Boolean(opts['--operation']) !== Boolean(opts['--expected-manifest-sha256']) || (opts['--python'] && !opts['--operation']))) fail('Restore continuation requires its operation and exact manifest SHA-256 together');
+  if (opts['--expected-manifest-sha256'] && !/^[a-f0-9]{64}$/.test(opts['--expected-manifest-sha256'])) fail('Invalid manifest SHA-256');
+  if (command !== 'restore-status' && !/^[A-Z][A-Z0-9_]{4,63}$/.test(opts['--pass-env'])) fail('Passphrase env variable name must be uppercase');
+  for (const key of ['--plan','--bundle','--out','--operation','--python']) if (opts[key] && !isAbsolute(opts[key])) fail(key+' must be absolute');
   return { command, opts };
 }
 function password(name) {
@@ -58,15 +64,22 @@ async function keyFor(pass, salt) {
   return await scrypt(pass, salt, 32, { N: 1 << 15, r: 8, p: 1, maxmem: 64 << 20 });
 }
 async function safeBytes(file, max) {
-  const st = await lstat(file);
-  if (!st.isFile() || st.isSymbolicLink() || st.size > max || st.nlink !== 1) fail('Unsafe JSON input');
-  const fd = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW);
+  const st = await lstat(file, { bigint: true });
+  if (!st.isFile() || st.isSymbolicLink() || st.size < 0n || st.size > BigInt(max) || st.nlink !== 1n) fail('Unsafe JSON input');
+  const fd = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
-    const opened = await fd.stat();
-    if (!opened.isFile() || opened.nlink !== 1 || opened.size > max) fail('Unsafe JSON input');
-    const value = await fd.readFile();
-    if (value.length > max) fail('JSON input grew past its limit');
-    return value;
+    const before = await fd.stat({ bigint: true });
+    if (!before.isFile() || before.nlink !== 1n || before.size > BigInt(max) || before.dev !== st.dev || before.ino !== st.ino) fail('Unsafe JSON input');
+    const value = Buffer.alloc(Number(before.size) + 1); let length = 0;
+    while (length < value.length) {
+      const read = await fd.read(value, length, value.length - length, length);
+      if (!read.bytesRead) break;
+      length += read.bytesRead;
+    }
+    const after = await fd.stat({ bigint: true }), named = await lstat(file, { bigint: true });
+    if (length !== Number(before.size) || !['dev','ino','size','mtimeNs','ctimeNs','nlink']
+      .every(key => before[key] === after[key] && after[key] === named[key])) fail('Original JSON input changed during read');
+    return value.subarray(0, length);
   } finally { await fd.close(); }
 }
 async function safeJSON(file, max) {
@@ -242,9 +255,10 @@ function validateManifest(m) {
 }
 async function loadBundle(bundle){
   await safeDir(bundle);
-  const m=validateManifest(await safeJSON(join(bundle,'manifest.json'),MAX_MANIFEST));
+  const raw=await safeBytes(join(bundle,'manifest.json'),MAX_MANIFEST);
+  const m=validateManifest(JSON.parse(raw.toString('utf8')));
   const objDir=join(bundle,'objects');await safeDir(objDir);
-  return m;
+  return {m,raw};
 }
 async function decryptEntry(bundle,e,key,destination=null){
   const file = join(bundle,e.object), info=await lstat(file);
@@ -257,25 +271,26 @@ async function decryptEntry(bundle,e,key,destination=null){
   try{
     if(destination){
       await pipeline(fd.createReadStream({autoClose:false}),hashStream(cipherHash),decipher,collector,
-        createWriteStream(destination,{flags:'wx',mode:0o600}));
+        typeof destination==='string'?createWriteStream(destination,{flags:'wx',mode:0o600}):destination);
     } else {
       await pipeline(fd.createReadStream({autoClose:false}),hashStream(cipherHash),decipher,collector,
         new Writable({write(_chunk,_enc,cb){cb();}}));
     }
   } finally {await fd.close();}
   if(size!==e.size||plainHash.digest('hex')!==e.sha256||cipherHash.digest('hex')!==e.cipherSha256) fail('Snapshot content digest mismatch');
-  if(destination) await syncFile(destination);
+  if(typeof destination==='string') await syncFile(destination);
 }
 async function verifyBundle(opts,returnKey=false){
   const bundle=resolve(opts['--bundle']);
-  const m=await loadBundle(bundle);
+  const {m,raw}=await loadBundle(bundle);
   const key=await keyFor(password(opts['--pass-env']),Buffer.from(m.kdf.salt,'hex'));
+  let transferred=false;
   try {
     if(!timingSafeEqual(Buffer.from(m.manifestMac,'hex'),Buffer.from(manifestMac(m,key),'hex'))) fail('Manifest authentication failed');
     for(const e of m.entries) if(e.kind==='file') await decryptEntry(bundle,e,key);
-    if(returnKey) return {m,key,bundle};
+    if(returnKey) {transferred=true;return {m,key,bundle,raw};}
     return {status:'SNAPSHOT_VERIFIED',files:m.fileCount,bytes:m.totalPlainBytes,roots:m.roots.map(r=>r.name)};
-  } finally {if(!returnKey) key.fill(0);}
+  } finally {if(!transferred) key.fill(0);}
 }
 async function restoreBundle(opts){
   // Authentication and complete source integrity are established BEFORE output creation.
@@ -294,10 +309,37 @@ async function restoreBundle(opts){
   finally {key.fill(0);}
 }
 
+// Opt-in continuation retains an immutable original selection and private stage.
+// Existing restore without an operation keeps its original create-only contract.
+export async function restoreSnapshotWithOperation(options={}){
+  return await continueSnapshotRestore(options,{
+    authenticate:()=>verifyBundle({'--bundle':options.bundleDirectory,'--pass-env':options.passphraseEnv},true),
+    decrypt:(verified,entry,destination)=>decryptEntry(verified.bundle,entry,verified.key,destination)
+  });
+}
+
+// This bounded original-member read does not create a directory, file or journal.
+// It authenticates the whole original bundle before returning one selected member.
+export async function readAuthenticatedSnapshotEntry({bundleDirectory,passphraseEnv,expectedManifestSha256,entryPath,maximum=256*1024}={}){
+  if(typeof bundleDirectory!=='string'||!isAbsolute(bundleDirectory)||resolve(bundleDirectory)!==bundleDirectory||bundleDirectory.includes('\0')) fail('bundleDirectory must be a canonical absolute path');
+  if(!/^[A-Z][A-Z0-9_]{4,63}$/.test(passphraseEnv??'')||!/^[a-f0-9]{64}$/.test(expectedManifestSha256??'')||!validPath(entryPath)||!Number.isSafeInteger(maximum)||maximum<0||maximum>256*1024) fail('Invalid bounded authenticated entry selection');
+  const verified=await verifyBundle({'--bundle':bundleDirectory,'--pass-env':passphraseEnv},true);
+  try{
+    if(sha().update(verified.raw).digest('hex')!==expectedManifestSha256) fail('Original manifest SHA-256 differs');
+    const entry=verified.m.entries.find(row=>row.path===entryPath);
+    if(!entry||entry.kind!=='file'||entry.size>maximum) fail('Selected snapshot entry is absent or exceeds its bound');
+    const chunks=[];let size=0;
+    await decryptEntry(verified.bundle,entry,verified.key,new Writable({write(chunk,_enc,callback){size+=chunk.length;if(size>maximum)return callback(new Error('Snapshot entry exceeds its bound'));chunks.push(Buffer.from(chunk));callback();}}));
+    return {bytes:Buffer.concat(chunks,size),manifest:verified.m,manifestSha256:expectedManifestSha256};
+  }finally{verified.key.fill(0);}
+}
+
 export async function run(argv=process.argv.slice(2)) {
   const {command,opts}=argumentsOf(argv);
   if(command==='snapshot') return await makeSnapshot(opts);
   if(command==='verify') return await verifyBundle(opts);
+  if(command==='restore-status') return await inspectSnapshotRestoreOperation({operationDirectory:opts['--operation'],expectedManifestSha256:opts['--expected-manifest-sha256']});
+  if(opts['--operation']) return await restoreSnapshotWithOperation({bundleDirectory:opts['--bundle'],outputDirectory:opts['--out'],operationDirectory:opts['--operation'],passphraseEnv:opts['--pass-env'],expectedManifestSha256:opts['--expected-manifest-sha256'],python:opts['--python']});
   return await restoreBundle(opts);
 }
 if(process.argv[1] && import.meta.url===new URL('file://'+resolve(process.argv[1])).href){

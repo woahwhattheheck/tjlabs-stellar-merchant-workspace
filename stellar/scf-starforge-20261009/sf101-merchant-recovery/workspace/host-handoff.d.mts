@@ -23,6 +23,12 @@ export interface HostHandoffRestoreInput {
   restoreDirectory: string;
   passphraseEnv: string;
   expectedManifestSha256: string;
+  /** Optional original operation for interrupted cold-restore continuation. */
+  restoreOperationDirectory?: string;
+  /** With restoreOperationDirectory, the trusted Linux publication executable. */
+  python?: string;
+  /** Original operation cancellation; all native publication drains before return. */
+  signal?: AbortSignal;
 }
 export interface HostHandoffReceivingInput extends HostHandoffRestoreInput {
   targetFile: string;
@@ -91,6 +97,21 @@ export declare function exportHostHandoff(input: {
 export declare function restoreHostHandoff(input: HostHandoffRestoreInput): Promise<HostHandoffResult>;
 export declare function inspectRestoredHostHandoff(input: HostHandoffReceivingInput): Promise<HostHandoffResult>;
 export declare function adoptRestoredHostHandoff(input: HostHandoffAdoptInput): Promise<HostHandoffResult>;
+
+export interface HostHandoffRecordedRestore {
+  schema: 'stellar-forge.merchant-recovery-restore-operation.v1';
+  status: 'ABSENT' | 'PREPARED' | 'STAGING' | 'PUBLISHED' | 'RECORDED_COMPLETE';
+  operationDirectory: string;
+  manifestSha256: string;
+  binding: null | Record<string, unknown>;
+  stage: null | { path: string; dev: string; ino: string };
+  result: null | Record<string, unknown>;
+  validation: 'RECORDED_ONLY_NOT_FRESH_TREE_OR_NATIVE_VALIDATION';
+}
+/** Reads the original cold restore record without authentication, mutation or fresh-tree validation. */
+export declare function inspectHostHandoffRestore(input: {
+  restoreOperationDirectory: string; expectedManifestSha256: string;
+}): Promise<HostHandoffRecordedRestore>;
 
 /** Reads recorded status only. Does not authenticate a bundle or inspect current receiving state. */
 export declare function inspectHostHandoffAdoption(input: {

@@ -88,7 +88,7 @@ function normalize(value) {
   for (const [name, input] of Object.entries(value.hosts)) {
     need(ALIAS.test(name), 'HOST_HANDOFF_AGENT_ALIAS');
     exact(input, ['label', 'bundleDirectory', 'passphraseEnv', 'selectionFile', 'planFile',
-      'captureOperationDirectory', 'restoreDirectory', 'targetFile', 'adoptionOperationDirectory', 'python'],
+      'captureOperationDirectory', 'restoreDirectory', 'targetFile', 'adoptionOperationDirectory', 'restoreOperationDirectory', 'python'],
     ['label', 'bundleDirectory', 'passphraseEnv']);
     need(typeof input.label === 'string' && input.label.trim() && input.label.length <= 160 &&
       !/[\x00-\x1f\x7f]/.test(input.label), 'HOST_HANDOFF_AGENT_CONFIGURATION', 'Use a readable one-line host label.');
@@ -103,20 +103,34 @@ function normalize(value) {
     need(hasSource || hasReceiving, 'HOST_HANDOFF_AGENT_CONFIGURATION', 'Declare a complete source or receiving group.');
     for (const [enabled, keys] of [[hasSource, source], [hasReceiving, receiving]]) if (enabled)
       for (const key of keys) entry[key] = path(input[key], key);
+    if (input.restoreOperationDirectory !== undefined) {
+      need(hasReceiving, 'HOST_HANDOFF_AGENT_CONFIGURATION',
+        'A cold restore operation belongs to the complete original receiving group.');
+      entry.restoreOperationDirectory = path(input.restoreOperationDirectory, 'restoreOperationDirectory');
+    }
     if (input.python !== undefined) {
       need(hasReceiving, 'HOST_HANDOFF_AGENT_CONFIGURATION', 'Python belongs to the original receiving operation.');
       entry.python = path(input.python, 'python');
     }
-    const directories = ['bundleDirectory', 'captureOperationDirectory', 'restoreDirectory', 'adoptionOperationDirectory']
+    const directories = ['bundleDirectory', 'captureOperationDirectory', 'restoreDirectory', 'adoptionOperationDirectory', 'restoreOperationDirectory']
       .filter(key => entry[key]).map(key => entry[key]);
     need(directories.every((a, i) => directories.slice(i + 1).every(b => !overlaps(a, b))),
-      'HOST_HANDOFF_AGENT_CONTROL_OVERLAP', 'Keep bundle, capture, restored tree and adoption controls disjoint.');
+      'HOST_HANDOFF_AGENT_CONTROL_OVERLAP', 'Keep bundle, capture, cold restore, restored tree and adoption controls disjoint.');
     const files = ['selectionFile', 'planFile', 'targetFile'].filter(key => entry[key]).map(key => entry[key]);
     need(new Set(files).size === files.length &&
       files.every(a => directories.every(b => !overlaps(a, b))),
     'HOST_HANDOFF_AGENT_CONTROL_OVERLAP', 'Keep original selection, plan and target files outside mutable control trees.');
     hosts[name] = entry;
   }
+  // A resumable restore owns a plaintext staging tree. It cannot overlap another
+  // alias's control path, including a target or a source selection not yet read.
+  const controlKeys = ['selectionFile', 'planFile', 'bundleDirectory', 'captureOperationDirectory',
+    'restoreDirectory', 'targetFile', 'adoptionOperationDirectory', 'restoreOperationDirectory', 'python'];
+  for (const [name, host] of Object.entries(hosts)) if (host.restoreOperationDirectory)
+    for (const [otherName, other] of Object.entries(hosts))
+      for (const key of controlKeys) if (other[key] && !(name === otherName && key === 'restoreOperationDirectory'))
+        need(!overlaps(host.restoreOperationDirectory, other[key]), 'HOST_HANDOFF_AGENT_CONTROL_OVERLAP',
+          'Keep each original cold restore operation outside every declared alias control and trusted executable.');
   return hosts;
 }
 function selectedRoots(value) {
@@ -139,7 +153,7 @@ function custodyPaths(configuration) {
   return [...new Set([configuration.connectionFile, ...Object.values(configuration.custody),
     ...Object.values(configuration.hosts).flatMap(entry =>
       ['selectionFile', 'planFile', 'bundleDirectory', 'captureOperationDirectory', 'restoreDirectory',
-        'targetFile', 'adoptionOperationDirectory'].map(key => entry[key]).filter(Boolean))])];
+        'targetFile', 'adoptionOperationDirectory', 'restoreOperationDirectory'].map(key => entry[key]).filter(Boolean))])];
 }
 export function assertHostHandoffOperatorCustody(roots, protectedPaths) {
   need(Array.isArray(roots) && Array.isArray(protectedPaths), 'HOST_HANDOFF_AGENT_CUSTODY');
@@ -193,11 +207,12 @@ function savedPlan(raw, selected) {
   return { value, profile, roots };
 }
 const PREFIX = 'merchant_host_handoff_';
-const READS = new Set(['hosts', 'selection', 'saved_plan', 'capture', 'operation']);
+const READS = new Set(['hosts', 'selection', 'saved_plan', 'capture', 'operation', 'restore_operation']);
 const FIELDS = {
   hosts: [], selection: ['host'], plan: ['host', 'expectedSelectionSha256', 'quiesced'],
   saved_plan: ['host', 'expectedPlanSha256'], export: ['host', 'expectedPlanSha256', 'quiesced'],
   capture: ['host', 'expectedPlanSha256'], restore: ['host', 'expectedManifestSha256'],
+  restore_operation: ['host', 'expectedManifestSha256'],
   review: ['host', 'expectedManifestSha256'],
   adopt: ['host', 'expectedManifestSha256', 'expectedReviewSha256', 'quiesced'],
   operation: ['host', 'expectedReviewSha256']
@@ -229,9 +244,11 @@ export class MerchantHostHandoffs {
     return { ownership: 'ORIGINAL_OFFLINE_HOST_HANDOFF', closing: this.#closing,
       active: this.#active ? { host: this.#active.host, operation: this.#active.operation,
         startedAt: this.#active.startedAt, cancellation: this.#active.controller ?
-          'ORIGINAL_ADOPTION_ABORT_AND_DRAIN' : 'DRAIN_ONLY' } : null,
+          (this.#active.operation === 'restore' ? 'ORIGINAL_RESTORE_ABORT_AND_DRAIN' :
+            'ORIGINAL_ADOPTION_ABORT_AND_DRAIN') : 'DRAIN_ONLY' } : null,
       hosts: Object.entries(this.#configuration.hosts).map(([host, value]) => ({
-        host, label: value.label, source: Boolean(value.selectionFile), receiving: Boolean(value.targetFile)
+        host, label: value.label, source: Boolean(value.selectionFile), receiving: Boolean(value.targetFile),
+        resumableRestore: Boolean(value.restoreOperationDirectory)
       })) };
   }
   async #native() { return this.#engine ??= await import('./host-handoff.mjs'); }
@@ -270,7 +287,7 @@ export class MerchantHostHandoffs {
     const custody = Object.values(this.#configuration.custody);
     for (const selected of custodyPaths(this.#configuration)) await canonical(selected);
     for (const host of Object.values(this.#configuration.hosts)) {
-      for (const key of ['bundleDirectory', 'captureOperationDirectory', 'restoreDirectory', 'adoptionOperationDirectory'])
+      for (const key of ['bundleDirectory', 'captureOperationDirectory', 'restoreDirectory', 'adoptionOperationDirectory', 'restoreOperationDirectory'])
         if (host[key]) for (const own of custody)
           need(!overlaps(host[key], own), 'HOST_HANDOFF_AGENT_SELF_CAPTURE',
             'Keep native handoff controls outside the running operator and its persistent console.');
@@ -312,6 +329,9 @@ export class MerchantHostHandoffs {
       const source = ['selection', 'plan', 'saved_plan', 'export', 'capture'].includes(operation);
       need(source ? Boolean(selected.selectionFile) : Boolean(selected.targetFile),
         'HOST_HANDOFF_AGENT_CAPABILITY', 'This alias does not declare that original source or receiving group.');
+      if (operation === 'restore_operation')
+        need(Boolean(selected.restoreOperationDirectory), 'HOST_HANDOFF_AGENT_CAPABILITY',
+          'This alias does not declare an original resumable cold restore operation.');
     }
     for (const key of ['expectedSelectionSha256', 'expectedPlanSha256', 'expectedManifestSha256', 'expectedReviewSha256'])
       if (Object.hasOwn(args, key)) hash(args[key], key);
@@ -322,7 +342,8 @@ export class MerchantHostHandoffs {
     need(!mutation || !this.#active, 'HOST_HANDOFF_AGENT_BUSY',
       'The original offline engine still owns a call. Read its retained state and wait for that call to drain.');
     const active = mutation ? { host: args.host, operation, startedAt: new Date().toISOString(),
-      controller: operation === 'adopt' ? new AbortController() : null } : null;
+      controller: operation === 'adopt' || operation === 'restore' && selected.restoreOperationDirectory
+        ? new AbortController() : null } : null;
     if (active) this.#active = active;
     const work = Promise.resolve().then(() => this.#dispatch(operation, clone(args), selected, active))
       .catch(error => {
@@ -330,7 +351,8 @@ export class MerchantHostHandoffs {
           const recovery = {
             host: args.host ?? null, operation, retry: 'EXPLICIT_ONLY_SAME_ORIGINAL_SELECTION',
             readback: operation === 'plan' ? PREFIX + 'saved_plan' : operation === 'export' ?
-              PREFIX + 'capture' : operation === 'adopt' ? PREFIX + 'operation' : null };
+              PREFIX + 'capture' : operation === 'adopt' ? PREFIX + 'operation' :
+                operation === 'restore' && selected?.restoreOperationDirectory ? PREFIX + 'restore_operation' : null };
           error.hostHandoff = recovery;
           // The existing HTTP tool transport retains details, not custom Error properties.
           error.details = plain(error.details) ? { ...error.details, hostHandoff: recovery } :
@@ -404,14 +426,26 @@ export class MerchantHostHandoffs {
     if (operation === 'operation') return (await this.#native()).inspectHostHandoffAdoption({
       operationDirectory: selected.adoptionOperationDirectory,
       expectedReviewSha256: args.expectedReviewSha256, ...(selected.python ? { python: selected.python } : {}) });
+    if (operation === 'restore_operation') return (await this.#native()).inspectHostHandoffRestore({
+      restoreOperationDirectory: selected.restoreOperationDirectory,
+      expectedManifestSha256: args.expectedManifestSha256 });
     // Receiving controls themselves cannot alias the running operator.
-    for (const candidate of [selected.bundleDirectory, selected.restoreDirectory, selected.adoptionOperationDirectory])
+    for (const candidate of [selected.bundleDirectory, selected.restoreDirectory,
+      selected.adoptionOperationDirectory, selected.restoreOperationDirectory].filter(Boolean))
       for (const own of Object.values(this.#configuration.custody))
         need(!overlaps(candidate, own), 'HOST_HANDOFF_AGENT_SELF_CAPTURE',
           'Keep original receiving controls outside the running Merchant operator.');
     const input = { bundleDirectory: selected.bundleDirectory, restoreDirectory: selected.restoreDirectory,
-      passphraseEnv: selected.passphraseEnv, expectedManifestSha256: args.expectedManifestSha256 };
-    if (operation === 'restore') return (await this.#native()).restoreHostHandoff(input);
+      passphraseEnv: selected.passphraseEnv, expectedManifestSha256: args.expectedManifestSha256,
+      ...(selected.restoreOperationDirectory ? { restoreOperationDirectory: selected.restoreOperationDirectory } : {}) };
+    if (operation === 'restore') {
+      active.controller?.signal.throwIfAborted();
+      const native = await this.#native();
+      active.controller?.signal.throwIfAborted();
+      return native.restoreHostHandoff({ ...input,
+        ...(selected.restoreOperationDirectory && selected.python ? { python: selected.python } : {}),
+        ...(active.controller ? { signal: active.controller.signal } : {}) });
+    }
     await this.#target(selected);
     const receiving = { ...input, targetFile: selected.targetFile,
       operationDirectory: selected.adoptionOperationDirectory, ...(selected.python ? { python: selected.python } : {}) };
@@ -426,7 +460,7 @@ export class MerchantHostHandoffs {
     if (!this.#closePromise) {
       this.#closing = true;
       this.#active?.controller?.abort(fault('HOST_HANDOFF_AGENT_CLOSED',
-        'The original adoption was interrupted; read its retained operation before explicit continuation.'));
+        'The original receiving operation was interrupted; read its retained operation before explicit continuation.'));
       this.#closePromise = (async () => { await Promise.allSettled([...this.#pending]); })();
     }
     return this.#closePromise;

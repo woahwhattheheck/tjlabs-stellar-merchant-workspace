@@ -17,7 +17,7 @@ Each host has a nonempty `label` of at most 160 characters, `bundleDirectory` an
 | Source capture | `selectionFile`, `planFile`, `captureOperationDirectory` |
 | Receiving | `restoreDirectory`, `targetFile`, `adoptionOperationDirectory` |
 
-A partial group is rejected. A receiving declaration may also select an absolute `python` executable. The source and receiving operation directories are distinct original operations. Keep original directories and IDs when reconnecting; do not create replacements to recover a missing response.
+A partial group is rejected. A receiving declaration may also select an absolute `python` executable. A receiving declaration may select optional `restoreOperationDirectory` for interrupted cold-restore continuation. It requires the complete receiving group and must remain disjoint from every alias's source/target/control path and trusted executable. Its stage and the final restore's parent must share a filesystem. The capture, cold restore and adoption directories are distinct original operations. Keep original directories and IDs when reconnecting; do not create replacements to recover a missing response.
 
 This source-host example selects capture only:
 
@@ -47,6 +47,7 @@ This cold receiving-host example selects the complete original encrypted bundle 
       "label": "Original workspace receiving host",
       "bundleDirectory": "/srv/handoff-input/original-bundle",
       "restoreDirectory": "/srv/handoff-staging/original-restore",
+      "restoreOperationDirectory": "/srv/handoff-control/original-cold-restore",
       "targetFile": "/srv/handoff-control/original-target.json",
       "adoptionOperationDirectory": "/srv/handoff-control/original-adoption",
       "passphraseEnv": "MERCHANT_HANDOFF_PASSPHRASE",
@@ -214,13 +215,13 @@ The capture readback is recorded evidence. It does not authenticate the current 
 Transfer the complete original encrypted bundle through the existing binary transfer route. Preserve every native bundle member and the exact manifest SHA-256 returned by the original operation. Avoid moving ciphertext through model text. The original private external inputs must be supplied on the receiving host according to the target's explicit original paths and expected hashes.
 
 1. Configure the receiving alias on the cold host and initialize its separate dedicated operator.
-2. Call `merchant_host_handoff_restore` with the receiving `host` and `expectedManifestSha256`. It invokes the original restore into the fixed private staging directory.
+2. Call `merchant_host_handoff_restore` with the receiving `host` and `expectedManifestSha256`. When the alias declares `restoreOperationDirectory`, the original native restore owns its private staged plaintext, exact bundle/output binding and no-replace publication. The host wrapper first authenticates the bounded handoff plan without writing and rejects operation overlap with captured roots, external private files or retained absent paths. It then verifies the complete current restored tree and application before returning `HOST_HANDOFF_RESTORED`. After a missing response or interruption, call `merchant_host_handoff_restore_operation` with the same host and manifest SHA before explicitly continuing the original restore. This read never dispatches restore or authenticates current bytes.
 3. Call `merchant_host_handoff_review` with the same host and manifest SHA. Inspect the full native receiving review: original source identity, every path, target availability, external-file bindings, operation directory and review SHA.
 4. Keep the reviewed receiving producers stopped. Call `merchant_host_handoff_adopt` with the same manifest SHA, the returned `expectedReviewSha256`, and `quiesced:true`.
 5. Read the original complete adoption result. After a missing response, call `merchant_host_handoff_operation` with the same host and review SHA. It reads original recorded progress; it does not dispatch a second adoption.
 6. Use the existing original workspace opening/startup workflow only after the actual native adoption result permits it. Handoff adoption itself does not start a listener or replay completed transfers.
 
-Restore and review are original native operations, not recorded-only reads. They may retain state. The provider does not automatically retry them after an uncertain response. Inspect the original selected paths/result and use the native engine's existing continuation rules.
+Restore and review are original native operations, not recorded-only reads. They may retain state. The provider does not automatically retry them after an uncertain response. Inspect the original selected paths/result and use the native engine's existing continuation rules. The cold-restore record distinguishes `ABSENT`, `PREPARED`, `STAGING`, `PUBLISHED` and `RECORDED_COMPLETE`, with `RECORDED_ONLY_NOT_FRESH_TREE_OR_NATIVE_VALIDATION`. Keep the same alias configuration and original manifest. A saved completion is not a fresh current-tree result. Aliases without `restoreOperationDirectory` keep legacy restore behavior and cannot use the restore-operation read. An unrelated final tree or legacy partial output is never claimed as a resumable operation.
 
 ## Agent tool contract
 
@@ -234,23 +235,24 @@ Every tool rejects additional arguments. Digests are lowercase 64-character hexa
 | `saved_plan` | `host` | `expectedPlanSha256` | Read original complete saved plan. |
 | `export` | `host`, `expectedPlanSha256`, `quiesced:true` | None | Original capture/reconciliation. |
 | `capture` | `host`, `expectedPlanSha256` | None | Read recorded capture evidence. |
-| `restore` | `host`, `expectedManifestSha256` | None | Original authenticated restore. |
+| `restore` | `host`, `expectedManifestSha256` | None | Original authenticated restore and current-tree validation; original continuation when declared. |
+| `restore_operation` | `host`, `expectedManifestSha256` | None | Read original recorded cold-restore progress/result; requires a declared restore operation. |
 | `review` | `host`, `expectedManifestSha256` | None | Original receiving review. |
 | `adopt` | `host`, `expectedManifestSha256`, `expectedReviewSha256`, `quiesced:true` | None | Original operation-backed adoption. |
 | `operation` | `host`, `expectedReviewSha256` | None | Read recorded adoption progress/result. |
 
-Only inventory, selection, saved plan, recorded capture and recorded operation tools are marked read-only. All five tools that invoke native operations, including create-only plan creation, are not advertised as automatically retryable. Native errors keep their original code/message and a same-host readback suggestion where an original saved record exists.
+Only inventory, selection, saved plan, recorded capture, recorded cold restore and recorded adoption tools are marked read-only. All five tools that invoke native operations, including create-only plan creation, are not advertised as automatically retryable. Native errors keep their original code/message and a same-host readback suggestion where an original saved record exists.
 
 ## Close and recovery
 
-The provider owns admission and its native-call lifetime. Closing stops new calls and shares one close promise across repeated close requests. It requests cancellation for an active operation-backed adoption only. Every original call is then drained before provider shutdown completes. Other native operations can finish during close; do not describe them as cancelled because the agent disconnected.
+The provider owns admission and its native-call lifetime. Closing stops new calls and shares one close promise across repeated close requests. It requests cancellation for an active operation-backed adoption or declared resumable cold restore. Every original call is then drained before provider shutdown completes. Legacy cold restore and other native operations can finish during close; do not describe them as cancelled because the agent disconnected.
 
-After reconnecting, read the same saved plan, capture or adoption operation using the same host alias and original digest. Keep the complete native result and original operation directories. Do not replace a journal or generate a new operation ID to make a missing response look complete.
+After reconnecting, read the same saved plan, capture, cold-restore operation or adoption operation using the same host alias and original digest. Keep the complete native result and original operation directories. Do not replace a journal or generate a new operation ID to make a missing response look complete.
 
 ## Installed receiving check
 
-Use the existing original host-handoff receiving operation and real source selection. Confirm that the maintained installed distribution includes this provider declaration, catalog, adapter, setup, types and guide, and that ordinary source-owned provider discovery lists the ten tools.
+Use the existing original host-handoff receiving operation and real source selection. Confirm that the maintained installed distribution includes this provider declaration, catalog, adapter, setup, types and guide, and that ordinary source-owned provider discovery lists the eleven tools. The installed source includes the original native restore operation and adjacent Linux publication helper.
 
-Complete one original source selection → create-only plan → saved-plan readback → capture → recorded capture readback → complete binary transfer → cold restore → full receiving review → original adoption → recorded operation readback journey. Include loss of the initial plan response and the existing operation's supported interruption/reopen. Keep original source bytes, IDs, paths and full native results. Recheck dedicated operator and optional console custody against the actual roots.
+Complete one original source selection → create-only plan → saved-plan readback → capture → recorded capture readback → complete binary transfer → cold restore → full receiving review → original adoption → recorded operation readback journey. Include loss of the initial plan response, the original cold restore's partial-member and publication-before-receipt interruption/reopen, and the existing adoption operation's supported interruption/reopen. Keep original source bytes, IDs, paths and full native results. Recheck dedicated operator and optional console custody against the actual roots.
 
 Metadata/JavaScript execution with reference filesystem boundaries establishes the adapter contract only. Native execution must come from the actual original receiving course with its real filesystem, leases, Python publication helper and complete installed source. Actual rendered UI acceptance, where that existing course includes a browser, stays with the producing operator using the exact final interface and complete downloads.

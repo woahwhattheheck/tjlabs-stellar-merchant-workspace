@@ -197,13 +197,36 @@ Do not start source or receiving writers until adoption and readback finish. The
 starforge merchant-recovery-remote workspace handoff restore \
   --bundle /srv/handoff-incoming/original-bundle \
   --restore /srv/handoff-review/original-restore \
+  --restore-operation /srv/handoff-control/original-cold-restore \
   --pass-env HOST_HANDOFF_PASSPHRASE \
   --expected-manifest-sha256 ORIGINAL_MANIFEST_SHA256
 ~~~
 
-The original recovery engine authenticates the complete encrypted bundle before creating output. The result is HOST_HANDOFF_RESTORED. No original destination is touched. Repeating this command with an existing complete staging restore checks every file and directory against the authenticated inventory; it does not overwrite it.
+The original recovery engine authenticates the complete encrypted bundle before creating output. With `--restore-operation`, it retains the original operation's private plaintext staging tree and publishes the complete tree to `--restore` using Linux `renameat2(RENAME_NOREPLACE)`. No captured original root is touched. Before operation creation, the host wrapper authenticates and reads only the bounded original handoff plan in memory, then checks the operation path against every original root, external private input and retained absent path.
+
+Choose the original restore-operation directory outside the encrypted bundle, final restore directory, original roots, plan, target file, adoption operation, external private inputs and trusted Python executable. Its parent must already exist and its staging tree must share the destination parent's filesystem. Use the existing private host provisioning route. The native operation binds the canonical bundle, exact manifest bytes/hash, output path, original operation path, passphrase environment **name** and publication Python. The default Python is `/usr/bin/python3`; if another trusted absolute executable is selected, retain the same `--python` for every continuation. This is a different operation from capture's or adoption's `--operation`.
+
+The wrapper returns `HOST_HANDOFF_RESTORED` only after it authenticates and checks the complete current restored inventory and application metadata. A native saved completion alone does not establish this fresh result. Repeating the original command reopens only the same native operation, then checks every current file and directory against the authenticated inventory; it does not overwrite the tree. Existing callers without `--restore-operation` retain the legacy create-only restore behavior.
 
 The original application manifest is checked again against the restored source. Staging must contain precisely the native snapshot's roots, including its encrypted handoff plan. Extra files, missing files, modified content, links and private-mode violations stop review.
+
+### Interrupted cold restore
+
+After interruption or a missing response, read the original record without starting native restore:
+
+~~~sh
+starforge merchant-recovery-remote workspace handoff restore-operation \
+  --restore-operation /srv/handoff-control/original-cold-restore \
+  --expected-manifest-sha256 ORIGINAL_MANIFEST_SHA256
+~~~
+
+This command returns the original binding, recorded stage identity and saved result when present. Its statuses are `ABSENT`, `PREPARED`, `STAGING`, `PUBLISHED` and `RECORDED_COMPLETE`. The explicit validation field is `RECORDED_ONLY_NOT_FRESH_TREE_OR_NATIVE_VALIDATION`: it does not authenticate a bundle, inspect the current tree, acquire a writer lease or complete unfinished work. `ABSENT` does not establish ownership of an existing directory.
+
+Continue only by explicitly repeating the original restore command with the same paths, manifest hash, passphrase environment name and Python. The original native operation reauthenticates, resumes matching partial plaintext prefixes without truncating them, checks complete members and rejects unrelated extra files or changed bytes. It synchronizes the complete tree before no-replace publication. If publication finished before its receipt was saved, the same operation recognizes its original directory identity and complete inventory before completing its own record. It never adopts an unrelated final directory.
+
+Ctrl-C or SIGTERM on the operation-backed CLI requests cancellation of that original operation and waits for accepted native publication to drain before closing its lease. Keep the operation directory and bundle for explicit continuation. Closing an agent connection follows the same original abort-and-drain path. An already completed native record remains recorded-only if later adoption changes staged file modes; use the fresh host restore/review results to assess the current tree.
+
+A partial output created by the **legacy** restore has no original resumable-operation binding. The new engine does not claim or delete it. Preserve it; when a fresh restore is needed, deliberately select a separate absent output directory and its own new original operation. Do not remove an uncertain directory merely to make restore proceed.
 
 ### 4. Review every receiving binding
 
@@ -248,6 +271,8 @@ starforge merchant-recovery-remote workspace handoff review \
 ~~~
 
 The result is HOST_HANDOFF_REVIEW. Review its roots, original identity, exact source edition, retained operation IDs, external file fingerprints and absentOriginalInputs. Each destination is either NEW_CREATE_ONLY_ROOT or EXACT_ORIGINAL_ALREADY_PRESENT. The latter requires an exact complete byte/inventory match.
+
+If a resumable cold restore was selected, also pass its original `--restore-operation` on both review and adoption. It remains a protected control path; these commands do not dispatch cold restore.
 
 Retain the returned reviewSha256. The optional `--operation` directory and publication Python executable are part of that exact review. Use a new private control directory outside every original root, receiving bundle/staging directory, target file, external credential file and original absent input. Its parent must already exist. The default publication executable is `/usr/bin/python3`; select another absolute executable with `--python` on both review and adoption when required. This Linux helper performs descriptor-checked staging copies and atomic no-replace filesystem publication; original snapshot encryption and authentication remain in the same native engine.
 
