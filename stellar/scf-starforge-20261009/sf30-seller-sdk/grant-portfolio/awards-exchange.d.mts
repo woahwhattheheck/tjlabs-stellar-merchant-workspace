@@ -13,13 +13,15 @@ export interface AwardCsvIdentities {
 export interface AwardCsvImportInput {
   operationId:OperationId;csv:Uint8Array;filename:string;documentId:AwardId;roundId:AwardId;actor:string;
   mapping:AwardCsvMapping;identities:AwardCsvIdentities;status?:'draft'|'submitted';
+  /** Optional explicit zero-based data-row selection; the complete CSV stays attached. */
+  rowIndexes?:number[];
 }
 export interface AwardCsvImportPlan {
   schema:'stellar-forge.awards-csv-import-plan.v1';
   portfolio:{id:PortfolioId;revision:number;snapshot:Sha256};
   source:{sha256:Sha256;bytes:number;filename:string;contentType:'text/csv'};
   documentId:AwardId;round:{id:AwardId;revision:number;sha256:Sha256};
-  rows:number;mapping:AwardCsvMapping;actionSha256:Sha256;
+  rows:number;mapping:AwardCsvMapping;actionSha256:Sha256;sourceRows?:number;rowIndexes?:number[];
   action:{operationId:OperationId;action:'portfolio.save';payload:PortfolioSaveInput};
 }
 export interface AwardApplicationExchange {
