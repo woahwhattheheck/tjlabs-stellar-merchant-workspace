@@ -75,6 +75,7 @@ export function createCentralCommissioning({workspace,store,connection,fetchImpl
       throw fault('CENTRAL_COMMISSIONING_HOST_RECEIPT','Use the actual original central-host handover JSON.');
     const handoverConnection=normalizeConnection(handover.connection);
     if(!selected||handoverConnection.url!==selected.url||handoverConnection.authEnv!==selected.authEnv||
+        handoverConnection.codespacesTokenEnv!==selected.codespacesTokenEnv||
         selected.connectionId&&handoverConnection.connectionId!==selected.connectionId)
       throw fault('CENTRAL_COMMISSIONING_HOST_RECEIPT','The host handover must describe this exact private connection.');
     // The original handover is a source/status receipt, never an environment or secret file.
@@ -82,7 +83,7 @@ export function createCentralCommissioning({workspace,store,connection,fetchImpl
       'runtime','connection','container_states','backup_count','restore','receiving_operation']);
     if(Object.keys(handover).some(key=>!allowed.has(key)))
       throw fault('CENTRAL_COMMISSIONING_HOST_RECEIPT','Use the original host handover output, without additional private configuration.');
-    const connectionKeys=new Set(['id','name','url','authEnv','allowLoopback']);
+    const connectionKeys=new Set(['id','name','url','authEnv','allowLoopback','codespacesTokenEnv']);
     if(Object.keys(handover.connection).some(key=>!connectionKeys.has(key)))
       throw fault('CENTRAL_COMMISSIONING_HOST_RECEIPT','Host handover connection fields must contain references, not credential values.');
     const request={handover},old=matching('commissioning-host',id,request);
@@ -182,7 +183,8 @@ export function createCentralCommissioning({workspace,store,connection,fetchImpl
       if(String(actor.value.id)!==String(inspection.actor.id))
         throw fault('CENTRAL_COMMISSIONING_ACTOR','The host credential now resolves to another Central actor. Prepare a new connection/inspection.',409);
       const bound=await workspace.connect({id:record.definition.connectionId,name:con.name,url:con.url,
-        authEnv:con.authEnv,allowLoopback:con.allowLoopback});
+        authEnv:con.authEnv,allowLoopback:con.allowLoopback,
+        ...(con.codespacesTokenEnv===undefined?{}:{codespacesTokenEnv:con.codespacesTokenEnv})});
       if(String(bound.actor.id)!==String(inspection.actor.id))
         throw fault('CENTRAL_COMMISSIONING_ACTOR','This original connection belongs to another Central actor.',409);
       const plans=[];
@@ -383,6 +385,8 @@ export function createCentralCommissioning({workspace,store,connection,fetchImpl
       '## Original operator and source','',
       'Central origin: '+commission.connection.url,
       'Private credential reference: '+commission.connection.authEnv+' (value stays on the host).',
+      ...(commission.connection.codespacesTokenEnv?
+        ['Codespaces proxy reference: '+commission.connection.codespacesTokenEnv+' (value stays on the receiving host).']:[]),
       'Project: '+def.projectId,
       'Accountable project owner: '+String(d.accountable_project_owner),
       'Technical receiver: '+String(d.technical_receiver),'',

@@ -85,7 +85,7 @@ The existing gateway applies its own public authentication and client routing. P
 - Retain the complete selected balance transactions, payouts and order index with the source window and real pagination.
 - Review the explicit transactionRoles mapping. Only contribution and transfer are classified. An unconfigured transaction type remains visible and prevents a matched source-total status.
 - Money arrives as decimal strings with explicit currency scales. Exact integer arithmetic keeps currencies separate and retains original gross, fee and net values.
-- A payout summary compares contribution net to the original payout amount. Transfer rows are separate, preventing a payout movement from being counted as a sale.
+- A payout summary compares contribution net to the original payout amount. Transfer rows are separate, preventing a payout movement from being counted as a sale. transaction_count retains the original selected row count; parsed_net_count shows how many net amounts could actually be read. A malformed linked transaction prevents the payout from receiving a clean match.
 - Duplicate transaction/payout/order IDs, missing selected references, test activity, amount inconsistencies, unknown types, non-PAID statuses and withdrawal/direction cases remain explicit review items.
 - MATCHED_SOURCE_TOTAL means the selected original net arithmetic matched with none of those exceptions. The operator reconciles the actual bank receipt through the customer's normal finance process.
 - Resolve an issue in a retained successor source/mapping and re-run. Never silently drop a duplicate or force a difference to zero.
@@ -110,7 +110,7 @@ Preparation bundles can be received before native execution:
 
     node prepare_cli.mjs receive --input /private/customer/prepared-20261013 --out /private/customer/received-preparation
 
-Every complete file and the original input/preparation hashes are checked. This copy retains the original installation template. Bind its paths through the original configure command when the receiving installation selects a new location.
+Receiving requires all five editable source files, every declared table, Review.html, metadata and both original/prepared JSON files in the manifest. It checks descriptor types, complete table content, source closure and the bound original/kind/preparation identities. This copy retains the original installation template. Bind its paths through the original configure command when the receiving installation selects a new location.
 
 After an actual native workflow, export the complete editable project:
 

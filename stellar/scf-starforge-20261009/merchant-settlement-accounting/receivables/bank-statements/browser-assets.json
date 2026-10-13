@@ -141,6 +141,27 @@
         "../accountant-receiving/ACCOUNTANT_RECEIVING.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/source-collection-model.mjs",
+      [
+        "source-collection-model.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-collections.mjs",
+      [
+        "source-collections.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/SOURCE_COLLECTIONS.md",
+      [
+        "../SOURCE_COLLECTIONS.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }

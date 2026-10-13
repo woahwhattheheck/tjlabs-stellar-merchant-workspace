@@ -10,6 +10,7 @@ import {
 } from './common.mjs';
 import {openInvoiceSource,parseInvoiceJSON,prepareListenerDelivery,sendListenerDelivery,verifyCustomerWebhook,describeListenerBackend} from './native.mjs';
 import {normalizeInvoiceProgramme,normalizeInvoiceRecords,reconcileInvoices,compareInvoiceReconciliations,buildInvoiceReport} from './reconciliation.mjs';
+import {buildHorizonInvoiceReview,validateHorizonReviewChoices} from './horizon-invoices.mjs';
 export const INVOICE_WORKSPACE_SCHEMA=STATE_SCHEMA;
 const LIST_KINDS=new Set(['payments','operations','transactions']);
 function versioned(table,id,version){
@@ -131,6 +132,33 @@ async function retainSource(directory,state,{
   return {source:state.sources[id],projected,crossedBoundary,error:source.error};
 }
 function defaultBody(name,data){return {name,...clone(data)};}
+async function appendInvoiceDecision(directory,state,args){
+  const programme=await originalVersion(directory,state.programmes,args.programmeId,args.programmeVersion);
+  need(['link','unlink','exclude','include'].includes(args.action),'INVALID_ARGUMENT','Select a link, unlink, exclude or include decision.');
+  text(args.recordId,'original record ID',1024);text(args.reason,'decision reason',4000);text(args.actor,'decision actor',255);
+  const sourceIds=Object.values(state.sources).filter(source=>source.programmeId===programme.id||source.programmeId===null).map(source=>source.id);
+  const records=await recordsFor(directory,state,sourceIds),record=records.find(row=>row.id===args.recordId);
+  need(record,'NOT_FOUND','The selected original source record is absent.',{recordId:args.recordId});
+  if(args.invoiceId!==undefined){text(args.invoiceId,'invoice ID',1024);
+    need(programme.definition.invoices.some(row=>row.id===args.invoiceId),'NOT_FOUND','The invoice is absent from the selected programme version.');}
+  if(args.orderId!==undefined)text(args.orderId,'original order ID',1024);
+  if(args.action==='link')need(args.invoiceId!==undefined||args.orderId!==undefined,'INVALID_ARGUMENT','Select the invoice or order for this original record.');
+  if(args.role!==undefined)need(['collection','settlement','refund','fee'].includes(args.role),'INVALID_ARGUMENT','Select the original amount role.');
+  if(args.supersedes!==undefined){
+    const previous=selected(state.decisions,args.supersedes,'Previous decision');
+    need(previous.programmeId===programme.id&&previous.recordId===record.id,'DECISION_MISMATCH','A correction must supersede a decision for this programme and original record.');
+  }
+  const id=randomUUID(),decision=sealed({schema:'stellar-forge.invoice-settlement.decision.v1',id,
+    programmeId:programme.id,programmeVersion:programme.version,programmeSha256:programme.sha256,
+    action:args.action,recordId:record.id,sourceId:record.sourceId,invoiceId:args.invoiceId,orderId:args.orderId,role:args.role,
+    reason:args.reason,actor:args.actor,supersedes:args.supersedes,createdAt:now()});
+  const file=await retainJSON(directory,'decisions/'+id+'.json',decision);
+  state.decisions[id]={id,programmeId:programme.id,programmeVersion:programme.version,recordId:record.id,sourceId:record.sourceId,
+    action:decision.action,invoiceId:decision.invoiceId,orderId:decision.orderId,role:decision.role,supersedes:decision.supersedes,
+    reason:decision.reason,actor:decision.actor,createdAt:decision.createdAt,file,sha256:decision.sha256};
+  return {decisionId:id,decision:clone(state.decisions[id])};
+}
+
 export async function inspectInvoiceWorkspace({directory,allowMissing=false}){
   try{const state=await readState(directory);return summarizeState(state,[]);}
   catch(error){if(allowMissing&&error.code==='ENOENT')return null;throw error;}
@@ -759,33 +787,72 @@ export async function openInvoiceWorkspace({directory,connections={},profile={},
   }
 
 
-  async function decisionSave(args){
-    check();return mutate(directory,'decision.save',args,async state=>{
-      const programme=await originalVersion(directory,state.programmes,args.programmeId,args.programmeVersion);
-      need(['link','unlink','exclude','include'].includes(args.action),'INVALID_ARGUMENT','Select a link, unlink, exclude or include decision.');
-      text(args.recordId,'original record ID',1024);text(args.reason,'decision reason',4000);text(args.actor,'decision actor',255);
-      const sourceIds=Object.values(state.sources).filter(source=>source.programmeId===programme.id||source.programmeId===null).map(source=>source.id);
-      const records=await recordsFor(directory,state,sourceIds),record=records.find(row=>row.id===args.recordId);
-      need(record,'NOT_FOUND','The selected original source record is absent.',{recordId:args.recordId});
-      if(args.invoiceId!==undefined){text(args.invoiceId,'invoice ID',1024);
-        need(programme.definition.invoices.some(row=>row.id===args.invoiceId),'NOT_FOUND','The invoice is absent from the selected programme version.');}
-      if(args.orderId!==undefined)text(args.orderId,'original order ID',1024);
-      if(args.action==='link')need(args.invoiceId!==undefined||args.orderId!==undefined,'INVALID_ARGUMENT','Select the invoice or order for this original record.');
-      if(args.role!==undefined)need(['collection','settlement','refund','fee'].includes(args.role),'INVALID_ARGUMENT','Select the original amount role.');
-      if(args.supersedes!==undefined){
-        const previous=selected(state.decisions,args.supersedes,'Previous decision');
-        need(previous.programmeId===programme.id&&previous.recordId===record.id,'DECISION_MISMATCH','A correction must supersede a decision for this programme and original record.');
-      }
-      const id=randomUUID(),decision=sealed({schema:'stellar-forge.invoice-settlement.decision.v1',id,
-        programmeId:programme.id,programmeVersion:programme.version,programmeSha256:programme.sha256,
-        action:args.action,recordId:record.id,sourceId:record.sourceId,invoiceId:args.invoiceId,orderId:args.orderId,role:args.role,
-        reason:args.reason,actor:args.actor,supersedes:args.supersedes,createdAt:now()});
-      const file=await retainJSON(directory,'decisions/'+id+'.json',decision);
-      state.decisions[id]={id,programmeId:programme.id,programmeVersion:programme.version,recordId:record.id,sourceId:record.sourceId,
-        action:decision.action,invoiceId:decision.invoiceId,orderId:decision.orderId,role:decision.role,supersedes:decision.supersedes,
-        reason:decision.reason,actor:decision.actor,createdAt:decision.createdAt,file,sha256:decision.sha256};
-      return {decisionId:id,decision:clone(state.decisions[id])};
+  async function horizonReviewFrom(state,args){
+    const programme=await originalVersion(directory,state.programmes,args.programmeId,args.programmeVersion);
+    const registerSource=selected(state.sources,args.registerSourceId,'Horizon invoice register');
+    need(registerSource.provider==='document'&&registerSource.kind==='horizon-invoice-register'&&
+      registerSource.programmeId===programme.id&&registerSource.programmeVersion===programme.version,
+      'REGISTER_SOURCE_MISMATCH','Select the original register document retained for this exact programme version.');
+    const register=JSON.parse((await readDescriptor(directory,registerSource.bodyFile)).toString('utf8'));
+    const sourceIds=unique(args.sourceIds,'Horizon source IDs');need(sourceIds.length>0&&sourceIds.length<=10000,'INVALID_SELECTION','Select complete original Horizon sources.');
+    const sourceBindings=[];
+    for(const id of sourceIds){
+      const item=selected(state.sources,id,'Horizon source');
+      need(item.provider==='horizon'&&(item.programmeId===null||item.programmeId===programme.id),
+        'PROGRAMME_MISMATCH','Select Horizon observations retained for this programme or unassigned originals.');
+      const full=verified(await readRecord(directory,item));
+      await readDescriptor(directory,full.bodyFile);
+      sourceBindings.push({id,sha256:full.sha256,bodyFile:full.bodyFile,projectionFile:full.projectionFile,error:full.error,captureId:full.captureId});
+    }
+    sourceBindings.push({id:registerSource.id,sha256:registerSource.sha256,bodyFile:registerSource.bodyFile,kind:registerSource.kind,error:registerSource.error});
+    sourceBindings.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
+    const captures=[...new Set(sourceBindings.map(row=>row.captureId).filter(Boolean))].map(id=>{
+      const capture=selected(state.captures,id,'Original capture');
+      return {id,status:capture.status,programmeId:capture.programmeId,programmeVersion:capture.programmeVersion,
+        rootSourceId:capture.rootSourceId,selection:capture.selection,sources:clone(capture.sources),
+        missingSourceIds:capture.sources.filter(sourceId=>!sourceIds.includes(sourceId))};
+    }).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
+    const records=await recordsFor(directory,state,sourceIds),decisionBindings=[],decisionSources=new Map();
+    // A prior link can reference an earlier observation or another capture of
+    // this same native operation. Include that original decision even when its
+    // source is not in the current observation selection.
+    for(const selectedDecision of Object.values(state.decisions)){
+      const source=state.sources[selectedDecision.sourceId];if(source?.provider!=='horizon')continue;
+      let originalRecords=decisionSources.get(source.id);
+      if(!originalRecords){originalRecords=await recordsFor(directory,state,[source.id]);decisionSources.set(source.id,originalRecords);}
+      const record=originalRecords.find(row=>row.id===selectedDecision.recordId);
+      need(record,'ORIGINAL_DECISION_SOURCE_MISSING','An existing Horizon decision lost its original source record.');
+      decisionBindings.push({decision:verified(await readRecord(directory,selectedDecision)),record});
+    }
+    decisionBindings.sort((a,b)=>a.decision.id<b.decision.id?-1:a.decision.id>b.decision.id?1:0);
+    return buildHorizonInvoiceReview({workspaceId:state.workspaceId,programme,register,records,sourceBindings,captureBindings:captures,decisionBindings});
+  }
+  async function horizonReview(args){
+    check();const state=await readState(directory);return horizonReviewFrom(state,args);
+  }
+  async function horizonApply(args){
+    check();return mutate(directory,'horizon.apply',args,async state=>{
+      text(args.actor,'review actor',255);
+      const review=await horizonReviewFrom(state,args);
+      need(hash(args.reviewSha256)===review.reviewSha256,'DEPOSIT_REVIEW_CHANGED','The selected original deposits, register or decisions changed. Review the complete current selection before saving.');
+      const choices=validateHorizonReviewChoices(review,args.choices);
+      // Both the complete reviewed material and all original decisions commit in
+      // the existing single writer transaction; no ledger or provider dispatch.
+      const retained=await retainSource(directory,state,{programmeId:review.programme.id,programmeVersion:review.programme.version,
+        provider:'document',kind:'horizon-invoice-review',network:null,label:'Reviewed Horizon invoice deposits',
+        body:jsonBytes({schema:'stellar-forge.horizon-invoice-reviewed-choices.v1',review,choices,actor:args.actor,requestId:args.requestId}),
+        records:[],request:{source:'horizon.apply',requestId:args.requestId,reviewSha256:review.reviewSha256}});
+      const decisions=[];
+      for(const choice of choices)decisions.push(await appendInvoiceDecision(directory,state,{
+        programmeId:review.programme.id,programmeVersion:review.programme.version,recordId:choice.recordId,
+        action:'link',invoiceId:choice.invoiceId,role:choice.role,reason:choice.reason,actor:args.actor}));
+      return {reviewSourceId:retained.source.id,reviewSha256:review.reviewSha256,
+        decisionIds:decisions.map(row=>row.decisionId),choices,providerRequests:0,ledgerMutations:0};
     });
+  }
+
+  async function decisionSave(args){
+    check();return mutate(directory,'decision.save',args,state=>appendInvoiceDecision(directory,state,args));
   }
   async function decisionRead({decisionId}){
     check();const state=await readState(directory);return verified(await readRecord(directory,selected(state.decisions,decisionId,'Decision')));
@@ -908,6 +975,6 @@ export async function openInvoiceWorkspace({directory,connections={},profile={},
   return {describe,sourceCatalog,profileSave,programmeSave,programmeRead,
     sourceImport,sourceProject,sourceRead,sourceFile,captureStart,captureNext,capturePause,captureResume,captureRun,
     receiveWebhook,receiptRead,prepareDeliveries,deliveryRead,deliveryFile,deliveryNext,deliveryPause,deliveryResume,deliveryResolve,
-    deliveryRun,deliveryRunPause,deliveryRunResume,decisionSave,decisionRead,reconcileCreate,editionRead,compare,
+    deliveryRun,deliveryRunPause,deliveryRunResume,horizonReview,horizonApply,decisionSave,decisionRead,reconcileCreate,editionRead,compare,
     reportCreate,reportRead,reportFile,runtimeSelections,close};
 }

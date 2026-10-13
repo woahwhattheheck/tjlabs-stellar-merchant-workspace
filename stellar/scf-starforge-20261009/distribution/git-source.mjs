@@ -5,9 +5,9 @@ import { performance } from 'node:perf_hooks';
 import { resolve } from 'node:path';
 
 const OID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
-// Keep original source members within the same 4 MiB limit enforced by runtime-unpack.py.
-export const MAX_SOURCE_FILE_BYTES = 4 * 1024 * 1024;
-export const MAX_SOURCE_BYTES = 128 * 1024 * 1024;
+// Keep original source members within the same 8 MiB limit enforced by runtime-unpack.py.
+export const MAX_SOURCE_FILE_BYTES = 8 * 1024 * 1024;
+export const MAX_SOURCE_BYTES = 256 * 1024 * 1024;
 const round = value => Math.round(value * 100) / 100;
 
 export function openGitSource({ repository, ref = 'HEAD', offline = false, onProgress = () => {} }) {

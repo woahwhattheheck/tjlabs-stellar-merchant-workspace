@@ -18,7 +18,7 @@ const commands=new Map([
   ['publisher-capture','capturePublisher'],['publisher-receive','receivePublisher'],['publisher-transfers','publisherTransfers'],
 ]);
 const keys=new Map([
-  ['id','id'],['name','name'],['url','url'],['auth-env','authEnv'],['connection-id','connectionId'],
+  ['id','id'],['name','name'],['url','url'],['auth-env','authEnv'],['codespaces-token-env','codespacesTokenEnv'],['connection-id','connectionId'],
   ['project-id','projectId'],['form-id','formId'],['plan-id','planId'],['label','label'],['table-id','tableId'],
   ['row-id','rowId'],['after','after'],['limit','limit'],['search','search'],['kind','kind'],
   ['expected-revision','expectedRevision'],['decision','decision'],['note','note'],['reviewer','reviewer'],
@@ -75,11 +75,14 @@ Inputs:
   --id, --report-id, --export-id      Retain the original ID before a repeat or recovery.
   --no-wait                          Return after dispatch when using an existing managed listener.
   --allow-loopback                   Permit HTTP only for an explicitly local Central source.
+  --codespaces-token-env NAME         Optional host variable for private Codespaces proxy authentication.
 
 Complex action fields (--forms, --scope, --findings, --indicators, --payment,
 --runtime and --fields) accept JSON. Every original SDK action input is also
 available through --input. Connection credentials remain in the named host
-environment variable as the complete Authorization header.
+environment variable as the complete Authorization header. Private Codespaces
+sources may also name codespacesTokenEnv (or --codespaces-token-env NAME) for
+a separate proxy token. Supply environment variable names, never token values.
 
 Captures wait for completion by default. An existing Applications listener keeps
 running when this command exits. A direct command owns its one workspace lease

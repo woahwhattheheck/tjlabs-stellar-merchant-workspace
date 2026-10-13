@@ -279,3 +279,26 @@ compareOperatingFiles compares complete bodies and notes and reports added,
 removed and changed files plus file order; comparison metadata avoids
 duplicating encoded bodies. The full step and plan retain those bodies.
 Older steps have no added field and keep their exact original history.
+
+
+### Review divergent returned files
+
+Applications using the original returned-plan review carry complete output files
+through the same current, returned and shared-history comparison as the work.
+New reviews group a step's recorded status, recorded result and complete file
+list into one reviewed value. Adding or removing an output, changing its bytes
+or note, and changing file order are visible changes.
+
+When instructions changed on one branch while the other branch changed its
+outputs, review the complete step before applying the return. This keeps the
+reported result and original files with the work they describe. A chosen file
+list retains the exact original binary contents; removing the list restores the
+step's original representation without adding an empty field.
+
+The standalone returned-review HTML includes named original-file downloads for
+the shared, current, returned and selected values, plus the completed result.
+Its embedded editable review keeps both complete source histories and all
+decisions. The receiving application's existing complete-document limit still
+includes these contents.
+
+New return reviews retain reportingVersion: 2 and compare complete files together with recorded progress. Unversioned unfinished reviews reopen using the maintained separate-file comparisons wherever those comparisons preserve all original explicit decisions. Completed unversioned reviews must reproduce their exact saved complete result. If the maintained comparison cannot preserve an older decision or completed result, the receiver validates the complete review against the original historical interpretation instead; it retains the original body, sources and decisions without rewriting them. Both separate file choices and grouped progress choices expose downloads of their complete validated file bytes.

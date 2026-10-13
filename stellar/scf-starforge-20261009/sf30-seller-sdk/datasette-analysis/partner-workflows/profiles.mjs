@@ -9,7 +9,7 @@ export function preparedFiles(result,sha) {
       result.kind==="odoo-contact-import-preparation"&&["companies","people"].includes(name)?result.summary.importHeaders:
       name==="exceptions"?["scope","source_id","code","detail"]:
       name==="transactions"?["source_row","transaction_id","payout_id","order_id","order_name","transaction_type","role","test","transaction_date","source_id","source_type","gross","fee","net","currency","adjustment_reason","adjustments_orders_json","review_state"]:
-      name==="payouts"?["payout_id","currency","test","transaction_count","contribution_net","transfer_net","unclassified_net","source_payout_net","payout_status","payout_direction","arithmetic_difference","review_state"]:
+      name==="payouts"?["payout_id","currency","test","transaction_count","parsed_net_count","contribution_net","transfer_net","unclassified_net","source_payout_net","payout_status","payout_direction","arithmetic_difference","review_state"]:
       name==="orders"?["source_row","order_id","name","transaction_references","review_state"]:
       name==="reconciliation"?["source_id","external_id","kind","expected_parent","actual_parent","action","review_state","expected_fields_json","actual_fields_json"]:
       ["source_row","source_id","kind","external_id","parent_external_id","action",...result.summary.ownedFields,"review_state"];

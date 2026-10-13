@@ -60,14 +60,19 @@ export function buildRetail(input,sha) {
   requireValue(policy && policy.currencyScale && policy.transactionRoles && typeof policy.currencyScale==="object","RETAIL_POLICY_REQUIRED");
   const tx=list(input.balanceTransactions,"balanceTransactions"), payouts=list(input.payouts,"payouts"), orders=list(input.orders,"orders");
   const txdups=duplicates(tx,r=>text(r.id)), payoutdups=duplicates(payouts,r=>text(r.id)), orderdups=duplicates(orders,r=>text(r.id));
-  const pi=index(payouts,r=>text(r.id)), oi=index(orders,r=>text(r.id)), problems=[], detail=[], groups=new Map(), seenPayouts=new Set();
-  const row=(g)=>({payout_id:g.payoutId,currency:g.currency,test:g.test?"true":"false",transaction_count:String(g.count),
+  const pi=index(payouts,r=>text(r.id)), oi=index(orders,r=>text(r.id)), problems=[], detail=[], groups=new Map(), groupsByPayout=new Map(), pendingFlags=new Map(), orderReferences=new Map();
+  const row=(g)=>({payout_id:g.payoutId,currency:g.currency,test:g.test?"true":"false",transaction_count:String(g.selectedCount),parsed_net_count:String(g.count),
     contribution_net:decimal(g.contribution,g.scale),transfer_net:decimal(g.transfer,g.scale),unclassified_net:decimal(g.unknown,g.scale),
     source_payout_net:g.payoutAmount,payout_status:g.status,payout_direction:g.direction,
     arithmetic_difference:g.difference,review_state:[...g.flags].sort().join(";")||"MATCHED_SOURCE_TOTAL"});
   function group(payoutId,currency,test,scale) {
     const key=JSON.stringify([payoutId,currency,test]);
-    if(!groups.has(key))groups.set(key,{payoutId,currency,test,scale,count:0,contribution:0n,transfer:0n,unknown:0n,flags:new Set(["PAYOUT_NOT_VALIDATED"]),payoutAmount:"",status:"",direction:"",difference:""});
+    if(!groups.has(key)){
+      const value={payoutId,currency,test,scale,count:0,selectedCount:0,contribution:0n,transfer:0n,unknown:0n,flags:new Set(["PAYOUT_NOT_VALIDATED"]),payoutAmount:"",status:"",direction:"",difference:""};
+      groups.set(key,value);
+      if(!groupsByPayout.has(payoutId))groupsByPayout.set(payoutId,[]);
+      groupsByPayout.get(payoutId).push(value);
+    }
     return groups.get(key);
   }
   for(let n=0;n<tx.length;n++) {
@@ -90,10 +95,17 @@ export function buildRetail(input,sha) {
     if(type==="CHARGE"&&!orderId)flags.add("CHARGE_WITHOUT_ORDER_REFERENCE");
     if(t.test===true)flags.add("TEST_TRANSACTION");
     if(net) {
-      const g=group(pid,net.currency,t.test===true,net.scale);g.count++; if(pid)seenPayouts.add(pid);
+      const g=group(pid,net.currency,t.test===true,net.scale);g.count++;
       if(role==="contribution")g.contribution+=net.minor;else if(role==="transfer")g.transfer+=net.minor;else g.unknown+=net.minor;
       for(const flag of flags)g.flags.add(flag);
     }
+    if(!net&&typeof t.net?.currencyCode==="string"&&Number.isInteger(policy.currencyScale[t.net.currencyCode])&&policy.currencyScale[t.net.currencyCode]>=0&&policy.currencyScale[t.net.currencyCode]<=8)group(pid,t.net.currencyCode,t.test===true,policy.currencyScale[t.net.currencyCode]);
+    const flagKey=JSON.stringify([pid,typeof t.test==="boolean"?t.test:null]);
+    if(!pendingFlags.has(flagKey))pendingFlags.set(flagKey,{flags:new Set(),counts:new Map()});
+    const pending=pendingFlags.get(flagKey),currency=text(t.net?.currencyCode);
+    pending.counts.set(currency,(pending.counts.get(currency)||0)+1);
+    for(const flag of flags)pending.flags.add(flag);
+    if(orderId)orderReferences.set(orderId,(orderReferences.get(orderId)||0)+1);
     for(const flag of flags)issue(problems,"transaction",id||"row:"+String(n+1),flag,"Retained source row "+String(n+1));
     detail.push({source_row:String(n+1),transaction_id:id,payout_id:pid,order_id:orderId,
       order_name:text(oi.get(orderId)?.name),transaction_type:type,role:role||"review",test:text(t.test),
@@ -106,7 +118,7 @@ export function buildRetail(input,sha) {
     const id=text(p.id);let m;
     if(!nonblank(p.id))issue(problems,"payout",id,"MISSING_OR_NONSTRING_PAYOUT_ID","");
     try{m=money(p.net,policy.currencyScale);}catch(e){issue(problems,"payout",id,e.code||"MONEY_INVALID","");continue;}
-    const matching=[...groups.values()].filter(g=>g.payoutId===id && !g.test);
+    const matching=(groupsByPayout.get(id)||[]).filter(g=>!g.test);
     if(!matching.length){const g=group(id,m.currency,false,m.scale);g.flags.add("PAYOUT_WITHOUT_SELECTED_TRANSACTIONS");matching.push(g);}
     for(const g of matching) {
       g.flags.delete("PAYOUT_NOT_VALIDATED");g.payoutAmount=m.original;g.status=text(p.status);g.direction=text(p.transactionType);
@@ -119,10 +131,17 @@ export function buildRetail(input,sha) {
     }
   }
   for(const g of groups.values())if(!pi.has(g.payoutId)&&g.payoutId)g.flags.add("PAYOUT_NOT_IN_SELECTED_SOURCE");
+  for(const g of groups.values())for(const mode of [g.test,null]) {
+    const pending=pendingFlags.get(JSON.stringify([g.payoutId,mode]));
+    if(pending){
+      g.selectedCount+=(pending.counts.get(g.currency)||0)+(pending.counts.get("")||0);
+      for(const flag of pending.flags)g.flags.add(flag);
+    }
+  }
   const summaries=[...groups.values()].map(row).sort((a,b)=>(canonical([a.payout_id,a.currency,a.test])<canonical([b.payout_id,b.currency,b.test])?-1:canonical([a.payout_id,a.currency,a.test])>canonical([b.payout_id,b.currency,b.test])?1:0));
   const orderRows=orders.map((o,n)=>({source_row:String(n+1),order_id:text(o.id),name:text(o.name),
-    transaction_references:String(detail.filter(t=>t.order_id===text(o.id)).length),
-    review_state:!o.id?"MISSING_ORDER_ID":orderdups.has(text(o.id))?"DUPLICATE_ORDER_ID":detail.some(t=>t.order_id===text(o.id))?"SOURCE_REFERENCED":"NO_SELECTED_PAYMENT_REFERENCE"}));
+    transaction_references:String(orderReferences.get(text(o.id))||0),
+    review_state:!o.id?"MISSING_ORDER_ID":orderdups.has(text(o.id))?"DUPLICATE_ORDER_ID":orderReferences.has(text(o.id))?"SOURCE_REFERENCED":"NO_SELECTED_PAYMENT_REFERENCE"}));
   for(const r of orderRows)if(r.review_state!=="SOURCE_REFERENCED")issue(problems,"order",r.order_id,r.review_state,"Review the selected source window and gateway; an order is not automatically payable.");
   return report("retail-payout-reconciliation",input,source,{transactions:detail,payouts:summaries,orders:orderRows,exceptions:problems},
     {transactions:tx.length,payouts:payouts.length,orders:orders.length,exceptions:problems.length,matchedSourceTotals:summaries.filter(g=>g.review_state==="MATCHED_SOURCE_TOTAL").length},sha);
@@ -162,6 +181,7 @@ export function buildContacts(input,sha) {
       else {parent=nonblank(p.targetExternalId)?p.targetExternalId:externalId(namespace,"company",r.companySourceId,sha);if(dcompanies.has(r.companySourceId))flags.add("AMBIGUOUS_PARENT_SOURCE");}
     }
     if(!parentSupplied&&parent&&(!targetIndex.has(parent)||targetIndex.get(parent).kind!=="company"))flags.add("PRESERVED_PARENT_NOT_IN_TARGET_BASELINE");
+    if(!parentSupplied&&parent&&dexisting.has(parent))flags.add("AMBIGUOUS_PRESERVED_PARENT");
     const fields={name:text(r.name).trim()};
     for(const f of ownedFields.filter(x=>x!=="name")){
       const has=own(r,f);

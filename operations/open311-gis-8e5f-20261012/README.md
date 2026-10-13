@@ -149,3 +149,54 @@ The programme does not create a second customer ZIP or native controller. The ex
 `OPEN311_GIS_PHASE` reports a retained completed operating phase. `OPEN311_GIS_COMPLETE` reports either the completed result or current failed attempt. Failures exit nonzero and retain the actual error. Completed replay reports `reused: true` without running the browser or customer mutations again.
 
 The source remains paired with the original GIS product merged in public PR2453 and standalone PR404. Native results belong to their actual host and selected edition; source publication and syntax alone are not a customer-run result.
+
+
+## Complete 104-case analyst and independent supervisor operation
+
+The optional full-plan mode carries the complete original Boston analyst programme through the existing browser, native request journal, five dispatch exports and independent receiving. Select this complete source before the first GIS action. Continue an already-started older operation with its original selected source.
+
+Add the original analyst-plan path and a private supervisor-selection path to the same configuration:
+
+~~~json
+{
+  "analystPlan": "/absolute/original/Boston_104_Case_Analyst_Plan_32C2.json",
+  "supervisorSelection": "/absolute/private/boston-supervisor-selection.json"
+}
+~~~
+
+All existing GIS product, original four collection/report files, Node 24, Chrome, Playwright, sourceRoot and output settings remain in that configuration. The original plan is the 167,883-byte attachment on the original Boston source page, FileUpload ID 3f7dd772-3100-81bb-a3f9-00b2ba08da15, SHA256 e3d1736810049ecb6d21e7fa07e2be935dc6d1d5c946b14588b5b5605cfaaea8. Its full 104 recommendations retain 48 dispatch, 16 review and 40 retained closures. Use the original complete plan and preserve its source records. The four spacing corrections posted in the original thread may be applied to an explicitly selected successor plan before the first run; INPUT.json binds the actual selected bytes.
+
+The driver retains the complete plan in inputs/analyst-plan.json and matches every recommendation to its original source record. It edits only assigned_team, priority, action and analyst_note in a new copy of the original GeoPackage. Existing asset, work-order and due-date references remain unchanged. The original city status and source content remain attached throughout.
+
+After the actual104-row return is received, the programme closes its browsers/desks, releases its operation lease and returns state awaiting-supervisor. This is a completed analyst handoff. It retains:
+
+- inputs/supervisor-input.json: all 104 actual proposal IDs, original case records, authored recommendations, native proposals and exact return/workspace selection.
+- downloads/boston-analyst-supervisor-workspace.json: the complete editable native workspace at that review point.
+- The original analyst GeoPackage, returned GeoPackage, source files, saved browser requests and native return result.
+
+OPEN311_GIS_SUPERVISOR_READY prints the actual paths, return/handoff IDs, workspace ID/revision, complete input SHA256 and48/16/40 totals. The independent supervisor reads the full handoff and writes the selected private supervisor file. Copy the binding fields from that actual handoff and use its exact file SHA256:
+
+~~~json
+{
+  "schema": "commons.open311.full-analyst-supervisor-selection.v1",
+  "operationId": "boston-geographic-8e5f-20261012-01",
+  "runId": "<actual runId>",
+  "handoffId": "<actual handoffId>",
+  "returnId": "<actual returnId>",
+  "returnSha256": "<actual returnSha256>",
+  "handoffSha256": "<SHA256 of complete supervisor-input.json>",
+  "workspaceId": "<actual workspace.workspaceId>",
+  "expectedRevision": 0,
+  "reviewer": "<actual independent supervisor>",
+  "note": "<the supervisor's complete decision note>",
+  "decisions": [
+    {"proposalId": "<actual proposal ID>", "choice": "accept"}
+  ]
+}
+~~~
+
+Replace expectedRevision with the actual workspace.revision. Supply exactly one accept or reject choice for every actual proposal. This programme selects the full 48 individually approved dispatch cases. Accepting a review or dismiss recommendation retains that internal analyst state; it does not change the city source status.
+
+Resume the same configuration and physical output directory. The original request ledger first reconciles any retained native operations. The complete supervisor choices are received into the actual browser and retained in its original IndexedDB; the browser reloads and reopens those same choices before saving the native decision. The reviewed 48-case selection then continues across the original case pages through GeoPackage, GeoJSON, CSV, JSON and HTML dispatch exports, complete workspace receiving, CLI receiving, Merchant receiving and cold reopen. Every frozen source and original request result remains in the same customer handover.
+
+Without analystPlan, the existing three-case commissioning programme remains available. A completed copied handover still uses the original inspect mode. Neither mode changes the original municipal data.

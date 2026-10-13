@@ -912,16 +912,18 @@ export function inspectCohortTaskMeasurements(value){
     task:document.task,unit:document.unit,installation:copy(document.installation),observations};
 }
 function fpTaskMeasurement(value,caseId){
-  cmFields(value,['schema','original','kind','observationId','serviceBasis'],'measurement');
+  cmFields(value,['schema','original','kind','observationId','serviceBasis','caseId'],'measurement');
   if(value.schema!==COHORT_TASK_MEASUREMENT_SCHEMA)fail('COST_PLAN_MEASUREMENT_SOURCE','Use the original selected task measurement.','measurement.schema');
   const catalog=inspectCohortTaskMeasurements(value.original);
-  if(caseId&&catalog.caseId!==caseId)fail('COST_PLAN_MEASUREMENT_CASE','Select the saved measurement in the original commercial case.','measurement.original');
+  const selectedCaseId=value.caseId??catalog.caseId;
+  if(!/^operation-[a-f0-9]{32}$/.test(selectedCaseId)||(caseId&&selectedCaseId!==caseId))
+    fail('COST_PLAN_MEASUREMENT_CASE','Select the actual case holding this complete saved measurement. Keep its original producer case separately.','measurement.caseId');
   if(!['INSTALLED','FOLLOWUP'].includes(value.kind)||typeof value.observationId!=='string')
     fail('COST_PLAN_MEASUREMENT_SELECTION','Select the installed method or one exact recurring observation.','measurement');
   const selected=catalog.observations.find(row=>row.kind===value.kind&&row.observationId===value.observationId);
   if(!selected||!selected.usable)fail('COST_PLAN_MEASUREMENT_SELECTION',selected?.unavailable.join(' ')||'The original selected observation is absent.','measurement');
   const measurement={schema:COHORT_TASK_MEASUREMENT_SCHEMA,original:catalog.original,kind:value.kind,
-    observationId:value.observationId,serviceBasis:cmRequired(value.serviceBasis,'measurement.serviceBasis',12000)};
+    observationId:value.observationId,serviceBasis:cmRequired(value.serviceBasis,'measurement.serviceBasis',12000),...(value.caseId===undefined?{}:{caseId:value.caseId})};
   const outputSource=catalog.customer+' · '+catalog.title+'; '+catalog.comparisonId+' revision '+catalog.revision+
     '; '+(selected.kind==='INSTALLED'?'installed method':'observation '+selected.observationId)+
     '; '+selected.basis+'; source '+catalog.sourceId+' / '+catalog.sourceSha256+'. '+measurement.serviceBasis;
@@ -929,9 +931,9 @@ function fpTaskMeasurement(value,caseId){
 }
 /** Explicit acceptance replaces the selected denominator and retains every earlier selected basis. */
 export function bindCohortRecordedCostMeasurement(allocation,original,selection){
-  object(allocation,'allocation');cmFields(selection,['kind','observationId','serviceBasis'],'measurement selection');
+  object(allocation,'allocation');cmFields(selection,['kind','observationId','serviceBasis','caseId'],'measurement selection');
   const next=copy(allocation),bound=fpTaskMeasurement({schema:COHORT_TASK_MEASUREMENT_SCHEMA,original,
-    kind:selection.kind,observationId:selection.observationId??'',serviceBasis:selection.serviceBasis});
+    kind:selection.kind,observationId:selection.observationId??'',serviceBasis:selection.serviceBasis,...(selection.caseId===undefined?{}:{caseId:selection.caseId})});
   if(next.measurement&&canonical(next.measurement)!==canonical(bound.measurement)){
     next.measurementHistory=[...(next.measurementHistory||[]),{measurement:copy(next.measurement),
       outputQuantity:next.outputQuantity,outputUnit:next.outputUnit,outputSource:next.outputSource}];
@@ -984,7 +986,7 @@ export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
     if(mapping.measurementHistory!==undefined){
       row.measurementHistory=list(mapping.measurementHistory,path+'.measurementHistory',1000).map((previous,i)=>{
         cmFields(previous,['measurement','outputQuantity','outputUnit','outputSource'],path+'.measurementHistory.'+i);
-        const retained=fpTaskMeasurement(previous.measurement,sourceDocument.source.programId);
+        const retained=fpTaskMeasurement(previous.measurement);
         if(previous.outputQuantity!==retained.outputQuantity||previous.outputUnit!==retained.outputUnit||previous.outputSource!==retained.outputSource)
           fail('COST_PLAN_MEASUREMENT_CHANGED','Retain the complete preceding measurement selection.',path+'.measurementHistory.'+i);
         return copy(previous);
@@ -1030,7 +1032,7 @@ export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
       sourceService:copy(service),originalEconomics:copy(schedule.economics),derivedEconomics:copy(next),
       ...(measured?{measurement:{...copy(measured.selected),comparisonId:measured.catalog.comparisonId,revision:measured.catalog.revision,
         sourceId:measured.catalog.sourceId,sourceSha256:measured.catalog.sourceSha256,customer:measured.catalog.customer,task:measured.catalog.task,
-        serviceBasis:measured.measurement.serviceBasis}}:{}),
+        serviceBasis:measured.measurement.serviceBasis,...(measured.measurement.caseId===undefined?{}:{originCaseId:measured.catalog.caseId,selectedCaseId:measured.measurement.caseId})}}:{}),
       supplierCoverage:row.supplierCoverage,laborCoverage:row.laborCoverage,coverageNote:row.coverageNote,
       knownSupplierCost:cmText(supplier),knownLaborCost:cmText(labor),knownActiveHours:cmText(hours),
       supplierComplete:completeSupplier,laborComplete:completeLabor,hoursComplete:completeHours,contributions,

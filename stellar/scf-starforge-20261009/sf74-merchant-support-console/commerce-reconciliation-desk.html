@@ -22,7 +22,7 @@
 <label>Open original review return<input id="open-review" type="file" accept=".json,application/json"></label>
 <div class="row"><label>Actual reviewer<input id="actor" autocomplete="name"></label><label>Observed UTC time<input id="observed" placeholder="2026-10-13T12:00:00.000Z"></label></div>
 <label>Review authority or decision reference<input id="review-reference"></label><div id="issues"></div>
-<button id="download-review">Save source-bound review</button><button id="download-report">Download current report</button><button id="download-csv">Download exceptions CSV</button>
+<button id="download-review">Save source-bound review</button><button id="download-report">Download recorded report</button><button id="download-csv">Download recorded exceptions CSV</button>
 <p>Leaving a finding pending preserves that status. A recorded disposition is an operator decision; customer acceptance and implementation completion remain separate original case actions.</p></section>
 <section><h2>3. Receive into the original case</h2><p>Use <code>commerce-reconciliation-cli.mjs review --input ... --review ... --out ...</code> to create the complete package, then its <code>inspect</code> and <code>attach</code> commands. Preserve the first attachment request ID, operator, timestamp and selected case revision for replay. The existing implementation export/receive commands carry all case history and original source bundles.</p><iframe id="preview" title="Current reconciliation report" sandbox=""></iframe></section>
 </main><script>
@@ -745,10 +745,25 @@ function readableDate(value){const date=new Date(value);return Number.isFinite(d
 function controls(){
   for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy||initializing;
   for(const id of ['download-report','download-csv','download-review','open-review'])$(id).disabled=busy||initializing||!current;
+  for(const id of ['download-report','download-csv'])$(id).disabled=busy||initializing||!current||unrecordedReview();
   $('download-copy').disabled=false;
   $('copy-status').textContent=(initializing?'Opening local working copy… ':pendingWrites?'Saving complete working copy… ':'')+
     'Copy '+slot.id+' · local revision '+slot.revision+(slot.savedVersion===editVersion?' · saved':' · current fields available for download');
   $('storage-status').textContent=storageError?'Local storage: '+storageError+' Your current fields remain available in Download complete working copy. Use Save as a separate copy to retain a new copy without replacing another window’s work.':pointerWarning;
+}
+function unrecordedReview(){
+  if(!current)return false;
+  const fields=rawReview(),decisions=fields.issues.filter(row=>row.outcome).map(row=>({issue_id:row.issueId,outcome:row.outcome,note:row.note,reference:row.reference})).sort((a,b)=>a.issue_id.localeCompare(b.issue_id));
+  if(!recordedReview)return !!(fields.actor||fields.observedAt||fields.reference||decisions.length);
+  const visible={actor:fields.actor,observed_at:fields.observedAt,reference:fields.reference,decisions};
+  const recorded={actor:recordedReview.actor,observed_at:recordedReview.observed_at,reference:recordedReview.reference,
+    decisions:[...recordedReview.decisions].sort((a,b)=>a.issue_id.localeCompare(b.issue_id))};
+  return !same(visible,recorded);
+}
+function recordedCurrent(){
+  exactCurrent();
+  if(unrecordedReview())throw Error('Save the source-bound review to record the visible decisions before downloading their report or exceptions CSV.');
+  return current;
 }
 function rawReview(){
   return {actor:$('actor').value,observedAt:$('observed').value,reference:$('review-reference').value,
@@ -866,6 +881,7 @@ function changed(){
   if(saveTimer!==null)clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{saveTimer=null;persist();},180);
   controls();
+  if(unrecordedReview())status('The working review differs from the recorded report. Save the source-bound review to record these decisions. Pending notes remain in the complete working copy.');
 }
 async function flush(){if(saveTimer!==null)persist();await queue;}
 async function refreshCopies(){
@@ -1019,8 +1035,8 @@ $('download-review').addEventListener('click',()=>action(async()=>{
   download('commerce-review.json',json(review));
   status('Source-bound review downloaded. Unfinished fields remain in the complete working copy. Use the original CLI to create its receiving package and attach it to the saved case.');
 }));
-$('download-report').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-reconciliation.html',engine.reportHtml(current),'text/html');}));
-$('download-csv').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-exceptions.csv',engine.issuesCsv(current),'text/csv');}));
+$('download-report').addEventListener('click',()=>action(async()=>{download('commerce-reconciliation.html',engine.reportHtml(recordedCurrent()),'text/html');}));
+$('download-csv').addEventListener('click',()=>action(async()=>{download('commerce-exceptions.csv',engine.issuesCsv(recordedCurrent()),'text/csv');}));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&saveTimer!==null)persist();});
 window.addEventListener('beforeunload',event=>{if(busy||editVersion>Math.max(slot.savedVersion,exportedVersion)){event.preventDefault();event.returnValue='';}});
 $('input').value=json(INITIAL_INPUT);

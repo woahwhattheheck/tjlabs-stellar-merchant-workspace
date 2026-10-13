@@ -4,15 +4,15 @@
 
 This operation continues the retained Queens HPD service and its completed preservation customer edition. The source contains 1,342 building-in-project records. The customer selected 144 records, delivered as a 100-row page and a 44-row terminal page, with the original CSV, JSONL, source/query record and reading guide.
 
-The same service is now commissioned through its already staged Vellar and Periplo releases. Both providers serve the same source snapshot, request URLs, schema and complete output. The original SF82 seller, SF88 buyer, approval/spending records and commissioning product perform their existing operations.
+The same service is now commissioned through its already staged Vellar and Periplo releases. The received-response stages listed below are the actual retained editions from the completed 48DB native handover; each includes its complete source-bound review and original public response. Both providers serve the same source snapshot, request URLs, schema and complete output. The original SF82 seller, SF88 buyer, approval/spending records and commissioning product perform their existing operations.
 
 | Original record | Exact identity |
 | --- | --- |
 | Publisher | /dev/shm/1fb3-scf-socrata/operator-hpd/publisher |
 | Seller release store | /dev/shm/1fb3-scf-socrata/operator-hpd/publisher/releases |
 | Source release | socrata-hpd-queens-20261011 |
-| Vellar release | hpd-vellar-48db-20261012 |
-| Periplo release | hpd-periplo-48db-20261012 |
+| Vellar release | hpd-vellar-response-48db-20261012 |
+| Periplo release | hpd-periplo-response-48db-20261012 |
 | Customer | a3618289-2faa-4634-9ab6-f063995229ed |
 | Completed acquisition | socrata-hpd-queens-paid-customer-1fb3-20261011 |
 | Dataset snapshot | 11e07ef6b87c34cbf38dd975b8fbe44e2de22d50d273315736080162983c72ea |
@@ -41,11 +41,11 @@ python3 operations/hpd-two-facilitator-20261013/assemble_source.py \
   --original /absolute/original-hpd-source.json \
   --commissioning-product /absolute/commissioning-product.json \
   --integration /absolute/hpd-integration.json \
-  --integration-sha256 1eb002a8265ce3ec08943d5141c097f11310d6470a3a4c9ca82d2e1e8d9c4126 \
+  --integration-sha256 41024f469bf5252ca58d49824c7054e71292e3bac56164127a09232cd19ca1f8 \
   --out /absolute/private/hpd-complete-installation
 ~~~
 
-The resulting source directory contains 210 files and 3,115,599 bytes. SOURCE_INSTALLATION.json records the complete installed inventory and preimages; SOURCE_INSTALLATION_RESULT.json is written after all installed bodies match. Repeating the same command completes an interrupted installation or reopens the same complete source. The source root supplied to preparation is /absolute/private/hpd-complete-installation/source.
+The resulting source directory contains 210 files and 3,124,144 bytes. SOURCE_INSTALLATION.json records the complete installed inventory and preimages; SOURCE_INSTALLATION_RESULT.json is written after all installed bodies match. Repeating the same command completes an interrupted installation or reopens the same complete source. The source root supplied to preparation is /absolute/private/hpd-complete-installation/source.
 
 The selected native release is the dataset release. Its original runActiveRelease selects release-dataset.mjs through release-child.mjs, with the retained SF30 dataset handler and native SDK. Optional Python/database release families are separate source selections.
 
@@ -60,8 +60,11 @@ Work in a private operator directory. Supply the exact completed ZIP through its
 ~~~sh
 python3 operations/hpd-two-facilitator-20261013/intake_original.py \
   --archive /absolute/path/Socrata_HPD_Queens_Completed_Customer_Delivery_20261012.zip \
+  --acquisition-directory /absolute/original/acquisition \
   --out /absolute/private/hpd-commissioning-intake
 ~~~
+
+The customer ZIP contains the complete data room and acquisition manifest. Its two original paid responses, two checkout evidence files and session.json are retained in the original acquisition directory. Supply that existing directory with --acquisition-directory, or its complete original ZIP with --acquisition-archive. Intake selects those five source files by their original exact hashes and session identity and keeps their original provenance in original-acquisition/. The session configuration must hash to 4ff12cd2f60b2f37670883c135266835ffd7f9fed86ea65215acc5cc44403aa7.
 
 Intake checks the archive's whole SHA256 and byte length before reading its members, preserves all complete original files, checks the exact acquisition manifest and both original evidence/body pairs, and produces:
 
@@ -177,3 +180,9 @@ The complete customer handover consists of the exported commissioning directory,
 The completed historical 144-row customer remains available throughout. The new report describes the actual later paired commissioning under its own original provider/page operations, while the existing SCF cohort and observation-window records retain their original owners.
 
 If the operation fails while its original job also fails to close, the command retains both error codes and messages in one error result. Reopen the same saved operation and result identities when continuing.
+
+## Recovered original page bytes
+
+The complete response recovery package is HPD_Original_Response_Recovery_20261013.zip (68,104 bytes; SHA256 25543ad99c8216772ef2c80a9fd2b45e0ff1e1a8bfa0c8c049f525bbf14b46d7). It retains the original source CSV/configuration, unchanged native SF30 reader modules, both exact original query URLs, the complete recovery runner, original acquisition manifest, and both restored response bodies. Its native source execution returned both expected byte counts and SHA256s in the table above. The saved file is libfile_9a63d6c7eb5881918afd1683dff288ff, version 0.
+
+When receiving this source recovery, keep response-recovery.json beside the original acquisition source. Join the restored bodies with the existing session.json and the two original checkout evidence files before running intake. The session and checkout records retain their original identities and histories.

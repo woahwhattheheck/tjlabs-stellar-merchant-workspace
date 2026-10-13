@@ -415,6 +415,51 @@ A correction preserves every prior selection file and original native request. I
 
 The same property compiler can prepare a current existing Installation while preserving its original task, stage, assignments and observed checks. The original preview decides whether the selected source/plan and existing native references are coherent. Keep old and new review baselines distinct.
 
+## Guided portfolio intake and customer decisions
+
+The generated editor now includes **Guided customer selection** above the original property table. It edits the same complete selection used by the original compiler. There is one source roster, one property selection and the original Installation/Return flow.
+
+### Record complete source metadata
+
+Load the actual CSV, TSV, JSON, report or agreement through **Add complete original source files**. In the guided source section, enter its original MIME type, observation time with timezone, original URL (or blank for a local file), and actual attached case source ID when one exists. The editor derives the full byte count and SHA-256 from the loaded original. A generated local source key is an editable preparation identifier, not a vendor or native case identity.
+
+Choose **Add complete source descriptor** to include that original in the selection. Existing source IDs stay stable when editing metadata so property, rights and example references do not silently point elsewhere. A source attachment is still made separately through the original case.
+
+Unfinished metadata entries are retained in the complete coordinator draft. Download the complete input packet before closing; it contains those entries and every selected original file. This editor does not persist customer files to browser storage or transmit them.
+
+### Map an actual property roster
+
+1. Select a loaded source whose recorded type is `text/csv` or `text/tab-separated-values`.
+2. Choose its actual comma, tab or semicolon delimiter and logical header record. A quoted field may span physical lines; the preview retains both logical record and physical line locations. Title/preamble records remain in the original source and preview.
+3. Read the full roster. Every original column is identified by its ordinal and complete heading. Blank and duplicate headings are allowed; a heading's spelling never decides a property field automatically.
+4. For each property field, choose its actual original column or enter an explicit literal. Keys, BBL, BIN, ZIP and all buyer identifiers remain text, including leading zeroes, whitespace and large numeric-looking values. No cell is trimmed, rounded or converted to a number.
+5. Select one explicit inspection/template choice, or map every included row's exact original source value. An empty original value and an absent trailing cell remain different. Missing mappings or cells stop preparation. Template choices come from the selection's actual existing template roster; no template is created.
+6. Give every original record an INCLUDE or EXCLUDE disposition and an actual reason. **Apply explicit disposition to all records** is a deliberate bulk choice requiring its own reason. It does not guess which records are properties. Excluded records remain complete in the mapping and report.
+7. Read **Review complete mapped roster**. It shows every included property, every excluded record, added/removed/changed original keys, before/after values, order changes and unresolved identity/inspection findings.
+8. Choose **Apply this reviewed roster** only after reviewing that full replacement. It checks the same complete original source, mapping and current selection again. Existing customer examples referencing a removed property must be corrected deliberately first.
+
+The imported roster replaces the draft's entire selected property array. It never merges rows by address, BBL or apparent similarity. Duplicate keys are refused. A missing buyer identity remains missing; selecting a REQUIRED inspection with no actual buyer or template creates a visible finding, not an issued inspection.
+
+The original limits remain: at most 50 selected property records, three templates, 100 selected source descriptors, 8 MiB per source and 24 MiB of complete selected sources. The delimited reader supports up to 10,000 logical records and 200 columns; all records need a disposition and no overflow cell is discarded.
+
+### Correct a mapping and retain its sources
+
+A mapping is bound to a complete original selection snapshot. Editing the selection's advanced JSON or other fields makes that older mapping stale. **Bind mapping to current selection** is an explicit new basis: the previous complete mapping is retained in its history. Choosing another roster also retains the preceding mapping.
+
+Every applied roster produces a complete `Property_Roster_Mapping_<digest>.json` source containing the original mapping, source descriptor, original selection basis, full included rows, excluded rows and complete comparison. Its generated source descriptor is included in the selected source roster. Attach that actual file with the other originals when preparing the native Installation. The original CSV remains an unchanged separate source.
+
+The editor prevents removal of an original file still required by retained mapping history. Export the full input packet or continue in a separate deliberate selection instead of dropping that source. The packet retains all preceding mapping bases, unfinished choices, row/value-page selections, source metadata drafts and original bytes. Reopening uses the current complete editor, which recognizes the additive coordinator draft member; older editors do not implement that member.
+
+### Complete ordinary customer controls
+
+The guided form also edits the selecting operator/time and note, the existing three-template roster, permitted report field pointers, whole-report choice, merchant and buyer hosts, report/PMS route, all six source/host/payment rights decisions, both source-edition references and the five customer examples. Multi-selection controls list the original source IDs and selected property keys.
+
+An APPROVED choice does not supply missing decision-maker, time, note or evidence automatically. The original compiler still validates those fields. Whole-report delivery still requires its separately recorded approval. Selecting a payment route preserves every original native payment field; exact atomic amounts and existing native terms remain available in Advanced JSON. No implementation fee is converted to a resource price.
+
+Advanced JSON remains the complete editable format. Changing it disables stale guided fields until **Reload guided controls** reads the new original selection. Guided edits preserve all other selection fields and the original native plan/case observation. The existing **Prepare original Installation input**, native source attachment, preview/save, actual vendor operation and independent Return still complete the work.
+
+The two additive modules are `property-coordinator.mjs` (full source mapping and comparison) and `property-coordinator-ui.mjs` (guided source/selection controls). The original editor command embeds both full bodies in its self-contained HTML; the existing distribution collector includes them with the complete workorder directory. No additional server, database, provider or runtime owner is introduced.
+
 ## 8. Editor, source export and recovery
 
 Generate Property_Commissioning_Editor.html with the editor command and open that complete local file. It embeds the maintained modules and profile. Load the original cohort, native seed, current case catalogue, selected JSON, any predecessor, full source files, saved Installation and Return seed as required for the chosen phase.

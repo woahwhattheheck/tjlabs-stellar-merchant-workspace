@@ -4,6 +4,7 @@
 // Execute this named successor once through the same receiving owner.
 import assert from 'node:assert/strict';
 import {mkdtemp, mkdir, writeFile, readFile} from 'node:fs/promises';
+import {continueRetainedCustomerFollowup} from '../retained-customer-followup.mjs';
 import {createDurableCustomerCase,captureDurableCustomerCase,checkpointDurableCustomerCase}
   from '../durable-customer-case.mjs';
 import {createServer} from 'node:http';
@@ -348,6 +349,13 @@ try {
   // Continue the same committed business records into the editable customer account.
   reopened=await connectAccountingReceivablesClient(connection);await reopened.open();
   const originalStatus=await reopened.status({customerId:customer.id,asOf:date});
+  retained.workspaceId=originalStatus.workspaceId;retained.followupDirectory=join(temporary,'customer-followup');
+  await writeFile(join(temporary,'RETENTION.json'),json(retained),{mode:0o600});
+  const followup=await continueRetainedCustomerFollowup({directory:join(temporary,'customer-followup'),client:reopened,
+    originalOperation:retained.originalOperation,customerId:customer.id,originalInvoiceId:invoiceId,
+    workspaceId:originalStatus.workspaceId,actor,accountDate:date,url,workspace:alias,tokenEnv});
+  retained.followup=followup;await writeFile(join(temporary,'RETENTION.json'),json(retained),{mode:0o600});
+  workflows.push('Same retained customer: reviewed USD 4800 order, consumed credit approval, assigned collection case, promised payment and delivery query, original cash-plan editions, full customer return, matched USD 1000 receipt and reviewed revised promise');
   const publicationId=randomUUID(),publicationPreview=await reopened.previewCustomerAccount({customerId:customer.id,asOf:date,publicationId});
   const publicationOperation=join(temporary,'publication-operation'),publicationRequestId=randomUUID();
   await prepareAccountingReceivablesOperation({directory:publicationOperation,url,workspace:alias,tokenEnv,
@@ -357,7 +365,7 @@ try {
   await createDurableCustomerCase({directory:caseDirectory,client:reopened,selection:{
     id:caseId,title:'Merchant implementation and customer account',originalOperation:retained.originalOperation,
     url,workspace:alias,tokenEnv,workspaceId:originalStatus.workspaceId,customerId:customer.id,asOf:date,
-    cashPlans:[],requestIds:[quoteArgs.requestId,publicationRequestId]
+    cashPlans:followup.result.cashPlans,requestIds:[quoteArgs.requestId,publicationRequestId,...followup.result.requestIds]
   }});
   const capture=await captureDurableCustomerCase({directory:caseDirectory,editionId,client:reopened});
   Object.assign(retained,{workspaceId:originalStatus.workspaceId,caseDirectory,caseId,editionId,
@@ -375,6 +383,23 @@ try {
   }else retained.checkpoint={ready:true,passEnv:'STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE',
     note:'Retained native source and complete customer case are ready for the original configured encrypted checkpoint.'};
   await reopened.closeWorkspace();await reopened.disconnect();reopened=null;
+  reopened=await connectAccountingReceivablesClient(connection);await reopened.open();
+  const coldInvoice=await reopened.invoice({invoiceId:followup.result.invoiceId});
+  const coldCase=await reopened.collectionCase({collectionCaseId:followup.result.collectionCaseId,asOf:date});
+  const coldDecision=await reopened.creditDecision({creditDecisionId:followup.result.creditDecisionId});
+  const coldResponse=await reopened.customerResponse({customerResponseId:followup.result.responseId});
+  assert.equal(coldInvoice.invoice.amountDue,'3800.00');assert.equal(coldInvoice.invoice.paid,'1000.00');
+  assert.equal(coldCase.collectionCase.promise.amount,'2800.00');assert.equal(coldCase.collectionCase.dispute.status,'RESOLVED');
+  assert.equal(coldDecision.decision.status,'CONSUMED');assert.equal(coldResponse.response.decisions.length,2);
+  const recoveredFollowup=await continueRetainedCustomerFollowup({directory:followup.directory,client:reopened,
+    originalOperation:retained.originalOperation,customerId:customer.id,originalInvoiceId:invoiceId,
+    workspaceId:originalStatus.workspaceId,actor,accountDate:date,url,workspace:alias,tokenEnv});
+  assert.equal(recoveredFollowup.replayed,true);
+  retained.followupReopen={invoice:coldInvoice.invoice,collectionCase:coldCase.collectionCase,
+    creditDecisionId:coldDecision.decision.id,customerResponseId:coldResponse.response.id,
+    replayed:recoveredFollowup.replayed,at:new Date().toISOString()};
+  await reopened.closeWorkspace();await reopened.disconnect();reopened=null;
+  workflows.push('Full customer follow-up cold reopen: USD 3800 remains due, revised USD 2800 promise and resolved query retained, consumed approval and both customer decisions restored under the same original IDs');
   retained.status='COMPLETE';retained.finishedAt=new Date().toISOString();
   workflows.push('Original issued account published as an editable customer document; complete customer/staff case and original request journals retained for continuing work');
 

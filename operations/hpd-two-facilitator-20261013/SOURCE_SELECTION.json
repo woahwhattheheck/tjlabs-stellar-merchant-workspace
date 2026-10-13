@@ -19,8 +19,8 @@
     "sha256": "d9ab5ae0461c5c436f9b5d9e5786ac18aac07945d92183707cc2f31ce9e107ce"
   },
   "integrationCarrier": {
-    "bytes": 956592,
-    "sha256": "1eb002a8265ce3ec08943d5141c097f11310d6470a3a4c9ca82d2e1e8d9c4126"
+    "bytes": 965393,
+    "sha256": "41024f469bf5252ca58d49824c7054e71292e3bac56164127a09232cd19ca1f8"
   },
   "nativeOverlay": [
     {
@@ -341,18 +341,18 @@
     },
     {
       "path": "operations/hpd-two-facilitator-20261013/intake_original.py",
-      "bytes": 13559,
-      "sha256": "10ba06863fd394edbe9a2af10e224e0e9c82383d7b4a8753630b1a01a8ea1a7d"
+      "bytes": 19564,
+      "sha256": "2db076c55eba7e2d20053c0894ef6c5618a33e779766bf27941b623acaf5ad88"
     },
     {
       "path": "operations/hpd-two-facilitator-20261013/OPERATING.md",
-      "bytes": 14925,
-      "sha256": "aa76ae860e5b0b3c52ccd6fc0f9d87e5ec84594380606098c46cea35a4fe11b5"
+      "bytes": 17447,
+      "sha256": "23b9e7cc92a48ceb39ab905c179f1304cd9a36f54e248ece776a0618db07262d"
     },
     {
       "path": "operations/hpd-two-facilitator-20261013/prepare_hpd_commissioning.mjs",
-      "bytes": 16596,
-      "sha256": "8cb31fdb46cd9be80bfea49112d97c7efdddb2b091427f1f94feac53c0940225"
+      "bytes": 16614,
+      "sha256": "6b9ffd1e9d9eee06a49e216eb33bd38b7ee646e8abefda6e243b4652ed332d82"
     },
     {
       "path": "operations/hpd-two-facilitator-20261013/provider-authority/periplo-README.md",

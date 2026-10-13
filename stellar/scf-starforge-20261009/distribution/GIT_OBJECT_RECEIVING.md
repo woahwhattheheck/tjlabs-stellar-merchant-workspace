@@ -294,15 +294,21 @@ const release = await buildDistribution({
 Use the maintained object receiver, builder and runtime installer with compatible
 source and package limits. Keep their toolkit location separate when receiving a
 historical source edition. The current `MAX_SOURCE_BYTES` shared by `build.mjs` and
-`git-source.mjs` permits 128 MiB of aggregate source; this receiver uses the same
-budget. `MAX_SOURCE_FILE_BYTES` retains the 2 MiB individual source limit. The
-builder also checks that the complete unpacked package, including its generated
-manifest and package metadata, fits the installer's 128 MiB limit. Compressed
-archives remain bounded to 64 MiB, and each installed member remains bounded to
-4 MiB. A toolkit retaining the earlier 64 MiB unpacked limit cannot receive a
-larger cumulative package; use the current maintained installer for that package.
-The selected source commit, cache identity and previous READY runtime remain
-unchanged when receiving an earlier original archive.
+`git-source.mjs` permits 256 MiB of aggregate source; the object receiver uses the
+same budget. Each original source file and installed package member is bounded
+to 8 MiB. The builder also checks that the complete unpacked package, including
+its generated manifest and package metadata, fits the installer's 256 MiB limit.
+These bounds retain the complete selected source, including the original Pollar
+SDK capsule consumed by `pollar-partner/runtime.mjs`. Compressed archives remain
+bounded to 64 MiB and release archives to 10,000 entries. The object receiver's
+expanded donor tar stream is separately bounded to 512 MiB to allow tar headers,
+padding and skipped original members while retaining the 256 MiB selected-source
+budget. Metadata limits remain unchanged.
+
+A toolkit retaining the earlier member or aggregate limits cannot receive a
+larger cumulative package; use the current maintained receiver and installer for
+that package. The selected source commit, cache identity and previous READY
+runtime remain unchanged when receiving an earlier original archive.
 
 The builder resolves its original declared commands, exports, browser assets,
 and static imports. If it requests an additional original source path outside

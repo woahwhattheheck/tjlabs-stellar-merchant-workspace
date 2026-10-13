@@ -404,7 +404,7 @@ function render(){
   for(const id of ['reconciliation-select','report-reconciliation','compare-left','compare-right'])
     select(id,recons.map(row=>({id:row.id,label:row.name+' · '+date(row.createdAt)})),{blank:recons.length?null:'Create a reconciliation edition'});
   select('export-report',reports.map(row=>({id:row.id,label:row.name+' · '+(row.partnerId??'Complete programme')})),{blank:reports.length?null:'Create a report'});
-  renderCaptures();renderSources();renderDeliveries();renderReports();renderExports();renderDecisions();
+  renderCaptures();renderSources();renderDeliveries();renderReports();renderExports();renderDecisions();renderHorizonInputs();
   const previous=new Map(all('#reconcile-sources input').map(input=>[input.value,input.checked]));
   $('reconcile-sources').innerHTML=sources.map(row=>'<label><input type="checkbox" value="'+esc(row.id)+'" '+((previous.has(row.id)?previous.get(row.id):true)?'checked':'')+'><span>'+esc(row.label)+' · '+esc(row.provider+'/'+row.kind)+' · '+esc(row.selectedRecords)+' records'+(row.error?' · '+esc(row.error.code):'')+'</span></label>').join('')||'<p class="empty">Capture or import original source files for this programme.</p>';
   const current=programmeSelection(false),hook=values(state.connections).find(row=>row.provider==='customer-webhook');
@@ -413,6 +413,82 @@ function render(){
     ' --programme-version '+current.programmeVersion+' --connection-alias '+hook.alias+' --host 127.0.0.1 --port 8789':
     'Configure a customer-webhook connection and select a saved programme to open the authenticated notification receiver.';
 }
+
+let horizonReview=null,horizonSelection=null,horizonOffset=0;
+const horizonChoices=new Map();
+function renderHorizonInputs(){
+  const current=programmeSelection(false),sources=scope(values(state.sources));
+  select('horizon-register',sources.filter(row=>row.provider==='document'&&row.kind==='horizon-invoice-register'&&row.programmeVersion===current?.programmeVersion)
+    .map(row=>({id:row.id,label:row.label+' · '+row.id})),{blank:'Select the original deposit register'});
+  const checked=new Map(all('#horizon-sources input').map(input=>[input.value,input.checked]));
+  $('horizon-sources').innerHTML=sources.filter(row=>row.provider==='horizon').map(row=>'<label><input type="checkbox" value="'+esc(row.id)+'" '+(checked.get(row.id)?'checked':'')+'><span>'+esc(row.label)+' · '+esc(row.kind)+' · '+esc(row.selectedRecords)+' records'+(row.error?' · '+esc(row.error.code):'')+'</span></label>').join('')||'<p class="empty">Retain the original Horizon root and complete payment capture under Original sources.</p>';
+}
+async function downloadHorizonTemplate(){
+  const selected=programmeSelection(),programme=await read('programme.read',{programmeId:selected.programmeId,version:selected.programmeVersion});
+  const assets=new Map(programme.definition.assets.map(row=>[row.id,row]));
+  const template={schema:'stellar-forge.horizon-invoice-register.v1',programmeId:programme.id,programmeVersion:programme.version,programmeSha256:programme.sha256,
+    entries:programme.definition.invoices.filter(row=>assets.get(row.assetId)?.type==='stellar').map((row,index)=>({
+      id:'mapping-'+String(index+1),invoiceId:row.id,role:'collection',account:'',memo:{type:'SELECT_ORIGINAL_MEMO_TYPE',value:''},
+      note:'Enter the actual invoice destination and memo from its original terms; no inferred address or memo.'}))};
+  downloadJSON(template,'horizon-invoice-register-to-complete.json');
+}
+async function importHorizonRegister(){
+  const file=field($('horizon-register-form'),'file').files[0];if(!file)throw error('Select the complete original register JSON.');
+  const selected=programmeSelection(),result=await importOriginal(file,{...selected,provider:'document',kind:'horizon-invoice-register',label:file.name},'Retaining original invoice deposit register');
+  await refresh();$('horizon-register').value=result.sourceId;notify('Retained the original mapping file. Review checks its exact programme, accounts and memos.');
+}
+async function reviewHorizonDeposits(){
+  const selection={...programmeSelection(),registerSourceId:$('horizon-register').value,sourceIds:all('#horizon-sources input:checked').map(input=>input.value)};
+  if(!selection.registerSourceId||!selection.sourceIds.length)throw error('Select an original register and every response in the complete Horizon observation.');
+  busy('Reviewing original Horizon deposit records',1);
+  try{const review=await read('horizon.review',selection);horizonSelection=selection;horizonReview=review;horizonOffset=0;horizonChoices.clear();renderHorizonReview();}
+  finally{busy('',-1);}
+}
+function renderHorizonReview(){
+  $('horizon-review-panel').hidden=!horizonReview;if(!horizonReview)return;
+  const review=horizonReview;$('horizon-summary').textContent=pretty(review.summary);
+  $('horizon-binding').textContent='Programme '+review.programme.id+' · version '+review.programme.version+' · review '+review.reviewSha256;
+  $('horizon-errors').textContent=review.sourceIssues.length||review.captureIssues.length?pretty([...review.sourceIssues,...review.captureIssues]):'Original source and complete capture checks passed. Review every selected attribution and amount.';
+  const body=$('horizon-rows');body.replaceChildren();
+  for(const row of review.rows.slice(horizonOffset,horizonOffset+pageSize)){
+    const tr=el('tr'),original=el('td'),selection=el('td'),details=el('td'),reason=el('td');
+    original.append(el('strong',row.operationId??'No operation ID'),el('small',row.transactionHash??'No transaction hash'),el('small',row.status));
+    const inspect=el('button','Inspect original movement');inspect.type='button';inspect.dataset.action='horizon-detail';inspect.dataset.id=row.movementId;original.append(inspect);
+    const choose=el('select');choose.setAttribute('aria-label','Invoice mapping for operation '+row.operationId);choose.dataset.horizonMapping=row.movementId;
+    const blank=el('option','Leave unassigned');blank.value='';choose.append(blank);
+    for(const candidate of row.candidates){const option=el('option',candidate.invoiceId+' · '+candidate.role+' · '+candidate.amountRelation);option.value=candidate.mappingId;choose.append(option);}
+    choose.disabled=!['CANDIDATE','AMBIGUOUS'].includes(row.status);
+    choose.value=horizonChoices.get(row.movementId)?.mappingId??'';selection.append(choose);
+    details.append(el('div',(row.amount?.amount??'Unknown')+' '+(row.amount?.code??'asset')),el('small','Destination '+(row.to??'unknown')));
+    for(const candidate of row.candidates)details.append(el('small',candidate.mappingId+': invoice '+candidate.expectedAmount+'; difference '+candidate.differenceUnits+' native units'));
+    if(row.issues.length)details.append(el('small',row.issues.map(item=>item.code).join(', ')));
+    if(Object.keys(row.near).length)details.append(el('small','Other account mappings: '+pretty(row.near)));
+    const input=el('textarea');input.rows=2;input.setAttribute('aria-label','Review reason for operation '+row.operationId);input.dataset.horizonReason=row.movementId;
+    input.value=horizonChoices.get(row.movementId)?.reason??'';input.disabled=choose.disabled;reason.append(input);
+    tr.append(original,details,selection,reason);body.append(tr);
+  }
+  pager('horizon-pager',horizonOffset,review.rows.length,'horizon-page');
+  $('horizon-chosen-count').textContent=horizonChoices.size+' explicitly selected movements across all pages';
+}
+function horizonChoiceChanged(event){
+  const input=event.target,identity=input.dataset.horizonMapping??input.dataset.horizonReason;if(!identity)return;
+  const prior=horizonChoices.get(identity)??{movementId:identity,mappingId:'',reason:''};
+  if(input.dataset.horizonMapping!==undefined)prior.mappingId=input.value;else prior.reason=input.value;
+  if(prior.mappingId||prior.reason)horizonChoices.set(identity,prior);else horizonChoices.delete(identity);
+  $('horizon-chosen-count').textContent=[...horizonChoices.values()].filter(row=>row.mappingId).length+' explicitly selected movements across all pages';
+}
+async function applyHorizonReview(){
+  if(!horizonReview)throw error('Read the complete original deposit selection first.');
+  const choices=[...horizonChoices.values()].filter(row=>row.mappingId);
+  if(!choices.length)throw error('Choose at least one mapping, with its individual review reason.');
+  const actor=field($('horizon-apply-form'),'actor').value.trim();if(!actor)throw error('Enter the actual reviewer.');
+  if(choices.some(row=>!row.reason.trim()))throw error('Give a reason for every selected attribution, including amount differences or ambiguous mappings.');
+  const result=await mutate('horizon.apply',{...horizonSelection,reviewSha256:horizonReview.reviewSha256,choices,actor},'Saving reviewed deposits through original invoice decisions');
+  horizonChoices.clear();horizonReview=null;$('horizon-review-panel').hidden=true;
+  notify('Saved '+result.decisionIds.length+' original decisions and the full reviewed source. Create a reconciliation edition to inspect the resulting balances.');
+  await openSource(result.reviewSourceId);
+}
+
 function renderConnections(){
   $('connection-list').innerHTML=table(['Alias','Provider','Network','Origin or scope'],values(state.connections).map(row=>[
     esc(row.alias),esc(row.provider),esc(row.network??''),esc(row.origin??row.nativeSource?.origin??short(row.sourceScope))]));
@@ -948,6 +1024,7 @@ function downloadJSON(value,filename){
   link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 function changeProgrammeSelection(){
+  horizonReview=null;horizonSelection=null;horizonChoices.clear();$('horizon-review-panel').hidden=true;
   sourceOffset=0;sourceListOffset=0;captureOffset=0;sourceCaptureFilter=null;deliveryOffset=0;receiptOffset=0;
   selectedSource=null;selectedDelivery=null;selectedReconciliation=null;
   for(const id of ['source-detail-panel','delivery-detail-panel','receipt-detail-panel'])$(id).hidden=true;
@@ -978,6 +1055,8 @@ function writeRegister(input){
   else row[key]=value;
 }
 const actionHandlers={
+  'horizon-page':async(_id,data)=>{horizonOffset=whole(data.offset,'Offset');renderHorizonReview();},
+  'horizon-detail':async id=>showOperation(horizonReview?.rows.find(row=>row.movementId===id),{heading:'Complete original Horizon deposit review'}),
   'asset-remove':async(id)=>{assets.splice(whole(id,'Asset row'),1);renderRegisters();},
   'invoice-remove':async(id)=>{invoices.splice(whole(id,'Invoice row'),1);renderRegisters();},
   'invoice-page':async(_id,data)=>{invoiceOffset=whole(data.offset,'Offset');renderRegisters();},
@@ -1073,6 +1152,14 @@ onClick('select-all-sources',async()=>{for(const input of all('#reconcile-source
 onClick('reconciliation-open',async()=>openReconciliation($('reconciliation-select').value));
 $('reconciliation-filter').addEventListener('input',()=>{reconciliationOffset=0;orderOffset=0;issueOffset=0;renderReconciliation();});
 onSubmit('decision-form',saveDecision);
+onClick('horizon-template',downloadHorizonTemplate);
+onSubmit('horizon-register-form',importHorizonRegister);
+onSubmit('horizon-selection-form',reviewHorizonDeposits);
+onSubmit('horizon-apply-form',applyHorizonReview);
+onClick('horizon-select-all',async()=>{for(const input of all('#horizon-sources input'))input.checked=true;});
+onClick('horizon-download',async()=>{if(!horizonReview)throw error('Read the original deposit selection first.');downloadJSON({selection:horizonSelection,review:horizonReview,choices:[...horizonChoices.values()]},'horizon-invoice-review.json');});
+$('horizon-rows').addEventListener('change',horizonChoiceChanged);
+$('horizon-rows').addEventListener('input',horizonChoiceChanged);
 onSubmit('compare-form',compareReconciliations);
 onSubmit('report-form',createReport);
 onSubmit('export-form',exportWorkspace);

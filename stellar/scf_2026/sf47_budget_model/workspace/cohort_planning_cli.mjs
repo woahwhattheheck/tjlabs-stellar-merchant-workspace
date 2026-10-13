@@ -34,7 +34,7 @@ const HELP = [
   "  node cohort_planning_cli.mjs recorded-cost-seed --recorded delivery.json --baseline future-plan.json [--output choices.json]",
   "  node cohort_planning_cli.mjs recorded-cost-plan --recorded delivery.json --baseline future-plan.json --choices choices.json [--output cost-plan.json]",
   "  node cohort_planning_cli.mjs task-measurements --input saved-task-response.json [--output measurements.json]",
-  "  node cohort_planning_cli.mjs recorded-cost-bind --choices choices.json --allocation ID --measurement saved-task-response.json --kind INSTALLED|FOLLOWUP [--observation ID] --service-basis TEXT [--output bound-choices.json]",
+  "  node cohort_planning_cli.mjs recorded-cost-bind --choices choices.json --allocation ID --measurement saved-task-response.json --kind INSTALLED|FOLLOWUP [--observation ID] [--case RECEIVING_CASE_ID] --service-basis TEXT [--output bound-choices.json]",
   "  node cohort_planning_cli.mjs recorded-cost-reopen --input cost-plan.json [--output verified-cost-plan.json]",
   "",
   "Recorded-cost planning retains complete originals and explicit measured useful outputs; existing funding and purchased prices stay unchanged.",
@@ -86,7 +86,7 @@ function parse(argv) {
     csv: ["input", "output"],
     compare: ["baseline", "candidate", "name", "note", "output"],
     "task-measurements": ["input","output"],
-    "recorded-cost-bind": ["choices","allocation","measurement","kind","observation","service-basis","output"],
+    "recorded-cost-bind": ["choices","allocation","measurement","kind","observation","case","service-basis","output"],
     "recorded-cost-seed": ["recorded","baseline","output"],
     "recorded-cost-plan": ["recorded","baseline","choices","output"],
     "recorded-cost-reopen": ["input","output"],
@@ -200,7 +200,7 @@ async function main(argv) {
     const found=result.allocations.filter(row=>row.id===options.allocation);
     if(found.length!==1)fail("INVALID_ARGUMENT","Select one original allocation identity.","allocation");
     const next=bindCohortRecordedCostMeasurement(found[0],await readJson(options.measurement),
-      {kind:options.kind,observationId:options.observation||"",serviceBasis:options["service-basis"]});
+      {kind:options.kind,observationId:options.observation||"",serviceBasis:options["service-basis"],...(options.case?{caseId:options.case}:{})});
     result.allocations=result.allocations.map(row=>row.id===options.allocation?next:row);
   } else if (command === "recorded-cost-reopen") {
     result=reopenCohortRecordedCostPlan(await readJson(options.input));

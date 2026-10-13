@@ -49,7 +49,8 @@ NAME = re.compile(r"^[a-z][a-z0-9_-]{1,47}$")
 KNOWN_CONFIG = {"schema", "operation_id", "directory", "checkout", "compose_project",
                 "mode", "domain", "url", "http_port", "https_port", "bind_address",
                 "sysadmin_email", "auth_env", "admin", "tls", "environment",
-                "secret_environment", "backup_passphrase_env", "connection_name", "restore_settings"}
+                "secret_environment", "backup_passphrase_env", "connection_name", "restore_settings",
+                "codespaces_token_env"}
 
 def now():
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
@@ -187,6 +188,12 @@ def validate_config(raw):
     for key in ("auth_env", "backup_passphrase_env"):
         if not ENV_NAME.fullmatch(str(c[key])):
             raise ValueError(key + " must be an environment reference.")
+    if "codespaces_token_env" in c:
+        alias = c["codespaces_token_env"]
+        if not isinstance(alias, str) or not ENV_NAME.fullmatch(alias) or alias == c["auth_env"]:
+            raise ValueError("codespaces_token_env must name a distinct host environment reference.")
+        if c["mode"] != "upstream" or c["https_port"] != 443 or not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.app\.github\.dev", c["domain"]):
+            raise ValueError("The proxy token is restricted to this original HTTPS Codespaces upstream origin.")
     admin = c.get("admin")
     if admin is not None:
         if set(admin) != {"email", "password_env"} or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", str(admin.get("email", ""))):
@@ -636,9 +643,15 @@ class Host:
     def http(self, path, *, auth=False, extended=False, body=None, target=None, timeout=120):
         origin = self.c["url"]
         url = urllib.parse.urljoin(origin, path)
-        if urllib.parse.urlsplit(url).netloc != urllib.parse.urlsplit(origin).netloc:
+        selected, requested = urllib.parse.urlsplit(origin), urllib.parse.urlsplit(url)
+        if (requested.scheme, requested.netloc) != (selected.scheme, selected.netloc) or requested.username or requested.password or requested.fragment:
             raise ValueError("The request left the selected Central origin.")
         headers = {"Accept": "application/json"}
+        if "codespaces_token_env" in self.c:
+            proxy_token = secret(self.c["codespaces_token_env"])
+            if any(ord(char) <= 32 or ord(char) == 127 for char in proxy_token):
+                raise ValueError("Set the selected Codespaces proxy token without whitespace or control characters.")
+            headers["X-Github-Token"] = proxy_token
         if extended:
             headers["X-Extended-Metadata"] = "true"
         if auth:
@@ -790,6 +803,8 @@ class Host:
         atomic_json(self.root / "connection-secret.json", {self.c["auth_env"]: self.auth_value()}, exact=True)
         connection = {"id": self.c["compose_project"], "name": self.c["connection_name"],
                       "url": self.c["url"], "authEnv": self.c["auth_env"], "allowLoopback": False}
+        if "codespaces_token_env" in self.c:
+            connection["codespacesTokenEnv"] = self.c["codespaces_token_env"]
         atomic_json(self.root / "connection.json", connection, exact=True)
         self.save(phase="AUTHENTICATED", authenticated=result, connection=connection)
         return {"connection": connection, "service": result,
@@ -1018,6 +1033,8 @@ class Host:
             raise ValueError("The restored native project roster differs; inspect the retained source and target.")
         connection = {"id": self.c["compose_project"], "name": self.c["connection_name"],
                       "url": self.c["url"], "authEnv": self.c["auth_env"], "allowLoopback": False}
+        if "codespaces_token_env" in self.c:
+            connection["codespacesTokenEnv"] = self.c["codespaces_token_env"]
         atomic_json(self.root / "connection.json", connection, exact=True)
         ca = self.root / "tls" / "ca.pem"
         selected_ca = str(ca) if ca.exists() else self.c["tls"].get("ca")
