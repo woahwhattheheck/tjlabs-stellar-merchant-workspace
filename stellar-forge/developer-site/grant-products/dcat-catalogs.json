@@ -130,6 +130,118 @@
           "bytes": 10411
         }
       ]
+    },
+    {
+      "id": "dcat-semantic-profile-operator",
+      "label": "Complete retained profiles, native findings, coverage qualifications and operator decisions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_CATALOGS.md",
+      "commit": "5a8c6cb8d1b539cbb53d601540fae9c861b4f251",
+      "editions": [
+        {
+          "commit": "5a8c6cb8d1b539cbb53d601540fae9c861b4f251",
+          "git_blob": "ec937336d5b4c7a508571505d266f725f147e7f2",
+          "sha256": "f11ffdb2d4e0ce3da6d3b1c510f87ac071c76609b70b3cbebf5e371889147051",
+          "bytes": 16399
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-snapshot-comparison",
+      "label": "Ordered original graph snapshots, complete differences and explicitly scoped relationship impact",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_COMPARISONS.md",
+      "commit": "212a85843d89f166d66f46f9dd934bd610c57cbf",
+      "editions": [
+        {
+          "commit": "212a85843d89f166d66f46f9dd934bd610c57cbf",
+          "git_blob": "c0b97c4bd0d4c7617e31d44435314b136578b544",
+          "sha256": "97d4fc7d33511f0a35bd52e0f16e2bb81a6f1f56b190b3a3c050378bbfaad623",
+          "bytes": 12502
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-prepared-runtime",
+      "label": "Original source, complete wheel lock, private interpreter preparation and receiving-side selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_RUNTIME.md",
+      "commit": "5a8c6cb8d1b539cbb53d601540fae9c861b4f251",
+      "editions": [
+        {
+          "commit": "5a8c6cb8d1b539cbb53d601540fae9c861b4f251",
+          "git_blob": "1bd1dd1d7d35a68d87a9cff73cb2831df7534b8d",
+          "sha256": "6d8b9be1c3ce13a44a2d0b89b8bdeddb73674270bf1c34dee0e73c7968b0aee7",
+          "bytes": 15356
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-customer-programme",
+      "label": "Original GSA native semantics, complete artifact receiving and independent cold reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/dcat-semantic-customer-390e-20261013/README.md",
+      "commit": "212a85843d89f166d66f46f9dd934bd610c57cbf",
+      "editions": [
+        {
+          "commit": "212a85843d89f166d66f46f9dd934bd610c57cbf",
+          "git_blob": "2098828a2e6242d92d946439ff9a96900e7f8ef8",
+          "sha256": "2eef25716a75c7cf08929b7a7ab73793c0a5e543675fbaa796afc633f7dc940f",
+          "bytes": 20687
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-comparison-customer-programme",
+      "label": "Original saved-pair comparison, complete rows and independent reviewed receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/dcat-semantic-comparison-customer-390e-20261013/README.md",
+      "commit": "212a85843d89f166d66f46f9dd934bd610c57cbf",
+      "editions": [
+        {
+          "commit": "212a85843d89f166d66f46f9dd934bd610c57cbf",
+          "git_blob": "a036cd71d538d4083c0dda83162bceedd7515a28",
+          "sha256": "10c95de33421dc4c6ceac0bc6c91809afef28c94e74445350d1b9669745faba1",
+          "bytes": 18854
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-editable-operator-handover",
+      "label": "Original semantic evidence, editable operator Brief and Action Plan, and complete portable handover",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "tools/phone_driver/DCAT_HANDOVERS.md",
+      "commit": "99fae766a334d4a613c921b79e9e32d07450d1bf",
+      "editions": [
+        {
+          "commit": "99fae766a334d4a613c921b79e9e32d07450d1bf",
+          "git_blob": "8729adce01b380b7e93a09f6e1bf182a9b6bf717",
+          "sha256": "d3fba4c65e51182029ebca21a14628b1e241abca7fdcf30883c962680bf0854b",
+          "bytes": 27155
+        }
+      ]
+    },
+    {
+      "id": "dcat-semantic-lda-customer-programme",
+      "label": "Original semantic customer archive, complete member receiving, independent host and cold reopening",
+      "repository": "woahwhattheheck/LocalDeviceAgent",
+      "kind": "blob",
+      "path": "operations/lda-dcat-gsa-customer-390e-20261013/SEMANTIC_RECEIVING.md",
+      "commit": "99fae766a334d4a613c921b79e9e32d07450d1bf",
+      "editions": [
+        {
+          "commit": "99fae766a334d4a613c921b79e9e32d07450d1bf",
+          "git_blob": "c78e6330c6f7e13e630470f43a51e26b7ce819fe",
+          "sha256": "6857546b96b4f6c3683f7b32ade5e214d140186abb322a795c13ea4aa99ef0a3",
+          "bytes": 15451
+        }
+      ]
     }
   ]
 }
