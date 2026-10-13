@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md",
-      "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
+      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
@@ -25,6 +25,11 @@
           "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
           "git_blob": "f5f116f74a0b849ed5b62f7271f054974abd4477",
           "bytes": 28586
+        },
+        {
+          "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+          "git_blob": "631a51c85f1140184e15af93a010c9ff0752fbdf",
+          "bytes": 29252
         }
       ]
     },
@@ -114,12 +119,17 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/scf-statements-original-32c2-20261013/README.md",
-      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
           "git_blob": "b5d0a066e58b26e6a132f83d8ed6093d4bcf4cf0",
           "bytes": 9130
+        },
+        {
+          "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+          "git_blob": "4aa70e570fa4322d278ef8c4659ca6b9f129e5f6",
+          "bytes": 13574
         }
       ]
     },
@@ -204,12 +214,62 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statements.mjs",
-      "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
+      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
       "editions": [
         {
           "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
           "git_blob": "e03f00a30ba7ff2bfca179f1c3f64a2f41616c1e",
           "bytes": 72948
+        },
+        {
+          "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+          "git_blob": "7091da9d7c9bf68e7b39dfe5d4d878475ade69bb",
+          "bytes": 80794
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-allocations-guide",
+      "label": "Supplier payment search, original invoice review and recoverable allocations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_ALLOCATIONS.md",
+      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "editions": [
+        {
+          "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+          "git_blob": "bd4585fb5e516de432ba963724e8522abb580a5d",
+          "bytes": 7830
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-allocations-browser",
+      "label": "Exact payment capacity, signed refunds and complete allocation proposals",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_allocations.mjs",
+      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "editions": [
+        {
+          "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+          "git_blob": "98dafb00758373abec092ea1ecd5f8b0b27a034e",
+          "bytes": 20205
+        }
+      ]
+    },
+    {
+      "id": "grant-statements-browser-controller",
+      "label": "Original account browser operation with invoice source downloads and desktop/phone receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/scf-statements-original-32c2-20261013/operate-original-statements.mjs",
+      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "editions": [
+        {
+          "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+          "git_blob": "2c2a7c525af74821d595a83d3a2966c4f75e2a4e",
+          "bytes": 33996
         }
       ]
     }
