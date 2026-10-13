@@ -399,25 +399,172 @@ export async function receiveServiceAdjustmentOperation({
     await saveChain.catch(()=>{});await lease.close();
   }
 }
+
+/** Following browser-only receiving for a genuinely completed original native
+ * programme. Original PASS/checkpoint files and native monetary journals remain
+ * immutable; only the receiving case's normal revision history can advance. */
+export async function continueServiceBuyerWorkbenchOperation({
+  directory,serviceDirectory,fixturePacket,sourceCommit,chromiumPath,playwrightModule,
+  python='python3',selectionFile=null
+}={}){
+  directory=await privateDirectory(absolute(directory,'Original adjustment operation directory'));
+  serviceDirectory=absolute(serviceDirectory,'Original Service operation directory');
+  absolute(fixturePacket,'Original input packet');absolute(chromiumPath,'Original Chromium executable');
+  need(/^[a-f0-9]{40}$/.test(sourceCommit??'')&&typeof playwrightModule==='string'&&playwrightModule,
+    'Select the complete current browser source and actual original browser module.');
+  const {acquireStateLease}=await import('../merchant-fleet-gateway/state-lease.mjs');
+  const lease=await acquireStateLease(await privateDirectory(join(directory,'operation-owner')));
+  let connections,context,sourceServer,receivingServer,sourceDesk,receivingDesk;
+  const originalPaths=[join(directory,'service-adjustment-native-result.json'),join(directory,'service-adjustment-operation.json')];
+  let originals;
+  try{
+    originals=await Promise.all(originalPaths.map(async path=>{const raw=await bytes(path,128*1024*1024);return {path,raw,sha256:hash(raw),bytes:raw.length,value:JSON.parse(decode(raw))};}));
+    const completed=originals[0].value,state=originals[1].value;
+    need(completed.schema===SCHEMA&&completed.result==='PASS'&&state.schema===SCHEMA&&state.result==='PASS'&&
+      same(completed.identity,state.identity)&&completed.identity.operationId===OPERATION,
+      'This explicit continuation requires the completed original Service adjustment programme.');
+    need(completed.identity.directory===directory&&completed.identity.serviceDirectory===serviceDirectory,
+      'Use the actual retained original operation and Service directories.');
+    const packetRaw=await bytes(fixturePacket,MAX_BYTES*2),packet=JSON.parse(decode(packetRaw));validateFixture(packet);
+    const selectedRaw=await bytes(join(directory,'operator-selection.json'),1024*1024),selection=JSON.parse(decode(selectedRaw));
+    need(packet.inputSha256===completed.identity.inputSha256&&hash(packetRaw)===completed.identity.packetSha256&&
+      hash(json(selection))===completed.identity.selectionSha256,'The completed original input or operator selection differs.');
+    if(selectionFile)need(same(JSON.parse(decode(await bytes(absolute(selectionFile,'Original operator selection'),1024*1024))),selection),
+      'Retain the original saved operator selection.');
+    await verifyFiles(completed.artifacts);
+    const nativeResultPath=join(directory,'receiving','service-adjustment-result.json'),nativeRaw=await bytes(nativeResultPath,128*1024*1024),
+      native=JSON.parse(decode(nativeRaw));
+    need(native.result==='PASS'&&native.caseId===completed.caseId&&native.reportId===completed.reportId&&
+      native.captureOutcomeId===completed.captureOutcomeId&&native.proposalId===completed.proposalId,
+      'Reopen the exact completed original inner receiving result.');
+    const buyerResult=native.phases['original-buyer-accountant-received']?.result?.result;
+    need(buyerResult?.case?.id===completed.caseId&&buyerResult.capture?.id===completed.captureOutcomeId&&
+      buyerResult.buyer?.alias===selection.buyerAlias,'Retain the actual completed original Buyer identity and files.');
+    const following=join(directory,'buyer-workbench-continuation');await privateDirectory(following);
+    const binding={schema:'stellar-forge.service-buyer-workbench-continuation-selection.v1',operationId:OPERATION,
+      originalResult:{path:originals[0].path,bytes:originals[0].bytes,sha256:originals[0].sha256},
+      originalCheckpoint:{path:originals[1].path,bytes:originals[1].bytes,sha256:originals[1].sha256},
+      originalInnerResult:{path:nativeResultPath,bytes:nativeRaw.length,sha256:hash(nativeRaw)},
+      identity:completed.identity,caseId:completed.caseId,captureOutcomeId:completed.captureOutcomeId,
+      buyerResultSha256:hash(json(buyerResult))};
+    await keep(join(following,'original-selection.json'),json(binding));
+    const followingPath=join(following,'service-buyer-workbench-following-result.json');
+    const cached=await object(followingPath);
+    if(cached){
+      need(cached.result==='PASS'&&same(cached.selection,binding),'Retain the original following workbench selection.');
+      await verifyFiles(cached.artifacts);return {...cached,reused:true};
+    }
+    const [{openCaseStore},{openServiceConnections},{openCaseServiceAdjustments},{createConsoleServer},{receiveServiceBuyerWorkbench}]=await Promise.all([
+      import('./case-store.mjs'),import('./service-connections.mjs'),import('./case-service-adjustments.mjs'),
+      import('./server.mjs'),import('./service-buyer-workbench-receiving.mjs')
+    ]);
+    // Reopen the exact existing configs. Do not construct replacement owners or
+    // replay capture, coding, review, close, accountant return or CLI delivery.
+    const accountingConfig=join(directory,'accounting-connection.json'),buyerConfig=join(directory,'buyer-connection.json');
+    const configRows=await Promise.all([accountingConfig,buyerConfig].map(async path=>{const raw=await bytes(path,1024*1024);return {path,bytes:raw.length,sha256:hash(raw)};}));
+    connections=await openServiceConnections({accountingConfig,buyerExpenseConnection:buyerConfig,directory:join(directory,'connections'),environment:process.env});
+    await connections.accounting.call('merchant_accounting_open',{workspace:selection.accountingAlias});
+    await connections.buyer.call('merchant_buyer_expense_open',{workspace:selection.buyerAlias});
+    const sourceStore=await openCaseStore(join(serviceDirectory,'cases')),receivingStore=await openCaseStore(join(serviceDirectory,'receiving-cases'));
+    const selectedCasesPath=join(following,'selected-cases.json'),previousSelection=await object(selectedCasesPath);
+    const transferPath=join(following,'case-transfer-intent.json');
+    const sourceCase=await sourceStore.read(completed.caseId);
+    let receiverCase=await receivingStore.read(completed.caseId);
+    const sameBody=(left,right)=>left.workspaceText===right.workspaceText&&left.supportText===right.supportText&&same(left.metadata,right.metadata);
+    const caseRef=value=>({id:value.id,revision:value.revision,workspaceSha256:hash(value.workspaceText)});
+    let selectedCases;
+    if(previousSelection){
+      need(same(previousSelection.source,caseRef(sourceCase))&&same(previousSelection.receiver,caseRef(receiverCase))&&sameBody(sourceCase,receiverCase),
+        'The frozen source or receiving case changed. Preserve its new edition before continuing the original workbench.');
+      selectedCases=previousSelection;
+    }else{
+      let transfer=await object(transferPath);
+      if(!transfer){
+        transfer={schema:'stellar-forge.service-buyer-workbench-case-transfer.v1',
+          source:caseRef(sourceCase),receiver:caseRef(receiverCase),
+          request:{id:completed.caseId,expectedRevision:receiverCase.revision,
+            workspaceText:sourceCase.workspaceText,supportText:sourceCase.supportText,metadata:sourceCase.metadata}};
+        await keep(transferPath,json(transfer));
+      }
+      need(transfer.schema==='stellar-forge.service-buyer-workbench-case-transfer.v1'&&transfer.request.id===completed.caseId&&
+        same(transfer.source,caseRef(sourceCase))&&sameBody(transfer.request,sourceCase)&&
+        transfer.request.expectedRevision===transfer.receiver.revision,'Retain the original complete source and exact receiving save request.');
+      const exactTarget=sameBody(receiverCase,transfer.request);
+      need(receiverCase.revision===transfer.request.expectedRevision||
+        exactTarget&&receiverCase.previousRevision===transfer.request.expectedRevision,
+        'The receiver has another current edition. Preserve that edit before replaying the frozen case transfer.');
+      // The maintained original save returns the accepted edition unchanged when
+      // this exact body and original predecessor were already committed.
+      const accepted=await receivingStore.save(transfer.request);
+      receiverCase=await receivingStore.read(completed.caseId);
+      need(accepted.case.revision===receiverCase.revision&&sameBody(receiverCase,transfer.request),
+        'The original receiving transfer differs from its accepted complete result.');
+      const transferResultPath=join(following,'case-transfer-result.json'),retainedTransferResult=await object(transferResultPath);
+      if(retainedTransferResult)need(same(retainedTransferResult.case,accepted.case),'The saved original case-transfer result differs from the replayed native revision.');
+      else await keep(transferResultPath,json(accepted));
+      selectedCases={source:caseRef(sourceCase),receiver:caseRef(receiverCase)};
+      await keep(selectedCasesPath,json(selectedCases));
+    }
+    need(sameBody(sourceCase,receiverCase),'The same receiving case must retain the complete original native histories.');
+    sourceDesk=openCaseServiceAdjustments({store:sourceStore,accounting:connections.accounting,buyer:connections.buyer,directory:join(directory,'source-actions')});
+    receivingDesk=openCaseServiceAdjustments({store:receivingStore,accounting:connections.accounting,buyer:connections.buyer,directory:join(directory,'receiving-actions')});
+    sourceServer=createConsoleServer({caseStore:sourceStore,adjustmentDesk:sourceDesk,allowLoopback:true});
+    receivingServer=createConsoleServer({caseStore:receivingStore,adjustmentDesk:receivingDesk,allowLoopback:true});
+    need(Number.isInteger(state.ports?.source)&&state.ports.source>0&&Number.isInteger(state.ports?.receiver)&&state.ports.receiver>0&&state.ports.source!==state.ports.receiver,
+      'Retain the two original browser origins and their saved ports.');
+    const sourceUrl=await listen(sourceServer,state.ports.source),receivingUrl=await listen(receivingServer,state.ports.receiver);
+    const {chromium}=createRequire(import.meta.url)(playwrightModule);
+    context=await chromium.launchPersistentContext(join(directory,'browser'),{headless:true,executablePath:chromiumPath,
+      args:['--no-sandbox','--disable-dev-shm-usage','--renderer-process-limit=1'],acceptDownloads:true,viewport:{width:1440,height:1000}});
+    const result=await receiveServiceBuyerWorkbench({
+      directory:join(directory,'receiving','buyer-workbench'),context,sourceUrl,receivingUrl,
+      store:sourceStore,receivingStore,api:sourceDesk,receivingApi:receivingDesk,
+      caseId:completed.caseId,captureOutcomeId:completed.captureOutcomeId,buyerResult,
+      sourceRevision:sourceCase.revision,receivingRevision:receiverCase.revision,sourceCommit,actor:selection.actor
+    });
+    need(result.result==='PASS','Finish the actual original workbench receiving.');
+    await context.close();context=null;await stopServer(sourceServer);sourceServer=null;await stopServer(receivingServer);receivingServer=null;
+    await sourceDesk.close();sourceDesk=null;await receivingDesk.close();receivingDesk=null;await connections.close();connections=null;
+    for(const original of originals){const current=await bytes(original.path,128*1024*1024);
+      need(current.length===original.bytes&&hash(current)===original.sha256,'The original completed result/checkpoint changed during following receiving.');}
+    need(hash(await bytes(nativeResultPath,128*1024*1024))===hash(nativeRaw),'The original inner PASS result must remain immutable.');
+    const artifacts=[...result.artifacts];
+    for(const path of [join(following,'original-selection.json'),join(following,'selected-cases.json'),join(following,'case-transfer-intent.json'),join(following,'case-transfer-result.json'),
+      join(directory,'receiving','buyer-workbench','service-buyer-workbench-result.json')]){
+      const raw=await bytes(path,128*1024*1024);artifacts.push({path,bytes:raw.length,sha256:hash(raw),name:relative(directory,path),type:'application/json'});
+    }
+    await verifyFiles(artifacts);
+    const finished={schema:'stellar-forge.service-buyer-workbench-following-result.v1',operationId:OPERATION,result:'PASS',
+      completedAt:now(),sourceCommit,selection:binding,cases:selectedCases,originalConfigs:configRows,workbench:result,artifacts,
+      originalResultsUnchanged:true,financialMutations:0};
+    await keep(followingPath,json(finished));return finished;
+  }finally{
+    await context?.close().catch(()=>{});await stopServer(sourceServer).catch(()=>{});await stopServer(receivingServer).catch(()=>{});
+    await sourceDesk?.close().catch(()=>{});await receivingDesk?.close().catch(()=>{});await connections?.close().catch(()=>{});await lease.close();
+  }
+}
+
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   try{
     const {values}=parseArgs({options:{
       directory:{type:'string'},'service-directory':{type:'string'},'fixture-packet':{type:'string'},
       'source-commit':{type:'string'},chromium:{type:'string'},'playwright-module':{type:'string'},
       python:{type:'string'},'selection-file':{type:'string'},
-      'capture-original-fixture':{type:'boolean'},'original-directory':{type:'string'},'outbox-directory':{type:'string'},help:{type:'boolean'}
+      'continue-buyer-workbench':{type:'boolean'},'capture-original-fixture':{type:'boolean'},'original-directory':{type:'string'},'outbox-directory':{type:'string'},help:{type:'boolean'}
     },strict:true});
     if(values.help)process.stdout.write(
       'Capture the original private input packet:\n'+
       'node service-adjustment-native.mjs --capture-original-fixture --original-directory ABS --outbox-directory ABS --fixture-packet ABS\n'+
       'Continue the complete original Service, native adjustment and buyer operation:\n'+
       'node service-adjustment-native.mjs --directory ABS --service-directory ORIGINAL_SERVICE_ABS --fixture-packet ABS --source-commit COMMIT --chromium ABS --playwright-module MODULE [--python ABS] [--selection-file ABS] [--original-directory ABS --outbox-directory ABS]\n'+
+      'Continue only the original completed programme workbench without replaying native financial work:\n'+
+      'node service-adjustment-native.mjs --continue-buyer-workbench --directory ABS --service-directory ORIGINAL_SERVICE_ABS --fixture-packet ABS --source-commit COMMIT --chromium ABS --playwright-module MODULE [--selection-file ABS]\n'+
       'When the input packet is absent, the original-directory/outbox-directory selections capture it before receiving.\n'+
       'Repeat the same directory, input packet and explicit operator selection after interruption.\n');
     else{
       const result=values['capture-original-fixture']?await captureOriginalServiceAdjustmentInputs({
         sourceDirectory:values['original-directory'],outboxDirectory:values['outbox-directory'],packetFile:values['fixture-packet']
-      }):await receiveServiceAdjustmentOperation({
+      }):await (values['continue-buyer-workbench']?continueServiceBuyerWorkbenchOperation:receiveServiceAdjustmentOperation)({
         directory:values.directory,serviceDirectory:values['service-directory'],fixturePacket:values['fixture-packet'],
         sourceCommit:values['source-commit'],chromiumPath:values.chromium??process.env.STARFORGE_CHROMIUM,
         playwrightModule:values['playwright-module']??process.env.STARFORGE_PLAYWRIGHT_MODULE,

@@ -605,6 +605,31 @@ export async function receiveServiceAdjustments({
         proposals:received.adjustments.proposals.length,intents:received.adjustments.intents.length,outcomes:received.adjustments.outcomes.length};
     });
 
+
+    await phase('buyer-workbench-draft-received',async()=>{
+      const selected=phases['named-case-received'].result;
+      const {receiveServiceBuyerWorkbench}=await import('./service-buyer-workbench-receiving.mjs');
+      const receivedApi=openCaseServiceAdjustments({store:receivingStore,directory:join(root,'receiving-native')});
+      try{
+        const result=await receiveServiceBuyerWorkbench({
+          directory:join(root,'buyer-workbench'),context,sourceUrl,receivingUrl,
+          store,receivingStore,api,receivingApi:receivedApi,caseId,captureOutcomeId:captureId,
+          buyerResult:phases['original-buyer-accountant-received'].result.result,
+          sourceRevision:selected.source.revision,receivingRevision:selected.receiver.revision,sourceCommit,actor:input.actor
+        });
+        requireValue(result.result==='PASS','Complete the original buyer draft/workbench receiving.');
+        for(const file of result.artifacts){
+          const raw=await readFile(file.path);assert.equal(raw.length,file.bytes);assert.equal(sha(raw),file.sha256);
+          const prior=saved.artifacts.find(row=>row.path===file.path);
+          if(prior)assert.deepEqual(prior,file);else saved.artifacts.push(file);
+        }
+        const resultFile=join(root,'buyer-workbench','service-buyer-workbench-result.json'),raw=await readFile(resultFile);
+        const descriptor={name:'service-buyer-workbench-result.json',path:resultFile,mediaType:'application/json',bytes:raw.length,sha256:sha(raw)};
+        if(!saved.artifacts.some(row=>row.path===resultFile))saved.artifacts.push(descriptor);
+        return result;
+      }finally{await receivedApi.close();}
+    });
+
     await phase('browser-complete-case-and-files',async()=>{
       const selected=phases['named-case-received'].result;
       if(!page){page=await context.newPage();observeBrowser(page,'source');}

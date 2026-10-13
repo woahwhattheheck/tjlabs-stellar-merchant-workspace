@@ -34,6 +34,7 @@ const ASSETS = Object.freeze({
   '/adjustments': ['adjustments.html', 'text/html; charset=utf-8'],
   '/adjustments.mjs': ['adjustments.mjs', 'text/javascript; charset=utf-8'],
   '/service-buyer-workbench.mjs': ['service-buyer-workbench.mjs', 'text/javascript; charset=utf-8'],
+  '/service-buyer-draft.mjs': ['service-buyer-draft.mjs', 'text/javascript; charset=utf-8'],
   '/adjustments.css': ['adjustments.css', 'text/css; charset=utf-8'],
   '/commercial': ['commercial.html', 'text/html; charset=utf-8'],
   '/commercial/receiving-desk.mjs': ['commercial/receiving-desk.mjs', 'text/javascript; charset=utf-8'],
