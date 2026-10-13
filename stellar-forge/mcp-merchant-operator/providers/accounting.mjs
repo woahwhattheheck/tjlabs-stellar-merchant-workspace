@@ -11,6 +11,11 @@ export default defineMerchantProvider({
     read: async (value, { base, config, hostPath }) => value == null ? null : (await import("../accounting.mjs")).normalizeAccountingConfig(value, base) },
   tools: accountingTools,
   instructions: [
+    {
+      prefix: 'merchant_accounting_qbo_worksheet_',
+      text: 'For QuickBooks allocation worksheets, retain the original workspace/source binding, complete worksheet base, company chart and returned CSV byte hashes. Export or inspect through host-declared platformInputs aliases; page every row and conflict against one result SHA and download complete files through file kind qbo-worksheet. Keep missing valuations and Pending-only exclusions explicit. Choose current or returned for each conflicting field, then preview worksheet-create through the original native compiler. Save the exact client operation before execution. Creation retains one original DRAFT plan; review, native posting and accountant return remain separate original operations. After a lost create reply, read worksheet_request or reconcile the same saved operation before reopening former aliases. Preserve the original entered CSV and conflict decisions, close MCP before opening the same workspace in Applications, and follow ACCOUNTING-QBO-WORKSHEETS.md.',
+      order: 42
+    },
     ...['qbo', 'xero'].map(platform => ({
       prefix: 'merchant_accounting_' + platform + '_source_change_',
       text: 'For chart changes, inspect the original plan and target source, then preview complete mappings and explicit valuations through the native engine. Retain the exact preview before source_change_prepare. Read the saved review and prepare its application with the current revision, original application UUID and all three operator confirmations. After a lost reply, reconcile that same review or application before reading changed source aliases. Resume only its retained cancellation/successor intent; completed or rejected requests retain their original outcome. Receive the complete chart-change handoff through the original accounting file reader. Release the original MCP workspace before opening that same directory in Applications.',
