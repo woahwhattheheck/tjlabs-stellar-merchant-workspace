@@ -723,3 +723,211 @@ Replay an interrupted saved request unchanged. The original operation ledger ret
 ### Join the existing MSU workshare
 
 The existing commissioning workorder retains its agreed work packages, effort, commercial terms and responsible delivery participants. This capability supplies its collection-wave, exception, changed-source, cutover and handover operations. The original eleven-record staff cohort and complete fifteen-record Endeavors edition remain separate selectable projects in the same Scholars Junction workspace; the seven public original-document selections retain their original receiving driver and source rights. The distinct CIIM169 case retains its own original source.
+
+
+## Customer agent operation of the same TIND workspace
+
+The installed **tind-migration** product now registers the source-owned
+**tind-workspaces** Merchant provider. Its 13 tools use the same original
+Python server, SQLite projects, source editions, staff decisions, production
+waves and native destination jobs as the industrial desktop. The typed Node
+client is maintained beside the Python application at
+`stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/client.mjs`;
+its declaration file is `client.d.mts`. The selected package exposes ordered
+`./tind/client` and `./tind/merchant` type/import entries. The Merchant runtime has its own
+`merchant.d.mts` declaration. No browser-to-agent record conversion is needed.
+
+### Select the actual existing workspace
+
+Keep the complete installed TIND source. The provider and typed client source
+are included by the existing TIND selection and its original contribution.
+After receiving a full editable migration, open its original workspace with
+the maintained TIND application or select that received directory in the host
+connection. The direct Node client can also operate the received Python source
+from its original `source/oai-pmh/tind` directory.
+
+A private connection file uses this shape; replace the paths and alias with
+the actual selected host values:
+
+```json
+{
+  "schema": "stellar-forge.tind-workspace-connection.v1",
+  "workspaces": {
+    "scholars-junction": {
+      "label": "Scholars Junction migration",
+      "directory": "/private/actual-msu-workspace",
+      "mode": "managed",
+      "files": {
+        "native-export": "/private/actual-export.xml"
+      },
+      "directories": {
+        "source-documents": "/private/actual-source-documents"
+      },
+      "authorizationEnvironments": ["TIND_AUTHORIZATION"]
+    }
+  }
+}
+```
+
+Connection files are private regular files (0600); workspace and export
+directories are canonical private directories (0700). File and directory
+aliases bind the actual selected host objects. Updating a configured source
+file requires reloading the connection so the new original identity is
+selected. Host paths and executable selection remain in this connection,
+rather than tool arguments.
+
+In **managed** mode, first open the same workspace in Applications. The agent
+reads its private `oai/tind/live.json`, authenticates against the actual
+listener, and binds the exact random instance ID, original workspace marker,
+source binding, process identity and session. An Applications restart requires
+closing the old attachment and opening the new instance. Closing the agent
+attachment leaves Applications and its worker in control.
+
+In **owned** mode, configure `"mode":"owned"` and the absolute
+`"pythonExecutable"`. The host starts the same original `cli.py serve`
+with the configured environment and a local ephemeral port. It owns only that
+child. Closing requests the original graceful shutdown, drains accepted
+requests and workers, and releases descriptors. The original SQLite owner
+continues to prevent two independent processes from opening one workspace.
+Authorization values come from the configured process environment; tool
+arguments name only permitted environment variables.
+
+Register the source-owned provider with the maintained host:
+
+```sh
+starforge merchant-providers init tind-workspaces --options /private/tind-setup.json
+```
+
+The options document contains the actual `directory`, `connection`,
+optional `name` and optional existing `releaseStore`.
+The complete [setup contract](../../stellar/scf-starforge-20261009/sf30-seller-sdk/oai-pmh/tind/MERCHANT_SETUP.md)
+also shows the direct host API. Use the returned `merchant-mcp.json` with the
+existing Merchant MCP launcher. Initialization retains the whole existing host
+configuration and its other source families. Repeating the exact same setup
+completes an interrupted original initialization or reopens it.
+
+### Complete customer workflow
+
+| Tool | Original customer action |
+| --- | --- |
+| `merchant_tind_workspaces` | See configured aliases, source aliases, environment names and current attachments. |
+| `merchant_tind_open` | Attach or start the selected original listener and return its actual instance and projects. |
+| `merchant_tind_view` | Read source records, files, staff cases, acquisition, production plans/waves, native jobs and original observations. |
+| `merchant_tind_preview` | Review actual staff collection choices or the original destination job result. |
+| `merchant_tind_save` | Save the original complete migration operation, exact expected revision and stable operation ID. |
+| `merchant_tind_native_start` | Continue original source acquisition, institution export, exact frozen-batch send or documented job GET. |
+| `merchant_tind_operation` | Read the exact saved request and actual current persisted outcome. |
+| `merchant_tind_resume` | Continue that same retained request after interruption. |
+| `merchant_tind_source_pause` | Checkpoint the actual running source acquisition. |
+| `merchant_tind_export` | Prepare a frozen original file, native package or complete editable handover. |
+| `merchant_tind_file_read` | Receive its complete bytes in bounded chunks, with original byte count and SHA-256. |
+| `merchant_tind_file_release` | Close the original read descriptor while retaining its complete file. |
+| `merchant_tind_close` | Detach or close only the returned actual live instance. |
+
+Start with `merchant_tind_open`, retain the actual project ID and revision,
+and inspect that project's source edition and existing staff decisions.
+The view names are `state`, `history`, `records`, `record`, `original`,
+`production-collections`, `production-plans`, `production-wave`,
+`source-downloads`, `files`, `file-history`, `source-cases`,
+`source-case`, `source-case-reviews`, `destination-jobs` and
+`job-observation`. Original paginated views return their next position;
+continue until the actual end.
+
+Saved operations preserve the original Python request:
+`{operationId,kind,projectId,expectedRevision,input}`.
+Use `projectId:null` and `expectedRevision:null` only for the original
+`create` operation. The supported kinds are the complete existing source,
+record, file, staff-case, production-wave and destination-job operations
+documented above. A received source edition is selected through the original
+`edition` operation; it remains attached to its original OAI/XML source.
+
+For `destination-file` and `source-download-import`, pass the configured
+`sourceFile` alias alongside the request and omit `input.path`.
+For `file-root`, use `fileDirectory` and omit `input.path`.
+The immutable request also retains a `sourceBinding`: the original canonical
+path, device/inode and, for a file, complete byte count, SHA-256 and nanosecond
+modification/change identity. An unsatisfied resume rechecks the configured
+alias and this original binding. The Python intake verifies the actual received
+bytes before committing. A completed original operation can return its saved
+receipt without reopening a source that has since moved.
+
+Original per-record file rows still use their relative member paths beneath
+the reviewed root. Access, embargo, checksum and original source decisions
+remain in the same migration records.
+
+For the existing MSU case, continue its real staff collection and complete
+Endeavors edition. Read the reviewed wave membership, preserve its explicit
+exclusions and exceptions, prepare its actual batch, then select that frozen
+batch for the original documented native transfer. Read the saved native
+operation after acceptance. Bind/read or import the actual destination job
+response, preview the exact record interpretation, receive it through
+`native-job-receive`, then reconcile the existing wave. The distinct
+CIIM169 workspace retains its own original source and identity.
+
+### Lost responses and saved operation recovery
+
+The agent writes a complete immutable input before sending and an atomic
+attempt/result journal under `oai/tind/agent-requests`. These documents
+contain the original request and authorization variable names, not the live
+session token. The original database also retains the actual operation and
+its exact request hash. A network timeout does not create another operation.
+
+On `TIND_OUTCOME_UNKNOWN`, call `merchant_tind_operation` with the same
+operation ID and kind. Its `saved` document is the exact input and attempt;
+`observed` reads the original database and current worker. When continuation
+is needed, call `merchant_tind_resume` with that same ID. If the process
+stopped after preparing the immutable request but before recording its first
+attempt, the retained original input still supports continuation.
+
+Native acceptance and destination completion stay separate. A search or
+source download can continue its original saved cursor/prefix. An interrupted
+job GET continues its retained exact request. An uncertain destination write
+uses the original native recovery rules and actual returned observation;
+resuming does not replace it with an unrelated send. The full request body,
+including its envelope, must fit within the original 8 MiB limit.
+
+The provider serializes ordinary work per workspace while allowing source
+pause and exact-instance close to reach active work. If a descriptor close fails, repeat close with the same actual instance;
+the owner retains its descriptors and retries their original drain. Closing leaves an
+interrupted request attached to its original ID for reopening. Projects in
+different configured workspaces retain independent owners.
+
+### Receive complete original files and editable projects
+
+Prepare a download with a stable `exportId`, exact `kind` and original
+query. Supported kinds are `record`, `batch`, `batch-file`, `handover`,
+`production-plan`, `source-acquisition`, `source-document`,
+`source-cases`, `source-case-review`, `file-receipt`,
+`destination-job` and `job-response`. The returned file includes its
+complete byte count and SHA-256. The original server streams it with those
+identities, and the client verifies the completed bytes before publishing
+the retained export.
+
+A stable export ID freezes one original selection. Reusing it returns that
+file rather than silently generating a newer workspace. The export also
+retains the original project-revision selection. Choose a new export ID for
+a later completed edition. Keep the host's customer export directory outside
+the source workspace so full handovers cannot recursively include themselves.
+
+Read the retained file with `merchant_tind_file_read`. Start at offset zero,
+then use the returned `nextOffset`, `readId` and `expectedSha256`.
+Read until `nextOffset` is null and verify the assembled byte count and
+digest. Each original read owns a read-only descriptor, so large complete
+handovers are hashed and delivered with bounded memory rather than copied
+into a buffer. The original TIND package limit is 4 TiB, subject to the real
+host's available storage. At most four retained reads remain open.
+
+Read IDs are temporary. After host restart or reader expiry, select the same
+`exportId`, `expectedSha256` and offset without the expired read ID. The
+complete frozen file remains in the private host export directory. Releasing
+a read closes its descriptor and keeps that file.
+
+A `handover` export includes original source files by default. An explicit
+`{"files":false}` selects the existing metadata-only form. For complete
+customer delivery, receive the full handover, use the original `receive`
+command and reopen the received project following the earlier receiving
+section. The handover includes complete saved agent requests and typed client
+source. It excludes the current private live connection and incomplete
+transport stages; opening the received workspace creates a fresh listener
+identity. The installed Merchant host can then bind the received directory
+through its actual new private connection.
