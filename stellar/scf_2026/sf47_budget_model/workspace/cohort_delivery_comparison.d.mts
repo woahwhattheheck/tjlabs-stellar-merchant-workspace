@@ -6,7 +6,7 @@ export interface DeliveryIntentAssignment { intentId:string; targetId:string; no
 export interface DeliveryRecording { editionId:string; createdAt:string; actor:string; planSourceId:string }
 export interface CohortDeliveryInput {
   schema:'stellar-forge.sf47-cohort-delivery-input.v1';planDocument:JsonObject;review:JsonObject;
-  links:DeliveryIdentityLink[];assignments:DeliveryIntentAssignment[];title:string;note:string;recording:DeliveryRecording;
+  links:DeliveryIdentityLink[];assignments:DeliveryIntentAssignment[];title:string;note:string;recording:DeliveryRecording;commercial?:CohortCommercialChoices;
 }
 export interface DeliveryJoin {
   kind:IdentityKind;plannedId:string;plannedLabel:string;observedId:string|null;observedLabel:string|null;
@@ -46,7 +46,7 @@ export interface CohortDeliveryComparison {
   schema:'stellar-forge.sf47-cohort-delivery-comparison.v1';engineVersion:1;title:string;input:CohortDeliveryInput;
   summary:{[key:string]:number|boolean};source:DeliverySource;planReport:JsonObject;joins:DeliveryJoin[];rows:DeliveryOpportunity[];
   records:DeliveryRecord[];unmatched:DeliveryRecord[];candidateGroups:Array<{id:string;targetIds:string[]}>;days:DeliveryDay[];operators:DeliveryOperator[];targets:DeliveryTarget[];
-  issues:DeliveryFinding[];nativeMetrics:JsonObject;nativeIssues:DeliveryFinding[];amounts:JsonObject[];outcomes:JsonObject[];products:JsonObject[];
+  commercial?:CohortCommercialReport;issues:DeliveryFinding[];nativeMetrics:JsonObject;nativeIssues:DeliveryFinding[];amounts:JsonObject[];outcomes:JsonObject[];products:JsonObject[];
 }
 export const COHORT_DELIVERY_INPUT_SCHEMA:'stellar-forge.sf47-cohort-delivery-input.v1';
 export const COHORT_DELIVERY_COMPARISON_SCHEMA:'stellar-forge.sf47-cohort-delivery-comparison.v1';
@@ -56,3 +56,27 @@ export function compareCohortDelivery(input:CohortDeliveryInput):CohortDeliveryC
 export function reopenCohortDeliveryComparison(document:unknown):CohortDeliveryComparison;
 export function exportCohortDeliveryCsv(document:CohortDeliveryComparison):string;
 export function exportCohortDeliveryHtml(document:CohortDeliveryComparison):string;
+
+export const COHORT_COMMERCIAL_SCHEMA:'stellar-forge.sf47-cohort-commercial.v1';
+export interface CohortCommercialValuation {network:string;asset:string;atomicDecimals:number;unitValue:string;asOfAt:string;sourceReference:string}
+export interface CohortCommercialCost {id:string;label:string;serviceId:string;costType:'SUPPLIER'|'LABOR'|'PAYMENT_FEE'|'OTHER';amount:string|null;activeHours:string|null;hourlyCost:string|null;occurredAt:string;sourceReference:string}
+export interface CohortCommercialAdjustment {id:string;label:string;kind:'REFUND'|'OTHER_REVENUE';amount:string;occurredAt:string;sourceReference:string;refundCashId:string;intentIds:string[]}
+export interface CohortCommercialAllocation {network:string;transactionHash:string;parts:Array<{targetId:string;amountAtomic:string}>;note:string}
+export interface CohortCommercialChoices {
+  schema:typeof COHORT_COMMERCIAL_SCHEMA;currency:string;
+  transactionScope:'SETTLED_IN_WINDOW'|'FIRST_ATTEMPT_IN_WINDOW';feeTreatment:'SEPARATE'|'INCLUDE_AS_COST';
+  costCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;valuations:CohortCommercialValuation[];costs:CohortCommercialCost[];
+  adjustments:CohortCommercialAdjustment[];transactionAllocations:CohortCommercialAllocation[];note:string;
+}
+export interface CohortCommercialReport {
+  schema:'stellar-forge.sf47-cohort-commercial-report.v1';currency:string;
+  transactionScope:CohortCommercialChoices['transactionScope'];feeTreatment:CohortCommercialChoices['feeTreatment'];
+  window:JsonObject;choices:CohortCommercialChoices;planned:JsonObject|null;plannedCurrencies:JsonObject[];
+  actual:{grossSettlementValue:string|null;refunds:string;otherRevenue:string;adjustedRevenue:string|null;networkFeeValue:string|null;recordedCost:string|null;totalCost:string|null;contribution:string|null};
+  differences:{revenue:string|null;totalCost:string|null;contribution:string|null};
+  knownSubtotals:{grossSettlementValue:string;networkFeeValue:string;recordedCost:string;totalCost:string};
+  coverage:{costCoverage:'PARTIAL'|'COMPLETE';costCoverageNote:string;unvaluedTransactions:number;unvaluedFeeTransactions:number;unresolvedCosts:number;unreviewedRefundCashIds:string[];unreviewedRefundIntentIds:string[];unallocatedTransactionIds:string[]};
+  assets:JsonObject[];opportunities:JsonObject[];transactions:JsonObject[];costs:Array<CohortCommercialCost & {calculatedAmount:string|null;service:JsonObject|null}>;
+  adjustments:Array<CohortCommercialAdjustment & {originalRefund:JsonObject|null}>;originalRefundCash:JsonObject[];services:JsonObject[];issues:DeliveryFinding[];note:string;
+}
+export function seedCohortCommercialChoices(document:CohortDeliveryInput|CohortDeliveryComparison,options?:{currency?:string}):CohortCommercialChoices;

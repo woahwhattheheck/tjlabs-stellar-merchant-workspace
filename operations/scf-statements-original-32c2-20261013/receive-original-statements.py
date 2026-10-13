@@ -167,7 +167,7 @@ def main():
              "allocations": [{"invoiceId": invoice_id, "amountUsd": "250.00"}]},
             {"rowNumber": 4, "action": "IMPORT", "category": "CUSTOMER"}]}
     browser_input = {"schema": "commons.grant.original-statements-browser-input.v1",
-                     "caseId": case_id, "invoiceId": invoice_id, "origin": config["origin"],
+                     "caseId": case_id, "invoiceId": invoice_id,
                      "plan": selected, "inputs": csv_inputs, "originalFiles": client.state["statementsOriginals"]}
     save("browser-input.json", browser_input)
     save("original-csv-inputs.json", csv_inputs)

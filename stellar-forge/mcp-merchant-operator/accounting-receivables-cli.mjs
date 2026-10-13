@@ -172,7 +172,7 @@ async function operation(directory, work) {
   directory = await privateDirectory(directory);
   const lease = await acquireStateLease(directory); let failure;
   try {
-    const request = validateRequest(await readJson(join(directory, 'request.json'), 8_000_000));
+    const request = validateRequest(await readJson(join(directory, 'request.json'), 128_000_000));
     const state = await readJson(join(directory, 'state.json'), 32_000_000);
     need(state.schema === STATE && state.requestSha256 === request.sha256 &&
       typeof state.submissionAttempted === 'boolean', 'The operation state belongs to a different request.', 'STATE');
@@ -464,7 +464,7 @@ export async function main(args = process.argv.slice(2)) {
     result = await prepareAccountingReceivablesOperation({
       directory: required(values, '--dir'), url: required(values, '--url'), workspace: required(values, '--workspace'),
       tokenEnv: values.get('--token-env') ?? 'MCP_ACCESS_TOKEN', kind,
-      ...(previewMode ? {preview: await readJson(resolve(required(values, '--preview')), 4_000_000),
+      ...(previewMode ? {preview: await readJson(resolve(required(values, '--preview')), kind.startsWith('customer_') ? 128_000_000 : 4_000_000),
         actor: required(values, '--actor'), requestId: values.get('--request-id'),
         ...(values.has('--review-options') ? {reviewOptions: await readJson(resolve(values.get('--review-options')), 65536)} : {})} :
         {arguments: await sourceArguments(kind, await readJson(resolve(required(values, '--request')), 4_000_000), values.get('--source'))})

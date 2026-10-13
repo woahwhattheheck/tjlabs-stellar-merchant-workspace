@@ -13,7 +13,7 @@ spec.loader.exec_module(original)
 SCHEMA = "stellar-forge.tind-managed-binding.v1"
 STARTUP = "stellar-forge.tind-workspace-launch.v1"
 SOURCE_FILES = (
-    "marc.py", "migration.py", "native.py", "source_cases.py", "source_files.py", "cli.py", "cli.mjs", "server.py",
+    "marc.py", "migration.py", "native.py", "source_cases.py", "source_files.py", "production_waves.py", "cli.py", "cli.mjs", "server.py",
     "managed.py", "browser.mjs", "index.html", "style.css", "application-provider.mjs",
 )
 

@@ -157,6 +157,7 @@ function tab(name) {
   $$('[data-tab]').forEach(button => { if (button.dataset.tab === name) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current'); });
   if (name === 'records' && data?.project) loadRecords().catch(error => message(error.message,true));
   if (name === 'receiving' && data?.project) Promise.all([loadFiles(),loadAcquisitions()]).catch(error => message(error.message,true));
+  if (name === 'production') loadProduction().catch(error => message(error.message,true));
   if (name === 'source-cases') loadSourceCollections().catch(error => message(error.message,true));
 }
 function recordLink(view) {
@@ -263,6 +264,7 @@ async function reload({preserve=false}={}) {
   if(!$('[data-panel="receiving"]').hidden){await loadFiles();await loadAcquisitions();}
   if(sourceContext!==projectId){sourceContext=projectId;sourceCollection=null;sourceCollections=null;sourcePlan=null;sourcePlanDirty=false;sourceCollectionOffset=0;$('#source-case-detail').hidden=true;}
   if(!$('[data-panel="source-cases"]').hidden) await loadSourceCollections();
+  if(!$('[data-panel="production"]').hidden) await loadProduction();
 }
 
 function sourceQuery(values={}) { return new URLSearchParams({project:projectId,...values}); }
@@ -728,6 +730,115 @@ formHandler('#source-download-adopt-form',async(form,values)=>{
     reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
   acquisitionChosen.clear();await loadAcquisitions();await loadFiles();
 });
+
+
+let productionContext='',productionPlans=null,productionPlan=null,productionWave=null;
+let productionPlanOffset=0,productionWaveOffset=0,productionMemberOffset=0,productionChosen=new Set();
+function productionCounts(counts){return Object.entries(counts||{}).map(([key,value])=>value+' '+key).join(' · ');}
+function productionSelectionUI(){
+  const form=$('#production-plan-form'),all=form.elements.all.checked;
+  form.querySelectorAll('[name="sets"],[name="unassigned"]').forEach(item=>{item.disabled=all;});
+}
+async function loadProduction(){
+  if(productionContext!==projectId){
+    productionContext=projectId;productionPlans=null;productionPlan=null;productionWave=null;
+    productionPlanOffset=0;productionWaveOffset=0;productionMemberOffset=0;productionChosen.clear();
+    $('#production-collections').innerHTML='';
+    $('#production-plan-detail').hidden=true;$('#production-wave-detail').hidden=true;
+  }
+  if(!data?.project){$('#production-plans').innerHTML='<tr><td colspan="4">Choose the original migration first.</td></tr>';return;}
+  const selectedSets=new Set([...$('#production-collections').querySelectorAll('input:checked')].map(item=>item.value));
+  const inventory=await api('/api/production-collections?'+sourceQuery());
+  $('#production-collection-summary').textContent=inventory.records+' original records · '+inventory.unassigned+' without a collection. '+inventory.counting;
+  $('#production-collections').innerHTML=inventory.collections.map(item=>'<label><input type="checkbox" name="sets" value="'+esc(item.set)+'"'+(selectedSets.has(item.set)?' checked':'')+'> '+esc(item.set)+' ('+item.records+')</label>').join('');
+  productionSelectionUI();
+  productionPlans=await api('/api/production-plans?'+sourceQuery({offset:String(productionPlanOffset),limit:'50'}));
+  $('#production-plans').innerHTML=productionPlans.items.map(item=>'<tr><td>'+esc(item.title)+'<div class="record-id">'+esc(item.id)+'</div></td><td>'+item.selectedRecords+' records; '+esc(productionCounts(item.initialCounts))+'</td><td>'+item.waveCount+'</td><td><button type="button" data-production-plan="'+esc(item.id)+'">Open plan</button></td></tr>').join('')||'<tr><td colspan="4">Save the first collection plan above.</td></tr>';
+  $('#production-plans-previous').disabled=productionPlanOffset===0;
+  $('#production-plans-next').disabled=productionPlans.next===null;
+  $('#production-plans-page').textContent=(productionPlanOffset+1)+'–'+(productionPlanOffset+productionPlans.items.length)+' of '+productionPlans.total;
+  if(productionPlan)await openProductionPlan(productionPlan.id,true);
+  if(productionWave)await openProductionWave(productionWave.id,true);
+}
+async function openProductionPlan(identity,preserve=false){
+  if(!preserve){productionWaveOffset=0;productionWave=null;productionChosen.clear();$('#production-wave-detail').hidden=true;}
+  productionPlan=await api('/api/production-plans?'+sourceQuery({id:identity,offset:String(productionWaveOffset),limit:'50'}));
+  $('#production-plan-detail').hidden=false;
+  $('#production-plan-title').textContent=productionPlan.title;
+  $('#production-plan-summary').textContent=productionPlan.selectedRecords+' original records; '+productionPlan.waveCount+' saved waves. Original edition '+short(productionPlan.editionId)+' · '+productionCounts(productionPlan.initialCounts)+'.';
+  $('#production-plan-download').href='/download/production-plan?'+sourceQuery({id:identity});
+  $('#production-waves').innerHTML=productionPlan.waves.map(wave=>'<tr><td>'+wave.ordinal+'. '+esc(wave.title)+'</td><td>'+wave.records+'</td><td>'+esc(wave.batchStates.map(batch=>short(batch.id)+' '+batch.status).join(' · ')||'Ready for source review')+'</td><td><button type="button" data-production-wave="'+esc(wave.id)+'">Open wave</button></td></tr>').join('')||'<tr><td colspan="4">All selected records were already received or excluded. Their complete membership remains in the plan download.</td></tr>';
+  $('#production-waves-previous').disabled=productionWaveOffset===0;
+  $('#production-waves-next').disabled=productionPlan.next===null;
+  $('#production-waves-page').textContent=(productionWaveOffset+1)+'–'+(productionWaveOffset+productionPlan.waves.length)+' of '+productionPlan.waveCount;
+}
+async function openProductionWave(identity,preserve=false){
+  if(!preserve){productionMemberOffset=0;productionChosen.clear();}
+  productionWave=await api('/api/production-wave?'+sourceQuery({id:identity,offset:String(productionMemberOffset),limit:'50'}));
+  $('#production-wave-detail').hidden=false;
+  $('#production-wave-title').textContent=productionWave.title;
+  $('#production-wave-summary').textContent=productionCounts(productionWave.counts)+'. '+(productionWave.complete?'All wave records have a completed receiving or exclusion disposition.':'Continue the original records and native batches.')+' Current edition '+short(productionWave.currentEditionId)+', revision '+productionWave.currentProjectRevision+'.';
+  $('#production-members').innerHTML=productionWave.items.map(item=>'<tr><td><input type="checkbox" data-production-member="'+esc(item.identifier)+'" aria-label="Choose '+esc(item.currentTitle)+'"'+(productionChosen.has(item.identifier)?' checked':'')+'></td><td>'+esc(item.currentTitle)+'<div class="record-id">'+esc(item.identifier)+'</div></td><td>'+esc(item.status)+'</td><td>'+esc(item.currentIssues.map(issue=>issue.message).join('; ')||'Current mapping resolved')+'</td><td><button type="button" data-production-record="'+esc(item.identifier)+'">Open record</button></td></tr>').join('');
+  $('#production-members-previous').disabled=productionMemberOffset===0;
+  $('#production-members-next').disabled=productionWave.next===null;
+  $('#production-members-page').textContent=(productionMemberOffset+1)+'–'+(productionMemberOffset+productionWave.items.length)+' of '+productionWave.total;
+  $('#production-selected').textContent=productionChosen.size+' records selected across the opened pages.';
+  if(!preserve){for(const id of ['production-wave-form','production-reconcile-form']){$('#'+id).elements.reviewer.value=productionWave.reviewer;$('#'+id).elements.note.value=productionWave.note;}}
+  $('#production-batches').innerHTML=productionWave.batchStates.map(batch=>'<div class="conflict"><strong>'+esc(short(batch.id)+' · '+batch.status)+'</strong><p>'+esc(productionCounts(batch.lastReconciliation?.counts||batch.counts))+'</p><a href="/download/batch?'+new URLSearchParams({batch:batch.id})+'">Download complete original batch</a> <button type="button" data-production-batch="'+esc(batch.id)+'">Open native delivery</button></div>').join('')||'<p>Prepare this wave after reviewing the original source and destination decisions.</p>';
+  const select=$('#production-reconcile-form').elements.batchId,prior=select.value;
+  select.innerHTML='<option value="">Choose this wave’s original batch</option>'+productionWave.batchStates.map(batch=>'<option value="'+esc(batch.id)+'">'+esc(short(batch.id)+' · '+batch.status)+'</option>').join('');
+  if(productionWave.batchStates.some(batch=>batch.id===prior))select.value=prior;
+  else if(productionWave.batchStates.length)select.value=productionWave.batchStates.at(-1).id;
+  $('#production-history').textContent=pretty({history:productionWave.history,batchIds:productionWave.batchIds,originalEditionId:productionWave.editionId});
+}
+$('#production-plan-form').elements.all.addEventListener('change',productionSelectionUI);
+formHandler('#production-plan-form',async(form,values)=>{
+  const all=form.elements.all.checked;
+  const result=await apply('production-plan',{title:String(values.get('title')),recordsPerWave:Number(values.get('recordsPerWave')),
+    reviewer:String(values.get('reviewer')),note:String(values.get('note')),selection:{all,
+      sets:all?[]:values.getAll('sets').map(String),unassigned:all?false:form.elements.unassigned.checked,
+      includeReceived:form.elements.includeReceived.checked}});
+  if(result){productionPlanOffset=0;await loadProduction();await openProductionPlan(result.result.id);}
+});
+$('#production-wave-form').addEventListener('submit',async event=>{
+  event.preventDefault();const form=event.currentTarget;if(!form.reportValidity())return;
+  try{
+    if(!productionWave)throw new Error('Open the original production wave.');
+    const mode=event.submitter?.value,values=new FormData(form);
+    const common={waveId:productionWave.id,reviewer:String(values.get('reviewer')),note:String(values.get('note'))};
+    if(mode==='review')await apply('production-review',common);
+    else if(mode==='defer'||mode==='include'){
+      if(!productionChosen.size)throw new Error('Choose original wave records.');
+      await apply('production-disposition',{...common,identifiers:[...productionChosen],disposition:mode});
+      productionChosen.clear();
+    }else if(mode==='prepare')await apply('production-prepare',{...common,readyOnly:form.elements.readyOnly.checked});
+    else throw new Error('Choose the intended wave action.');
+    await openProductionWave(common.waveId,true);
+  }catch(error){message(error.message,true);}
+});
+formHandler('#production-reconcile-form',async(form,values)=>{
+  if(!productionWave)throw new Error('Open the original production wave.');
+  const identity=productionWave.id;
+  await apply('production-reconcile',{waveId:identity,batchId:String(values.get('batchId')),reviewer:String(values.get('reviewer')),note:String(values.get('note'))});
+  await openProductionWave(identity,true);
+});
+$('#production-plans').addEventListener('click',event=>{const button=event.target.closest('[data-production-plan]');if(button)openProductionPlan(button.dataset.productionPlan).catch(error=>message(error.message,true));});
+$('#production-waves').addEventListener('click',event=>{const button=event.target.closest('[data-production-wave]');if(button)openProductionWave(button.dataset.productionWave).catch(error=>message(error.message,true));});
+$('#production-members').addEventListener('change',event=>{const box=event.target.closest('[data-production-member]');if(!box)return;if(box.checked)productionChosen.add(box.dataset.productionMember);else productionChosen.delete(box.dataset.productionMember);$('#production-selected').textContent=productionChosen.size+' records selected across the opened pages.';});
+$('#production-members').addEventListener('click',event=>{const button=event.target.closest('[data-production-record]');if(button)openRecord(button.dataset.productionRecord).catch(error=>message(error.message,true));});
+$('#production-batches').addEventListener('click',event=>{
+  const button=event.target.closest('[data-production-batch]');if(!button)return;
+  tab('batches');
+  $$('.batch-select').forEach(select=>{if(![...select.options].some(option=>option.value===button.dataset.productionBatch)){const option=document.createElement('option');option.value=button.dataset.productionBatch;option.textContent=short(option.value)+' / original production wave';select.append(option);}select.value=button.dataset.productionBatch;});
+});
+action('#production-refresh',()=>loadProduction());
+action('#production-clear',async()=>{productionChosen.clear();if(productionWave)await openProductionWave(productionWave.id,true);});
+action('#production-plans-previous',async()=>{productionPlanOffset=Math.max(0,productionPlanOffset-50);await loadProduction();});
+action('#production-plans-next',async()=>{if(productionPlans?.next!==null){productionPlanOffset=productionPlans.next;await loadProduction();}});
+action('#production-waves-previous',async()=>{productionWaveOffset=Math.max(0,productionWaveOffset-50);await openProductionPlan(productionPlan.id,true);});
+action('#production-waves-next',async()=>{if(productionPlan?.next!==null){productionWaveOffset=productionPlan.next;await openProductionPlan(productionPlan.id,true);}});
+action('#production-members-previous',async()=>{productionMemberOffset=Math.max(0,productionMemberOffset-50);await openProductionWave(productionWave.id,true);});
+action('#production-members-next',async()=>{if(productionWave?.next!==null){productionMemberOffset=productionWave.next;await openProductionWave(productionWave.id,true);}});
 
 (async()=>{
   try{

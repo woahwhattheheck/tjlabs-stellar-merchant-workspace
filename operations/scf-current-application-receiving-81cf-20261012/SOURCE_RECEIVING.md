@@ -235,3 +235,64 @@ Use the new directory's `browser-receiving-input.json` with
 mapping handles both the original directory and subsequent nested editions.
 The same original archive writer saves the complete case using its selected
 current version.
+
+## Complete native and browser receiving in one command
+
+The original receiver also accepts `--source-browser` with its existing native
+source input. Select the installed Playwright directory and Chromium executable:
+
+~~~sh
+python -B receive_review.py \
+  --engine native \
+  --source-input /absolute/existing/complete-current-source-input.json \
+  --expected-source-input-sha256 ACTUAL_SELECTED_INPUT_SHA256 \
+  --case /absolute/existing/SCF-Current-Application-and-Review.zip \
+  --expected-case-sha256 ACTUAL_CURRENT_CASE_SHA256 \
+  --parent /absolute/existing/receiving-parent \
+  --node /absolute/existing/node \
+  --source-browser \
+  --node-modules /absolute/existing/node_modules \
+  --chromium /absolute/existing/chrome-headless-shell \
+  --replace-library-file-id ACTUAL_ORIGINAL_LIBRARY_ITEM \
+  --expected-library-version ACTUAL_CURRENT_VERSION_NUMBER \
+  --timeout-seconds 1800
+~~~
+
+The composed `receive-original-grant-source.py` wrapper accepts the same
+`--source-browser`, `--node-modules` and `--chromium` options alongside its
+normal local arguments and original transfer input. Compose it with the full
+current runtime first. Omitting the flag preserves native-only behavior.
+
+The command first completes the two existing native source phases. Its browser
+continuation then starts the selected maintained reader through the same native
+process controller, calls `receiveCurrentSourceBrowser`, and completes the
+original editor save, source-package export, answers export, review and second
+browser-store receiving. Both phases share the selected execution allowance.
+The original archive writer saves the complete case once, after these stages.
+`nativeSourceState` reports the model result; the overall state is complete only
+when the requested browser continuation also completes.
+
+The browser directory retains its original local origin and complete IndexedDB
+storage snapshot. Checkpoints surround the original working save, the original
+review save and completed stages. A review-save intent records the prior local
+IDs; a resumed run reopens the accepted exact review record or reconciles its
+single complete saved effect before it can issue another save-copy. Older
+retained saved-review records are adopted only when the actual local binding
+still matches. The browser snapshot is saved before either acceptance receipt.
+The original receipt comparison preserves any later or different local work.
+
+Browser process IDs, host/boot/namespace/start identity and cleanup remain with
+the maintained controller. The continuation closes its own Chromium and listener,
+and keeps prior process observations in the same case's attempt history.
+Before assembling either a complete or partial archive, the caller requires
+the original controller to confirm cleanup of every launched native and browser
+phase. If any writer's exit is unconfirmed, it returns incomplete with
+`archiveState: WAITING_FOR_OWNED_PROCESS_EXIT`, the retained operation directory
+and the exact pending phase identities. The equipped owner resumes that
+original operation; the command leaves the current saved case intact.
+
+Use the resulting case's actual current version for a continuation. Its
+`browser/RESULT.json`, complete downloads, saved records, browser storage and
+both native process records remain together. The selected reviewer source,
+original draft and review identities, every previous source edition and all
+prior archive members retain their existing history.
