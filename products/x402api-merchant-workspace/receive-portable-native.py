@@ -58,7 +58,12 @@ SOURCE_PATHS = [
     "stellar/scf-starforge-20261009/distribution/specification.mjs",
     "stellar/scf-starforge-20261009/distribution/product-package.mjs",
     "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
-    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs"
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+  "products/x402api-merchant-workspace/received-project-review.mjs",
+  "products/x402api-merchant-workspace/managed-review.mjs",
+  "products/x402api-merchant-workspace/RECEIVED_REVIEW.md",
+  "products/x402api-merchant-workspace/received-review-receiving.mjs",
+  "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs"
 ]
 
 def digest(raw): return hashlib.sha256(raw).hexdigest()

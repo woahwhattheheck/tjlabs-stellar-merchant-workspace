@@ -1,0 +1,502 @@
+// MIT. Receive the original completed five-invoice project through managed Applications.
+import assert from 'node:assert/strict';
+import { createHash, randomUUID } from 'node:crypto';
+import { constants } from 'node:fs';
+import { open, mkdir, readFile, lstat, realpath, rename, link, unlink } from 'node:fs/promises';
+import { DatabaseSync } from 'node:sqlite';
+import { createRequire } from 'node:module';
+import { join, dirname, resolve, isAbsolute } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { parseArgs } from 'node:util';
+import { operationLease } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
+import { applicationEnvironment } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs';
+import { inspectReceivedMerchant, reviewEnvironmentName, reviewEnvironmentValue } from './received-project-review.mjs';
+
+const OPERATION = 'SCF-RECEIVED-MERCHANT-APPLICATION-CEDAR-8047-20261013';
+const { values } = parseArgs({ strict: true, options: {
+  project: { type: 'string' }, runtime: { type: 'string' }, applications: { type: 'string' },
+  output: { type: 'string' }, 'environment-file': { type: 'string' }, 'operator-token-env': { type: 'string' },
+  python: { type: 'string' }, playwright: { type: 'string' }, chromium: { type: 'string' },
+  'allow-loopback': { type: 'boolean', default: false },
+} });
+for (const name of ['project','runtime','applications','output','environment-file','python','playwright','chromium'])
+  assert(typeof values[name] === 'string' && isAbsolute(values[name]) && resolve(values[name]) === values[name],
+    'Use the original absolute ' + name + ' selection.');
+assert.equal(process.platform, 'linux'); assert(Number(process.versions.node.split('.')[0]) >= 24);
+process.umask(0o077);
+const ROOT = values.output, RUNTIME = values.runtime, APPLICATIONS = values.applications;
+let WORKSPACE, DATABASE, SOURCE, selectedProject;
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const encoding = value => JSON.stringify(value, (_key, item) => typeof item === 'bigint' ? { integer: item.toString() } :
+  item instanceof Uint8Array ? { base64: Buffer.from(item).toString('base64') } : item, 2) + '\n';
+const errorView = error => ({ code: error?.code ?? error?.name ?? 'RECEIVED_REVIEW_FAILED', message: String(error?.message ?? error).slice(0, 2000) });
+const exists = async path => { try { await lstat(path); return true; } catch (error) { if (error.code === 'ENOENT') return false; throw error; } };
+const readJSON = async path => { try { return JSON.parse(await readFile(path, 'utf8')); } catch (error) { if (error.code === 'ENOENT') return null; throw error; } };
+const identity = label => {
+  const hex = sha(OPERATION + '\n' + ROOT + '\n' + label);
+  return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-4' + hex.slice(13, 16) + '-a' + hex.slice(17, 20) + '-' + hex.slice(20, 32);
+};
+function emit(value) { process.stdout.write(JSON.stringify(value) + '\n'); }
+async function syncDirectory(path) {
+  const handle = await open(path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try { await handle.sync(); } finally { await handle.close(); }
+}
+async function directory(path) {
+  if (!await exists(path)) { await directory(dirname(path)); await mkdir(path, { mode: 0o700 }); }
+  const info = await lstat(path);
+  assert(info.isDirectory() && !info.isSymbolicLink() && await realpath(path) === path);
+  if (path === ROOT || path.startsWith(ROOT + '/')) assert.equal(info.mode & 0o077, 0, 'Keep the original private receiving directory.');
+  await syncDirectory(path); await syncDirectory(dirname(path));
+}
+async function save(path, value, { original = false } = {}) {
+  const body = Buffer.isBuffer(value) ? value : Buffer.from(encoding(value));
+  await directory(dirname(path));
+  if (original && await exists(path)) {
+    const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try { assert((await handle.stat()).isFile()); assert.deepEqual(await handle.readFile(), body); await handle.sync(); }
+    finally { await handle.close(); }
+    await syncDirectory(dirname(path)); return value;
+  }
+  const temporary = path + '.' + randomUUID() + '.partial';
+  let handle = null, created = false;
+  try {
+    handle = await open(temporary, 'wx', 0o600); created = true;
+    await handle.writeFile(body); await handle.sync();
+    await handle.close(); handle = null;
+    if (original) {
+      try { await link(temporary, path); }
+      catch (error) {
+        if (error.code !== 'EEXIST') throw error;
+        const target = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+        try { assert((await target.stat()).isFile()); assert.deepEqual(await target.readFile(), body); await target.sync(); }
+        finally { await target.close(); }
+      }
+      await unlink(temporary);
+    } else await rename(temporary, path);
+    await syncDirectory(dirname(path));
+  } finally {
+    try { if (handle) await handle.close(); }
+    finally {
+      if (created) {
+        try { await unlink(temporary); await syncDirectory(dirname(path)); }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
+      }
+    }
+  }
+  return value;
+}
+let stopping = null, model = null, activeRun = null, browser = null, browserContext = null;
+const pause = ms => new Promise(accept => setTimeout(accept, ms));
+function stopped() { if (stopping) throw Object.assign(new Error('The original installed receiving was stopped.'), { code: 'RECEIVING_STOPPED', signal: stopping }); }
+function stop(signal) {
+  stopping ??= signal;
+  if (browserContext) void browserContext.close().catch(() => {});
+}
+const terminated = () => stop('SIGTERM'), interrupted = () => stop('SIGINT');
+process.on('SIGTERM', terminated); process.on('SIGINT', interrupted);
+async function retainCompleted(label, action) {
+  let announced = null;
+  for (;;) {
+    try { return await action(); }
+    catch (error) {
+      const notice = JSON.stringify(errorView(error));
+      if (notice !== announced) { emit({ state: 'AWAITING_LOCAL_RECEIPT', label, error: errorView(error) }); announced = notice; }
+      await pause(1000);
+    }
+  }
+}
+function sqlName(name) { return '"' + name.replaceAll('"', '""') + '"'; }
+function databaseSnapshot(databasePath = DATABASE) {
+  const db = new DatabaseSync(databasePath, { readOnly: true, enableDoubleQuotedStringLiterals: false });
+  try {
+    db.exec('BEGIN');
+    const definitions = db.prepare("SELECT name,sql FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all();
+    const tables = [];
+    for (const definition of definitions) {
+      const statement = db.prepare('SELECT * FROM ' + sqlName(definition.name)); statement.setReadBigInts(true);
+      const rows = statement.all().map(row => encoding(row)).sort();
+      tables.push({ name: definition.name, sql: definition.sql, rows });
+    }
+    const business = { applicationId: db.prepare('PRAGMA application_id').get().application_id,
+      userVersion: db.prepare('PRAGMA user_version').get().user_version,
+      tables: tables.filter(table => table.name !== 'merchant_runtimes') };
+    const runtimes = tables.find(table => table.name === 'merchant_runtimes');
+    assert.equal(business.applicationId, 0x58344d31); assert.equal(business.userVersion, 1);
+    const orders = db.prepare('SELECT id,state FROM merchant_orders ORDER BY id').all();
+    assert.equal(orders.length, 5); assert(orders.every(order => order.state === 'COMPLETE'));
+    assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_events WHERE state='PENDING'").get().count, 0);
+    assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_fulfillments WHERE state!='COMPLETE'").get().count, 0);
+    db.exec('ROLLBACK');
+    return { businessSha256: sha(encoding(business)),
+      allUserRowsSha256: sha(encoding({ ...business, tables })), business, runtimes, orders };
+  } finally { db.close(); }
+}
+async function originalFile(path, expected) {
+  const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const first = await handle.stat(); assert(first.isFile()); assert.equal(first.size, expected.bytes);
+    const hash = createHash('sha256'), buffer = Buffer.allocUnsafe(65536); let position = 0;
+    while (position < first.size) {
+      const result = await handle.read(buffer, 0, Math.min(buffer.length, first.size - position), position);
+      assert(result.bytesRead > 0); hash.update(buffer.subarray(0, result.bytesRead)); position += result.bytesRead;
+    }
+    const last = await handle.stat();
+    assert.equal(last.size, first.size); assert.equal(last.mtimeMs, first.mtimeMs); assert.equal(last.ctimeMs, first.ctimeMs);
+    assert.equal(hash.digest('hex'), expected.sha256);
+    return { path, ...expected };
+  } finally { await handle.close(); }
+}
+async function applicationView(id) {
+  const state = await model.applicationsState({ historyLimit: 100 });
+  const application = state.applications.find(value => value.id === id); assert(application, 'Keep the original saved application.');
+  return application;
+}
+async function originalRun(id, applicationId = null) {
+  const directory = join(APPLICATIONS, 'operations', id);
+  const [state, result, announcement] = await Promise.all(['state.json', 'command-result.json', 'application-url.json'].map(name => readJSON(join(directory, name))));
+  let held = false;
+  const operation = await readJSON(join(directory, 'request.json'));
+  if (operation) {
+    const native = await import(pathToFileURL(join(SOURCE, 'stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs')));
+    held = await native.operationRunning(join(directory, 'worker.lock'));
+  }
+  const cancellation = applicationId ? await readJSON(join(APPLICATIONS, 'applications', applicationId, 'runs', id + '.cancel.json')) : null;
+  return { directory, state, result, announcement, held, operation, cancellation };
+}
+async function stopApplication(selection) {
+  let announced = null;
+  for (;;) {
+    try {
+      const runFile = join(APPLICATIONS, 'applications', selection.applicationId, 'runs', selection.operationId + '.json');
+      if (!await exists(runFile)) { activeRun = null; return { launched: false, reason: 'NO_RETAINED_RUN' }; }
+      let current = await originalRun(selection.operationId, selection.applicationId);
+      if (!current.held && current.cancellation) { activeRun = null; return { ...current, launched: false }; }
+      if (!current.held && current.result) {
+        const output = await model.applicationsOutput(selection);
+        await save(join(ROOT, 'applications-output', selection.operationId + '.json'), output, { original: true });
+        activeRun = null; return { ...current, output };
+      }
+      if (!current.held && ['FAILED','SUCCEEDED','CANCELLED','RUNNING'].includes(current.state?.phase) && !current.result) {
+        const output = await model.applicationsOutput(selection);
+        await save(join(ROOT, 'applications-output', selection.operationId + '.json'), output, { original: true });
+        activeRun = null; return { ...current, output, outcomeUnavailable: true };
+      }
+      await model.applicationsStop(selection);
+      current = await originalRun(selection.operationId, selection.applicationId);
+      if (!current.held && current.result) continue;
+    } catch (error) {
+      const notice = JSON.stringify(errorView(error));
+      if (notice !== announced) { emit({ state: 'AWAITING_ORIGINAL_APPLICATION_STOP', operationId: selection.operationId, error: errorView(error) }); announced = notice; }
+    }
+    await pause(250);
+  }
+}
+async function beginOpening(label, applicationId) {
+  stopped();
+  const path = join(ROOT, 'opening-' + label + '.json');
+  const selection = await readJSON(path) ?? { label, applicationId, attempts: [] };
+  assert.equal(selection.applicationId, applicationId);
+  let attempt = selection.attempts.at(-1);
+  if (attempt) {
+    const observed = await originalRun(attempt.operationId, applicationId);
+    if (!observed.held && (observed.result || observed.cancellation)) {
+      if (attempt.completed) {
+        assert.deepEqual(attempt.completed.native, observed.result, 'Keep the original completed process result.');
+        return { ...attempt, applicationId, completed: attempt.completed };
+      }
+      attempt.ended = { state: observed.state, result: observed.result, cancellation: observed.cancellation };
+      await save(path, selection);
+      attempt = null;
+    } else if (!observed.held && ['FAILED', 'SUCCEEDED', 'CANCELLED', 'RUNNING'].includes(observed.state?.phase)) {
+      throw Object.assign(new Error('The original managed outcome is unavailable; inspect its retained output.'), { code: 'ORIGINAL_APPLICATION_OUTCOME_UNAVAILABLE' });
+    }
+  }
+  if (!attempt) {
+    const review = await model.applicationsStartReview({ applicationId });
+    const operationId = identity('application-' + label + '-' + (selection.attempts.length + 1));
+    attempt = { operationId, reviewId: review.id, review, acceptedAt: new Date().toISOString() };
+    selection.attempts.push(attempt);
+    await save(path, selection);
+  }
+  activeRun = { applicationId, operationId: attempt.operationId };
+  const retained = await readJSON(join(APPLICATIONS, 'applications', applicationId, 'runs', attempt.operationId + '.json'));
+  if (retained) {
+    const observed = await originalRun(attempt.operationId, applicationId);
+    if (!observed.held && (!observed.state || observed.state.phase === 'QUEUED'))
+      await model.applicationsRecover(activeRun);
+  } else await model.applicationsStart({ applicationId, requestId: attempt.operationId, reviewId: attempt.reviewId });
+  const started = Date.now();
+  for (;;) {
+    stopped();
+    const current = await originalRun(attempt.operationId, applicationId);
+    if (current.held && current.announcement) {
+      assert.equal(current.announcement.operationId, attempt.operationId);
+      assert.equal(current.announcement.applicationId, applicationId);
+      assert.equal(current.announcement.original.selection.workspaceDirectory, WORKSPACE);
+      assert.equal(current.announcement.original.selectionSha256, selectedProject.selectionSha256);
+      await save(join(ROOT, 'launches', attempt.operationId + '.json'), current.announcement, { original: true });
+      return { ...attempt, applicationId, url: current.announcement.url, selectionPath: path, selection };
+    }
+    if (!current.held && (current.result || ['FAILED', 'SUCCEEDED', 'CANCELLED'].includes(current.state?.phase)))
+      throw Object.assign(new Error('The original application ended before returning its verified URL.'), { code: 'ORIGINAL_APPLICATION_LAUNCH_FAILED', native: current });
+    assert(Date.now() - started < 120000, 'Wait for the original Applications listener; no replacement command is allowed.');
+    await pause(200);
+  }
+}
+async function finishOpening(opening, result) {
+  const stoppedRun = await stopApplication({ applicationId: opening.applicationId, operationId: opening.operationId });
+  assert(!stoppedRun.outcomeUnavailable, 'Retain the actual original managed process outcome.');
+  assert.equal(stoppedRun.result?.state, 'STOPPED'); assert.equal(stoppedRun.result?.stopped, true);
+  const attempt = opening.selection.attempts.find(value => value.operationId === opening.operationId);
+  attempt.completed = { at: new Date().toISOString(), result, native: stoppedRun.result };
+  await retainCompleted('original-completed-opening', () => save(opening.selectionPath, opening.selection));
+  return stoppedRun;
+}
+async function get(url, credential, route) {
+  const response = await fetch(new URL(route, url), { headers: { Authorization: 'Bearer ' + credential },
+    redirect: 'error', signal: AbortSignal.timeout(15000) });
+  assert.equal(response.status, 200, 'Open the original authenticated read: ' + route);
+  const raw = Buffer.from(await response.arrayBuffer()); assert(raw.length <= 16 * 1024 * 1024);
+  return { raw, json: () => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)) };
+}
+async function receiveReads(opening, credential, label) {
+  const state = (await get(opening.url, credential, '/api/state')).json();
+  assert.equal(state.mode, 'review'); assert.equal(state.orders.length, 5);
+  const listener = (await get(opening.url, credential, '/api/project')).json();
+  assert.deepEqual(listener, { available: false, mode: 'review', storeId: selectedProject.selection.storeId, exports: [] });
+  const invoices = [];
+  for (const row of state.orders) {
+    stopped();
+    const inspected = (await get(opening.url, credential, '/api/orders/' + row.id)).json();
+    assert.equal(inspected.order.id, row.id); assert.equal(inspected.order.state, 'COMPLETE');
+    const order = inspected.order, downloaded = await get(opening.url, credential, '/api/orders/' + row.id + '/result');
+    assert.equal(downloaded.raw.length, order.result.bytes); assert.equal(sha(downloaded.raw), order.result.sha256);
+    const path = join(ROOT, 'downloads', label, row.id + '-result');
+    await save(path, downloaded.raw, { original: true });
+    const envelope = await get(opening.url, credential, '/api/orders/' + row.id + '/envelope');
+    const envelopePath = join(ROOT, 'downloads', label, row.id + '-payment-request.json');
+    await save(envelopePath, envelope.raw, { original: true });
+    await save(join(ROOT, 'invoices', label, row.id + '.json'), inspected, { original: true });
+    invoices.push({ merchantOrderId: row.id, paymentId: order.paymentId, reference: order.reference, title: order.title,
+      bytes: order.result.bytes, sha256: order.result.sha256,
+      historySha256: sha(encoding(inspected.history)),
+      download: { path, bytes: downloaded.raw.length, sha256: sha(downloaded.raw) },
+      envelope: { path: envelopePath, bytes: envelope.raw.length, sha256: sha(envelope.raw) } });
+  }
+  return { invoices, mode: state.mode, apiStateSha256: sha(encoding(state)), nativeUrlRecord: opening.operationId };
+}
+async function receiveBrowser(opening, scenario, reads, { label, review = true } = {}) {
+  const require = createRequire(import.meta.url), loaded = require(values.playwright);
+  const chromium = loaded.chromium ?? loaded.default?.chromium; assert(chromium?.launch);
+  browser = await chromium.launch({ executablePath: values.chromium, headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  browserContext = await browser.newContext({ viewport: { width: 1440, height: 1080 }, acceptDownloads: true, deviceScaleFactor: 1 });
+  const page = await browserContext.newPage(), origin = new URL(opening.url).origin;
+  const failures = [], consoleErrors = [], requests = [], images = [], downloads = [];
+  page.on('pageerror', error => failures.push({ kind: 'pageerror', message: String(error.message) }));
+  page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  await browserContext.route('**/*', async route => {
+    const request = route.request(), url = new URL(request.url());
+    if (url.origin !== origin || request.method() !== 'GET') {
+      failures.push({ kind: 'unexpected-browser-request', method: request.method(), origin: url.origin, path: url.pathname });
+      return route.abort();
+    }
+    requests.push({ method: request.method(), path: url.pathname });
+    try {
+      const headers = {};
+      for (const [name, value] of Object.entries(await request.allHeaders()))
+        if (!['host','connection','accept-encoding','content-length'].includes(name)) headers[name] = value;
+      const response = await fetch(request.url(), { method: request.method(), headers,
+        redirect: 'error', signal: AbortSignal.timeout(15000) });
+      const body = Buffer.from(await response.arrayBuffer()); assert(body.length <= 64 * 1024 * 1024);
+      const selected = {};
+      for (const name of ['content-type','cache-control','content-security-policy','x-content-type-options','content-disposition','referrer-policy'])
+        if (response.headers.has(name)) selected[name] = response.headers.get(name);
+      await route.fulfill({ status: response.status, headers: selected, body });
+    } catch (error) { failures.push({ kind: 'original-http-read', path: url.pathname, error: errorView(error) }); await route.abort(); }
+  });
+  const dimensions = () => page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+  async function capture(name, fullPage = false) {
+    const path = join(ROOT, 'screenshots', name); await directory(dirname(path));
+    await page.screenshot({ path, fullPage, animations: 'disabled' });
+    const body = await readFile(path); images.push({ path, bytes: body.length, sha256: sha(body), viewport: page.viewportSize(), fullPage });
+  }
+  try {
+    await page.goto(opening.url, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.locator('#operator-token').fill(scenario.operatorToken); await page.locator('#connect-form button').click();
+    await page.locator('#workspace').waitFor({ state: 'visible', timeout: 15000 });
+    assert.equal(await page.locator('#count-total').innerText(), '5');
+    assert.equal(await page.locator('#count-complete').innerText(), '5');
+    assert.equal(await page.locator('#count-awaiting').innerText(), '0');
+    assert.equal(await page.locator('#count-progress').innerText(), '0');
+    assert.equal(await page.locator('#order-rows tr').count(), 5);
+    if (review) {
+      assert.equal(await page.locator('#review-banner').isVisible(), true);
+      assert.equal(await page.locator('#show-create').isVisible(), false);
+      assert.equal(await page.locator('#export-project').isVisible(), false);
+      assert.equal(await page.locator('#connection-state').innerText(), 'Project review');
+    }
+    for (const [index, invoice] of reads.invoices.entries()) {
+      stopped();
+      await page.getByRole('row', { name: invoice.reference + ', Delivered', exact: true }).click();
+      await page.locator('#detail-content[data-order-id="' + invoice.merchantOrderId + '"]').waitFor({ state: 'visible' });
+      assert.equal(await page.locator('#detail-reference').innerText(), invoice.reference);
+      assert.equal(await page.locator('#detail-state').innerText(), 'Delivered');
+      assert.equal(await page.locator('#signature-form').isVisible(), false);
+      assert.equal(await page.locator('#create-charge').isVisible(), false);
+      assert.equal(await page.locator('#download-result').isVisible(), true);
+      const desktop = await dimensions(); assert(desktop.document <= desktop.viewport + 1, 'The original desktop layout overflows.');
+      if (index === 0) await capture('merchant-' + label + '-desktop.png');
+      const pending = page.waitForEvent('download', { timeout: 15000 }); await page.locator('#download-result').click();
+      const download = await pending, path = join(ROOT, 'downloads', 'browser-' + label, invoice.paymentId + '.txt');
+      await directory(dirname(path)); await download.saveAs(path); assert.equal(await download.failure(), null);
+      assert.equal(download.suggestedFilename(), 'Merchant_Commissioned_Delivery.txt');
+      downloads.push(await originalFile(path, { bytes: invoice.bytes, sha256: invoice.sha256 }));
+    }
+    
+    await page.setViewportSize({ width: 390, height: 844 }); await page.evaluate(() => scrollTo(0, 0));
+    await capture('merchant-' + label + '-phone-invoices.png');
+    const first = reads.invoices[0];
+    await page.getByRole('row', { name: first.reference + ', Delivered', exact: true }).click();
+    await page.locator('#detail-content[data-order-id="' + first.merchantOrderId + '"]').waitFor({ state: 'visible' });
+    await page.locator('#detail-panel').evaluate(element => element.scrollIntoView({ block: 'start' }));
+    const phone = await dimensions(); assert(phone.document <= phone.viewport + 1, 'The original phone layout overflows.');
+    await capture('merchant-' + label + '-phone-detail.png'); await capture('merchant-' + label + '-phone-complete.png', true);
+    await page.locator('#search').fill(reads.invoices.at(-1).reference); assert.equal(await page.locator('#order-rows tr').count(), 1);
+    await page.locator('#search').fill(''); assert.equal(await page.locator('#order-rows tr').count(), 5);
+    await page.locator('#disconnect').click(); await page.locator('#connect-panel').waitFor({ state: 'visible' });
+    await page.locator('#operator-token').fill(scenario.operatorToken); await page.locator('#connect-form button').click();
+    await page.locator('#workspace').waitFor({ state: 'visible' }); assert.equal(await page.locator('#count-complete').innerText(), '5');
+    assert.deepEqual(failures, []); assert.deepEqual(consoleErrors, []);
+    return { browser: await browser.version(), chromium: values.chromium,
+      mode: 'ORIGINAL_RECEIVED_REVIEW_HTTP_GET_BRIDGE',
+      dimensions: { phone }, images, downloads, requests, pageErrors: failures, consoleErrors };
+  } finally {
+    await browserContext.close(); browserContext = null; await browser.close(); browser = null;
+  }
+}
+async function receive() {
+  selectedProject = await inspectReceivedMerchant(values.project, { python: values.python, allowLoopback: values['allow-loopback'] });
+  WORKSPACE = selectedProject.selection.workspaceDirectory; DATABASE = join(WORKSPACE, 'merchant.sqlite3');
+  const installedRuntime = await import(pathToFileURL(join(RUNTIME,
+    'package/source/stellar/scf-starforge-20261009/distribution/runtime-install.mjs')));
+  const inspection = await installedRuntime.inspectRuntimeInstall({ directory: RUNTIME, load: true, source: true });
+  assert.equal(inspection.status, 'READY'); assert.equal(inspection.ready, true); SOURCE = inspection.sourceRoot;
+  const { environment, sha256: environmentSha256 } = await applicationEnvironment(values['environment-file']);
+  const credentialName = reviewEnvironmentName(values['operator-token-env'] ?? selectedProject.selection.operatorTokenEnv);
+  const credential = reviewEnvironmentValue(environment, credentialName);
+  const selection = { schema: 'stellar-forge.received-merchant-application-receiving.v1', operation: OPERATION,
+    project: selectedProject.selection, projectSha256: selectedProject.selectionSha256,
+    runtime: RUNTIME, runtimeSource: SOURCE, runtimeSourceCommit: inspection.sourceCommit, applications: APPLICATIONS,
+    output: ROOT, environmentFile: values['environment-file'], environmentSha256, operatorTokenEnv: credentialName,
+    python: values.python, playwright: values.playwright, chromium: values.chromium, allowLoopback: values['allow-loopback'] };
+  await save(join(ROOT, 'selection.json'), selection, { original: true });
+  const beforePath = join(ROOT, 'before.json');
+  const before = await readJSON(beforePath) ?? databaseSnapshot();
+  await save(beforePath, before, { original: true });
+  assert.equal(databaseSnapshot().allUserRowsSha256, before.allUserRowsSha256);
+  const prior = await readJSON(join(ROOT, 'complete.json'));
+  if (prior) {
+    assert.equal(prior.projectSha256, selectedProject.selectionSha256); assert.equal(prior.state, 'COMPLETE');
+    assert.equal(prior.afterAllRowsSha256, before.allUserRowsSha256);
+    for (const phase of prior.openings)
+      for (const invoice of phase.reads.invoices) {
+        await originalFile(invoice.download.path, invoice.download);
+        await originalFile(invoice.envelope.path, invoice.envelope);
+      }
+    return { ...prior, reopened: true };
+  }
+  const runtimeModel = await import(pathToFileURL(join(SOURCE, 'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
+  // The operator selects the existing Applications workspace. It is never replaced on resume.
+  model = await runtimeModel.openRuntimeWorkspace({ directory: APPLICATIONS });
+  let attached = await readJSON(join(ROOT, 'runtime-attachment.json'));
+  if (!attached) {
+    attached = await model.attach({ directory: RUNTIME, label: 'Received merchant review runtime' });
+    await save(join(ROOT, 'runtime-attachment.json'), attached, { original: true });
+  }
+  const catalog = await model.applicationsState();
+  assert(catalog.catalog.some(value => value.id === 'x402api-merchant-received-review' && value.providerId === 'x402api-merchant'));
+  await save(join(ROOT, 'application-catalog.json'), catalog);
+  const reviewPath = join(ROOT, 'application-review.json');
+  let review = await readJSON(reviewPath);
+  if (!review) {
+    review = await model.applicationsReview({ runtimeId: attached.runtimeId, kind: 'x402api-merchant-received-review',
+      providerId: 'x402api-merchant', label: 'Original received merchant invoices',
+      settings: { receivedDirectory: values.project, port: 0, environmentFile: values['environment-file'],
+        operatorTokenEnv: credentialName, pythonExecutable: values.python, allowLoopback: values['allow-loopback'] } });
+    await save(reviewPath, review, { original: true });
+  }
+  const saved = await model.applicationsSave({ requestId: identity('save'), reviewId: review.id });
+  await save(join(ROOT, 'application-save.json'), { applicationId: saved.applicationId, revision: saved.revision, saved: saved.saved }, { original: true });
+  const applicationId = saved.applicationId;
+  if (!(await applicationView(applicationId)).release) await model.applicationsConnect({ applicationId });
+  const connectedAt = Date.now();
+  for (;;) {
+    stopped(); const current = await applicationView(applicationId);
+    await save(join(ROOT, 'application-adoption.json'), { applicationId, adoption: current.adoption ?? null, release: current.release ?? null });
+    if (current.release) break;
+    assert(!['FAILED','INTERRUPTED'].includes(current.adoption?.phase), 'Receive the existing runtime adoption outcome.');
+    assert(Date.now() - connectedAt < 120000, 'Continue the existing runtime adoption.');
+    await pause(200);
+  }
+  const openings = [];
+  for (const label of ['desktop-phone', 'cold-reopen']) {
+    const completePath = join(ROOT, label + '.json');
+    let completed = await readJSON(completePath);
+    if (!completed) {
+      const opening = await beginOpening(label, applicationId);
+      if (opening.completed) completed = { ...opening.completed.result, operationId: opening.operationId, native: opening.completed.native };
+      else {
+        const reads = await receiveReads(opening, credential, label);
+        const visual = await receiveBrowser(opening, { operatorToken: credential }, reads, { label, review: true });
+        const ended = await finishOpening(opening, { reads, browser: visual });
+        completed = { reads, browser: visual, operationId: opening.operationId, native: ended.result };
+      }
+      await save(completePath, completed, { original: true });
+    }
+    assert.equal(databaseSnapshot().allUserRowsSha256, before.allUserRowsSha256);
+    openings.push(completed);
+    // End the first operator model and reopen the same persisted Applications workspace.
+    if (label === 'desktop-phone') {
+      await model.close(); model = await runtimeModel.openRuntimeWorkspace({ directory: APPLICATIONS });
+    }
+  }
+  assert.equal(openings[0].reads.apiStateSha256, openings[1].reads.apiStateSha256);
+  const history = []; let cursor = null;
+  do {
+    const page = await model.applicationsHistory({ applicationId, limit: 100, cursor });
+    history.push(...page.runs); cursor = page.nextCursor;
+  } while (cursor !== null);
+  await save(join(ROOT, 'application-history.json'), history);
+  const after = databaseSnapshot(); assert.equal(after.allUserRowsSha256, before.allUserRowsSha256);
+  const result = { schema: 'stellar-forge.received-merchant-application-complete.v1', operation: OPERATION, state: 'COMPLETE',
+    project: selectedProject.selection, projectSha256: selectedProject.selectionSha256, runtimeSourceCommit: inspection.sourceCommit,
+    application: { directory: APPLICATIONS, applicationId, reviewId: review.id, revision: saved.revision },
+    beforeAllRowsSha256: before.allUserRowsSha256, afterAllRowsSha256: after.allUserRowsSha256,
+    openings, history, completedAt: new Date().toISOString() };
+  await save(join(ROOT, 'complete.json'), result, { original: true });
+  return result;
+}
+await directory(ROOT);
+const receivingLease = await operationLease(join(ROOT, 'receiver.lock'));
+let result, failure;
+try { result = await receive(); }
+catch (error) {
+  failure = error;
+  await save(join(ROOT, 'continuation.json'), { operation: OPERATION, state: 'INCOMPLETE',
+    error: errorView(error), activeRun, at: new Date().toISOString() });
+  emit({ state: 'INCOMPLETE', operation: OPERATION, error: errorView(error), output: ROOT });
+} finally {
+  try {
+    if (browserContext) await browserContext.close().catch(() => {});
+    if (browser) await browser.close().catch(() => {});
+    if (activeRun && model) await stopApplication(activeRun);
+    if (model) await model.close();
+  } finally {
+    await receivingLease.close();
+    process.off('SIGTERM', terminated); process.off('SIGINT', interrupted);
+  }
+}
+if (failure) process.exitCode = 1;
+else emit({ state: 'RECEIVED_MERCHANT_APPLICATION_COMPLETE', operation: OPERATION, output: ROOT,
+  applicationId: result.application.applicationId, projectSha256: result.projectSha256, invoices: result.openings[0].reads.invoices.length });
