@@ -134,6 +134,49 @@ accepted decision and the complete receiving history.
 A changed time selection remains explicit in the comparison. Use its source
 selection interpretation together with the retained change counts.
 
+## Receive the publisher and its editable customer application
+
+The complete [Zürich portal-use example](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/ZURICH_PORTAL_USE.md)
+adds a customer-analysis continuation to the same source and publisher workflow.
+It retains both complete original date captures and publishes their reviewed
+editions before receiving all original dataset pages into the Python customer
+workspace. Both dictionaries and source-version identities travel with those
+pages.
+
+The original programmes are:
+
+| Source programme | Retained starting point | Complete customer work |
+| --- | --- | --- |
+| `sf30-seller-sdk/ckan/examples/zurich-portal-use.mjs` | Both original captures and the same private publisher project/output roots | Reviewed meanings, two native publications, every SF100 page, complete publisher archive and independent publisher reopening |
+| `sf88-operator-buyer-cli/python/examples/zurich_portal_use.py` | The original `publisher-programme.json` and the same private customer database/output roots | Both source imports, five editable queries, complete exports, saved report/workbook definitions, native customer archive and cold reopening |
+
+Both paths are under `stellar/scf-starforge-20261009/` in the selected source.
+The full operating guide gives the exact arguments and original fixed capture
+hashes. Keep the complete captured source, selected executable source and native
+project outputs together. Repeated invocations use the same original request
+and source identities.
+
+The two native workspace archives have different receiving commands:
+
+- `Zurich_Publisher_Workspace.ckanw` uses the existing CKAN
+  `inspect-workspace` and `receive-workspace` commands above.
+- `Zurich_Customer_Workspace.zip` uses the original Python
+  `stellar_forge_buyer.workspace_archive_receive` command with its delivered
+  SHA-256 and an absent private destination.
+
+Open the received customer directory through the normal
+`stellar_forge_buyer.analysis_workspace` server. The new local launch capability
+is supplied by that application, while its imported versions, queries, report,
+workbook and output files retain their original saved identities. The complete
+programme verifies all original query exports and the workbook after that cold
+receive before recording customer completion.
+
+On a constrained host, select a private writable `TMPDIR` for the original
+workbook engine. After correcting a terminal workbook failure, the customer's
+`--retry-workbook` option records one explicit child build against the same
+saved definition and preserves the failed parent. Subsequent continuation uses
+that selected child and reuses completed imports, queries and report jobs.
+
 ## Keep the entire completed delivery
 
 Retain the original complete result directory with these outputs:
