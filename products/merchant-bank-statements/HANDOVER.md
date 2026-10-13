@@ -101,7 +101,7 @@ For a complete statement delivered in pages, receive all original pages first. I
 4. Choose **Use these original statement balances** when the source review is eligible. The application binds the ordinary close to the selected source imports and their exact assembled review.
 5. Finish the period's existing transaction, receipt, refund and posting review. Retain the complete close with its original request identity.
 
-The first opening and final closing remain original bank balances. Intermediate boundaries connect the pages, and every original booked entry must still have exactly one current posted cash binding. An empty page still belongs to the original source set. A changed source interpretation requires a fresh page review; the earlier retained close remains available with its original files.
+The first opening and final closing remain original bank balances. Intermediate boundaries connect the pages, and every original booked entry must still have exactly one current posted cash binding. Every posted transaction in the account period must also be covered by the selected complete original pages. An empty page still belongs to the original source set. A changed source interpretation requires a fresh page review; the earlier retained close remains available with its original files.
 
 The [complete page guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/PAGE_ASSEMBLY.md) includes `assembly-preview`, typed API requests and the original-workspace native receiving course.
 

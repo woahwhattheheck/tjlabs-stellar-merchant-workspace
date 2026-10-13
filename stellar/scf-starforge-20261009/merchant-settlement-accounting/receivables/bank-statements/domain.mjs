@@ -258,6 +258,9 @@ export function closePreview(data,account,value,periodClose=null,sourceAssembly=
         else claimed.set(current.id,entry);
       }
     }
+    for(const row of posted)if(!claimed.has(row.id))problems.push({
+      code:'CAMT_ASSEMBLED_CASH_UNCOVERED',transactionId:row.id,
+      message:'Every current posted transaction in this account period must be covered by the selected complete original statement pages. Review this transaction and its source.'});
   }
   for(const row of rows) if(!['POSTED','DUPLICATE','SUPERSEDED','DELETED','EXCLUDED'].includes(row.status))
     problems.push({code:'TRANSACTION_REVIEW',transactionId:row.id,status:row.status,message:'Review the original transaction.'});

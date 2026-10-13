@@ -25,7 +25,7 @@ Electronic, legal and reporting sequences must agree when supplied. Message IDs 
 
 The first page supplies its original `OPBD`; intermediate boundaries use original `OPBD/CLBD` with subtype `INTM`; the final page supplies its original `CLBD`. Each page's signed booked entries must explain its own balance movement. Its opening must also equal the preceding original closing. A pair must be unambiguous. Original timestamps, including explicit offsets and fractional seconds, preserve their ordering.
 
-The summary review uses all original entries in its declared scope, while the balance equation uses booked entries. Entry details remain nested source information. Their amounts, reversals and charges retain the existing parser's interpretation. Every selected booked entry must still resolve to exactly one current posted cash transaction with its original source amount, date and account value.
+The summary review uses all original entries in its declared scope, while the balance equation uses booked entries. Entry details remain nested source information. Their amounts, reversals and charges retain the existing parser's interpretation. Every selected booked entry must still resolve to exactly one current posted cash transaction with its original source amount, date and account value. Every current posted transaction in the selected account period must also appear in those complete pages. This includes zero-amount entries and equal-and-opposite movements. An additional retained copy of an already covered transaction keeps that same cash identity.
 
 ## Original bank rules
 
