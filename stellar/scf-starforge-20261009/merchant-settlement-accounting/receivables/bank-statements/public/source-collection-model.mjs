@@ -15,7 +15,11 @@ export const mappingSignature=value=>JSON.stringify(canonical(value));
 export async function sha256(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');}
 export function encodeBytes(bytes){let value='';for(let i=0;i<bytes.length;i+=32768)value+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(value);}
 export function decodeBytes(value){
- if(typeof value!=='string'||value.length>Math.ceil(COLLECTION_LIMITS.fileBytes/3)*4||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))fail('COLLECTION_FILE','Receive complete standard base64 original bytes.');
+ if(typeof value!=='string'||value.length>Math.ceil(COLLECTION_LIMITS.fileBytes/3)*4||value.length%4)fail('COLLECTION_FILE','Receive complete standard base64 original bytes.');
+ const padding=value.endsWith('==')?2:value.endsWith('=')?1:0,end=value.length-padding;
+ if(padding&&end<2)fail('COLLECTION_FILE','Receive complete standard base64 original bytes.');
+ for(let i=0;i<end;i+=65536)if(!/^[A-Za-z0-9+/]*$/.test(value.slice(i,Math.min(end,i+65536))))fail('COLLECTION_FILE','Receive complete standard base64 original bytes.');
+ if((padding===1&&end%4!==3)||(padding===2&&end%4!==2))fail('COLLECTION_FILE','Receive complete standard base64 original bytes.');
  const bytes=Uint8Array.from(atob(value),c=>c.charCodeAt(0));
  if(!bytes.length||bytes.length>COLLECTION_LIMITS.fileBytes||encodeBytes(bytes)!==value)fail('COLLECTION_FILE','The original file is empty, too large or has incomplete encoding.');
  return bytes;

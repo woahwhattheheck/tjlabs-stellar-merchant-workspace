@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 import {BankStatementsClient} from './sdk/client.mjs';
 import {BankSourcePreparationsClient} from './source-preparation-client.mjs';
+import {mountSourceReviewAuthor} from './source-review-author.mjs';
+import {verifyPreparationCapsuleBytes} from './source-preparation-capsule.mjs';
 import {openSourceDeskState,requestSha256,retainOperation,observeOperation} from './source-preparation-state.mjs';
 const $=id=>document.getElementById(id),clone=v=>structuredClone(v),json=v=>JSON.stringify(v,null,2);
 const KINDS=['collection_prepare','collection_edit','collection_receive','collection_inspect','profile_save','profile_receive','profile_review','profile_apply'];
@@ -25,7 +27,7 @@ function errorText(e){return(e?.code?e.code+': ':'')+(e?.message??String(e));}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b);}
 function download(name,value,type='application/json'){const data=value instanceof Uint8Array||value instanceof Blob?value:typeof value==='string'?value:json(value);const blob=data instanceof Blob?data:new Blob([data],{type});const url=URL.createObjectURL(blob),link=node('a','',{href:url,download:name});document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function request(){if(!S?.draft?.request)throw new Error('Create or open a complete source request.');return S.draft.request;}
-function editable({raw=false}={}){if(!S||conflicted||busy||S.pending||S.draft?.frozen)throw new Error('Resolve the original retained request or reopen the current draft before editing.');if(S.draft?.rawDirty&&!raw)throw new Error('Apply the complete retained JSON before changing guided fields. Your raw edits remain intact.');}
+function editable({raw=false,review=false}={}){if(!S||conflicted||busy||S.pending||S.draft?.frozen)throw new Error('Resolve the original retained request or reopen the current draft before editing.');if(S.draft?.sourceReview&&!review)throw new Error('This exact author decision is read only. Create an explicit editable copy to change it.');if(S.draft?.rawDirty&&!raw)throw new Error('Apply the complete retained JSON before changing guided fields. Your raw edits remain intact.');}
 function control(){
  for(const n of $('mapping-fields').querySelectorAll('input,select,textarea,button'))n.disabled=conflicted||busy||!!S?.draft?.mappingDraft?.rawDirty;
  $('mapping-json').disabled=conflicted||busy;
@@ -34,6 +36,8 @@ function control(){
  $('mapping-cancel').disabled=conflicted||busy;
  $('draft-fields').disabled=!S?.draft||conflicted||busy||!!S?.pending||!!S?.draft?.frozen;
  for(const n of $('draft-fields').querySelectorAll('input,select,textarea,button'))if(!['request-json','apply-json','download-request'].includes(n.id))n.disabled=!!S?.draft?.rawDirty||n.readOnly;
+ for(const n of $('draft-fields').querySelectorAll('input,select,textarea,button'))if(S?.draft?.sourceReview&&!['review-request','download-request'].includes(n.id))n.disabled=true;
+ $('copy-review-draft').hidden=!S?.draft?.sourceReview;$('copy-review-draft').disabled=busy||conflicted||!!S?.pending;
  $('reopen').disabled=busy;$('download-desk').disabled=busy;$('download-conflict').disabled=busy;
  for(const n of document.querySelectorAll('[data-conflict-restore]'))n.disabled=!S||busy||conflicted||!!S.pending;
  $('conflicts-before').disabled=busy||!conflictPrevious.length;$('conflicts-after').disabled=busy||!conflictPage?.nextCursor;$('refresh-conflicts').disabled=busy||!storage;
@@ -182,8 +186,8 @@ function verifyShape(r){
 }
 function facts(root,value){root.replaceChildren();for(const [k,v]of Object.entries(value)){root.append(node('dt',k),node('dd',typeof v==='object'?json(v):v??'—'));}}
 async function reviewRequest(){
- editable();await flush();if(S.draft.rawDirty)throw new Error('Apply the retained raw JSON before reviewing this request.');if(S.draft.mappingDraft)throw new Error('Use or discard the retained interpretation draft before reviewing the request.');
- const selected=clone(verifyShape(request())),sha=await requestSha256(selected);if(!same(selected,request()))throw new Error('The request changed during review.');
+ editable({review:true});await flush();if(S.draft.rawDirty)throw new Error('Apply the retained raw JSON before reviewing this request.');if(S.draft.mappingDraft)throw new Error('Use or discard the retained interpretation draft before reviewing the request.');
+ const selected=clone(verifyShape(request())),sha=await requestSha256(selected);if(S.draft.sourceReview&&S.draft.sourceReview.requestSha256!==sha)throw new Error('The retained author decision differs from this request. Create an explicit new copy before changing it.');if(!same(selected,request()))throw new Error('The request changed during review.');
  S.draft.review={requestSha256:sha,sourceSha256:status.sourceSha256,at:new Date().toISOString()};await persist();renderReview();$('review').scrollIntoView({block:'nearest'});
 }
 function renderReview(){
@@ -194,7 +198,7 @@ async function checkWorkspace(){const current=await client.status();if(current.w
 async function retainRequest(){
  return transaction(async()=>{
   if(S.pending||!$('reviewed').checked)throw new Error('Resolve the current original action and review this exact request first.');
-  const r=clone(verifyShape(request())),hash=await requestSha256(r);if(S.draft.rawDirty||S.draft.mappingDraft||S.draft.review?.requestSha256!==hash)throw new Error('The request changed after review.');
+  const r=clone(verifyShape(request())),hash=await requestSha256(r);if(S.draft.sourceReview&&S.draft.sourceReview.requestSha256!==hash)throw new Error('This request differs from its retained author decision.');if(S.draft.rawDirty||S.draft.mappingDraft||S.draft.review?.requestSha256!==hash)throw new Error('The request changed after review.');
   const current=await checkWorkspace();if(current.sourceSha256!==S.draft.review.sourceSha256)throw new Error('The installed parser/source edition changed. Refresh and review this complete request again.');
   const pending={action:'prepare',request:r,requestSha256:hash,sourceSha256:current.sourceSha256,createdAt:new Date().toISOString()};S=retainOperation(S,pending);await persist();renderPending();await dispatchPending();
  });
@@ -299,15 +303,6 @@ $('mapping-cancel').addEventListener('click',()=>run(()=>{editable();mappingEdit
 $('mapping-json').addEventListener('input',()=>run(()=>saveMappingDraft(true)));
 
 async function bytesSha256(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
-function decodeWholeBase64(text){
- if(typeof text!=='string'||text.length%4!==0)throw new Error('A complete capsule member has invalid base64.');
- const padding=text.endsWith('==')?2:text.endsWith('=')?1:0,end=text.length-padding;
- for(let offset=0;offset<end;offset+=65536)if(/[^A-Za-z0-9+/]/.test(text.slice(offset,Math.min(end,offset+65536))))throw new Error('A complete capsule member has invalid base64.');
- if(padding&&end<2)throw new Error('A complete capsule member has invalid base64.');
- const out=new Uint8Array(text.length/4*3-padding);let position=0;
- for(let offset=0;offset<text.length;offset+=65536){const binary=atob(text.slice(offset,offset+65536));for(let i=0;i<binary.length;i++)out[position++]=binary.charCodeAt(i);}
- if(position!==out.length)throw new Error('A complete capsule member has invalid base64.');return out;
-}
 function renderReceivedJson(root,value){
  root.replaceChildren();const title=node('h3','Complete retained JSON');root.append(title);
  const meta=node('dl'),brief={};if(value&&typeof value==='object'&&!Array.isArray(value))for(const [k,v]of Object.entries(value))if(v===null||typeof v!=='object')brief[k]=v;facts(meta,brief);root.append(meta);
@@ -320,24 +315,9 @@ function renderReceivedJson(root,value){
 async function openCapsule(file){
  const generation=++capsuleGeneration,limit=268435456;
  if(file.size>limit)throw new Error('This complete capsule exceeds the browser receiving limit of 256 MiB. Use the installed source-preparation-capsule.py receiver to verify and extract every member without truncation.');
- $('capsule-status').textContent='Reading and verifying every complete original file…';const raw=new Uint8Array(await file.arrayBuffer()),wholeSha=await bytesSha256(raw),value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw)),r=value?.receipt;
- if(value?.schema!=='stellar-forge.bank-source-capsule.v1'||!r||r.state!=='COMPLETE'||r.schema!=='stellar-forge.accounting-bank-source-preparation.v1'||!/^[a-f0-9]{64}$/.test(r.workspaceId)||!Array.isArray(r.files)||r.files.length>4101||!Array.isArray(value.files)||value.files.length!==r.files.length)throw new Error('Open the complete original preparation capsule and its exact COMPLETE receipt.');
- const files=new Map(),names=new Set();
- for(let i=0;i<r.files.length;i++){
-  const p=r.files[i],f=value.files[i];
-  if(typeof p.name!=='string'||!p.name||p.name==='.'||p.name==='..'||/[\\/\u0000-\u001f]/.test(p.name)||names.has(p.name)||!Number.isSafeInteger(p.bytes)||p.bytes<0||p.bytes>192000000||!(/^[a-f0-9]{64}$/).test(p.sha256)||!['request','input','output','result'].includes(p.role)||f?.encoding!=='base64'||f.name!==p.name||f.bytes!==p.bytes||f.sha256!==p.sha256||f.role!==p.role)throw new Error('The capsule inventory differs from its original receipt.');
-  names.add(p.name);const bytes=decodeWholeBase64(f.contentBase64);if(bytes.length!==p.bytes||await bytesSha256(bytes)!==p.sha256)throw new Error('The complete original member differs: '+p.name);files.set(p.name,{...p,bytesValue:bytes});
- }
- const read=name=>{const f=files.get(name);if(!f)throw new Error('The original capsule omits '+name);return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(f.bytesValue));};
- const request=read('request.json'),intent=read('intent.json'),result=read('result.json');
- if(request.workspaceId!==r.workspaceId||request.requestId!==r.preparationId||request.actor!==r.actor||request.kind!==r.kind||await requestSha256(request)!==r.requestSha256||intent.workspaceId!==r.workspaceId||intent.preparationId!==r.preparationId||intent.sourceSha256!==r.sourceSha256||!same(intent.request,request)||intent.requestSha256!==r.requestSha256)throw new Error('The original request, intent and receipt are not one preparation.');
- const resultPin=r.files.find(x=>x.name==='result.json'),baseReceipt={...r};delete baseReceipt.workspace;baseReceipt.files=r.files.filter(x=>x.name!=='result.json');
- if(await requestSha256(baseReceipt)!==await requestSha256(result)||!resultPin)throw new Error('The frozen result differs from the complete delivered receipt.');
- if(!Array.isArray(intent.sourceFiles)||await requestSha256(intent.sourceFiles)!==intent.sourceSha256)throw new Error('The original operating-source inventory changed.');
- if(!Array.isArray(r.inputs)||r.inputs.length!==request.inputs.length||!same(r.inputs,intent.inputs))throw new Error('The complete original input inventory differs.');
- for(let i=0;i<request.inputs.length;i++){const pin=request.inputs[i],input=r.inputs[i],member=files.get('input-'+pin.key+'.bin');if(!member||input.key!==pin.key||input.name!==pin.name||input.bytes!==pin.bytes||input.sha256!==pin.sha256||input.file!==member.name||member.bytes!==pin.bytes||member.sha256!==pin.sha256)throw new Error('The capsule is missing an exact original input.');}
+ $('capsule-status').textContent='Reading and verifying every complete original file…';const capsuleRaw=new Uint8Array(await file.arrayBuffer()),verified=await verifyPreparationCapsuleBytes(capsuleRaw),wholeSha=verified.sha256,r=verified.receipt,files=verified.files,request=verified.request;
  if(generation!==capsuleGeneration)return;
- openedCapsule={name:file.name,bytes:file.size,sha256:wholeSha,receipt:r,files};const box=$('capsule-content');box.replaceChildren();
+ openedCapsule={name:file.name,bytes:file.size,sha256:wholeSha,receipt:r,files,raw:capsuleRaw};const box=$('capsule-content');box.replaceChildren();
  $('capsule-status').textContent='Verified '+r.files.length+' complete files · '+file.size.toLocaleString()+' bytes · SHA-256 '+wholeSha;
  const dl=node('dl');facts(dl,{'Original workspace':r.workspaceId,'Original preparation':r.preparationId,'Operator':r.actor,'Operation':r.kind,'State':r.state,'Original parser source':r.sourceSha256});box.append(dl);
  const select=node('select',undefined,{'aria-label':'Complete delivered file'});for(const pin of r.files)select.append(node('option',pin.name+' · '+pin.bytes.toLocaleString()+' bytes',{value:pin.name}));
@@ -397,3 +377,26 @@ $('import-desk').addEventListener('change',()=>run(()=>transaction(async()=>{
 })));
 
 void boot();
+
+mountSourceReviewAuthor({
+ root:$('source-review-author'),
+ workspaceId:()=>S?.workspaceId??null,
+ selectedCapsule:async()=>{if(!client||S?.selected?.state!=='COMPLETE')throw new Error('Select a complete original preparation first.');const receipt=clone(S.selected),result=await client.bundle(receipt);return {name:result.name,bytes:result.bytes};},
+ openedCapsule:async()=>{if(!openedCapsule?.raw)throw new Error('Open and verify a complete delivered preparation first.');return {name:openedCapsule.name,bytes:openedCapsule.raw};},
+ lookupReceipt:async id=>{if(!client)throw new Error('Open the original configured accounting workspace.');return client.lookup(id);},
+ receiveDraft:async(value,sourceReview)=>transaction(async()=>{
+  if(!S||S.pending||conflicted)throw new Error('Resolve the original source desk action or draft conflict before receiving a review decision.');
+  verifyShape(value);if(value.workspaceId!==S.workspaceId||value.kind!=='collection_edit')throw new Error('This author decision belongs to another original workspace or operation.');
+  const candidates=[S.draft,...(S.draftHistory??[])].filter(Boolean),retained=candidates.find(x=>x.request?.requestId===value.requestId),operation=S.operations.find(x=>x.request.requestId===value.requestId);
+  if(retained&&!same(retained.request,value)||operation&&!same(operation.request,value))throw new Error('That original request ID retains different content.');
+  if(S.draft?.request?.requestId===value.requestId&&same(S.draft.request,value)){if(S.draft.rawDirty||S.draft.mappingDraft)throw new Error('The original request has a newer unfinished editor draft. Preserve it before reopening the author decision.');return;}
+  if(S.draft){S.draftHistory??=[];S.draftHistory.push(clone(S.draft));}
+  S.draft={request:clone(value),raw:json(value),rawDirty:false,review:null,frozen:!!operation?.observations?.some(x=>['PREPARED','COMPLETE'].includes(x.result?.state)),sourceReview:{...clone(sourceReview),requestSha256:await requestSha256(value)}};
+  await persist();renderDraft();control();message('The exact author decision is an unsent original collection edit. Review its source, retain it and execute only through the existing controls.');
+ })
+});
+
+$('copy-review-draft').addEventListener('click',()=>run(()=>transaction(async()=>{
+ if(S.pending||!S.draft?.sourceReview)throw new Error('Open the exact author decision without an unfinished native action.');
+ const value=clone(S.draft.request);value.requestId=crypto.randomUUID();await applyDraft(value);message('Created an explicit new editable request. The exact author decision and its original request remain in history.');
+})));

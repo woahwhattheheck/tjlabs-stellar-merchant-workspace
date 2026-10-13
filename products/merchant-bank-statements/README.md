@@ -304,3 +304,25 @@ receiving guides; it does not claim to update another host merely by being
 published. Bryce's placement instruction is: "that rule goes in every policy
 file the agents read not just a slack ping" and "and not just local sessions or
 ones from this provider".
+
+## Complete source reviews and explicit returned choices
+
+The installed **Source preparation** desk can issue one exact complete preparation and collection to a named reviewer. Open **Issue and receive a source review**, select the verified original preparation, and retain the author, recipient and review instructions. The source retains every original file, the original request and parser/source selection, the collection revision and its mappings, inclusion choices and notes.
+
+The linked **Source review** workspace gives the recipient a complete editor and a standalone HTML application. It keeps each original file downloadable, preserves unapplied mapping text and comments, and distinguishes saved draft editions from explicitly submitted reviewer editions. Each new edition retains its predecessor and full original source. The complete working record can be reopened, and simultaneous browser edits use the original IndexedDB compare-and-swap/conflict custody.
+
+On return, the author selects the exact original returned file and current complete preparation. The comparison shows issued, current and proposed values for every changed mapping, inclusion choice or note. Every proposed field requires an explicit **Keep current** or **Adopt** decision. Current-only items and unrelated current choices remain intact. A changed or absent original file cannot silently receive a mapping proposal.
+
+A saved author decision produces either a closed review requiring no edit, or one exact unsent original `collection_edit` request bound to the selected current collection bytes and revision. Opening it in the source desk preserves its identity and keeps it read only. The original **Review**, **Retain complete inputs** and **Execute retained request** controls remain deliberate actions; **Create an editable copy** assigns a new request identity and retains the original decision in history. The complete native result can be read back beside that decision.
+
+Open the installed recipient workspace at:
+
+`/bank-statements/source-review.html`
+
+Use the installed `merchant-accounting-bank-source-review` command or the `./merchant/accounting-bank-source-review` typed client for the same pure review and original retained-request forwarding. The underlying Bank controller and financial writers remain the existing ones.
+
+The review supports the maintained OFX, QFX, CSV and CAMT053 collection formats. PDF page interpretation and its complete working-copy transfer remain in the **PDF statements** desk. The source-review package preserves content hashes and named attribution; it does not authenticate a reviewer’s identity or represent financial acceptance.
+
+The browser review has explicit complete-byte limits: 32 MiB for a selected whole preparation capsule, 64 MiB for an issued or returned review package, and 256 MiB for a full working record. These bounds leave room for original/current/returned evidence. Larger original preparations remain available through the existing full capsule receiving route; files are never removed to make a review fit.
+
+Read the complete [source-review operating guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_REVIEW.md) for source selection, return comparison, interrupted saves, offline source downloads, the installed client/CLI and the original receiving course. Actual rendered use of the exact outgoing HTML, original files and all downloaded working records remains required by the repository’s full rendered-product instruction. Source publication alone is not a rendered customer acceptance result.
