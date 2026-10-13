@@ -295,6 +295,27 @@
         "../SOURCE_REVIEW.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/working.mjs",
+      [
+        "../accountant-receiving/working.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/portable.mjs",
+      [
+        "../accountant-receiving/portable.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/accountant-receiving/working-source.json",
+      [
+        "../accountant-receiving/working-source.json",
+        "application/json; charset=utf-8"
+      ]
     ]
   ]
 }
