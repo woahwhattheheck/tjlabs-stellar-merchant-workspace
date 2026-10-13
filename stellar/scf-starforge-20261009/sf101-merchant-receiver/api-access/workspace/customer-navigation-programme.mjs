@@ -129,3 +129,4 @@ export async function main(argv=process.argv.slice(2)){
  process.stdout.write(JSON.stringify(result)+'\n');
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main().catch(e=>{process.stderr.write(JSON.stringify({error:e.message})+'\n');process.exitCode=1;});
+
