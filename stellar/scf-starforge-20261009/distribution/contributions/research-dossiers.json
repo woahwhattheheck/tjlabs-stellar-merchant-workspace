@@ -13,7 +13,8 @@
     "./buyer/research-dossiers/comparison-adoption": {
       "types": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-client.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-client.mjs"
-    }
+    },
+    "./buyer/research-dossiers/comparison-adoption-handover": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/contracts.mjs",
@@ -77,6 +78,12 @@
     "stellar-forge/mcp-merchant-operator/catalog/research-workspace.mjs",
     "stellar-forge/mcp-merchant-operator/research-workspace.mjs",
     "stellar-forge/mcp-merchant-operator/RESEARCH_COMPARISON.md",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-browser-receiving.mjs"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-browser-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-render.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-handover-archive.py",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/inspect-adoption-handover.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/ADOPTION_HANDOVER.md"
   ]
 }

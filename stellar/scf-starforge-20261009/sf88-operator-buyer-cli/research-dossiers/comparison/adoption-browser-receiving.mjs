@@ -44,11 +44,11 @@ async function overflow(p){
     .filter(x=>x.rect.left < -1||x.rect.right > innerWidth+1).map(x=>({label:x.label,left:x.rect.left,right:x.rect.right})));
 }
 export async function reviewComparisonAdoptionBrowser({page,url,receipt,directory,reviewer,openReceived}){
-  fail(page&&typeof openReceived==='function'&&receipt?.operationId&&receipt.dossierId&&receipt.browserSelection&&receipt.originalRun&&receipt.browserInterrupted,'Complete paired native adoption course required');
+  fail(page&&typeof openReceived==='function'&&receipt?.operationId&&receipt.dossierId&&receipt.browserSelection&&receipt.originalRun&&receipt.browserInterrupted&&Array.isArray(receipt.handovers),'Complete paired native adoption course required');
   fail(typeof reviewer==='string'&&reviewer.trim(),'Named actual reviewer required');
   directory=resolve(directory);await mkdir(directory,{recursive:true,mode:0o700});const output=join(directory,'files');await mkdir(output,{recursive:true,mode:0o700});
   const selection={schema:SCHEMA,operationId:receipt.operationId,dossierId:receipt.dossierId,source:receipt.browserSelection,originalRun:receipt.originalRun,
-    interrupted:receipt.browserInterrupted,reviewer,fixture:'TRAINING FIXTURE: original software receiving source; no scientific evaluation'};
+    interrupted:receipt.browserInterrupted,handovers:receipt.handovers.map(h=>({label:h.label,planId:h.planId,revision:h.revision,manifest:h.exported.manifest,archive:h.exported.archive})),reviewer,fixture:'TRAINING FIXTURE: original software receiving source; no scientific evaluation'};
   const statePath=join(directory,'adoption-browser-progress.json'),original=await maybe(statePath);
   let state=original??{...selection,steps:{},files:[],screens:[],status:'IN_PROGRESS'};
   for(const [key,value]of Object.entries(selection))fail(same(state[key],value),'Original paired adoption selection changed: '+key);
@@ -314,6 +314,89 @@ export async function reviewComparisonAdoptionBrowser({page,url,receipt,director
       fail(original.status==='SUPERSEDED'&&original.successorPlanId===completed.result.planId,'Original interrupted plan did not retain explicit successor lineage');
       return{...completed,originalPlanId:prior.planId,acceptedPrefix:prior.acceptedMappings,originalStatus:original.status};
     });
+
+    fail(Array.isArray(receipt.handovers)&&receipt.handovers.length===3,'Complete paired handover receiving required');
+    await step('complete-handover-members-and-projects',async()=>{
+      const opened=[],projects=[],seen=new Set();
+      for(const handover of receipt.handovers){
+        const selected=handover.exported;
+        const archive=await identity(selected.archivePath);
+        fail(archive.bytes===selected.archive.bytes&&archive.sha256===selected.archive.sha256,'Actual selected handover archive changed');
+        const inspection=JSON.parse(await readFile(handover.inspectionFile,'utf8'));
+        fail(inspection.selection.planId===handover.planId&&inspection.selection.revision===handover.revision&&
+          inspection.manifestSha256===selected.manifest.sha256,'Original full handover inspection changed');
+        const inventory=[{path:'manifest.json',...selected.manifest},...selected.files];
+        fail(inventory.length===20,'Complete native handover inventory required');
+        for(const row of inventory){
+          const file=join(handover.membersDirectory,row.path),got=await identity(file);
+          fail(got.bytes===row.bytes&&got.sha256===row.sha256,'Complete extracted original member changed');
+          const name='handover-'+handover.label+'-'+row.path.replace(/[^A-Za-z0-9_.-]/g,'-');
+          const existing=state.files.find(x=>x.name===name);
+          const d={name,...got};
+          if(existing)fail(existing.bytes===d.bytes&&existing.sha256===d.sha256&&existing.file===d.file,'Original member view changed');
+          else{state.files.push(d);await save(statePath,state);}
+          if(row.path==='author.research.json.gz'||row.path==='returned.research.json')continue;
+          // Identical fixed source is fully opened once; every carried instance is
+          // still checked against that exact complete body before this reuse.
+          if(seen.has(row.sha256)){opened.push({name,...got,viewedIdenticalOriginal:true});continue;}
+          const p=await page.context().newPage();pages.push(p);
+          try{
+            if(row.path==='adoption.html'){
+              await p.goto(pathToFileURL(file).href);
+              fail((await p.locator('body').innerText()).includes(inspection.report.status),'Actual adoption HTML did not show its retained state');
+              for(const width of [1440,390]){
+                await p.setViewportSize({width,height:width===390?844:1000});
+                await capture('handover-'+handover.label+'-html-'+width,p);
+                fail(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Actual adoption report overflows narrow view');
+              }
+            }else{
+              const text=new TextDecoder('utf-8',{fatal:true}).decode(await readFile(file));
+              await p.setContent('<!doctype html><html lang="en"><meta charset="utf-8"><title>Complete handover original member</title><body><h1></h1><pre style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></body></html>');
+              await p.locator('h1').evaluate((e,s)=>e.textContent=s,row.path);
+              await p.locator('pre').evaluate((e,s)=>e.textContent=s,text);
+              fail(await p.locator('pre').textContent()===text,'Actual complete member was not opened');
+              if(['selection.json','lineage.json','README.md'].includes(row.path))await capture('handover-'+handover.label+'-'+row.path.replaceAll('.','-'),p);
+            }
+            seen.add(row.sha256);opened.push({name,...got,viewedIdenticalOriginal:false});
+          }finally{await p.close();pages.splice(pages.indexOf(p),1);}
+        }
+        // Use the actual complete native projects extracted from this ZIP,
+        // rather than treating the inspection projection as an editable dossier.
+        for(const role of ['author','contributor']){
+          const member=role==='author'?'author.research.json.gz':'returned.research.json';
+          const row=inventory.find(x=>x.path===member),file=join(handover.membersDirectory,member);
+          const name='received-handover-'+handover.label+'-'+role;
+          const received=await fixturePage(url,{file,bytes:row.bytes,sha256:row.sha256},name);
+          try{
+            if(role==='author'){
+              const result=(await read(received.p,received.ctx,'/comparison/adoption?planId='+encodeURIComponent(handover.planId)+'&revision='+handover.revision)).adoption;
+              fail(same(result,inspection.report),'Received actual author plan differs from complete archive');
+              await click(received.p,'Refresh adoption inventory');await click(received.p,'Inspect adoption '+handover.planId);
+              fail((await pane(received.p).innerText()).includes(result.status),'Received author status is not visible');
+              await expose(received.p);
+            }else{
+              const select=received.p.locator('#view-comparison').getByLabel('Comparison case',{exact:true});
+              await select.selectOption(receipt.sourceCaseId);await settle(received.p);
+              const protocol=received.p.locator('#view-comparison').getByLabel('Protocol edition',{exact:true});
+              await protocol.selectOption(receipt.sourceCaseVersionId);await settle(received.p);
+              await button(received.p.locator('#view-comparison'),'Read comparison report').click();await settle(received.p);
+              const report=received.p.locator('[data-comparison-report]');await report.waitFor();
+              fail((await report.innerText()).includes('1.2500')&&(await report.innerText()).includes('Undefined:'),'Actual contributor report lost its original results');
+            }
+            await capture('handover-'+handover.label+'-'+role+'-desktop',received.p);
+            await received.p.setViewportSize({width:390,height:844});
+            await capture('handover-'+handover.label+'-'+role+'-phone',received.p);
+            fail((await overflow(received.p)).length===0,'Actual received handover controls overflow');
+            projects.push({label:handover.label,role,originalMember:member,bytes:row.bytes,sha256:row.sha256,dossierId:receipt.dossierId});
+          }finally{
+            await received.p.close();pages.splice(pages.indexOf(received.p),1);
+            if(received.listener.close)await received.listener.close();listeners.splice(listeners.indexOf(received.listener),1);
+          }
+        }
+      }
+      return{opened,projects,completeArchives:receipt.handovers.map(h=>({file:h.exported.archivePath,...h.exported.archive})),noUploadedSourceExecuted:true};
+    });
+
     await step('literal-generated-file-review',async()=>{
       const opened=[];
       for(const d of state.files.filter(x=>!x.name.includes('source.bin')&&!x.name.includes('original-source.bin'))){

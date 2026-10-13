@@ -11,6 +11,8 @@ import {openDossierStore} from '../dossier.mjs';
 import {openPortableFile,writePortableFile,portableEntries} from '../portable.mjs';
 import {receiveComparison} from './receive.mjs';
 import {hash,same} from './contracts.mjs';
+import {exportAdoptionHandover} from './adoption-handover.mjs';
+import {inspectAdoptionHandover} from './inspect-adoption-handover.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const SCHEMA='sf88-research-comparison-adoption-receiving/v1';
 const FIXTURE='TRAINING FIXTURE — software receiving only; no actual actuarial evaluation or recommendation';
@@ -104,14 +106,157 @@ async function laterEdit(store,id,file,operationId){
  await retainJson(file+'.accepted.json',{dossierId:id,revision:selected.revision,description:selected.description});
  return selected.revision;
 }
-export async function receiveComparisonAdoption({directory,operationId,reviewer}){
+
+async function ownedChild(command,args){
+ const child=spawn(command,args,{stdio:['ignore','pipe','pipe']});let stdout='',stderr='';
+ const stop=()=>child.kill('SIGTERM');process.once('SIGINT',stop);process.once('SIGTERM',stop);
+ child.stdout.on('data',b=>{stdout+=b.toString('utf8');if(stdout.length>1048576)child.kill('SIGTERM');});
+ child.stderr.on('data',b=>{stderr+=b.toString('utf8');if(stderr.length>1048576)child.kill('SIGTERM');});
+ try{
+  const result=await new Promise((accept,reject)=>{child.once('error',reject);child.once('close',(code,signal)=>accept({code,signal}));});
+  need(result.code===0&&!result.signal&&stdout.length<=1048576&&stderr.length<=1048576,'ADOPTION_COURSE_ARCHIVE_RECEIVE_FAILED');
+  return stdout;
+ }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}
+}
+const EXTRACT_HANDOVER=String.raw`
+import hashlib,json,os,stat,sys,tempfile,zipfile,shutil
+from pathlib import Path
+archive,target,receipt_file=sys.argv[1:]
+target=Path(target);receipt=json.loads(Path(receipt_file).read_bytes())
+expected=[{"path":"manifest.json",**receipt["manifest"]},*receipt["files"]]
+maximum=256*1024*1024
+def need(value,message):
+    if not value:raise ValueError(message)
+def digest(path):
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+    try:
+        before=os.fstat(fd)
+        need(stat.S_ISREG(before.st_mode) and before.st_size<=maximum,"Ordinary bounded original required")
+        h=hashlib.sha256();size=0
+        while True:
+            b=os.read(fd,1048576)
+            if not b:break
+            size+=len(b);need(size<=maximum,"Original exceeds bound");h.update(b)
+        after=os.fstat(fd);named=os.lstat(path)
+        stamp=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(stamp(before)==stamp(after)==stamp(named) and size==before.st_size,"Original changed")
+        return {"bytes":size,"sha256":h.hexdigest()}
+    finally:os.close(fd)
+need(digest(archive)=={k:receipt["archive"][k] for k in ("bytes","sha256")},"Selected archive changed")
+need(len(expected)==20 and sum(r["bytes"] for r in expected)<=maximum,"Complete original inventory required")
+stage=Path(tempfile.mkdtemp(prefix=".adoption-receive-",dir=target.parent))
+try:
+    with zipfile.ZipFile(archive) as z:
+        infos=z.infolist()
+        need([i.filename for i in infos]==[r["path"] for r in expected],"Complete ordered archive required")
+        for info,row in zip(infos,expected):
+            name=row["path"];parts=name.split("/")
+            need(not name.startswith("/") and all(p not in ("",".","..") for p in parts) and "\\" not in name and ":" not in name,"Unsafe original member")
+            need(not info.is_dir() and not info.flag_bits&1 and stat.S_ISREG(info.external_attr>>16) and stat.S_IMODE(info.external_attr>>16)==0o600 and info.file_size==row["bytes"],"Ordinary original member required")
+            output=stage.joinpath(*parts);output.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+            h=hashlib.sha256();size=0
+            fd=os.open(output,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+            with os.fdopen(fd,"wb") as outgoing,z.open(info) as incoming:
+                while True:
+                    b=incoming.read(1048576)
+                    if not b:break
+                    size+=len(b);need(size<=row["bytes"],"Member grew");h.update(b);outgoing.write(b)
+                need(size==row["bytes"] and h.hexdigest()==row["sha256"],"Member changed")
+                outgoing.flush();os.fsync(outgoing.fileno())
+    need(digest(archive)=={k:receipt["archive"][k] for k in ("bytes","sha256")},"Archive changed during receive")
+    manifest=json.loads((stage/"manifest.json").read_bytes())
+    need(manifest["schema"]=="sf88-research-comparison-adoption-handover/v1" and manifest["selection"]==receipt["selection"] and manifest["files"]==receipt["files"],"Selected manifest differs")
+    for directory,_,_ in os.walk(stage,topdown=False):
+        fd=os.open(directory,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+    if target.exists():
+        need(target.is_dir() and not target.is_symlink(),"Original receiving directory changed")
+        got=[]
+        for directory,dirs,files in os.walk(target):
+            for name in dirs:need(not Path(directory,name).is_symlink(),"Unexpected linked directory")
+            for name in files:
+                p=Path(directory,name);got.append(p.relative_to(target).as_posix())
+        need(sorted(got)==sorted(r["path"] for r in expected),"Original received inventory changed")
+        for row in expected:need(digest(target/row["path"])=={k:row[k] for k in ("bytes","sha256")},"Original received member changed")
+    else:
+        os.rename(stage,target)
+        fd=os.open(target.parent,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+    print(json.dumps({"members":len(expected),"archive":receipt["archive"],"selection":receipt["selection"]},sort_keys=True))
+finally:
+    if stage.exists():shutil.rmtree(stage)
+`;
+async function receiveHandoverCourse({store,dossierId,directory,label,revision,planId,input,operationId,python,expectedCompleted,expectedStatus,originalRun}){
+ const root=await privateDirectory(join(directory,'handovers',label)),exportDirectory=join(root,'original-export');
+ const options={directory:exportDirectory,operationId:'adoption-handover-'+hash({operationId,label}),revision,planId,python};
+ const exported=await exportAdoptionHandover(store,dossierId,options);
+ const again=await exportAdoptionHandover(store,dossierId,options);
+ need(same(exported,again),'ADOPTION_COURSE_HANDOVER_REPLAY_CHANGED');
+ need(exported.status===expectedStatus&&exported.files.length===19,'ADOPTION_COURSE_HANDOVER_SELECTION_CHANGED');
+ const receiptFile=join(exportDirectory,'handover-result.json'),membersDirectory=join(root,'received-members');
+ const extraction=JSON.parse(await ownedChild(python,['-c',EXTRACT_HANDOVER,exported.archivePath,membersDirectory,receiptFile]));
+ need(extraction.members===20&&same(extraction.selection,exported.selection),'ADOPTION_COURSE_HANDOVER_RECEIVE_CHANGED');
+ const inspection=await inspectAdoptionHandover(membersDirectory,{manifestSha256:exported.manifest.sha256});
+ const original=(await store.comparisonAdoption(dossierId,{planId,revision})).adoption;
+ need(same(inspection.report,original)&&inspection.report.progress.completed===expectedCompleted,'ADOPTION_COURSE_HANDOVER_REPORT_CHANGED');
+ need(inspection.returned.comparison.runs.some(r=>r.id===originalRun.runId&&same(r.raw,originalRun.raw)&&same(r.artifacts,originalRun.artifacts)),'ADOPTION_COURSE_HANDOVER_RETURNED_RUN_CHANGED');
+ const inspectionFile=join(root,'complete-inspection.json');await retainJson(inspectionFile,inspection);
+ const authorStoreDirectory=join(root,'received-author'),author=await openDossierStore(authorStoreDirectory);
+ const returnedStoreDirectory=join(root,'received-contributor'),returned=await openDossierStore(returnedStoreDirectory);
+ await receivePortable(author,join(membersDirectory,'author.research.json.gz'),dossierId);
+ await receivePortable(returned,join(membersDirectory,'returned.research.json'),dossierId);
+ const pinned=(await author.comparisonAdoption(dossierId,{planId,revision})).adoption;
+ need(same(pinned,inspection.report),'ADOPTION_COURSE_HANDOVER_NATIVE_REPORT_CHANGED');
+ const returnedHead=await returned.getMetadata(dossierId,{revision:inspection.returned.metadata.revision});
+ need(returnedHead.id===inspection.returned.metadata.id,'ADOPTION_COURSE_HANDOVER_NATIVE_RETURN_CHANGED');
+ const originalRaw=await returned.comparisonFile(dossierId,{revision:inspection.returned.metadata.revision,runId:originalRun.runId});
+ need(originalRaw.bytes===originalRun.raw.bytes&&originalRaw.sha256===originalRun.raw.sha256,'ADOPTION_COURSE_HANDOVER_RAW_CHANGED');
+ const source=await author.exportComparisonAdoption(dossierId,{planId,revision,format:'source'});
+ const sourceHash=createHash('sha256');let sourceBytes=0;
+ for await(const b of source.stream){sourceHash.update(b);sourceBytes+=b.length;}
+ need(sourceBytes===exported.source.bytes&&sourceHash.digest('hex')===exported.source.sha256,'ADOPTION_COURSE_HANDOVER_SOURCE_CHANGED');
+ // Continue a separate native receiving copy, leaving the delivered historical
+ // author view intact for the actual browser inspection.
+ const resumedStoreDirectory=join(root,'resumed-author'),resumed=await openDossierStore(resumedStoreDirectory);
+ await receivePortable(resumed,join(membersDirectory,'author.research.json.gz'),dossierId);
+ const applied=await reviewed(resumed,dossierId,join(root,'original-adoption-request.json'),input);
+ need(applied.result.planId===planId&&applied.result.status==='COMPLETE','ADOPTION_COURSE_HANDOVER_RESUME_CHANGED');
+ const run=applied.result.progress.mappings.find(m=>m.sourceKind==='runs');
+ need(run,'ADOPTION_COURSE_HANDOVER_RUN_MAPPING_MISSING');
+ const resumedRaw=await resumed.comparisonFile(dossierId,{revision:applied.generation,runId:run.targetId});
+ need(resumedRaw.body.equals(originalRaw.body),'ADOPTION_COURSE_HANDOVER_RESUMED_RAW_CHANGED');
+ const laterRevision=await laterEdit(resumed,dossierId,join(root,'later-recipient-edit.json'),operationId+'-'+label);
+ const currentBefore=(await resumed.getMetadata(dossierId)).revision;
+ await receivePortable(resumed,join(membersDirectory,'author.research.json.gz'),dossierId);
+ const replay=await resumed.reviewComparisonAdoption(dossierId,input);
+ need(replay.duplicate&&replay.status==='COMPLETE'&&(await resumed.getMetadata(dossierId)).revision===currentBefore&&currentBefore>=laterRevision,'ADOPTION_COURSE_HANDOVER_LATER_WORK_LOST');
+ const finalArchive=await exportAdoptionHandover(store,dossierId,options);
+ need(same(finalArchive,exported),'ADOPTION_COURSE_HANDOVER_FINAL_REPLAY_CHANGED');
+ const files=[await descriptor(exported.archivePath),await descriptor(receiptFile),await descriptor(inspectionFile)];
+ for(const row of [{path:'manifest.json',...exported.manifest},...exported.files]){
+  const item=await descriptor(join(membersDirectory,row.path));
+  need(item.bytes===row.bytes&&item.sha256===row.sha256,'ADOPTION_COURSE_HANDOVER_MEMBER_CHANGED');files.push(item);
+ }
+ const result={schema:SCHEMA+'.handover',label,operationId:options.operationId,dossierId,revision,planId,status:expectedStatus,
+  directory:root,membersDirectory,authorStoreDirectory,returnedStoreDirectory,resumedStoreDirectory,
+  inspectionFile,exported,files,resumedRevision:applied.generation,recipientEditRevision:laterRevision,
+  checks:{completeTwentyMembers:true,exactNativeReport:true,completeLineage:true,exactReturnedSource:true,
+   coldAuthorAndContributor:true,originalRequestResumeAndReplay:true,laterRecipientWorkPreserved:true,originalArchivePreserved:true}};
+ await retainJson(join(root,'receiving-result.json'),result);return result;
+}
+
+export async function receiveComparisonAdoption({directory,operationId,reviewer,python=process.env.CODEX_PRIMARY_RUNTIME_PYTHON||'python3'}){
  directory=await privateDirectory(resolve(directory));
  need(typeof operationId==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,79}$/.test(operationId),'ADOPTION_COURSE_OPERATION_REQUIRED');
  need(typeof reviewer==='string'&&reviewer.trim().length>0&&reviewer.length<=150,'ADOPTION_COURSE_REVIEWER_REQUIRED');
  const outputs=await privateDirectory(join(directory,'outputs')),requests=await privateDirectory(join(directory,'requests'));
  const names=['dossier.mjs','portable.mjs','dossier-returns/source.mjs','dossier-returns/store.mjs','dossier-returns/engine.mjs',
   'comparison/contracts.mjs','comparison/model.mjs','comparison/store.mjs','comparison/render.mjs','comparison/receive.mjs',
-  'comparison/adoption-contracts.mjs','comparison/adoption-model.mjs','comparison/adoption-store.mjs','comparison/adoption-receiving.mjs'];
+  'comparison/adoption-contracts.mjs','comparison/adoption-model.mjs','comparison/adoption-store.mjs','comparison/adoption-receiving.mjs',
+  'comparison/adoption-render.mjs','comparison/adoption-handover.mjs','comparison/inspect-adoption-handover.mjs',
+  'comparison/adoption-handover-archive.py','comparison/adoption-handover-cli.mjs'];
  const source=[];
  for(const name of names){const body=await readBytes(join(ROOT,name),4*1024*1024);source.push({name,bytes:body.length,sha256:digest(body)});}
  await retainJson(join(directory,'intent.json'),{schema:SCHEMA,operationId,directory,reviewer,fixture:FIXTURE,source});
@@ -248,6 +393,18 @@ export async function receiveComparisonAdoption({directory,operationId,reviewer}
  need(sourceRows.every(r=>r.status==='EXACT'),'ADOPTION_COURSE_SOURCE_BINDING_CHANGED');
  const authorFinal=await firstPortable(join(outputs,'author-with-browser-work.research.json.gz'),author,dossierId,reused.generation);
  files.push(authorFinal);
+ const handovers=[];
+ for(const selected of [
+  {label:'pending-plan',store:author,revision:adopted.result.plan.committedRevision,planId:adopted.result.planId,input:adopted.input,expectedCompleted:0,expectedStatus:'NEEDS_REVIEW'},
+  {label:'accepted-prefix',store:author,revision:prefixRevision,planId:adopted.result.planId,input:adopted.input,expectedCompleted:2,expectedStatus:'NEEDS_REVIEW'},
+  {label:'completed-continuation',store:partialStore,revision:continued.generation,planId:continued.result.planId,input:continued.input,expectedCompleted:3,expectedStatus:'COMPLETE'}
+ ]){
+  const handover=await receiveHandoverCourse({...selected,dossierId,directory,operationId,python,
+   originalRun:{runId:incomingRun.id,raw:incomingRun.raw,artifacts:incomingRun.artifacts}});
+  handovers.push(handover);files.push(...handover.files,await descriptor(join(handover.directory,'receiving-result.json')));
+ }
+ need(handovers[2].exported.lineage.length===2&&handovers[2].exported.lineage[0].status==='SUPERSEDED'&&
+  handovers[2].exported.lineage[1].planId===continued.result.planId,'ADOPTION_COURSE_HANDOVER_LINEAGE_CHANGED');
  for(const s of source){const body=await readBytes(join(ROOT,s.name),4*1024*1024);need(body.length===s.bytes&&digest(body)===s.sha256,'ADOPTION_COURSE_SOURCE_CHANGED');}
  const outcome={schema:SCHEMA,status:'ADOPTION_BACKEND_RECEIVING_COMPLETE',fixture:FIXTURE,operationId,directory,reviewer,
   authorStoreDirectory,pendingStoreDirectory,partialStoreDirectory,reopenedStoreDirectory,dossierId,sourceId,
@@ -262,7 +419,7 @@ export async function receiveComparisonAdoption({directory,operationId,reviewer}
   reusePlanId:reused.result.planId,mappings:adopted.result.progress.mappings,
   continuedMappings:continued.result.progress.mappings,
   originalRun:{runId:incomingRun.id,raw:incomingRun.raw,artifacts:incomingRun.artifacts},
-  source,files,checks:{completeDependencyGraph:true,originalAcceptingActorDistinct:true,originalReviewerPreserved:true,
+  source,files,handovers,checks:{completeDependencyGraph:true,originalAcceptingActorDistinct:true,originalReviewerPreserved:true,
    exactRawAndArtifacts:true,pendingSnapshotExcludesUnacceptedRaw:true,verifiedColdSourceFallback:true,
    originalRequestReplay:true,acceptedPrefixPreserved:true,unrelatedAuthorEditPreserved:true,
    explicitContinuation:true,equivalentDefinitionsReused:true,completePortableReopen:true,completeOriginalReturn:true},
@@ -270,7 +427,7 @@ export async function receiveComparisonAdoption({directory,operationId,reviewer}
  await retainJson(join(directory,'adoption-receiving-result.json'),outcome);return outcome;
 }
 export async function main(argv=process.argv.slice(2)){
- const {values:v}=parseArgs({args:argv,options:{directory:{type:'string'},operation:{type:'string'},reviewer:{type:'string'},'lock-held':{type:'boolean',default:false}},strict:true});
+ const {values:v}=parseArgs({args:argv,options:{directory:{type:'string'},python:{type:'string'},operation:{type:'string'},reviewer:{type:'string'},'lock-held':{type:'boolean',default:false}},strict:true});
  need(v.directory&&v.operation&&v.reviewer,'ADOPTION_COURSE_ARGUMENTS_REQUIRED');
  const directory=await privateDirectory(resolve(v.directory));
  if(!v['lock-held']){
@@ -280,7 +437,7 @@ export async function main(argv=process.argv.slice(2)){
    need(result.code===0&&!result.signal,'ADOPTION_COURSE_CHILD_FAILED');
   }finally{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);}return;
  }
- const result=await receiveComparisonAdoption({directory,operationId:v.operation,reviewer:v.reviewer});process.stdout.write(jsonBytes(result));
+ const result=await receiveComparisonAdoption({directory,operationId:v.operation,reviewer:v.reviewer,...(v.python?{python:v.python}:{})});process.stdout.write(jsonBytes(result));
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main().catch(error=>{
  process.stderr.write(JSON.stringify({error:error.code??'ADOPTION_COURSE_FAILED'})+'\n');process.exitCode=1;

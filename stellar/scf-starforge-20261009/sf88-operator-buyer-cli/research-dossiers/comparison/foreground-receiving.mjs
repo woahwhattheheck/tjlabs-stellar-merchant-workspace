@@ -17,7 +17,9 @@ const REQUIRED=['dossier.mjs','server.mjs','portable.mjs','public/app.js','publi
  'comparison/adoption-contracts.mjs','comparison/adoption-model.mjs','comparison/adoption-store.mjs',
  'comparison/adoption-routes.mjs','comparison/adoption-receiving.mjs','comparison/adoption-browser-receiving.mjs',
  'comparison/ADOPTION.md','comparison/ADOPTION_BROWSER.md','public/comparison-adoption.js',
- 'public/comparison-adoption-store.js','public/comparison-adoption.css'];
+ 'public/comparison-adoption-store.js','public/comparison-adoption.css',
+ 'comparison/adoption-render.mjs','comparison/adoption-handover.mjs','comparison/inspect-adoption-handover.mjs',
+ 'comparison/adoption-handover-archive.py','comparison/adoption-handover-cli.mjs','comparison/ADOPTION_HANDOVER.md'];
 const MAX_SOURCE=1024*1024*1024,MAX_FILES=30000;
 const need=(ok,message)=>{if(!ok)throw Error(message);};
 const json=x=>JSON.stringify(x,null,2)+'\n';
@@ -122,7 +124,7 @@ export async function receiveComparisonForeground(options){
  await retained(join(directory,'foreground-intent.json'),intent);
  const selected=await selectSource(sourceRoot,directory),app=join(selected.directory,PREFIX);
  const completed=await optional(join(directory,'foreground-result.json'));
- if(completed){need(completed.adoption?.browser&&completed.adoption?.backend,'An earlier completed original course remains preserved. Receive the explicitly reviewed adoption continuation from its complete selected source before claiming this whole edition.');need(completed.sourceSha256===selected.sha256&&completed.operationId===options.operationId,'Original foreground result changed');await verifyOutputs(completed);return completed;}
+ if(completed){need(completed.adoption?.browser&&completed.adoption?.backend&&completed.adoption?.handovers?.length===3,'An earlier completed original course remains preserved. Receive the explicitly reviewed adoption continuation from its complete selected source before claiming this whole edition.');need(completed.sourceSha256===selected.sha256&&completed.operationId===options.operationId,'Original foreground result changed');await verifyOutputs(completed);return completed;}
  const receive=await import(pathToFileURL(join(app,'comparison/receive.mjs')).href);
  const browserReview=await import(pathToFileURL(join(app,'comparison/browser-receiving.mjs')).href);
  const adoptionReceive=await import(pathToFileURL(join(app,'comparison/adoption-receiving.mjs')).href);
@@ -172,7 +174,7 @@ export async function receiveComparisonForeground(options){
   // uses separate retained directories in this same locked foreground lifetime.
   await closeOnce('cold',cold);await closeOnce('main',main);active();
   const adoptionDirectory=join(directory,'adoption-backend');
-  const adoption=await adoptionReceive.receiveComparisonAdoption({directory:adoptionDirectory,operationId:options.operationId,reviewer:options.reviewer});
+  const adoption=await adoptionReceive.receiveComparisonAdoption({directory:adoptionDirectory,operationId:options.operationId,reviewer:options.reviewer,python:runtime.python});
   active();await verifySelection(selected.directory,selected.manifest);await verifyOutputs(adoption);
   const adoptionMain=await listener('adoption-original',adoption.authorStoreDirectory);additionalListeners.set('adoption-original',adoptionMain);
   active();
@@ -182,6 +184,9 @@ export async function receiveComparisonForeground(options){
     const targets=new Map([
       [join(directory,'adoption-browser','received-adoption-author'),'adoption-received'],
       [join(directory,'adoption-browser','received-interrupted-adoption'),'adoption-interrupted']]);
+    for(const handover of adoption.handovers??[])for(const role of ['author','contributor']){
+      const name='received-handover-'+handover.label+'-'+role;targets.set(join(directory,'adoption-browser',name),'adoption-handover-'+handover.label+'-'+role);
+    }
     const key=targets.get(resolve(receivedDirectory));need(key&&!additionalListeners.has(key),'Only the original selected adoption receiving stores are opened');
     const value=await listener(key,receivedDirectory);additionalListeners.set(key,value);
     return{url:value.url,close:()=>closeOnce(key,value)};
@@ -196,7 +201,7 @@ export async function receiveComparisonForeground(options){
    directory,sourceSha256:selected.sha256,sourceSelection:join(directory,'source-selection.json'),runtime,
    backend:{file:join(directory,'backend','receiving-result.json'),dossierId:backend.dossierId,revision:backend.revision},
    browser:{file:join(directory,'browser','browser-result.json'),status:browser.status,version:context.browser()?.version()??null},files,
-   adoption:{backend:{file:join(adoptionDirectory,'adoption-receiving-result.json'),dossierId:adoption.dossierId,revision:adoption.authorRevision},
+   adoption:{handovers:adoption.handovers.map(h=>({label:h.label,planId:h.planId,revision:h.revision,archive:h.exported.archive,receipt:join(h.directory,'receiving-result.json')})),backend:{file:join(adoptionDirectory,'adoption-receiving-result.json'),dossierId:adoption.dossierId,revision:adoption.authorRevision},
     browser:{file:join(directory,'adoption-browser','adoption-browser-result.json'),status:adoptedBrowser.status}},
    literalInspection:{status:'AWAITING_ACTUAL_REVIEWER_VIEW',original:browser.literalInspection,adoption:adoptedBrowser.literalInspection}};
   // Publish completion only after both original listeners and the owned browser close.

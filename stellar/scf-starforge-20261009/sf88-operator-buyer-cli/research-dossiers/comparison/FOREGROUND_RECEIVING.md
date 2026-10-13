@@ -8,7 +8,7 @@ Use the complete exported Research source selection, with the original relative 
 
     stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/
 
-This includes all maintained dependencies elsewhere in the same selection, plus the reviewed protocol selector and the two receiving modules in this guide. The public protocol selector is merged at 62a42017ebcbe7b51e3d4940cca356c646b79b77. Preserve any later reviewed source explicitly before the first accepted course; a running course keeps its original selection. A small changed-file overlay alone is insufficient.
+This includes all maintained dependencies elsewhere in the same selection, plus the reviewed protocol selector and all receiving modules required by this guide. The public protocol selector is merged at 62a42017ebcbe7b51e3d4940cca356c646b79b77. Preserve any later reviewed source explicitly before the first accepted course; a running course keeps its original selection. A small changed-file overlay alone is insufficient.
 
 The launcher requires the existing Node runtime, GNU flock, Python supported by the original Research components, an existing Playwright Node entrypoint, and an installed Chromium executable. Supply their actual absolute paths. It does not install packages, download a browser, allocate a worker or change account/provider settings.
 
@@ -56,7 +56,7 @@ The full module performs:
 
 Fixture values keep exact decimal text and explicit undefined reasons. Reports continue to identify the training fixture. The browser module does not rank or recalculate measurements.
 
-The authenticated listener is the maintained startDossierWorkspace function. Its original close method drains its owned services. The launcher owns only its two listeners and browser context. Signal handling closes those owned resources; no unrelated process is killed. A cleanup error preserves the execution error as its cause. The final foreground result is written only after owned cleanup succeeds.
+The authenticated listener is the maintained startDossierWorkspace function. Its original close method drains its owned services. The launcher owns only the declared original and received-workspace listeners and its browser context. Signal handling closes those owned resources; no unrelated process is killed. A cleanup error preserves the execution error as its cause. The final foreground result is written only after owned cleanup succeeds.
 
 ## Retained records
 
@@ -183,6 +183,19 @@ await reviewComparisonAdoptionBrowser({
 });
 ```
 
-The maintained foreground supplies that callback and starts only the two declared receiving directories. The browser uses the original portable import control, so its received dossier stays editable and every original history/blob validator runs. The callback does not fabricate a dossier or replace its identity.
+The maintained foreground supplies that callback and starts only the declared receiving directories. The browser uses the original portable import control, so its received dossier stays editable and every original history/blob validator runs. The callback does not fabricate a dossier or replace its identity.
 
 Final outputs include `adoption-receiving-result.json`, `adoption-browser-result.json`, both original phase journals, complete original downloads and attempt-specific desktop/390px captures. All remain inside the one final foreground receipt. Actual readiness still requires a named operator to open and use every final HTML/report, original archive/member, working copy, complete portable and editable received project, and view all relevant images/media. Screenshots alone do not satisfy the owner's inspection instruction.
+
+
+## Complete adoption handover receiving in this original lifetime
+
+The same foreground operation now receives three complete adoption handovers from its retained native history: the saved plan before any comparison operation; the accepted case/candidate prefix; and the completed reviewed continuation after an independent author edit. The completed family's full lineage retains its superseded ancestor. These use the original case, plan, request and revision identities from `adoption-receiving-result.json`; no new experiment or measurement is produced.
+
+Each producer operation freezes its explicit plan and historical revision, publishes the complete twenty-member ZIP and replays that exact archive. The course extracts the actual ZIP into a private receiving directory, checks the whole ordered inventory and every original hash, and invokes the fixed installed inspector. It then opens both complete native dossiers through the maintained `reopenStream`, compares the selected adoption result and the contributor's original raw run, and resumes the same original request in a separate editable received author workspace. A later recipient edit remains intact after repeated archive receiving and original-request replay. The immutable receiving receipt records the original completed generations; later current heads are checked separately and never replace those receipt values.
+
+The paired browser opens the complete extracted HTML/JSON/lineage/source members, the author dossier and the contributor dossier. It operates the actual retained protocol/report selection, shows the original measured and undefined values, and captures desktop and 390-pixel views of the report and received projects. Identical fixed engine bodies can reuse one complete literal source view only after each carried instance's full hash and byte count are checked. Neither the course nor the inspector executes uploaded engine source.
+
+The original `adoption-backend/handovers/` directory contains `pending-plan`, `accepted-prefix` and `completed-continuation`. Each retains `original-export/Research_Comparison_Adoption_Handover.zip`, all extracted members, the complete inspection JSON, separate received author/contributor stores, a separately resumed author store, the original request and the stable receiving receipt. These are substantive handover outputs; retain the whole original operation directory. No second listener, browser owner, source selection or capacity request is introduced.
+
+Use only the browser assigned to the original operation. Bryce reserved the local Codex in-app browser from October 13, 2026 at 16:00 UTC until an explicit meeting-over or release message. During that reservation, do not navigate, capture or inspect that browser. An explicitly owned isolated cloud browser remains usable. Source publication and native completion do not establish that a person has inspected the final rendered products: open and use every actual final report, archive member and editable received project and record any remaining finding.
