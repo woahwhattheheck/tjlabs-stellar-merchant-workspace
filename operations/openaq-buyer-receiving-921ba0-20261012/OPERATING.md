@@ -70,10 +70,25 @@ For ordinary installed product use, follow the complete product guide at `stella
 
 The historical sample is Del Norte, Albuquerque, 2022-05-03: 140 measurements from six sensors. It demonstrates the receiving workflow and retains original units, review and licensing context. The current Whitehorse commercial work uses this identified sample as a software example; its scientific assessment and station source remain with the original project authority.
 
-## Retained execution state
+## Completed native execution
 
-The original reviewed study, publication/release, authenticated handoff, and Buyer preparation/reopen phases have completed under this operation. The original 827-file source selection and 46-package dependency installation also ran. On the next continuation, the retained ledger worker exited without a valid JSON result. Source inspection found that its selected packet omitted the original console import closure. This edition supplies the exact original SF62 console, SF54 intent adapter and SF59 reservation gate; their Governor and expired-reservation dependencies were already in the 808-file capsule. The programme keeps its original page, accounting and approval authorities. PR749's native signer import correction was exercised successfully by that Buyer initialization.
+The original programme completed on 13 October 2026 at 01:00:17.863 UTC, on Node 24.19.0. The maintained receiver's native session 44945 exited zero and retained the complete result in `NATIVE_RESULT.json`. All original owners retired before package publication.
 
-The first page reached the local original HTTPS handler on 2026-10-12 at 22:59:22 UTC. Its retained unsigned transport failure identified the admission-response bug described above. That native process and its diagnostic readers have retired. This source update corrects the driver and complete unpaid history before the same attempt continues through pages, accounting, output and independent receiving. `NATIVE_RESULT.json` and `package.json` will record the actual final outcome after the full programme completes.
+| Stage | Completed result |
+|---|---|
+| Original reviewed study | Retained capture and named review; 140 historical observations; no new OpenAQ provider request |
+| Publication and release | Original Frictionless publication, SF82 staging and fixed Dataset snapshot |
+| Authenticated handoff | Complete source-bound handoff and original study archive received through the original application |
+| Buyer preparation | Same original reviewed request, configuration and Dataset session reopened |
+| HTTP pages | Three successful native pages, 140 rows; four total HTTP requests including the first failed GET |
+| Native accounting | Three original `NO_PAYMENT_REQUIRED` entries; zero approvals and settlements |
+| Complete output | CSV, JSONL, HTML review, original study, complete session archive and accounting; 22 PM2.5 rows |
+| Independent receiving | Source owners closed; complete archives received and all 140 rows cold-reopened with no additional HTTP request |
 
-The selected base is `c7ac4399e3bb419fafd42395841bace7d089036a`; product PR593 is merged as `ece595782a2ece95485200e4cb6f573ed1aefbab`, the complete source intake PR705 as `2778cfcbefcf134b6c00f948fe4bd88f175b1d3f`, and signer correction PR749 as `0ad4c1be410db604f0a11150f896ae1ed74d83af`. This continuation preserves that base capsule, the original operation, study, handoff, customer and page identities.
+Replaying the completed acquisition also made zero additional HTTP requests. The first `ECONNRESET` attempt remains in the original unpaid history, with its complete wire and SF82 checkout source and retirement identities. The successful continuation used the same page intent and original Dataset/SF36 authorities.
+
+The final 136-member customer ZIP is `OpenAQ_Original_Buyer_Workspace.zip`, 376,833 bytes, SHA256 `a5955daf68b1b62a709519080c528b52905ea27f63d8f1d884a4fa5ced17d2f7`. It contains 1,861,656 expanded bytes of complete delivery, independent receiving, original history, typed outputs, guides and source selections. The complete native result is 12,359 bytes, SHA256 `b2c2c768980b3e0644ffb12618d496f7b0dcc1f0b46f985c7965c13744df4036`. Both are saved as the original customer deliverables.
+
+The source-native fixture used unsigned HTTP200 responses: its accounting records `NO_PAYMENT_REQUIRED`, with zero new provider calls, payment approvals or settlements. The historical sample remains Del Norte, Albuquerque, 3 May 2022. It demonstrates a complete installed customer workflow while preserving the separate seller's paid purchase authority and the original study provenance.
+
+The selected base is `c7ac4399e3bb419fafd42395841bace7d089036a`; product PR593 is merged as `ece595782a2ece95485200e4cb6f573ed1aefbab`, complete source intake PR705 as `2778cfcbefcf134b6c00f948fe4bd88f175b1d3f`, signer correction PR749 as `0ad4c1be410db604f0a11150f896ae1ed74d83af`, and the complete unpaid-history continuation PR821 as `8cfa8469f271db5e88e1342b8c65837b8e3a3349`. The original operation, study, handoff, customer and page identities are unchanged.

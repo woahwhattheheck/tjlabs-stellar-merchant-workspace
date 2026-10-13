@@ -194,5 +194,33 @@
     },
     "completeSourceFiles": 830,
     "additionalSourceBytes": 18632
+  },
+  "nativeExecution": {
+    "state": "COMPLETE",
+    "completedAt": "2026-10-13T01:00:17.863Z",
+    "node": "v24.19.0",
+    "session": 44945,
+    "exitCode": 0,
+    "mode": "NO_PAYMENT_REQUIRED",
+    "pages": 3,
+    "rows": 140,
+    "httpRequests": 4,
+    "providerCalls": 0,
+    "paymentApprovals": 0,
+    "settlements": 0,
+    "allOwnersRetired": true,
+    "result": {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/NATIVE_RESULT.json",
+      "bytes": 12359,
+      "sha256": "b2c2c768980b3e0644ffb12618d496f7b0dcc1f0b46f985c7965c13744df4036",
+      "gitBlob": "66ec15ecdf8cd3bf06907e04a5e0933d1f71ea14"
+    },
+    "package": {
+      "file": "OpenAQ_Original_Buyer_Workspace.zip",
+      "bytes": 376833,
+      "sha256": "a5955daf68b1b62a709519080c528b52905ea27f63d8f1d884a4fa5ced17d2f7",
+      "members": 136,
+      "expandedBytes": 1861656
+    }
   }
 }
