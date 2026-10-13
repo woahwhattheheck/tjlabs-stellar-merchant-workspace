@@ -73,7 +73,9 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-working-cli.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-review.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-review-ui.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-review-cli.mjs"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-review-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-check.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-source-ui.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

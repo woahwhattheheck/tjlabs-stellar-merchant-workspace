@@ -61,3 +61,13 @@ export function prepareNativeAnalysisEventMappingReview(options:EventMappingRevi
 export function reviewNativeAnalysisEventMappingWorking(options:EventMappingReviewReceivingOptions):Promise<EventMappingReviewReceipt>;
 export function receiveNativeAnalysisEventMappingReview(options:EventMappingReviewReceivingOptions):Promise<EventMappingReviewReceipt>;
 export function reopenNativeAnalysisEventMappingReview(options:EventMappingReviewReceivingOptions):Promise<EventMappingReviewReceipt>;
+
+export interface EventMappingSavedSourceReceipt {
+ schema:'stellar-forge.event-mapping-native-received.v1'; state:'COMPLETE';
+ analysisWorkspace:string; workspace_id:string; programme:string; input_id:string;
+ action_id:string; operation_id:string; directory:string; source:{id:string;bytes:number;sha256:string};
+ actionFile:string; indexFile:string; workingFile:string; editableFile:string;
+ files:Array<{name:string;bytes:number;sha256:string;kind:'source'|'html';mime:string}>; offline:true;
+}
+export function downloadNativeAnalysisEventMappingSavedSource(options:EventMappingReviewReceivingOptions):Promise<EventMappingSavedSourceReceipt>;
+export function reopenNativeAnalysisEventMappingSavedSource(options:EventMappingReviewReceivingOptions):Promise<EventMappingSavedSourceReceipt>;

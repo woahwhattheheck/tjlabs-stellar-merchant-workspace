@@ -68,6 +68,8 @@ class EventProgrammes:
                                  error="Continue this original saved action.")
                     db.execute("UPDATE sf_event_browser_actions SET record=? WHERE id=?", (raw(value), row["id"]))
             db.commit()
+        from .event_mapping_source_store import EventMappingSourceStore
+        self.mapping_sources = EventMappingSourceStore(self.database, self.workspace.identity, self._lock)
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="event-programmes")
 
     def close(self):
@@ -285,6 +287,20 @@ class EventProgrammes:
             future = self._executor.submit(source_package, self, programme, input_id, mapping, expected)
         return future.result()
 
+    def create_mapping_working_source(self, body):
+        programme, input_id = name(body.get("programme")), identifier(body.get("input_id"))
+        with self._lock:
+            need(not self._closed, "CLOSED")
+            with self.database._connection(readonly=True) as db:
+                self._input(db, input_id)
+            self._core(programme).programme()
+            return self.mapping_sources.create(body)
+
+    def put_mapping_working_source(self, source_id, body):
+        with self._lock:
+            need(not self._closed, "CLOSED")
+            return self.mapping_sources.put(source_id, body)
+
     def _review_mapping(self, programme, request):
         selection = request["mapping_review"]
         need(isinstance(selection, dict) and set(selection) ==
@@ -363,6 +379,11 @@ class EventProgrammes:
                 need(isinstance(body["mapping_review"], dict) and
                      len(raw(body["mapping_review"]).encode()) <= 1024 * 1024, "MAPPING_REVIEW_INVALID")
                 request["mapping_review"] = body["mapping_review"]
+            if "mapping_working_source" in body:
+                need("mapping_review" in request, "ATTRIBUTED_MAPPING_REVIEW_REQUIRED")
+                request["mapping_working_source"] = body["mapping_working_source"]
+                from .event_mapping_native_source import selection
+                selection(self, programme, request)
         if action in {"apply", "refresh-review"}:
             digest = body.get("review_sha256")
             note = body.get("note")
@@ -439,6 +460,16 @@ class EventProgrammes:
                         need(current["revision"] == evidence["comparison"]["programme_revision"] and
                              (current["accepted"] or {}).get("operation_id") ==
                              evidence["comparison"]["baseline_operation_id"], "MAPPING_BASELINE_CHANGED")
+                if "mapping_working_source" in request:
+                    from .event_mapping_native_source import validate_source
+                    receipt = validate_source(self, value["programme"], request,
+                                              value["mapping_review"]["comparison"])
+                    if "mapping_working_source" in value:
+                        need(value["mapping_working_source"] == receipt,
+                             "ORIGINAL_MAPPING_WORKING_RECEIPT_CHANGED")
+                    else:
+                        value["mapping_working_source"] = receipt
+                        self._store(value)
                 originals = self._originals(request["input_id"])
                 # Executable source is chosen by the local launch configuration.
                 # Browser inputs are data only, never an executable source path.

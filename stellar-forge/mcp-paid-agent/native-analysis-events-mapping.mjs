@@ -307,14 +307,16 @@ function reviewBody(working,reader,options){
  need(encoded(request).length<=EVENT_MAPPING_REQUEST_SOURCE_LIMIT,'MAPPING_NATIVE_REVIEW_LIMIT');
  return {checked,request};
 }
-function reviewRequest(options,workingRaw,captureRaw,sources){
- const original=decode(captureRaw),working=decode(workingRaw),c=original.original?.comparison;
+function reviewRequest(options,workingRaw,captureRaw,sources,retainNative=true){
+ const original=decode(captureRaw),working=retainNative?JSON.parse(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(workingRaw)):decode(workingRaw),c=original.original?.comparison;
  checkContext(c,options);
  const reader=runtime(sources,c);reader.api.reopen(original);
  const selected=working?.schema===COLLEAGUE_SCHEMA
   ?(need(reader.reviewApi,'ORIGINAL_MAPPING_COLLEAGUE_READER_REQUIRED'),reader.reviewApi.reopen(working).working):working;
  need(same(selected?.original,original.original),'ORIGINAL_MAPPING_CAPTURE_CHANGED');
  const result=reviewBody(selected,reader,options);
+ if(retainNative){const hash=sha(workingRaw);result.request.mapping_working_source={id:hash,bytes:workingRaw.length,sha256:hash};}
+ need(encoded(result.request).length<=EVENT_MAPPING_REQUEST_SOURCE_LIMIT,'MAPPING_NATIVE_REVIEW_LIMIT');
  return {schema:EVENT_MAPPING_REVIEW,analysisWorkspace:options.analysisWorkspace,workspace_id:options.expectedWorkspaceId,
   working:identity(workingRaw),capture:identity(captureRaw),
   renderer:Object.fromEntries(Object.keys(sources).map(name=>[name,identity(sources[name])])),request:result.request};
@@ -324,7 +326,7 @@ async function readReview(options){
  const request=decode(await bytes(join(root,REVIEW_REQUEST),1024*1024+65536));
  const sources=await sourceFiles(root,request.renderer),workingRaw=await bytes(join(root,WORKING),MAX),
   captureRaw=await bytes(join(root,'original-capture-working.json'),MAX);
- need(same(request,reviewRequest(options,workingRaw,captureRaw,sources)),'RETAINED_MAPPING_REVIEW_CHANGED');
+ need(same(request,reviewRequest(options,workingRaw,captureRaw,sources,Object.hasOwn(request.request,'mapping_working_source'))),'RETAINED_MAPPING_REVIEW_CHANGED');
  if(options.workingPath!==undefined)await supplied(options.workingPath,workingRaw,MAX,'ORIGINAL_MAPPING_RETURN_REQUIRED');
  if(options.captureDirectory!==undefined){
   const capture=await reopenNativeAnalysisEventMappingWorking({...options,directory:options.captureDirectory});
@@ -391,7 +393,7 @@ async function receiveRequest(client,raw,workspace,options){
 }
 function actionValue(value,prepared){
  const r=prepared.request.request,expected={action:'review',operation_id:r.operation_id,input_id:r.input_id,
-  mapping:r.mapping,mapping_review:r.mapping_review};
+  mapping:r.mapping,mapping_review:r.mapping_review,...(r.mapping_working_source?{mapping_working_source:r.mapping_working_source}:{})};
  need(object(value)&&value.workspace_id===prepared.request.workspace_id&&value.programme===r.programme&&
   value.id===r.id&&['READY','RUNNING','COMPLETE','ERROR','INTERRUPTED'].includes(value.status)&&
   same(value.request,expected),'ORIGINAL_MAPPING_ACTION_CHANGED');
@@ -402,6 +404,15 @@ function actionValue(value,prepared){
    'ORIGINAL_MAPPING_EVIDENCE_CHANGED');
  }
  if(value.status==='COMPLETE')need(object(value.mapping_review),'COMPLETE_MAPPING_EVIDENCE_REQUIRED');
+ if(r.mapping_working_source&&(value.mapping_working_source||value.status==='COMPLETE')){
+  const saved=value.mapping_working_source;
+  need(saved?.schema==='stellar-forge.event-mapping-native-source-receipt.v1'&&same(saved.source,r.mapping_working_source)&&
+   saved.evidence?.working_bytes===r.mapping_working_source.bytes&&saved.evidence?.working_sha256===r.mapping_working_source.sha256&&
+   saved.evidence?.workspace_id===prepared.request.workspace_id&&saved.evidence?.programme===r.programme&&saved.evidence?.input_id===r.input_id&&
+   same(saved.evidence.mapping,r.mapping)&&same(saved.evidence.mapping_review,r.mapping_review)&&
+   Number.isSafeInteger(saved.html?.bytes)&&saved.html.bytes>0&&saved.html.bytes<=256*1024*1024&&EVENT_HASH.test(saved.html.sha256),
+   'ORIGINAL_MAPPING_NATIVE_SOURCE_CHANGED');
+ }
  return value;
 }
 async function receiveAction(options,prepared,client,summary){
@@ -416,6 +427,24 @@ async function receiveAction(options,prepared,client,summary){
  return reviewResult(prepared,value.status,{record:selected,action:value});
 }
 /** Dispatch the prepared original Review; it does not Apply or deliver a workbook. */
+async function receiveNativeWorking(client,prepared,options){
+ const selected=prepared.request.request.mapping_working_source;if(!selected)return;
+ const raw=await bytes(join(prepared.root,WORKING),MAX);
+ need(raw.length===selected.bytes&&sha(raw)===selected.sha256,'ORIGINAL_MAPPING_RETURN_REQUIRED');
+ const context={...selected,programme:prepared.request.request.programme,input_id:prepared.request.request.input_id,name:'mapping-working.json'};
+ const checked=value=>{
+  need(value?.workspace_id===prepared.request.workspace_id&&['id','bytes','sha256','programme','input_id','name'].every(key=>value[key]===context[key])&&
+   value.chunk_bytes===65536&&Number.isSafeInteger(value.received)&&value.received>=0&&value.received<=raw.length&&
+   value.complete===(value.received===raw.length),'MAPPING_NATIVE_SOURCE_CHANGED');return value;
+ };
+ options.signal?.throwIfAborted();let current=checked(await client.call('event-mapping-working-create',context,{signal:options.signal,timeoutMs:options.timeoutMs}));
+ while(!current.complete){
+  options.signal?.throwIfAborted();const offset=current.received,part=raw.subarray(offset,offset+65536);
+  current=checked(await client.call('event-mapping-working-chunk',{id:selected.id,offset,base64:part.toString('base64'),sha256:sha(part)},{signal:options.signal,timeoutMs:options.timeoutMs}));
+  need(current.received>=offset+part.length,'MAPPING_NATIVE_SOURCE_ACKNOWLEDGEMENT_CHANGED');
+  await options.onProgress?.({kind:'mapping-native-working',id:selected.id,received:current.received,bytes:selected.bytes});
+ }
+}
 export async function reviewNativeAnalysisEventMappingWorking(options={}){
  need(options.resume===undefined||typeof options.resume==='boolean','EXPLICIT_RESUME_REQUIRED');
  await prepareNativeAnalysisEventMappingReview(options);
@@ -423,6 +452,7 @@ export async function reviewNativeAnalysisEventMappingWorking(options={}){
  options.signal?.throwIfAborted();const client=await nativeEventConnection(options);
  const overview=await client.call('event-overview',{limit:1,programme_limit:1},{signal:options.signal});
  need(overview.workspace_id===prepared.request.workspace_id,'ORIGINAL_WORKSPACE_CHANGED');
+ await receiveNativeWorking(client,prepared,options);
  const selectedRequest=await receiveRequest(client,encoded(prepared.request.request),prepared.request.workspace_id,options);
  const result=await client.call('event-review',{programme:options.programme,id:options.actionId,operation_id:options.operationId,
   mapping_request_source:selectedRequest,...(options.resume===undefined?{}:{resume:options.resume})},
@@ -449,4 +479,102 @@ export async function reopenNativeAnalysisEventMappingReview(options={}){
  const raw=await bytes(join(folder,selected.sha256+'.json'),EVENT_MAX_RECORD);
  need(raw.length===selected.bytes&&sha(raw)===selected.sha256,'MAPPING_ACTION_RECORD_CHANGED');
  return reviewResult(prepared,actionValue(decode(raw),prepared).status,{record:selected,action:decode(raw),offline:true});
+}
+
+
+const SAVED_INDEX='mapping-native-index.json',SAVED_ACTION='mapping-native-action.json',SAVED_SCHEMA='stellar-forge.event-mapping-native-received.v1',SAVED_PREFIX='native_analysis_mapping_saved';
+function savedManifest(raw,options){
+ const value=decode(raw),source=value?.request?.mapping_working_source,receipt=value?.mapping_working_source;
+ need(value?.workspace_id===options.expectedWorkspaceId&&value.programme===options.programme&&value.id===options.actionId&&
+  value.request?.action==='review'&&value.request.operation_id===options.operationId&&value.request.input_id===options.inputId&&
+  source?.id===source?.sha256&&EVENT_HASH.test(source?.id??'')&&Number.isSafeInteger(source.bytes)&&source.bytes>0&&source.bytes<=MAX&&
+  receipt?.schema==='stellar-forge.event-mapping-native-source-receipt.v1'&&same(receipt.source,source)&&
+  receipt.evidence?.working_bytes===source.bytes&&receipt.evidence?.working_sha256===source.sha256&&
+  receipt.evidence?.workspace_id===options.expectedWorkspaceId&&receipt.evidence?.programme===options.programme&&
+  receipt.evidence?.input_id===options.inputId&&same(receipt.evidence.mapping,value.request.mapping)&&same(receipt.evidence.mapping_review,value.request.mapping_review)&&
+  Number.isSafeInteger(receipt.html?.bytes)&&receipt.html.bytes>0&&receipt.html.bytes<=256*1024*1024&&EVENT_HASH.test(receipt.html.sha256),
+  'ORIGINAL_NATIVE_MAPPING_SOURCE_REQUIRED');
+ return {schema:SAVED_SCHEMA,workspace_id:value.workspace_id,analysisWorkspace:options.analysisWorkspace,programme:value.programme,
+  input_id:options.inputId,action_id:value.id,operation_id:options.operationId,source,
+  action:identity(raw),files:[{name:WORKING,bytes:source.bytes,sha256:source.sha256,kind:'source',mime:'application/json;charset=utf-8'},
+   {name:'mapping-working.html',bytes:receipt.html.bytes,sha256:receipt.html.sha256,kind:'html',mime:'text/html;charset=utf-8'}]};
+}
+function parseSavedManifest(raw,expectedId){
+ const m=decode(raw);need(m?.schema===SAVED_SCHEMA&&m.action_id===expectedId&&EVENT_ID.test(m.workspace_id)&&ALIAS.test(m.analysisWorkspace)&&
+  EVENT_NAME.test(m.programme)&&EVENT_ID.test(m.input_id)&&EVENT_ID.test(m.operation_id)&&Array.isArray(m.files)&&m.files.length===2&&
+  m.files[0].name===WORKING&&m.files[1].name==='mapping-working.html','NATIVE_MAPPING_INDEX_CHANGED');
+ for(const [i,file]of m.files.entries())need(file.kind===(i?'html':'source')&&Number.isSafeInteger(file.bytes)&&file.bytes>0&&file.bytes<=(i?256*1024*1024:MAX)&&EVENT_HASH.test(file.sha256),'NATIVE_MAPPING_INDEX_CHANGED');
+ return m;
+}
+function savedAdapter(client,manifest,signal){
+ const raw=encoded(manifest),digest=sha(raw),indexFile={name:SAVED_INDEX,bytes:raw.length,sha256:digest,mime:'application/json'};
+ return {endpoint:'native-analysis-mapping-saved:'+manifest.analysisWorkspace+':'+manifest.workspace_id+':'+manifest.action_id+':'+manifest.source.id,
+ async call(tool,args,options={}){
+  signal?.throwIfAborted();options.requestSignal?.throwIfAborted();
+  need(args.exportId===manifest.action_id,'NATIVE_MAPPING_ACTION_CHANGED');
+  if(tool===SAVED_PREFIX+'_manifest')return {state:'MANIFEST_RETAINED',exportId:manifest.action_id,manifestFile:indexFile};
+  need(tool===SAVED_PREFIX+'_file'&&same(Object.keys(args).sort(),['exportId','file','expectedManifestSha256','expectedSha256','offset','limit'].sort())&&args.expectedManifestSha256===digest&&Number.isSafeInteger(args.offset)&&args.offset>=0&&Number.isSafeInteger(args.limit)&&args.limit>=1&&args.limit<=65536,'NATIVE_MAPPING_INDEX_CHANGED');
+  const file=args.file===SAVED_INDEX?indexFile:manifest.files.find(f=>f.name===args.file);
+  need(file&&args.expectedSha256===file.sha256&&args.offset<=file.bytes,'NATIVE_MAPPING_FILE_CHANGED');
+  const size=Math.min(args.limit,file.bytes-args.offset);let part;
+  if(args.file===SAVED_INDEX)part=raw.subarray(args.offset,args.offset+size);
+  else{
+   need(client,'NATIVE_MAPPING_DOWNLOAD_INCOMPLETE');
+   const result=await client.call('event-mapping-working-file',{id:manifest.source.id,kind:file.kind,sha256:file.sha256,byteOffset:args.offset,maxBytes:args.limit},
+    {signal:options.requestSignal??signal,timeoutMs:options.timeoutMs});
+   signal?.throwIfAborted();options.requestSignal?.throwIfAborted();
+   need(result.source?.workspace_id===manifest.workspace_id&&result.source?.programme===manifest.programme&&result.source?.input_id===manifest.input_id&&
+    ['id','bytes','sha256'].every(k=>result.source[k]===manifest.source[k])&&result.kind===file.kind&&result.bytes===file.bytes&&result.sha256===file.sha256&&
+    result.offset===args.offset&&result.length===size&&result.next_offset===args.offset+size&&result.eof===(args.offset+size===file.bytes),'NATIVE_MAPPING_RANGE_CHANGED');
+   part=Buffer.from(result.base64,'base64');need(part.length===size&&part.toString('base64')===result.base64&&sha(part)===result.range_sha256,'NATIVE_MAPPING_RANGE_CHANGED');
+  }
+  return {exportId:manifest.action_id,manifestSha256:digest,file,offset:args.offset,bytesRead:size,encoding:'base64',data:part.toString('base64'),nextOffset:args.offset+size<file.bytes?args.offset+size:null};
+ }};
+}
+const savedTransport=createRetainedDownload({manifestName:SAVED_INDEX,parseManifest:parseSavedManifest,maximumBytes:256*1024*1024,
+ maximumManifestBytes:65536,maximumCheckpointBytes:65536,readLease:false,
+ stateSchema:'stellar-forge.event-mapping-native-download-state.v1',resultSchema:SAVED_SCHEMA,
+ toolPrefix:SAVED_PREFIX,errorPrefix:'MCP_ANALYSIS_EVENT_MAPPING_SAVED',clientName:'starforge-analysis-mapping-saved',
+ validateExportId:id=>need(EVENT_ID.test(id??''),'NATIVE_MAPPING_ACTION_REQUIRED'),
+ describe:m=>({workspaceId:m.workspace_id,actionId:m.action_id,sourceSha256:m.source.sha256})});
+async function finishSaved(options,root,raw,manifest){
+ const folder=join(root,'saved-source'),index=encoded(manifest);
+ await savedTransport.lockedDownload(folder,async context=>{
+  await savedTransport.loadContext(context,index,manifest.action_id,savedAdapter(null,manifest).endpoint);
+  for(const file of manifest.files){options.signal?.throwIfAborted();context.lease.assertHeld();await savedTransport.verifiedFile(join(folder,file.name),file,options.signal);context.state.files[file.name]={bytes:file.bytes,sha256:file.sha256,complete:true};}
+  await savedTransport.checkpoint(context);context.lease.assertHeld();await retainFile(join(folder,SAVED_INDEX),index,{resume:true});
+ });
+ const full=decode(await bytes(join(folder,WORKING),MAX)),working=full.working??full,c=working?.comparison;
+ need(c?.workspace_id===manifest.workspace_id&&c.programme===manifest.programme&&c.input_id===manifest.input_id&&
+  c.comparison_sha256===decode(raw).request.mapping_review.comparison_sha256,'SAVED_NATIVE_MAPPING_CONTEXT_CHANGED');
+ return {schema:SAVED_SCHEMA,state:'COMPLETE',analysisWorkspace:options.analysisWorkspace,workspace_id:manifest.workspace_id,
+  programme:manifest.programme,input_id:manifest.input_id,action_id:manifest.action_id,operation_id:manifest.operation_id,
+  directory:root,source:manifest.source,actionFile:join(root,SAVED_ACTION),indexFile:join(folder,SAVED_INDEX),
+  workingFile:join(folder,WORKING),editableFile:join(folder,'mapping-working.html'),files:manifest.files,offline:true};
+}
+/** Receive an original saved action's whole JSON and frozen editor, including after workspace restore. */
+export async function downloadNativeAnalysisEventMappingSavedSource(options={}){
+ const root=chosen(options,true);await directory(root,{create:true});
+ let raw=await optionalBytes(join(root,SAVED_ACTION),EVENT_MAX_RECORD),client;
+ if(raw===null){
+  options.signal?.throwIfAborted();client=await nativeEventConnection(options);
+  const summary=await client.call('event-action',{id:options.actionId},{signal:options.signal,timeoutMs:options.timeoutMs}),record=summary?.complete_record;
+  need(record?.workspace_id===options.expectedWorkspaceId&&record.kind==='action'&&record.record_id===options.actionId,'ORIGINAL_MAPPING_ACTION_RECORD_REQUIRED');
+  const full=await readNativeAnalysisEventRecord({...options,url:undefined,client,record});raw=full.bytes;savedManifest(raw,options);
+  await retainFile(join(root,SAVED_ACTION),raw,{resume:true});
+ }
+ const manifest=savedManifest(raw,options),folder=join(root,'saved-source');await directory(folder,{create:true});
+ const completed=await optionalBytes(join(folder,SAVED_INDEX),65536);
+ if(completed!==null)need(completed.equals(encoded(manifest)),'NATIVE_MAPPING_INDEX_CHANGED');
+ else{
+  client??=await nativeEventConnection(options);
+  await savedTransport.download({client:savedAdapter(client,manifest,options.signal),exportId:manifest.action_id,directory:folder,
+   expectedManifestSha256:sha(encoded(manifest)),signal:options.signal,onProgress:options.onProgress,timeoutMs:options.timeoutMs});
+ }
+ return finishSaved(options,root,raw,manifest);
+}
+/** Verify the selected complete saved source and frozen editable HTML without producer folders or a service. */
+export async function reopenNativeAnalysisEventMappingSavedSource(options={}){
+ const root=chosen(options,true);await directory(root);const raw=await bytes(join(root,SAVED_ACTION),EVENT_MAX_RECORD);
+ return finishSaved(options,root,raw,savedManifest(raw,options));
 }

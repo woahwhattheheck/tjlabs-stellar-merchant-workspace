@@ -724,3 +724,12 @@ desktop and narrow width, then reopens the saved JSON/HTML and original saved
 action. Carry actual images and full resulting files back through that
 operation. The existing owner meeting-end release applies; preserve the
 user's current browser tabs and all other owner instructions.
+
+
+## Complete mapping working source in the native archive
+
+New mapping Review preparation retains the full original working JSON in the registered Analysis workspace through `event-mapping-working-create`, `event-mapping-working-status` and `event-mapping-working-chunk`. The compact Review carries the immutable full source descriptor; its original native action validates all source/colleague history and retains the complete rendered editable HTML. `event-mapping-working-file` receives exact source or HTML ranges by full digest. Ordinary MCP message limits stay unchanged.
+
+The typed `downloadNativeAnalysisEventMappingSavedSource` helper and installed `event-mapping-receiving saved-source` command start from an actual saved action in the original or restored workspace. They retain that full action and both original files through the maintained resumable writer. `reopenNativeAnalysisEventMappingSavedSource` / `saved-source-reopen` independently verifies those complete files offline, preserving alias and original workspace/action/source identity.
+
+Full operator and original restore/render course: [EVENT_MAPPING_NATIVE_SOURCE.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_NATIVE_SOURCE.md).

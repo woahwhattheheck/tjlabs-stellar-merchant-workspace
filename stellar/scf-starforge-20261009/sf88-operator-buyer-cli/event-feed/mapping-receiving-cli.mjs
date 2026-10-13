@@ -9,7 +9,9 @@ import {
  prepareNativeAnalysisEventMappingReview,
  reviewNativeAnalysisEventMappingWorking,
  receiveNativeAnalysisEventMappingReview,
- reopenNativeAnalysisEventMappingReview
+ reopenNativeAnalysisEventMappingReview,
+ downloadNativeAnalysisEventMappingSavedSource,
+ reopenNativeAnalysisEventMappingSavedSource
 } from '../../../../stellar-forge/mcp-paid-agent/native-analysis-events-mapping.mjs';
 
 const COMMON=['--workspace','--workspace-id','--programme','--input','--dir'];
@@ -17,6 +19,8 @@ const NETWORK=['--url','--token-env','--timeout-ms'];
 const CAPTURE=['--comparison','--draft'];
 const REVIEW=['--capture-dir','--working','--action','--operation'];
 const COMMANDS={
+ 'saved-source':{flags:[...COMMON,'--action','--operation',...NETWORK],run:downloadNativeAnalysisEventMappingSavedSource,network:true,review:true},
+ 'saved-source-reopen':{flags:[...COMMON,'--action','--operation'],run:reopenNativeAnalysisEventMappingSavedSource,review:true},
  'capture-prepare':{flags:[...COMMON,...CAPTURE],run:prepareNativeAnalysisEventMappingWorking},
  capture:{flags:[...COMMON,...CAPTURE,...NETWORK],run:downloadNativeAnalysisEventMappingWorking,network:true},
  'capture-reopen':{flags:COMMON,run:reopenNativeAnalysisEventMappingWorking},
@@ -43,6 +47,10 @@ Commands:
           --url ORIGINAL_MCP_URL [--token-env ENVIRONMENT_VARIABLE] [--timeout-ms POSITIVE_INTEGER]
   capture-reopen
 
+  saved-source --action ID --operation ID --url ORIGINAL_MCP_URL
+               [--token-env ENVIRONMENT_VARIABLE] [--timeout-ms POSITIVE_INTEGER]
+  saved-source-reopen --action ID --operation ID
+
   review-prepare --action ID --operation ID
                  [--capture-dir ORIGINAL_CAPTURE_DIRECTORY] [--working COMPLETE_WORKING_JSON]
   review --action ID --operation ID
@@ -53,6 +61,8 @@ Commands:
                  --url ORIGINAL_MCP_URL [--token-env ENVIRONMENT_VARIABLE] [--timeout-ms POSITIVE_INTEGER]
   review-reopen --action ID --operation ID [--record-sha256 SHA256]
 
+Saved-source receives the complete native action, full working JSON and frozen editable HTML from its original or restored workspace.
+Its own private directory can reopen both whole files without the original capture/review folders or a network service.
 First capture preparation needs the complete comparison file. Its optional full draft is retained with it.
 First review preparation needs its complete capture directory and selected whole working file.
 After preparation, resume the SAME directory/IDs; original external files may be omitted.
