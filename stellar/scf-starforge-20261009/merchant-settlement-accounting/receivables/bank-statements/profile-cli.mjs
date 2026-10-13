@@ -6,7 +6,7 @@ import {randomUUID} from 'node:crypto';
 import {PROFILE_LIMITS,createProfileLibrary,validateProfileLibrary,saveProfile,receiveProfileLibrary,previewProfileApplication,applyProfileApplication} from './public/source-profile-model.mjs';
 import {receiveCollection,updateItem,canonical,sha256} from './public/source-collection-model.mjs';
 const HELP='Saved bank source interpretations\n\n'+
- 'starforge bank-statements profile create --workspace UUID --mapping /absolute/mapping.json --name NAME --actor OPERATOR --reason REASON --out /absolute/new-library.json\n'+
+ 'starforge bank-statements profile create --workspace WORKSPACE_SHA256 --mapping /absolute/mapping.json --name NAME --actor OPERATOR --reason REASON --out /absolute/new-library.json\n'+
  'starforge bank-statements profile revise --library /absolute/library.json --profile UUID --expected-version N --mapping /absolute/mapping.json --name NAME --actor OPERATOR --reason REASON --out /absolute/new-library.json\n'+
  'starforge bank-statements profile inspect --library /absolute/library.json --out /absolute/complete-history.json\n'+
  'starforge bank-statements profile receive --library /absolute/receiving-library.json --source /absolute/incoming-library.json --out /absolute/new-library.json\n'+

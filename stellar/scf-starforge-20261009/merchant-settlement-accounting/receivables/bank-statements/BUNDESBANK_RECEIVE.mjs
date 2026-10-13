@@ -9,8 +9,8 @@ import {readBankStatementSource} from './source.mjs';
 import {receiveCollection,sourceInputForItem} from './public/source-collection-model.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const requireValue=(yes,message)=>{if(!yes)throw new Error(message);};
-const flags={};for(let i=2;i<process.argv.length;i+=2){const key=process.argv[i],value=process.argv[i+1];requireValue(['--workspace-id','--out'].includes(key)&&value&&!Object.hasOwn(flags,key),'Use --workspace-id ORIGINAL_UUID --out /absolute/new-directory');flags[key]=value;}
-requireValue(Object.keys(flags).length===2&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(flags['--workspace-id']),'Supply the receiving workspace UUID.');
+const flags={};for(let i=2;i<process.argv.length;i+=2){const key=process.argv[i],value=process.argv[i+1];requireValue(['--workspace-id','--out'].includes(key)&&value&&!Object.hasOwn(flags,key),'Use --workspace-id ORIGINAL_WORKSPACE_SHA256 --out /absolute/new-directory');flags[key]=value;}
+requireValue(Object.keys(flags).length===2&&/^[a-f0-9]{64}$/.test(flags['--workspace-id']),'Supply the receiving accounting workspace identity.');
 requireValue(isAbsolute(flags['--out'])&&resolve(flags['--out'])===flags['--out']&&flags['--out']!=='/','Choose a new absolute output directory.');
 const root=flags['--out'],raw=await readFile(new URL('./BUNDESBANK_ORIGINALS.json',import.meta.url));
 requireValue(hash(raw)==='15d9affd621121c16bb900a169eb359b1abf1377cffeb9bd301361b85efb8ee3','The retained original delivery changed; select its complete maintained source edition.');

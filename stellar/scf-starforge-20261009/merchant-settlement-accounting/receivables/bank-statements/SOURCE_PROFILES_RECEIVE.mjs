@@ -3,15 +3,15 @@
 // Complete original-file receiving through the installed profile and collection commands.
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-import {createHash,randomUUID} from 'node:crypto';
+import {createHash} from 'node:crypto';
 import {isAbsolute,resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {runBankProfileCli} from './profile-cli.mjs';
 import {runBankCollectionCli} from './collection-cli.mjs';
 const need=(condition,message)=>{if(!condition)throw new Error(message);};
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const options={};for(let i=2;i<process.argv.length;i+=2){const key=process.argv[i],value=process.argv[i+1];need(['--workspace-id','--out'].includes(key)&&value&&!Object.hasOwn(options,key),'Supply --workspace-id UUID --out /absolute/new-directory.');options[key]=value;}
-need(Object.keys(options).length===2&&/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(options['--workspace-id']),'Use the original receiving workspace UUID.');
+const options={};for(let i=2;i<process.argv.length;i+=2){const key=process.argv[i],value=process.argv[i+1];need(['--workspace-id','--out'].includes(key)&&value&&!Object.hasOwn(options,key),'Supply --workspace-id WORKSPACE_SHA256 --out /absolute/new-directory.');options[key]=value;}
+need(Object.keys(options).length===2&&/^[a-f0-9]{64}$/.test(options['--workspace-id']),'Use the original receiving accounting workspace identity.');
 const root=options['--out'];need(isAbsolute(root)&&resolve(root)===root&&root!=='/','Use a new absolute private output directory.');
 await mkdir(root,{mode:0o700});
 const files=[],phases=[];
@@ -43,8 +43,8 @@ for(const row of newReview.items.filter(item=>item.status==='REVIEWED')){
  const original=oldReview.items.find(item=>item.id===row.id);
  need(original&&JSON.stringify(original.preview)===JSON.stringify(row.preview),'The saved profile must preserve the original complete source preview.');
 }
-const destinationWorkspace=randomUUID(),destinationInitial=join(root,'receiving-library-initial.json');
-await command('Prepare receiving workspace library',['create','--workspace',destinationWorkspace,'--mapping',mappingPath,'--name','Receiving operator source mapping','--actor','Receiving operator','--reason','Receiving workspace original reusable mapping.','--out',destinationInitial]);
+const destinationWorkspace=options['--workspace-id'],destinationInitial=join(root,'receiving-library-initial.json');
+await command('Prepare independent receiving library',['create','--workspace',destinationWorkspace,'--mapping',mappingPath,'--name','Receiving operator source mapping','--actor','Receiving operator','--reason','Same original merchant workspace, independent receiving operator library.','--out',destinationInitial]);
 const receivedPath=join(root,'received-complete-library.json');
 const received=await command('Receive every original version',['receive','--library',destinationInitial,'--source',currentPath,'--out',receivedPath]);
 const repeated=await command('Reopen the same original edition',['receive','--library',receivedPath,'--source',currentPath,'--out',join(root,'received-again-complete-library.json')]);

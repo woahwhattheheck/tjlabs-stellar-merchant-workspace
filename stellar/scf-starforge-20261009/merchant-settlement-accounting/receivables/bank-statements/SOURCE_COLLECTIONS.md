@@ -56,7 +56,7 @@ All outputs are create-only. The manifest names existing original paths and expl
 
 ~~~json
 {
-  "workspaceId": "00000000-0000-4000-8000-000000000001",
+  "workspaceId": "ORIGINAL_ACCOUNTING_WORKSPACE_SHA256",
   "name": "Original bank delivery",
   "files": [
     {
@@ -74,7 +74,7 @@ All outputs are create-only. The manifest names existing original paths and expl
 }
 ~~~
 
-Replace the example workspace identity and path with the existing bank workspace and actual original. CSV mappings use the same working fields exported by the browser. Preparing a collection reads each complete original file, verifies its regular-file size and stability, and creates the portable collection without opening an accounting writer.
+Replace the workspace marker with the exact 64-character SHA-256 identity returned by the existing Bank state, and the path with the actual original. Collection and item IDs retain their own UUIDs. CSV mappings use the same working fields exported by the browser. Preparing a collection reads each complete original file, verifies its regular-file size and stability, and creates the portable collection without opening an accounting writer.
 
 Inspection runs every included file through the installed original bank source parser. It retains each account/statement preview and the exact source-review digest. An original parser error stays attached to that source item, while the command continues the remaining original files. This makes a complete delivery usable even when one original requires source correction.
 

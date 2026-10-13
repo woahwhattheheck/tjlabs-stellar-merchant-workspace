@@ -8,6 +8,8 @@ const fail=(code,message)=>{throw Object.assign(new Error(message),{code});};
 const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
 const string=(value,label,limit=4000)=>{if(typeof value!=='string'||value.length>limit||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value))fail('COLLECTION_FIELD','Use a complete '+label+'.');return value;};
 const uuid=value=>{if(typeof value!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))fail('COLLECTION_ID','Use the original collection identity.');return value;};
+/** Bank accounting uses its original SHA-256 binding; retain prior standalone v1 UUID tags on receive. */
+export function sourceWorkspaceId(value){if(typeof value==='string'&&/^[a-f0-9]{64}$/.test(value))return value;try{return uuid(value);}catch{fail('COLLECTION_WORKSPACE','Use the original accounting workspace identity.');}}
 export const canonical=value=>Array.isArray(value)?value.map(canonical):object(value)?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
 export const mappingSignature=value=>JSON.stringify(canonical(value));
 export async function sha256(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');}
@@ -33,7 +35,7 @@ export function transferBytes(collection){
 function transferable(collection){if(transferBytes(collection)>COLLECTION_LIMITS.transferBytes)fail('COLLECTION_TRANSFER_LIMIT','This complete collection exceeds the 192 MB transferable JSON limit. Retain additional original files in a separate collection.');return collection;}
 function changed(collection,items,extra={}){return transferable({...collection,...extra,revision:collection.revision+1,items});}
 export function createCollection({id,workspaceId,name='Original bank statements'}){
- return {schema:COLLECTION_SCHEMA,id:uuid(id),workspaceId:uuid(workspaceId),name:string(name,'collection name',160),revision:0,items:[]};
+ return {schema:COLLECTION_SCHEMA,id:uuid(id),workspaceId:sourceWorkspaceId(workspaceId),name:string(name,'collection name',160),revision:0,items:[]};
 }
 export function selectItem(collection,id){const item=collection.items.find(row=>row.id===id);if(!item)fail('COLLECTION_ITEM','Select an original file in this collection.');return item;}
 export function updateItem(collection,id,patch){
@@ -89,7 +91,7 @@ export function collectionProgress(collection,imports=[]){
 }
 export async function receiveCollection(value,{workspaceId,id,digest=sha256}={}){
  if(!object(value)||value.schema!==COLLECTION_SCHEMA||!Array.isArray(value.items)||!Number.isSafeInteger(value.revision)||value.revision<0)fail('COLLECTION_FORMAT','Open a complete original statement collection.');
- uuid(value.id);uuid(value.workspaceId);
+ uuid(value.id);sourceWorkspaceId(value.workspaceId);
  let result=createCollection({id:id||value.id,workspaceId:workspaceId||value.workspaceId,name:value.name});
  // Verify every original before selecting the received edition. Earlier previews are context only;
  // the current server will compose them afresh before any financial import.

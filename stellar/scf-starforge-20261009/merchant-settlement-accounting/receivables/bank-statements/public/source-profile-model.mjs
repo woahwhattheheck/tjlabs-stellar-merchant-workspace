@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Named source interpretations for recurring bank deliveries. Original files stay in their collections.
-import {canonical,mappingSignature,sha256} from './source-collection-model.mjs';
+import {canonical,mappingSignature,sha256,sourceWorkspaceId} from './source-collection-model.mjs';
 export const PROFILE_SCHEMA='stellar-forge.bank-source-profiles.v1';
 export const PROFILE_LIMITS=Object.freeze({profiles:256,versions:2048,bytes:16000000,mappingBytes:131072});
 const clone=value=>JSON.parse(JSON.stringify(value));
 const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
 const fail=(code,message)=>{throw Object.assign(new Error(message),{code});};
-const id=value=>{if(typeof value!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))fail('SOURCE_PROFILE_ID','Use a complete source profile or workspace UUID.');return value;};
+const id=value=>{if(typeof value!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value))fail('SOURCE_PROFILE_ID','Use a complete source profile UUID.');return value;};
 const text=(value,label,max,required=false)=>{if(typeof value!=='string'||value.length>max||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)||(required&&!value.trim()))fail('SOURCE_PROFILE_FIELD','Supply '+label+'.');return value;};
 const integer=(value,label,min=0)=>{if(!Number.isSafeInteger(value)||value<min)fail('SOURCE_PROFILE_VERSION','Use the current '+label+'.');return value;};
 const hash=value=>typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);
@@ -33,17 +33,17 @@ function capacity(library){
  return library;
 }
 export function createProfileLibrary({id:libraryId,workspaceId}){
- return {schema:PROFILE_SCHEMA,id:id(libraryId),workspaceId:id(workspaceId),revision:0,profiles:[]};
+ return {schema:PROFILE_SCHEMA,id:id(libraryId),workspaceId:sourceWorkspaceId(workspaceId),revision:0,profiles:[]};
 }
 export async function validateProfileLibrary(value,{digest=sha256}={}){
  if(!object(value)||value.schema!==PROFILE_SCHEMA||!Array.isArray(value.profiles))fail('SOURCE_PROFILE_FORMAT','Open the complete source interpretation library.');
- id(value.id);id(value.workspaceId);integer(value.revision,'library revision');capacity(value);
+ id(value.id);sourceWorkspaceId(value.workspaceId);integer(value.revision,'library revision');capacity(value);
  const ids=new Set();for(const profile of value.profiles){
   if(!object(profile)||!Array.isArray(profile.versions)||!profile.versions.length)fail('SOURCE_PROFILE_FORMAT','Every profile must carry its complete saved history.');
   id(profile.id);if(ids.has(profile.id))fail('SOURCE_PROFILE_ID','Profile identities must be unique.');ids.add(profile.id);
   if(profile.origin!==null&&profile.origin!==undefined){
    let origin=profile.origin,depth=0;while(origin!==null&&origin!==undefined){if(!object(origin)||++depth>64)fail('SOURCE_PROFILE_ORIGIN','Keep the complete original receiving lineage.');
-    id(origin.libraryId);id(origin.workspaceId);id(origin.profileId);if(!hash(origin.headSha256))fail('SOURCE_PROFILE_ORIGIN','Keep the original received profile version.');origin=origin.previous;}
+    id(origin.libraryId);sourceWorkspaceId(origin.workspaceId);id(origin.profileId);if(!hash(origin.headSha256))fail('SOURCE_PROFILE_ORIGIN','Keep the original received profile version.');origin=origin.previous;}
   }
   let previous=null;for(let index=0;index<profile.versions.length;index++){
    const version=profile.versions[index];

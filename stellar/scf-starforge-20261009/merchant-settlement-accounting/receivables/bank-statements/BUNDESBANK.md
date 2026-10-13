@@ -10,11 +10,11 @@ From the bank-statements directory in the installed source package, run:
 
 ```sh
 node BUNDESBANK_RECEIVE.mjs \
-  --workspace-id ORIGINAL_WORKSPACE_UUID \
+  --workspace-id ORIGINAL_WORKSPACE_SHA256 \
   --out /absolute/new-bundesbank-delivery
 ```
 
-Use the UUID of the workspace where you will open the collection and a new directory. The command uses Node built-ins and the included original source; it requires no network connection, accounting database or additional package installation.
+Use the original accounting SHA-256 identity of the workspace where you will open the collection and a new directory. The command uses Node built-ins and the included original source; it requires no network connection, accounting database or additional package installation.
 
 The receiving directory contains:
 
