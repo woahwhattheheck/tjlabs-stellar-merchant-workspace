@@ -1,5 +1,11 @@
 # Flowable contribution to the existing SCF application
 
+## Current combined author edition: native jobs and following Installations
+
+This complete author edition selects **103 source IDs**: all 92 from the native-job author successor, plus 11 newly named following-edition sources. Sixteen complete following-product paths are bound to their merged source; existing path registrations retain their earlier measured editions and select the new explicitly linked edition. All 25 native-job source objects remain unchanged. The earlier 25-, 54-, 67- and 92-source sections below describe their preserved author editions. Receive this whole matched chapter, guide and declaration; the cumulative publisher composes them with its current complete union.
+
+The following-edition product is public PR4876 at `fa8c4876fc20bcfd0e3b123050c44b336d98e54c` and installed PR2047 at `723a3279d0134ab88630fc333ae35827181471a5`. The preserved job application and receiving programme remain selected at their original PR2044 and PR2050 commits. These pins establish delivered source; actual native execution, viewed application use and independent customer receiving remain recorded by their original equipped operations.
+
 This guide receives the complete Flowable process, decision and adaptive-case contribution into the original grant workflow. It uses the maintained product, original native commissioning programme, independent source declaration and existing grant composer.
 
 The chapter is `products/flowable-merchant/GRANT.md`. Its exact heading is:
@@ -355,6 +361,26 @@ For customer accounting, retain the parent useful task, merchant offer, buyer, r
 
 The [complete chapter](../../products/flowable-merchant/GRANT.md) develops the operating and grant-delivery relationship. The [independent source schema](GRANT_PRODUCT_SOURCES.md) and [Product Sources workspace](GRANT_PRODUCT_AUTHORING.md) explain the original composer and saved authoring APIs. The [Flowable selected installation](../../stellar/scf-starforge-20261009/distribution/selections/FLOWABLE_MERCHANT.md) retains all original build, application and native receiving commands.
 
+
+## Following editions in the existing customer Installation
+
+The delivered following-source workflow continues the existing Source Desk and native Installation writer. Its full operating guide is `stellar/scf_2026/sf49_data_commissioning/installation-workorders/FLOWABLE_FOLLOWING.md` at the selected product commit recorded by this contribution. Preserve the complete current job-recovery chapter, all preceding source IDs and every historical measured edition when receiving this addition.
+
+Use the current complete product release and the original customer workspace. In the Flowable Source Desk, prepare the complete later candidate through the existing archive/programme/seed/commissioning/binding course. Open the prior completed preparation and retain its request ID, then the later completed preparation and its request ID. A completed following preparation may be the prior preparation in a later round. The later candidate is an ordinary full preparation.
+
+In **Following source edition**, read the actual saved Installations and complete historical pages, select the original Installation and the revision produced from the prior preparation, and compare. The private bridge reads the saved historical/current rows and proves the complete baseline through the original historical normalizer. The full later archive must retain the original programme record. Keep both original Workshare and current case/plan selections.
+
+Review the complete selected-file and native-operation differences. Acknowledge the later source and choose **Keep current**, **Use later** or **Use baseline** for every changed editable field. Retain current workorder, stage, assignments, checks, Workshare and commercial/workflow/calendar/commissioning/effort fields. Record the reviewer and the source/binding decision. Prepare, preview against the actual current case, open the reviewed draft and deliberately Save the next revision of the same Installation. The expected case version and current saved revision remain frozen in the comparison.
+
+The existing typed Flowable Source Desk client and installation-source-desk Python CLI expose `following-compare` and `following-prepare`. Their request contracts retain the same six native selection fields: `installationId`, `baseRevision`, `expectedBaseSha256`, `expectedRevision`, `expectedInstallationSha256` and `expectedVersion`. The private bridge supplies complete native rows. Use the original saved UUID for uncertain-response reconciliation; a changed selection is a new review.
+
+The direct `flowable-installation-following` command prepares or reopens the complete prior/later source directories from the retained native selection and review. The existing `flowable-installation-receive` command consumes that preparation through its original input schema. Select either the deliberate same-ID Save or the exact already-saved next revision. Carry the entire source chain, the original native case archive, all commercial attachments and complete receiving output. Check every historical/current/successor record and each selected programme after independent reopening; selections sharing one full archive all remain in the receiving census.
+
+The full desk working-copy export preserves unfinished authoring. The separate following-working JSON is a complete review record; it accompanies the full desk copy. Download the whole preparation ZIP and extract all contents. `prior/` and `later/` retain complete original metadata, source archives and nested earlier preparations. The completed root metadata is reproduced from those files, including source, programme, archive, native selection, full output inventory and comparison/review identity.
+
+The producing operator continues the original equipped receiving operation and its native engine, browser, case and saved request identities. Operate the exact current application at the presentation width and 390 px; use source choices, native history pages, validation errors, interrupted-request recovery, full downloads and same-ID Save. Open the complete commercial/source/report attachments and all usable ZIP contents, then independently reopen the delivered case and source editions. Return actual operated output and viewed images through that original course. The complete standing producing-operator instruction below applies.
+
+This author addition leaves USD 38,000, 400 prospective hours, 150 days, the six packages and both original installation targets unchanged. E496 remains the original cumulative manuscript/source-union/four-output publisher. Receive the whole matched chapter and measured declaration against its current source union, preserving every other author and the saved-v7 application operation.
 
 ## Producing operator instruction
 
