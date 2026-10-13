@@ -355,6 +355,27 @@ Compose this chapter and its four sources with every current chapter and registr
 
 Run the original composer and retain its four source pins for grant.html, grant-data/application.md, grant-data/product-and-finance.md, and grant-data/source-index.json. Continue the same saved draft/review, Page and owner-private Site publication. The [full merchant chapter and receiving boundary](./GRANT_X402API_MERCHANT.md) explains this source contribution.
 
+## Receive SQL preparation and reusable pipelines
+
+Receive the complete canonical §9A chapter **SQL preparation, reusable pipelines and complete analyst receiving** through the existing `--manuscript` operation. The complete chapter carries the analyst’s original sources, reviewed SQL recipe, reusable pipeline, complete stage results and editable receiving project. Its Applications, typed SDK and 40 Merchant tools use the same retained operation. The original whole-H2 receiver includes every more detailed heading and the six funded-package rows.
+
+The existing customer-source receiver selects these six immutable references from that chapter:
+
+| Source ID | Selected file |
+| --- | --- |
+| `preparation-workspace-operating` | `products/data-preparation/OPERATING.md` |
+| `preparation-pipeline-original-engine` | `stellar/scf-starforge-20261009/sf30-seller-sdk/data-preparation/pipelines/README.md` |
+| `preparation-workspace-selection` | `stellar/scf-starforge-20261009/distribution/selections/data-preparation-workspace.json` |
+| `preparation-workspace-receiving` | `products/data-preparation/RECEIVING.md` |
+| `preparation-workspace-source` | `products/data-preparation/receiving-source.json` |
+| `preparation-workspace-native-receiving` | `products/data-preparation/receiving.py` |
+
+Each source keeps the repository, commit and path selected by the current chapter. A later source selection clears an obsolete blob pin through the original `receive` helper; a manuscript without the chapter or a particular link retains the existing selection. The source index receives the operating guide, original pipeline contract, installed selection, complete receiving guide, frozen runtime manifest and native controller together.
+
+The product is merged in PR726 at `c451614467b688b8306adb512fa6105898ac634e`. Its complete reviewed source is `b47099ffa5acf15f2c70d9d12662ee81dca0d3fe`; the receiving manifest selects runtime `68ad5adf250e9f100f84d034881ebabc9fa48117`, 91 full source files and 1,124,639 bytes. The complete receiving correction is merged in PR899 at `25dd8b0aa9b32eb99507cfb95e682248fcbf2922`, with controller/driver/guide source `ca518e3aba84eed4dbc56147fa5ac9090904424e`. Its original transfer contract keeps every portable file and saved run field while reconstructing the native SQLite descriptor. The original 120,012-row customer case supplies the current continuation. Its complete checkpoint receiver transfers the same saved operation, native identities and earlier histories to the receiving host, then uses the existing operation lock. The dated completed customer result joins this original case and chapter.
+
+Run the same complete composer described above and retain all four resulting reader pins. The original saved draft/review, Page and owner-private Site receive that cumulative edition. The chapter maps this reusable starting product into the existing six funded packages and the current independent merchant/buyer acceptance, with the same selected funding, capacity and schedule. The [complete preparation contribution](./GRANT_PREPARATION.md) retains the chapter and source-selection contract.
+
 ## Receive regional labor analysis and customer data delivery
 
 The complete regional customer guide is [BLS regional analysis and recurring delivery](../../products/bls-labor/GRANT.md). Its concise accepted chapter belongs within the canonical manuscript's existing current demonstration and operator journey. The ordinary whole-chapter `--manuscript` receiver carries this H2 into the same product and finance companion.
