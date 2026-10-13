@@ -357,15 +357,20 @@ def _compose(p):
     return result
 
 
+
 def _file_identity(path):
     digest = hashlib.sha256()
     size = 0
     with Path(path).open("rb") as stream:
+        before = os.fstat(stream.fileno())
         for block in iter(lambda: stream.read(1048576), b""):
             digest.update(block)
             size += len(block)
+        after = os.fstat(stream.fileno())
+    if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
+            after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) or size != before.st_size:
+        raise ValueError("An original native file changed while its complete bytes were received.")
     return {"bytes": size, "sha256": digest.hexdigest()}
-
 
 
 def _working_tree(s, label, root=None, depth=0):
@@ -501,6 +506,10 @@ def _source(s, inventory, phase):
         # retains existing members, but may legitimately precede their creation.
         selected["allow_missing_task_outputs"] = True
     result = castor_source.capture_source(s, inventory, selected)
+    for item in list(s.artifacts):
+        current = _retain(s, item["path"], item["role"], **{k: v for k, v in item.items() if k not in {"path", "role", "sha256", "size"}})
+        if current["sha256"] != item["sha256"] or current["size"] != item["size"]:
+            raise ValueError("An original helper source artifact changed before completion.")
     s.state.setdefault("source_captures", {})[phase] = result
     s.save_state()
     return result
@@ -621,14 +630,22 @@ def _recover_receipt(s, operation):
         return
     if incoming.get("request_sha256") != s.state.get("request_sha256"):
         raise ValueError("The selected command receipt belongs to another original request.")
-    label = s.state.get("pending_command")
-    if not label or not re.fullmatch(r"[A-Za-z0-9_.-]+", label):
-        raise ValueError("No original native command is awaiting its completion.")
-    original_path = s.out / (label + ".command.json")
-    original = s.read_private_json(original_path)
+    accepted = s.state.setdefault("received_command_receipts", {})
+    for item in accepted.values():
+        if item.get("selection") == incoming:
+            return
     source = Path(incoming["path"])
     raw = source.read_bytes()
     receipt_hash = hashlib.sha256(raw).hexdigest()
+    if any(item["sha256"] == receipt_hash for item in accepted.values()):
+        return
+    label = s.state.get("pending_command")
+    if not label or not re.fullmatch(r"[A-Za-z0-9_.-]+", label):
+        raise ValueError("No original native command is awaiting its completion; retain the already accepted receipt.")
+    if label in accepted:
+        raise ValueError("The already accepted original native receipt cannot be replaced.")
+    original_path = s.out / (label + ".command.json")
+    original = s.read_private_json(original_path)
     retained = s.out / ("received-command-receipt-" + receipt_hash + ".json")
     if not retained.exists():
         with retained.open("xb") as output:
@@ -663,7 +680,9 @@ def _recover_receipt(s, operation):
     _api()._atomic(original_path, completed)
     s.state.setdefault("completed_commands", {})[label] = completed
     s.state.update(phase="native_prepared" if completed["returncode"] == 0 else "native_failed", pending_command=None)
-    s.state["received_command_receipt"] = {"sha256": receipt_hash, "reason": incoming["reason"], "label": label}
+    s.state["received_command_receipts"][label] = {"sha256": receipt_hash, "reason": incoming["reason"],
+        "label": label, "request_sha256": s.state["request_sha256"], "selection": incoming,
+        "retained_path": str(retained)}
     s.save_state()
 
 
@@ -836,6 +855,9 @@ def execute(operation, config, source_paths, checkpoint=None, cancelled=None):
         source = s.state.get("after_source")
         if source is None:
             source = _source(s, following, "after")
+            final_inventory = _inventory(s, "source-after-" + str(time.time_ns()))
+            if _binding(final_inventory) != _binding(following):
+                raise ValueError("The actual post-task source/engine/configuration changed during receiving.")
             if outputs != _outputs(s, required=True):
                 raise ValueError("The original task outputs changed during complete source capture.")
             s.state["after_source"] = source
