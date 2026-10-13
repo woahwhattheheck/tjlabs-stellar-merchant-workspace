@@ -239,6 +239,12 @@ To manage a received operator through Applications, select these paths:
 Review the receiving machine's paths through the normal Applications controls.
 The original opener creates the new local session and managed-launch files.
 
+## Reconcile a colleague's returned workspace
+
+Open **Returned workspaces** to receive the complete returned operator ZIP, compare exact issued/current/returned revisions, select product and source changes, and save a new native draft while preserving newer original work. The same original CLI, authenticated API and six merchant tools retain each return and its interrupted-request recovery. Complete exports carry the original return, source histories and decision records through independent receiving.
+
+The [complete returned-workspace guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/sec-edgar/RETURNED_WORKSPACES.md) covers issuing, recipient edits, explicit field choices, source/payment grouping, mixed product ordering, reviewer notes, full portable reopening and the original equipped receiving course.
+
 ## Embedded receiving API
 
 ~~~js

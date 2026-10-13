@@ -94,9 +94,24 @@ function originalStateUnchanged(before, after, request, response) {
  * No server, browser or substitute business workspace is created here.
  * An independent complete receiving directory is created only after the original export.
  */
+/**
+ * Open the recipient tab in the already-owned original customer-review operator.
+ * The preceding original course keeps navigation, auth and Page ownership.
+ */
+export async function openCurrentReviewReturnDesk({page,workspaceId}) {
+  need(page && typeof page.evaluate === "function", "Use the original customer-review Page.");
+  const original = await page.evaluate(() => window.customerServiceReviewOperator?.inspect?.() ?? null);
+  need(original?.workspaceId === workspaceId && !original.closed && !original.closing,
+    "Keep the same open customer-service-review operator before entering its Recipient returns tab.");
+  await page.getByRole("button", {name:"Recipient returns", exact:true}).click();
+  await page.locator(".review-return-desk").waitFor({state:"visible", timeout:45000});
+  const current = await page.evaluate(() => window.customerServiceReviewOperator?.inspect?.() ?? null);
+  need(current?.workspaceId === workspaceId && !current.closed && !current.closing,
+    "The original customer-review operator changed while opening recipient returns.");
+}
 export async function receiveReviewReturns({
   page, client, workspace, store, outputDirectory, input: incoming, remember,
-  openDesk
+  openDesk = openCurrentReviewReturnDesk
 }) {
   const input = normalInput(incoming), root = resolve(outputDirectory);
   await directory(root);

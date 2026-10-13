@@ -6,7 +6,7 @@ import { readJson, identity, digest, absolute } from '../postgres/publisher/file
 import { SCHEMA, need } from './core.mjs';
 export const GLEIF_SOURCE='stellar/scf-starforge-20261009/sf30-seller-sdk/gleif';
 export const SOURCE_FILES=['core.mjs','source.mjs','workspace.mjs','server.mjs','client.mjs','client.d.mts','managed.mjs','cli.mjs',
-  'application-provider.mjs','operator.mjs','operator-tools.mjs','operator-provider.mjs','browser-assets.json','public/index.html','public/app.mjs','public/style.css'];
+  'application-provider.mjs','operator.mjs','operator-tools.mjs','operator-provider.mjs','browser-assets.json','public/index.html','public/app.mjs','public/style.css','monitoring-portfolio.mjs','public/monitoring.mjs','MONITORING_FIELD_MAPPING.md','MONITORING_HANDOVER.md','receiving/monitoring.mjs'];
 export async function inspectGleifSource(directory=fileURLToPath(new URL('.',import.meta.url)),expected) {
   directory=await realpath(resolve(directory));const files=[];
   for(const path of SOURCE_FILES){const absolutePath=join(directory,path),stat=await lstat(absolutePath);

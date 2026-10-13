@@ -61,6 +61,7 @@ TABLES = {
     "case_events": ("id", "case_id", "body"),
     "reviews": ("id", "change_id", "body"),
     "cycle_events": ("id", "body"),
+    "research_intakes": ("id", "body"),
 }
 
 def sha(data: bytes) -> str:
@@ -179,6 +180,7 @@ class Domain:
                 CREATE TABLE IF NOT EXISTS os_case_events(id TEXT PRIMARY KEY,case_id TEXT NOT NULL,body TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS os_reviews(id TEXT PRIMARY KEY,change_id TEXT NOT NULL,body TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS os_cycle_events(id TEXT PRIMARY KEY,body TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS os_research_intakes(id TEXT PRIMARY KEY,body TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS os_alias_lookup ON os_aliases(scope,alias);
                 CREATE INDEX IF NOT EXISTS os_case_events_case ON os_case_events(case_id);
                 CREATE INDEX IF NOT EXISTS os_change_comparison ON os_changes(comparison,entity_id);
@@ -775,7 +777,7 @@ class Domain:
         with self.mutex:
             out = {"schema": SCHEMA, "native": self.ws.state()}
             for table in ("editions", "updates", "comparisons", "statement_sets", "portfolios",
-                          "profiles", "requests", "cases"):
+                          "profiles", "requests", "cases", "research_intakes"):
                 out[table] = [load_json(r[0]) for r in self.db.execute(f"SELECT body FROM os_{table} ORDER BY rowid DESC")]
             return out
 
@@ -785,6 +787,8 @@ class Domain:
         with self.mutex, self.ws.scratch() as temp:
             import review_cycles
             review_cycles.replay(self)
+            import gleif_portfolio
+            gleif_portfolio.verify_all(self)
             state = {"schema": SCHEMA, "tables": {}}
             for table, columns in TABLES.items():
                 if table in ("indexes", "aliases", "statements"):
@@ -851,9 +855,12 @@ class Domain:
                 paths[name] = dest
             state = load_json(paths["state.json"].read_bytes())
             expected_tables = set(TABLES) - {"indexes", "aliases", "statements"}
-            # Earlier complete archives predate cycles; their exact original tables remain valid.
-            if isinstance(state.get("tables"), dict) and set(state["tables"]) == expected_tables - {"cycle_events"}:
-                state["tables"]["cycle_events"] = []
+            # Earlier complete archives predate additive immutable custody collections.
+            if isinstance(state.get("tables"), dict):
+                absent = expected_tables - set(state["tables"])
+                if absent <= {"cycle_events", "research_intakes"}:
+                    for name in absent:
+                        state["tables"][name] = []
             if state.get("schema") != SCHEMA or set(state.get("tables", {})) != expected_tables:
                 raise InputError("Receiving domain state is incomplete")
             for table, rows in state["tables"].items():
@@ -925,6 +932,8 @@ class Domain:
                 # Complete replay occurs inside the domain transaction, before acceptance.
                 import review_cycles
                 review_cycles.replay(self)
+                import gleif_portfolio
+                gleif_portfolio.verify_all(self)
             # The original comparison implementation reconstructs its own closure.
             for row in state["tables"]["comparisons"]:
                 body = load_json(row["body"]); before = self._one("editions", body["before"]); after = self._one("editions", body["after"])

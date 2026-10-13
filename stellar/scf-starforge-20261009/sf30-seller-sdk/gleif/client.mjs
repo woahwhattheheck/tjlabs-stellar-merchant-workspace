@@ -29,6 +29,7 @@ export class GleifClient {
   rows(id,options={}){return this.request('/api/captures/'+encodeURIComponent(id)+'/rows?'+new URLSearchParams(Object.entries(options).map(([k,v])=>[k,String(v)])));}
   capture(id){return this.request('/api/captures/'+encodeURIComponent(id));}
   compare(before,after){return this.request('/api/compare?'+new URLSearchParams({before,after}));}
+  monitoringPreview(input){return this.request('/api/monitoring-preview',{method:'POST',body:input});}
   operation(id){return this.request('/api/operations/'+encodeURIComponent(id));}
   start(request){return this.request('/api/start',{method:'POST',body:request});}
   pause(id){return this.request('/api/pause/'+encodeURIComponent(id),{method:'POST',body:{}});}

@@ -1,6 +1,6 @@
-# Definian migration acceptance workspace
+# Migration Acceptance workspace
 
-An editable migration application for an implementation workstream within Definian's existing delivery team. The application operates original dlt 1.31.0 and DuckDB, retains complete source and native pipeline state, and places business acceptance alongside full typed source/target parity. Definian and its customer keep the client relationship, approved business rules and production decisions.
+An editable migration application for an implementation team's source-to-customer receiving workflow. The application operates original dlt 1.31.0 and DuckDB, retains complete source and native pipeline state, and places business acceptance alongside full typed source/target parity. The actual data owner and customer keep the approved business rules and production decisions.
 
 ## What the application does
 
@@ -10,7 +10,7 @@ The acceptance layer evaluates the complete population. It checks object keys, r
 
 Measured findings are immutable. Acknowledgement records that a finding was read and leaves it unresolved. An accepted exception clears only an explicitly reviewable finding for that exact current report; it cannot clear required keys, native completeness or typed parity. Corrections create new source, pipeline, native verification and report editions. A current accepted selection binds the exact approved plan, completed explicit verify job, complete database, report and decision edition.
 
-The consumer view exposes the retained complete native export selected by that binding. It does not claim to change an external application's connection string. Rollback restores the previous retained selection and its provenance. An imported legacy dlt selection is shown as legacy-unreviewed until Definian acceptance actually establishes the required evidence.
+The consumer view exposes the retained complete native export selected by that binding. It does not claim to change an external application's connection string. Rollback restores the previous retained selection and its provenance. An imported legacy dlt selection is shown as legacy-unreviewed until business acceptance actually establishes the required evidence.
 
 ## Full receiving programmes
 
@@ -18,7 +18,7 @@ The first course uses the unchanged original dlt fruitshop resource functions: 1
 
 The primary browser exercises the actual reviewable finding and one lost acknowledgement through the application's original saved request. The final receiving browser reads the corrected project. Both preserve complete downloads, native typed rows, screenshots, actor boundaries, original request identities and historical handoffs.
 
-The additive Chinook course uses the complete published 1.4.5 reference selected by the original source contributor. Its 11 tables and 15,607 rows retain original generator provenance, native SQLite source, all keys and relationships, every invoice control, exact amount arithmetic and source-local date text. It joins the same maintained application and receiving operation. These are public reference records, not Definian customer data. See the original reference and integration guides for the precise source boundary and execution state.
+The additive Chinook course uses the complete published 1.4.5 reference selected by the original source contributor. Its 11 tables and 15,607 rows retain original generator provenance, native SQLite source, all keys and relationships, every invoice control, exact amount arithmetic and source-local date text. It joins the same maintained application and receiving operation. These are public reference records, not customer data. See the original reference and integration guides for the precise source boundary and execution state.
 
 Both courses retain complete editable application source and an original dlt runtime that can be rebuilt offline on a compatible receiving host. Portable workspace handoffs preserve history, all original native source and target files, acceptance inputs/reports/decisions, named prior handoffs and actual request receipts. Fresh, same, forward and older receiving preserve the selected history; an older package cannot silently replace a newer edition.
 
@@ -64,7 +64,7 @@ Source review, syntax inspection, source-native execution, receiving, customer a
 
 The complete result binds all named files by bytes and SHA-256, including both browser result manifests and every browser download or image, full native observations, complete handoffs and offline runtime receiving. Completion candidates are tied to the selected source edition and adoption history. A reviewed source correction preserves both complete source editions and the original interrupted operation before continuation.
 
-Read OPERATOR.md for every workflow, COMMISSIONING.md for input and owner responsibilities, WORKSHARE.md for the proposed implementation scope, runtime/OPERATING.md for original runtime installation/offline transfer, and reference/MIGRATION_SOURCE_AND_ACCEPTANCE.md plus CHINOOK.md for the original relational course.
+Read OPERATOR.md for every workflow, COMMISSIONING.md for input and owner responsibilities, WORKSHARE.md for reusable technical scope guidance, runtime/OPERATING.md for original runtime installation/offline transfer, and reference/MIGRATION_SOURCE_AND_ACCEPTANCE.md plus CHINOOK.md for the original relational course.
 
 ## Source and licence
 

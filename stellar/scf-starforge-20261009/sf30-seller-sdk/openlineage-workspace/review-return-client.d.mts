@@ -1,4 +1,4 @@
-import { LineageClient } from "./client.mjs";
+import { LineageClient } from "./client.js";
 export interface Recipient { name:string; organisation?:string; reference?:string }
 export interface RecipientRequestInput { reviewId:string; recipient:Recipient; requestedBy:string; instructions?:string }
 export interface ReviewMutation { operationId:string; expectedRevision:number; expectedPreviewSha256:string }

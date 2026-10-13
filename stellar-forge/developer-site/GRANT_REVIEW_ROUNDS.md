@@ -301,6 +301,93 @@ On the exact outgoing installation, open the author’s current complete record 
 At the intended desktop width and a relevant narrow/mobile width, LOOK at and operate the populated comparison, empty and filtered states, loading/error state, action pagination, original-request recovery and history details. Open every outgoing review JSON, original returned file, working package and readable report. Independently receive and continue the full result, preserving later recipient edits and exact replay of the original return. View the actual captured screenshots; repair any clipping, unreadable comparison or broken control within this same operation. Source-model checks alone do not establish native IndexedDB, rendered or customer-ready completion.
 
 
+## Complete offline colleague review
+
+The existing review can now be delivered as one editable HTML file. It contains the exact complete recorded review, the selected original application modules, stylesheet and icon. The colleague can read every retained draft, record attributed decisions and requested changes, keep a complete working JSON, compare revisions, and return the complete review JSON to the author. The author receives that JSON through the existing **Returned reviews** workflow and explicitly adopts or retains each returned action. The same core implements both sides; no separate decision model, review store, server or account is introduced.
+
+### Issue the whole recorded review
+
+Open the intended current round in `grant-review-round.html`. Read the selected original draft and current review history. Name the colleague through the existing **Add a named participant** control if they are absent. That is a normal recorded participant action by the currently selected actor; it is not authentication or a statement that the colleague has already reviewed anything. A completed review must first be explicitly reopened before adding another participant.
+
+Record any intended unfinished decisions, or download the complete working copy before deliberately discarding unrecorded form text. **Download offline reviewer** follows the same recorded-handover rule as the existing complete review JSON. It does not silently promote unfinished notes or revision choices into decisions. A retained pending return must be continued through its original request before another recorded review is issued.
+
+Expand **Send a complete offline reviewer**, explicitly choose the named colleague, and select **Download offline reviewer**. The downloaded filename ends in `-offline-review.html`. The source selection and exact review bytes travel inside that file. All retained original drafts, source descriptions, references, previous decisions, author responses and discussion history are included; use the same sharing judgment as for the full review JSON. No mail, upload, invitation or issuer submission is performed by this control.
+
+The downloaded HTML is a frozen issued copy. Giving the file a different filesystem name does not change the embedded round, participant or request identities. Issuing another copy later deliberately captures the then-current recorded review. Neither issue action changes the author's current selected draft or records a review decision.
+
+### Use the file as the colleague
+
+Open the complete HTML in a current browser that supports ES modules and import maps. Its selected application source is embedded; ordinary review operation needs no server, CDN, installation or network connection. The original source-reference URLs remain ordinary explicit links. The sibling hosted editors and navigation are hidden because those other applications are not bundled into this file.
+
+The first open verifies the complete source selection, imports the original review with the existing codec, and selects the named recipient. Read **Person recording this action** before recording each action. Participant names identify responsibility within the file; they are not an authentication system. The existing controls support review decisions, requested changes with sources, author responses, resolution, revised-draft comparison, complete return receiving and explicit editorial completion/reopening.
+
+The HTML file on disk is not rewritten by browser edits. Save a **complete working copy** JSON to retain unfinished text, active participant, selected screen, original inputs, comparison choices and pending requests. Download a **complete review** JSON to return recorded work. The existing plain review report and exact original-draft downloads remain available. Later **Download offline reviewer** produces an onward HTML from the current recorded round and the same retained application source.
+
+Browser saves use the existing revision-checked draft store. File-viewer or privacy settings may make that storage unavailable. The application first opens its full issued review without depending on a successful browser save. A failed save remains visible; complete review and working downloads retain the in-memory work. If the URL identifies a saved working copy of this same round, reload opens a separate working branch containing those complete saved values. A working URL for a different round is not silently substituted. A newly downloaded file without that URL opens its frozen issued review; use **Open working package** or **Saved reviews** to choose later work explicitly.
+
+When an offline viewer cannot save, opening a new input preserves the current selection first. An unchanged issued review is already retained by the original HTML. If the current selection has later work, download its complete working copy and save that file, then choose the incoming file again. The application compares the exact current working content with that explicit download before replacing it. Any intervening edit requires a fresh complete working download. Receiving a working JSON installs all of its values before attempting another optional browser save; a save failure does not prevent access to the imported work.
+
+Do not assume moving a file between machines transfers browser storage. Transfer the full working JSON when unfinished work matters. Keep the existing original HTML as a readable source, and preserve exported JSON before closing a viewer that reports a storage failure. Two independently opened windows retain their own working branches; author-side reconciliation remains necessary after independent review.
+
+### Receive the recorded return and continue
+
+The colleague downloads the complete review JSON. In the author's original current round, open **Returned reviews**, select that complete returned JSON and read its comparison with the author's later local work. Read full current and returned records where a choice needs detail, record an explicit adopt-or-retain choice for every action and keep reasons for retained actions. The original branch, actors, timestamps and full input bytes remain in history.
+
+The offline package does not confer authority to complete a review, change the source selection or overwrite the author's later decision. Those are the same explicit original actions as in hosted operation. Repeated receipt uses the original retained request/result behavior. Pending original requests and their complete results remain in the working JSON; continue them rather than creating another request after an uncertain write. A third colleague can receive an onward offline HTML or whole review JSON without erasing earlier origins.
+
+### Install and export the complete maintained reader
+
+The original `grant-reviewer` distribution now exports the offline package, complete embedded source bank and source builder under `./grant/review-round/offline-package`, `./grant/review-round/offline-source` and `./grant/review-round/offline-source-builder`. The same selected product retains this full guide and the original review/working models. The builder is maintainer source: it requires an actual Git checkout and Node's `--experimental-vm-modules` option as described below. Receiving an installed package does not manufacture that checkout or run a new build.
+
+Both the checked-in `browser-assets.json` and `registerGrantReviewRoundAssets` register `/grant-review-offline-package.mjs`, `/grant-review-offline-source.mjs` and `/grant-review-round-guide.md`. Keep these exact routes with `/grant-review-round.html`, its workspace, working-copy/core modules and every declared dependency. The application source index records the offline schemas and these original routes alongside its existing application/review identities. A source bank is a complete frozen selection; it is not automatically regenerated or silently advanced by installation.
+
+Serve the installed source through the existing command:
+
+```sh
+starforge grant-application serve --port 0
+```
+
+Use the returned origin and open `/grant-review-round.html`. The original source server resolves the same manifest used by the distribution builder. Read the full selected guide at `/grant-review-round-guide.md`; the package module and complete bank must be served with their declared JavaScript content type. Opening the original review page must reach its actual controls before issuance; an HTTP response alone does not establish that the application loaded.
+
+Export that same complete reader with its existing operation:
+
+```sh
+starforge grant-application export --out /ABS/NEW-STATIC-READER
+```
+
+The destination must be new. The existing exporter streams every declared original asset, including the complete offline bank and guide, and retains each route, source path, byte length and SHA-256 in `starforge-static-reader.json`. Publish or receive the whole exported directory with its recorded route/content-type mapping. Do not copy only the review HTML or rewrite its dependency URLs. Open `grant-review-round.html` through the original receiving static host; a multi-file reader is distinct from the self-contained HTML issued by **Download offline reviewer**.
+
+Within the same existing receiving course, open the installed page, retain the full recorded review and issue the standalone colleague file. Then open the exported static reader at its receiving origin, import the complete recorded or working JSON explicitly, and issue another complete colleague file from that selected bank. Operate and LOOK at both pages at the intended wide and narrow widths, open the downloaded guide, working JSON, recorded JSON, report, original draft and each standalone HTML, and cold-reopen the colleague return through the author's original comparison. Keep the two browser origins' local records separate; transferring a directory does not transfer IndexedDB. Use the original pending request and complete working recovery at either origin. Retain the actual source/route manifest and operated outcomes with the original author/recipient case; this source integration alone is not a native installation or rendered result.
+
+### Maintain the selected application source
+
+The generated `dist/grant-review-offline-source.mjs` is the complete review source bank. Its member records retain full repo-relative path, kind, original content, byte length, SHA-256 and exact dependency bindings. The reusable `dist/grant-review-offline-package.mjs` validates that bank and composes the single HTML with an inert complete input envelope and embedded module map. Import URLs are rewritten only for delivery; every unmodified original source body remains in the bank. The generated bank is excluded from its own graph to avoid recursive self-inclusion. An offline onward export reads the same embedded bank instead of fetching another edition.
+
+Regenerate the bank after changing any selected review module or asset using the complete maintained source builder:
+
+```sh
+node --experimental-vm-modules stellar-forge/developer-site/scripts/build-grant-review-offline-source.mjs \
+  --root /ABS/REPOSITORY --source-revision ACTUAL_CHECKOUT_HEAD \
+  --out /ABS/REPOSITORY/stellar-forge/developer-site/dist/grant-review-offline-source.mjs
+```
+
+When replacing a different existing generated bank, supply its actual SHA-256 through `--replace-existing-sha256`. The optional `--expected` argument selects a complete prior source-bank JSON whose file identities must match. The command parses and links the selected modules without executing the application; it is a source builder, not a browser run. Use its complete generated output. Do not append a changed module to an old bank or relabel authored postimages as an earlier Git revision. The build records the selected source basis and complete content identities; the later merged Git source is the publication authority. The whole generated bank is committed with its source builder and UI change, preserving one reproducible edition.
+
+An HTML containing embedded executable source is a complete application file, like any other offline software. Content hashes bind the included files to the declared selection; they do not authenticate the sender or make modified arbitrary code trustworthy. Continue using the original authorized source and normal exchange channel.
+
+### Complete the existing receiving course
+
+This is a following source edition within the existing SCF review operation, not a second controller. Retain the original author round, separate colleague branch, native/browser records and original submission history. Operate this selected source in the existing equipped browser:
+
+1. Open the original author round, add or select the actual named reviewer, and download the complete offline HTML. Keep the author's current round open in its original profile.
+2. Open that exact file in an independent browser profile with network unavailable. LOOK at the full application at desktop and 390px. Read the original draft and previous history, exercise the named participant, record a substantive requested change and decision, and retain one unfinished note in a complete working JSON.
+3. Download complete review JSON, working JSON, the original draft and report; open every resulting file. Open the working JSON in a fresh offline window and confirm the actual unfinished note and original context remain. Reload the saved same-round working URL where browser storage is available. Also operate the visible storage-failure recovery without substituting an empty round.
+4. In the original author profile, record later author work, receive the colleague's complete returned JSON, read the full current/returned records and make explicit choices through the original request. Reopen the resulting full review and retain the exact original return bytes.
+5. Export an onward offline HTML for another named colleague, reopen it independently without a network and inspect the complete prior origins, retained original drafts and latest accepted work. Download its original review again and reopen through the existing codec.
+6. LOOK at all actual captured screens and downloaded outputs, fix concrete layout or control defects in this same source, and return the complete selected source marker and actual operated files through the original SCF receiving thread.
+
+Source compilation, hash checks and JavaScript function exercises are distinct from this actual browser/file delivery. The present source work does not claim a completed browser/render course. The standing instruction below governs the actual outgoing app and every attachment.
+
 ## Rendered product inspection — owner instruction, 2026-10-13
 
 This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.

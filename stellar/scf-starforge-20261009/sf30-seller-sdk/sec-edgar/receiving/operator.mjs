@@ -16,6 +16,25 @@ import { nativeArchive } from './archive.mjs';
 
 const VERSION = /^\d{12}\.json$/;
 const requestName = 'operator-export-request.json';
+
+async function verifyMember(path, file) {
+  if (file.path.startsWith('workspace/returned-workspaces/')) {
+    const { verifyReturnedFile } = await import('../returned-workspace.mjs');
+    return verifyReturnedFile(path, file);
+  }
+  return pinnedFile(path, file);
+}
+async function copyMember(original, target, file) {
+  if (file.path.startsWith('workspace/returned-workspaces/')) {
+    const { copyReturnedFile } = await import('../returned-workspace.mjs');
+    return copyReturnedFile(original, target, file);
+  }
+  return exactFile(target, (await pinnedFile(original, file)).bytes);
+}
+async function linkMember(original, target, file) {
+  if (file.path.startsWith('workspace/returned-workspaces/')) return copyMember(original, target, file);
+  return linkExactOriginal(original, target, file);
+}
 async function existingDirectory(value) {
   const path = absolute(value), info = await lstat(path);
   need(info.isDirectory() && !info.isSymbolicLink(), 'EDGAR_PORTABLE_DIRECTORY_REQUIRED');
@@ -97,6 +116,12 @@ export async function reviewEdgarOperator({ directory, storeDirectory, expectedR
     need(same(await versionsAt(directory), names) &&
       same((await source.listEditions()).map(row => row.id), selectedEditions.map(row => row.id)),
     'EDGAR_PORTABLE_REVIEW_CHANGED', 'Saved work changed during the review. Review the current complete workspace.');
+    const { collectReturnedWorkspaceFiles } = await import('../returned-workspace.mjs');
+    const returned = await collectReturnedWorkspaceFiles({ directory, storeDirectory });
+    for (const file of returned.entries) entries.set(file.path, file);
+    need(same(await versionsAt(directory), names) &&
+      same((await source.listEditions()).map(row => row.id), selectedEditions.map(row => row.id)),
+      'EDGAR_PORTABLE_REVIEW_CHANGED', 'Saved work changed while retaining returned branches. Review the complete current workspace.');
     const files = [...entries.values()].sort((a, b) => a.path.localeCompare(b.path));
     const manifest = validateOperatorManifest({
       schema: OPERATOR_ARCHIVE_SCHEMA,
@@ -107,6 +132,7 @@ export async function reviewEdgarOperator({ directory, storeDirectory, expectedR
         revisionSha256: entries.get('workspace/versions/' + revisionName(current.revision)).sha256,
       },
       editions: editions.sort((a, b) => a.id.localeCompare(b.id)),
+      ...(returned.returnedWorkspaces.length ? { returnedWorkspaces: returned.returnedWorkspaces } : {}),
       files: files.map(({ original, ...file }) => file),
     });
     return { manifest, entries: files, summary: portableSummary(manifest) };
@@ -150,8 +176,8 @@ export async function exportEdgarOperator(input = {}) {
   const source = await realDirectory(join(out, 'source'), { create: true });
   for (const file of manifest.files) {
     const target = selectedPath(source, file.path);
-    if (await exists(target)) await pinnedFile(target, file);
-    else await exactFile(target, (await pinnedFile(sourcePath(paths, file), file)).bytes);
+    if (await exists(target)) await verifyMember(target, file);
+    else await copyMember(sourcePath(paths, file), target, file);
   }
   await exactFile(join(out, 'workspace-manifest.json'), encoded(manifest));
   const archivePath = join(out, 'sec-edgar-workspace.zip');
@@ -188,7 +214,7 @@ async function verifyIncoming(stage, manifest) {
 async function verifyExistingPrefix(destination, manifest) {
   for (const file of manifest.files) {
     const path = selectedPath(destination, file.path);
-    if (await exists(path)) await pinnedFile(path, file);
+    if (await exists(path)) await verifyMember(path, file);
   }
   const original = join(destination, 'workspace', 'versions', revisionName(0));
   need(await exists(original), 'EDGAR_PORTABLE_DESTINATION_NOT_SELECTED',
@@ -217,6 +243,8 @@ async function verifySelectedPrefix(destination, manifest, current) {
         file.path === 'workspace/versions/' + revisionName(selectedState.revision)).sha256,
     },
     editions: current.manifest.editions.filter(edition => selectedEditions.has(edition.id)),
+    ...(manifest.returnedWorkspaces ? { returnedWorkspaces: current.manifest.returnedWorkspaces?.filter(row =>
+      manifest.returnedWorkspaces.some(selected => selected.id === row.id)) ?? [] } : {}),
     files: current.manifest.files.filter(file => selectedFiles.has(file.path)),
   };
   need(same(actual, manifest), 'EDGAR_PORTABLE_RECEIVED_SELECTION_CHANGED');
@@ -256,7 +284,7 @@ export async function receiveEdgarOperator(input = {}) {
     for (const file of manifest.files) {
       const original = selectedPath(destination, file.path);
       if (await exists(original))
-        await linkExactOriginal(original, selectedPath(stage, file.path), file);
+        await linkMember(original, selectedPath(stage, file.path), file);
     }
   }
   const extracted = await nativeArchive('extract', { archive: selected.archivePath, destination: stage }, input);
@@ -278,15 +306,15 @@ export async function receiveEdgarOperator(input = {}) {
     await verifyExistingPrefix(destination, manifest);
     for (const file of manifest.files) {
       const target = selectedPath(destination, file.path);
-      if (await exists(target)) await pinnedFile(target, file);
-      else await linkExactOriginal(selectedPath(stage, file.path), target, file);
+      if (await exists(target)) await verifyMember(target, file);
+      else await linkMember(selectedPath(stage, file.path), target, file);
     }
     reused = false;
   }
   const current = await reviewEdgarOperator({
     directory: join(destination, 'workspace'), storeDirectory: join(destination, 'source-store'),
   });
-  for (const file of manifest.files) await pinnedFile(selectedPath(destination, file.path), file);
+  for (const file of manifest.files) await verifyMember(selectedPath(destination, file.path), file);
   return receivedResult(destination, selected, current, reused);
 }
 

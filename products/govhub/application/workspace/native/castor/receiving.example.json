@@ -1,0 +1,191 @@
+{
+  "schema": "govhub-castor-native-receiving/v1",
+  "operation_id": "SELECT-ORIGINAL-CASTOR-COURSE",
+  "work_directory": "/PRIVATE/SELECT_ORIGINAL_RECEIVING",
+  "workspace": {
+    "workspace": "/PRIVATE/SELECT_EXISTING_GOVHUB_WORKSPACE",
+    "source_root": "/PRIVATE/SELECT_COMPLETE_ORIGINAL_INPUTS",
+    "assessment_core": "/ABS/GOVHUB/workspace/vendor/assessment-core",
+    "username": "SELECT_EXISTING_STAFF",
+    "password_env": "SELECT_EXISTING_PASSWORD_ENV"
+  },
+  "authorization_reference": "SELECT_ORIGINAL_OPERATING_AUTHORITY",
+  "steps": [
+    {
+      "id": "01-source",
+      "type": "CAPTURE",
+      "native_action": "castor-capture",
+      "environment_id": "SELECT_EXISTING_LOCAL_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "castor",
+        "environment_id": "SELECT_ORIGINAL_LOGICAL_NONPRODUCTION_ENVIRONMENT",
+        "site_root": "/ABS/SELECT_ORIGINAL_APPLICATION",
+        "castor_path": "/ABS/SELECT_ORIGINAL_CASTOR",
+        "php_path": "",
+        "git_path": "/ABS/SELECT_ORIGINAL_GIT",
+        "docker_path": "/ABS/SELECT_ORIGINAL_DOCKER",
+        "castor_file": "SELECT_ORIGINAL_RELATIVE_CASTOR_FILE",
+        "castor_context": "SELECT_ORIGINAL_CONTEXT",
+        "docker_context": "SELECT_ORIGINAL_DOCKER_CONTEXT",
+        "compose_project": "SELECT_ORIGINAL_COMPOSE_PROJECT",
+        "compose_files_json": "[\"SELECT_ORIGINAL_COMPOSE_FILE\"]",
+        "release_files_json": "[\"SELECT_ORIGINAL_RELEASE_FILE\"]",
+        "source_images_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 4294967296
+      }
+    },
+    {
+      "id": "02-backup",
+      "type": "BACKUP_CREATE",
+      "native_action": "castor-backup",
+      "environment_id": "SELECT_EXISTING_LOCAL_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "castor",
+        "environment_id": "SELECT_ORIGINAL_LOGICAL_NONPRODUCTION_ENVIRONMENT",
+        "site_root": "/ABS/SELECT_ORIGINAL_APPLICATION",
+        "castor_path": "/ABS/SELECT_ORIGINAL_CASTOR",
+        "php_path": "",
+        "git_path": "/ABS/SELECT_ORIGINAL_GIT",
+        "docker_path": "/ABS/SELECT_ORIGINAL_DOCKER",
+        "castor_file": "SELECT_ORIGINAL_RELATIVE_CASTOR_FILE",
+        "castor_context": "SELECT_ORIGINAL_CONTEXT",
+        "docker_context": "SELECT_ORIGINAL_DOCKER_CONTEXT",
+        "compose_project": "SELECT_ORIGINAL_COMPOSE_PROJECT",
+        "compose_files_json": "[\"SELECT_ORIGINAL_COMPOSE_FILE\"]",
+        "release_files_json": "[\"SELECT_ORIGINAL_RELEASE_FILE\"]",
+        "source_images_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 4294967296,
+        "task_name": "SELECT_EXISTING_BACKUP_TASK",
+        "task_args_json": "[]",
+        "verify_task_name": "SELECT_EXISTING_BACKUP_VERIFICATION_TASK",
+        "verify_args_json": "[]",
+        "verify_source": "stdout",
+        "verification_checks_json": "[{\"pointer\":\"/SELECT_ACTUAL_REPORT_FIELD\",\"equals\":\"SELECT_EXPECTED_NATIVE_VALUE\"}]",
+        "task_outputs_json": "[{\"path\":\"SELECT_ACTUAL_SQL_OUTPUT\",\"role\":\"database\",\"kind\":\"file\"},{\"path\":\"SELECT_ACTUAL_FILES_DIRECTORY\",\"role\":\"files\",\"kind\":\"directory\"}]"
+      },
+      "profile_sources": [
+        {
+          "field": "source_revision",
+          "step": "01-source",
+          "pointer": "/native_result/observations/native_inventory/head_commit"
+        }
+      ]
+    },
+    {
+      "id": "03-preview",
+      "type": "PREVIEW",
+      "native_action": "castor-preview",
+      "environment_id": "SELECT_EXISTING_LOCAL_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "castor",
+        "environment_id": "SELECT_ORIGINAL_LOGICAL_NONPRODUCTION_ENVIRONMENT",
+        "site_root": "/ABS/SELECT_ORIGINAL_APPLICATION",
+        "castor_path": "/ABS/SELECT_ORIGINAL_CASTOR",
+        "php_path": "",
+        "git_path": "/ABS/SELECT_ORIGINAL_GIT",
+        "docker_path": "/ABS/SELECT_ORIGINAL_DOCKER",
+        "castor_file": "SELECT_ORIGINAL_RELATIVE_CASTOR_FILE",
+        "castor_context": "SELECT_ORIGINAL_CONTEXT",
+        "docker_context": "SELECT_ORIGINAL_DOCKER_CONTEXT",
+        "compose_project": "SELECT_ORIGINAL_COMPOSE_PROJECT",
+        "compose_files_json": "[\"SELECT_ORIGINAL_COMPOSE_FILE\"]",
+        "release_files_json": "[\"SELECT_ORIGINAL_RELEASE_FILE\"]",
+        "source_images_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 4294967296,
+        "task_name": "SELECT_EXISTING_NONPRODUCTION_TASK",
+        "task_args_json": "[]",
+        "verify_task_name": "SELECT_EXISTING_APPLICATION_VERIFICATION_TASK",
+        "verify_args_json": "[]",
+        "verify_source": "stdout",
+        "verification_checks_json": "[{\"pointer\":\"/SELECT_ACTUAL_REPORT_FIELD\",\"equals\":\"SELECT_EXPECTED_NATIVE_VALUE\"}]",
+        "task_outputs_json": "[]"
+      },
+      "profile_sources": [
+        {
+          "field": "source_revision",
+          "step": "01-source",
+          "pointer": "/native_result/observations/native_inventory/head_commit"
+        }
+      ]
+    },
+    {
+      "id": "04-restore",
+      "type": "REHEARSAL",
+      "native_action": "castor-restore",
+      "environment_id": "SELECT_EXISTING_LOCAL_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "castor",
+        "environment_id": "SELECT_ORIGINAL_LOGICAL_NONPRODUCTION_ENVIRONMENT",
+        "site_root": "/ABS/SELECT_ORIGINAL_APPLICATION",
+        "castor_path": "/ABS/SELECT_ORIGINAL_CASTOR",
+        "php_path": "",
+        "git_path": "/ABS/SELECT_ORIGINAL_GIT",
+        "docker_path": "/ABS/SELECT_ORIGINAL_DOCKER",
+        "castor_file": "SELECT_ORIGINAL_RELATIVE_CASTOR_FILE",
+        "castor_context": "SELECT_ORIGINAL_CONTEXT",
+        "docker_context": "SELECT_ORIGINAL_DOCKER_CONTEXT",
+        "compose_project": "SELECT_ORIGINAL_COMPOSE_PROJECT",
+        "compose_files_json": "[\"SELECT_ORIGINAL_COMPOSE_FILE\"]",
+        "release_files_json": "[\"SELECT_ORIGINAL_RELEASE_FILE\"]",
+        "source_images_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 4294967296,
+        "task_name": "SELECT_EXISTING_NONPRODUCTION_RESTORE_TASK",
+        "task_args_json": "[\"SELECT_ORIGINAL_BACKUP_ARGUMENTS\"]",
+        "verify_task_name": "SELECT_EXISTING_RESTORE_VERIFICATION_TASK",
+        "verify_args_json": "[]",
+        "verify_source": "stdout",
+        "verification_checks_json": "[{\"pointer\":\"/SELECT_ACTUAL_REPORT_FIELD\",\"equals\":\"SELECT_EXPECTED_NATIVE_VALUE\"}]",
+        "task_outputs_json": "[]"
+      },
+      "plan_id": "SELECT_REVIEWED_ORIGINAL_PLAN",
+      "expected_plan_revision": "SELECT_CURRENT_REVIEWED_REVISION",
+      "backup_sources": [
+        {
+          "step": "02-backup",
+          "path": "SELECT_ACTUAL_SQL_OUTPUT",
+          "target_path": "SELECT_EXISTING_RECEIVED_SQL_INPUT"
+        },
+        {
+          "step": "02-backup",
+          "path": "SELECT_ACTUAL_FILES_DIRECTORY",
+          "target_path": "SELECT_EXISTING_RECEIVED_FILES_DIRECTORY"
+        }
+      ],
+      "profile_sources": [
+        {
+          "field": "source_revision",
+          "step": "01-source",
+          "pointer": "/native_result/observations/native_inventory/head_commit"
+        }
+      ]
+    },
+    {
+      "id": "05-following-source",
+      "type": "CAPTURE",
+      "native_action": "castor-capture",
+      "environment_id": "SELECT_EXISTING_LOCAL_ENVIRONMENT_RECORD",
+      "profile": {
+        "source_kind": "castor",
+        "environment_id": "SELECT_ORIGINAL_LOGICAL_NONPRODUCTION_ENVIRONMENT",
+        "site_root": "/ABS/SELECT_ORIGINAL_APPLICATION",
+        "castor_path": "/ABS/SELECT_ORIGINAL_CASTOR",
+        "php_path": "",
+        "git_path": "/ABS/SELECT_ORIGINAL_GIT",
+        "docker_path": "/ABS/SELECT_ORIGINAL_DOCKER",
+        "castor_file": "SELECT_ORIGINAL_RELATIVE_CASTOR_FILE",
+        "castor_context": "SELECT_ORIGINAL_CONTEXT",
+        "docker_context": "SELECT_ORIGINAL_DOCKER_CONTEXT",
+        "compose_project": "SELECT_ORIGINAL_COMPOSE_PROJECT",
+        "compose_files_json": "[\"SELECT_ORIGINAL_COMPOSE_FILE\"]",
+        "release_files_json": "[\"SELECT_ORIGINAL_RELEASE_FILE\"]",
+        "source_images_json": "[]",
+        "timeout_seconds": 3600,
+        "max_artifact_bytes": 4294967296
+      }
+    }
+  ]
+}

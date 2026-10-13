@@ -38,6 +38,7 @@ Provider recovery requires the destination host's explicitly selected current ru
 - Skpr: skpr_receive.py and SKPR.md retain actual native environment, source and complete restic receiving.
 - Tugboat: tugboat_receive.py and TUGBOAT_RECEIVING.md retain original project/repository/preview and asynchronous job identity.
 - Upsun: upsun_receive.py and UPSUN_RECEIVING.md carry the actual selected course, complete source archive, Git/index/worktree reopen, whole project and cold application reopen.
+- Castor: castor_receive.py and CASTOR_RECEIVING.md carry selected original task/verification results, full Git/index/dirty source and image archives, hash-bound backup inputs, independent source reconstruction, a frozen original operation cohort, complete private project and cold reopen. native/castor/browser_receive.cjs opens that same saved project, retains actual wide/narrow images, checks real controls and complete downloads, and requires visual inspection of the returned images.
 - Content: content_consolidation/NATIVE_SITE.md and content_packages/native_receiving/OPERATE.md describe complete native graph receiving, correction, deliberate isolated interruption and original import continuation.
 - Tome: static_releases/TOME_RECEIVING.md and PORTABLE_RECEIVING.md cover complete native generation, publication, rollback, browser receiving and full local private handover.
 - DNN: dnn_maintenance/RECEIVING.md covers the native Windows/IIS/SQL host and full private project restoration; public source does not discover an unrelated commercial case.

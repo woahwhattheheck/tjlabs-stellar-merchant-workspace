@@ -50,6 +50,7 @@ export async function startGleifServer({workspace,port=0,sourceIdentity,connecti
             'content-disposition':'attachment; filename="'+match[1]+'.bin"'});res.end(data);return;
         }
         if(req.method==='POST'&&path==='/api/package-file'){await body(req);send(res,200,await workspace.packageFile());return;}
+        if(req.method==='POST'&&path==='/api/monitoring-preview'){send(res,200,await workspace.monitoringPreview(await body(req)));return;}
         if(req.method==='POST'&&path==='/api/start'){send(res,202,await workspace.start(await body(req)));return;}
         if(req.method==='POST'&&(match=path.match(/^\/api\/pause\/([A-Za-z0-9._-]+)$/))){await body(req);send(res,200,await workspace.pause(match[1]));return;}
         need(false,'GLEIF_ROUTE','Choose an available project operation.',404);

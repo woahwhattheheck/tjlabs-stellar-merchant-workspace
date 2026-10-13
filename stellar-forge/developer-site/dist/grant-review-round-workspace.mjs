@@ -7,7 +7,11 @@ import { REVIEW_SCHEMA, REVIEW_MAX_BYTES, createReviewRound, readSubmissionExpor
 
 import { WORKING_SCHEMA, WORKING_MAX_BYTES, newWorkingCopy, saveWorkingCopy, loadWorkingCopy,
   listWorkingCopies, forkWorkingCopy, exportWorkingCopy, importWorkingCopy } from './grant-review-working-copy.mjs';
+import { buildOfflineReviewer, validateOfflineSource } from './grant-review-offline-package.mjs';
 const $ = id => document.getElementById(id);
+const offlineInput=$('review-offline-input');
+let offlineSource=null,offlineIssuedRound=null,lastWorkingDownloadSha=null;
+const offlineMode=!!offlineInput;
 const node = (tag, value, cls) => { const item=document.createElement(tag); if(value!==undefined)item.textContent=String(value); if(cls)item.className=cls; return item; };
 const uid = () => crypto.randomUUID();
 const keyOf = target => target.kind+':'+target.id;
@@ -80,7 +84,7 @@ async function flushWorking(){
 }
 function beginSelection(){
   clearTimeout(workingTimer);workingBase=newWorkingCopy();workingRevision=0;workingGeneration=0;storedGeneration=0;workingError=null;
-  returnedReview=null;returnPreview=null;
+  returnedReview=null;returnPreview=null;lastWorkingDownloadSha=null;
   formDrafts.clear();formContexts.clear();carryChoices.clear();newFields={newTitle:'',newPerson:'',newFormat:'plain',newParticipant:''};
   $('review-new-participant').value='';
 }
@@ -159,7 +163,7 @@ function download(body,name,type='application/json'){
 function metadata(){
   const workspace=$('review-workspace');workspace.dataset.reviewId=round?.id||'';workspace.dataset.reviewRecordId=savedId||'';workspace.dataset.reviewRevision=String(view?.revision??0);workspace.dataset.reviewSaveRevision=String(savedRevision);
   $('review-save-state').textContent=round?(savedId?'Browser revision '+savedRevision:'Unsaved browser copy')+(dirty?' · complete review not yet saved':'')+(formDrafts.size?' · unrecorded form text':''):'Open a prepared submission to begin.';
-  $('review-export').disabled=!round;$('review-report').disabled=!round;$('review-draft-export').disabled=!round;$('review-save-copy').disabled=!round;
+  $('review-export').disabled=!round;$('review-offline-download').disabled=!round;$('review-offline-recipient').disabled=!round;$('review-report').disabled=!round;$('review-draft-export').disabled=!round;$('review-save-copy').disabled=!round;
   $('review-add-person').disabled=!round||view?.status==='COMPLETE';$('review-finish').disabled=!round;
 }
 function textInput(label,value,{area=false,type='text',placeholder='',readonly=false,id=null}={}){
@@ -202,7 +206,19 @@ function guardUnrecorded(){
   if(formDrafts.size||carryChoices.size)throw new Error('Record the pending decision or response, or use Discard unrecorded forms before opening another review. Download the complete working package to preserve unfinished text, or finish/discard these forms before a recorded-review handover.');
 }
 async function preserveWorking(){
-  await flushWorking();if(!round||!dirty)return;
+  try{await flushWorking();}catch(error){
+    if(!offlineMode)throw error;
+    readStartFields();
+    const unchangedIssued=round===offlineIssuedRound&&!formDrafts.size&&!carryChoices.size&&!incoming&&!returnedReview&&!initialCapture&&!newFields.newParticipant;
+    if(!unchangedIssued){
+      const current=JSON.parse(await exportWorkingCopy(workingSnapshot()));
+      if(current.sha256!==lastWorkingDownloadSha)throw new Error('Browser storage is unavailable. Download the complete current working copy, save that file, then reopen your selected input. Your current work is still open.');
+    }
+    // The original issued HTML, or the exact explicitly downloaded complete
+    // working file, preserves this selection before the user opens another.
+    return;
+  }
+  if(!round||!dirty)return;
   try{const saved=await saveDraft({id:savedId,revision:savedRevision,input:round});savedId=saved.id;savedRevision=saved.revision;dirty=false;}
   catch(error){if(error.name!=='DraftConflictError')throw error;const saved=await saveDraft({revision:0,input:round});savedId=saved.id;savedRevision=saved.revision;dirty=false;}
 }
@@ -233,8 +249,8 @@ async function openFile(file){
   const purpose=filePurpose,text=await readFile(file);
   if(purpose==='return')return openReturnedReview(text,file.name);
   if(purpose==='working'){
-    const selected=await importWorkingCopy(text);await flushWorking();
-    await installWorking(await forkWorkingCopy(selected));
+    const selected=await importWorkingCopy(text);await preserveWorking();
+    await installWorking(await forkWorkingCopy(selected),{persist:!offlineMode});
     status('Received the complete working package into a separate copy. Original recorded actions and unfinished form text retain their distinct meanings.');return;
   }
   if(purpose==='round'){
@@ -281,7 +297,7 @@ async function renderStart(){
     card.append(title.wrap,person.wrap,format.wrap,button('Start this review',createFromCapture,'review-primary'));root.append(card);
   }
   const row=node('div',undefined,'review-row');row.append(button('Open full submission draft',()=>pickFile('start')),button('Open complete review JSON',()=>pickFile('round')),
-    link('Prepare the submission','./grant-submission.html'));root.append(row,node('p','Use Download full draft in the existing submission editor, or select its saved browser record below. The review retains the whole original export.','review-muted'));
+    ...(offlineMode?[]:[link('Prepare the submission','./grant-submission.html')]));root.append(row,node('p',offlineMode?'Open a complete draft or review JSON saved by the author. The complete original draft stays in this review; the submission editor is part of the original hosted workspace.':'Use Download full draft in the existing submission editor, or select its saved browser record below. The review retains the whole original export.','review-muted'));
   const records=await listDrafts().catch(error=>{root.append(node('p',error.message,'review-error'));return[];});
   const submissions=records.filter(x=>x.name?.startsWith('SCF submission — '));
   if(submissions.length)root.append(node('h3','Original saved submissions'));
@@ -300,6 +316,10 @@ function renderNavigation(){
   const actor=$('review-person');actor.replaceChildren();
   for(const p of view?.participants||[]){const item=node('option',p.label);item.value=p.id;actor.append(item);}
   if(view&&!view.participants.some(x=>x.id===actorId))actorId=view.participants[0].id;actor.value=actorId||'';actor.disabled=!view;
+  const recipient=$('review-offline-recipient'),previous=recipient.value;recipient.replaceChildren();
+  const prompt=node('option','Choose the named colleague');prompt.value='';recipient.append(prompt);
+  for(const p of view?.participants||[]){const item=node('option',p.label);item.value=p.id;recipient.append(item);}
+  recipient.value=view?.participants.some(p=>p.id===previous)?previous:'';
   const targetNav=$('review-targets');targetNav.replaceChildren();
   for(const row of view?.targets||[]){
     const count=(view.isCurrent?view.decisions:view.decisionsHistory.filter(x=>x.editionId===view.viewedEdition)).filter(x=>keyOf(x.target)===row.key).length;
@@ -728,6 +748,18 @@ $('review-export').addEventListener('click',()=>work(async()=>{
   if(!round)throw new Error('Open a review first.');guardUnrecorded();
   download(await exportReviewRound(round),safeName(round.title)+'-complete-review.json');status('Downloaded every received original draft, participant, decision, author reply and review action.');
 }));
+$('review-offline-download').addEventListener('click',()=>work(async()=>{
+  if(!round)throw new Error('Open a review first.');guardUnrecorded();
+  if(returnedReview?.pending)throw new Error('Continue the original pending returned-review request before issuing another recorded review. The complete working download retains that request.');
+  const recipientId=$('review-offline-recipient').value;
+  if(!view.participants.some(p=>p.id===recipientId))throw new Error('Choose the named colleague who will review this copy. Add them through the existing Add a named participant control if needed.');
+  const reviewText=await exportReviewRound(round);
+  const source=offlineSource||((await import('./grant-review-offline-source.mjs')).default);
+  await validateOfflineSource(source);
+  const result=await buildOfflineReviewer({reviewText,title:round.title,recipientId,source});
+  download(result.html,safeName(round.title)+'-offline-review.html','text/html;charset=utf-8');
+  status('Downloaded the complete offline reviewer for '+view.participants.find(p=>p.id===recipientId).label+'. It contains all recorded review history and selected application source. Send its complete returned review JSON back to the author for explicit comparison.');
+}));
 $('review-report').addEventListener('click',()=>work(async()=>{
   if(!round)throw new Error('Open a review first.');guardUnrecorded();
   const report=await reviewReport(round);download(report,safeName(round.title)+'-review-report.md','text/markdown;charset=utf-8');status('Downloaded the complete selected application text and current review report. The full review JSON retains its whole history.');
@@ -744,7 +776,8 @@ $('review-discard-forms').addEventListener('click',()=>work(async()=>{formDrafts
 $('review-finish').addEventListener('click',()=>work(async()=>{screen='finish';viewedEdition=null;await refreshView();await render();}));
 window.addEventListener('beforeunload',event=>{if(isDirty()){event.preventDefault();event.returnValue='';}});
 $('review-working-download').addEventListener('click',()=>work(async()=>{
-  const value=workingSnapshot();download(await exportWorkingCopy(value),safeName(value.label)+'-working-copy.json');
+  const value=workingSnapshot(),serialized=await exportWorkingCopy(value);download(serialized,safeName(value.label)+'-working-copy.json');
+  lastWorkingDownloadSha=JSON.parse(serialized).sha256;
   status('Downloaded the complete working copy, including invalid unfinished text and every selected original draft. No review decision was invented.');
 }));
 $('review-working-open').addEventListener('click',()=>pickFile('working'));
@@ -758,6 +791,41 @@ $('review-working-latest').addEventListener('click',()=>work(async()=>{
 document.addEventListener('input',event=>{if(event.target.closest('#review-workspace'))scheduleWorking();});
 document.addEventListener('change',event=>{if(event.target.closest('#review-workspace')&&event.target.id!=='review-file')scheduleWorking();});
 work(async()=>{
+  if(offlineMode){
+    // Import the original recorded review before consulting browser storage. A
+    // file viewer with unavailable IndexedDB must still expose the whole input.
+    const envelope=JSON.parse(offlineInput.textContent);
+    if(envelope?.schema!=='stellar-forge.review-offline/1'||typeof envelope.reviewText!=='string'||typeof envelope.recipientId!=='string')throw new Error('This offline reviewer has an invalid complete input envelope.');
+    await validateOfflineSource(envelope.source);
+    const selected=await importReviewRound(envelope.reviewText),selectedView=await reviewRoundView(selected);
+    if(!selectedView.participants.some(p=>p.id===envelope.recipientId))throw new Error('The named offline recipient is not retained in this original review.');
+    offlineSource=envelope.source;workingReady=true;beginSelection();
+    round=selected;offlineIssuedRound=selected;viewedEdition=null;savedId=null;savedRevision=0;dirty=true;incoming=comparison=null;
+    actorId=envelope.recipientId;screen='targets';selectedTarget='application:application';
+    await refreshView();await render();
+    const context=$('review-offline-context');context.hidden=false;
+    context.textContent='Offline copy for '+view.participants.find(p=>p.id===actorId).label+'. The downloaded HTML retains its issued review. Use complete working-copy downloads for unfinished work and complete review JSON for returning recorded actions. Browser saves depend on this file viewer; external source links open only when selected.';
+    for(const a of document.querySelectorAll('[data-review-online-only]'))a.hidden=true;
+    const header=$('review-site-navigation');if(header)header.hidden=true;
+    const brand=$('review-brand');if(brand)brand.removeAttribute('href');
+    const workingId=new URL(location.href).searchParams.get('working');
+    if(workingId){
+      try{
+        const saved=await loadWorkingCopy(workingId);
+        if(saved?.input?.round?.id!==selected.id)throw new Error('The URL working copy belongs to a different review. The complete issued review remains open; choose the intended working JSON explicitly.');
+        const resumed=await forkWorkingCopy(saved.input);
+        // Install all retained values before attempting another browser save.
+        // If that save fails, the exact resumed working JSON is downloadable.
+        await installWorking(resumed,{persist:false});
+        status('Recovered this review’s complete saved working copy in a separate window. The issued offline HTML remains unchanged; download current working JSON or complete recorded review JSON before transferring it.');
+      }catch(error){
+        fail(error);status('The complete issued review remains open. Open a retained working JSON or choose a saved working copy to continue later work.');
+      }
+    }else{
+      status('Opened the complete original review for '+view.participants.find(p=>p.id===actorId).label+'. Record your review, download it, then return that JSON to the author. Names identify responsibility; they do not authenticate identity.');
+    }
+    return;
+  }
   const parameters=new URL(location.href).searchParams,workingId=parameters.get('working');
   if(workingId){
     const record=await loadWorkingCopy(workingId);await installWorking(await forkWorkingCopy(record.input));

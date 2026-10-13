@@ -12,7 +12,7 @@ Run the course from that installed package's `source/tools/mpc-recovery-operatio
 
 Required equipment is Linux with `/proc`, the existing Runtime workspace, Node 20 or later, Python 3.11 or later, an installed Playwright package and an existing compatible Chromium executable. The original managed service uses Node and the existing lock helper. Python owns the receiving lock, archive assembly and browser process wrapper. Use the receiver's actual executable paths; the course installs no alternate toolchain.
 
-The application source-selection SHA-256 is `9027c8b723d3870b5a09ab179de6d288a1b78df40c9b4a2ade1ecf7015aa90c8`. The supervisor separately freezes every selected product and course leaf. It also records the executable identities used by this continuation.
+The application source-selection SHA-256 is `252bb22da655ba8fd54ba3355bf71f52c66bae50307ca7f2b130a9b2b5589184`. The supervisor separately freezes every selected product and course leaf. It also records the executable identities used by this continuation.
 
 ## 2. Run in the original operation
 
@@ -108,3 +108,14 @@ The original accepted result remains session 11912's completed result. The manag
 ### Interrupted browser planning checks
 
 If the planning edit commits before the stale-tab evidence is saved, continuation retains that exact edition and its request history. It opens a fresh stale tab and records one separately named planning continuation to demonstrate the conflict against that actual earlier view. The final exports and managed observation use the last edition whose conflict check completed. No completed planning edit is replayed, and no interrupted screenshot is treated as proof of a completed check.
+
+
+## Receiving launch preparation and ordered recovery records
+
+The maintained browser course incorporates the original 493D preparation correction and 9EEA journal-ordering correction from the [shared receiving source thread](https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791888028440609). The complete incoming launch is registered with shutdown before its first asynchronous journal write. If a signal arrives while the live owner is still preparing and has not dispatched an executable, that same owner records the preparation as closed with `notDispatched: true`. Every dispatched launch still requires its exact original process receipt, host/namespace/start-tick binding and full surviving-group closure.
+
+The original journal writer serializes saves. A slower older preparation save therefore cannot overwrite a later proved closure. Each caller still receives its own write error; a following cleanup save can proceed after a previous failed write. Original requests, accepted outputs, browser profiles, artifact inventory and complete source selection remain with their existing operation.
+
+Select this entire maintained source edition before a fresh receiving continuation. For an already initialized source-bound course, retain its original source-selection and results; settle its exact recorded browser ownership with the original source first. Keep the historical result and start the following managed source stage within the same original parent operation, using its complete accepted workspace and the existing parent lock. The earlier result is never relabelled as execution of this updated source.
+
+Use the existing managed receiving command documented above. The original producing owner opens the complete application, exercises actual controls and all downloads/reopened files, and personally views its desktop/narrow outputs under the full rendered-product instruction in this guide. Source publication leaves that original equipped operation intact.

@@ -39,7 +39,8 @@ const initialIdentity={workspaceId:accepted.snapshot.workspace.id,revision:accep
 const journalPath=resolve(out,'result.json'),old=await maybe(journalPath);
 let report=old?JSON.parse(old):{operation,sourceSha256:sourceSelection.sha256,acceptedArchive,acceptedWorkspace:initialIdentity,startedAt:new Date().toISOString(),status:'RUNNING',steps:{},launches:[],artifacts:[]};
 requireThat(report.operation===operation&&report.sourceSha256===sourceSelection.sha256&&equal(report.acceptedArchive,acceptedArchive)&&equal(report.acceptedWorkspace,initialIdentity),'Original receiving source/input differs.');
-const retain=()=>atomic(journalPath,JSON.stringify(report,null,2)+'\n');
+let retainTail=Promise.resolve();
+const retain=()=>{const pending=retainTail.then(()=>atomic(journalPath,JSON.stringify(report,null,2)+'\n'));retainTail=pending.catch(()=>{});return pending;};
 const artifact=async relative=>{requireThat(relative&&!relative.startsWith('/')&&!relative.split('/').includes('..'),'Unsafe output path.');const data=await readFile(resolve(out,relative)),d={path:relative,bytes:data.length,sha256:sha(data)},previous=report.artifacts.find(x=>x.path===relative);if(previous)requireThat(equal(previous,d),'Original artifact changed: '+relative);else report.artifacts.push(d);return d;};
 if(report.status==='COMPLETE'){for(const f of report.artifacts)await artifact(f.path);requireThat(report.browserClosed&&report.serverClosed,'Completed resources are not closed.');console.log(JSON.stringify(report));process.exit(0);}
 await retain();
@@ -98,13 +99,23 @@ for(const base of [process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES,'/opt/codex/ru
 requireThat(playwright,'An existing Playwright installation is required.');
 const legacyRaw=JSON.stringify(accepted.snapshot,null,2),url='http://127.0.0.1:18741/';
 async function launch(profile){
- assertRunning();requireThat(!context,'Only one browser interval may run.');
- activeLaunch={id:randomUUID(),profile,status:'STARTING',startedAt:new Date().toISOString()};report.launches.push(activeLaunch);await retain();
- assertRunning();launchPending=playwright.chromium.launchPersistentContext(resolve(out,'profiles',profile),{
+ assertRunning();requireThat(!context&&!activeLaunch,'Only one browser interval may run.');
+ activeLaunch={id:randomUUID(),profile,status:'PREPARING',startedAt:new Date().toISOString()};report.launches.push(activeLaunch);
+ const preparing=activeLaunch;
+ // Retain one pending owner before the first yield so shutdown cannot race
+ // durable preparation. Only this live never-dispatched branch closes without
+ // a process receipt; every dispatched launch still requires its original census.
+ launchPending=(async()=>{
+  await retain();
+  if(!shutdownReason){preparing.status='STARTING';await retain();}
+  if(shutdownReason){preparing.status='CLOSED';preparing.closedAt=new Date().toISOString();preparing.groupClosed=true;preparing.notDispatched=true;await retain();throw shutdownReason;}
+  context=await playwright.chromium.launchPersistentContext(resolve(out,'profiles',profile),{
   executablePath:wrapper,headless:true,timeout:15000,viewport:{width:1440,height:1000},acceptDownloads:true,
   env:{...process.env,MPC_BRANCH_CHROME:chrome,MPC_BRANCH_OPERATION:operation,MPC_BRANCH_SOURCE_SHA:sourceSelection.sha256,MPC_BRANCH_LAUNCH_ID:activeLaunch.id,MPC_BRANCH_PROCESS_RECORD:resolve(out,'control',activeLaunch.id+'.process.json')},
   args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--single-process','--no-zygote']
  });
+  return context;
+ })();
  try{context=await launchPending;}finally{launchPending=null;}
  assertRunning();context.setDefaultTimeout(60000);context.setDefaultNavigationTimeout(60000);
  requireThat(await browserRecord(activeLaunch),'Browser did not retain its process identity.');

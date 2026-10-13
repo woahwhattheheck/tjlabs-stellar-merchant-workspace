@@ -264,3 +264,8 @@ Use a disposable copy of the original output for replacement/truncation behavior
 Return the native result to the existing distribution/backup receiving operation,
 with the original source/workspace/run/attempt identity. This is a continuation of
 the cumulative Runtime customer workflow.
+
+
+## Complete selected-output search
+
+The same reader now searches the complete fixed-end original selection. See [Search complete original output](./OUTPUT_SEARCH.md) for literal matching, retained cursors, match navigation, full JSONL export, the native API/CLI and the installed browser receiving course.

@@ -33,6 +33,7 @@ export class MerchantGleif {
     if(name==='merchant_gleif_status')return client.status();
     if(name==='merchant_gleif_rows')return client.rows(input.captureId,{...(input.offset===undefined?{}:{offset:input.offset}),...(input.limit===undefined?{}:{limit:input.limit}),...(input.search===undefined?{}:{search:input.search})});
     if(name==='merchant_gleif_compare')return client.compare(input.before,input.after);
+    if(name==='merchant_gleif_monitoring_preview')return client.monitoringPreview(input);
     if(name==='merchant_gleif_operation')return client.operation(input.id);
     if(name==='merchant_gleif_resume'){const record=await client.operation(input.id);return client.start({id:record.id,action:record.action,input:record.input});}
     if(name==='merchant_gleif_pause')return client.pause(input.id);

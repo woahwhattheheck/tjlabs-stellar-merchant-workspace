@@ -1,0 +1,32 @@
+{
+  "operationId": "create-1",
+  "actor": "Recording operator",
+  "at": "2026-10-13T15:00:00Z",
+  "kind": "create",
+  "input": {
+    "id": "reporting-example",
+    "label": "Example reporting programme",
+    "reports": [
+      {
+        "id": "orders.monthly",
+        "title": "Monthly orders",
+        "meaning": "Replace this example with the actual agreed period and amount semantics.",
+        "parameters": {
+          "month": "2026-09"
+        },
+        "sourceDescription": "Replace this example with the selected complete original database and source owner.",
+        "calendar": {
+          "status": "proposed",
+          "timezone": "UTC",
+          "expression": "0 8 1 * *",
+          "rule": "Run for the prior closed month; retain a missed run as its original period."
+        },
+        "query": {
+          "filename": "monthly.sql",
+          "content": "-- Replace this complete example with the original SQL.\nSELECT order_id, amount_cents FROM orders WHERE month = :month;\n",
+          "mediaType": "application/sql"
+        }
+      }
+    ]
+  }
+}

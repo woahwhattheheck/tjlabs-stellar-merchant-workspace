@@ -28,6 +28,7 @@
       <button class="active" data-tab="products" aria-current="page">Data products</button>
       <button data-tab="captures">Capture library</button>
       <button data-tab="handoff">Buyer handoff</button>
+      <button data-tab="returns">Returned workspaces</button>
       <button data-tab="history">Saved revisions</button>
     </nav>
 
@@ -110,6 +111,48 @@
       <section class="card"><div class="section-heading"><h2>Buyer handoff</h2><span id="handoff-revision" class="tag"></span></div><p>Export the saved product configuration, endpoint contract and source editions for the original seller and buyer workflow.</p><div class="form-actions"><button type="button" data-download="config">Merchant configuration</button><button type="button" data-download="openapi">OpenAPI document</button><button type="button" data-download="handoff" class="primary">Complete buyer handoff</button></div><p id="handoff-dirty" class="help"></p><div id="handoff-products" class="handoff-products"></div></section>
     </section>
 
+    <section id="tab-returns" class="tab-panel" hidden>
+      <section class="card">
+        <div class="section-heading"><h2>Returned operator workspaces</h2><button id="return-refresh" type="button">Refresh retained returns</button></div>
+        <p>Receive a colleague's complete workspace, compare its issued, current and returned revisions, and choose changes for a new saved draft.</p>
+        <form id="return-upload-form">
+          <div class="fields two">
+            <label>Complete returned ZIP<input id="return-file" type="file" accept=".zip,application/zip" required></label>
+            <label>Return label<input id="return-upload-label" maxlength="256" placeholder="Colleague or purpose"></label>
+          </div>
+          <label>Original export SHA-256<input id="return-upload-sha" pattern="[A-Fa-f0-9]{64}" maxlength="64" required spellcheck="false"></label>
+          <button type="submit">Receive complete return</button>
+        </form>
+        <p class="help">Use the SHA-256 supplied by the returned workspace's completed export. The retained return includes its original archive, source captures and complete saved history.</p>
+      </section>
+      <section class="card">
+        <div class="section-heading"><h2>Open a return</h2><span id="return-total" class="muted"></span></div>
+        <label>Retained return<select id="return-select"><option value="">Refresh to load retained returns</option></select></label>
+        <details><summary>Choose a specific issued revision</summary><label>Original issued revision<input id="return-issued-revision" type="number" min="0" step="1" placeholder="Use the latest exact shared revision"></label><p class="help">The original revision must match the returned history exactly. Leave blank to use the latest complete shared prefix.</p></details>
+        <button id="return-open" type="button">Compare the three revisions</button>
+        <section id="return-pending" class="return-pending" hidden>
+          <h3>Original save request</h3><p id="return-pending-text" class="help"></p>
+          <div class="form-actions"><button id="return-resume" type="button">Continue original request</button><button id="return-request-status" type="button">Read saved request</button><button id="return-clear-unsent" type="button">Review after an unsent or rejected request</button></div>
+        </section>
+      </section>
+      <section id="return-reviewed" class="card" hidden>
+        <div class="section-heading"><h2>Choose the next draft</h2><button id="return-download-review" type="button">Download complete comparison</button></div>
+        <p id="return-lineage"></p><p class="help">Review identity</p><code id="return-review-sha"></code>
+        <p><a id="return-original-archive" download="sec-edgar-returned-workspace.zip">Download original returned ZIP</a></p>
+        <details><summary>Original source editions</summary><pre id="return-source-status" class="return-value"></pre></details>
+        <fieldset id="return-choices" class="return-choices">
+          <legend>Version choices</legend>
+          <div class="fields two"><label>Find a field or product<input id="return-search" type="search"></label><label class="return-check"><input id="return-show-same" type="checkbox">Show unchanged fields</label></div>
+          <div class="form-actions"><button id="return-keep-all" type="button">Keep current for every changed field</button><span id="return-choice-count" class="help" aria-live="polite"></span></div>
+          <div id="return-comparison"></div>
+          <details><summary>Combine product additions and set their order</summary><p id="return-order-help" class="help"></p><label>Exact product order<textarea id="return-order" rows="5" spellcheck="false"></textarea></label></details>
+          <div class="fields two"><label>Reviewing operator<input id="return-actor" maxlength="256" autocomplete="name"></label><label>Decision notes<textarea id="return-notes" maxlength="8000" rows="3"></textarea></label></div>
+        </fieldset>
+        <p class="help">Save or download your local merchant edits first. Saving creates a new original revision, records these decisions and retains the complete return. Publishing and payment operation remain in their existing controls.</p>
+        <button id="return-apply" type="button" class="primary" disabled>Save selected changes as a new revision</button>
+      </section>
+      <section class="card"><h2>Saved operation result</h2><pre id="return-result" class="return-value" hidden></pre></section>
+    </section>
     <section id="tab-history" class="tab-panel" hidden>
       <section class="card"><div class="section-heading"><h2>Saved revisions</h2><button id="refresh-history" type="button">Refresh history</button></div><p>Restoring a prior draft writes a new revision and retains the full saved history.</p><div id="history-table" class="table-wrap"></div><div class="form-actions"><label>Revision to restore<select id="restore-revision"></select></label><button id="restore" type="button">Restore as a new revision</button></div></section>
     </section>

@@ -50,7 +50,7 @@ Recurring customer use comes from real subsequent source periods, corrected sour
 
 ### Full source, runtime and customer receiving
 
-The original workbench contains 208 complete source files, including its 207-member source inventory and the manifest itself. The source remains unchanged inside the Merchant product's workbench directory. Integration wrappers expose the original CLI, managed listener and complete receiving course.
+The public workbench contains 205 complete source files, including its 204-member source inventory and the manifest itself. Native implementation remains byte-for-byte unchanged. The public edition omits private commercial documents and substitutes reusable technical commissioning guidance; PUBLIC_SOURCE.md preserves its historical lineage. Integration wrappers expose the original CLI, managed listener and complete receiving course.
 
 The named whole-project handoff includes the selected revision prefix, original requests, sources, plans, reports, decisions, native attempts and closed files, editable application source and the original portable runtime. New v2 project packages are canonical plain NDJSON. Content-addressed objects appear once, and historical named packages retain the selections needed to reproduce their original bytes. The original gzip-v1 receiving path remains available for previously issued packages.
 
@@ -70,7 +70,7 @@ These are reproducible source programmes and known reference selections. They ar
 
 ### Remaining funded work and commercial separation
 
-The 208-file workbench, original runtime integration and reference programme are already authored reusable work. The prospective grant estimate must cover only the remaining actual work allocated to its selected customer installations. Depending on the customer, that can include:
+The 205-file public workbench, original runtime integration and reference programme are already authored reusable work. The prospective grant estimate must cover only the remaining actual work allocated to its selected customer installations. Depending on the customer, that can include:
 
 - Acquiring and retaining an authorized complete source population, specifying its business meaning and producing independent expected data.
 - Adapting a real original connector, field mapping, cursor/load semantics or destination requirement within the agreed scope.
@@ -97,15 +97,16 @@ This chapter and `grant-products/migration-acceptance.json` are received through
 
 All links below select the same immutable published product edition. The registration measures complete file bytes against that edition; it does not assign fabricated byte identities to a directory.
 
-- [Complete 208-file original workbench source](https://github.com/woahwhattheheck/commons/tree/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013).
-- [Complete original source manifest](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/SOURCE_MANIFEST.json).
-- [Original operator and native workflow](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/OPERATOR.md).
-- [Original CLI and exact request handling](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/cli.mjs).
-- [Complete business acceptance implementation](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/acceptance/index.mjs).
-- [Complete business acceptance operating contract](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/acceptance/OPERATING.md).
-- [Original runtime installation and receiving implementation](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/vendor/dlt/runtime/runtime.mjs).
-- [Complete Chinook customer source and receiving guide](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/CHINOOK.md).
-- [Same-programme Chinook native and customer receiving course](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/receiving/chinook.mjs).
-- [Original-source preservation and continuation helper](https://github.com/woahwhattheheck/commons/blob/6720db68738b822e3c87ee10c4b58e1a2a12944f/revenue/definian_migration_acceptance_20261013/receiving/chinook-source.py).
+- [Complete 205-file public workbench source](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/tree/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench).
+- [Complete public source manifest](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/SOURCE_MANIFEST.json).
+- [Public source lineage and commercial-document separation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/PUBLIC_SOURCE.md).
+- [Original operator and native workflow](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/OPERATOR.md).
+- [Original CLI and exact request handling](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/cli.mjs).
+- [Complete business acceptance implementation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/acceptance/index.mjs).
+- [Complete business acceptance operating contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/acceptance/OPERATING.md).
+- [Original runtime installation and receiving implementation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/vendor/dlt/runtime/runtime.mjs).
+- [Complete Chinook customer source and receiving guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/CHINOOK.md).
+- [Same-programme Chinook native and customer receiving course](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/receiving/chinook.mjs).
+- [Original-source preservation and continuation helper](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/59c1eb450720ce9d65411b6b670362e2b73498f2/products/migration-acceptance/workbench/receiving/chinook-source.py).
 
 The Merchant installation guide at `products/migration-acceptance/OPERATING.md` supplies the packaged command, managed connection, customer-agent, Installation and handover path. Its integration source is delivered with the complete product; the current immutable Merchant integration commit should be recorded by the existing source composer when that edition is published.

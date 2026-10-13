@@ -3,10 +3,12 @@
   "id": "gleif-research",
   "description": "Official GLEIF company source editions, reviewed shortlists, full revision comparisons and native customer datasets",
   "commands": {
-    "gleif": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/cli.mjs"
+    "gleif": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/cli.mjs",
+    "gleif-monitoring-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/receiving/monitoring.mjs"
   },
   "commandDescriptions": {
-    "gleif": "Operate official company research, full source editions, saved shortlists, customer reports and native datasets."
+    "gleif": "Operate official company research, full source editions, saved shortlists, customer reports and native datasets.",
+    "gleif-monitoring-receive": "Carry reviewed original GLEIF research through Monitoring portfolio intake and complete independent reopening of both native projects."
   },
   "exports": {
     "./seller/gleif": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/workspace.mjs",
@@ -17,7 +19,8 @@
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/client.d.mts",
       "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/client.mjs"
     },
-    "./merchant/mcp/gleif": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/operator.mjs"
+    "./merchant/mcp/gleif": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/operator.mjs",
+    "./seller/gleif/monitoring": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/monitoring-portfolio.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/client.d.mts",
@@ -36,7 +39,12 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/review-branch.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/prepare-report.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/prepare-dataset.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/README.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/examples/observed-foundation-20261012/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/monitoring-portfolio.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/public/monitoring.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/MONITORING_FIELD_MAPPING.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/MONITORING_HANDOVER.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/gleif/receiving/monitoring.mjs"
   ],
   "browserAssets": [
     {

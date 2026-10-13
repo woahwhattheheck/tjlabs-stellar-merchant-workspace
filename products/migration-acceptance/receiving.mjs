@@ -489,7 +489,7 @@ export async function main(argv=process.argv.slice(2)){
   const options=parse(argv),root=resolve(options.option.directory);
   const inspected=await inspectMerchantRuntime(options.merchant.runtime,{load:false});
   need(inspected.sourceRoot&&await realpath(inspected.sourceRoot)===SOURCE_ROOT,'MERCHANT_SOURCE_BINDING','Invoke this continuation from the selected installed Merchant source.');
-  const originalSource=await inspectOriginalSource();need(originalSource.manifestSha256===ORIGINAL_MANIFEST_SHA256||originalSource.sha256===ORIGINAL_MANIFEST_SHA256||ORIGINAL_MANIFEST_SHA256===hash(await readFile(join(WORKBENCH_ROOT,'SOURCE_MANIFEST.json'))),'MERCHANT_SOURCE_BINDING','Preserve the unchanged 208-file source.');
+  const originalSource=await inspectOriginalSource();need(originalSource.manifestSha256===ORIGINAL_MANIFEST_SHA256||originalSource.sha256===ORIGINAL_MANIFEST_SHA256||ORIGINAL_MANIFEST_SHA256===hash(await readFile(join(WORKBENCH_ROOT,'SOURCE_MANIFEST.json'))),'MERCHANT_SOURCE_BINDING','Preserve the complete pinned 205-file public software edition.');
   // The unchanged programme holds its own operation lease. Do not recursively acquire it.
   const original=await receiveOriginal(options.original);
   need(original.status==='complete'&&original.chinook?.rows===15607,'MERCHANT_NATIVE_REQUIRED','Complete the one original Fruitshop and Chinook programme first.');

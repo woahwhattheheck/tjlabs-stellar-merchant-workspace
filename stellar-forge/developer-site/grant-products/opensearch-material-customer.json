@@ -101,13 +101,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/OPENSEARCH_MATERIALS.md",
-      "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
+      "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
       "editions": [
         {
           "commit": "9ae97486f55905326bed06372d0094e0b9a18921",
           "git_blob": "bb4d6d79f05d3bf9642311ff4ff2d3c01df124cd",
           "bytes": 23885,
           "sha256": "a20d1d91ca77851f0165d74d444097d3441bd7299a47afc6160f5e2fe2068c76"
+        },
+        {
+          "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+          "git_blob": "5d03c17a05100a63e8a0be7b604f221ef42a1305",
+          "bytes": 25980,
+          "sha256": "21502aa7806f18e7476064e0043808902be9ec14e599b5959f1e0b3a1e731ae9"
         }
       ]
     },
@@ -332,6 +338,102 @@
           "git_blob": "e63f76b40998c7cd5049b0ced7c5d1ff506cf2f9",
           "bytes": 11155,
           "sha256": "a28c0554238424d0b5ae39eb0677da2cf58e34efc44376204a4402d2391e4f86"
+        }
+      ]
+    },
+    {
+      "id": "material-bmecat-mcp-tool-contract",
+      "label": "Original BMEcat material MCP tool contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/catalog/opensearch-materials.mjs",
+      "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+      "editions": [
+        {
+          "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+          "git_blob": "54c55d88027e01b0e9f3ac14ca85823195ae8244",
+          "bytes": 13868,
+          "sha256": "526c0cece29293dededd2d6d13ee8b3c661aff17be03b9d07a11c1f0bff3fd38"
+        }
+      ]
+    },
+    {
+      "id": "material-bmecat-mcp-client",
+      "label": "Typed material client with original BMEcat source profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/opensearch-material-client.mjs",
+      "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+      "editions": [
+        {
+          "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+          "git_blob": "c0f298596108223ef58b76e17dec1ae0795369e5",
+          "bytes": 12335,
+          "sha256": "117a4e011fb258cc6869dabf33739d8337cc54aae0c80f892190edf4be511344"
+        }
+      ]
+    },
+    {
+      "id": "material-bmecat-mcp-receiving-guide",
+      "label": "Complete original BMEcat material MCP receiving guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/receiving/OPENSEARCH_MATERIALS_NATIVE.md",
+      "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+      "editions": [
+        {
+          "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+          "git_blob": "71810d411dab3a8a4bdc1062cc4705fc83ba0337",
+          "bytes": 22065,
+          "sha256": "48eb480e7c7d51570e0daa5a22c621ae6082981a666d1855b8a341cc2cb16c4e"
+        }
+      ]
+    },
+    {
+      "id": "material-bmecat-mcp-receiving",
+      "label": "Whole material MCP customer export and final-recipient receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/receiving/opensearch-materials-native.mjs",
+      "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+      "editions": [
+        {
+          "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+          "git_blob": "9ed50ec1b53ca718814517a379d8d4be46bbd031",
+          "bytes": 63174,
+          "sha256": "b93527af5d3698b298cde2a3d5cefb17cbc1cd4d2df907944547ea00832f3658"
+        }
+      ]
+    },
+    {
+      "id": "material-bmecat-original-etim10",
+      "label": "Original published ETIM 10 BMEcat example",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/examples/supplier-etim/SampleFile_bmecat_etim_V5_T_NEW_CATALOG_ETIM10.xml",
+      "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+      "editions": [
+        {
+          "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+          "git_blob": "e10b0e2af97b0f09cff0e07d3d9b0d07e271309b",
+          "bytes": 18076,
+          "sha256": "50568f0357c982a853eaf523475d18d6f2a594d0c8a392143a4df50007cddf8e"
+        }
+      ]
+    },
+    {
+      "id": "material-bmecat-original-xsd",
+      "label": "Original retained ETIM BMEcat 5.0.1 schema",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/examples/supplier-etim/bmecat_etim_501.xsd",
+      "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+      "editions": [
+        {
+          "commit": "f0edb0f53171c5adb66eb36ae082f0be5f059bf9",
+          "git_blob": "5bf568a990b8c4f87f170f36561b67162fca4b1a",
+          "bytes": 99041,
+          "sha256": "821e4dbcec9fa32b64df4298531adc5d3cdab68507686317dd08e8266378b005"
         }
       ]
     }

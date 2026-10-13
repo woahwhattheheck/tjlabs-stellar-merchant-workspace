@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.mpc-recovery-source.v1",
-  "repository": "woahwhattheheck/commons",
-  "commit": "5c2962823d313c9bbb1c37c79feb415581c7730d",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "commit": null,
   "files": [
     {
       "path": "branch-receiving.mjs",
-      "bytes": 29946,
-      "sha256": "5e65ccd23342314c6ebbfbbaa9cddcc7353d72a7aee398d1076748f64e2e810d"
+      "bytes": 30643,
+      "sha256": "e5b557211e2a6c8d3d4bb1384628dc77ece5cce75533532cf9e1922223fe2bf4"
     },
     {
       "path": "cli.mjs",
@@ -100,8 +100,8 @@
     },
     {
       "path": "recovery-operations.html",
-      "bytes": 163466,
-      "sha256": "34007ed4cd073c73f75aa7685df1a022e18dfb1c02982e8f65f498a5694705cb"
+      "bytes": 168530,
+      "sha256": "fdbb0c2a3efbe97b28946078cd56618f66c5cf9b9f8a6b9ddaca63cdc790cf8e"
     },
     {
       "path": "run-receiving.py",
@@ -134,5 +134,12 @@
       "sha256": "b54be356a9906e37b5575b4cf90e8a271a1d3734d5377350aefce9ccccc9bdaf"
     }
   ],
-  "sha256": "9027c8b723d3870b5a09ab179de6d288a1b78df40c9b4a2ade1ecf7015aa90c8"
+  "workingEdition": "mpc-complete-receiving-preparation-20261013",
+  "predecessor": {
+    "repository": "woahwhattheheck/commons",
+    "commit": "5c2962823d313c9bbb1c37c79feb415581c7730d",
+    "sha256": "9027c8b723d3870b5a09ab179de6d288a1b78df40c9b4a2ade1ecf7015aa90c8"
+  },
+  "baseCommit": "d668db2c13dcb72a0d0012125a54551a21551ed2",
+  "sha256": "252bb22da655ba8fd54ba3355bf71f52c66bae50307ca7f2b130a9b2b5589184"
 }

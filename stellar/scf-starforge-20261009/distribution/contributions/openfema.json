@@ -6,13 +6,15 @@
     "openfema-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/workspace.mjs",
     "openfema": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/cli.mjs",
     "openfema-mcp": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/mcp-client.mjs",
-    "openfema-merchant-exchange": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs"
+    "openfema-merchant-exchange": "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs",
+    "openfema-installation": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-installation.mjs"
   },
   "commandDescriptions": {
     "openfema-workspace": "Operate original Public Assistance source editions, portfolio review, publication and complete receiving",
     "openfema": "Capture, resume, review, export and reopen the original Public Assistance portfolio",
     "openfema-mcp": "Use the same Public Assistance workspace through typed merchant tools and complete retained-file receiving",
-    "openfema-merchant-exchange": "Complete original mapping, customer CSV reconciliation, selected analyst decisions and retained archive through the merchant"
+    "openfema-merchant-exchange": "Complete original mapping, customer CSV reconciliation, selected analyst decisions and retained archive through the merchant",
+    "openfema-installation": "Receive a complete original Public Assistance customer delivery, Workshare seed and working files into the original Customer Installation"
   },
   "exports": {
     "./seller/openfema": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/core.mjs",
@@ -36,7 +38,9 @@
     "./seller/openfema/delivery": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/delivery.mjs",
     "./merchant-mcp/openfema/exchange": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/merchant-project-exchange.mjs",
     "./seller/openfema/recipient": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recipient.mjs",
-    "./seller/openfema/recipient-core": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recipient-core.mjs"
+    "./seller/openfema/recipient-core": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/recipient-core.mjs",
+    "./installation-workorders/openfema": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-installation.mjs",
+    "./installation-workorders/openfema-core": "./source/stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-installation-core.mjs"
   },
   "browserAssets": [
     {
@@ -82,6 +86,14 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/WORKING_COPIES.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/working-copy-receiving.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/RECIPIENT_WORKSPACE.md",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recipient-receiving.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openfema/examples/recipient-receiving.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-installation-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/openfema-customer.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/OPENFEMA_CUSTOMER.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/profiles.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/README.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md"
   ]
 }

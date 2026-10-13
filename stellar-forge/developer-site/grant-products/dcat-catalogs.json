@@ -318,6 +318,108 @@
           "bytes": 11399
         }
       ]
+    },
+    {
+      "id": "dcat-exact-correction-workbench",
+      "label": "Exact catalogue editor, attributed revisions and candidate preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CORRECTION_WORKBENCH.md",
+      "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+      "editions": [
+        {
+          "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+          "git_blob": "0ecc29f3b12755b685c8019d284eaddbba9f8971",
+          "sha256": "a314dec70992ea24c4c20774846f2ab4447b0c106773fc8dace6fd6123783ca2",
+          "bytes": 12972
+        }
+      ]
+    },
+    {
+      "id": "dcat-correction-agent-operator",
+      "label": "Original correction commands, guarded agent workflow and complete file receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CORRECTIONS_AGENT.md",
+      "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+      "editions": [
+        {
+          "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+          "git_blob": "c543fab01fd1573ac1b2ddba84ffad104ed5bfd0",
+          "sha256": "945acc6d49ec5dc7231b1168339d519cbeb5cff760bd28337968d5474d8bd7b7",
+          "bytes": 21359
+        }
+      ]
+    },
+    {
+      "id": "dcat-correction-customer-programme",
+      "label": "Original GSA correction, standalone recipient return, explicit adoption and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "operations/dcat-correction-customer-390e-20261013/RECEIVING.md",
+      "commit": "7ae6b066ad74eb03f67c7f26afb4f3bfc8e50a5a",
+      "editions": [
+        {
+          "commit": "8a27ca55e9705abe3d1a78c14009e46a896c05a5",
+          "git_blob": "a1806940b84a34834cd44eca03446a33a551584e",
+          "sha256": "66a3741aaed0b2eb75ba7a17301d6301c7ea0545a3b981d13516a61157400169",
+          "bytes": 19726
+        },
+        {
+          "commit": "7ae6b066ad74eb03f67c7f26afb4f3bfc8e50a5a",
+          "git_blob": "813b46a9da436f5c1ebb58a2ab82deaab4e3e9a8",
+          "sha256": "adaa6fb25f8ef8825440df528213498f0e32ed66a57f11af18b2f5badba7aaa6",
+          "bytes": 33114
+        }
+      ]
+    },
+    {
+      "id": "dcat-recipient-catalogue-corrections",
+      "label": "Standalone recipient editor, complete returns and explicit author reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CORRECTION_EXCHANGES.md",
+      "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+      "editions": [
+        {
+          "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+          "git_blob": "7852bff6fe17b264dc68a63a7e7e663151142f20",
+          "sha256": "4bcb46d32a5c2d46cd308cdbe0c314fa1370bbd01160a813f81edff02245b8ea",
+          "bytes": 13871
+        }
+      ]
+    },
+    {
+      "id": "dcat-recipient-correction-agent-operator",
+      "label": "Original issue, received proposal, exact comparison and adoption commands and tools",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/CORRECTION_EXCHANGES_AGENT.md",
+      "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+      "editions": [
+        {
+          "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+          "git_blob": "cec24a558f6859938928612fddd9473e5d0973de",
+          "sha256": "a0cdda57abe2a06955d00adfbe0b7f745425d4a3ea28552d8af36ac861ed1a76",
+          "bytes": 22521
+        }
+      ]
+    },
+    {
+      "id": "dcat-recipient-exact-comparison",
+      "label": "Original exact issue/proposal codec and structural-history three-document comparison",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/public/dcat-correction-exchange.mjs",
+      "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+      "editions": [
+        {
+          "commit": "38f0a07bbf45ca610bd1b5519b12ed410d48d6f9",
+          "git_blob": "2c1e5454d5d971e580f5f1a28351e43a8f3e8c79",
+          "sha256": "433ba8109ee702f78f8bbc9999cde6690b8b18dcca63b8426a74b131fd90b129",
+          "bytes": 19301
+        }
+      ]
     }
   ]
 }

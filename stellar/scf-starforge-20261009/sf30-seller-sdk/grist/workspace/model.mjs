@@ -18,6 +18,7 @@ import { normalizeConnections, selectConnection, connectionViews, discoveryConfi
 import { MAX_PACKET_BYTES, makeGristSourcePacket, validatePacket, retainPacket, packetFromCapture, createOrVerify } from './packet.mjs';
 
 import {openOperatingProcedures,OPERATING_MUTATIONS,validateOperatingInput} from './operating-store.mjs';
+import {gristDraftIdentity,gristDraftRecord,gristReturnSnapshot,compareGristReturn,gristReturnSummary} from './returns.mjs';
 
 import {readGristPlacement,gristPlacedPath,gristRuntimeSettings} from './placement.mjs';
 import {createGristWorkspaceHandover,gristWorkspaceHandoverFile,receiveGristWorkspaceFile,receivedGristWorkspaces,
@@ -108,6 +109,8 @@ export async function openGristAuthoring({ directory, create = false, connection
     db.exec(`PRAGMA foreign_keys=ON; PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL;
       CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS state(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS returned_reviews(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS returned_review_versions(id TEXT NOT NULL,revision INTEGER NOT NULL,data TEXT NOT NULL,PRIMARY KEY(id,revision));
       CREATE TABLE IF NOT EXISTS captures(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS discoveries(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS document_catalogs(id TEXT PRIMARY KEY,data TEXT NOT NULL);
@@ -1007,7 +1010,7 @@ export async function openGristAuthoring({ directory, create = false, connection
     }
     function handoverSource(){const state=current();return {directory,draftRevision:state.draftRevision,selectedVersion:state.selectedVersion,
       selectionRevision:state.selectionRevision,historyRevision:Number(db.prepare('SELECT COALESCE(MAX(id),0) AS n FROM events').get().n),logicalSettingsSha256:digest(logicalSettings),createdAt:settings.createdAt};}
-    function handoverCounts(){return Object.fromEntries(['captures','discoveries','document_catalogs','previews','versions','operations','events','operating_plans','operating_plan_requests'].map(name=>[name,
+    function handoverCounts(){return Object.fromEntries(['captures','discoveries','document_catalogs','previews','versions','operations','events','operating_plans','operating_plan_requests','returned_reviews','returned_review_versions'].map(name=>[name,
       Number(db.prepare('SELECT count(*) AS n FROM '+name).get().n)]));}
     function exportWorkspace(input){input=structuredClone(input);if(!object(input)||Object.keys(input).some(k=>!['requestId','expectedDraftRevision','expectedSelectedVersion'].includes(k)))throw fault('GRIST_WORKSPACE_EXPORT_INPUT');return transfer('WORKSPACE_EXPORT',input.requestId,async()=>{
       const invoke=()=>createGristWorkspaceHandover({directory,settings:structuredClone(settings),source:handoverSource(),counts:handoverCounts(),...input});
@@ -1058,12 +1061,160 @@ export async function openGristAuthoring({ directory, create = false, connection
       });
     }
 
+    const returnRecord=(reviewId,revision)=>{
+      id(reviewId);const row=revision===undefined?db.prepare('SELECT data FROM returned_reviews WHERE id=?').get(reviewId):
+        db.prepare('SELECT data FROM returned_review_versions WHERE id=? AND revision=?').get(reviewId,integer(revision,'Use a saved review revision.'));
+      if(!row)throw fault('GRIST_RETURN_NOT_FOUND','Select a saved returned review.',404);
+      return JSON.parse(row.data);
+    };
+    function storeReturn(record){
+      const data=JSON.stringify(record);
+      db.prepare('INSERT INTO returned_review_versions(id,revision,data) VALUES(?,?,?)').run(record.id,record.revision,data);
+      db.prepare('INSERT INTO returned_reviews(id,data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(record.id,data);
+      return gristReturnSummary(record);
+    }
+    function returnReplay(kind,input,request){
+      assertOpen();id(request);const old=db.prepare('SELECT * FROM operations WHERE id=?').get(request);if(!old)return null;
+      if(old.kind!==kind||old.payload_hash!==identity(input))throw fault('GRIST_REQUEST_REUSED','Replay the exact original request.',409);
+      if(old.status!=='complete')throw fault('GRIST_OPERATION_RETAINED','Retain the original operation for recovery.',409);
+      return{value:JSON.parse(old.result)};
+    }
+    function returnCommit(kind,input,request,change){
+      return transaction(()=>{
+        const old=returnReplay(kind,input,request);if(old)return old.value;
+        const result=change(),time=stamp();
+        db.prepare('INSERT INTO operations(id,kind,payload_hash,input,status,created,updated,result,error) VALUES(?,?,?,?,?,?,?,?,?)')
+          .run(request,kind,identity(input),JSON.stringify(input),'complete',time,time,JSON.stringify(result),null);
+        event('COMPLETED',request,{kind});return result;
+      });
+    }
+    const sourceIdentity=draft=>{
+      const row=captureRecord(draft.captureId);
+      return{captureId:row.id,manifestSha256:row.manifestSha256,selectionSha256:row.selectionSha256,
+        schemaSha256:row.schemaSha256,rowCount:row.rowCount};
+    };
+    async function returnSnapshot(){
+      const state=current();if(!state.draft)throw fault('GRIST_RETURN_DRAFT_REQUIRED','Save an original source draft first.',409);
+      await capture(state.draft.captureId);
+      const history=[],add=(kind,requestId,draftRevision,draft)=>{
+        if(draft)history.push(gristDraftRecord({kind,requestId,draftRevision,draft,source:sourceIdentity(draft)}));
+      };
+      for(const row of db.prepare('SELECT data FROM captures ORDER BY rowid').all()){
+        const value=JSON.parse(row.data);if(value.adoption?.draftSaved)add('CAPTURE',value.id,value.adoption.draftRevision,value.draft);
+      }
+      for(const row of db.prepare('SELECT * FROM versions ORDER BY id').all()){
+        const value=JSON.parse(row.data);add('VERSION',row.request_id,value.draftRevision,value.draft);
+      }
+      for(const row of db.prepare("SELECT * FROM operations WHERE status='complete' ORDER BY rowid").all()){
+        const value=JSON.parse(row.result??'null');
+        if(row.kind==='DRAFT')add('DRAFT',row.id,value?.draftRevision,value?.draft);
+        if(row.kind==='RETURN_APPLY'){
+          const applied=returnRecord(JSON.parse(row.input).reviewId,value.review.revision);
+          history.push(...applied.incoming.history);
+          add('RETURN_APPLY',row.id,applied.applied.draftRevision,applied.applied.draft);
+        }
+      }
+      return gristReturnSnapshot({workspace:identity({schema:SCHEMA,createdAt:settings.createdAt,settingsSha256:digest(logicalSettings)}),
+        source:sourceIdentity(state.draft),state,history});
+    }
+    function returnedReviewSnapshot(){return transfer('RETURN_SNAPSHOT','read',returnSnapshot);}
+    async function captureReturnedReview(options){
+      const input=structuredClone(options);only(input,['name','expectedDraftRevision','requestId'],'GRIST_RETURN_INPUT');
+      const {requestId,...payload}=input;id(requestId);workspaceName(payload.name);integer(payload.expectedDraftRevision,'Use the current author draft revision.');
+      const old=returnReplay('RETURN_CAPTURE',payload,requestId);if(old)return old.value;
+      return withReceivedWorkspace(payload.name,async child=>{
+        const replay=returnReplay('RETURN_CAPTURE',payload,requestId);if(replay)return replay.value;
+        const local=await returnSnapshot();
+        if(local.state.draftRevision!==payload.expectedDraftRevision)throw fault('GRIST_DRAFT_CHANGED','Refresh the current author draft.',409);
+        const incoming=await child.model.returnedReviewSnapshot();
+        const record={schema:'stellar-forge.grist-return-review.v1',id:requestId,revision:1,status:'received',createdAt:stamp(),
+          received:structuredClone(child.record),localAtCapture:local,incoming,choices:{},note:'',review:null,applied:null};
+        returnCommit('RETURN_CAPTURE',payload,requestId,()=>storeReturn(record));
+        return gristReturnSummary(record);
+      });
+    }
+    function currentReturn(reviewId,expectedRevision){
+      const record=returnRecord(reviewId);
+      if(expectedRevision!==undefined&&record.revision!==expectedRevision)throw fault('GRIST_RETURN_CHANGED','Reopen the latest saved review.',409);
+      return record;
+    }
+    async function returnPreview(record){
+      const local=await returnSnapshot(),comparison=compareGristReturn({record,local});
+      if(!comparison.issues.length&&!comparison.unresolved){
+        try{await normalizeDraft(comparison.merged);}
+        catch(e){comparison.issues.push({code:e.code??'GRIST_RETURN_DRAFT_INVALID',message:e.message});comparison.canApply=false;}
+      }
+      // Include native normalization outcomes in the exact reviewed preview.
+      const {previewSha256,...body}=comparison;comparison.previewSha256=identity(body);
+      return{local,comparison};
+    }
+    function previewReturnedReview(options){
+      const input=structuredClone(options);only(input,['reviewId','offset','limit'],'GRIST_RETURN_INPUT');
+      const {reviewId,offset=0,limit=100}=input;integer(offset,'Use a nonnegative offset.');
+      if(!Number.isSafeInteger(limit)||limit<1||limit>100)throw fault('GRIST_PAGE_LIMIT_INVALID');
+      return transfer('RETURN_PREVIEW',reviewId,async()=>{
+        const record=currentReturn(reviewId),{comparison}=await returnPreview(record);
+        const {merged,rows,...rest}=comparison;
+        return{...rest,review:gristReturnSummary(record),rows:rows.slice(offset,offset+limit),offset,
+          nextOffset:offset+limit<rows.length?offset+limit:null};
+      });
+    }
+    function saveReturnedReview(options){
+      const input=structuredClone(options);only(input,['reviewId','expectedReviewRevision','previewSha256','choices','note','requestId'],'GRIST_RETURN_INPUT');
+      const {requestId,...payload}=input;id(requestId);id(payload.reviewId);integer(payload.expectedReviewRevision,'Use the saved review revision.');
+      hashValue(payload.previewSha256);if(!object(payload.choices)||Array.isArray(payload.choices)||Object.keys(payload.choices).length>100000)
+        throw fault('GRIST_RETURN_CHOICES_INVALID');
+      for(const [path,choice]of Object.entries(payload.choices))if(typeof path!=='string'||!['local','returned','base'].includes(choice))throw fault('GRIST_RETURN_CHOICE_INVALID');
+      if(typeof payload.note!=='string'||payload.note.length>16000||payload.note.includes('\0'))throw fault('GRIST_RETURN_NOTE_INVALID');
+      const old=returnReplay('RETURN_REVIEW',payload,requestId);if(old)return Promise.resolve(old.value);
+      return transfer('RETURN_REVIEW',requestId,async()=>{
+        const record=currentReturn(payload.reviewId,payload.expectedReviewRevision);
+        if(record.status==='applied')throw fault('GRIST_RETURN_ALREADY_APPLIED',undefined,409);
+        const {local,comparison}=await returnPreview(record);
+        if(comparison.previewSha256!==payload.previewSha256)throw fault('GRIST_RETURN_PREVIEW_CHANGED','Compare the current author draft again.',409);
+        if(Object.keys(payload.choices).some(path=>!comparison.rows.some(row=>row.path===path)))throw fault('GRIST_RETURN_CHOICE_INVALID');
+        const candidate={...record,revision:record.revision+1,status:'reviewed',choices:payload.choices,note:payload.note,
+          review:{createdAt:stamp(),local,basisSha256:identity({local:local.sha256,incoming:record.incoming.sha256,
+            base:comparison.base?.id??null,choices:payload.choices})}};
+        return returnCommit('RETURN_REVIEW',payload,requestId,()=>storeReturn(candidate));
+      });
+    }
+    function applyReturnedReview(options){
+      const input=structuredClone(options);only(input,['reviewId','expectedReviewRevision','previewSha256','requestId'],'GRIST_RETURN_INPUT');
+      const {requestId,...payload}=input;id(requestId);id(payload.reviewId);integer(payload.expectedReviewRevision,'Use the saved review revision.');hashValue(payload.previewSha256);
+      const old=returnReplay('RETURN_APPLY',payload,requestId);if(old)return Promise.resolve(old.value);
+      return transfer('RETURN_APPLY',requestId,async()=>{
+        const record=currentReturn(payload.reviewId,payload.expectedReviewRevision),{local,comparison}=await returnPreview(record);
+        if(comparison.previewSha256!==payload.previewSha256)throw fault('GRIST_RETURN_PREVIEW_CHANGED','Compare and review the current draft again.',409);
+        if(!comparison.canApply)throw fault('GRIST_RETURN_REVIEW_REQUIRED','Resolve issues and conflicts, then save the complete review.',409);
+        const normalized=await normalizeDraft(comparison.merged);
+        return returnCommit('RETURN_APPLY',payload,requestId,()=>{
+          const state=current();
+          if(identity(state)!==identity(local.state)||gristDraftIdentity(state.draft)!==gristDraftIdentity(local.state.draft))throw fault('GRIST_DRAFT_CHANGED','The author draft changed after review.',409);
+          state.draft=normalized;state.draftRevision++;setState(state);
+          const next={...record,revision:record.revision+1,status:'applied',applied:{requestId,createdAt:stamp(),
+            draftRevision:state.draftRevision,draft:normalized,basis:comparison,localBefore:local}};
+          const review=storeReturn(next);
+          return{review,draft:normalized,draftRevision:state.draftRevision};
+        });
+      });
+    }
+    function returnedReview(reviewId){assertOpen();return gristReturnSummary(returnRecord(reviewId));}
+    function returnedReviews(){assertOpen();return db.prepare('SELECT data FROM returned_reviews ORDER BY rowid DESC').all().map(r=>gristReturnSummary(JSON.parse(r.data)));}
+    function exportReturnedReview({reviewId,revision}){
+      assertOpen();const record=returnRecord(reviewId,revision);
+      const history=db.prepare('SELECT data FROM returned_review_versions WHERE id=? AND revision<=? ORDER BY revision').all(reviewId,record.revision).map(row=>JSON.parse(row.data));
+      const value={schema:'stellar-forge.grist-return-delivery.v1',review:record,history};
+      return{filename:'grist-return-'+reviewId+'-r'+record.revision+'.json',mime:'application/json; charset=utf-8',bytes:bytes(value)};
+    }
+
     // Reopening never repeats a provider call or starts a publication/service.
     db.prepare("UPDATE operations SET status='interrupted',updated=? WHERE status='pending'").run(stamp());
     for (const row of db.prepare("SELECT id FROM operations WHERE status='interrupted' AND kind IN ('VERSION','SELECT')").all())
       await resume(row.id).catch(() => {});
     return {
-      directory, settings,  exportWorkspace,receiveWorkspace,receiveWorkspaceFile,openReceivedWorkspace,closeReceivedWorkspace,withReceivedWorkspace,
+      directory, settings, returnedReviewSnapshot,captureReturnedReview,returnedReviews,returnedReview,previewReturnedReview,saveReturnedReview,applyReturnedReview,exportReturnedReview,
+      exportWorkspace,receiveWorkspace,receiveWorkspaceFile,openReceivedWorkspace,closeReceivedWorkspace,withReceivedWorkspace,
       workspaceExports:async()=> (await workspaceTransferList(directory,'exports')).filter(r=>r.status==='complete').map(r=>r.result),
       exportWorkspaceFile:id=>gristWorkspaceHandoverFile(directory,id),
       workspaceExportStatus:id=>workspaceTransferStatus(directory,'exports',id),

@@ -1,35 +1,6 @@
 {
   "schema": "definian.source-references.v1",
-  "operation": "DEFINIAN-MIGRATION-ACCEPTANCE-0C7A-20261013",
-  "company": {
-    "name": "Definian",
-    "aliases": [
-      "Premier International",
-      "Analytiks"
-    ],
-    "case": {
-      "channel": "C0BTTA66TK3",
-      "thread": "1791872726.629159"
-    },
-    "primarySources": [
-      {
-        "url": "https://www.definian.com/solutions/modernization",
-        "purpose": "Published modernization service fit"
-      },
-      {
-        "url": "https://www.definian.com/articles/data-migration-services-overview",
-        "purpose": "Published repeatable migration and reconciliation needs"
-      },
-      {
-        "url": "https://www.definian.com/articles/premier-international-now-definian-acquires-analytiks",
-        "purpose": "Company alias and acquisition identity"
-      },
-      {
-        "url": "https://www.definian.com/contact",
-        "purpose": "Published original company contact form"
-      }
-    ]
-  },
+  "operation": "SCF-MIGRATION-ACCEPTANCE-PUBLIC-3459-20261013",
   "originalEngine": {
     "repository": "dlt-hub/dlt",
     "version": "1.31.0",
@@ -41,7 +12,7 @@
     "edition": "integration-7",
     "sourceCommit": "535e33bcbae9b2db798acfc52336469b7cbc195f",
     "manifestSha256": "aabdafdff261b9076c9675dac49c3c1e9a0490f806a7ec59048d6324efc61cf7",
-    "meaning": "Complete unchanged application source retained as a dependency, including its original upstream cohort."
+    "meaning": "Native application source retained from this original edition. The public installation replaces private commercial guidance with reusable technical scope; its own manifest records the actual installed files."
   },
   "reference": {
     "fruitshop": {
@@ -77,14 +48,13 @@
       },
       "programme": {
         "path": "receiving/chinook.mjs",
-        "mode": "Continuation of the same Definian programme after complete Fruitshop receiving",
+        "mode": "Continuation of the same saved receiving programme after complete Fruitshop receiving",
         "nativeStatus": "unstarted"
       }
     }
   },
   "executionStatus": {
     "application": "prepared source; full native receiving has not started",
-    "customerAcceptance": false,
-    "commercial": "Proposed implementation workshare, no customer commitment or payment claimed."
+    "customerAcceptance": false
   }
 }

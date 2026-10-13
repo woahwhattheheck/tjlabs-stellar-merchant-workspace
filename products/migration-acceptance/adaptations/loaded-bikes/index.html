@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Loaded Bikes | Catalogue migration</title><link rel="stylesheet" href="./style.css"></head>
+<body><header class="topbar"><div><p class="eyebrow">Migration acceptance workbench</p><h1>Loaded Bikes catalogue</h1></div><div class="actions"><button id="open">Open project</button><button id="save" disabled>Save project</button><button id="package" disabled>Export intake package</button></div></header>
+<input id="file" type="file" accept=".json,application/json" hidden>
+<div id="status" class="status" role="status">Loading the complete catalogue…</div>
+<div class="shell"><nav aria-label="Project sections" id="nav">
+<button data-tab="overview" aria-current="page">Overview</button><button data-tab="catalogue">Catalogue & corrections</button><button data-tab="relations">Published relationships</button><button data-tab="mapping">Destination mapping</button><button data-tab="issues">Business review</button><button data-tab="sources">Original sources</button><button data-tab="history">History & handover</button>
+</nav><main id="main" tabindex="-1" aria-live="polite"></main></div>
+<footer><span id="project-label">No project open</span><span>Original catalogue · Reviewed mapping · Native migration acceptance</span></footer>
+<dialog id="editor"><form id="editor-form"><div class="dialog-head"><h2 id="editor-title">Review source value</h2><button type="button" id="close-editor" aria-label="Close review">Close</button></div><div id="editor-fields"></div><div class="actions"><button type="submit">Save review</button><button type="button" id="restore" hidden>Restore original</button></div></form></dialog>
+<script type="module" src="./app.mjs"></script></body></html>

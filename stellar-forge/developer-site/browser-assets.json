@@ -346,6 +346,27 @@
       ]
     ],
     [
+      "/grant-application-return-working.mjs",
+      [
+        "grant-application-return-working.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-application-return-workspace.mjs",
+      [
+        "grant-application-return-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-application-return.mjs",
+      [
+        "grant-application-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-catalog-browser.mjs",
       [
         "grant-catalog-browser.mjs",
@@ -675,10 +696,31 @@
       ]
     ],
     [
+      "/grant-review-offline-package.mjs",
+      [
+        "grant-review-offline-package.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-review-offline-source.mjs",
+      [
+        "grant-review-offline-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-review-round-core.mjs",
       [
         "grant-review-round-core.mjs",
         "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-review-round-guide.md",
+      [
+        "../GRANT_REVIEW_ROUNDS.md",
+        "text/markdown; charset=utf-8"
       ]
     ],
     [

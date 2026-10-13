@@ -10,7 +10,7 @@ import {CONNECTION_SCHEMA,STARTUP_SCHEMA,need,absolute,integer,hash,readFile,rea
   writeJson,privateDirectory,readLaunchConfiguration,HiveClient,inside} from './connection.mjs';
 
 export const WORKBENCH_ROOT=fileURLToPath(new URL('./workbench/',import.meta.url));
-export const ORIGINAL_MANIFEST_SHA256='37c20a0f517a4311afb10f8c4bcd3373717b591d070423a9d838c62f89ffc83a';
+export const ORIGINAL_MANIFEST_SHA256='b73dcb02995c22d150159709f95bab37e1b2ddec604672aed0a9fc18cd9b5574';
 export async function inspectOriginalSource({directory=WORKBENCH_ROOT}={}){
   const root=absolute(directory),selected=await readJson(fileURLToPath(new URL('./original-source.json',import.meta.url)),1024*1024,{privateOnly:false});
   need(selected.sha256===ORIGINAL_MANIFEST_SHA256&&selected.value.files.length===64,'HIVE_SOURCE_SELECTION','Select the complete maintained Hive workbench.',409);

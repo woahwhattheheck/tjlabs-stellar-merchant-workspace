@@ -296,6 +296,15 @@ export async function inspectCentralWarehouse(connection,options={}) {
     'ODK_WAREHOUSE_CHANGED','The authenticated warehouse differs from the selected original workspace.',409);
   return state;
 }
+export async function inspectCentralReleaseOperations(connection,options={}) {
+  const state=await odkRequest(connection,'/api/release-operations/state',{...options,maximum:64*1024*1024});
+  odkNeed(state?.schema==='stellar-forge.odk-release-operations.v1'&&
+    state.workspaceId===connection.value.workspaceId&&
+    state.capabilities?.gitlabReadOnly===true&&state.capabilities?.softwareMutation===false&&
+    ['connections','centralConnections','sources','operations','activeOperations','formPlans'].every(key=>Array.isArray(state[key])),
+    'ODK_RELEASE_OPERATIONS_CHANGED','The authenticated software release desk differs from the selected original workspace.',409);
+  return state;
+}
 /** A remote client borrows the Applications listener; close never stops that application. */
 export class CentralWorkspaceClient {
   #connection; #fetch; #closed=false;
@@ -322,6 +331,9 @@ export class CentralWorkspaceClient {
   warehouseAction(method,input={},options={}){return this.namespaceAction('warehouse',method,input,options);}
   async warehouseState(options={}){
     return inspectCentralWarehouse(await this.#current(),{...options,fetchImpl:this.#fetch});
+  }
+  async releaseOperationsState(options={}){
+    return inspectCentralReleaseOperations(await this.#current(),{...options,fetchImpl:this.#fetch});
   }
   warehousePrepare(input,options){return this.warehouseAction('prepare',input,options);}
   warehouseConnect(input,options){return this.warehouseAction('connect',input,options);}

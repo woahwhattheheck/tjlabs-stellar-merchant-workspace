@@ -17,6 +17,8 @@ const HELP = 'GLEIF company research\n\n'+
 '  gleif import-source --workspace DIRECTORY --file ORIGINAL_RESPONSES.json [--id ORIGINAL_ID]\n'+
 '  gleif rows --workspace DIRECTORY --capture ID [--offset 0 --limit 50 --search TEXT]\n'+
 '  gleif compare --workspace DIRECTORY --before ID --after ID\n'+
+'  gleif monitoring-preview --workspace DIRECTORY --selection SELECTION.json\n'+
+'  gleif file --workspace DIRECTORY --sha256 ORIGINAL_SHA --out FILE\n'+
 '  gleif run --workspace DIRECTORY --request REQUEST.json\n'+
 '  gleif operation --workspace DIRECTORY --id ORIGINAL_ID\n'+
 '  gleif dataset-query --workspace DIRECTORY --id DATASET_ID [--query QUERY]\n'+
@@ -56,6 +58,8 @@ export async function main(args=process.argv.slice(2)) {
     if(command==='status')result=await api.status();
     else if(command==='rows')result=await api.rows(opts['--capture'],{offset:Number(opts['--offset']??0),limit:Number(opts['--limit']??50),search:opts['--search']??''});
     else if(command==='compare')result=await api.compare(opts['--before'],opts['--after']);
+    else if(command==='monitoring-preview'){need(opts['--selection'],'GLEIF_ARGUMENT');result=await api.monitoringPreview(await input(opts['--selection']));}
+    else if(command==='file'){need(opts['--sha256']&&opts['--out'],'GLEIF_ARGUMENT');const raw=await api.object(opts['--sha256']);await createFile(resolve(opts['--out']),raw);result={file:resolve(opts['--out']),sha256:opts['--sha256'],bytes:raw.length};}
     else if(command==='operation')result=await api.operation(opts['--id']);
     else if(command==='dataset-query')result=await(local?api.datasetQuery(opts['--id'],opts['--query']??''):api.query(opts['--id'],opts['--query']??''));
     else if(command==='export'){need(opts['--out'],'GLEIF_ARGUMENT','Choose the complete output file.');const pkg=await(local?api.portable():api.package());await createFile(resolve(opts['--out']),bytes(pkg));result={file:resolve(opts['--out']),sha256:pkg.sha256,workspaceId:pkg.metadata.id};}

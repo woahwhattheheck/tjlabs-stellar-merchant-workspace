@@ -5,10 +5,10 @@ export const DOMAIN_SCHEMA: 'starforge.opensanctions-workspace.v1';
 export const STARTUP_SCHEMA: 'stellar-forge.opensanctions-workspace-launch.v1';
 export type ReadOperation = 'state' | 'contract' | 'entity' | 'entities' | 'aliases' |
   'changes' | 'impacts' | 'case' | 'statements' | 'response' | 'request' | 'update-plan' |
-  'cycles' | 'cycle' | 'cycle-request' | 'cycle-report';
+  'cycles' | 'cycle' | 'cycle-request' | 'cycle-report' | 'gleif-intake';
 export type WriteOperation = 'published-edition' | 'edition' | 'portfolio' | 'statement-set' |
   'compare' | 'update' | 'fetch-update' | 'select-update' | 'review' | 'case' | 'profile' |
-  'prepare' | 'dispatch' | 'receive-response' | 'query' | 'cycle-command';
+  'prepare' | 'dispatch' | 'receive-response' | 'query' | 'cycle-command' | 'gleif-preview' | 'gleif-receive';
 export const GET_OPERATIONS: readonly ReadOperation[];
 export const POST_OPERATIONS: readonly WriteOperation[];
 export type JsonObject = { [key: string]: unknown };

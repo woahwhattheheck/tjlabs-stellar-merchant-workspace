@@ -1,0 +1,67 @@
+{
+  "schema": "commons.source-carrier-git-parts.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "operation": "SCF-SOURCE-DESK-HANDOVER-4593-20261013",
+  "carrier": {
+    "gitBlob": "ca694d1bdf6f8ed599d5ca6c52ec5339c5d8f5ba",
+    "bytes": 9915259,
+    "sha256": "f0c5db28e3037e286adb406477360c9a1e75d31ff97b50ac08fd4e5558280628"
+  },
+  "parts": [
+    {
+      "part": 1,
+      "offset": 0,
+      "gitBlob": "58257517b539b17bab0a4dbfeec5217d4ee0341f",
+      "bytes": 2500000,
+      "sha256": "e93887f62632ebac681b0053193f4e7c0e7030fed288924ac0707e69ba25184b"
+    },
+    {
+      "part": 2,
+      "offset": 2500000,
+      "gitBlob": "38e81293f0d711526660d6a76075df501b98d107",
+      "bytes": 2500000,
+      "sha256": "22384c635eb3729531a060ae65aeb4b9cc67a30983c097c011670163a5a42faf"
+    },
+    {
+      "part": 3,
+      "offset": 5000000,
+      "gitBlob": "b03fe4f04da9e4bbb8f61291d6ef825bd74304a6",
+      "bytes": 2500000,
+      "sha256": "f6d1e63635765f66c08ec9114d0a00f4efef6c84b61a689efd809ef035683f2a"
+    },
+    {
+      "part": 4,
+      "offset": 7500000,
+      "gitBlob": "e0da8f24f70699cac9e57201a8d53b1fc90a1f7c",
+      "bytes": 2415259,
+      "sha256": "aaef8956379c421413968ecb53a15e7b923f3af333c13017c73edadf90f22737"
+    }
+  ],
+  "instruction": "Read each original Git blob as complete UTF-8 text; verify its bytes and SHA256; concatenate in part order without separators. Verify the full carrier identity, parse its original commons.gzip-source-carrier.v1 payload, then use the unchanged original decoder. The internal commercial-effort example consumes the same files under a separate original operation identity.",
+  "verification": {
+    "allFourPartsReadBackExact": true,
+    "decoded": {
+      "schema": "commons.gzip-source-carrier.v1",
+      "operation": "SCF-SOURCE-DESK-HANDOVER-4593-20261013",
+      "encoding": "base64+gzip+utf8-json",
+      "uncompressed_bytes": 29725481,
+      "sha256": "7653febbe4c8855378fc810cb598fc95bf65fb3d7718e1abfd11b8d0b14ba674",
+      "gzip_bytes": 7436096,
+      "gzip_sha256": "5a48a2e2dc49de8bfe59c53823abed568543722db136fcb7d6e19d2b12abe49d",
+      "source_files": 1582,
+      "source_bytes": 27867785,
+      "feature_commit": "f34bfea6ef3f3e3b9d7842a69059fe1da1ec18a2",
+      "carrier": {
+        "bytes": 9915259,
+        "sha256": "f0c5db28e3037e286adb406477360c9a1e75d31ff97b50ac08fd4e5558280628"
+      }
+    }
+  },
+  "internalExample": {
+    "classification": "INTERNAL_WALKTHROUGH",
+    "featureCommit": "f34bfea6ef3f3e3b9d7842a69059fe1da1ec18a2",
+    "sourcePrefix": "stellar/scf_2026/sf47_budget_model/workspace/",
+    "entrypoint": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs",
+    "nativeExecuted": false
+  }
+}

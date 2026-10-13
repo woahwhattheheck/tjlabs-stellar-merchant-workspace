@@ -190,7 +190,7 @@ export async function mountReviewReturnDesk(root, { request, identity, reconnect
     if(!origin.workspaceId||!origin.instanceId)throw Error("Open the original authenticated workspace connection first.");
     await refresh();const saved=await readReturnDesk(origin.workspaceId);local=saved?valid(saved):structuredClone(initial);version=saved?.version??0;
     initialized=true;paint();say(local.pending?"Original pending request recovered. Inspect or replay its exact body.":"Original review return desk ready.");
-  } catch(error){initialized=false;renderButtons();say(error.message,true);throw error;}
+  } catch(error){initialized=false;window.removeEventListener("beforeunload",beforeUnload);renderButtons();say(error.message,true);throw error;}
   function close() {
     if(closed)return Promise.resolve({state:"CLOSED",workspaceId:origin.workspaceId,pendingOperationId:local?.pending?.args?.operationId??null});
     if(closePromise)return closePromise;

@@ -20,8 +20,8 @@ const HERE=dirname(fileURLToPath(import.meta.url));
 // xChange recipient-state coverage belongs to xchange-materials-native.mjs.
 const SUPPLIER_EXPORT_FORMATS=Object.freeze(['review.json','issues.csv','products.jsonl','bmecat.xml']);
 const SCHEMA='stellar-forge.opensearch-materials-native-receiving.v1';
-const PRIMARY='etim-original',CUSTOMER='etim-received';
-const SOURCE_INPUT='etim-original-source',OLDER_INPUT='etim-original-delivery',CURRENT_INPUT='etim-mcp-delivery';
+const PRIMARY='etim-original',CUSTOMER='etim-received',FINAL='etim-final-received';
+const SOURCE_INPUT='etim-original-source',OLDER_INPUT='etim-original-delivery',CURRENT_INPUT='etim-mcp-delivery',FINAL_INPUT='etim-final-delivery';
 const PUBLISHED='https://www.etim-international.com/wp-content/uploads/2021/09/ETIM-BMEcat-Guideline-V5-0-2-2024-12-12.zip';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const json=value=>JSON.stringify(value,null,2)+'\n';
@@ -155,12 +155,14 @@ export const materialReceivingIO=Object.freeze({privateDirectory,readBytes,readJ
  */
 export async function runOpenSearchMaterialsReceiving({
   supplierDirectory,directory,supplierOperationId='supplier-etim-2769',
-  operationId='opensearch-materials-2769',inputsDirectory,python
+  operationId='opensearch-materials-2769',inputsDirectory,inputFormat='jsonl',python
 }={}) {
   if(typeof supplierDirectory!=='string'||typeof directory!=='string'||
       !/^[A-Za-z0-9][A-Za-z0-9_-]{0,50}$/.test(operationId)||
       !/^[A-Za-z0-9][A-Za-z0-9_-]{0,50}$/.test(supplierOperationId))
     throw failure('MATERIAL_RECEIVING_INPUT','Supply the original supplier directory, private receiving directory and stable operation IDs.');
+  if(!['jsonl','bmecat-xml'].includes(inputFormat))
+    throw failure('MATERIAL_RECEIVING_INPUT','Use jsonl or bmecat-xml for the original source course.');
   supplierDirectory=resolve(supplierDirectory);directory=resolve(directory);
   if(inside(supplierDirectory,directory)||inside(directory,supplierDirectory))
     throw failure('MATERIAL_RECEIVING_INPUT','Keep the two complete operation directories distinct and nonoverlapping.');
@@ -168,8 +170,9 @@ export async function runOpenSearchMaterialsReceiving({
   await privateDirectory(control);
   const lease=await acquireStateLease(control),stateFile=join(control,'receiving-state.json');
   const reportFile=join(directory,'materials-receiving-native.json');
-  const selected={schema:SCHEMA,operationId,supplierOperationId,supplierDirectory,directory};
-  let state,server,primary,customer,storageFault=null;
+  const selected={schema:SCHEMA,operationId,supplierOperationId,supplierDirectory,directory,
+    ...(inputFormat==='bmecat-xml'?{inputFormat}:{})};
+  let state,server,primary,customer,finalRecipient,storageFault=null;
   const callCounts={};
   const save=async()=>{
     if(storageFault)throw storageFault;
@@ -211,8 +214,9 @@ export async function runOpenSearchMaterialsReceiving({
   };
   let environment;
   const closeHost=async()=>{
-    if(!server&&!primary&&!customer)return;
+    if(!server&&!primary&&!customer&&!finalRecipient)return;
     const errors=[];
+    if(finalRecipient){try{await finalRecipient.close();}catch(error){errors.push(error);}finalRecipient=null;}
     if(customer){try{await customer.close();}catch(error){errors.push(error);}customer=null;}
     if(primary){try{await primary.close();}catch(error){errors.push(error);}primary=null;}
     if(server){try{await server.close();server=null;}catch(error){errors.push(error);}}
@@ -224,8 +228,9 @@ export async function runOpenSearchMaterialsReceiving({
     state=await maybeJson(stateFile)??{...selected,startedAt:new Date().toISOString(),requests:{},operations:{},phases:{},
       observedTools:{},connection:null,host:null,lifetimes:{merchant:'CLOSED',originalWorkspace:'CLOSED',receivingWorkspace:'CLOSED'}};
     for(const [key,value]of Object.entries(selected))assert.deepEqual(state[key],value,'Keep the original receiving operation selection.');
+    assert.equal(state.inputFormat??'jsonl',inputFormat,'Preserve the original source format when resuming.');
     state.state='RUNNING';state.error=null;await save();
-    const supplier=await runSupplierDeliveryJourney({directory:supplierDirectory,operationId:supplierOperationId,
+    const supplier=await runSupplierDeliveryJourney({directory:supplierDirectory,operationId:supplierOperationId,inputFormat,
       ...(inputsDirectory===undefined?{}:{inputsDirectory}),...(python===undefined?{}:{python})});
     assert.equal(supplier.state,'CLOSED');assert.equal(supplier.operationId,supplierOperationId);
     const originalPhase=phaseOf(supplier,'original_source_and_catalog');
@@ -233,35 +238,42 @@ export async function runOpenSearchMaterialsReceiving({
     const httpPhase=phaseOf(supplier,'http_correction_replay_and_download');
     const originalReport=await fileIdentity(join(supplierDirectory,'supplier-delivery-native.json'));
     const sourceFile=join(supplierDirectory,'source.json');
-    const wrappedFile=join(supplierDirectory,'etim-original-input.jsonl');
+    const fixtureDirectory=resolve(inputsDirectory??join(HERE,'../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/examples/supplier-etim'));
+    const sourceName=inputFormat==='bmecat-xml'?'SampleFile_bmecat_etim_V5_T_NEW_CATALOG_ETIM10.xml':'etim-original-input.jsonl';
+    const inputFile=inputFormat==='bmecat-xml'?join(fixtureDirectory,sourceName):join(supplierDirectory,sourceName);
     const originalBundlePath=join(supplierDirectory,'exports','supplier-customer-workspace-v2.jsonl');
-    const originalSource=await fileIdentity(wrappedFile,originalPhase.source);
+    const originalSource=await fileIdentity(inputFile,originalPhase.source);
     const originalBundle=await fileIdentity(originalBundlePath,
       supplier.exports.find(item=>item.name==='supplier-customer-workspace-v2.jsonl'));
-    const wrapped=JSON.parse((await readBytes(wrappedFile)).toString('utf8').trim());
+    const productReference=inputFormat==='bmecat-xml'?join(fixtureDirectory,'etim10-supplier-products.jsonl'):inputFile;
+    const wrapped=JSON.parse((await readBytes(productReference)).toString('utf8').trim());
     const product=wrapped.supplier;assertOriginalProduct(product,product);
-    assert.equal(hash(wrapped.originalSource.contentXml),originalPhase.originalXmlSha256);
+    if(inputFormat==='bmecat-xml')assert.equal(originalSource.sha256,originalPhase.originalXmlSha256);
+    else assert.equal(hash(wrapped.originalSource.contentXml),originalPhase.originalXmlSha256);
     const original={report:originalReport,catalogId:originalPhase.catalogId,editionId:originalPhase.editionId,
       planId:correctionPhase.planId,reviewId:httpPhase.reviewId,source:originalSource,bundle:originalBundle,
       productSha256:digest(product),originalXmlSha256:originalPhase.originalXmlSha256};
     if(state.original)assert.deepEqual(state.original,original,'Use the complete same original supplier delivery.');
     else{state.original=original;await save();}
     const customerDirectory=join(directory,'customer-workspace');await privateDirectory(customerDirectory);
+    const finalRecipientDirectory=join(directory,'final-recipient-workspace');await privateDirectory(finalRecipientDirectory);
     const downloadsRoot=join(directory,'downloads');await privateDirectory(downloadsRoot);
     environment={...process.env,SUPPLIER_JOURNEY_ENDPOINT:'http://127.0.0.1:9200',
       MCP_ACCESS_TOKEN:randomBytes(32).toString('hex'),MCP_CLIENT_ORIGINS:''};
     delete environment.MCP_OAUTH_CONFIG;
     const connectionPath=join(control,'opensearch-connection.json');
-    const connectionFor=additional=>{
+    const connectionFor=(additional,finalAdditional=state.finalBundleInput)=>{
       const inputs={
-        [SOURCE_INPUT]:{path:wrappedFile,name:'etim-original-input.jsonl',bytes:originalSource.bytes,sha256:originalSource.sha256},
+        [SOURCE_INPUT]:{path:inputFile,name:sourceName,bytes:originalSource.bytes,sha256:originalSource.sha256},
         [OLDER_INPUT]:{path:originalBundlePath,name:'supplier-customer-workspace-v2.jsonl',
           bytes:originalBundle.bytes,sha256:originalBundle.sha256}
       };
       const customerInputs={...inputs,...(additional?{[CURRENT_INPUT]:additional}:{})};
       return {schema:'stellar-forge.opensearch-workspace-connection.v1',workspaces:{
         [PRIMARY]:{label:'Published ETIM supplier receiver',directory:join(supplierDirectory,'receiver'),sourceFile,materialInputs:inputs},
-        [CUSTOMER]:{label:'Received original ETIM customer workspace',directory:customerDirectory,sourceFile,materialInputs:customerInputs}
+        [CUSTOMER]:{label:'Received original ETIM customer workspace',directory:customerDirectory,sourceFile,materialInputs:customerInputs},
+        ...(finalAdditional?{[FINAL]:{label:'Final exported ETIM customer recipient',directory:finalRecipientDirectory,sourceFile,
+          materialInputs:{[FINAL_INPUT]:finalAdditional}}}:{})
       }};
     };
     const installConnection=async value=>{
@@ -332,7 +344,8 @@ export async function runOpenSearchMaterialsReceiving({
       assert.equal(material.materialId,'411061');
       const complete=await primary.materialGet({editionId:edition.id,materialKey:material.key});assert.deepEqual(complete,material);
       assertOriginalProduct(material.attributes.supplier,product);
-      assert.equal(hash(material.attributes.originalSource.contentXml),original.originalXmlSha256);
+      if(inputFormat==='bmecat-xml')assert.equal(material.attributes.bmecat.source.document.sha256,original.originalXmlSha256);
+      else assert.equal(hash(material.attributes.originalSource.contentXml),original.originalXmlSha256);
       const source=await primary.materialSource({sourceId:edition.source.id});
       assert.equal(source.sha256,originalSource.sha256);
       const plan=await primary.supplierPlan({planId:original.planId});
@@ -350,6 +363,21 @@ export async function runOpenSearchMaterialsReceiving({
       const templates=await primary.supplierTemplates();assert.ok(templates&&typeof templates==='object');
       return {workspaceId:status.workspaceId,catalog,edition,material,source,plan,correction,review,
         productSha256:digest(row.product),inputCount:inputs.inputs.length};
+    });
+    const bmecatProfile=await step('original_bmecat_profile',async()=>{
+      const generic=await primary.materialBMEcatProfile();
+      assert.equal(generic.catalogMapping.fields.materialId,'materialId');
+      assert.deepEqual(generic.transactionModes.T_NEW_CATALOG,['full']);
+      assert.equal(generic.sourceProfile,null);
+      if(inputFormat!=='bmecat-xml')return {inputFormat,generic};
+      const original=await primary.materialBMEcatProfile({sourceId:baseline.source.id});
+      assert.deepEqual(original.sourceProfile,baseline.source.bmecat.sourceProfile);
+      assert.deepEqual(original.supplierProfile,original.sourceProfile);
+      assert.equal(original.supplierProfile.envelope.receiverAccepted,false);
+      assert.equal(original.supplierProfile.envelope.subsetAgreed,false);
+      assert.equal(baseline.source.bmecat.transaction.name,'T_NEW_CATALOG');
+      assert.equal(baseline.source.bmecat.productCount,1);
+      return {inputFormat,sourceId:baseline.source.id,metadata:baseline.source.bmecat,profile:original};
     });
     const customerId='etim-published-example',description=product.descriptions.eng.short;
     const firstCommercialSelection=await step('original_match_and_query',async()=>{
@@ -376,10 +404,11 @@ export async function runOpenSearchMaterialsReceiving({
     });
     const mapped=await step('original_unit_and_classification',async()=>{
       const uploaded=await mutate(primary,'source-intake','materialUpload',()=>({
-        inputId:SOURCE_INPUT,format:{kind:'jsonl'},
+        inputId:SOURCE_INPUT,format:{kind:inputFormat},
         provenance:{url:PUBLISHED,publisher:'ETIM International',revision:'2024-12-12 / ETIM 10 sample',
           kind:'published-standard-example',
-          note:'The complete original XML and converted product fields are received through the configured source alias.'}
+          note:inputFormat==='bmecat-xml'?'Receive the complete original publisher XML directly through the configured source alias.':
+            'The complete original XML and converted product fields are received through the configured source alias.'}
       }));
       const source=operationResult(uploaded,'source');
       assert.equal(source.bytes,originalSource.bytes);assert.equal(source.sha256,originalSource.sha256);
@@ -681,6 +710,59 @@ export async function runOpenSearchMaterialsReceiving({
         cli:{command:'download-export',historyCommand:'supplier-history --all-pages',historyPages:history.pages,
           progressMessages:progress.length}};
     });
+    // The final exported bundle contains newer customer work than the first
+    // received bundle. Receive these exact outgoing bytes into a third workspace.
+    const finalBundle=retainedExportFile(finalFiles.material,'catalog-bundle.jsonl');
+    const finalInput={...await fileIdentity(join(finalFiles.material.download.directory,finalBundle.name),finalBundle),
+      name:finalBundle.name};
+    if(state.finalBundleInput)assert.deepEqual(state.finalBundleInput,finalInput,'Keep the exact final customer bundle.');
+    else{state.finalBundleInput=finalInput;await save();}
+    const finalConnection=connectionFor(state.bundleInput,finalInput);
+    if(state.connection.sha256!==hash(Buffer.from(json(finalConnection)))){
+      await closeHost();await installConnection(finalConnection);await startHost();
+      customer=await connect(CUSTOMER);await customer.open();
+    }
+    const readFinalRecipient=async()=>{
+      const status=await finalRecipient.status();
+      assert.notEqual(status.workspaceId,baseline.workspaceId);
+      assert.notEqual(status.workspaceId,customerReceived.workspaceId);
+      assert.deepEqual(await finalRecipient.materialCatalog({catalogId:mapped.catalog.id}),mapped.catalog);
+      assert.deepEqual(await finalRecipient.materialEdition({editionId:mapped.edition.id}),mapped.edition);
+      assert.deepEqual(await finalRecipient.materialGet({editionId:mapped.edition.id,materialKey:mapped.material.key}),mapped.material);
+      assert.deepEqual(await finalRecipient.materialDecisionGet({decisionId:customerWork.decision.id}),customerWork.decision);
+      assert.deepEqual(await finalRecipient.supplierPlan({planId:delivery.plan.id}),delivery.plan);
+      assert.deepEqual(await finalRecipient.supplierCorrectionGet({correctionId:customerWork.correction.id}),customerWork.correction);
+      assert.deepEqual(await finalRecipient.supplierReviewGet({reviewId:customerWork.review.id}),customerWork.review);
+      assertOriginalProduct((await finalRecipient.supplierRow({reviewId:customerWork.review.id,materialKey:mapped.material.key})).product,product);
+      const source=await finalRecipient.materialSource({sourceId:mapped.source.id});
+      assert.equal(source.sha256,originalSource.sha256);
+      if(inputFormat==='bmecat-xml'){
+        assert.deepEqual(source.bmecat,mapped.source.bmecat);
+        assert.deepEqual(await finalRecipient.materialBMEcatProfile({sourceId:source.id}),
+          await customer.materialBMEcatProfile({sourceId:mapped.source.id}));
+      }
+      return {workspaceId:status.workspaceId,sourceId:source.id,sourceSha256:source.sha256,
+        sourceMetadataSha256:inputFormat==='bmecat-xml'?digest(source.bmecat):null,
+        catalogId:mapped.catalog.id,editionId:mapped.edition.id,
+        decisionId:customerWork.decision.id,decisionRevision:customerWork.decision.revision,
+        planId:delivery.plan.id,planRevision:delivery.plan.revision,
+        correctionId:customerWork.correction.id,correctionRevision:customerWork.correction.revision,
+        reviewId:customerWork.review.id,productSha256:digest(product)};
+    };
+    const finalRecipientReceived=await step('final_outgoing_bundle_cold_recipient',async()=>{
+      finalRecipient=await connect(FINAL);await finalRecipient.open();
+      const received=await mutate(finalRecipient,'final-customer-receive','materialReceive',()=>({inputId:FINAL_INPUT}));
+      operationResult(received);
+      const before=await readFinalRecipient();
+      await closeHost();await startHost();
+      customer=await connect(CUSTOMER);await customer.open();
+      finalRecipient=await connect(FINAL);await finalRecipient.open();
+      assert.deepEqual(await readFinalRecipient(),before,'The exact final attachment changed after complete host close/reopen.');
+      await finalRecipient.close();finalRecipient=null;
+      return {...before,exportId:finalFiles.material.exportId,manifestSha256:finalFiles.material.manifestSha256,
+        bundle:finalInput,operation:{id:received.id,requestSha256:received.requestSha256},
+        completeHostClosedAndReopened:true};
+    });
     await step('closed_handles_and_original_reopen',async()=>{
       const primaryRead=await primary.status(),customerRead=await customer.status();
       assert.equal(primaryRead.workspaceId,baseline.workspaceId);assert.equal(customerRead.workspaceId,customerReceived.workspaceId);
@@ -725,6 +807,10 @@ export async function runOpenSearchMaterialsReceiving({
       customerWorkspace:await verifyGroup(customer,finalFiles.material,finalFiles.material.download.directory),
       customerSupplier:await verifyGroup(customer,finalFiles.supplier,finalFiles.supplier.download.directory)
     };
+    finalRecipient=await connect(FINAL);await finalRecipient.open();
+    const finalRead=await readFinalRecipient();
+    for(const [key,value]of Object.entries(finalRead))assert.deepEqual(finalRecipientReceived[key],value);
+    await finalRecipient.close();finalRecipient=null;
     const currentMaterial=await customer.materialGet({editionId:mapped.edition.id,materialKey:mapped.material.key});
     assert.equal(currentMaterial.sha256,mapped.material.sha256);
     const currentRow=await customer.supplierRow({reviewId:customerWork.review.id,materialKey:mapped.material.key});
@@ -736,7 +822,8 @@ export async function runOpenSearchMaterialsReceiving({
     state.state='COMPLETE';state.completedAt??=new Date().toISOString();state.artifacts=artifacts;await save();
     const report={schema:SCHEMA,operationId,supplierOperationId,state:'CLOSED',startedAt:state.startedAt,
       completedAt:state.completedAt,directory,supplierDirectory,source,original:state.original,
-      workspaceIds:{original:baseline.workspaceId,received:customerReceived.workspaceId},
+      inputFormat,bmecatProfile,finalRecipient:finalRecipientReceived,
+      workspaceIds:{original:baseline.workspaceId,received:customerReceived.workspaceId,finalReceived:finalRecipientReceived.workspaceId},
       catalog:{id:mapped.catalog.id,revision:mapped.catalog.revision,editionId:mapped.edition.id,
         materialId:mapped.material.materialId,materialSha256:mapped.material.sha256,unit:mapped.material.unit,
         quantity:mapped.quantity.quantity},
@@ -765,12 +852,13 @@ export async function main(args=process.argv.slice(2),{stdout=process.stdout}={}
     stdout.write('Continue the complete original ETIM supplier delivery through the material MCP.\n\n'+
       '  node receiving/opensearch-materials-native.mjs --supplier-directory ORIGINAL_SUPPLIER_DIRECTORY\n'+
       '       --directory PRIVATE_RECEIVING_DIRECTORY [--supplier-operation supplier-etim-2769]\n'+
-      '       [--operation opensearch-materials-2769] [--inputs ORIGINAL_INPUT_DIRECTORY] [--python EXECUTABLE]\n\n'+
+      '       [--operation opensearch-materials-2769] [--inputs ORIGINAL_INPUT_DIRECTORY] [--python EXECUTABLE]\n'+
+      '       [--input-format jsonl|bmecat-xml]\n\n'+
       'Keep both directories and both operation IDs to resume the original requests, exports and file checkpoints.\n');
     return;
   }
   const names={'--supplier-directory':'supplierDirectory','--directory':'directory','--supplier-operation':'supplierOperationId',
-    '--operation':'operationId','--inputs':'inputsDirectory','--python':'python'},options={};
+    '--operation':'operationId','--inputs':'inputsDirectory','--input-format':'inputFormat','--python':'python'},options={};
   for(let index=0;index<args.length;index+=2){
     const name=names[args[index]],value=args[index+1];
     if(!name||!value||value.startsWith('--')||Object.hasOwn(options,name))

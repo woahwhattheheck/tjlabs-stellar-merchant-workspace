@@ -53,4 +53,6 @@ The reader accepts complete bundles up to 256 MiB and original individual JSONL 
 
 Follow [RECEIVING.md](./RECEIVING.md) against the selected actual bundle. The receiving command builds both blank and populated HTML, exercises the real browser controls, downloads the original sources and complete records, reopens the generated recipient, and retains desktop/narrow screenshots. Inspect those actual images before marking the visual delivery complete.
 
+An assigned browser can also receive the exact blank and populated attachments through the supplied-HTML mode and exported existing-context API described in RECEIVING.md. The complete source and embedded original bundle are checked before rendering, and the actual downloaded recipient is reopened through that same explicit transport.
+
 The source shell and modules are maintained separately. The build embeds them without fetching packages or running hosted CI. It also preserves the original source notice in the resulting HTML.

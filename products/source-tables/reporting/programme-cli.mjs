@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+// MIT. Installed reporting programme operator; original sources stay in place.
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {receiveDeskHandover} from './desk-receive.mjs';
+import {applyProgramme,openProgramme,programmeSummary,programmeIdentity,exportProgramme} from './programme.mjs';
+
+const usage=`reporting-programme apply --request REQUEST.json [--project PROJECT.json] --out NEW_PROJECT.json
+reporting-programme receive-desk --source HANDOVER.json --context RECEIVE_CONTEXT.json [--project PROJECT.json] --out NEW_PROJECT.json
+reporting-programme inspect --project PROJECT.json
+reporting-programme export --project PROJECT.json --out NEW_NATIVE.zip
+
+A create request starts a project; define, run and delivery continue it.
+Complete file inputs accept content or fromFile (relative to the request file).
+Use encoding base64 for original binary attachments. Existing outputs are preserved.
+Open the resulting project in the installed Source Tables workbench for field
+mapping, reasoned cell decisions, saved reviews and comparisons.
+`;
+function fail(message){throw new Error(message);}
+function flags(args){const out={};for(let i=0;i<args.length;i+=2){const key=args[i];if(!['--request','--project','--out','--source','--context'].includes(key)||!args[i+1]||args[i+1].startsWith('--')||out[key])fail('Use the complete command shown by help.');out[key]=args[i+1];}return out;}
+async function readJSON(file){return JSON.parse(await fs.readFile(path.resolve(file),'utf8'));}
+async function fileInput(value,base){if(!value||typeof value!=='object'||Array.isArray(value))return value;if(!Object.hasOwn(value,'fromFile'))return value;if(typeof value.fromFile!=='string'||!value.fromFile)fail('fromFile must name the complete original file.');if(Object.hasOwn(value,'content'))fail('Choose content or fromFile for one original file.');const body=await fs.readFile(path.resolve(base,value.fromFile)),encoding=value.encoding||'utf8';let content;if(encoding==='base64')content=body.toString('base64');else if(encoding==='utf8')content=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(body);else fail('File encoding must be utf8 or base64.');const {fromFile,...rest}=value;return {...rest,filename:value.filename||path.basename(fromFile),encoding,content};}
+async function requestFiles(request,filename){const base=path.dirname(path.resolve(filename)),v=request.input;if(!v||typeof v!=='object')return request;if(request.kind==='create'&&Array.isArray(v.reports))for(const r of v.reports)r.query=await fileInput(r.query,base);if(request.kind==='define')v.query=await fileInput(v.query,base);if(request.kind==='run'){if(v.result)v.result=await fileInput(v.result,base);if(Array.isArray(v.files))v.files=await Promise.all(v.files.map(f=>fileInput(f,base)));}if(request.kind==='source'&&Array.isArray(v.files))v.files=await Promise.all(v.files.map(f=>fileInput(f,base)));if(request.kind==='delivery'&&v.receipt)v.receipt=await fileInput(v.receipt,base);return request;}
+async function saveNew(filename,body){const out=path.resolve(filename),temporary=path.join(path.dirname(out),'.reporting-'+randomUUID()+'.tmp');let handle,owned=false;try{handle=await fs.open(temporary,'wx',0o600);owned=true;await handle.writeFile(body);await handle.sync();await handle.close();handle=null;await fs.link(temporary,out);}finally{if(handle)await handle.close();if(owned)await fs.unlink(temporary).catch(e=>{if(e.code!=='ENOENT')throw e;});}return out;}
+async function main(args){const command=args.shift();if(!command||['help','--help','-h'].includes(command)){process.stdout.write(usage);return;}if(!['apply','inspect','export','receive-desk'].includes(command))fail(usage);const o=flags(args);if(command==='receive-desk'){if(!o['--source']||!o['--context']||!o['--out']||o['--request'])fail(usage);const source=await fs.readFile(path.resolve(o['--source']),'utf8'),context=await readJSON(o['--context']),project=o['--project']?await readJSON(o['--project']):null;const result=await receiveDeskHandover(project,source,context),out=await saveNew(o['--out'],JSON.stringify(result.project,null,2)+'\n');process.stdout.write(JSON.stringify({out,replayed:result.replayed,...await programmeIdentity(result.project)},null,2)+'\n');return;}if(o['--source']||o['--context'])fail(usage);if(command==='apply'){if(!o['--request']||!o['--out'])fail(usage);const request=await requestFiles(await readJSON(o['--request']),o['--request']),project=o['--project']?await readJSON(o['--project']):null;const result=await applyProgramme(project,request),out=await saveNew(o['--out'],JSON.stringify(result.project,null,2)+'\n');process.stdout.write(JSON.stringify({out,replayed:result.replayed,projectSha256:result.projectSha256,summary:programmeSummary(result.project)},null,2)+'\n');return;}if(!o['--project']||o['--request']||command==='inspect'&&o['--out']||command==='export'&&!o['--out'])fail(usage);const project=await openProgramme(await readJSON(o['--project']));if(command==='inspect'){process.stdout.write(JSON.stringify(await programmeIdentity(project),null,2)+'\n');return;}const result=await exportProgramme(project),out=await saveNew(o['--out'],result.bytes);process.stdout.write(JSON.stringify({out,bytes:result.bytes.length,files:result.files.length,summary:result.summary},null,2)+'\n');}
+main(process.argv.slice(2)).catch(error=>{process.stderr.write(JSON.stringify({error:error.code||'REPORTING_PROGRAMME',message:error.message})+'\n');process.exitCode=1;});

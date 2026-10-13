@@ -1441,7 +1441,7 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/PUBLIC_OBJECT_RECOVERY.md",
-      "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
+      "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
       "editions": [
         {
           "commit": "506a0a9e4f624db7ec830f1bb95e34032ca14128",
@@ -1454,6 +1454,12 @@
           "bytes": 10655,
           "sha256": "7cdb427e9057d884e77160c5c406055b3ca2713d1e82f9e967cd25dfc154a1ae",
           "git_blob": "18dde742c14871e9da016a028c633eeab877d67c"
+        },
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 11676,
+          "sha256": "b30e9a5b0527e21002ec4a1ec77487534fafa9115517794e755a2a4daadb837f",
+          "git_blob": "62a39c1459f072b13df978d38d1633a9ef62bdf1"
         }
       ],
       "required": false
@@ -1481,13 +1487,25 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.mjs",
-      "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
+      "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
       "editions": [
         {
           "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
           "bytes": 75174,
           "sha256": "90b61213bb8c180af8ed9797490ac8e5f2212c73a488390d4b91a2ee4031f9b9",
           "git_blob": "a4a3c33e1faa5ee6bb8c42873add7b4835fc5a70"
+        },
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 80819,
+          "sha256": "22ad96c9084a680e21ccd722934941f579bf5a7ae60a4cc369b3f5d606b5d4b5",
+          "git_blob": "02ae547fd68df1b8e6c852cc3b834d77fb9f7b85"
+        },
+        {
+          "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
+          "bytes": 80835,
+          "sha256": "0bfecafff6d3c369ec5134feb1a536514d4afd2a711a6b96c2a515bc3d88ee41",
+          "git_blob": "baa28bf1aa0c22e035c97ffb74202c4fc3eac44e"
         }
       ],
       "required": false
@@ -1498,13 +1516,25 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/HOST_HANDOFF.md",
-      "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
+      "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
       "editions": [
         {
           "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
           "bytes": 26511,
           "sha256": "9986ca052020a8d883fbee04893a5dd007bd64551b9de4feba6055f660db13d5",
           "git_blob": "5bdc3b6b9b6e6adc7063db4d40cca7588115de50"
+        },
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 29886,
+          "sha256": "a14af1f6a71fe71ee635c94b8bee74dc4ffca5590c6cf4074ffc73afee3dd77a",
+          "git_blob": "2f2842a82a32c0faf329d6eab42d689c9d98b660"
+        },
+        {
+          "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
+          "bytes": 30110,
+          "sha256": "0b772f68921340119ca1a77ec4495b9b29018337d3ceeb136d308df7987a796b",
+          "git_blob": "ed3cc49d0d9d70e856b008ea1152fcb05738054e"
         }
       ],
       "required": false
@@ -1515,13 +1545,25 @@
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff.d.mts",
-      "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
+      "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
       "editions": [
         {
           "commit": "e8b1ddb19c9dc8fabd820c60190b7fa8b39ec66d",
           "bytes": 4036,
           "sha256": "7863ae78f3d42738d26a8c9a56efdfa2a8ef7693e6095571ebc5705f2ab8d27c",
           "git_blob": "98ff58494888aaa586f25b7c5ba688461e595689"
+        },
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 4645,
+          "sha256": "d66e690867247db211be30401beab28883f1b08c40d365bd1c164e33521210d0",
+          "git_blob": "eddbc4108dae5d2d9d578f2c84dfa451c26b1b02"
+        },
+        {
+          "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
+          "bytes": 4755,
+          "sha256": "53acdf106bc30e559c9d9443d6b8894c3bd53f2bbf62e5ae1707fda139e50cbb",
+          "git_blob": "197ae9f2e9a4244fb370a129af4da2bb77a00125"
         }
       ],
       "required": false
@@ -1573,6 +1615,80 @@
           "bytes": 5403,
           "sha256": "7f21484789d6d9cc731188bb56690e45fd91ec4fd5075abc20bd28c184e6a11d",
           "git_blob": "8089e87f1b807e0472127656034495505f9636c2"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-public-host-host-handoff-cli-mjs",
+      "label": "Original host adoption: host-handoff-cli.mjs",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-handoff-cli.mjs",
+      "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
+      "editions": [
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 8137,
+          "sha256": "93079d3efe4716a45aa10ee9897c0d7b8021bcde55869535997b4fdf80892cb5",
+          "git_blob": "fdc0aac9eafaeaae18927534a69278d9702969e3"
+        },
+        {
+          "commit": "e6d3d26651a8bedf14f19cc34bc8bc98b32ff66d",
+          "bytes": 8230,
+          "sha256": "28d35f4b7103279fc9ad717c082faa832374d0bdfb4608a618b3af21746602dc",
+          "git_blob": "791d1b9e268dd9e945618327b1e4dbad419980d6"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-public-host-host-adoption-files-mjs",
+      "label": "Original host adoption: host-adoption-files.mjs",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-adoption-files.mjs",
+      "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+      "editions": [
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 10919,
+          "sha256": "6aef0170ef68de601e6558b64cb82427702aeb161218c6f99ea75ed259d62696",
+          "git_blob": "f0352ca46b9dfa4a7b3431db670a972e2e3d1d68"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-public-host-host-adoption-files-py",
+      "label": "Original host adoption: host-adoption-files.py",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/host-adoption-files.py",
+      "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+      "editions": [
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 33433,
+          "sha256": "97e1db2581fb12cf043d3218fe8b9c6e133a6eb1e7a35379d8dedb567637142d",
+          "git_blob": "a166d4d999c9a04e46c9e396e229cdd1c4757009"
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "recovery-public-host-delivery-lock-mjs",
+      "label": "Original host adoption: delivery-lock.mjs",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/delivery-lock.mjs",
+      "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+      "editions": [
+        {
+          "commit": "ea8b9823eaf11f92ffd640d4b2a8b491e73b80ab",
+          "bytes": 5180,
+          "sha256": "e96e86ce5560f10c144bfb28f7471441c0a198aca1a789e240b92810678392e2",
+          "git_blob": "a98f39d671254287f7150133a35718227057cfc4"
         }
       ],
       "required": false

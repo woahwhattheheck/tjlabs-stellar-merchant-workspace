@@ -5,7 +5,7 @@ export {restoreCentralArchive} from './archive.mjs';
 export {centralManagedOptions,startManagedCentralWorkspace,centralStartup,runManagedCentralCli} from './managed.mjs';
 export {CentralWorkspaceClient,connectCentralWorkspace,readCentralConnection,inspectCentralListener,
   ODK_CONNECTION_FILENAME,ODK_CONNECTION_SCHEMA,ODK_STARTUP_SCHEMA,
-  centralOperationId,centralActionRoute,requestCentralAction,inspectCentralCommissioning,inspectCentralWarehouse,
+  centralOperationId,centralActionRoute,requestCentralAction,inspectCentralCommissioning,inspectCentralWarehouse,inspectCentralReleaseOperations,
   CENTRAL_WAREHOUSE_READ_ACTIONS,CENTRAL_WAREHOUSE_ACTIONS} from './connection.mjs';
 export {readCentralWorkspaceConfiguration,MerchantCentralWorkspaces,odkWorkspaceTools,
   ODK_MCP_CONNECTION_SCHEMA} from './mcp.mjs';
