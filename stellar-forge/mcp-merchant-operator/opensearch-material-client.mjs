@@ -27,6 +27,7 @@ export const OPENSEARCH_MATERIAL_CLIENT_METHODS=Object.freeze({
   status:'status',open:'open',close:'close',operation:'operation',
   materialInputs:'material_inputs',materialList:'material_list',materialCatalog:'material_catalog',
   materialHistory:'material_history',materialDecisionGet:'material_decision_get',materialSource:'material_source',
+  materialBMEcatProfile:'material_bmecat_profile',
   materialEdition:'material_edition',materialRows:'material_rows',materialChanges:'material_changes',
   materialGet:'material_get',materialFacets:'material_facets',materialSuggest:'material_suggest',
   materialQuantity:'material_quantity',materialSave:'material_save',materialUpload:'material_upload',
