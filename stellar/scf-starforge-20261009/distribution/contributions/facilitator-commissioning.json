@@ -44,5 +44,11 @@
     "products/facilitator-commissioning/installation.d.mts",
     "stellar/scf_2026/sf49_data_commissioning/installation-workorders/facilitator-commissioning.json",
     "products/facilitator-commissioning/INSTALLATION_DESK.md"
+  ],
+  "browserAssets": [
+    {
+      "server": "products/facilitator-commissioning/operator-server.mjs",
+      "manifest": "products/facilitator-commissioning/browser-assets.json"
+    }
   ]
 }
