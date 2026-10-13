@@ -23,6 +23,8 @@ import {riskOfBiasRegistry} from './risk-of-bias/registry.mjs';
 import {createCustomerUpdateStore,validateCustomerUpdateTransition} from './customer-updates/store.mjs';
 import {createRisSourceStore,validateRisState,validateRisTransition} from './ris-source/store.mjs';
 import {createStudyFlowStore} from './study-flow/store.mjs';
+import {createComparisonStore} from './comparison/store.mjs';
+import {comparisonBlobMetadata,validateComparisonState,validateComparisonTransition} from './comparison/model.mjs';
 import {validateStudyFlowState,validateStudyFlowTransition} from './study-flow/model.mjs';
 import {validateCustomerUpdateState,customerUpdateBlobMetadata} from './customer-updates/model.mjs';
 import {createTemplateExchange,validateTemplateExchangeState,
@@ -53,6 +55,8 @@ const summary = state => ({
   createdAt: state.createdAt, updatedAt: state.updatedAt,
   questionCount: state.questions.length, editionCount: state.editions.length,
   selectedCount: state.selections.filter(selection => selection.selected).length,
+  comparisonOperationCount:(state.comparisonEvents??[]).length,
+  comparisonCaseCount:new Set((state.comparisonEvents??[]).filter(e=>e.action==='case.save').map(e=>e.record.id)).size,
   findingCount: state.findings.length, dossierReturnCount:(state.dossierReturnEvents??[]).length,
   dossierReturnProposalCount:(state.dossierReturnEvents??[]).reduce((count,event)=>count+event.proposalCount,0),
   citationReviewCount:(state.citationReviews??[]).length,
@@ -259,7 +263,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
     const id = newId('d'), now = timestamp();
     const state = { schema: DOCUMENT, id, title, description, revision: 1,
       previous: null, createdAt: now, updatedAt: now, change: 'Created dossier',
-      questions: [], editions: [], selections: [], findings: [], citationReviews: [], eligibilityEvents: [], extractionEvents: [], extractionPublicationEvents: [], riskOfBiasEvents: [], customerUpdateEvents: [], templateExchangeEvents: [], studyFlowEvents: [] };
+      questions: [], editions: [], selections: [], findings: [], citationReviews: [], eligibilityEvents: [], extractionEvents: [], extractionPublicationEvents: [], riskOfBiasEvents: [], customerUpdateEvents: [], templateExchangeEvents: [], studyFlowEvents: [], comparisonEvents: [] };
     await writeJson(join(await revisionsDirectory(id, true), filename(1)),
       { sha256: digest(jsonBytes(state)), state }, { exclusive: true });
     return projection === 'metadata' ? getMetadata(id) : get(id);
@@ -649,7 +653,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
 
   function collectBlobMetadata(state, contents) {
     for (const metadata of [...state.editions.filter(edition => edition.mode === 'retained').map(edition => edition.raw),
-      ...customerUpdateBlobMetadata(state), ...templateExchangeBlobs(state), ...dossierReturnBlobMetadata(state)]) {
+      ...customerUpdateBlobMetadata(state), ...templateExchangeBlobs(state), ...dossierReturnBlobMetadata(state), ...comparisonBlobMetadata(state)]) {
       const existing = contents.get(metadata.sha256);
       need(!existing || existing.bytes === metadata.bytes, 'RESEARCH_BLOB_CHANGED');
       contents.set(metadata.sha256, metadata);
@@ -764,6 +768,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
       validateTemplateExchangeState(state);
       await validateRisState(state,readContent,occurrenceCache);
       await validateDossierReturnState(state,readContent,occurrenceCache);
+      await validateComparisonState(state,readContent,occurrenceCache);
       const findings = new Set();
       for (const finding of state.findings) {
         need(object(finding) && typeof finding.id === 'string' && /^f_[a-f0-9-]{36}$/.test(finding.id) &&
@@ -790,6 +795,7 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
       occurrenceCache.set(key(previous.revision),sha256);
     }
     occurrenceCache.set(key(state.revision),digest(jsonBytes(state)));
+    validateComparisonTransition(previous,state);
     if(await validateDossierReturnTransition(previous,state,{readContent,
       withPortableBranch:returnSourceAdapter.withPortableBranch,
       historyPin:revision=>occurrenceCache.get(key(revision))}))return;
@@ -1016,13 +1022,14 @@ export async function openDossierStore(directory, { providers = {}, extractionOp
   const dossierReturnStore=createDossierReturnStore({directory,dossierDirectory,head,history,readRevision,commit,blob,putBlob,
     sourceAdapter:returnSourceAdapter,validateCandidate:validateReturnCandidate,validateCapacity:validateReturnCapacity});
 
+  const comparisonStore=createComparisonStore({head,commit,metadata,get,blob,putBlob,validateCapacity:validateReturnCapacity});
   const studyFlowStore=createStudyFlowStore({head,commit,metadata,get,projections});
   const risSourceStore=createRisSourceStore({head,commit,metadata,blob,putBlob});
   const customerUpdateStore=createCustomerUpdateStore({head,commit,metadata,get,projections,blob,putBlob,exportStream});
   const templateExchange=createTemplateExchange({head,commit,blob,putBlob,reviewExtraction,
     workbookOptions:{python:extractionOptions.python??'python3',signal:extractionOptions.signal}});
   return Object.freeze({ directory, list, create, get, getMetadata, readRetainedEdition, listRevisions, update, addQuestion, updateQuestion,
-    ...customerUpdateStore,...risSourceStore,...dossierReturnStore,...studyFlowStore,templateExchange,
+    ...customerUpdateStore,...risSourceStore,...dossierReturnStore,...studyFlowStore,...comparisonStore,templateExchange,
     receive, previewSourceBundle, receiveSourceBundle, receiveBuyerResult, receiveReference, selectEvidence, updateSelection, addFinding, updateFinding,
     citationUpdates,reviewCitationUpdate,eligibility,reviewEligibility,exportEligibility,
     riskOfBias,reviewRiskOfBias,exportRiskOfBias,

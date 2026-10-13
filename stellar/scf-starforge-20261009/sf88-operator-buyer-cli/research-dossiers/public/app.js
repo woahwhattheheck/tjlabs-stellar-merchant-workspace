@@ -12,6 +12,7 @@ import {createDossierReturnsPanel} from './dossier-returns.js';
 import {createEligibilityPanel} from './eligibility.js';
 import {createStudyExtractionPanel} from './study-extraction.js';
 import {createStudyFlowPanel} from './study-flow.js';
+import {createComparisonPanel} from './comparison.js';
 import {createRiskOfBiasPanel} from '/risk-of-bias/browser.mjs';
 import {installZoteroResearchControl} from './zotero-browser.mjs';
 'use strict';
@@ -21,7 +22,7 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
   const MAX_RESEARCH_FILE_BYTES = 16 * 1024 * 1024;
   const MAX_PORTABLE_FILE_BYTES = 256 * 1024 * 1024;
   const tokenKey = 'research-dossiers-session:' + location.origin;
-  const state = {token: '', workspaceId: null, instanceId: null, dossiers: [], dossier: null, activeTab: ['pipelines','citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','zotero'].includes(new URLSearchParams(location.hash.slice(1)).get('view'))?new URLSearchParams(location.hash.slice(1)).get('view'):'sources', sourceId: null, variantDigest: null,
+  const state = {token: '', workspaceId: null, instanceId: null, dossiers: [], dossier: null, activeTab: ['pipelines','citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','comparison','zotero'].includes(new URLSearchParams(location.hash.slice(1)).get('view'))?new URLSearchParams(location.hash.slice(1)).get('view'):'sources', sourceId: null, variantDigest: null,
     page: 0, busy: false, openalexConfigured: false, openalexEditions: [], editingDossier: false, editingQuestion: null, editingFinding: null, editingSelection: null, importCompleted: new Set(), noteDrafts: new Map(), noteEditVersions: new Map()};
   const safeStorage = {
     get() { try { return sessionStorage.getItem(tokenKey) || ''; } catch { return ''; } },
@@ -113,6 +114,7 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
     studyExtractionPanel.updateBusy();
     studyFlowPanel.updateBusy();
     riskOfBiasPanel.updateBusy();
+    comparisonPanel.updateBusy();
   }
   async function api(path, {method = 'GET', body, file, download = false, sourceProjection = 'inspection', workspaceId} = {}) {
     const requestUrl=new URL(path,location.origin);
@@ -185,14 +187,14 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
     $('question-filter').value = '';
     $('selected-only').checked = false;
     const params = new URLSearchParams(); params.set('dossier', state.dossier.id);
-    if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','zotero'].includes(state.activeTab))params.set('view',state.activeTab);
+    if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','comparison','zotero'].includes(state.activeTab))params.set('view',state.activeTab);
     history.replaceState(null, '', '#' + params.toString());
     render();
   }
   function applyDossier(view) {
     state.dossier = view; state.page = 0; state.sourceId = null;
     const params = new URLSearchParams(); params.set('dossier', view.id);
-    if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','zotero'].includes(state.activeTab))params.set('view',state.activeTab);
+    if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','comparison','zotero'].includes(state.activeTab))params.set('view',state.activeTab);
     history.replaceState(null, '', '#' + params.toString());
     render();
   }
@@ -597,7 +599,7 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
     if (tab === 'clinical-trials' && $('clinical-trials-tab').hidden) tab = 'sources';
     if (tab === 'zotero' && $('zotero-tab').hidden) tab = 'sources';
     state.activeTab = tab;
-    ['sources', 'questions', 'findings', 'revisions', 'citation-review', 'ris-sources', 'dossier-returns', 'eligibility', 'study-extraction', 'study-flow', 'risk-of-bias', 'zotero', 'crossref', 'documents', 'pipelines', 'clinical-trials'].forEach(name => {
+    ['sources', 'questions', 'findings', 'revisions', 'citation-review', 'ris-sources', 'dossier-returns', 'eligibility', 'study-extraction', 'study-flow', 'risk-of-bias', 'comparison', 'zotero', 'crossref', 'documents', 'pipelines', 'clinical-trials'].forEach(name => {
       $('view-' + name).hidden = name !== tab;
       const button = document.querySelector('[data-tab="' + name + '"]');
       button.classList.toggle('active', name === tab);
@@ -614,9 +616,10 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
     studyExtractionPanel.show(tab === 'study-extraction');
     studyFlowPanel.show(tab === 'study-flow');
     riskOfBiasPanel.show(tab === 'risk-of-bias');
+    comparisonPanel.show(tab === 'comparison');
     const params=new URLSearchParams(location.hash.slice(1));
-    if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','zotero'].includes(tab))params.set('view',tab);
-    else if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','zotero'].includes(params.get('view')))params.delete('view');
+    if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','comparison','zotero'].includes(tab))params.set('view',tab);
+    else if(['citation-review','ris-sources','dossier-returns','eligibility','study-extraction','study-flow','risk-of-bias','comparison','zotero'].includes(params.get('view')))params.delete('view');
     if(state.dossier)params.set('dossier',state.dossier.id);
     history.replaceState(null,'',params.toString()?'#'+params.toString():location.pathname);
   }
@@ -773,6 +776,10 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
     getWorkspace:()=>({workspaceId:state.workspaceId,instanceId:state.instanceId}),isBusy:()=>state.busy,
     onReceived:async view=>{applyDossier(view);await refreshList();}});
   const riskOfBiasPanel=createRiskOfBiasPanel({root:$('view-risk-of-bias'),tab:$('risk-of-bias-tab'),
+    api:(path,options={})=>api(path,{sourceProjection:'full',workspaceId:state.workspaceId,...options}),
+    task,notify,getDossier:()=>state.dossier,getWorkspace:()=>({workspaceId:state.workspaceId,instanceId:state.instanceId}),
+    isBusy:()=>state.busy,onReceived:async view=>{applyDossier(view);await refreshList();}});
+  const comparisonPanel=createComparisonPanel({root:$('view-comparison'),
     api:(path,options={})=>api(path,{sourceProjection:'full',workspaceId:state.workspaceId,...options}),
     task,notify,getDossier:()=>state.dossier,getWorkspace:()=>({workspaceId:state.workspaceId,instanceId:state.instanceId}),
     isBusy:()=>state.busy,onReceived:async view=>{applyDossier(view);await refreshList();}});

@@ -23,6 +23,7 @@ import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
 import {handleRiskOfBiasRoute,readRiskOfBiasAsset,RISK_OF_BIAS_REQUEST_LIMIT} from './risk-of-bias/routes.mjs';
 import {handleStudyExtractionRoute,STUDY_EXTRACTION_REVIEW_LIMIT} from './study-extraction-routes.mjs';
 import {handleStudyFlowRoute,STUDY_FLOW_REQUEST_LIMIT} from './study-flow/routes.mjs';
+import {handleComparisonRoute,COMPARISON_REQUEST_LIMIT} from './comparison/routes.mjs';
 import {createTemplateExchangeDispatcher,TEMPLATE_POST_ACTIONS} from './template-exchange/http.mjs';
 import {MAX_WORKBOOK_BYTES} from './template-exchange/workbook.mjs';
 import {openZoteroResearchBridge} from './zotero-workspace.mjs';
@@ -49,6 +50,8 @@ const TYPES = Object.freeze({
   'europe-pmc.js': 'text/javascript; charset=utf-8',
   'europe-pmc.css': 'text/css; charset=utf-8',
   'app.js': 'text/javascript; charset=utf-8',
+  'comparison.js': 'text/javascript; charset=utf-8',
+  'comparison.css': 'text/css; charset=utf-8',
   'ris-sources.js':'text/javascript; charset=utf-8',
   'ris-sources.css':'text/css; charset=utf-8',
   'ris-drafts.js':'text/javascript; charset=utf-8',
@@ -261,6 +264,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
   const api = {schema:RESEARCH_WORKSPACE_API,metadata:true,revisionPages:true,streamedPortable:true,sourceBundles:true,sourceInspection:true,studyProtocolInspection:true,
     studyExtraction:true,studyExtractionRequestLimit:STUDY_EXTRACTION_REVIEW_LIMIT,extractionPublications:true,zoteroBridge:zotero!==null,
     studyFlow:true,studyFlowRequestLimit:STUDY_FLOW_REQUEST_LIMIT,
+    comparison:true,comparisonRequestLimit:COMPARISON_REQUEST_LIMIT,
     customerUpdates:true,customerUpdateRequestLimit:16*1024*1024,
     dossierReturns:true,dossierReturnSourceLimit:DOSSIER_RETURN_SOURCE_LIMIT,dossierReturnRequestLimit:DOSSIER_RETURN_REQUEST_LIMIT,
     customerCommerce:true,customerCommerceConfigured:customerCommerceConfiguration!==null,customerCommerceRequestLimit:2*1024*1024,
@@ -483,6 +487,9 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       }
       if(await handleRisRoute({store,dossierId:id,action,req,url,readBody:readJson,send,
         setHeader:(name,value)=>res.setHeader(name,value)}))return;
+      if(action==='comparison'||action.startsWith('comparison/'))sourceProjection='full';
+      if(await handleComparisonRoute({store,dossierId:id,action,req,url,projection,
+        readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleStudyFlowRoute({store,dossierId:id,action,req,url,projection,
         readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleStudyExtractionRoute({store,dossierId:id,action,req,url,projection,
@@ -766,6 +773,9 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       const code = safeCode(error);
       const status = code === 'AUTH_REQUIRED' ? 401 : ['HOST_REFUSED', 'ORIGIN_REFUSED'].includes(code) ? 403 :
         DOSSIER_RETURN_ERROR_STATUS[code]??(
+        ['COMPARISON_REQUEST_CHANGED','COMPARISON_ENTITY_VERSION_CONFLICT','COMPARISON_EXTERNAL_RUN_CHANGED'].includes(code)?409:
+        ['COMPARISON_RUN_NOT_FOUND','COMPARISON_ARTIFACT_NOT_FOUND','COMPARISON_CASE_NOT_FOUND','COMPARISON_CASE_VERSION_NOT_FOUND'].includes(code)?404:
+        ['COMPARISON_RUN_TOO_LARGE','COMPARISON_ARTIFACTS_TOO_LARGE'].includes(code)?413:
         code.startsWith('TEMPLATE_')&&Number.isInteger(error.status)&&error.status>=400&&error.status<=599 ? error.status :
         (code.startsWith('EUROPE_PMC_')&&/(?:CHANGED|CONFLICT|REUSED|RUNNING_ELSEWHERE|COOLDOWN)$/.test(code)) ? 409 :
         ['REVISION_CONFLICT','CITATION_REVIEW_CHANGED','CITATION_REVIEW_REQUEST_CHANGED','PORTABLE_HISTORY_CONFLICT','ROUTESCAN_RECORD_BUSY','CROSSREF_OPERATION_RUNNING_ELSEWHERE','UNSTRUCTURED_REVIEWED_EDITION_CHANGED','UNSTRUCTURED_RECEIVING_LABEL_CONFLICT','CLINICALTRIALS_REVIEW_CHANGED','CLINICALTRIALS_PLAN_CHANGED','CLINICALTRIALS_QUESTION_CHANGED','CLINICALTRIALS_SOURCE_CONFIGURATION_CHANGED','PIPELINE_REVISION_CHANGED','PIPELINE_REVIEWED_EDITION_CHANGED',
