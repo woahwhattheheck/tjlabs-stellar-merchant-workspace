@@ -21,6 +21,8 @@ The assembly function uses the original PDFMint service at [pdf.mintapis.com/doc
 
 See the same official [limits](https://pdf.mintapis.com/docs#limits) and [quota](https://pdf.mintapis.com/docs#quota) sections when selecting the current account plan. The live supplier response and its account counters remain the usage source. Original documents, supplier credits, native purchases, PDF pages and accepted parent tasks are separate quantities.
 
+To commission the complete service from an existing account, use [original-account commissioning](COMMISSIONING.md#commission-rendering-and-ordered-pdf-assembly-together) with its explicit `assemblyPaymentFile` / `--assembly-payment` option. It prepares rendering and assembly together on the same original buyer/account, native facilitator, customer settings and managed service.
+
 Enable assembly explicitly in a PDFMint merchant template:
 
 ~~~sh

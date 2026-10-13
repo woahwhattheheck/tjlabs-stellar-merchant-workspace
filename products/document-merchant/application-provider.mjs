@@ -113,7 +113,8 @@ async function prepareCommissioningApplication(settings,{inputPath,runtimeDirect
     documentMerchant:{schema:COMMISSIONING,directory:state.path,sourceDirectory:native,
       selectionSha256:selected.selectionSha256,merchantState:selected.merchantState,
       provider:selected.review.request.provider,publicOrigin:selected.review.original.publicOrigin,
-      payment:selected.review.request.payment,originalOperator:selected.review.original.operatorWorkspace??
+      payment:selected.review.request.payment,...(selected.review.request.assembly?
+        {assemblyPayment:selected.review.request.assembly.payment}:{}),originalOperator:selected.review.original.operatorWorkspace??
         selected.review.original.operatorProfile?.path,
       customerDirectory:selected.review.customer.directory,customerOptions:selected.review.paths.customerOptions,
       consumerOptions:selected.review.paths.consumerOptions,ports:{

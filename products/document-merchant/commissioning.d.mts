@@ -7,6 +7,8 @@ export const DOCUMENT_COMMISSIONING_REVIEW_SCHEMA:'stellar-forge.document-commer
 export interface DocumentCommissioningCommonOptions{
   directory:string;provider?:DocumentProviderId;anonymous?:boolean;
   customerOptionsFile?:string|null;customerDirectory?:string|null;
+  /** Complete explicit PDFMint assembly payment JSON, constrained by the retained original facilitator policy. */
+  assemblyPaymentFile?:string;
   sellerPort?:number;customerPort?:number;operatorPort?:number;operationsPort?:number;
 }
 export type DocumentCommissioningOptions=DocumentCommissioningCommonOptions&(
@@ -28,7 +30,7 @@ export interface OriginalDocumentCommerce{
 }
 export interface DocumentCommissioningReview{
   schema:typeof DOCUMENT_COMMISSIONING_REVIEW_SCHEMA;selectionSha256:string;
-  options:Required<DocumentCommissioningCommonOptions>&({commerceDirectory:string;intentId:string}|{accountSourceFile:string});original:OriginalDocumentCommerce;
+  options:Omit<Required<DocumentCommissioningCommonOptions>,'assemblyPaymentFile'>&Pick<DocumentCommissioningCommonOptions,'assemblyPaymentFile'>&({commerceDirectory:string;intentId:string}|{accountSourceFile:string});original:OriginalDocumentCommerce;
   configurationFiles:CommissioningFile[];sourceFiles:CommissioningFile[];request:DocumentSetup;
   customer:Parameters<typeof openDocumentBatchCustomer>[0];
   paths:{merchant:string;factory:string;customerOptions:string;consumerOptions:string;compositionOptions:string;sourceRoot:string};
@@ -36,7 +38,7 @@ export interface DocumentCommissioningReview{
 }
 export interface DocumentCommissioning{
   schema:typeof DOCUMENT_COMMISSIONING_SCHEMA;directory:string;selectionSha256:string;
-  original:OriginalDocumentCommerce;installation:DocumentInstallation;customerOptions:string;
+  original:OriginalDocumentCommerce;installation:DocumentInstallation;assemblyPayment?:DocumentSetup['payment'];customerOptions:string;
   consumerOptions:string;compositionOptions:string;sourceRoot:string;nativeFactory:string;nativeFactoryFile:CommissioningFile;environmentNames:string[];
   serviceOptions:Parameters<typeof openDocumentService>[0];
   routes:{origin:string;seller:string[];customerPrefix:'/jobs/';privateListeners:string[]};budgetMeaning:string;
