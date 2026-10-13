@@ -35,7 +35,9 @@ export function camtStatementHtml(report,statement) {
   const message=report.camt||{},value=statement?.camt||{},check=value.balanceCheck;
   const excluded=statement?.camt?.unmappedCount??list(statement?.excludedRows).filter(row=>row.row?.camt||row.camt).length;
   let html='<section class="source-note mt15"><h3>CAMT.053 statement</h3>'+pairs([
-    ['Message version',message.messageVersion],['Message reference',message.messageId],
+    ['Message version',message.messageVersion],['Original XML elements',message.profile?.namespaceMode==='UNQUALIFIED'?'Unqualified; explicitly selected version':'Declared namespace'],
+    ['Original namespace',message.namespace===''?'Empty in original XML':message.namespace],
+    ['Booking reference identity',message.profile?.referencePolicy==='SOURCE_ENTRY'?'Separate source entries; overlaps require review':'Account-servicer reference'],['Message reference',message.messageId],
     ['Message created',sourceDate(message.messageCreated)],['Statement reference',value.statementId],
     ['Statement created',sourceDate(value.createdAt)],['Message pages',pageText(message.messagePagination)],
     ['Statement pages',pageText(value.pagination)],['Electronic sequence',value.sequences?.electronic],

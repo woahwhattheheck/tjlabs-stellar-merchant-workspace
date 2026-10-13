@@ -1,6 +1,6 @@
 # CAMT.053 bank statements
 
-The merchant bank workspace accepts original CAMT.053 XML through its existing source review, bank account, receipt, refund, allocation and statement-close workflow. Supported namespaces are `urn:iso:std:iso:20022:tech:xsd:camt.053.001.02` and `urn:iso:std:iso:20022:tech:xsd:camt.053.001.08`. The original namespace selects the message structure. An explicitly selected expected version must agree with it.
+The merchant bank workspace accepts original CAMT.053 XML through its existing source review, bank account, receipt, refund, allocation and statement-close workflow. Supported namespaces are `urn:iso:std:iso:20022:tech:xsd:camt.053.001.02` and `urn:iso:std:iso:20022:tech:xsd:camt.053.001.08`. The original namespace selects the message structure. An explicitly selected expected version must agree with it. Original unqualified XML is also supported through the explicit `UNQUALIFIED` namespace interpretation and documented message version; original bytes and namespaces remain intact.
 
 The source module uses Node built-ins and reads the complete original bytes. It does not make network requests while parsing. Installation includes the source parser, browser review module, complete original-file preparation command and source format guide with the existing merchant application.
 
@@ -17,6 +17,14 @@ The original account identity must identify the institution and account. If the 
 Each `Ntry` remains one entry. The statement review distinguishes the entry statuses and shows the original balance check. Add the selected bank account or choose its existing merchant account, review the statement and retain it. The original cash, receipt and invoice-allocation functions then work on the received entry.
 
 **Retained statement** opens every booked, pending and information entry in original record order. **Original row** shows its exact decoded XML, source positions and complete fields. The transaction screen shows bank references, booking and value dates, the reversal indicator, reported charge groups, underlying transaction details and their remittance data. Detail pages contain 25 records each; the complete original and parsed-file downloads retain all records.
+
+## Original namespace and booking-reference interpretation
+
+The source editor offers **Original XML elements** and **Booking reference identity**. `DECLARED` uses the original .02/.08 namespace and remains the default. `UNQUALIFIED` requires an explicit message version, preserves empty original element namespaces, and rejects a conflicting version declaration. Choose it for an original export with unqualified elements, including the retained Bundesbank examples.
+
+`ACCOUNT_SERVICER_REFERENCE` remains the default booking identity. `SOURCE_ENTRY` keeps every original entry separate while retaining its bank reference for inspection; repeated references do not collapse separate cash entries, and overlapping files use the existing comparison/review. The selected interpretation is bound into `reviewSha256` and travels through collection transfer and source replacement.
+
+The complete [Bundesbank original delivery and receiving guide](BUNDESBANK.md) includes both original ZIPs, all22XMLfiles and their ready-to-open collection. Its cheque and separate fee illustrate the explicit source-entry policy.
 
 ## Prepare a request from an original file
 
@@ -40,7 +48,7 @@ starforge bank-statements prepare-source \
   --out /private/bank/source-request.json
 ```
 
-Optional `--account-namespace` supplies the stable institution reference. Optional `--text-encoding` selects the original file encoding and must agree with its declaration and byte-order mark. The source parser reports source problems in the returned statement summaries so the original remains available for review.
+Optional `--namespace-mode UNQUALIFIED` requires `--message-version`; optional `--reference-policy SOURCE_ENTRY` selects separate original entry identities. Both options are limited to CAMT053. Optional `--account-namespace` supplies the stable institution reference. Optional `--text-encoding` selects the original file encoding and must agree with its declaration and byte-order mark. The source parser reports source problems in the returned statement summaries so the original remains available for review.
 
 The prepared request is limited to the installed workspace's 24 MB request budget; its original source is limited to 16 MB and 50,000 bank entries. The command reads a regular original file, detects changes during reading and creates a private output file without overwriting an existing path.
 
@@ -97,7 +105,7 @@ const received = await bank.receiveSource({
 });
 ```
 
-`camt` is optional. `messageVersion`, when present, is the exact supported message identifier without the namespace prefix. `detailPolicy` defaults to `PRESERVE_ONLY`; `ENTRY_CURRENCY_TX_AMT` requests an additional check of explicitly stated transaction-detail amounts in the entry currency. Both preserve the original entry amount and all detail records.
+`camt` is optional. `messageVersion`, when present, is the exact supported message identifier without the namespace prefix. `namespaceMode` defaults to `DECLARED`; `UNQUALIFIED` requires `messageVersion`. `referencePolicy` defaults to `ACCOUNT_SERVICER_REFERENCE`; `SOURCE_ENTRY` retains each original separately and carries overlapping imports into review. `detailPolicy` defaults to `PRESERVE_ONLY`; `ENTRY_CURRENCY_TX_AMT` requests an additional check of explicitly stated transaction-detail amounts in the entry currency. Both preserve the original entry amount and all detail records.
 
 The source report adds:
 
@@ -123,7 +131,7 @@ Compact workspace projections retain the message, statement and entry metadata. 
 | `CdtDbtInd=CRDT` | The entry's current credit direction. |
 | `CdtDbtInd=DBIT` | The entry's current debit direction. |
 | `RvslInd=true` | Original reversal metadata attached to the current signed entry. |
-| `AcctSvcrRef` | Account-scoped provider identity used by the existing source overlap and duplicate review. |
+| `AcctSvcrRef` | Original account-servicer reference. By default it supplies account-scoped provider identity; explicit `SOURCE_ENTRY` keeps it as source information while reviewing original entries separately. |
 | `NtryRef` | Retained entry reference, kept separate from the account-servicer identity. |
 
 The debit/credit indicator describes the current entry. A reversal therefore keeps that current direction; the parser does not reverse its sign a second time. A CAMT reversal is distinct from an OFX correction that instructs replacement or deletion of an earlier transaction. Original party roles stay attached to the source, including returns whose original debtor/creditor roles remain present.
