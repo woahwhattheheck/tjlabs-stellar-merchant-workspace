@@ -46,6 +46,8 @@ export const OPERATING_RETURN_WORKBOOK_ASSETS = Object.freeze([
   { key: 'plan', route: '/operating-return-core/operating-plan.mjs', file: 'operating-plan.mjs' },
   { key: 'review', route: '/operating-return-core/operating-plan-return.mjs', file: 'operating-plan-return.mjs' },
   { key: 'workbook', route: '/operating-return-core/operating-plan-return-workbook.mjs', file: 'operating-plan-return-workbook.mjs' },
+  { key: 'grantTable', route: '/sf30-seller-sdk/lab-edd/table.mjs', file: '../../sf30-seller-sdk/lab-edd/table.mjs' },
+  { key: 'grant', route: '/grant-tracker-core/grant-tracker.mjs', file: 'grant-tracker.mjs' },
   { key: 'editor', route: '/operating-plan-return.mjs', file: 'public/operating-plan-return.mjs' },
   { key: 'html', route: '/operating-plan-return.html', file: 'public/operating-plan-return.html' },
   { key: 'css', route: '/operating-plan-return.css', file: 'public/operating-plan-return.css' },
@@ -57,7 +59,7 @@ function checkedSources(sources) {
     Object.keys(sources).length !== sourceKeys.length ||
     !sourceKeys.every(key => typeof sources[key] === 'string' && sources[key].length > 0 &&
       utf8Size(sources[key]) <= 4 * 1024 * 1024))
-    throw new TypeError('Keep the complete eight original workbook application sources.');
+    throw new TypeError('Keep the complete original workbook application sources and their grant-tracker dependencies.');
   return Object.fromEntries(sourceKeys.map(key => [key, sources[key]]));
 }
 const scriptJSON = value => JSON.stringify(value).replace(/</g, '\\u003c')
@@ -89,7 +91,14 @@ function launchWorkbook() {
     module('plan', { './catalog.mjs': 'catalog' });
     module('review', { './operating-plan.mjs': 'plan' });
     module('workbook', { './operating-plan-return.mjs': 'review' });
+    module('grantTable', {});
+    module('grant', {
+      './operating-plan.mjs': 'plan',
+      './operating-plan-return.mjs': 'review',
+      '../../sf30-seller-sdk/lab-edd/table.mjs': 'grantTable',
+    });
     module('editor', {
+      '/grant-tracker-core/grant-tracker.mjs': 'grant',
       '/operating-return-core/operating-plan.mjs': 'plan',
       '/operating-return-core/operating-plan-return.mjs': 'review',
       '/operating-return-core/operating-plan-return-workbook.mjs': 'workbook',

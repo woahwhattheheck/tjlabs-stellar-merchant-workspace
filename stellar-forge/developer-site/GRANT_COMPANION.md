@@ -91,7 +91,7 @@ Choose the note's original chapter and name the author. Enter a title, note,
 optional bookmark and Open or Resolved state. **Save note revision** records
 that decision against the exact source edition and chapter. Editing an existing
 note adds a version. Every version remains available in its history and the
-complete notes download.
+working notes download.
 
 The note editor identifies its bound chapter explicitly. Navigating the reader
 does not silently move an unfinished note to another chapter. Choose the
@@ -132,8 +132,12 @@ still open their recorded destinations.
 every note version, working drafts and reading position in
 scf-companion-reading-workspace.json. **Reopen complete workspace** verifies
 each original source pair and note/chapter binding before replacing the
-current reading work. Invalid source bytes or an edit made while an import
-is being read leave the current workspace in place.
+current reading work. Use this control when deliberately opening a different
+complete copy. To bring a collaborator's changes into the current copy, use
+**Review a collaborator's returned workspace** instead. Invalid source bytes
+or an edit made while an import is being read leave the current workspace in
+place. Download the current complete workspace before deliberately replacing
+your selected copy.
 
 The record format is stellar-forge.companion-reading-workspace.v1. Original
 source files have a 16 MiB per-file allowance; the complete workspace has a
@@ -186,3 +190,114 @@ complete original source editions.
 The offline reader validates its complete embedded workspace and the browser's saved copy against the same workspace identity. Exact equivalent copies open directly. Differing complete workspaces are presented before the reader opens: the operator chooses the downloaded copy or saved browser copy, with source, note and draft counts visible. Revision counts and timestamps do not establish which mutable reading work is newer.
 
 The copy panel keeps every alternative available for complete JSON download and explicit reopening. Before changing copies, current unsaved reading work is retained as a complete snapshot. Subsequent offline HTML downloads carry all retained alternatives. Browser persistence saves the complete alternatives before updating the selected copy; if storage capacity fails, the earlier browser copy remains intact and the open reader offers complete downloads. An invalid or differently identified browser entry is kept as downloadable original data and cannot replace the embedded reading workspace. The main workspace JSON export contains the selected working copy; the copy panel's archive and offline HTML preserve all alternatives.
+
+## Review and apply a collaborator's returned reading work
+
+Collaborators can continue independent copies of the same reading workspace,
+add or revise notes, keep unfinished drafts and receive later complete source
+editions. A returned copy does not establish that it is newer merely because
+its timestamp or revision counter is larger. The reader reviews its actual
+retained histories against the currently open workspace.
+
+1. Download the complete current workspace before sending a copy to a
+   collaborator. Keep its workspace identity and full source pairs together.
+2. In your current copy, expand **Review a collaborator's returned workspace**
+   and select the returned complete JSON file. The reader validates both
+   workspaces and their complete original source bindings. An unrelated
+   workspace identity cannot enter this return.
+3. Inspect **Complete retained source editions**, **Saved notes and their
+   complete histories**, and **Unfinished working drafts**. Each note shows
+   both complete branches, named authors, original edition/chapter bindings,
+   every saved version and their shared original prefix. A working draft shows
+   its complete authored text, author, bookmark and review state.
+4. Choose a working result for every conflict and name the reviewing operator.
+   For divergent note histories, continue with your current branch, continue
+   with the returned branch, or keep both as separate editable notes. Keeping
+   both retains the complete local history and a linked complete incoming note
+   branch. This forks the selected note, not every unchanged descendant:
+   unchanged carried child notes keep their original/local parent, while
+   incoming-added or changed children follow the returned parent fork. The
+   complete original incoming note family remains in its downloadable branch.
+   For different unfinished drafts at the same note/chapter binding,
+   choose the working local or incoming draft. Both original drafts remain
+   available in their retained full branches.
+5. Choose **Apply reviewed return**. The model rechecks the complete review and
+   the exact current local copy before constructing the cumulative workspace.
+   If the current reading work changed after review, choose **Review against
+   current reading work** and confirm the new displayed decisions. Earlier
+   choices are cleared for that refreshed review.
+6. Download the resulting complete workspace or save its offline HTML.
+   Reopening that complete output retains the review receipt, source editions,
+   note histories, working choices and both complete original branches.
+
+A source edition already present is reused; an additional complete source pair
+is retained. Identical notes keep their existing histories. A note with later
+versions on only one branch can retain that continued complete history without
+inventing a conflict; divergent later versions require the explicit working
+choice shown in the review. This comparison uses actual note-version ancestry,
+not revision-count or timestamp guesses. Notes, bookmarks and drafts remain
+reading records; no manuscript, source index, application answer or submitted
+grant plan is edited.
+
+The incoming file stays selected in the review until it is applied or the review
+is closed. **Download original returned copy** saves that complete validated
+branch without changing the current selection. **Close this review** leaves the
+current workspace unchanged. The reader locks its controls while an asynchronous
+receive, comparison, apply or download validation is active; the exact selection
+and revision are checked again before adopting the result.
+
+### Preserve and reopen every return branch
+
+After application, **Retained return branches** lists the complete **Before
+return**, **Incoming return** and **Applied result** snapshots with their
+operator/date labels, source/note/draft counts and content identities. Equivalent
+snapshots share one retained body. **Download this complete branch** validates
+and reconstructs that branch, then downloads its whole workspace without
+switching the current copy.
+
+The original **Reopen complete workspace** control remains available for
+deliberately continuing any downloaded branch as a replacement selection.
+Keep your cumulative current workspace download before using that control.
+The existing offline copy selector continues to retain downloaded and browser
+alternatives; its complete-copy export and later offline HTML include the
+selected workspace's full return archive.
+
+Applying the same reviewed return again is idempotent: it retains the already
+applied result and any later reading work instead of reverting to an earlier
+copy. A review whose local contents no longer match cannot silently overwrite
+progress. Both original branches are retained regardless of the operator's
+working note or draft choices. The existing 64 MiB complete-workspace limit
+includes these retained snapshots, receipts and all original source pairs;
+receive a complete download rather than dropping history to fit a browser
+storage quota.
+
+### Maintained return interface
+
+The additive dependency-free `dist/grant-companion-returns.mjs` decorates the
+existing edition model through
+`createCompanionReturnModel({editions: originalApi})`. The existing source
+loader and offline builder provide that same decorated API to the unchanged
+reader entry. The original edition operations keep their behavior.
+
+| Operation | Complete result |
+| --- | --- |
+| `await api.reviewReturn(local, incoming)` | Validates complete workspace objects or incoming JSON; returns both branches, exact review/local/incoming identities, source-edition review, note-version ancestry and draft conflicts. |
+| `await api.applyReturn(local, review, {actor, choices})` | Revalidates the exact review and selected local copy; returns the cumulative workspace, retained review receipt and explicit replay result. |
+| `api.returnCopies(workspace)` | Lists deduplicated retained full branches with identities, labels and source/note/draft counts. |
+| `await api.openReturnCopy(workspace, sha256)` | Validates and reconstructs the selected complete branch without changing the current workspace. |
+
+Conflict choices are keyed by the exact review's `conflict_key`.
+Divergent notes accept `local`, `incoming` or `both`; conflicting drafts
+accept `local` or `incoming`. The reader does not infer a choice from field
+order or label text. Every selected source and full branch remains under the
+existing reader's native validation and complete export/reopen contract.
+
+### Working notes and archived alternatives
+
+**Download working notes** creates Markdown containing every version of the
+notes in the current working selection. After a conflict choice, an unselected
+alternative note history can remain only in its complete archived branch.
+Use **Download complete workspace**, offline HTML, or **Download this complete
+branch** to retain those alternatives and their source bindings as well. The
+working-notes Markdown is a readable current selection, not an archive of every
+alternative returned branch.

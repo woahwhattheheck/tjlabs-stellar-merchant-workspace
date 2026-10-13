@@ -43,6 +43,8 @@ from .analysis_synthesis import AnalysisSynthesis
 from . import synthesis_http
 from .analysis_lineage import AnalysisLineage
 from . import lineage_http
+from .event_programmes import EventProgrammes
+from . import event_programmes_http
 from . import worldbank_programmes_http
 from . import worldbank_intake_http
 from .errors import BuyerError, StateError
@@ -133,7 +135,7 @@ class AnalysisWorkspace:
     their imports and activations. Source registration is an operator action.
     """
 
-    def __init__(self, directory, *, checkout=None, node="node", research_connections=None, lineage_connections=None, worldbank_core=None):
+    def __init__(self, directory, *, checkout=None, node="node", research_connections=None, lineage_connections=None, event_source_cli=None, worldbank_core=None):
         self.database = DatasetDatabase(directory)
         self.checkout = str(Path(checkout).expanduser().resolve()) if checkout else None
         self.node = node
@@ -180,6 +182,7 @@ class AnalysisWorkspace:
             self.archives.recover_completed()
             self.lineage = AnalysisLineage(self, connections=lineage_connections)
             self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="dataset-analysis")
+            self.event_programmes = EventProgrammes(self, source_cli=event_source_cli)
             # Lazy import preserves the original WorldBankAnalysis -> workspace join.
             from .worldbank_programmes import WorldBankProgrammes
             self.worldbank_programmes = WorldBankProgrammes(self, core=worldbank_core)
@@ -191,6 +194,8 @@ class AnalysisWorkspace:
                     self.worldbank_intake.close()
                 if hasattr(self, "worldbank_programmes"):
                     self.worldbank_programmes.close()
+                if hasattr(self, "event_programmes"):
+                    self.event_programmes.close()
                 if hasattr(self, "_executor"):
                     self._executor.shutdown(wait=True)
             finally:
@@ -198,10 +203,11 @@ class AnalysisWorkspace:
             raise
 
     def close(self):
-        # The original recurring coordinator may still sequence Analysis jobs.
-        # Drain it before marking this workspace closed, without its job mutex.
+        # Both programme coordinators may still sequence Analysis jobs.
+        # Drain them before marking this workspace closed, without its job mutex.
         self.worldbank_intake.close()
         self.worldbank_programmes.close()
+        self.event_programmes.close()
         with self._mutex:
             if self._closed:
                 return
@@ -690,6 +696,7 @@ def serve(workspace, *, port=0):
             assets.update(worldbank_intake_http.assets())
             assets.update(synthesis_http.assets())
             assets.update(lineage_http.assets())
+            assets.update(event_programmes_http.assets())
             assets.update({"/profiles": (_analysis_profiles_ui.HTML, "text/html;charset=utf-8"),
                            "/profiles.js": (_analysis_profiles_ui.JS, "text/javascript;charset=utf-8"),
                            "/profiles.css": (_analysis_profiles_ui.CSS, "text/css;charset=utf-8")})
@@ -706,6 +713,8 @@ def serve(workspace, *, port=0):
             if synthesis_http.get(self, workspace, url, query, parts):
                 return
             if lineage_http.get(self, workspace, url, query, parts):
+                return
+            if event_programmes_http.get(self, workspace, url, query, parts):
                 return
             if worldbank_intake_http.get(self, workspace, url, query, parts):
                 return
@@ -875,6 +884,8 @@ def serve(workspace, *, port=0):
                     return
                 if lineage_http.post(self, workspace, url, parts, body):
                     return
+                if event_programmes_http.post(self, workspace, url, parts, body):
+                    return
                 if worldbank_intake_http.post(self, workspace, url, parts, body):
                     return
                 if worldbank_programmes_http.post(self, workspace, url, parts, body):
@@ -965,6 +976,7 @@ def main():
     parser.add_argument("--database", required=True, help="Original private DatasetDatabase directory")
     parser.add_argument("--checkout", help="Matching full native Stellar Forge checkout/runtime, required for imports")
     parser.add_argument("--node", default="node")
+    parser.add_argument("--event-source-cli", help="Trusted local original SF88 event-feed analysis-source-cli.mjs; browser inputs are data only")
     parser.add_argument("--worldbank-core", help="Original installed World Bank core.py; browser requests select retained sources only")
     parser.add_argument("--research-connections", help="Private named original Research connections; browser requests select aliases only")
     parser.add_argument("--lineage-connections", help="Named original OpenLineage startup/token files; browser requests select aliases only")
@@ -1015,7 +1027,8 @@ def main():
         return
     workspace = AnalysisWorkspace(args.database, checkout=args.checkout, node=args.node,
                                   research_connections=args.research_connections,
-                                  lineage_connections=args.lineage_connections, worldbank_core=args.worldbank_core)
+                                  lineage_connections=args.lineage_connections, event_source_cli=args.event_source_cli,
+                                  worldbank_core=args.worldbank_core)
     try:
         if args.command == "research-read":
             request = parse(read(Path(args.request).expanduser().absolute(), _MAX_BODY)) if args.request else {}

@@ -323,6 +323,62 @@
         "../FRED_OPERATING_BROWSER.md",
         "text/plain; charset=utf-8"
       ]
+    ],
+    [
+      "/grant-tracker-editor.mjs",
+      [
+        "grant-tracker-editor.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-tracker-editor.css",
+      [
+        "grant-tracker-editor.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-tracker-core/grant-tracker.mjs",
+      [
+        "../grant-tracker.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-tracker-core/operating-plan.mjs",
+      [
+        "../operating-plan.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-tracker-core/operating-plan-return.mjs",
+      [
+        "../operating-plan-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-tracker-core/catalog.mjs",
+      [
+        "../catalog.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/sf30-seller-sdk/lab-edd/table.mjs",
+      [
+        "../../../sf30-seller-sdk/lab-edd/table.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-tracker-operator.md",
+      [
+        "../GRANT_TRACKER_OPERATOR.md",
+        "text/plain; charset=utf-8"
+      ]
     ]
   ]
 }

@@ -1,0 +1,103 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "source-tables-document-authoring",
+  "heading": "## Document processing and complete customer receiving",
+  "sources": [
+    {
+      "id": "source-tables-document-operator",
+      "label": "Source Tables installation, Applications and complete customer handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/source-tables/OPERATING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703",
+          "bytes": 14174,
+          "sha256": "2afb13e3778a4d056e906372d7102606643f07a9a4138be67602c2f447882f98",
+          "git_blob": "28f0eaf9eb618dffdbc62afa4c6cebd716d07009"
+        }
+      ]
+    },
+    {
+      "id": "source-tables-document-guide",
+      "label": "Document projection, field mapping, unfinished preparations and complete receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/SOURCE_TABLES.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703",
+          "bytes": 28665,
+          "sha256": "760fe4fb4d559070a4044e13cb5e87210ddee2a409d69b72aa02a058c5660b51",
+          "git_blob": "111c64665c813090a7268dd7ea8cc160d2d965ee"
+        }
+      ]
+    },
+    {
+      "id": "source-tables-document-parser",
+      "label": "Original source cells, span-aware selection and complete projection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/dist/source-document-tables.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703",
+          "bytes": 17473,
+          "sha256": "f5d0d411e38c2af0a0076341651de2ffd9a30c9872f6e8c15d44599b28d8db34",
+          "git_blob": "c5953fb910b76259b450ce09d76bc73eb55e154b"
+        }
+      ]
+    },
+    {
+      "id": "source-tables-document-preparations",
+      "label": "Saved per-table working choices and complete preparation return",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/dist/source-table-intake.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703",
+          "bytes": 8590,
+          "sha256": "b6772b928ae5ce81b6b47d0882feee010dd34121f13e752ccc699819f709d28e",
+          "git_blob": "f7c30e72f3d6b1d2dbdd74a66737017488fc9415"
+        }
+      ]
+    },
+    {
+      "id": "source-tables-wago-original",
+      "label": "Complete original six-table WAGO supplier source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/examples/document-tables/wago221-document-source.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703",
+          "bytes": 9618,
+          "sha256": "985270d705a28863599db7114b02b92e0f1fed91f1aadbd3ef45462b305e9dbf",
+          "git_blob": "3748f73b6e30cbbeffa295d845b9d639a6b43fdf"
+        }
+      ]
+    },
+    {
+      "id": "source-tables-wago-receiving",
+      "label": "Original complete WAGO native export and independent reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/examples/document-tables/receive-wago221.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703",
+          "bytes": 8842,
+          "sha256": "dc28d0446e6a7d94aeaee8261e6ae7f027c79038fb025a9892d0f092dba16a09",
+          "git_blob": "32f6cd477160f036c702b1f5e50b87dd633bd79f"
+        }
+      ]
+    }
+  ]
+}

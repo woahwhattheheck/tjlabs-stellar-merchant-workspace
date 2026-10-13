@@ -687,10 +687,26 @@ class EventFeedAnalysis:
         self.save_operation(operation)
         return self.workspace.workbooks.save(programme["workbook_name"], selected_request)
 
-    def deliver(self, operation_id, destination, *, resume=False):
-        operation = self.operation(operation_id)
-        applied = operation.get("applied")
+    def deliver(self, operation_id, destination, *, resume=False, delivery_id=None):
+        original = self.operation(operation_id)
+        applied = original.get("applied")
         need(applied is not None, "Apply the complete reviewed customer window first.")
+        # Explicitly request a new current-workspace snapshot without changing
+        # the accepted result or replaying its original archive operation.
+        accepted_operation_id = original.get("accepted_operation_id", operation_id)
+        if delivery_id is not None:
+            need(delivery_id != operation_id, "Use a new delivery ID for a fresh workspace snapshot.")
+            operation = self.operation(delivery_id, "delivery", {
+                "accepted_operation_id": accepted_operation_id,
+                "applied_sha256": sha(encoded(applied)),
+                "review_sha256": original["review"]["review_sha256"]})
+            if "applied" not in operation:
+                operation.update(applied=applied, review=original["review"],
+                                 accepted_operation_id=accepted_operation_id)
+                self.save_operation(operation)
+            operation_id = delivery_id
+        else:
+            operation = original
         destination = private_directory(Path(destination).expanduser().absolute(), create=True)
         if operation.get("delivery") and operation["delivery"]["destination"] == str(destination):
             for record in operation["delivery"]["files"]:
@@ -737,10 +753,11 @@ class EventFeedAnalysis:
              "The original archive programme record is unavailable or changed.")
         archived_programme = json.loads(row[0])
         need(archived_programme["workspace_id"] == self.workspace.identity and
-             any(item["operation_id"] == operation_id for item in archived_programme["history"]),
+             any(item["operation_id"] == accepted_operation_id for item in archived_programme["history"]),
              "The workspace snapshot must retain this original applied window.")
         plan = {"schema": "stellar-forge.event-feed-analysis-delivery-plan.v1",
-                "operation_id": operation_id, "selected_edition_id": applied["accepted"]["edition_id"],
+                "operation_id": operation_id, "accepted_operation_id": accepted_operation_id,
+                "selected_edition_id": applied["accepted"]["edition_id"],
                 "workspace_archive_job_id": archive["id"],
                 "workspace_archive_sha256": archive_files["workspace.zip"][1]["sha256"],
                 "workspace_programme": archived_programme,
@@ -823,6 +840,7 @@ their original owner-operated handovers and recovery journals.
         publish("Open_and_use.md", guide.encode())
         result = {"schema": "stellar-forge.event-feed-analysis-delivery.v1",
                   "programme": self.name, "operation_id": operation_id,
+                  "accepted_operation_id": accepted_operation_id,
                   "workspace_id": self.workspace.identity,
                   "edition_id": applied["accepted"]["edition_id"],
                   "review_sha256": applied["accepted"]["review_sha256"],
@@ -867,6 +885,7 @@ def main(argv=None):
             command.add_argument("--columns", help="JSON object of worksheet index to complete reviewed column array")
         elif action == "deliver":
             command.add_argument("--destination", required=True)
+            command.add_argument("--delivery-id", help="New retained delivery identity for a fresh current-workspace snapshot")
     receive = commands.add_parser("receive")
     receive.add_argument("--archive", required=True)
     receive.add_argument("--sha256", required=True)
@@ -906,7 +925,8 @@ def main(argv=None):
                 result = current.apply(args.operation_id, args.review_sha256,
                                        note=args.note, columns=columns, resume=args.resume)
             elif args.command == "deliver":
-                result = current.deliver(args.operation_id, args.destination, resume=args.resume)
+                result = current.deliver(args.operation_id, args.destination, resume=args.resume,
+                                         delivery_id=args.delivery_id)
             else:
                 result = current.status()
         print(json.dumps(result, ensure_ascii=False, allow_nan=False), flush=True)

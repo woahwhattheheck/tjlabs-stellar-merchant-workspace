@@ -451,3 +451,7 @@ the receiver always binds the actual four-file edition selected for that run.
 The existing handover now receives the original Grant Operations issuer-case ZIP, including correspondence, selected terms, commissioning and native planning history. Use **Issuer programme and selected native plan** in Submission handover to review and retain the programme, then explicitly receive its case-selected plan through Planning edition. The selected context is frozen with each prepared edition and retained in the complete editable draft.
 
 The full operating flow, receiving profile, original files and CLI export are documented in [GRANT_ISSUER_CONTEXT.md](./GRANT_ISSUER_CONTEXT.md).
+
+## Exact required-content coverage
+
+New preparations freeze the Required content review for their actual selected output alongside the complete authoring snapshot. Reviews of canonical answers alone do not become reviews of actual issuer fields. Changed text, pending decisions and historical reviews without an exact text basis remain visible. Receiving recomputes the coverage from the immutable snapshot, while the readable report includes its complete original/current text comparison as it stood at preparation. Earlier prepared editions retain their exact original bodies. See [Required content review](./GRANT_REQUIRED_CONTENT_REVIEW.md) for the complete same-editor journey.

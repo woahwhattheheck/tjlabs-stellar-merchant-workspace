@@ -1,4 +1,5 @@
 // Payment-based completion operations in the original SF47 case.
+import {completionCorrections} from './operations_completion_corrections.mjs';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
 const utcDate=()=>new Date().toISOString().slice(0,10);
@@ -26,7 +27,7 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
   if(!document.querySelector('link[data-completion-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_completion.css';link.dataset.completionStyle='true';document.head.append(link);
   }
-  for(const [key,value] of Object.entries({tranche:1,asOfDate:utcDate(),drafts:{},formDrafts:{},receiptId:'',summary:'',cohortReviewIds:[],implementationReviewIds:[],preview:null,reviewId:'',review:null,pending:null,accepted:null,inflight:null,dialog:null,notice:'',error:''})){
+  for(const [key,value] of Object.entries({tranche:1,asOfDate:utcDate(),drafts:{},formDrafts:{},receiptId:'',summary:'',cohortReviewIds:[],implementationReviewIds:[],correctionReviewId:'',preview:null,reviewId:'',review:null,pending:null,accepted:null,inflight:null,dialog:null,notice:'',error:''})){
     if(!Object.hasOwn(session,key))session[key]=value;
   }
   let active=true,hostBusy=false,busy=false,caseValue=current,calendar=current.completion;
@@ -39,14 +40,17 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
   const prefix='/api/operations/'+current.program.id;
   const savedPlan=tranche=>caseValue.completionPlans?.find(row=>row.tranche===tranche);
   function clearPreview(){session.preview=null;}
+  const corrections=completionCorrections({getCase:()=>caseValue,session,api:saveApi,mutate,clearPreview,
+    selectEvidence(id){session.correctionReviewId=id;clearPreview();},
+    async adoptCase(next){captureCurrent(next);if(available())await onCase(next,null);}});
   function error(error){session.error=error.message||String(error);if(available())render();}
   function updateControls(){
     if(!available())return;
     root.setAttribute('aria-busy',String(hostBusy||busy||!!session.inflight));
     for(const el of root.querySelectorAll('button,input,select,textarea')){
-      const retry=el.dataset.completionAction==='retry',readback=el.dataset.completionAction==='readback';
+      const retry=el.dataset.completionAction==='retry',readback=el.dataset.completionAction==='readback',recovery=el.dataset.completionAction==='correction-download';
       el.disabled=el.dataset.completionFixed==='true'||hostBusy||busy||!!session.inflight||
-        (!!session.pending&&!retry)||(!!session.accepted&&!readback)||
+        (!!session.pending&&!retry&&!recovery)||(!!session.accepted&&!readback&&!recovery)||
         ((el.dataset.completionWrite==='true'||el.closest('[data-completion-dialog]')&&el.tagName!=='BUTTON')&&caseValue.program.state!=='OPEN');
     }
   }
@@ -122,7 +126,10 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     const {payload,result}=accepted;
     if(next.program.id!==result.id||next.program.version<result.version)return;
     let superseded=false;
-    if(payload.action==='completion.save'){
+    if(payload.action==='completion.corrections.save'){
+      if(!next.reviews.some(row=>row.id===result.recordId))return;
+      await corrections.accepted(next,payload,result);
+    }else if(payload.action==='completion.save'){
       const number=payload.data.inputs.tranche,saved=next.completionPlans?.find(row=>row.tranche===number);
       if(!saved||saved.id!==result.recordId||!result.unchanged&&saved.version<result.version)return;
       superseded=saved.version>result.version;
@@ -143,7 +150,7 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
       if(!next.completionPlans.some(row=>row.extensions.some(item=>item.id===result.extensionId)))return;
     }else if(!next.records.outcomes.some(row=>row.id===result.recordId))return;
     session.accepted=null;session.dialog=null;
-    session.notice=payload.action==='completion.prepare'?'Prepared the complete original tranche form and selected sources.':
+    session.notice=payload.action==='completion.corrections.save'?'Saved the original correction edition and its complete source.':payload.action==='completion.prepare'?'Prepared the complete original tranche form and selected sources.':
       payload.action==='completion.submit'?'Retained the actual form submission with its original preparation and payment deadline.':
       payload.action==='completion.extension'?'Retained the issuer confirmation; the original deadline remains visible.':
       payload.action==='completion.decision'?'Retained the issuer outcome on the original form submission.':
@@ -195,10 +202,10 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
     session.reviewId=id;session.review=review;
   }
   async function selectTranche(number){
-    session.formDrafts[String(session.tranche)]={receiptId:session.receiptId,summary:session.summary,cohortReviewIds:clone(session.cohortReviewIds),implementationReviewIds:clone(session.implementationReviewIds),
+    session.formDrafts[String(session.tranche)]={receiptId:session.receiptId,summary:session.summary,cohortReviewIds:clone(session.cohortReviewIds),implementationReviewIds:clone(session.implementationReviewIds),correctionReviewId:session.correctionReviewId,
       preview:session.preview,reviewId:session.reviewId,review:session.review};
     session.tranche=number;
-    Object.assign(session,{cohortReviewIds:[],implementationReviewIds:[]},session.formDrafts[String(number)]||{receiptId:'',summary:'',preview:null,reviewId:'',review:null});
+    Object.assign(session,{cohortReviewIds:[],implementationReviewIds:[],correctionReviewId:''},session.formDrafts[String(number)]||{receiptId:'',summary:'',preview:null,reviewId:'',review:null});
     if(session.preview?.source.version!==caseValue.program.version)session.preview=null;
     await loadDraft(number);chooseReceipt();
   }
@@ -346,13 +353,14 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
       field('Previous payment','completionReceipt',session.receiptId,{options:[['','Choose the actual previous payment'],...options],wide:true})+
       field('Completed tranche result','completionSummary',session.summary,{area:true,rows:5,wide:true,max:20000,attrs:'data-completion-write="true"'})+
       cohortSelection()+implementationSelection()+
+      field('Saved issuer correction edition (optional)','completionCorrection',session.correctionReviewId,{options:[['','No correction edition selected'],...caseValue.reviews.filter(x=>x.purpose==='TRANCHE_CORRECTIONS'&&x.completionTranche===session.tranche).map(x=>[x.id,x.correctionTitle+' · edition '+x.correctionRevision])],wide:true,help:'This exact saved round and its original issuer findings accompany re-preparation. It does not change the actual payment deadline.'})+
       '</div><div class="completion-actions">'+button('Preview completion','preview','',!session.receiptId||!!value?.dirty)+
       button('Prepare completion','prepare','data-completion-write="true"',!preview?.ready||preview?.source.version!==caseValue.program.version||caseValue.program.state!=='OPEN')+'</div>'+
       (value?.dirty?note('Save the edited assignments before preparing their form.'): '')+
       (preview?'<div class="completion-preview" data-completion-preview><h4>'+ (preview.ready?'Ready to prepare':'Complete the remaining fields')+
         '</h4><p>Previous payment '+esc(preview.receipt.date)+' · form deadline '+esc(preview.clock.deadlineOn)+'</p>'+
         (preview.issues.length?'<ul>'+preview.issues.map(item=>'<li>'+esc(item.costId?item.costId+': ':'')+esc(item.message)+'</li>').join('')+'</ul>':'')+
-        '<p>'+esc(preview.summary)+'</p>'+cohortEvidence(preview)+implementationEvidence(preview)+'<small>Reviewed case version '+preview.source.version+'</small></div>':'')+'</section>';
+        '<p>'+esc(preview.summary)+'</p>'+cohortEvidence(preview)+implementationEvidence(preview)+corrections.evidence(preview)+'<small>Reviewed case version '+preview.source.version+'</small></div>':'')+'</section>';
   }
   function preparations(){
     const reviews=caseValue.reviews.filter(row=>row.purpose==='TRANCHE_COMPLETION'&&row.completionTranche===session.tranche);
@@ -363,7 +371,7 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
         '<p>'+esc(candidate.summary)+'</p><p>Paid '+esc(candidate.receipt.date)+' · reviewed deadline '+esc(candidate.clock.deadlineOn)+'</p>'+
         table(['Work package','Owners','Completed','Result'],candidate.completionPlan.inputs.items.map(item=>[
           esc(item.costId),item.ownerIds.map(id=>esc(candidate.completionPlan?review.snapshot.records.contributors.find(row=>row.id===id)?.name||id:id)).join(', '),
-          esc(item.completedOn),esc(item.completionNote)]))+cohortEvidence(candidate)+implementationEvidence(candidate)+
+          esc(item.completedOn),esc(item.completionNote)]))+cohortEvidence(candidate)+implementationEvidence(candidate)+corrections.evidence(candidate)+
         '<div class="completion-actions">'+button('Download prepared files','download-review')+
         button('Record form submission','submission','data-completion-write="true"',caseValue.program.state!=='OPEN')+'</div></div>':'')+
       '</section>';
@@ -374,9 +382,10 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
       (rows.length?table(['Form reference','Submitted','Deadline used','Current issuer outcome',''],rows.map(row=>[
         esc(row.completion.formReference),esc(row.completion.submittedOn),
         esc(row.completion.deadlineOn)+'<small>'+ (row.completion.submittedOn<=row.completion.deadlineOn?'Submitted within deadline':'Submitted after deadline')+'</small>',
-        esc(label(row.state))+'<small>'+esc(row.date)+'</small>',
+        esc(label(row.state))+'<small>'+esc(row.date)+'</small>'+(row.completion.correction?'<small>Resubmission from '+esc(row.completion.correction.sourceOutcomeId)+' · correction edition '+row.completion.correction.revision+'</small>':''),
         button('Open preparation','review','data-review="'+esc(row.completion.reviewId)+'"')+
-        button('Record issuer outcome','decision','data-outcome="'+esc(row.id)+'" data-completion-write="true"',caseValue.program.state!=='OPEN'),
+        button('Record issuer outcome','decision','data-outcome="'+esc(row.id)+'" data-completion-write="true"',caseValue.program.state!=='OPEN')+
+        (row.state==='CHANGES_REQUESTED'?button('Start correction round','correction-new','data-outcome="'+esc(row.id)+'" data-completion-write="true"',caseValue.program.state!=='OPEN'):''),
       ])):note('Use the original completion form receipt to record its submission. Each receipt keeps the exact prepared source.'))+'</section>';
   }
   function dialogMarkup(){
@@ -424,13 +433,14 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
       '<section><h3>Payment clocks</h3>'+clockTable()+
       (calendar.unassignedGrantIds.length?note('These received grant payments need their original tranche selection. Use the original cash correction to void an incorrect receipt and record its corrected source: '+calendar.unassignedGrantIds.join(', ')):'')+
       (calendar.finalPaymentIds.length?note('Final T3 payments retained: '+calendar.finalPaymentIds.join(', ')):'')+'</section>'+
-      assignments()+preparation()+preparations()+submissions()+dialogMarkup();
+      assignments()+corrections.markup()+preparation()+preparations()+submissions()+dialogMarkup();
     const dialog=$('dialog.completion-dialog');if(dialog&&!dialog.open)dialog.showModal();
     updateControls();
   }
   root.addEventListener('input',event=>{
     if(!editable())return;
     const el=event.target;
+    if(corrections.input(el)){clearPreview();const prepare=root.querySelector('[data-completion-action=correction-save]');if(prepare){prepare.disabled=true;prepare.dataset.completionFixed='true';}return;}
     if(el.matches('[data-completion-field]')){
       const value=draft(),item=value.inputs.items.find(row=>row.costId===el.dataset.cost),key=el.dataset.completionField;
       item[key]=el.multiple?values(el):el.type==='date'?(el.value||null):el.value;value.dirty=true;clearPreview();
@@ -444,6 +454,8 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
   });
   root.addEventListener('change',event=>{
     const el=event.target;
+    if(corrections.change(el)){render();return;}
+    if(el.name==='completionCorrection'){session.correctionReviewId=el.value;clearPreview();render();return;}
     if(el.closest('[data-completion-dialog]')&&editable())session.dialog.data[el.name]=el.multiple?values(el):el.value;
     if(el.name==='completionTranche')run(async()=>{if(session.pending||session.accepted)return;await selectTranche(Number(el.value));});
     if(el.name==='completionAsOfDate')run(async()=>{if(session.pending)return;session.asOfDate=el.value;calendar=await saveApi(prefix+'/completion?asOfDate='+encodeURIComponent(el.value));clearPreview();chooseReceipt();});
@@ -460,7 +472,9 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
         await sendPending();return;
       }
       if(action==='readback'){const next=await reloadCase();await reconcileAccepted(next);if(available())await onCase(next,session.accepted?.result||null);return;}
+      if(action==='correction-download'){await corrections.action(action,target);return;}
       if(session.pending||session.accepted)return;
+      if(await corrections.action(action,target))return;
       if(action==='resume-dialog'){session.dialog=session.closedDialog;session.closedDialog=null;return;}
       if(action==='save'){
         const value=draft();
@@ -484,11 +498,11 @@ export function mountCompletion({container,current,saveApi,session,mutationId,re
       }
       if(action==='preview'){
         if(draft()?.dirty)throw new Error('Save the edited assignments before preparing their completion.');
-        session.preview=await saveApi(prefix+'/completion-preview',{expectedVersion:caseValue.program.version,receiptId:session.receiptId,asOfDate:session.asOfDate,summary:session.summary,...(session.cohortReviewIds.length?{cohortReviewIds:clone(session.cohortReviewIds)}:{}),...(session.implementationReviewIds.length?{implementationReviewIds:clone(session.implementationReviewIds)}:{})});return;
+        session.preview=await saveApi(prefix+'/completion-preview',{expectedVersion:caseValue.program.version,receiptId:session.receiptId,asOfDate:session.asOfDate,summary:session.summary,...(session.cohortReviewIds.length?{cohortReviewIds:clone(session.cohortReviewIds)}:{}),...(session.implementationReviewIds.length?{implementationReviewIds:clone(session.implementationReviewIds)}:{}),...(session.correctionReviewId?{correctionReviewId:session.correctionReviewId}:{})});return;
       }
       if(action==='prepare'){
         const preview=session.preview;if(!preview?.ready||preview.source.version!==caseValue.program.version)throw new Error('Preview the complete current source before preparing.');
-        await mutate('completion.prepare',{receiptId:session.receiptId,asOfDate:session.asOfDate,summary:session.summary,expectedPreviewSha256:preview.previewSha256,...(session.cohortReviewIds.length?{cohortReviewIds:clone(session.cohortReviewIds)}:{}),...(session.implementationReviewIds.length?{implementationReviewIds:clone(session.implementationReviewIds)}:{})});return;
+        await mutate('completion.prepare',{receiptId:session.receiptId,asOfDate:session.asOfDate,summary:session.summary,expectedPreviewSha256:preview.previewSha256,...(session.cohortReviewIds.length?{cohortReviewIds:clone(session.cohortReviewIds)}:{}),...(session.implementationReviewIds.length?{implementationReviewIds:clone(session.implementationReviewIds)}:{}),...(session.correctionReviewId?{correctionReviewId:session.correctionReviewId}:{})});return;
       }
       if(action==='review'){await openReview(target.dataset.review);return;}
       if(action==='download-implementation'){

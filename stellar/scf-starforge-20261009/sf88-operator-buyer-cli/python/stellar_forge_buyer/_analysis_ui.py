@@ -327,3 +327,8 @@ HTML = HTML.replace('<button data-tab="activity"', '<button data-tab="worldbank"
 HTML = HTML.replace('<section id="tab-activity"', _analysis_worldbank_ui.HTML + '<section id="tab-activity"', 1)
 CSS += _analysis_worldbank_ui.CSS
 JS += _analysis_worldbank_ui.JS
+
+
+# Event receiving shares this private capability and original Analysis owner.
+HTML = HTML.replace('<nav aria-label="Workspace">', '<nav aria-label="Workspace"><a id="event-programmes-link" href="/event-programmes">Event programmes</a>', 1)
+JS += "\ndocument.getElementById('event-programmes-link').href='/event-programmes#'+capability;\n"

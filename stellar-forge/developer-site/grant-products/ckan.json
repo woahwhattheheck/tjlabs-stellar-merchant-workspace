@@ -160,6 +160,22 @@
         }
       ],
       "required": false
+    },
+    {
+      "id": "ckan-reviewed-remote-publication",
+      "label": "Original reviewed CKAN target publication, per-action recovery and complete receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/REMOTE_PUBLICATION.md",
+      "commit": "429625d8404faa481ce7eef881f27acc915df88f",
+      "editions": [
+        {
+          "commit": "429625d8404faa481ce7eef881f27acc915df88f",
+          "bytes": 13332,
+          "git_blob": "c4ac838896f32636bbe800de48c292063d81aca5"
+        }
+      ],
+      "required": false
     }
   ]
 }

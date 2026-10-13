@@ -43,7 +43,11 @@ export function verifyWebhook({rawBody,headers,secret,scope,nowSeconds=Math.floo
  if((event.tenant_id!==selected.tenantId&&!(singleTenantInstallation===true&&event.tenant_id===undefined))||event.source_wallet_id!==selected.sourceWalletId)fail("WEBHOOK_SCOPE_MISMATCH","Event tenant and source wallet must match the original selected endpoint");
  if(typeof event.occurred_at!=="string"||!Number.isFinite(Date.parse(event.occurred_at))||!event.data||Array.isArray(event.data)||typeof event.data!=="object")fail("INVALID_WEBHOOK_EVENT","Provider event time and data are required");
  if(event.event_type.startsWith("disbursement."))identifier(event.data.disbursement_id,"disbursement_id");
- return {schema:"commons.sdp.verified-event.v1",providerSource:SDP_SOURCE,scope:selected,event,rawBodyBase64:Buffer.from(rawBody).toString("base64"),rawBodySHA256:hash(rawBody),deliveryTimestamp:timestamp,verifiedAt:new Date(nowSeconds*1000).toISOString(),eventKey:[selected.origin,selected.tenantId,selected.sourceWalletId,event.event_id].join("\n")};
+ if(event.event_type.startsWith("wallet.")){
+  identifier(event.data.wallet_id,"wallet_id");
+  if(event.data.wallet_id!==selected.sourceWalletId)fail("WEBHOOK_SCOPE_MISMATCH","Wallet event data must select the same original distribution wallet");
+ }
+ return {schema:"commons.sdp.verified-event.v1",providerSource:SDP_SOURCE,scope:selected,event,rawBodyBase64:Buffer.from(rawBody).toString("base64"),rawBodySHA256:hash(rawBody),deliveryTimestamp:timestamp,signatureHeaders:{"X-SDP-Timestamp":timestamp,"X-SDP-Signature":signature},verifiedAt:new Date(nowSeconds*1000).toISOString(),eventKey:[selected.origin,selected.tenantId,selected.sourceWalletId,event.event_id].join("\n")};
 }
 export async function receiveWebhook(options,{acceptEvent}){
  if(typeof acceptEvent!=="function")fail("TRANSACTION_ADAPTER_REQUIRED","Pass the original application transaction that atomically records event identity and its effect");
@@ -55,7 +59,7 @@ export async function receiveWebhook(options,{acceptEvent}){
  return {eventId:verified.event.event_id,status:outcome.status,outcome};
 }
 export class SDPClient {
- constructor({scope,getToken,onObservation,admitMutation,recordMutation,fetchImpl=globalThis.fetch,timeoutMs=30000,maxResponseBytes=32*1024*1024,allowLoopback=false}){
+ constructor({scope,getToken,onObservation,admitMutation,recordMutation,executeMutation,fetchImpl=globalThis.fetch,timeoutMs=30000,maxResponseBytes=32*1024*1024,allowLoopback=false}){
   this.scope=Object.freeze({...validateScope(scope),asset:Object.freeze({...scope.asset})});
   const base=new URL(this.scope.origin);
   if(base.username||base.password||base.search||base.hash)fail("INVALID_ORIGIN","SDP base URL cannot include credentials/query/fragment");
@@ -63,7 +67,7 @@ export class SDPClient {
   base.pathname=base.pathname.replace(/\/+$/,"")+"/";this.base=base;
   if(typeof getToken!=="function"||typeof fetchImpl!=="function"||typeof onObservation!=="function")fail("NATIVE_ADAPTER_REQUIRED","getToken, original durable onObservation and fetch are required");
   if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||!Number.isSafeInteger(maxResponseBytes)||maxResponseBytes<1)fail("INVALID_LIMIT","Invalid explicit response/timeout limits");
-  this.getToken=getToken;this.onObservation=onObservation;this.admitMutation=admitMutation;this.recordMutation=recordMutation;this.fetch=fetchImpl;this.timeoutMs=timeoutMs;this.maxResponseBytes=maxResponseBytes;this.allowLoopback=allowLoopback;
+  this.getToken=getToken;this.onObservation=onObservation;this.admitMutation=admitMutation;this.recordMutation=recordMutation;this.executeMutation=executeMutation;this.fetch=fetchImpl;this.timeoutMs=timeoutMs;this.maxResponseBytes=maxResponseBytes;this.allowLoopback=allowLoopback;
  }
  url(path){
   const u=new URL(path,this.base);
@@ -113,6 +117,25 @@ export class SDPClient {
   const rawBody=body===null?null:Buffer.from(body);
   const descriptor={method,url:url.href,scope:this.scope,bodyBase64:rawBody?.toString("base64")??null,contentType,operationId};
   const requestSHA256=hash(Buffer.from(canonical(descriptor)));
+  if(signal?.aborted)throw new SDPNativeError("NOT_STARTED","Operation canceled before dispatch");
+  if(writing&&typeof this.executeMutation==="function"){
+   identifier(operationId,"operationId");
+   // The selected company service owns admission, wire encoding, financial validation,
+   // dispatch and recovery. This branch never performs a second HTTP mutation.
+   const result=await this.executeMutation({descriptor,requestSHA256,signal,beforeDispatch});
+   if(!result||result.requestSHA256!==requestSHA256||canonical(result.descriptor)!==canonical(descriptor))fail("MUTATION_IDENTITY_MISMATCH","The company outcome must bind this complete SDK intent");
+   const retainedBody=Buffer.from(result.bodyBase64??"","base64");
+   if(retainedBody.toString("base64")!==result.bodyBase64||hash(retainedBody)!==result.bodySHA256)fail("MUTATION_BODY_MISMATCH","Retain the complete original company response bytes");
+   if(retainedBody.length&&(result.headers?.["content-type"]??"").toLowerCase().includes("json")){
+    try{result.data=strictJSON(retainedBody);}catch(error){result.parseError={code:error.code??"INVALID_JSON",message:error.message};}
+   }
+   await this.observe(result);
+   if(!result.complete)throw new SDPNativeError("WRITE_OUTCOME_UNCERTAIN","Reconcile the same original company operation",result);
+   if(result.status<200||result.status>=300)throw new SDPNativeError(result.status===401?"AUTHENTICATION":result.status===403?"PERMISSION":result.status===429?"RATE_LIMITED":result.status===409?"CONFLICT":"PROVIDER_ERROR","SDP returned HTTP "+result.status,result);
+   if(result.parseError)throw new SDPNativeError("WRITE_RESPONSE_UNREADABLE",result.parseError.message,result);
+   if(result.error)throw new SDPNativeError(result.error.code??"COMPANY_OUTCOME_REQUIRES_REVIEW",result.error.message??"Reconcile the original company operation",result);
+   return result;
+  }
   let token;
   try{token=await this.getToken();}catch(error){throw new SDPNativeError("CREDENTIAL_UNAVAILABLE",error.message);}
   if(typeof token!=="string"||!token||/[\r\n]/.test(token))fail("INVALID_CREDENTIAL","Original SDP credential is unavailable");

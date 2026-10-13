@@ -116,3 +116,13 @@ Continue the returned existing workspace identity and original journal on receip
 ## Provider contract and verification
 
 PROVIDER_CONTRACT.md records the exact upstream source selection and endpoint semantics. source-contract.json lists the original maintained dependencies. Financial contract exercises cover exact one-stroop amounts, preservation of an existing recipient's external ID, contact mismatch detection and missing amounts. Actual provider commissioning uses the original authorized installation, customer batch and account configuration.
+
+## Existing company transaction service
+
+The transaction interface also accepts `executeMutation({descriptor,requestSHA256,signal,beforeDispatch})`. This delegates admission, native request encoding, authorization, dispatch and recovery to the selected company application. The SDK retains the returned exact response as its provider observation. A delegated action never enters the SDK HTTP mutation writer. Existing `admitMutation`/`recordMutation` integrations retain their original behavior.
+
+The complete Bloccpay adapter lives with its original company application: `lib/sdp-sdk-adapter.mjs`, `examples/invoice-sdp-adapter.mjs` and `docs/invoice-sdp-integration.md` under [Bloccpay payroll commissioning](https://github.com/woahwhattheheck/Commons/tree/main/opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll). It uses the existing SQLite operations and selected programme, authenticated capability observations, original instructions and native exchange recovery. The private example module selects an existing workspace identity and closes its owned connection after accepted calls drain.
+
+Delegated observations distinguish the complete SDK intent from the company's actual native request. `requestSHA256` binds the SDK intent; `companyOperation` identifies the original operation, attempt, response source and private exchange. Original provider JSON is parsed from its retained bytes before the SDK interprets it. An interrupted invoice source save can therefore retry the same company result without another payment action.
+
+For the full browser and managed-application workflow, use the [SDP desk guide](DESK.md). For Bridge intake and incident review in this same workspace, use the [Bridge workspace guide](../bridge/BRIDGE_WORKSPACE.md).

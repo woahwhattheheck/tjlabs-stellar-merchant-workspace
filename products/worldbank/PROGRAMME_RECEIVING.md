@@ -54,8 +54,18 @@ source-value checks and completed-request replay. Its existing
 `recurring-receiving.json` remains unchanged.
 
 The continuation opens the same customer in the existing gray Analysis browser.
-It saves a named programme with the customer's actual view/report/workbook,
-selects the already registered candidate revision, prepares the same retained
+Its first phase receives the complete approved candidate ZIP through **Receive
+approved handover**. The browser retains the original intake ID and full file
+identity before sending the first request, uploads through the maintained chunk
+interface and waits for original source registration. The registered source name,
+revision and document content address become the programme's exact selection.
+The original source metadata and review appear in the operator page; its full
+original ZIP downloads and must match the selected candidate bytes and SHA-256.
+**Review in customer programmes** must select that same source in the existing
+Analysis tab.
+
+It then saves a named programme with the customer's actual view/report/workbook,
+selects that exact intake-registered candidate revision, prepares the same retained
 edition, reads full provider metadata and observation comparison, downloads its
 complete review, and refreshes the customer's report/workbook through the real
 buttons. Reusing this edition deliberately verifies unchanged source behavior;
@@ -70,7 +80,11 @@ downloads are retained. The full delivered workspace ZIP is received into the
 course's independent `programme-received-analysis` directory. Because that ZIP
 contains its own in-progress delivery checkpoint, the restored original delivery
 remains `INTERRUPTED`. Its validated accepted report/workbook edition remains
-visible. The browser then creates a fresh linked portable delivery with a new ID,
+visible. Before continuing that delivery, the restored browser opens the same
+intake in the complete paginated intake history, reads its original source/review
+metadata and downloads the original approved ZIP from the received document
+store. The bytes must still match the original candidate; no former filesystem
+path is used. The browser then creates a fresh linked portable delivery with a new ID,
 reusing the exact accepted business output.
 
 Before and after this new delivery the course compares the complete customer
@@ -85,10 +99,10 @@ The complete continuation is saved under:
 
 - `programme-receiving/intent.json`: original source/runtime/operation selection.
 - `programme-receiving/programme-selection.json`: exact registered source and customer names.
-- `programme-receiving/customer/` and `restored/`: original requests, browser
+- `programme-receiving/intake/`, `customer/` and `restored/`: original requests, browser
   captures/downloads and each main/family closure with complete stdout/stderr.
 - `programme-receiving/programme-receiving.json`: full final continuation result,
-  original metadata review and both complete browser returns.
+  original metadata review and all three complete browser returns.
 
 The command prints the original course result with an additional `programme`
 field. Preserve the complete receiving directory through the existing native
@@ -107,3 +121,28 @@ The same original workspace receive is repeated after linked-delivery activity
 and must report reuse without resetting that activity. The old interrupted
 delivery remains a separate historical operation. No second source acquisition,
 payment, report edit or customer-recipient operation is inferred.
+
+## Intake source and request continuity
+
+This joined receiving helper composes the original 38,247-byte helper
+(SHA-256 `d2e53c0f6de3abd922a2fdc2b0fb0785a4b3cbff5a66a25aa564f85cb6d125a4`)
+with its existing publish-request recovery correction. A publish intent saved
+before dispatch is submitted with its same ID/body when the original operation
+remains REVIEW_READY.
+
+The intake dependency is the complete maintained cohort from Merchant PR1312
+(`6fe4ba6d6dbcbed27eb9643c521bf58bd4b85417`) and public PR3441
+(`b8d51079b05a2f2ef31878cf50a1bc8e5f47bce6`). The final intake module is
+`73490a520cf994268ff5981a94492dec17a9c2c1`; its full shared Analysis workspace
+and World Bank tab joins are in source packet
+`ee7f8729f5f35fd5a5769dc13e984456ea854a63`. Keep the current shared composer's
+newer metadata/lifecycle changes while adopting those joins.
+
+The intake phase owns `intake-request.json` under its original phase directory.
+When the browser restarts, that exact request is restored into its original
+workspace-scoped browser reminder before choosing the same source file. A
+registered source is reopened directly; an incomplete upload continues through
+the original chunk/status APIs. The programme selection record includes the
+exact source received by this phase, even when an earlier registration of the
+same file already exists. All phases use the existing server, original
+ProcessFamily, stable operation ID and sequential browser lifecycle.

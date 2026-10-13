@@ -1,0 +1,20 @@
+{
+  "environment": "sandbox",
+  "baseUrl": "https://api.sandbox.bridge.xyz/v0/",
+  "network": "bridge:sandbox",
+  "apiKey": "REPLACE_WITH_ORIGINAL_PRIVATE_API_KEY",
+  "binding": {
+    "developerId": "REPLACE_ORIGINAL_DEVELOPER_ID",
+    "customerIds": [
+      "REPLACE_ORIGINAL_CUSTOMER_ID"
+    ],
+    "virtualAccounts": [
+      {
+        "customerId": "REPLACE_ORIGINAL_CUSTOMER_ID",
+        "virtualAccountId": "REPLACE_ORIGINAL_VIRTUAL_ACCOUNT_ID"
+      }
+    ]
+  },
+  "timeoutMs": 30000,
+  "maximumResponseBytes": 33554432
+}
