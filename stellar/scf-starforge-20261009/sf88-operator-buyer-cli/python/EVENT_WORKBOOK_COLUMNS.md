@@ -61,6 +61,9 @@ to continue. The saved file supplies the initial work; a different browser
 cache is offered as an explicit restoration, with confirmation before replacing
 the displayed choices. Cache failure leaves complete file saving available.
 Opening an older copy does not silently substitute a newer browser draft.
+If browser storage fails or fills up, the visible storage warning survives the
+change notification. The complete choices remain in the open editor and its
+full-file downloads remain available.
 The editor warns before leaving changed choices. Requesting a download keeps
 that reminder in the original window, since the browser may cancel the file
 save. Reopen the complete saved file to continue its retained edition.
@@ -109,6 +112,15 @@ a modern browser with ES modules; its local control flow has no network call
 and carries no Analysis capability. Original JSON inputs keep the existing
 16 MiB allowance; complete editable HTML has a 128 MiB allowance to include
 the full escaped source/choices and installed editor without truncation.
+
+Both choice-file controls and the CLI template use the exact UTF-8 return-file
+allowance, including its final newline. They retain readable indented JSON when
+it fits and use complete compact JSON when that is needed to stay within
+16 MiB. If the complete current choices still exceed that allowance, the
+operator sees a return-size error; no rows, proposal fields or unfinished
+choices are removed. Saving the complete editable HTML remains available up to
+its separate 128 MiB allowance, so oversized working choices can still travel
+and reopen in full before a fitting return is selected.
 
 Continue the same actual native receiving operation. Open the original
 customer's unresolved proposal, edit more than one worksheet and more than one
@@ -226,7 +238,7 @@ that original financial operation.
 The portable module and CLI are shipped alongside the original Event source
 projector under sf88-operator-buyer-cli/event-feed. They need the maintained
 Node.js runtime and no additional package. The maintained distribution exposes
-**starforge event-workbook-columns** with the same four commands, and exports
+**starforge event-workbook-columns** with template, inspect, columns, html and editor commands, and exports
 the portable core as **./buyer/event-workbook-columns**. The direct source
 invocations below run from the installed sf88-operator-buyer-cli directory.
 

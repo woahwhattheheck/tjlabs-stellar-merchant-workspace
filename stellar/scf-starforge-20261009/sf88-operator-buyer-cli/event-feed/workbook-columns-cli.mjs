@@ -3,7 +3,7 @@
 import { open, lstat, realpath, link, unlink, readFile } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { initial, reopen, review, nativeColumns, reviewHTML } from './workbook-columns.mjs';
+import { initial, reopen, review, nativeColumns, reviewHTML, serializeChoices } from './workbook-columns.mjs';
 import { renderEditableWorkbookColumns } from './workbook-editor.mjs';
 const MAX=16*1024*1024;
 const need=(ok,text)=>{if(!ok)throw Error(text);};
@@ -52,7 +52,7 @@ async function main(){
   if(a.command==='template'){
     need(a.proposal&&a.workspace&&a.programme&&a.out,'Template needs --proposal, --workspace, --programme and --out.');
     value=initial({workspace_id:a.workspace,programme:a.programme,proposal:proposal(await read(a.proposal))});
-    console.log(JSON.stringify(await publish(a.out,JSON.stringify(value,null,2)+'\n'),null,2));return;
+    console.log(JSON.stringify(await publish(a.out,serializeChoices(value)),null,2));return;
   }
   need(a.choices,'Select the complete --choices handover.');
   value=reopen(await read(a.choices));

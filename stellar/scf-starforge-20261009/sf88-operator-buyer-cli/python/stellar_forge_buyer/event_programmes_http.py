@@ -9,6 +9,7 @@ def assets():
             "/event-programmes.js": (ui.JS, "text/javascript;charset=utf-8"),
             "/event-programmes.css": (ui.CSS, "text/css;charset=utf-8"),
             "/event-workbook-columns.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-columns.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
+            "/workbook-columns.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-columns.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/event-workbook-editor.mjs": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-editor.mjs").read_text(encoding="utf-8"), "text/javascript;charset=utf-8"),
             "/event-workbook-editor.js": ((Path(__file__).resolve().parents[2] / "event-feed" / "workbook-editor.js").read_text(encoding="utf-8"), "text/javascript;charset=utf-8")}
 
