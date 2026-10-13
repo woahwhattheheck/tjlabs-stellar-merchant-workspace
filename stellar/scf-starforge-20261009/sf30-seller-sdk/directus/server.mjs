@@ -64,7 +64,7 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
   const root=selectedSource.selection.directory,instanceId='directus-instance-'+randomUUID();
   const lease=acquireDatasetLease(root),registryFile=path.join(root,'operator.json'),launchFile=path.join(root,'operator-launch.json');
   let launch;
-  let registry,workspace,server,agent,tail=Promise.resolve(),closing=false;const handlers=new Set();
+  let registry,workspace,server,agent,tail=Promise.resolve(),closing=false;const handlers=new Set(),ownedWorkspaces=new Set();let pendingSelection=null,currentWorkspaceId=null;
   let connection={baseUrl:environment.DIRECTUS_BASE_URL??'',token:environment.DIRECTUS_TOKEN??''};
   const nativeOperations=new DirectusOperations(),merchants=new Map();
   const closeOwned=async()=>{
@@ -76,7 +76,8 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
       catch(error){failure??=error;}
     }
     if(failure)throw failure;
-    await workspace?.close();
+    for(const item of [...ownedWorkspaces]){try{await item.close();ownedWorkspaces.delete(item);}catch(error){failure??=error;}}
+    if(failure)throw failure;
   };
   const serial=job=>{const result=tail.then(()=>{if(closing)throw fault('OPERATOR_CLOSING','The operator is closing.',409);lease.assertHeld();return job();});tail=result.catch(()=>{});return result;};
   try{
@@ -93,28 +94,35 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
     // Loopback browser cookies are shared across ports. Keep each original
     // operator's private cookie separate when several managed apps are open.
     const cookieName='directus_operator_'+createHash('sha256').update(JSON.stringify([registry.id,root])).digest('hex').slice(0,24);
-    workspace=await openDirectusWorkspace({directory:registry.projects.find(p=>p.key===registry.selected).directory});
+    workspace=await openDirectusWorkspace({directory:registry.projects.find(p=>p.key===registry.selected).directory});ownedWorkspaces.add(workspace);currentWorkspaceId=workspace.meta('workspace_id');
     let origin;
-    const state=()=>({...workspace.state(),connection:{baseUrl:connection.baseUrl,configured:Boolean(connection.baseUrl),authenticated:Boolean(connection.token)},
-      native_active:nativeOperations.active,agent_active:agent?.active??0,merchants:[...merchants.entries()].map(([directory,service])=>({directory,url:service.url,edition:service.edition,current:service.versions?.status?.().current})),operator:{id:registry.id,instanceId,selected:registry.selected,projects:registry.projects.map(({key,name})=>({key,name}))}});
-    const publicLaunch=()=>({...launch,projectKey:registry.selected,workspaceId:workspace.state().id});
+    const state=()=>{if(pendingSelection)throw fault('OPERATOR_PROJECT_TRANSITION','Continue selecting '+pendingSelection.key+' or close the original operator before more work.',409);return({...workspace.state(),connection:{baseUrl:connection.baseUrl,configured:Boolean(connection.baseUrl),authenticated:Boolean(connection.token)},
+      native_active:nativeOperations.active,agent_active:agent?.active??0,merchants:[...merchants.entries()].map(([directory,service])=>({directory,url:service.url,edition:service.edition,current:service.versions?.status?.().current})),operator:{id:registry.id,instanceId,selected:registry.selected,projects:registry.projects.map(({key,name})=>({key,name}))}});};
+    const publicLaunch=()=>({...launch,projectKey:registry.selected,workspaceId:currentWorkspaceId});
     const scoped=(req,job)=>serial(()=>{
+      if(pendingSelection&&!['/api/launch','/api/select-project','/api/receiving'].includes(new URL(req.url,origin).pathname))throw fault('OPERATOR_PROJECT_TRANSITION','Continue the same pending project selection or close the original operator.',409);
       if(agent?.active&&req.method!=='GET'&&req.method!=='HEAD'&&!req.url.startsWith('/api/agent/'))throw fault('DIRECTUS_AGENT_RUNNING','Continue the active original customer request before changing this project.',409);
       if(agent?.active&&req.url.startsWith('/api/download'))throw fault('DIRECTUS_AGENT_RUNNING','Finish the original saved operation before freezing the complete project.',409);
       const expected=[['x-directus-operator',registry.id,'OPERATOR'],['x-directus-instance',instanceId,'INSTANCE'],
-        ['x-directus-project',registry.selected,'PROJECT'],['x-directus-workspace',workspace.state().id,'WORKSPACE']];
+        ['x-directus-project',registry.selected,'PROJECT'],['x-directus-workspace',currentWorkspaceId,'WORKSPACE']];
       for(const [header,actual,kind] of expected)if(req.headers[header]!==undefined&&req.headers[header]!==actual)
         throw fault('DSCOPE_'+kind,'The selected '+kind.toLowerCase()+' changed. Bind the current original workspace before continuing.',409);
       return job();
     });
     const select=async key=>{
       const selected=registry.projects.find(p=>p.key===key);if(!selected)throw fault('OPERATOR_PROJECT','Choose an available original workspace.',404);
-      if(key===registry.selected)return state();
-      if(nativeOperations.active||agent?.active)throw fault('DIRECTUS_NATIVE_RUNNING','Let the active native request finish before switching its workspace.',409);
-      const next=await openDirectusWorkspace({directory:selected.directory});
-      const revised={...registry,selected:key};
-      try{await saveJson(registryFile,revised);}catch(error){await next.close();throw error;}
-      await workspace.close();workspace=next;registry=revised;return state();
+      if(pendingSelection&&pendingSelection.key!==key)throw fault('OPERATOR_PROJECT_TRANSITION','Finish the original pending project selection before choosing another.',409);
+      if(!pendingSelection&&key===registry.selected)return state();
+      if(nativeOperations.active||agent?.active)throw fault('DIRECTUS_NATIVE_RUNNING','Let the active original request finish before switching its workspace.',409);
+      if(!pendingSelection){
+        const next=await openDirectusWorkspace({directory:selected.directory});ownedWorkspaces.add(next);
+        pendingSelection={key,next,previous:workspace,revised:{...registry,selected:key},previousClosed:false};
+      }
+      const transition=pendingSelection;
+      if(!transition.previousClosed){await transition.previous.close();ownedWorkspaces.delete(transition.previous);transition.previousClosed=true;}
+      await saveJson(registryFile,transition.revised);
+      registry=transition.revised;workspace=transition.next;currentWorkspaceId=workspace.meta('workspace_id');pendingSelection=null;
+      return state();
     };
     const checkSource=async()=>{
       const current=await verifyDirectusOperatorSourceSelection({directory:root,workspaceDirectory,sourceDirectory,expectedSelectionSha256:selectedSource.selectionSha256});
@@ -126,7 +134,7 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
       if(action==='inspect-running'){const service=merchants.get(key);if(!service)throw fault('DIRECTUS_AGENT_MERCHANT_STOPPED','Start this original publisher before reviewing its live buyer offer.',409);return{url:service.url,edition:service.edition,current:service.versions.status()};}
       if(action==='stop'){const service=merchants.get(key);if(service){await service.close();merchants.delete(key);}return{merchantId:id,stopped:true};}
       if(!object(runtime??{port:0})||Object.keys(runtime??{}).some(k=>!['port','facilitator','allowLocalFacilitator'].includes(k)))throw fault('DIRECTUS_AGENT_RUNTIME','Use the original private SF82 runtime configuration.');
-      const stageDirectory=path.join(root,'agent-merchant-stages',hash(id)),chosen=runtime??{port:0};
+      const stageDirectory=path.join(root,'agent-merchant-stages',hash(workspace.directory+'\n'+id)),chosen=runtime??{port:0};
       const launchIdentity=hash(canonical({directory:key,stageDirectory,runtime:chosen}));
       if(merchants.has(key)){const service=merchants.get(key);if(service.directusLaunchIdentity!==launchIdentity)throw fault('DIRECTUS_SELLER_RUNNING','This publisher is already running with another original runtime selection.',409);return{merchantId:id,url:service.url,reused:true};}
       const service=await startDirectusMerchant({directory:key,stageDirectory,runtime:chosen});
@@ -160,7 +168,7 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
         if(u.pathname.startsWith('/api/agent/')){
           if(req.method==='POST'&&u.pathname.startsWith('/api/agent/requests/')&&nativeOperations.active)throw fault('DIRECTUS_NATIVE_RUNNING','Continue the original native request before new customer work.',409);
           if(u.pathname.startsWith('/api/agent/cancel/')){
-            for(const [header,actual]of [['x-directus-operator',registry.id],['x-directus-instance',instanceId],['x-directus-project',registry.selected],['x-directus-workspace',workspace.meta('workspace_id')]])
+            for(const [header,actual]of [['x-directus-operator',registry.id],['x-directus-instance',instanceId],['x-directus-project',registry.selected],['x-directus-workspace',currentWorkspaceId]])
               if(req.headers[header]!==actual)throw fault('DIRECTUS_AGENT_SCOPE','Bind the original operator, instance and project before cancelling.',409);
             await agent.routes(req,res,u.pathname,u);return;
           }
@@ -286,6 +294,7 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
           if(typeof operationId!=='string'||!ID.test(operationId))throw fault('OPERATOR_REQUEST','Retain a stable receiving request ID.');
           const result=await scoped(req,async()=>{
             if(nativeOperations.active||agent?.active)throw fault('DIRECTUS_NATIVE_RUNNING','Let the active native request finish before receiving another workspace.',409);
+            for(const item of [...ownedWorkspaces])if(item!==workspace&&item!==pendingSelection?.next&&item!==pendingSelection?.previous){await item.close();ownedWorkspaces.delete(item);}
             const uploads=path.join(root,'uploads');await durableDirectory(uploads);
             const temporary=path.join(uploads,operationId+'.partial-'+randomUUID()),digest=createHash('sha256');let bytes=0;
             const meter=new Transform({transform(chunk,encoding,callback){bytes+=chunk.length;if(bytes>DIRECTUS_AGENT_MAX_FILE)return callback(fault('OPERATOR_PROJECT_SIZE','Select a complete original project up to 32 GiB.',413));digest.update(chunk);callback(null,chunk);}});
@@ -307,8 +316,11 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
               const key='received-'+sha256;
               if(!registry.projects.some(p=>p.key===key)){
                 const destination=path.join(root,'workspaces',key);
-                const received=await receiveDirectusWorkspace({file,directory:destination}),receivedState=received.state();
-                await received.close();
+                let received;
+                try{received=await receiveDirectusWorkspace({file,directory:destination});}
+                catch(error){if(error.directusWorkspaceCleanup)ownedWorkspaces.add(error.directusWorkspaceCleanup);throw error;}
+                ownedWorkspaces.add(received);const receivedState=received.state();
+                await received.close();ownedWorkspaces.delete(received);
                 const revised={...registry,projects:[...registry.projects,{key,name:'Received '+receivedState.id.slice(0,15),directory:destination}],receiving:{...registry.receiving,[operationId]:{sha256,bytes,key}}};
                 await saveJson(registryFile,revised);registry=revised;
               }else if(!prior){
@@ -349,7 +361,7 @@ export async function startDirectusOperator({directory,workspaceDirectory,source
     }};
   }catch(error){
     closing=true;agent?.requestClose();nativeOperations.requestClose();let attempt;
-    const cleanup={instanceId,workspaceId:workspace?.meta('workspace_id')??null,
+    const cleanup={instanceId,workspaceId:currentWorkspaceId,
       summary:{operatorId:registry?.id??null,instanceId,mode:'owned',admitted:false,cleanupPending:true},
       requestClose(){},
       close(){if(!attempt){const current=(async()=>{

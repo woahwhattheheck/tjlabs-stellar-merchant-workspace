@@ -392,7 +392,8 @@ export class DirectusWorkspace {
         const sessions=await captureDirectusBuyerSessions(this);
         this.setMeta('session_custody',sessions);
         filename='Directus_Collection_Datasets_'+this.revision()+'.sqlite3';
-        file=path.join(root,this.meta('workspace_id')+'-'+this.revision()+'-'+runtime.sha256+'-'+sessions.sha256+'.sqlite3');
+        const agentRequests=hash(canonical(this.db.prepare("SELECT key,value FROM meta WHERE key LIKE 'agent_request:%' ORDER BY key").all()));
+        file=path.join(root,this.meta('workspace_id')+'-'+this.revision()+'-'+runtime.sha256+'-'+sessions.sha256+'-'+agentRequests+'.sqlite3');
         if(!fs.existsSync(file)){
           const temporary=file+'.partial-'+randomUUID();
           try{
@@ -552,5 +553,5 @@ export async function receiveDirectusWorkspace({file,directory:root}={}){
       sourceArchiveSha256:received.meta('receiving_source').sha256});
     return received;
   }
-  catch(error){await received.close();throw error;}
+  catch(error){try{await received.close();}catch(secondary){Object.defineProperty(error,'directusWorkspaceCleanup',{value:received,configurable:true});error.cleanupFailure={code:secondary.code??'DIRECTUS_CLOSE_INCOMPLETE',message:secondary.message};}throw error;}
 }
