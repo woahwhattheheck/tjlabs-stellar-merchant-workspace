@@ -1806,7 +1806,8 @@
           "bytes": 4328,
           "sha256": "2273ebb40ee99248c8fb22b02a2a25853616a60e3b0d41aa7ea199bc6ba512d6"
         }
-      ]
+      ],
+      "commit": "e971839b16b169ef3bbf2ad664331878fc715062"
     },
     {
       "id": "webhook-event-workbook-agent-source",
