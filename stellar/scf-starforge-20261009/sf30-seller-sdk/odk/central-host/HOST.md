@@ -50,6 +50,30 @@ For upstream, use mode upstream, bind_address 127.0.0.1 and the selected interna
 
 Source: [Central advanced configuration](https://docs.getodk.org/central-install-advanced/).
 
+## Private Codespaces on the same Central server
+
+Keep the original Codespace, stack, volumes and port visibility. Select `upstream`, the actual forwarded hostname from its existing Ports view, its internal HTTP port, and external HTTPS port 443. The external URL remains Central's canonical identity; a loopback URL does not substitute for that identity.
+
+A private forwarded port requires a separate GitHub proxy token as well as Central's own Authorization. The optional host setting names the existing process environment variable; it never contains a token value:
+
+~~~json
+{
+  "codespaces_token_env": "GITHUB_TOKEN"
+}
+~~~
+
+This setting is accepted only for an `upstream` HTTPS origin with a single hostname label below `app.github.dev` on port 443. It must differ from `auth_env`. The helper reads that alias for every HTTP request and sends it as `X-Github-Token`, including the anonymous Central version and public-configuration health requests. Authenticated Central requests independently retain their original `Authorization` header. Redirects remain rejected by the host helper.
+
+Use the token already supplied to this same authorized Codespace session. Do not print it, place it on a command line, copy it into the config, or include it in the operator handover. GitHub regenerates its Codespace token when the Codespace restarts; the current session's environment is the source. The helper never writes this proxy token into `connection-secret.json`, a backup, or a receipt.
+
+The helper adds only `"codespacesTokenEnv": "GITHUB_TOKEN"` to the original `connection.json`. Pass that complete connection to `native/run-released-fixtures.mjs` and the original workspace receiver. Their process must retain both selected environment references: the private Central Authorization value and the live proxy token. Both the released-fixture writer and every full-capture resource request use the same constrained header builder. The fixture's original service/source check still verifies the released Central and backend commits before creating any project or form; its journal/reconciliation and complete reporting programme are unchanged.
+
+The workspace connection retains the alias and canonical URL, never either credential value. Capture pagination and allowed redirects remain inside the selected original API origin. The browser reporting listener's external-origin configuration is separate from this server-to-server Central API authentication.
+
+Before first selection, the existing owner checks whether this operation already has operation.json, selection.json, connection.json or a fixture journal. If these are absent, include the proxy alias in the complete initial selection. The host config hash and published connection are immutable: adding an alias to an already-bound selection is rejected, and this release provides no transport-rebind command. Preserve that exact prior state and resolve its observed preimage with the original owner before changing the selection. A GitHub proxy login redirect or access failure is not an authenticated Central response and does not justify changing visibility or recreating the service.
+
+Source: [GitHub's private forwarded-port REST-client contract](https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace?tool=cli).
+
 ## Prepare and start
 
 Set the selected administrator-password and backup-passphrase references in the host's existing private environment. Values are not command arguments. The example reference names are ODK_CENTRAL_ADMIN_PASSWORD and ODK_CENTRAL_BACKUP_PASSPHRASE.
