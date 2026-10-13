@@ -6,7 +6,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {openProject,validateProject} from './project.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const need=(ok,message)=>{if(!ok)throw Error(message);};
-export async function receiveProviderReview({page,baseUrl,projectPath,outputDirectory,ownerCheck,actor}){
+export async function receiveProviderReview({page,baseUrl,applicationUrl,projectPath,outputDirectory,ownerCheck,actor}){
  need(page&&typeof ownerCheck==='function','Use the existing owned Page and required ownerCheck.');
  need(typeof actor==='string'&&actor.trim(),'Supply the actual receiving reviewer identity.');
  await ownerCheck();const originalBytes=await fs.readFile(projectPath),original=openProject(originalBytes.toString('utf8'));
@@ -23,8 +23,10 @@ export async function receiveProviderReview({page,baseUrl,projectPath,outputDire
  async function open(path){await ownerCheck();await page.locator('#project-file').setInputFiles(path);await page.waitForFunction(()=>!document.querySelector('#project-file').disabled);await noError();}
  async function screenshot(name,width){await ownerCheck();await page.setViewportSize({width,height:1000});const size=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));need(size.scroll<=size.width+1,'Document overflows the selected viewport.');const row=await retain(name,await page.screenshot({fullPage:true}));result.screens.push(row);await checkpoint();}
  try{
-  const url=new URL('adaptations/airtable-netsuite/',baseUrl.endsWith('/')?baseUrl:baseUrl+'/');
-  await ownerCheck();const response=await page.goto(url.href,{waitUntil:'domcontentloaded'});need(response?.ok(),'Complete review app did not open.');
+  const url=applicationUrl?new URL(applicationUrl):new URL('adaptations/airtable-netsuite/',baseUrl.endsWith('/')?baseUrl:baseUrl+'/');
+  need(['http:','https:','file:'].includes(url.protocol),'Choose the original installed or complete offline review.');
+  await ownerCheck();const response=await page.goto(url.href,{waitUntil:'domcontentloaded'});need(response?.ok()||(!response&&url.protocol==='file:'),'Complete review app did not open.');
+  await page.waitForFunction(()=>document.documentElement.dataset.providerReviewReady==='true');
   need(await page.locator('#save').isDisabled(),'Empty editor unexpectedly contains a saved project.');
   await page.locator('#project-file').setInputFiles({name:'incomplete.json',mimeType:'application/json',buffer:Buffer.from('{"schema":"tjlabs.provider-migration-project.v1"}')});
   await page.waitForFunction(()=>!document.querySelector('#project-file').disabled);need(await page.locator('#error').isVisible(),'Invalid original project did not produce a visible recoverable error.');

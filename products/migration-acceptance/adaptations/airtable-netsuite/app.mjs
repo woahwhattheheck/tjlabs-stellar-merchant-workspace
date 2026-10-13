@@ -100,3 +100,5 @@ $('prev').onclick=()=>{state.offset=Math.max(0,state.offset-100);renderRows();};
 for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>{for(const n of document.querySelectorAll('[data-tab]'))n.setAttribute('aria-selected',String(n===b));for(const tab of document.querySelectorAll('.tab'))tab.hidden=tab.id!==b.dataset.tab;};
 window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});
 controls();
+
+document.documentElement.dataset.providerReviewReady='true';
