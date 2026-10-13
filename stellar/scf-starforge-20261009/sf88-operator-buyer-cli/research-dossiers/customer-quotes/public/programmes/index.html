@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Customer quotation programmes</title>
+<link rel="stylesheet" href="/customer-quote-programmes/style.css">
+</head>
+<body>
+<header>
+<div><h1>Customer quotation programmes</h1><p>Prepare, deliver and receive the complete customer programme.</p></div>
+<nav aria-label="Research"><a href="/">Research workspace</a><a href="/customer-quotes.html">Quotations</a></nav>
+</header>
+<section class="connection" aria-label="Original workspace connection">
+<label for="token">Workspace token</label><input id="token" type="password" autocomplete="off">
+<button id="connect" type="button">Open workspace</button><span id="identity"></span>
+</section>
+<p id="message" role="status" aria-live="polite"></p>
+<nav id="navigation" class="tabs" aria-label="Programme workflow">
+<button data-tab="programmes" type="button">Programmes</button>
+<button data-tab="create" type="button">New programme</button>
+<button data-tab="import" type="button">Receive a package</button>
+<button data-tab="jobs" type="button">Operations</button>
+<button data-tab="working" type="button">Saved working forms</button>
+</nav>
+<main id="main"><p>Open the original Research workspace to continue.</p></main>
+<footer><span id="activity"></span></footer>
+<script type="module" src="/customer-quote-programmes/browser.mjs"></script>
+</body>
+</html>
