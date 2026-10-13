@@ -4,7 +4,7 @@ This integration takes an original Rialto discovery catalogue through a concrete
 
 ## Runtime and installation
 
-Use Node.js 22 or newer, the Linux `flock` utility (util-linux), and a complete installed checkout of `woahwhattheheck/public-commons-sprint-2026`. Place this directory at `stellar/scf-starforge-20261009/partners/rialto`. The four runtime modules use Node built-ins; they add no package installation or hosted workflow.
+Use Node.js 22 or newer, the Linux `flock` utility (util-linux), and a complete installed Merchant workspace checkout. The source lives at `stellar/scf-starforge-20261009/partners/rialto`. The runtime modules use Node built-ins; they add no package installation or hosted workflow.
 
 Set `RIALTO_HOME` to this directory and `COMMONS_CHECKOUT` to the complete checkout. Receiving directories and output files are private: directories mode 0700, files mode 0600. Use real absolute paths rather than symlink aliases. Put archives outside the directory being packaged.
 
@@ -159,6 +159,8 @@ node "$RIALTO_HOME/customer.mjs" compare \
 ```
 
 Comparison retains full before/after rows, uses the original resource-plus-tool identity, preserves duplicate occurrences, and reports added, removed, changed and unchanged entries. It exposes whether scope changed; a different network, filter or original source plan should be interpreted as a different scope.
+
+The existing offline report also receives the earlier complete `catalogue.json`, displays every original before/after row and payment alternative, retains review notes and exact request drafts, and exports a complete receiving HTML or JSON. Earlier views remain available when a comparison is replaced. Follow [the complete comparison and handover guide](CATALOGUE_COMPARISON.md) for source coverage, duplicate identities, draft restoration, independent reopening and full filtered printing.
 
 ## Operational limits and source ownership
 
