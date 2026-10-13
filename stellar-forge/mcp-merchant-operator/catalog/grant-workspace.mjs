@@ -99,6 +99,59 @@ const statementInput={type:'object',additionalProperties:false,
   ]};
 const statementModelInput={...modelInput,inputs:statementInput};
 const statementInspectionModelInput={...modelInput,inputs:statementInspectionInput};
+// Delivery risks reuse the original case review, source and command history.
+const riskId = {type:'string',pattern:'^[a-z][a-z0-9-]{1,99}$'};
+const riskDate = {type:'string',pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
+const nullableRiskDate = {anyOf:[riskDate,{type:'null'}]};
+const riskOwner = {anyOf:[nonempty(12000),{type:'null'}],
+  description:'Original case contributor ID, or null when explicitly unassigned.'};
+const riskEvidence = {
+  sourceIds:{type:'array',items:id('source'),uniqueItems:true},
+  sourceNote:str(12000),
+  sourceBasis:{enum:['ATTACHED_SOURCE','OPERATOR_ENTRY'],
+    description:'Native engine recomputes this field from actual attached source references.'}
+};
+const riskReviewRef = {type:'object',additionalProperties:false,
+  properties:{reviewId:id('review'),reviewSha256:digest},required:['reviewId','reviewSha256']};
+const riskAction = {type:'object',additionalProperties:false,properties:{
+  id:riskId,title:nonempty(500),description:str(12000),ownerId:riskOwner,ownerNote:str(4000),
+  status:{enum:['PLANNED','IN_PROGRESS','DONE','CANCELLED']},
+  dueOn:nullableRiskDate,completedOn:nullableRiskDate,progress:str(12000),...riskEvidence
+},required:['id','title','description','ownerId','ownerNote','status','dueOn','completedOn','progress','sourceIds','sourceNote']};
+const riskRecord = {type:'object',additionalProperties:false,properties:{
+  id:riskId,kind:{enum:['RISK','ISSUE']},title:nonempty(500),description:str(12000),
+  category:{enum:['DELIVERY','STAFFING','CUSTOMER','FUNDING','TECHNICAL','SECURITY','EXTERNAL','OTHER']},
+  identifiedOn:riskDate,ownerId:riskOwner,ownerNote:str(4000),
+  status:{enum:['OPEN','MONITORING','MITIGATING','RESOLVED','CLOSED']},
+  likelihood:{enum:['UNASSESSED','UNLIKELY','POSSIBLE','LIKELY','NOT_APPLICABLE']},
+  impact:{enum:['UNASSESSED','MINOR','MODERATE','MAJOR']},
+  priority:{enum:['UNASSESSED','LOW','MEDIUM','HIGH']},
+  assessmentNote:str(12000),trigger:str(12000),nextReviewOn:nullableRiskDate,
+  costIds:{type:'array',items:nonempty(300),uniqueItems:true},...riskEvidence,
+  review:{type:'object',additionalProperties:false,
+    properties:{on:nullableRiskDate,by:str(300),note:str(12000)},required:['on','by','note']},
+  resolution:{type:'object',additionalProperties:false,
+    properties:{on:nullableRiskDate,note:str(12000)},required:['on','note']},
+  actions:{type:'array',maxItems:100,items:riskAction}
+},required:['id','kind','title','description','category','identifiedOn','ownerId','ownerNote','status',
+  'likelihood','impact','priority','assessmentNote','trigger','nextReviewOn','costIds','sourceIds','sourceNote',
+  'review','resolution','actions'],
+allOf:[{if:{properties:{kind:{const:'ISSUE'}},required:['kind']},
+  then:{properties:{likelihood:{const:'NOT_APPLICABLE'}}},
+  else:{properties:{likelihood:{enum:['UNASSESSED','UNLIKELY','POSSIBLE','LIKELY']}}}}]};
+const riskDocument = {type:'object',additionalProperties:false,properties:{
+  schema:{const:'stellar-forge.sf47-delivery-risks.v1'},name:nonempty(300),asOfDate:riskDate,note:str(12000),
+  supersedes:{anyOf:[{type:'null'},riskReviewRef]},
+  risks:{type:'array',maxItems:200,items:riskRecord,
+    description:'Complete register with stable risk and action IDs, including resolved and closed entries.'}
+},required:['schema','name','asOfDate','note','supersedes','risks']};
+const riskSaveCommand = {type:'object',additionalProperties:false,properties:{
+  expectedVersion:integer,...originalRequest,note:nonempty(12000),action:{const:'risk-register.save'},
+  data:{type:'object',additionalProperties:false,
+    properties:{document:riskDocument,expectedPreviewSha256:digest},
+    required:['document','expectedPreviewSha256']}
+},required:['expectedVersion','requestId','actor','note','action','data']};
+
 // Contributor Engagements reuse the original reviews, retained sources and allocators.
 const engagementId = {type:'string', pattern:'^[a-z][a-z0-9-]{1,99}$'};
 const engagementDate = {type:'string', pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
@@ -451,6 +504,21 @@ export const grantWorkspaceTools = [
   tool('work_intake_apply', 'Apply the complete reviewed work/invoice intake in one original transaction. The exact preview SHA, case version, intake edition and request ID preserve all native created/matched records and original source links.',
     {...ws,...caseSelection,...originalRequest,intakeId:id('intake'),expectedRevision:integer,...intakeModelInput,expectedPreviewSha256:digest},
     ['workspace','caseId','expectedVersion','requestId','actor','intakeId','expectedRevision','expectedPreviewSha256']),
+  tool('risks', 'Read the complete original Delivery risks register and immutable edition history, newest first, against the current case source.',
+    {...ws,caseId:id('operation')},['workspace','caseId'],true),
+  tool('risk_register', 'Open one saved Delivery risks edition with its complete document, source, report and current source comparison.',
+    {...ws,caseId:id('operation'),reviewId:id('review')},['workspace','caseId','reviewId'],true),
+  tool('risk_history', 'Read one stable risk or issue across every saved register edition, including its retained mitigation actions and reviews.',
+    {...ws,caseId:id('operation'),riskId},['workspace','caseId','riskId'],true),
+  tool('risk_seed', 'Prepare an editable Delivery risks register from the actual case contributors, packages and sources. An optional reviewId selects the original edition; a successor retains all previous stable risk and action IDs.',
+    {...ws,...caseSelection,reviewId:id('review')},['workspace','caseId','expectedVersion'],true),
+  tool('risk_preview', 'Preview the complete operator-authored risk register, ownership, mitigation actions, review dates, attached sources and native findings. Dates and assessments come from the recorded document. Supply inputs inline or one complete input reference; inputPointer /document selects a seed or preview document.',
+    {...ws,...caseSelection,...modelInput,inputs:riskDocument},['workspace','caseId','expectedVersion'],true),
+  tool('risk_save', 'Save the complete reviewed Delivery risks edition through original risk-register.save. Retain the current case version, exact document, preview SHA256, stable original request ID, operator and nonempty review note. The native command preserves immutable history and exact-request recovery.',
+    {...ws,...caseSelection,...modelInput,inputs:riskDocument,...originalRequest,note:nonempty(12000),expectedPreviewSha256:digest},
+    ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
+  tool('risk_request', 'Look up the original saved risk-register.save request without writing. Supply the whole original command as inputs or an exact retained input reference, including its original reviewed version, request ID, actor, note, action, complete document and preview digest. A found result must match this complete original command; preserve it after an interrupted connection.',
+    {...ws,caseId:id('operation'),...modelInput,inputs:riskSaveCommand},['workspace','caseId'],true),
   tool('engagements', 'Read every original Contributor Engagements edition and its retained receiving summaries. Full source documents and response bytes remain available through the original native snapshots.',
     {...ws,caseId:id('operation')}, ['workspace','caseId'], true),
   tool('engagement', 'Reopen one complete immutable Contributor Engagements review, its source, report, current source comparison and prior Forecast/Portfolio receiving records.',
@@ -707,8 +775,8 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar, the full explicitly selected multi-case delivery agenda and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','delivery-agenda','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
+  tool('export', 'Delivery risk-register exports select caseId and reviewId, retaining the complete original case, all saved register editions, selected JSON, CSV and offline HTML. Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar, the full explicitly selected multi-case delivery agenda and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','delivery-agenda','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding','risk-register']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:{anyOf:[id('review'),id('settlement')]},
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
       installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
