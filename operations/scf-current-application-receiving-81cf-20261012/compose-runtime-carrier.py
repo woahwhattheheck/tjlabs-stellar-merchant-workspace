@@ -14,6 +14,7 @@ RUNTIME_FILES = (
     "receive-prepared-review.mjs", "receive-current.cjs",
     "receive-review-continuation.cjs", "receive_source.py",
     "receive-source-package.mjs", "source-phase.mjs", "SOURCE_RECEIVING.md",
+    "receive-current-source-browser.mjs", "receive-source-browser.cjs",
 )
 
 

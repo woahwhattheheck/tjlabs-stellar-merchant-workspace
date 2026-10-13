@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent
 RUNTIME_FILES = (
     "source-phase.mjs", "receive-source-package.mjs", "receive_source.py",
     "receive_review.py", "receive_current.py", "scf_native_process.py",
-    "SOURCE_RECEIVING.md", "receive-current-source-browser.mjs",
+    "SOURCE_RECEIVING.md", "receive-current-source-browser.mjs", "receive-source-browser.cjs",
 )
 
 def sha(body):

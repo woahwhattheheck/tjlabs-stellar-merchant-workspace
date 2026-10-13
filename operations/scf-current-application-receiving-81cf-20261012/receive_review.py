@@ -136,6 +136,8 @@ def main():
     parser.add_argument("--node", type=Path, required=True)
     parser.add_argument("--engine", choices=("browser", "native"), default="browser")
     parser.add_argument("--source-input", type=Path)
+    parser.add_argument("--source-browser", action="store_true",
+                        help="Continue the selected native source through its full browser journey before saving")
     parser.add_argument("--expected-source-input-sha256")
     parser.add_argument("--node-modules", type=Path)
     parser.add_argument("--chromium", type=Path)
@@ -155,17 +157,19 @@ def main():
         raise ValueError("A complete source input requires its selected SHA-256.")
     if args.source_input and args.engine != "native":
         raise ValueError("Continue the current source package through the native receiving engine.")
+    if args.source_browser and (not args.source_input or args.engine != "native"):
+        raise ValueError("--source-browser continues the existing --engine native --source-input operation.")
     selected_paths = [args.case, args.parent, args.node]
     if args.source_input:
         selected_paths.append(args.source_input)
-    if args.engine == "browser":
+    if args.engine == "browser" or args.source_browser:
         if args.node_modules is None or args.chromium is None:
             raise ValueError("The browser engine requires --node-modules and --chromium")
         selected_paths.extend((args.node_modules, args.chromium))
     for selected in selected_paths:
         if not selected.is_absolute() or not selected.exists():
             raise ValueError("Supply existing absolute input and runtime paths: " + str(selected))
-    if not args.case.is_file() or not args.parent.is_dir() or (args.engine == "browser" and not args.node_modules.is_dir()):
+    if not args.case.is_file() or not args.parent.is_dir() or ((args.engine == "browser" or args.source_browser) and not args.node_modules.is_dir()):
         raise ValueError("Select the complete saved ZIP and actual host directories")
     selected_hash = file_digest(args.case)
     original_case_bytes = args.case.stat().st_size

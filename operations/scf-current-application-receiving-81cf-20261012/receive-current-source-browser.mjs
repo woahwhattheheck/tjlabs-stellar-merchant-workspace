@@ -66,7 +66,7 @@ function workingSaveDisposition(intent,candidate,retainVersion){
 }
 
 export async function receiveCurrentSourceBrowser(page,{
-  inputPath,outputDirectory,expectedOrigin
+  inputPath,outputDirectory,expectedOrigin,ownedProcesses=[],checkpoint=null
 }={}){
   const actualInputPath=resolve(inputPath);
   const selectedInput=JSON.parse(await readFile(actualInputPath,'utf8'));
@@ -100,7 +100,9 @@ export async function receiveCurrentSourceBrowser(page,{
     'Use the existing secure or loopback source-selected reader.');
   const output=resolve(outputDirectory||join(dirname(actualInputPath),'browser'));
   await mkdir(output,{recursive:true,mode:0o700});
-  const stages=[],files=[],pageErrors=[];
+  const stages=ownedProcesses.length?[{name:'browser-process-started',at:new Date().toISOString(),owned_processes:ownedProcesses}]:[];
+  const files=[],pageErrors=[];
+  need(checkpoint===null||typeof checkpoint==='function','Use the original equipped browser checkpoint callback.');
   let independent=null,releaseRead=null,readRoute=null;
   const applicationURL=new URL('/grant-data/application.md',origin).href;
   const write=async(name,body)=>{
@@ -112,6 +114,7 @@ export async function receiveCurrentSourceBrowser(page,{
   const stage=async(name,details={})=>{
     const entry={name,at:new Date().toISOString(),...details};stages.push(entry);
     await writeFile(join(output,'progress.json'),json({operationId:OPERATION,stages}),{mode:0o600});
+    if(checkpoint)await checkpoint();
     console.log('SCF_CURRENT_SOURCE_BROWSER '+name);
   };
   const onError=error=>pageErrors.push({stage:stages.at(-1)?.name||'START',message:error.message});
@@ -245,6 +248,7 @@ export async function receiveCurrentSourceBrowser(page,{
       await retainJSON(saveReceiptPath,accepted);saveReceipt=accepted;
       // The portable native record is preserved before any remaining export.
       await retainJSON(join(output,'saved-submission-record.json'),candidate);
+      if(checkpoint)await checkpoint();
       return candidate;
     };
 
@@ -353,6 +357,7 @@ export async function receiveCurrentSourceBrowser(page,{
       const intent={schema:'stellar-forge.current-source-working-save.v1',
         selection:saveSelection,bindingMode:local.mode,before};
       await retainJSON(saveIntentPath,intent);saveIntent=intent;
+      if(checkpoint)await checkpoint();
       await page.locator('#save').click();await settle(page);
       saved=await record(page);
       await retainAccepted(saved);

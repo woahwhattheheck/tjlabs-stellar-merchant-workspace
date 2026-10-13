@@ -249,6 +249,7 @@ def receive_source(args, original):
         "originalReviewActions": baseline["reviewEvents"],
         "nativeRecord": str(output / "native-process.json"),
     }), flush=True)
+    programme_started = time.monotonic()
     native, result = run_receiving_program(
         OPERATION, root, output, context, args.node, None,
         runtime / "receive-source-package.mjs", phase_config, case, environment,
@@ -266,6 +267,52 @@ def receive_source(args, original):
         "reviewActions": result.get("reviewActions") if result else None,
         "reviewStatus": result.get("reviewStatus") if result else None,
     })
+    native["nativeSourceState"] = native["state"]
+    if getattr(args, "source_browser", False):
+        browser_output = output / "browser"
+        browser_output.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # Keep source/save receipts and the actual IndexedDB snapshot in place.
+        # Only prior process observations move into this same retained attempt.
+        for name in ("native-process.json", "native-process.log", "javascript-parse.log",
+                     "node-version.log", "browser-version.log", "progress.json",
+                     "BROWSER_RECEIVER_INCOMPLETE.json", "config.json"):
+            selected = browser_output / name
+            if selected.is_file():
+                target = attempt / "browser" / name
+                target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                retired[selected.relative_to(case).as_posix()] = target.relative_to(case).as_posix()
+                selected.replace(target)
+        browser_config = {
+            **current, "outputDirectory": str(browser_output),
+            "browserInputPath": str(output / "browser-receiving-input.json"),
+        }
+        browser_config_path = browser_output / "config.json"
+        original.write_json(browser_config_path, browser_config)
+        remaining = args.timeout_seconds - (time.monotonic() - programme_started)
+        if native["state"] == "COMPLETE" and remaining > 0:
+            try:
+                browser_native, browser_result = run_receiving_program(
+                    OPERATION, root, browser_output, context, args.node, args.chromium,
+                    runtime / "receive-source-browser.cjs", browser_config_path, case, environment,
+                    remaining, "current-source-browser-receiving", engine="browser",
+                )
+                native["browserContinuation"] = browser_native
+                native["browserResult"] = browser_result
+                native["state"] = ("COMPLETE" if browser_native["state"] == "COMPLETE"
+                                   else "INCOMPLETE")
+            except Exception as error:
+                native["browserContinuation"] = {
+                    "state": "INCOMPLETE", "error": str(error), "errorType": type(error).__name__,
+                }
+                native["state"] = "INCOMPLETE"
+        else:
+            native["browserContinuation"] = {
+                "state": "NOT_STARTED",
+                "reason": ("Complete the original native source phases first."
+                           if native["state"] != "COMPLETE"
+                           else "The shared source-receiving deadline elapsed."),
+            }
+            native["state"] = "INCOMPLETE"
     state = native["state"]
     original.write_json(output / "native-result.json", native)
     archive = root / ("SCF-Current-Application-and-Review" +
