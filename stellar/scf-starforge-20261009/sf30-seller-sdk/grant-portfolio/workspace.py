@@ -34,6 +34,27 @@ from workspace_extensions import (
 ACTIONS = ("source.receive", "portfolio.save", "review.save", "portfolio.export", "portfolio.receive") + extension_actions()
 
 
+def source_summary(source):
+    """Compact source-list contract; complete native records remain on source()."""
+    result = {key: source[key] for key in
+              ("id", "standard", "label", "coverage", "selection", "counts", "object")}
+    if source["standard"] == "businesscentral":
+        native = source["native"]
+        summary = native["summary"]
+        result["financialSummary"] = {
+            "reconciliationId": native["reconciliationId"],
+            "companyId": native["scope"]["companyId"],
+            "period": native["period"],
+            "ready": summary["ready"],
+            "nativeRowCount": native["nativeRowCount"],
+            "financialRowCount": native["financialRowCount"],
+            "eligibleFinancialRowCount": native["eligibleFinancialRowCount"],
+            "findingCount": len(summary["findings"]),
+            "blockingFindingCount": sum(bool(item["blocking"]) for item in summary["findings"]),
+            "currencyBases": sorted({item["currency_basis"] for item in summary["totals"]})}
+    return result
+
+
 def portfolio_documents(history):
     """Original programme objects also cover frozen award contributor editions."""
     selected = dict(programme_objects(history))
@@ -210,8 +231,7 @@ class Workspace:
             requests = [parse(x[0]) for x in db.execute("SELECT body FROM requests ORDER BY rowid DESC")]
             return {"schema": SCHEMA, "workspaceId": self.marker["workspaceId"],
                     "revision": self.current_revision(db),
-                    "sources": [{k: x[k] for k in ("id", "standard", "label", "coverage", "selection", "counts", "object")}
-                                for x in sources],
+                    "sources": [source_summary(source) for source in sources],
                     "portfolios": [{k: x[k] for k in ("id", "revision", "snapshot", "name", "review", "counts", "updatedAt")}
                                    for x in portfolios],
                     "requests": [{k: x[k] for k in ("id", "state", "action", "inputSha256", "updatedAt", "error")

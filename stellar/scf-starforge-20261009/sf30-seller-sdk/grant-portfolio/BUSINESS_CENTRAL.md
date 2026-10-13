@@ -87,8 +87,13 @@ project GUID, preventing a shared grant label/key from joining unrelated project
 ```
 
 The typed client and merchant tool schema require `reconciliationId` for this
-standard. Existing source, table, detail, programme and export calls remain the
-application API. The original finance service continues to own capture, mapping,
+standard. The source list returned by `/api/state` includes a bounded
+`financialSummary` for Business Central: reconciliation ID, company, reporting
+period, readiness, original/projected/included row counts, total and blocking
+findings, and the currency bases actually present. Source cards use that summary.
+`/api/source` retains the complete native reconciliation, findings and partial
+totals; the compact list does not repeat the original pages or accounting records.
+Existing source, table, detail, programme and export calls remain the application API. The original finance service continues to own capture, mapping,
 reconciliation and Dataverse delivery; the portfolio receives the resulting edition.
 
 The adapter imports the pinned original `pmrs` package only inside the existing

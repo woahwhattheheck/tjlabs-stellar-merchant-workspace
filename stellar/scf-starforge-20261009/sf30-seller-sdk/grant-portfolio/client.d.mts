@@ -75,9 +75,21 @@ export type CoreActionInput = {operationId:OperationId; expectedRevision?:number
   | {action:'portfolio.receive'; payload:PortfolioReceiveInput}
 );
 export type ActionInput = CoreActionInput|DataverseActionInput|SupportActionInput;
+/** Bounded source-list facts from the exact retained Business Central reconciliation. */
+export interface BusinessCentralFinancialSummary {
+  reconciliationId:Sha256; companyId:string; period:{from:string;to:string}; ready:boolean;
+  nativeRowCount:number; financialRowCount:number; eligibleFinancialRowCount:number;
+  findingCount:number; blockingFindingCount:number; currencyBases:('lcy'|'project')[];
+}
+export interface PortfolioSourceSummary {
+  id:Sha256; standard:SourceStandard; label:string; coverage:SourceCoverage;
+  selection:JsonObject|BusinessCentralSelection;
+  counts:{entities:number;financial:number}; object:FileDescriptor;
+  financialSummary?:BusinessCentralFinancialSummary;
+}
 export interface PortfolioState {
   schema:'stellar-forge.grant-portfolio.v1'; workspaceId:string; revision:number;
-  sources:JsonObject[]; portfolios:JsonObject[]; requests:JsonObject[];
+  sources:PortfolioSourceSummary[]; portfolios:JsonObject[]; requests:JsonObject[];
   [key:string]:unknown;
 }
 export interface RowsInput extends PortfolioSelection {

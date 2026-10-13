@@ -213,11 +213,19 @@ function sourceCard(source) {
   metrics.append(metric(source.counts.entities, "records and organizations"), metric(source.counts.financial, "financial records"));
   card.append(metrics);
   if (source.standard === "businesscentral") {
-    const native = source.native, summary = native.summary;
-    card.append(node("p", native.period.from + " to " + native.period.to + " · "
-      + native.scope.companyId + " · " + (summary.ready ? "Reconciliation ready" : "Financial review required"), "small"));
-    card.append(node("p", summary.row_count + " original rows · " + summary.findings.length
-      + " findings · separate local and project currency views", "small"));
+    const summary = source.financialSummary;
+    if (summary) {
+      card.append(node("p", summary.period.from + " to " + summary.period.to + " · "
+        + summary.companyId + " · " + (summary.ready ? "Reconciliation ready" : "Financial review required"), "small"));
+      card.append(node("p", summary.nativeRowCount + " original rows · " + summary.findingCount
+        + " findings (" + summary.blockingFindingCount + " blocking) · "
+        + summary.eligibleFinancialRowCount + " included financial records", "small"));
+      const bases = summary.currencyBases.map(basis => basis === "lcy" ? "local currency" : "project currency");
+      card.append(node("p", bases.length ? "Separate views: " + bases.join(" and ")
+        : "No allocated currency groups in this edition.", "small"));
+    } else {
+      card.append(node("p", "Open Source details for this edition's financial review and reporting period.", "small"));
+    }
   }
   const buttons = node("div", null, "actions");
   buttons.append(button("Original source packet", () => download("/api/object?sha256=" + source.object.sha256, source.label.replace(/[^a-z0-9]+/gi, "_") + ".zip")),

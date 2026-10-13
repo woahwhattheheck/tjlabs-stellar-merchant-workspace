@@ -40,6 +40,24 @@ def all_rows(workspace, portfolio, table, **selected):
         offset = page["nextOffset"]
 
 
+def verify_source_card(workspace, source):
+    """Receive the actual compact API state used by the source-editions screen."""
+    current = next((item for item in workspace.state()["sources"] if item["id"] == source["id"]), None)
+    require(current is not None, "The received source is missing from the application source list")
+    native, summary = source["native"], source["native"]["summary"]
+    expected = {"reconciliationId": native["reconciliationId"],
+        "companyId": native["scope"]["companyId"], "period": native["period"],
+        "ready": summary["ready"], "nativeRowCount": native["nativeRowCount"],
+        "financialRowCount": native["financialRowCount"],
+        "eligibleFinancialRowCount": native["eligibleFinancialRowCount"],
+        "findingCount": len(summary["findings"]),
+        "blockingFindingCount": sum(bool(item["blocking"]) for item in summary["findings"]),
+        "currencyBases": sorted({item["currency_basis"] for item in summary["totals"]})}
+    require(current.get("financialSummary") == expected,
+            "The source screen's compact financial summary differs from its complete reconciliation")
+    return expected
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", required=True)
@@ -65,6 +83,7 @@ def main():
             "object": uploaded["sha256"], "standard": "businesscentral",
             "label": "Business Central financial edition", "coverage": selected["coverage"],
             "selection": {"reconciliationId": selected["reconciliationId"]}})
+        source_card = verify_source_card(workspace, source)
         entities = sorted(workspace._selected([source["id"]])[1], key=lambda row: row["entityKey"])
         projects = [row for row in entities if row["kind"] == "activity"]
         grants = [row for row in entities if row["kind"] == "grant"]
@@ -171,6 +190,8 @@ def main():
         with retained.open("rb") as stream:
             received_object = receiving.upload(stream, retained.stat().st_size)
         act(receiving, prefix + "-receive", "portfolio.receive", {"object": received_object["sha256"]})
+        require(verify_source_card(receiving, receiving.source(source["id"])) == source_card,
+                "The received source card changed after complete handoff")
         restored = receiving.portfolio(portfolio["id"], portfolio["revision"])
         require(restored["snapshot"] == expected_snapshot and restored["tableSha256"] == expected_table_hashes,
                 "Complete receiving changed the original saved revision")
@@ -182,6 +203,7 @@ def main():
             "projects": len(projects), "grants": len(grants),
             "nativeRows": source["native"]["nativeRowCount"], "financialRows": len(rows),
             "entityViews": alias_checks, "nativeMetricGroups": len(expected_groups),
+            "sourceCardReopened": True, "financialSummary": source_card,
             "tableSha256": expected_table_hashes, "handover": file_info(retained), "state": "COMPLETE"}
     immutable(root / "result.json", canonical(result))
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
