@@ -19,7 +19,7 @@ FINANCE_COMMANDS = {
     "expense.receive", "expense.save", "expense.review", "expense.reopen", "expense.void",
 }
 REVIEW_COMMANDS = {"review", "work.accept", "work.reopen",
-                   "implementation.prepare", "cohort.prepare", "completion.prepare"}
+                   "implementation.prepare", "cohort.prepare", "completion.prepare", "completion.corrections.save"}
 READ_POSTS = {
     "risk-register-seed", "risk-register-preview", "risk-register-request",
     "installation-return-seed", "installation-return-preview", "installation-return-review-seed",
@@ -30,7 +30,7 @@ READ_POSTS = {
     "installation-workshare-seed", "installation-seed", "installation-preview",
     "installation-effort-seed", "installation-effort-selection",
     "installation-commissioning-seed", "installation-commissioning-review",
-    "completion-seed", "completion-preview", "support-preview", "buyer-preview",
+    "completion-seed", "completion-preview", "completion-corrections-seed", "completion-corrections-preview", "support-preview", "buyer-preview",
     "forecast-preview", "portfolio-preview", "portfolio-seed", "portfolio-selection",
     "expense-preview", "expense-request",
     "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio",
