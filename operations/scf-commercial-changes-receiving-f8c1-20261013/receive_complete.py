@@ -44,6 +44,15 @@ def main():
             git=hashlib.sha1(b"blob "+str(len(content)).encode()+b"\0"+content).hexdigest()
             if git!=item["gitBlob"]:raise ValueError("Original Git identity differs")
             files.append(item)
+    for supplement in manifest.get("sourceSupplements",[]):
+        if supplement["sourceCommit"]!=manifest["sourceCommit"]:raise ValueError("Supplement original source differs")
+        for item in supplement["files"]:
+            if item["path"] in seen:raise ValueError("Repeated supplemental source")
+            seen.add(item["path"]);content=item["content"].encode("utf-8")
+            if len(content)!=item["bytes"] or hashlib.sha256(content).hexdigest()!=item["sha256"]:raise ValueError("Supplement source content differs")
+            git=hashlib.sha1(b"blob "+str(len(content)).encode()+b"\0"+content).hexdigest()
+            if git!=item["gitBlob"]:raise ValueError("Supplement Git identity differs")
+            files.append(item)
     inventory=[{k:item[k] for k in ("path","bytes","sha256","gitBlob")} for item in files]
     if inventory!=manifest["sourceInventory"] or len(files)!=manifest["sourceFiles"] or sum(item["bytes"] for item in files)!=manifest["sourceBytes"]:raise ValueError("Complete source selection differs")
     payload=dict(manifest["receiver"],files=files)
