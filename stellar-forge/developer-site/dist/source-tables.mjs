@@ -6,6 +6,7 @@ import {
 } from './source-table-workspace.mjs';
 import { createDocumentTableSource, validateDocumentTableSource, inspectDocumentTables, projectDocumentTable, validateDocumentTableProjection } from './source-document-tables.mjs';
 import { importWorkspaceDraft } from './onboarding.mjs';
+import { DOCUMENT_INTAKE_PACKET_SCHEMA, createDocumentIntake, captureDocumentPreparation, documentPreparation, restoreDocumentPreparation, createDocumentIntakePacket, receiveDocumentIntakePacket } from './source-table-intake.mjs';
 
 const $ = id => document.getElementById(id);
 const clone = value => structuredClone(value);
@@ -67,7 +68,9 @@ function download(name, content, type = 'application/json') {
 }
 async function fileText(file, limit) {
   if (file.size > limit) throw new SourceTableError('FILE_SIZE', 'The file exceeds the selected workflow size limit.');
-  return decodeSource(await file.arrayBuffer());
+  const data=await file.arrayBuffer();
+  if(limit<=LIMITS.sourceBytes)return decodeSource(data);
+  try{return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(data);}catch{throw new Error('Choose complete valid UTF-8 document intake JSON or extracted text.');}
 }
 function replaceProject(next, selection = null) {
   project = next;
@@ -272,7 +275,7 @@ async function openSaved(id) {
   });
   if (!row) throw new Error('That saved project is absent.');
   const verified = await importProject(row.project);
-  replaceProject(verified); savedRef = { id: row.id, revision: row.revision }; dirty = false;
+  replaceProject(verified); await restoreProjectIntake(); savedRef = { id: row.id, revision: row.revision }; dirty = false;
   message('Opened ' + verified.name + ' at browser revision ' + row.revision + '.');
 }
 async function showSaved() {
@@ -281,7 +284,7 @@ async function showSaved() {
   if (!rows.length) list.append(element('p', 'No source-table projects have been saved in this browser.'));
   for (const row of rows) {
     const item = element('div', undefined, 'saved-row'), text = element('span', row.name), button = element('button', 'Open');
-    text.append(element('small', row.tables + ' tables · revision ' + row.revision + ' · ' + row.updatedAt));
+    text.append(element('small', row.tables + ' tables · revision ' + row.revision + ' · ' + new Date(row.updatedAt).toLocaleString()));
     button.type = 'button'; button.addEventListener('click', () => {
       if (dirty && !confirm('Open the saved project and discard the current unsaved changes?')) return;
       perform(() => openSaved(row.id));
@@ -310,7 +313,7 @@ $('source-edition').addEventListener('change', () => { currentDocument().selecte
 $('baseline-selection').addEventListener('change', () => { currentDocument().baselineReviewId = $('baseline-selection').value || null; touch(); renderComparison(currentDocument()); });
 $('new-project').addEventListener('click', () => {
   if (dirty && !confirm('Create a new project and discard the current unsaved changes?')) return;
-  project = createProject(); documentId = null; dirty = false; savedRef = null; clearError(); message('New source-table project.'); render();
+  project = createProject(); documentId = null; clearProjectIntake(); dirty = false; savedRef = null; clearError(); message('New source-table project.'); render();
 });
 $('open-project').addEventListener('click', () => chooseFile('project-file'));
 $('import-merchant').addEventListener('click', () => chooseFile('merchant-file'));
@@ -348,7 +351,7 @@ $('project-file').addEventListener('change', () => {
     let text;
     try { text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(await file.arrayBuffer()); } catch { throw new Error('Choose a valid UTF-8 project JSON.'); }
     const verified = await importProject(text);
-    replaceProject(verified); savedRef = null; dirty = false; message('Opened the complete project and reproduced every retained review from its original source.');
+    replaceProject(verified); await restoreProjectIntake(); savedRef = null; dirty = false; message('Opened the complete project, unfinished document preparations and original retained reviews.');
   });
 });
 $('merchant-file').addEventListener('change', () => {
@@ -404,6 +407,43 @@ $('saved-projects').addEventListener('click', () => {
 // Document extraction stays data throughout: all source content enters textContent.
 let documentIntake = {source:null,inspection:null,tableIndex:1,rowPage:0,columnPage:0,projection:null};
 const documentPageRows = 20, documentPageColumns = 12;
+const intakeFields = {'document-header-rows':'headerRows','document-data-rows':'dataRows','document-columns':'columns','document-exclusions':'exclusions','document-merge':'mergedCells','document-whitespace':'whitespace','document-csv-name':'filename','document-target':'target'};
+const intakeState = () => project.documentIntake || createDocumentIntake();
+function retainDocumentPreparation({replace=false,changed=true}={}) {
+  if(!documentIntake.source || !intakeTable())return;
+  project.documentTableSources ||= [];
+  if(!project.documentTableSources.some(row=>row.id===documentIntake.source.id))
+    project.documentTableSources.push(clone(documentIntake.source));
+  const fields=Object.fromEntries(Object.entries(intakeFields).map(([id,key])=>[key,$(id).value]));
+  project.documentIntake=captureDocumentPreparation(intakeState(),documentIntake.source.id,documentIntake.tableIndex,
+    {fields,rowPage:documentIntake.rowPage,columnPage:documentIntake.columnPage},{replace});
+  if(changed)touch();
+}
+function applyDocumentPreparation(saved) {
+  for(const [id,key] of Object.entries(intakeFields)) {
+    if(id==='document-target' && ![...$(id).options].some(row=>row.value===saved.fields[key]))
+      $(id).append(option(saved.fields[key],'Original destination · choose a current target',true));
+    $(id).value=saved.fields[key];
+  }
+  documentIntake.rowPage=saved.rowPage;documentIntake.columnPage=saved.columnPage;
+}
+function clearProjectIntake() {
+  documentIntake={source:null,inspection:null,tableIndex:1,rowPage:0,columnPage:0,projection:null};
+  const details=intakeState().sourceDetails;
+  $('document-source-url').value=details.url;$('document-original-name').value=details.filename;$('document-provider').value=details.provider;
+  $('document-intake-status').textContent='Open an extraction to inspect its tables.';
+}
+async function restoreProjectIntake() {
+  clearProjectIntake();
+  const state=intakeState(),selected=project.documentTableSources?.find(row=>row.id===state.selectedSourceId);
+  if(selected)await loadDocumentSource(selected,null,{restoring:true});
+  $('document-source-url').value=state.sourceDetails.url;$('document-original-name').value=state.sourceDetails.filename;$('document-provider').value=state.sourceDetails.provider;
+}
+async function prepareRetainedPreview() {
+  try {documentIntake.projection=await projectDocumentTable(documentIntake.source,readDocumentSelection());}
+  catch {documentIntake.projection=null;}
+}
+
 const intakeTable = () => documentIntake.inspection?.tables.find(t => t.tableIndex === documentIntake.tableIndex);
 function selectedDocumentSource(edition) {
   const sources = project.documentTableSources || [];
@@ -461,17 +501,24 @@ function invalidateDocumentProjection() {
   $('document-projection-panel').hidden = true;
   $('document-intake-status').textContent = 'Selection is editable. Prepare the CSV preview to review its exact output.';
 }
-async function loadDocumentSource(source, projection = null) {
+async function loadDocumentSource(source, projection = null, {restoring=false}={}) {
   const verified = await validateDocumentTableSource(source), inspection = await inspectDocumentTables(verified);
   if (!inspection.tables.length) throw new Error('This extraction contains no HTML tables. Choose extracted HTML or Markdown with table elements.');
   if (projection) await validateDocumentTableProjection({source:verified,projection});
-  documentIntake = {source:verified,inspection,tableIndex:projection?.selection.tableIndex || inspection.tables[0].tableIndex,rowPage:0,columnPage:0,projection:null};
+  if(!restoring)retainDocumentPreparation();
+  const state=intakeState(), prior=state.sources.find(row=>row.sourceId===verified.id);
+  const tableIndex=projection?.selection.tableIndex || prior?.selectedTable || inspection.tables[0].tableIndex;
+  const saved=documentPreparation(state,verified.id,tableIndex);
+  documentIntake = {source:verified,inspection,tableIndex,rowPage:0,columnPage:0,projection:null};
   $('document-source-url').value = verified.sourceUrl || verified.document?.url || '';
   $('document-original-name').value = verified.document?.filename || '';
   $('document-provider').value = verified.extraction?.provider || verified.extraction?.method || '';
   resetDocumentSelection();
-  if (projection) { writeDocumentSelection(projection.selection); documentIntake.projection = projection; }
-  $('document-intake-status').textContent = verified.filename + ' · ' + inspection.tables.length + ' tables · complete extraction retained (' + verified.bytes + ' bytes).';
+  if(saved)applyDocumentPreparation(saved);
+  if(projection) { writeDocumentSelection(projection.selection);documentIntake.projection=projection; }
+  retainDocumentPreparation({replace:Boolean(projection),changed:!restoring});
+  if(!projection && saved)await prepareRetainedPreview();
+  $('document-intake-status').textContent = verified.filename + ' · ' + inspection.tables.length + ' tables · complete extraction and preparation retained in this project. Save or download the project to reopen it.';
 }
 function showDocumentCell(t, row, column) {
   const index = t.grid[row-1]?.[column-1], cell = index == null ? null : t.cells[index];
@@ -513,6 +560,11 @@ function renderDocumentGrid() {
 }
 function renderDocumentIntake() {
   const source=documentIntake.source, t=intakeTable(), projection=documentIntake.projection;
+  const state=intakeState(), list=$('document-source-choice');
+  list.replaceChildren(option('','Choose a retained extraction',!source));
+  for(const row of state.sources){const original=project.documentTableSources?.find(item=>item.id===row.sourceId);if(original)list.append(option(row.sourceId,original.filename+' · '+row.tables.length+' prepared tables',row.sourceId===source?.id));}
+  list.disabled=busy||!state.sources.length;
+  $('document-download-intake').disabled=busy||!state.sources.length;
   $('document-intake-editor').hidden=!source;
   const activeDoc=currentDocument();
   $('reopen-document-selection').hidden=!activeDoc||!selectedEdition(activeDoc).documentTable;
@@ -522,7 +574,11 @@ function renderDocumentIntake() {
   const target=$('document-target'), chosen=target.value;target.replaceChildren(option('','New merchant resource',chosen===''));
   for(const resource of project.starter.resources)if(!project.documents.some(d=>d.resourceId===resource.id))target.append(option('resource:'+resource.id,'Existing unbound resource · '+resource.id,chosen==='resource:'+resource.id));
   for(const doc of project.documents)target.append(option('document:'+doc.id,'Next edition · '+doc.label,chosen==='document:'+doc.id));
-  if(![...target.options].some(x=>x.value===chosen))target.value='';
+  if(![...target.options].some(x=>x.value===chosen))target.append(option(chosen,'Original destination unavailable · choose a current target',true));
+  const saved=documentPreparation(state,source.id,t.tableIndex), history=$('document-preparation-history');
+  history.replaceChildren(option('','Current preparation',true));
+  for(const [index,prior] of (saved?.history||[]).entries())history.append(option(String(index),new Date(prior.retainedAt).toLocaleString()+' · '+prior.fields.filename,false));
+  history.disabled=busy||!saved?.history.length;
   renderDocumentGrid();
   $('document-projection-panel').hidden=!projection;
   if(projection) {
@@ -540,6 +596,12 @@ $('document-extraction-file').addEventListener('change',()=>{
     let source, projection=null;
     if(/\.json$/i.test(file.name)||/^\s*\{/.test(text)) {
       const value=JSON.parse(text);
+      if(value.schema===DOCUMENT_INTAKE_PACKET_SCHEMA){
+        retainDocumentPreparation();
+        const received=await receiveDocumentIntakePacket(intakeState(),project.documentTableSources||[],value);
+        project.documentIntake=received.intake;project.documentTableSources=received.sources;
+        await restoreProjectIntake();touch();message('Opened the complete document preparations. Earlier current choices remain in preparation history; choose a current destination before receiving.');return;
+      }
       source=value.schema==='stellar-forge.document-table-source.v1'?value:value.source;
       projection=value.projection||null;
       if(!source)throw new Error('Choose retained document-table source JSON or a saved source and selection. Complete projects open through Open project JSON.');
@@ -554,13 +616,15 @@ $('document-extraction-file').addEventListener('change',()=>{
     message('Opened the complete extracted source. Review original cells and choose the rows and columns to receive.');
   });
 });
-$('document-table-choice').addEventListener('change',()=>{
-  documentIntake.tableIndex=Number($('document-table-choice').value);resetDocumentSelection();renderDocumentIntake();
-});
+$('document-table-choice').addEventListener('change',()=>{const target=Number($('document-table-choice').value);perform(async()=>{
+  retainDocumentPreparation();documentIntake.tableIndex=target;resetDocumentSelection();
+  const saved=documentPreparation(intakeState(),documentIntake.source.id,target);if(saved)applyDocumentPreparation(saved);
+  retainDocumentPreparation();if(saved)await prepareRetainedPreview();
+});});
 for(const id of ['document-header-rows','document-data-rows','document-columns','document-exclusions','document-merge','document-whitespace'])
-  $(id).addEventListener(id==='document-merge'||id==='document-whitespace'?'change':'input',invalidateDocumentProjection);
+  $(id).addEventListener(id==='document-merge'||id==='document-whitespace'?'change':'input',()=>{invalidateDocumentProjection();retainDocumentPreparation();});
 for(const [id,field,delta] of [['document-rows-prev','rowPage',-1],['document-rows-next','rowPage',1],['document-cols-prev','columnPage',-1],['document-cols-next','columnPage',1]])
-  $(id).addEventListener('click',()=>{documentIntake[field]+=delta;renderDocumentGrid();});
+  $(id).addEventListener('click',()=>{documentIntake[field]+=delta;retainDocumentPreparation();renderDocumentGrid();});
 $('document-show-markup').addEventListener('click',()=>{
   const pre=$('document-original-markup');pre.hidden=!pre.hidden;
   pre.textContent=pre.hidden?'':intakeTable().html;
@@ -568,6 +632,7 @@ $('document-show-markup').addEventListener('click',()=>{
 });
 $('document-download-source').addEventListener('click',()=>download('Document_Table_Source.json',json(documentIntake.source)));
 $('document-preview').addEventListener('click',()=>perform(async()=>{
+  retainDocumentPreparation();
   documentIntake.projection=await projectDocumentTable(documentIntake.source,readDocumentSelection());
   message('Prepared the complete selected CSV. Review it, then use it in field mapping.');
 }));
@@ -576,11 +641,13 @@ $('document-download-selection').addEventListener('click',()=>download('Document
 $('document-receive').addEventListener('click',()=>perform(async()=>{
   if(!documentIntake.projection)throw new Error('Prepare the current selection first.');
   const target=$('document-target').value;
+  if(target && !(target.startsWith('document:')&&project.documents.some(row=>row.id===target.slice(9))) && !(target.startsWith('resource:')&&project.starter.resources.some(row=>row.id===target.slice(9))&&!project.documents.some(row=>row.resourceId===target.slice(9))))throw new Error('Choose a current destination for this retained preparation.');
+  retainDocumentPreparation();
   const result=await addDocumentTable(project,{source:documentIntake.source,projection:documentIntake.projection,
     filename:$('document-csv-name').value.trim()||undefined,
     ...(target.startsWith('document:')?{documentId:target.slice(9)}:target.startsWith('resource:')?{resourceId:target.slice(9)}:{})});
   replaceProject(result.project,result.documentId);
-  renderDocumentIntake(); $('document-target').value='document:'+result.documentId;
+  renderDocumentIntake(); $('document-target').value='document:'+result.documentId;retainDocumentPreparation();
   message(result.reused?'Reopened the retained identical document projection. Continue with its field mapping.':'Received the projected CSV, complete original extraction and cell origins. Review the field mapping below.');
   $('document-workspace').scrollIntoView({block:'start',behavior:'smooth'});
 }));
@@ -588,9 +655,25 @@ $('reopen-document-selection').addEventListener('click',()=>perform(async()=>{
   const edition=selectedEdition(currentDocument()),source=selectedDocumentSource(edition);
   if(!source||!edition.documentTable?.projection)throw new Error('This edition has no retained document-table source.');
   await loadDocumentSource(source,edition.documentTable.projection);
-  $('document-target').value='document:'+documentId;$('document-csv-name').value=edition.filename;
+  $('document-target').value='document:'+documentId;$('document-csv-name').value=edition.filename;retainDocumentPreparation();
   message('Reopened the exact original extraction and selection. Change the selection to prepare another edition.');
   $('document-intake').scrollIntoView({block:'start',behavior:'smooth'});
+}));
+
+
+$('document-source-choice').addEventListener('change',()=>{const sourceId=$('document-source-choice').value;if(!sourceId)return;perform(async()=>{const source=project.documentTableSources?.find(row=>row.id===sourceId);if(!source)throw new Error('The original extraction is absent.');await loadDocumentSource(source);});});
+$('document-preparation-history').addEventListener('change',()=>{const value=$('document-preparation-history').value;if(value==='')return;perform(async()=>{
+  retainDocumentPreparation();project.documentIntake=restoreDocumentPreparation(intakeState(),documentIntake.source.id,documentIntake.tableIndex,Number(value));
+  applyDocumentPreparation(documentPreparation(intakeState(),documentIntake.source.id,documentIntake.tableIndex));await prepareRetainedPreview();touch();
+  message('Reopened the selected preparation. The preceding complete choices remain in history.');
+});});
+for(const id of ['document-csv-name','document-target'])$(id).addEventListener(id==='document-target'?'change':'input',()=>retainDocumentPreparation());
+for(const [id,key] of [['document-source-url','url'],['document-original-name','filename'],['document-provider','provider']])$(id).addEventListener('input',()=>{
+  project.documentIntake ||= createDocumentIntake();project.documentIntake.sourceDetails[key]=$(id).value;touch();
+});
+$('document-download-intake').addEventListener('click',()=>perform(async()=>{
+  retainDocumentPreparation();const packet=await createDocumentIntakePacket(intakeState(),project.documentTableSources||[]);
+  download('Document_Table_Preparations.json',json(packet));message('Downloaded every retained extraction, unfinished table choice and earlier preparation.');
 }));
 
 window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
