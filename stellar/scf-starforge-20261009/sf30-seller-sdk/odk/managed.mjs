@@ -6,13 +6,14 @@ import {mkdir,unlink} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import {openCentralWarehouse} from './warehouse/open.mjs';
 import {composeCentralFormReleaseReview} from './release-review/open.mjs';
-import {readCentralCommissioningInputs,readCentralWarehouseProfiles} from './host-inputs.mjs';
+import {composeCentralReleaseOperations} from './release-operations/open.mjs';
+import {readCentralCommissioningInputs,readCentralWarehouseProfiles,readCentralReleaseConnections} from './host-inputs.mjs';
 import {createCentralServer} from './server.mjs';
 import {restoreCentralArchive} from './archive.mjs';
 import {ODK_CONNECTION_SCHEMA,ODK_CONNECTION_FILENAME,ODK_STARTUP_SCHEMA,ODK_HASH,
   odkNeed,odkAbsolute,odkExternalOrigin,odkPrivateDirectory,odkWritePrivateJson,odkReadPrivateJson} from './connection.mjs';
 
-const OPTIONS=['workspace','operator','port','external-origin','restore-archive','restore-sha256','commissioning-connection','commissioning-environment','warehouse-profiles'];
+const OPTIONS=['workspace','operator','port','external-origin','restore-archive','restore-sha256','commissioning-connection','commissioning-environment','warehouse-profiles','release-connections'];
 export function centralManagedOptions(argv){
   const raw={};
   for(let i=0;i<argv.length;i+=2){
@@ -37,6 +38,7 @@ export function centralManagedOptions(argv){
     'Select the actual stable loopback --port forwarded by the trusted external proxy.');
   return {directory,operator,port:Number(raw.port??0),
     ...(externalOrigin?{externalOrigin}:{}),
+    ...(raw['release-connections']?{releaseConnectionsFile:odkAbsolute(raw['release-connections'])}:{}),
     ...(raw['warehouse-profiles']?{warehouseProfilesFile:odkAbsolute(raw['warehouse-profiles'])}:{}),
     ...(raw['commissioning-connection']?{commissioningConnectionFile:odkAbsolute(raw['commissioning-connection'])}:{}),
     ...(raw['commissioning-environment']?{commissioningEnvironmentFile:odkAbsolute(raw['commissioning-environment'])}:{}),
@@ -49,6 +51,7 @@ export async function startManagedCentralWorkspace(options){
   const selected=centralManagedOptions(['--workspace',options.directory,'--operator',options.operator||'Central field operator',
     '--port',String(options.port??0),
     ...(options.externalOrigin!==undefined?['--external-origin',options.externalOrigin]:[]),
+    ...(options.releaseConnectionsFile?['--release-connections',options.releaseConnectionsFile]:[]),
     ...(options.warehouseProfilesFile?['--warehouse-profiles',options.warehouseProfilesFile]:[]),
     ...(options.restoreArchive?['--restore-archive',options.restoreArchive,'--restore-sha256',options.restoreSha256]:[]),
     ...(options.commissioningConnectionFile?['--commissioning-connection',options.commissioningConnectionFile]:[]),
@@ -58,6 +61,7 @@ export async function startManagedCentralWorkspace(options){
     'ODK_COMMISSIONING_CONNECTION','Select the original host connection before loading its authorization alias.');
   const warehouseInputs=await readCentralWarehouseProfiles({profiles:options.warehouseProfiles,
     profilesFile:selected.warehouseProfilesFile});
+  const releaseInputs=await readCentralReleaseConnections({connections:options.releaseConnections,connectionsFile:selected.releaseConnectionsFile});
   let restored=null;
   if(selected.restoreArchive)restored=await restoreCentralArchive({archive:selected.restoreArchive,
     directory:selected.directory,expectedSha256:selected.restoreSha256,signal:options.signal});
@@ -65,7 +69,7 @@ export async function startManagedCentralWorkspace(options){
   const before=await odkPrivateDirectory(selected.directory);
   const hostInputs=await readCentralCommissioningInputs({connection:options.commissioningConnection,
     connectionFile:selected.commissioningConnectionFile,environmentFile:options.commissioningEnvironmentFile});
-  let owner,workspace,server,connection,closePromise,formReleases;
+  let owner,workspace,server,connection,closePromise,formReleases,releaseOperations;
   const formReleaseExtensions=[];
   try{
     owner=await openCentralWarehouse({directory:before.path,connection:hostInputs.connection,
@@ -75,6 +79,9 @@ export async function startManagedCentralWorkspace(options){
         const composed=composeCentralFormReleaseReview({workspace:original,store,
           authoring:options.formAuthoring,fetchImpl:options.fetchImpl});
         formReleases=composed.review;formReleaseExtensions.push(composed.extension);
+        const software=composeCentralReleaseOperations({workspace:original,store,formReleases,
+          fetchImpl:options.fetchImpl,gitlabConnections:releaseInputs.connections});
+        releaseOperations=software.operations;formReleaseExtensions.push(software.extension);
       },extraExtensions:formReleaseExtensions});
     workspace=owner.workspace;
     server=await createCentralServer({workspace,host:'127.0.0.1',port:selected.port,externalOrigin:selected.externalOrigin,
@@ -99,6 +106,12 @@ export async function startManagedCentralWorkspace(options){
     odkNeed(observedFormReleases.schema==='stellar-forge.odk-form-release-review.v1'&&
       observedFormReleases.workspaceId===commissioned.workspaceId,'ODK_FORM_RELEASE_IDENTITY',
       'The form release desk differs from the managed Central workspace.',409);
+    const softwareMounted=await fetch(server.origin+'/api/release-operations/state',{headers:{Authorization:'Bearer '+server.token},
+      redirect:'error',signal:AbortSignal.timeout(10000)});
+    odkNeed(softwareMounted.ok,'ODK_SOFTWARE_RELEASE_MOUNT','The software release desk did not open on this managed listener.',502);
+    const softwareState=await softwareMounted.json();
+    odkNeed(softwareState.schema==='stellar-forge.odk-release-operations.v1'&&softwareState.workspaceId===commissioned.workspaceId,
+      'ODK_SOFTWARE_RELEASE_IDENTITY','The software release desk differs from the original managed workspace.',409);
     const identity=await odkPrivateDirectory(workspace.directory),state=await workspace.state();
     odkNeed(identity.dev===before.dev&&identity.ino===before.ino,
       'ODK_DIRECTORY_CHANGED','The selected original workspace directory changed during opening.',409);
@@ -125,6 +138,8 @@ export async function startManagedCentralWorkspace(options){
       commissioningUrl:(server.browserOrigin??server.origin)+'/commissioning/#token='+encodeURIComponent(server.token),
       warehouse:owner.warehouse,warehouseProfilesSha256:warehouseInputs.source?.sha256??null,
       warehouseUrl:(server.browserOrigin??server.origin)+'/warehouse/#token='+encodeURIComponent(server.token),
+      releaseOperations,releaseConnectionsSha256:releaseInputs.source?.sha256??null,
+      releaseOperationsUrl:(server.browserOrigin??server.origin)+'/release-operations/#token='+encodeURIComponent(server.token),
       formReleases,formReleasesUrl:(server.browserOrigin??server.origin)+'/form-releases/#token='+encodeURIComponent(server.token),close};
   }catch(error){
     await server?.close().catch(()=>{});
@@ -139,7 +154,8 @@ export function centralStartup(service){
     connectionSha256:service.connection.sha256,origin:service.origin,url:service.url,
     ...(service.browserOrigin?{browserOrigin:service.browserOrigin,browserUrl:service.browserUrl}:{}),
     commissioningUrl:service.commissioningUrl,
-    warehouseUrl:service.warehouseUrl,warehouseProfilesSha256:service.warehouseProfilesSha256,formReleasesUrl:service.formReleasesUrl};
+    warehouseUrl:service.warehouseUrl,warehouseProfilesSha256:service.warehouseProfilesSha256,formReleasesUrl:service.formReleasesUrl,
+    releaseOperationsUrl:service.releaseOperationsUrl,releaseConnectionsSha256:service.releaseConnectionsSha256};
 }
 const HELP='ODK Central managed workspace\n\n'+
   'starforge odk-central-workspace --workspace /private/central --operator "Field data operator" [--port 0]\n'+
@@ -148,8 +164,10 @@ const HELP='ODK Central managed workspace\n\n'+
   '  --restore-sha256 SHA256         Exact reviewed archive hash; required with --restore-archive\n\n'+
   '  --commissioning-connection PATH  Original private Central host connection or bootstrap JSON\n'+
   '  --commissioning-environment PATH Original private JSON containing that Authorization alias\n\n'+
+  '  --release-connections PATH     Private configured GitLab connections for software release receiving\n\n'+
   '  --warehouse-profiles PATH      Original private PostgreSQL warehouse profile selection\n\n'+
-  'Commissioning, Warehouse and Form releases open at /commissioning/, /warehouse/ and /form-releases/.\n'+
+  'Commissioning, Warehouse, Form releases and Software releases share this original workspace.\n'+
+  'Software release plans and source receiving open at /release-operations/.\n'+
   'Use commissioning <command> for source agreements, original periods and complete handover.\n'+
   'Use warehouse <command> for approved periods, reviewed SQL imports and full period reports.\n'+
   'Data subcommands include state, capture, report, export, publisher transfers and release controls.\n'+
