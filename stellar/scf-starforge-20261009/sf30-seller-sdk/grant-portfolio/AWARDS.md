@@ -144,3 +144,64 @@ CSV parsing preserves commas, doubled quotes, embedded line breaks and every amo
 JSON exchange retains complete selected rounds and application records, including saved publication data, record revisions, hashes, the portfolio snapshot and awards revision. CSV exchange supplies the application columns, every selected criterion answer, original decimal amounts and record identities. CSV uses spreadsheet-safe cell presentation by default: a leading apostrophe protects a cell that could be interpreted as a formula. The exchange descriptor records that setting. Set spreadsheetSafe false when a receiving machine requires literal CSV values; JSON retains the original structured values in either case.
 
 The bytes field contains the complete output file and sha256 identifies its exact content. Use the original complete portfolio export for documents, all register histories, source packets and independently runnable application delivery alongside these application exchanges.
+
+
+## Browser CSV intake and application exchange
+
+Open **Applications and awards → Import application CSV** on the latest selected
+portfolio revision. The console uses the same portable exchange rules as
+`awards-exchange.mjs`; the native client's synchronous public API is unchanged.
+
+1. Select the complete UTF-8 CSV, its retained filename, the published funding
+   round, recording actor, and draft or submitted status.
+2. Map reference, title, legal name and partner-key columns. Add the project key,
+   actual submission date, amount/currency pair, profile fields, notes and the
+   published round's question columns as applicable. Original quoted commas,
+   multiline cells, decimal strings and UTF-8 content remain unchanged.
+3. Match every distinct partner/project key to an existing programme record.
+   Search and page through larger intake lists. Review each application identity:
+   a new application keeps its allocated UUID throughout this import; a selected
+   matching saved draft is updated at its exact record revision.
+4. Review the complete mapped applications and original plan. Download the
+   plan, then save the reviewed import. The original CSV document and all
+   applications use one original `portfolio.save` action.
+
+The browser retains the original operation ID before its first action POST.
+It uploads the complete CSV with its SHA-256 and checks the returned descriptor.
+The current portfolio ID, revision and snapshot must still match before a new
+action is sent. The server retains its ordinary original request and revision
+guards.
+
+To continue after closing the browser, open the same portfolio's CSV intake.
+Select the original CSV and use **Resume a saved import → Saved import plan**.
+The console computes the CSV and action hashes, fetches the plan's actual
+historical portfolio revision, and rebuilds the complete import from that CSV,
+the explicit mapping and record identities. It compares the whole original plan
+before exposing **Continue original import**. An already admitted operation is
+looked up by its original ID and must have identical input; the same saved
+operation is used even when its completed result preceded an interrupted
+refresh. A new unrelated pending operation must be completed first.
+
+Review is explicit: mapping, actor, round, application status, partner/project
+identities and create/update choices are visible before saving. The browser
+does not place applicant data into local storage. The downloaded complete plan
+contains the reviewed application information, so retain it with the original
+CSV using the operator's normal applicant-document handling.
+
+**Export applications** is available from any saved awards revision. Select one
+round or all rounds, then download JSON or CSV. JSON includes complete original
+round/application records and their selected portfolio revision. CSV includes
+original record IDs, revisions, hashes, profile, request, evidence references
+and criterion answer columns. CSV defaults to protecting formula-like cells;
+the operator can explicitly select literal original CSV strings. The download
+selection displays its exact byte length and SHA-256.
+
+The portable core performs the same parsing, identity mapping, complete-action
+construction and export rendering in both runtimes. Node computes hashes using
+`node:crypto`; the browser uses Web Crypto. There is no alternative persistence
+engine or duplicated CSV interpretation.
+
+The complete receiving programme now has a source selection containing the
+browser exchange modules. Its original source manifest includes every selected
+file. The actual saved native receiving return remains the authority for which
+source selection and browser journey executed.

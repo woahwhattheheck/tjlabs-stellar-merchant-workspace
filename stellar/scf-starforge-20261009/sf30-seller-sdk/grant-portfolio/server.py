@@ -119,9 +119,11 @@ class Console:
                               "/programme.js": ("programme.js", "text/javascript; charset=utf-8"),
                               "/programme.css": ("programme.css", "text/css; charset=utf-8"),
                               "/awards.js": ("awards.js", "text/javascript; charset=utf-8"),
+                              "/awards-exchange.js": ("awards-exchange.js", "text/javascript; charset=utf-8"),
                               "/awards.css": ("awards.css", "text/css; charset=utf-8"),
                               "/style.css": ("style.css", "text/css; charset=utf-8")}
                     extra_static = extension_static_routes()
+                    extra_static["/awards-exchange-core.mjs"] = ("awards-exchange-core.mjs", "text/javascript; charset=utf-8")
                     if path in static or path in extra_static:
                         if path in static:
                             filename, content_type = static[path]
