@@ -9,6 +9,9 @@ import { CATALOG_SCHEMA, searchCommandCatalog } from
 import { snapshotRegistration, renderOperatingPlanHTML, renderOperatingPlanMarkdown } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 
+import { renderOperatingPlanReturnHTML } from
+  '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs';
+
 const catalogs = new Map();
 const cleanName = value => String(value).replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 120) || 'grant-operating-plan';
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -164,6 +167,18 @@ export function renderGrantOperatingPlan(root, context, { source, plan, review }
           (record.filename ? ' · ' + record.filename : '') + (record.note ? '\n' + record.note : '')));
         details.append(receiving); entry.append(details);
       }
+      if (item.reviewedReturns?.length) {
+        const reviews = node('details');
+        reviews.append(node('summary', 'Completed return reviews (' + item.reviewedReturns.length + ')'));
+        for (const received of item.reviewedReturns) {
+          const card = node('article', undefined, 'card');
+          card.append(node('p', received.at + ' · reviewed result revision ' + received.resultRevision +
+            (received.filename ? ' · ' + received.filename : ''), 'muted'));
+          if (received.note) card.append(node('pre', received.note, 'source-text'));
+          renderReviewedReturn(card, context, received.review); reviews.append(card);
+        }
+        entry.append(reviews);
+      }
       history.append(entry);
     }
     section.append(history);
@@ -172,6 +187,29 @@ export function renderGrantOperatingPlan(root, context, { source, plan, review }
   root.append(section);
 }
 
+
+function renderReviewedReturn(root, context, review) {
+  const { node, button, download } = context;
+  root.append(node('h4', 'Completed reconciliation · ' + review.id),
+    node('p', 'Reviewing operator: ' + review.reviewer + ' · completed ' + review.completion.savedAt),
+    node('p', 'Current branch revision ' + review.current.revisions.length +
+      ' · returned branch revision ' + review.incoming.revisions.length +
+      ' · reviewed result revision ' + review.completion.plan.revisions.length +
+      ' · ' + review.decisions.length + ' explicit decisions', 'muted'));
+  if (review.notes) root.append(node('pre', review.notes, 'source-text'));
+  const choices = node('details'); choices.append(node('summary', 'Review decisions and both complete branches'));
+  for (const decision of review.decisions) choices.append(node('h5', decision.key + ' · ' + decision.take),
+    node('pre', JSON.stringify(decision, null, 2), 'source-text'));
+  for (const [label, plan] of [['Original current branch', review.current], ['Original returned branch', review.incoming],
+    ['Exact completed result', review.completion.plan]]) {
+    const branch = node('details'); branch.append(node('summary', label),
+      node('pre', JSON.stringify(plan, null, 2), 'source-text')); choices.append(branch);
+  }
+  root.append(choices, button('Download complete reconciliation review', () =>
+    download(JSON.stringify(review, null, 2) + '\n', cleanName(review.id) + '-review.json', 'application/json')),
+    button('Download readable reconciliation review', () =>
+      download(renderOperatingPlanReturnHTML(review), cleanName(review.id) + '-review.html', 'text/html')));
+}
 
 function renderReturnDetails(root, context, comparison) {
   const { node } = context;
@@ -255,12 +293,12 @@ function renderReturnReceiving(root, context, source, nativeRevision) {
     'Closed this unfinished return. Its full source and note remain in the preceding saved version.');
   const section = node('section', undefined, 'card');
   section.append(node('h3', 'Receive customer procedure'),
-    node('p', 'Open the complete later JSON exported from Operating plans. Review its original package mapping, complete step sequence and recorded work, then receive its saved revisions into this same planning review. Save the submission to retain an unfinished return and its note; the complete editable draft carries them too.'));
+    node('p', 'Open a complete later Operating plan or a completed Returned procedures review JSON. Review the original package mapping and recorded work. A reconciliation keeps both complete branches, every decision and the reviewing operator with its result in this same saved submission. Save to retain the unfinished return and receiving note.'));
   const file = node('input'); file.type = 'file'; file.accept = '.json,application/json';
-  file.setAttribute('aria-label', 'Complete returned customer operating plan');
+  file.setAttribute('aria-label', 'Complete returned customer operating plan or completed reconciliation review');
   file.addEventListener('change', () => work(async () => {
     const chosen = file.files?.[0]; if (!chosen) return;
-    if (!chosen.size || chosen.size > MAX_BYTES) throw new TypeError('Choose a complete operating plan within 16 MiB.');
+    if (!chosen.size || chosen.size > MAX_BYTES) throw new TypeError('Choose a complete operating plan or completed review within the existing 16 MiB draft limit.');
     const originalDraft = context.getDraft(), originalReview = selectedReview();
     const incoming = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await chosen.arrayBuffer()));
     if (context.getDraft() !== originalDraft || context.getDraft().planningReview !== originalReview)
@@ -280,6 +318,7 @@ function renderReturnReceiving(root, context, source, nativeRevision) {
         download(JSON.stringify(current.incoming, null, 2) + '\n',
           cleanName(current.planId) + '-returned.json', 'application/json');
       }));
+    if (pending.reviewedReturn) renderReviewedReturn(section, context, pending.reviewedReturn);
     const note = input('Receiving review note', pending.note, value => {
       const review = selectedReview();
       if (!review.operatingSelection?.returnDraft) throw new Error('Reopen the retained customer return.');
@@ -287,24 +326,27 @@ function renderReturnReceiving(root, context, source, nativeRevision) {
     }, { area: true });
     note.field.maxLength = 32000; section.append(note.wrap);
     try {
-      const comparison = compareGrantOperatingReturn(source, selectedReview(), pending.incoming);
+      const comparison = compareGrantOperatingReturn(source, selectedReview(), pending.reviewedReturn ?? pending.incoming);
       section.append(node('h4', comparison.incomingTitle),
         node('p', 'Current operating revision ' + comparison.previousRevision +
           ' · returned revision ' + comparison.incomingRevision + ' · ' + comparison.addedRevisions + ' later revisions', 'muted'));
       renderReturnDetails(section, context, comparison);
       const stale = pending.comparedRevision !== comparison.previousRevision;
-      const receive = button('Receive later customer work into this planning review', () => {
+      const receive = button('Receive complete customer work and review', () => {
         const current = pendingOf();
         if (!current) throw new Error('Reopen the retained customer return.');
-        const received = receiveGrantOperatingReturn(source, selectedReview(), current.incoming, {
+        const received = receiveGrantOperatingReturn(source, selectedReview(), current.reviewedReturn ?? current.incoming, {
           filename: current.filename, note: current.note, expectedRevision: current.comparedRevision,
         });
         const nextReview = closeGrantOperatingReturn(source, received.review);
         replaceReview(nextReview, 'Before receiving customer operating revision ' + comparison.incomingRevision,
           received.reused ? 'This complete procedure is already retained. Closed the unfinished return while preserving its prior saved version.' :
-          'Received ' + received.addedRevisions + ' original customer operating revisions. Save the submission to retain the complete work, note and receiving history.');
+          'Received ' + received.addedRevisions + ' original customer operating revisions' +
+          (received.reviewAdded ? ' and the complete reconciliation review' : '') +
+          '. Save the submission to retain the complete work, note and receiving history.');
       });
-      receive.disabled = comparison.reused || stale;
+      const alreadyRetained = comparison.reused && (!comparison.reviewedReturn || comparison.reviewedReturn.retained);
+      receive.disabled = alreadyRetained || stale;
       if (stale) section.append(node('p',
         'The selected procedure advanced after this return was compared. Review the complete current comparison, then confirm that current revision. Your returned file and note remain saved in this draft.', 'issues'),
         button('Use this current comparison for receiving', () => {
@@ -312,12 +354,14 @@ function renderReturnReceiving(root, context, source, nativeRevision) {
           replaceReview(refreshed.review, 'Before refreshing customer return comparison',
             'Retained the current operating revision as the comparison basis. The original returned file and review note are unchanged.');
         }));
-      else if (comparison.reused) section.append(node('p', 'The current saved procedure already contains this complete returned history.', 'muted'));
+      else if (alreadyRetained) section.append(node('p', 'The current saved procedure and complete review are already retained.', 'muted'));
+      else if (comparison.reused) section.append(node('p',
+        'The reviewed result is already in this procedure. Receive to retain both branches and the complete review alongside that existing history.', 'muted'));
       section.append(receive,
         button('Download full return comparison', () => {
           const current = pendingOf();
           if (!current) throw new Error('Reopen the retained customer return.');
-          const latest = compareGrantOperatingReturn(source, selectedReview(), current.incoming);
+          const latest = compareGrantOperatingReturn(source, selectedReview(), current.reviewedReturn ?? current.incoming);
           download(JSON.stringify(latest, null, 2) + '\n',
             cleanName(latest.planId) + '-return-comparison.json', 'application/json');
         }));

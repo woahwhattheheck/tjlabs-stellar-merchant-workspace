@@ -1,3 +1,13 @@
+import type { OperatingPlanReturn } from
+  '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs';
+export const GRANT_OPERATING_REVIEW_RECEIPT_SCHEMA: 'stellar-forge.grant-operating-review-receipt.v1';
+export type GrantOperatingReturnInput = OperatingPlan | OperatingPlanReturn;
+export interface GrantOperatingReviewedReturn {
+  schema: typeof GRANT_OPERATING_REVIEW_RECEIPT_SCHEMA;
+  at: string; filename: string; note: string; resultRevision: number; review: OperatingPlanReturn;
+}
+export function grantOperatingReturnInput(value: unknown):
+  { plan: OperatingPlan; reviewedReturn: OperatingPlanReturn | null };
 import type { OperatingPlan, OperatingRegistration, OperatingStep, OperatingStepState } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 export const GRANT_OPERATING_SELECTION_SCHEMA: 'stellar-forge.grant-operating-selection.v1';
@@ -30,6 +40,7 @@ export interface GrantOperatingPreparation {
   totals: { plannedUsd: string; estimatedHours: string | null; awardRequestUsd: string; projectEndDay: number };
   plan: OperatingPlan;
   continuation?: GrantOperatingContinuation;
+  reviewedReturns?: GrantOperatingReviewedReturn[];
 }
 export function newGrantOperatingSelection(source: NativeGrantPlanningSource, revision?: number): GrantOperatingSelection;
 export function validateGrantOperatingSelection(value: unknown, source: NativeGrantPlanningSource, revision: number): GrantOperatingSelection;
@@ -52,6 +63,8 @@ export interface GrantOperatingReturnComparison {
   planId: string; source: GrantOperatingPreparation['source']; packageIds: string[];
   totals: GrantOperatingPreparation['totals']; preparedRevision: number; previousRevision: number;
   incomingRevision: number; selectedRevision: number; addedRevisions: number; reused: boolean;
+  reviewedReturn: null | { id: string; reviewer: string; notes: string; completedAt: string;
+    currentRevision: number; incomingRevision: number; resultRevision: number; decisions: number; retained: boolean };
   originalTitle: string; previousTitle: string; incomingTitle: string;
   stepOrder: {
     prepared: GrantOperatingStepPosition[]; previous: GrantOperatingStepPosition[]; returned: GrantOperatingStepPosition[];
@@ -63,21 +76,21 @@ export interface GrantOperatingReturnComparison {
 }
 export function grantOperatingContinuationPlan(prepared: GrantOperatingPreparation): OperatingPlan;
 export function compareGrantOperatingReturn(source: NativeGrantPlanningSource,
-  review: NativeGrantPlanningReview, incoming: OperatingPlan): GrantOperatingReturnComparison;
+  review: NativeGrantPlanningReview, incoming: GrantOperatingReturnInput): GrantOperatingReturnComparison;
 export function receiveGrantOperatingReturn(source: NativeGrantPlanningSource,
-  review: NativeGrantPlanningReview, incoming: OperatingPlan, options?: {
+  review: NativeGrantPlanningReview, incoming: GrantOperatingReturnInput, options?: {
     at?: string; filename?: string; note?: string; expectedRevision?: number;
   }): { review: NativeGrantPlanningReview; comparison: GrantOperatingReturnComparison;
-    reused: boolean; addedRevisions: number };
+    reused: boolean; addedRevisions: number; reviewAdded: boolean };
 
 export interface GrantOperatingStepPosition { id: string; title: string; position: number; }
 export interface GrantOperatingReturnDraft {
   schema: typeof GRANT_OPERATING_RETURN_DRAFT_SCHEMA;
   sourceSha256: string; nativeRevision: number; planId: string;
-  incoming: OperatingPlan; filename: string; note: string; openedAt: string; comparedRevision: number;
+  incoming: OperatingPlan; reviewedReturn?: OperatingPlanReturn; filename: string; note: string; openedAt: string; comparedRevision: number;
 }
 export function stageGrantOperatingReturn(source: NativeGrantPlanningSource, review: NativeGrantPlanningReview,
-  incoming: OperatingPlan, options?: { filename?: string; note?: string; openedAt?: string }):
+  incoming: GrantOperatingReturnInput, options?: { filename?: string; note?: string; openedAt?: string }):
   { review: NativeGrantPlanningReview; comparison: GrantOperatingReturnComparison };
 export function refreshGrantOperatingReturn(source: NativeGrantPlanningSource, review: NativeGrantPlanningReview):
   { review: NativeGrantPlanningReview; comparison: GrantOperatingReturnComparison };

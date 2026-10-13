@@ -147,8 +147,7 @@ instruction, input, command argument, selected registration and expected
 result. The comparison also retains additional customer steps and explicitly
 shows an original package step removed from the returned revision.
 
-Enter the receiving review note and choose **Receive later customer work into
-this planning review**. Save the original submission. Its preceding complete
+Enter the receiving review note and choose **Receive complete customer work and review**. Save the original submission. Its preceding complete
 draft version is retained, and the selected procedure now carries all original
 customer revisions and its receiving history. **Prepared customer procedures**
 downloads the current complete plan or readable HTML/Markdown; **Download
@@ -158,9 +157,7 @@ Shared saved revisions must match the procedure the team originally prepared.
 The existing Operating Plans receiver extends that complete history. Reopening
 the same returned file reuses the already received revision, and an older
 matching file keeps the current selection. A copy with a different plan ID
-belongs to its own operating procedure. Divergent shared edits remain in their
-original files for the operator to reconcile through the existing Operating
-plans editor before receiving the continuing original plan.
+belongs to its own operating procedure. Divergent shared edits are reconciled in **Returned procedures**. Complete that review and open its complete review JSON in this grant receiving desk. The saved submission retains both complete original branches, every decision and decision note, the reviewing operator, the completed result and the first receiving note.
 
 The native planning file, original preparation, prices, hours, tranche scope
 and payment calculation remain the selected original basis. Customer progress
@@ -318,3 +315,36 @@ The comparison shows the complete **Originally prepared**, **Previously selected
 The additive model interfaces are `stageGrantOperatingReturn`, `refreshGrantOperatingReturn` and `closeGrantOperatingReturn`. They return new planning reviews for the original saved-draft writer. The optional `operatingSelection.returnDraft` contains the full source and review state; earlier saved selections without that field remain readable.
 
 When the installed CLI receives the exact pending plan from a saved draft, it uses the retained review note unless `--return-note` explicitly replaces it. Replaying an already retained matching plan saves any pending-desk cleanup in the full output draft, with the preceding complete version preserved. A replay with no review change retains the original draft state.
+
+
+## Receive a complete reconciliation review
+
+A completed Returned procedures document uses the original `stellar-forge.operating-plan-return.v1` format. It includes the complete current and returned procedures, the reviewing operator and notes, each explicit choice (including custom values and reviewed step order), and the exact completed original-format procedure. Receive this whole document instead of extracting only its result.
+
+In the grant planning review, open **Receive customer procedure**, select the completed review JSON and read the original funded-package comparison. The desk shows the reviewer, both branch revisions, result revision and decisions. Expand the branch and decision panels or download its complete JSON/readable HTML. Enter the receiving note, confirm the displayed current operating revision and choose **Receive complete customer work and review**. Save the submission.
+
+The same command accepts either ordinary procedure JSON or a completed review:
+
+~~~sh
+starforge grant-operating-plan --file submission.json --receive completed-review.json --format comparison --out comparison.json
+starforge grant-operating-plan --file submission.json --receive completed-review.json --expected-revision 2 --return-note "Reviewed customer handover and package results." --out next-submission.json
+~~~
+
+Use the actual `previousRevision` from the comparison for `--expected-revision`. The command preserves the exact native planning source and its original package prices, hours, scope and relative dates. The review's completed result must continue that prepared procedure. A completed review whose result is already present may be received after later procedure revisions; those later revisions remain selected.
+
+A completed review that changes no procedure fields still carries useful review decisions and notes. Receiving it adds one complete review record without inventing a procedure revision or an advancing continuation receipt. Receiving the same complete review again keeps its original first-received metadata and adds no duplicate. Different content with the same review identity is rejected. An explicit stale expected revision is rejected before either kind of receiving.
+
+### Reopen, export and retain the whole history
+
+Each prepared procedure now lists its **Completed return reviews**. These retain the review's own result revision separately from the current later procedure revision. Download the complete review or its readable HTML from that list, or use:
+
+~~~sh
+starforge grant-operating-plan --file next-submission.json --plan PROCEDURE-ID --review REVIEW-ID --out retained-review.json
+starforge grant-operating-plan --file next-submission.json --plan PROCEDURE-ID --review REVIEW-ID --format html --out retained-review.html
+~~~
+
+The existing `--format preparation` output also includes every received review. The complete submission JSON/export envelope carries those records, both source branches, decisions and all saved versions. Restoring an earlier submission version restores its selected procedure and review collection while retaining the later state in the preceding saved version.
+
+An unfinished grant receiving desk retains the full completed review plus its exact result, filename, receiving note and comparison revision. Closing that desk retains its previous state in the original submission version history. Refreshing a stale comparison preserves the full review and note.
+
+Receiving validates the original completed-review calculation and its full original ancestry, then uses the existing Operating plans receiver for the exact completed result. Incomplete reconciliation reviews remain in Returned procedures until completed. The original complete-draft limit stays 16 MiB, including sources and saved versions; an oversized addition leaves the current editor and original source intact.
