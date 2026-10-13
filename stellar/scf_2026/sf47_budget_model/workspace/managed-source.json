@@ -603,6 +603,8 @@
     "portfolio-effort.mjs",
     "portfolio-effort-desk.mjs",
     "portfolio-effort.css",
-    "PORTFOLIO_EFFORT.md"
+    "PORTFOLIO_EFFORT.md",
+    "operations_statement_review.mjs",
+    "STATEMENT_RECIPIENT_REVIEW.md"
   ]
 }

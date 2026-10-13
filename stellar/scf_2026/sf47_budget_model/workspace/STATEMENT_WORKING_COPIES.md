@@ -60,6 +60,10 @@ Archive import is one transaction. A conflict or storage failure leaves the orig
 
 The desk keeps its existing per-case automatic draft separately from explicitly saved editions. The new list is stored in the same object store with case-scoped keys; it is not a second case or cash ledger. Browser site-data removal clears browser preparation, so retain its complete downloads.
 
+## Accountant recipient review
+
+The same current statement can be sent for complete offline finance review. Use the current native preview, retain its original edition, receive an attributed recommendation file, compare original/current/returned fields and apply explicit choices before the existing native re-preview. See [Accountant recipient review](STATEMENT_RECIPIENT_REVIEW.md) for the complete source, recovery and original receiving journey.
+
 ## Source integration
 
 - **operations_statement_copies.mjs** supplies complete edition validation, before-open comparison, full archive merging, search, table controls and transactional access to the existing database.
