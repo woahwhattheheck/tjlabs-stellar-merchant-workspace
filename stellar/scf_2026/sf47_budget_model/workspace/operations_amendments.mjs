@@ -104,13 +104,14 @@ function previewHtml(p){
     +'<details><summary>Original payment-derived clocks</summary><pre>'+esc(pretty(p.paymentClocks))+'</pre></details>'
     +'<details><summary>Complete native reports and source pins</summary><pre>'+esc(pretty({source:p.source,reports:p.reports,previewSha256:p.previewSha256}))+'</pre></details></section>';
 }
-export function mountAmendments({container,current,api,saveApi=api,session={},mutationId,recordingActor,onCase,onSources,onCalendarOpen}){
+export function mountAmendments({container,current,api,saveApi=api,session={},mutationId,recordingActor,onCase,onSources,onCalendarOpen,planningReturn=null,onPlanningReturn,onOpenPlanning}){
   if(!document.querySelector('link[data-sf47-amendments]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./operations_amendments.css',import.meta.url).href;link.dataset.sf47Amendments='';document.head.append(link);
   }
   const root=document.createElement('section');root.className='plan-amendments';root.setAttribute('aria-label','Plan amendments');container.replaceChildren(root);
   const caseId=current.program.id,planId=current.program.planId,base='/api/operations/'+caseId,sessionKey='sf47.amendments.'+caseId;
   let active=true,hostBusy=false,busy=false,caseNow=current,index=null,desk=null,drafts=[],detail=null,preview=null,mappingPlan=null,error='',storageFault=false,serial=Promise.resolve(),opening=0;
+  if(planningReturn)session.planningReturn=clone(planningReturn);
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   function storageRecovery(){
@@ -164,6 +165,54 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     await loadMappingPlan();
     if(desk.selection)await openSaved(desk.selection.id,desk.selection.revision,false);
   }
+
+  function originalPlanningReturn(value){
+    if(!value||value.caseId!==caseId||value.planId!==planId||typeof value.id!=='string'||
+      !value.id||typeof value.draftId!=='string'||!Number.isSafeInteger(value.revision)||value.revision<1||
+      !/^[a-f0-9]{64}$/.test(value.contentSha256??'')||!/^\d{4}-\d{2}-\d{2}$/.test(value.asOfDate??'')||
+      typeof value.reason!=='string')throw new Error('Return the exact saved planning revision to its original case.');
+    return value;
+  }
+  async function receivePlanningReturn(){
+    await serial;
+    const incoming=session.planningReturn;if(!incoming)return false;
+    const selection=originalPlanningReturn(incoming);
+    drafts=await listDrafts(caseId,planId);
+    const existing=drafts.find(value=>value.planningReturn?.id===selection.id);
+    if(desk?.pending&&desk.id!==existing?.id){render();return false;}
+    const selected=await saveApi('/api/plans/'+planId+'/revision/'+selection.revision);
+    if(selected.id!==planId||selected.revision!==selection.revision||selected.contentSha256!==selection.contentSha256)
+      throw new Error('The returned native revision differs from its saved source. Keep the original planning draft.');
+    if(existing){
+      validDesk(existing);
+      if(canonical(existing.planningReturn)!==canonical(selection))throw new Error('This returned planning identity has different retained content.');
+      await openDraft(existing.id);
+      await onPlanningReturn?.(selection,existing.id);
+    }else if(caseNow.plan.revision===selection.revision&&caseNow.plan.contentSha256===selection.contentSha256){
+      await onPlanningReturn?.(selection,null);
+    }else{
+      const next=blank();
+      next.draft.inputs.selectedRevision=selection.revision;
+      next.draft.inputs.expectedContentSha256=selection.contentSha256;
+      next.draft.inputs.asOfDate=selection.asOfDate;
+      next.draft.inputs.reason=selection.reason;
+      next.planningReturn=clone(selection);
+      await writeDraft(next,0);desk=next;remember(next.id);preview=null;detail=null;
+      drafts=await listDrafts(caseId,planId);render();await loadMappingPlan();
+      await onPlanningReturn?.(selection,next.id);
+    }
+    if(session.planningReturn?.id===selection.id)session.planningReturn=null;
+    render();return true;
+  }
+  function planningReturnHtml(){
+    const value=session.planningReturn;
+    if(!value)return '';
+    return '<section class="amend-warning"><h4>Saved workbook revision ready for this case</h4><p>Revision '+
+      esc(value.revision)+' · comparison date '+esc(value.asOfDate)+' · <code>'+esc(value.contentSha256)+
+      '</code></p><p>The complete planning draft retains this exact saved selection. Receive the original pending request in the current amendment before opening it.</p>'+
+      button('Open returned planning revision','planning-return','',Boolean(desk?.pending))+'</section>';
+  }
+
   async function refresh(){
     const [next,listing]=await Promise.all([saveApi(base),saveApi(base+'/amendments')]);
     if(next.program.id!==caseId||next.program.planId!==planId||listing.program.id!==caseId||listing.program.version!==next.program.version)throw new Error('The case changed during this read. Refresh the original case again before choosing an amendment.');
@@ -260,10 +309,10 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     const canApply=canReview&&row.state==='REVIEWED';
     const d=desk?.draft,items=index?.revisions||[],sourceOptions=(index?.sources||current.sources).map(s=>[s.id,s.filename+' · '+s.sha256.slice(0,12)]);
     const pending=desk?.pending;
-    root.innerHTML='<header><div><h3>Plan amendments</h3><p>Select an actual saved native planning revision for this existing Delivery case. Review the complete budget change and any explicit package reassignment while retaining original observations, sources and case history.</p></div><div class="amend-actions">'+button('Refresh case and plans','refresh')+button('Sources','sources')+button('Export complete case','export-case')+'</div></header>'
+    root.innerHTML='<header><div><h3>Plan amendments</h3><p>Select an actual saved native planning revision for this existing Delivery case. Review the complete budget change and any explicit package reassignment while retaining original observations, sources and case history.</p></div><div class="amend-actions">'+button('Refresh case and plans','refresh')+(onOpenPlanning?button('Edit plan and workbook','planning','',Boolean(desk?.pending)):'')+button('Sources','sources')+button('Export complete case','export-case')+'</div></header>'
       +'<p>Case <code>'+esc(caseId)+'</code> · version '+caseNow.program.version+' · current baseline revision '+caseNow.program.planRevision+' · '+esc(caseNow.program.mode)+'</p>'
       +'<p role="alert" data-amend-error>'+esc(error)+'</p>'
-      +'<section data-amend-storage-recovery hidden></section>'
+      +'<section data-amend-storage-recovery hidden></section>'+planningReturnHtml()
       +(pending?'<section class="amend-warning"><h4>Original request retained</h4><p>'+esc(pending.body.action)+' · <code>'+esc(pending.body.requestId)+'</code> · original case version '+pending.body.expectedVersion+'</p><p>'+esc(pending.error?.message||'Recover this request through the original transaction before recording another mutation.')+'</p><div class="amend-actions">'+button('Retry exact request','retry')+button('Download retained request','request-export')+(pending.error?.rejected?button('Keep draft and resolve rejected request','resolve-rejected'):'')+'</div></section>':'')
       +'<section><h4>Local work</h4><div class="amend-actions">'+input('Retained browser draft','localDraft',desk?.id||'',{options:[['','Select a retained draft'],...drafts.map(v=>[v.id,(v.draft.inputs.reason||'New amendment').slice(0,90)+' · '+v.updatedAt+(v.pending?' · request pending':'')])]})+button('New amendment draft','new')+(desk?button('Download local draft','draft-export'):'')+'</div>'
       +(d?'<form data-amend-form><div class="amend-fields">'+input('Saved native planning revision','selectedRevision',d.inputs.selectedRevision??'',{required:true,options:[['','Select an exact saved revision'],...items.filter(v=>v.revision!==caseNow.program.planRevision||v.revision===d.inputs.selectedRevision).map(v=>[v.revision,'Revision '+v.revision+' · '+v.savedAt+' · '+(v.note||'')])],help:'Save a partial change in the original planner, then select that complete revision here.'})
@@ -392,6 +441,11 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
         const id=desk.id;serial=Promise.resolve();await openDraft(id);return;
       }
       if(action==='sources'){onSources?.();return;}
+      if(action==='planning'){
+        await serial;if(desk?.pending)throw new Error('Receive the original retained amendment request before opening planning work.');
+        await onOpenPlanning?.({asOfDate:desk?.draft.inputs.asOfDate||date(),amendmentDraftId:desk?.id??null});return;
+      }
+      if(action==='planning-return'){await receivePlanningReturn();return;}
       if(action==='export-case'){const response=await saveApi(base+'/export.zip',undefined,{download:true});download(await response.blob(),caseId+'-complete.zip','application/zip');return;}
       await serial;
       if(action==='refresh'){await refresh();await loadMappingPlan();if(desk?.selection)await openSaved(desk.selection.id,desk.selection.revision,false);render();return;}
@@ -431,7 +485,8 @@ export function mountAmendments({container,current,api,saveApi=api,session={},mu
     await refresh();
     let retained=session.deskId;try{retained=retained||sessionStorage.getItem(sessionKey);}catch{}
     if(retained&&drafts.some(v=>v.id===retained))await openDraft(retained);
-    else if(drafts.length===0)await createDraft();
+    if(session.planningReturn)await receivePlanningReturn();
+    if(!desk&&drafts.length===0)await createDraft();
     else render();
   })();
   ready.catch(showError);
