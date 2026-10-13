@@ -8,7 +8,7 @@ import {inspectSourcePacket} from '../source-intake.mjs';
 import {zipBytes} from '../exports.mjs';
 import {need,canonical,encoded,sha,digest,MAX_PACKAGE} from '../contract.mjs';
 
-async function saved(path){try{return await readJson(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
+async function saved(path,limit=65536){try{return await readJson(path,limit);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function retain(path,value){
  const previous=await saved(path);if(previous){need(canonical(previous)===canonical(value),'ORIGINAL_OPERATION_RECORD_CHANGED');return previous;}
  await publishJson(path,value);return value;
@@ -80,7 +80,7 @@ export async function runOriginalSource({input,project,output}){
  const result={schema:'stellar-forge.airgradient-original-source-result.v1',operationId,source:source.summary,workspaces:{producer:producerDirectory,receiver:receiverDirectory},first:summarize(first),later:summarize(later),receiving:receivedLater,cold,
   continued:{path:join(output,'continued.airgradient.json'),bytes:continuedBytes.length,sha256:sha(continuedBytes),packageId:finalHandover.id},
   runtime:{node:process.version,platform:process.platform}};
- const resultPath=join(output,'operation-result.json'),previous=await saved(resultPath);
+ const resultPath=join(output,'operation-result.json'),previous=await saved(resultPath,MAX_PACKAGE);
  if(previous){need(previous.operationId===operationId&&previous.first.reportId===first.report.id&&previous.later.reportId===later.report.id&&previous.continued.sha256===result.continued.sha256,'ORIGINAL_COMPLETION_CHANGED');return previous;}
  await publishJson(resultPath,result);return result;
 }
