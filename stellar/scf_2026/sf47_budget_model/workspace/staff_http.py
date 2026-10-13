@@ -11,7 +11,7 @@ from staff_access import SCHEMA, MEMBER_ID, owner_principal, fail
 from operations_agenda_http import ROUTE as DELIVERY_AGENDA_ROUTE, selection as agenda_selection
 
 FINANCE_COMMANDS = {
-    "source.add", "airflow-source.add", "contributor.save", "work.save", "work.submit",
+    "source.add", "airflow-source.add", "material-catalog-source.add", "contributor.save", "work.save", "work.submit",
     "invoice.save", "invoice.review", "invoice.dispute", "invoice.reopen", "invoice.void",
     "cash.record", "cash.void", "statement.receive", "statement-setup.save", "forecast.save", "portfolio.save",
     "work-intake.upload", "work-intake.save", "work-intake.apply",
@@ -25,6 +25,8 @@ READ_POSTS = {
     "billing-evidence/preview", "billing-evidence/inspect",
     "gravitee/inspect", "gravitee/member", "gravitee/template", "gravitee/prepare",
     "airflow/inspect", "airflow/member", "airflow/template", "airflow/prepare",
+    "material-catalog/inspect", "material-catalog/rows", "material-catalog/member",
+    "material-catalog/compare", "material-catalog/template", "material-catalog/prepare", "material-catalog/handover",
     "risk-register-seed", "risk-register-preview", "risk-register-request",
     "installation-return-seed", "installation-return-preview", "installation-return-review-seed",
     "installation-return-review-preview",
@@ -242,7 +244,7 @@ def authorize(handler):
             return
         if role == "contributor":
             fail("Use the contributor desk's original work and invoice commands.")
-        if action == "airflow-source":
+        if action in ("airflow-source", "material-catalog-source"):
             if role not in ("lead", "finance"):
                 fail("A delivery lead or finance operator retains the original source file.")
             bind_actor(handler, body)

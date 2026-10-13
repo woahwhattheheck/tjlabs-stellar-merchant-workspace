@@ -32,6 +32,7 @@ VERSION = "1.0.0"
 import operations_http
 import operations_dcat_sources as dcat_sources
 import operations_airflow_sources as airflow_sources
+import operations_material_catalogue_sources as material_sources
 import plan_comparison
 operations_http.register_static(STATIC)
 STATIC.update({
@@ -147,7 +148,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", ""))
         except ValueError as exc:
             raise Problem("Send the request with a Content-Length.", 411, "BODY_LENGTH") from exc
-        maximum = airflow_sources.request_limit(urlsplit(self.path).path)
+        maximum = material_sources.request_limit(urlsplit(self.path).path)
         if not 0 <= length <= maximum:
             raise Problem("Request exceeds its selected original route capacity.", 413, "BODY_TOO_LARGE")
         body = self.rfile.read(length)
