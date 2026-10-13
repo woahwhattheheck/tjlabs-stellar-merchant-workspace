@@ -74,3 +74,21 @@ Run the [foreground comparison receiving course](../../stellar/scf-starforge-202
 ## Prepare original output in the application
 
 The [original-output preparation desk](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/DESK.md) continues the selected comparison case and protocol in the authenticated Research application. Retain whole producer tables, workbooks and reports; inspect every mapped, unavailable, excluded and outside-selection row; then explicitly save the candidate and original run. Complete browser working copies preserve unfinished source, plans and original requests across reload or file handover. Accepted outputs remain in the existing dossier reports and complete editable export.
+
+## Review and adopt a colleague's comparison work
+
+The existing **Returned work** receiver accepts the complete colleague dossier. In **Comparison**, select that retained source and an exact protocol, inspect its original candidates, runs, judgments, decisions and files, and prepare an explicit author adoption. The accepting operator chooses the new or equivalent author protocol and candidate destinations, reviews the complete plan and submits the saved request.
+
+The [adoption operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/ADOPTION.md) describes the complete workflow. The [browser guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/ADOPTION_BROWSER.md) covers durable working copies, storage recovery, reviewed continuation, original downloads and independent reopening. The full returned branch remains with the dossier. Original measured values, producer bytes, reviewer definitions and source editions accompany the new ordinary author operations.
+
+An interrupted request reopens its existing adoption and accepted native prefix. An intervening author edit requires an explicitly reviewed continuation of the original plan. Download the complete JSON/HTML adoption report, exact original returned dossier and individual original run/artifact files, then reopen the complete author dossier through its original portable receiver.
+
+The installed command is:
+
+```sh
+research-dossiers comparison adoption help
+```
+
+The typed subpath `./buyer/research-dossiers/comparison-adoption` and seven methods on the existing `ResearchWorkspaceClient` use the authenticated original listener. The [Merchant comparison guide](../../stellar-forge/mcp-merchant-operator/RESEARCH_COMPARISON.md) provides eight complete comparison/adoption tools and ten case/report/source/member export kinds through the existing workspace attachment and retained-file reader. The existing before/after dossier comparison remains available as `exportDossierComparison`; case reports use `exportCaseComparison`.
+
+The same source-native receiving operation runs [adoption-receiving.mjs](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-receiving.mjs) and its paired [browser course](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/adoption-browser-receiving.mjs). Those courses exercise complete original source intake, actual historical pending/prefix reopening, exact-request recovery, named continuation, original file downloads and editable cold receiving. Operate and visually inspect the actual final application and outgoing files at desktop and narrow widths under the repository's receiving instructions before presenting a customer delivery.

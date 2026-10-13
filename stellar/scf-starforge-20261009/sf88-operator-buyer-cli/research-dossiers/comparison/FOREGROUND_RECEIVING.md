@@ -153,3 +153,36 @@ The existing owner instruction applies to ALL ATTACHMENTS: literally view, play 
 Source validation parsed the complete browser successor. A controlled run of the actual production preparation/contracts functions using the original native fixture and byte/crypto/path/UTF-8 adapters verified both literal metrics, complete row coverage, named exclusion and exact restoration. A controlled run of the actual working-copy reopen function verified fresh import, a lost return after one completed import, and rejection of a changed complete draft. These are source-function checks, not a browser, native model or filesystem operating result.
 
 The sole original equipped-worker intake and operation remain unchanged. Actual full foreground execution, portable cold receiving and literal rendered inspection are still pending until an equipped receiver accepts that original operation.
+
+
+## Following returned-comparison adoption in the same foreground lifetime
+
+The maintained foreground now also composes `comparison/adoption-receiving.mjs` and `comparison/adoption-browser-receiving.mjs`. All earlier backend, comparison, original-output, request, report, download, portable and cold-reopen phases remain intact. The adoption course uses separate `adoption-backend/` and `adoption-browser/` directories under the same original operation directory and the same outer kernel lock. It does not create another host request, operation ID, browser profile, provider action or evaluator.
+
+The actual native adoption course returns its retained author store, original validated foreign branch, complete raw/artifact descriptors and explicit browserSelection. The browser deliberately adopts that original training protocol into a separately named NEW_CASE with NEW candidate, exercising the complete five-record dependency closure. The foreign source and earlier native acceptance remain unchanged. No research performance or commercial claim is inferred from this software fixture.
+
+The paired browser phase first selects a decision without an explicit candidate destination to display a real ineligible preview with a null digest. It then explicitly includes the recorded dependencies, reads the complete eligible plan and source/current question bindings, freezes the exact request, observes a deliberately lost response after the original server has answered, and receives/replays the same UUID. A response interruption is recorded only when actually observed. A previously committed request is looked up and reused; a crash never generates a replacement request.
+
+Complete original raw runs, artifacts, adoption reports and the original returned archive are downloaded with source/generation-bound journals. The complete working copy is downloaded and reopened on its original workspace. The accepted author dossier is exported as a separately named portable generation and received through the original app, where adopted measurements, undefined values, original reviewers, source chunks and native operations are inspected.
+
+The native result's browserInterrupted points to an actual historical NEEDS_REVIEW portable. It retains the accepted case/candidate prefix plus an unrelated author edit. A second sequential received listener opens that exact preserved source; the browser inspects the plan from native history, creates a separately reviewed continuation, and adopts only its three remaining operations. The original plan becomes SUPERSEDED with explicit successor lineage. This is not a synthetic request error or a history rewrite.
+
+All listeners use retained per-phase localhost ports. The original first cold/main listeners close before the native adoption phase. The first adoption received listener closes before the interrupted source is opened. Each owned listener and browser has one retained cleanup promise, including signal paths; primary execution errors stay attached if cleanup also fails. The caller-provided original page/browser context remains the same.
+
+The source selection explicitly requires all canonical adoption engine, route, UI, guide and receiving modules. Every phase executes from the immutable copied selection. Completed reuse verifies the complete original outputs. An earlier completed source edition is preserved; it cannot be relabeled as adoption-complete or silently updated in place. Receive any following edition through its explicit reviewed source continuation while retaining the earlier source manifest and artifacts.
+
+The browser module's full callable contract is:
+
+```js
+await reviewComparisonAdoptionBrowser({
+  page, url: originalAuthenticatedAuthorListenerUrl,
+  receipt: nativeAdoptionReceipt,
+  directory: absoluteRetainedBrowserDirectory,
+  reviewer: actualReviewerName,
+  openReceived: async ({directory, portableFile, operationId}) => ({url, close})
+});
+```
+
+The maintained foreground supplies that callback and starts only the two declared receiving directories. The browser uses the original portable import control, so its received dossier stays editable and every original history/blob validator runs. The callback does not fabricate a dossier or replace its identity.
+
+Final outputs include `adoption-receiving-result.json`, `adoption-browser-result.json`, both original phase journals, complete original downloads and attempt-specific desktop/390px captures. All remain inside the one final foreground receipt. Actual readiness still requires a named operator to open and use every final HTML/report, original archive/member, working copy, complete portable and editable received project, and view all relevant images/media. Screenshots alone do not satisfy the owner's inspection instruction.

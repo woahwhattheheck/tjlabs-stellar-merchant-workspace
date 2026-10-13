@@ -15,6 +15,7 @@ import {callResearchEligibility,exportResearchEligibility,RESEARCH_ELIGIBILITY_P
 import {callResearchCustomerUpdates,exportResearchCustomerUpdates,RESEARCH_CUSTOMER_UPDATE_PREFIX} from './research-customer-updates.mjs';
 import {callResearchRis,exportResearchRis,RESEARCH_RIS_PREFIX} from './research-ris.mjs';
 import {callResearchDossierReturns,exportResearchDossierReturn,RESEARCH_DOSSIER_RETURN_PREFIX} from './research-dossier-returns.mjs';
+import {callResearchComparison,exportResearchComparison,RESEARCH_COMPARISON_PREFIX} from './research-comparison.mjs';
 import {ResearchProgrammeOperations,RESEARCH_PROGRAMME_PREFIX} from './research-programmes.mjs';
 import {ResearchCommerceOperations,RESEARCH_COMMERCE_PREFIX} from './research-commerce.mjs';
 import {callResearchQuotes,exportResearchQuotes,RESEARCH_QUOTE_PREFIX} from './research-quotes.mjs';
@@ -282,7 +283,9 @@ export class MerchantResearchWorkspaces{
       }
     };
     try{
-      if(args.kind.startsWith('dossier-return-')){
+      if(args.kind.startsWith('comparison-')){
+        ({result,selection}=await exportResearchComparison(entry.client,args,{file:temporary,download}));
+      }else if(args.kind.startsWith('dossier-return-')){
         ({result,selection}=await exportResearchDossierReturn(entry.client,args,{file:temporary,download}));
       }else if(args.kind.startsWith('ris-')){
         ({result,selection}=await exportResearchRis(entry.client,args,{file:temporary,download}));
@@ -403,6 +406,7 @@ export class MerchantResearchWorkspaces{
     if(name==='merchant_research_detach')return this.#detach(args.workspace,args.attachmentId);
     return this.#with(args.workspace,async entry=>{
       const c=entry.client,id=args.dossierId,input=nativeFields(args,['workspace','dossierId']);
+      if(name.startsWith(RESEARCH_COMPARISON_PREFIX))return callResearchComparison(c,name,args);
       if(name.startsWith(RESEARCH_DOSSIER_RETURN_PREFIX))return callResearchDossierReturns(c,name,args,{source:(name,accepted)=>this.#source(entry,name,accepted)});
       if(name.startsWith(RESEARCH_RIS_PREFIX))return callResearchRis(c,name,args,{source:(name,accepted)=>this.#source(entry,name,accepted)});
       if(name.startsWith(RESEARCH_PROGRAMME_PREFIX))return this.#programmes(entry).call(name,args);
@@ -522,6 +526,12 @@ export class MerchantResearchWorkspaces{
               comparisonSha256:args.input?.comparisonSha256,
               expectedRevision:args.expectedRevision??args.input?.expectedRevision,
               expectedDraftVersion:args.input?.expectedDraftVersion}:{}),
+            ...(name.startsWith(RESEARCH_COMPARISON_PREFIX)?{workspace:args.workspace,
+              ...(Number.isInteger(error.status)?{status:error.status}:{}),
+              ...(error.details===undefined?{}:{details:error.details}),
+              planId:error.planId??args.planId??args.input?.continuationOf,
+              expectedRevision:args.input?.expectedRevision,previewSha256:args.input?.previewSha256,
+              ...(error.requestSha256?{requestSha256:error.requestSha256}:{})}:{}),
             ...(name.startsWith(RESEARCH_PROGRAMME_PREFIX)?{workspace:args.workspace,workspaceId:args.workspaceId,
               jobId:args.id,programmeId:args.programmeId,operationId:args.operationId??error.operationId,
               uploadId:args.uploadId,destination:args.destination,destinationWorkspaceId:args.destinationWorkspaceId}:{}),

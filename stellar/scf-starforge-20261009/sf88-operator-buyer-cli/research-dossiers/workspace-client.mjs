@@ -15,6 +15,7 @@ import {createClinicalTrialsClient} from './clinical-trials-client.mjs';
 import {createStudyExtractionClient} from './study-extraction-client.mjs';
 import {createStudyFlowClient} from './study-flow/client.mjs';
 import {createComparisonClient} from './comparison/client.mjs';
+import {createComparisonAdoptionClient} from './comparison/adoption-client.mjs';
 import {createStudyProtocolClient} from './study-protocol-client.mjs';
 import {createTemplateExchangeClient} from './template-exchange/client.mjs';
 import {createDocumentWorkspaceClient,createPipelineWorkspaceClient,sendPipelineFiles} from './document-workspace-client.mjs';
@@ -102,6 +103,7 @@ export class ResearchWorkspaceClient{
   }
   async #request(route,{body,method=body===undefined?'GET':'POST',headers={},signal,readOnly=false}={},consume=readResponse){
     const connection=await this.#connection();
+    const detailedResearchRoute=/^\/api\/dossiers\/[^/]+\/(?:returns|comparison\/adoption)(?:\/|\?|$)/.test(route);
     const target=new URL(route,connection.origin);
     const upload=method==='PUT'&&/^\/api\/customer-quote-programmes\/uploads\/[a-f0-9-]{36}(?:\?|$)/.test(route);
     need(route.startsWith('/api/')&&target.origin===connection.origin&&(['GET','POST'].includes(method)||upload),'RESEARCH_ROUTE_INVALID');
@@ -115,10 +117,10 @@ export class ResearchWorkspaceClient{
           ...(connection.instanceId?{'X-Research-Instance-Id':connection.instanceId}:{})},
         ...(body===undefined?{}:{body,...(typeof body==='string'||body instanceof Uint8Array?{}:{duplex:'half'})})});
       if(!response.ok){
-        let detail={};try{detail=parseJson(await readResponse(response,/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route)?64*1024*1024:65536));}catch{}
+        let detail={};try{detail=parseJson(await readResponse(response,detailedResearchRoute?64*1024*1024:65536));}catch{}
         throw new BuyerError(safeCode(detail.error,'RESEARCH_HTTP_REJECTED'),{status:response.status,
           ...(detail.openAlexImport?{openAlexImport:detail.openAlexImport}:{}),
-          ...(/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route)&&object(detail.details)?{details:detail.details}:{}),
+          ...(detailedResearchRoute&&object(detail.details)?{details:detail.details}:{}),
           ...(typeof detail.outcomeUnknown==='boolean'?{outcomeUnknown:detail.outcomeUnknown}:{}),
           ...(detail.researchCommerce?{researchCommerce:detail.researchCommerce}:{}),
           ...(detail.requestId?{requestId:detail.requestId}:{}),
@@ -336,7 +338,17 @@ export class ResearchWorkspaceClient{
   comparison(id,options={}){return this.comparisons().comparison(id,options);}
   comparisonReport(id,options={}){return this.comparisons().comparisonReport(id,options);}
   reviewComparison(id,input,options={}){return this.comparisons().reviewComparison(id,input,options);}
-  exportComparison(id,options={}){return this.comparisons().exportComparison(id,options);}
+  exportCaseComparison(id,options={}){return this.comparisons().exportComparison(id,options);}
+  /** @returns {import('./comparison/adoption-client.mjs').ComparisonAdoptionClient} */
+  comparisonAdoptionsClient(){return createComparisonAdoptionClient({request:(route,body,options)=>this.#json(route,body,options),
+    download:(route,file,options)=>this.#download(route,file,options)});}
+  comparisonAdoptions(id,options={}){return this.comparisonAdoptionsClient().comparisonAdoptions(id,options);}
+  comparisonAdoptionSource(id,options={}){return this.comparisonAdoptionsClient().comparisonAdoptionSource(id,options);}
+  previewComparisonAdoption(id,input,options={}){return this.comparisonAdoptionsClient().previewComparisonAdoption(id,input,options);}
+  reviewComparisonAdoption(id,input,options={}){return this.comparisonAdoptionsClient().reviewComparisonAdoption(id,input,options);}
+  comparisonAdoption(id,options={}){return this.comparisonAdoptionsClient().comparisonAdoption(id,options);}
+  comparisonAdoptionFile(id,options={}){return this.comparisonAdoptionsClient().comparisonAdoptionFile(id,options);}
+  exportComparisonAdoption(id,options={}){return this.comparisonAdoptionsClient().exportComparisonAdoption(id,options);}
   comparisonFile(id,options={}){return this.comparisons().comparisonFile(id,options);}
   studyFlow(id,options={}){return this.studyFlows().studyFlow(id,options);}
   studyFlowSources(id,options={}){return this.studyFlows().studyFlowSources(id,options);}
@@ -482,8 +494,13 @@ export class ResearchWorkspaceClient{
     return this.#download(sourcePath(id,editionId,key)+'/file'+parameters({revision,name,sha256:expectedSha256}),
       file,{...options,expectedSha256});
   }
-  exportComparison(id,{before,after,file,...options}={}){
+  exportDossierComparison(id,{before,after,file,...options}={}){
     return this.#download(dossierPath(id)+'/compare'+parameters({before,after}),file,options);
+  }
+  exportComparison(id,options={}){
+    const selectedCase=options.caseId!==undefined||options.caseVersionId!==undefined;
+    need(!(selectedCase&&(options.before!==undefined||options.after!==undefined)),'RESEARCH_COMPARISON_SELECTION_AMBIGUOUS');
+    return selectedCase?this.exportCaseComparison(id,options):this.exportDossierComparison(id,options);
   }
   reopenFile(file,{signal,expectedSha256}={}){
     return this.#run(async()=>{

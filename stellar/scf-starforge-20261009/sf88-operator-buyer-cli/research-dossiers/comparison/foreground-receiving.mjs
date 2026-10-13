@@ -13,7 +13,11 @@ const PREFIX='stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-do
 const REQUIRED=['dossier.mjs','server.mjs','portable.mjs','public/app.js','public/index.html',
  'public/comparison.js','public/comparison.css','comparison/contracts.mjs','comparison/model.mjs',
  'comparison/store.mjs','comparison/render.mjs','comparison/receive.mjs','comparison/browser-receiving.mjs',
- 'comparison/foreground-receiving.mjs','comparison/OPERATING.md','comparison/RECEIVING.md'];
+ 'comparison/foreground-receiving.mjs','comparison/OPERATING.md','comparison/RECEIVING.md',
+ 'comparison/adoption-contracts.mjs','comparison/adoption-model.mjs','comparison/adoption-store.mjs',
+ 'comparison/adoption-routes.mjs','comparison/adoption-receiving.mjs','comparison/adoption-browser-receiving.mjs',
+ 'comparison/ADOPTION.md','comparison/ADOPTION_BROWSER.md','public/comparison-adoption.js',
+ 'public/comparison-adoption-store.js','public/comparison-adoption.css'];
 const MAX_SOURCE=1024*1024*1024,MAX_FILES=30000;
 const need=(ok,message)=>{if(!ok)throw Error(message);};
 const json=x=>JSON.stringify(x,null,2)+'\n';
@@ -118,18 +122,21 @@ export async function receiveComparisonForeground(options){
  await retained(join(directory,'foreground-intent.json'),intent);
  const selected=await selectSource(sourceRoot,directory),app=join(selected.directory,PREFIX);
  const completed=await optional(join(directory,'foreground-result.json'));
- if(completed){need(completed.sourceSha256===selected.sha256&&completed.operationId===options.operationId,'Original foreground result changed');await verifyOutputs(completed);return completed;}
+ if(completed){need(completed.adoption?.browser&&completed.adoption?.backend,'An earlier completed original course remains preserved. Receive the explicitly reviewed adoption continuation from its complete selected source before claiming this whole edition.');need(completed.sourceSha256===selected.sha256&&completed.operationId===options.operationId,'Original foreground result changed');await verifyOutputs(completed);return completed;}
  const receive=await import(pathToFileURL(join(app,'comparison/receive.mjs')).href);
  const browserReview=await import(pathToFileURL(join(app,'comparison/browser-receiving.mjs')).href);
+ const adoptionReceive=await import(pathToFileURL(join(app,'comparison/adoption-receiving.mjs')).href);
+ const adoptionBrowser=await import(pathToFileURL(join(app,'comparison/adoption-browser-receiving.mjs')).href);
  const {startDossierWorkspace}=await import(pathToFileURL(join(app,'server.mjs')).href);
  const playwright=await import(pathToFileURL(runtime.playwrightModule).href);
  const chromium=playwright.chromium??playwright.default?.chromium;need(chromium,'Original Playwright Chromium API unavailable');
  const abort=new AbortController();let context=null,main=null,cold=null,primary=null,signalClose=null,result=null;
- const closers=new Map();
+ const closers=new Map(),additionalListeners=new Map();
  const closeOnce=(key,value)=>{if(!value)return Promise.resolve();if(!closers.has(key))closers.set(key,Promise.resolve().then(()=>value.close()));return closers.get(key);};
+ const closing=()=>[closeOnce('browser',context),closeOnce('cold',cold),closeOnce('main',main),...[...additionalListeners].map(([key,value])=>closeOnce(key,value))];
  const stop=()=>{
   if(abort.signal.aborted)return;abort.abort(Error('Original foreground receiving interrupted'));
-  signalClose=Promise.allSettled([closeOnce('browser',context),closeOnce('cold',cold),closeOnce('main',main)]);
+  signalClose=Promise.allSettled(closing());
  };
  process.once('SIGINT',stop);process.once('SIGTERM',stop);
  const active=()=>abort.signal.throwIfAborted();
@@ -161,21 +168,44 @@ export async function receiveComparisonForeground(options){
     return{url:cold.url,close:()=>closeOnce('cold',cold)};
    }});
   active();await verifySelection(selected.directory,selected.manifest);
-  const files=[...backend.files,...browser.files,...browser.screens,
+  // Preserve all completed original comparison/output phases. Following adoption
+  // uses separate retained directories in this same locked foreground lifetime.
+  await closeOnce('cold',cold);await closeOnce('main',main);active();
+  const adoptionDirectory=join(directory,'adoption-backend');
+  const adoption=await adoptionReceive.receiveComparisonAdoption({directory:adoptionDirectory,operationId:options.operationId,reviewer:options.reviewer});
+  active();await verifySelection(selected.directory,selected.manifest);await verifyOutputs(adoption);
+  const adoptionMain=await listener('adoption-original',adoption.authorStoreDirectory);additionalListeners.set('adoption-original',adoptionMain);
+  active();
+  const adoptedBrowser=await adoptionBrowser.reviewComparisonAdoptionBrowser({page,url:adoptionMain.url,receipt:adoption,
+   directory:join(directory,'adoption-browser'),reviewer:options.reviewer,
+   openReceived:async({directory:receivedDirectory})=>{
+    const targets=new Map([
+      [join(directory,'adoption-browser','received-adoption-author'),'adoption-received'],
+      [join(directory,'adoption-browser','received-interrupted-adoption'),'adoption-interrupted']]);
+    const key=targets.get(resolve(receivedDirectory));need(key&&!additionalListeners.has(key),'Only the original selected adoption receiving stores are opened');
+    const value=await listener(key,receivedDirectory);additionalListeners.set(key,value);
+    return{url:value.url,close:()=>closeOnce(key,value)};
+   }});
+  active();await verifySelection(selected.directory,selected.manifest);
+  const files=[...backend.files,...browser.files,...browser.screens,...adoption.files,...adoptedBrowser.files,...adoptedBrowser.screens,
+   await outputIdentity(join(adoptionDirectory,'adoption-receiving-result.json')),
+   await outputIdentity(join(directory,'adoption-browser','adoption-browser-result.json')),
    await outputIdentity(join(directory,'backend','receiving-result.json')),
    await outputIdentity(join(directory,'browser','browser-result.json'))];
   result={schema:SCHEMA,status:'COMPLETE_REQUIRES_VISUAL_INSPECTION',operationId:options.operationId,
    directory,sourceSha256:selected.sha256,sourceSelection:join(directory,'source-selection.json'),runtime,
    backend:{file:join(directory,'backend','receiving-result.json'),dossierId:backend.dossierId,revision:backend.revision},
    browser:{file:join(directory,'browser','browser-result.json'),status:browser.status,version:context.browser()?.version()??null},files,
-   literalInspection:browser.literalInspection};
+   adoption:{backend:{file:join(adoptionDirectory,'adoption-receiving-result.json'),dossierId:adoption.dossierId,revision:adoption.authorRevision},
+    browser:{file:join(directory,'adoption-browser','adoption-browser-result.json'),status:adoptedBrowser.status}},
+   literalInspection:{status:'AWAITING_ACTUAL_REVIEWER_VIEW',original:browser.literalInspection,adoption:adoptedBrowser.literalInspection}};
   // Publish completion only after both original listeners and the owned browser close.
  }catch(e){
   primary=e;try{await atomic(join(directory,'foreground-error.json'),{schema:SCHEMA,operationId:options.operationId,
    message:e.message,stack:e.stack,sourceSha256:selected.sha256});}catch(retainError){primary=new AggregateError([e,retainError],'Original receiving failure and error retention failure',{cause:e});}throw primary;
  }finally{
   process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);
-  const closed=await Promise.allSettled([closeOnce('browser',context),closeOnce('cold',cold),closeOnce('main',main)]);
+  const closed=await Promise.allSettled(closing());
   if(signalClose)await signalClose;
   const failures=closed.filter(x=>x.status==='rejected').map(x=>x.reason);
   if(failures.length)throw new AggregateError(primary?[primary,...failures]:failures,'Owned Research browser/listener cleanup failed',{cause:primary??failures[0]});

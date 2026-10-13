@@ -128,7 +128,7 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
       try { value = await response.json(); } catch {}
       const error = Object.assign(new Error(value.error || 'HTTP_' + response.status), {
         code: value.error || 'HTTP_' + response.status, detail: value.message, status: response.status, openAlexImport: value.openAlexImport,
-        ...(requestUrl.pathname.includes('/returns')&&value.details?{details:value.details}:{})});
+        ...((requestUrl.pathname.includes('/returns')||requestUrl.pathname.includes('/comparison/adoption'))&&value.details?{details:value.details}:{})});
       if (response.status === 401 && !$('session-dialog').open) $('session-dialog').showModal();
       throw error;
     }
@@ -782,7 +782,7 @@ import {installZoteroResearchControl} from './zotero-browser.mjs';
   const comparisonPanel=createComparisonPanel({root:$('view-comparison'),
     api:(path,options={})=>api(path,{sourceProjection:'full',workspaceId:state.workspaceId,...options}),
     task,notify,getDossier:()=>state.dossier,getWorkspace:()=>({workspaceId:state.workspaceId,instanceId:state.instanceId}),
-    isBusy:()=>state.busy,onReceived:async view=>{applyDossier(view);await refreshList();}});
+    isBusy:()=>state.busy,openReturnedWork:()=>showTab('dossier-returns'),onReceived:async view=>{applyDossier(view);await refreshList();}});
   const zoteroControl=installZoteroResearchControl({container:$('zotero-control'),
     open:()=>api('/api/zotero/open',{method:'POST',body:{},workspaceId:state.workspaceId}),
     status:()=>api('/api/zotero'),onError:error=>notify(errorMessage(error),'error')});

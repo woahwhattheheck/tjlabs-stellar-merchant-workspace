@@ -1,0 +1,28 @@
+/* SPDX-License-Identifier: MIT. Original Research adoption operator. */
+.comparison-adoption{color:#202020;background:#fff;border-top:3px solid #333;margin-top:2rem;padding-top:1.25rem;min-width:0;max-width:100%;font-size:1rem;line-height:1.5}
+.comparison-adoption *{box-sizing:border-box}
+.comparison-adoption h2{font-size:1.5rem;margin:0 0 .7rem}
+.comparison-adoption h3{font-size:1.1rem;margin:0 0 .8rem}
+.comparison-adoption p{overflow-wrap:anywhere}
+.comparison-adoption .adoption-card{border:1px solid #b9b9b9;border-radius:3px;padding:1rem;margin:1rem 0;background:#fafafa;min-width:0}
+.comparison-adoption .adoption-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}
+.comparison-adoption .adoption-field{display:flex;flex-direction:column;gap:.3rem;min-width:0;margin:.7rem 0;font-weight:600}
+.comparison-adoption input:not([type=checkbox]),.comparison-adoption select,.comparison-adoption textarea{width:100%;min-width:0;max-width:100%;font:inherit;color:#202020;background:#fff;border:1px solid #797979;border-radius:2px;padding:.55rem;font-weight:400}
+.comparison-adoption input[type=checkbox]{width:1.2rem;height:1.2rem;vertical-align:middle;margin:.5rem}
+.comparison-adoption textarea{resize:vertical;min-height:6rem}
+.comparison-adoption button{font:inherit;color:#202020;background:#fff;border:1px solid #656565;border-radius:2px;padding:.5rem .7rem;min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.comparison-adoption button:hover:not(:disabled){background:#e7e7e7}
+.comparison-adoption :disabled{color:#676767;background:#eeeeee;cursor:default}
+.comparison-adoption :focus-visible{outline:3px solid #333;outline-offset:2px}
+.comparison-adoption .adoption-actions{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.8rem 0;min-width:0}
+.comparison-adoption .adoption-table{max-width:100%;overflow:auto;border:1px solid #b0b0b0;margin:.8rem 0}
+.comparison-adoption table{border-collapse:collapse;width:100%;min-width:660px;background:#fff}
+.comparison-adoption th,.comparison-adoption td{vertical-align:top;border-bottom:1px solid #d0d0d0;text-align:left;padding:.65rem;overflow-wrap:anywhere;max-width:36rem}
+.comparison-adoption th{font-weight:650;background:#ececec}
+.comparison-adoption details{margin:.5rem 0;max-width:100%;min-width:0}
+.comparison-adoption summary{cursor:pointer;font-weight:600;padding:.4rem 0;overflow-wrap:anywhere}
+.comparison-adoption pre{font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f1f1;border:1px solid #ccc;padding:.7rem;max-height:35rem;overflow:auto}
+.comparison-adoption .adoption-error,.comparison-adoption .adoption-warning{border-left:4px solid #333;padding:.7rem 1rem;background:#ececec;font-weight:500}
+.comparison-adoption[aria-busy=true]{cursor:progress}
+@media(max-width:600px){.comparison-adoption .adoption-card{padding:.75rem}.comparison-adoption .adoption-grid{grid-template-columns:1fr}.comparison-adoption h2{font-size:1.3rem}.comparison-adoption .adoption-actions>button{flex:1 1 100%}.comparison-adoption table{min-width:580px}}
+@media print{.comparison-adoption button,.comparison-adoption input[type=file]{display:none}.comparison-adoption .adoption-table{overflow:visible}.comparison-adoption pre{max-height:none}.comparison-adoption table{min-width:0}.comparison-adoption .adoption-card{break-inside:avoid}}
