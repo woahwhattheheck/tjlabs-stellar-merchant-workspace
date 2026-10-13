@@ -86,11 +86,11 @@
     },
     {
       "path": "products/catalogue-delivery-workbench/mcp.mjs",
-      "blob": "f68a53e7aa5fa682ea4ccf668e5190ce9a6dfc2e"
+      "blob": "8acb26340b14e8f6cf310e642d00a363f4f44619"
     },
     {
       "path": "products/catalogue-delivery-workbench/requests.mjs",
-      "blob": "bef8291b0080bf158bbd87e463d774eb9d340b61"
+      "blob": "14479ef2c6e2384ddc88c843acf9a1dd13a4bc11"
     },
     {
       "path": "products/catalogue-delivery-workbench/files.mjs",

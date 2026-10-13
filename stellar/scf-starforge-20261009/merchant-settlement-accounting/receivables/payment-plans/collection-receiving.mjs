@@ -77,7 +77,9 @@ export async function receiveInstallmentCollection({receivables,paymentPlans,sel
     let value;
     if(typeof receivables.paymentRequestBytes==='function') value=await receivables.paymentRequestBytes(id,name);
     else value=await receivables.paymentRequestFile(id,name);
-    const bytes=value.bytes?Buffer.from(value.bytes):Buffer.from(await value.arrayBuffer());
+    need(typeof value?.arrayBuffer==='function'||value?.bytes instanceof Uint8Array,
+      'COLLECTION_RECEIVING_FILE','Use the original complete byte file or HTTP Response.');
+    const bytes=typeof value.arrayBuffer==='function'?Buffer.from(await value.arrayBuffer()):Buffer.from(value.bytes);
     const row={name,bytes:bytes.length,sha256:sha(bytes),type:value.type??value.headers?.get('content-type')??null,contentBase64:bytes.toString('base64')};
     await save('files/'+name+'.source.json',row);inventory.push({name,bytes:row.bytes,sha256:row.sha256,type:row.type});
   }

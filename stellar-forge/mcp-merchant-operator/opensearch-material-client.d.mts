@@ -312,7 +312,7 @@ export interface RecipientReceived {
 export interface AuthorWorklistInput {inputId:string;expectedInputSha256:Sha256}
 export interface AuthorWorklistRecordRequest extends AuthorWorklistInput {
   returnId:Sha256;section:'return'|'draft'|'history'|'request'|'outcome';index?:number;
-  expectedRecordSha256?:Sha256;offset?:number;limit?:number;
+  expectedRecordSha256?:Sha256;readId?:string;offset?:number;limit?:number;
 }
 export interface AuthorWorklistIdentity {workspaceId:string;inputId:string;inputSha256:Sha256}
 export interface AuthorWorklistSummary {
@@ -328,7 +328,7 @@ export interface AuthorWorklistRecordIdentity extends AuthorWorklistIdentity {
   returnId:Sha256;section:AuthorWorklistRecordRequest['section'];index?:number|null;recordSha256:Sha256;recordBytes:number;
 }
 export interface AuthorWorklistRecordPage extends AuthorWorklistRecordIdentity {
-  offset:number;bytes:number;dataBase64:string;nextOffset:number|null;
+  readId:string;offset:number;bytes:number;dataBase64:string;nextOffset:number|null;
 }
 export interface AuthorWorklistRecordText extends AuthorWorklistRecordIdentity {text:string}
 
@@ -359,6 +359,7 @@ export interface MaterialClientRequests {
   materialDraft:MaterialDraftRequest;
   materialWorklistList:AuthorWorklistInput&PageArgs&{catalogId?:RecordId;search?:string};
   materialWorklistRecord:AuthorWorklistRecordRequest;
+  materialWorklistRecordRelease:AuthorWorklistInput&{returnId:Sha256;section:AuthorWorklistRecordRequest['section'];index?:number;readId:string};
   materialWorklistPreview:AuthorWorklistInput&PageArgs&{returnId:Sha256;expectedComparisonSha256?:Sha256};
   materialWorklistReceive:AuthorWorklistInput&{returnId:Sha256;requestId:RecordId;expectedRequestSha256:Sha256};
   materialRecipientPreview:PageArgs&{inputId:string;expectedInputSha256:Sha256;expectedComparisonSha256?:Sha256};
@@ -410,6 +411,7 @@ export interface MaterialClientResults {
   materialDraft:NativeOperation<{draftId:RecordId;revision:number;draft:Record<string,unknown>}>;
   materialWorklistList:AuthorWorklistPage;
   materialWorklistRecord:AuthorWorklistRecordPage;
+  materialWorklistRecordRelease:{released:boolean;readId:string};
   materialWorklistPreview:RecipientComparisonPage&{workspaceId:string;returnId:Sha256};
   materialWorklistReceive:NativeOperation<RecipientReceived>;
   materialRecipientPreview:RecipientComparisonPage;
@@ -462,6 +464,7 @@ export declare const OPENSEARCH_MATERIAL_CLIENT_METHODS:Readonly<{
   materialDraft:'material_draft';
   materialWorklistList:'material_worklist_list';
   materialWorklistRecord:'material_worklist_record';
+  materialWorklistRecordRelease:'material_worklist_record_release';
   materialWorklistPreview:'material_worklist_preview';
   materialWorklistReceive:'material_worklist_receive';
   materialRecipientPreview:'material_recipient_preview';
@@ -517,6 +520,7 @@ export declare class OpenSearchMaterialClient {
   materialDraft(args:MaterialClientRequests['materialDraft'],options?:CallOptions):Promise<MaterialClientResults['materialDraft']>;
   materialWorklistList(args:MaterialClientRequests['materialWorklistList'],options?:CallOptions):Promise<MaterialClientResults['materialWorklistList']>;
   materialWorklistRecord(args:MaterialClientRequests['materialWorklistRecord'],options?:CallOptions):Promise<MaterialClientResults['materialWorklistRecord']>;
+  materialWorklistRecordRelease(args:MaterialClientRequests['materialWorklistRecordRelease'],options?:CallOptions):Promise<MaterialClientResults['materialWorklistRecordRelease']>;
   materialWorklistPreview(args:MaterialClientRequests['materialWorklistPreview'],options?:CallOptions):Promise<MaterialClientResults['materialWorklistPreview']>;
   materialWorklistReceive(args:MaterialClientRequests['materialWorklistReceive'],options?:CallOptions):Promise<MaterialClientResults['materialWorklistReceive']>;
   readWorklistRecord(args:AuthorWorklistRecordRequest,options?:CallOptions):Promise<AuthorWorklistRecordText>;

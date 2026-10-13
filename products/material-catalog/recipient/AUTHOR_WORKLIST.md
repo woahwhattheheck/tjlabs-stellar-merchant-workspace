@@ -60,6 +60,7 @@ The installed commands are available through the existing
 | `material-worklist-list --all-pages` | Page named returns, source hashes, current draft counts and every history/request/outcome count; optional original catalogue/search filter. |
 | `material-worklist-record --all-pages` | Return exact Base64 byte pages for a selected complete original return, current draft, historical draft, approved request or outcome. Every page carries the full record identity. |
 | `read-worklist-record` | Reassemble a selected record, verify its complete byte count/SHA-256 and UTF-8, then emit its exact original text on stdout. No partial record is presented as complete. |
+| `material-worklist-record-release` | Release an unfinished selected record read without changing its input or Journal. |
 | `material-worklist-preview --all-pages` | Compare a selected original return with the actual current catalogue using its unchanged read snapshot; pin the full comparison hash across pages. |
 | `material-worklist-receive` | Apply or recover only an exact request already reviewed and retained in that worklist, through the original catalogue transaction and Journal. |
 
@@ -83,16 +84,33 @@ opensearch-materials-client material-worklist-preview --url "$MCP_URL" --workspa
 ```
 
 The typed client exposes `materialWorklistList`, `materialWorklistRecord`,
-`materialWorklistPreview`, `materialWorklistReceive`, and
+`materialWorklistPreview`, `materialWorklistReceive`,
+`materialWorklistRecordRelease`, and
 `readWorklistRecord`. The last returns the complete verified text plus its
-record/input/workspace identity. Byte pages are at most262,144 bytes; ordinary
-summary and comparison pages retain the existing reply budget. Each read
-rechecks the complete host-selected file identity, closes its owned descriptor,
-and validates its full worklist. It does not keep an unbounded process cache.
+record/input/workspace identity. Byte pages use the original retained reader's
+196,608-byte maximum; ordinary summaries and comparisons retain the existing
+reply budget. The first record read verifies the entire selected input and all
+original worklist contents once, then gives the selected exact record to the
+unchanged retained reader. It keeps records up to32KiB in memory and larger
+records in a private unlinked descriptor, under its shared256,000,000-byte
+snapshot budget and four-read limit. Subsequent pages use that same immutable
+snapshot and never reopen or revalidate the full worklist.
+
+Continue with the returned `readId`, exact `expectedRecordSha256` and
+`nextOffset`, preserving the input/workspace/return/section/index selection.
+The typed `pages()` and complete-text reader keep these bindings automatically
+and release an unfinished read when iteration exits. Explicit
+`materialWorklistRecordRelease` uses the same selection and `readId`.
+Completion, the original120-second idle expiry, or owner close releases the
+snapshot. After expiry/restart, omit `readId` and reopen the same original input
+with the expected record hash and retained byte offset; changed source bytes
+are refused. This is the existing retained-file lifecycle, with no new cache
+or workspace. Lists/current previews still inspect the declared complete input.
 
 To receive a request, preserve the same `inputId`, `expectedInputSha256`,
 `returnId`, original `requestId`, and `expectedRequestSha256` (the exact
-pretty-JSON request file hash returned by the record reader). The tool does not
+pretty-JSON request file hash returned by the record reader). First admission
+retains the original8MiB request-file limit even inside a128MiB worklist. The tool does not
 turn a draft into approval, silently choose conflicts, or refresh a saved
 request. A first application still checks the original complete comparison and
 current catalogue inside the unchanged transaction. If the catalogue has

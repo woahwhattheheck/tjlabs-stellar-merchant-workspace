@@ -106,6 +106,97 @@ The resulting ordinary Merchant configuration has empty `sources` and `hostHando
 
 The release store must remain untouched and empty, with no current/previous release, release history, staged release, invalid release entry or observed runtime. Native handoff operations recheck this condition. The existing core controls remain owned by their original provider and serialize with native handoff mutations. Do not repurpose this operator as a seller release host.
 
+## Inspect and resume the original setup
+
+Setup supports `operation: "initialize"` (the default), `"inspect"`, and
+`"resume"` through the same initializer and `init-provider` command.
+Use the original absolute directory, complete connection file and name.
+
+`inspect` is read-only. It does not create a directory, acquire a writer lease,
+initialize releases or start a host. It returns recorded setup status, the full
+retained initialization intent, the intended configuration and original result.
+The connection file may be missing or changed while you inspect the retained
+original intent. Inspection does not assert fresh source validity.
+
+For explicit continuation, use the same options with `"operation": "resume"`:
+
+~~~json
+{
+  "directory": "/srv/handoff-operator",
+  "connection": "/srv/handoff-control/connection.json",
+  "name": "Merchant whole-host handoffs",
+  "operation": "resume"
+}
+~~~
+
+Save these options privately and run the same `init-provider` command shown
+above. A complete connection-byte match is required, including whitespace.
+Changing an alias, path, name or source file does not silently change the
+interrupted operation. If the connection changed, inspect and preserve both
+editions, restore the intended complete source at its original path when that
+is the operator's decision, then explicitly resume. Do not edit retained intent
+or completion records to make another input look like the original.
+
+| Recorded status | Continuation |
+| --- | --- |
+| `NOT_STARTED` | Initialize the selected new private directory. |
+| `BEFORE_INTENT` | The control directory exists but no operator root was published. Repeat initialize with the intended inputs. |
+| `INCOMPLETE` | Resume the exact retained initialization. |
+| `COMPLETE` | Resume revalidates the original source/configuration and dedicated empty release store, then returns the same result with `reused: true`. |
+| `UNMANAGED_EXISTING_DIRECTORY` or `UNBOUND_EXISTING_DIRECTORY` | Preserve that unrelated directory; setup will not adopt or overwrite it. |
+
+The initializer retains a deterministic private sibling named
+`.merchant-host-setup-<directory digest>`. Keep this directory together with
+the original operator root. It contains complete source and configuration
+bytes, directory identity and completion history. These controls are also
+excluded from selected source and receiving roots by the original provider's
+custody checks. Keep backups of both original directories in their existing
+authorized locations. The setup does not relocate either directory.
+
+Initialization requires Linux, util-linux `flock`, and `/usr/bin/python3`.
+It uses the existing delivery lease and the original host-adoption
+`renameat2(RENAME_NOREPLACE)` primitive. A private stage's exact device and inode
+are recorded before final-path publication; an unrelated destination is never
+replaced, including an empty directory. A parent interruption retains every
+earlier stage and the inherited lease until its publication child exits.
+Incomplete private publication files remain as original interruption history;
+continuation does not remove someone else's entries or reset a release store.
+
+Both initial completion and completed resume require the dedicated release
+store to remain at generation zero with no active/previous release, release
+history, or retained release directories. Customer exports must be empty until
+initialization completes. A completed resume preserves subsequent original
+customer export files. The handoff provider retains its normal empty-release
+admission rule.
+
+## Receive this setup through the original provider
+
+The complete source includes `receiving/HOST_SETUP_RECEIVE.mjs`. On the
+equipped Linux host, select the same private setup options and a separate new
+private observation directory:
+
+~~~sh
+node "$SOURCE/stellar/scf-starforge-20261009/sf101-merchant-recovery/workspace/receiving/HOST_SETUP_RECEIVE.mjs" \
+  --options /srv/handoff-control/setup.json \
+  --output /srv/handoff-observations/setup-receive
+~~~
+
+The course inspects before continuing, initializes or resumes the exact setup,
+reopens the actual Merchant provider twice, reads its host inventory, closes
+the original owners and confirms the original configuration/release bytes
+survive another completed resume. It retains complete inputs and observations
+in a unique invocation directory. It does not capture, restore or adopt a host,
+start a seller, replace an existing operator, or create a second handoff job.
+
+Source-level interruption observations cover control creation, retained intent,
+unbound staging, bound staging, final-root publication, original release state,
+configuration publication and completion publication. They used the actual
+JavaScript initializer and original release functions with explicit filesystem
+and native-call interface adapters. Actual Linux filesystem, Python publication
+and provider receiving require the equipped course above; adapter execution
+does not claim those native outcomes.
+
+
 ## Source capture
 
 1. Stop the selected original recovery workspace listener and all other selected source writers through their normal controls. Keep them stopped through plan and capture. Reconcile a stale launch or lease through its original owner; the adapter does not delete it.

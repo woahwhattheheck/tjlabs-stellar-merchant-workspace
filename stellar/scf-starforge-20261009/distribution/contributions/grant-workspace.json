@@ -79,7 +79,22 @@
     "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_source_collection.mjs",
     "stellar-forge/developer-site/dist/source-table-corrections.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/operations_dcat_sources.py",
-    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_dcat_following.py"
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_installation_dcat_following.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_flowable_sources.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/flowable-source-desk-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/flowable-source-desk-agent.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_flowable_sources.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_flowable_sources.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/FLOWABLE_SOURCE_DESK.md",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation/service-cli.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation/service.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-core.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-source.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-receiving.mjs",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-installation-operations.py",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/flowable-customer.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/FLOWABLE_CUSTOMER.md"
   ],
   "managedSourceManifests": [
     "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"

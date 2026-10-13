@@ -55,7 +55,9 @@ export async function receiveCashRealization({receivables,selection,actor,operat
  const expectedFiles=new Map(cashRealizationFiles(row).map(file=>[file.name,file])),inventory=[];
  async function fileBytes(client,name){
    const value=await client.cashRealizationFile(id,name);
-   return value.bytes?Buffer.from(value.bytes):Buffer.from(await value.arrayBuffer());
+   if(typeof value?.arrayBuffer==='function')return Buffer.from(await value.arrayBuffer());
+   need(value?.bytes instanceof Uint8Array,'CASH_REALIZATION_RECEIVING_FILE','Use the original complete byte file or HTTP Response.');
+   return Buffer.from(value.bytes);
  }
  for(const name of names){
    const bytes=await fileBytes(receivables,name),expected=expectedFiles.get(name);

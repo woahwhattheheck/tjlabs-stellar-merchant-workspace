@@ -1,5 +1,60 @@
 # Receive the complete current SCF application
 
+## Current selected edition: complete customer reporting, accounts and recovery
+
+This following edition receives five completed full author pairs over merged PR1945's fourteen-author union. The same application now selects **2,043 source records, 96 product declarations and 112 complete chapters**. All 1,953 preceding source IDs remain. The original receiver adds 90 current records and advances three selected Recovery source editions, retaining every historical edition. All **107 unrelated chapters and 1,784 unrelated source rows remain exact**.
+
+The full application, reviewer HTML, accepted concise answer wording and original 597-byte budget are unchanged. The request remains **USD38,000 / 400 prospective hours / 150 days / six funded packages**. Each chapter retains its original commercial assumptions, actual implementation and receiving state.
+
+### Complete following author pairs
+
+| Original declaration | Selected sources | Merged author PR | Full author chapter Git blob |
+| --- | ---: | ---: | --- |
+| grant-accounts-operating-desk | 62 | 1939 | 5fbefffb0c288fe9cc6147e50950a779bdff3ead |
+| recovery-commissioning | 113 | 1937 | d7737020f9551c3ba15b5438fa0d1a1587410130 |
+| reporting-programmes | 29 | 1941 | f1f359e6ece2e1f09e5f498a5a0e94d8c8bbc2da |
+| worldbank-customer-programmes | 30 | 1935 | 715bd456443f84948a2bb2997913b298119c5e7a |
+| analytical-workbooks | 25 | 1943 | a239c0244111d43f61c33df503cedd265e9b91dc |
+
+Accounts now includes the whole accepted terms, milestone amendment, reviewed expense, hourly Work authority, original invoice/credit/replacement and frozen customer Billing evidence family. Recovery carries the complete original host-handoff agent, its installed provider and current source/recipe identities. World Bank carries complete report assignment, recipient work and explicit returned-source reconciliation. Reporting Programmes joins the existing complete Document chapter with original definitions, actual output, field/period review and recipient handover. Analytical work carries reviewed acquired data into saved SQL, publication and the selected ordinary SQL client. Full source declarations and chapter identities are retained in source-selection.json.
+
+## Complete current source and opening
+
+Immutable four-output source commit: **82a89ae73f0d917d3881aaa90f42d5abf8f996c1**. Continue through the original reviewer application and its complete companion. The explicit concise choice remains `grant-submission.html?source=concise`.
+
+| Complete output | Bytes | SHA-256 |
+| --- | ---: | --- |
+| grant.html | 120006 | 7531bd602fafeacec3d3bbbc3fb9f13fc9a0da9c97accd9e3097e65f5c5e0248 |
+| application.md | 66962 | d426ab4fcdf77bc0802e1d65d845ba373e9e41ac1ea637e21cc0d5174c11ca55 |
+| product-and-finance.md | 2453778 | e62f450f525f6a57d9339aaf2f29ebe78186bbfbe8408e92c3eb3bbcf2d9438c |
+| source-index.json | 2721933 | 9be86b886fbd53d320790eb0a1160bf5619b7e7560d40ed4b375c7715f49631b |
+| budget.csv | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
+| application-reviewer.md | 20167 | 773c26c2f3b221f43fce2a730dcbae6e2a9416fe28ecea41234dbcdbdac663b6 |
+| reviewer-working-index.json | 2798198 | 7afc0c8cc3bdf434c2bce27488ef120b444e97a74220f3397f8edecef09ac85c |
+| reviewer-working-source.json | 7053862 | dc446a76e10668dde31ab1cf9c8559280ce615acf35e88588263931d03e68867 |
+
+The [complete full four-role package](./current-source-package.json) contains **7061588 bytes**, SHA-256 **2200393b751d7a43d0793d1571a4718040c3d8bf0eb958e5194c71f5550fa73d**, Git blob **e6cfad494eb568aa48f20a8ac1b4a151ef5f6701**, bundle **37f20ea19d2e4f5424e776a7883c0e8e89d159c7b3e67b0a6df350ad01ff005f**. It contains the full application, original source index, unchanged budget and entire companion.
+
+The complete concise package at `stellar-forge/developer-site/dist/grant-data/reviewer-working-source.json` contains **7053862 bytes**, SHA-256 **dc446a76e10668dde31ab1cf9c8559280ce615acf35e88588263931d03e68867**, Git blob **d92d5e5916502cab6a79b5942c99aa07bf929ca5**, bundle **d1b14e6d840225b82889fd5eac79378f96398386f4fd0455a02d03759b11a6dc**. The accepted 20,167-byte concise application remains exact and the full original application remains embedded in its complete source index.
+
+Both packages were generated and cold-opened through the maintained original source/package functions. Every decoded role has the exact selected full byte count and content hash; the full package also compares as the identical complete received source, bundle and object set. The full current module closure is unchanged from the preceding operated source composition. There is one complete source index and one complete chapter per existing heading.
+
+## Continue the original saved application
+
+Continue **SCF-CURRENT-CUSTOMER-SOURCE-05C7-20261013** in the existing 22B7/81CF saved-v7/Page/profile course. Preserve its actual current phase, source identity, saved state, directory and operation journal through that phase's existing completed/save boundary. At the next explicit source-change boundary, select this complete following package with:
+
+`--expected-source-sha256 2200393b751d7a43d0793d1571a4718040c3d8bf0eb958e5194c71f5550fa73d`
+
+Use the actual source-comparison and selected-form controls to receive it. Retain manually edited answers, issuer fields, requirements, planning selections, decisions, correspondence, original attachments, review rounds and previous source editions. Full and concise remain deliberate choices in the same saved application. Actual issuer fields and limits stay with the existing original form intake.
+
+The original producing operator then personally opens and uses the exact current desktop/narrow application, reviews both answer choices and the whole companion, views every outgoing attachment, downloads/reopens all full source and working files and saves the complete continuing workspace. The original owner instructions and detailed course remain physically present below. Source receipt and package reopening above identify the completed composition work; the actual original receiving journal retains the browser and saved-case outcomes.
+
+## Historical source selections and original full operating guide
+
+The complete prior guide below retains the original operation, preceding source selections, detailed receiving course and full owner directives. Its historical hashes describe those editions; this current source and package identity is given above.
+
+# Receive the complete current SCF application
+
 ## Current selected edition: fourteen complete product contributions
 
 This edition receives the authors' complete current chapter and declaration pairs into the same original grant application. The source union contains **1,953 source records, 95 product declarations and 112 companion chapters**. All 1,843 previous source IDs remain, with 110 newly selected records and 21 deliberately advanced existing source editions. All 99 unrelated chapters and 1,392 unrelated source rows remain byte-identical. The complete application, reviewer HTML, reviewed concise answers and original 597-byte budget remain unchanged.
@@ -452,4 +507,5 @@ Return the actual selected record/source identity, running host and observed res
 The entry remains `stellar-forge/developer-site/grant-compose.mjs`; product ownership stays in the existing `grant-products` declarations and canonical H2 chapters. This reconciliation executed the original pure composer and complete-source package functions with the retained full inputs and standard UTF-8/digest adapters. Both complete packages reopened through the maintained receiving functions; the full reopened value equals its original four-role input.
 
 For a following edition, select its full current canonical and complete current declarations, start with this complete published source union, and run the maintained composer. Preserve any concurrent valid generated successor through fresh-main comparison. Keep a single coherent set of four reviewer outputs and one complete portable package. The source selection retains the preceding publisher's module inventory and separately records the 24 exact modules executed for this reconciliation. Its sourcePins map names every changed full and concise browser artifact. Continue the original saved application through its reviewed incoming source and retained handover.
+
 

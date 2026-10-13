@@ -247,12 +247,14 @@ The full [installed return guide](../../products/material-catalog/recipient/INST
 ## Complete author worklist agent continuation
 
 The original installed author worklist is available through
-`merchant_opensearch_material_worklist_list`, `_record`, `_preview` and
+`merchant_opensearch_material_worklist_list`, `_record`/`_record_release`, `_preview` and
 `_receive`, plus the corresponding typed client and CLI methods.
 Use the original128MiB worklist as a host-declared `materialInputs` alias;
 the two-MiB control envelope remains unchanged. Reads validate every complete
 retained row and the original workspace ID, preserve exact record bytes across
-bounded pages and close all owned handles. Current preview remains the original
+bounded pages through the unchanged private snapshot reader and close all owned handles.
+A selected record validates its original worklist once; its readId/record hash
+pin later pages under the original four-read/256MB snapshot lifecycle. Current preview remains the original
 catalogue snapshot. Receive accepts only an exact already-approved retained
 request; original transaction/current-comparison guards still apply.
 Exact admitted requests recover from the original Journal before reopening

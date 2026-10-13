@@ -1,5 +1,6 @@
 // MIT. Complete typed-client runtime for the original OpenSearch material and supplier tools.
 import { createHash } from 'node:crypto';
+import { MAX_RETAINED_CHUNK_BYTES } from './retained-file-contracts.mjs';
 import { MAX_AUTHOR_WORKLIST_BYTES } from '../../products/material-catalog/recipient/author-worklist.mjs';
 import { openSearchMaterialTools } from './catalog/opensearch-materials.mjs';
 import { createRetainedDownload, openMerchantFileClient } from './retained-download.mjs';
@@ -34,7 +35,7 @@ export const OPENSEARCH_MATERIAL_CLIENT_METHODS=Object.freeze({
   materialBMEcatProfile:'material_bmecat_profile',
   materialEdition:'material_edition',materialRows:'material_rows',materialChanges:'material_changes',
   materialGet:'material_get',materialFacets:'material_facets',materialSuggest:'material_suggest',
-  materialWorklistList:'material_worklist_list',materialWorklistRecord:'material_worklist_record',
+  materialWorklistList:'material_worklist_list',materialWorklistRecord:'material_worklist_record',materialWorklistRecordRelease:'material_worklist_record_release',
   materialWorklistPreview:'material_worklist_preview',materialWorklistReceive:'material_worklist_receive',
   materialRecipientPreview:'material_recipient_preview',materialRecipientReceive:'material_recipient_receive',
   materialQuantity:'material_quantity',materialSave:'material_save',materialUpload:'material_upload',
@@ -146,13 +147,17 @@ export class OpenSearchMaterialClient {
     if(!paging)fail('OPENSEARCH_CLIENT_PAGINATION','Choose a paged material or supplier method.');
     const [input,output]=paging,selected={...args},seen=new Set();
     if(selected[input]!==undefined)seen.add(selected[input]);
-    while(true){
+    let ownedReadId=null;
+    try{while(true){
       const page=await this[method](selected,options);
       if(method==='materialWorklistRecord'){
         if(typeof page.recordSha256!=='string'||!/^[a-f0-9]{64}$/.test(page.recordSha256)||
             selected.expectedRecordSha256!==undefined&&selected.expectedRecordSha256!==page.recordSha256)
           fail('OPENSEARCH_CLIENT_PAGINATION','The original complete worklist record changed between byte pages.');
         selected.expectedRecordSha256=page.recordSha256;
+        if(typeof page.readId!=='string'||!page.readId||selected.readId!==undefined&&selected.readId!==page.readId)
+          fail('OPENSEARCH_CLIENT_PAGINATION','The original record reader changed its active session.');
+        selected.readId=page.readId;ownedReadId=page.nextOffset===null?null:page.readId;
       }
       if(!Object.hasOwn(page,output))fail('OPENSEARCH_CLIENT_PAGINATION','The original page omitted its continuation field.');
       if(method==='materialRecipientPreview'||method==='materialWorklistPreview'){
@@ -172,6 +177,11 @@ export class OpenSearchMaterialClient {
         fail('OPENSEARCH_CLIENT_PAGINATION','The original page did not advance its saved position.');
       if(seen.has(next))fail('OPENSEARCH_CLIENT_PAGINATION','The original page repeated a continuation token.');
       seen.add(next);selected[input]=next;
+    }}finally{
+      if(ownedReadId)await this.materialWorklistRecordRelease({
+        inputId:args.inputId,expectedInputSha256:args.expectedInputSha256,returnId:args.returnId,section:args.section,
+        ...(args.index===undefined?{}:{index:args.index}),readId:ownedReadId
+      },{...options,requestSignal:undefined});
     }
   }
   /** Read a complete selected original record; no partial body is returned as complete. */
@@ -189,8 +199,8 @@ export class OpenSearchMaterialClient {
       const key=JSON.stringify(current);if(identity!==null&&identity!==key)
         fail('OPENSEARCH_CLIENT_REPLY_INVALID','The complete retained record identity changed during reading.');
       identity=key;metadata=current;
-      if(part.offset!==length||!Number.isSafeInteger(part.bytes)||part.bytes<1||part.bytes>262144||
-          typeof part.dataBase64!=='string'||part.dataBase64.length>349528)
+      if(part.offset!==length||!Number.isSafeInteger(part.bytes)||part.bytes<1||part.bytes>MAX_RETAINED_CHUNK_BYTES||
+          typeof part.dataBase64!=='string'||part.dataBase64.length>Math.ceil(MAX_RETAINED_CHUNK_BYTES/3)*4)
         fail('OPENSEARCH_CLIENT_REPLY_INVALID','The retained record byte page is invalid.');
       const bytes=Buffer.from(part.dataBase64,'base64');
       if(bytes.length!==part.bytes||bytes.toString('base64')!==part.dataBase64||length+bytes.length>current.recordBytes)
