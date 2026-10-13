@@ -123,6 +123,7 @@ export async function startMerchantServer({ workspace, operatorToken, host = '12
     const origin = header(request, 'origin'), localOrigin = 'http://' + header(request, 'host');
     if (origin && origin !== workspace.config.publicOrigin && origin !== localOrigin) fail('ORIGIN_NOT_ALLOWED', 403);
     if (parsed.search) fail('QUERY_NOT_SUPPORTED');
+    if (path === '/api/observations' && request.method === 'GET') return respond(response, 200, workspace.observations());
     if (path === '/api/state' && request.method === 'GET') return respond(response, 200, { config: workspace.publicConfig(), orders: workspace.listOrders() });
     if (path === '/api/orders' && request.method === 'POST') {
       const selection = await jsonBody(request);
@@ -211,7 +212,12 @@ export async function loadMerchantConfiguration(configPath, { env = process.env,
     configuration: config.fulfillmentOptions ?? {}, baseDirectory: dirname(configPath), expectedManifestSha256,
   }) : module;
   if (typeof fulfillment.fulfill !== 'function' || typeof fulfillment.reconcile !== 'function') fail('FULFILLMENT_MODULE_CONTRACT_REQUIRED');
-  return { config, credential, operatorToken, webhookSecretsByVersion, fulfillment };
+  const observationBinding = Object.freeze({
+    kind: reviewed ? 'reviewed-file-inputs' : 'configuration-file',
+    configSha256: reviewed?.configSha256 ?? createHash('sha256').update(raw).digest('hex'),
+    inputsSha256: reviewed?.inputsSha256 ?? null,
+  });
+  return { config, credential, operatorToken, webhookSecretsByVersion, fulfillment, observationBinding };
 }
 export async function main(argv = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true,
