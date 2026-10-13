@@ -39,7 +39,7 @@ const inputRoot=resolve(process.argv[2]),out=resolve(process.argv[3]);
 await mkdir(out,{recursive:true,mode:0o700});
 const inputs=JSON.parse(await readFile(join(inputRoot,'inputs.json'),'utf8')).filter(row=>row.sourceKind.endsWith('BANK_ISSUED_EXAMPLE')||row.sourceKind==='GS_ISSUER_PUBLISHED_EXAMPLE');
 const result={schema:'stellar-forge.camt053.application-receiving.v1',operation:'SCF-BANK-CAMT053-SOURCE-DFF77-20261013',
- sourceCommit:'933219ca2f66ebbaf28d5a7ef69cefe278de2a98',startedAt:new Date().toISOString(),completed:false,node:process.version,files:[],assets:[],coldReopen:[]};
+ sourceCommit:'f912a1ece05abcfeaa83882dfb86db719fd745da',startedAt:new Date().toISOString(),completed:false,node:process.version,files:[],assets:[],coldReopen:[]};
 const save=async(name,value)=>{const target=join(out,name);await mkdir(resolve(target,'..'),{recursive:true,mode:0o700});await writeFile(target,Buffer.isBuffer(value)?value:typeof value==='string'?value:json(value),{mode:0o600});};
 const actor='Original issued CAMT application receiving';
 const serial=value=>JSON.parse(JSON.stringify(value));
@@ -52,7 +52,7 @@ await writeFile(termsFile,json({schema:'stellar-forge.merchant-accounting-terms.
 let workspace,running,client;
 const received=[],closePlans=[],retainedCloses=[];
 const operatorReview=JSON.parse(await readFile(join(inputRoot,'SAMPLE_OPERATOR_REVIEW.json'),'utf8'));
-result.edition='NORDEA_AND_GS08_20261013';result.closes=[];result.coldCloses=[];
+result.edition='NORDEA_GS_BUNDESBANK_COLLECTIONS_20261013';result.closes=[];result.coldCloses=[];
 try{
  workspace=await openAccountingWorkspace({directory,outboxDir,proofDir,termsFile});
  const r=await new ReceivablesWorkspace(workspace).init();
@@ -62,7 +62,15 @@ try{
  const initial=await client.state();
  const bound=values=>({revision:workspace.state.revision,actor,requestId:randomUUID(),workspaceId:initial.workspaceId,...values});
  result.workspace={directory,workspaceId:initial.workspaceId,sourcesSha256:initial.sourcesSha256};
- for(const path of ['/bank-statements/','/bank-statements/camt.mjs','/bank-statements/CAMT053.md','/bank-statements/sdk/client.mjs']){
+ const collectionOutput=join(out,'bundesbank-delivery'),collectionReceiver=fileURLToPath(new URL('./BUNDESBANK_RECEIVE.mjs',import.meta.url));
+ const collectionRun=spawnSync(process.execPath,[collectionReceiver,'--workspace-id',initial.workspaceId,'--out',collectionOutput],
+  {encoding:'utf8',maxBuffer:8_000_000,timeout:60000});
+ await save('bundesbank-collection-run.json',{status:collectionRun.status,stdout:collectionRun.stdout,stderr:collectionRun.stderr,error:collectionRun.error?.message});
+ assert.equal(collectionRun.status,0,collectionRun.stderr||collectionRun.error?.message);
+ result.sourceCollection=JSON.parse(await readFile(join(collectionOutput,'RECEIVING_RESULT.json'),'utf8'));
+ assert.equal(result.sourceCollection.completed,true);assert.equal(result.sourceCollection.workspaceId,initial.workspaceId);
+ assert.equal(result.sourceCollection.files,22);assert.equal(result.sourceCollection.reviewedStatements,2);assert.equal(result.sourceCollection.retainedOtherReports,20);
+ for(const path of ['/bank-statements/','/bank-statements/camt.mjs','/bank-statements/source-collections.mjs','/bank-statements/source-collection-model.mjs','/bank-statements/CAMT053.md','/bank-statements/sdk/client.mjs']){
   const response=await fetch(origin+path);assert.equal(response.status,200,path);
   const bytes=Buffer.from(await response.arrayBuffer());assert(bytes.length>0);result.assets.push({path,bytes:bytes.length,sha256:sha(bytes)});
  }
@@ -70,7 +78,7 @@ try{
  for(const input of inputs){
   const bytes=await readFile(join(inputRoot,input.local)),prefix='files/'+input.label;
   const source={format:'CAMT053',file:{name:input.name,dataBase64:bytes.toString('base64')},
-   accountNamespace:input.accountNamespace||'NORDEA-ISSUED-EXAMPLES',camt:{detailPolicy:'ENTRY_CURRENCY_TX_AMT'}};
+   accountNamespace:input.accountNamespace||'NORDEA-ISSUED-EXAMPLES',camt:{detailPolicy:'ENTRY_CURRENCY_TX_AMT',...input.camt}};
   const item={name:input.name,label:input.label,bytes:bytes.length,sha256:sha(bytes),sourceKind:input.sourceKind,provenance:input.provenance??null,imports:[]};
   result.files.push(item);
   if(input.expectedRejection){
@@ -81,12 +89,15 @@ try{
   }
   const preparedPath=join(out,input.label+'-prepared-source.json');
   const cliRun=spawnSync(process.execPath,[cli,'prepare-source','--file',join(inputRoot,input.local),'--format','CAMT053','--out',preparedPath,
-   '--account-namespace',source.accountNamespace,'--message-version',input.expected.messageVersion,'--detail-policy','ENTRY_CURRENCY_TX_AMT'],
+   '--account-namespace',source.accountNamespace,'--message-version',input.expected.messageVersion,'--detail-policy',source.camt.detailPolicy,
+   ...(source.camt.namespaceMode?['--namespace-mode',source.camt.namespaceMode]:[]),
+   ...(source.camt.referencePolicy?['--reference-policy',source.camt.referencePolicy]:[])],
    {encoding:'utf8',maxBuffer:8_000_000,timeout:30000});
   await save(prefix+'/cli-prepare.json',{status:cliRun.status,stdout:cliRun.stdout,stderr:cliRun.stderr});
   assert.equal(cliRun.status,0,cliRun.stderr);
   const prepared=JSON.parse(await readFile(preparedPath,'utf8'));assert.deepEqual(Buffer.from(prepared.source.file.dataBase64,'base64'),bytes);
   assert.equal(prepared.source.format,'CAMT053');assert.equal(prepared.source.camt.messageVersion,input.expected.messageVersion);
+  for(const[key,value]of Object.entries(source.camt))assert.equal(prepared.source.camt[key],value,'CLI and HTTP carry the same original interpretation');
   const native=readBankStatementSource(source),preview=await client.previewSource({source});
   assert.equal(preview.file.sha256,sha(bytes));assert.equal(preview.camt.namespace,native.camt.namespace);
   assert.equal(preview.statements.length,native.statements.length);
@@ -95,7 +106,7 @@ try{
    const selected=preview.statements[si],expected=native.statements[si];
    assert.deepEqual(selected.camt,serial(expected.camt));assert.deepEqual(selected.balances,serial(expected.balances));
    let account=(await client.state()).accounts.find(row=>row.sourceIdentitySha256===selected.account.identitySha256);
-   if(!account)account=(await client.saveAccount(bound({account:{name:(input.sourceKind==='GS_ISSUER_PUBLISHED_EXAMPLE'?'GS published ':'Nordea issued ')+input.label,currency:{code:selected.account.currency,scale:2},
+   if(!account)account=(await client.saveAccount(bound({account:{name:(input.sourceKind==='GS_ISSUER_PUBLISHED_EXAMPLE'?'GS published ':input.sourceKind==='BUNDESBANK_BANK_ISSUED_EXAMPLE'?'Bundesbank issued ':'Nordea issued ')+input.label,currency:{code:selected.account.currency,scale:2},
      sourceIdentitySha256:selected.account.identitySha256,note:'Original issued source '+input.name}}))).account;
    const request=bound({accountId:account.id,statementId:selected.id,source,reviewSha256:preview.reviewSha256});
    const saved=await client.receiveSource(request),importId=saved.import.id,revision=workspace.state.revision;
@@ -141,6 +152,16 @@ try{
     originalSha256:sha(original),replayed:true,closing:closing.map(x=>({eligible:x.eligible,issues:x.issues}))});
   }
   item.status='RECEIVED';await save('APPLICATION_RESULT.json',result);
+ }
+ const bundesbank=result.files.filter(item=>item.sourceKind==='BUNDESBANK_BANK_ISSUED_EXAMPLE');
+ assert.equal(bundesbank.length,2);assert.equal(bundesbank.flatMap(item=>item.imports).reduce((sum,item)=>sum+item.rows,0),22);
+ for(const item of bundesbank){
+  assert.equal(item.imports.length,1);const detail=await client.importDetail(item.imports[0].id);
+  const first=await client.detail(detail.import.rowIds[2]),second=await client.detail(detail.import.rowIds[3]);
+  assert.notEqual(first.transaction.id,second.transaction.id);
+  assert.equal(first.transaction.providerId,second.transaction.providerId);
+  assert.equal(first.transaction.sourceAmount,'-20000');assert.equal(second.transaction.sourceAmount,'-15');
+  assert.equal(first.transaction.camt.providerIdentityBasis,'SOURCE_ENTRY');assert.equal(second.transaction.camt.providerIdentityBasis,'SOURCE_ENTRY');
  }
  const state=await client.state();await save('SAVED_STATE.json',state);
  assert.equal(r.data().receipts.length,0);assert.equal(r.data().bankStatements.matches.length,0);
