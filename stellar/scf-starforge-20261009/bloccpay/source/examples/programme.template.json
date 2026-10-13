@@ -1,0 +1,41 @@
+{
+  "id": "SELECT_ORIGINAL_PROGRAMME_ID",
+  "name": "Selected payroll programme",
+  "environment": "sandbox",
+  "connectionAliases": {
+    "sdpCreator": "sdpCreator",
+    "sdpApprover": "sdpApprover",
+    "horizon": "horizonTestnet",
+    "bridge": "bridgeSandbox"
+  },
+  "sourceWalletId": "SELECT_ORIGINAL_DISTRIBUTION_WALLET_ID",
+  "asset": {
+    "code": "SELECT_ACTUAL_ASSET_CODE",
+    "issuer": "SELECT_ACTUAL_ISSUER",
+    "scale": 7
+  },
+  "period": {
+    "start": "SELECT_ORIGINAL_PERIOD_START_ISO",
+    "end": "SELECT_ORIGINAL_PERIOD_END_ISO"
+  },
+  "mapping": {
+    "id": "id",
+    "externalId": "externalId",
+    "externalPaymentId": "externalPaymentId",
+    "amount": "amount",
+    "currency": "currency",
+    "phoneNumber": "phoneNumber",
+    "email": "email",
+    "verificationValue": "verificationValue",
+    "memo": "memo",
+    "walletAddress": "walletAddress",
+    "walletAddressMemo": "walletAddressMemo",
+    "links.sdpDisbursementId": "sdpDisbursementId",
+    "links.sdpPaymentId": "sdpPaymentId",
+    "links.sdpReceiverId": "sdpReceiverId",
+    "links.bridgeTransferId": "bridgeTransferId",
+    "links.bridgeVirtualAccountId": "bridgeVirtualAccountId",
+    "links.bridgeDepositId": "bridgeDepositId",
+    "links.stellarTransactionHash": "stellarTransactionHash"
+  }
+}

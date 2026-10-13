@@ -1,0 +1,13 @@
+{
+  "schema": "bloccpay.sdp-sdk-adapter.configuration.v1",
+  "workspaceDirectory": "/absolute/existing/bloccpay-workspace",
+  "expectedWorkspaceId": "SELECT_EXISTING_COMPANY_WORKSPACE_ID",
+  "configurationFile": "/absolute/private/bloccpay-connections.json",
+  "connectionAlias": "sdpCreator",
+  "programmeVersionId": "SELECT_EXISTING_COMPANY_PROGRAMME_VERSION_ID",
+  "subscriptionId": "SELECT_EXISTING_SDP_WEBHOOK_ENDPOINT",
+  "evidence": {
+    "versionIds": {},
+    "sourceIds": {}
+  }
+}

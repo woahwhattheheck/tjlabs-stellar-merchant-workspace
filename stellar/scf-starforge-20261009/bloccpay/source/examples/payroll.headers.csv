@@ -1,0 +1,1 @@
+id,externalId,externalPaymentId,amount,currency,phoneNumber,email,verificationValue,memo,walletAddress,walletAddressMemo,sdpDisbursementId,sdpPaymentId,sdpReceiverId,bridgeTransferId,bridgeVirtualAccountId,bridgeDepositId,stellarTransactionHash
