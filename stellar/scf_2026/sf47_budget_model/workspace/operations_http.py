@@ -13,6 +13,9 @@ from operations_commercial_http import handle as commercial_http
 
 
 def register_static(static):
+    static.update({"/operations_navigation.mjs": ("operations_navigation.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_navigation_ui.mjs": ("operations_navigation_ui.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
     static.update({"/operations_funding.mjs": ("operations_funding.mjs", "text/javascript; charset=utf-8"),
                    "/operations_funding.css": ("operations_funding.css", "text/css; charset=utf-8"),
                    "/COST_FUNDING.md": ("COST_FUNDING.md", "text/markdown; charset=utf-8")})

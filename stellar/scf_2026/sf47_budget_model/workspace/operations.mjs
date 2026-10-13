@@ -1,3 +1,5 @@
+import {defineSections,normalizeNavigationState} from './operations_navigation.mjs';
+import {mountOperationsNavigation} from './operations_navigation_ui.mjs';
 import {mountStatements} from './operations_statements.mjs';
 import {mountForecast} from './forecast.mjs';
 import {mountPortfolio} from './portfolio.mjs';
@@ -24,6 +26,7 @@ import {mountCommercialReceivables} from './operations_commercial.mjs';
 import {mountTaskOutcomes} from './operations_task_outcomes.mjs';
 import {mountFunding} from './operations_funding.mjs';
 
+const retainedNavigationSessions=new Map();
 const retainedStatementSessions=new Map();
 const retainedSupportSessions=new Map();
 const retainedBuyerSessions=new Map();
@@ -53,6 +56,7 @@ const title = value => String(value ?? '').toLowerCase().replaceAll('_',' ').rep
 const money = value => value === null || value === undefined ? 'Unvalued' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
 const date = () => new Date().toISOString().slice(0,10);
 const timestamp = () => new Date().toISOString();
+const navigationSections=defineSections([['overview','Plan / actual'],['amendments','Plan amendments'],['performance','Budget performance'],['ledger-intake','Bulk ledger intake'],['supplier-account','Supplier accounts'],['contributors','Contributors'],['engagements','Contributor engagements'],['work','Work'],['invoices','Invoices'],['work-intake','Work / invoice intake'],['cash','Cash / issuer'],['statements','Account statements'],['account-reconciliation','Account reconciliation'],['completion','Tranche completion'],['calendar','Delivery calendar'],['cohort-planning','Customer adoption plan'],['cohort','Cohort acceptance'],['forecast','Operating forecast'],['portfolio','Portfolio allocation'],['delivery','Deployment / buyers'],['installations','Customer installations'],['task-outcomes','Customer task outcomes'],['funding','Cost funding'],['customer-use','Customer use'],['installation-returns','Receiving returns'],['commercial','Customer billing'],['dispatch','Delivery queue'],['implementation','Implementation evidence'],['support','Merchant support'],['buyer','Native buyer receiving'],['sources','Sources'],['reviews','Reviews / history']]);
 const labels = {contributors:'Contributors',work:'Recorded work',invoices:'Invoices',cash:'Observed cash',awards:'Issuer events',deployments:'Deployments',purchases:'Purchase observations',outcomes:'Delivery outcomes'};
 const singular = {contributors:'contributor',work:'work',invoices:'invoice',cash:'cash',awards:'award',deployments:'deployment',purchases:'purchase',outcomes:'outcome'};
 const values = (...choices) => choices.map(value => [value,title(value)]);
@@ -81,9 +85,66 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   const view={cases:[],current:null,tab:'overview',busy:false,events:[],nextAfter:null,form:null};
   let active=true,statementView=null,forecastView=null,forecastViewCase=null,portfolioView=null,supportView=null,completionView=null,calendarView=null,customerUseView=null,buyerView=null,cohortView=null,cohortPlanningView=null,installationView=null,installationReturnView=null,dispatchView=null,implementationView=null,engagementView=null,performanceView=null,ledgerIntakeView=null,payablesView=null,cashAccountView=null,accountReconciliationView=null,commercialView=null,workIntakeView=null,amendmentView=null;
   let taskOutcomeView=null,fundingView=null;
+  let navigationView=null;
   let localBusy=false,hostBusy=false;
   view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;
   const available=()=>active&&root.isConnected;
+  function navigationSession(caseId) {
+    if(!retainedNavigationSessions.has(caseId)){
+      let original;try{original=JSON.parse(sessionStorage.getItem('sf47.operations.navigation.v1.'+caseId)||'null');}catch{}
+      retainedNavigationSessions.set(caseId,normalizeNavigationState(original,navigationSections));
+    }
+    return retainedNavigationSessions.get(caseId);
+  }
+  function saveNavigation(caseId,preferences) {
+    if(!available()||view.current?.program.id!==caseId)return;
+    try{sessionStorage.setItem('sf47.operations.navigation.v1.'+caseId,JSON.stringify(preferences));}catch{}
+  }
+  function openSection(sectionId) {
+    if(!available()||view.busy||!navigationSections.some(section=>section.id===sectionId))return;
+    view.tab=sectionId;render();$('[data-ops-current-panel]')?.focus();
+  }
+  async function openNavigationEntry(entry,action,origin) {
+    if(!available())return;
+    await run(async()=>{
+      const c=view.current;
+      if(c?.program.id!==origin.caseId||c.program.version!==origin.version)
+        throw new Error('The current case changed. Reopen its finder before using this original record.');
+      if(action==='source'){
+        const metadata=c.sources.find(row=>row.id===entry.id);
+        if(!metadata||metadata.sha256!==entry.data.sha256)throw new Error('The original source selection changed.');
+        const response=await api('/api/operations/'+c.program.id+'/sources/'+metadata.id,undefined,{download:true});
+        download(await response.blob(),metadata.filename);return;
+      }
+      if(action==='review'){
+        if(!c.reviews.some(row=>row.id===entry.id))throw new Error('The original saved review is unavailable in this case.');
+        const original=await api('/api/operations/'+c.program.id+'/reviews/'+entry.id);
+        download(JSON.stringify(original,null,2)+'\n',entry.id+'.json');return;
+      }
+      if(!navigationSections.some(section=>section.id===entry.section))throw new Error('The original section is unavailable.');
+      if(entry.collection==='forecasts'){
+        if(!c.forecasts.some(row=>row.id===entry.id))throw new Error('The original forecast is unavailable in this case.');
+        const retainedDraft=forecastView?.draftInputs()||view.forecastDraft;
+        if(retainedDraft){
+          download(JSON.stringify(retainedDraft,null,2)+'\n',c.program.id+'-forecast-inputs-before-selection.json');
+          inform('Retained the open forecast inputs in a complete file before opening the saved forecast.');
+        }
+        view.forecastId=entry.id;view.forecastDraft=null;
+      }
+      if(entry.collection==='portfolios'){
+        if(!c.portfolios.some(row=>row.id===entry.id))throw new Error('The original portfolio is unavailable in this case.');
+        view.portfolioId=entry.id;
+      }
+      view.tab=entry.section;render();
+      if(action==='edit'){
+        const editableKinds=new Set(['contributors','work','invoices','awards','deployments','purchases','outcomes']);
+        const row=c.records[entry.collection]?.find(item=>item.id===entry.id);
+        if(c.program.state!=='OPEN'||!editableKinds.has(entry.collection)||!row)
+          throw new Error('Open this original record in its own section to continue.');
+        showForm(entry.collection,row);
+      }else $('[data-ops-current-panel]')?.focus();
+    });
+  }
   function openCalendarSource(programId,tab,tranche,selection={}){
     if(!available()||view.current?.program.id!==programId)return;
     if(tab==='completion'){
@@ -98,7 +159,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     view.tab=tab;render();
   }
   function requireActive() {if(!available()){const error=new Error('This operations view is closed. Reopen the retained case to continue.');error.code='OPERATIONS_VIEW_CLOSED';throw error;}}
-  function dispose() {active=false;forecastView?.dispose();portfolioView?.dispose();supportView?.dispose();completionView?.dispose();calendarView?.dispose();customerUseView?.dispose();buyerView?.dispose();cohortView?.dispose();cohortPlanningView?.dispose();installationView?.dispose();installationReturnView?.dispose();dispatchView?.dispose();implementationView?.dispose();statementView?.dispose();performanceView?.dispose();engagementView?.dispose();ledgerIntakeView?.dispose();payablesView?.dispose();cashAccountView?.dispose();accountReconciliationView?.dispose();commercialView?.dispose();workIntakeView?.dispose();amendmentView?.dispose();taskOutcomeView?.dispose();fundingView?.dispose();const dialog=root.querySelector('dialog.ops-dialog');if(dialog?.open)dialog.close();}
+  function dispose() {active=false;navigationView?.dispose();forecastView?.dispose();portfolioView?.dispose();supportView?.dispose();completionView?.dispose();calendarView?.dispose();customerUseView?.dispose();buyerView?.dispose();cohortView?.dispose();cohortPlanningView?.dispose();installationView?.dispose();installationReturnView?.dispose();dispatchView?.dispose();implementationView?.dispose();statementView?.dispose();performanceView?.dispose();engagementView?.dispose();ledgerIntakeView?.dispose();payablesView?.dispose();cashAccountView?.dispose();accountReconciliationView?.dispose();commercialView?.dispose();workIntakeView?.dispose();amendmentView?.dispose();taskOutcomeView?.dispose();fundingView?.dispose();const dialog=root.querySelector('dialog.ops-dialog');if(dialog?.open)dialog.close();}
   const inform=(...args)=>{if(available())notify(...args);};
   const download=(...args)=>{if(available())downloadFile(...args);};
   async function api(...args) {
@@ -132,7 +193,8 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   function applyBusy() {
     const value=localBusy||hostBusy;
     view.busy=value;root.setAttribute('aria-busy',String(value));
-    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.operating-forecast,.portfolio,.support-delivery,.completion-desk,.grant-delivery-calendar,.customer-use-calendar,.buyer-receiving,.cohort-desk,.cohort-planning,.installation-desk,.installation-return-desk,.delivery-queue,.implementation-evidence-desk,.engagement-desk,.statement-desk,.budget-performance,.ledger-intake,.supplier-accounts,.cash-account-desk,.account-reconciliation-desk,.commercial-desk,.work-intake-desk,.plan-amendments,.task-outcomes-desk,.cost-funding-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
+    root.querySelectorAll('button,input,select,textarea').forEach(el=>{if(!el.closest('.operating-navigation,.operating-forecast,.portfolio,.support-delivery,.completion-desk,.grant-delivery-calendar,.customer-use-calendar,.buyer-receiving,.cohort-desk,.cohort-planning,.installation-desk,.installation-return-desk,.delivery-queue,.implementation-evidence-desk,.engagement-desk,.statement-desk,.budget-performance,.ledger-intake,.supplier-accounts,.cash-account-desk,.account-reconciliation-desk,.commercial-desk,.work-intake-desk,.plan-amendments,.task-outcomes-desk,.cost-funding-desk'))el.disabled=value||el.dataset.opsFixed==='true';});
+    navigationView?.setHostBusy(value);
     forecastView?.setHostBusy(value);portfolioView?.setHostBusy(value);supportView?.setHostBusy(value);completionView?.setHostBusy(value);calendarView?.setHostBusy(value);customerUseView?.setHostBusy(value);buyerView?.setHostBusy(value);cohortView?.setHostBusy(value);cohortPlanningView?.setHostBusy(value);installationView?.setHostBusy(value);installationReturnView?.setHostBusy(value);dispatchView?.setHostBusy(value);implementationView?.setHostBusy(value);statementView?.setHostBusy(value);performanceView?.setHostBusy(value);engagementView?.setHostBusy(value);ledgerIntakeView?.setHostBusy(value);amendmentView?.setHostBusy(value);payablesView?.setHostBusy(value);cashAccountView?.setHostBusy(value);accountReconciliationView?.setHostBusy(value);commercialView?.setHostBusy(value);workIntakeView?.setHostBusy(value);taskOutcomeView?.setHostBusy(value);fundingView?.setHostBusy(value);
   }
   function setBusy(value) {localBusy=Boolean(value);applyBusy();}
@@ -144,7 +206,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
     view.cases=(await api('/api/operations')).cases;
     let retained;try{retained=sessionStorage.getItem('sf47.operations.case.'+plan.id);}catch{}
     const target=prefer||view.cases.find(row=>row.id===retained)?.id||view.cases[0]?.id;
-    if(view.current?.program.id!==target){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;}
+    if(view.current?.program.id!==target){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;view.tab=target?navigationSession(target).activeSection:'overview';}
     view.current=target?await api('/api/operations/'+target):null;
     if(target)try{sessionStorage.setItem('sf47.operations.case.'+plan.id,target);}catch{}
     view.events=[];view.nextAfter=null;render();
@@ -217,6 +279,7 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   function render() {
     if(!available())return;
     if(forecastView&&forecastViewCase===view.current?.program.id){try{view.forecastDraft=forecastView.draftInputs();}catch{}}
+    navigationView?.dispose();navigationView=null;
     amendmentView?.dispose();amendmentView=null;
     forecastView?.dispose();forecastView=null;forecastViewCase=null;
     portfolioView?.dispose();portfolioView=null;
@@ -247,10 +310,17 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
       +(c?'<div class="ops-case-heading"><div><strong>'+esc(c.program.name)+'</strong> '+flag(c.program.state)+' <span>Version '+c.program.version+' · '+esc(c.plan.name)+' · pinned revision '+c.program.planRevision+'</span></div><div class="ops-actions">'+button('Refresh case','refresh')+button('Export complete case','export')+(c.program.state==='CLOSED'?button('Reopen review','reopen'):'')+'</div></div>'
        +(c.program.mode==='WALKTHROUGH'?'<p class="ops-note"><strong>Internal walkthrough.</strong> These fictional workflow records are separate from operating cash, awards and customer outcomes.</p>':'')
        +(c.program.currentPlanRevision!==c.program.planRevision?'<p class="ops-note">The planner has a newer saved revision. This case retains its selected baseline revision '+c.program.planRevision+'.</p>':'')
-       +'<nav class="ops-tabs" aria-label="Delivery operations sections">'+[['overview','Plan / actual'],['amendments','Plan amendments'],['performance','Budget performance'],['ledger-intake','Bulk ledger intake'],['supplier-account','Supplier accounts'],['contributors','Contributors'],['engagements','Contributor engagements'],['work','Work'],['invoices','Invoices'],['work-intake','Work / invoice intake'],['cash','Cash / issuer'],['statements','Account statements'],['account-reconciliation','Account reconciliation'],['completion','Tranche completion'],['calendar','Delivery calendar'],['cohort-planning','Customer adoption plan'],['cohort','Cohort acceptance'],['forecast','Operating forecast'],['portfolio','Portfolio allocation'],['delivery','Deployment / buyers'],['installations','Customer installations'],['task-outcomes','Customer task outcomes'],['funding','Cost funding'],['customer-use','Customer use'],['installation-returns','Receiving returns'],['commercial','Customer billing'],['dispatch','Delivery queue'],['implementation','Implementation evidence'],['support','Merchant support'],['buyer','Native buyer receiving'],['sources','Sources'],['reviews','Reviews / history']].map(([id,label])=>'<button type="button" data-ops-tab="'+id+'"'+(view.tab===id?' aria-current="page"':'')+'>'+esc(label)+'</button>').join('')+'</nav><div class="ops-panel">'+({overview,contributors,work,invoices,cash,delivery,sources,reviews,amendments:()=>'<div data-ops-amendments></div>','work-intake':()=>'<div data-ops-work-intake></div>',statements:()=>'<div data-ops-statements></div>','account-reconciliation':()=>'<div data-ops-account-reconciliation></div>',support:()=>'<div data-ops-support></div>',buyer:()=>'<div data-ops-buyer></div>',completion:()=>'<div data-ops-completion></div>',engagements:()=>'<div data-ops-engagements></div>',calendar:()=>'<div data-ops-calendar></div>','customer-use':()=>'<div data-ops-customer-use></div>','cohort-planning':()=>'<div data-ops-cohort-planning></div>',cohort:()=>'<div data-ops-cohort></div>',installations:()=>'<div data-ops-installations></div>','task-outcomes':()=>'<div data-ops-task-outcomes></div>',funding:()=>'<div data-ops-funding></div>','installation-returns':()=>'<div data-ops-installation-returns></div>',commercial:()=>'<div data-ops-commercial></div>',dispatch:()=>'<div data-ops-dispatch></div>',performance:()=>'<div data-ops-performance></div>','ledger-intake':()=>'<div data-ops-ledger-intake></div>','supplier-account':()=>'<div data-ops-payables></div>',implementation:()=>'<div data-ops-implementation></div>',forecast:()=>'<div data-ops-forecast></div>',portfolio:()=>'<div data-ops-portfolio></div>'}[view.tab])()+'</div>'
+       +'<div class="ops-layout"><div class="ops-nav-host" data-ops-navigation></div><div class="ops-panel" data-ops-current-panel tabindex="-1" role="region" aria-label="'+esc(navigationSections.find(section=>section.id===view.tab)?.label||'Operations section')+'">'+({overview,contributors,work,invoices,cash,delivery,sources,reviews,amendments:()=>'<div data-ops-amendments></div>','work-intake':()=>'<div data-ops-work-intake></div>',statements:()=>'<div data-ops-statements></div>','account-reconciliation':()=>'<div data-ops-account-reconciliation></div>',support:()=>'<div data-ops-support></div>',buyer:()=>'<div data-ops-buyer></div>',completion:()=>'<div data-ops-completion></div>',engagements:()=>'<div data-ops-engagements></div>',calendar:()=>'<div data-ops-calendar></div>','customer-use':()=>'<div data-ops-customer-use></div>','cohort-planning':()=>'<div data-ops-cohort-planning></div>',cohort:()=>'<div data-ops-cohort></div>',installations:()=>'<div data-ops-installations></div>','task-outcomes':()=>'<div data-ops-task-outcomes></div>',funding:()=>'<div data-ops-funding></div>','installation-returns':()=>'<div data-ops-installation-returns></div>',commercial:()=>'<div data-ops-commercial></div>',dispatch:()=>'<div data-ops-dispatch></div>',performance:()=>'<div data-ops-performance></div>','ledger-intake':()=>'<div data-ops-ledger-intake></div>','supplier-account':()=>'<div data-ops-payables></div>',implementation:()=>'<div data-ops-implementation></div>',forecast:()=>'<div data-ops-forecast></div>',portfolio:()=>'<div data-ops-portfolio></div>'}[view.tab])()+'</div></div>'
        :empty('Open a case from the selected saved plan or import an original case. Forecast staffing and payouts do not populate actual records.'))
       +'<dialog class="ops-dialog" aria-labelledby="ops-dialog-title"><form method="dialog" data-ops-form><h3 id="ops-dialog-title"></h3><div data-ops-fields class="ops-fields"></div><p data-ops-form-error role="alert"></p><div class="ops-actions"><button type="button" data-ops-action="cancel">Cancel</button><button type="submit" class="primary">Save</button></div></form></dialog>'
       +'<input type="file" data-ops-import hidden accept=".zip,application/zip"><input type="file" data-ops-intake hidden accept=".json,application/json">';
+    if(c){
+      navigationView=mountOperationsNavigation({container:$('[data-ops-navigation]'),hostRoot:root,current:c,
+        sections:navigationSections,activeSection:view.tab,session:navigationSession(c.program.id),
+        onSection:openSection,onEntry:openNavigationEntry,onError:alertError,
+        onState:preferences=>saveNavigation(c.program.id,preferences)});
+      navigationView.setHostBusy(view.busy);
+    }
     if(c&&view.tab==='forecast'){
       const retained=c.forecasts.some(row=>row.id===view.forecastId)?view.forecastId:null;
       forecastViewCase=c.program.id;
@@ -646,11 +716,11 @@ export function mountOperations({container,api:transport,plan,inform:notify,muta
   }
   root.addEventListener('change',event=>{
     if(event.target.name==='recordingActor'){actor=event.target.value;try{sessionStorage.setItem('sf47.operations.actor',actor);}catch{}}
-    if(event.target.name==='caseSelect')run(async()=>{const selectedCase=await api('/api/operations/'+event.target.value);if(selectedCase.program.id!==view.current?.program.id){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;}view.current=selectedCase;view.events=[];view.nextAfter=null;try{sessionStorage.setItem('sf47.operations.case.'+plan.id,view.current.program.id);}catch{}render();});
+    if(event.target.name==='caseSelect')run(async()=>{const selectedCase=await api('/api/operations/'+event.target.value);if(selectedCase.program.id!==view.current?.program.id){view.forecastId=null;view.forecastDraft=null;view.portfolioId=null;view.tab=navigationSession(selectedCase.program.id).activeSection;}view.current=selectedCase;view.events=[];view.nextAfter=null;try{sessionStorage.setItem('sf47.operations.case.'+plan.id,view.current.program.id);}catch{}render();});
     if(event.target.matches('[data-ops-import],[data-ops-intake]')){const file=event.target.files[0];if(file)run(async()=>showForm(event.target.matches('[data-ops-intake]')?'intake':'import',{}, {file,filename:file.name,title:'Receive operations source'}));}
   });
   root.addEventListener('click',event=>{
-    const tab=event.target.closest('[data-ops-tab]');if(tab&&!view.busy){view.tab=tab.dataset.opsTab;render();return;}
+    const tab=event.target.closest('[data-ops-tab]');if(tab&&!view.busy){openSection(tab.dataset.opsTab);return;}
     const target=event.target.closest('[data-ops-action]');if(!target)return;
     const action=target.dataset.opsAction;
     // Open native pickers in the click gesture before busy state disables inputs.
