@@ -12,6 +12,7 @@ import {serveStdio} from "./protocol.mjs";
 import {actions, validateArguments} from "./catalog.mjs";
 import {plainRead, createOnlyFile} from "./files.mjs";
 import {canonical} from "./util.mjs";
+import {projectionHelp,projectionCommandOptions,runProjectionCommand} from "./projection-cli.mjs";
 
 const REQUEST_FORMAT="commons.haystack.operator.request.v1";
 const SOURCE_LIMIT=32*1024*1024;
@@ -323,7 +324,7 @@ Existing output files are accepted only when their complete bytes already match.
 `;
 export async function main(argv=process.argv.slice(2)){
   const {command,flags,positionals}=parse([...argv]);
-  if(command==="help"||flags.help){process.stdout.write(HELP);return;}
+  if(command==="help"||flags.help){process.stdout.write(HELP+projectionHelp);return;}
   if(command==="request"){
     if(positionals.length!==1)throw new Error("Use request ACTION --args OBJECT.json.");
   }else if(positionals.length)throw new Error("Unexpected positional argument: "+positionals[0]);
@@ -371,7 +372,9 @@ export async function main(argv=process.argv.slice(2)){
     if(command==="recover-writer")return output(await workspace.recoverWriter(required(flags,"lock-id")),flags);
     await workspace.read();return serveStdio(workspace);
   }
+  const projectionCommands=projectionCommandOptions(mutationFlags,pageFlags);
   const specific={
+    ...projectionCommands,
     standard:[],"point-intakes":pageFlags,"point-intake":[...pageFlags,"intake-id"],
     "point-import":[...mutationFlags,"file","format","name","delimiter","source-url"],"point-source-download":["intake-id"],
     "model-preview":["file"],"model-assess":["file"],models:pageFlags,model:["model-id","version-id"],
@@ -400,6 +403,7 @@ export async function main(argv=process.argv.slice(2)){
   if(!specific[command])throw new Error("Unknown command "+command+". Use help for the complete workflow.");
   options(flags,[...sharedFlags,...specific[command]]);
   const target=await targetFor(flags);
+  if(projectionCommands[command])return runProjectionCommand(command,flags,target,{required,one,clean,optionalNote,semanticInput,revisionArgs,allPages,output,performMutation,deliveryToFile,readJson,plainRead});
   if(command==="standard")return output(await target.request("semantic.catalog",{}),flags);
   const semanticLists={"point-intakes":"semantic.intakes.list",models:"semantic.models.list","model-validations":"semantic.validations.list","model-returns":"semantic.returns.list"};
   if(semanticLists[command])return output(await allPages(target,semanticLists[command],await revisionArgs(target,flags,clean({modelId:one(flags,"model-id")})),flags),flags);

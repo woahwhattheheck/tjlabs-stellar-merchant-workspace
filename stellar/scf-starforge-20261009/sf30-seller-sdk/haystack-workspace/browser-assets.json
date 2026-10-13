@@ -99,6 +99,34 @@
         "semantic-browser-state.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/projection.html",
+      [
+        "projection.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/projection.js",
+      [
+        "projection.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/projection.css",
+      [
+        "projection.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/PROJECTION.md",
+      [
+        "PROJECTION.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }

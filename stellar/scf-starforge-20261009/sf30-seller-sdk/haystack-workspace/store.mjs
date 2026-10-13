@@ -1,3 +1,5 @@
+import { previewProjection, projectionRead, projectionRows, compareProjections, previewProjectionReturn } from "./projection-model.mjs";
+import { makeProjectionDelivery } from "./projection-reports.mjs";
 import { stringifyJson } from "./json-codec.mjs";
 import { promises as fs, constants as FS } from "node:fs";
 import { join, resolve } from "node:path";
@@ -477,12 +479,18 @@ export class HaystackWorkspace {
   }
   async prepareDelivery(args) {
     const operationId = id(args.operationId), argumentsSha256 = digest({ action: "delivery.prepare", args });
+    const projectionKind = ["projection-grid", "projection-lineage", "projection-report"].includes(args.kind);
     const semanticKind = ["semantic-report", "semantic-dictionary", "semantic-output"].includes(args.kind);
+    if (projectionKind) {
+      need(args.projectionId && args.modelId === undefined && args.editionId === undefined && args.sourceId === undefined && args.role === undefined && args.validationId === undefined && args.name === undefined, "Choose one complete projection version without unrelated source or model selectors.");
+    } else {
+      need(args.projectionId === undefined, "Use projection identity only for a projection delivery.");
+    }
     if (semanticKind) {
       need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined, "Semantic reports retain the chosen model version and its own complete source context.");
       if (args.kind === "semantic-output") need(args.validationId && args.name && args.modelId === undefined && args.versionId === undefined && args.format === undefined, "Download an exact retained native output by its validation and filename.");
       else need(args.modelId && args.validationId === undefined && args.name === undefined, "Choose one complete model version for its report or dictionary.");
-    } else need(args.modelId === undefined && args.versionId === undefined && args.validationId === undefined && args.name === undefined, "Use model selectors only for a semantic delivery.");
+    } else if (!projectionKind) need(args.modelId === undefined && args.versionId === undefined && args.validationId === undefined && args.name === undefined, "Use model selectors only for a semantic delivery.");
     if (args.kind === "workspace") need(args.format === undefined && args.editionId === undefined && args.sourceId === undefined && args.role === undefined,
       "The complete workspace delivery includes every source, edition and application file; omit report-only fields.");
     else if (args.kind === "work-register") need(args.editionId === undefined && args.sourceId === undefined && args.role === undefined, "The complete corrective-work register retains every finding and review; omit asset-report scope fields.");
@@ -498,7 +506,7 @@ export class HaystackWorkspace {
       }
       const state = await this.read(); assertRevision(state, args.expectedRevision);
       need(!state.operations.some(item => item.id === operationId), "This identity belongs to an original saved mutation.", "HAYSTACK_OPERATION", 409);
-      const result = args.kind === "workspace" ? await buildBundle(state) :
+      const result = projectionKind ? makeProjectionDelivery(state, args) : args.kind === "workspace" ? await buildBundle(state) :
         args.kind === "work-register" ? makeWorkReport(state, args) :
         ["semantic-report", "semantic-dictionary"].includes(args.kind) ? makeSemanticReport(state, args) :
         args.kind === "semantic-output" ? semanticNativeDelivery(state, args) :
@@ -557,6 +565,11 @@ export class HaystackWorkspace {
     assertRevision(state, args.expectedRevision);
     const envelope = { workspaceId: state.workspaceId, revision: state.revision, ...(args.editionId ? { editionId: args.editionId } : {}) };
     const paginate = items => ({ ...envelope, ...page(items, args) });
+    if (action === "projection.list") return paginate(projectionRows(state));
+    if (action === "projection.read") return { ...envelope, ...projectionRead(state, args) };
+    if (action === "projection.preview") return { ...envelope, ...previewProjection(state, args) };
+    if (action === "projection.compare") return { ...envelope, ...compareProjections(state, args) };
+    if (action === "projection.return.preview") return { ...envelope, ...previewProjectionReturn(state, args) };
     if (action === "semantic.intakes.list") return paginate((state.semantics?.intakes || []).map(intakeSummary));
     if (action === "semantic.intake.read") {
       const intake = state.semantics?.intakes.find(row => row.id === id(args.intakeId));
