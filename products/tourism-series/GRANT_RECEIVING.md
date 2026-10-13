@@ -10,7 +10,7 @@ The chapter retains the complete Installation product from merchant PR1934, merg
 
 ## Preserve the current cumulative edition
 
-Begin with the publisher’s actual current whole canonical manuscript, complete original dist directory, original source index and current registration set. Append or replace this one complete product H2 in its original author location. Preserve every other chapter and its current source editions. Keep the publisher’s actual current financial and programme selections.
+Begin with the publisher’s actual current whole canonical manuscript, complete original dist directory, original source index and current registration set. Append or replace this complete Tourism author section in its original location. Preserve every other chapter and its current source editions. The current canonical Canvas also has a later, independently authored H3, “Original saved-plan cash realization,” after the Tourism section and before the next H2. That entire source/financial continuation belongs to its original author: preserve it byte-for-byte when updating the Tourism material. Do not delete all content to the next H2 merely because a peer continuation presently shares that heading boundary. Keep the publisher’s actual current financial and programme selections.
 
 Use the existing source receiver and chapter selector:
 
