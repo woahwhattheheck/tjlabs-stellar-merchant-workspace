@@ -102,3 +102,9 @@ Current execution evidence is in **EXAMPLE_RESULTS.md**. Source delivery and an 
 ## Complete browser projects
 
 The offline workbench now assembles and edits multi-port projects through its fifth panel. It saves all current/prior original source pairs, reopens complete projects, and exports full standalone reports and source-annotated CSV/JSON. Native builds include `browser-workspace.json`; `maritime-project-cli.mjs import-workspace --workspace SAVED.json --out NEW_PROJECT` receives a browser project into the original complete native workflow. See PROJECT_GUIDE.md for editing, undo, engine/source binding, limits and the same-operation browser/native receiving course.
+
+## Installed maritime operating workspace
+
+The complete [installed Econdb product](../../../../products/econdb/OPERATING.md) provides the **econdb-maritime** source selection, four original commands, a typed client and the source-owned **econdb** Applications provider. Its private loopback desk receives original responses, retains analyses and complete projects, publishes typed datasets, compiles original public merchant terms and exports existing buyer returns. Source capture, version activation and payment remain their original native workflows.
+
+Use `econdb init --directory DIR`, then `econdb serve --directory DIR --port 0`; open the complete private URL. The command journal preserves exact request UUIDs and revisions. Complete manifest-bound directory export/receive reopens the same record identities independently. The original browser receiving course now includes this desk and its handover. Source publication is separate from actually operating and viewing the outgoing product.
