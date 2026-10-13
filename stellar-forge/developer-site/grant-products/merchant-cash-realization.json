@@ -145,14 +145,14 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-client.mjs",
-      "commit": "e93b5fba95466200f75ceed06268b63dae63a900",
+      "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
       "required": false,
       "editions": [
         {
-          "commit": "e93b5fba95466200f75ceed06268b63dae63a900",
-          "bytes": 36797,
-          "sha256": "28500b5f7b38b8f3d4d5eb258d4eb73ad7e87105a11f2bc4f46294fb4bae7d27",
-          "git_blob": "07a0923536c27d97c23ebd9f45f2f615660ebc10"
+          "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
+          "bytes": 36798,
+          "sha256": "de49470f85e6104c5ced09ff8a38d079d8367a39abbe7f9b5e4320941e44eacf",
+          "git_blob": "85389d72d8080d436cd40f27196c8b0303082a30"
         }
       ]
     },
@@ -196,14 +196,14 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/accounting-receivables-cli.mjs",
-      "commit": "e93b5fba95466200f75ceed06268b63dae63a900",
+      "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
       "required": false,
       "editions": [
         {
-          "commit": "e93b5fba95466200f75ceed06268b63dae63a900",
-          "bytes": 43001,
-          "sha256": "f0d4f58cde6bcc53b758bbe849153c7fceddc270595b020c3ef5611a6218e1ea",
-          "git_blob": "52726e5d94f35ab6a85a420b0ea5c358dbc8b233"
+          "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
+          "bytes": 43167,
+          "sha256": "5526e406ea81a89cac60ec1fdc87c16fce7b39fc491dc7c66e60c893f2b28d8e",
+          "git_blob": "5922f201e48ebe07db5a4f403e9920a57cfa85ed"
         }
       ]
     },
@@ -417,14 +417,14 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/cash-realization-receiving.mjs",
-      "commit": "e93b5fba95466200f75ceed06268b63dae63a900",
+      "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
       "required": false,
       "editions": [
         {
-          "commit": "e93b5fba95466200f75ceed06268b63dae63a900",
-          "bytes": 7330,
-          "sha256": "cc849b904ba9eea60174c6c4b2f095bb5f8e1999b4314aa5b9f11415e821f5ec",
-          "git_blob": "e50d4f21178a6050defa632ac1ee642fb66e6866"
+          "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
+          "bytes": 7506,
+          "sha256": "c3fda2b7b8ec3be0af235c8b52d50ef1950fbc406163bb5738d77cbb6ecf44b7",
+          "git_blob": "117b1ebaad9a69d4ab9a7db35a216b1bd07949b2"
         }
       ]
     },
@@ -459,6 +459,23 @@
           "bytes": 11014,
           "sha256": "912dbfb3be60132a3df0a5cc9571ea345977e65a0258bafc64b3a23ebd699b3c",
           "git_blob": "1ac566fe64b02dc3874723fb19bc5a057b6a4c3f"
+        }
+      ]
+    },
+    {
+      "id": "merchant-cash-realization-28",
+      "label": "Original receivables payment-plans/collection-receiving.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection-receiving.mjs",
+      "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
+      "required": false,
+      "editions": [
+        {
+          "commit": "fb9bb080ab06d8d30c70867e8ea5be6538ba5a21",
+          "bytes": 7385,
+          "sha256": "e94aa4db37d82d2c0006fc5001cba96fc2055e290ddee0f57ed9a36f0afb0e95",
+          "git_blob": "d7c3d73b7c590cf4595ba97aa64a4b91dc2542e4"
         }
       ]
     }
