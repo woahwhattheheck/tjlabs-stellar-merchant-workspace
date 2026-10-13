@@ -1,11 +1,12 @@
 // MIT. Full input, plan, result and project artifacts for the original live owner.
 import {constants} from 'node:fs';
-import {mkdir,readdir,open} from 'node:fs/promises';
+import {mkdir,readdir,open,mkdtemp,link,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {canonicalJson} from '../../products/x402api-merchant-workspace/protocol.mjs';
 import {RetainedFileReads} from './retained-file-reads.mjs';
 import {retainMerchantArtifactBytes,syncMerchantArtifactDirectory} from './merchant-project-files.mjs';
 import {projectPrivateDirectory,projectJSON,projectNeed as need} from './merchant-project-connection.mjs';
+import {readMerchantInput} from '../../products/x402api-merchant-workspace/application-inputs.mjs';
 import {invoiceHash} from './merchant-invoice-connection.mjs';
 const SHA=/^[a-f0-9]{64}$/,SCHEMA='stellar-forge.merchant-invoice-agent-artifact.v1';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -26,22 +27,22 @@ export class MerchantInvoiceFiles {
   await retainMerchantArtifactBytes(await this.directory(),artifactId+'.json',Buffer.from(JSON.stringify(record)+'\n'));
   return record;
  }
- async document(kind,native,details={}) {
+ async document(kind,native,details={},maximum=64*1024*1024) {
   const raw=Buffer.from(JSON.stringify(native)+'\n'),sha256=invoiceHash(raw);
-  need(raw.length<=64*1024*1024,'MERCHANT_INVOICE_DOCUMENT_CAPACITY');
+  need(raw.length<=maximum,'MERCHANT_INVOICE_DOCUMENT_CAPACITY');
   await retainMerchantArtifactBytes(await this.directory(),sha256+'.bin',raw);
   return this.#record(kind,{bytes:raw.length,sha256,name:kind+'.json',contentType:'application/json'},details);
  }
  async request(kind,operation,body) {
-  need(['intake','project','invoice-charge','invoice-authorization','invoice-reconcile'].includes(kind)&&UUID.test(operation??''),'MERCHANT_INVOICE_OPERATION_REQUIRED');
-  const artifact=await this.document(kind+'-request',body,{operation});
+  need(['intake','project','invoice-charge','invoice-authorization','invoice-reconcile','review-issue','review-receive','review-decide'].includes(kind)&&UUID.test(operation??''),'MERCHANT_INVOICE_OPERATION_REQUIRED');
+  const artifact=await this.document(kind+'-request',body,{operation},kind==='review-receive'?96*1024*1024+65537:64*1024*1024);
   // Immutable original request reference: a changed body cannot replace the same operation.
   await retainMerchantArtifactBytes(await this.directory(),kind+'-'+operation.toLowerCase()+'.request',
    Buffer.from(JSON.stringify({schema:'stellar-forge.merchant-invoice-agent-request.v1',kind,operation,artifactId:artifact.artifactId})+'\n'));
   return artifact;
  }
  async originalRequest(kind,operation,expectedRequestSha256) {
-  need(['intake','project','invoice-charge','invoice-authorization','invoice-reconcile'].includes(kind)&&UUID.test(operation??'')&&SHA.test(expectedRequestSha256??''),
+  need(['intake','project','invoice-charge','invoice-authorization','invoice-reconcile','review-issue','review-receive','review-decide'].includes(kind)&&UUID.test(operation??'')&&SHA.test(expectedRequestSha256??''),
    'MERCHANT_INVOICE_REQUEST_SELECTION');
   const ref=await projectJSON(join(await this.directory(),kind+'-'+operation.toLowerCase()+'.request'));
   need(ref.schema==='stellar-forge.merchant-invoice-agent-request.v1'&&ref.kind===kind&&ref.operation===operation,
@@ -49,7 +50,7 @@ export class MerchantInvoiceFiles {
   const artifact=await this.inspect(ref.artifactId);
   need(artifact.kind===kind+'-request'&&artifact.operation===operation&&artifact.payload.sha256===expectedRequestSha256,
    'MERCHANT_INVOICE_REQUEST_CHANGED');
-  const body=await projectJSON(join(await this.directory(),artifact.payload.sha256+'.bin'),8*1024*1024);
+  const body=await projectJSON(join(await this.directory(),artifact.payload.sha256+'.bin'),kind==='review-receive'?96*1024*1024+65537:8*1024*1024);
   need(invoiceHash(Buffer.from(JSON.stringify(body)+'\n'))===expectedRequestSha256,'MERCHANT_INVOICE_REQUEST_CHANGED');
   return {artifact,body};
  }
@@ -75,6 +76,32 @@ export class MerchantInvoiceFiles {
    details={operation:input.operation};name='merchant-project.zip';type='application/zip';
   }
   return this.#record(kind,{bytes:saved.bytes,sha256:saved.sha256,name,contentType:type},details);
+ }
+
+ async originalBytes(kind,raw,name,contentType,details={}) {
+  need(Buffer.isBuffer(raw)&&raw.length<=48*1024*1024,'MERCHANT_REVIEW_INPUT_CAPACITY');
+  const sha256=invoiceHash(raw);await retainMerchantArtifactBytes(await this.directory(),sha256+'.bin',raw);
+  return this.#record(kind,{bytes:raw.length,sha256,name,contentType},details);
+ }
+ async reviewDownload(kind,client,input) {
+  const root=await this.directory(),stage=await mkdtemp(join(root,'.review-download-'));
+  try {
+   const path=join(stage,'complete');let saved,name,type;
+   if(kind==='review_document') {saved=await client.downloadCustomerReview(input.invoiceId,input.issueId,path);name='Customer_Review_'+input.issueId+'.html';type='text/html';}
+   else if(kind==='review_return') {saved=await client.downloadCustomerReturn(input.invoiceId,input.returnSha256,path);name='Customer_Return_'+input.returnSha256+'.json';type='application/json';}
+   else {need(kind==='review_support','MERCHANT_REVIEW_FILE_ACTION');saved=await client.downloadCustomerReviewSupport(input.invoiceId,path);name='Merchant_Review_Support_'+input.invoiceId+'.json';type='application/json';}
+   need(Number.isSafeInteger(saved.bytes)&&saved.bytes>=0&&saved.bytes<=192*1024*1024&&SHA.test(saved.sha256??''),'MERCHANT_REVIEW_DOWNLOAD_IDENTITY');
+   if(kind==='review_return')need(saved.sha256===input.returnSha256,'MERCHANT_REVIEW_RETURN_CHANGED');
+   const actual=await readMerchantInput(path,{maximum:saved.bytes,privateOnly:true,allowMultipleLinks:true});
+   need(actual.descriptor.bytes===saved.bytes&&actual.descriptor.sha256===saved.sha256,'MERCHANT_REVIEW_DOWNLOAD_CHANGED');
+   const destination=join(root,saved.sha256+'.bin');
+   try{await link(path,destination);}catch(error){if(error.code!=='EEXIST')throw error;
+    const prior=await readMerchantInput(destination,{maximum:saved.bytes,privateOnly:true,allowMultipleLinks:true});
+    need(prior.descriptor.bytes===saved.bytes&&prior.descriptor.sha256===saved.sha256,'MERCHANT_REVIEW_RETAINED_FILE_CHANGED');}
+   await syncMerchantArtifactDirectory(root);
+   return this.#record(kind,{bytes:saved.bytes,sha256:saved.sha256,name,contentType:type},
+    {invoiceId:input.invoiceId,...(input.issueId?{issueId:input.issueId}:{}),...(input.returnSha256?{returnSha256:input.returnSha256}:{})});
+  } finally {await rm(stage,{recursive:true,force:true});}
  }
  async inspect(artifactId) {
   need(SHA.test(artifactId??''),'MERCHANT_INVOICE_ARTIFACT_REQUIRED');
