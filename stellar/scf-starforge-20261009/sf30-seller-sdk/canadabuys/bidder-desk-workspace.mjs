@@ -4,6 +4,7 @@ import { canonical, sha256, failure, plain, text, revision, timestamp } from './
 import { normalizeCapabilityProfile, normalizeEvidenceDocument, normalizeRequirementAssessment,
   assessCapabilityFit, compareDecisionContext } from './bidder-desk-domain.mjs';
 import { renderDecisionReport } from './bidder-desk-reports.mjs';
+import responseReviewModel from './response-review/model.cjs';
 
 export const BIDDER_DESK_SCHEMA = 'starforge.canadabuys.bidder-desk.v1';
 export const BIDDER_PACKAGE_SCHEMA = 'starforge.canadabuys.package.v2';
@@ -33,6 +34,87 @@ function sourceDescriptor(value){
  const {rawText,entryIds,observations,...source}=value;return source;
 }
 function recordKey(kind,id){return kind+'\n'+id;}
+
+const RESPONSE_ORIGIN='canadabuys-response-review/';
+function responseDocument(record,body){
+ requireThat(record?.accessState==='CAPTURED'&&body&&body.sha256===record.sha256&&body.bytes===record.bytes,
+  'BIDDER_RESPONSE_BODY_MISSING','The complete response needs its selected original evidence bytes');
+ const bytes=Buffer.from(body.base64,'base64');
+ requireThat(bytes.length===body.bytes&&bytes.toString('base64')===body.base64&&sha256(bytes)===body.sha256,
+  'BIDDER_RESPONSE_BODY_CHANGED','The complete response evidence differs from its original bytes');
+ let value;
+ try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
+ catch{throw failure('BIDDER_RESPONSE_JSON','The complete response evidence is not valid UTF-8 JSON',409);}
+ return value;
+}
+function validateResponseCommand(command,edition,graph,bodyMap){
+ const result=command.result,keys=Object.keys(result).sort();
+ if(canonical(keys)===canonical(['record']))return;
+ const applied=canonical(keys)===canonical(['comparison','document','record','returnedRecord']);
+ requireThat(applied||canonical(keys)===canonical(['document','record']),
+  'BIDDER_COMMAND_RESULT_CHANGED','A saved command contains an unsupported result shape');
+ requireThat(edition.localOrigin===RESPONSE_ORIGIN+edition.id,
+  'BIDDER_RESPONSE_ORIGIN','An expanded response result must belong to its original response evidence');
+ const selected=(id,revision)=>{
+  const item=graph.get(recordKey('evidence',id))?.editions?.[revision-1];
+  requireThat(item&&item.revision===revision,'BIDDER_RESPONSE_DEPENDENCY_MISSING','A complete response history dependency is missing',{id,revision});
+  return item;
+ };
+ const read=record=>responseDocument(record,bodyMap.get(record.sha256));
+ const document=read(edition);
+ responseReviewModel.validateDocument(document);
+ requireThat(canonical(document)===canonical(result.document)&&document.id===edition.id&&document.binding.noticeId===edition.noticeId,
+  'BIDDER_RESPONSE_DOCUMENT_CHANGED','The command response differs from its original selected evidence body');
+ if(!applied){
+  requireThat(edition.revision===1&&document.merges.length===0,
+   'BIDDER_RESPONSE_PREPARED_CHANGED','The prepared response must be its initial complete edition');
+  return;
+ }
+ const merge=document.merges.at(-1),returned=result.returnedRecord,comparison=result.comparison;
+ requireThat(plain(merge)&&merge.id===command.id&&merge.previousRevision===edition.revision-1&&plain(returned)&&plain(comparison),
+  'BIDDER_RESPONSE_RETURN_CHANGED','The returned command needs its original receiving history');
+ const previousRecord=selected(edition.id,merge.previousRevision),previous=read(previousRecord);
+ requireThat(canonical(previous.master)===canonical(document.master)&&canonical(previous.binding)===canonical(document.binding)
+  &&canonical(previous.merges)===canonical(document.merges.slice(0,-1)),
+  'BIDDER_RESPONSE_HISTORY_CHANGED','A response return must preserve its original master and complete prior receiving history');
+ requireThat(canonical(returned)===canonical(selected(returned.id,returned.revision))
+  &&returned.noticeId===edition.noticeId&&returned.localOrigin==='canadabuys-response-return/'+edition.id
+  &&canonical(merge.returnedRecord)===canonical({id:returned.id,revision:returned.revision,sha256:returned.sha256,editionSha256:returned.editionSha256}),
+  'BIDDER_RESPONSE_RETURN_CHANGED','The returned original record differs from its complete selected evidence edition');
+ const transfer=read(returned),base=transfer.base;
+ requireThat(transfer.schema===responseReviewModel.TRANSFER_SCHEMA&&plain(base)&&plain(base.record)
+  &&base.record.id===edition.id&&base.record.revision===merge.baselineRevision&&base.record.revision<=merge.previousRevision,
+  'BIDDER_RESPONSE_BASE_CHANGED','The returned original baseline is missing or selects another response');
+ const original=selected(edition.id,base.record.revision);
+ requireThat(canonical(base.record)===canonical(original)&&canonical(base.document)===canonical(read(original))
+  &&sha256(canonical(base))===transfer.transferId&&transfer.transferId===merge.transferId
+  &&sha256(canonical(transfer))===merge.incomingSha256,
+  'BIDDER_RESPONSE_BASE_CHANGED','The returned file differs from its immutable baseline or retained complete return');
+ const rows=responseReviewModel.compareContent(base.document.content,previous.content,transfer.draft.content);
+ const context=merge.context,prior=previous.currentReviewContext||{
+  source:{noticeId:previous.binding.noticeId,entryId:previous.binding.entryId,sourceId:previous.binding.sourceId,rowSha256:previous.binding.rowSha256,row:previous.master.originalRow},
+  workshare:previous.workshare};
+ requireThat(plain(context)&&plain(context.source)&&plain(context.workshare),
+  'BIDDER_RESPONSE_CONTEXT_CHANGED','The receiving history needs its complete reviewed source and workshare');
+ const sameSource=prior.source.entryId===context.source.entryId&&prior.source.sourceId===context.source.sourceId
+  &&prior.source.rowSha256===context.source.rowSha256&&canonical(prior.source.row)===canonical(context.source.row);
+ const changedSource=sameSource?null:{baseline:prior.source,current:context.source};
+ const changedWorkshare=canonical(prior.workshare)===canonical(context.workshare)?null:{baseline:prior.workshare,current:context.workshare};
+ const contextSha256=sha256(canonical(context));
+ const reviewSha256=sha256(canonical({schema:'starforge.canadabuys.response-return-review.v1',workspaceId:base.workspaceId,
+  recordId:edition.id,currentEditionSha256:previousRecord.editionSha256,incomingSha256:merge.incomingSha256,
+  contextSha256,rows,changedSource,changedWorkshare}));
+ requireThat(canonical(merge.changedSource)===canonical(changedSource)&&canonical(merge.changedWorkshare)===canonical(changedWorkshare)
+  &&merge.reviewSha256===reviewSha256&&canonical(document.currentReviewContext)===canonical(context)
+  &&canonical(document.workshare)===canonical(context.workshare)
+  &&canonical(comparison)===canonical({rows,changedSource,changedWorkshare,reviewSha256,contextSha256,returnReady:true,reviewResets:merge.reviewResets}),
+  'BIDDER_RESPONSE_COMPARISON_CHANGED','The saved comparison differs from the complete original three-way review');
+ const selectedContent=responseReviewModel.applyChoices(previous.content,transfer.draft.content,rows,merge.choices);
+ const resolved=responseReviewModel.resolveReviewAttribution(previous.content,transfer.draft.content,selectedContent);
+ requireThat(canonical(resolved.resets)===canonical(merge.reviewResets)&&canonical(resolved.content)===canonical(document.content),
+  'BIDDER_RESPONSE_SELECTION_CHANGED','The saved response differs from its original explicit choices and source-bound review attribution');
+}
+
 
 export class CanadaBuysBidderDesk {
  constructor(workspace,{maximumEvidenceBytes=64*1024*1024}={}){
@@ -432,6 +514,15 @@ export class CanadaBuysBidderDesk {
       for(const item of edition.context.evidence)expanded=include('evidence',item.id,item.revision)||expanded;
       for(const item of edition.context.requirements)expanded=include('requirement',item.id,item.revision)||expanded;
      }
+     if(selected.kind==='evidence'&&edition.localOrigin===RESPONSE_ORIGIN+edition.id){
+      const bytes=this.evidenceFile(edition.id,{revision:edition.revision}).body;
+      const document=responseDocument(edition,{sha256:edition.sha256,bytes:bytes.length,base64:bytes.toString('base64')});
+      responseReviewModel.validateDocument(document);
+      for(const merge of document.merges){
+       requireThat(plain(merge.returnedRecord),'BIDDER_RESPONSE_DEPENDENCY_MISSING','A response return needs its complete original evidence reference');
+       expanded=include('evidence',merge.returnedRecord.id,merge.returnedRecord.revision)||expanded;
+      }
+     }
      if(selected.kind==='requirement')for(const ref of [...edition.sourceEvidence,...edition.supplierEvidence])
       expanded=include('evidence',ref.evidenceId,ref.revision)||expanded;
      if(selected.kind==='profile')for(const id of new Set([...(edition.evidenceIds||[]),...(edition.qualificationClaims||[]).flatMap(c=>c.evidenceIds||[])])){
@@ -583,14 +674,16 @@ export function validateDeskEnvelope(packet){
   }
  }
  const commandIds=new Set(),graph=new Map(packet.records.map(group=>[recordKey(group.kind,group.id),group]));
+ const responseBodies=new Map(packet.bodies.map(body=>[body.sha256,body]));
  for(const command of packet.commands){
   requireThat(plain(command)&&typeof command.id==='string'&&command.id.trim()&&command.id.length<=256&&
    HASH.test(command.fingerprint||'')&&plain(command.result)&&plain(command.result.record)&&!commandIds.has(command.id),
    'BIDDER_COMMAND_INVALID','Every saved command needs its unique id, input fingerprint and original result');
   const record=command.result.record,kind=typeof record.id==='string'?record.id.split('-')[0]:'';
   const edition=graph.get(recordKey(kind,record.id))?.editions?.[record.revision-1];
-  requireThat(edition&&canonical(command.result)===canonical({record:edition}),
+  requireThat(edition&&canonical(command.result.record)===canonical(edition),
    'BIDDER_COMMAND_RESULT_CHANGED','The saved command result differs from its selected original record edition');
+  validateResponseCommand(command,edition,graph,responseBodies);
   commandIds.add(command.id);
  }
  const hashes=new Set();

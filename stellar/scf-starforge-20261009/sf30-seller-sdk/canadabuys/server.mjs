@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { CanadaBuysWorkspace, failure } from './workspace.mjs';
 import { captureCanadaBuys } from './capture.mjs';
 import { routeBidderDesk } from './bidder-desk-http.mjs';
+import { routeResponseReview } from './response-review/routes.mjs';
 import { routeAPM2Capacity } from './examples/apm2/capacity/routes.mjs';
 
 const loopback = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
@@ -71,6 +72,7 @@ export async function startCanadaBuysServer({ directory, operator = 'operator', 
           'X-Content-Type-Options': 'nosniff' }); response.end(page); return;
       }
       if (await routeAPM2Capacity({ request, response, url })) return;
+      if (await routeResponseReview({ workspace, request, response, url, requestJSON, sendJSON, attachment })) return;
       if (await routeBidderDesk({ workspace, request, response, url, requestJSON, sendJSON, attachment, maxRequestBytes })) return;
       if (request.method === 'GET' && url.pathname === '/health') { sendJSON(response, 200, { schema: 'stellar-forge.canadabuys-health.v1', workspace: workspace.metadata() }); return; }
       if (request.method === 'GET' && url.pathname === '/api/workspace') { sendJSON(response, 200, workspace.view()); return; }
