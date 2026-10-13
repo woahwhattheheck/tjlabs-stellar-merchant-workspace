@@ -29,7 +29,8 @@
     "customerTiming": "Original milestone conditions and invoice terms; the extra delay applies only to post-start collections.",
     "additionalHardCostsInDatedCurvesUsd": "0.00",
     "lutraReserveUsd": "200.00",
-    "lutraReserveTiming": "Separate original internal source/compute planning allowance. Its actual cash date has not been selected; the original dated curves below exclude it."
+    "lutraReserveTiming": "Separate original internal source/compute planning allowance. Its actual cash date has not been selected; the original dated curves below exclude it.",
+    "awardCashRealization": "Award figures are USD-denominated equivalents paid in XLM. These cash curves assume the modeled USD equivalents become available on their entered receipt dates, before conversion fees or subsequent price movement."
   },
   "calendar": {
     "startDate": "2026-10-13",
