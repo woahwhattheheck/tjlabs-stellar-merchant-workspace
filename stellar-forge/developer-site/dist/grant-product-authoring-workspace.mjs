@@ -4,7 +4,7 @@ import {
   parseImmutableProductSource,productChapterSources,indexedProductRegistrations,sourceSpecification,
   selectProductSource,previewProductSources,productDeclarationFiles,registrationForComposer,
 } from './grant-product-authoring-core.mjs';
-import {readProductAuthoringContext,readProductRegistrationFile,exportProductDeclarations} from './grant-product-authoring-source.mjs';
+import {readProductAuthoringContext,readProductRegistrationFile,prepareProductDeclarationPreview,exportProductDeclarations} from './grant-product-authoring-source.mjs';
 
 let renderSequence=0;
 const contexts=new Map(),previews=new Map();
@@ -180,10 +180,50 @@ function sourceRows(root,ctx,ui,context,row){
   root.append(section);
 }
 
-function previewView(root,ctx,ui,result){
+function previewView(root,ctx,ui,result,coverage){
   const {node,details,actions,button}=ui;
   root.replaceChildren();root.dataset.previewState='current';
   for(const [key,value]of Object.entries(result.counts))root.dataset[key]=String(value);
+  const chapterRows=new Map();
+  for(const product of coverage.products){
+    if(!chapterRows.has(product.heading))chapterRows.set(product.heading,{heading:product.heading,present:product.present,productIds:[]});
+    chapterRows.get(product.heading).productIds.push(product.id);
+  }
+  const selectedChapters=new Map(coverage.chapters.map(chapter=>[chapter.heading,chapter]));
+  const chapterSection=node('section');
+  chapterSection.dataset.productChapterCoverage='v1';
+  chapterSection.append(node('h3','Chapter coverage'),node('p',
+    compact(coverage.counts.presentProducts)+' of '+compact(coverage.counts.products)+' products present · '+
+    compact(coverage.counts.presentChapters)+' complete chapters · '+compact(coverage.counts.sharedChapters)+
+    ' shared chapters · '+compact(coverage.counts.absentProducts)+' products absent','product-summary'),
+    node('p','This coverage uses the selected retained reviewer edition. A later canonical composition is not automatically part of this draft.','muted'));
+  const identity=node('div');
+  identity.append(ui.readOnly('Coverage reviewer bundle',coverage.basis.bundleId),
+    ui.readOnly('Coverage companion SHA-256',coverage.basis.companion.sha256),
+    ui.readOnly('Coverage source-index SHA-256',coverage.basis.sourceIndex.sha256));
+  chapterSection.append(details('Exact coverage source',identity));
+  const chapters=node('table',undefined,'product-table'),chapterHead=node('thead'),chapterBody=node('tbody'),chapterTitles=node('tr');
+  for(const label of ['Complete chapter','Product owners','Selected edition'])chapterTitles.append(node('th',label));
+  chapterHead.append(chapterTitles);chapters.append(chapterHead,chapterBody);
+  for(const group of chapterRows.values()){
+    const row=node('tr');row.dataset.productChapterHeading=group.heading;row.dataset.productChapterPresent=String(group.present);
+    const chapter=node('td'),owners=node('td'),state=node('td');
+    chapter.append(node('strong',headingLabel(group.heading)));
+    if(group.present){
+      const selected=selectedChapters.get(group.heading);
+      chapter.append(details('Read complete retained chapter',node('pre',selected.markdown,'source-text product-chapter')));
+      state.textContent='Present once'+(group.productIds.length>1?' · shared chapter':'');
+    }else{
+      state.append(node('strong','Absent from this edition'),node('p',
+        'Keep the declaration for a later edition, receive its complete reviewer bundle, or correct the selected heading.','muted'));
+    }
+    const list=node('ul');for(const id of group.productIds)list.append(node('li',id));owners.append(list);
+    row.append(chapter,owners,state);chapterBody.append(row);
+  }
+  const chapterWrap=node('div',undefined,'product-table-scroll');chapterWrap.append(chapters);
+  chapterSection.append(chapterWrap,actions(button('Download complete chapter coverage',()=>
+    ctx.download(JSON.stringify(coverage,null,2)+'\n','scf-product-chapter-coverage.json'))));
+  root.append(chapterSection);
   root.append(node('h3','Source changes'),node('p',
     compact(result.counts.selectedProducts)+' selected products · '+compact(result.counts.added)+' added sources · '+
     compact(result.counts.changed)+' changed · '+compact(result.counts.unchanged)+' unchanged','product-summary'));
@@ -344,17 +384,19 @@ export async function renderProductSources(root,ctx){
   }
   const preview=node('section',undefined,'card');preview.dataset.productSourcePreview='';preview.dataset.previewState='stale';
   const prior=previews.get(current.id);
-  if(prior?.fingerprint===fingerprint(ctx.getDraft()))previewView(preview,ctx,ui,prior.result);
+  if(prior?.fingerprint===fingerprint(ctx.getDraft()))previewView(preview,ctx,ui,prior.result,prior.coverage);
   else preview.append(node('p','Preview the current declarations to see the resulting source changes.','muted'));
   root.append(actions(button('Preview source changes',async()=>{
-    const draft=ctx.getDraft(),selection=draft.productSourceAuthoring.selection;
-    const verified=await readProductAuthoringContext(draft,selection.bundleId);
-    const result=previewProductSources(verified,selection.registrations);
-    previews.set(draft.id,{fingerprint:fingerprint(draft),result});previewView(preview,ctx,ui,result);
-    ctx.status('Previewed every working product with the maintained grant composer source-selection rules.');
+    const draft=ctx.getDraft(),selectedFingerprint=fingerprint(draft);
+    const {preview:result,chapterCoverage:coverage}=await prepareProductDeclarationPreview(draft);
+    if(sequence!==renderSequence||!root.isConnected||ctx.getDraft().id!==draft.id||
+      fingerprint(ctx.getDraft())!==selectedFingerprint)return;
+    previews.set(draft.id,{fingerprint:selectedFingerprint,result,coverage});previewView(preview,ctx,ui,result,coverage);
+    ctx.status('Previewed '+coverage.counts.presentProducts+' present products and '+coverage.counts.absentProducts+
+      ' absent products in the selected retained edition, with complete source changes.');
   },'primary'),button('Download all composer files',async()=>{
     const result=await exportProductDeclarations(ctx.getDraft());
     ctx.download(result.bytes,result.name,'application/zip');
-    ctx.status('Downloaded '+result.files.length+' complete composer files with the selected source-index preview.');
+    ctx.status('Downloaded '+result.files.length+' complete composer files with the source-index preview and complete chapter coverage.');
   })),preview);
 }
