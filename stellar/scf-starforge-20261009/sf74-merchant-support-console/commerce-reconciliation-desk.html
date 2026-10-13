@@ -717,7 +717,9 @@ const engine=createCommerceReconciliation({sha256Utf8:hash});
 let current=null,currentInput=null,dirty=false,reviewDirty=false,busy=false;
 const json=value=>JSON.stringify(value,null,2)+'\n';
 const status=(message,error=false)=>{$('status').textContent=message;$('status').className=error?'error':'';};
-function controls(){for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy;for(const id of ['download-report','download-csv','download-review'])$(id).disabled=busy||!current;}
+function controls(){for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy;for(const id of ['download-report','download-csv','download-review'])$(id).disabled=busy||!current;for(const id of ['download-report','download-csv'])$(id).disabled=busy||!current||reviewDirty;}
+function reviewEdited(){reviewDirty=true;controls();status('Review edits are pending. Download the source-bound review to validate these decisions and update the report. The preview still shows the last recorded review.');}
+function recordedCurrent(){exactCurrent();if(reviewDirty)throw Error('Validate and download the source-bound review before downloading its report or exception CSV.');return current;}
 function forget(message){current=null;currentInput=null;reviewDirty=false;$('summary').textContent='No analyzed selection.';$('issues').replaceChildren();$('preview').removeAttribute('srcdoc');controls();status(message);}
 function selectSource(){return !reviewDirty||window.confirm('This changes the selected source and clears unexported review edits. Continue?');}
 async function action(fn){if(busy)return;busy=true;controls();try{await fn();}catch(error){status(error.message,true);}finally{busy=false;controls();}}
@@ -745,15 +747,15 @@ for(const side of ['source','destination'])$(side+'-file').addEventListener('cha
   value[side]={...value[side],name:file.name,content,...identity};$('input').value=json(value);dirty=true;forget('Selected '+side+' original bytes. Set the actual export reference/capture time and column mapping.');}));
 $('analyze').addEventListener('click',()=>action(async()=>{const value=parsed(),report=engine.analyze(value);if(current&&current.input_sha256===report.input_sha256){status('This exact input is already analyzed. Existing review edits remain available.');return;}if(!selectSource())return;reviewDirty=false;show(report);dirty=true;status('Analysis uses the exact selected input. No system or customer record has been changed.');}));
 $('download-input').addEventListener('click',()=>action(async()=>{const value=parsed();engine.analyze(value);download('commerce-input.json',json(value));dirty=false;status('Complete source input downloaded. Preserve it with the original exports.');}));
-$('open-review').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(file.size>16*1024*1024)throw Error('Review return exceeds the selected limit.');const input=exactCurrent(),value=JSON.parse(await file.text()),report=engine.review(input,value);show(report);dirty=true;status('Original review reread against its exact input. Pending findings remain pending.');}));
+$('open-review').addEventListener('change',event=>action(async()=>{const file=event.target.files[0];if(!file)return;if(file.size>16*1024*1024)throw Error('Review return exceeds the selected limit.');if(reviewDirty&&!window.confirm('Opening this review replaces unexported review edits. Continue?')){event.target.value='';return;}const input=exactCurrent(),value=JSON.parse(await file.text()),report=engine.review(input,value);reviewDirty=false;show(report);dirty=true;status('Original review reread against its exact input. Pending findings remain pending.');}));
 $('download-review').addEventListener('click',()=>action(async()=>{const input=exactCurrent(),decisions=[];
   for(const select of document.querySelectorAll('[data-issue]'))if(select.value){const id=select.dataset.issue;decisions.push({issue_id:id,outcome:select.value,note:document.querySelector('[data-note="'+id+'"]').value,reference:document.querySelector('[data-reference="'+id+'"]').value});}
   const review={schema:REVIEW_SCHEMA,input_sha256:current.input_sha256,actor:$('actor').value,observed_at:$('observed').value,reference:$('review-reference').value,decisions},report=engine.review(input,review);
   show(report);download('commerce-review.json',json(review));reviewDirty=false;status('Source-bound review downloaded. Use the original CLI to create its complete receiving package and attach it to the saved case.');}));
-$('download-report').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-reconciliation.html',engine.reportHtml(current),'text/html');}));
-$('download-csv').addEventListener('click',()=>action(async()=>{exactCurrent();download('commerce-exceptions.csv',engine.issuesCsv(current),'text/csv');}));
-$('issues').addEventListener('input',()=>{reviewDirty=true;});
-for(const id of ['actor','observed','review-reference'])$(id).addEventListener('input',()=>{reviewDirty=true;});
+$('download-report').addEventListener('click',()=>action(async()=>{download('commerce-reconciliation.html',engine.reportHtml(recordedCurrent()),'text/html');}));
+$('download-csv').addEventListener('click',()=>action(async()=>{download('commerce-exceptions.csv',engine.issuesCsv(recordedCurrent()),'text/csv');}));
+$('issues').addEventListener('input',reviewEdited);
+for(const id of ['actor','observed','review-reference'])$(id).addEventListener('input',reviewEdited);
 window.addEventListener('beforeunload',event=>{if(dirty||reviewDirty){event.preventDefault();event.returnValue='';}});
 $('input').value=json(INITIAL_INPUT);controls();status('Authored receiving example loaded. It is not customer data. Replace both exports and select their actual scope before customer use.');
 
