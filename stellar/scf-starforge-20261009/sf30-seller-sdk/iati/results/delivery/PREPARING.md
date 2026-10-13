@@ -21,13 +21,16 @@ No new publisher acquisition is needed for these already selected operations.
 | --- | --- |
 | Text source | 201 files; 3,846,277 UTF-8 bytes |
 | Original binary publisher inputs | 2 files; 664,228 bytes |
-| Complete installed closure | 203 files; 4,510,505 bytes |
+| Original packet closure | 203 files; 4,510,505 bytes |
+| Installed closure with receiving corrections | 203 files; 4,512,424 bytes |
 | Compressed envelope | 1,539,216 bytes |
 | Envelope SHA256 | `2ee3332f9e254d40076fad1a0f5bd8dc8c5c3f3286383d64296c830183f1b952` |
 | Decoded envelope | 4,952,476 bytes |
 | Decoded SHA256 | `600a4ad86a698d68e0ee3f582dfef1fd0ae008e12a37f2f91d393c4c698ed3be` |
 | Source selection | `3bbeeb3cef95dd159343ec298b5595ffa4e970dd1606469ed03f5152f475d873` |
 | Packet commit | `9bfca6df8ebbd8e6c4583557df1978accd015a23` |
+| Selected receiving commit | `63bea8d5b701c98f2f8f2498bc4c3cfebfbffa6a` |
+| Complete installed source selection | `d2bcb160fdb3e1646b3542b0222807d1e2976c63ee8a8caee8a90290466ed5cd` |
 | Native/Applications source binding | The same 167 runtime files |
 
 ## Prepare the exact source
@@ -58,6 +61,56 @@ Do not install a Results-only subset.
 The source-preparation receipt records syntax and source custody separately
 from the original native receiving outcome. A completed source receipt does
 not mean that the case, browser or customer handover has run.
+
+## Select the current receiving files
+
+The original complete packet stays byte-for-byte intact. Preparation selects three
+subsequent original repository files from commit
+`63bea8d5b701c98f2f8f2498bc4c3cfebfbffa6a`: the two Python receiving entrypoints
+and their browser continuation. They correct direct Python imports and loading
+the installed Playwright module, follow the current “Following edition” tab, and
+retain a browser failure’s actual page errors and screenshot. No financial,
+Programme, publishing, refresh, organisation or AMP source is replaced.
+
+| Original repository file under `iati/` | Selected bytes | Selected SHA256 |
+| --- | ---: | --- |
+| `results/receiving.py` | 24069 | `df718f79bf34b3c1ca50abb0beb2d422ef46c31f1ffc5054666de79fec836530` |
+| `results/receiving_console.py` | 7448 | `4023d2780c3885870e95dc4621b917a25138f1a362f2506b6a62929074e77750` |
+| `results/browser_receiving.mjs` | 17016 | `a6e5f5e6589df4c31809812f643435351d506cb455dfebed9ff879416fb05de0` |
+
+For every selected file, the preparer first verifies the original packet member’s
+size and digest, then verifies the selected file’s exact size, SHA256 and Git blob
+identity. It reads all selected files before writing the installed source. A
+different local postimage is rejected; it is never silently replaced by a download.
+
+A preparer running inside the original repository path uses that checkout’s
+three files. For an offline or explicitly retained source selection, supply a
+directory containing their complete repository-relative paths:
+
+```sh
+python3 -B prepare_source.py \
+  --root /absolute/private/iati-source-current-receiving \
+  --packet-file /absolute/complete-source.json.gz \
+  --receiving-source-root /absolute/retained/current-receiving-source \
+  --node /absolute/installed/node
+```
+
+A standalone preparer without that option reads only these three files from the
+pinned public commit. It does not select an ambient branch or download another
+complete source archive. If a checkout has already advanced to different
+receiving bytes, use the explicitly pinned source directory.
+
+Use a new source-preparation destination after a code correction. The existing
+case’s receiving root remains the same. Source writes are create-only; an earlier
+installed file with different bytes is rejected without being overwritten.
+
+The source receipt keeps `sourceSelectionSha256` as the original packet identity
+and records `receivingSourceCommit`, all three before/after file identities and
+`installedSourceSelectionSha256` separately. The installed selection is SHA256 of
+the path-sorted array of `{bytes,path,sha256}` records for all 203 files, encoded
+as compact sorted-key UTF-8 JSON followed by exactly one newline. Thus a receiver
+can reproduce the actual installed source identity without mistaking the packet
+for the final executable selection.
 
 ## Run the selected FCDO financial operation
 
@@ -135,6 +188,30 @@ file's byte identity. See the retained example notice and source provenance.
 For native receiving alone, omit the four Node/browser/merchant options from
 the SNV command. Keep all four when requesting the full console continuation.
 The complete source preparation still requires Node for syntax checks.
+
+### Continue a completed native case
+
+When the original `result.json` already records completed receiving, prepare the
+corrected source as above and invoke its existing console programme directly.
+Do not call a second source acquisition or create another project.
+
+```sh
+python3 -B /absolute/private/iati-source-current-receiving/source/stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/receiving_console.py \
+  --root /absolute/private/iati-results-snv-sp2194-6966-20261012 \
+  --node /absolute/installed/node \
+  --playwright /absolute/installed/playwright \
+  --chromium /absolute/installed/chromium \
+  --merchant-root /absolute/private/iati-source-current-receiving/source/stellar-forge/mcp-merchant-operator \
+  --reviewer "Actual source reviewer" \
+  --review-note "Recorded interpretation of the exact retained source records"
+```
+
+This continues the original receiver, saved browser request and review history.
+The browser/server lifecycle stays in that same process context. An incomplete
+browser attempt retains `browser-failure.json` and, when the page remains
+available, `browser-failure.png`; these describe the actual failure and do not
+mark the original case complete. Keep the saved case and completed exports when
+selecting a later source correction.
 
 ## Other explicitly selected source cases
 
