@@ -1,0 +1,165 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "transport-planning-workbench",
+  "heading": "## Transport Planning Workbench: complete operating-source, performance and recipient delivery",
+  "sources": [
+    {
+      "id": "transport-planning-maintained-contract-1",
+      "label": "Maintained Applications/product distribution composition",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/specification.mjs",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "71a4365be2511e60e839bbbbcd8c98eccd0a58b4",
+          "bytes": 29002,
+          "sha256": "c1bc927b90c033aa0789642cac6b53a27a93df3968b672341de60825d1ea7a6f",
+          "git_blob": "c6d3ca93a5afc233c2b642dbf56c9cf566f4b7d0"
+        },
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 29002,
+          "sha256": "c1bc927b90c033aa0789642cac6b53a27a93df3968b672341de60825d1ea7a6f",
+          "git_blob": "c6d3ca93a5afc233c2b642dbf56c9cf566f4b7d0"
+        }
+      ]
+    },
+    {
+      "id": "transport-planning-maintained-contract-2",
+      "label": "Exact source selection and complete declared support",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/source-selection.mjs",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "71a4365be2511e60e839bbbbcd8c98eccd0a58b4",
+          "bytes": 14936,
+          "sha256": "2f572fadba76be2332b33a5e575aac656707bfee36a4983619f004547be9d8aa",
+          "git_blob": "7ee2721f6787fa0f59cd44b1d4e9e9d6d0e5012c"
+        },
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 14936,
+          "sha256": "2f572fadba76be2332b33a5e575aac656707bfee36a4983619f004547be9d8aa",
+          "git_blob": "7ee2721f6787fa0f59cd44b1d4e9e9d6d0e5012c"
+        }
+      ]
+    },
+    {
+      "id": "transport-planning-maintained-contract-3",
+      "label": "Installed product package identity",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/product-package.mjs",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "71a4365be2511e60e839bbbbcd8c98eccd0a58b4",
+          "bytes": 3764,
+          "sha256": "e1f33fd1940b62c7ede90288ff2ad36da529a197b06e059e8b3b6e27fba1e76d",
+          "git_blob": "2c668933f214f201137ac6d3c6b7410525955c9b"
+        },
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 3764,
+          "sha256": "e1f33fd1940b62c7ede90288ff2ad36da529a197b06e059e8b3b6e27fba1e76d",
+          "git_blob": "2c668933f214f201137ac6d3c6b7410525955c9b"
+        }
+      ]
+    },
+    {
+      "id": "transport-planning-maintained-contract-4",
+      "label": "Original grant workspace and Installation contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/grant-workspace.json",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "71a4365be2511e60e839bbbbcd8c98eccd0a58b4",
+          "bytes": 6388,
+          "sha256": "e092b7ae2c716b84b66b489d718e84899258aa19713956bc232301f9785703f4",
+          "git_blob": "db44f2451fa5c6efcb017cf713aaed9ce1e76691"
+        },
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 8094,
+          "sha256": "2d7c9614a6dd1cb5dc845c8342b9a50bad8dbc5aaab5e0eb84b055f8d7dbe54f",
+          "git_blob": "2a6105b4dd51fa5760961af7726c9884790ba28e"
+        }
+      ]
+    },
+    {
+      "id": "transport-planning-maintained-contract-5",
+      "label": "Maintained Merchant provider registration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/merchant-provider-tools.json",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "71a4365be2511e60e839bbbbcd8c98eccd0a58b4",
+          "bytes": 737,
+          "sha256": "64b29c1293acb077c3f318a0dee1b6dd17985d61de07755e49996d7d2673995c",
+          "git_blob": "ef9552d29cd899b60e5f9317bb0f8398cb8dd0da"
+        },
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 737,
+          "sha256": "64b29c1293acb077c3f318a0dee1b6dd17985d61de07755e49996d7d2673995c",
+          "git_blob": "ef9552d29cd899b60e5f9317bb0f8398cb8dd0da"
+        }
+      ]
+    },
+    {
+      "id": "transport-planning-maintained-contract-6",
+      "label": "Current complete-source distribution collector",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 36064,
+          "sha256": "1733e646683187d76d1eec5086596dbaeda9b453a38322a155377641e07fb93a",
+          "git_blob": "ebe3f17f6b9a65f2813021e9c0c96e37a1cc1aba"
+        }
+      ]
+    },
+    {
+      "id": "transport-planning-maintained-contract-7",
+      "label": "Shared Applications output observation and settled closure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 9395,
+          "sha256": "0f638caeeaa5c78560ebd262c0e410cb0dfd4fcd886748f5136cd08755e019c9",
+          "git_blob": "1b005a019cb4428e611f98cca1a960bd6e7afb0b"
+        }
+      ]
+    },
+    {
+      "id": "transport-planning-maintained-contract-8",
+      "label": "Shared managed command actual child and observer closure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs",
+      "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+      "editions": [
+        {
+          "commit": "27d26efaf6d0caa4f09e4999613bac05cf4505a3",
+          "bytes": 7682,
+          "sha256": "b9ab9e43ad4281be435644c736dd8ce3ad24758611895fd88eff1eed97abb3f0",
+          "git_blob": "2b143b028be28947518139e4afc0a3b1d276fffb"
+        }
+      ]
+    }
+  ]
+}
