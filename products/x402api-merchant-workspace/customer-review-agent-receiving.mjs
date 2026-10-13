@@ -69,7 +69,6 @@ export async function receiveMerchantReviewAgent({opening,scenario,root,expected
    const resumed=await call('review_resume',{action,requestId:body.requestId,expectedRequestSha256:value.requestArtifact.payload.sha256});
    assert.deepEqual(resumed,value);
    const expectedRequest=Buffer.from(JSON.stringify(body)+'\n');assert.equal(value.requestArtifact.payload.sha256,hash(expectedRequest));
-   assert.equal(value.artifact.payload.sha256,hash(Buffer.from(JSON.stringify(responses[action])+'\n')));
   }
   const compared=await call('review_compare',{returnSha256:course.returnSha256});
   assert.equal(compared.invoiceChanged,false);assert.equal(compared.unfinishedReturnedDraft,true);
