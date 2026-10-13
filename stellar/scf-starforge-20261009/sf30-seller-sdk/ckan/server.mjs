@@ -322,7 +322,7 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
   });
   server.requestTimeout = 300000; server.headersTimeout = 15000; server.keepAliveTimeout = 5000;
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
-  origin = 'http://127.0.0.1:' + server.address().port;
+  origin = new URL('http://127.0.0.1:' + server.address().port).origin;
   return { server, origin, token, instanceId, url: origin + '/#' + token,
     close() { return closing ??= new Promise(resolve => { server.close(resolve); server.closeIdleConnections?.(); }); } };
 }
