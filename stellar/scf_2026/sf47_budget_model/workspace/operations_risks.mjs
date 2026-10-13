@@ -63,7 +63,7 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
   }
   const defaults={tab:'register',draft:null,draftVersion:null,seed:null,preview:null,previewInput:null,previewVersion:null,
     selectedRisk:'',book:null,history:null,listing:null,search:'',statusFilter:'',kindFilter:'',ownerFilter:'',
-    pending:null,accepted:null,receipts:[],saveNote:'',notice:'',error:'',storageError:'',storageBlocked:false};
+    pending:null,accepted:null,receipts:[],copies:[],saveNote:'',notice:'',error:'',storageError:'',storageBlocked:false};
   const savedKeys=Object.keys(defaults).filter(k=>!['error','storageError','notice','storageBlocked'].includes(k));
   if(!session.initialized){
     for(const [key,value] of Object.entries(defaults))session[key]=clone(value);
@@ -77,7 +77,8 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
         if(session.pending)need(session.pending.command?.action==='risk-register.save'&&typeof session.pending.command.requestId==='string','The original pending request is incomplete.');
         if(session.accepted)need(session.accepted.command?.action==='risk-register.save'&&plain(session.accepted.result),'The original accepted request is incomplete.');
         need(Array.isArray(session.receipts)&&session.receipts.every(row=>plain(row)&&row.command?.action==='risk-register.save'&&typeof row.command.requestId==='string'&&(row.result===null||plain(row.result))),'Keep the retained risk request receipts.');
-        need(['register','draft','editions','request'].includes(session.tab)&&['selectedRisk','search','statusFilter','kindFilter','ownerFilter','saveNote'].every(key=>typeof session[key]==='string'),'The retained desk view is incomplete.');
+        need(['register','draft','editions','request','copies'].includes(session.tab)&&['selectedRisk','search','statusFilter','kindFilter','ownerFilter','saveNote'].every(key=>typeof session[key]==='string'),'The retained desk view is incomplete.');
+        need(Array.isArray(session.copies)&&session.copies.length<=16&&session.copies.every(row=>plain(row)&&hex.test(row.id||'')&&typeof row.label==='string'&&typeof row.at==='string'&&plain(row.desk)),'The retained working-copy inventory is incomplete.');
         if(session.book)verifyBook(session.book,session.book.review?.id);
         if(session.seed){documentShape(session.seed.document);need(['contributors','packages','sources'].every(key=>Array.isArray(session.seed[key])),'The original seed choices are incomplete.');}
         if(session.listing)need(Array.isArray(session.listing.editions)&&session.listing.editions.every(row=>plain(row)&&typeof row.id==='string'),'The retained edition list is incomplete.');
@@ -282,6 +283,186 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
     session.notice='The complete document is retained as a draft. Native preview will check every current source, link and predecessor.';
   }
 
+
+  // Working copies carry the complete desk. Imported bytes remain observations
+  // until the original native request table and selected reviews are reopened.
+  const COPY='stellar-forge.sf47-delivery-risk-working-copy.v1';
+  const COPY_LIMIT=32*1024*1024, COPY_COUNT=16;
+  const hashBytes=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
+  const hashValue=value=>hashBytes(new TextEncoder().encode(canonical(value)));
+  function snapshot(withCopies=true){
+    const value={schema:DESK,programId,staffContext:clone(context)};
+    for(const key of savedKeys)if(withCopies||key!=='copies')value[key]=clone(session[key]);
+    return value;
+  }
+  function commandShape(command){
+    need(plain(command)&&command.action==='risk-register.save'&&typeof command.requestId==='string'&&command.requestId.length>0&&command.requestId.length<=300&&
+      Number.isInteger(command.expectedVersion)&&command.expectedVersion>=0&&typeof command.actor==='string'&&command.actor.trim()&&
+      typeof command.note==='string'&&command.note.trim()&&plain(command.data)&&hex.test(command.data.expectedPreviewSha256||''),
+      'Keep the complete original risk save command, actor, note, version and preview identity.');
+    documentShape(command.data.document);return command;
+  }
+  function copyDeskShape(value,allowCopies=true){
+    need(plain(value)&&value.schema===DESK&&value.programId===programId&&canonical(value.staffContext??null)===canonical(context),
+      'Open this working copy in its original Operations case and signed-in staff scope. To share only an editable document, use the existing draft document export.');
+    if(value.draft)documentShape(value.draft);
+    need(value.draftVersion===null||Number.isInteger(value.draftVersion),'The working copy draft version is incomplete.');
+    need(['register','draft','editions','request','copies'].includes(value.tab)&&
+      ['selectedRisk','search','statusFilter','kindFilter','ownerFilter','saveNote'].every(key=>typeof value[key]==='string'),
+      'Keep the complete working-copy view and save note.');
+    need(!(value.pending&&value.accepted),'A working copy cannot have two unresolved original commands.');
+    if(value.pending){need(plain(value.pending),'The pending request is incomplete.');commandShape(value.pending.command);}
+    if(value.accepted){commandShape(value.accepted.command);receipt(value.accepted.result,value.accepted.command);}
+    const command=value.accepted?.command||value.pending?.command;
+    if(command)need(value.draft&&canonical(command.data.document)===canonical(value.draft),'The unfinished original command and its locked draft differ.');
+    need(Array.isArray(value.receipts)&&value.receipts.length<=1000&&value.receipts.every(row=>plain(row)&&
+      row.command?.action==='risk-register.save'&&typeof row.command.requestId==='string'&&(row.result===null||plain(row.result))),
+      'Keep the complete retained request history (at most 1,000 rows).');
+    const seen=new Map();
+    for(const row of value.receipts){
+      commandShape(row.command);if(row.result)receipt(row.result,row.command);
+      const prior=seen.get(row.command.requestId);
+      need(!prior||canonical(prior)===canonical(row),'Two different receipt observations use one request ID.');
+      seen.set(row.command.requestId,row);
+    }
+    if(value.book)verifyBook(value.book,value.book.review?.id);
+    if(value.seed){documentShape(value.seed.document);need(value.seed.source&&['contributors','packages','sources'].every(key=>Array.isArray(value.seed[key])),'Keep all original seed choices and source identity.');}
+    if(value.listing)need(Array.isArray(value.listing.editions)&&value.listing.editions.every(row=>plain(row)&&typeof row.id==='string'),'The working-copy edition list is incomplete.');
+    if(value.history)need(Array.isArray(value.history.entries)&&value.history.entries.every(row=>plain(row.edition)&&plain(row.risk)&&Array.isArray(row.risk.actions)),'The working-copy history is incomplete.');
+    if(value.preview){documentShape(value.preview.document);reportShape(value.preview.report);need(hex.test(value.preview.previewSha256||''),'The stored preview identity is incomplete.');}
+    const copies=value.copies??[];
+    need(Array.isArray(copies)&&copies.length<=COPY_COUNT&&(allowCopies||copies.length===0),'Keep at most 16 complete, unnested working-copy checkpoints.');
+    const ids=new Set();
+    for(const row of copies){
+      need(plain(row)&&hex.test(row.id||'')&&typeof row.label==='string'&&typeof row.at==='string'&&!ids.has(row.id)&&plain(row.desk),'The retained checkpoint inventory is incomplete.');
+      ids.add(row.id);copyDeskShape(row.desk,false);
+    }
+    return value;
+  }
+  async function checkCopyHashes(value){
+    for(const row of value.copies??[])need(await hashValue(row.desk)===row.id,'A retained working-copy checkpoint changed.');
+  }
+  async function exportCopy(value=snapshot(),label=programId+'-risk-working-copy.json'){
+    copyDeskShape(value);await checkCopyHashes(value);
+    const payload=clone(value),envelope={schema:COPY,exportedAt:new Date().toISOString(),payloadSha256:await hashValue(payload),payload};
+    const raw=JSON.stringify(envelope,null,2)+'\n';
+    need(new TextEncoder().encode(raw).byteLength<=COPY_LIMIT,'This working copy exceeds 32 MiB. Download individual checkpoints before removing them from this desk.');
+    if(available())download(new Blob([raw],{type:'application/json'}),label);
+  }
+  async function stageCopy(file){
+    need(file&&file.size>0&&file.size<=COPY_LIMIT,'Choose a complete risk working copy or legacy desk JSON of at most 32 MiB.');
+    const raw=await file.arrayBuffer(),value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));
+    let payload=value;
+    if(value?.schema===COPY){
+      need(hex.test(value.payloadSha256||'')&&plain(value.payload),'The working-copy envelope is incomplete.');
+      need(await hashValue(value.payload)===value.payloadSha256,'The working-copy checksum does not match its complete payload.');
+      payload=value.payload;
+    }
+    copyDeskShape(payload);await checkCopyHashes(payload);
+    need(!Object.hasOwn(payload,'unreadableOriginal'),'This export also contains unreadable original storage. Keep those bytes separately and resolve their original desk before reopening a replacement.');
+    session.copyReview={desk:clone(payload),source:{filename:file.name,bytes:raw.byteLength,sha256:await hashBytes(raw)},payloadSha256:await hashValue(payload)};
+    session.tab='copies';session.notice='The complete copy is ready for review. No draft, native request or saved edition has been changed.';
+  }
+  async function stageCheckpoint(copyId){
+    const row=session.copies.find(value=>value.id===copyId);
+    need(row,'Choose an existing complete checkpoint.');copyDeskShape(row.desk,false);
+    need(await hashValue(row.desk)===row.id,'The retained checkpoint bytes changed.');
+    session.copyReview={desk:clone(row.desk),source:{filename:row.label,sha256:row.id,bytes:new TextEncoder().encode(canonical(row.desk)).byteLength},payloadSha256:row.id};
+    session.tab='copies';
+  }
+  async function adoptCopy(){
+    const staged=session.copyReview;need(staged&&!session.storageBlocked,'Review the complete selected copy and resolve any unreadable original storage first.');
+    copyDeskShape(staged.desk);await checkCopyHashes(staged.desk);
+    need(await hashValue(staged.desk)===staged.payloadSha256,'The reviewed working copy changed.');
+    const imported=staged.desk,held=session.accepted?.command||session.pending?.command;
+    const command=imported.accepted?.command||imported.pending?.command;
+    need(!held||(command&&canonical(held)===canonical(command)),'This desk owns a different unfinished request. Resolve it before reopening another working copy.');
+    if(session.accepted&&imported.accepted)need(canonical(session.accepted.result)===canonical(imported.accepted.result),'The working copy conflicts with this desk’s known native success.');
+    if(!window.confirm('Reopen this complete working copy? The current full desk will be retained as a checkpoint. Any unfinished save is read from the original native table; this action does not save an edition.'))return;
+    // Finish every native read before replacing any editable state. No imported
+    // absence/rejection flag can authorize a new request or unlock the old one.
+    const nativeCase=await saveApi(prefix);
+    need(nativeCase.program?.id===programId,'The original case identity changed.');
+    const listing=await saveApi(prefix+'/risk-register');
+    need(Array.isArray(listing.editions)&&Object.hasOwn(listing,'current'),'The current native register list is incomplete.');
+    let accepted=null,pending=null,book=null,seed=null;
+    if(command){
+      const found=await saveApi(prefix+'/risk-register-request',{command:clone(command)});
+      need(found.requestId===command.requestId&&typeof found.found==='boolean','The original request lookup is incomplete.');
+      if(found.found){
+        receipt(found.result,command);
+        if(imported.accepted)need(canonical(imported.accepted.result)===canonical(found.result),'The imported acceptance differs from the original native result.');
+        if(session.accepted)need(canonical(session.accepted.result)===canonical(found.result),'The native result differs from this desk’s known success.');
+        accepted={command:clone(command),result:clone(found.result)};
+        book=verifyBook(await saveApi(prefix+'/risk-register/'+enc(found.result.recordId)),found.result.recordId);
+        need(book.review.sha256===found.result.reviewSha256&&book.previewSha256===command.data.expectedPreviewSha256,'The original accepted edition differs from the imported command.');
+      }else{
+        need(!imported.accepted&&!session.accepted,'A known accepted request is missing from this native case. Keep the original copy and recover its source case.');
+        pending={command:clone(command),absentObserved:true,definitelyRejected:false,lastError:null};
+      }
+    }
+    if(!book&&imported.book){
+      book=verifyBook(await saveApi(prefix+'/risk-register/'+enc(imported.book.review.id)),imported.book.review.id);
+      need(book.review.sha256===imported.book.review.sha256,'The original saved edition differs from the working copy.');
+    }
+    if(imported.draft){
+      const body={expectedVersion:nativeCase.program.version};
+      if(imported.draft.supersedes?.reviewId)body.reviewId=imported.draft.supersedes.reviewId;
+      seed=await saveApi(prefix+'/risk-register-seed',body);documentShape(seed.document);
+      need(seed.source&&['contributors','packages','sources'].every(key=>Array.isArray(seed[key])),'The original native seed choices are incomplete.');
+      if(imported.draft.supersedes)need(seed.previous?.id===imported.draft.supersedes.reviewId&&seed.previous?.sha256===imported.draft.supersedes.reviewSha256,'The imported predecessor differs from its native saved edition.');
+    }
+    const prior=snapshot(false),priorId=await hashValue(prior);
+    const originalCopy=clone(imported);delete originalCopy.copies;
+    const originalId=await hashValue(originalCopy),copies=new Map();
+    for(const row of [...session.copies,...(imported.copies??[])]){
+      const previous=copies.get(row.id);need(!previous||canonical(previous.desk)===canonical(row.desk),'Two checkpoints conflict.');
+      copies.set(row.id,clone(row));
+    }
+    if(!copies.has(priorId))copies.set(priorId,{id:priorId,label:'Desk before '+staged.source.filename,at:new Date().toISOString(),desk:prior});
+    if(!copies.has(originalId))copies.set(originalId,{id:originalId,label:staged.source.filename,at:new Date().toISOString(),source:clone(staged.source),desk:originalCopy});
+    need(copies.size<=COPY_COUNT,'Reopening would exceed 16 complete checkpoints. Download and explicitly remove older checkpoints first.');
+    // Imported receipt history stays verbatim in the complete checkpoint. Only
+    // original native lookup results enter this desk's live accepted state.
+    const next={...snapshot(),draft:clone(imported.draft??null),draftVersion:imported.draftVersion,seed:clone(seed),
+      preview:null,previewInput:null,previewVersion:null,selectedRisk:imported.selectedRisk,
+      book:clone(book),history:null,listing:clone(listing),search:imported.search,statusFilter:imported.statusFilter,
+      kindFilter:imported.kindFilter,ownerFilter:imported.ownerFilter,saveNote:imported.saveNote,
+      accepted,pending,copies:[...copies.values()],tab:command?'request':imported.draft?'draft':'copies'};
+    const before={};for(const key of savedKeys)before[key]=session[key];
+    for(const key of savedKeys)session[key]=next[key];
+    try{persist(true);}catch(error){for(const key of savedKeys)session[key]=before[key];throw error;}
+    caseValue=nativeCase;session.copyReview=null;
+    session.notice=accepted?'The original saved request was found. Reopen its known saved edition in Request recovery.':
+      pending?'The exact original command is retained. The native read found no acceptance; Request recovery can reconcile and explicitly send that same command.':
+      'The complete draft is reopened. Its original copy and previous desk are retained as checkpoints. Review it again with the current native engine before saving.';
+  }
+  async function removeCheckpoint(copyId){
+    const row=session.copies.find(value=>value.id===copyId);need(row,'Choose an existing complete checkpoint.');
+    if(!window.confirm('Remove this local checkpoint from future working-copy exports? Download it first if it is still needed. The active draft, original request and native editions remain unchanged.'))return;
+    const prior=session.copies;session.copies=prior.filter(value=>value.id!==copyId);
+    try{persist(true);}catch(error){session.copies=prior;throw error;}
+  }
+  function copiesView(){
+    const staged=session.copyReview,value=staged?.desk,command=value?.accepted?.command||value?.pending?.command;
+    return '<p>Carry the full editable desk between sessions for this same case and signed-in staff scope. A checksum detects changed bytes; it does not make imported claims authoritative. Native reads reconcile unfinished saves before reopening. A fresh native preview is required before saving a reopened draft.</p>'+
+      '<div class="risk-actions">'+button('Download complete working copy','export-copy')+button('Download legacy full desk','download-desk')+'</div>'+
+      field('Complete working-copy or legacy desk JSON','',{type:'file',wide:true,attrs:{accept:'.json,application/json','data-risk-copy-import':'true'},help:'Maximum 32 MiB. Reading a file only stages it for review.'})+
+      button('Review selected working copy','review-copy')+
+      (staged?'<section class="risk-panel"><h4>Review selected copy</h4>'+table(['File / identity','Editable document','Retained request','History'],[[
+        esc(staged.source.filename)+'<small>'+esc(staged.source.bytes)+' bytes · '+esc(staged.source.sha256)+'</small>',
+        esc(value.draft?.name||'No draft')+'<small>'+esc(value.draft?.risks.length??0)+' entries · opened at case version '+esc(value.draftVersion)+'</small>',
+        esc(command?.requestId||'None')+'<small>'+esc(value.accepted?'Claims accepted; native lookup required':value.pending?'Unfinished original command':'A later native preview creates no request')+'</small>',
+        esc(value.receipts.length)+' receipt observations<small>'+esc((value.copies??[]).length)+' complete checkpoints</small>'
+      ]])+'<div class="risk-actions">'+button('Reopen reviewed working copy','adopt-copy',{},session.storageBlocked)+button('Download reviewed copy','export-reviewed-copy')+button('Cancel copy review','cancel-copy')+'</div>'+details('Complete selected desk and original history',value)+'</section>':'')+
+      '<h4>Complete retained checkpoints</h4><p>These are full local observations. Their saved receipts and previews are rechecked when reopened; they do not grant permission or create an edition. Up to 16 are included in each portable copy.</p>'+
+      (session.copies.length?table(['Checkpoint','Draft / request','Actions'],session.copies.map(row=>[
+        esc(row.label)+'<small>'+esc(row.at)+' · '+esc(row.id)+'</small>',
+        esc(row.desk.draft?.name||'No draft')+'<small>'+esc(row.desk.accepted?.command.requestId||row.desk.pending?.command.requestId||'No unfinished request')+'</small>',
+        '<div class="risk-actions">'+button('Review checkpoint','review-checkpoint',{'data-copy-id':row.id})+button('Download checkpoint','export-checkpoint',{'data-copy-id':row.id})+button('Remove local checkpoint','remove-checkpoint',{'data-copy-id':row.id})+'</div>'
+      ])):empty('Reopening a working copy retains its complete original and the preceding desk here.'));
+  }
+
   function sourceLinks(ids){
     return (ids||[]).map(sourceId=>{const row=(caseValue.sources||[]).find(s=>s.id===sourceId);return '<div class="risk-source">'+button(row?.filename||sourceId,'source',{'data-source-id':sourceId},!row)+'<small>'+esc(row?.sha256||'Original source unavailable in current case')+'</small></div>';}).join('')||'<small>No source selected</small>';
   }
@@ -482,8 +663,8 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
       (session.error?'<p role="alert">'+esc(session.error)+'</p>':'')+
       (session.storageError?'<section class="risk-pending" role="alert"><p>'+esc(session.storageError)+'</p>'+button('Download complete desk','download-desk')+'</section>':'')+
       (locked()?'<div class="risk-pending">A retained request or local storage problem needs attention. '+button('Open original request','tab',{'data-risk-tab':'request'})+'</div>':'')+
-      '<nav class="risk-tabs" aria-label="Risk register views">'+[['register','Register'],['draft','Draft edition'],['editions','Editions and history'],['request','Request recovery']].map(([key,label])=>'<button type="button" data-risk-action="tab" data-risk-tab="'+key+'"'+(session.tab===key?' aria-current="page"':'')+'>'+label+'</button>').join('')+'</nav>'+
-      '<div data-risk-panel tabindex="-1">'+({register:registerView,draft:draftView,editions:editionsView,request:requestView}[session.tab]||registerView)()+'</div>';
+      '<nav class="risk-tabs" aria-label="Risk register views">'+[['register','Register'],['draft','Draft edition'],['editions','Editions and history'],['request','Request recovery'],['copies','Working copies']].map(([key,label])=>'<button type="button" data-risk-action="tab" data-risk-tab="'+key+'"'+(session.tab===key?' aria-current="page"':'')+'>'+label+'</button>').join('')+'</nav>'+
+      '<div data-risk-panel tabindex="-1">'+({register:registerView,draft:draftView,editions:editionsView,request:requestView,copies:copiesView}[session.tab]||registerView)()+'</div>';
     updateControls();
     if(focus?.filter){
       const next=root.querySelector('[data-risk-filter="'+focus.filter+'"]');next?.focus();
@@ -539,6 +720,14 @@ export function mountDeliveryRisks({container,current,saveApi,session={},mutatio
   const editingActions=new Set(['seed','import','add-risk','add-issue','add-action','preview','save']);
   async function dispatch(action,target){
     if(editingActions.has(action))need(!locked()&&caseValue.program.state==='OPEN','Resolve the original request or reopen the original case before editing.');
+    if(action==='export-copy'){await exportCopy();return;}
+    if(action==='review-copy'){await stageCopy($('[data-risk-copy-import]')?.files[0]);return;}
+    if(action==='adopt-copy'){await adoptCopy();return;}
+    if(action==='cancel-copy'){session.copyReview=null;return;}
+    if(action==='export-reviewed-copy'){need(session.copyReview,'Review a complete copy first.');await exportCopy(session.copyReview.desk);return;}
+    if(action==='review-checkpoint'){await stageCheckpoint(target.dataset.copyId);return;}
+    if(action==='export-checkpoint'){const row=session.copies.find(value=>value.id===target.dataset.copyId);need(row,'Choose an existing checkpoint.');await exportCopy(row.desk,programId+'-risk-checkpoint-'+row.id.slice(0,12)+'.json');return;}
+    if(action==='remove-checkpoint'){await removeCheckpoint(target.dataset.copyId);return;}
     if(action==='tab'){session.tab=target.dataset.riskTab;persist();return;}
     if(action==='refresh'){await refresh();return;}
     if(action==='seed'){await makeDraft(target.dataset.reviewId||null);return;}

@@ -1,0 +1,85 @@
+{
+  "schema": "stellar-forge.collection-review-example-edition.v1",
+  "originalProductCommit": "36dacba6b7f66852df768c06043fd10da053bd6c",
+  "sourceRepairOperation": "COLLECTION-REVIEW-PUBLIC-MAPS-KEY-REDACTION-20261013-2D58",
+  "requestId": "61b1cd91-6cdb-4a45-b4d4-97777be39c25",
+  "originalEditorialRequestId": "a2197f07-ae64-4d8d-851a-a7d05eaeb332",
+  "baseRevision": "revision-ff5d5c2087cd1153f3063f4eb2f4421c4c7613ab1449bd5a940318d01c9084b5",
+  "revision": "revision-63c330e37c70b5f12a4df6b414a2b6688376789ed4a92a4ee94b5aca7d264a5f",
+  "actor": "TJLabs assistant — editorial proposal",
+  "recordedAt": "2026-10-13T08:40:39.000Z",
+  "counts": {
+    "collections": 2,
+    "occurrences": 44,
+    "unreviewed": 0,
+    "include": 28,
+    "exclude": 0,
+    "needs-info": 16,
+    "rightsUnknown": 44
+  },
+  "storyOccurrences": 14,
+  "relationships": 19,
+  "historyRevisions": 3,
+  "verification": {
+    "execution": "Original published JavaScript functions executed in V8 with controlled WebCrypto, UTF-8 and URL platform adapters; not a native browser or customer runtime.",
+    "all44OccurrenceFieldsEqual": true,
+    "initialDerivativeSourcesUnchanged": true,
+    "allInitialDerivativeRevisionsUnchanged": true,
+    "reopened": true,
+    "replayed": true,
+    "receivingPreservesHead": true,
+    "noRemovedKeyInOutputs": true,
+    "linkedMediaFetched": false,
+    "institutionalApproval": false
+  },
+  "files": [
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Request.json",
+      "bytes": 36510,
+      "gitBlob": "0f37d0bd4bcfb289b0ddf7dbf7b2cfbd14d01499",
+      "sha256": "194515f4ed36db2aa9e2ec4d16648f43a1e9e705dda182dce2d8b6de5374c8a4"
+    },
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Publication_Request.json",
+      "bytes": 36780,
+      "gitBlob": "a3d60d4c6438ae03103b55598ca9e9327fd53f0b",
+      "sha256": "a943f5a19b105bcd550d9f6b74251680807ad339c7787079e61761ecdc57ea3b"
+    },
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Derivation.json",
+      "bytes": 1912,
+      "gitBlob": "e91f73c77c4b77b1b5823718aab9a87d0ca719fc",
+      "sha256": "2a10951cabb67563c4afde8aa46cecf67eedd77e26a3a4bb797ef3225a5cf9e6"
+    },
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Review.json",
+      "bytes": 423102,
+      "gitBlob": "3e171f844df9de279fa6baf333cb68f090781103",
+      "sha256": "df4af35617dcd8b3d0cd982a1754e0b2a02093f20b389507adc68d9f6879a8a3"
+    },
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Projection.json",
+      "bytes": 88534,
+      "gitBlob": "6546f991c3853b38e6d6ef7ef2325d78883312a5",
+      "sha256": "6585d3909837dff72d1d947efedcadddc3ec629ff940829287f5e92f1e7ecd92"
+    },
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Review.html",
+      "bytes": 91847,
+      "gitBlob": "fa9ee18deae56061c26499d8dac8a05d09a9276d",
+      "sha256": "296fd5c0d848b7d5935bec522d15402982a27069a070d2ef30d16c76b6dda26d"
+    },
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Native.zip",
+      "bytes": 1658920,
+      "gitBlob": "75fda783af01f864d5f894185aac18c0fc59bb9f",
+      "sha256": "f96ea3c03ca7f0290ac6279e30fe173cf97396e3430ff9cc5a29b5049b0ed4c9"
+    },
+    {
+      "path": "products/collection-review/examples/ArchiveBlack_Editorial_Package.zip",
+      "bytes": 1749794,
+      "gitBlob": "ef01d7cc79c96a678e5e8b19844212980cbc07ab",
+      "sha256": "580c78fc9436f3b3a9576e05c384565d1e8550ad11c0e6a63090d0cb78b0379c"
+    }
+  ]
+}

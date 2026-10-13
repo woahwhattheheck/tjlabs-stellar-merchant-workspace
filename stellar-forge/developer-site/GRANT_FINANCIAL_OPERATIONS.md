@@ -100,6 +100,16 @@ The browser manifest declares both the readable page and complete Markdown route
 
 The financial source register keeps the original request and measures. It connects the 139-path public release and its 46 native receivables operations to the exact 275-file original-programme capsule, the maintained bank application and the completed customer billing handover. The application and companion describe each selected operation and its original result separately.
 
+## Receive the completed original financial result
+
+The complete **dist/grant-data/financial-native-result.json** retains the two original programme summaries, source version and correction, original result byte/hash identities and immutable packet URLs. The current financial walkthrough presents those outcomes in its ordered account review, the application answer carries their concise outcome and the complete companion retains the original scope and supplied RPC input basis.
+
+The original payment programme passed in run 38343867655; that same run retained the MCP registration failure. MCP completed in run 38359117638 with the three maintained startup corrections and unchanged programme/accounting engine. Keep both records and their original source **94ad1dd3** together. The existing 275-file **8aed042e** source descriptor remains a separate selection in the same financial register.
+
+The browser manifest exposes **/grant-data/financial-native-result.json**. The grant-reviewer and merchant-receivables installed support declarations carry the exact same JSON. The original walkthrough renderer projects its relative download to that registered route. The existing application composer preserves **financial_operations.completed_native_receiving** and the original immutable result source entries while updating current application/companion identities.
+
+Continue source receiving through the same original operation. Reuse these completed programme outputs for their exact source and scope; a customer's selected installed package retains its own manifest and complete account. The original six packages, USD 38,000, 400 prospective hours, 150-day delivery and distinct network-purchase baseline keep their existing definitions.
+
 ## Source modules
 
 **grant-financial-operations.mjs** extracts and receives the single financial chapter and attaches fourteen selected original product source entries and retains the original bank operating sources. It is a pure composition helper. **grant-compose.mjs** remains the sole native four-file authoring entry. Its original **grant-customers.mjs**, **grant-datasette.mjs**, **grant-entry.mjs** and **grant-submission.mjs** continue the customer chapter projection, selected Datasette product, guided reviewer opening and issuer-workspace attachment.

@@ -33,6 +33,8 @@
     "XERO_CASH_CHECK.mjs",
     "XERO_CASH_CHECK_MANIFEST.json",
     "operations/scf-receivables-native-2a51-20261012/XERO_CUSTOMER_HANDOVER.md",
-    "operations/scf-receivables-native-2a51-20261012/programs/XERO_CUSTOMER_CASE_MANIFEST.json"
+    "operations/scf-receivables-native-2a51-20261012/programs/XERO_CUSTOMER_CASE_MANIFEST.json",
+    "stellar/scf-starforge-20261009/sf101-merchant-recovery/recover.mjs",
+    "operations/scf-receivables-native-2a51-20261012/recover-hosted-customer.py"
   ]
 }

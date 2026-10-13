@@ -17,7 +17,17 @@
     "products/collection-review/examples/ArchiveBlack_Institution_Review.json",
     "products/collection-review/examples/ArchiveBlack_Review_Projection.json",
     "products/collection-review/examples/README.md",
-    "products/collection-review/examples/ArchiveBlack_Review.html"
+    "products/collection-review/examples/ArchiveBlack_Review.html",
+    "stellar-forge/developer-site/dist/collection-review-publication.mjs",
+    "products/collection-review/PUBLICATION.md",
+    "products/collection-review/examples/ArchiveBlack_Editorial_Request.json",
+    "products/collection-review/examples/ArchiveBlack_Editorial_Publication_Request.json",
+    "products/collection-review/examples/ArchiveBlack_Editorial_Derivation.json",
+    "products/collection-review/examples/ArchiveBlack_Editorial_Review.json",
+    "products/collection-review/examples/ArchiveBlack_Editorial_Projection.json",
+    "products/collection-review/examples/ArchiveBlack_Editorial_Review.html",
+    "products/collection-review/examples/ArchiveBlack_Editorial_Edition.json",
+    "products/collection-review/examples/PUBLICATION_REDACTION.json"
   ],
   "commands": {
     "collection-review": "stellar-forge/developer-site/collection-review-cli.mjs"
@@ -28,7 +38,8 @@
   "exports": {
     "./collection-review": "./source/stellar-forge/developer-site/dist/collection-review-workspace.mjs",
     "./collection-review/source": "./source/stellar-forge/developer-site/dist/collection-review-source.mjs",
-    "./collection-review/report": "./source/stellar-forge/developer-site/dist/collection-review-report.mjs"
+    "./collection-review/report": "./source/stellar-forge/developer-site/dist/collection-review-report.mjs",
+    "./collection-review/publication": "./source/stellar-forge/developer-site/dist/collection-review-publication.mjs"
   },
   "browserAssets": [
     {

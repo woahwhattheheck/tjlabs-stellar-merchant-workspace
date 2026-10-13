@@ -995,6 +995,13 @@
         "saved-project-library.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/grant-data/financial-native-result.json",
+      [
+        "grant-data/financial-native-result.json",
+        "application/json; charset=utf-8"
+      ]
     ]
   ]
 }

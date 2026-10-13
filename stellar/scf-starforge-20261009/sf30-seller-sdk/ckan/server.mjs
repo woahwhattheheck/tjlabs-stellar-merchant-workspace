@@ -18,6 +18,7 @@ const assets = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/dcat-json.mjs', ['dcat-json.mjs', 'text/javascript; charset=utf-8']],
   ['/remote-publication.mjs', ['remote-publication.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-sources.mjs', ['dcat-sources.mjs', 'text/javascript; charset=utf-8']],
+  ['/dcat-semantic.mjs', ['dcat-semantic.mjs', 'text/javascript; charset=utf-8']],
   ['/migration.mjs', ['migration.mjs', 'text/javascript; charset=utf-8']], ['/style.css', ['style.css', 'text/css; charset=utf-8']]]);
 const root = fileURLToPath(new URL('./public/', import.meta.url));
 function exactPresentation(value) {
@@ -175,6 +176,28 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
               ...(state.authTokenEnv ? { authTokenEnv: state.authTokenEnv } : {}),
             } });
         }
+        if (parts[0] === 'dcat' && parts[1] === 'semantic') {
+          if (parts[2] === 'profiles' && parts.length === 4)
+            return json(response, await workbench.dcatSemanticProfile(parts[3]));
+          if (parts[2] === 'runs' && parts.length === 4)
+            return json(response, await workbench.dcatSemanticRun(parts[3]));
+          if (parts[2] === 'runs' && parts[4] === 'findings' && parts.length === 5)
+            return json(response, await workbench.dcatSemanticFindings({
+              runId: parts[3], offset: Number(url.searchParams.get('offset') ?? 0),
+              limit: Number(url.searchParams.get('limit') ?? 50),
+              ...(url.searchParams.has('severity') ? { severity: url.searchParams.get('severity') } : {}),
+              ...(url.searchParams.has('search') ? { search: url.searchParams.get('search') } : {}),
+            }));
+          if (parts[2] === 'files' && parts.length === 5)
+            return await downloadWorkspaceArchive(response, await workbench.dcatSemanticDownload({
+              kind: parts[3], id: parts[4], ...(url.searchParams.has('key') ? { key: url.searchParams.get('key') } : {}),
+            }));
+          if (parts[2] === 'guide' && parts.length === 3) {
+            response.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8',
+              'content-disposition': 'attachment; filename="SEMANTIC_CATALOGS.md"' });
+            response.end(await readFile(fileURLToPath(new URL('./SEMANTIC_CATALOGS.md', import.meta.url)))); return;
+          }
+        }
         if (parts[0] === 'dcat') {
           if (parts[1] === 'sources' && parts.length === 3)
             return json(response, await workbench.dcatSource(parts[2]));
@@ -310,7 +333,7 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
       }
       if (request.method === 'POST') {
         if (uploading) throw fault('CKAN_PROJECT_BUSY', 'Finish the current upload before starting another project operation.', 409);
-        const input = await body(request, ['dcat', 'remote'].includes(parts[0]), parts[0] === 'remote' ? 4194304 : 131072);
+        const input = await body(request, parts[0] === 'remote' || parts[0] === 'dcat' && parts[1] !== 'semantic', parts[0] === 'remote' ? 4194304 : parts[0] === 'dcat' && parts[1] === 'semantic' ? 50331648 : 131072);
         if (parts[0] === 'editions' && parts[2] === 'semantics' && parts.length === 3)
           return json(response, await workbench.previewSemantics(parts[1], input.projection));
         if (parts[0] === 'refreshes' && parts[2] === 'preview' && parts.length === 3)
@@ -326,6 +349,12 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
           result = workbench.publishRemotePublication(parts[2], input);
         else if (parts[0] === 'remote' && parts[1] === 'publications' && parts[3] === 'reconcile' && parts.length === 4)
           result = workbench.reconcileRemotePublication(parts[2]);
+        else if (parts[0] === 'dcat' && parts[1] === 'semantic' && parts[2] === 'profiles' && parts.length === 3)
+          result = workbench.importDcatSemanticProfile(input);
+        else if (parts[0] === 'dcat' && parts[1] === 'semantic' && parts[2] === 'runs' && parts.length === 3)
+          result = workbench.startDcatSemanticRun(input);
+        else if (parts[0] === 'dcat' && parts[1] === 'semantic' && parts[2] === 'reviews' && parts.length === 3)
+          result = workbench.reviewDcatSemanticRun(input);
         else if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'save' && parts.length === 3)
           result = workbench.saveDcatSource(input);
         else if (parts[0] === 'dcat' && parts[1] === 'sources' && parts[2] === 'acquire' && parts.length === 3)
@@ -353,6 +382,9 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
         else if (parts[0] === 'cancel' && parts.length === 1) return json(response, workbench.cancel());
         else throw fault('CKAN_ROUTE_NOT_FOUND', 'The requested project action does not exist.', 404);
         return json(response, { operationId: result.id,
+          ...(result.profileId ? { profileId: result.profileId } : {}),
+          ...(result.runId ? { runId: result.runId } : {}),
+          ...(result.semanticReviewId ? { semanticReviewId: result.semanticReviewId } : {}),
           ...(result.targetId ? { targetId: result.targetId } : {}),
           ...(result.releaseId ? { releaseId: result.releaseId } : {}),
           ...(result.editionId ? { editionId: result.editionId } : {}),

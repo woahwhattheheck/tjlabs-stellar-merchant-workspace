@@ -1,7 +1,7 @@
 {
   "schema": "commons.installation-completion-source-status.v1",
   "operation": "SCF-INSTALLATION-TO-COMPLETION-26B1-20261013",
-  "base_commit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
+  "base_commit": "f694c3a9e3cd2a9199c548d581d5f11ca9fc460d",
   "source_files": [
     {
       "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_completion_installations.py",
@@ -54,17 +54,17 @@
     },
     {
       "path": "stellar/scf_2026/sf47_budget_model/workspace/launch.mjs",
-      "bytes": 25285,
-      "sha256": "5eaea0e5a0d3f6376d088b54b8c69b990561060f797072c975caa65753f9dbf8",
-      "git_blob": "fab38071589c16fcab84cf71cf039e681649a46a",
-      "before": "3d7334ea23b697a9e46efd8891265b43e2c388cc"
+      "bytes": 25406,
+      "sha256": "3f66ad4b98c32dcf44317eec1218e55623a5e89064269807433e34ebb633ef39",
+      "git_blob": "3da8cb6aa9e7a2091f578d4ac1ed3b2d314d2e57",
+      "before": "d7bf38440fa54496f6a2d9cbbc3f5393e960ac0d"
     },
     {
       "path": "stellar/scf_2026/sf47_budget_model/workspace/managed_launch.py",
-      "bytes": 22584,
-      "sha256": "41ac3365edd5d1084fbb913b3a2373bf69831bea03ae4ee80a6a6a16a5f3b9a9",
-      "git_blob": "460ac8ce56888c1f0db83c0d24a02432c9fdba7b",
-      "before": "955b4c71297827a944c55d9e52ead83b74b36823"
+      "bytes": 22711,
+      "sha256": "37f89e15fe73c0b3409e42a1db65ecaee23f65605f68d915da4583d43960dc66",
+      "git_blob": "29de35c5aae74b64b7de01017292719eba524f41",
+      "before": "0de47225a391b07216d328c0d526c943089fcd30"
     },
     {
       "path": "stellar/scf_2026/sf47_budget_model/workspace/installation-completion-receiving.py",
@@ -120,7 +120,7 @@
       "unrenderable imported assignment rejected before replacement"
     ],
     "managedLaunch": {
-      "files": 370,
+      "files": 373,
       "identical": true,
       "duplicateFree": true
     },
@@ -131,13 +131,14 @@
       "fullExact": true
     },
     "currentSourceComposition": {
-      "baseCommit": "b81137ecb4e8ca27a108cb28b09ae12558bcbc86",
-      "baseTree": "d9ca8eae3e252a9249ba2341e83b6c522f574eed",
+      "baseCommit": "f694c3a9e3cd2a9199c548d581d5f11ca9fc460d",
+      "baseTree": "a6b07bd45db009e5354bc767529ff81d6b67728a",
       "workspaceMembers": 356,
       "preserved": [
         "statement profiles dispatch/import/static/staff",
         "SourceDesk full installation/recurring managed launch",
-        "original Source Tables and correction workflow"
+        "original Source Tables and correction workflow",
+        "later SourceDesk native agent/types/guide managed-launch closure"
       ],
       "allFourteenTargetPreimagesMatched": true
     },

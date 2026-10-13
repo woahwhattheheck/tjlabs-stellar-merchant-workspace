@@ -9,12 +9,17 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md",
-      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
           "git_blob": "07d326f7c94ededada48ca2392db6caed511b8b1",
           "bytes": 24417
+        },
+        {
+          "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+          "git_blob": "5a0801628886a29d40dfc25b763781d6c1eaf473",
+          "bytes": 24867
         }
       ]
     },
@@ -39,12 +44,17 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statements.py",
-      "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
+      "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
           "git_blob": "c52a1a50e48405fa15020f95566f10d116dfa3b8",
           "bytes": 46396
+        },
+        {
+          "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+          "git_blob": "4bd4dbbff2a8c0f311c78aedc0b94b256bb7fbf7",
+          "bytes": 46683
         }
       ]
     },
@@ -120,6 +130,51 @@
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
           "git_blob": "e7aae0e6711d1b27d816d584cf5a8df318291d56",
           "bytes": 24120
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-setups-guide",
+      "label": "Named statement setups, recurring periods and complete case handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_SETUPS.md",
+      "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+      "editions": [
+        {
+          "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+          "git_blob": "eb2b58bd113e42b8869ff7307997a7ec908cfad1",
+          "bytes": 7581
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-setups-native",
+      "label": "Immutable statement setup editions and original case receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_profiles.py",
+      "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+      "editions": [
+        {
+          "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+          "git_blob": "33ca934fcf0f0191e77bdf1a3bba9446744e1269",
+          "bytes": 14038
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-setups-browser",
+      "label": "Exact header and account comparison before applying a saved setup",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_profiles.mjs",
+      "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+      "editions": [
+        {
+          "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+          "git_blob": "89e22fadfe120286e30380d17f09f1f4986b7932",
+          "bytes": 8218
         }
       ]
     }

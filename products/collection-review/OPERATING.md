@@ -147,3 +147,7 @@ Use keep-draft to retain unfinished text, receive to union a colleague's origina
 
 
 See the [complete field and source guide](../../stellar-forge/developer-site/dist/collection-review-guide.md) for actual-source examples, limits and the validation boundary.
+
+## Publish an example safely
+
+Private editable exports retain the complete supplied source. Before committing or distributing an example, use the explicit publication workflow in [PUBLICATION.md](PUBLICATION.md). `collection-review publish` validates the complete packet and refuses recognizable Google API key candidates without logging or using them. `collection-review publication-check --file PATH` inspects a full decoded UTF-8/JSON artifact. The distribution builder applies the same check to every selected Collection Review example before creating a new package. These checks do not redact an original source in place, establish credential validity, or replace the credential owner's restriction/rotation work.

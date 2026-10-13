@@ -4,7 +4,7 @@
 <body>
 <header><div><p class="eyebrow">STELLAR FORGE</p><h1>Economic editions</h1><p id="project-title">Opening project…</p></div><button id="refresh" type="button">Refresh state</button></header>
 <p class="source-notice">This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. By using this application, users agree to the <a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener noreferrer">FRED API Terms of Use</a>.</p>
-<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="county">County reports</button><button data-tab="releases">Release planner</button><button data-tab="ddp">DDP migration</button><button data-tab="published">Current publications</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
+<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="county">County reports</button><button data-tab="research">Research sources</button><button data-tab="releases">Release planner</button><button data-tab="ddp">DDP migration</button><button data-tab="published">Current publications</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
 <main>
 <div id="message" role="status" aria-live="polite"></div>
 <section id="summary" class="metrics" aria-label="Project summary"></section>
@@ -434,6 +434,7 @@
 <div id="county-customer-downloads" class="buttons"></div>
 </div>
 </section>
+<section data-panel="research" hidden><div id="research-workspace"></div></section>
 <section data-panel="recovery" hidden>
 <h2>History and receiving</h2><p>The project retains source captures, saved review decisions, publications and completed operation identities. Resume an interrupted source acquisition with the same operation.</p>
 <pre id="pending">No pending operation.</pre><div class="buttons"><button id="resume">Continue original acquisition</button><button id="abandon">Abandon pending action and retain its files</button><button id="download-bundle">Export complete project</button></div>
