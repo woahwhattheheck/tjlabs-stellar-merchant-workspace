@@ -135,7 +135,7 @@ Host shutdown drains pending calls and readers; it never stops the managed prope
 
 ## Source and operating evidence
 
-The entire 22-file original application travels unchanged in app/. ADOPTION.json records every original path, length and hash against Commons merge a64e69c1. The additive managed lifecycle, client and agent source are separately reviewable here. The complete Installation profile and source chapter remain in the maintained SCF discovery paths.
+The current complete review-enabled application is selected in app/source-selection.json. ADOPTION.json preserves every original path, length and hash against Commons merge a64e69c1 and records the maintained edition separately. The original commissioning input keeps its historical source identity; the installed lifecycle, client, agent and reviewer exchange use the current selection. The complete Installation profile and source chapter remain in the maintained SCF discovery paths.
 
 Source syntax and interface review are distinct from operating evidence. The original Bluewave programme and actual image inspection remain with the one equipped receiving request. Continue that exact operation and preserve its original native results; a source merge is not a claim that a customer load, browser course or managed runtime has executed.
 
