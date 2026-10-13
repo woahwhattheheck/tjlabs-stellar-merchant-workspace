@@ -199,7 +199,7 @@ function renderOverview(){
  lockForms();
 }
 function defaultMapping(){
- return {format:'OFX',textEncoding:'',accountNamespace:'',camtMessageVersion:'',camtDetailPolicy:'PRESERVE_ONLY',delimiter:',',headerRow:'1',dateFormat:'YMD',decimalSeparator:'.',groupSeparator:'',amountMode:'SIGNED',accountName:'',bankId:'',branchId:'',accountId:'',accountType:'CHECKING',currency:'USD',scale:'2',postedStatuses:'Booked',pendingStatuses:'Pending',balanceRecords:'[]',skipRecords:'[]',columns:{}};
+ return {format:'OFX',textEncoding:'',accountNamespace:'',camtMessageVersion:'',camtNamespaceMode:'DECLARED',camtReferencePolicy:'ACCOUNT_SERVICER_REFERENCE',camtDetailPolicy:'PRESERVE_ONLY',delimiter:',',headerRow:'1',dateFormat:'YMD',decimalSeparator:'.',groupSeparator:'',amountMode:'SIGNED',accountName:'',bankId:'',branchId:'',accountId:'',accountType:'CHECKING',currency:'USD',scale:'2',postedStatuses:'Booked',pendingStatuses:'Pending',balanceRecords:'[]',skipRecords:'[]',columns:{}};
 }
 function renderImport(){
  const d=ctx.sourceMapping||defaultMapping();
@@ -214,9 +214,11 @@ function renderImport(){
  '<div id="source-file-summary" class="file-summary mt14"></div>'+
  '<div id="native-options" class="mt14">'+field('Institution namespace when the original file has no bank/FI identity','accountNamespace',d.accountNamespace,'text','data-source-field maxlength="255" placeholder="Stable institution reference"')+'</div>'+
  '<fieldset id="camt-options" class="mt16" '+(d.format==='CAMT053'?'':'hidden')+'><legend>CAMT.053 source interpretation</legend><div class="grid two">'+
+ selectField('Original XML elements','camtNamespaceMode',[{value:'DECLARED',label:'Use the original declared namespace'},{value:'UNQUALIFIED',label:'Unqualified elements — select the message version'}],d.camtNamespaceMode||'DECLARED',null,'data-source-field')+
  selectField('Expected message version','camtMessageVersion',[{value:'',label:'Read the original supported namespace'},{value:'camt.053.001.02',label:'camt.053.001.02'},{value:'camt.053.001.08',label:'camt.053.001.08'}],d.camtMessageVersion,null,'data-source-field')+
+ selectField('Booking reference identity','camtReferencePolicy',[{value:'ACCOUNT_SERVICER_REFERENCE',label:'Account-servicer reference identifies the booking'},{value:'SOURCE_ENTRY',label:'Keep separate entries; review overlapping files'}],d.camtReferencePolicy||'ACCOUNT_SERVICER_REFERENCE',null,'data-source-field')+
  selectField('Transaction detail amounts','camtDetailPolicy',[{value:'PRESERVE_ONLY',label:'Preserve the original entry amount'},{value:'ENTRY_CURRENCY_TX_AMT',label:'Also check details stated in the entry currency'}],d.camtDetailPolicy,null,'data-source-field')+
- '</div><p class="small muted mt10">Each booked entry remains one cash row. Original detail amounts, charges, reversals and remittance fields remain attached to that entry.</p></fieldset>'+
+ '</div><p class="small muted mt10">Each booked entry remains one cash row. Original detail amounts, charges, reversals and remittance fields remain attached to that entry. For an original with unqualified XML elements, select Unqualified and its documented message version; original bytes remain unchanged. When the bank reuses a booking reference for separate entries, select Keep separate entries; the reference stays visible and overlaps require review.</p></fieldset>'+
  '<fieldset id="csv-options" class="mt16" '+(d.format==='CSV'?'':'hidden')+'><legend>CSV source mapping</legend><div class="grid four">'+
  selectField('Delimiter','delimiter',[{value:',',label:'Comma'},{value:';',label:'Semicolon'},{value:'\t',label:'Tab'},{value:'|',label:'Pipe'}],d.delimiter,null,'data-source-field')+
  field('Header logical record','headerRow',d.headerRow,'number','data-source-field min="1" max="100000"')+

@@ -299,10 +299,16 @@ export declare function readBankStatementSource(value: BankStatementSourceInput)
 
 
 export type CamtMessageVersion = 'camt.053.001.02' | 'camt.053.001.08';
+export type CamtReferencePolicy = 'ACCOUNT_SERVICER_REFERENCE' | 'SOURCE_ENTRY';
+export type CamtNamespaceMode = 'DECLARED' | 'UNQUALIFIED';
 export type CamtDetailPolicy = 'PRESERVE_ONLY' | 'ENTRY_CURRENCY_TX_AMT';
 export interface CamtStatementOptions {
-  /** The exact source namespace selects the version when omitted. A supplied version must agree. */
+  /** The original namespace selects the version by default; required for explicitly unqualified elements. */
   messageVersion?: CamtMessageVersion;
+  /** DECLARED by default. UNQUALIFIED preserves original empty namespaces and requires messageVersion. */
+  namespaceMode?: CamtNamespaceMode;
+  /** SOURCE_ENTRY retains references without assigning cross-file transaction identity; overlaps require review. */
+  referencePolicy?: CamtReferencePolicy;
   /** Details always remain nested. This option only requests a separate exact original-detail comparison. */
   detailPolicy?: CamtDetailPolicy;
   /** Optional explicit source precision agreement; ordinary receiving needs no precision map. */
@@ -499,7 +505,7 @@ export interface CamtDetailTieOut {
 export interface CamtEntryMetadata {
   entryReference: string;
   accountServicerReference: string;
-  providerIdentityBasis: 'ACCOUNT_SERVICER_REFERENCE' | 'PLACEHOLDER' | 'MISSING';
+  providerIdentityBasis: 'ACCOUNT_SERVICER_REFERENCE' | 'PLACEHOLDER' | 'MISSING' | 'SOURCE_ENTRY';
   creditDebit: 'CRDT' | 'DBIT' | null;
   reversal: boolean | null;
   status: { code: string; proprietary: string; source: SourceLocation | null };
@@ -585,6 +591,11 @@ export interface CamtSourceMetadata {
   profile: {
     messageVersion: CamtMessageVersion;
     versionSelection: 'EXPLICIT' | 'SOURCE_NAMESPACE';
+    /** Present only for explicitly interpreted unqualified original XML. */
+    namespaceMode?: 'UNQUALIFIED';
+    originalNamespace?: '';
+    /** Present only when original entries are explicitly retained separately. */
+    referencePolicy?: 'SOURCE_ENTRY';
     detailPolicy: CamtDetailPolicy;
     currencyScales: Record<string, number> | null;
   };

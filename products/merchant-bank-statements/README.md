@@ -209,3 +209,7 @@ Use `starforge bank-statements accountant` for the same native inspection, compa
 ## Whole original statement deliveries
 
 Open **Statement collections** to keep several original files and their per-file interpretations together. The installed desk retains every byte and unfinished mapping, searches/pages the full collection, shows exact source-section intake including superseded interpretations, and reopens a complete downloaded copy in another workspace. Each file enters the existing original bank editor and financial request journal. Native `bank-statements collection prepare`, `inspect` and `extract` carry the same complete collection through source preparation and receiving. See the [complete collection operating guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md).
+
+## Complete issued statement delivery
+
+The [Bundesbank original delivery](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/BUNDESBANK.md) includes both official example ZIPs and all22XMLfiles, explicit original namespace/reference interpretation and one complete receiving command. Its two statements keep all22cash entries and22nested details, including the separate cheque and fee that share a bank reference. Open the resulting whole collection in the existing Bank desk to continue account intake, matching, source correction and closing.

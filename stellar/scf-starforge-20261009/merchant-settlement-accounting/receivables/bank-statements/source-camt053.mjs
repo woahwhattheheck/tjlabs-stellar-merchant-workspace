@@ -19,9 +19,14 @@ export function readCamt053Statements(decoded, file, input, shared) {
     addDecimals, makeLocator, entities, finishAccount, candidateFingerprint,
     statementSummary, markDuplicates, jsonHash } = shared;
   const config = input.camt === undefined ? {} : object(input.camt, 'camt');
-  const allowed = new Set(['messageVersion', 'detailPolicy', 'currencyScales']);
+  const allowed = new Set(['messageVersion', 'namespaceMode', 'referencePolicy', 'detailPolicy', 'currencyScales']);
   for (const key of Object.keys(config)) if (!allowed.has(key)) fail('CAMT_PROFILE_FIELD', 'Unknown CAMT source interpretation option', { field: key });
   if (config.messageVersion !== undefined && !VERSIONS.includes(config.messageVersion)) fail('CAMT_MESSAGE_VERSION', 'Select camt.053.001.02 or camt.053.001.08');
+  const namespaceMode = config.namespaceMode ?? 'DECLARED';
+  if (!['DECLARED', 'UNQUALIFIED'].includes(namespaceMode)) fail('CAMT_NAMESPACE_MODE', 'Select DECLARED or UNQUALIFIED original XML elements');
+  if (namespaceMode === 'UNQUALIFIED' && !config.messageVersion) fail('CAMT_UNQUALIFIED_VERSION', 'Choose the documented message version for this unqualified original source');
+  const referencePolicy = config.referencePolicy ?? 'ACCOUNT_SERVICER_REFERENCE';
+  if (!['ACCOUNT_SERVICER_REFERENCE', 'SOURCE_ENTRY'].includes(referencePolicy)) fail('CAMT_REFERENCE_POLICY', 'Select ACCOUNT_SERVICER_REFERENCE or separate SOURCE_ENTRY identity');
   const detailPolicy = config.detailPolicy ?? 'PRESERVE_ONLY';
   if (!['PRESERVE_ONLY', 'ENTRY_CURRENCY_TX_AMT'].includes(detailPolicy)) fail('CAMT_DETAIL_POLICY', 'Select PRESERVE_ONLY or ENTRY_CURRENCY_TX_AMT');
   let scales = null;
@@ -41,11 +46,15 @@ export function readCamt053Statements(decoded, file, input, shared) {
   const namespaceDeclarations = [];
   const xml = parseXml();
   const namespace = xml.root.namespace;
-  const messageVersion = VERSIONS.find(version => namespace === NS_PREFIX + version);
+  const messageVersion = namespaceMode === 'UNQUALIFIED' ? config.messageVersion : VERSIONS.find(version => namespace === NS_PREFIX + version);
   if (!messageVersion) fail('CAMT_NAMESPACE', 'The original document namespace must be camt.053.001.02 or camt.053.001.08', { namespace });
   if (config.messageVersion && config.messageVersion !== messageVersion) fail('CAMT_VERSION_CONFLICT', 'Selected CAMT version conflicts with the original namespace', { selected: config.messageVersion, original: messageVersion });
   const legacy = messageVersion === 'camt.053.001.02';
-  const profile = { messageVersion, versionSelection: config.messageVersion ? 'EXPLICIT' : 'SOURCE_NAMESPACE', detailPolicy, currencyScales: scales };
+  const profile = { messageVersion, versionSelection: config.messageVersion ? 'EXPLICIT' : 'SOURCE_NAMESPACE', detailPolicy, currencyScales: scales,
+    ...(namespaceMode === 'UNQUALIFIED' ? { namespaceMode, originalNamespace: namespace } : {}),
+    ...(referencePolicy === 'SOURCE_ENTRY' ? { referencePolicy } : {}) };
+  if (namespaceMode === 'UNQUALIFIED') issue(issues, 'CAMT_UNQUALIFIED_SOURCE', 'Original unqualified XML is interpreted using the explicitly selected message version; original elements and namespace declarations are retained unchanged', location(xml.root), 'WARNING', { messageVersion });
+  if (referencePolicy === 'SOURCE_ENTRY') issue(issues, 'CAMT_SOURCE_ENTRY_IDENTITY', 'Each original entry remains separate; account-servicer references are retained as source information and overlapping files require review', location(xml.root), 'WARNING');
   const projectionCache = new WeakMap();
 
   function location(node, recordNumber = null) {
@@ -311,10 +320,16 @@ export function readCamt053Statements(decoded, file, input, shared) {
         if (prefix && !own(ns, prefix)) fail('CAMT_XML_UNBOUND_PREFIX', 'XML element prefix has no namespace declaration', { prefix });
         const uri = ns[prefix] || '';
         if (!parent && name !== 'Document') fail('CAMT_XML_ROOT', 'CAMT source requires its Document root');
-        if (!parent && !VERSIONS.some(v => uri === NS_PREFIX + v)) fail('CAMT_NAMESPACE', 'The original document namespace must be camt.053.001.02 or camt.053.001.08', { namespace: uri });
+        if (!parent) {
+          if (namespaceMode === 'UNQUALIFIED') {
+            if (uri) fail('CAMT_NAMESPACE_MODE_CONFLICT', 'This original has a namespace; select its original declared namespace', { namespace: uri });
+            const declaredVersions = [...new Set(Object.values(ns).filter(value => VERSIONS.some(version => value === NS_PREFIX + version)))];
+            if (declaredVersions.some(value => value !== NS_PREFIX + config.messageVersion)) fail('CAMT_VERSION_CONFLICT', 'Selected version conflicts with a version declared on the original document', { selected: config.messageVersion, declaredNamespaces: declaredVersions });
+          } else if (!VERSIONS.some(v => uri === NS_PREFIX + v)) fail('CAMT_NAMESPACE', 'The original document namespace must be camt.053.001.02 or camt.053.001.08; an unqualified original requires explicit UNQUALIFIED interpretation and version', { namespace: uri });
+        }
         const opaqueSupplementary = Boolean(parent?.opaqueSupplementary || parent?.supplementaryEnvelope);
         const supplementaryEnvelope = Boolean(parent && !opaqueSupplementary &&
-          root.namespace === NS_PREFIX + 'camt.053.001.08' &&
+          (root.namespace === NS_PREFIX + 'camt.053.001.08' || (namespaceMode === 'UNQUALIFIED' && config.messageVersion === 'camt.053.001.08')) &&
           uri === root.namespace && name === 'Envlp' &&
           parent.namespace === root.namespace && parent.name === 'SplmtryData');
         if (parent && uri !== root.namespace && !opaqueSupplementary) fail('CAMT_MIXED_NAMESPACE', 'CAMT core source contains an element in a different namespace', { tag: qualifiedName, namespace: uri });
@@ -693,7 +708,7 @@ export function readCamt053Statements(decoded, file, input, shared) {
       || (bankTransactionCode.proprietary ? 'PROPRIETARY:' + bankTransactionCode.proprietary : '') : '';
     const row = {
       id: jsonHash({ file: file.sha256, pointer: source.pointer }),
-      providerId, providerKey: account.identitySha256 && providerId ? jsonHash({ account: account.identitySha256, kind: 'TRANSACTION', providerId }) : null,
+      providerId, providerKey: referencePolicy === 'ACCOUNT_SERVICER_REFERENCE' && account.identitySha256 && providerId ? jsonHash({ account: account.identitySha256, kind: 'TRANSACTION', providerId }) : null,
       status, statusRaw: statusValue?.code || statusValue?.proprietary || rawScalar(statusNode),
       postedDate: bookingDate?.date || null, postedAtRaw: bookingDate?.raw || '', postedAt: bookingDate,
       amount, amountRaw: amountNode ? rawScalar(amountNode) : '', currency: money?.currency || account.currency,
@@ -701,7 +716,7 @@ export function readCamt053Statements(decoded, file, input, shared) {
       userDate: null, availableDate: null, expiresAt: null, correction: null, runningBalance: null,
       source, original: project(node), issues: rowIssues,
       camt: {
-        entryReference, accountServicerReference, providerIdentityBasis: providerId ? 'ACCOUNT_SERVICER_REFERENCE' : placeholder ? 'PLACEHOLDER' : 'MISSING',
+        entryReference, accountServicerReference, providerIdentityBasis: referencePolicy === 'SOURCE_ENTRY' ? 'SOURCE_ENTRY' : providerId ? 'ACCOUNT_SERVICER_REFERENCE' : placeholder ? 'PLACEHOLDER' : 'MISSING',
         creditDebit, reversal, status: statusValue || { code: '', proprietary: '', source: location(statusNode) },
         bookingDate, valueDate, bankTransactionCode, amountMagnitude: money,
         referenceBasis, counterpartyRole, batches: nested.batches, details: nested.details, detailTieOut: nested.detailTieOut,
