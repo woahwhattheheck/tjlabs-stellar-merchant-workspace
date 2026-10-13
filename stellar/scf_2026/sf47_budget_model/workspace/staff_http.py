@@ -25,6 +25,7 @@ READ_POSTS = {
     "implementation-source", "implementation-preview", "cohort-seed", "cohort-preview",
     "installation-workflows", "installation-workflow-seed", "installation-workshares",
     "installation-workshare-seed", "installation-seed", "installation-preview",
+    "installation-commissioning-seed", "installation-commissioning-review",
     "completion-seed", "completion-preview", "support-preview", "buyer-preview",
     "forecast-preview", "portfolio-preview", "portfolio-seed", "portfolio-selection",
     "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio",
@@ -185,6 +186,8 @@ def authorize(handler):
         if role == "contributor":
             fail("Use the contributor desk's original work and invoice commands.")
         if action in READ_POSTS:
+            if action == "installation-commissioning-review":
+                bind_actor(handler, body)
             return
         if role == "lead" or role == "finance" and (
                 action in ("ledger-intake-apply", "cash-correction", "account-reconciliation") or action.startswith("commercial/")):
