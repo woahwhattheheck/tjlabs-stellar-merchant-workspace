@@ -27,6 +27,13 @@ def retain_original_file(target, data):
         actual = target.read_bytes()
         if actual == data:
             target.chmod(0o600)
+            with target.open("rb") as existing:
+                os.fsync(existing.fileno())
+            fd = os.open(target.parent, os.O_RDONLY)
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
             return
         require(len(actual) < len(data) and data.startswith(actual),
                 "A different original receiving member already exists")
@@ -114,10 +121,22 @@ def run(args):
     descriptor = next(row for row in old["steps"]["portable_receiving"]["files"] if row["name"] == "warehouse.duckdb")
     require(snapshot.stat().st_size == descriptor["bytes"] and digest(snapshot.read_bytes()) == descriptor["sha256"],
             "Original portable database changed")
-    if not (working / "warehouse.duckdb").exists():
-        retain_original_file(working / "warehouse.duckdb", snapshot.read_bytes())
+    warehouse_file = working / "warehouse.duckdb"
+    copy_pending = not any(name != "source_runtime" for name in record["steps"])
+    if not warehouse_file.exists():
+        retain_original_file(warehouse_file, snapshot.read_bytes())
+    elif copy_pending and warehouse_file.is_file() and not warehouse_file.is_symlink():
+        # The old caller could stop during its first direct copy, before any
+        # workspace/native step. Repair only a shorter exact source prefix in
+        # that phase. An existing operated database remains its own live state.
+        if warehouse_file.stat().st_size < descriptor["bytes"]:
+            prefix, source_bytes = warehouse_file.read_bytes(), snapshot.read_bytes()
+            if source_bytes.startswith(prefix):
+                retain_original_file(warehouse_file, source_bytes)
     workspace = DuckDBWorkspace(working, memory_limit="256MB", threads=1)
     require(workspace.identity()["workspace_id"] == old["workspace_id"], "Original workspace identity changed")
+    keep("workspace_opened", {"workspace_id": old["workspace_id"], "original_source": descriptor,
+                             "directory": str(working)})
     model = Analytics(workspace)
     server, control, launch = serve(workspace, export_root=root / "exports", handoff_root=root / "handoffs")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
