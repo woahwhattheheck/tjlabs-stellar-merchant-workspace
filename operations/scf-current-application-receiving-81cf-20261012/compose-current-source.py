@@ -105,28 +105,118 @@ def literal_envelope(payload):
     return {"codec": "lzss16-base64", "bytes": len(body), "sha256": sha(body),
             "data": base64.b64encode(packed).decode("ascii")}
 
+
+def following_baseline(archive, directory):
+    """Select the full preceding native edition and its actual browser lineage."""
+    directory = str(safe_path(directory))
+    if not directory.startswith("receiving/"):
+        raise ValueError("Select a retained receiving directory inside this same case.")
+    result_path = directory + "/RESULT.json"
+    result = json.loads(archive.read(result_path))
+    if (result.get("state") != "COMPLETE" or result.get("operationId") != OPERATION or
+            result.get("phaseId") != PHASE):
+        raise ValueError("Continue the complete preceding source edition in this operation.")
+    baseline = {
+        "draftPath": directory + "/draft.json",
+        "reviewPath": directory + "/downloads/Current_Complete_Review.json",
+        "recordPath": directory + "/native-submission-record.json",
+        "resultPath": result_path,
+    }
+    browser_input = json.loads(archive.read(directory + "/browser-receiving-input.json"))
+    selected_draft = PurePosixPath(browser_input["currentDraftPath"])
+    expected_suffix = PurePosixPath(baseline["draftPath"]).parts
+    if selected_draft.parts[-len(expected_suffix):] != expected_suffix:
+        raise ValueError("The preceding portable browser input selects a different draft.")
+    selected_root = PurePosixPath(*selected_draft.parts[:-len(expected_suffix)])
+    browser_record = PurePosixPath(browser_input["originalRecordPath"]).relative_to(selected_root)
+    baseline["browserRecordPath"] = str(safe_path(str(browser_record)))
+    if directory + "/browser/RESULT.json" in archive.namelist():
+        browser = json.loads(archive.read(directory + "/browser/RESULT.json"))
+        if browser.get("state") == "COMPLETE":
+            if (browser.get("operationId") != OPERATION or
+                    browser.get("sourcePackageSha256") != result["sourcePackageSha256"] or
+                    browser.get("originalDraftId") != result["originalDraftId"] or
+                    browser.get("originalReviewId") != result["originalReviewId"]):
+                raise ValueError("The complete preceding browser result selects another edition.")
+            baseline.update(
+                draftPath=directory + "/browser/downloads/Current_Browser_Submission.json",
+                recordPath=directory + "/browser/saved-submission-record.json",
+                browserRecordPath=directory + "/browser/saved-submission-record.json",
+            )
+            saved = json.loads(archive.read(baseline["recordPath"]))
+            if (browser.get("localBrowserBinding") !=
+                    {"id": saved["id"], "revision": saved["revision"]}):
+                raise ValueError("Retain the actual completed browser record and revision.")
+    for value in baseline.values():
+        safe_path(value)
+        archive.getinfo(value)
+    return baseline
+
+
+def verify_baseline_binding(archive, baseline, draft):
+    saved = json.loads(archive.read(baseline["recordPath"]))
+    browser = json.loads(archive.read(baseline.get("browserRecordPath", baseline["recordPath"])))
+    if (not browser.get("id") or not isinstance(browser.get("revision"), int) or
+            not isinstance(browser.get("input"), dict) or browser["input"].get("id") != draft["id"]):
+        raise ValueError("Retain the actual original browser record separately from native source receiving.")
+    browser_binding = {key: value for key, value in browser.items() if key != "input"}
+    if saved.get("schema") == "stellar-forge.source-package-native-submission-record.v1":
+        if (saved.get("operationId") != OPERATION or saved.get("input") != draft or
+                saved.get("originalBrowserBinding") != browser_binding):
+            raise ValueError("The preceding native draft and retained original browser lineage differ.")
+    elif saved.get("input") != draft or saved != browser:
+        raise ValueError("The preceding saved draft differs from its actual local binding.")
+    return browser_binding
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", type=Path, required=True)
     parser.add_argument("--expected-case-sha256", required=True)
     parser.add_argument("--source-package", type=Path, required=True)
     parser.add_argument("--reader-html", type=Path, required=True)
+    parser.add_argument("--selection", type=Path,
+                        help="Exact publisher asset/source selection for a following edition.")
+    parser.add_argument("--source-root", type=Path,
+                        help="Complete locally received source root selected by --selection.")
+    parser.add_argument("--previous-source-directory",
+                        help="Completed preceding source directory inside the same case ZIP.")
     parser.add_argument("--original-controller", type=Path, required=True)
     parser.add_argument("--prepared-review", type=Path,
                         help="The original authors' complete following application review.")
     parser.add_argument("--library-file-id", required=True)
     parser.add_argument("--library-file-version-id", required=True)
     parser.add_argument("--library-version", type=int, required=True)
-    parser.add_argument("--expected-review-actions", type=int, default=135)
+    parser.add_argument("--expected-review-actions", type=int,
+                        help="Exact preceding event count; original phase defaults to 135.")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     os.umask(0o077)
     for path in (args.case, args.source_package, args.reader_html, args.original_controller):
         if not path.is_absolute() or not path.is_file():
             raise ValueError("Select the equipped owner's existing absolute local input: " + str(path))
-    if not args.output.is_absolute() or args.library_version < 0 or args.expected_review_actions < 1:
+    if (not args.output.is_absolute() or args.library_version < 0 or
+            (args.expected_review_actions is not None and args.expected_review_actions < 1)):
         raise ValueError("Select an absolute output directory and the actual saved case version.")
-    selection = json.loads((ROOT / "source-assets-selection.json").read_text(encoding="utf-8"))
+    if bool(args.previous_source_directory) != bool(args.selection):
+        raise ValueError("A following edition requires its exact source selection and preceding source directory.")
+    if args.selection and (not args.selection.is_absolute() or not args.selection.is_file()):
+        raise ValueError("Select the publisher's complete local source-selection manifest.")
+    if args.source_root and (not args.source_root.is_absolute() or not args.source_root.is_dir()):
+        raise ValueError("Select the actual complete local source root.")
+    if args.previous_source_directory and args.source_root is None:
+        raise ValueError("The following source edition requires its complete selected local source.")
+    selection_path = args.selection or ROOT / "source-assets-selection.json"
+    selection = json.loads(selection_path.read_text(encoding="utf-8"))
+    if (selection.get("schema") != "stellar-forge.current-source-assets-selection.v1" or
+            selection.get("operationId") != OPERATION or selection.get("phaseId") != PHASE):
+        raise ValueError("Select the original complete source-selection format and operation.")
+    for key in ("originalSourceCommit", "currentRuntimeSourceCommit", "currentApplicationSourceCommit"):
+        value = selection.get(key)
+        if not isinstance(value, str) or len(value) != 40 or any(c not in "0123456789abcdef" for c in value):
+            raise ValueError("Select the exact immutable source commit: " + key)
+    paths = [str(safe_path(row["path"])) for row in selection["assets"]]
+    if len(paths) != len(set(paths)) or selection["readerPath"] not in paths:
+        raise ValueError("Retain each selected source asset once, including the complete reader.")
     case_bytes = args.case.stat().st_size
     with args.case.open("rb") as stream:
         case_sha = hashlib.file_digest(stream, "sha256").hexdigest()
@@ -161,6 +251,8 @@ def main():
         names = archive.namelist()
         if len(names) != len(set(names)):
             raise ValueError("The retained case contains duplicate members.")
+        if args.previous_source_directory:
+            baseline = following_baseline(archive, args.previous_source_directory)
         for key in baseline:
             if baseline[key] not in names:
                 raise ValueError("The complete original case is missing its " + key)
@@ -170,21 +262,27 @@ def main():
         review_export = json.loads(archive.read(baseline["reviewPath"]))
         review = review_export["round"]
         result = json.loads(archive.read(baseline["resultPath"]))
+        browser_binding = verify_baseline_binding(archive, baseline, draft)
     if config["sourceCommit"] != selection["originalSourceCommit"]:
         raise ValueError("Continue the selected original source in the saved case.")
-    if result["state"] != "COMPLETE" or result["reviewActions"] != args.expected_review_actions:
+    expected_review_actions = args.expected_review_actions
+    if expected_review_actions is None:
+        expected_review_actions = len(review["events"]) if args.previous_source_directory else 135
+    if result["state"] != "COMPLETE" or result["reviewActions"] != expected_review_actions:
         raise ValueError("Continue the actual completed original native review.")
-    if len(review["events"]) != args.expected_review_actions or result["originalReviewId"] != review["id"] or result["originalDraftId"] != draft["id"]:
+    if len(review["events"]) != expected_review_actions or result["originalReviewId"] != review["id"] or result["originalDraftId"] != draft["id"]:
         raise ValueError("The retained review result, draft and complete history differ.")
     baseline.update(draftId=draft["id"], reviewId=review["id"],
                     actorId="scf-application-reviewer-81cf",
-                    reviewEvents=args.expected_review_actions)
+                    reviewEvents=expected_review_actions)
 
     assets = []
     for metadata in selection["assets"]:
         relative = safe_path(metadata["path"])
         if metadata["path"] == selection["readerPath"]:
             path = args.reader_html
+        elif args.source_root:
+            path = args.source_root.joinpath(*relative.parts)
         else:
             supplied = ROOT.joinpath("assets", *relative.parts)
             path = supplied if supplied.is_file() else ROOT.parents[1].joinpath(*relative.parts)
@@ -202,9 +300,21 @@ def main():
         "sourcePackageSha256": sha(package_body), "assets": asset_metadata,
     }
     source_selection = {"id": sha(encoded(basis).rstrip(b"\n")), **basis}
+    receiving_basis = {"sourceSelection": source_selection["id"],
+                       "draftSha256": sha(draft_body),
+                       "reviewSha256": sha(encoded(review)),
+                       "browserBinding": browser_binding}
+    receiving_id = sha(encoded(receiving_basis))
+    receiving_directory = ("receiving/source-package-editions/" + receiving_id
+                           if args.previous_source_directory else "receiving/source-package-continuation")
+    if args.previous_source_directory == receiving_directory:
+        raise ValueError("Resume the existing retained input for this same source edition.")
     current_input = {
         "schema": "stellar-forge.current-source-receiving-input.v1",
         "operationId": OPERATION, "phaseId": PHASE,
+        "receivingDirectory": receiving_directory,
+        "precedingSourceDirectory": args.previous_source_directory,
+        "receivingId": receiving_id, "receivingBasis": receiving_basis,
         "originalCase": {
             "libraryId": args.library_file_id, "version": args.library_version,
             "fileId": args.library_file_version_id, "bytes": case_bytes, "sha256": case_sha,
@@ -219,8 +329,8 @@ def main():
         "runtime": [{key: row[key] for key in ("path", "bytes", "sha256", "git_blob")}
                     for row in runtime],
     }
-    prepared_path = args.prepared_review or ROOT / "following-application-review.json"
-    if prepared_path.is_file():
+    prepared_path = args.prepared_review or (None if args.previous_source_directory else ROOT / "following-application-review.json")
+    if prepared_path is not None and prepared_path.is_file():
         prepared_body = prepared_path.read_bytes()
         prepared = json.loads(prepared_body)
         if prepared.get("schema") != "scf.current-application-review.v1" or prepared.get("review_id") != review["id"]:
@@ -242,6 +352,7 @@ def main():
     old = original_payload(args.original_controller)
     wrapper_payload = {
         "operation": OPERATION, "sourcePhase": PHASE,
+        "receivingDirectory": receiving_directory,
         "files": [
             {"name": row["path"], "bytes": row["bytes"], "sha256": row["sha256"],
              "gitSha": row["git_blob"], "content": row["content"]}
@@ -272,7 +383,9 @@ def main():
         "schema": "stellar-forge.local-source-receiver-composition.v1",
         "operationId": OPERATION, "phaseId": PHASE,
         "sourceRecords": expected_package["sourceRecords"], "assets": len(assets),
-        "originalReviewEvents": args.expected_review_actions,
+        "originalReviewEvents": expected_review_actions,
+        "receivingDirectory": receiving_directory,
+        "precedingSourceDirectory": args.previous_source_directory,
         "sourceSelection": source_selection["id"],
         "sourceInput": {key: input_row[key] for key in ("path", "bytes", "sha256", "git_blob")},
         "wrapper": {"path": str(wrapper_path), "bytes": len(wrapper.encode("utf-8")),
