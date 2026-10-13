@@ -8,6 +8,7 @@ ORIGINAL_ROOT = "/dev/x402api-merchant-7de2-20261012"
 PRODUCT = "products/x402api-merchant-workspace"
 OPERATION = "X402API-PORTABLE-MERCHANT-48DB-20261012"
 SOURCE_PATHS = [
+  "stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-summary.mjs",
   "products/x402api-merchant-workspace/workspace.mjs",
   "products/x402api-merchant-workspace/server.mjs",
   "products/x402api-merchant-workspace/store.mjs",
@@ -86,7 +87,19 @@ SOURCE_PATHS = [
   "products/x402api-merchant-workspace/PROJECT_INTAKE.md",
   "products/x402api-merchant-workspace/web/intake.html",
   "products/x402api-merchant-workspace/web/intake.css",
-  "products/x402api-merchant-workspace/web/intake.mjs"
+  "products/x402api-merchant-workspace/web/intake.mjs",
+  "products/x402api-merchant-workspace/project-intake-client.mjs",
+  "products/x402api-merchant-workspace/project-intake-client.d.mts",
+  "stellar-forge/mcp-merchant-operator/merchant-project-connection.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-project-files.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-project-protocol.mjs",
+  "stellar-forge/mcp-merchant-operator/merchant-projects.mjs",
+  "stellar-forge/mcp-merchant-operator/providers/merchant-projects.mjs",
+  "stellar-forge/mcp-merchant-operator/provider-contract.mjs",
+  "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs",
+  "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
+  "products/x402api-merchant-workspace/PROJECT_AGENT.md",
+  "products/x402api-merchant-workspace/project-agent-receiving.mjs"
 ]
 
 def digest(raw): return hashlib.sha256(raw).hexdigest()

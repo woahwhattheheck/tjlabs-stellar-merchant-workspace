@@ -247,6 +247,10 @@ export async function startMerchantIntake(options) {
     need(typeof authorization === 'string' && authorization.startsWith('Bearer ') &&
       tokenEqual(authorization.slice(7), credential), 'MERCHANT_INTAKE_AUTHENTICATION_REQUIRED', 401);
     need(!request.headers.origin || request.headers.origin === url, 'MERCHANT_INTAKE_ORIGIN_INVALID', 403);
+    const expectedSelection = request.headers['x-merchant-intake-selection-sha256'];
+    need(expectedSelection === undefined || expectedSelection === inspected.selectionSha256,
+      'MERCHANT_INTAKE_REVIEWED_SELECTION_CHANGED', 409);
+    response.setHeader('X-Merchant-Intake-Selection-Sha256', inspected.selectionSha256);
     if (path !== '/api/files') need(!parsed.search, 'MERCHANT_INTAKE_QUERY_INVALID', 400);
     if (path === '/api/state' && request.method === 'GET') return respond(response, 200, status());
     if (path === '/api/manifest' && request.method === 'GET')
