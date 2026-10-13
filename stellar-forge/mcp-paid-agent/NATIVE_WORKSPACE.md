@@ -308,3 +308,7 @@ stable IDs. The console and typed
 client can then select a compatible service and reopen complete history across
 all of its original HTTP request inboxes. Original wallets, payment bindings,
 approval and ledgers stay with their service workspace.
+
+## Standalone free ObjectSession recovery
+
+The existing operator also supports complete reviewed backup, verification, canonical restoration and retained same-request continuation for a host-registered standalone zero-cap ObjectSession. See [OBJECT_RECOVERY.md](./OBJECT_RECOVERY.md) for the original native workflow, private registration, interrupted-result handling and full receiving instructions.
