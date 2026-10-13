@@ -26,6 +26,8 @@ export type RecoverySelection = {
 } & (
   | { action: 'snapshot'; capturePlanId: string; quiesced: true; destinationName?: string }
   | { action: 'verify'; bundleId: string }
+  | { action: 'object-snapshot'; objectSessionId: string; quiesced: true }
+  | { action: 'object-verify' | 'object-restore'; objectSessionId: string; expectedRecordSha256: RecoveryDigest }
   | ({ action: 'publisher-prepare' } & (
       | { restoreId: RecoveryOperationId; publisherRestoreId?: never }
       | { publisherRestoreId: string; restoreId?: never }))
@@ -53,6 +55,8 @@ export interface RecoveryProfileInput extends RecoveryWorkspaceInput { profileId
 export interface RecoveryOriginalInput extends RecoveryProfileInput { id: RecoveryOperationId; }
 export interface RecoveryToolInputs {
   merchant_recovery_status: RecoveryWorkspaceInput;
+  merchant_recovery_object_session: RecoveryProfileInput & { objectSessionId: string };
+  merchant_recovery_object_evidence: RecoveryWorkspaceInput & { sha256: RecoveryDigest };
   merchant_recovery_bundles: RecoveryProfileInput;
   merchant_recovery_inventory: RecoveryProfileInput & RecoveryPage;
   merchant_recovery_requests: RecoveryWorkspaceInput & RecoveryPage;
@@ -61,7 +65,9 @@ export interface RecoveryToolInputs {
   merchant_recovery_operation: RecoveryOriginalInput;
   merchant_recovery_review: RecoveryWorkspaceInput & { selection: RecoverySelection };
   merchant_recovery_start: RecoveryWorkspaceInput & { selection: RecoverySelection; expectedReviewHash: RecoveryDigest };
-  merchant_recovery_resume: RecoveryOriginalInput;
+  merchant_recovery_resume: RecoveryOriginalInput & {
+    expectedReviewHash?: RecoveryDigest; afterAttempt?: number; quiesced?: true;
+  };
   merchant_recovery_cancel: RecoveryOriginalInput;
 }
 export interface RecoveryConnectionView {

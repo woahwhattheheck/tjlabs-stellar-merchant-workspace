@@ -17,6 +17,9 @@ function responseError(error) {
     message: String(error.message ?? 'The recovery workspace request failed').slice(0, 500) };
   for (const key of ['status', 'providerCode', 'originalCode', 'requestId', 'putRequestId', 'retryAfter', 'retryable', 'mayHaveCommitted', 'reconciliationCode', 'reconciliationStatus'])
     if (['string', 'number', 'boolean'].includes(typeof error[key])) value[key] = error[key];
+  const evidence=error.objectRecoveryResult?.nativeEvidence;
+  if(evidence&&/^[a-f0-9]{64}$/.test(evidence.sha256)&&Number.isSafeInteger(evidence.bytes)&&evidence.bytes>0)
+    value.nativeEvidence={sha256:evidence.sha256,bytes:evidence.bytes};
   return value;
 }
 function headers(res) {
@@ -128,6 +131,8 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
             query(url, []);
             if (!connection) fail('WORKSPACE_CONNECTION_NOT_AVAILABLE', 'This embedding host did not publish an original listener connection', 409);
             value = { ...connection, identity: await workspace.identity() }; break;
+          case '/api/object-session': { const q=query(url,['profile','session']); value=await workspace.objectSession(q.profile,q.session); break; }
+          case '/api/object-evidence': { const q=query(url,['sha256']); value=await workspace.objectEvidence(q.sha256); break; }
           case '/api/request': { const q = query(url, ['profile', 'id']); value = await workspace.request(q.profile, q.id); break; }
           case '/api/requests': { const q = query(url, ['cursor', 'limit']); value = await workspace.requests(page(q)); break; }
           case '/api/bundles': { const q = query(url, ['profile']); value = await workspace.localBundles(q.profile); break; }
@@ -146,7 +151,8 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
         switch (url.pathname) {
           case '/api/review': result = await workspace.review(value); break;
           case '/api/start': fields(value, ['selection', 'expectedReviewHash']); result = await workspace.start(value); break;
-          case '/api/resume': fields(value, ['profileId', 'id']); result = await workspace.resume(value.profileId, value.id); break;
+          case '/api/resume': { fields(value,['profileId','id','expectedReviewHash','afterAttempt','quiesced']);
+            const {profileId,id,...continuation}=value; result=await workspace.resume(profileId,id,continuation); break; }
           case '/api/cancel': fields(value, ['profileId', 'id']); result = await workspace.cancel(value.profileId, value.id); break;
           default: fail('WORKSPACE_ROUTE_NOT_FOUND', 'Unknown recovery workspace route', 404);
         }

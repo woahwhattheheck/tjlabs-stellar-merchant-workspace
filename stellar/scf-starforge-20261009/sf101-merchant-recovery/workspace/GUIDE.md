@@ -6,7 +6,10 @@ a completed recovery point on the selected storage service, and restore its
 original named roots on a receiving host. It also authenticates and adopts an
 existing local dataset-publisher restore through the publisher's maintained
 receiving operation, and prepares a restored merchant fleet through its original
-receiving engine.
+receiving engine. Standalone free Object sessions can also use the same operator
+for native inspection, encrypted backup, verification and canonical restore/reopen;
+see [Standalone Object sessions](OBJECT_SESSIONS.md) for the complete host and
+browser workflow.
 
 The workspace operates the maintained `runRemote` facade and `recover.mjs`.
 Its original transfer journal remains the saved record of the upload, download,
@@ -32,6 +35,7 @@ The host administrator chooses these separate locations:
 | A profile's optional `storeConfig` | The existing private S3 configuration used for remote transfers. Omit it or use `null` for local recovery. |
 | A profile's `operations` | The original transfer journals and provider acknowledgements for that merchant. |
 | A profile's `bundleRoots` | Named collections containing original encrypted snapshots and configured parents for new captures. |
+| A profile's optional `objectSessions` | Fixed original standalone Object-session sources, encrypted bundles and permitted native actions. |
 | A profile's optional `capturePlans` | Named original recovery plan files, each bound to one declared encrypted-bundle parent. |
 | A profile's optional `publisherRestores` | Host-declared original encrypted bundles and existing plaintext publisher restores to inspect and adopt. |
 | A profile's optional `fleetRestores` | Original encrypted fleet bundles and their existing complete plaintext restores. |
