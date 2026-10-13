@@ -14,7 +14,7 @@ import {selectSource} from '../../stellar/scf-starforge-20261009/sf88-operator-b
 import {SCHEMA as PACKAGE,MAX_PACKAGE,inspectPackage,measure,identity}
  from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/collections/delivery/format.mjs';
 import {createSavedFileReader} from './native-file.mjs';
-import {nativeCollectionDeliveryOperations} from './native-collection-delivery-schema.mjs';
+import {nativeCollectionDeliveryOperations,nativeCollectionDeliveryUploadBatchChunks} from './native-collection-delivery-schema.mjs';
 export {nativeCollectionDeliveryActions,nativeCollectionDeliverySchema} from './native-collection-delivery-schema.mjs';
 
 export const DELIVERY_NATIVE_SCHEMA='stellar-forge.mcp-native-collection-delivery.v1';
@@ -78,9 +78,21 @@ function originalRequest(body,record){
   typeof body.allowIncomplete==='boolean','MCP_DELIVERY_REVIEW_REQUIRED');
  return{...Object.fromEntries(keys.map(k=>[k,body[k]])),sourceRoot:record.source.root,sourceManifest:record.source.manifest};
 }
-function uploadView(value,expected){
+function uploadView(value,expected,uploadBatchChunks){
  need(object(value)&&value.sha256===expected&&Number.isSafeInteger(value.bytes)&&value.bytes>0&&value.bytes<=MAX_PACKAGE&&Number.isSafeInteger(value.offset)&&value.offset>=0&&value.offset<=value.bytes&&typeof value.complete==='boolean','MCP_DELIVERY_UPLOAD_CHANGED');
- return {sha256:value.sha256,bytes:value.bytes,filename:value.filename,offset:value.offset,complete:value.complete};
+ return {sha256:value.sha256,bytes:value.bytes,filename:value.filename,offset:value.offset,complete:value.complete,uploadBatchChunks};
+}
+function uploadBatchLimit(status){
+ const count=status.uploadBatchChunks;
+ return Number.isSafeInteger(count)&&count>=1?Math.min(count,nativeCollectionDeliveryUploadBatchChunks):1;
+}
+function checkedChunk(value){
+ fields(value,['offset','base64','chunkSha256']);
+ need(Number.isSafeInteger(value.offset)&&value.offset>=0&&typeof value.base64==='string'&&value.base64.length<=87384&&
+  /^[A-Za-z0-9+/]*={0,2}$/.test(value.base64)&&value.base64.length%4===0,'MCP_DELIVERY_CHUNK_REQUIRED');
+ const raw=Buffer.from(value.base64,'base64');
+ need(raw.length>0&&raw.length<=65536&&raw.toString('base64')===value.base64&&sha(raw)===hash(value.chunkSha256),'MCP_DELIVERY_CHUNK_CHANGED');
+ return{offset:value.offset,base64:value.base64,sha256:value.chunkSha256,bytes:raw.length};
 }
 function resultView(value,files){
  return{schema:value.schema,id:value.id,state:value.state,request:value.request,previewSha256:value.previewSha256,
@@ -234,7 +246,8 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false}={})
    if(prior)return result(operation==='received-file'?await receivedFile(record,prior,body):receivedView(prior,body));
   }
   const connection=await connect(record,context.signal),get=route=>request(connection,route,undefined,context.signal),post=(route,v)=>request(connection,route,v,context.signal);
-  if(operation==='status')return result({mode:record.mode,source:publicRegistration(record).source,...page(connection.status.deliveries,body)});
+  const uploadBatchChunks=uploadBatchLimit(connection.status);
+  if(operation==='status')return result({mode:record.mode,source:publicRegistration(record).source,uploadBatchChunks,...page(connection.status.deliveries,body)});
   if(operation==='preview'||operation==='prepare'){
    const selected=originalRequest(body,record),directory=await savedDirectory(record,selected.id);
    const previewFile=join(directory,'preview.json');
@@ -259,16 +272,24 @@ export function createNativeCollectionDelivery({manifest,isClosed=()=>false}={})
   hash(body.sha256);
   if(operation==='upload-start'){
    need(Number.isSafeInteger(body.bytes)&&body.bytes>0&&body.bytes<=MAX_PACKAGE&&typeof body.filename==='string'&&body.filename.length<=160,'MCP_DELIVERY_UPLOAD_REQUIRED');
-   return result(uploadView(await post('uploads',body),body.sha256));
+   return result(uploadView(await post('uploads?progress=compact',body),body.sha256,uploadBatchChunks));
   }
-  if(operation==='upload-status')return result(uploadView(await get('uploads/'+body.sha256),body.sha256));
+  if(operation==='upload-status')return result(uploadView(await get('uploads/'+body.sha256+'?progress=compact'),body.sha256,uploadBatchChunks));
   if(operation==='upload-chunk'){
-   need(Number.isSafeInteger(body.offset)&&body.offset>=0&&typeof body.base64==='string'&&body.base64.length<=87384&&
-    /^[A-Za-z0-9+/]*={0,2}$/.test(body.base64)&&body.base64.length%4===0,'MCP_DELIVERY_CHUNK_REQUIRED');
-   const raw=Buffer.from(body.base64,'base64');need(raw.length>0&&raw.length<=65536&&raw.toString('base64')===body.base64&&sha(raw)===hash(body.chunkSha256),'MCP_DELIVERY_CHUNK_CHANGED');
-   return result(uploadView(await post('uploads/'+body.sha256+'/chunk',{offset:body.offset,base64:body.base64,sha256:body.chunkSha256}),body.sha256));
+   const {bytes,...part}=checkedChunk({offset:body.offset,base64:body.base64,chunkSha256:body.chunkSha256});
+   return result(uploadView(await post('uploads/'+body.sha256+'/chunk?progress=compact',part),body.sha256,uploadBatchChunks));
   }
-  if(operation==='upload-finish')return result(uploadView(await post('uploads/'+body.sha256+'/finish',{}),body.sha256));
+  if(operation==='upload-chunks'){
+   need(Array.isArray(body.chunks)&&body.chunks.length>=1&&body.chunks.length<=uploadBatchChunks,'MCP_DELIVERY_BATCH_REQUIRED');
+   const checked=body.chunks.map(checkedChunk);
+   for(let index=1;index<checked.length;index++)need(checked[index].offset===checked[index-1].offset+checked[index-1].bytes,'MCP_DELIVERY_BATCH_ORDER');
+   const chunks=checked.map(({bytes,...part})=>part);
+   // An older host accepts the retained single-part route; no speculative batch retry.
+   const route=checked.length===1&&uploadBatchChunks===1?'chunk':'chunks';
+   const input=route==='chunk'?chunks[0]:{chunks};
+   return result(uploadView(await post('uploads/'+body.sha256+'/'+route+'?progress=compact',input),body.sha256,uploadBatchChunks));
+  }
+  if(operation==='upload-finish')return result(uploadView(await post('uploads/'+body.sha256+'/finish?progress=compact',{}),body.sha256,uploadBatchChunks));
   if(operation==='receive'||operation==='received'||operation==='received-file'){
    const value=operation==='receive'?await post('uploads/'+body.sha256+'/receive',{}):await get('received/'+body.sha256);
    await retainReceived(record,value,body.sha256);
