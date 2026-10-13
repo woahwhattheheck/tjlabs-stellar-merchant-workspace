@@ -1,0 +1,116 @@
+{
+  "project": "MPC RFP2026-01",
+  "snapshotDate": "2026-10-13",
+  "sources": [
+    {
+      "id": "mpc-rfp",
+      "title": "Server Backup Services RFP2026-01",
+      "url": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP.pdf",
+      "pages": 23
+    },
+    {
+      "id": "mpc-addendum1",
+      "title": "Addendum1",
+      "url": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum1.pdf",
+      "pages": 1
+    },
+    {
+      "id": "mpc-addendum2",
+      "title": "Addendum2",
+      "url": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf",
+      "pages": 24
+    },
+    {
+      "id": "mpc-intake",
+      "title": "Existing proposal and planner source",
+      "url": "https://app.notion.com/p/3f8dd7723100812cb188d51ee6e4cc92"
+    }
+  ],
+  "planning": {
+    "serverLimit": 25,
+    "expectedServers": [
+      20,
+      22
+    ],
+    "serverDataTB": 41,
+    "existingStorageTB": 30,
+    "m365Users": [
+      30,
+      35
+    ],
+    "annualGrowthTB": 1,
+    "throughputAssumptionGbps": 4,
+    "source": "mpc-addendum2",
+    "references": [
+      "Q1",
+      "Q4",
+      "Q14",
+      "Q21",
+      "Q28",
+      "Q40"
+    ]
+  },
+  "requirements": [
+    {
+      "id": "dual-copy",
+      "label": "Local and off-site protection",
+      "source": "mpc-rfp",
+      "reference": "pp12–13"
+    },
+    {
+      "id": "recovery-types",
+      "label": "Server, file, application, database and Microsoft365 recovery",
+      "source": "mpc-rfp",
+      "reference": "p13"
+    },
+    {
+      "id": "encrypted",
+      "label": "Encryption and controlled administration",
+      "source": "mpc-rfp",
+      "reference": "p13"
+    },
+    {
+      "id": "notifications",
+      "label": "Incident notices, continuing updates and resolution report",
+      "source": "mpc-rfp",
+      "reference": "Section T,pp8–9"
+    },
+    {
+      "id": "handover",
+      "label": "Runbooks, licensing, training and monthly reporting",
+      "source": "mpc-rfp",
+      "reference": "pp15–16"
+    },
+    {
+      "id": "bare-metal",
+      "label": "Complete recovery cycle, including bare-metal restoration",
+      "source": "mpc-addendum2",
+      "reference": "Q32/Q97"
+    },
+    {
+      "id": "entra",
+      "label": "Entra configuration protection",
+      "source": "mpc-addendum2",
+      "reference": "Q83"
+    },
+    {
+      "id": "monitoring",
+      "label": "Automatic job alerts and weekly review",
+      "source": "mpc-addendum2",
+      "reference": "Q30"
+    },
+    {
+      "id": "storm",
+      "label": "Verified complete recovery point before hurricane impact",
+      "source": "mpc-addendum2",
+      "reference": "Q9"
+    },
+    {
+      "id": "ownership",
+      "label": "MPC access, portability and transfer",
+      "source": "mpc-addendum2",
+      "reference": "Q24/Q100"
+    }
+  ],
+  "notes": "Published aggregate figures are planning inputs. The workspace starts without customer hostnames, measured jobs or approved recovery tiers. Import the selected plan and actual installation records into their own source editions."
+}

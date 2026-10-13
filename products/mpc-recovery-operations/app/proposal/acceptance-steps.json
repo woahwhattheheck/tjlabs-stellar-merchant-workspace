@@ -1,0 +1,110 @@
+[
+  {
+    "id": "ACC-001",
+    "title": "Confirm scope and custody",
+    "action": "Reconcile up to 25 server entries and M365/Entra objects, MPC/SAGIS grouping, data volume and data owner. Establish controlled original inventory and all ownership/support entitlements.",
+    "sourceLocator": "A2 Q4, Q20, Q24, Q28, Q83",
+    "owner": "MPC IT + prime assessment lead",
+    "output": "Inventory version, approved protected scope, entitlement and account handover",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-002",
+    "title": "Measure the source estate",
+    "action": "Measure daily changed data, actual repository availability/compatibility, network throughput and allowed production windows. Update model inputs and retain observed units and timestamps.",
+    "sourceLocator": "A2 Q14, Q21, Q40–41",
+    "owner": "Prime platform lead",
+    "output": "Measurement period, tool output, workload/speed/capacity values and revised scenario",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-003",
+    "title": "Approve the design",
+    "action": "Agree workload tiers, RPO/RTO, retention, local/off-site paths, recovery dependency order, immutable/DRaaS options, escalation and end-of-term rights.",
+    "sourceLocator": "A2 Q2, Q6, Q26, Q80, Q100",
+    "owner": "MPC owner + prime architect",
+    "output": "Signed design decisions, sources and selected quote schedule",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-004",
+    "title": "Commission isolated administration",
+    "action": "Establish individual MFA-protected admin identities, least privilege, logs and MPC revocation. Verify vendor credential infrastructure has no synchronised credentials or persistent trust into MPC.",
+    "sourceLocator": "A2 Q50",
+    "owner": "Prime security lead + MPC IT",
+    "output": "Approved access design, identity/permission review and actual revocation demonstration",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-005",
+    "title": "Seed and verify protection",
+    "action": "Complete initial local/off-site server copies and required SaaS/Entra scope, validate recoverable chains and record failed/excluded work with assigned corrections.",
+    "sourceLocator": "RFP Deliverables; A2 Q28, Q83, Q97",
+    "owner": "Prime platform lead",
+    "output": "Actual job reports, original recovery-point times, error outcomes and corrected reruns",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-006",
+    "title": "Exercise ordinary restores",
+    "action": "Recover selected file, database/application and virtual workload examples against agreed scope. Verify data/application usability and dependency order.",
+    "sourceLocator": "RFP Technical Requirements; A2 Q20, Q26, Q32",
+    "owner": "Prime recovery lead + MPC system owners",
+    "output": "Original point IDs, start/end times, usable-data checks and owner result",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-007",
+    "title": "Demonstrate bare-metal recovery",
+    "action": "Perform the required complete physical-server recovery cycle to an agreed isolated target; demonstrate boot, service/data usability and measured recovery age/time.",
+    "sourceLocator": "A2 Q32, Q97",
+    "owner": "Prime recovery lead + MPC IT",
+    "output": "Source/target identification, recovery chain, actual measured result and defect resolution",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-008",
+    "title": "Demonstrate SaaS and identity restoration",
+    "action": "Show agreed M365 object recovery and applicable Entra configuration recovery using the quoted product's supported route; preserve tenant/admin control.",
+    "sourceLocator": "A2 Q28, Q83",
+    "owner": "Prime SaaS lead + MPC owner",
+    "output": "Covered-object matrix, source points, restored state and role/permission checks",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-009",
+    "title": "Confirm monitoring and incident routing",
+    "action": "Show failed/missed/delayed/incomplete job alerts, named 24x7 contact and dual phone/email reporting. Apply the shortest applicable notification clock.",
+    "sourceLocator": "RFP §T; A2 Q30–31, Q90",
+    "owner": "Prime operations lead + MPC",
+    "output": "Observed alert path, escalation/notification timestamps, monthly report example",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-010",
+    "title": "Rehearse hurricane readiness",
+    "action": "Use an agreed exercise trigger and impact time. Verify complete/equivalent point across all covered workloads, track completion relative to impact−24h and disclose exceptions.",
+    "sourceLocator": "RFP §T.5; A2 Q9",
+    "owner": "MPC IT + prime operations lead",
+    "output": "Trigger/impact assumptions, complete workload checklist, actual point verification and written completion record",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-011",
+    "title": "Train and accept",
+    "action": "Train three MPC staff on daily review, restore, escalation, access/ownership, reporting and emergency/exit procedures. Correct acceptance defects before sign-off.",
+    "sourceLocator": "A2 Q97, Q170",
+    "owner": "Prime training lead + three MPC staff",
+    "output": "Attendance, reusable operating materials, completed exercises and resolved defect list",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  },
+  {
+    "id": "ACC-012",
+    "title": "Enter service and preserve exit",
+    "action": "Retire legacy operational backup only after enough successful new cycles and recovery validation. Maintain MPC legacy media custody, periodic exercises, monthly reporting and documented transfer/export/deletion.",
+    "sourceLocator": "A2 Q19, Q32, Q100; RFP Service Levels",
+    "owner": "Prime operations lead + MPC",
+    "output": "Cutover approval, continuing service schedule, retained legacy obligations and complete exit procedure",
+    "sourceUrl": "https://www.thempc.org/docs/lit/IT/2026/MPC_Server_Backup_RFP_Addendum2.pdf"
+  }
+]
