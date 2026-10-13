@@ -1,9 +1,10 @@
 // MIT. Compare-and-save browser drafts; pending original requests stay intact.
 const failure=code=>Object.assign(new Error(code),{code});
-export async function openProtocolDraftStore(){
+export async function openProtocolDraftStore({databaseName='sf88-study-protocol-drafts'}={}){
+  if(!['sf88-study-protocol-drafts','sf88-original-output-drafts'].includes(databaseName))throw failure('PROTOCOL_BROWSER_DATABASE_INVALID');
   if(!globalThis.indexedDB)throw failure('PROTOCOL_BROWSER_STORAGE_UNAVAILABLE');
   const db=await new Promise((resolve,reject)=>{
-    const request=indexedDB.open('sf88-study-protocol-drafts',1);let settled=false;
+    const request=indexedDB.open(databaseName,1);let settled=false;
     const rejectOnce=error=>{if(!settled){settled=true;reject(error);}};
     request.onupgradeneeded=()=>{
       if(!request.result.objectStoreNames.contains('drafts'))request.result.createObjectStore('drafts',{keyPath:'id'});
@@ -35,6 +36,10 @@ export async function openProtocolDraftStore(){
   return Object.freeze({
     list:()=>transaction('readonly',(store,done)=>{
       const request=store.getAll();request.onsuccess=()=>done(request.result);
+    }),
+    listPrefix:prefix=>transaction('readonly',(store,done,abort)=>{
+      if(typeof prefix!=='string'||!prefix.length){abort(failure('PROTOCOL_DRAFT_PREFIX_REQUIRED'));return;}
+      const request=store.getAll(IDBKeyRange.bound(prefix,prefix+'\uffff'));request.onsuccess=()=>done(request.result);
     }),
     read:id=>transaction('readonly',(store,done)=>{
       const request=store.get(id);request.onsuccess=()=>done(request.result??null);

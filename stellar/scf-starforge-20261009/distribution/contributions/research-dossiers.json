@@ -44,6 +44,11 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_IMPORT.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/browser-receiving.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/foreground-receiving.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/FOREGROUND_RECEIVING.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/FOREGROUND_RECEIVING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/desk-routes.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/DESK.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/original-output.js",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/original-output.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/study-protocol-storage.js"
   ]
 }

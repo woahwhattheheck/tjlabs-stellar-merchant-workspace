@@ -23,6 +23,7 @@ import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
 import {handleRiskOfBiasRoute,readRiskOfBiasAsset,RISK_OF_BIAS_REQUEST_LIMIT} from './risk-of-bias/routes.mjs';
 import {handleStudyExtractionRoute,STUDY_EXTRACTION_REVIEW_LIMIT} from './study-extraction-routes.mjs';
 import {handleStudyFlowRoute,STUDY_FLOW_REQUEST_LIMIT} from './study-flow/routes.mjs';
+import {handleOriginalOutputRoute} from './comparison/original-output/desk-routes.mjs';
 import {handleComparisonRoute,COMPARISON_REQUEST_LIMIT} from './comparison/routes.mjs';
 import {createTemplateExchangeDispatcher,TEMPLATE_POST_ACTIONS} from './template-exchange/http.mjs';
 import {MAX_WORKBOOK_BYTES} from './template-exchange/workbook.mjs';
@@ -52,6 +53,8 @@ const TYPES = Object.freeze({
   'app.js': 'text/javascript; charset=utf-8',
   'comparison.js': 'text/javascript; charset=utf-8',
   'comparison.css': 'text/css; charset=utf-8',
+  'original-output.js':'text/javascript; charset=utf-8',
+  'original-output.css':'text/css; charset=utf-8',
   'ris-sources.js':'text/javascript; charset=utf-8',
   'ris-sources.css':'text/css; charset=utf-8',
   'ris-drafts.js':'text/javascript; charset=utf-8',
@@ -264,7 +267,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
   const api = {schema:RESEARCH_WORKSPACE_API,metadata:true,revisionPages:true,streamedPortable:true,sourceBundles:true,sourceInspection:true,studyProtocolInspection:true,
     studyExtraction:true,studyExtractionRequestLimit:STUDY_EXTRACTION_REVIEW_LIMIT,extractionPublications:true,zoteroBridge:zotero!==null,
     studyFlow:true,studyFlowRequestLimit:STUDY_FLOW_REQUEST_LIMIT,
-    comparison:true,comparisonRequestLimit:COMPARISON_REQUEST_LIMIT,
+    comparison:true,comparisonRequestLimit:COMPARISON_REQUEST_LIMIT,originalOutputPreparation:true,
     customerUpdates:true,customerUpdateRequestLimit:16*1024*1024,
     dossierReturns:true,dossierReturnSourceLimit:DOSSIER_RETURN_SOURCE_LIMIT,dossierReturnRequestLimit:DOSSIER_RETURN_REQUEST_LIMIT,
     customerCommerce:true,customerCommerceConfigured:customerCommerceConfiguration!==null,customerCommerceRequestLimit:2*1024*1024,
@@ -488,6 +491,7 @@ export async function startDossierWorkspace({directory, port = 0, providers = {}
       if(await handleRisRoute({store,dossierId:id,action,req,url,readBody:readJson,send,
         setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(action==='comparison'||action.startsWith('comparison/'))sourceProjection='full';
+      if(await handleOriginalOutputRoute({store,dossierId:id,action,req,url,readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleComparisonRoute({store,dossierId:id,action,req,url,projection,
         readBody:readJson,send,setHeader:(name,value)=>res.setHeader(name,value)}))return;
       if(await handleStudyFlowRoute({store,dossierId:id,action,req,url,projection,
