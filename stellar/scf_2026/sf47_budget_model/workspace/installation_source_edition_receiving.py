@@ -15,6 +15,8 @@ from operations_installation_source_editions import PLAN, unseal, same
 
 COURSE = "stellar-forge.installation-source-edition-course.v1"
 RESULT = "stellar-forge.installation-source-edition-receiving.v1"
+MAPPING_COURSE = "stellar-forge.installation-source-mapping-course.v1"
+MAPPING_RESULT = "stellar-forge.installation-source-mapping-receiving.v1"
 
 
 def need(ok, message):
@@ -28,14 +30,18 @@ def preparation_id(draft_id, request_id, selection):
                                    "selectionSha256": raw_sha}), raw_sha
 
 
-def prepare_course(client, plan, *, request_prefix, actor, note="", attach_version=None):
+def prepare_course(client, plan, *, request_prefix, actor, note="", attach_version=None, mapping=False):
     """Freeze actual source/model/profile selections; write no business record."""
-    value = unseal(plan, PLAN)
+    if mapping:
+        from operations_installation_mapping_reconciliation import verify_plan
+        value = verify_plan(client.desk, client.case_id, client.draft_id, plan)["editionPlan"]
+    else:
+        value = unseal(plan, PLAN)
     need(value["caseId"] == client.case_id and value["target"]["draftId"] == client.draft_id,
          "Use this existing client's original target edition.")
     # Reproduce before creating the immutable course; apply repeats this under CAS.
     rebuilt = client.edition_preview({key: value[key] for key in ("source", "target", "files", "mapping")})
-    need(same(rebuilt, plan), "The complete original edition preview differs.")
+    need(same(rebuilt, value if mapping else plan), "The complete original edition preview differs.")
     selected = value["selection"]
     need(isinstance(selected, dict) and isinstance(selected.get("cases"), list) and selected["cases"],
          "Select a complete original customer mapping before preparing a native course.")
@@ -51,7 +57,8 @@ def prepare_course(client, plan, *, request_prefix, actor, note="", attach_versi
     need(isinstance(request_prefix, str) and 1 <= len(request_prefix) <= 80,
          "Keep one stable original request prefix of at most 80 characters.")
     revision = value["target"]["revision"]
-    edition = client.prepare_edition(plan, actor=actor, request_id=request_prefix + "-edition", note=note)
+    prepare = client.prepare_mapping if mapping else client.prepare_edition
+    edition = prepare(plan, actor=actor, request_id=request_prefix + "-edition", note=note)
     native = prepare_command(client.case_id, client.draft_id,
         {"requestId": request_prefix + "-prepare", "expectedRevision": revision + 1,
          "actor": actor, "note": note, "action": "prepare", "data": {
@@ -66,7 +73,7 @@ def prepare_course(client, plan, *, request_prefix, actor, note="", attach_versi
              "actor": actor, "note": note, "action": "attach", "data": {
                  "preparationId": ident, "expectedSelectionSha256": selection_sha,
                  "expectedVersion": attach_version}}, workspace_directory=client.workspace_directory)
-    result = {"schema": COURSE, "caseId": client.case_id, "draftId": client.draft_id,
+    result = {"schema": MAPPING_COURSE if mapping else COURSE, "caseId": client.case_id, "draftId": client.draft_id,
               "source": deepcopy(value["source"]), "target": deepcopy(value["target"]),
               "preparationId": ident, "selectionSha256": selection_sha,
               "engine": deepcopy(engine), "profiles": [deepcopy(profiles[key]) for key in sorted(pins)],
@@ -81,7 +88,7 @@ def validate_course(course, client):
     sha = value.pop("sha256", None)
     need(set(value) == {"schema", "caseId", "draftId", "source", "target", "preparationId",
                         "selectionSha256", "engine", "profiles", "operations"}
-         and value["schema"] == COURSE and sha == digest(value)
+         and value["schema"] in (COURSE, MAPPING_COURSE) and sha == digest(value)
          and value["caseId"] == client.case_id and value["draftId"] == client.draft_id,
          "The complete original edition course changed identity or target.")
     operations = value["operations"]
@@ -94,9 +101,15 @@ def validate_course(course, client):
         verified[key] = validate_operation(operation, case_id=client.case_id, draft_id=client.draft_id,
                                            workspace_directory=client.workspace_directory)
     edition, native = verified["edition"]["request"], verified["prepare"]["request"]
-    need(edition["action"] == "edition.apply" and set(edition["data"]) == {"plan"}
+    mapping = value["schema"] == MAPPING_COURSE
+    need(edition["action"] == ("mapping.apply" if mapping else "edition.apply") and set(edition["data"]) == {"plan"}
          and native["action"] == "prepare", "Use the original edition and preparation actions.")
-    plan = unseal(edition["data"]["plan"], PLAN)
+    if mapping:
+        from operations_installation_mapping_reconciliation import verify_plan
+        plan = verify_plan(client.desk, client.case_id, client.draft_id,
+                           edition["data"]["plan"])["editionPlan"]
+    else:
+        plan = unseal(edition["data"]["plan"], PLAN)
     need(same(plan["source"], value["source"]) and same(plan["target"], value["target"])
          and plan["caseId"] == client.case_id and plan["target"]["draftId"] == client.draft_id
          and edition["expectedRevision"] == value["target"]["revision"]
@@ -164,7 +177,8 @@ def execute_course(client, course):
         historical = client.read(accepted["draft"]["revision"])
         need(same(historical, accepted["draft"]),
              "Reopen the exact accepted historical successor, preserving later customer revisions.")
-    report = {"schema": RESULT, "state": "COMPLETE", "courseSha256": course["sha256"],
+    report = {"schema": MAPPING_RESULT if course["schema"] == MAPPING_COURSE else RESULT,
+              "state": "COMPLETE", "courseSha256": course["sha256"],
               "caseId": client.case_id, "draftId": client.draft_id,
               "source": deepcopy(course["source"]), "target": deepcopy(course["target"]),
               "edition": edition, "preparation": native, "attachment": attached,
@@ -186,7 +200,8 @@ def verify_result(client, course, report, archive):
     need(set(body) == {"schema", "state", "courseSha256", "caseId", "draftId", "source", "target",
                        "edition", "preparation", "attachment", "acceptedHistoricalDraft",
                        "originalRequestReplay", "currentDraft", "outputs", "archive"}
-         and body["schema"] == RESULT and body["state"] == "COMPLETE" and digest(body) == sha
+         and body["schema"] == (MAPPING_RESULT if course["schema"] == MAPPING_COURSE else RESULT)
+         and body["state"] == "COMPLETE" and digest(body) == sha
          and body["courseSha256"] == course["sha256"] and body["caseId"] == client.case_id
          and body["draftId"] == client.draft_id and same(body["source"], course["source"])
          and same(body["target"], course["target"]),

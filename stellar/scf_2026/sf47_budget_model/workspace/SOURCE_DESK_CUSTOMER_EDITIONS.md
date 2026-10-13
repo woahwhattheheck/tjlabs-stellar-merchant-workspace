@@ -148,3 +148,11 @@ The browser report's final stage is `14-edition-history-and-final-working-reopen
 Keep the current receiving source selected with the whole installed application. An earlier complete report or backup retains its original source identity; it does not establish completion of these additional stages. Resume a partial current run through its original input, report, persistent browser profile and requests. A following source edition of an already completed operation needs its own explicitly retained continuation binding and output directory in that same case.
 
 The producing operator opens the saved desktop and narrow-screen images and the actual downloaded attachments, inspects the displayed content, and reopens the complete outputs. The report identifies the controls and files actually operated; the operator's observations accompany the customer delivery.
+
+## Reconcile individual mapping fields
+
+Customer editions also offers **Reconcile individual mapping fields** when a successor needs choices from both complete mappings. Keep the original file decisions, compare every differing field, and choose source, target, exact custom JSON or explicit absence. Arrays remain whole until you explicitly expand their original positions. The preview preserves original values and records each removed or resulting array index.
+
+The complete field review, unfinished custom text, earlier choices and original pending request travel in the existing Source Desk working copy. Saving uses the same target revision check, original request journal and byte store, then continues through native Prepare. Exact native JSON transport retains original number values and distinguishes absence from null.
+
+See [Installation mapping reconciliation](INSTALLATION_MAPPING_RECONCILIATION.md) for the mounted workflow, complete JSON/CSV/HTML exports, native command and receiving course. The original source/target/explicit whole-mapping modes and customer-edition receiving remain available.
