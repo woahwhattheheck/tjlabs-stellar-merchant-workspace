@@ -208,7 +208,10 @@ export function openOperatingProcedures({db,transaction,settings,current,operati
   if(method==='request'){
    const receipt=operation(args.requestId);
    need(!receipt||receipt.kind==='OPERATING_PLAN','GRIST_PROCEDURE_REQUEST','This UUID belongs to another original source operation; use its original operation reader.',409);
-   return receipt;
+   if(!receipt)return null;
+   const recorded=db.prepare('SELECT payload_hash FROM operations WHERE id=?').get(args.requestId);
+   need(recorded,'GRIST_PROCEDURE_REQUEST','The original operation journal is unavailable.',409);
+   return {...receipt,inputSha256:recorded.payload_hash,origin};
   }
   const saved=get(args.planId);
   if(method==='read')return view(saved);
