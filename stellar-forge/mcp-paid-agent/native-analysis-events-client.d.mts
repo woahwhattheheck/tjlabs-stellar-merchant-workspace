@@ -35,7 +35,7 @@ export interface EventInputReceipt {
 export interface EventRecordIdentity {
  schema: 'stellar-forge.analysis-event-record.v1';
  workspace_id: string;
- kind: 'overview' | 'programme' | 'action';
+ kind: 'overview' | 'programme' | 'action' | 'fields' | 'values';
  record_id: string;
  bytes: number;
  sha256: string;
@@ -45,3 +45,17 @@ export function nativeEventConnection(options: EventConnectionOptions): Promise<
 export function receiveNativeAnalysisEventInput(options: EventInputOptions): Promise<EventInputReceipt>;
 export function readNativeAnalysisEventRecord(options: EventConnectionOptions & {record: EventRecordIdentity}):
  Promise<{record: EventRecordIdentity; bytes: Uint8Array; text: string}>;
+
+export interface EventPayloadSource {
+ schema: 'stellar-forge.event-feed-payload-fields.v1' | 'stellar-forge.event-feed-payload-values.v1';
+ workspace_id: string; input_id: string; edition_id: string; events: number;
+ original_files: {ndjson: {bytes: number; sha256: string}; manifest: {bytes: number; sha256: string}};
+ receiver: {cli_sha256: string; core_sha256: string};
+}
+export interface EventPayloadInspectionOptions extends EventConnectionOptions {
+ inputId: string; expectedWorkspaceId: string;
+}
+export function inspectNativeAnalysisEventFields(options: EventPayloadInspectionOptions):
+ Promise<{record: EventRecordIdentity; bytes: Uint8Array; text: string; value: EventPayloadSource & {field_count: number; fields: Array<Record<string, unknown>>}}>;
+export function inspectNativeAnalysisEventFieldValues(options: EventPayloadInspectionOptions & {pointer: string; offset?: number; limit?: number}):
+ Promise<{record: EventRecordIdentity; bytes: Uint8Array; text: string; value: EventPayloadSource & {pointer: string; offset: number; limit: number; total: number; next_offset: number | null; rows: Array<Record<string, unknown>>}}>;

@@ -343,3 +343,95 @@ customer's operating case. The complete native exercise joins the original
 Mercury/paid-subscriber receiving course and the existing general webhook
 commissioning source; customer files and actual returned execution stay with
 those original operations.
+
+## Inspect original fields and receive complete values
+
+After receiving the complete original pair, call event-input-fields with the
+same input ID. It returns paged field summaries and complete_record for the
+entire validated catalogue. The record contains every actual path, per-event
+present/missing and JSON-kind coverage, original source/file identities and
+explicitly labelled short example previews. Request field_offset and
+field_limit (at most 50) for another concise page; all full paths remain in
+the same immutable record.
+
+event-input-values accepts the same input ID, the exact JSON Pointer,
+offset and limit. Offsets count original events, including missing values.
+The concise response retains original event identities and labelled text
+previews. Its immutable complete_record contains each full original native
+text value, kind and exact text digest. Read all record ranges with the existing
+event-record-file helper before interpreting complete values.
+
+The typed client now exposes complete receiving helpers:
+
+~~~js
+const fields = await inspectNativeAnalysisEventFields({
+  client, analysisWorkspace: alias,
+  inputId: retainedInputId, expectedWorkspaceId: originalWorkspaceId
+});
+const values = await inspectNativeAnalysisEventFieldValues({
+  client, analysisWorkspace: alias,
+  inputId: retainedInputId, expectedWorkspaceId: originalWorkspaceId,
+  pointer: '/amount', offset: 0, limit: 25
+});
+~~~
+
+Both helpers receive and hash every byte of the immutable record. Their text
+retains the original full JSON, while value exposes catalogue counts and field
+values already represented as exact text by the original native projector.
+Each receiving request preserves the operation's cancellation signal. Another
+inspection cannot change the selected earlier record while its ranges arrive.
+
+To exchange the chosen mapping with the browser, save this complete native
+handover at a new private file using exclusive creation:
+
+~~~js
+const selected = fields.value;
+const handover = {
+  schema: 'stellar-forge.event-field-mapping-handover.v1',
+  original: {
+    workspace_id: selected.workspace_id,
+    input_id: selected.input_id,
+    edition_id: selected.edition_id,
+    source: selected.source,
+    original_files: selected.original_files
+  },
+  mapping: {
+    schema: 'stellar-forge.event-feed-analysis-mapping.v1',
+    fields: reviewedPayloadFields
+  }
+};
+await writeFile(newPrivatePath, JSON.stringify(handover, null, 2) + '\n',
+  {flag: 'wx', mode: 0o600});
+~~~
+
+Here writeFile is the ordinary node:fs/promises function; reviewedPayloadFields
+contains the customer's actual selected name/pointer pairs. Open that file in
+Event programmes after inspecting the same retained input. The browser checks
+the complete original selection before opening its editable field list. For a
+later window, reuse the accepted programme mapping and review the actual source
+differences. Original review/apply and customer acceptance remain explicit.
+
+The complete browser/CLI course is in
+[Event programmes](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_PROGRAMMES.md).
+It covers whole catalogue and value downloads, empty windows, mixed kinds,
+mapping import/export, explicit review and the original complete delivery.
+
+
+### Operate the actual explorer and complete returned mapping
+
+In the same original receiving course, open the exact outgoing browser, inspect
+its complete source, search a real path, read present/missing/null/mixed-kind
+coverage, select and rename useful fields, and open complete original values.
+Download the full catalogue, value page and mapping. Reopen each JSON file,
+import the same mapping, continue native review/apply, and confirm the actual
+customer report/workbook still receives every selected event. Open a complete
+empty window and the actual invalid-selection/error state without replacing
+the original customer source.
+
+The producer must LOOK at the actual desktop/screenshare and relevant narrow
+screens, operate the important controls, and open every outgoing attachment
+as its recipient. View captured screenshots and repair concrete layout or
+behavior defects in the same source. Source-only execution is separate from
+this actual native/rendered course. Return the exact source edition, original
+workspace/input/programme IDs, complete downloads and real screens to the
+existing receiving owner; preserve the same original operation and deadline.

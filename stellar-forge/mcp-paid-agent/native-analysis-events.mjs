@@ -55,8 +55,21 @@ function input(value,record,id,expected){
  need(value.complete===Object.keys(INPUT_LIMITS).every(kind=>value.received[kind]===value.files[kind].bytes),'INPUT_CHANGED');
  return value;
 }
+
+function inspection(value,record,id,schema){
+ need(object(value)&&value.schema===schema&&value.workspace_id===record.workspaceId&&value.input_id===id&&
+ object(value.original_files)&&object(value.source)&&object(value.receiver),'INPUT_INSPECTION_CHANGED');
+ check(value.edition_id,EVENT_HASH,'SOURCE_EDITION_REQUIRED');integer(value.events);
+ check(value.receiver.cli_sha256,EVENT_HASH,'SOURCE_RECEIVER_REQUIRED');check(value.receiver.core_sha256,EVENT_HASH,'SOURCE_RECEIVER_REQUIRED');
+ for(const [kind,maximum]of Object.entries(INPUT_LIMITS)){
+ const file=value.original_files[kind];need(object(file),'INPUT_INSPECTION_CHANGED');
+ integer(file.bytes,0,maximum);check(file.sha256,EVENT_HASH,'SOURCE_DIGEST_REQUIRED');
+ }
+ return pick(value,['schema','workspace_id','input_id','edition_id','source','original_files','events','through_sequence','pages','receiver']);
+}
+
 function recordIdentity(kind,id){
- need(['overview','programme','action'].includes(kind),'RECORD_KIND_INVALID');
+ need(['overview','programme','action','fields','values'].includes(kind),'RECORD_KIND_INVALID');
  if(kind==='overview')need(id==='overview','RECORD_ID_REQUIRED');
  else check(id,kind==='programme'?EVENT_NAME:EVENT_ID,'RECORD_ID_REQUIRED');
 }
@@ -143,6 +156,41 @@ export function createNativeEventActions({reads,parse}={}){
  return input(await post(ROOT+'/inputs',copy(body)),record,body.id,body.files);
  }
  if(operation==='event-input')return input(await get(ROOT+'/inputs/'+check(body.id,EVENT_ID,'INPUT_ID_REQUIRED')),record,body.id);
+
+ if(operation==='event-input-fields'){
+ check(body.id,EVENT_ID,'INPUT_ID_REQUIRED');integer(body.field_limit??25,1,50);
+ return snapshot(record,'fields',body.id,()=>getBytes(ROOT+'/inputs/'+body.id+'/fields',EVENT_MAX_RECORD),value=>{
+ const selected=inspection(value,record,body.id,'stellar-forge.event-feed-payload-fields.v1');
+ need(Array.isArray(value.fields)&&value.field_count===value.fields.length,'COMPLETE_FIELDS_REQUIRED');
+ return {...selected,field_count:value.field_count,fields:page(value.fields,body.field_offset??0,body.field_limit??25,row=>{
+ need(object(row)&&typeof row.pointer==='string'&&typeof row.selectable==='boolean'&&object(row.types)&&
+ Array.isArray(row.examples),'FIELD_COVERAGE_CHANGED');
+ integer(row.present,0,value.events);integer(row.missing,0,value.events);
+ need(row.present+row.missing===value.events,'FIELD_COVERAGE_CHANGED');
+ return {...pick(row,['present','missing','types','selectable','examples']),pointer:row.selectable?row.pointer:row.pointer.slice(0,160),
+ pointer_preview:!row.selectable};
+ })};
+ });
+ }
+ if(operation==='event-input-values'){
+ check(body.id,EVENT_ID,'INPUT_ID_REQUIRED');
+ need(typeof body.pointer==='string'&&body.pointer.length<=2000&&
+ (body.pointer===''||body.pointer.startsWith('/'))&&!/~(?:[^01]|$)/.test(body.pointer),'PAYLOAD_POINTER_REQUIRED');
+ integer(body.offset??0);integer(body.limit??25,1,100);
+ const selected={pointer:body.pointer,offset:body.offset??0,limit:body.limit??25};
+ return snapshot(record,'values',body.id,()=>postBytes(ROOT+'/inputs/'+body.id+'/inspect',selected,EVENT_MAX_RECORD),value=>{
+ const original=inspection(value,record,body.id,'stellar-forge.event-feed-payload-values.v1');
+ need(value.pointer===selected.pointer&&value.offset===selected.offset&&value.limit===selected.limit&&
+ value.total===value.events&&Array.isArray(value.rows)&&value.rows.length<=selected.limit,'FIELD_VALUES_CHANGED');
+ return {...original,...pick(value,['pointer','offset','limit','total','next_offset']),rows:value.rows.map(row=>{
+ need(object(row)&&object(row.event)&&['missing','null','string','number','boolean','object','array'].includes(row.state)&&
+ (row.text===null||typeof row.text==='string'),'FIELD_VALUES_CHANGED');
+ return {...pick(row,['index','event','state','value_bytes','value_sha256']),text_preview:row.text===null?null:row.text.slice(0,160),
+ text_truncated:typeof row.text==='string'&&row.text.length>160};
+ })};
+ });
+ }
+
  if(operation==='event-input-chunk'){
  check(body.id,EVENT_ID,'INPUT_ID_REQUIRED');need(Object.hasOwn(INPUT_LIMITS,body.kind),'FILE_KIND_REQUIRED');
  integer(body.offset);check(body.sha256,EVENT_HASH,'CHUNK_DIGEST_REQUIRED');
