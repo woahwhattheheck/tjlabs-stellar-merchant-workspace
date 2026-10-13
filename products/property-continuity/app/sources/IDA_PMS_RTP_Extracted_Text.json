@@ -1,0 +1,4856 @@
+{
+  "schema": "bluewave.issuer-extracted-text.v1",
+  "url": "https://www.etenders.gov.ie/epps/cft/downloadContractDocument.do?documentId=8912599&resourceId=8912550",
+  "title": "IDA IDAPMS082026 Request to Participate",
+  "pages": 28,
+  "lineCount": 969,
+  "sourceKind": "web-extracted-pdf-text",
+  "binarySha256": null,
+  "lines": [
+    {
+      "line": 0,
+      "page": "0",
+      "text": "1"
+    },
+    {
+      "line": 1,
+      "page": "0",
+      "text": "IDA001/0095-#12514451v2"
+    },
+    {
+      "line": 2,
+      "page": "0",
+      "text": "REQUEST TO PARTICIPATE"
+    },
+    {
+      "line": 3,
+      "page": "0",
+      "text": "Establishment of a Single Party Framework for the Design, Delivery"
+    },
+    {
+      "line": 4,
+      "page": "0",
+      "text": "and Management of IDA Ireland’s Property Management System"
+    },
+    {
+      "line": 5,
+      "page": "0",
+      "text": "on the Salesforce platform"
+    },
+    {
+      "line": 6,
+      "page": "0",
+      "text": "Title"
+    },
+    {
+      "line": 7,
+      "page": "0",
+      "text": "Single Party Framework forthe Design, Delivery and Support of"
+    },
+    {
+      "line": 8,
+      "page": "0",
+      "text": "IDA Ireland’s Property Management System on the Salesforce"
+    },
+    {
+      "line": 9,
+      "page": "0",
+      "text": "platform"
+    },
+    {
+      "line": 10,
+      "page": "0",
+      "text": "Contracting Authority: IDA Ireland"
+    },
+    {
+      "line": 11,
+      "page": "0",
+      "text": "Procedure: Competitive Procedure with Negotiation"
+    },
+    {
+      "line": 12,
+      "page": "0",
+      "text": "eTenders Resource ID:"
+    },
+    {
+      "line": 13,
+      "page": "0",
+      "text": "IDA Ireland Reference: IDAPMS082026"
+    },
+    {
+      "line": 14,
+      "page": "0",
+      "text": "Issue Date: 25"
+    },
+    {
+      "line": 15,
+      "page": "0",
+      "text": "th August 2026"
+    },
+    {
+      "line": 16,
+      "page": "0",
+      "text": "Closing Date for Queries: 9"
+    },
+    {
+      "line": 17,
+      "page": "0",
+      "text": "th September 2026 at 17:00 (local time)"
+    },
+    {
+      "line": 18,
+      "page": "0",
+      "text": "Closing Date for Submissions: 25"
+    },
+    {
+      "line": 19,
+      "page": "0",
+      "text": "th September 2026 at 16:00 (local time)"
+    },
+    {
+      "line": 20,
+      "page": "0",
+      "text": "Submissions and Queries via: eTenders only"
+    },
+    {
+      "line": 21,
+      "page": "0-1",
+      "text": "Please upload your response as a ZIP FILE to protect the integrity of the file names2"
+    },
+    {
+      "line": 22,
+      "page": "1",
+      "text": "IDA001/0095-#12514451v2"
+    },
+    {
+      "line": 23,
+      "page": "1",
+      "text": "Table of Contents"
+    },
+    {
+      "line": 24,
+      "page": "1",
+      "text": "1. General Information ................................................................................................................ 4"
+    },
+    {
+      "line": 25,
+      "page": "1",
+      "text": "1.1 Disclaimer................................................................................................................................ 4"
+    },
+    {
+      "line": 26,
+      "page": "1",
+      "text": "1.2 Small and Medium-Sized Enterprise Participation ................................................................. 4"
+    },
+    {
+      "line": 27,
+      "page": "1",
+      "text": "1.3 Use of the RTP Response Document....................................................................................... 5"
+    },
+    {
+      "line": 28,
+      "page": "1",
+      "text": "1.4 Summary ................................................................................................................................. 5"
+    },
+    {
+      "line": 29,
+      "page": "1",
+      "text": "2. About IDA Ireland .................................................................................................................... 6"
+    },
+    {
+      "line": 30,
+      "page": "1",
+      "text": "3. About the Framework Agreement and the Procurement Procedure....................................... 6"
+    },
+    {
+      "line": 31,
+      "page": "1",
+      "text": "3.1 Purpose of the RTP Documentation........................................................................................ 7"
+    },
+    {
+      "line": 32,
+      "page": "1",
+      "text": "3.2 Numbers Admitted to the Framework Agreement................................................................. 7"
+    },
+    {
+      "line": 33,
+      "page": "1",
+      "text": "3.3 Duration .................................................................................................................................. 7"
+    },
+    {
+      "line": 34,
+      "page": "1",
+      "text": "3.3.1 Duration of the Framework Agreement............................................................................ 7"
+    },
+    {
+      "line": 35,
+      "page": "1",
+      "text": "3.3.2 Duration of the Initial Call-Off Contract............................................................................. 7"
+    },
+    {
+      "line": 36,
+      "page": "1",
+      "text": "3.3.3 Subsequent Call-Off Contracts........................................................................................... 8"
+    },
+    {
+      "line": 37,
+      "page": "1",
+      "text": "3.3.4 Maximum Value of the Framework Agreement ............................................................... 8"
+    },
+    {
+      "line": 38,
+      "page": "1",
+      "text": "3.4 Awarding Call-Off Contracts under the Framework Agreement.............................................. 8"
+    },
+    {
+      "line": 39,
+      "page": "1",
+      "text": "3.5 Use of the Framework Agreement.......................................................................................... 9"
+    },
+    {
+      "line": 40,
+      "page": "1",
+      "text": "3.6 Award to Runner Up................................................................................................................ 9"
+    },
+    {
+      "line": 41,
+      "page": "1",
+      "text": "3.7 Competitive Procedure with Negotiation................................................................................ 9"
+    },
+    {
+      "line": 42,
+      "page": "1",
+      "text": "3.8 Data Protection and IT Security............................................................................................. 12"
+    },
+    {
+      "line": 43,
+      "page": "1",
+      "text": "3.8.1 Data Protection Legislation.............................................................................................. 13"
+    },
+    {
+      "line": 44,
+      "page": "1",
+      "text": "3.8.2 Transfer of Data outside the European Economic Area (EEA)........................................ 13"
+    },
+    {
+      "line": 45,
+      "page": "1",
+      "text": "4. Scope of Requirement for the Framework Agreement and the Initial Call-Off Contract........ 14"
+    },
+    {
+      "line": 46,
+      "page": "1",
+      "text": "4.1 Context.................................................................................................................................. 14"
+    },
+    {
+      "line": 47,
+      "page": "1",
+      "text": "4.1.1 Review of Salesforce Platform Suitability ....................................................................... 14"
+    },
+    {
+      "line": 48,
+      "page": "1",
+      "text": "4.1.2 Design Assumptions:....................................................................................................... 15"
+    },
+    {
+      "line": 49,
+      "page": "1",
+      "text": "4.1.3 Known Requirements...................................................................................................... 15"
+    },
+    {
+      "line": 50,
+      "page": "1",
+      "text": "4.1.4 Expectations from the new PMS – Advantages & Benefits ............................................ 16"
+    },
+    {
+      "line": 51,
+      "page": "1",
+      "text": "4.1.5 Time scales for Implementation & Ongoing Support...................................................... 17"
+    },
+    {
+      "line": 52,
+      "page": "1",
+      "text": "4.1.6 Expectations of the Provider........................................................................................... 17"
+    },
+    {
+      "line": 53,
+      "page": "1",
+      "text": "4.2 High‑Level Scope of the Framework Agreement................................................................... 18"
+    },
+    {
+      "line": 54,
+      "page": "1",
+      "text": "4.3 Scope of the Initial Call-Off Contract..................................................................................... 18"
+    },
+    {
+      "line": 55,
+      "page": "1",
+      "text": "5. Instructions to Candidates..................................................................................................... 19"
+    },
+    {
+      "line": 56,
+      "page": "1",
+      "text": "5.1 Multiple Participation & Conflicts of Interest....................................................................... 19"
+    },
+    {
+      "line": 57,
+      "page": "1",
+      "text": "5.2 Submission of Applications.................................................................................................... 19"
+    },
+    {
+      "line": 58,
+      "page": "1-2",
+      "text": "5.2.1 Accessing documents....................................................................................................... 203"
+    },
+    {
+      "line": 59,
+      "page": "2",
+      "text": "IDA001/0095-#12514451v2"
+    },
+    {
+      "line": 60,
+      "page": "2",
+      "text": "5.2.2 Submitting Queries.......................................................................................................... 20"
+    },
+    {
+      "line": 61,
+      "page": "2",
+      "text": "5.2.3 Submitting your Response............................................................................................... 21"
+    },
+    {
+      "line": 62,
+      "page": "2",
+      "text": "5.3 Closing date for Applications................................................................................................ 21"
+    },
+    {
+      "line": 63,
+      "page": "2",
+      "text": "5.4 Completing the RTP Response Document ............................................................................ 21"
+    },
+    {
+      "line": 64,
+      "page": "2",
+      "text": "5.5 Applications from SMEs and Consortia ................................................................................. 22"
+    },
+    {
+      "line": 65,
+      "page": "2",
+      "text": "5.5.1 SMEs................................................................................................................................ 22"
+    },
+    {
+      "line": 66,
+      "page": "2",
+      "text": "5.5.2 Sub-Contractors............................................................................................................... 23"
+    },
+    {
+      "line": 67,
+      "page": "2",
+      "text": "5.5.3 Consortia ......................................................................................................................... 23"
+    },
+    {
+      "line": 68,
+      "page": "2",
+      "text": "5.5.4 Reliance on Resources..................................................................................................... 23"
+    },
+    {
+      "line": 69,
+      "page": "2",
+      "text": "5.5.5 Prime Contractor............................................................................................................. 24"
+    },
+    {
+      "line": 70,
+      "page": "2",
+      "text": "5.6 Opening and Evaluation of Applications ............................................................................... 24"
+    },
+    {
+      "line": 71,
+      "page": "2",
+      "text": "5.7 European Single Procurement Document............................................................................. 24"
+    },
+    {
+      "line": 72,
+      "page": "2",
+      "text": "5.8 Evaluation of Applications..................................................................................................... 24"
+    },
+    {
+      "line": 73,
+      "page": "2",
+      "text": "5.9 Clarification of Applications................................................................................................... 24"
+    },
+    {
+      "line": 74,
+      "page": "2",
+      "text": "5.10 Identification of Shortlist ...................................................................................................... 25"
+    },
+    {
+      "line": 75,
+      "page": "2",
+      "text": "5.11 Freedom of Information Act.................................................................................................. 25"
+    },
+    {
+      "line": 76,
+      "page": "2",
+      "text": "5.12 Interference .......................................................................................................................... 25"
+    },
+    {
+      "line": 77,
+      "page": "2",
+      "text": "5.13 Inducement to Purchase ....................................................................................................... 26"
+    },
+    {
+      "line": 78,
+      "page": "2",
+      "text": "Evaluation of Responses: SEE APPENDIX A: RTP Response Document................................................. 27"
+    },
+    {
+      "line": 79,
+      "page": "2-3",
+      "text": " 4"
+    },
+    {
+      "line": 80,
+      "page": "3",
+      "text": "IDA001/0095-#12514451v2"
+    },
+    {
+      "line": 81,
+      "page": "3",
+      "text": "1. General Information"
+    },
+    {
+      "line": 82,
+      "page": "3",
+      "text": "1.1 Disclaimer"
+    },
+    {
+      "line": 83,
+      "page": "3",
+      "text": "This Request to Participate information document (the “RTP”), the associated RTP response document"
+    },
+    {
+      "line": 84,
+      "page": "3",
+      "text": "(“RTP Response Document”) issued separately by IDA Ireland as part of this procurement process for"
+    },
+    {
+      "line": 85,
+      "page": "3",
+      "text": "the establishment of a framework agreement for the provision of the design, delivery and"
+    },
+    {
+      "line": 86,
+      "page": "3",
+      "text": "management of IDA Ireland’s Property Management System (the “Procurement Process”) and any"
+    },
+    {
+      "line": 87,
+      "page": "3",
+      "text": "clarification circulars issued by IDA Ireland (together the “Documents” and where the context allows,"
+    },
+    {
+      "line": 88,
+      "page": "3",
+      "text": "a “Document”) are for information only and do not constitute, and shall not be interpreted as, an offer"
+    },
+    {
+      "line": 89,
+      "page": "3",
+      "text": "for sale, prospectus, or the basis of a contract."
+    },
+    {
+      "line": 90,
+      "page": "3",
+      "text": "Candidates (as defined in section 3.1 of this RTP) are recommended to read the documents"
+    },
+    {
+      "line": 91,
+      "page": "3",
+      "text": "thoroughly. While all reasonable steps have been taken to ensure that the information set out in the"
+    },
+    {
+      "line": 92,
+      "page": "3",
+      "text": "Document is accurate and up to date, no representation or warranty, express or implied, is or will be"
+    },
+    {
+      "line": 93,
+      "page": "3",
+      "text": "made or given in relation to the accuracy or the completeness of any information contained in the"
+    },
+    {
+      "line": 94,
+      "page": "3",
+      "text": "Document or otherwise provided by or on behalf of IDA Ireland (in writing or otherwise) to any"
+    },
+    {
+      "line": 95,
+      "page": "3",
+      "text": "interested party or its advisers. No responsibility or liability for any loss or damage arising as a result"
+    },
+    {
+      "line": 96,
+      "page": "3",
+      "text": "of reliance on these documents, or for the information contained in these documents or for any"
+    },
+    {
+      "line": 97,
+      "page": "3",
+      "text": "omission is or will be accepted by IDA Ireland or by any of its officers, employees, agents or"
+    },
+    {
+      "line": 98,
+      "page": "3",
+      "text": "professional advisers. No officer, employee, agent, or professional adviser of the company has any"
+    },
+    {
+      "line": 99,
+      "page": "3",
+      "text": "authority to give or make any representation or warranty, express or implied, in relation to such"
+    },
+    {
+      "line": 100,
+      "page": "3",
+      "text": "information. IDA Ireland’s officers, employees, agents, and professional advisers expressly disclaim"
+    },
+    {
+      "line": 101,
+      "page": "3",
+      "text": "any and all liability arising out of such documentation or information and any errors or omissions in or"
+    },
+    {
+      "line": 102,
+      "page": "3",
+      "text": "from the documents and information."
+    },
+    {
+      "line": 103,
+      "page": "3",
+      "text": "IDA Ireland reserves the right, at any time and without notice or liability, not to proceed with some or"
+    },
+    {
+      "line": 104,
+      "page": "3",
+      "text": "all of the Procurement Process, to terminate the Procurement Process (or any part thereof), to change"
+    },
+    {
+      "line": 105,
+      "page": "3",
+      "text": "the basis of and the procedures for the bidding process and/or to procure the PMS by alternative means"
+    },
+    {
+      "line": 106,
+      "page": "3",
+      "text": "if, in IDA Ireland’s opinion and at its sole discretion, it appears that it can be thereby more advantageously"
+    },
+    {
+      "line": 107,
+      "page": "3",
+      "text": "procured."
+    },
+    {
+      "line": 108,
+      "page": "3",
+      "text": "1.2 Small and Medium-Sized Enterprise Participation"
+    },
+    {
+      "line": 109,
+      "page": "3",
+      "text": "It isthe policy of IDA Ireland to promote participation by Small and Medium-Sized Enterprises(“SMEs”)"
+    },
+    {
+      "line": 110,
+      "page": "3",
+      "text": "on a fair and equal basis."
+    },
+    {
+      "line": 111,
+      "page": "3",
+      "text": "All firms are encouraged to explore the possibilities of forming relationships with SMEs or other"
+    },
+    {
+      "line": 112,
+      "page": "3",
+      "text": "enterprises to meet the financial, economic or technical capacity requirements of the Procurement"
+    },
+    {
+      "line": 113,
+      "page": "3",
+      "text": "Process and/or deliverables under the framework agreement/contracts, if required."
+    },
+    {
+      "line": 114,
+      "page": "3",
+      "text": "Candidates are reminded that they may rely on the resources of other entities to establish the"
+    },
+    {
+      "line": 115,
+      "page": "3",
+      "text": "requirements on condition that they can prove to the satisfaction of IDA Ireland that they will have"
+    },
+    {
+      "line": 116,
+      "page": "3",
+      "text": "these resources at their disposal when necessary – please see Section 5 of this RTP below."
+    },
+    {
+      "line": 117,
+      "page": "3",
+      "text": "Candidates may include individuals, partnerships, limited companies, groupings or any combination"
+    },
+    {
+      "line": 118,
+      "page": "3-4",
+      "text": "of the foregoing with or without legal personality.5"
+    },
+    {
+      "line": 119,
+      "page": "4",
+      "text": "IDA001/0095-#12514451v2"
+    },
+    {
+      "line": 120,
+      "page": "4",
+      "text": "If the response is from a Consortium (defined below), Candidates must ensure that all the relevant"
+    },
+    {
+      "line": 121,
+      "page": "4",
+      "text": "information is provided and where necessary, provide the information requested separately for each"
+    },
+    {
+      "line": 122,
+      "page": "4",
+      "text": "party. Relevant information relates to where a Candidate is relying on the resources to qualify (e.g.,"
+    },
+    {
+      "line": 123,
+      "page": "4",
+      "text": "turnover, personnel, previous experience) and / or to deliver contracts. The Consortium must appoint"
+    },
+    {
+      "line": 124,
+      "page": "4",
+      "text": "a single point of contact (a “Prime Contractor” as defined in section 5.5.5 of this RTP) who will assume"
+    },
+    {
+      "line": 125,
+      "page": "4",
+      "text": "overall responsibility for delivery, and who is authorised to sign the Framework Agreement / contract"
+    },
+    {
+      "line": 126,
+      "page": "4",
+      "text": "on behalf of all consortia members. IDA Ireland will not act as an arbitrator between members of a"
+    },
+    {
+      "line": 127,
+      "page": "4",
+      "text": "Consortium."
+    },
+    {
+      "line": 128,
+      "page": "4",
+      "text": "Further details will be specified in the Invitation to Tender issued as part of this Procurement Process"
+    },
+    {
+      "line": 129,
+      "page": "4",
+      "text": "to shortlisted Candidates."
+    },
+    {
+      "line": 130,
+      "page": "4",
+      "text": "1.3 Use of the RTP Response Document"
+    },
+    {
+      "line": 131,
+      "page": "4",
+      "text": "IDA Ireland has provided the RTP Response Document as a separate document for Candidates to use"
+    },
+    {
+      "line": 132,
+      "page": "4",
+      "text": "in preparing their response (Appendix A RTP Response Document). This document and format must"
+    },
+    {
+      "line": 133,
+      "page": "4",
+      "text": "be used. Candidates should note that personalisation of the RTP Response Document is not allowed,"
+    },
+    {
+      "line": 134,
+      "page": "4",
+      "text": "and they must not add their branding/colours to the RTP Response Document."
+    },
+    {
+      "line": 135,
+      "page": "4",
+      "text": "Please note that in addition to this RTP and the RTP Response Document, any clarification circulars"
+    },
+    {
+      "line": 136,
+      "page": "4",
+      "text": "issued by IDA Ireland during the qualification submission period form part of the RTP Response"
+    },
+    {
+      "line": 137,
+      "page": "4",
+      "text": "Document and this RTP. Candidates must ensure they regularly monitor eTenders and review any"
+    },
+    {
+      "line": 138,
+      "page": "4",
+      "text": "clarifications published."
+    },
+    {
+      "line": 139,
+      "page": "4",
+      "text": "Please do not embed any web links in the documents submitted as they cannot be accessed. It is"
+    },
+    {
+      "line": 140,
+      "page": "4",
+      "text": "recommended to upload your response in eTenders as a Zip file in order to protect the integrity of"
+    },
+    {
+      "line": 141,
+      "page": "4",
+      "text": "file names."
+    },
+    {
+      "line": 142,
+      "page": "4",
+      "text": "1.4 Summary"
+    },
+    {
+      "line": 143,
+      "page": "4",
+      "text": "Contracting Authority IDA Ireland"
+    },
+    {
+      "line": 144,
+      "page": "4",
+      "text": "Title"
+    },
+    {
+      "line": 145,
+      "page": "4",
+      "text": "Establishment of a Single‑Party Framework for the Design,"
+    },
+    {
+      "line": 146,
+      "page": "4",
+      "text": "Delivery and Management of IDA Ireland’s Property"
+    },
+    {
+      "line": 147,
+      "page": "4",
+      "text": "Management System on the Salesforce platform"
+    },
+    {
+      "line": 148,
+      "page": "4",
+      "text": "Nature of Requirement Services"
+    },
+    {
+      "line": 149,
+      "page": "4",
+      "text": "Procedure Competitive Procedure with Negotiation"
+    },
+    {
+      "line": 150,
+      "page": "4",
+      "text": "Stage in procedure"
+    },
+    {
+      "line": 151,
+      "page": "4",
+      "text": "Thisisthe firststage of this competitive procedure whereby"
+    },
+    {
+      "line": 152,
+      "page": "4",
+      "text": "any interested party may submit an application in response"
+    },
+    {
+      "line": 153,
+      "page": "4",
+      "text": "to this RTP in order to be considered for inclusion on the"
+    },
+    {
+      "line": 154,
+      "page": "4-5",
+      "text": "shortlist that will be invited to tender.IDA001/0095-#12514451v2 6"
+    },
+    {
+      "line": 155,
+      "page": "5",
+      "text": "2. About IDA Ireland"
+    },
+    {
+      "line": 156,
+      "page": "5",
+      "text": "IDA Ireland is the authority responsible for this procurement."
+    },
+    {
+      "line": 157,
+      "page": "5",
+      "text": "IDA Ireland is the State agency responsible for attracting and developing foreign direct investment into"
+    },
+    {
+      "line": 158,
+      "page": "5",
+      "text": "Ireland. Its statutory mandate is set out in the Industrial Development Acts 1986–2019. IDA Ireland’s"
+    },
+    {
+      "line": 159,
+      "page": "5",
+      "text": "main objective is to encourage investment into Ireland by foreign owned companies. It works as a"
+    },
+    {
+      "line": 160,
+      "page": "5",
+      "text": "strategic partner and provides consultancy and support services free of charge to help organisations"
+    },
+    {
+      "line": 161,
+      "page": "5",
+      "text": "set up and grow. Its success is measured by the impact of Foreign Direct Investment (FDI) and IDA\u0002supported companies on the Irish economy."
+    },
+    {
+      "line": 162,
+      "page": "5",
+      "text": "IDA Ireland works closely with Government Departments, Enterprise Ireland, and other State"
+    },
+    {
+      "line": 163,
+      "page": "5",
+      "text": "agencies as part of the broader enterprise ecosystem to deliver on Ireland’s economic development"
+    },
+    {
+      "line": 164,
+      "page": "5",
+      "text": "objectives. IDA Ireland maintains a network of international offices and works with prospective"
+    },
+    {
+      "line": 165,
+      "page": "5",
+      "text": "investors to identify suitable locations in Ireland. A core function of IDA Ireland involves the"
+    },
+    {
+      "line": 166,
+      "page": "5",
+      "text": "management and development of its property portfolio, including the provision of sites and buildings"
+    },
+    {
+      "line": 167,
+      "page": "5",
+      "text": "to support investment projects."
+    },
+    {
+      "line": 168,
+      "page": "5",
+      "text": "Further information on IDA Ireland’s functions and activities is available at"
+    },
+    {
+      "line": 169,
+      "page": "5",
+      "text": "https://www.idaireland.com/"
+    },
+    {
+      "line": 170,
+      "page": "5",
+      "text": "3. About the Framework Agreement and the Procurement Procedure"
+    },
+    {
+      "line": 171,
+      "page": "5",
+      "text": "IDA Ireland proposes to engage in the Procurement Process for the establishment of a single-party"
+    },
+    {
+      "line": 172,
+      "page": "5",
+      "text": "framework agreement for the provision of the design, delivery and management of IDA Ireland’s"
+    },
+    {
+      "line": 173,
+      "page": "5",
+      "text": "Property Management System (PMS) the “Framework Agreement”."
+    },
+    {
+      "line": 174,
+      "page": "5",
+      "text": "The Property Management System (PMS) means the Salesforce based Property management"
+    },
+    {
+      "line": 175,
+      "page": "5",
+      "text": "System to be designed, implemented, supported and enhanced under the Framework Agreement."
+    },
+    {
+      "line": 176,
+      "page": "5",
+      "text": "A framework agreement constitutes a means of establishing overall terms and conditions in"
+    },
+    {
+      "line": 177,
+      "page": "5",
+      "text": "accordance with which, for a specified duration, individual contracts (known as “Call-Off Contracts”)"
+    },
+    {
+      "line": 178,
+      "page": "5",
+      "text": "may (or may not) be awarded."
+    },
+    {
+      "line": 179,
+      "page": "5",
+      "text": "It is emphasised that the Framework Agreement constitutes no guarantee to purchase a specific"
+    },
+    {
+      "line": 180,
+      "page": "5",
+      "text": "quantity of supplies or services from a particular economic operator. Indeed, IDA Ireland reserves the"
+    },
+    {
+      "line": 181,
+      "page": "5",
+      "text": "right to operate outside of the Framework Agreement at its sole and absolute discretion, particularly"
+    },
+    {
+      "line": 182,
+      "page": "5",
+      "text": "should it become apparent that doing so would offer greater value for money or if IDA Ireland requires"
+    },
+    {
+      "line": 183,
+      "page": "5",
+      "text": "more specialist services. Notwithstanding the foregoing, the Framework Agreement approach has"
+    },
+    {
+      "line": 184,
+      "page": "5",
+      "text": "been adopted in order to leverage efficiencies and maximise cost savings over the duration of the"
+    },
+    {
+      "line": 185,
+      "page": "5",
+      "text": "Framework Agreement."
+    },
+    {
+      "line": 186,
+      "page": "5",
+      "text": "IDA Ireland intends to award the initial Call-Off Contract from the Framework Agreement (the “Initial"
+    },
+    {
+      "line": 187,
+      "page": "5",
+      "text": "Call-Off Contract”) to the first ranked tenderer as determined by the application of the award criteria"
+    },
+    {
+      "line": 188,
+      "page": "5",
+      "text": "(the “Preferred Tenderer”) at the same time as the Framework Agreement. Under the Framework"
+    },
+    {
+      "line": 189,
+      "page": "5",
+      "text": "Agreement, subsequent Call-Off Contracts may be awarded to the Preferred Tenderer at the discretion"
+    },
+    {
+      "line": 190,
+      "page": "5",
+      "text": "of IDA Ireland. IDA Ireland shall not be obliged to award any particular number of subsequent Call-Off"
+    },
+    {
+      "line": 191,
+      "page": "5-6",
+      "text": "Contracts or any particular value.IDA001/0095-#12514451v2 7"
+    },
+    {
+      "line": 192,
+      "page": "6",
+      "text": "3.1 Purpose of the RTP Documentation"
+    },
+    {
+      "line": 193,
+      "page": "6",
+      "text": "The purpose of the RTP documentation is to:"
+    },
+    {
+      "line": 194,
+      "page": "6",
+      "text": "(i) provide interested persons with the information that they need to decide whether to"
+    },
+    {
+      "line": 195,
+      "page": "6",
+      "text": "participate in this Procurement Process;"
+    },
+    {
+      "line": 196,
+      "page": "6",
+      "text": "(ii) facilitate the submission of completed RTP Response Documents by interested persons (each"
+    },
+    {
+      "line": 197,
+      "page": "6",
+      "text": "person who submits an RTP Response Document hereinafter being referred to as a"
+    },
+    {
+      "line": 198,
+      "page": "6",
+      "text": "“Candidate”);"
+    },
+    {
+      "line": 199,
+      "page": "6",
+      "text": "(iii) facilitate IDA Ireland in assessing the quality of the Candidates and their legal, financial and"
+    },
+    {
+      "line": 200,
+      "page": "6",
+      "text": "technical capacities to meet the requirements of the Framework Agreement and Call-Off"
+    },
+    {
+      "line": 201,
+      "page": "6",
+      "text": "Contracts; and"
+    },
+    {
+      "line": 202,
+      "page": "6",
+      "text": "(iv) allow IDA Ireland to identify a number of suitably qualified and experienced Candidates who"
+    },
+    {
+      "line": 203,
+      "page": "6",
+      "text": "will be invited to participate in the Tender Phase (as defined in section 3.7 of this RTP) of the"
+    },
+    {
+      "line": 204,
+      "page": "6",
+      "text": "Procurement Process."
+    },
+    {
+      "line": 205,
+      "page": "6",
+      "text": "The information provided in this RTP will be supplemented during the Tender Phase of the"
+    },
+    {
+      "line": 206,
+      "page": "6",
+      "text": "Procurement Process."
+    },
+    {
+      "line": 207,
+      "page": "6",
+      "text": "3.2 Numbers Admitted to the Framework Agreement"
+    },
+    {
+      "line": 208,
+      "page": "6",
+      "text": "The Framework Agreement will be established as a single party framework agreement with the"
+    },
+    {
+      "line": 209,
+      "page": "6",
+      "text": "Preferred Tenderer following the conclusion of the Procurement Process."
+    },
+    {
+      "line": 210,
+      "page": "6",
+      "text": "3.3 Duration"
+    },
+    {
+      "line": 211,
+      "page": "6",
+      "text": "3.3.1 Duration of the Framework Agreement"
+    },
+    {
+      "line": 212,
+      "page": "6",
+      "text": "The maximum duration of the Framework Agreement will be four (4) years with the option to extend"
+    },
+    {
+      "line": 213,
+      "page": "6",
+      "text": "by up to three (3) years subject to satisfactory annual review of performance. For the avoidance of"
+    },
+    {
+      "line": 214,
+      "page": "6",
+      "text": "doubt, IDA Ireland confirms that the period of any Call-off Contract awarded under the Framework"
+    },
+    {
+      "line": 215,
+      "page": "6",
+      "text": "Agreement may extend beyond the date of expiry of the Framework Agreement."
+    },
+    {
+      "line": 216,
+      "page": "6",
+      "text": "While significant work has been undertaken on an initial discovery phase whereby user stories have been"
+    },
+    {
+      "line": 217,
+      "page": "6",
+      "text": "developed, the successful supplier may be required to undertake potentially significant upfront time"
+    },
+    {
+      "line": 218,
+      "page": "6",
+      "text": "investment in further discovery, detailed solution design, data migration, configuration, testing,"
+    },
+    {
+      "line": 219,
+      "page": "6",
+      "text": "integration and organisational change activities. The option of the extension of the framework to a"
+    },
+    {
+      "line": 220,
+      "page": "6",
+      "text": "maximum of 7 years will allow the IDA (provided that the successful supplier has performed in a"
+    },
+    {
+      "line": 221,
+      "page": "6",
+      "text": "satisfactory manner) to obtain the benefit of the framework support as envisaged in the event of a"
+    },
+    {
+      "line": 222,
+      "page": "6",
+      "text": "prolonged implementation period."
+    },
+    {
+      "line": 223,
+      "page": "6",
+      "text": "3.3.2 Duration of the Initial Call-Off Contract"
+    },
+    {
+      "line": 224,
+      "page": "6",
+      "text": "It is anticipated that the Initial Call‑Off Contract will be awarded simultaneously with the Framework"
+    },
+    {
+      "line": 225,
+      "page": "6-7",
+      "text": "Agreement. The duration of the Initial Call-Off Contract will be for a period of four (4) years with the IDA001/0095-#12514451v2 8"
+    },
+    {
+      "line": 226,
+      "page": "7",
+      "text": "option to extend by up to three (3) years. This extension provision (if used) would be exercised in Year 4"
+    },
+    {
+      "line": 227,
+      "page": "7",
+      "text": "of the Framework Agreement and allow the potential additional three (3) years to be applied flexibly, for"
+    },
+    {
+      "line": 228,
+      "page": "7",
+      "text": "example as a:"
+    },
+    {
+      "line": 229,
+      "page": "7",
+      "text": "• one (1)-year extension;"
+    },
+    {
+      "line": 230,
+      "page": "7",
+      "text": "• two (2)-year extension;"
+    },
+    {
+      "line": 231,
+      "page": "7",
+      "text": "• three (3)-year extension; or"
+    },
+    {
+      "line": 232,
+      "page": "7",
+      "text": "• a combination of increments of one (1) year up to a maximum of three (3) years."
+    },
+    {
+      "line": 233,
+      "page": "7",
+      "text": "The scope of the Initial Call-off Contract is expected to include (but not be limited to):"
+    },
+    {
+      "line": 234,
+      "page": "7",
+      "text": "• Design and configuration and build of a Property Management System, which includes:"
+    },
+    {
+      "line": 235,
+      "page": "7",
+      "text": "o Integration of current Financial Management System"
+    },
+    {
+      "line": 236,
+      "page": "7",
+      "text": "o Integration of current GIS Mapping System"
+    },
+    {
+      "line": 237,
+      "page": "7",
+      "text": "• Migration of existing data from existing Property Management System"
+    },
+    {
+      "line": 238,
+      "page": "7",
+      "text": "• Ongoing Support and Maintenance (including Support and Platform Updates)"
+    },
+    {
+      "line": 239,
+      "page": "7",
+      "text": "• Training Services"
+    },
+    {
+      "line": 240,
+      "page": "7",
+      "text": "It should be noted that IDA Ireland anticipates that, during the Initial Call-Off Contract, the"
+    },
+    {
+      "line": 241,
+      "page": "7",
+      "text": "anticipated time for the design and implementation of the proposed Property Management System"
+    },
+    {
+      "line": 242,
+      "page": "7",
+      "text": "will be circa. one (1) year."
+    },
+    {
+      "line": 243,
+      "page": "7",
+      "text": "Further information on the Initial Call-Off Contract will be provided to shortlisted Candidates as part"
+    },
+    {
+      "line": 244,
+      "page": "7",
+      "text": "of this Procurement Process."
+    },
+    {
+      "line": 245,
+      "page": "7",
+      "text": "3.3.3 Subsequent Call-Off Contracts"
+    },
+    {
+      "line": 246,
+      "page": "7",
+      "text": "Subsequent Call-off Contracts may be awarded pursuant to the Framework Agreement in relation to"
+    },
+    {
+      "line": 247,
+      "page": "7",
+      "text": "the following:"
+    },
+    {
+      "line": 248,
+      "page": "7",
+      "text": "• Additional development projects which may include customisations and integrations."
+    },
+    {
+      "line": 249,
+      "page": "7",
+      "text": "• Additional capability provided by Salesforce."
+    },
+    {
+      "line": 250,
+      "page": "7",
+      "text": "• Future support and maintenance of the Salesforce System."
+    },
+    {
+      "line": 251,
+      "page": "7",
+      "text": "• Additional cloud hosting acquisition / hosting management requirements."
+    },
+    {
+      "line": 252,
+      "page": "7",
+      "text": "• Ancillary or related services or licenses."
+    },
+    {
+      "line": 253,
+      "page": "7",
+      "text": "3.3.4 Maximum Value of the Framework Agreement"
+    },
+    {
+      "line": 254,
+      "page": "7",
+      "text": "The maximum total value of any purchases pursuant to the Framework Agreement is €4m (ex. VAT)"
+    },
+    {
+      "line": 255,
+      "page": "7",
+      "text": "(inclusive of any anticipated extensions) over the lifetime of the Framework Agreement. It is"
+    },
+    {
+      "line": 256,
+      "page": "7",
+      "text": "emphasised, however, that this figure is provided strictly for indicative purposes only as there is no"
+    },
+    {
+      "line": 257,
+      "page": "7",
+      "text": "guaranteed expenditure under the Framework Agreement."
+    },
+    {
+      "line": 258,
+      "page": "7-8",
+      "text": "3.4 Awarding Call-Off Contracts under the Framework AgreementIDA001/0095-#12514451v2 9"
+    },
+    {
+      "line": 259,
+      "page": "8",
+      "text": "Call-Off Contracts under the Framework Agreement may be awarded directly on foot of the original"
+    },
+    {
+      "line": 260,
+      "page": "8",
+      "text": "tender provided by the Preferred Tenderer or by consultation with the Preferred Tenderer and"
+    },
+    {
+      "line": 261,
+      "page": "8",
+      "text": "invitation to provide a supplementary tender within the constraints laid down in this Procurement"
+    },
+    {
+      "line": 262,
+      "page": "8",
+      "text": "Process and the Framework Agreement’s terms and conditions."
+    },
+    {
+      "line": 263,
+      "page": "8",
+      "text": "3.5 Use of the Framework Agreement"
+    },
+    {
+      "line": 264,
+      "page": "8",
+      "text": "IDA Ireland intends to use this Framework Agreement as and when requirements within itsscope arise."
+    },
+    {
+      "line": 265,
+      "page": "8",
+      "text": "However, there is no obligation upon IDA Ireland to make use of this Framework Agreement."
+    },
+    {
+      "line": 266,
+      "page": "8",
+      "text": "Notwithstanding this fact, the Framework Agreement may be terminated in accordance with its terms"
+    },
+    {
+      "line": 267,
+      "page": "8",
+      "text": "and conditions, a draft of which will be appended to the ITT."
+    },
+    {
+      "line": 268,
+      "page": "8",
+      "text": "3.6 Award to Runner Up"
+    },
+    {
+      "line": 269,
+      "page": "8",
+      "text": "If for any reason, it is not possible to establish the Framework Agreement or award the Initial Call\u0002Off Contract to the designated Preferred Tenderer emerging from this Procurement Process, IDA"
+    },
+    {
+      "line": 270,
+      "page": "8",
+      "text": "Ireland reserves the right to establish the framework with the next highest scoring tenderer on the"
+    },
+    {
+      "line": 271,
+      "page": "8",
+      "text": "basis of the terms advertised at any time during the tender validity period. This shall be without"
+    },
+    {
+      "line": 272,
+      "page": "8",
+      "text": "prejudice to the right of IDA Ireland to cancel this Procurement Process and/or initiate a new contract"
+    },
+    {
+      "line": 273,
+      "page": "8",
+      "text": "award procedure at its sole discretion."
+    },
+    {
+      "line": 274,
+      "page": "8",
+      "text": "3.7 Competitive Procedure with Negotiation"
+    },
+    {
+      "line": 275,
+      "page": "8",
+      "text": "IDA Ireland is employing the competitive procedure with negotiation as permitted under Regulation"
+    },
+    {
+      "line": 276,
+      "page": "8",
+      "text": "29 of the European Union (Award of Public Authority Contracts) Regulations 2016 (S.I. No. 284 of"
+    },
+    {
+      "line": 277,
+      "page": "8",
+      "text": "2016) (the “2016 Regulations”). IDA Ireland has considered in accordance with Regulation 26 of the"
+    },
+    {
+      "line": 278,
+      "page": "8",
+      "text": "2016 Regulations that the choice of competitive procedure with negotiation is appropriate given the"
+    },
+    {
+      "line": 279,
+      "page": "8",
+      "text": "complexity and risk associated with this Procurement Processin accordance with and the consequent"
+    },
+    {
+      "line": 280,
+      "page": "8",
+      "text": "potential need to seek to negotiate certain elements with Tenderers prior to final submissions. The"
+    },
+    {
+      "line": 281,
+      "page": "8",
+      "text": "procedure involves a number of stages, specified below."
+    },
+    {
+      "line": 282,
+      "page": "8",
+      "text": "As noted below, there is no requirement on IDA Ireland to enter negotiations with Tenderers and the"
+    },
+    {
+      "line": 283,
+      "page": "8",
+      "text": "Framework Agreement (and Initial Call-off Contract) may be awarded without any negotiations taking"
+    },
+    {
+      "line": 284,
+      "page": "8",
+      "text": "place. Further information will be specified within the Invitation to Tender."
+    },
+    {
+      "line": 285,
+      "page": "8",
+      "text": "Pre-Qualification Phase (this Phase)"
+    },
+    {
+      "line": 286,
+      "page": "8",
+      "text": "This phase of the Procurement Process (the “Pre-Qualification Phase”) will be used to determine which"
+    },
+    {
+      "line": 287,
+      "page": "8",
+      "text": "Candidates qualify for the Tender Phase of the Procurement Process described below. This"
+    },
+    {
+      "line": 288,
+      "page": "8",
+      "text": "determination will be based on Candidates’ assessed and scored RTP Response Documents. RTP"
+    },
+    {
+      "line": 289,
+      "page": "8",
+      "text": "Response Documents will be evaluated in accordance with the rules set out in the RTP Documentation."
+    },
+    {
+      "line": 290,
+      "page": "8",
+      "text": "If any specified mandatory criterion is not satisfied or if any specified minimum score is not achieved,"
+    },
+    {
+      "line": 291,
+      "page": "8-9",
+      "text": "IDA Ireland reserves the right to eliminate the Candidate from the Procurement Process.IDA001/0095-#12514451v2 10"
+    },
+    {
+      "line": 292,
+      "page": "9",
+      "text": "If the RTP Response Document otherwise fails to comply in any respect with the requirements set out"
+    },
+    {
+      "line": 293,
+      "page": "9",
+      "text": "in the RTP Documentation or is ambiguous or if information/documentation is omitted from a RTP"
+    },
+    {
+      "line": 294,
+      "page": "9",
+      "text": "Response Document, IDA Ireland will be entitled at its discretion (but will not be obliged) to take such"
+    },
+    {
+      "line": 295,
+      "page": "9",
+      "text": "steps as it considers appropriate including (but not limited to):"
+    },
+    {
+      "line": 296,
+      "page": "9",
+      "text": "(i) rejecting the relevant RTP Response Document as non-compliant;"
+    },
+    {
+      "line": 297,
+      "page": "9",
+      "text": "(ii) assessing/evaluating the RTP Response Document ‘asis’;"
+    },
+    {
+      "line": 298,
+      "page": "9",
+      "text": "(iii) without prejudice to IDA Ireland’s right to reject the RTP Response Document and in"
+    },
+    {
+      "line": 299,
+      "page": "9",
+      "text": "accordance with Regulation 56(4) of the 2016 Regulations, where it appears to IDA"
+    },
+    {
+      "line": 300,
+      "page": "9",
+      "text": "Ireland that information or documentation submitted by a Candidate is incomplete,"
+    },
+    {
+      "line": 301,
+      "page": "9",
+      "text": "erroneous or missing, IDA Ireland may:"
+    },
+    {
+      "line": 302,
+      "page": "9",
+      "text": "(a) seek clarification from a Candidate in respect of the relevant RTP Response"
+    },
+    {
+      "line": 303,
+      "page": "9",
+      "text": "Document;"
+    },
+    {
+      "line": 304,
+      "page": "9",
+      "text": "(b) request a Candidate to provide IDA Ireland with information or items which"
+    },
+    {
+      "line": 305,
+      "page": "9",
+      "text": "have not been provided or have been provided in an incorrect form or on an"
+    },
+    {
+      "line": 306,
+      "page": "9",
+      "text": "incorrect basis;"
+    },
+    {
+      "line": 307,
+      "page": "9",
+      "text": "(c) request a Candidate to complete any aspect of the relevant RTP Response"
+    },
+    {
+      "line": 308,
+      "page": "9",
+      "text": "Document;"
+    },
+    {
+      "line": 309,
+      "page": "9",
+      "text": "provided however that no clarification or additional information will be sought if, in the opinion of"
+    },
+    {
+      "line": 310,
+      "page": "9",
+      "text": "IDA Ireland, such clarification or additional information would be material."
+    },
+    {
+      "line": 311,
+      "page": "9",
+      "text": "If those eligible Candidates who meet all pass/fail criteria, achieve all specified minimum scores and"
+    },
+    {
+      "line": 312,
+      "page": "9",
+      "text": "are not otherwise eliminated, the top scoring three (3) Candidates against the selection criteria in"
+    },
+    {
+      "line": 313,
+      "page": "9",
+      "text": "Section B of the RTP Response Document will be selected to proceed to the Tender Phase of the"
+    },
+    {
+      "line": 314,
+      "page": "9",
+      "text": "Procurement Process. IDA Ireland reserves the right to select a fewer number to proceed to the"
+    },
+    {
+      "line": 315,
+      "page": "9",
+      "text": "Tender Phase if there are fewer than three (3) Candidates who submit RTP Response Documents that"
+    },
+    {
+      "line": 316,
+      "page": "9",
+      "text": "meet all pass/fail criteria, achieve all specified minimum scores and are not otherwise eliminated."
+    },
+    {
+      "line": 317,
+      "page": "9",
+      "text": "Candidates who do not qualify for the Tender Phase of the Procurement Process will be notified in"
+    },
+    {
+      "line": 318,
+      "page": "9",
+      "text": "writing by IDA Ireland."
+    },
+    {
+      "line": 319,
+      "page": "9",
+      "text": "Tender Phase"
+    },
+    {
+      "line": 320,
+      "page": "9",
+      "text": "Shortlisted Candidates who are selected in the Pre-Qualification Phase (hereinafter referred to as"
+    },
+    {
+      "line": 321,
+      "page": "9",
+      "text": "“Tenderers”) to tender for the Framework Agreement will be invited to participate in the next stage"
+    },
+    {
+      "line": 322,
+      "page": "9",
+      "text": "of the Procurement Process (known as the “Tender Phase”)."
+    },
+    {
+      "line": 323,
+      "page": "9",
+      "text": "Tenderers will be issued with an Invitation to Tender (“ITT”) which will include the following:"
+    },
+    {
+      "line": 324,
+      "page": "9",
+      "text": "(i) minimum specification of requirements to be met by all Tenderers;"
+    },
+    {
+      "line": 325,
+      "page": "9",
+      "text": "(ii) draft Framework Agreement and Initial Call-Off Contract;"
+    },
+    {
+      "line": 326,
+      "page": "9",
+      "text": "(iii) draft Data Processing Agreement;"
+    },
+    {
+      "line": 327,
+      "page": "9",
+      "text": "(iv) further information on the required form and content of Tenders;"
+    },
+    {
+      "line": 328,
+      "page": "9",
+      "text": "(v) further information on structure of the negotiation and Tender Phase;"
+    },
+    {
+      "line": 329,
+      "page": "9-10",
+      "text": "(vi) further information on tender submission requirements; andIDA001/0095-#12514451v2 11"
+    },
+    {
+      "line": 330,
+      "page": "10",
+      "text": "(vii) details of the award criteria that will be applied as part of the Procurement Process."
+    },
+    {
+      "line": 331,
+      "page": "10",
+      "text": "Possible award on foot of Initial Tenders, without negotiation"
+    },
+    {
+      "line": 332,
+      "page": "10",
+      "text": "In accordance with Regulation 29(10) of the 2016 Regulations, IDA Ireland reserves the right to"
+    },
+    {
+      "line": 333,
+      "page": "10",
+      "text": "evaluate the initial tenders submitted by shortlisted Candidates in response to the ITT (the “Initial"
+    },
+    {
+      "line": 334,
+      "page": "10",
+      "text": "Tenders”) against the Award Criteria and the evaluation methodology set out in the ITT and to award"
+    },
+    {
+      "line": 335,
+      "page": "10",
+      "text": "the Framework Agreement and Initial Call-Off Contract to the Preferred Tenderer - without further"
+    },
+    {
+      "line": 336,
+      "page": "10",
+      "text": "negotiation."
+    },
+    {
+      "line": 337,
+      "page": "10",
+      "text": "Optional Negotiations with Tenderers (the “Negotiation Stage”) and Final Tenders"
+    },
+    {
+      "line": 338,
+      "page": "10",
+      "text": "In the event that IDA Ireland opts not to award the Framework Agreement and the Initial Call-off"
+    },
+    {
+      "line": 339,
+      "page": "10",
+      "text": "Contract on the basis of Initial Tenders, it shall instead enter into negotiations with Tenderers in"
+    },
+    {
+      "line": 340,
+      "page": "10",
+      "text": "relation to their Initial Tenders. Tenderers will be invited to attend a negotiation meeting (or meetings)"
+    },
+    {
+      "line": 341,
+      "page": "10",
+      "text": "at which aspects of their Initial Tenders may be discussed."
+    },
+    {
+      "line": 342,
+      "page": "10",
+      "text": "IDA Ireland reserves the right to negotiate on any aspect of the tender with the exception of the"
+    },
+    {
+      "line": 343,
+      "page": "10",
+      "text": "minimum requirements and the award criteria as stated in the ITT. IDA Ireland reserves the right to"
+    },
+    {
+      "line": 344,
+      "page": "10",
+      "text": "conduct the Negotiation Stage in successive stages in order to reduce the number of tenders to be"
+    },
+    {
+      "line": 345,
+      "page": "10",
+      "text": "negotiated by applying the award criteria. Should IDA Ireland decide to negotiate initial Tenders, it"
+    },
+    {
+      "line": 346,
+      "page": "10",
+      "text": "will provide Tenderers with the details of the process and the timetable in advance of the"
+    },
+    {
+      "line": 347,
+      "page": "10",
+      "text": "negotiations. Further information on any Negotiation Phase of the Procurement Process will be"
+    },
+    {
+      "line": 348,
+      "page": "10",
+      "text": "specified at a later point in the Procurement Process."
+    },
+    {
+      "line": 349,
+      "page": "10",
+      "text": "Following its determination that such negotiations are concluded, IDA Ireland will set a common"
+    },
+    {
+      "line": 350,
+      "page": "10",
+      "text": "deadline and issue an Invitation to Submit Final Tenders (“ISFT”) to the Tenderers. IDA Ireland reserves"
+    },
+    {
+      "line": 351,
+      "page": "10",
+      "text": "the right to amend and re-issue a further revised draft Framework Agreement and/or Initial Call-Off"
+    },
+    {
+      "line": 352,
+      "page": "10",
+      "text": "Contract with the ISFT; any such further revised form of draft Framework Agreement and/or Initial"
+    },
+    {
+      "line": 353,
+      "page": "10",
+      "text": "Call-Off Contract shall not be subject to additional negotiation as part of the ISFT. Each Tenderer not"
+    },
+    {
+      "line": 354,
+      "page": "10",
+      "text": "eliminated during the Negotiation Stage shall be invited to submit a final tender (“Final Tender”) in"
+    },
+    {
+      "line": 355,
+      "page": "10",
+      "text": "response to the instructions set out in the ISFT."
+    },
+    {
+      "line": 356,
+      "page": "10",
+      "text": "Final Tenders shall be evaluated in accordance with the Award Criteria and the evaluation"
+    },
+    {
+      "line": 357,
+      "page": "10",
+      "text": "methodology set out in the ITT and ISFT and IDA Ireland reserves the right to award the Framework"
+    },
+    {
+      "line": 358,
+      "page": "10",
+      "text": "Agreement and Initial Call-off Contract to the Preferred Tenderer."
+    },
+    {
+      "line": 359,
+      "page": "10",
+      "text": "Preferred Tenderer"
+    },
+    {
+      "line": 360,
+      "page": "10",
+      "text": "Whether a Framework Agreement and Initial Call-off Contract is to be awarded on the basis of Initial"
+    },
+    {
+      "line": 361,
+      "page": "10",
+      "text": "Tenders or Final Tenders, IDA Ireland would expect to conclude the Framework Agreement and the"
+    },
+    {
+      "line": 362,
+      "page": "10",
+      "text": "Initial Call-off Contract with the Preferred Tenderer as soon as possible following the standstill period"
+    },
+    {
+      "line": 363,
+      "page": "10",
+      "text": "required by the European Communities (Public Authorities' Contracts) (Review Procedures)"
+    },
+    {
+      "line": 364,
+      "page": "10",
+      "text": "Regulations 2010 (as amended)."
+    },
+    {
+      "line": 365,
+      "page": "10",
+      "text": "The conclusion of any Framework Agreement and any Call-Off Contract (including the Initial Call-Off"
+    },
+    {
+      "line": 366,
+      "page": "10",
+      "text": "Contract) is subject to all necessary approvals being obtained by IDA Ireland, the provision of relevant"
+    },
+    {
+      "line": 367,
+      "page": "10-11",
+      "text": "documentation by the Preferred Tenderer (e.g., to demonstrate compliance with minimumIDA001/0095-#12514451v2 12"
+    },
+    {
+      "line": 368,
+      "page": "11",
+      "text": "requirements including tax and insurance requirements), the completion of final due diligence (e.g. to"
+    },
+    {
+      "line": 369,
+      "page": "11",
+      "text": "ensure there are no grounds for exclusion), any conditions precedent specified in the ITT/ISFT and all"
+    },
+    {
+      "line": 370,
+      "page": "11",
+      "text": "other legal requirements being satisfied."
+    },
+    {
+      "line": 371,
+      "page": "11",
+      "text": "Anticipated Timeline"
+    },
+    {
+      "line": 372,
+      "page": "11",
+      "text": "The following indicative timeline is envisaged for this procurement:"
+    },
+    {
+      "line": 373,
+      "page": "11",
+      "text": "Issue Invitation to Participate August 25th 2026"
+    },
+    {
+      "line": 374,
+      "page": "11",
+      "text": "Closing Date for Queries September 9th 2026"
+    },
+    {
+      "line": 375,
+      "page": "11",
+      "text": "Closing Date for Submission (Qualification stage) September 25th 2026"
+    },
+    {
+      "line": 376,
+      "page": "11",
+      "text": "Selection Decision October 1st 2026"
+    },
+    {
+      "line": 377,
+      "page": "11",
+      "text": "Issue ITT (Tender Stage) October 11"
+    },
+    {
+      "line": 378,
+      "page": "11",
+      "text": "th"
+    },
+    {
+      "line": 379,
+      "page": "11",
+      "text": " 2026"
+    },
+    {
+      "line": 380,
+      "page": "11",
+      "text": "Closing Date for Queries October 28th 2026"
+    },
+    {
+      "line": 381,
+      "page": "11",
+      "text": "Closing Date for Submission (Tenderstage) November 12th 2026"
+    },
+    {
+      "line": 382,
+      "page": "11",
+      "text": "Negotiation stage (if required) November 2026"
+    },
+    {
+      "line": 383,
+      "page": "11",
+      "text": "Invitation to Submit Final Tenders (if required) issued November 30th 2026"
+    },
+    {
+      "line": 384,
+      "page": "11",
+      "text": "Award Decision January 18th 2027"
+    },
+    {
+      "line": 385,
+      "page": "11",
+      "text": "Framework Commencement February 12th 2027"
+    },
+    {
+      "line": 386,
+      "page": "11",
+      "text": "The dates provided above are estimates at the time of publication of the Invitation to"
+    },
+    {
+      "line": 387,
+      "page": "11",
+      "text": "Participate. IDA Ireland will endeavour to run the process to this timetable, but this cannot"
+    },
+    {
+      "line": 388,
+      "page": "11",
+      "text": "be guaranteed."
+    },
+    {
+      "line": 389,
+      "page": "11",
+      "text": "3.8 Data Protection and IT Security"
+    },
+    {
+      "line": 390,
+      "page": "11",
+      "text": "Candidates should note that if successfully shortlisted, they will be required to submit evidence of"
+    },
+    {
+      "line": 391,
+      "page": "11",
+      "text": "technical and organisational measures during the Tender Stage to demonstrate compliance with Data"
+    },
+    {
+      "line": 392,
+      "page": "11",
+      "text": "Protection Legislation & IT Security as set out below. This will be incorporated into a Data Processing"
+    },
+    {
+      "line": 393,
+      "page": "11",
+      "text": "Agreement which will be signed by the parties prior to formal commencement of the contract, a copy"
+    },
+    {
+      "line": 394,
+      "page": "11",
+      "text": "of which will be provided at Tender Stage."
+    },
+    {
+      "line": 395,
+      "page": "11",
+      "text": "1. Information Security Certification"
+    },
+    {
+      "line": 396,
+      "page": "11",
+      "text": "Tenderers must maintain a certified Information Security Management System (ISMS) in accordance"
+    },
+    {
+      "line": 397,
+      "page": "11",
+      "text": "with ISO/IEC 27001 (or equivalent), covering the services and operations relevant to the proposed"
+    },
+    {
+      "line": 398,
+      "page": "11",
+      "text": "Property Management System. ."
+    },
+    {
+      "line": 399,
+      "page": "11",
+      "text": "2. Independent Security Assurance"
+    },
+    {
+      "line": 400,
+      "page": "11",
+      "text": "Tenderers must provide evidence of independent security assurance through ISO/IEC 27001"
+    },
+    {
+      "line": 401,
+      "page": "11",
+      "text": "certification (or equivalent) and a current SOC 2 Type II attestation covering relevant services and"
+    },
+    {
+      "line": 402,
+      "page": "11",
+      "text": "operations."
+    },
+    {
+      "line": 403,
+      "page": "11",
+      "text": "3. Data Protection & Regulatory Compliance"
+    },
+    {
+      "line": 404,
+      "page": "11",
+      "text": "Tenderers must demonstrate compliance with applicable data protection legislation, including GDPR,"
+    },
+    {
+      "line": 405,
+      "page": "11-12",
+      "text": "and provide details of their data protection governance arrangements.IDA001/0095-#12514451v2 13"
+    },
+    {
+      "line": 406,
+      "page": "12",
+      "text": "4. Security Incident Management"
+    },
+    {
+      "line": 407,
+      "page": "12",
+      "text": "Tenderers must maintain documented information security incident management processes and be"
+    },
+    {
+      "line": 408,
+      "page": "12",
+      "text": "capable of notifying IDA Ireland of security incidents or personal data breaches affecting the services"
+    },
+    {
+      "line": 409,
+      "page": "12",
+      "text": "provided."
+    },
+    {
+      "line": 410,
+      "page": "12",
+      "text": "5. Data Hosting & Sub-processors"
+    },
+    {
+      "line": 411,
+      "page": "12",
+      "text": "Tenderers must disclose the geographic locations where customer data will be stored or processed,"
+    },
+    {
+      "line": 412,
+      "page": "12",
+      "text": "including the use of any subcontractors or third-party service providers."
+    },
+    {
+      "line": 413,
+      "page": "12",
+      "text": "3.8.1 Data Protection Legislation"
+    },
+    {
+      "line": 414,
+      "page": "12",
+      "text": "“Data Protection Laws” means all applicable national and EU data protection laws, regulations and"
+    },
+    {
+      "line": 415,
+      "page": "12",
+      "text": "guidelines including but not limited to Regulation (EU) 2016/679 on the protection of natural persons"
+    },
+    {
+      "line": 416,
+      "page": "12",
+      "text": "with regard to the processing of personal data and on the free movement ofsuch data, and repealing"
+    },
+    {
+      "line": 417,
+      "page": "12",
+      "text": "Directive 95/46/EC (the “General Data Protection Regulation” or “GDPR”), the Data Protection Act"
+    },
+    {
+      "line": 418,
+      "page": "12",
+      "text": "2018 and any guidelines and codes of practice issued by the Data Protection Commission or other"
+    },
+    {
+      "line": 419,
+      "page": "12",
+      "text": "supervisory authority for data protection in Ireland from time to time. IDA Ireland will be a Controller"
+    },
+    {
+      "line": 420,
+      "page": "12",
+      "text": "(where Controller has the meaning given under the Data Protection Laws) in respect of any Personal"
+    },
+    {
+      "line": 421,
+      "page": "12",
+      "text": "Data (where Personal Data has the meaning given under the Data Protection Laws) required to be"
+    },
+    {
+      "line": 422,
+      "page": "12",
+      "text": "provided by the Candidate in response to this RTP. The Candidate, as Controller in respect of any"
+    },
+    {
+      "line": 423,
+      "page": "12",
+      "text": "Personal Data provided by it in its RTP Response Document, is required to confirm by way of"
+    },
+    {
+      "line": 424,
+      "page": "12",
+      "text": "statement that all Data Subjects (where Data Subject has the meaning given under the Data"
+    },
+    {
+      "line": 425,
+      "page": "12",
+      "text": "Protection Laws) whose Personal Data is provided by the Candidate have consented to the processing"
+    },
+    {
+      "line": 426,
+      "page": "12",
+      "text": "of such Personal Data by the Candidate, IDA Ireland, the Evaluation Team and the supplier of the"
+    },
+    {
+      "line": 427,
+      "page": "12",
+      "text": "etenders.gov.ie website, for the purposes of the participation of the Candidate in this Procurement"
+    },
+    {
+      "line": 428,
+      "page": "12",
+      "text": "Process or that the Candidate otherwise has a legal basis for providing such Personal Data to IDA"
+    },
+    {
+      "line": 429,
+      "page": "12",
+      "text": "Ireland for the purposes of its participation in this Procurement Process."
+    },
+    {
+      "line": 430,
+      "page": "12",
+      "text": "3.8.2 Transfer of Data outside the European Economic Area (EEA)"
+    },
+    {
+      "line": 431,
+      "page": "12",
+      "text": "It is the intention of IDA Ireland that no data gathered on behalf or entered by IDA Ireland can be"
+    },
+    {
+      "line": 432,
+      "page": "12",
+      "text": "stored or processed outside of the European Economic Area (EEA) for the duration of the contract."
+    },
+    {
+      "line": 433,
+      "page": "12",
+      "text": "Tenderers need to clearly state where, geographically, the data is stored and processed, backup/DR"
+    },
+    {
+      "line": 434,
+      "page": "12",
+      "text": "data included and confirm that no data is stored or processed outside of the EEA. In the event that"
+    },
+    {
+      "line": 435,
+      "page": "12",
+      "text": "the data needs to be stored and/or processed outside of the EEA, tenderers are asked to specify if an"
+    },
+    {
+      "line": 436,
+      "page": "12",
+      "text": "adequacy decision exists in relation to the non-EU country where they intend data storage and/or"
+    },
+    {
+      "line": 437,
+      "page": "12",
+      "text": "processing to be carried out."
+    },
+    {
+      "line": 438,
+      "page": "12",
+      "text": "If storage and processing of IDA Ireland’s data is intended to be carried out with the UK, it is the"
+    },
+    {
+      "line": 439,
+      "page": "12",
+      "text": "intention of IDA Ireland to require the inclusion of a Standard Contractual Clause between IDA"
+    },
+    {
+      "line": 440,
+      "page": "12",
+      "text": "Ireland and the Preferred Tenderer in any Call-Off Contract and/or the Framework Agreement."
+    },
+    {
+      "line": 441,
+      "page": "12",
+      "text": "Tenderers will be required to confirm as part of the Tender Stage that they are willing to engage"
+    },
+    {
+      "line": 442,
+      "page": "12",
+      "text": "with IDA Ireland on putting this measure in place if the situation applies."
+    },
+    {
+      "line": 443,
+      "page": "12",
+      "text": "For the purposes of the RTP Response Document, Candidates are required to provide the necessary"
+    },
+    {
+      "line": 444,
+      "page": "12-13",
+      "text": "confirmation in A7 of the RTP Response Document.IDA001/0095-#12514451v2 14"
+    },
+    {
+      "line": 445,
+      "page": "13",
+      "text": "4. Scope of Requirement for the Framework Agreement and the Initial Call-Off Contract"
+    },
+    {
+      "line": 446,
+      "page": "13",
+      "text": "4.1 Context"
+    },
+    {
+      "line": 447,
+      "page": "13",
+      "text": "IDA Ireland’s existing Property Management System (“PMS”) was procured and implemented in 2013"
+    },
+    {
+      "line": 448,
+      "page": "13",
+      "text": "at a time when the scale, value and complexity of the IDA Ireland’s property portfolio and capital"
+    },
+    {
+      "line": 449,
+      "page": "13",
+      "text": "delivery programme were significantly lower than today. The system was designed primarily to support"
+    },
+    {
+      "line": 450,
+      "page": "13",
+      "text": "relatively straightforward sales and lease transactions and to facilitate basic invoice processing, with"
+    },
+    {
+      "line": 451,
+      "page": "13",
+      "text": "limited integration to the broader organisational systems landscape."
+    },
+    {
+      "line": 452,
+      "page": "13",
+      "text": "Over successive strategy cycles, the Strategic Property Division has experienced a substantial increase"
+    },
+    {
+      "line": 453,
+      "page": "13",
+      "text": "in activity levels, portfolio value, capital investment and operational complexity. This includes"
+    },
+    {
+      "line": 454,
+      "page": "13",
+      "text": "significant growth in land acquisition, major infrastructure projects, advance building delivery,"
+    },
+    {
+      "line": 455,
+      "page": "13",
+      "text": "long-term leasing arrangements, legal case volumes, and the scale of income and expenditure"
+    },
+    {
+      "line": 456,
+      "page": "13",
+      "text": "managed annually. While the existing PMS continues to provide limited transactional tracking, it does"
+    },
+    {
+      "line": 457,
+      "page": "13",
+      "text": "not support the full property lifecycle now required, nor does it integrate with Salesforce, which has"
+    },
+    {
+      "line": 458,
+      "page": "13",
+      "text": "become IDA’s strategic client and operational system of record."
+    },
+    {
+      "line": 459,
+      "page": "13",
+      "text": "As a result, a significant proportion of core property management activity is conducted outside the"
+    },
+    {
+      "line": 460,
+      "page": "13",
+      "text": "PMS using spreadsheets, email and manual controls. While the Property team continues to operate"
+    },
+    {
+      "line": 461,
+      "page": "13",
+      "text": "very effectively, this fragmented approach presents increasing risks in terms of data quality,"
+    },
+    {
+      "line": 462,
+      "page": "13",
+      "text": "auditability, governance, reporting consistency and operational resilience."
+    },
+    {
+      "line": 463,
+      "page": "13",
+      "text": "4.1.1 Review of Salesforce Platform Suitability"
+    },
+    {
+      "line": 464,
+      "page": "13",
+      "text": "In 2025, IDA Ireland’s external ICT advisory firm was commissioned to undertake an independent"
+    },
+    {
+      "line": 465,
+      "page": "13",
+      "text": "assessment of whether the Salesforce platform could be leveraged as the foundation for a PMS tailored"
+    },
+    {
+      "line": 466,
+      "page": "13",
+      "text": "to IDA Ireland’s unique requirements. The objective of this engagement was to determine whether an"
+    },
+    {
+      "line": 467,
+      "page": "13",
+      "text": "integrated, Salesforce-based approach could reduce delivery risk, improve long-term value for money,"
+    },
+    {
+      "line": 468,
+      "page": "13",
+      "text": "and avoid introducing another standalone enterprise system into the technology landscape."
+    },
+    {
+      "line": 469,
+      "page": "13",
+      "text": "The Salesforce suitability assessment and the subsequent high-level design phase is now complete."
+    },
+    {
+      "line": 470,
+      "page": "13",
+      "text": "The outcome of this work confirms that Salesforce is a viable and stable core platform on which to"
+    },
+    {
+      "line": 471,
+      "page": "13",
+      "text": "deliver a modern PMS for IDA. The agreed solution design indicates the majority of requirements align"
+    },
+    {
+      "line": 472,
+      "page": "13",
+      "text": "to standard capability, with the remaining delivered through controlled configuration and integration."
+    },
+    {
+      "line": 473,
+      "page": "13",
+      "text": "The high-level design has produced a fully articulated end-to-end solution covering the complete"
+    },
+    {
+      "line": 474,
+      "page": "13",
+      "text": "property lifecycle, including acquisition, property development, finance and lease management, sales"
+    },
+    {
+      "line": 475,
+      "page": "13",
+      "text": "and marketing, legal and conveyancing activities. The high-level design explicitly embeds governance"
+    },
+    {
+      "line": 476,
+      "page": "13",
+      "text": "controls, approval gates, auditability and role-based access throughout the lifecycle, directly"
+    },
+    {
+      "line": 477,
+      "page": "13",
+      "text": "addressing known weaknesses in the current operating environment. Scope is now clearly defined,"
+    },
+    {
+      "line": 478,
+      "page": "13",
+      "text": "technical and data architecture decisions have been made, and delivery assumptions are transparent"
+    },
+    {
+      "line": 479,
+      "page": "13",
+      "text": "and documented. Importantly, the high-level design phase was deliberately separated from any"
+    },
+    {
+      "line": 480,
+      "page": "13",
+      "text": "commitment to build or implement, preserving IDA Ireland’s governance control over cost and delivery"
+    },
+    {
+      "line": 481,
+      "page": "13-14",
+      "text": "decisions.IDA001/0095-#12514451v2 15"
+    },
+    {
+      "line": 482,
+      "page": "14",
+      "text": "4.1.2 Design Assumptions:"
+    },
+    {
+      "line": 483,
+      "page": "14",
+      "text": "• The PMS will be built on Salesforce, leveraging the client’s existing CRM platform."
+    },
+    {
+      "line": 484,
+      "page": "14",
+      "text": "• Docusign CLM is the confirmed target platform for controlled PMS document generation,"
+    },
+    {
+      "line": 485,
+      "page": "14",
+      "text": "document storage, versioning and signature workflow. Salesforce remains the process and"
+    },
+    {
+      "line": 486,
+      "page": "14",
+      "text": "metadata layer and exposes access to CLM documents from the relevant PMS records."
+    },
+    {
+      "line": 487,
+      "page": "14",
+      "text": "• Centros API connection is the confirmed target integration pattern for finance visibility and"
+    },
+    {
+      "line": 488,
+      "page": "14",
+      "text": "outbound invoice/billing requests. Detailed field mapping is treated as a build activity once the"
+    },
+    {
+      "line": 489,
+      "page": "14",
+      "text": "Centros data model and available API entities are provided."
+    },
+    {
+      "line": 490,
+      "page": "14",
+      "text": "• ArcGIS integration will provide map and boundary visibility in PMS, while spatial/sizing edits"
+    },
+    {
+      "line": 491,
+      "page": "14",
+      "text": "remain managed in ArcGIS. Some Property related data will be synced between PMS and"
+    },
+    {
+      "line": 492,
+      "page": "14",
+      "text": "ArcGIS to avoid duplication of effort."
+    },
+    {
+      "line": 493,
+      "page": "14",
+      "text": "• The solution will support both IDA-owned assets and selected third-party properties for sales"
+    },
+    {
+      "line": 494,
+      "page": "14",
+      "text": "and marketing use cases."
+    },
+    {
+      "line": 495,
+      "page": "14",
+      "text": "• Talend will be used as middleware where required to orchestrate and secure integrations"
+    },
+    {
+      "line": 496,
+      "page": "14",
+      "text": "between Salesforce PMS and external systems such as Centros and ArcGIS."
+    },
+    {
+      "line": 497,
+      "page": "14",
+      "text": "• Property maintenance is confirmed as a lightweight PMS tracking process. The solution will"
+    },
+    {
+      "line": 498,
+      "page": "14",
+      "text": "not implement a heavy Field Service operating model unless a future phase explicitly changes"
+    },
+    {
+      "line": 499,
+      "page": "14",
+      "text": "this scope."
+    },
+    {
+      "line": 500,
+      "page": "14",
+      "text": "4.1.3 Known Requirements"
+    },
+    {
+      "line": 501,
+      "page": "14",
+      "text": "IDA Ireland’s property assets currently under management comprise c. 1,500ha, c. 150 land banks"
+    },
+    {
+      "line": 502,
+      "page": "14",
+      "text": "nationally together with c. 40 IDA owned building solutions, including those delivered as part of the"
+    },
+    {
+      "line": 503,
+      "page": "14",
+      "text": "IDA Regional Building Programme. The IDA Property team completes between 40-50 sales transactions"
+    },
+    {
+      "line": 504,
+      "page": "14",
+      "text": "per year which generate invoices. There are additional invoices to be generated on building leases &"
+    },
+    {
+      "line": 505,
+      "page": "14",
+      "text": "ground rents on c. 2300 occupational and long leased units. Additionally, there are c. 60-80 licences,"
+    },
+    {
+      "line": 506,
+      "page": "14",
+      "text": "leases, options, wayleaves, rights of way, grazing transactions ongoing with IDA and IDA clients’"
+    },
+    {
+      "line": 507,
+      "page": "14",
+      "text": "solicitors at any one time. The property marketing team also manages over 350 property enquiries"
+    },
+    {
+      "line": 508,
+      "page": "14",
+      "text": "year on year."
+    },
+    {
+      "line": 509,
+      "page": "14",
+      "text": "IDA Ireland’s success in attracting FDI has often involved clients taking up property stock at scale in"
+    },
+    {
+      "line": 510,
+      "page": "14",
+      "text": "various locations around the country. To continue this and as part of our strategic goal to build clusters"
+    },
+    {
+      "line": 511,
+      "page": "14",
+      "text": "of technical excellence and to maximise regional opportunities, over the next 20 years, we intend to"
+    },
+    {
+      "line": 512,
+      "page": "14",
+      "text": "develop a number of larger scale, pre-permitted Next Generation Sites (“NGS”) at regional locations"
+    },
+    {
+      "line": 513,
+      "page": "14",
+      "text": "that encompass property, utility and sustainable infrastructure that a potential investor can then use"
+    },
+    {
+      "line": 514,
+      "page": "14",
+      "text": "or modify to suit their needs."
+    },
+    {
+      "line": 515,
+      "page": "14",
+      "text": "Successfully delivering NGS to being investment ready will require commitment to excellent data"
+    },
+    {
+      "line": 516,
+      "page": "14",
+      "text": "management, digitisation & communication. As such, it is expected that there will be a significant"
+    },
+    {
+      "line": 517,
+      "page": "14",
+      "text": "increase in Property activity over the next strategy cycle with a commensurate increase in value &"
+    },
+    {
+      "line": 518,
+      "page": "14",
+      "text": "complexity of transactions together with all the related reporting, information requests & audit"
+    },
+    {
+      "line": 519,
+      "page": "14",
+      "text": "demands."
+    },
+    {
+      "line": 520,
+      "page": "14-15",
+      "text": "To this end, IDA Property now requires a PMS that supports its strategic goals through the provision of IDA001/0095-#12514451v2 16"
+    },
+    {
+      "line": 521,
+      "page": "15",
+      "text": "accurate property asset and transaction data together with the ability to consistently generate and"
+    },
+    {
+      "line": 522,
+      "page": "15",
+      "text": "recoup its own resource income from the sale and letting of property assets while managing the overall"
+    },
+    {
+      "line": 523,
+      "page": "15",
+      "text": "risk effectively and efficiently. The proposed PMS must be capable of managing, supporting, and"
+    },
+    {
+      "line": 524,
+      "page": "15",
+      "text": "optimising IDA’s asset base and use technology to fully optimise its property management processes"
+    },
+    {
+      "line": 525,
+      "page": "15",
+      "text": "and record keeping, adopting a digital first approach and seeking to remove/reduce paper as much as"
+    },
+    {
+      "line": 526,
+      "page": "15",
+      "text": "possible."
+    },
+    {
+      "line": 527,
+      "page": "15",
+      "text": "4.1.4 Expectations from the new PMS – Advantages & Benefits"
+    },
+    {
+      "line": 528,
+      "page": "15",
+      "text": "The required Salesforce-led PMS should offer enhanced security and data integrity with built-in"
+    },
+    {
+      "line": 529,
+      "page": "15",
+      "text": "validation checks, secure access controls, and real-time updates, making it a reliable and incorruptible"
+    },
+    {
+      "line": 530,
+      "page": "15",
+      "text": "solution. An enhanced Salesforce-led Property management information system will also facilitate"
+    },
+    {
+      "line": 531,
+      "page": "15",
+      "text": "sharing of procurement, payment, project management, case management and financial information."
+    },
+    {
+      "line": 532,
+      "page": "15",
+      "text": "The proposed Salesforce-led PMS will contribute greatly to the modernising and proofing of IDA’s"
+    },
+    {
+      "line": 533,
+      "page": "15",
+      "text": "technology landscape by simplifying and unifying end-to-end processes & ultimately facilitate"
+    },
+    {
+      "line": 534,
+      "page": "15",
+      "text": "improved risk management for Property & client related interactions."
+    },
+    {
+      "line": 535,
+      "page": "15",
+      "text": "The proposed solution will deliver significant advantages in terms of risk management and compliance"
+    },
+    {
+      "line": 536,
+      "page": "15",
+      "text": "under the following broad areas of work:"
+    },
+    {
+      "line": 537,
+      "page": "15",
+      "text": "• Building Delivery - contract management"
+    },
+    {
+      "line": 538,
+      "page": "15",
+      "text": "• Infrastructure and 3rd Party Contract Management Acquisition - contract management"
+    },
+    {
+      "line": 539,
+      "page": "15",
+      "text": "• Sustainability Tracking and Reporting"
+    },
+    {
+      "line": 540,
+      "page": "15",
+      "text": "• Financial Control and Risk Management"
+    },
+    {
+      "line": 541,
+      "page": "15",
+      "text": "• Conveyance Contracting and Case Management"
+    },
+    {
+      "line": 542,
+      "page": "15",
+      "text": "• Information sharing across Property, Operations and Finance Teams Training and resource"
+    },
+    {
+      "line": 543,
+      "page": "15",
+      "text": "management through task management and tracking functionality"
+    },
+    {
+      "line": 544,
+      "page": "15",
+      "text": "• Management Decision-making, improved metrics, and management reporting Property"
+    },
+    {
+      "line": 545,
+      "page": "15",
+      "text": "Marketing support materials Arc GIS map Viewer where mapping information remain integral"
+    },
+    {
+      "line": 546,
+      "page": "15",
+      "text": "to the new ArcGIS System"
+    },
+    {
+      "line": 547,
+      "page": "15",
+      "text": "Expected Benefits"
+    },
+    {
+      "line": 548,
+      "page": "15",
+      "text": "Strategic Alignment and Organisational Integration: Integration between Property and Operations"
+    },
+    {
+      "line": 549,
+      "page": "15",
+      "text": "will enable the Property team to share and report on richer datasets covering both functions, reducing"
+    },
+    {
+      "line": 550,
+      "page": "15",
+      "text": "duplication and ensuring more consistent client messaging."
+    },
+    {
+      "line": 551,
+      "page": "15",
+      "text": "Enhanced Financial Integration with Centros (Current IDA Financial Management System):"
+    },
+    {
+      "line": 552,
+      "page": "15",
+      "text": "Integrating property income and expenditure data with the IDA finance system will enable stronger"
+    },
+    {
+      "line": 553,
+      "page": "15",
+      "text": "financial reporting and improve the quality of information available through the property system."
+    },
+    {
+      "line": 554,
+      "page": "15",
+      "text": "Mitigation of Data Quality Risk: Currently, the proposed integrated system will reduce manual"
+    },
+    {
+      "line": 555,
+      "page": "15",
+      "text": "processes re budget tracking, property marketing activity records, sustainability and green budgeting"
+    },
+    {
+      "line": 556,
+      "page": "15-16",
+      "text": "data, building and insurance lists, risk registers, and purchase order lists and the associated data quality IDA001/0095-#12514451v2 17"
+    },
+    {
+      "line": 557,
+      "page": "16",
+      "text": "risks."
+    },
+    {
+      "line": 558,
+      "page": "16",
+      "text": "Enhanced Property Project Management: Information will be available and managed through the"
+    },
+    {
+      "line": 559,
+      "page": "16",
+      "text": "system, facilitating the sharing of procurement, payment, project management, and financial"
+    },
+    {
+      "line": 560,
+      "page": "16",
+      "text": "information. This will support contract cost comparison across teams and improve overall project"
+    },
+    {
+      "line": 561,
+      "page": "16",
+      "text": "management capabilities."
+    },
+    {
+      "line": 562,
+      "page": "16",
+      "text": "Mapping Integration with ArcGIS: The planned solution with Salesforce will improve the clarity and"
+    },
+    {
+      "line": 563,
+      "page": "16",
+      "text": "accuracy of mapping information, support better decision-making, reduce costly and time-consuming"
+    },
+    {
+      "line": 564,
+      "page": "16",
+      "text": "errors, and increase certainty for both IDA clients and staff."
+    },
+    {
+      "line": 565,
+      "page": "16",
+      "text": "Enhanced Contact and Case Management capability: The proposed solution will provide a single"
+    },
+    {
+      "line": 566,
+      "page": "16",
+      "text": "source of record for all IDA client and legal interactions, enabling the Property Legal Team to manage"
+    },
+    {
+      "line": 567,
+      "page": "16",
+      "text": "conveyancing cases more efficiently and effectively."
+    },
+    {
+      "line": 568,
+      "page": "16",
+      "text": "4.1.5 Time scales for Implementation & Ongoing Support"
+    },
+    {
+      "line": 569,
+      "page": "16",
+      "text": "Implementation is intended to commence in early 2027 with an expected duration circa 1 Year. After"
+    },
+    {
+      "line": 570,
+      "page": "16",
+      "text": "hyper care, ongoing support and maintenance would be required for the remainder of the contract."
+    },
+    {
+      "line": 571,
+      "page": "16",
+      "text": "4.1.6 Expectations of the Provider"
+    },
+    {
+      "line": 572,
+      "page": "16",
+      "text": "The preferred delivery model requires a strategic “partnership”, not a transactional service. The"
+    },
+    {
+      "line": 573,
+      "page": "16",
+      "text": "Preferred Tenderer will be able to demonstrate:"
+    },
+    {
+      "line": 574,
+      "page": "16",
+      "text": "• Proven Track Record / Experience in delivering similar service solutions which are relevant"
+    },
+    {
+      "line": 575,
+      "page": "16",
+      "text": "and comparable with the IDA requirements. As requested by the RTP Response Document,"
+    },
+    {
+      "line": 576,
+      "page": "16",
+      "text": "Candidates should demonstrate a high level of experience, expertise and capability to deliver"
+    },
+    {
+      "line": 577,
+      "page": "16",
+      "text": "the service solution required and should provide examples of how their business activities"
+    },
+    {
+      "line": 578,
+      "page": "16",
+      "text": "relate to the provision of bespoke implementations on the Salesforce platform, referencing"
+    },
+    {
+      "line": 579,
+      "page": "16",
+      "text": "contracts of a similar nature, size, scale and scope to those envisaged by this Procurement"
+    },
+    {
+      "line": 580,
+      "page": "16",
+      "text": "Process."
+    },
+    {
+      "line": 581,
+      "page": "16",
+      "text": "• Appropriate Team Expertise and Qualifications / Certifications: The Preferred Tenderer will"
+    },
+    {
+      "line": 582,
+      "page": "16",
+      "text": "be required to provide appropriate resourcing levels, of suitably qualified and experienced"
+    },
+    {
+      "line": 583,
+      "page": "16",
+      "text": "personnel, to successfully manage and deliver all the requirements under the Framework"
+    },
+    {
+      "line": 584,
+      "page": "16",
+      "text": "Agreement, including an experienced Helpdesk Team."
+    },
+    {
+      "line": 585,
+      "page": "16",
+      "text": "• Appreciation of importance of rigorous project and contract management: Accessible"
+    },
+    {
+      "line": 586,
+      "page": "16",
+      "text": "Contract Manager with Programme orchestration skills involving potentially multiple actors"
+    },
+    {
+      "line": 587,
+      "page": "16",
+      "text": "(providers) and delivery streams. Complex project governance, risk management and"
+    },
+    {
+      "line": 588,
+      "page": "16",
+      "text": "performance measurement. Robust internal governance including Steering Committee"
+    },
+    {
+      "line": 589,
+      "page": "16",
+      "text": "participation and structured project management processes. Familiarity with the machinery"
+    },
+    {
+      "line": 590,
+      "page": "16",
+      "text": "of Government and the governance, reporting and commercial implications that flow from"
+    },
+    {
+      "line": 591,
+      "page": "16-17",
+      "text": "contracting with a public body. IDA001/0095-#12514451v2 18"
+    },
+    {
+      "line": 592,
+      "page": "17",
+      "text": "Candidates should seek to highlight their strengths in these areas in the RTP Response Document as"
+    },
+    {
+      "line": 593,
+      "page": "17",
+      "text": "required by the selection criteria."
+    },
+    {
+      "line": 594,
+      "page": "17",
+      "text": "4.2 High‑Level Scope of the Framework Agreement"
+    },
+    {
+      "line": 595,
+      "page": "17",
+      "text": "The Framework Agreement covers the full suite of services required to design, deliver, manage, and"
+    },
+    {
+      "line": 596,
+      "page": "17",
+      "text": "evolve a modern property management system that supports the full property lifecycle, improves data"
+    },
+    {
+      "line": 597,
+      "page": "17",
+      "text": "integrity, strengthens governance and reporting, manages transaction cases through caseload"
+    },
+    {
+      "line": 598,
+      "page": "17",
+      "text": "allocations. The system should aim to reduce/eliminate manual dependency on disconnected"
+    },
+    {
+      "line": 599,
+      "page": "17",
+      "text": "spreadsheets, email trails and incumbent-based system workarounds."
+    },
+    {
+      "line": 600,
+      "page": "17",
+      "text": "The design should capture all Property activities across each sub team including Acquisition, Property"
+    },
+    {
+      "line": 601,
+      "page": "17",
+      "text": "Development, Finance & Lease Management, Sales & Marketing, and Legal & Conveyancing."
+    },
+    {
+      "line": 602,
+      "page": "17",
+      "text": "IDA Ireland reserves the right, during the lifetime of the Framework Agreement, to draw down"
+    },
+    {
+      "line": 603,
+      "page": "17",
+      "text": "any combination of these services as required, subject to the terms and conditions of the"
+    },
+    {
+      "line": 604,
+      "page": "17",
+      "text": "Framework Agreement. The Framework Agreement does not guarantee any minimum level of"
+    },
+    {
+      "line": 605,
+      "page": "17",
+      "text": "expenditure."
+    },
+    {
+      "line": 606,
+      "page": "17",
+      "text": "4.3 Scope of the Initial Call-Off Contract"
+    },
+    {
+      "line": 607,
+      "page": "17",
+      "text": "The Initial Call-Off Contract will appoint a partner to design, deliver, and implement a new PMS to"
+    },
+    {
+      "line": 608,
+      "page": "17",
+      "text": "deliver the following target functions & data architecture:"
+    },
+    {
+      "line": 609,
+      "page": "17",
+      "text": "• Property record management across a hierarchical portfolio structure including holdings,"
+    },
+    {
+      "line": 610,
+      "page": "17",
+      "text": "parks, buildings, units and rental spaces."
+    },
+    {
+      "line": 611,
+      "page": "17",
+      "text": "• Acquisition initiation, approvals, legal handoff, transaction reporting and completion to"
+    },
+    {
+      "line": 612,
+      "page": "17",
+      "text": "portfolio."
+    },
+    {
+      "line": 613,
+      "page": "17",
+      "text": "• Property development management including project tracking, spend tracking, project phases,"
+    },
+    {
+      "line": 614,
+      "page": "17",
+      "text": "planning, supplier contracts, milestones and capital project reporting."
+    },
+    {
+      "line": 615,
+      "page": "17",
+      "text": "• Finance and lease management including asset financial activation, lease setup, charge"
+    },
+    {
+      "line": 616,
+      "page": "17",
+      "text": "schedules, lease events, batch invoice request generation and financial visibility."
+    },
+    {
+      "line": 617,
+      "page": "17",
+      "text": "• Sales and marketing support includes property catalogue search, third-party properties,"
+    },
+    {
+      "line": 618,
+      "page": "17",
+      "text": "transactions, prospect handling, commercial readiness and transaction monitoring."
+    },
+    {
+      "line": 619,
+      "page": "17",
+      "text": "• Legal and conveyancing support including legal cases, confidentiality controls, advice"
+    },
+    {
+      "line": 620,
+      "page": "17",
+      "text": "generation, mapping/conveyancing tasks and correspondence management."
+    },
+    {
+      "line": 621,
+      "page": "17",
+      "text": "• Lightweight maintenance tracking for planned and reactive maintenance work, with regional"
+    },
+    {
+      "line": 622,
+      "page": "17",
+      "text": "ownership, FM contractor involvement, purchase order reference and basic reporting."
+    },
+    {
+      "line": 623,
+      "page": "17",
+      "text": "• Transversal requirements including document generation, email capture, security and access"
+    },
+    {
+      "line": 624,
+      "page": "17",
+      "text": "controls, integrations and reporting."
+    },
+    {
+      "line": 625,
+      "page": "17",
+      "text": "The target data model is centred on a single property hierarchy and a set of domain-specific"
+    },
+    {
+      "line": 626,
+      "page": "17-18",
+      "text": "process objects. The following core data model principles are applied:IDA001/0095-#12514451v2 19"
+    },
+    {
+      "line": 627,
+      "page": "18",
+      "text": "• Asset / Property hierarchy is the backbone of the model and supports Holding, Land Bank,"
+    },
+    {
+      "line": 628,
+      "page": "18",
+      "text": "Park, Building, Unit and Rental Space structures."
+    },
+    {
+      "line": 629,
+      "page": "18",
+      "text": "• Development Projects and KPN (Key Project Numbers) provide capital project traceability"
+    },
+    {
+      "line": 630,
+      "page": "18",
+      "text": "independent of the underlying site hierarchy."
+    },
+    {
+      "line": 631,
+      "page": "18",
+      "text": "• Lease Agreements are dedicated objects linked to Rental Spaces rather than standard"
+    },
+    {
+      "line": 632,
+      "page": "18",
+      "text": "Contracts with mixed-use record types. There can only be one LIVE / ACTIVE LEASE"
+    },
+    {
+      "line": 633,
+      "page": "18",
+      "text": "AGREEMENT connected to a Rental Space at any time."
+    },
+    {
+      "line": 634,
+      "page": "18",
+      "text": "• Financial mirrors from Centros are modelled explicitly for reporting and linkage, not for local"
+    },
+    {
+      "line": 635,
+      "page": "18",
+      "text": "accounting control."
+    },
+    {
+      "line": 636,
+      "page": "18",
+      "text": "5. Instructions to Candidates"
+    },
+    {
+      "line": 637,
+      "page": "18",
+      "text": "Every effort has been made to ensure that this RTP contains all the necessary information for the"
+    },
+    {
+      "line": 638,
+      "page": "18",
+      "text": "completion of applications. IDA Ireland does not warrant or represent that the Documents, or any"
+    },
+    {
+      "line": 639,
+      "page": "18",
+      "text": "other information given to Candidates, is accurate or complete. No liability is accepted for any error,"
+    },
+    {
+      "line": 640,
+      "page": "18",
+      "text": "misstatement, or omission (negligent or otherwise) in this RTP, or in any other information given to"
+    },
+    {
+      "line": 641,
+      "page": "18",
+      "text": "Candidates."
+    },
+    {
+      "line": 642,
+      "page": "18",
+      "text": "5.1 Multiple Participation & Conflicts of Interest"
+    },
+    {
+      "line": 643,
+      "page": "18",
+      "text": "Candidates must note that an entity is limited to participating in one RTP Submission on its own behalf"
+    },
+    {
+      "line": 644,
+      "page": "18",
+      "text": "and one RTP Submission as part of a Consortium. However, in all instances where an entity participates"
+    },
+    {
+      "line": 645,
+      "page": "18",
+      "text": "in more than one RTP Submission, the potential multiple participation and/or potential conflict of"
+    },
+    {
+      "line": 646,
+      "page": "18",
+      "text": "interest must be notified to IDA Ireland for review and approval as soon as the conflict or potential"
+    },
+    {
+      "line": 647,
+      "page": "18",
+      "text": "conflict becomes apparent and in any event before the closing date for submission."
+    },
+    {
+      "line": 648,
+      "page": "18",
+      "text": "In order to obtain approval from IDA Ireland for participation in multiple RTP Submissions, the relevant"
+    },
+    {
+      "line": 649,
+      "page": "18",
+      "text": "entity must provide a statement from all Consortium Members declaring that they are aware of this"
+    },
+    {
+      "line": 650,
+      "page": "18",
+      "text": "‘multiple participation’ and this has been brought to the attention of all Consortia they belong to. IDA"
+    },
+    {
+      "line": 651,
+      "page": "18",
+      "text": "Ireland, at its sole discretion, reserves the right to require an entity participating in more than one RTP"
+    },
+    {
+      "line": 652,
+      "page": "18",
+      "text": "Submission to take such steps as are necessary to maintain effective competition or to mitigate the risk of"
+    },
+    {
+      "line": 653,
+      "page": "18",
+      "text": "a conflict of interest which may extend to a requirement that the entity withdraw from multiple RTP"
+    },
+    {
+      "line": 654,
+      "page": "18",
+      "text": "Submissions. In the event thatIDA Ireland considers that a conflict of interest or potential conflict of interest"
+    },
+    {
+      "line": 655,
+      "page": "18",
+      "text": "exists, IDA Ireland will (in its absolute discretion) decide on the appropriate course of action."
+    },
+    {
+      "line": 656,
+      "page": "18",
+      "text": "Depending on the situation arising, IDA Ireland may take all appropriate steps to limit attendance by"
+    },
+    {
+      "line": 657,
+      "page": "18",
+      "text": "such parties at negotiation meetings where applicable. IDA Ireland will engage individually with"
+    },
+    {
+      "line": 658,
+      "page": "18",
+      "text": "relevant parties in order to ensure that any conflicts of interest, distortion of competition, and/or"
+    },
+    {
+      "line": 659,
+      "page": "18",
+      "text": "competitive advantage are appropriately managed to the satisfaction of IDA Ireland."
+    },
+    {
+      "line": 660,
+      "page": "18",
+      "text": "5.2 Submission of Applications"
+    },
+    {
+      "line": 661,
+      "page": "18",
+      "text": "IDA Ireland is using the dedicated submission facility on eTenders, and applications must be submitted"
+    },
+    {
+      "line": 662,
+      "page": "18",
+      "text": "electronically via www.etenders.gov.ie only. Only applications submitted in this manner will be"
+    },
+    {
+      "line": 663,
+      "page": "18-19",
+      "text": "accepted. Applications submitted by any other means (including but not limited to by the messaging IDA001/0095-#12514451v2 20"
+    },
+    {
+      "line": 664,
+      "page": "19",
+      "text": "facility on eTenders, email, post or hand delivery) will not be accepted. All documentation should be"
+    },
+    {
+      "line": 665,
+      "page": "19",
+      "text": "submitted as a single uploaded zip file, where possible, which is clearly labelled, page numbered and"
+    },
+    {
+      "line": 666,
+      "page": "19",
+      "text": "indexed. Candidates must ensure that they give themselves sufficient time to upload and submit all"
+    },
+    {
+      "line": 667,
+      "page": "19",
+      "text": "required documentation before the closing date/time noting that upload speeds may vary. Candidates"
+    },
+    {
+      "line": 668,
+      "page": "19",
+      "text": "must ensure they have submitted the response completely. It is advisable to familiarise yourself with"
+    },
+    {
+      "line": 669,
+      "page": "19",
+      "text": "the platform prior to the closing date."
+    },
+    {
+      "line": 670,
+      "page": "19",
+      "text": "It is the responsibility of the Candidate to ensure that their application is complete and is uploaded as"
+    },
+    {
+      "line": 671,
+      "page": "19",
+      "text": "a zip file in accordance with the instructions provided on eTenders prior to the deadline set out on the"
+    },
+    {
+      "line": 672,
+      "page": "19",
+      "text": "cover page. Below we provide an overview of the key steps. Please note that IDA Ireland takes no"
+    },
+    {
+      "line": 673,
+      "page": "19",
+      "text": "responsibility for these steps being the totality of the steps required as different processes may require"
+    },
+    {
+      "line": 674,
+      "page": "19",
+      "text": "different actions. For all up to date information on using eTenders, please refer to the Guidance"
+    },
+    {
+      "line": 675,
+      "page": "19",
+      "text": "Material on eTenders: https://www.etenders.gov.ie/epps/home.do"
+    },
+    {
+      "line": 676,
+      "page": "19",
+      "text": "eTenders system usage queries are managed by eTenders Technical Support and not by IDA Ireland."
+    },
+    {
+      "line": 677,
+      "page": "19",
+      "text": "If in doubt, please ensure you contact the eTenders helpdesk as follows:"
+    },
+    {
+      "line": 678,
+      "page": "19",
+      "text": "Email: irish-eproc-helpdesk@eurodyn.com"
+    },
+    {
+      "line": 679,
+      "page": "19",
+      "text": "Phone: +353-818001459"
+    },
+    {
+      "line": 680,
+      "page": "19",
+      "text": "5.2.1 Accessing documents"
+    },
+    {
+      "line": 681,
+      "page": "19",
+      "text": "It is important to note that you must ensure you ASSOCIATE your company with this Procurement"
+    },
+    {
+      "line": 682,
+      "page": "19",
+      "text": "Process in the first instance. To do this you must do the following:"
+    },
+    {
+      "line": 683,
+      "page": "19",
+      "text": "(a) Log-in to the system;"
+    },
+    {
+      "line": 684,
+      "page": "19",
+      "text": "(b) Locate the Procurement Process using the Advanced Search by Contracting Authority or"
+    },
+    {
+      "line": 685,
+      "page": "19",
+      "text": "Resource ID;"
+    },
+    {
+      "line": 686,
+      "page": "19",
+      "text": "(c) Click on the hyperlink for the Procurement Process which will bring you to the CfT Workspace;"
+    },
+    {
+      "line": 687,
+      "page": "19",
+      "text": "(d) In the “Show CfT” drop-down menu for the Procurement Process click on the “Expression of"
+    },
+    {
+      "line": 688,
+      "page": "19",
+      "text": "Interest”;"
+    },
+    {
+      "line": 689,
+      "page": "19",
+      "text": "(e) Complete the “Association with the CfT” tab;"
+    },
+    {
+      "line": 690,
+      "page": "19",
+      "text": "(f) This will then provide you with a link to the “Tender” tab under the “Show CfT” drop-down"
+    },
+    {
+      "line": 691,
+      "page": "19",
+      "text": "menu to enable you to upload your response."
+    },
+    {
+      "line": 692,
+      "page": "19",
+      "text": "5.2.2 Submitting Queries"
+    },
+    {
+      "line": 693,
+      "page": "19",
+      "text": "All queries regarding this Application should be submitted using the message tool on the eTenders"
+    },
+    {
+      "line": 694,
+      "page": "19",
+      "text": "platform. The closing date for receipt of queries is noted on the front page of this RTP unless IDA"
+    },
+    {
+      "line": 695,
+      "page": "19",
+      "text": "Ireland indicates otherwise via eTenders."
+    },
+    {
+      "line": 696,
+      "page": "19",
+      "text": "Queries should be in question format and submitted using the messaging tool only. Responses to"
+    },
+    {
+      "line": 697,
+      "page": "19",
+      "text": "queries will be issued via eTenders to all parties who have expressed an interest in the contract on"
+    },
+    {
+      "line": 698,
+      "page": "19",
+      "text": "that site, in order to ensure that no party has an unfair advantage over any other. Candidates should"
+    },
+    {
+      "line": 699,
+      "page": "19",
+      "text": "note that IDA Ireland does not intend to respond to individual queries privately."
+    },
+    {
+      "line": 700,
+      "page": "19",
+      "text": "Candidates should ensure that they register their interest in this Procurement Process, by clicking on"
+    },
+    {
+      "line": 701,
+      "page": "19-20",
+      "text": "the “Accept” button on www.etenders.gov.ie, in order to receive all responses to queries and other IDA001/0095-#12514451v2 21"
+    },
+    {
+      "line": 702,
+      "page": "20",
+      "text": "updates in relation to this Procurement Process."
+    },
+    {
+      "line": 703,
+      "page": "20",
+      "text": "For the purpose of circulating responses, queries will be edited to avoid disclosing the identity of the"
+    },
+    {
+      "line": 704,
+      "page": "20",
+      "text": "querist, and any sensitive information included in the query should be clearly indicated."
+    },
+    {
+      "line": 705,
+      "page": "20",
+      "text": "5.2.3 Submitting your Response"
+    },
+    {
+      "line": 706,
+      "page": "20",
+      "text": "In responding to a Procurement Process without an electronic ESPD, a number of steps are required."
+    },
+    {
+      "line": 707,
+      "page": "20",
+      "text": "The final step involves clicking on a Submit button and receiving the following status:"
+    },
+    {
+      "line": 708,
+      "page": "20",
+      "text": "If you do not receive a message similar to above, you have not submitted your response."
+    },
+    {
+      "line": 709,
+      "page": "20",
+      "text": "Please note that the screen may say OFFLINE, this is a technical feature of eTenders and does not"
+    },
+    {
+      "line": 710,
+      "page": "20",
+      "text": "mean you cannot submit. Also please note you may see the percentage field also saying 100% before"
+    },
+    {
+      "line": 711,
+      "page": "20",
+      "text": "you submit, this still requires you to go through the submit button."
+    },
+    {
+      "line": 712,
+      "page": "20",
+      "text": "Please upload your response as a ZIP FILE to protect the integrity of the file names."
+    },
+    {
+      "line": 713,
+      "page": "20",
+      "text": "It is the responsibility of the Candidate to ensure that their tender is complete and is uploaded in"
+    },
+    {
+      "line": 714,
+      "page": "20",
+      "text": "accordance with the instructions provided on eTenders prior to the deadline as per the front page."
+    },
+    {
+      "line": 715,
+      "page": "20",
+      "text": "DO NOT CLICK “PROCEED WITHOUT ASSOCIATION” – IN DOING SO WE WILL NOT BE ABLE TO TRACK"
+    },
+    {
+      "line": 716,
+      "page": "20",
+      "text": "YOUR INTEREST OR COMMUNICATE WITH YOU ABOUT THE PROCUREMENT PROCESS AND YOU WILL"
+    },
+    {
+      "line": 717,
+      "page": "20",
+      "text": "NOT BE ABLE TO SUBMIT A TENDER RESPONSE."
+    },
+    {
+      "line": 718,
+      "page": "20",
+      "text": "5.3 Closing date for Applications"
+    },
+    {
+      "line": 719,
+      "page": "20",
+      "text": "The closing date for the Procurement Process is specified on the title page unless IDA Ireland indicates"
+    },
+    {
+      "line": 720,
+      "page": "20",
+      "text": "otherwise via eTenders."
+    },
+    {
+      "line": 721,
+      "page": "20",
+      "text": "It is the responsibility of the Candidate to ensure that their application is complete and is uploaded by"
+    },
+    {
+      "line": 722,
+      "page": "20",
+      "text": "the designated deadline. Applications that are received late or via other means may not be considered"
+    },
+    {
+      "line": 723,
+      "page": "20",
+      "text": "in this Procurement Process."
+    },
+    {
+      "line": 724,
+      "page": "20",
+      "text": "It is important to note that only persons who have downloaded and accepted a document can submit"
+    },
+    {
+      "line": 725,
+      "page": "20",
+      "text": "an upload."
+    },
+    {
+      "line": 726,
+      "page": "20",
+      "text": "5.4 Completing the RTP Response Document"
+    },
+    {
+      "line": 727,
+      "page": "20",
+      "text": "When completing the RTP Response Document contained in Appendix A to this RTP, Candidates should"
+    },
+    {
+      "line": 728,
+      "page": "20",
+      "text": "note the following conditions:"
+    },
+    {
+      "line": 729,
+      "page": "20",
+      "text": "All questions must be completed in full and without reference to other documents or other parts of"
+    },
+    {
+      "line": 730,
+      "page": "20-21",
+      "text": "the RTP Response Document.IDA001/0095-#12514451v2 22"
+    },
+    {
+      "line": 731,
+      "page": "21",
+      "text": "All questions should be answered with relevance to the subject matter of this Procurement Process."
+    },
+    {
+      "line": 732,
+      "page": "21",
+      "text": "For the avoidance of doubt, it is emphasised that the information requested in the RTP Response"
+    },
+    {
+      "line": 733,
+      "page": "21",
+      "text": "Document is aimed solely at determining the suitability and choice of Candidates for entry to the"
+    },
+    {
+      "line": 734,
+      "page": "21",
+      "text": "Tender Phase. Only at that subsequent Tender Phase will the selected Candidates be invited to tender"
+    },
+    {
+      "line": 735,
+      "page": "21",
+      "text": "for the specific requirements of the contract in the light of the published award criteria and the ITT."
+    },
+    {
+      "line": 736,
+      "page": "21",
+      "text": "The RTP Response Document must be completed in English or Irish and where copies of original"
+    },
+    {
+      "line": 737,
+      "page": "21",
+      "text": "documents are provided in languages other than English or Irish, a complete and accurate English"
+    },
+    {
+      "line": 738,
+      "page": "21",
+      "text": "translation should be provided, or the documents will not be considered during the evaluation process."
+    },
+    {
+      "line": 739,
+      "page": "21",
+      "text": "All financial information should be denominated in euro (€), except where financial information is"
+    },
+    {
+      "line": 740,
+      "page": "21",
+      "text": "being provided in a certified or audited supporting document such as a set of financial statements in"
+    },
+    {
+      "line": 741,
+      "page": "21",
+      "text": "which case it is sufficient for the information to remain in its original currency. Failure to provide a"
+    },
+    {
+      "line": 742,
+      "page": "21",
+      "text": "sufficient level of detail or to explain adequately any relevant matters may result in such data or"
+    },
+    {
+      "line": 743,
+      "page": "21",
+      "text": "information not being taken into account during the evaluation of the RTP Responses."
+    },
+    {
+      "line": 744,
+      "page": "21",
+      "text": "Candidates are reminded that they may rely on the resources of other entities in order to establish"
+    },
+    {
+      "line": 745,
+      "page": "21",
+      "text": "the suitability requirements on condition that they can prove to the satisfaction of IDA Ireland that"
+    },
+    {
+      "line": 746,
+      "page": "21",
+      "text": "they will have these resources at their disposal when necessary. This may involve the provision, at IDA"
+    },
+    {
+      "line": 747,
+      "page": "21",
+      "text": "Ireland’s sole discretion, of parent company guarantees or other commitments from such other"
+    },
+    {
+      "line": 748,
+      "page": "21",
+      "text": "entities, as IDA Ireland may require."
+    },
+    {
+      "line": 749,
+      "page": "21",
+      "text": "If the application is from a consortium / joint venture, Candidates must ensure that all the relevant"
+    },
+    {
+      "line": 750,
+      "page": "21",
+      "text": "information is provided and where necessary, provide the information requested separately for each"
+    },
+    {
+      "line": 751,
+      "page": "21",
+      "text": "party (See Section 5.5.3). The consortium must appoint a single supplier who will assume overall"
+    },
+    {
+      "line": 752,
+      "page": "21",
+      "text": "responsibility for delivery, and who is authorised to sign a contract on behalf of all consortia members."
+    },
+    {
+      "line": 753,
+      "page": "21",
+      "text": "IDA Ireland will not act as an arbitrator between members of project consortia."
+    },
+    {
+      "line": 754,
+      "page": "21",
+      "text": "Candidates are strictly prohibited from discussing any aspect of their RTP Response Document with"
+    },
+    {
+      "line": 755,
+      "page": "21",
+      "text": "other Candidates or otherwise exchanging information or colluding in respect of the Procurement"
+    },
+    {
+      "line": 756,
+      "page": "21",
+      "text": "Process. Any Candidate who fails to comply with this requirement may be disqualified."
+    },
+    {
+      "line": 757,
+      "page": "21",
+      "text": "IDA Ireland is not responsible for and will not pay for any expense or cost incurred or loss suffered by"
+    },
+    {
+      "line": 758,
+      "page": "21",
+      "text": "a Candidate in the preparation or submission of its RTP Response Document or otherwise. Further,"
+    },
+    {
+      "line": 759,
+      "page": "21",
+      "text": "IDA Ireland is not responsible for any travel or accommodation costs incurred by the Candidate unless"
+    },
+    {
+      "line": 760,
+      "page": "21",
+      "text": "previously agreed in writing by IDA Ireland. Each Candidate is fully responsible for the entirety of all"
+    },
+    {
+      "line": 761,
+      "page": "21",
+      "text": "expenses and/or costs it incurs in the presentation or submission of a RTP Response Document or in"
+    },
+    {
+      "line": 762,
+      "page": "21",
+      "text": "participating in this Procurement Process. IDA Ireland will bear no liability whatsoever to anyone"
+    },
+    {
+      "line": 763,
+      "page": "21",
+      "text": "whether participating in this Procurement Process or not and will not be liable for any costs or losses"
+    },
+    {
+      "line": 764,
+      "page": "21",
+      "text": "incurred howsoever arising in connection with the Procurement Process including, without limitation,"
+    },
+    {
+      "line": 765,
+      "page": "21",
+      "text": "any loss of profit or other economic loss incurred."
+    },
+    {
+      "line": 766,
+      "page": "21",
+      "text": "5.5 Applications from SMEs and Consortia"
+    },
+    {
+      "line": 767,
+      "page": "21",
+      "text": "5.5.1 SMEs"
+    },
+    {
+      "line": 768,
+      "page": "21",
+      "text": "IDA Ireland seeks to encourage participation on a fair and equal basis by SMEs in this Procurement"
+    },
+    {
+      "line": 769,
+      "page": "21",
+      "text": "Process. SMEs that believe the scope of this Procurement Processis beyond theirtechnical or business"
+    },
+    {
+      "line": 770,
+      "page": "21-22",
+      "text": "capacity are encouraged, subject to this paragraph, to explore the possibilities of forming relationships IDA001/0095-#12514451v2 23"
+    },
+    {
+      "line": 771,
+      "page": "22",
+      "text": "with other SMEs or with larger enterprises. Through such relationships they can participate and"
+    },
+    {
+      "line": 772,
+      "page": "22",
+      "text": "contribute to the successful implementation of any services contracts that may result from this"
+    },
+    {
+      "line": 773,
+      "page": "22",
+      "text": "Procurement Process and therefore increase their social and economic benefits."
+    },
+    {
+      "line": 774,
+      "page": "22",
+      "text": "Larger enterprises are also encouraged, subject to this paragraph, to consider the practical ways that"
+    },
+    {
+      "line": 775,
+      "page": "22",
+      "text": "SMEs can be included in their proposals to maximise the social and economic benefits of any services"
+    },
+    {
+      "line": 776,
+      "page": "22",
+      "text": "contracts that may result from this Procurement Process."
+    },
+    {
+      "line": 777,
+      "page": "22",
+      "text": "5.5.2 Sub-Contractors"
+    },
+    {
+      "line": 778,
+      "page": "22",
+      "text": "It is accepted by IDA Ireland that, in order to offer the resources and the range and depth of services"
+    },
+    {
+      "line": 779,
+      "page": "22",
+      "text": "and skills required, Candidates may wish to use sub-contractors."
+    },
+    {
+      "line": 780,
+      "page": "22",
+      "text": "Candidates should specify in their RTP Response Document, Section A1, the identity of the proposed"
+    },
+    {
+      "line": 781,
+      "page": "22",
+      "text": "sub-contractors, (each a “Sub-Contractor”) to the extent this is known."
+    },
+    {
+      "line": 782,
+      "page": "22",
+      "text": "5.5.3 Consortia"
+    },
+    {
+      "line": 783,
+      "page": "22",
+      "text": "If a Candidate wishes to collaborate with other entities to form a consortium (a “Consortium”), the"
+    },
+    {
+      "line": 784,
+      "page": "22",
+      "text": "Consortium shall apply as a single Candidate for pre-qualification as part of this Procurement Process."
+    },
+    {
+      "line": 785,
+      "page": "22",
+      "text": "Such Consortia should specify in their RTP Response Document, Section A1, the identity of the"
+    },
+    {
+      "line": 786,
+      "page": "22",
+      "text": "proposed members of the Consortium (each a “Consortium Member”). For the avoidance of doubt:"
+    },
+    {
+      "line": 787,
+      "page": "22",
+      "text": "(i) Consortium Members are those entities which are proposed by a Candidate to enter into the"
+    },
+    {
+      "line": 788,
+      "page": "22",
+      "text": "Framework Agreement with IDA Ireland if the Candidate is successful in this Procurement Process. If"
+    },
+    {
+      "line": 789,
+      "page": "22",
+      "text": "the Candidate is successful in this Procurement Process, the Consortium Members shall enter into the"
+    },
+    {
+      "line": 790,
+      "page": "22",
+      "text": "Framework Agreement together on a joint and several basis unless IDA Ireland requires them to form"
+    },
+    {
+      "line": 791,
+      "page": "22",
+      "text": "a new legal entity to enter into the Framework Agreement with IDA Ireland (in which case, each of the"
+    },
+    {
+      "line": 792,
+      "page": "22",
+      "text": "Consortium Members will be required in IDA Ireland’s absolute discretion to execute legally binding"
+    },
+    {
+      "line": 793,
+      "page": "22",
+      "text": "guarantees with IDA Ireland in respect of the obligations of the new legal entity)."
+    },
+    {
+      "line": 794,
+      "page": "22",
+      "text": "(ii) Any proposed sub-contractors are not Consortium Members (unless it is proposed that they too"
+    },
+    {
+      "line": 795,
+      "page": "22",
+      "text": "will enter into the Framework Agreement directly with IDA Ireland)."
+    },
+    {
+      "line": 796,
+      "page": "22",
+      "text": "5.5.4 Reliance on Resources"
+    },
+    {
+      "line": 797,
+      "page": "22",
+      "text": "Where, in order to meet the financial, economic and/or technical standing requirements of this RTP"
+    },
+    {
+      "line": 798,
+      "page": "22",
+      "text": "Response Document, a Candidate or any Consortium Member relies on the resources of an entity (a"
+    },
+    {
+      "line": 799,
+      "page": "22",
+      "text": "“Supporting Entity”) with which it is directly or indirectly linked, (including, for example, but not"
+    },
+    {
+      "line": 800,
+      "page": "22",
+      "text": "limited to, a parent company or a sub-contractor) the Candidate must provide with its RTP Response"
+    },
+    {
+      "line": 801,
+      "page": "22",
+      "text": "Document a letter of support from the Supporting Entity. Upon IDA Ireland’s request, any Candidate"
+    },
+    {
+      "line": 802,
+      "page": "22",
+      "text": "or Consortium Member relying upon the resources of a Supporting Entity may be required to provide"
+    },
+    {
+      "line": 803,
+      "page": "22",
+      "text": "such evidence as IDA Ireland may require to be satisfied of the Supporting Entity’s support (which may"
+    },
+    {
+      "line": 804,
+      "page": "22",
+      "text": "include commitments to provide parent company guarantees, in particular where the Supporting"
+    },
+    {
+      "line": 805,
+      "page": "22",
+      "text": "Entity is relied upon for the purposes of fulfilling the financial requirements of this RTP, or other such"
+    },
+    {
+      "line": 806,
+      "page": "22",
+      "text": "support as IDA Ireland may require)."
+    },
+    {
+      "line": 807,
+      "page": "22",
+      "text": "Please note that if a Supporting Entity is being relied upon, itshall be required to submit for evaluation"
+    },
+    {
+      "line": 808,
+      "page": "22-23",
+      "text": "the necessary information or documentation specified in the RTP Response Document.IDA001/0095-#12514451v2 24"
+    },
+    {
+      "line": 809,
+      "page": "23",
+      "text": "In the event that IDA Ireland deems that the evidence provided to demonstrate that resources will be"
+    },
+    {
+      "line": 810,
+      "page": "23",
+      "text": "made available isinsufficient, the Candidate orrelevant Consortium Member(asthe casemay be) shall"
+    },
+    {
+      "line": 811,
+      "page": "23",
+      "text": "be evaluated based on its own information."
+    },
+    {
+      "line": 812,
+      "page": "23",
+      "text": "5.5.5 Prime Contractor"
+    },
+    {
+      "line": 813,
+      "page": "23",
+      "text": "Where a Consortia (in whatever form and regardless of the legal relationship between them) come"
+    },
+    {
+      "line": 814,
+      "page": "23",
+      "text": "together to submit an application in response to this RTP Response Document, IDA Ireland will deal"
+    },
+    {
+      "line": 815,
+      "page": "23",
+      "text": "with all matters relating to this Procurement Process through the entity who will carry overall"
+    },
+    {
+      "line": 816,
+      "page": "23",
+      "text": "responsibility for the performance of the contract only (the “Prime Contractor”), irrespective of"
+    },
+    {
+      "line": 817,
+      "page": "23",
+      "text": "whether or not tasks are to be performed by a Sub-Contractor or other Consortium Members. The"
+    },
+    {
+      "line": 818,
+      "page": "23",
+      "text": "Candidate must clearly and comprehensively set out the name, title, telephone number, postal"
+    },
+    {
+      "line": 819,
+      "page": "23",
+      "text": "address, and email address of the nominated contact personnel of the Prime Contractor authorised to"
+    },
+    {
+      "line": 820,
+      "page": "23",
+      "text": "represent the Candidate and to whom all communications shall be directed and accepted until this"
+    },
+    {
+      "line": 821,
+      "page": "23",
+      "text": "Procurement Process has been completed or terminated. Correspondence from any other person"
+    },
+    {
+      "line": 822,
+      "page": "23",
+      "text": "(including from any Sub-Contractor) will not be accepted or responded to."
+    },
+    {
+      "line": 823,
+      "page": "23",
+      "text": "5.6 Opening and Evaluation of Applications"
+    },
+    {
+      "line": 824,
+      "page": "23",
+      "text": "Applications will be evaluated in accordance with the selection criteria, minimum rules and weightings"
+    },
+    {
+      "line": 825,
+      "page": "23",
+      "text": "specified in the RTP Response Document."
+    },
+    {
+      "line": 826,
+      "page": "23",
+      "text": "5.7 European Single Procurement Document"
+    },
+    {
+      "line": 827,
+      "page": "23",
+      "text": "In accordance with the 2016 Regulations, suppliers may have compiled a European Single Procurement"
+    },
+    {
+      "line": 828,
+      "page": "23",
+      "text": "Document (ESPD), either electronically via the eESPD on eTenders or as a separate uploaded"
+    },
+    {
+      "line": 829,
+      "page": "23",
+      "text": "attachment with the RTP Response Document, which will be accepted as evidence of compliance with"
+    },
+    {
+      "line": 830,
+      "page": "23",
+      "text": "Section A of the Questionnaire. However, IDA Ireland requires evidence via completed submission of"
+    },
+    {
+      "line": 831,
+      "page": "23",
+      "text": "Section B relating to Technical Capacity. Mere confirmation will not be sufficient under these headings."
+    },
+    {
+      "line": 832,
+      "page": "23",
+      "text": "Progression to the Tender Stage will be conditional upon identified Candidates providing evidence of"
+    },
+    {
+      "line": 833,
+      "page": "23",
+      "text": "self-declared information to IDA Ireland. Failure to provide appropriate evidence within the required"
+    },
+    {
+      "line": 834,
+      "page": "23",
+      "text": "timeframe specified will result in the Candidate being deemed inadmissible for the next stage of the"
+    },
+    {
+      "line": 835,
+      "page": "23",
+      "text": "Procurement Process."
+    },
+    {
+      "line": 836,
+      "page": "23",
+      "text": "5.8 Evaluation of Applications"
+    },
+    {
+      "line": 837,
+      "page": "23",
+      "text": "An “Application” comprises a completed RTP Response Document including the associated"
+    },
+    {
+      "line": 838,
+      "page": "23",
+      "text": "appendices. Applications will be evaluated strictly on their merits in accordance with the published"
+    },
+    {
+      "line": 839,
+      "page": "23",
+      "text": "selection criteria, minimum rules and weightings specified in the RTP Response Document."
+    },
+    {
+      "line": 840,
+      "page": "23",
+      "text": "5.9 Clarification of Applications"
+    },
+    {
+      "line": 841,
+      "page": "23",
+      "text": "While not being obliged to seek clarifications from Candidates, IDA Ireland reserves the right, at its"
+    },
+    {
+      "line": 842,
+      "page": "23-24",
+      "text": "absolute discretion,to ask Candidatesfor clarification or elaboration oftheir RTP Response DocumentsIDA001/0095-#12514451v2 25"
+    },
+    {
+      "line": 843,
+      "page": "24",
+      "text": "to assist in its evaluation of RTP Response Documents."
+    },
+    {
+      "line": 844,
+      "page": "24",
+      "text": "However, it is stressed that IDA Ireland may not seek clarification where any of the pass/fail"
+    },
+    {
+      "line": 845,
+      "page": "24",
+      "text": "requirements set out in the RTP Response Document have not been met. Therefore, Candidates"
+    },
+    {
+      "line": 846,
+      "page": "24",
+      "text": "should pay particular attention to ensure that their RTP Response Documents contain all the required"
+    },
+    {
+      "line": 847,
+      "page": "24",
+      "text": "information where the required information forms part of the pass/fail requirements."
+    },
+    {
+      "line": 848,
+      "page": "24",
+      "text": "5.10 Identification of Shortlist"
+    },
+    {
+      "line": 849,
+      "page": "24",
+      "text": "All RTP Response Documents will be evaluated in line with the criteria and rules outlined in Appendix"
+    },
+    {
+      "line": 850,
+      "page": "24",
+      "text": "A. Responses will be scored and ranked and the intention is that the top three (3) qualifying"
+    },
+    {
+      "line": 851,
+      "page": "24",
+      "text": "Candidates will be invited to tender, subject to that number meeting the minimum requirements. In"
+    },
+    {
+      "line": 852,
+      "page": "24",
+      "text": "the event that the overall result calculated in accordance with the foregoing results in a tie between"
+    },
+    {
+      "line": 853,
+      "page": "24",
+      "text": "Candidates at the lowest score for admittance to the shortlist, IDA Ireland will invite all those tied"
+    },
+    {
+      "line": 854,
+      "page": "24",
+      "text": "Candidates, notwithstanding this could total four (4) shortlisted Candidates."
+    },
+    {
+      "line": 855,
+      "page": "24",
+      "text": "5.11 Freedom of Information Act"
+    },
+    {
+      "line": 856,
+      "page": "24",
+      "text": "All responses to this RTP will be treated in confidence and no information contained therein will be"
+    },
+    {
+      "line": 857,
+      "page": "24",
+      "text": "communicated to any third party without the written permission of the Candidate except insofar as is"
+    },
+    {
+      "line": 858,
+      "page": "24",
+      "text": "specifically required for the consideration and evaluation of the response or as may be required under"
+    },
+    {
+      "line": 859,
+      "page": "24",
+      "text": "law, including the Freedom of Information Act 2014, EU and Irish Government Procurement rules."
+    },
+    {
+      "line": 860,
+      "page": "24",
+      "text": "Candidates are requested to consider if any of the information supplied by them in response to this"
+    },
+    {
+      "line": 861,
+      "page": "24",
+      "text": "request for tenders should not be disclosed because of its sensitivity. If that is the case, Candidates"
+    },
+    {
+      "line": 862,
+      "page": "24",
+      "text": "should specify the information that is sensitive and the reasons for its sensitivity. IDA Ireland cannot"
+    },
+    {
+      "line": 863,
+      "page": "24",
+      "text": "guarantee that any information provided by Candidates, either in response to this RTP Response"
+    },
+    {
+      "line": 864,
+      "page": "24",
+      "text": "Document or in the course of any contract awarded as a result thereof, will not be released pursuant"
+    },
+    {
+      "line": 865,
+      "page": "24",
+      "text": "to IDA Ireland’s obligations under law, including the Freedom of Information Act 2014, or to those"
+    },
+    {
+      "line": 866,
+      "page": "24",
+      "text": "under EU and Irish Government Procurement rules. IDA Ireland accepts no liability whatsoever in"
+    },
+    {
+      "line": 867,
+      "page": "24",
+      "text": "respect of any disclosure of the relevant information which is subsequently released or in respect of"
+    },
+    {
+      "line": 868,
+      "page": "24",
+      "text": "any consequential damage suffered as a result of such disclosure."
+    },
+    {
+      "line": 869,
+      "page": "24",
+      "text": "5.12 Interference"
+    },
+    {
+      "line": 870,
+      "page": "24",
+      "text": "Any effort by the Candidate to unduly influence IDA Ireland, relevant agency personnel or any other"
+    },
+    {
+      "line": 871,
+      "page": "24",
+      "text": "relevant persons or bodies in the process of examination, clarification, evaluation and comparison of"
+    },
+    {
+      "line": 872,
+      "page": "24",
+      "text": "applications and in decisions concerning the award of the contract shall have their application"
+    },
+    {
+      "line": 873,
+      "page": "24",
+      "text": "rejected."
+    },
+    {
+      "line": 874,
+      "page": "24",
+      "text": "In accordance with Section 38 of the Ethics in Public Office Act 1995, any money, gift or other"
+    },
+    {
+      "line": 875,
+      "page": "24",
+      "text": "consideration from a person holding orseeking to obtain a contract will be deemed to have been paid"
+    },
+    {
+      "line": 876,
+      "page": "24",
+      "text": "or given corruptly unless the contrary is proved. Candidates should also note the provisions of the"
+    },
+    {
+      "line": 877,
+      "page": "24-25",
+      "text": "Criminal Justice (Corruption Offences) Act 2018.IDA001/0095-#12514451v2 26"
+    },
+    {
+      "line": 878,
+      "page": "25",
+      "text": "5.13 Inducement to Purchase"
+    },
+    {
+      "line": 879,
+      "page": "25",
+      "text": "IDA Ireland shall be entitled to disqualify any Candidate in one of the following circumstances:"
+    },
+    {
+      "line": 880,
+      "page": "25",
+      "text": "(a) If the Candidate has offered or given or agreed to give to any person any gift or consideration of"
+    },
+    {
+      "line": 881,
+      "page": "25",
+      "text": "any kind as an inducement or reward for doing or forbearing to do, or for having done or forborne to"
+    },
+    {
+      "line": 882,
+      "page": "25",
+      "text": "do, any action in relation to the obtaining or execution of this contract award procedure or showing"
+    },
+    {
+      "line": 883,
+      "page": "25",
+      "text": "or forbearing to show favour or disfavour to any person in relation to this contract award procedure"
+    },
+    {
+      "line": 884,
+      "page": "25",
+      "text": "or any other contract award procedure with IDA Ireland, or"
+    },
+    {
+      "line": 885,
+      "page": "25",
+      "text": "(b) If like acts have been done by any other person employed by the Candidate or acting on its behalf"
+    },
+    {
+      "line": 886,
+      "page": "25-26",
+      "text": "(whether with or without the knowledge of the Candidate).IDA001/0095-#12514451v2 27"
+    },
+    {
+      "line": 887,
+      "page": "26",
+      "text": "Evaluation of Responses: SEE APPENDIX A: RTP Response Document"
+    },
+    {
+      "line": 888,
+      "page": "26",
+      "text": "Ref. Pass/Fail Criteria Pass Requirements"
+    },
+    {
+      "line": 889,
+      "page": "26",
+      "text": "A1"
+    },
+    {
+      "line": 890,
+      "page": "26",
+      "text": "Candidate"
+    },
+    {
+      "line": 891,
+      "page": "26",
+      "text": "Summary"
+    },
+    {
+      "line": 892,
+      "page": "26",
+      "text": "Candidates must complete this section. If the Candidate is a"
+    },
+    {
+      "line": 893,
+      "page": "26",
+      "text": "Consortium, then a separate Response Document must be"
+    },
+    {
+      "line": 894,
+      "page": "26",
+      "text": "completed for each Consortium Member."
+    },
+    {
+      "line": 895,
+      "page": "26",
+      "text": "A2 Tax Compliance Candidates are required to complete a Self-Declaration Form (A5) in"
+    },
+    {
+      "line": 896,
+      "page": "26",
+      "text": "respect of the requirements specified in A2 to A4. Candidates should"
+    },
+    {
+      "line": 897,
+      "page": "26",
+      "text": "note that if invited to tender, they will be required to provide the"
+    },
+    {
+      "line": 898,
+      "page": "26",
+      "text": "evidence self-declared prior to receipt of Request for Tender."
+    },
+    {
+      "line": 899,
+      "page": "26",
+      "text": "A3 Financial Capacity"
+    },
+    {
+      "line": 900,
+      "page": "26",
+      "text": "A4 Insurance"
+    },
+    {
+      "line": 901,
+      "page": "26",
+      "text": "A5 Declaration re A2,"
+    },
+    {
+      "line": 902,
+      "page": "26",
+      "text": "A3 and A4"
+    },
+    {
+      "line": 903,
+      "page": "26",
+      "text": "A6 Not Used"
+    },
+    {
+      "line": 904,
+      "page": "26",
+      "text": "A7"
+    },
+    {
+      "line": 905,
+      "page": "26",
+      "text": "Data Centre"
+    },
+    {
+      "line": 906,
+      "page": "26",
+      "text": "Location"
+    },
+    {
+      "line": 907,
+      "page": "26",
+      "text": "Candidates must confirm that the location(s) of their data centre(s)"
+    },
+    {
+      "line": 908,
+      "page": "26",
+      "text": "that will be utilised for this Project are within the EEA (or"
+    },
+    {
+      "line": 909,
+      "page": "26",
+      "text": "jurisdictions that have an adequacy decision from the European"
+    },
+    {
+      "line": 910,
+      "page": "26",
+      "text": "Commission in accordance with Art 45 GDPR) for production and"
+    },
+    {
+      "line": 911,
+      "page": "26",
+      "text": "non-production environments and disaster recovery sites."
+    },
+    {
+      "line": 912,
+      "page": "26",
+      "text": "A8 Consortium"
+    },
+    {
+      "line": 913,
+      "page": "26",
+      "text": "Structure & Roles"
+    },
+    {
+      "line": 914,
+      "page": "26",
+      "text": "Candidates must provide clarity on consortium members, Prime"
+    },
+    {
+      "line": 915,
+      "page": "26",
+      "text": "Contractor, and governance model"
+    },
+    {
+      "line": 916,
+      "page": "26",
+      "text": "A9 Declaration"
+    },
+    {
+      "line": 917,
+      "page": "26",
+      "text": "Candidates must complete, sign and date this Declaration relating to"
+    },
+    {
+      "line": 918,
+      "page": "26",
+      "text": "Bona Fides, Statutory Compliance and also Article K (Regulation"
+    },
+    {
+      "line": 919,
+      "page": "26",
+      "text": "2022/576) compliance. Non-compliant Candidates under any of the"
+    },
+    {
+      "line": 920,
+      "page": "26",
+      "text": "headings may be disqualified."
+    },
+    {
+      "line": 921,
+      "page": "26",
+      "text": "Ref. Weighted Criteria Max score Min score"
+    },
+    {
+      "line": 922,
+      "page": "26",
+      "text": "Full Details set out in Response Document"
+    },
+    {
+      "line": 923,
+      "page": "26",
+      "text": "B1"
+    },
+    {
+      "line": 924,
+      "page": "26",
+      "text": "Team Capability /"
+    },
+    {
+      "line": 925,
+      "page": "26",
+      "text": "Technical"
+    },
+    {
+      "line": 926,
+      "page": "26",
+      "text": "Capacity /"
+    },
+    {
+      "line": 927,
+      "page": "26",
+      "text": "Resources"
+    },
+    {
+      "line": 928,
+      "page": "26",
+      "text": "3,000 1,800"
+    },
+    {
+      "line": 929,
+      "page": "26",
+      "text": "B2"
+    },
+    {
+      "line": 930,
+      "page": "26",
+      "text": "Relevant"
+    },
+    {
+      "line": 931,
+      "page": "26",
+      "text": "Experience /"
+    },
+    {
+      "line": 932,
+      "page": "26",
+      "text": "Previous"
+    },
+    {
+      "line": 933,
+      "page": "26",
+      "text": "Contracts"
+    },
+    {
+      "line": 934,
+      "page": "26",
+      "text": "7,000 4,200"
+    },
+    {
+      "line": 935,
+      "page": "26-27",
+      "text": "Total 10,000 6,000IDA001/0095-#12514451v2 28"
+    },
+    {
+      "line": 936,
+      "page": "27",
+      "text": "Candidates should note that they must achieve a minimum rating of 60% for each of the individual"
+    },
+    {
+      "line": 937,
+      "page": "27",
+      "text": "qualitative criteria (B1) and (B2) in order to avoid elimination from the Procurement Process."
+    },
+    {
+      "line": 938,
+      "page": "27",
+      "text": "Qualitative criteria will be scored using the following baseline scoring system:"
+    },
+    {
+      "line": 939,
+      "page": "27",
+      "text": "Score Category Description"
+    },
+    {
+      "line": 940,
+      "page": "27",
+      "text": "90% – 100% Excellent"
+    },
+    {
+      "line": 941,
+      "page": "27",
+      "text": "An excellent RTP Response demonstrating an excellent level of"
+    },
+    {
+      "line": 942,
+      "page": "27",
+      "text": "understanding of the qualification requirements and offering"
+    },
+    {
+      "line": 943,
+      "page": "27",
+      "text": "strong assurance to IDA Ireland. The response is fully supported"
+    },
+    {
+      "line": 944,
+      "page": "27",
+      "text": "with clear and relevant detail."
+    },
+    {
+      "line": 945,
+      "page": "27",
+      "text": "80% – 89% Very good"
+    },
+    {
+      "line": 946,
+      "page": "27",
+      "text": "A very good RTP Response demonstrating a very good"
+    },
+    {
+      "line": 947,
+      "page": "27",
+      "text": "understanding of the qualification requirements and providing"
+    },
+    {
+      "line": 948,
+      "page": "27",
+      "text": "reliable assurance to IDA Ireland. The response is well supported"
+    },
+    {
+      "line": 949,
+      "page": "27",
+      "text": "with substantive, relevant information."
+    },
+    {
+      "line": 950,
+      "page": "27",
+      "text": "70% – 79% Good"
+    },
+    {
+      "line": 951,
+      "page": "27",
+      "text": "A good RTP Response demonstrating a solid understanding of the"
+    },
+    {
+      "line": 952,
+      "page": "27",
+      "text": "qualification requirements and offering satisfactory assurance to"
+    },
+    {
+      "line": 953,
+      "page": "27",
+      "text": "IDA Ireland. The response is supported with appropriate detail."
+    },
+    {
+      "line": 954,
+      "page": "27",
+      "text": "60% – 69% Acceptable"
+    },
+    {
+      "line": 955,
+      "page": "27",
+      "text": "An acceptable RTP Response demonstrating a minimum but"
+    },
+    {
+      "line": 956,
+      "page": "27",
+      "text": "sufficient understanding of the qualification requirements and"
+    },
+    {
+      "line": 957,
+      "page": "27",
+      "text": "offering adequate assurance to IDA Ireland. The response is"
+    },
+    {
+      "line": 958,
+      "page": "27",
+      "text": "satisfactorily supported, though limited in depth."
+    },
+    {
+      "line": 959,
+      "page": "27",
+      "text": "Less than 60% score is unacceptable and considered ineligible from further consideration"
+    },
+    {
+      "line": 960,
+      "page": "27",
+      "text": "The RTP Response is insufficient, does not demonstrate the required understanding or assurance,"
+    },
+    {
+      "line": 961,
+      "page": "27",
+      "text": "and is ineligible for further consideration."
+    },
+    {
+      "line": 962,
+      "page": "27",
+      "text": "Candidates should ensure in their response that they provide detailed information in respect of all"
+    },
+    {
+      "line": 963,
+      "page": "27",
+      "text": "aspects of the weighted criteria as stated above. This will enable IDA Ireland to assess fully the extent"
+    },
+    {
+      "line": 964,
+      "page": "27",
+      "text": "of their responses."
+    },
+    {
+      "line": 965,
+      "page": "27",
+      "text": "Candidates should note that IDA Ireland reserves the right to confirm that the financial and technical"
+    },
+    {
+      "line": 966,
+      "page": "27",
+      "text": "capacity of any Candidate is valid and unchanged prior to the award of any contract. More information"
+    },
+    {
+      "line": 967,
+      "page": "27",
+      "text": "will be included within the ITT."
+    },
+    {
+      "line": 968,
+      "page": "27",
+      "text": "Candidates are referred to the separate RTP Response Document."
+    }
+  ]
+}
