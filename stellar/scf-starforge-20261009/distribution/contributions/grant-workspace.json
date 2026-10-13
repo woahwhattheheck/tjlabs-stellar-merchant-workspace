@@ -64,5 +64,8 @@
     "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
     "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md"
+  ],
+  "managedSourceManifests": [
+    "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json"
   ]
 }

@@ -4,6 +4,7 @@ import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { productPackageMetadata } from './product-package.mjs';
+import {validateManagedSourceManifest} from './managed-source.mjs';
 import { sourceSelectionPath, validateSourceSelection, selectedContributionPaths,
   selectDistributionSources, validateSourceSelectionRecord, requireSourceSelectionMatch,
   validateSourceFormats, parseOriginalSourceData } from './source-selection.mjs';
@@ -13,10 +14,10 @@ export const contributionDirectory = 'stellar/scf-starforge-20261009/distributio
 export const contributionSchema = 'stellar-forge.merchant-distribution-contribution.v1';
 const ownRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const baseSchema = 'stellar-forge.merchant-distribution.v1';
-const fields = ['components', 'supportFiles', 'moduleTemplates', 'sourceFormats', 'excludeFiles', 'commands',
+const fields = ['components', 'supportFiles', 'managedSourceManifests', 'moduleTemplates', 'sourceFormats', 'excludeFiles', 'commands',
   'commandDescriptions', 'exports', 'nativePeers', 'featurePeers', 'runtimePackageManifests',
   'browserAssets', 'applicationProviders', 'merchantProviders'];
-const lists = ['components', 'supportFiles', 'moduleTemplates', 'excludeFiles'];
+const lists = ['components', 'supportFiles', 'managedSourceManifests', 'moduleTemplates', 'excludeFiles'];
 const maps = ['commands', 'commandDescriptions', 'exports', 'nativePeers', 'runtimePackageManifests',
   'applicationProviders', 'merchantProviders', 'sourceFormats'];
 const idPattern = /^[a-z][a-z0-9-]{0,63}$/;
@@ -84,6 +85,8 @@ function validateRegistrations(data, owner) {
     if (!Array.isArray(data[field])) throw new TypeError(owner + ': ' + field + ' must be a source path array');
     for (const value of data[field]) {
       filePath(value, field);
+      if (field === 'managedSourceManifests' && !value.endsWith('.json'))
+        throw new TypeError(owner + ': a managed source manifest must name original JSON');
       if (field === 'moduleTemplates' && !/\.(?:mjs|js)$/.test(value))
         throw new TypeError(owner + ': a module template must name original JavaScript source');
     }
@@ -342,9 +345,28 @@ export async function readDistributionSpecification({ sourceRoot = ownRoot, sele
   }
   if (recipeFile) inputFiles.push(recipeFile.descriptor);
   const distribution = composeDistribution({ base: original.data, contributions, selection: recipe });
+  const managedSources = [];
+  for (const path of distribution.spec.managedSourceManifests ?? []) {
+    const file = await originalJson(root, path);
+    managedSources.push({descriptor:file.descriptor,
+      inventory:validateManagedSourceManifest(file.data, path)});
+  }
   if (manifest) {
     const entries = new Map(manifest.files.map(entry => [entry.path, entry]));
     if (entries.size !== manifest.files.length) throw new TypeError('Installed distribution has duplicate files');
+    for (const {descriptor, inventory} of managedSources) {
+      const retained = entries.get(descriptor.path);
+      if (!retained || retained.packagePath !== 'source/' + descriptor.path ||
+          retained.bytes !== descriptor.bytes || retained.sha256 !== descriptor.sha256)
+        throw new TypeError('Installed managed source manifest changed: ' + descriptor.path);
+      for (const source of inventory.entries) {
+        const entry = entries.get(source.path);
+        if (!entry || entry.packagePath !== 'source/' + source.path ||
+            !Number.isSafeInteger(entry.bytes) || entry.bytes < 0 || entry.bytes > 1024 * 1024 ||
+            !/^[a-f0-9]{64}$/.test(entry.sha256 ?? ''))
+          throw new TypeError('Installed managed source is missing or invalid: ' + source.path);
+      }
+    }
     const formats = validateSourceFormats(manifest.sourceFormats ?? {});
     if (!same(Object.entries(formats).sort(), Object.entries(distribution.spec.sourceFormats ?? {}).sort()))
       throw new TypeError('Installed distribution source formats changed');
