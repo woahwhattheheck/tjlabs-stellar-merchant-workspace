@@ -33,3 +33,30 @@ export declare const FRED_OPERATING_HANDOVER_FILE: 'HANDOVER.json';
 export declare function exportFredOperatingArchive(options: FredOperatingArchiveExportOptions): Promise<FredOperatingArchiveResult>;
 export declare function inspectFredOperatingArchive(options: FredOperatingArchiveInspectOptions): Promise<FredOperatingArchiveResult>;
 export declare function receiveFredOperatingArchive(options: FredOperatingArchiveReceiveOptions): Promise<FredOperatingArchiveResult>;
+
+export interface FredOperatingArchiveReadOnlyOptions {
+  archivePath: string; expectedArchive: FredOperatingArchiveFile; signal?: AbortSignal;
+}
+export interface FredOperatingArchiveReadOnlyResult {
+  schema: 'stellar-forge.fred-operating-archive-readonly.v1';
+  archive: FredOperatingArchiveFile;
+  source: FredOperatingSource;
+  sourceFile: FredOperatingArchiveFile;
+  manifestFile: FredOperatingArchiveFile;
+  manifest: {
+    schema: 'stellar-forge.fred-operating-archive.v1';
+    sourceId: string; projectId: string; sourceFile: FredOperatingArchiveFile;
+    manifestFile: FredOperatingArchiveFile; plan: FredOperatingArchiveFile | null;
+    files: FredOperatingArchiveFile[]; bytes: number;
+  };
+  packageManifest: {
+    schema: 'stellar-forge.fred-operating-package.v1';
+    source: FredOperatingArchiveFile; projectId: string; bundleSha256: string;
+    files: FredOperatingArchiveFile[]; bytes: number;
+  };
+  plan: OperatingPlan | null;
+  /** Full actual member inventory, including HANDOVER.json. */
+  files: FredOperatingArchiveFile[];
+}
+/** Uses fixed installed source; reads all original bytes without extraction or writer locks. */
+export declare function inspectFredOperatingArchiveReadOnly(options: FredOperatingArchiveReadOnlyOptions): Promise<FredOperatingArchiveReadOnlyResult>;
