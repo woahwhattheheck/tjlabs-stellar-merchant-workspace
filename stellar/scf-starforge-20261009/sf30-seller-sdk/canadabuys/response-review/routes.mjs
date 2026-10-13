@@ -20,7 +20,10 @@ export async function responseEditorHTML(transfer){
 export async function routeResponseReview({workspace,request,response,url,requestJSON,sendJSON,attachment}){
  if(url.pathname==='/response-review'||url.pathname.startsWith('/response-review/')){
   if(request.method!=='GET')throw failure('METHOD_NOT_ALLOWED','Open the response review with GET.',405);
-  const leaf=url.pathname==='/response-review'?'index.html':url.pathname.slice('/response-review/'.length)||'index.html',chosen=files.get(leaf);
+  if(url.pathname==='/response-review'){
+   response.writeHead(308,{'Location':'/response-review/'+url.search,'Cache-Control':'no-store','Content-Length':0});response.end();return true;
+  }
+  const leaf=url.pathname.slice('/response-review/'.length)||'index.html',chosen=files.get(leaf);
   if(!chosen)throw failure('NOT_FOUND','Response review asset does not exist.',404);
   const body=await readFile(new URL('./'+chosen[0],import.meta.url));
   response.writeHead(200,{'Content-Type':chosen[1],'Content-Length':body.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',

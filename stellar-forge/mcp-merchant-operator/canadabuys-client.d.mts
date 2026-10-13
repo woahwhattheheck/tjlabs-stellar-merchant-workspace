@@ -7,6 +7,7 @@ import type { WorkspaceMetadata, CaptureRecord, Publication, Receiving } from
 import type { BidderKind, BidderRecordMap, BidderInputMap, BidderPage, BidderFitResult, BidderAssessResult,
   DecisionSelection, BidderCompareResult } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/bidder-desk-workspace.mjs';
 import type { DownloadOptions, DownloadResult, PublicationInspection } from './canadabuys-download.mjs';
+import type { ResponseDocument, CompareResult } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/workspace.mjs';
 export type { BidderKind, BidderRecordMap, BidderInputMap, DecisionSelection };
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export interface RequestOptions { signal?: AbortSignal; timeoutMs?: number }
@@ -69,7 +70,43 @@ export interface EvidenceIntakeResult {
   commandId: string; intakeSha256: string; noticeId: string;
   records: BidderRecordMap['evidence'][]; alreadyApplied: boolean;
 }
+
+export interface ResponseInputArguments extends WorkspaceSelection { input:string; expectedSha256:string }
+export interface ResponseMutationArguments extends ResponseInputArguments { commandId:string }
+export interface ResponseRecordMetadata {
+  id:string; noticeId:string; title:string; revision:number; sha256:string; bytes:number; editionSha256:string; createdAt:string; updatedAt:string;
+}
+export interface ResponseDocumentMetadata {
+  id:string; title:string; binding:ResponseDocument['binding']; workshare:ResponseDocument['workshare']; createdAt:string; updatedAt:string;
+  counts:{answers:number;annexes:number;attachments:number;merges:number}; attachments:Array<Omit<ResponseDocument['attachments'][number],'base64'>>;
+}
+export interface ResponseInspection {
+  workspace:string; native:WorkspaceMetadata; operation:'prepare'|'compare'|'apply'; input:string;
+  file:{name:string;bytes:number;sha256:string}; mutation:false; validation:string;
+  selection:{workspaceId:string;commandId?:string;expectedRevision?:number;recordId?:string;workshareId?:string;binding?:ResponseDocument['binding']};
+}
+export interface ResponseMutation {
+  workspace:string; native:WorkspaceMetadata; commandId:string; input:ResponseInspection['file'];
+  record:ResponseRecordMetadata; alreadyApplied:boolean; returnedRecord?:ResponseRecordMetadata;
+  comparison?:{reviewSha256:string;contextSha256:string;reviewResets:unknown[]};
+}
+export interface ResponsePublication extends FilePublication {native:WorkspaceMetadata;record:ResponseRecordMetadata}
+export interface ResponseStatus extends NativePage<Record<string,unknown>> {
+  workspace:string; native:WorkspaceMetadata; schema:string; browserUrl:string; collection:'records'|'workshares'; counts:{records:number;workshares:number};
+}
+export interface ResponseComparison extends ResponsePublication {
+  input:ResponseInspection['file'];incoming:CompareResult['incoming'];
+  comparison:{reviewSha256:string;contextSha256:string;returnReady:boolean;changedSource:boolean;changedWorkshare:boolean;rows:number;counts:Record<string,number>};
+}
+
 export interface ToolArguments {
+  response_status:WorkspaceSelection & PageSelection & {collection?:'records'|'workshares'};
+  response_inspect:ResponseInputArguments & {operation:'prepare'|'compare'|'apply';commandId?:string};
+  response_prepare:ResponseMutationArguments;
+  response_record:WorkspaceSelection & {recordId:string;recordRevision?:number};
+  response_export:WorkspaceSelection & {recordId:string;recordRevision?:number;expectedRevision:number;format:'document'|'transfer'|'editor'|'markdown'};
+  response_compare:ResponseInputArguments & {expectedRevision:number};
+  response_apply:ResponseMutationArguments;
   workspaces: Record<string, never>;
   open: WorkspaceSelection;
   close: WorkspaceSelection & { instanceId: string };
@@ -111,6 +148,13 @@ export interface ToolArguments {
   delivery_adopt: WorkspaceSelection & { delivery: string; expectedRevision: number };
 }
 export interface ToolResults {
+  response_status:ResponseStatus;
+  response_inspect:ResponseInspection;
+  response_prepare:ResponseMutation;
+  response_record:{workspace:string;native:WorkspaceMetadata;record:ResponseRecordMetadata;document:ResponseDocumentMetadata};
+  response_export:ResponsePublication;
+  response_compare:ResponseComparison;
+  response_apply:ResponseMutation;
   workspaces: { configured: boolean; workspaces: Array<{ workspace: string; label: string; open: boolean; instanceId: string | null;
     inputAliases: string[]; deliveryAliases: string[]; [key: string]: unknown }>; [key: string]: unknown };
   open: Status;
@@ -158,7 +202,7 @@ export type ToolName = keyof ToolArguments;
 export type FullToolName = `merchant_canadabuys_${ToolName}`;
 export type SelectedTool = ToolName | FullToolName;
 export type ShortTool<N extends SelectedTool> = N extends `merchant_canadabuys_${infer K}` ? K extends ToolName ? K : never : N extends ToolName ? N : never;
-export type PagedTool = 'status' | 'entries' | 'compare' | 'qualify' | 'bidder_list' | 'bidder_fit';
+export type PagedTool = 'response_status' | 'status' | 'entries' | 'compare' | 'qualify' | 'bidder_list' | 'bidder_fit';
 export interface CompleteCollection<T = unknown> {
   workspace: string; workspaceId: string; revision: number; tool: FullToolName; complete: true; pages: unknown[]; items: T[];
 }
@@ -198,6 +242,13 @@ export declare class CanadaBuysMerchantClient {
   qualify(args: ToolArguments['qualify'], options?: RequestOptions): Promise<ToolResults['qualify']>;
   inspectEvidenceIntake(args: ToolArguments['bidder_intake_inspect'], options?: RequestOptions): Promise<EvidenceIntakeInspection>;
   intakeEvidence(args: EvidenceIntakeArguments, options?: RequestOptions): Promise<EvidenceIntakeResult>;
+  responseStatus(args?:ToolArguments['response_status'],options?:RequestOptions):Promise<ResponseStatus>;
+  inspectResponse(args:ToolArguments['response_inspect'],options?:RequestOptions):Promise<ResponseInspection>;
+  prepareResponse(args:ResponseMutationArguments,options?:RequestOptions):Promise<ResponseMutation>;
+  responseRecord(args:ToolArguments['response_record'],options?:RequestOptions):Promise<ToolResults['response_record']>;
+  exportResponse(args:ToolArguments['response_export'],options?:RequestOptions):Promise<ResponsePublication>;
+  compareResponse(args:ToolArguments['response_compare'],options?:RequestOptions):Promise<ResponseComparison>;
+  applyResponse(args:ResponseMutationArguments,options?:RequestOptions):Promise<ResponseMutation>;
   bidderStatus(options?: RequestOptions): Promise<ToolResults['bidder_status']>;
   bidderList<K extends BidderKind>(args: Omit<ToolArguments['bidder_list'], 'kind'> & { kind: K }, options?: RequestOptions): Promise<BidderPage<K> & { workspace: string }>;
   bidderRecord<K extends BidderKind>(args: Omit<ToolArguments['bidder_record'], 'kind'> & { kind: K }, options?: RequestOptions): Promise<{ workspace: string; record: BidderRecordMap[K] & { history?: BidderRecordMap[K][] } }>;

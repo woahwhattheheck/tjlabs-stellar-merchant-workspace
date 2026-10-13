@@ -8,6 +8,8 @@ export { canadabuysWorkspaceTools } from './catalog/canadabuys-workspace.mjs';
 import { exact, failure, identifier, line, plain, privateSupportDirectory, writePrivate } from './host-files.mjs';
 import { RetainedFileReads } from './retained-file-reads.mjs';
 import { CanadaBuysClient } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/client.mjs';
+import { responseStatus, getResponseReview, prepareResponseReview, exportResponseReview, compareResponseReturn, applyResponseReturn, responseMarkdown } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/workspace.mjs';
+import { responseEditorHTML } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/routes.mjs';
 
 export const CANADABUYS_WORKSPACE_CONNECTION_SCHEMA = 'starforge.canadabuys.workspace-connection.v1';
 const HASH = /^[a-f0-9]{64}$/;
@@ -76,6 +78,19 @@ async function originalFile(path, { consume = false, maximum = INPUT_LIMIT } = {
       throw failure('CANADABUYS_INPUT_UNAVAILABLE', 'The selected host-declared original file is unavailable. Check that same alias on the host.');
     throw issue;
   } finally { await handle?.close(); }
+}
+
+
+function responseRecord(record) {
+  return Object.fromEntries(['id','noticeId','title','revision','sha256','bytes','editionSha256','createdAt','updatedAt']
+    .filter(key => Object.hasOwn(record,key)).map(key => [key,record[key]]));
+}
+function responseDocument(document) {
+  return { id: document.id, title: document.title, binding: document.binding,
+    workshare: document.workshare, createdAt: document.createdAt, updatedAt: document.updatedAt,
+    counts: { answers: document.content.answers.length, annexes: document.content.annexes.length,
+      attachments: document.attachments.length, merges: document.merges.length },
+    attachments: document.attachments.map(({base64,...metadata})=>metadata) };
 }
 
 /** Configuration reads declarations only. The original SQLite service opens explicitly. */
@@ -412,10 +427,121 @@ export class MerchantCanadaBuysWorkspaces {
       documents, totalBytes, mutation: false } };
   }
 
+
+  async #responseInput(entry, input, operation) {
+    const selected = this.#input(entry, input.input);
+    const file = await originalFile(selected.file, {consume:true,maximum:64*1024*1024});
+    if(file.sha256!==input.expectedSha256)
+      throw failure('CANADABUYS_INPUT_CHANGED','The complete response request differs from its inspected SHA256.');
+    const request = parse(file.content);
+    const keys = operation==='prepare'
+      ? ['workspaceId','expectedRevision','commandId','master','workshareId','title','allowHistoricalSource']
+      : operation==='apply'
+        ? ['workspaceId','expectedRevision','commandId','recordId','transfer','reviewSha256','choices','acknowledgement','reviewer','note']
+        : ['recordId','transfer'];
+    const required = operation==='prepare' ? ['workspaceId','expectedRevision','commandId','master','workshareId']
+      : operation==='apply' ? ['workspaceId','expectedRevision','commandId','recordId','transfer','reviewSha256','choices','reviewer']
+      : ['recordId','transfer'];
+    exact(request,keys,required);
+    const native=entry.model.metadata(),workspaceId=operation==='compare'?request.transfer?.base?.workspaceId:request.workspaceId;
+    if(workspaceId!==native.id)
+      throw failure('CANADABUYS_RESPONSE_WORKSPACE_CHANGED','Use the complete request for this original response workspace.');
+    if(operation!=='compare') {
+      integer(request.expectedRevision,-1);
+      if(typeof request.commandId!=='string'||!request.commandId.trim()||request.commandId.length>180)
+        throw failure('INVALID_PARAMS','Retain the complete original nonempty response commandId.');
+      if(input.commandId!==undefined&&request.commandId!==input.commandId)
+        throw failure('CANADABUYS_RESPONSE_COMMAND_CHANGED','The selected file belongs to another original response command.');
+    } else if(input.commandId!==undefined) throw failure('INVALID_PARAMS','A comparison has no mutation commandId.');
+    return {request,inspection:{workspace:entry.alias,native,operation,input:input.input,
+      file:{name:basename(selected.file),bytes:file.bytes,sha256:file.sha256},
+      selection:{workspaceId,...(request.commandId?{commandId:request.commandId,expectedRevision:request.expectedRevision}:{}),
+        ...(request.recordId?{recordId:request.recordId}:{}),...(request.workshareId?{workshareId:request.workshareId}:{}),
+        ...(request.master?.binding?{binding:request.master.binding}:{})},
+      mutation:false,validation:'Original domain validation occurs in the selected native operation.'}};
+  }
+  async #retainResponse(entry,{body,format,native,record,selection={}}) {
+    const bytes=Buffer.isBuffer(body)?body:Buffer.from(body,'utf8');
+    const extension=format==='editor'?'html':format==='markdown'?'md':'json';
+    const contentType=extension==='html'?'text/html; charset=utf-8':extension==='md'?'text/markdown; charset=utf-8':'application/json; charset=utf-8';
+    const file='canadabuys-response-'+format+'-'+randomUUID()+'.'+extension;
+    await writePrivate(join(entry.exportsDirectory,file),bytes);
+    const publication=entry.model.recordPublication({kind:'canadabuys-export',format:'response-'+format,
+      sourceRevision:native.revision,noticeIds:[record.noticeId],directory:entry.exportsDirectory,file,
+      mime:contentType,bytes:bytes.length,sha256:digest(bytes),
+      selection:{...selection,format,workspaceId:native.id,recordId:record.id,recordRevision:record.revision,
+        editionSha256:record.editionSha256,evidenceSha256:record.sha256}}).publication;
+    return {workspace:entry.alias,native,record:responseRecord(record),publication:publicationView(publication),
+      files:[{file,mime:contentType,bytes:bytes.length,sha256:publication.sha256}]};
+  }
+  async #responseExport(entry,input) {
+    // Pin the complete native edition and source revision before any await.
+    const frozen=entry.model._snapshot(()=>{
+      this.#revision(entry,input.expectedRevision);
+      const original=getResponseReview(entry.model,input.recordId,{revision:input.recordRevision});
+      const selected={revision:original.record.revision};
+      return {original,transfer:['transfer','editor'].includes(input.format)
+        ? exportResponseReview(entry.model,original.record.id,selected) : null,
+        markdown:input.format==='markdown'?responseMarkdown(entry.model,original.record.id,selected).body:null};
+    });
+    let body;
+    if(input.format==='document')body=encoded(frozen.original);
+    else if(input.format==='markdown')body=frozen.markdown;
+    else {
+      const transfer=await frozen.transfer;
+      body=input.format==='editor'?await responseEditorHTML(transfer):encoded(transfer);
+    }
+    return this.#retainResponse(entry,{body,format:input.format,native:frozen.original.workspace,record:frozen.original.record});
+  }
+
   async #execute(entry, name, args) {
     const { workspace, ...input } = args;
     const model = entry.model;
     switch (name) {
+      case 'merchant_canadabuys_response_status': {
+        const result=responseStatus(model),collection=input.collection??'records';
+        return {workspace,native:result.workspace,schema:result.schema,
+          browserUrl:new URL('/response-review/',entry.service.origin).href,collection,
+          counts:{records:result.records.length,workshares:result.workshares.length},...page(result[collection],input)};
+      }
+      case 'merchant_canadabuys_response_inspect':
+        return (await this.#responseInput(entry,input,input.operation)).inspection;
+      case 'merchant_canadabuys_response_record': {
+        const result=getResponseReview(model,input.recordId,{revision:input.recordRevision});
+        return {workspace,native:result.workspace,record:responseRecord(result.record),document:responseDocument(result.document)};
+      }
+      case 'merchant_canadabuys_response_prepare':
+      case 'merchant_canadabuys_response_apply': {
+        const operation=name.endsWith('_prepare')?'prepare':'apply';
+        const {request,inspection}=await this.#responseInput(entry,input,operation);
+        // Do not add a live revision precheck: the native command journal reopens
+        // the original result first, even after subsequent edits or exports.
+        const result=operation==='prepare'?prepareResponseReview(model,request):await applyResponseReturn(model,request);
+        return {workspace,native:result.workspace,commandId:request.commandId,input:inspection.file,
+          record:responseRecord(result.record),alreadyApplied:result.alreadyApplied||false,
+          ...(result.returnedRecord?{returnedRecord:responseRecord(result.returnedRecord)}:{}),
+          ...(result.comparison?{comparison:{reviewSha256:result.comparison.reviewSha256,
+            contextSha256:result.comparison.contextSha256,reviewResets:result.comparison.reviewResets}}:{})};
+      }
+      case 'merchant_canadabuys_response_export': return this.#responseExport(entry,input);
+      case 'merchant_canadabuys_response_compare': {
+        const {request,inspection}=await this.#responseInput(entry,input,'compare');
+        this.#revision(entry,input.expectedRevision);
+        const result=await compareResponseReturn(model,request);
+        if(result.workspace.revision!==input.expectedRevision)
+          throw failure('CANADABUYS_REVISION_CONFLICT','The workspace advanced while reading this complete return. Retain the same input and compare it against the current revision.');
+        // All values below are the original complete comparison snapshot.
+        const counts={};for(const row of result.comparison.rows)counts[row.status]=(counts[row.status]||0)+1;
+        const saved=await this.#retainResponse(entry,{body:encoded(result),format:'comparison',
+          native:result.workspace,record:result.current.record,
+          selection:{inputSha256:inspection.file.sha256,incomingSha256:result.incoming.sha256,
+            reviewSha256:result.comparison.reviewSha256,contextSha256:result.comparison.contextSha256}});
+        return {...saved,input:inspection.file,incoming:result.incoming,
+          comparison:{reviewSha256:result.comparison.reviewSha256,contextSha256:result.comparison.contextSha256,
+            returnReady:result.comparison.returnReady,changedSource:Boolean(result.comparison.changedSource),
+            changedWorkshare:Boolean(result.comparison.changedWorkshare),rows:result.comparison.rows.length,counts}};
+      }
+
       case 'merchant_canadabuys_bidder_intake_inspect':
         return (await this.#intakeInput(entry, input)).inspection;
       case 'merchant_canadabuys_bidder_intake': {

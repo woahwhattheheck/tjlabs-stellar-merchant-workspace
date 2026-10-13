@@ -125,8 +125,8 @@ export async function main(argv = process.argv.slice(2), { environment = process
   if (command === 'publication-selection') {
     const a = flags(remaining, ['directory', 'out'], ['directory', 'out']);
     const original = await showCanadaBuysOperation(resolve(a.directory));
-    need(original.request.request.name === CANADABUYS_TOOL_PREFIX + 'export',
-      'Select an original retained export operation.');
+    need(['export','response_export','response_compare'].includes(original.request.request.name.slice(CANADABUYS_TOOL_PREFIX.length)),
+      'Select the original retained export or response comparison operation.');
     return output({ schema: CANADABUYS_CUSTOMER_OPERATION_SCHEMA + '.publication-selection',
       operationId: original.request.operationId, requestSha256: original.requestSha256, publicationId: '',
       note: 'Replace with the observed original publication UUID and explain its original export evidence.' }, a.out, stdout);
