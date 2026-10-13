@@ -359,3 +359,52 @@ node stellar/scf-starforge-20261009/sf30-seller-sdk/directus/native-browser.mjs 
 ~~~
 
 The walk uses the actual UI for native draft creation, exact patch text, comparison and promotion; collection capture; field selection and edition review; dataset query; merchant offer and buyer preparation; completed original customer receiving; project download, receiving and restart. It also saves and inspects the acquired session through the actual controls, receives customer data from its relocated pages, starts a saved publisher from the received project, downloads its saved buyer configuration, and inspects its original customer delivery. The session remains available after the second project transfer and operator restart. It saves eight desktop/mobile viewport images, including 390-pixel keyboard navigation and the saved publishing tables, plus the received editable project and `BROWSER_RESULT.json`. All browser and operator resources close before the native job releases its original Directus service.
+
+## Customer-agent operation of the same saved Directus project
+
+The installed `directus-workspaces` merchant provider gives a customer's agent access to this existing application. The browser, direct Node client and customer tools use the original operator registry, collection records, immutable editions, approvals, native mutation journal, publisher generations and buyer-session archive. Configure the private host once using [MERCHANT_SETUP.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/directus/MERCHANT_SETUP.md). The source-owned initializer preserves the whole existing merchant configuration and release store.
+
+An attachment identifies **operatorId, instanceId, projectKey and workspaceId**. Two received projects can retain the same original workspace ID and still have different registry keys. Select a project explicitly with `merchant_directus_project`; every following request carries all four identities. A different browser selection rejects stale work. Reopening after a listener restart binds its new instance. Managed attachment uses the current Applications listener; owned attachment starts the original Node operator against its existing private registry. A failed owned admission retains the exact cleanup handle for another close attempt.
+
+### Complete operating sequence
+
+1. Open the configured operator alias. Read `state`, then page `sources`, `editions`, `reviews`, `merchant-packages`, `buyer-configurations`, `customer-deliveries` and `buyer-sessions` through each returned `nextOffset`. The `agent-requests` and `operations` pages recover stable IDs and statuses after reopening; inspect an agent request by its original ID before resuming.
+2. Select a named Directus connection. The host resolves its `tokenEnv`; credential values remain outside saved project records. Import a complete captured source through a configured file alias, or perform the original native `capture`. Native draft creation, save, comparison, promotion and item reads retain their existing Directus 12.5 principal, patch, version, response and reconciliation identities.
+3. Save an edition from exact source item variants, selected fields, mode and distribution rights. Read its full record and compare it to the previous edition. Approve its exact edition digest with the original reviewer/comment, then select that approval. These are the same operations used in the browser.
+4. Prepare a publisher with that exact edition and review. A new publisher can reuse the version store of a selected saved `versionMerchantId`, preserving the original refresh contract. Start its original dataset merchant with a configured private runtime alias; it passes the original port, facilitator and deliberate local-facilitator setting into SF82.
+5. Read the original live buyer offer. Prepare the buyer using its exact `offerSha256`, selected `acceptIndex`, query and `intentId`. Initialize the original SF88 session with explicit page, amount and row limits. Run or recover that saved session; the original signer, purchase decisions and budget checks still apply.
+6. Receive the finished buyer session into the original customer data room. Complete datasets, retained original responses, lineage, acquisition and payment information become saved customer files. Source captures are included only when `includeSourceCaptures` is explicitly selected.
+7. Export exact records, native response bytes, individual delivery members or the **whole SQLite project**. A project export requires the current `expectedRevision`; its stable export ID pins the resulting complete file. Read every chunk to the returned terminal offset and verify full byte length and SHA-256.
+8. Receive that complete original project with a stable receiving ID and configured file alias. The operator creates its independent received-project registry entry and restores original publisher and buyer-session custody. Select its returned project scope, inspect earlier records and acquired pages, make a new saved change, and export the reopened project again.
+
+### Saved actions
+
+Every save is `{action,input}`. Input always contains a stable `operationId`, an `actor` and the reviewed `expectedRevision`. Operation IDs use 8–128 letters, numbers or `_ . : -`. After an uncertain response, inspect that same operation and resume it. New input uses a new operation ID and the current revision.
+
+| Action | Additional original inputs |
+| --- | --- |
+| `import-source` | Configure `sourceFile` on the tool call. The client streams its exact full captured bytes; it supplies the internal upload ID and SHA itself. |
+| `save-edition` | Existing `name`, `mode`, `selection`, `metadataFields`, `rights`, and optional `previousEditionId` / `nativeOperationIds`. |
+| `review-edition` | `editionId`, `editionSha256`, `decision`, `comment`. |
+| `select-edition` | `editionId`, `reviewId`. |
+| `compare-editions` | `beforeId`, `afterId`. |
+| Native `capture` / draft / item actions | The original named native inputs from this guide; `expectedRevision` is the initial agent decision boundary, while native event commits retain their own revisions. |
+| `prepare-merchant` | `editionId`, `editionSha256`, `reviewId`, original `payment`, `origin`, optional route `path` and saved `versionMerchantId`. Local output paths are owned by the existing project. |
+| `publish` | `merchantId`, original `expectedSnapshot` and `publisherRevision`. The actual returned publication is retained in the original project. |
+| `prepare-buyer` | `merchantId`, `query`, `intentId`, `acceptIndex`, `offerSha256`. |
+| `buyer-session-init` | `buyerId`, `maxPages`, `maxTotalAtomic`, optional `maxRows` / `maxPageBytes`. |
+| `buyer-session-run` | `buyerId`, optional original `retryUnpaid` and `expectedAttemptSha256`. |
+| `buyer-session-recover` | `buyerId`. |
+| `receive-buyer` | `merchantId`, `buyerId`, optional `includeSourceCaptures`. |
+
+Native writes are never blindly repeated after interruption. Their original invocation and response events decide whether the same request can continue or requires reconciliation. Cancellation signals the active native transport or original buyer session and retains its saved history. Owned shutdown stops accepting new requests, drains accepted HTTP handlers and the same native work, then closes its publisher services, workspace and lease. Managed shutdown detaches only the agent client and its file descriptors.
+
+### Original files and project size
+
+Control requests are limited to 2 MiB. Original captured sources retain the product's 256 MiB bound. Whole-project receiving is streamed up to 32 GiB, allowing the existing complete buyer-session archive to travel with the editable project. Customer-agent file readers use an owned read-only descriptor, stream whole-file hashing and return chunks up to 196,608 bytes; they do not copy a multi-gigabyte project into a JavaScript buffer.
+
+A saved export ID names one exact file. A retry uses its original length and SHA-256. A restarted reader uses the same export ID, expected digest and next offset, omitting the previous process's read ID. Completed saved operations can be inspected without reopening a former input file. An incomplete operation whose original runtime directory has moved remains attached to its original request; new work in the received project uses that project's current binding.
+
+### Original native commissioning
+
+Continue **SCF-DIRECTUS-CONTENT-DATA-A238-20261012** using its existing source and customer case. In the same operated project, run the customer-agent course above alongside the browser: original source selection → reviewed edition → original paid/free publisher and buyer → complete customer files → whole project export → independent receiving → reopened change and re-export. Retain actual native outputs with the original operation. The customer-agent implementation adds access to that maintained course and does not replace its source acquisition or execution history.
