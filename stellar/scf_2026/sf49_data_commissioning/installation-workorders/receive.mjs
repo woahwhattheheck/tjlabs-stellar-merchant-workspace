@@ -256,11 +256,29 @@ function nativeCustomerSeed(customer, attached, state, before) {
     fail("The native seed selected a different original commercial plan.");
   return seed;
 }
+function programmeDirectory(customer) {
+  const root = join(options.out, "customer-programmes");
+  const earlier = join(root, customer.profile);
+  const retainedSeed = join(earlier, "original-native-seed.json");
+  if (existsSync(retainedSeed)) {
+    const seed = JSON.parse(regular(retainedSeed).toString("utf8"));
+    if (seed.source?.caseId === options.case && seed.source?.planId === options.plan &&
+        seed.workshare?.caseId === customer.workshareCaseId &&
+        seed.workshare?.planSha256 === customer.planSha256)
+      return earlier;
+  }
+  // Two customers can select the same installed profile in this original operation.
+  // The complete case identity selects a private programme directory; an earlier
+  // accepted per-profile seed continues in its own retained location.
+  const identity = hash(Buffer.from(canonical({workshareCaseId: customer.workshareCaseId,
+    planSha256: customer.planSha256}), "utf8"));
+  return join(root, customer.profile + "-" + identity);
+}
 function prepareProgramme(customer, attached) {
   const selected = programmeInputs(customer, attached);
   if (!selected) return null;
   const profile = readProfile(customer.profile).value;
-  const directory = join(options.out, "customer-programmes", customer.profile);
+  const directory = programmeDirectory(customer);
   privateDirectory(directory);
   const retainedSeed = join(directory, "original-native-seed.json");
   let seed;
