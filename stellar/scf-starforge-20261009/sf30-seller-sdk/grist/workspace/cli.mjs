@@ -4,7 +4,7 @@ import { constants } from 'node:fs';
 import { open, link, unlink } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { readJson, bytes, createFile, privateDirectory, syncDirectory, fault } from '../../postgres/publisher/files.mjs';
+import { readJson, bytes, createFile, privateDirectory, hashPrivate, syncDirectory, fault } from '../../postgres/publisher/files.mjs';
 import { openGristAuthoring } from './model.mjs';
 import { MAX_WORKSPACE_BYTES, existingGristWorkspaceArchive } from './handover.mjs';
 import { serveGristAuthoring } from './server.mjs';
@@ -55,9 +55,19 @@ const HELP = [
   '  deployment-console --directory PRIVATE_DIR',
   '  deployment-compare --directory PRIVATE_DIR --from RELEASE_ID --to RELEASE_ID',
   '  deployment-file --directory PRIVATE_DIR --request PACKAGE_UUID --file NAME --out NEW_FILE',
+  "  return-capture --directory PRIVATE_DIR --name RECEIVED_NAME --expected-revision N --request UUID",
+  "  returns --directory PRIVATE_DIR",
+  "  return --directory PRIVATE_DIR --review UUID",
+  "  return-preview --directory PRIVATE_DIR --review UUID [--offset N] [--limit 1..100]",
+  "  return-review --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --choices CHOICES.json --note TEXT --request UUID",
+  "  return-apply --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --request UUID",
+  "  return-export --directory PRIVATE_DIR --review UUID [--revision N] --out FROZEN_REVIEW.json",
   '  identity --directory PRIVATE_DIR',
   '  source-identity [--source-directory INSTALLED_WORKSPACE_SOURCE_DIR]',
   '',
+  'Returned-review writes require --request UUID. Keep the complete choices file and preview SHA for the original retry.',
+  'Choices replace the whole saved map. Read every preview page, save decisions, then refresh preview before apply.',
+  'Apply changes only the author draft. Run the existing full-row preview and save-version/publication separately.',
   'Writes accept --request UUID. Save the printed UUID and use operation/resume after an interrupted response.',
   'Capture Resume advances the original step journal under the same UUID/selection. Metadata recovery requires a retained response. A fresh observation uses a new explicit request.',
   'Document lists retain exact metadata bytes under the same request UUID; document-tables/export perform no provider read.',
@@ -72,13 +82,13 @@ const FLAGS = new Set(['--create','--startup-json']);
 const VALUES = new Set(['--directory','--target','--connections','--port','--connection','--document','--table','--filter',
   '--selection','--title','--expected-revision','--source','--packet','--capture','--draft','--draft-revision','--preview',
   '--reviewer','--note','--expected-selected-version','--version','--left','--right','--out','--request','--input',
-  '--catalog','--expected-catalog-sha256','--offset','--limit','--search','--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--filter-file','--seller','--resource','--archive','--sha256','--name']);
+  '--catalog','--expected-catalog-sha256','--offset','--limit','--search','--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--filter-file','--seller','--resource','--archive','--sha256','--name','--review','--expected-review-revision','--preview-sha256','--choices','--revision']);
 const COMMANDS = new Set(['operating','init','serve','status','document','document-tables','document-export','discover','capture','import-source','import','inspect-capture','attempt',
   'draft','preview','save','select','compare','export','export-capture','packet','operation','resume','publisher',
   'deployment-status','deployment-review','deployment-prepare','deployment-stage','deployment-package',
   'deployment-console','deployment-compare','deployment-file','identity','source-identity',
-  'workspace-export','workspace-exports','workspace-download','workspace-receive','workspace-received']);
-const PATHS = new Set(['--directory','--target','--connections','--selection','--source','--packet','--draft','--out','--input','--source-directory','--filter-file','--archive']);
+  'workspace-export','workspace-exports','workspace-download','workspace-receive','workspace-received','return-capture','returns','return','return-preview','return-review','return-apply','return-export']);
+const PATHS = new Set(['--directory','--target','--connections','--selection','--source','--packet','--draft','--out','--input','--source-directory','--filter-file','--archive','--choices']);
 function parse(argv) {
   const [command, ...args] = argv, options = {};
   if (!COMMANDS.has(command)) throw fault('COMMAND_REQUIRED', HELP);
@@ -156,6 +166,38 @@ async function saveWorkspaceArchive(file, descriptor) {
     try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT')issues.push(issue);}
     if(issues.length && !primary)throw issues[0];
   }
+}
+
+async function returnedChoicesFile(file) {
+  const value=await readJson(file,1024*1024);
+  if(!value||typeof value!=='object'||Array.isArray(value)||
+      Object.entries(value).some(([path,side])=>!path.startsWith('/')||!['local','returned','base'].includes(side)))
+    throw fault('GRIST_RETURN_CHOICES_INVALID','Use the complete JSON pointer to local/returned/base choice map, not a preview or local-download envelope.');
+  return value;
+}
+async function saveReturnedReviewFile(file,artifact) {
+  const content=artifact.bytes;
+  const size=content?.length;
+  if(!Number.isSafeInteger(size)||size<1)throw fault('GRIST_RETURN_EXPORT_INVALID');
+  const digest=createHash('sha256').update(content).digest('hex');
+  const result={file,bytes:size,sha256:digest};
+  await privateDirectory(dirname(file));
+  async function identical() {
+    let existing;
+    try{existing=await hashPrivate(file,size);}catch(issue){if(issue.code==='ENOENT')return false;throw issue;}
+    if(existing.bytes!==size||existing.hash!==digest)
+      throw fault('GRIST_RETURN_OUTPUT_CHANGED','The output already contains different bytes. Keep it and choose a new output for this review revision.');
+    return true;
+  }
+  if(await identical())return result;
+  const temporary=join(dirname(file),'.grist-return-'+randomUUID()+'.partial');
+  let primary;
+  try{
+    await createFile(temporary,content);
+    try{await link(temporary,file);}catch(issue){if(issue.code!=='EEXIST'||!await identical())throw issue;}
+    await unlink(temporary);await syncDirectory(dirname(file));return result;
+  }catch(issue){primary=issue;throw issue;}
+  finally{try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT'&&!primary)throw issue;}}
 }
 
 async function lifetime(service, ready, { compact = false } = {}) {
@@ -252,6 +294,23 @@ export async function main(argv = process.argv.slice(2)) {
       archiveFile:required(o,'--archive'),expectedSha256:required(o,'--sha256'),name:required(o,'--name'),requestId:required(o,'--request')
     });
     else if (command === 'workspace-received') result={received:await workspace.receivedWorkspaces()};
+    else if(command==='return-capture')result=await workspace.captureReturnedReview({
+      name:required(o,'--name'),expectedDraftRevision:number(required(o,'--expected-revision'),'--expected-revision'),requestId:required(o,'--request')});
+    else if(command==='returns')result={returns:await workspace.returnedReviews()};
+    else if(command==='return')result=await workspace.returnedReview(required(o,'--review'));
+    else if(command==='return-preview'){
+      const count=o['--limit']===undefined?100:number(o['--limit'],'--limit');
+      if(count<1||count>100)throw fault('GRIST_RETURN_LIMIT_INVALID','Use a limit from 1 through 100.');
+      result=await workspace.previewReturnedReview({reviewId:required(o,'--review'),offset:o['--offset']===undefined?0:number(o['--offset'],'--offset'),limit:count});
+    } else if(command==='return-review')result=await workspace.saveReturnedReview({
+      reviewId:required(o,'--review'),expectedReviewRevision:number(required(o,'--expected-review-revision'),'--expected-review-revision'),
+      previewSha256:required(o,'--preview-sha256'),choices:await returnedChoicesFile(required(o,'--choices')),
+      note:required(o,'--note'),requestId:required(o,'--request')});
+    else if(command==='return-apply')result=await workspace.applyReturnedReview({
+      reviewId:required(o,'--review'),expectedReviewRevision:number(required(o,'--expected-review-revision'),'--expected-review-revision'),
+      previewSha256:required(o,'--preview-sha256'),requestId:required(o,'--request')});
+    else if(command==='return-export')result=await saveReturnedReviewFile(required(o,'--out'),await workspace.exportReturnedReview({
+      reviewId:required(o,'--review'),...(o['--revision']===undefined?{}:{revision:number(o['--revision'],'--revision')})}));
     else if (command === 'init' || command === 'status') result = await workspace.status();
     else if (command === 'document') result = await workspace.listDocument({ connectionAlias: required(o, '--connection'),
       docId: required(o, '--document'), requestId: requestId() });

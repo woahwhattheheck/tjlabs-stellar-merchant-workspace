@@ -2,6 +2,7 @@
 export const SOURCE_FILES=Object.freeze([
   "launch.mjs",
   "model.mjs",
+  "returns.mjs",
   "placement.mjs",
   "handover.mjs",
   "uploads.mjs",
