@@ -24,6 +24,7 @@ export async function serveGristAuthoring({ workspace, port = 8482 } = {}) {
   const assets = new Map(await Promise.all([
     ['/', 'index.html', 'text/html; charset=utf-8'], ['/browser.mjs', 'browser.mjs', 'text/javascript; charset=utf-8'],
     ['/style.css', 'style.css', 'text/css; charset=utf-8'],
+    ['/operating-browser.mjs','operating-browser.mjs','text/javascript; charset=utf-8'],
   ].map(async ([path, file, mime]) => [path, { content: await readFile(new URL('./' + file, import.meta.url)), mime }])));
   let origin, closing;
   const server = createServer((req, res) => {
@@ -91,6 +92,11 @@ export async function serveGristAuthoring({ workspace, port = 8482 } = {}) {
       }
       if (req.method !== 'POST') throw fault('NOT_FOUND', 'Action not found.', 404);
       const input = await body(req);
+      if (path === '/api/operating') {
+        if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(k=>!['method','args'].includes(k)))
+          throw fault('GRIST_PROCEDURE_FIELDS','Send the documented method and complete args.');
+        return send(200,await workspace.operating(input.method,input.args));
+      }
       if (path === '/api/document') return send(201, await workspace.listDocument(input));
       if (path === '/api/discover') return send(201, await workspace.discover(input));
       if (path === '/api/import-package') return send(201, await workspace.importPacket(input));

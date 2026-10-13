@@ -240,14 +240,8 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     await initializeSourceBuildWorkspace(root);
     initialized = true;
   }
-  if (!receiving || receiving.phase === 'BINDINGS_REVIEWED') {
-    try { await withWorkspaceWrite(root, initialize); }
-    catch (error) {
-      // Opening an observer must remain possible while a backup owns the gate.
-      // The first later mutation completes any original initialization.
-      if (error.code !== 'RUNTIME_WORKSPACE_BACKUP_BUSY') throw error;
-    }
-  }
+  // Opening is read-only. The first lifecycle mutation initializes optional
+  // feature directories under the shared workspace lease.
   const operationReader = createOperationReader({
     readJob: (id, observe) => jobView(root, id, observe),
     workerAlive, managedCommandAlive, operationRunning,
@@ -325,7 +319,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
     },
     async pythonState(input) {
       const selected = await entry(root, recordId(input.runtimeId));
-      return pythonWorkspaceState(root, { ...input, runtimeDirectory: selected.directory });
+      return pythonWorkspaceState(root, { ...input, runtimeDirectory: selected.directory }, await observedOperations());
     },
     async pythonReview(input) {
       const selected = await entry(root, recordId(input.runtimeId));
@@ -529,7 +523,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
       const plan = await readJSON(join(selected.directory, 'runtime-install.json'));
       const command = await runtimeCommand({ directory: selected.directory, args: ['source'] });
       const activePython = await readJSON(join(selected.directory, 'python-runtime', 'active.json'), true);
-      const python = activePython ? await pythonWorkspaceState(root, { runtimeId, runtimeDirectory: selected.directory }) : null;
+      const python = activePython ? await pythonWorkspaceState(root, { runtimeId, runtimeDirectory: selected.directory }, await observedOperations()) : null;
       return { schema: 'stellar-forge.runtime-deployment-handoff.v1', createdAt: now(),
         installationId: observed.installationId, directory: observed.directory, sourceCommit: observed.sourceCommit,
         packageVersion: observed.packageVersion, profileId: observed.profileId, lockSha256: observed.lockSha256,
@@ -642,7 +636,7 @@ export async function openRuntimeWorkspace({ directory, openApiSetupPolicy = {} 
   };
   // Keep retained inspection available during receiving. All existing lifecycle
   // methods, including reviews that persist records, share the backup gate.
-  const readMethods = new Set(["sourcePlansState","sourcePlanRead","sourcePlanRuntimes","sourcePlanHandoff","sourcePlanBriefing","sourcePlanReceiving","sourceBuildsState","sourceBuildsCatalog","sourceBuildsProduct","sourceBuildsReadReview","sourceBuildsDownload","pythonState","pythonDownload","transfersState","transfersDownload","imagesState","imagesDownload","state","operationStatus","catalog","review","compare","handoff","logs","applicationGroupsState","applicationsState","applicationsHistory","applicationsOutput","applicationsTerminal","managedState","close"]);
+  const readMethods = new Set(["sourcePlansState","sourcePlanRead","sourcePlanRuntimes","sourcePlanHandoff","sourcePlanBriefing","sourcePlanReceiving","sourceBuildsState","sourceBuildsReadReview","pythonState","pythonDownload","transfersState","transfersDownload","imagesState","imagesDownload","state","operationStatus","catalog","review","compare","handoff","logs","applicationGroupsState","applicationsState","applicationsHistory","applicationsOutput","applicationsTerminal","managedState","close"]);
   for (const [name, method] of Object.entries(model)) {
     if (typeof method !== 'function' || readMethods.has(name) || name.startsWith('workspaceBackup')) continue;
     model[name] = (...args) => withWorkspaceWrite(root, async () => {

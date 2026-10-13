@@ -1,4 +1,5 @@
 // MIT. Original Grist tool metadata; source and provider runtimes load only when selected.
+import {operatingTools} from './operating-catalog.mjs';
 import { MAX_RETAINED_CHUNK_BYTES } from '../../../../../stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs';
 import { publisherTools } from '../../../../../stellar-forge/mcp-merchant-operator/catalog/publisher.mjs';
 
@@ -174,6 +175,7 @@ export function gristWorkspaceTools(tool) {
     tool('merchant_grist_packet_release', 'Release only this alias verified packet-read snapshot. Does not delete an original version, capture, publisher, release or workspace.', {
       ...selected, readId: uuid,
     }, ['workspace', 'readId'], read),
+    ...operatingTools(tool),
     // Schema and behavior stay with the original retained-publisher adapter.
     ...publisherTools((name, description, properties, required, annotations) => {
       if (['merchant_publishers', 'merchant_publisher_open', 'merchant_publisher_close'].includes(name)) return null;

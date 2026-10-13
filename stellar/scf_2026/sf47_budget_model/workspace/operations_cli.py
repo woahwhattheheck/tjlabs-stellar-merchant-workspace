@@ -12,6 +12,7 @@ from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
 import operations_commercial_cli as commercial_cli
 import operations_installation_returns_cli as installation_returns_cli
+import operations_company_returns_cli as company_returns_cli
 import operations_ledger_intake as ledger_intake
 import operations_funding_cli as funding_cli
 import award_terms_cli
@@ -512,6 +513,7 @@ def register(subparsers, common):
     award_terms_cli.register(command, mutation)
     commercial_cli.register(command)
     installation_returns_cli.register(command, mutation)
+    company_returns_cli.register(command, mutation)
 
 def read_bytes(filename, maximum=MAX_BUNDLE):
     path = Path(filename).expanduser().resolve()
@@ -702,6 +704,8 @@ def operate(workspace, args):
         return funding_cli.operate(ops, args, read_bytes, publish)
     if award_terms_cli.operates(action):
         return award_terms_cli.operate(ops, args, read_bytes, publish)
+    if action.startswith("installation-company-return-"):
+        return company_returns_cli.operate(ops, args, read_bytes, publish)
     if action == "installation-returns" or action.startswith("installation-return-"):
         return installation_returns_cli.operate(ops, args, read_bytes, publish)
     if action.startswith("commercial-"):

@@ -393,10 +393,12 @@ export function exportCohortDeliveryCsv(document) {
     for(const row of c.assets)add('commercial_asset',row.network+':'+row.asset,'','atomic amount',row.plannedAtomic,row.observedAtomic,row.differenceAtomic,row);
     for(const row of c.opportunities)add('commercial_opportunity',row.id,'','atomic amount',row.plannedAtomic,row.observedAtomic,row.differenceAtomic,row);
     for(const row of c.transactions)add('commercial_transaction',row.id,dayOf(row.settledAt),'valued settlement',null,row.valuedAmount,null,row);
-    for(const row of c.costs)add('commercial_cost',row.id,dayOf(row.occurredAt),'recorded cost',null,row.calculatedAmount,null,row);
+    for(const row of c.costs)add('commercial_cost',row.id,row.originalCost?row.periodEnd:dayOf(row.occurredAt),'recorded cost',null,row.calculatedAmount,null,row);
     for(const row of c.adjustments)add('commercial_adjustment',row.id,dayOf(row.occurredAt),row.kind,null,row.amount,null,row);
     for(const row of c.choices.valuations)add('commercial_valuation',row.network+':'+row.asset,dayOf(row.asOfAt),'whole-unit value',null,row.unitValue,null,row);
     for(const row of c.services)add('commercial_service',row.id,'','known recorded cost',row.plannedCost,row.knownRecordedCost,null,row);
+    if(c.originalCostIntake){for(const row of c.originalCostIntake.rows)add('original_cost_balance',row.sourceKey,row.periodEnd,row.unit,row.quantity,row.selectedQuantity,row.unselectedQuantity,row);
+      for(const row of c.originalCostIntake.overlaps)add('original_cost_overlap',row.workId,'','distinct cost review',null,row.reviewedDistinctCosts,null,row);}
     for(const row of c.issues)add('commercial_finding',row.id||row.code,'',row.code,null,null,null,row);
   }
   return rows.map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
@@ -469,7 +471,7 @@ function cmNullable(value,path){return value===null||value===undefined||value===
 function cmKey(network,asset){return JSON.stringify([network,asset]);}
 function cmTxKey(network,hash){return JSON.stringify([network,hash.toLowerCase()]);}
 function cmNormalize(raw){
-  cmFields(raw,['schema','currency','transactionScope','feeTreatment','costCoverage','coverageNote','valuations','costs','adjustments','transactionAllocations','note'],'commercial');
+  cmFields(raw,['schema','currency','transactionScope','feeTreatment','costCoverage','coverageNote','valuations','costs','adjustments','transactionAllocations','note','originalCosts'],'commercial');
   if(raw.schema!==COHORT_COMMERCIAL_SCHEMA)fail('COMMERCIAL_SCHEMA_REQUIRED','Use '+COHORT_COMMERCIAL_SCHEMA+'.','commercial.schema');
   const currency=cmRequired(raw.currency,'commercial.currency',16);
   if(!/^[A-Z][A-Z0-9._-]{0,15}$/.test(currency))fail('COMMERCIAL_CURRENCY_REQUIRED','Select one explicit reporting currency.','commercial.currency');
@@ -519,7 +521,8 @@ function cmNormalize(raw){
   return {schema:COHORT_COMMERCIAL_SCHEMA,currency,
     transactionScope:choose(raw.transactionScope,['SETTLED_IN_WINDOW','FIRST_ATTEMPT_IN_WINDOW'],'commercial.transactionScope'),
     feeTreatment:choose(raw.feeTreatment,['SEPARATE','INCLUDE_AS_COST'],'commercial.feeTreatment'),costCoverage,coverageNote,
-    valuations,costs,adjustments,transactionAllocations:allocations,note:text(raw.note||'','commercial.note',20000)};
+    valuations,costs,adjustments,transactionAllocations:allocations,note:text(raw.note||'','commercial.note',20000),
+    ...(Object.hasOwn(raw,'originalCosts')?{originalCosts:ocNormalize(raw.originalCosts)}:{})};
 }
 export function seedCohortCommercialChoices(document,options={}){
   const report=document?.schema===COHORT_DELIVERY_COMPARISON_SCHEMA?reopenCohortDeliveryComparison(document):compareCohortDelivery(document);
@@ -607,6 +610,12 @@ function cmReconcile(report,choices){
     const amount=row.costType==='LABOR'?(row.activeHours===null||row.hourlyCost===null?null:cmText(cmMul(cmExact(row.activeHours,'activeHours'),cmExact(row.hourlyCost,'hourlyCost')))):row.amount;
     return {...copy(row),calculatedAmount:amount,service:row.serviceId?copy(serviceMap.get(row.serviceId)):null};
   });
+  const originalCostIntake=ocCompile(report,choices,serviceMap);
+  if(originalCostIntake){
+    const ids=new Set(costs.map(row=>row.id));
+    for(const row of originalCostIntake.costs){if(ids.has(row.id))fail('COMMERCIAL_ORIGINAL_IDENTITY','Keep manual and original-source cost row identities distinct.',row.id);ids.add(row.id);costs.push(row);}
+    if(originalCostIntake.unreviewedOverlaps.length)finding('ORIGINAL_WORK_INVOICE_OVERLAP','Review linked Work and invoice costs: remove a duplicated selection or record the actual source showing that both are distinct costs. Complete cost remains unspecified.');
+  }
   const refundCash=list(c.refundCash||[],'review.cohort.refundCash',10000),refundMap=new Map(refundCash.map(row=>[row.id,row])),joinedRefunds=new Set();
   const joinedRefundIntents=new Set(),selectedGroupIds=new Set(selected.flatMap(row=>row.groupIds));
   const adjustments=choices.adjustments.map(row=>{
@@ -632,7 +641,7 @@ function cmReconcile(report,choices){
   const knownCosts=cmSum(costs.filter(row=>row.calculatedAmount!==null).map(row=>cmExact(row.calculatedAmount,'cost')));
   const refunds=cmSum(adjustments.filter(row=>row.kind==='REFUND').map(row=>cmExact(row.amount,'refund')));
   const otherRevenue=cmSum(adjustments.filter(row=>row.kind==='OTHER_REVENUE').map(row=>cmExact(row.amount,'otherRevenue')));
-  const costComplete=choices.costCoverage==='COMPLETE'&&!costUnknown&&(choices.feeTreatment==='SEPARATE'||!feeUnknown);
+  const costComplete=choices.costCoverage==='COMPLETE'&&!costUnknown&&(choices.feeTreatment==='SEPARATE'||!feeUnknown)&&!originalCostIntake?.unreviewedOverlaps.length;
   const costTotal=cmAdd(knownCosts,choices.feeTreatment==='INCLUDE_AS_COST'?knownFees:cmZero),net=cmAdd(cmSub(knownPayments,refunds),otherRevenue);
   const baseline=plan.currencies.find(row=>row.currency===choices.currency)||null;
   const actual={grossSettlementValue:paymentUnknown?null:cmText(knownPayments),refunds:cmText(refunds),otherRevenue:cmText(otherRevenue),
@@ -660,7 +669,8 @@ function cmReconcile(report,choices){
     coverage:{costCoverage:choices.costCoverage,costCoverageNote:choices.coverageNote,unvaluedTransactions:paymentUnknown,
       unvaluedFeeTransactions:feeUnknown,unresolvedCosts:costUnknown,unreviewedRefundCashIds:unreviewedRefunds.map(row=>row.id),unreviewedRefundIntentIds:unreviewedRefundIntents.map(row=>row.id),
       unallocatedTransactionIds:selected.filter(row=>!row.parts.length).map(row=>row.id)},
-    assets,opportunities,transactions:transactionRows,costs,adjustments,originalRefundCash:copy(refundCash),services,issues,note:choices.note};
+    assets,opportunities,transactions:transactionRows,costs,adjustments,originalRefundCash:copy(refundCash),services,issues,note:choices.note,
+    ...(originalCostIntake?{originalCostIntake}: {})};
 }
 function cmHtml(report){
   const r=report.commercial;if(!r)return '';
@@ -673,8 +683,183 @@ function cmHtml(report){
     '<h3>Dated valuation sources</h3>'+t(['Network','Asset','Decimal places','Value per whole unit','As of','Original source'],r.choices.valuations.map(row=>[row.network,row.asset,row.atomicDecimals,row.unitValue,row.asOfAt,row.sourceReference]))+
     '<h3>Original transactions and allocation</h3>'+t(['Network / transaction','Amount atomic','Fee stroops','Included','Valued amount','Original intents','Allocations','Basis'],r.transactions.map(row=>[row.network+' / '+row.transactionHash,row.amountAtomic,row.feesAtomic,row.included,row.valuedAmount,row.groupIds,row.parts,row.allocationBasis+' '+row.allocationNote]))+
     '<h3>Recorded service costs</h3>'+t(['Original cost','Service component','Kind','Occurred','Amount','Active hours','Hourly cost','Original source'],r.costs.map(row=>[row.label+' / '+row.id,row.serviceId,row.costType,row.occurredAt,row.calculatedAmount,row.activeHours,row.hourlyCost,row.sourceReference]))+
-    '<h3>Original shared service components</h3>'+t(['Service','Funding groups','Planned currency / cost','Recorded currency / known cost','Original cost rows'],r.services.map(row=>[row.label,row.fundingGroupIds,row.currency+' / '+row.plannedCost,r.currency+' / '+row.knownRecordedCost,row.recordedCostIds]))+
+    ocHtml(r)+'<h3>Original shared service components</h3>'+t(['Service','Funding groups','Planned currency / cost','Recorded currency / known cost','Original cost rows'],r.services.map(row=>[row.label,row.fundingGroupIds,row.currency+' / '+row.plannedCost,r.currency+' / '+row.knownRecordedCost,row.recordedCostIds]))+
     '<h3>Refunds and revenue adjustments</h3>'+t(['Original adjustment','Kind','Value','Occurred','Original refund cash','Source'],r.adjustments.map(row=>[row.label,row.kind,row.amount,row.occurredAt,row.refundCashId,row.sourceReference]))+
     '<h3>Commercial coverage and findings</h3><p>'+esc(r.choices.coverageNote)+'</p>'+t(['Finding','Source','Action'],r.issues.map(row=>[row.code,row.id,row.message]))+
     '<details><summary>Complete commercial sources, known subtotals and original refund cash</summary><pre>'+esc(JSON.stringify(r,null,2))+'</pre></details>';
+}
+
+
+export const COHORT_ORIGINAL_COSTS_SCHEMA='stellar-forge.sf47-cohort-original-costs.v1';
+function ocDay(value,path){
+  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))fail('COMMERCIAL_ORIGINAL_PERIOD','Select an explicit original UTC civil date.',path);
+  timestamp(value+'T00:00:00Z',path);return value;
+}
+function ocInput(document){
+  const raw=document?.schema===COHORT_DELIVERY_COMPARISON_SCHEMA?document.input:document;
+  const input=normalizeInput(raw);checkedReview(input.review);checkedPlan(input.planDocument);return input;
+}
+function ocSourceKey(kind,id,lineId=''){return JSON.stringify([kind,id,lineId]);}
+function ocCatalog(input){
+  const review=input.review,records=review.snapshot.records;
+  if(!records||!Array.isArray(records.work)||!Array.isArray(records.invoices)||!Array.isArray(records.contributors))
+    fail('COMMERCIAL_ORIGINAL_RECORDS_REQUIRED','Select the complete native frozen review with its original Work, supplier invoices and contributor records.','review.snapshot.records');
+  const work=unique(list(records.work,'original work',10000),'id','original work');
+  const invoices=unique(list(records.invoices,'original invoices',10000),'id','original invoices');
+  const contributors=new Map(unique(list(records.contributors,'original contributors',10000),'id','original contributors').map(row=>[row.id,row]));
+  const sourceMap=new Map(unique(list(review.snapshot.sources,'original sources',10000),'id','original sources').map(row=>[row.id,row]));
+  const workMap=new Map(work.map(row=>[row.id,row])),rows=[];
+  function source(record,linked=[]){
+    const contributor=contributors.get(record.contributorId)||null;
+    const sourceIds=[...new Set([record,contributor,...linked].filter(Boolean).flatMap(row=>row.sourceIds||[]))].sort();
+    return {record:copy(record),contributor:copy(contributor),linkedWork:copy(linked),
+      attachments:sourceIds.map(id=>copy(sourceMap.get(id)||{id,missing:true}))};
+  }
+  for(const row of work){
+    const start=ocDay(row.startDate,'work.startDate'),end=ocDay(row.endDate,'work.endDate');
+    if(start>end)fail('COMMERCIAL_ORIGINAL_PERIOD','The original Work interval is reversed.',row.id);
+    rows.push({sourceKey:ocSourceKey('WORK',row.id),kind:'WORK',recordId:row.id,lineId:'',
+      label:row.description,contributorId:row.contributorId,contributorName:contributors.get(row.contributorId)?.name||row.contributorId,
+      state:row.state,costId:row.costId||'',fundingBasis:row.fundingBasis||'',unit:'HOURS',
+      quantity:cmText(cmExact(row.hours,'original recorded hours')),periodStart:start,periodEnd:end,workIds:[row.id],source:source(row)});
+  }
+  for(const row of invoices){
+    if(row.currency!=='USD')fail('COMMERCIAL_ORIGINAL_CURRENCY','Original supplier invoice lines retain their native USD liability. Select the complete native invoice record.',row.id);
+    const day=ocDay(row.issuedDate,'invoice.issuedDate');
+    for(const line of unique(list(row.lines,'original invoice lines',200),'id','original invoice lines')){
+      const ids=list(line.workIds||[],'invoice linked work',10000),linked=ids.map(id=>workMap.get(id)||{id,missing:true});
+      rows.push({sourceKey:ocSourceKey('INVOICE_LINE',row.id,line.id),kind:'INVOICE_LINE',recordId:row.id,lineId:line.id,
+        label:row.number+' / '+line.description,contributorId:row.contributorId,contributorName:contributors.get(row.contributorId)?.name||row.contributorId,
+        state:row.state,costId:line.costId||'',fundingBasis:'',unit:'USD',
+        quantity:cmText(cmExact(line.amountUsd,'original invoice line amount')),periodStart:day,periodEnd:day,workIds:copy(ids),source:source(row,linked)});
+    }
+  }
+  return {schema:'stellar-forge.sf47-cohort-original-cost-catalog.v1',reviewId:review.id,businessSha256:review.businessSha256,
+    programId:review.snapshot.program.id,window:copy(review.cohort.window),rows,
+    note:'Work quantities are original recorded hours. Invoice quantities are original USD liabilities. Original source states and civil dates do not imply paid cash or accepted customer work.'};
+}
+export function inspectCohortOriginalCosts(document){
+  const input=ocInput(document),catalog=ocCatalog(input),selection=input.commercial?.originalCosts?
+    ocNormalize(input.commercial.originalCosts):{schema:COHORT_ORIGINAL_COSTS_SCHEMA,selections:[],overlapReviews:[],note:''};
+  const originals=new Map(catalog.rows.map(row=>[row.sourceKey,row]));
+  return {...catalog,selection:copy(selection),sourceReviews:selection.selections.map(row=>{
+    const current=originals.get(row.sourceKey)||null;
+    return {selectionId:row.id,sourceKey:row.sourceKey,status:!current?'MISSING':canonical(row.source)===canonical(current.source)?'UNCHANGED':'CHANGED',
+      retainedSource:copy(row.source),currentSource:current?copy(current.source):null};
+  })};
+}
+function ocNormalize(raw){
+  cmFields(raw,['schema','selections','overlapReviews','note'],'commercial.originalCosts');
+  if(raw.schema!==COHORT_ORIGINAL_COSTS_SCHEMA)fail('COMMERCIAL_ORIGINAL_SCHEMA','Use '+COHORT_ORIGINAL_COSTS_SCHEMA+'.','commercial.originalCosts');
+  const selections=unique(list(raw.selections||[],'original cost selections',10000).map((row,i)=>{
+    const p='commercial.originalCosts.selections.'+i;
+    cmFields(row,['id','sourceKey','serviceId','quantity','unitCost','valuationAt','valuationSource','periodStart','periodEnd','allocationNote','source'],p);
+    const quantity=cmText(cmDecimal(row.quantity,p+'.quantity'));
+    if(quantity==='0')fail('COMMERCIAL_ORIGINAL_QUANTITY','Select a positive portion of the original Work or invoice line.',p);
+    const valuationAt=text(row.valuationAt||'',p+'.valuationAt',100);if(valuationAt)timestamp(valuationAt,p+'.valuationAt');
+    const start=ocDay(row.periodStart,p+'.periodStart'),end=ocDay(row.periodEnd,p+'.periodEnd');
+    if(start>end)fail('COMMERCIAL_ORIGINAL_PERIOD','The selected cost interval must be in date order.',p);
+    return {id:cmRequired(row.id,p+'.id',200),sourceKey:cmRequired(row.sourceKey,p+'.sourceKey',1000),
+      serviceId:text(row.serviceId||'',p+'.serviceId',700),quantity,unitCost:cmNullable(row.unitCost,p+'.unitCost'),
+      valuationAt,valuationSource:text(row.valuationSource||'',p+'.valuationSource',20000),
+      periodStart:start,periodEnd:end,allocationNote:cmRequired(row.allocationNote,p+'.allocationNote',20000),
+      source:jsonSource(row.source,p+'.source')};
+  }),'id','original cost selections');
+  const overlapReviews=list(raw.overlapReviews||[],'original overlap reviews',10000).map((row,i)=>{
+    const p='commercial.originalCosts.overlapReviews.'+i;cmFields(row,['workId','invoiceId','lineId','note'],p);
+    return {workId:cmRequired(row.workId,p+'.workId',500),invoiceId:cmRequired(row.invoiceId,p+'.invoiceId',500),
+      lineId:cmRequired(row.lineId,p+'.lineId',200),note:cmRequired(row.note,p+'.note',20000)};
+  });
+  const keys=overlapReviews.map(x=>JSON.stringify([x.workId,x.invoiceId,x.lineId]));
+  if(new Set(keys).size!==keys.length)fail('COMMERCIAL_ORIGINAL_OVERLAP','Keep one explicit review for each original Work/invoice-line association.','commercial.originalCosts.overlapReviews');
+  return {schema:COHORT_ORIGINAL_COSTS_SCHEMA,selections,overlapReviews,note:text(raw.note||'','commercial.originalCosts.note',20000)};
+}
+export function selectCohortOriginalCosts(document,selection){
+  cmFields(selection,['selections','overlapReviews','note','acceptSourceIds'],'original cost intake');
+  const input=ocInput(document),catalog=ocCatalog(input),rows=new Map(catalog.rows.map(row=>[row.sourceKey,row]));
+  if(!input.commercial)input.commercial=seedCohortCommercialChoices(input);
+  const accepted=list(selection.acceptSourceIds||[],'reviewed original selection IDs',10000);
+  if(accepted.some(id=>typeof id!=='string')||new Set(accepted).size!==accepted.length)
+    fail('COMMERCIAL_ORIGINAL_SOURCE_CHANGED','Select each explicit original-source acceptance once.','original cost intake.acceptSourceIds');
+  const selections=list(selection.selections,'original cost selection',10000).map((row,i)=>{
+    cmFields(row,['id','sourceKey','serviceId','quantity','unitCost','valuationAt','valuationSource','periodStart','periodEnd','allocationNote','source'],'original cost selection.'+i);
+    const existing=input.commercial.originalCosts?.selections?.find(previous=>previous.id===row.id);
+    const retain=Object.hasOwn(row,'source')?row.source:existing?.source;
+    if(retain!==undefined&&!accepted.includes(row.id))return {...copy(row),source:copy(retain)};
+    const original=rows.get(row.sourceKey);
+    if(!original)fail('COMMERCIAL_ORIGINAL_SOURCE_CHANGED','Select an existing original Work or invoice line from the complete frozen review.','original cost selection.'+i);
+    return {...copy(row),source:copy(original.source)};
+  });
+  if(accepted.some(id=>!selections.some(row=>row.id===id)))
+    fail('COMMERCIAL_ORIGINAL_SOURCE_CHANGED','Accept the source only for a retained selection.','original cost intake.acceptSourceIds');
+  input.commercial.originalCosts=ocNormalize({schema:COHORT_ORIGINAL_COSTS_SCHEMA,selections,
+    overlapReviews:selection.overlapReviews||[],note:selection.note||''});
+  return input;
+}
+export function receiveCohortOriginalCosts(document,selection){
+  return compareCohortDelivery(selectCohortOriginalCosts(document,selection));
+}
+function ocCompile(report,choices,serviceMap){
+  const selection=choices.originalCosts;if(!selection)return null;
+  const catalog=ocCatalog(report.input),map=new Map(catalog.rows.map(row=>[row.sourceKey,row]));
+  const window=catalog.window,start=ocDay(window.start,'original cohort start'),end=ocDay(window.end,'original cohort end');
+  const cutoff=timestamp(window.asOfAt,'original cutoff').day,used=new Map(),costs=[];
+  for(const row of selection.selections){
+    const original=map.get(row.sourceKey),path='commercial.originalCosts.selections.'+row.id;
+    if(!original||canonical(original.source)!==canonical(row.source))
+      fail('COMMERCIAL_ORIGINAL_SOURCE_CHANGED','The original Work, invoice, linked Work, contributor or source metadata changed. Inspect the complete current record and explicitly receive the reviewed selection again.',path);
+    if(original.state==='VOID'||!original.source.contributor||original.source.attachments.some(x=>x.missing)||original.source.linkedWork.some(x=>x.missing))
+      fail('COMMERCIAL_ORIGINAL_SOURCE_CHANGED','Select a retained, non-void original cost with its complete contributor and source context.',path);
+    if(row.serviceId&&!serviceMap.has(row.serviceId))fail('COMMERCIAL_COST_SOURCE_CHANGED','Select the complete original shared service component.',path+'.serviceId');
+    if(row.periodStart<original.periodStart||row.periodEnd>original.periodEnd||
+       row.periodStart<start||row.periodEnd>end||row.periodEnd>cutoff||
+       (original.kind==='INVOICE_LINE'&&(row.periodStart!==original.periodStart||row.periodEnd!==original.periodEnd)))
+      fail('COMMERCIAL_ORIGINAL_PERIOD','Keep selected Work portions within their original interval, review window and cutoff date. Invoice lines retain their original issue date.',path);
+    const q=cmExact(row.quantity,'selected quantity'),total=cmAdd(used.get(row.sourceKey)||cmZero,q);
+    if(cmSub(total,cmExact(original.quantity,'original quantity')).n>0n)
+      fail('COMMERCIAL_ORIGINAL_QUANTITY','The complete selected portions exceed this original Work hours or invoice-line USD amount.',path+'.quantity');
+    used.set(row.sourceKey,total);
+    let rate=row.unitCost;
+    if(original.kind==='INVOICE_LINE'&&choices.currency==='USD'){
+      if(rate!==null&&cmText(cmExact(rate,'unit cost'))!=='1')fail('COMMERCIAL_ORIGINAL_VALUATION','An original USD invoice amount retains a USD-per-USD rate of one.',path+'.unitCost');
+      rate='1';
+    }else if(rate!==null&&(!row.valuationAt||!row.valuationSource.trim()))
+      fail('COMMERCIAL_ORIGINAL_VALUATION','Retain the actual dated source for the hourly cost or reporting-currency value per original USD.',path);
+    const amount=rate===null?null:cmText(cmMul(q,cmExact(rate,'unit cost')));
+    costs.push({id:'original:'+row.id,label:original.label,serviceId:row.serviceId,costType:original.kind==='WORK'?'LABOR':'SUPPLIER',
+      amount:original.kind==='WORK'?null:amount,activeHours:original.kind==='WORK'?row.quantity:null,hourlyCost:original.kind==='WORK'?rate:null,
+      occurredAt:row.periodEnd,periodStart:row.periodStart,periodEnd:row.periodEnd,dateBasis:original.kind==='WORK'?'ENTERED_PORTION_OF_ORIGINAL_WORK_INTERVAL':'ORIGINAL_INVOICE_ISSUE_DATE',
+      sourceReference:row.allocationNote,calculatedAmount:amount,service:row.serviceId?copy(serviceMap.get(row.serviceId)):null,
+      originalCost:{selectionId:row.id,sourceKey:row.sourceKey,kind:original.kind,recordId:original.recordId,lineId:original.lineId,
+        unit:original.unit,quantity:row.quantity,unitCost:rate,valuationAt:row.valuationAt,valuationSource:row.valuationSource,
+        state:original.state,contributorId:original.contributorId,contributorName:original.contributorName,workIds:copy(original.workIds),source:copy(row.source)}});
+  }
+  const reviews=new Map(selection.overlapReviews.map(row=>[JSON.stringify([row.workId,row.invoiceId,row.lineId]),row])),overlaps=[];
+  const selectedWork=new Set(costs.filter(x=>x.originalCost.kind==='WORK').map(x=>x.originalCost.recordId));
+  for(const original of catalog.rows.filter(x=>x.kind==='INVOICE_LINE'&&used.has(x.sourceKey))){
+    for(const id of original.workIds)if(selectedWork.has(id)){
+      const key=JSON.stringify([id,original.recordId,original.lineId]),review=reviews.get(key)||null;
+      overlaps.push({workId:id,invoiceId:original.recordId,lineId:original.lineId,
+        workSelectionIds:costs.filter(x=>x.originalCost.kind==='WORK'&&x.originalCost.recordId===id).map(x=>x.originalCost.selectionId),
+        invoiceSelectionIds:costs.filter(x=>x.originalCost.sourceKey===original.sourceKey).map(x=>x.originalCost.selectionId),
+        reviewedDistinctCosts:!!review,note:review?.note||''});
+    }
+  }
+  const usedReviews=new Set(overlaps.map(row=>JSON.stringify([row.workId,row.invoiceId,row.lineId])));
+  const unusedOverlapReviews=selection.overlapReviews.filter(row=>!usedReviews.has(JSON.stringify([row.workId,row.invoiceId,row.lineId])));
+  const balances=catalog.rows.map(row=>({...copy(row),selectedQuantity:cmText(used.get(row.sourceKey)||cmZero),
+    unselectedQuantity:cmText(cmSub(cmExact(row.quantity,'original quantity'),used.get(row.sourceKey)||cmZero))}));
+  return {...catalog,rows:balances,costs,overlaps,unusedOverlapReviews,unreviewedOverlaps:overlaps.filter(row=>!row.reviewedDistinctCosts),
+    selection:copy(selection),note:'Cost portions use recorded civil dates. Invoice issue-date liability and entered Work-hour valuation remain separate from original payment cash and funding eligibility.'};
+}
+function ocHtml(commercial){
+  const r=commercial.originalCostIntake;if(!r)return '';
+  return '<h3>Original case cost intake</h3><p>'+esc(r.note)+'</p>'+
+    htmlTable(['Original record','Kind / state','Contributor','Source quantity / unit','Selected','Unselected','Original dates'],
+      r.rows.map(x=>[x.label+' / '+x.recordId+(x.lineId?' / '+x.lineId:''),x.kind+' / '+x.state,x.contributorName,x.quantity+' '+x.unit,x.selectedQuantity,x.unselectedQuantity,x.periodStart+' through '+x.periodEnd]))+
+    htmlTable(['Selected original cost','Service','Portion / unit','Value per unit','Selected dates','Valuation source','Allocation source'],
+      r.costs.map(x=>[x.id,x.serviceId,x.originalCost.quantity+' '+x.originalCost.unit,x.originalCost.unitCost,x.periodStart+' through '+x.periodEnd,x.originalCost.valuationSource,x.sourceReference]))+
+    '<h4>Linked Work and invoice cost review</h4>'+
+    htmlTable(['Original Work','Invoice / line','Distinct costs reviewed','Actual source explanation'],
+      r.overlaps.map(x=>[x.workId,x.invoiceId+' / '+x.lineId,x.reviewedDistinctCosts,x.note]));
 }
