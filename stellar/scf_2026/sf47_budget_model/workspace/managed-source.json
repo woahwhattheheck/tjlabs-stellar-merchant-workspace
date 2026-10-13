@@ -549,6 +549,18 @@
     "portfolio-availability.css",
     "PORTFOLIO_AVAILABILITY.md",
     "operations_statement_copies.mjs",
-    "STATEMENT_WORKING_COPIES.md"
+    "STATEMENT_WORKING_COPIES.md",
+    "operations_installation_source_editions.py",
+    "operations_installation_editions_cli.py",
+    "installation_source_edition_receiving.py",
+    "operations_installation_source_editions.mjs",
+    "SOURCE_DESK_CUSTOMER_EDITIONS.md",
+    "installation-source-editions-receiving.mjs",
+    "../../../../stellar-forge/developer-site/dist/source-delimited.mjs",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/comparison-runtime.mjs",
+    "../../../scf-starforge-20261009/sf88-operator-buyer-cli/object-comparison-core.mjs",
+    "../../../scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/working-copies.mjs",
+    "../../../scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/public/review.mjs",
+    "../../../scf-starforge-20261009/sf97-merchant-revenue-ops/planning/source-working-copies.mjs"
   ]
 }
