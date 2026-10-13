@@ -12,6 +12,7 @@ import { requiredQueryKeys, prepareHttpQuery } from './query-requirements.mjs';
 import { normalizeDiscoveryArguments, discoveryRequestUrl } from './discovery.mjs';
 import { nativeRequestActions, NATIVE_REQUEST_LIMITS } from './native-request-schema.mjs';
 import {createNativeObjects, nativeObjectActions} from './native-objects.mjs';
+import {createNativeObjectRecovery,nativeObjectRecoveryActions} from './native-object-recovery.mjs';
 import {createNativeDatasets, nativeDatasetActions} from './native-datasets.mjs';
 import {createNativeAnalysis, nativeAnalysisActions} from './native-analysis.mjs';
 import {createNativeDuckDB,nativeDuckDBActions} from './native-duckdb.mjs';
@@ -316,6 +317,7 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
       const entry=active.get(key);if(!entry)return false;
       entry.controller.abort();await entry.promise;return true;
     }});
+  const objectRecovery=createNativeObjectRecovery({manifest,currentWorkspace,runOwned,isClosed:()=>closed});
   const datasets=createNativeDatasets({manifest,currentWorkspace,runOwned,
     isClosed:()=>closed,isActive:key=>active.has(key),
     cancelOwned:async key=>{
@@ -706,6 +708,7 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
           records:page.records.map(record => ({...record, workspaceId:'default', workspaceLabel:'Configured service'}))};
       }
       if(nativeObjectActions.includes(action))return objects.call(args,context);
+      if(nativeObjectRecoveryActions.includes(action))return objectRecovery.call(args,context);
       if(nativeDatasetActions.includes(action))return datasets.call(args,context);
       if(nativeAnalysisActions.includes(action))return analysis.call(args,context);
       if(nativeDuckDBActions.includes(action))return duckdb.call(args,context);
@@ -750,6 +753,7 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
   return {
     manifest:structuredClone(manifest),
     registerObjects:objects.register,
+    registerObjectRecovery:objectRecovery.register,
     registerDatasets:datasets.register,
     registerReceivedDataset:datasets.registerReceived,
     completedDataset:datasets.completedDataset,
@@ -778,7 +782,7 @@ export async function openNativeWorkspace(directory, {operationCoordinator} = {}
     async close() {
       if (closed) return;
       closed = true; shutdown.abort();
-      await Promise.allSettled([objects.close(), datasets.close(), analysis.close(), collections.close(), collectionRecovery.close(), duckdb.close(), ...preparing.values(), ...[...active.values()].map(value => value.promise)]);
+      await Promise.allSettled([objects.close(), objectRecovery.close(), datasets.close(), analysis.close(), collections.close(), collectionRecovery.close(), duckdb.close(), ...preparing.values(), ...[...active.values()].map(value => value.promise)]);
     },
   };
 }
