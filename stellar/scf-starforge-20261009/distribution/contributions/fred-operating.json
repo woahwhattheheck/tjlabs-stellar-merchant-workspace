@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "fred-operating",
-  "description": "Complete FRED economic customer Operating Plans, native source receiving, typed procedure client and pure MCP tools",
+  "description": "Complete FRED economic customer Operating Plans, native source receiving, typed procedure client and pure MCP tools and portable complete archive handover",
   "components": [
     "stellar/scf-starforge-20261009/distribution/discovery",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating"
@@ -28,12 +28,18 @@
     "./operator/fred/operating-cli": {
       "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/fred-operating-cli.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/fred-operating-cli.mjs"
+    },
+    "./operator/fred/operating-archive": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/archive.mjs"
     }
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/distribution/discovery/FRED_OPERATING_PLANS_CLI.md",
     "stellar-forge/mcp-merchant-operator/FRED_OPERATING_PLANS.md",
     "stellar-forge/mcp-merchant-operator/catalog/fred-operating.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/SOURCE.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/SOURCE.md",
+    "stellar-forge/mcp-merchant-operator/FRED_PORTABLE_HANDOVERS.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/operating/ARCHIVE.md"
   ]
 }

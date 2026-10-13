@@ -13,6 +13,7 @@ import { sendFredJsonFile } from './json-response.mjs';
 import { pageFredBriefing } from './briefing/model.mjs';
 import { inspectFredReleaseCapture } from './releases/model.mjs';
 import { FRED_DDP_ACTIONS, MAX_DDP_CAPTURE_BYTES, runFredDdpAction, handleFredDdpHttp } from './ddp/http.mjs';
+import { createFredOperatingHttp } from './operating/http.mjs';
 import { createFredDdpPublicationHttp } from './ddp/published-http.mjs';
 import { runFredDdpPublicationOperation } from './ddp/published-workspace.mjs';
 import { readFredWorkspaceLaunch, FRED_WORKSPACE_STARTUP } from './launch.mjs';
@@ -92,7 +93,7 @@ function output(value) {
   return plain;
 }
 export async function startFredWorkspace({ directory, port = 0, buyerConfig, environment = process.env,
-  facilitator, allowLocalFacilitator = false, merchantPort = 0, expectedBindingSha256 } = {}) {
+  facilitator, allowLocalFacilitator = false, merchantPort = 0, expectedBindingSha256, qcewSourceContexts = null, operatingPlanContext = null } = {}) {
   const launch = await readFredWorkspaceLaunch({ directory, buyerConfig, facilitator,
     allowLocalFacilitator, merchantPort, expectedBindingSha256 });
   const binding = launch.binding;
@@ -118,8 +119,12 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/customer-work.mjs', ['customer-work.mjs', 'text/javascript; charset=utf-8']],
     ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
     ['/county-merchant-guide', ['../qcew/MERCHANT.md', 'text/plain; charset=utf-8']],
-    ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']] ]);
+    ['/recurring-guide', ['../TEMPLATES.md', 'text/plain; charset=utf-8']],
+    ['/operating.js', ['operating.js', 'text/javascript; charset=utf-8']],
+    ['/operating-guide', ['../operating/ARCHIVE.md', 'text/plain; charset=utf-8']] ]);
   const publishedHttp = createFredDdpPublicationHttp({ directory });
+  const operatingHttp = createFredOperatingHttp({ directory, projectId:binding.projectId, qcewSourceContexts, currentPlanContext:operatingPlanContext,
+    openWorkspace:(received,contexts,planContext) => startFredWorkspace({directory:received,port:0,qcewSourceContexts:contexts,operatingPlanContext:planContext}) });
   const assets = new Map();
   for (const [route, [file, type]] of assetMap) assets.set(route, [await readFile(new URL('./ui/' + file, import.meta.url)), type]);
   const buyer = launch.buyerSettings ? await new Buyer(launch.buyerSettings).ready() : null;
@@ -236,6 +241,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
       const asset = assets.get(url.pathname);
       if (req.method === 'GET' && asset && !url.search) return send(res, 200, asset[0], asset[1]);
       if (!closing && await publishedHttp.ticket(req, res, url)) return;
+      if (!closing && await operatingHttp.ticket(req, res, url)) return;
       const supplied = req.headers.authorization, expected = 'Bearer ' + token;
       need(typeof supplied === 'string' && supplied.length === expected.length &&
         timingSafeEqual(Buffer.from(supplied), Buffer.from(expected)), 'Use the original workspace session.', 'FRED_SESSION_REQUIRED', 403);
@@ -390,6 +396,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
         const result = await selected.engine.download({ directory: selected.directory, buyer, intentId: url.searchParams.get('intent') });
         return send(res, 200, result.bytes, result.contentType, result.filename);
       }
+      if (await operatingHttp.handle({ req, res, url, body, send })) return;
       if (await publishedHttp.handle({ req, res, url, body, send })) return;
       if (await handleFredDdpHttp({ req, res, url, directory, body, send, sendJsonFile, execute, busy: () => Boolean(pending) })) return;
       if (req.method === 'GET' && url.pathname === '/api/customer-received') {
@@ -423,13 +430,13 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
           ...(error.retryAt ? { retryAt: error.retryAt } : {}) });
     });
   });
-  server.headersTimeout = 10000; server.requestTimeout = 120000; server.keepAliveTimeout = 1000;
+  server.headersTimeout = 10000; server.requestTimeout = 30 * 60 * 1000; server.keepAliveTimeout = 1000;
   await new Promise((done, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', done); });
   origin = new URL('http://127.0.0.1:' + server.address().port).origin;
   let closePromise;
   return { server, directory, url: origin + '/#' + token, origin,
     startup: { ...launchView(), url: origin + '/#' + token }, close: () => closePromise ??= (async () => {
-    closing = true; publishedHttp.close(); abort.abort();
+    closing = true; publishedHttp.close(); abort.abort(); await operatingHttp.close();
     await pending?.task.catch(() => {});
     try { if (merchant) await merchant.close(); }
     finally { merchant = null; runningPublication = null; runningKind = null;

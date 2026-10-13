@@ -114,6 +114,33 @@ export const fredFileSelection = {
 export function fredWorkspaceTools(tool) {
   return [
     ...fredOperatingTools(tool),
+    tool('merchant_fred_handovers','Page the original portable handover inventory. Keep the operation ID and follow nextOffset.',{
+      ...workspace,offset:{type:'integer',minimum:0},limit
+    },['workspace'],read),
+    tool('merchant_fred_handover','Inspect the retained export/import phase, source summary, archive identity and exact continuation action.',{
+      ...workspace,id:operation
+    },['workspace','id'],read),
+    tool('merchant_fred_handover_export','Capture the original economic project and selected complete publications as one portable archive. Keep id, revision and capturedAt; retry the same original id. A reviewed customer procedure can be selected by host alias.',{
+      ...workspace,id:operation,expectedRevision:revision,capturedAt:{type:'string',minLength:1,maxLength:64},
+      publicationIds:{type:'array',items:operation,uniqueItems:true},planInput:alias,planFileSha256:digest,useCurrentPlan:{type:'boolean'}
+    },['workspace','id'],change),
+    tool('merchant_fred_handover_upload','Stream one configured complete operating-archive file to the original handover ID. Return compact status; original binary bytes stay in native files.',{
+      ...workspace,id:operation,input:alias,expectedSha256:digest
+    },['workspace','id','input'],change),
+    tool('merchant_fred_handover_inspect','Validate the retained archive and complete original source, publication and customer procedure graph; resume the same import ID.',{
+      ...workspace,id:operation
+    },['workspace','id'],change),
+    tool('merchant_fred_handover_receive','Receive the inspected complete project and publication archives into the original handover destination. Preserve original source identities and later customer procedure edits.',{
+      ...workspace,id:operation
+    },['workspace','id'],change),
+    tool('merchant_fred_handover_open','Open the received original workspace and return its private native startup record for the same project.',{
+      ...workspace,id:operation
+    },['workspace','id'],change),
+    tool('merchant_fred_handover_download','Stream the complete retained archive to a new file under the configured private exports directory. Verify original size/SHA256; an identical existing file is reused.',{
+      ...workspace,id:operation,expectedSha256:digest,
+      outputName:{type:'string',minLength:8,maxLength:188,pattern:'^[A-Za-z0-9][A-Za-z0-9._-]{0,180}\\.tar\\.gz$'}
+    },['workspace','id','expectedSha256','outputName'],change),
+
     tool('merchant_fred_workspaces', 'List original configured economic workspace aliases and source/profile names.', {}, [], read),
     tool('merchant_fred_status', 'Inspect the original project, revision, source and publication counts, native merchant, buyer configuration and pending acquisition.', workspace, ['workspace'], read),
     tool('merchant_fred_inputs', 'List host-retained source aliases and the complete configured public merchant/payment profiles.', workspace, ['workspace'], read),

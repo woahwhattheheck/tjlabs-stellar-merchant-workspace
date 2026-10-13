@@ -438,6 +438,45 @@
 <section data-panel="recovery" hidden>
 <h2>History and receiving</h2><p>The project retains source captures, saved review decisions, publications and completed operation identities. Resume an interrupted source acquisition with the same operation.</p>
 <pre id="pending">No pending operation.</pre><div class="buttons"><button id="resume">Continue original acquisition</button><button id="abandon">Abandon pending action and retain its files</button><button id="download-bundle">Export complete project</button></div>
+
+<div class="box" id="operating-handover">
+<h3>Complete operating handover</h3>
+<p>Carry this economic project, its saved reports, all complete current-publication editions and an optional editable operating plan in one archive. Receiving opens a separate customer project and keeps the original sources and history.</p>
+<p><a href="/operating-guide" target="_blank" rel="noopener">Handover and receiving guide</a></p>
+<div class="form-grid">
+<label class="wide">Operating plan to carry<select id="handover-plan-mode"><option value="retained">Use retained customer plan</option><option value="file">Use selected complete plan file</option><option value="none">Source and publications only</option></select></label>
+<p id="handover-retained-plan-status" class="wide" role="status"></p>
+<label class="wide">Editable operating plan file<input id="handover-plan-file" type="file" accept=".json,application/json"><small>Choose the complete plan with every saved revision. Its original project history is checked when the archive is prepared.</small></label>
+<p id="handover-plan-file-status" class="wide" role="status"></p>
+<div class="wide buttons"><button id="handover-export" type="button">Prepare complete handover</button></div>
+<label class="wide">Receive a handover archive<input id="handover-archive-file" type="file" accept=".tar.gz,.tgz,application/gzip,application/octet-stream"><small>The complete file streams to this host. Review its retained source before opening the customer project.</small></label>
+<div class="wide buttons"><button id="handover-upload" type="button">Upload and inspect archive</button><button id="handover-cancel-upload" type="button" disabled>Cancel upload</button></div>
+<div class="wide"><progress id="handover-upload-progress" max="1" value="0" hidden></progress><p id="handover-transfer-status" role="status" aria-live="polite"></p></div>
+</div>
+<h4>Saved handovers</h4>
+<div class="buttons"><button id="handover-refresh" type="button">Refresh handovers</button><button id="handover-list-prev" type="button">Previous handovers</button><span id="handover-list-position"></span><button id="handover-list-next" type="button">Next handovers</button></div>
+<div id="handover-list" class="table-wrap"></div>
+<div id="handover-selected" hidden>
+<h4 id="handover-title">Selected handover</h4>
+<p id="handover-status" role="status" aria-live="polite"></p>
+<div id="handover-summary" class="metrics"></div>
+<div class="buttons"><button id="handover-download" type="button">Download complete archive</button><button id="handover-source" type="button">Review retained source</button><button id="handover-receive" type="button">Receive customer project</button><button id="handover-open" type="button">Open received workspace</button><button id="handover-retry" type="button" hidden>Continue original operation</button></div>
+<p id="handover-receiving-path"></p>
+<details><summary>Archive and operation identity</summary><pre id="handover-identity"></pre></details>
+<div id="handover-source-panel" hidden>
+<h4>Original project and publication inventory</h4>
+<div id="handover-source-summary"></div>
+<label>Retained source section<select id="handover-source-section"></select></label>
+<div class="buttons"><button id="handover-source-prev" type="button">Previous source rows</button><span id="handover-source-position"></span><button id="handover-source-next" type="button">Next source rows</button><button id="handover-source-save" type="button">Download complete source descriptor</button></div>
+<div id="handover-source-rows" class="table-wrap"></div>
+<h4>Editable operating plan</h4>
+<p id="handover-plan-status"></p>
+<div class="inline"><label>Saved revision<select id="handover-plan-revision"></select></label><button id="handover-plan-save" type="button">Download complete editable plan</button></div>
+<div id="handover-plan-summary"></div><div id="handover-plan-steps"></div>
+</div>
+</div>
+</div>
+
 <h3>Completed operations</h3><div id="history" class="table-wrap"></div>
 <p>To open a complete handover on another host, use <code>starforge fred receive --project /absolute/empty-directory --source /absolute/received-project.json</code>, then serve that same directory. Configure the receiving host’s existing buyer and facilitator when starting its workspace.</p>
 </section>

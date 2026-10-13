@@ -6,6 +6,7 @@ import { mountFredQcew } from './qcew.js';
 import { mountFredDdp } from './ddp.js';
 import { mountFredDdpPublished } from './ddp-published.js';
 import { mountFredCustomerWork } from './customer-work.mjs';
+import { mountFredOperatingHandovers } from './operating.js';
 // MIT. Original economic project controls; source text is rendered as text.
 const $ = id => document.getElementById(id);
 let token = location.hash.slice(1);
@@ -140,6 +141,8 @@ const ddp = mountFredDdp({ api, upload, download, table, select, getState: () =>
   } });
 const published = mountFredDdpPublished({ api, table, select, getState: () => state,
   getBusy: () => workspaceBusy, refresh, message });
+const handovers = mountFredOperatingHandovers({ api, getToken: () => token, getState: () => state,
+  getBusy: () => workspaceBusy, message });
 const research = mountFredResearch({api,download,getState:()=>state,getBusy:()=>workspaceBusy,refresh,message});
 const qcew = mountFredQcew({ api, download, table, select, getState: () => state,
   getBusy: () => workspaceBusy, refresh, message, onPublication: async result => {
@@ -282,6 +285,7 @@ async function renderState(value) {
   releases.onState();
   ddp.onState();
   published.onState();
+  handovers.onState();
   qcew.onState();
   research.onState();
   if (nativeWorkspace?.projectId!==state.id || typeof nativeWorkspace?.directory!=='string')
@@ -493,6 +497,7 @@ document.querySelectorAll('[data-tab]').forEach(button => button.addEventListene
     if (button.dataset.tab === 'customer') await showPublication(true);
     if (button.dataset.tab === 'ddp') await ddp.onOpen();
     if (button.dataset.tab === 'published') await published.onOpen();
+    if (button.dataset.tab === 'recovery') await handovers.onOpen();
   } catch (error) { message(error.message, true); }
 }));
 $('selection-form').addEventListener('input', () => { selectionDirty = true; });
