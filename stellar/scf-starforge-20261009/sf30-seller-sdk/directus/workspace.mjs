@@ -382,8 +382,9 @@ export class DirectusWorkspace {
   retainBuyer(input){return this.run(()=>registerDirectusBuyer(this,input));}
   retainDelivery(input){return this.run(()=>registerDirectusDelivery(this,input));}
   retainBuyerSession(input){return this.run(()=>registerDirectusBuyerSession(this,input));}
-  exportFile(kind,id){
+  exportFile(kind,id,{expectedRevision}={}){
     return this.run(async()=>{
+      if(expectedRevision!==undefined&&this.revision()!==expectedRevision)throw fault('DIRECTUS_REVISION_CHANGED','The original project changed before this complete export.',409);
       const root=path.join(this.directory,'downloads');directory(root);
       let bytes,filename,contentType='application/json; charset=utf-8',file;
       if(kind==='project'){
@@ -430,7 +431,8 @@ export class DirectusWorkspace {
   close(){
     if(this.closePromise)return this.closePromise;
     this.closing=true;
-    this.closePromise=(async()=>{try{await this.tail;this.db.close();}finally{try{await this.lease.close();}finally{this.closed=true;}}})();
+    const attempt=(async()=>{await this.tail;if(!this.databaseClosed){this.db.close();this.databaseClosed=true;}await this.lease.close();this.closed=true;})();
+    this.closePromise=attempt;void attempt.catch(()=>{if(this.closePromise===attempt)this.closePromise=null;});
     return this.closePromise;
   }
 }
