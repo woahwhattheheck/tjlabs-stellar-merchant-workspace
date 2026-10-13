@@ -2,7 +2,7 @@
 
 The mapping workbook carries the complete saved source and mapping choices into a spreadsheet, then returns an analyst's changes to the same GIS workspace. The native mapping editor remains the place to save and review the complete resulting plan. The saved workspace keeps the original register, edited XLSX, proposed plan, final saved plan and their full comparison together.
 
-Use this workflow for a customer who reviews field names, data types, null handling, coordinate systems, keys or project choices in a spreadsheet. The register is generated from an actual saved plan and its retained capture. It includes every source field and layer, the complete plan, ordered project layers, original source bodies, native field profiles and the saved review history.
+Use this workflow for a customer who reviews field names, data types, null handling, coordinate systems, keys or project choices in a spreadsheet. The register is generated from an actual saved plan and its retained capture. It includes every field and layer selected by that saved plan, the complete plan, ordered project layers, full original source inspection, declared original input files, native field profiles and the saved review history.
 
 ## 1. Select the original saved plan
 
@@ -102,14 +102,14 @@ The importer accepts the following complete choice groups:
 
 | Worksheet | Choices returned to the native plan |
 | --- | --- |
-| Field mapping | Target field, target type, null handling and mapping note for every selected source field |
-| Layers | Target layer name, destination format, geometry treatment and layer note |
-| Coordinates | Target coordinate system and its rationale |
-| Keys | Composite-key name, null handling and note, associated with the complete existing ordered key |
-| Projects | Project title, filename, coordinate system and note |
-| Project layers | Existing layer selection, display name and complete JSON options |
+| Field mapping | Destination field name, conversion, requested physical type, null policy, Shapefile name and mapping note |
+| Layers | Destination table, layer title, null geometry policy and layer note |
+| Coordinates | Selected source CRS, explicit assigned source CRS and selected target CRS |
+| Keys | Composite-key name, null policy and note, associated with the complete existing ordered key |
+| Projects | Delivery title, selected project CRS and destination format |
+| Project layers | Complete per-layer options JSON for each existing ordered project layer |
 
-The exact exported headings and permitted values remain visible in the workbook. The native plan normalizer validates their resulting values against the original capture.
+The exact exported headings and original choices remain visible in the workbook. The native plan normalizer validates their resulting values against the original capture.
 
 For composite keys, a changed name, null rule or note on one member applies to the whole key. Multiple changed cells for that same key must agree. Existing key membership and ordering are retained. Make key membership changes, row additions/removals and other structural changes in the full native editor.
 
