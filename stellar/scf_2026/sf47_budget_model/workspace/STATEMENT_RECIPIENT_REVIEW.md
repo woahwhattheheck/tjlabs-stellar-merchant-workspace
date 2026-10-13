@@ -69,3 +69,7 @@ Include this complete instruction in delegated assignments and the active owner-
 
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## Several returns and unfinished operator choices
+
+Use the [Returned review worklist](STATEMENT_REVIEW_WORKLIST.md) to keep each colleague's complete return, independent operator notes and saved field choices in the original working copy. Reopening resolves the trusted original edition and checks the current comparison. Stale choices remain visible and require a fresh comparison; identical return files reopen their existing work item. Complete copy archives preserve the whole review handover.
