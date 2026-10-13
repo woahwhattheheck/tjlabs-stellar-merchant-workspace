@@ -1,0 +1,13 @@
+{
+  "schema": "stellar-forge.odata-customer-desk-connection.v1",
+  "title": "Orders customer subscriptions",
+  "profiles": [
+    {
+      "id": "orders",
+      "label": "Orders customer",
+      "url": "https://merchant.example/mcp",
+      "publisher": "orders",
+      "tokenEnv": "MCP_ACCESS_TOKEN"
+    }
+  ]
+}
