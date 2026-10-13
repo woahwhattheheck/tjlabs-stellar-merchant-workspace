@@ -26,6 +26,11 @@ their inspected Airflow and Python versions in the reviewed plan.
 The driver creates its own private AIRFLOW_HOME and SQLite database. It uses
 SequentialExecutor with Airflow 2 and LocalExecutor with Airflow 3 for this
 receiving case. Its dags test commands run both actual original tasks locally.
+For Airflow 2, it registers the selected original DAG with the native
+`dags reserialize --subdir` command after migration and before the first run
+inventory. This preparation is confined to the driver's private database and
+retained as the native-dag-registration phase. Reopening the same operation
+reuses that completed phase and its original command logs.
 An installed Airflow 3 runtime must support that native command and its local
 database configuration; the environment and command records identify the actual
 runtime used.
@@ -116,6 +121,31 @@ the native command and execution directories, actual dependency/install records,
 and the original input/output files. Keep the operation directory private:
 Airflow's native logs and its local database belong to the receiving operator.
 The standalone customer handover follows the operator's explicit export rules.
+
+## Read a running or interrupted native operation
+
+The fixed airflow-native-receiving.json is published from the first phase and
+updated as the original operation advances. A returned command keeps its exact
+currentPhase and interruption together with both available native execution
+reports. The privateNativeFiles section carries complete base64 original command,
+worker, configured-observation and inventory files, with their relative paths,
+byte counts and SHA-256 identities. This includes actual stdout and stderr, so
+an operator can receive a failed first command without dispatching another DAG.
+
+The same file is published when the complete journey succeeds. Keep it within
+the private operation's receiving surface, alongside its original native logs.
+
+For a fresh read of the retained records, use the read-only entry:
+
+    node /absolute/application/airflow/RECEIVING.mjs \
+      /absolute/private/airflow-commissioning --report
+
+This reads the existing checkpoint and original native files. The normal command
+continues the same original operation, with its immutable plans and Python worker
+receiving. A receiver transporting these records should keep its live native
+process through complete file delivery and accept scoped report/archive reads
+after either a successful or returned child. Use the original source/operation
+identities when resuming after a runtime replacement.
 
 ## Original Apache contracts
 

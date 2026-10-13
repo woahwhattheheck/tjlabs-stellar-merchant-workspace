@@ -1,0 +1,185 @@
+{
+  "schema": "stellar-forge.iati-document-connected-receiving.v1",
+  "operationId": "iati-document-evidence-original-ods-20261012",
+  "state": "COMPLETE",
+  "sourceSha256": "c18e63db2d543eaeb5525a4df21cd16561f0316dab831789bfdd176e1accdfce",
+  "sender": {
+    "id": "97a0a60458635f96c79b18f00dc871245aa2e7f2b0dc5582e766efcd985d250a",
+    "recordSha256": "eb192bdc2a6c9b01a9cf3676b0038bfb1d0d8e4b8ad4debb85c4d5d4ac28354b",
+    "revision": 5
+  },
+  "receiver": {
+    "id": "97a0a60458635f96c79b18f00dc871245aa2e7f2b0dc5582e766efcd985d250a",
+    "recordSha256": "c065be976009292b8c9d22a47439499b8d6b0a4c9eecdab9f399f90452e13dbc",
+    "revision": 6
+  },
+  "requests": [
+    {
+      "action": "compare",
+      "requestId": "iati-document-evidence-original-ods-20261012-compare"
+    },
+    {
+      "action": "review",
+      "requestId": "iati-document-evidence-original-ods-20261012-review"
+    },
+    {
+      "action": "save",
+      "requestId": "iati-document-evidence-original-ods-20261012-selection"
+    },
+    {
+      "action": "observe",
+      "requestId": "iati-document-evidence-original-ods-20261012-observation-1"
+    },
+    {
+      "action": "observe",
+      "requestId": "iati-document-evidence-original-ods-20261012-observation-2"
+    },
+    {
+      "action": "note",
+      "requestId": "iati-document-evidence-original-ods-20261012-sender-note"
+    }
+  ],
+  "downloads": [
+    {
+      "name": "client-report.html",
+      "bytes": 16501,
+      "sha256": "9b3fcc0cd0fa7cb1ff86c8ce4403514480a30250ff697d4fffeaac87c0437c23"
+    },
+    {
+      "name": "merchant-report-9b3fcc0cd0fa7cb1ff86c8ce4403514480a30250ff697d4fffeaac87c0437c23.html",
+      "bytes": 16501,
+      "sha256": "9b3fcc0cd0fa7cb1ff86c8ce4403514480a30250ff697d4fffeaac87c0437c23",
+      "chunks": 1
+    },
+    {
+      "name": "client-register.csv",
+      "bytes": 2346,
+      "sha256": "904f941d05e94d3e78d300500ddd169e7f02409efe84455aaa511ce87f884d48"
+    },
+    {
+      "name": "merchant-register-904f941d05e94d3e78d300500ddd169e7f02409efe84455aaa511ce87f884d48.csv",
+      "bytes": 2346,
+      "sha256": "904f941d05e94d3e78d300500ddd169e7f02409efe84455aaa511ce87f884d48",
+      "chunks": 1
+    },
+    {
+      "name": "client-plan.json",
+      "bytes": 6821,
+      "sha256": "a66dfc5e4eb4b077f933ee6b4045e67842c35e312850c23d5771e1057dd4dc08"
+    },
+    {
+      "name": "merchant-plan-a66dfc5e4eb4b077f933ee6b4045e67842c35e312850c23d5771e1057dd4dc08.json",
+      "bytes": 6821,
+      "sha256": "a66dfc5e4eb4b077f933ee6b4045e67842c35e312850c23d5771e1057dd4dc08",
+      "chunks": 1
+    },
+    {
+      "name": "client-correction.json",
+      "bytes": 1223,
+      "sha256": "d9915bb66bed9d6c8bb7e4c78af706fc77507b5c46bdd8a23396fed1918fe07a"
+    },
+    {
+      "name": "merchant-correction-d9915bb66bed9d6c8bb7e4c78af706fc77507b5c46bdd8a23396fed1918fe07a.json",
+      "bytes": 1223,
+      "sha256": "d9915bb66bed9d6c8bb7e4c78af706fc77507b5c46bdd8a23396fed1918fe07a",
+      "chunks": 1
+    }
+  ],
+  "documents": 2,
+  "packet": {
+    "name": "document-evidence-6fc72629594ddc8d4afe3ec93e4b56bd60709dbde0626976e80cc8f6831d0ee3.zip",
+    "bytes": 1688604,
+    "sha256": "6fc72629594ddc8d4afe3ec93e4b56bd60709dbde0626976e80cc8f6831d0ee3",
+    "chunks": 27,
+    "releasedPrefix": {
+      "bytes": 4093,
+      "sha256": "68ec5fb1c2e97c69a011957835b0e23e8b9b237d187d19e3e87e56495e990ca1"
+    },
+    "reopenedToCompletion": true
+  },
+  "reopenedExport": {
+    "name": "original-retained-export-reopened.zip",
+    "bytes": 1688604,
+    "sha256": "6fc72629594ddc8d4afe3ec93e4b56bd60709dbde0626976e80cc8f6831d0ee3",
+    "chunks": 26
+  },
+  "browser": {
+    "state": "COMPLETE",
+    "planId": "97a0a60458635f96c79b18f00dc871245aa2e7f2b0dc5582e766efcd985d250a",
+    "revision": 5,
+    "observations": [
+      {
+        "section": "selection",
+        "viewport": "desktop",
+        "name": "desktop-selection-d91d5ae65abc31ddcf051471b083eabbaa7c5992b2451216c3b42d1fdfda7b49.png",
+        "bytes": 216998,
+        "sha256": "d91d5ae65abc31ddcf051471b083eabbaa7c5992b2451216c3b42d1fdfda7b49",
+        "renderedCharacters": 1994
+      },
+      {
+        "section": "acquisition",
+        "viewport": "desktop",
+        "name": "desktop-acquisition-2476cd3fcc3a293b3590867a103e64e478e163e3686b38a11b469e5555c1fb34.png",
+        "bytes": 296457,
+        "sha256": "2476cd3fcc3a293b3590867a103e64e478e163e3686b38a11b469e5555c1fb34",
+        "renderedCharacters": 3000
+      },
+      {
+        "section": "review",
+        "viewport": "desktop",
+        "name": "desktop-review-4b834a0de2be8672eba66f38c41d2ae565db814cf00ca27fd692032e75e56d9a.png",
+        "bytes": 260544,
+        "sha256": "4b834a0de2be8672eba66f38c41d2ae565db814cf00ca27fd692032e75e56d9a",
+        "renderedCharacters": 2641
+      },
+      {
+        "section": "comparison",
+        "viewport": "desktop",
+        "name": "desktop-comparison-951cce80d217424112d34c66e37af11542fd9d3b5f32d4aa60eaf3819d16c7fd.png",
+        "bytes": 201380,
+        "sha256": "951cce80d217424112d34c66e37af11542fd9d3b5f32d4aa60eaf3819d16c7fd",
+        "renderedCharacters": 1985
+      },
+      {
+        "section": "handoff",
+        "viewport": "desktop",
+        "name": "desktop-handoff-8ddc2b3e99145c361824f2d85b03265552226b1f825aef5524d3317de15a71fe.png",
+        "bytes": 180659,
+        "sha256": "8ddc2b3e99145c361824f2d85b03265552226b1f825aef5524d3317de15a71fe",
+        "renderedCharacters": 1720
+      },
+      {
+        "section": "receive",
+        "viewport": "desktop",
+        "name": "desktop-receive-af3e2d0acaa10b4d3b2b711d5d91de1bded37be585e89ec6f92837d32c653b8a.png",
+        "bytes": 300262,
+        "sha256": "af3e2d0acaa10b4d3b2b711d5d91de1bded37be585e89ec6f92837d32c653b8a",
+        "renderedCharacters": 3066
+      },
+      {
+        "section": "acquisition",
+        "viewport": "mobile",
+        "name": "mobile-acquisition-0d4b56d4a6bc7025cd67969f65a5d0539308f715879b4d6481cfc1d46c6b3add.png",
+        "bytes": 238867,
+        "sha256": "0d4b56d4a6bc7025cd67969f65a5d0539308f715879b4d6481cfc1d46c6b3add",
+        "width": {
+          "document": 390,
+          "viewport": 390
+        }
+      },
+      {
+        "section": "handoff",
+        "viewport": "mobile",
+        "name": "mobile-handoff-e800c282162f5f4f2e59782c7659dc609e794ddde3fb9bf4e831d9669090f5b2.png",
+        "bytes": 165048,
+        "sha256": "e800c282162f5f4f2e59782c7659dc609e794ddde3fb9bf4e831d9669090f5b2",
+        "width": {
+          "document": 390,
+          "viewport": 390
+        }
+      }
+    ],
+    "pageErrors": [],
+    "semantics": "Read-only browser navigation over the actual saved source/evidence workspace; no new acquisition or review was submitted."
+  }
+}

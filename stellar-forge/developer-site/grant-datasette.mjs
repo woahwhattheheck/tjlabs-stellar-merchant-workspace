@@ -1,11 +1,12 @@
 // MIT. Receive the maintained Datasette installation into the original SCF reviewer.
+import { DATASETTE_CUSTOMER_EXAMPLE } from './grant-datasette-example.mjs';
 const HEADING = '## Datasette editions and customer analysis';
 const COASTAL = '## Coastal model-input installation\n';
 const THREATS = '## 7. Threat response and useful-outcome measurement\n';
 const PUBLIC = 'https://github.com/woahwhattheheck/public-commons-sprint-2026/';
 const ROOT = 'stellar/scf-starforge-20261009/sf30-seller-sdk/';
 const OPERATION = 'SCF-DATASETTE-SOURCE-EDITIONS-07476-20261012';
-const PROGRAMME = 'https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791818956136219';
+const PROGRAMME = DATASETTE_CUSTOMER_EXAMPLE.operation_url;
 const WORK_START = '<!-- datasette-customer-analysis:start -->';
 const WORK_END = '<!-- datasette-customer-analysis:end -->';
 const clean = value => String(value).replaceAll('\r\n', '\n').trim() + '\n';
@@ -78,6 +79,7 @@ export function addDatasetteGrantSources(index, selection, { canonicalManuscript
       installed_application: 'datasette-analysis', installed_command: 'starforge datasette-analysis',
       python_extra: 'workbooks', application_operation: OPERATION,
       native_receiving_operation: OPERATION, native_receiving_thread: PROGRAMME,
+      completed_customer_example: JSON.parse(JSON.stringify(DATASETTE_CUSTOMER_EXAMPLE)),
       paid_unit: 'The selected complete table or query edition and advertised analysis resources retain their reviewed source, licence, access and payment terms.',
       retained_source: {
         publisher: 'World Resources Institute', collection: 'Global Power Plant Database',
@@ -100,7 +102,7 @@ export function addDatasetteGrantSources(index, selection, { canonicalManuscript
   for (const entry of entries) {
     const matches = index.sources.reduce((found, item, i) => item.id === entry.id ? [...found, i] : found, []);
     need(matches.length <= 1, 'Keep one original grant source entry for ' + entry.id);
-    if (matches.length) index.sources[matches[0]] = entry; else index.sources.push(entry);
+    if (matches.length) index.sources[matches[0]] = { ...index.sources[matches[0]], ...entry }; else index.sources.push(entry);
   }
   index.narrative_source = {
     ...index.narrative_source,
@@ -108,12 +110,49 @@ export function addDatasetteGrantSources(index, selection, { canonicalManuscript
     datasette_customer_commit: selected.analysisCommit,
     datasette_publisher_commit: selected.publisherCommit,
     datasette_application_operation: OPERATION,
+    datasette_customer_example: DATASETTE_CUSTOMER_EXAMPLE.id,
+    datasette_customer_example_source_commit: DATASETTE_CUSTOMER_EXAMPLE.analysis_source_commit,
   };
   const basis = ' The selected Datasette source editions and editable customer analysis use the same six funded packages.';
   need(index.product_and_finance && typeof index.product_and_finance.basis === 'string',
     'Retain the original product and finance source record.');
   if (!index.product_and_finance.basis.includes(basis.trim())) index.product_and_finance.basis += basis;
   return entries;
+}
+
+
+/** Render the saved customer example inside the original reader, using its table and details styles. */
+function completedCustomerExample() {
+  const example = DATASETTE_CUSTOMER_EXAMPLE;
+  const row = cells => '<tr>' + cells.map((value, i) => i === 0
+    ? '<th scope="row">' + escape(value) + '</th>' : '<td>' + escape(value) + '</td>').join('') + '</tr>';
+  const countryRows = example.country_totals.map(country =>
+    row([country.country_long, country.plant_count, country.disclosed_capacity_mw])).join('\n');
+  const generationRows = example.generation_coverage.map(year =>
+    row([year.year, year.known_records, year.null_records])).join('\n');
+  const fileRows = example.products.map(file => '<tr><th scope="row"><a href="' + escape(file.url)
+    + '" target="_blank" rel="noopener noreferrer">' + escape(file.label)
+    + '</a></th><td>' + escape(file.description) + '</td><td>'
+    + escape(file.bytes.toLocaleString('en-US')) + ' bytes</td></tr>').join('\n');
+  return [
+    '<h4 id="datasette-completed-customer-example">Completed customer analysis</h4>',
+    '<p>The completed 12 October 2026 customer workflow prepared all 189 source records and the five original report/workbook products, exported the editable Analysis workspace and reopened it through the original receiver. A receiving operator saved a USA country query containing 65 records, exported the edited workspace, and reopened the same saved query and result from that fresh delivery.</p>',
+    '<details><summary>Open the original report, workbook and edited workspace</summary>',
+    '<p>These original files open through the owner’s workspace access. The source installation and complete public WRI pages remain linked below.</p>',
+    '<table><caption>Original completed customer products</caption><thead><tr><th scope="col">File</th><th scope="col">Contents</th><th scope="col">Size</th></tr></thead><tbody>',
+    fileRows, '</tbody></table></details>',
+    '<details><summary>Read the country totals from the published analysis</summary>',
+    '<p>One retained source edition: disclosed capacity totals 12,563.55 MW across 189 records. Capacity remains exact decimal text in the source, report and workbook.</p>',
+    '<table><caption>All 22 countries in the original report</caption><thead><tr><th scope="col">Country</th><th scope="col">Plant records</th><th scope="col">Disclosed capacity (MW)</th></tr></thead><tbody>',
+    countryRows, '</tbody><tfoot><tr><th scope="row">Complete edition</th><td>189</td><td>12563.55</td></tr></tfoot></table></details>',
+    '<details><summary>Read the source-year coverage</summary>',
+    '<p>World Resources Institute’s Global Power Plant Database supplies the source. The four public response pages were collected on 12 October 2026. Capacity-data years are stated as 2017 for 74 records and 2016 for five; the remaining 110 are null. Those historical years remain separate from collection time. The reviewed <code>gppd_idnr</code> business identifier is present and unique across this edition; <code>rowid</code> remains a source locator.</p>',
+    '<table><caption>Historical generation columns retain their own coverage</caption><thead><tr><th scope="col">Source year</th><th scope="col">Records with generation</th><th scope="col">Null records</th></tr></thead><tbody>',
+    generationRows, '</tbody></table>',
+    '<p>Each row describes one historical source column. Matching business identifiers provide the basis for a comparison across years. Original source attribution, blank and null observations, and exact numeric spellings accompany the complete report.</p>',
+    '<p><a href="' + escape(example.source.url) + '" target="_blank" rel="noopener noreferrer">Original selected Datasette table</a> · <a href="' + escape(example.source.licence_url) + '" target="_blank" rel="noopener noreferrer">Creative Commons Attribution 4.0</a></p>',
+    '</details>',
+  ].join('\n');
 }
 
 /** Present the installation inside the existing tenth section, using its original typography and links. */
@@ -127,6 +166,7 @@ export function receiveDatasetteExistingWork(html, selection) {
     '<p>The retained WRI geothermal edition contains all 189 source records, 26 returned positions and 22 countries. Its disclosed capacity totals 12,563.55 MW. Original fields, source metadata and historical years accompany the four response pages.</p>',
     '<p>In the installed Datasette runtime, choose <strong>Python &amp; workbooks</strong> and retain the original Python installation with workbook support. Open <strong>Applications → Datasette customer Analysis</strong>, select that installation, the private Analysis directory and its operation ID, then use the existing review, save and start controls. The same workspace provides complete source rows, saved SQL, reports, an Excel workbook and editable archive receiving.</p>',
     '<p><a href="' + escape(urls.installation) + '" target="_blank" rel="noopener noreferrer">Install and open customer Analysis</a> · <a href="' + escape(urls.operation) + '" target="_blank" rel="noopener noreferrer">Operate and receive the editable workspace</a> · <a href="' + escape(urls.completeSource) + '" target="_blank" rel="noopener noreferrer">Complete original WRI source</a> · <a href="' + escape(urls.originalReceiving) + '" target="_blank" rel="noopener noreferrer">Original Datasette edition receiving</a></p>',
+    completedCustomerExample(),
     WORK_END,
   ].join('\n') + '\n';
   const text = String(html), starts = text.split(WORK_START).length - 1, ends = text.split(WORK_END).length - 1;

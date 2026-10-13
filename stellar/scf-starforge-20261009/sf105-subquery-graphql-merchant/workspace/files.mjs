@@ -8,12 +8,13 @@ import { readDeployment } from './deployment.mjs';
 import { readPreview } from './authoring.mjs';
 import { describeResponseComparisonFiles } from './comparison-report.mjs';
 import { prepareRequestPacket } from './request-files.mjs';
+import { preparePreparationPacket } from './preparation-files.mjs';
 import { readRequestBytes, writeRequestBytes } from './request-sets.mjs';
 import { describeProjectHandover, readProjectHandoverFile, PROJECT_HANDOVER_FILE } from './handover.mjs';
 
 export const GRAPHQL_FILE_SET_SCHEMA = 'stellar-forge.graphql-workspace-files.v1';
 export const GRAPHQL_FILE_SET_MANIFEST = 'workspace-files.json';
-export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover', 'comparison', 'requests'];
+export const GRAPHQL_FILE_KINDS = ['draft', 'preview', 'merchant', 'evolution', 'deployment', 'host', 'handover', 'comparison', 'requests', 'preparation'];
 const json = value => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
@@ -27,7 +28,7 @@ function filename(value) {
   return value;
 }
 function selectionOf(input) {
-  if (!plain(input) || Object.keys(input).some(key => !['project', 'revision', 'kind', 'exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId', 'requestSetId', 'runId', 'generation'].includes(key)))
+  if (!plain(input) || Object.keys(input).some(key => !['project', 'revision', 'kind', 'exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId', 'requestSetId', 'runId', 'generation', 'preparationId'].includes(key)))
     fail('Select original workspace identities, not filesystem paths.');
   const selection = { ...input };
   projectName(selection.project);
@@ -40,9 +41,9 @@ function selectionOf(input) {
       fail('Only a saved run packet selects an original generation.');
   } else if (selection.requestSetId !== undefined || selection.runId !== undefined || selection.generation !== undefined)
     fail('This file kind does not select request sets or run checkpoints.');
-  const fields = { requests: [], draft: [], handover: [], comparison: ['comparisonId'], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
+  const fields = { preparation: ['preparationId'], requests: [], draft: [], handover: [], comparison: ['comparisonId'], preview: ['previewId'], merchant: ['exportId'], evolution: ['exportId'],
     deployment: ['deploymentId'], host: ['deploymentId', 'hostId'] }[selection.kind];
-  for (const key of ['exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId']) {
+  for (const key of ['exportId', 'deploymentId', 'hostId', 'previewId', 'comparisonId', 'preparationId']) {
     if (fields.includes(key)) {
       if (key === 'hostId' ? typeof selection[key] !== 'string' || !/^host-[1-9]\d*-[a-f0-9]{8}$/.test(selection[key]) : !uuid(selection[key]))
         fail('Select the original ' + key + ' from this project.');
@@ -105,6 +106,10 @@ export function createWorkspaceFiles(store) {
       const requests = await prepareRequestPacket(store, selection);
       addDisk(requests.directory, requests.files);
       source = { ...source, ...requests.source, packetSha256: requests.packetSha256 };
+    } else if (selection.kind === 'preparation') {
+      const preparation = await preparePreparationPacket(store, selection);
+      addDisk(preparation.directory, preparation.files);
+      source = { ...source, ...preparation.source, packetSha256: preparation.packetSha256 };
     } else if (selection.kind === 'draft') {
       addBytes(saved.input.schemaText.trimStart().startsWith('{') ? 'schema-source.json' : 'schema-source.graphql', Buffer.from(saved.input.schemaText));
       addBytes('queries.json', Buffer.from(saved.input.queriesText));
@@ -151,7 +156,7 @@ export function createWorkspaceFiles(store) {
     if (bytes.length > 65000) fail('The retained file manifest exceeds its transfer limit.');
     return { manifest, bytes, sha256: digest(bytes), loaders };
   }
-  const pinned = selection => ['handover', 'requests'].includes(selection.kind);
+  const pinned = selection => ['handover', 'requests', 'preparation'].includes(selection.kind);
   const indexName = sha256 => 'workspace-file-indexes/' + sha256 + '.json';
   const sameSelection = (a, b) => JSON.stringify(Object.keys(a).sort().map(key => [key, a[key]]))
     === JSON.stringify(Object.keys(b).sort().map(key => [key, b[key]]));
@@ -198,7 +203,7 @@ export function createWorkspaceFiles(store) {
         : () => {
           if (!/^[a-f0-9]{64}$/.test(manifest.source.packetSha256 ?? ''))
             fail('The retained request packet has no original file-set identity.', 409);
-          return diskBytes(join(store.root, 'request-packets', manifest.source.packetSha256), item.name, item);
+          return diskBytes(join(store.root, selection.kind === 'preparation' ? 'preparation-packets' : 'request-packets', manifest.source.packetSha256), item.name, item);
         };
       loaders.set(item.name, { file: item, load });
     }

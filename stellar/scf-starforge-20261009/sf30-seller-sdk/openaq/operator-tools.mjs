@@ -14,7 +14,9 @@ export const TOOL_READS=Object.freeze({
  merchant_openaq_status:'status',merchant_openaq_operation:'operation',merchant_openaq_request:'request',merchant_openaq_capture_read:'capture',
  merchant_openaq_preview:'preview',merchant_openaq_review_read:'review',merchant_openaq_report_read:'report',merchant_openaq_study_read:'study',
  merchant_openaq_publication:'publication',merchant_openaq_dataset_preview:'publication.inspect',merchant_openaq_customer_status:'customer.status',
- merchant_openaq_customer_read:'customer.read',merchant_openaq_customer_operation:'customer.operation',merchant_openaq_customer_browser:'customer.browser',merchant_openaq_account:'account'
+ merchant_openaq_customer_read:'customer.read',merchant_openaq_customer_operation:'customer.operation',merchant_openaq_customer_browser:'customer.browser',merchant_openaq_account:'account',
+ merchant_openaq_merchant_status:'merchant.status',merchant_openaq_merchant_release:'merchant.release',
+ merchant_openaq_merchant_open:'merchant.open',merchant_openaq_merchant_close:'merchant.close'
 });
 const join={captureId:uuid,sourceReviewId:uuid},joinRequired=['captureId','sourceReviewId'];
 export function openaqMerchantTools(tool){
@@ -38,9 +40,14 @@ export function openaqMerchantTools(tool){
   merchant_openaq_customer_read:[{...join,deliveryId:uuid,operation:string(80),arguments:obj},[...joinRequired,'deliveryId','operation'],'Read original customer editions, mapping reviews, queries, exports or operations.'],
   merchant_openaq_customer_operation:[{...join,id:uuid},[...joinRequired,'id'],'Read the original native customer request by UUID.'],
   merchant_openaq_customer_browser:[join,joinRequired,'Open the existing original publisher/customer operator using the same owned publisher.'],
-  merchant_openaq_account:[{},[],'Inspect the original local account controller. This reads no provider data and is not a provider credit-balance assertion.']
+  merchant_openaq_account:[{},[],'Inspect the original local account controller. This reads no provider data and is not a provider credit-balance assertion.'],
+  merchant_openaq_merchant_status:[{stageRequestId:uuid},[],'Read this project’s original SF82 store, selected source release and current owned console identity.'],
+  merchant_openaq_merchant_release:[{stageRequestId:uuid},['stageRequestId'],'Inspect the exact completed study staging request, original preparation and retained native dataset release.'],
+  merchant_openaq_merchant_open:[{stageRequestId:uuid},['stageRequestId'],'Open or return this project’s existing original SF82 console for the selected staged study. Returns its private URL only to this connected caller; activation and payment remain original reviewed console actions.'],
+  merchant_openaq_merchant_close:[{consoleId:uuid},['consoleId'],'Close the exact console owned by this project, draining its accepted actions, native seller and customer handles. A later replacement console is preserved.']
  };
- for(const[name,[properties,needed,description]]of Object.entries(reads))result.push(tool(name,description,{...bound,...properties},[...required,...needed],read));
+ for(const[name,[properties,needed,description]]of Object.entries(reads))result.push(tool(name,description,{...bound,...properties},[...required,...needed],
+  ['merchant_openaq_merchant_open','merchant_openaq_merchant_close'].includes(name)?saved:read));
  const actions={
   merchant_openaq_save_study:[{id:uuid,name:string(160),purpose:string(),plan:obj,expectedRevision:{anyOf:[hash,{type:'null'}]}},['id','name','purpose','plan','expectedRevision'],'Save one named monitoring plan against its exact prior revision. Existing captures retain their original plans.'],
   merchant_openaq_capture:[{plan:obj,context:obj,study:obj},['plan'],'Acquire the selected official original API pages or public AWS location/day editions under one retained UUID. Completed requests reopen; only explicit resume retries an unfinished GET.'],

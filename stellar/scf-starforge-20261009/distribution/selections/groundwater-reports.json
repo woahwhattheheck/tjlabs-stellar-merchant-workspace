@@ -73,7 +73,8 @@
     "merchant-provider-receiving",
     "merchant-provider-tools",
     "groundwater",
-    "groundwater-reports"
+    "groundwater-reports",
+    "groundwater-application"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -106,7 +107,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-report",
     "stellar/scf_2026/sf47_budget_model",
-    "products/groundwater"
+    "products/groundwater",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/groundwater-application"
   ],
   "supportFiles": [
     "stellar-forge/payment-auto-catalog/schema-validation.mjs",

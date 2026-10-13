@@ -2,6 +2,7 @@
 import { need } from '../model.mjs';
 const XML='http://www.w3.org/XML/1998/namespace';
 const XMLNS='http://www.w3.org/2000/xmlns/';
+const EMPTY_ATTRIBUTE_LOCATIONS=Object.freeze(Object.create(null));
 const namePattern=/^[A-Za-z_][A-Za-z0-9_.-]*(?::[A-Za-z_][A-Za-z0-9_.-]*)?$/;
 function entityText(value) {
   need(!value.includes('<'),'An XML attribute contains an unescaped less-than character.');
@@ -34,7 +35,7 @@ function expanded(name,ns,attribute=false) {
   need(prefix===''||Object.hasOwn(ns,prefix),'An original XML namespace prefix is not declared.');
   return {name,localName,namespaceURI:prefix?ns[prefix]:attribute?'':ns['']||''};
 }
-export function scanFredDdpXml(text,handlers={}, {maxElements=5000000,maxDepth=64,maxAttributes=256,signal}={}) {
+export function scanFredDdpXml(text,handlers={}, {maxElements=5000000,maxDepth=64,maxAttributes=256,retainAttributeLocations=true,signal}={}) {
   need(typeof text==='string'&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text),'Invalid original XML text.');
   const stack=[];let i=text.charCodeAt(0)===0xfeff?1:0,count=0,rootCount=0,rootEnded=false,declaredRoot=null;
   const emitText=(value,start,end,cdata=false)=>{
@@ -79,8 +80,8 @@ export function scanFredDdpXml(text,handlers={}, {maxElements=5000000,maxDepth=6
       const node=stack.at(-1);node.location.end=end+1;handlers.end?.(node,stack);stack.pop();if(!stack.length)rootEnded=true;i=end+1;continue;
     }
     const nameStart=i;while(i<text.length&&!/[\s/>]/.test(text[i]))i++;
-    const name=text.slice(nameStart,i);parts(name);const rawAttributes=Object.create(null),attributeLocations=Object.create(null);
-    let selfClosing=false,closed=false;
+    const name=text.slice(nameStart,i);parts(name);const rawAttributes=Object.create(null),attributeLocations=retainAttributeLocations?Object.create(null):EMPTY_ATTRIBUTE_LOCATIONS;
+    let selfClosing=false,closed=false,attributeCount=0;
     while(i<text.length){
       const spacing=i;while(i<text.length&&/\s/.test(text[i]))i++;
       if(text[i]==='>'){i++;closed=true;break;}
@@ -93,12 +94,14 @@ export function scanFredDdpXml(text,handlers={}, {maxElements=5000000,maxDepth=6
       while(i<text.length&&/\s/.test(text[i]))i++;const quote=text[i++];need(quote==='"'||quote==="'",'Original XML attribute values must be quoted.');
       const valueStart=i,end=text.indexOf(quote,i);need(end>=0,'Incomplete original XML attribute.');
       rawAttributes[attributeName]=entityText(text.slice(valueStart,end).replace(/\r\n?/g,'\n').replace(/[\n\t]/g,' '));
-      attributeLocations[attributeName]={start:attributeStart,end:end+1};i=end+1;
-      need(Object.keys(rawAttributes).length<=maxAttributes,'The original XML exceeds its attribute capacity.');
+      if(retainAttributeLocations)attributeLocations[attributeName]={start:attributeStart,end:end+1};i=end+1;
+      need(++attributeCount<=maxAttributes,'The original XML exceeds its attribute capacity.');
     }
     need(closed,'The original XML ends inside an element.');
-    const ns=Object.assign(Object.create(null),stack.at(-1)?.namespaces||{'xml':XML,'xmlns':XMLNS});
-    for(const [key,value] of Object.entries(rawAttributes)){
+    const parentNamespaces=stack.at(-1)?.namespaces||Object.assign(Object.create(null),{xml:XML,xmlns:XMLNS});
+    const declarations=Object.entries(rawAttributes).filter(([key])=>key==='xmlns'||key.startsWith('xmlns:'));
+    const ns=declarations.length?Object.assign(Object.create(null),parentNamespaces):parentNamespaces;
+    for(const [key,value] of declarations){
       if(key==='xmlns'){need(value!==XMLNS&&value!==XML,'Invalid default XML namespace.');ns['']=value;}
       else if(key.startsWith('xmlns:')){
         const prefix=key.slice(6);need(prefix!=='xmlns'&&value!==XMLNS&&value!==''&&

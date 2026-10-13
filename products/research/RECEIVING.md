@@ -4,6 +4,14 @@ This guide takes the maintained Research product from its original Git source to
 
 The [operating guide](OPERATING.md) is the analyst-facing workflow. The [Documents and Pipelines contract](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/RESEARCH_DOCUMENTS.md) gives complete SDK, command, merchant and request fields. Original provider configuration belongs to the [Documents source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED.md) and [managed Pipelines source](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/UNSTRUCTURED_PIPELINES.md).
 
+
+## Customer quotations and Applications commissioning
+
+Use the complete [Research commissioning workflow](COMMISSIONING.md) to select the original customer case store, observed pricing profiles, paid-delivery host and existing source connections. Preparation retains the full native configuration and source review; save produces the original Applications settings/request and same-source direct launch arguments. The existing Applications desk reviews, starts, stops and reopens that Research listener.
+
+The quotation product carries the original customer case and published quote through a reviewed Research brief, source-linked work, frozen delivery, native paid publication, Buyer receiving and realized pricing/cost report. The [quotation operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md) contains the complete browser, terminal and Merchant journey.
+
+
 ## 1. Build the complete selected source
 
 Use the existing repository containing the full source commit. The normal builder reads the committed recipe and selected source-owned registrations, follows their static imports and browser maps, and retains the complete declared component directories.
@@ -1012,6 +1020,81 @@ node /absolute/private/received-research/package/engine/stellar/scf-starforge-20
 ~~~
 
 Use the authenticated loopback URL printed to the local terminal. The original native portable reader checks the delivered revision and complete history. Normal reopening accepts a matching later local history, so the customer can keep editing the same received workspace. Preserve the original ZIP and COMPLETE.json as the delivered edition.
+
+## 21. Receive a reviewed dossier return
+
+The complete installed source includes the original dossier-return engine/store/contracts, authenticated client/routes, browser and durable draft interface, command family, Merchant adapter/catalog and operating instructions. The existing source contribution registers `research-dossier-returns` and its exports without changing the original Research, quotation, Applications or Buyer selections.
+
+Read the [complete return operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/OPERATING.md) and [Merchant guide](../../stellar-forge/mcp-merchant-operator/DOSSIER_RETURNS.md). They use the actual installed engine and existing listener. No additional service or provider acquisition is required to compare retained original dossier files.
+
+### Preserve the complete receiving selection
+
+A complete reviewed-return handover includes:
+
+| Material | Required identity and purpose |
+|---|---|
+| Original returned portable | Full original bytes, filename, content type, byte count and SHA256. |
+| Immutable comparison export | Review/source IDs, comparison digest, common-base/current/returned revision-SHA pairs and every differing item. |
+| Complete reviewed request | Original request ID, review and comparison, expected revision, reviewer record and all explicit decisions. |
+| Actual accepted-return export | Original return/request/review/source IDs, saved revision/SHA, reviewer, decisions and branch descriptors. |
+| Accepted dossier portable | The full original portable exported at that exact accepted revision. |
+| Readable reports | The complete HTML or Markdown review/return reports needed for the operating handover. |
+| Unfinished continuation material | Full original native/browser draft exports and any pending request, preserved separately with their exact original review identity. |
+| Selected application source | The complete installed Research source, manifest, original notices and these operating/receiving guides. |
+
+Keep a typed returned proposal identifiable as a proposal. The current typed history remains authoritative until the applicable original native workflow adopts it. The receipt and report must not describe retained proposed events as active eligibility, extraction, appraisal or citation decisions.
+
+### Export the actual selected return
+
+The generic command selects one frozen review. Without a return ID, the export contains the immutable comparison only. The explicit saved return ID selects the actual accepted result:
+
+~~~sh
+starforge research-dossier-returns returns-export \
+  --connection-file /absolute/private/application-url.json \
+  --directory /absolute/original/dossier-store \
+  --id ORIGINAL_DOSSIER_ID \
+  --review ACTUAL_DRV_REVIEW_ID \
+  --return ACTUAL_DRR_RETURN_ID \
+  --format json \
+  --out /absolute/handover/accepted-return.json \
+  --result-file /absolute/private/return-export-file.json
+~~~
+
+Export the complete original source with `--format source` and its exact known SHA256. Preserve the returned JSON or gzip representation even when a Merchant retention filename uses the generic binary extension. The source's original metadata and full file digest identify its actual content.
+
+Use the existing `research-client export` command with the accepted receipt's revision to export `Research_Dossier_Accepted.json.gz`. A later current head is a different selected revision and must keep that distinction.
+
+### Reopen the accepted portable and continue editing
+
+On the selected receiving environment, use its original Research listener and store with the actual full portable:
+
+~~~sh
+starforge research-client reopen \
+  --connection-file /absolute/private/receiving-application-url.json \
+  --directory /absolute/receiving/dossier-store \
+  --source-file /absolute/handover/Research_Dossier_Accepted.json.gz \
+  --sha256 ACTUAL_ACCEPTED_PORTABLE_SHA256
+~~~
+
+Retain the complete original reopen result, including source byte count/SHA and dossier metadata. Read the received dossier's accepted revision through the original client and inspect its retained review/source records and selected authored changes. Continue a subsequent ordinary edit through that same received dossier.
+
+The current branch, original returned file and common-base identities remain separately recorded. Preserve the raw returned file and all complete reports alongside the accepted portable even when the native accepted state already retains their source references. Do not reconstruct any of these sources from a screenshot or a clipped report.
+
+A draft that has not been submitted remains a draft. Carry its full export and pending request explicitly. Reuse it only with its actual source/review/current binding; if the receiving current branch differs, retain the old draft and explicitly preview and review the new comparison.
+
+### Recovery boundaries
+
+- An identical request retry is reconciled by the original saved request before a new revision CAS. Preserve its full original payload.
+- A changed request under the same ID is a conflict; it cannot replace the accepted original.
+- A changed current revision requires a new explicit comparison and review, with the old full comparison retained.
+- A draft-version conflict preserves both complete reviewer versions until a successor is selected.
+- Full values and original source files use streamed exports. Retain the native selection header independently from the complete file byte digest.
+- CLI output or attachment cleanup can fail after the native operation returned. Recover the original saved request/draft/source or existing result file rather than repeating a write to repair output.
+- Record receiving completion only from the actual accepted receipt, complete exports and successful original portable reopen.
+
+The source wire and decoded limits are 256 MiB, with the original 8 MiB envelope and 64 MiB internal chunk limits. The original engine checks the complete portable, including retained branches, against its 256 MiB limit before committing a reviewed return; `PORTABLE_SIZE_LIMIT` preserves the unchanged current dossier. Review/draft requests are limited to 16 MiB, small control requests to 1 MiB, complete return JSON responses to 64 MiB and review pages to 100 items. These limits apply together with the original portable/history validators.
+
+For a large plain JSON return, select an existing original gzip portable from the producing Research workspace when available and retain that file’s actual source identity. The receiver preserves the selected upload exactly; it never silently recompresses the source. Compressed wire size does not waive the decoded or complete-portable limits.
 
 ## Continue an interrupted handover
 

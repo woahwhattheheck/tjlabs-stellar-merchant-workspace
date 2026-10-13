@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "ckan-merchant",
-  "title": "CKAN data merchant and reviewed refresh",
-  "description": "Complete original CKAN source, semantic review, accepted refresh, native publication, browser and merchant operation, whole-workspace and customer receiving",
+  "title": "CKAN data merchant, refresh and Support",
+  "description": "Complete CKAN source, semantic review, accepted refresh, native publication, Support incidents and original merchant cases, installed browser/MCP operation and whole-product receiving",
   "base": {
     "commands": [
       "installation",
@@ -30,7 +30,16 @@
       "facilitator",
       "client",
       "releases",
-      "merchant-host"
+      "merchant-host",
+      "support-console",
+      "support-watch",
+      "support",
+      "revenue-workspace",
+      "revenue-report",
+      "merchant-accounting",
+      "merchant-accounting-workspace",
+      "merchant-accounting-adjustments",
+      "buyer-expenses"
     ],
     "exports": [
       "./runtime-profile",
@@ -53,7 +62,27 @@
       "./merchant/mcp/client-config",
       "./buyer/mcp-native",
       "./package.json",
-      "./manifest.json"
+      "./manifest.json",
+      "./support",
+      "./merchant/incidents",
+      "./merchant/incidents/store",
+      "./merchant/incidents/operator",
+      "./merchant/support-console",
+      "./merchant/mcp/catalog",
+      "./merchant/mcp/stdio",
+      "./merchant/revenue-workspace",
+      "./merchant/revenue-model",
+      "./merchant/revenue-report",
+      "./merchant/accounting",
+      "./merchant/accounting-workspace",
+      "./merchant/accountant",
+      "./merchant/accounting-adjustments",
+      "./merchant/accounting-adjustments/operations",
+      "./merchant/scenario-planning",
+      "./merchant/scenario-workspace",
+      "./merchant/repricing",
+      "./merchant/quote-prices",
+      "./merchant/repricing-source"
     ],
     "features": [
       "schema",
@@ -77,7 +106,24 @@
     "merchant-provider-publishers",
     "merchant-provider-dataset",
     "merchant-provider-receiving",
-    "merchant-provider-facilitators"
+    "merchant-provider-facilitators",
+    "merchant-support",
+    "merchant-provider-support",
+    "merchant-console",
+    "merchant-implementation",
+    "merchant-service-operations",
+    "merchant-commercial",
+    "merchant-support-product",
+    "merchant-provider-accounting",
+    "merchant-provider-buyer-expenses",
+    "accounting-connections",
+    "buyer-expenses",
+    "merchant-service-adjustments",
+    "merchant-pricing",
+    "merchant-provider-pricing",
+    "merchant-tariffs",
+    "merchant-performance",
+    "merchant-economics-product"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",
@@ -103,7 +149,17 @@
     "stellar/scf-starforge-20261009/sf54-buyer-governor-intent",
     "stellar/scf-starforge-20261009/sf59-operator-reservation-gate",
     "stellar-forge/mcp-merchant-operator",
-    "stellar-forge/mcp-paid-agent"
+    "stellar-forge/mcp-paid-agent",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console",
+    "stellar/scf_2026/sf49_data_commissioning",
+    "stellar/scf-starforge-20261009/sf93-seller-support-bundle",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops",
+    "stellar/scf-starforge-20261009/sf77-merchant-workorder",
+    "stellar/scf-starforge-20261009/sf70-merchant-intake",
+    "products/merchant-support",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk",
+    "stellar/scf-starforge-20261009/sf43-agent-commerce"
   ],
   "supportFiles": [
     "products/ckan/OPERATING.md",
@@ -123,14 +179,19 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+    "stellar/scf_2026/sf49_data_commissioning/source-edition-archive.py",
+    "products/merchant-workspace/OPERATING.md",
+    "products/ckan/SUPPORT.md",
+    "products/ckan/support-receiving.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "CKAN data merchant, reviewed source refresh and complete operator/customer receiving",
+    "description": "CKAN data merchant with reviewed source refresh, Support incidents, original merchant cases and customer receiving",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

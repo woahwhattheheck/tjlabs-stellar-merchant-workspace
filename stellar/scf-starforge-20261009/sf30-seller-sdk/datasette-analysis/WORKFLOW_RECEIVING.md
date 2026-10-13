@@ -105,10 +105,16 @@ individual native operation IDs and selected editions on this original owner.
 
 ## 3. Bind the complete paired supplier source
 
-Use the complete original supplier review workspace supplied by the maintained
-supplier application. Its candidate CSV must be the exact pricing source
-selected for this profile. The original review can retain its own requestId;
-the external workflow request is linked to it.
+The selected supplier component includes the complete original reviewed example
+at $CONAPI_SUPPLIER_COMPONENT/examples/published-pricing-intake.workspace.json.
+It imports all 23 original published price records into the explicitly empty
+initial target and retains all 23 review decisions. Its original request ID is
+conapi-elite-initial-import-20261012, revision 23, with status reviewed. The
+workflow links that original native review to its own external business request.
+
+Use that retained workspace for this source edition. Its candidate CSV is the
+exact pricing source selected below. For a customer's different candidate or
+rule selection, use the corresponding complete native review workspace.
 
 The retained published source family is:
 
@@ -121,8 +127,11 @@ The retained published source family is:
 The publisher is Elite Digital AI Solutions Ltd; this retained original edition
 is dated August 12, 2026, acquired on October 12, and licensed CC BY 4.0. The
 complete original files and their original publisher metadata are the inputs.
-For another actual edition, update the selected descriptors and corresponding
-native review workspace together.
+The selected installation also retains these exact three original files at
+$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012, with their complete
+publisher attribution and source inventory. Use those paths directly for this
+retained edition. For another actual edition, update the selected descriptors
+and corresponding native review workspace together.
 
 Configure from the complete maintained example. Use the real local original
 files and built software archive:
@@ -130,16 +139,16 @@ files and built software archive:
 ~~~sh
 "$CONAPI_PYTHON" -I "$CONAPI_ANALYSIS_COMPONENT/workflow_cli.py" configure \
   --template "$CONAPI_ANALYSIS_COMPONENT/WORKFLOW_SUPPLIER_EXAMPLE.json" \
-  --source-csv /absolute/private/source/published-pricing.csv \
-  --related-csv catalog=/absolute/private/source/services-catalogue.csv \
-  --source-metadata /absolute/private/source/datapackage.json \
-  --related-metadata catalog=/absolute/private/source/datapackage.json \
+  --source-csv "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/published-pricing.csv" \
+  --related-csv "catalog=$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/services-catalogue.csv" \
+  --source-metadata "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/datapackage.json" \
+  --related-metadata "catalog=$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/datapackage.json" \
   --supplier-component "$CONAPI_SUPPLIER_COMPONENT" \
-  --supplier-workspace /absolute/private/supplier/original-reviewed-workspace.json \
+  --supplier-workspace "$CONAPI_SUPPLIER_COMPONENT/examples/published-pricing-intake.workspace.json" \
   --supplier-table-name supplier_feed_accepted \
-  --supplier-pricing /absolute/private/source/published-pricing.csv \
-  --supplier-catalogue /absolute/private/source/services-catalogue.csv \
-  --supplier-metadata /absolute/private/source/datapackage.json \
+  --supplier-pricing "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/published-pricing.csv" \
+  --supplier-catalogue "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/services-catalogue.csv" \
+  --supplier-metadata "$CONAPI_ANALYSIS_COMPONENT/sources/elite-digital-20261012/datapackage.json" \
   --analysis-workspace "$CONAPI_ANALYSIS" \
   --operation-id "$CONAPI_OPERATION" \
   --source-archive /absolute/private/releases/complete-datasette-source.zip \
@@ -389,9 +398,15 @@ supplier review keeps its original native identity and its new external request
 link. The resulting complete project preserves the original delivery-to-successor
 relationship.
 
-For a review/rule change, open the received workspace.json through the maintained
-supplier application, make the intended native edit, and export its successor
-workspace. Supply that complete new original workspace and its actual matching
+For a review/rule change, launch the complete original received supplier
+application:
+
+~~~sh
+node "$CONAPI_SUPPLIER_FILES/supplier-report-cli.mjs" serve --port 8765
+~~~
+
+Open the printed localhost URL and adjacent workspace.json, make the intended
+native edit, and export its successor workspace. Supply that complete new original workspace and its actual matching
 CSV source in a new configuration. The native revision/status, accepted output
 and original lineage travel with the report successor.
 
@@ -400,3 +415,33 @@ project archives, their returned hashes, original native identities and concise
 observed outcome in the existing conapi receiving thread. Keep the exact
 configuration and source selections in those projects so the next operator can
 continue them directly.
+
+## 7. Open and continue through managed Applications
+
+The complete installed product includes **Datasette source workflow** beside
+the original **Datasette customer Analysis** entry. Select the original
+workbooks Python installation, workflow directory and actual configured
+profile. Review, Save, Start and Open use the existing Applications lifecycle.
+
+For the received original project, set workflowDirectory to CONAPI_RECEIVED.
+Leave configurationFile empty to inspect and re-export the retained result.
+For the actual successor, select successor-configuration.json produced above
+after reopening the restored Analysis operation.
+
+The managed listener checks its original process, workspace ID and exact
+configuration against its private launch record and authenticated health
+response before exposing Open. Its health response also identifies the
+configured native Analysis owner and readiness. The workbench shows the whole
+source family, all six SQL sections, report definition and required period
+parameter, then retains each original request and successor outcome.
+
+Use the existing Stop control and reopen the same workflow directory to
+continue the retained project. The current Open link contains the new local
+capability. The native Analysis application retains its separate original
+workspace and lifecycle.
+
+[INSTALLATION.md](INSTALLATION.md#managed-source-workflow) contains the exact
+Application settings and installed wrapper command. The complete
+[product operating guide](../../../../products/datasette/OPERATING.md#operate-a-complete-source-workflow)
+connects retained source selection, supplier review, native reports and the
+portable receiving journey.

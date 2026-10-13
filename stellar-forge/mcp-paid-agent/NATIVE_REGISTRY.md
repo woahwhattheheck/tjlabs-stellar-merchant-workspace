@@ -1,7 +1,7 @@
 # Multiple native services in one buyer workspace
 
 The native registry connects existing SF88 buyer workspaces to one authenticated
-MCP endpoint, one catalog, and one HTTP request desk. Each configured service keeps
+MCP endpoint, a trusted catalog selector, and one HTTP request desk. Each configured service keeps
 its original route, payment binding, approval channel, signer, spending ledger,
 durable inbox and complete saved responses.
 
@@ -14,8 +14,11 @@ service and intent identities as the console.
 
 First initialize each service with the original
 [NATIVE_WORKSPACE.md](NATIVE_WORKSPACE.md) workflow. A service has one exact
-merchant origin, pathname, HTTP method and payment binding. All services in one
-registry must use the same original Bazaar URL.
+merchant origin, HTTP method and payment binding. Its route is the exact configured
+pathname by default. A service explicitly initialized with **--route-template**
+can accept matching concrete paths under that trusted original template. Each
+service keeps its original Bazaar URL. The registry exposes the distinct source
+URLs already configured by those services.
 
 Create an operator-owned JSON description:
 
@@ -42,6 +45,13 @@ Use actual existing native directories. IDs contain 1–64 lowercase letters,
 digits or hyphens and start with a letter or digit; labels contain 1–80 characters.
 The host supports 1–16 distinct services. Every directory must be canonical,
 absolute, private and owned by the current operator.
+
+The default service determines the default catalog. A single original source uses
+catalog ID **default**. With several original URLs, initialization derives stable
+IDs from each URL. To supply readable names, add an optional **catalogs** array
+of **{id,label,url}** objects to the description. It must name exactly the distinct
+canonical URLs in the existing service manifests; source IDs and URLs are unique.
+The [catalog guide](CATALOGS.md) gives the full schema and selection contract.
 
 Initialize a new private registry directory beneath an existing private parent:
 
@@ -76,9 +86,11 @@ starforge mcp-native-registry serve \
 ~~~
 
 The startup JSON provides the MCP URL and browser console URL. Open that console
-and connect with the configured access token. Browse or search the catalog and
-inspect the selected offer. Its native request form lists services whose original
-route and payment alternative match the offer.
+and connect with the configured access token. Choose an original catalog, browse
+or search it and inspect the selected offer. Its native request form lists services
+whose original catalog, route and payment alternative match the offer. For a declared path route, enter
+the original descriptor's required path values; the final concrete URL must match
+the chosen service's configured pathname or trusted template.
 
 The HTTP requests view includes a service selector, each service's request limits,
 and history for one service or all services. Opening a saved request selects its
@@ -109,12 +121,17 @@ try {
   console.log(configured.workspaces.map(service => ({
     id: service.workspaceId,
     label: service.workspaceLabel,
+    catalogId: service.catalogId,
+    catalogUrl: service.catalogUrl,
     route: service.route,
     payment: service.payment
   })));
 
   const reports = buyer.forWorkspace('reports');
-  const first = await buyer.discovery.search({query:'research reports',limit:25});
+  const workspace = await reports.workspace();
+  const first = await buyer.discovery.search({
+    catalogId: workspace.catalogId, query:'research reports', limit:25
+  });
   // Continue first.continuation with the existing discovery client as needed.
   // Inspect an actual eligible handle returned by this same endpoint.
   const described = await buyer.discovery.describe(first.resources[0].handle);
@@ -205,7 +222,8 @@ All actions use **sf43_discover_review_and_pay**.
 | read | action, workspaceId, intentId; optional byteOffset and maxBytes | Original saved response range |
 
 Service-specific results include **workspaceId** and **workspaceLabel** alongside
-the original result. Omitting workspaceId selects the configured default. The
+the original result. Service descriptors additionally expose **catalogId**,
+**catalogLabel** and **catalogUrl**. Omitting workspaceId selects the configured default. The
 single-service native host exposes the same service-list and combined-history
 actions with workspace ID **default**.
 
@@ -253,7 +271,8 @@ This returns the complete private host manifest and its digest. MCP service
 descriptions expose the selected routes and operational limits; private directory
 paths remain in the operator's local configuration.
 
-A registry's membership and original native manifest digests remain fixed.
+A registry's membership, configured catalog set and original native manifest
+digests remain fixed.
 To install a changed set of services, stop the host, initialize a new registry
 directory from the desired existing native workspaces, and start that registry.
 Their original inboxes and results reopen through the new host. Reusing an intent
@@ -264,5 +283,5 @@ Programmatic hosts use
 **initializeNativeRegistry**, **inspectNativeRegistry** and **openNativeRegistry**
 exports. Supply only trusted operator configuration to these host APIs.
 
-See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for request/body semantics,
+See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for path/query/body semantics,
 original approval and complete response handling.

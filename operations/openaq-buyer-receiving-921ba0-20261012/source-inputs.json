@@ -1,0 +1,226 @@
+{
+  "schema": "commons.source-native-receiving.v1",
+  "operation": "openaq-native-921ba0-20261012",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "productCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+  "parentSellerCommit": "3c9063c0872e835c25cb1e95c00ab27bd30326a2",
+  "productPullRequest": 593,
+  "originalSellerPullRequest": 517,
+  "sourceAcquisition": "Exact original 808-file source stream plus 19 runtime assets and three original SF62/SF54/SF59 operator Python modules, all Git/SHA256 verified and retained under the same operation. The base capsule remains intact; native signer and Dataset unpaid checkout/wire corrections retain their exact before/after identities.",
+  "dependencyProfile": {
+    "package": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+    "lockfile": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package-lock.json",
+    "lockGitBlob": "320cee72638cf1d4bc0fc1e48c4fe9b8547dc223",
+    "readiness": "dependency-ready.json is exact-bound to the original package and lock SHA256, published only after the original npm ci child exits successfully. An interrupted unmarked reproducible tree is rebuilt by that same npm ci; the canonical Dataset operation is unchanged."
+  },
+  "study": {
+    "file": "stellar/scf-starforge-20261009/sf30-seller-sdk/openaq/examples/completed-del-norte/study.tgz",
+    "bytes": 13807,
+    "sha256": "9fcc10bd1c91816c51c790a45d6f6aa76053ea375092ff5a802c655a19acc0b6",
+    "captureId": "142e4ed4-b38c-4013-8718-d3050765ee66",
+    "reviewId": "d12ca7d5-edec-4496-9b41-c3c588167ceb",
+    "reportId": "b674c1dc-dacc-407f-92a3-7f4c851baebc"
+  },
+  "nativeMode": "NO_PAYMENT_REQUIRED",
+  "sourceProviderCalls": 0,
+  "paidContinuationOwner": "Original OpenAQ seller/Buyer accounting and signer owner, separate from this source-native programme",
+  "files": [
+    {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/native-journey.mjs",
+      "bytes": 19060,
+      "sha256": "f3940401de94c25b38f5f98e95a1066b6390597a384535f0d6e7ab0ba76cdb07",
+      "gitBlob": "098471874e1c56e8645bb48bc58a17b2d994ae77"
+    },
+    {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/receive.py",
+      "bytes": 38517,
+      "sha256": "aeef39c8460d72a1e52daa87d13645f19b1139919dc42bc5444f3df83221fc7b",
+      "gitBlob": "8bf4ffc967514f9bdd107bfa61e2c2945f12f868"
+    },
+    {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-unpaid-repairs.json",
+      "bytes": 68151,
+      "sha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+      "gitBlob": "a17c25b28fe1d5509d1df8c6e1b2c77d942de985"
+    },
+    {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-operator.json",
+      "bytes": 20229,
+      "sha256": "df6a22deeba2837845775f1759f78c48500492e29b2ed6da40f8740af914819d",
+      "gitBlob": "a085e191385406d31c277725e16f252da0aabbad"
+    }
+  ],
+  "nativeContinuation": {
+    "previousJourneySha256": "96ba6cf6fff8daa7afea3b9a4188840280114fec25e3f2836c43cbcbc97d8ab6",
+    "reason": "Use the original true-admission Dataset response contract and explicitly continue the reviewed unsigned attempt only after retaining its full SF82 checkout and inactive wire history through the original Dataset/SF36 authorities.",
+    "mutableJournalDirectory": "/dev/shm/921ba0-openaq-buyer-native-20261012/native",
+    "reproducibleSourceDirectory": "/dev/921ba0-openaq-runtime-20261012/source",
+    "sourceRecovery": "The original operation lock remains held during source intake and is inherited by each original child; exact complete files are reopened and the source selection marker is always checked. The canonical compressed capsule restores invocation-private source without moving or replacing native session journals.",
+    "originalBootstrapJourneySha256": "43bc5e869bbc5f5e3cfe9506512b0f8b36915cecac974012dad67eabed6013ba",
+    "originalUnpaidAttempt": {
+      "index": 1,
+      "attemptSha256": "0c8f89e1292825866d057a28af227d4fa54c76fa02163eacdb35fb936e5c068e",
+      "intentId": "dataset:fcd3c83df5c5dcfbe02af2c600e0e39622cbbc6501d4e0debefd8eb1e7b3392f",
+      "nativeError": "INITIAL_TRANSPORT_FAILED",
+      "transportError": "ECONNRESET",
+      "paymentSent": false,
+      "operatorReservation": null,
+      "responseStatus": "NOT_STARTED"
+    }
+  },
+  "sourceStream": {
+    "manifest": "source-manifest.json",
+    "manifestGitBlob": "4f0754e3ee0e46e6e112817e777da1765d210370",
+    "manifestBytes": 183390,
+    "manifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c",
+    "stream": "source-stream.jsonl",
+    "streamGitBlob": "0cba11e99778b0601c5e5e443a4db28d043565fd",
+    "streamBytes": 11069796,
+    "streamSha256": "1a69bcbea0bd3d9dce53cc692e5513c40ac429fbc0ea1316477c562d7de309e3",
+    "files": 808,
+    "sourceBytes": 10510654,
+    "canonicalCapsule": "/dev/shm/921ba0-openaq-buyer-native-20261012/source-capsule.gz",
+    "mode": "python3 receive.py --source-stdin < source-stream.jsonl"
+  },
+  "runtimeAssets": {
+    "path": "source-assets.json",
+    "gitBlob": "96a79df978ba07fc4298f6be8dd5a34903d1bbb5",
+    "bytes": 263175,
+    "sha256": "6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc",
+    "files": 19,
+    "sourceBytes": 253313,
+    "completeSourceFiles": 827,
+    "baseManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c"
+  },
+  "sourceRepair": {
+    "schema": "stellar-forge.openaq-buyer-source-repair.v1",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+    "reason": "Import the original native signing diagnostic validator from its actual diagnostics module; preserve the original signer adapter and all request/payment behavior.",
+    "before": {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs",
+      "gitBlob": "053825b1862f3a5b3fc42aaa248f6b8aa6401254",
+      "bytes": 13420,
+      "sha256": "66d744c89f3e23157ba895f228729d6b294893260202cfdfe830cb7a8215461c"
+    },
+    "after": {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/native-signer.mjs",
+      "gitBlob": "c12720ce4f432e24f4972523021d71fa9d85e2ce",
+      "bytes": 13483,
+      "sha256": "b30f43740c9d0a7f99439ac8e6876aea6284d15efad71cf5168bed9d8c705cc0"
+    }
+  },
+  "unpaidSourceRepair": {
+    "schema": "stellar-forge.openaq-buyer-unpaid-source-selection.v1",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+    "sourceManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c",
+    "assetsSha256": "6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc",
+    "packetSha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+    "reason": "Preserve the original Dataset unsigned wire and linked SF82 checkout records in its existing unpaid history before explicit same-page continuation.",
+    "files": [
+      {
+        "before": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs",
+          "gitBlob": "e87fd6310a8261c490930ace3225dbd3a857de78",
+          "bytes": 36219,
+          "sha256": "8247cf9b2f0a6df5e5417adaf9cf8d14a491b4c1c8477029e43b2c514254f35b"
+        },
+        "after": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs",
+          "bytes": 43462,
+          "sha256": "055e76e4f6f4655a1cce000dc8b13cec2a24d733d746d6f43be68dbe4978cf2c",
+          "gitBlob": "092304ce9ed33fe7a2c1d483501a091e3db6c7b9"
+        }
+      },
+      {
+        "before": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.mjs",
+          "gitBlob": "d01a8e16d70d35a27ec7bc67fd2e1d51461dc743",
+          "bytes": 14526,
+          "sha256": "7d098e04db4524c223e3e7f8849e65938b1a334c6654a35889b08f91586a82e7"
+        },
+        "after": {
+          "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-unpaid.mjs",
+          "bytes": 22182,
+          "sha256": "f9b9832a16c09cab1ca4b6ced416f94e060d778c1be38606cad4a93cfbfb99fe",
+          "gitBlob": "a99c40ec7ee4c2df8a8df9d9339b05a3e469ba08"
+        }
+      }
+    ],
+    "packet": {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-unpaid-repairs.json",
+      "bytes": 68151,
+      "sha256": "6b1737f1f98c82ef777e3f3dde78433bb0e55287aa0efc906897aea090e52998",
+      "gitBlob": "a17c25b28fe1d5509d1df8c6e1b2c77d942de985"
+    }
+  },
+  "runtimeSourceBytesAfterCorrections": 10797561,
+  "originalOperatorSource": {
+    "schema": "stellar-forge.openaq-buyer-original-operator-source.v1",
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "baseCommit": "c7ac4399e3bb419fafd42395841bace7d089036a",
+    "sourceManifestSha256": "6c9d4ca8c04c5a3c52d6aba940660682dff02ad244bb36e6a35da2309ddde15c",
+    "assetsSha256": "6b2dbcd5dacf9e8ecb280611772da607198731e0f73bb526c7a4c75504a9dcbc",
+    "files": [
+      {
+        "path": "stellar/scf-starforge-20261009/sf62-human-approval-cli/console.py",
+        "gitBlob": "9edcb4f9ac15a4659438bf82e781bbaf76b2b122",
+        "bytes": 10763,
+        "sha256": "67abdaf937e11211bb6b2d1862b613488e966a98d7f42a93a088960ac86fdbc7",
+        "encoding": "utf-8"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf54-buyer-governor-intent/intent_adapter.py",
+        "gitBlob": "6d61d651b7137ba411d2b24cb69f0639080e1515",
+        "bytes": 4084,
+        "sha256": "873b576c1738dfcba7fe32cb1afcc514d827f95c950a7b1e6e511d474460a836",
+        "encoding": "utf-8"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf59-operator-reservation-gate/operator_gate.py",
+        "gitBlob": "9817043b7f74d6f570905c09c0592e442bfa85cb",
+        "bytes": 3785,
+        "sha256": "e14bea10b2cfb7c5cfbeea142f339e0939b39a1863212465a61d0b2ba59c36ce",
+        "encoding": "utf-8"
+      }
+    ],
+    "packetSha256": "df6a22deeba2837845775f1759f78c48500492e29b2ed6da40f8740af914819d",
+    "packet": {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/source-operator.json",
+      "gitBlob": "a085e191385406d31c277725e16f252da0aabbad",
+      "bytes": 20229,
+      "sha256": "df6a22deeba2837845775f1759f78c48500492e29b2ed6da40f8740af914819d"
+    },
+    "completeSourceFiles": 830,
+    "additionalSourceBytes": 18632
+  },
+  "nativeExecution": {
+    "state": "COMPLETE",
+    "completedAt": "2026-10-13T01:00:17.863Z",
+    "node": "v24.19.0",
+    "session": 44945,
+    "exitCode": 0,
+    "mode": "NO_PAYMENT_REQUIRED",
+    "pages": 3,
+    "rows": 140,
+    "httpRequests": 4,
+    "providerCalls": 0,
+    "paymentApprovals": 0,
+    "settlements": 0,
+    "allOwnersRetired": true,
+    "result": {
+      "path": "operations/openaq-buyer-receiving-921ba0-20261012/NATIVE_RESULT.json",
+      "bytes": 12359,
+      "sha256": "b2c2c768980b3e0644ffb12618d496f7b0dcc1f0b46f985c7965c13744df4036",
+      "gitBlob": "66ec15ecdf8cd3bf06907e04a5e0933d1f71ea14"
+    },
+    "package": {
+      "file": "OpenAQ_Original_Buyer_Workspace.zip",
+      "bytes": 376833,
+      "sha256": "a5955daf68b1b62a709519080c528b52905ea27f63d8f1d884a4fa5ced17d2f7",
+      "members": 136,
+      "expandedBytes": 1861656
+    }
+  }
+}

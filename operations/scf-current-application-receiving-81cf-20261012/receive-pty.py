@@ -71,15 +71,22 @@ if packet.get("schema") != "stellar-forge.complete-current-receiving-source.v1":
 stage = Path(tempfile.mkdtemp(prefix="scf-source-81cf-", dir=args.parent))
 packet_path = stage / "complete-source-packet.json"
 packet_path.write_bytes(packet_bytes)
-rows = [row for row in packet["runtime"] if row["path"] == "receive_current.py"]
-if len(rows) != 1:
-    raise ValueError("Retain the original complete native producer")
-body = rows[0]["content"].encode("utf-8")
-if len(body) != rows[0]["bytes"] or hashlib.sha256(body).hexdigest() != rows[0]["sha256"]:
-    raise ValueError("Original complete native producer differs")
-ast.parse(body, filename="receive_current.py")
+names = ("receive_current.py", "scf_native_process.py")
+rows = {name: [row for row in packet["runtime"] if row["path"] == name] for name in names}
+if len(rows["receive_current.py"]) != 1 or len(rows["scf_native_process.py"]) > 1:
+    raise ValueError("Retain the original complete native producer and controller")
+for name in names:
+    if not rows[name]:
+        continue  # Earlier complete carriers retain their original standalone producer.
+    row = rows[name][0]
+    body = row["content"].encode("utf-8")
+    if len(body) != row["bytes"] or hashlib.sha256(body).hexdigest() != row["sha256"]:
+        raise ValueError("Original complete runtime source differs: " + name)
+    ast.parse(body, filename=name)
+    target = stage / name
+    target.write_bytes(body)
+    target.chmod(0o600)
 producer = stage / "receive_current.py"
-producer.write_bytes(body)
 print("SCF_COMPLETE_SOURCE_STAGED " + json.dumps({
     "sourceFiles": len(packet["files"]), "sourceCommit": packet["sourceCommit"],
     "packetBytes": len(packet_bytes), "packetSha256": args.packet_sha256,

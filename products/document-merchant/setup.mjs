@@ -14,6 +14,7 @@ import {
 
 export const DOCUMENT_PLAN_SCHEMA = 'stellar-forge.document-merchant-plan.v1';
 export const DOCUMENT_INSTALLATION_SCHEMA = 'stellar-forge.document-merchant-installation.v1';
+export const DOCUMENT_REVIEW_SCHEMA = 'stellar-forge.document-merchant-review.v1';
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
@@ -245,6 +246,84 @@ function description(directory, plan, source) {
   };
 }
 
+async function proposedFiles(request, directory) {
+  const decode = bytes => new TextDecoder('utf-8', {fatal: true}).decode(bytes);
+  const [contracts, renderer] = await Promise.all(['contracts.mjs', 'renderer.mjs']
+    .map(name => ownedBytes(join(ROOT, name), 4194304, {privateMode: false}).then(decode)));
+  const examples = Object.fromEntries(await Promise.all(request.formats.map(async format =>
+    [format, decode(await ownedBytes(join(ROOT, 'examples', sourceNames[format]), 4194304, {privateMode: false}))])));
+  return generatedFiles(request, directory, applicationModule(contracts, renderer, request), examples);
+}
+
+/**
+ * Review the same preparation without creating a directory or changing its files.
+ * An interrupted setup reuses the complete original plan and exact generated source.
+ */
+export async function reviewDocumentMerchant({directory, request} = {}) {
+  directory = absolute(directory);
+  need(directory !== ROOT && !ROOT.startsWith(directory + '/'), 'DOCUMENT_SOURCE_AND_STATE_MUST_DIFFER');
+  let exists = true;
+  try {await ownedDirectory(directory);}
+  catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    exists = false;
+    await ownedDirectory(dirname(directory));
+  }
+  const retained = exists ? await optional(join(directory, 'setup.json')) : null;
+  const supplied = request === undefined ? undefined : structuredClone(request);
+  if (supplied !== undefined) normalizeDocumentSetup(supplied);
+  const inputSha256 = supplied === undefined ? undefined : digest(canonical(supplied));
+  let input, normalized, files, state;
+  if (retained) {
+    validatePlan(retained, directory, inputSha256);
+    input = structuredClone(retained.input);
+    normalized = structuredClone(retained.request);
+    files = retained.files;
+    const complete = await optional(join(directory, 'setup-complete.json'));
+    state = complete ? 'PREPARED' : 'INCOMPLETE';
+    for (const file of files) {
+      let bytes;
+      try {bytes = await ownedBytes(join(directory, file.name), 4194304);}
+      catch (error) {
+        if (error.code === 'ENOENT' && !complete) continue;
+        throw error;
+      }
+      need(bytes.length === file.bytes && digest(bytes) === file.sha256, 'DOCUMENT_SETUP_FILE_CHANGED', 409);
+    }
+    if (complete) {
+      const source = await materialized(directory, retained);
+      need(canonical(complete) === canonical(description(directory, retained, source)),
+        'DOCUMENT_SETUP_INCOMPLETE', 409);
+    }
+  } else {
+    need(supplied !== undefined, 'DOCUMENT_CONFIGURATION_REQUIRED', 409);
+    input = supplied;
+    normalized = normalizeDocumentSetup(input);
+    files = await proposedFiles(normalized, directory);
+    state = 'NEW';
+    // Detect files left by an unrelated setup before the original preparer would
+    // attempt its create-once publication. Matching complete files remain usable.
+    if (exists) for (const file of files) {
+      try {
+        const bytes = await ownedBytes(join(directory, file.name), 4194304);
+        need(bytes.length === file.bytes && digest(bytes) === file.sha256, 'DOCUMENT_SETUP_FILE_CHANGED', 409);
+      } catch (error) {if (error.code !== 'ENOENT') throw error;}
+    }
+    need(!exists || !await optional(join(directory, 'setup-complete.json')),
+      'DOCUMENT_RETAINED_SETUP_CHANGED', 409);
+  }
+  const configuration = jobConfiguration(normalized);
+  return {
+    schema: DOCUMENT_REVIEW_SCHEMA, state, directory,
+    input, inputSha256: digest(canonical(input)), request: normalized,
+    jobsConfig: join(directory, 'jobs.json'), merchantState: join(directory, 'merchant-state'),
+    providerConfig: join(directory, 'provider.json'), customerSetup: join(directory, 'customer-setup.json'),
+    files: files.map(({content, ...file}) => structuredClone(file)),
+    configuration, supplierPrice: documentPriceReview(normalized.provider),
+    ...(retained ? {setupId: retained.id, planSha256: digest(encoded(retained))} : {})
+  };
+}
+
 /** Repeated identical setup reopens its original files under the original Linux state lease. */
 export async function prepareDocumentMerchant({directory, request}) {
   directory = absolute(directory);
@@ -260,16 +339,11 @@ export async function prepareDocumentMerchant({directory, request}) {
       directory, name: 'setup.json', lease,
       validate: value => validatePlan(value, directory, inputSha256),
       create: async () => {
-        const decode = bytes => new TextDecoder('utf-8', {fatal: true}).decode(bytes);
-        const [contracts, renderer] = await Promise.all(['contracts.mjs', 'renderer.mjs']
-          .map(name => ownedBytes(join(ROOT, name), 4194304, {privateMode: false}).then(decode)));
         const normalized = normalizeDocumentSetup(input);
-        const examples = Object.fromEntries(await Promise.all(normalized.formats.map(async format =>
-          [format, decode(await ownedBytes(join(ROOT, 'examples', sourceNames[format]), 4194304, {privateMode: false}))])));
         return {
           schema: DOCUMENT_PLAN_SCHEMA, id: randomUUID(), createdAt: new Date().toISOString(),
           directory, input, inputSha256, request: normalized,
-          files: generatedFiles(normalized, directory, applicationModule(contracts, renderer, normalized), examples)
+          files: await proposedFiles(normalized, directory)
         };
       }
     });

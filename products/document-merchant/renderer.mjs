@@ -194,23 +194,63 @@ export async function renderDocumentBytes(configuration, format, input, sourceBy
   return {pdf, source: Buffer.from(sourceBytes), request: requestBytes, render: renderBytes};
 }
 
+// SF30's original Worker retains JOB_INPUT_*, JOB_NATIVE_* and JOB_OUTPUT_*
+// application categories. Keep supplier detail on the cause for direct callers;
+// the native journal receives only the supported category.
+function paidDocumentFailure(error) {
+  const sourceCode = typeof error?.code === 'string' ? error.code : '';
+  if (!sourceCode.startsWith('DOCUMENT_')) return error;
+  const http = /^DOCUMENT_PROVIDER_(AUTHENTICATION|SUBSCRIPTION|RATE_OR_QUOTA|INPUT|CAPACITY|HTTP)_[0-9]{3}$/.exec(sourceCode);
+  const categories = {
+    DOCUMENT_PROVIDER_KEY_REQUIRED: 'JOB_NATIVE_DOCUMENT_AUTHENTICATION',
+    DOCUMENT_PROVIDER_RESPONSE_UNCERTAIN: 'JOB_NATIVE_DOCUMENT_RESPONSE_UNCERTAIN',
+    DOCUMENT_PROVIDER_TIMEOUT: 'JOB_NATIVE_DOCUMENT_TIMEOUT',
+    DOCUMENT_PROVIDER_PDF_RECEIVING_INTERRUPTED: 'JOB_OUTPUT_DOCUMENT_INTERRUPTED',
+    DOCUMENT_PROVIDER_OUTPUT_TOO_LARGE: 'JOB_OUTPUT_DOCUMENT_TOO_LARGE',
+    DOCUMENT_PROVIDER_RESPONSE_INCOMPLETE: 'JOB_OUTPUT_DOCUMENT_INCOMPLETE',
+    DOCUMENT_PROVIDER_EMPTY_RESPONSE: 'JOB_OUTPUT_DOCUMENT_PDF_INVALID',
+    DOCUMENT_PROVIDER_RESPONSE_INVALID: 'JOB_OUTPUT_DOCUMENT_PDF_INVALID',
+    DOCUMENT_PROVIDER_PDF_RESPONSE_REQUIRED: 'JOB_OUTPUT_DOCUMENT_PDF_INVALID',
+    DOCUMENT_PROVIDER_PDF_BYTES_REQUIRED: 'JOB_OUTPUT_DOCUMENT_PDF_INVALID',
+    DOCUMENT_PROVIDER_HEADERS_TOO_LARGE: 'JOB_OUTPUT_DOCUMENT_METADATA_LIMIT',
+    DOCUMENT_RESULT_METADATA_TOO_LARGE: 'JOB_OUTPUT_DOCUMENT_METADATA_LIMIT',
+    DOCUMENT_ORIGINAL_FILE_HANDLE_REQUIRED: 'JOB_INPUT_DOCUMENT_HANDLE_REQUIRED',
+    DOCUMENT_ORIGINAL_SOURCE_CHANGED: 'JOB_INPUT_DOCUMENT_SOURCE_CHANGED',
+    DOCUMENT_SOURCE_MEDIA_MISMATCH: 'JOB_INPUT_DOCUMENT_MEDIA_MISMATCH',
+    DOCUMENT_SOURCE_BYTES_REQUIRED: 'JOB_INPUT_DOCUMENT_SOURCE_REQUIRED',
+    DOCUMENT_SOURCE_UTF8_REQUIRED: 'JOB_INPUT_DOCUMENT_ENCODING_REQUIRED',
+    DOCUMENT_SOURCE_SIZE_INVALID: 'JOB_INPUT_DOCUMENT_SOURCE_SIZE',
+    DOCUMENT_SOURCE_FORMAT_UNSUPPORTED: 'JOB_INPUT_DOCUMENT_FORMAT_UNSUPPORTED',
+    DOCUMENT_PROVIDER_BODY_TOO_LARGE: 'JOB_INPUT_DOCUMENT_PROVIDER_BODY_LIMIT',
+    DOCUMENT_INPUT_INVALID: 'JOB_INPUT_DOCUMENT_INVALID',
+    DOCUMENT_SETTINGS_INVALID: 'JOB_INPUT_DOCUMENT_SETTINGS',
+    DOCUMENT_PAGE_DIMENSIONS_REQUIRED: 'JOB_INPUT_DOCUMENT_PAGE_DIMENSIONS'
+  };
+  const code = http ? http[1] === 'INPUT' ? 'JOB_INPUT_DOCUMENT_PROVIDER_REJECTED' :
+    'JOB_NATIVE_DOCUMENT_' + (http[1] === 'HTTP' ? 'HTTP_FAILURE' : http[1]) :
+    categories[sourceCode] ?? 'JOB_NATIVE_DOCUMENT_CONFIGURATION';
+  return Object.assign(new Error(code, {cause: error}), {code});
+}
+
 /** Uses original sealed file handles supplied by SF30's paid application Worker. */
 export async function renderPaidDocument(configuration, format, input, context) {
-  const config = normalizeDocumentProvider(configuration);
-  requireDocument(context?.files && typeof context.files.read === 'function' &&
-    typeof context.files.metadata === 'function', 'DOCUMENT_ORIGINAL_FILE_HANDLE_REQUIRED');
-  context.signal?.throwIfAborted();
-  const descriptor = context.files.metadata('source');
-  const expectedType = format === 'html' ? 'text/html' : 'text/markdown';
-  requireDocument(descriptor?.contentType === expectedType, 'DOCUMENT_SOURCE_MEDIA_MISMATCH',
-    'Select the complete ' + expectedType + ' source file for this function.');
-  const source = await context.files.read('source', {maxBytes: config.maxSourceBytes});
-  requireDocument(source.byteLength === descriptor.bytes && digest(source) === descriptor.sha256,
-    'DOCUMENT_ORIGINAL_SOURCE_CHANGED');
-  return renderDocumentBytes(config, format, input, source, {
-    signal: context.signal, jobId: context.jobId, attemptId: context.attemptId,
-    sourceDescriptor: descriptor
-  });
+  try {
+    const config = normalizeDocumentProvider(configuration);
+    requireDocument(context?.files && typeof context.files.read === 'function' &&
+      typeof context.files.metadata === 'function', 'DOCUMENT_ORIGINAL_FILE_HANDLE_REQUIRED');
+    context.signal?.throwIfAborted();
+    const descriptor = context.files.metadata('source');
+    const expectedType = format === 'html' ? 'text/html' : 'text/markdown';
+    requireDocument(descriptor?.contentType === expectedType, 'DOCUMENT_SOURCE_MEDIA_MISMATCH',
+      'Select the complete ' + expectedType + ' source file for this function.');
+    const source = await context.files.read('source', {maxBytes: config.maxSourceBytes});
+    requireDocument(source.byteLength === descriptor.bytes && digest(source) === descriptor.sha256,
+      'DOCUMENT_ORIGINAL_SOURCE_CHANGED');
+    return await renderDocumentBytes(config, format, input, source, {
+      signal: context.signal, jobId: context.jobId, attemptId: context.attemptId,
+      sourceDescriptor: descriptor
+    });
+  } catch (error) {throw paidDocumentFailure(error);}
 }
 
 /** The provider's documented read-only account operation; never consumes a render. */

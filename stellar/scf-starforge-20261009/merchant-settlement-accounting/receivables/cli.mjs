@@ -28,6 +28,13 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables payment-receive --directory /private/accounting --id UUID --input /private/receive-payment.json\n' +
   'starforge receivables payment-cancel --directory /private/accounting --id UUID --input /private/withdrawal.json\n' +
   'starforge receivables payment-file --directory /private/accounting --id UUID --name payment-request.html --out /private/new-request.html\n\n' +
+  'Remittance CSV receiving:\n' +
+  'starforge receivables remittances --directory /private/accounting\n' +
+  'starforge receivables remittance-preview --directory /private/accounting --input /private/source.json [--out /private/review.json]\n' +
+  'starforge receivables remittance-apply --directory /private/accounting --input /private/reviewed-remittance.json\n' +
+  'starforge receivables remittance --directory /private/accounting --id UUID\n' +
+  'starforge receivables remittance-operation --directory /private/accounting --request ORIGINAL_REQUEST_ID\n' +
+  'starforge receivables remittance-file --directory /private/accounting --id UUID --name source.csv --out /private/new-source.csv\n\n' +
   'Customer credit and order release:\n' +
   'starforge receivables credit-control --directory /private/accounting [--customer UUID] [--search TEXT]\n' +
   'starforge receivables credit-policy --directory /private/accounting --id UUID\n' +
@@ -92,7 +99,7 @@ const HELP = 'Merchant receivables\n\n' +
 
 export function parseReceivablesArguments(argv) {
   const [command = 'help', ...rest] = argv, flags = {};
-  const known = new Set(["directory","outbox","proof-dir","terms","recovered-dir","port","as-of","id","run","invoice","customer","receipt","status","account","view","row-status","direction","search","source","offset","limit","action","input","name","out","expected-workspace-id","expected-sources-sha256","owner","request",'edition']);
+  const known = new Set(["directory","outbox","proof-dir","terms","recovered-dir","port","as-of","id","run","invoice","customer","receipt","status","offset","limit","action","input","name","out","expected-workspace-id","expected-sources-sha256","owner","search","request","edition","account","view","row-status","direction","source"]);
   for (let i = 0; i < rest.length; i += 2) {
     need(/^--[a-z-]+$/.test(rest[i]) && known.has(rest[i].slice(2)) && rest[i + 1] !== undefined && !rest[i + 1].startsWith('--'),
       'INVALID_RECEIVABLES_ARGUMENT', 'Use a documented option followed by its value.');
@@ -162,6 +169,20 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
     const receivables = await new ReceivablesWorkspace(workspace).init();
     let result;
     if (command === 'state') result = await receivables.state({asOf});
+    else if (command === 'remittances') result = await receivables.remittances();
+    else if (command === 'remittance') result = await receivables.remittance(flags.id);
+    else if (command === 'remittance-preview') {
+      result = await receivables.previewRemittance(await input(flags.input));
+      if (flags.out) await newFile(flags.out, Buffer.from(json(result)));
+    }
+    else if (command === 'remittance-apply') result = await receivables.applyRemittance(await input(flags.input));
+    else if (command === 'remittance-operation') result = await receivables.remittanceOperation(flags.request);
+    else if (command === 'remittance-file') {
+      const file = await receivables.remittanceFile(flags.id, flags.name);
+      await newFile(flags.out, file.bytes);
+      result = {path: flags.out, name: file.name, bytes: file.bytes.length, type: file.type,
+        sha256: createHash('sha256').update(file.bytes).digest('hex')};
+    }
     else if (command === 'credit-control') result=await receivables.creditControl({customerId:flags.customer,search:flags.search});
     else if (command === 'credit-policy') result=await receivables.creditPolicy(flags.id);
     else if (command === 'credit-policy-save') result=await receivables.saveCreditPolicy(await input(flags.input));

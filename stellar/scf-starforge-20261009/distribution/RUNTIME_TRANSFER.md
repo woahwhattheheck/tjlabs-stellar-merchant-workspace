@@ -16,9 +16,26 @@ The same workflow is available through `starforge runtime-transfer` and the Runt
 
 The exported `manifest.json` identifies those files, their byte lengths and SHA-256 values, the npm integrity values, the original runtime identities, the complete payload digest and an ordered list of parts. Its schema is `stellar-forge.runtime-transfer.v1`. Each part has an index, filename, offset, byte length and SHA-256.
 
-Send the exact manifest bytes and the declared files from `parts/`. A part is at most 8 MiB; the default maximum complete payload is 2 GiB. The parts are segments of the file payload, so keep the manifest's filenames and indexes. They are not individual compressed archives.
+Send the exact manifest bytes and the declared parts. With the default `parts` storage, the part files are in `parts/`. With `files` storage, the original files generate those same parts through the existing download API or the `download-part` command. A part is at most 8 MiB; the default maximum complete payload is 2 GiB. The parts are segments of the file payload, so keep the manifest's filenames and indexes. They are not individual compressed archives.
 
 The transfer covers the selected release and its public package dependencies. Merchant configuration, wallets, database contents, provider credentials, saved business requests, private registry packages and operating-system tools continue through their existing installation and backup workflows. An npm source transfer carries the original package archives; a native image is handled by [the image workflow](runtime-workspace/IMAGE_OPERATIONS.md).
+
+## Choose storage for the transfer
+
+A new export or receiver accepts `--storage parts` (the default) or `--storage files`. The choice belongs to that directory's retained request. Omit the option when resuming to use the recorded choice; a legacy directory without a storage field remains in `parts` mode. An explicit conflicting choice is rejected.
+
+| Mode | Sending directory | Receiving directory after completion |
+| --- | --- | --- |
+| `parts` | Original package archives and metadata, plus all declared part files. | All declared parts and all reconstructed original files. |
+| `files` | One complete set of original files, including its own retained `source.tgz`; parts are generated on demand. | One complete set under `files/`; duplicate part files are retired as their full file coverage is durably reconstructed. |
+
+Both modes use the original v1 manifest, file hashes, payload hash, part indexes and part hashes. A files-mode sender can serve a parts-mode receiver, and the reverse also works. Storage does not change package selection, installation identity or the original installer.
+
+In files mode, reconstruction verifies each original file, syncs its content and publishes it before retiring any covered part. The part must also finish its own hash check and close its read descriptor. An interrupted reconstruction can regenerate retired parts from the already-published files and continue using the remaining physical parts. Existing complete files are checked and reused without writing another copy. Repeated part uploads still consume and check their input.
+
+An open generated download uses at most one part's temporary bytes (up to 8 MiB) and the normal streaming buffer. Its native file descriptor owns those bytes until the consumer closes it; the temporary pathname is removed before the handle is returned. Concurrent downloads each have that requirement. The receiver initially accumulates its incoming parts. During reconstruction, its extra file space is bounded by the largest original file plus one part, rather than another entire payload. npm's cache and the separately installed runtime keep their own existing storage requirements.
+
+Inspection reports the transfer's chosen `storage` and each part's current `storage` (`parts` or `files`). `--verify` hashes the available bytes in either mode. Keep the original files and manifest when retaining a files-mode carrier; an empty `parts/` is expected after receiver completion.
 
 ## Use the receiving host's existing tools
 
@@ -64,9 +81,9 @@ starforge runtime-transfer export \
   --expect-lock EXACT_REVIEWED_LOCK_SHA256
 ~~~
 
-Export uses the explicitly selected cache in offline mode by default. For each distinct locked public package it asks npm for that exact tarball, verifies the lock's integrity value, retains the original bytes, then streams the complete file payload into the declared parts. It does not repackage the installed dependency folders.
+Export uses the explicitly selected cache in offline mode by default. For each distinct locked public package it asks npm for that exact tarball, verifies the lock's integrity value, retains the original bytes, then streams the complete file payload to calculate the declared parts. In `parts` mode it also writes those part files; in `files` mode it retains the complete original files and calculates the identical part descriptors without another payload copy. It does not repackage the installed dependency folders.
 
-If an approved connected sending host needs to fetch a missing public tarball, select `--online` when creating its export. This enables the exact public-registry acquisition; it does not change the accepted lock or dependency versions. An existing export binds its offline/online mode, cache path and part size. To change one of those selections, create a new transfer directory while retaining the prior incomplete export. `--npm` selects an existing npm executable. `--part-bytes` accepts 65,536 through 8,388,608 bytes.
+If an approved connected sending host needs to fetch a missing public tarball, select `--online` when creating its export. This enables the exact public-registry acquisition; it does not change the accepted lock or dependency versions. An existing export binds its offline/online mode, cache path, part size and storage choice. To change one of those selections, create a new transfer directory while retaining the prior incomplete export. `--npm` selects an existing npm executable. `--part-bytes` accepts 65,536 through 8,388,608 bytes.
 
 An interrupted export retains its source/profile/lock binding, completed package receipts and progress. Repeat the same export with the same final transfer directory and original inputs to continue it. A changed bound input is an explicit conflict.
 
@@ -79,11 +96,26 @@ starforge runtime-transfer inspect \
 
 Retain the returned `manifestSha256` and `manifest.transferId`. The sending state reaches `COMPLETE` when this source carrier is complete. That state describes the exported data, not a receiving installation.
 
-Provide the receiver with `manifest.json`, its exact SHA-256 and the declared `parts/part-00000.bin` style files. Keep the manifest bytes unchanged: reformatting its JSON changes the expected manifest digest. The receiver can obtain parts in several transfers and resume after an interrupted download.
+Provide the receiver with `manifest.json`, its exact SHA-256 and the declared `part-00000.bin` style files. To retain complete files and generate an offline part from them:
+
+~~~sh
+starforge runtime-transfer export \
+  --runtime /srv/starforge/runtimes/merchant-01 \
+  --directory /srv/starforge/transfers/merchant-files-01 \
+  --cache /srv/starforge/npm-cache \
+  --storage files
+
+starforge runtime-transfer download-part \
+  --directory /srv/starforge/transfers/merchant-files-01 \
+  --index 0 \
+  --file /srv/starforge/downloads/part-00000.bin
+~~~
+
+Use the actual indices from the returned manifest for subsequent parts. The destination's parent must exist. `download-part` publishes the complete verified part atomically, reuses an identical existing destination and rejects a conflicting existing file. It works for both storage modes. The existing authenticated Runtime Workspace download endpoint also supports either mode. Keep the manifest bytes unchanged: reformatting its JSON changes the expected manifest digest. The receiver can obtain parts in several transfers and resume after an interrupted download.
 
 ## 3. Receive and reopen the same transfer
 
-With all currently available part files in one directory:
+With all currently available part files in one directory (add `--storage files` for a new receiver that should retire duplicate parts during reconstruction):
 
 ~~~sh
 starforge runtime-transfer receive \
@@ -109,7 +141,7 @@ starforge runtime-transfer inspect \
   --directory /srv/starforge/receiving/merchant-01 --verify
 ~~~
 
-Use the actual part's index, filename and digest from the manifest. Inspection returns each part's status and explicit `missingParts` and `invalidParts` indexes. With `--verify`, present files are hashed rather than accepted only by their length. Exact repeats reopen the same retained part.
+Use the actual part's index, filename and digest from the manifest. Inspection returns each part's status and explicit `missingParts` and `invalidParts` indexes. With `--verify`, available parts are hashed from their physical part files or complete retained original files. Exact repeats reopen the same retained part.
 
 After all parts are available:
 
@@ -203,17 +235,20 @@ The CLI and workspace call the same functions from `runtime-transfer.mjs`:
 | Function | Purpose |
 | --- | --- |
 | `reviewRuntimeTransfer({ runtimeDirectory })` | Original readiness, source/profile/lock and supported package inventory. |
-| `exportRuntimeTransfer({ runtimeDirectory, directory, cache, expectedLockSha256, ... })` | Original cache acquisition and streamed immutable carrier. |
-| `beginRuntimeTransferReceive({ directory, manifest, manifestSha256 })` | Bind exact manifest bytes to the receiving directory. |
+| `exportRuntimeTransfer({ runtimeDirectory, directory, cache, expectedLockSha256, storage, ... })` | Original cache acquisition and a streamed immutable carrier in the selected storage mode. |
+| `beginRuntimeTransferReceive({ directory, manifest, manifestSha256, storage })` | Bind exact manifest bytes and the initial storage selection to the receiving directory. |
 | `receiveRuntimeTransferPart({ directory, index, file })` | Receive one actual declared part; an asynchronous `body` stream is also supported. |
-| `inspectRuntimeTransfer({ directory, verify })` | Reopen state, identities, actual part status and received paths. |
+| `inspectRuntimeTransfer({ directory, verify })` | Reopen state, identities, part availability and storage, and received paths. |
+| `openRuntimeTransferDownload({ directory, kind, index, signal })` | Return the existing native file handle for an exact manifest or part; the consumer closes it. |
+| `copyRuntimeTransferPart({ directory, index, file, signal })` | Atomically publish one declared part to an explicit offline handoff path. |
 | `completeRuntimeTransferReceive({ directory, npm, populateCache })` | Reconstruct, verify and populate the receiver's private cache. |
 | `installReceivedRuntime({ directory, runtimeDirectory, recoverFrom, ... })` | Original offline preparation, installation or new-directory recovery. |
 
 Use exact UTF-8 manifest bytes or the original manifest string for receiving, and the supplied SHA-256. Export, completion and installation accept an abort signal and progress callback; part receiving accepts an abort signal. Keep the current returned `directory`, `manifestSha256`, `manifest.transferId`, `cacheDirectory` and `filesDirectory`; later requests should reopen that same state.
 
-The source carrier's immutable file set and the receiver's operating state have different lifetimes. Retain the manifest and source parts for receiving or rebuilding the explicit cache, plus the original runtime's installation records for operational recovery. Source transfer does not activate a managed release automatically.
+The source carrier's immutable file set and the receiver's operating state have different lifetimes. Retain the manifest and the complete carrier for receiving or rebuilding the explicit cache: declared part files in `parts` mode, or the complete original file set in `files` mode. Keep the original runtime's installation records for operational recovery. Source transfer does not activate a managed release automatically.
 
 ## Original contracts
 
 The npm behavior used here is documented in the official [package-lock format](https://docs.npmjs.com/cli/v11/configuring-npm/package-lock-json/), [npm pack](https://docs.npmjs.com/cli/v11/commands/npm-pack/), [npm cache](https://docs.npmjs.com/cli/v11/commands/npm-cache/) and [npm ci](https://docs.npmjs.com/cli/v11/commands/npm-ci/) references, checked on 11 October 2026. The original Starforge installer and native preparation remain defined by [RUNTIME_INSTALL.md](RUNTIME_INSTALL.md); feature declarations and effective host requirements remain in [RUNTIME.md](RUNTIME.md).
+

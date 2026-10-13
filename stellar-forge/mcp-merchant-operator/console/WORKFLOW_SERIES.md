@@ -4,6 +4,57 @@ The merchant operator keeps a complete procedure for a returning customer: who r
 
 Open **Workflows → Recurring customer work** in the existing merchant Console. The same work is available through `starforge merchant-workflow-series` and the typed `MerchantWorkflowSeriesClient`.
 
+## Coordinate deliveries across customers
+
+**Customer delivery agenda**, at the top of Recurring customer work, brings every
+series in the selected profile into one due-date table. Select the due window,
+search by customer, task or source, and choose a work status. The totals cover
+every matching period; Previous and Next show its complete pages.
+
+The agenda includes unfinished saved work overdue before the selected window.
+Its **Today** date follows the browser's local date and can be selected explicitly.
+Saved periods retain the customer and task from their original series edition.
+Disabling new work keeps their existing progress visible. Calendar proposals use
+the current enabled edition; a saved key, including a canceled key, already owns
+that period. Manual series show their saved periods.
+
+Choose **Open period** to continue the original work, or **Plan period** to select
+a proposed period's source, purpose and complete inputs in the existing editor.
+The original first-start and run controls perform execution.
+
+**Export calendar** includes every matching period across all pages. It produces
+private, all-day deadline events with the full task, period, source and original
+identifiers. Proposed periods are tentative; cancellations retain canceled event
+status. Event identities stay stable when a proposal becomes a saved period and
+when a customer profile is received elsewhere. The file is a dated snapshot;
+refresh the agenda and export again to obtain later progress. A calendar
+application controls how it imports or updates an existing event.
+
+The same operation is available through the installed client and terminal:
+
+~~~sh
+starforge merchant-workflow-series agenda \
+  --url http://127.0.0.1:3211/operator/ --profile ORIGINAL_PROFILE_ID \
+  --from 2026-10-12 --to 2026-11-11 --today 2026-10-12 \
+  --status open --output /private/operator/customer-agenda.json
+
+starforge merchant-workflow-series agenda-calendar \
+  --url http://127.0.0.1:3211/operator/ --profile ORIGINAL_PROFILE_ID \
+  --from 2026-10-12 --to 2026-11-11 --today 2026-10-12 \
+  --output /private/operator/customer-deadlines.ics
+~~~
+
+Select the actual dates and profile. `agenda` returns `nextOffset`, complete
+counts and the selected page. `agenda-calendar` exports the complete selection
+regardless of its page offset. `--query`, `--status`, `--no-overdue` and
+`--no-proposals` refine either operation; `--input` accepts the complete
+`AgendaRequest` JSON instead. The typed client's `agenda` and `agendaCalendar`
+methods use these same Console operations.
+
+Calendar serialization follows [RFC 5545](https://www.rfc-editor.org/rfc/rfc5545):
+CRLF content lines, UTF-8 line folding, escaped text, stable UIDs and one-day
+DATE events. Its transparent events represent delivery deadlines.
+
 ## Complete a customer period in the browser
 
 1. Open the original merchant profile. Save the complete native procedure in **Workflows**, or install its original [workflow recipe](WORKFLOW_RECIPES.md). Include the existing native review, publication and customer-export steps that this customer actually needs.
@@ -221,3 +272,7 @@ python3 run-series-native.py --source-packet series-source-map.json \
 ```
 
 The receiver keeps an existing workspace as a private backup, streams the exact archived files into the original receiving path, restores any original configured source inputs, and runs the completed entry through its actual launch and customer APIs. A fresh native completion follows this same archive extraction and reopen path before producing the customer delivery summary.
+
+## Merchant agent tools
+
+The configured Merchant provider operates the complete original recurring-work lifecycle, native run recovery, customer receiving, complete handover files and agenda calendar export. See [WORKFLOW_SERIES_AGENT.md](WORKFLOW_SERIES_AGENT.md) for connection configuration, the full operating flow and receiving instructions.

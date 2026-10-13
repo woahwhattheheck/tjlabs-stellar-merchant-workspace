@@ -8,4 +8,4 @@ export function normalizeFredDdpPeriod(value:string,rule?:FredDdpPeriodRule):{
 export function inferredFredDdpPeriodRule(value:{code?:string|null;label?:string|null}):FredDdpPeriodRule;
 export function normalizeFredDdpScale(value?:string):string;
 export function exactFredDdpScaledValue(value:string,scale?:string):string|null;
-export function fredDdpObservationMissing(value:unknown):boolean;
+export function fredDdpObservationMissing(value:unknown,status?:string|null):boolean;

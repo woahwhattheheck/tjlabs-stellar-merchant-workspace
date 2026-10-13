@@ -8,7 +8,10 @@ import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { cpus, loadavg, totalmem } from 'node:os';
 import { openNativeRequestClient } from './native-request-client.mjs';
+import { prepareHttpQuery } from './query-requirements.mjs';
+import { bindHttpPath, matchesHttpRoute } from '../route-identity/http-path.mjs';
 import { normalizeDiscoveryArguments } from './discovery.mjs';
+import { sameCatalog } from './catalogs.mjs';
 
 const SCHEMA = 'stellar-forge.catalog-native-journey.v1';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -18,6 +21,9 @@ const need = (condition, code, message) => {
   if (!condition) throw Object.assign(new Error(message), {code});
 };
 const atomic = value => typeof value === 'string' && /^(0|[1-9][0-9]*)$/.test(value);
+const samePathValues = (a, b) => plain(a) && plain(b) &&
+  Object.keys(a).length === Object.keys(b).length &&
+  Object.entries(a).every(([name, value]) => Object.hasOwn(b, name) && b[name] === value);
 const identity = resource => JSON.stringify([resource.resource?.url, resource.resourceType,
   resource.method, resource.toolName]);
 function failure(error) {
@@ -25,12 +31,14 @@ function failure(error) {
     ...(error?.data === undefined ? {} : {data:error.data}),
     ...(error?.nativeRequest === undefined ? {} : {nativeRequest:error.nativeRequest})};
 }
-function selectionMatches(resource, workspace) {
-  if (resource.resourceType !== 'http' || resource.method !== workspace.route.method) return false;
+function selectionMatches(description, workspace, input) {
+  if (description.preview.resourceType !== 'http' || description.preview.method !== workspace.route.method) return null;
   try {
-    const url = new URL(resource.resource.url);
-    return url.origin === workspace.route.origin && url.pathname === workspace.route.pathname;
-  } catch { return false; }
+    const record = {resource:description.resource, input:description.bazaar.info.input, bazaar:description.bazaar};
+    const url = prepareHttpQuery(record, {path:input.path, query:input.query});
+    if (!matchesHttpRoute(url.href, description.preview.method, workspace.route)) return null;
+    return {requestUrl:url.href, pathBinding:bindHttpPath(record, url.href)};
+  } catch { return null; }
 }
 function acceptedIndex(description, workspace, maximum) {
   return description.accepts.findIndex(option => atomic(option.amount) &&
@@ -89,14 +97,15 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
     timingScope:'THIS_CLIENT_PROCESS_AND_OBSERVED_MCP_ROUND_TRIPS',
     phaseRelationship:'COMPLETE_DISCOVERY_INCLUDES_SELECTED_PREPARATION',
     phases:[], coverage:{pages:0, received:0, returned:0, filtered:0, invalid:0,
-      http:0, mcp:0, repeatedResources:0, upstreamPartialPages:0, exhausted:false},
-    selection:null, native:null, result:null};
+      http:0, mcp:0, pathTemplates:0, repeatedResources:0, upstreamPartialPages:0, exhausted:false},
+    catalog:null, discoveryRequest:null, selection:null, native:null, result:null};
   const checkpoint = async () => {
     const temporary = join(directory, '.run.json.tmp');
     await writeFile(temporary, json(report), {mode:0o600});
     await rename(temporary, join(directory, 'run.json'));
   };
-  const sourceFiles = ['native-request-client.mjs','discovery-client.mjs','discovery.mjs'];
+  const sourceFiles = ['native-request-client.mjs','discovery-client.mjs','discovery.mjs','catalogs.mjs',
+    'query-requirements.mjs','../route-identity/http-path.mjs','../route-identity/identity.mjs'];
   report.runtime.sources = await Promise.all(sourceFiles.map(async path => {
     const raw = await readFile(new URL('./' + path, import.meta.url));
     return {path,bytes:raw.length,sha256:hash(raw),
@@ -131,14 +140,36 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
       report.workspaceId = report.workspace.workspaceId;
     need(BigInt(request.maxAtomic) <= BigInt(report.workspace.payment.maxAtomic),
       'CATALOG_JOURNEY_CAP_EXCEEDS_WORKSPACE', 'The explicit request cap exceeds this native workspace.');
+    let discoveryArguments = request.discovery.arguments;
+    if (report.workspace.catalogUrl !== undefined || discoveryArguments.catalogId !== undefined) {
+      const configured = await phase('catalog-selection', () => client.discovery.catalogs({signal}));
+      const catalog = discoveryArguments.catalogId === undefined
+        ? configured.catalogs.find(value => value.url === report.workspace.catalogUrl)
+        : configured.catalogs.find(value => value.id === discoveryArguments.catalogId);
+      need(catalog && (report.workspace.catalogUrl === undefined || catalog.url === report.workspace.catalogUrl),
+        'CATALOG_JOURNEY_CATALOG_MISMATCH',
+        'Select the configured catalog that owns this native workspace; the original service remains bound to its catalog URL.');
+      report.catalog = structuredClone(catalog);
+      discoveryArguments = normalizeDiscoveryArguments(request.discovery.mode,
+        {...discoveryArguments, catalogId:catalog.id});
+    }
+    report.discoveryRequest = {mode:request.discovery.mode, arguments:discoveryArguments};
+    const retainCatalog = source => {
+      if (report.catalog === null && source?.catalog !== undefined)
+        report.catalog = structuredClone(source.catalog);
+      need(report.catalog === null || sameCatalog(source?.catalog, report.catalog),
+        'CATALOG_JOURNEY_SOURCE_CHANGED', 'The request must retain its originally selected catalog ID and URL.');
+    };
+    await checkpoint();
     pages = await open(join(directory, 'catalog-pages.ndjson'), 'wx', 0o600);
     descriptions = await open(join(directory, 'resource-descriptions.ndjson'), 'wx', 0o600);
     let prepared;
     const iterator = request.discovery.mode === 'resources'
-      ? client.discovery.browsePages(request.discovery.arguments, {signal})
-      : client.discovery.searchPages(request.discovery.arguments, {signal});
+      ? client.discovery.browsePages(discoveryArguments, {signal})
+      : client.discovery.searchPages(discoveryArguments, {signal});
     await phase('complete-discovery', async () => {
       for await (const page of iterator) {
+        retainCatalog(page.source);
         const pageIndex = report.coverage.pages++;
         await pages.writeFile(JSON.stringify({pageIndex, ...page}) + '\n');
         for (const key of ['received','returned','filtered','invalid'])
@@ -150,8 +181,13 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
           if (seen.has(key)) report.coverage.repeatedResources++;
           seen.add(key);
           const description = await client.discovery.describe(resource.handle, {signal});
+          retainCatalog(description.source);
           await descriptions.writeFile(JSON.stringify({pageIndex, ...description}) + '\n');
-          if (prepared || pageIndex === 0 || !selectionMatches(resource, report.workspace)) continue;
+          if (description.preview.resourceType === 'http' && description.preview.input.path?.routeTemplate)
+            report.coverage.pathTemplates++;
+          if (prepared || pageIndex === 0) continue;
+          const selectedPath = selectionMatches(description, report.workspace, request.input);
+          if (!selectedPath) continue;
           const acceptIndex = acceptedIndex(description, report.workspace, request.maxAtomic);
           if (acceptIndex < 0) continue;
           const source = description.source;
@@ -164,13 +200,17 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
           need(source.pageBytes <= report.workspace.limits.sourcePageBytes,
             'CATALOG_JOURNEY_NATIVE_PAGE_LIMIT', 'Use smaller real catalog pages for the original native preparer.');
           report.selection = {pageIndex, handle:resource.handle, resource:resource.resource,
-            source:description.source, acceptIndex, accepted:description.accepts[acceptIndex]};
+            source:description.source, acceptIndex, accepted:description.accepts[acceptIndex], ...selectedPath};
           notify({phase:'prepare', pageIndex, resource:resource.resource.url});
           prepared = await phase('prepare-selected-later-page', () => selected.prepare({
             intentId:request.intentId, handle:resource.handle, acceptIndex,
             maxAtomic:request.maxAtomic, input:request.input}, {signal}));
+          retainCatalog(prepared.preparation.source);
           need(prepared.preparation.pageSha256 === description.source.pageSha256 &&
-            prepared.preparation.rowIndex === description.source.rowIndex,
+            prepared.preparation.rowIndex === description.source.rowIndex &&
+            prepared.request.url === selectedPath.requestUrl &&
+            prepared.preparation.pathBinding?.requestUrl === selectedPath.requestUrl &&
+            samePathValues(prepared.preparation.pathBinding.values, selectedPath.pathBinding.values),
           'CATALOG_JOURNEY_SOURCE_CHANGED', 'The retained native request differs from its original selected page.');
           report.native = prepared;
         }
@@ -185,6 +225,9 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
     // Reopen the durable identity after the complete walk, including any cache
     // retirement caused by later pages. Execution uses this intent, never a new search.
     report.native = await phase('reopen-native-review', () => selected.review(request.intentId, {signal}));
+    retainCatalog(report.native.preparation.source);
+    need(report.native.request.url === report.selection.requestUrl,
+      'CATALOG_JOURNEY_REQUEST_CHANGED', 'The reopened intent must retain its exact concrete request URL.');
     need(report.native.availableActions.includes('execute') && !report.native.attempt,
       'CATALOG_JOURNEY_ORIGINAL_INTENT_NOT_QUEUED', 'Continue this existing intent through its original native history.');
     notify({phase:'execute', approval:'ORIGINAL_HOST_OPERATOR', intentId:request.intentId});
@@ -195,6 +238,9 @@ export async function runCatalogNativeJourney({configuration, directory, signal,
         nativeRequest:{workspaceId:report.workspaceId,intentId:request.intentId,action:'execute'},
       });
     report.native = await phase('reopen-native-result', () => selected.review(request.intentId, {signal}));
+    retainCatalog(report.native.preparation.source);
+    need(report.native.request.url === report.selection.requestUrl,
+      'CATALOG_JOURNEY_REQUEST_CHANGED', 'The completed intent must retain its exact concrete request URL.');
     need(report.native.availableActions.includes('read'), 'CATALOG_JOURNEY_RESULT_NOT_AVAILABLE',
       'The original native attempt has no saved response ready to read; inspect its retained result and recovery fields.');
     report.result = await phase('complete-saved-result', () => selected.downloadResult({
@@ -229,7 +275,8 @@ async function main() {
     'Usage: starforge mcp-catalog-journey --config /absolute/request.json --out /absolute/new-run',
     '',
     'Walk the configured catalog, prepare a matching later-page service, and complete its native request.',
-    'The configuration supplies url, a positive maxAtomic, actual input, and optional workspaceId/discovery.',
+    'The configuration supplies url, a positive maxAtomic, actual input.path/query/body, and optional workspaceId/discovery.',
+    'Discovery uses the service’s original catalog; an explicit discovery.arguments.catalogId must match it.',
     'Keep the existing operator console available for approval. The output directory must be new.',
     'See CATALOG_JOURNEY.md for configuration, phase measurements and saved-result continuation.',
   ].join('\n');

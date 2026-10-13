@@ -4,7 +4,7 @@
 <body>
 <header><div><p class="eyebrow">STELLAR FORGE</p><h1>Economic editions</h1><p id="project-title">Opening project…</p></div><button id="refresh" type="button">Refresh state</button></header>
 <p class="source-notice">This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. By using this application, users agree to the <a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener noreferrer">FRED API Terms of Use</a>.</p>
-<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="county">County reports</button><button data-tab="releases">Release planner</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
+<nav aria-label="Workspace sections"><button data-tab="source" class="active">Source</button><button data-tab="editions">Editions & review</button><button data-tab="recurring">Recurring briefings</button><button data-tab="county">County reports</button><button data-tab="releases">Release planner</button><button data-tab="ddp">DDP migration</button><button data-tab="published">Current publications</button><button data-tab="publication">Merchant</button><button data-tab="customer">Customer</button><button data-tab="recovery">History & handover</button></nav>
 <main>
 <div id="message" role="status" aria-live="polite"></div>
 <section id="summary" class="metrics" aria-label="Project summary"></section>
@@ -273,6 +273,139 @@
 </div>
 </section>
 
+
+<section data-panel="ddp" hidden>
+<h2>Federal Reserve DDP migration</h2>
+<p>Bring an original DDP package into this economic workspace, review its FRED series mappings, then compare the retained observations and continue the reporting work.</p>
+<p><a href="/ddp-guide" target="_blank" rel="noopener">Migration and receiving guide</a> · <a href="https://www.federalreserve.gov/data/data-download-fred-information.htm" target="_blank" rel="noopener noreferrer">Federal Reserve transition information</a></p>
+<div id="ddp-recovery" class="box" hidden><h3>Continue a saved action</h3><p id="ddp-recovery-text"></p><div class="buttons"><button id="ddp-resume" type="button">Continue original action</button><button id="ddp-discard" type="button">Clear browser request</button></div></div>
+<div class="box">
+<h3>Retain the official series crosswalk</h3>
+<p>The original release and Board series identifier select the FRED mapping. Each saved crosswalk keeps the complete published CSV and its source details.</p>
+<div class="buttons"><button id="ddp-crosswalk-capture" type="button">Capture the official crosswalk</button></div>
+<form id="ddp-crosswalk-import-form" class="form-grid">
+<label class="wide">Original crosswalk CSV or retained source JSON<input id="ddp-crosswalk-file" type="file" accept=".csv,.json,text/csv,application/json" required></label>
+<div class="wide buttons"><button id="ddp-crosswalk-import" type="submit">Import crosswalk</button></div>
+</form>
+<div class="form-grid"><label class="wide">Saved crosswalk<select id="ddp-crosswalk"></select></label><label>Release filter<input id="ddp-crosswalk-release" placeholder="For example, H15"></label><label>Series search<input id="ddp-crosswalk-query" type="search" placeholder="Board or FRED series ID"></label></div>
+<div class="buttons"><button id="ddp-crosswalk-open" type="button">Open mappings</button><button id="ddp-crosswalk-original" type="button">Download original CSV</button><button id="ddp-crosswalk-download" type="button">Download complete source</button></div>
+<p id="ddp-crosswalk-context"></p>
+<div id="ddp-crosswalk-table" class="table-wrap" role="region" aria-label="Original crosswalk rows" tabindex="0"></div>
+<div class="buttons"><button id="ddp-crosswalk-prev" type="button">Previous mappings</button><span id="ddp-crosswalk-page"></span><button id="ddp-crosswalk-next" type="button">Next mappings</button></div>
+</div>
+<div class="box">
+<h3>Import the original DDP package</h3>
+<p>Use the original downloaded archive, XML, or CSV. The archive carries its source dictionaries alongside the observations. Keep any original bookmark with the reporting selection below.</p>
+<form id="ddp-package-import-form" class="form-grid">
+<label class="wide">Original package or retained source JSON<input id="ddp-package-file" type="file" accept=".zip,.xml,.csv,.json,application/zip,application/xml,text/xml,text/csv,application/json" required></label>
+<label>Original release identifier<input id="ddp-package-release" maxlength="100" placeholder="For example, H15" required></label>
+<label>Package format<select id="ddp-package-format"><option value="board-sdmx-zip">Board SDMX archive</option><option value="board-sdmx-xml">Board SDMX XML</option><option value="ddp-csv">DDP CSV</option></select></label>
+<label class="wide">XML source dictionaries, when downloaded separately<input id="ddp-package-supplements" type="file" accept=".xml,.xsd,application/xml,text/xml" multiple></label>
+<label id="ddp-csv-layout-label" class="wide" hidden>CSV source column mapping<textarea id="ddp-csv-layout" rows="5" spellcheck="false" placeholder="Use the original layout definition from the migration guide when the CSV omits its labels."></textarea><small>The saved layout records which original columns supply the series identity, periods, values and metadata.</small></label>
+<div class="wide buttons"><button id="ddp-package-import" type="submit">Import original package</button></div>
+</form>
+<div class="form-grid"><label class="wide">Saved package<select id="ddp-package"></select></label><label>Source frequency<select id="ddp-package-frequency"><option value="">All original frequencies</option></select></label><label>Series search<input id="ddp-package-query" type="search"></label></div>
+<div class="buttons"><button id="ddp-package-open" type="button">Open original series</button><button id="ddp-package-original" type="button">Download original package</button><button id="ddp-package-download" type="button">Download complete source</button></div>
+<p id="ddp-package-context"></p><div id="ddp-package-summary" class="metrics"></div>
+<div id="ddp-package-table" class="table-wrap" role="region" aria-label="Original package series" tabindex="0"></div>
+<div class="buttons"><button id="ddp-package-prev" type="button">Previous series</button><span id="ddp-package-page"></span><button id="ddp-package-next" type="button">Next series</button></div>
+<h4>Original observations</h4><label>Original package series<select id="ddp-observation-series"></select></label>
+<div class="buttons"><button id="ddp-observation-open" type="button">Open source observations</button></div>
+<div id="ddp-observation-table" class="table-wrap" role="region" aria-label="Original DDP observations" tabindex="0"></div>
+<div class="buttons"><button id="ddp-observation-prev" type="button">Previous observations</button><span id="ddp-observation-page"></span><button id="ddp-observation-next" type="button">Next observations</button></div>
+</div>
+<div class="box">
+<h3>Save the migration selection</h3>
+<form id="ddp-migration-form" class="form-grid">
+<label class="wide">Migration name<input id="ddp-migration-name" maxlength="500" required></label>
+<label class="wide">Original DDP bookmark, when available<input id="ddp-bookmark" type="url" placeholder="https://www.federalreserve.gov/datadownload/..."></label>
+<p class="wide">The migration retains the whole selected package. Review any series exclusions, ambiguous mappings or explicit unit and calendar choices below.</p>
+<label>Original date policy<select id="ddp-date-policy"><option value="source">The original package interval</option><option value="fixed">Fixed observation interval</option><option value="last">Last observations for each series</option></select></label>
+<label id="ddp-last-label" hidden>Number of observations<input id="ddp-last-count" type="number" min="1" step="1" value="120"></label>
+<label id="ddp-start-label">Observation start<input id="ddp-start" type="date" required></label>
+<label id="ddp-end-label">Observation end<input id="ddp-end" type="date" required></label>
+<label>FRED edition as of<input id="ddp-as-of" type="date" required></label>
+
+<label>Rows per FRED source request<input id="ddp-page-size" type="number" min="1" max="100000" step="1" value="10000" required></label>
+<label>Combined observation capacity<input id="ddp-max-rows" type="number" min="1" max="1000000" step="1" value="100000" required></label>
+<label class="wide">Analyst note<textarea id="ddp-migration-note" rows="3" maxlength="8000"></textarea></label>
+<div class="wide buttons"><button id="ddp-migration-preview" type="submit">Preview complete migration</button><button id="ddp-migration-save" type="button" disabled>Save reviewed migration</button></div>
+</form>
+
+<details id="ddp-decisions" class="box">
+<summary>Review a mapping, exclusion, or source meaning</summary>
+<p>Series choices follow the original source filters and displayed page. Choose an original package series. A mapped target must come from its retained crosswalk candidates. Record the reason for each explicit decision.</p>
+<div class="form-grid">
+<label class="wide">Original package series<select id="ddp-decision-series"></select></label>
+<label>Mapping choice<select id="ddp-decision-action"><option value="automatic">Use the original crosswalk</option><option value="map">Choose a published candidate</option><option value="exclude">Exclude this series from acquisition</option></select></label>
+<label>Published FRED candidate<select id="ddp-decision-target"></select></label>
+<label class="wide">Decision reason<textarea id="ddp-decision-note" rows="2" maxlength="4000"></textarea></label>
+<div class="wide buttons"><button id="ddp-decision-apply" type="button">Retain mapping choice</button><button id="ddp-decision-remove" type="button">Restore original mapping</button></div>
+</div>
+<h4>Explicit comparison meaning</h4>
+<p>The original metadata supplies the default meaning. Use an explicit binding when the reviewed source needs a particular calendar rule or scale; the full binding stays with the comparison.</p>
+<div class="form-grid">
+<label>Period matching<select id="ddp-binding-period"><option value="">Original source calendar</option><option value="exact">Exact source date</option><option value="month">Same calendar month</option><option value="quarter">Same calendar quarter</option><option value="semiannual">Same half year</option><option value="year">Same calendar year</option></select></label>
+<label>Source value multiplier<input id="ddp-binding-source-scale" value="1" inputmode="decimal"></label>
+<label>FRED value multiplier<input id="ddp-binding-target-scale" value="1" inputmode="decimal"></label>
+<label>Expected FRED units<input id="ddp-binding-units"></label>
+<label>Expected FRED frequency<input id="ddp-binding-frequency"></label>
+<label>Expected FRED seasonal adjustment<input id="ddp-binding-adjustment"></label>
+<label class="wide">Binding reason<textarea id="ddp-binding-note" rows="2" maxlength="4000"></textarea></label>
+<div class="wide buttons"><button id="ddp-binding-apply" type="button">Retain comparison meaning</button><button id="ddp-binding-remove" type="button">Restore original source meaning</button></div>
+</div>
+<h4>Retained mapping decisions</h4><div id="ddp-decision-table" class="table-wrap" tabindex="0"></div>
+<h4>Retained comparison bindings</h4><div id="ddp-binding-table" class="table-wrap" tabindex="0"></div>
+</details>
+<p id="ddp-migration-status" role="status">Choose a retained package, crosswalk and original reporting selection.</p>
+<div id="ddp-migration-summary" class="metrics"></div>
+<div class="form-grid"><label class="wide">Saved migration<select id="ddp-migration"></select></label><label>Migration table<select id="ddp-migration-section"><option value="mappings">Series mappings</option><option value="series">Selected source series</option><option value="acquisitions">Observation acquisition</option></select></label></div>
+<div class="buttons"><button id="ddp-migration-open" type="button">Open saved migration</button><button id="ddp-migration-download" type="button">Download full migration</button></div>
+<div id="ddp-migration-table" class="table-wrap" role="region" aria-label="Migration mapping and source review" tabindex="0"></div>
+<div class="buttons"><button id="ddp-migration-prev" type="button">Previous migration rows</button><span id="ddp-migration-page"></span><button id="ddp-migration-next" type="button">Next migration rows</button></div>
+<div class="buttons"><button id="ddp-migration-acquire" type="button">Acquire the reviewed FRED selection</button></div>
+<p>The saved package is acquired as one operation. Completed original source requests are retained when that operation continues after an interruption.</p>
+</div>
+<div class="box">
+<h3>Review and receive the completed migration</h3>
+<label>Saved comparison<select id="ddp-receiving"></select></label>
+<div class="buttons"><button id="ddp-receiving-open" type="button">Open comparison</button><button id="ddp-receiving-html" type="button">Download offline HTML</button><button id="ddp-receiving-csv" type="button">Download full CSV</button><button id="ddp-receiving-json" type="button">Download full JSON</button></div>
+<p id="ddp-receiving-context" role="status"></p><div id="ddp-receiving-summary" class="metrics"></div>
+<div class="form-grid"><label>Comparison table<select id="ddp-receiving-section"><option value="observations">Original observations</option><option value="meanings">Series meaning and review</option></select></label><label>Original series filter<select id="ddp-receiving-series"><option value="">All retained series</option></select></label><label class="check"><input id="ddp-receiving-changes" type="checkbox" checked>Show differences only</label></div>
+<div id="ddp-receiving-table" class="table-wrap" role="region" aria-label="DDP and FRED source comparison" tabindex="0"></div>
+<div class="buttons"><button id="ddp-receiving-prev" type="button">Previous comparison rows</button><span id="ddp-receiving-page"></span><button id="ddp-receiving-next" type="button">Next comparison rows</button></div>
+<label>Retained FRED source<select id="ddp-result-capture"></select></label>
+<div class="buttons"><button id="ddp-open-observations" type="button">Open economic source and briefing editor</button><button id="ddp-use-release-watch" type="button">Use this selection for a release watch</button><button id="ddp-export-project" type="button">Export complete project handover</button></div>
+</div>
+</section>
+
+<section data-panel="published" hidden>
+<h2>Current publications</h2>
+<p>Compare every mapped Board period with the complete current FRED publication. Each edition retains its original files, collection dates, saved calendar rules, native project and complete customer report.</p>
+<div class="box"><h3>Complete publication edition</h3>
+<label>Saved migration<select id="published-migration"></select></label>
+<div class="buttons"><button id="published-start" type="button">Collect complete publication edition</button><button id="published-resume" type="button">Continue original operation</button><button id="published-refresh" type="button">Refresh editions</button></div>
+<p>A new edition collects the complete mapped population into its own retained intake. Continue an interrupted operation to use its original request and completed source files.</p>
+<p><a href="/ddp-published-guide" target="_blank" rel="noopener">Complete guide and existing-programme attachment</a></p>
+</div>
+<label>Retained publication edition<select id="published-operation"></select></label>
+<div class="buttons"><button id="published-open" type="button">Open original edition</button><button id="published-inventory-prev" type="button">Previous editions</button><span id="published-inventory-page"></span><button id="published-inventory-next" type="button">Next editions</button></div>
+<pre id="published-operation-state" aria-live="polite">Select a retained edition or its saved migration.</pre>
+<details><summary>Complete edition history</summary><div id="published-operation-history" class="table-wrap"></div></details>
+<div class="box"><h3>Complete customer files</h3><p>The edition archive includes every original Board and FRED source, the saved migration, native project bundle, complete comparison rows, report and source inventory.</p>
+<label>Original edition file<select id="published-file"></select></label><code id="published-file-details" class="published-digest"></code>
+<button id="published-download" type="button">Download complete original file</button></div>
+<h3>Published-data comparison</h3><p id="published-report-context"></p><div id="published-summary" class="table-wrap"></div>
+<label>Find an original series<input id="published-series-query" type="search" maxlength="500" placeholder="Board series, FRED series or title"></label>
+<div class="buttons"><button id="published-report-open" type="button">Find series</button><button id="published-series-prev" type="button">Previous series</button><span id="published-series-page"></span><button id="published-series-next" type="button">Next series</button></div>
+<div id="published-series-table" class="table-wrap"></div>
+<h3>Original observation rows</h3>
+<div class="form-grid"><label>Original series on this page<select id="published-row-series"><option value="">All original series</option></select></label>
+<label>Comparison result<select id="published-row-status"><option value="">Every original result</option><option value="EQUAL">Equal figures</option><option value="DIFFERENT">Different figures</option><option value="MISSING_CHANGED">Availability differs</option><option value="BOTH_MISSING">Unavailable in both</option><option value="SOURCE_ONLY">Board periods only</option><option value="TARGET_ONLY">FRED periods only</option></select></label></div>
+<div class="buttons"><button id="published-rows-open" type="button">Open original rows</button><button id="published-rows-prev" type="button">Previous rows</button><span id="published-row-page"></span><button id="published-rows-next" type="button">Next rows</button></div>
+<p>Values retain their original numeric strings and unavailable codes. Differences use FRED minus Board after the saved scale factors. Byte ranges locate each row in its original source file.</p>
+<div id="published-row-meaning" class="table-wrap"></div><div id="published-row-table" class="table-wrap"></div>
+</section>
 <section data-panel="publication" hidden>
 <h2>Operate a reviewed merchant edition</h2><p>Publish a saved review with the merchant’s original public payment terms. Each edition keeps a stable snapshot and its own public resource path.</p>
 <form id="publication-form" class="form-grid"><label class="wide">Saved review<select id="review-select"></select></label><label>Public HTTPS origin<input id="public-origin" type="url" placeholder="https://your-merchant.example" required></label><label>Resource path<input id="public-path" value="/economic-data" required></label>

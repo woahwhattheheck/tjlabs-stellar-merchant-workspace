@@ -44,7 +44,8 @@
       "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/server.mjs",
       "stellar-forge/mcp-merchant-operator/console/service.mjs",
       "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
-      "stellar/scf-starforge-20261009/sf30-seller-sdk/response-cache/workspace/server.mjs"
+      "stellar/scf-starforge-20261009/sf30-seller-sdk/response-cache/workspace/server.mjs",
+      "stellar-forge/mcp-paid-agent/operator-console.mjs"
     ]
   },
   "contributions": [
@@ -177,7 +178,13 @@
     "stellar/scf-starforge-20261009/sf54-buyer-governor-intent/intent_adapter.py",
     "stellar/scf-starforge-20261009/sf59-operator-reservation-gate/operator_gate.py",
     "stellar/scf_2026/sf47_budget_model/workspace/source_tables.py",
-    "stellar/scf_2026/sf47_budget_model/budget.py"
+    "stellar/scf_2026/sf47_budget_model/budget.py",
+    "stellar-forge/mcp-paid-agent/quote-store.mjs",
+    "stellar-forge/mcp-paid-agent/result-store.mjs",
+    "stellar-forge/mcp-paid-agent/serve.mjs",
+    "stellar-forge/mcp-paid-agent/remote-mcp.mjs",
+    "stellar-forge/mcp-paid-agent/operator-ui/client.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

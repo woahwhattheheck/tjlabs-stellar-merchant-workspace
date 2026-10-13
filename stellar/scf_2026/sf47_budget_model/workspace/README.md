@@ -252,6 +252,12 @@ The matching Python and Node managed launch readers identify the full installed 
 
 The [Implementation evidence desk](IMPLEMENTATION_EVIDENCE.md) receives complete SF74 commissioning source into the existing operating case. Operators select exact task, measurement and separate technical/customer receiving observations, link the original work/purchases/deployments and saved Installation editions, and freeze a source-verified review. The original Completion, typed client/MCP, CLI and full case export/reopen retain the same evidence and request identities. The [original receiving journey](BUYER_RECEIVING_JOURNEY.md) can include this phase on its explicitly selected original case.
 
+## Reconcile an original account and save its dated close
+
+**Delivery operations → Account reconciliation** compares a retained original account statement with the complete native cash account and period. Review source rows, original and corrected cash movements, whole-record matching groups and explicitly outstanding items. Retain an unresolved draft or close the reviewed period when the complete source and cash comparison balances.
+
+Every saved edition reopens its original decisions and comparison alongside the current account. The exact original Statements and Cash writers open from the reconciliation desk while complete drafts and pending requests remain retained. **Download complete account** carries the original native case, source files, saved editions, readable HTML and CSV reports; importing it reopens the same reconciliation selection. The [Account reconciliation guide](ACCOUNT_RECONCILIATION.md) covers the complete browser, command line, typed client, Merchant MCP, original request recovery and receiving workflow.
+
 ## Operate complete cash accounts and corrections
 
 **Delivery operations → Cash / issuer** now joins exact dated cash accounts, full original payment/refund allocations, native quantities, source documents and complete correction history. Review an observation's financial effect before recording its original void and replacement in one native case transaction. Current forecast inputs follow the recorded successor chain; original completion receipts and submitted reviews remain attached.
@@ -263,3 +269,12 @@ The [Implementation evidence desk](IMPLEMENTATION_EVIDENCE.md) receives complete
 **Delivery operations → Supplier accounts** brings the selected contributor or supplier, original work, invoice lines, review states, source documents and observed payments/refunds into one account. Operators can record and edit original supplier/work/invoice data, attach documents, retain actual cash allocations, and review opening/period/closing balances and invoice aging for selected dates.
 
 **Download complete account handover** includes the complete account JSON, all invoice/work/cash/activity CSVs, readable offline HTML and the original operating case with every retained attachment. Import that complete ZIP to reopen the same supplier and dates. The [Supplier accounts guide](PAYABLES.md) covers browser recovery, native commands, typed client, CLI, Merchant MCP and the source joins with Engagements, Statements, Ledger Intake and Budget Performance.
+
+
+## Named staff and complete installation receiving
+
+Open **Team workspace** at `/team` from the original private owner link. Enroll lead, finance, reviewer and contributor profiles against the existing case and contributor identities. Named HTTP sessions use individual cookies and a CSRF value; the original case commands record the enrolled actor. The contributor desk records original work and invoices and shows their paid, open and credit balances.
+
+[STAFF_ACCESS.md](STAFF_ACCESS.md) contains the operating workflow and role matrix. [STAFF_INSTALLATION.md](STAFF_INSTALLATION.md) covers whole-database backup, source and attachment transfer, individual SSH access and independent recovery. Both Applications launchers include the same named-staff source inventory.
+
+The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py --output /absolute/private/receiving --node /absolute/path/to/node`. It operates the original local server through named staff HTTP and browser sessions, then opens the same complete installation in a separate recovered destination. Existing trusted integrations retain the original owner bearer API.

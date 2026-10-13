@@ -164,7 +164,7 @@ export function merchantQuickBooksRecoverySources(definition, {
     Object.keys(value).every(key => allowed.includes(key));
   const absolute = value => typeof value === 'string' && isAbsolute(value) && value !== '/' &&
     resolve(value) === value && !/[\\\\\x00-\x1f\x7f]/.test(value);
-  return async ({readFile}) => {
+  const sourceResolver = async ({readFile}) => {
     require(typeof readFile === 'function', 'Use the original accounting source reader.');
     async function read(path, limit, label) {
       try {
@@ -233,4 +233,63 @@ export function merchantQuickBooksRecoverySources(definition, {
       roots,requiredEnvironment:[...references].sort(),
     };
   };
+  sourceResolver.relocateProfile = relocateMerchantQuickBooksRecoveryProfile;
+  return sourceResolver;
+}
+
+/** Project only the path fields owned by this original QuickBooks source provider. */
+export function relocateMerchantQuickBooksRecoveryProfile(original, {mapPath} = {}) {
+  const need = (value, message) => {
+    if (!value) throw Object.assign(new Error(message), {code:'ACCOUNTING_QBO_RECOVERY_RELOCATION'});
+  };
+  const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const fields = (value, allowed, required = allowed) => object(value) &&
+    Object.keys(value).every(key => allowed.includes(key)) && required.every(key => Object.hasOwn(value, key));
+  const absolute = value => typeof value === 'string' && isAbsolute(value) && value !== '/' &&
+    resolve(value) === value && !/[\\\\\x00-\x1f\x7f]/.test(value);
+  const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+  need(typeof mapPath === 'function' && fields(original, ['schema','kind','binding','roots','requiredEnvironment']) &&
+    original.schema === 'stellar-forge.accounting-host-source-profile.v1' && original.kind === 'quickbooks-oauth',
+    'Use the authenticated original QuickBooks recovery source profile.');
+  const binding = original.binding;
+  need(fields(binding, ['connectionsFile','selectionDirectory','expectedSelectionSha256','connectionsSha256','selectionFileSha256','selection','connections']) &&
+    absolute(binding.connectionsFile) && absolute(binding.selectionDirectory) && hash(binding.connectionsSha256) &&
+    hash(binding.selectionFileSha256) && (binding.expectedSelectionSha256 === null || hash(binding.expectedSelectionSha256)) &&
+    object(binding.selection) && Array.isArray(binding.connections) && binding.connections.length > 0 &&
+    Array.isArray(original.roots) && Array.isArray(original.requiredEnvironment) &&
+    original.requiredEnvironment.every(name => typeof name === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(name)),
+    'Retain the original company selection, source hashes and environment references.');
+  const aliases = new Set(), expectedRoots = [
+    {name:'QuickBooksConnections',path:binding.connectionsFile,kind:'file'},
+    {name:'QuickBooksSelection',path:binding.selectionDirectory,kind:'directory'},
+  ];
+  for (const connection of binding.connections) {
+    need(fields(connection, ['alias','directoryEnv','directory','connectionId','profileSha256','clientSecretEnv'],
+      ['alias','directoryEnv','directory','connectionId','profileSha256']) &&
+      typeof connection.alias === 'string' && connection.alias.length > 0 && !aliases.has(connection.alias) &&
+      typeof connection.directoryEnv === 'string' && original.requiredEnvironment.includes(connection.directoryEnv) &&
+      absolute(connection.directory) && typeof connection.connectionId === 'string' && connection.connectionId.length > 0 &&
+      hash(connection.profileSha256) && (connection.clientSecretEnv === undefined ||
+        typeof connection.clientSecretEnv === 'string' && original.requiredEnvironment.includes(connection.clientSecretEnv)),
+      'Retain each original OAuth connection identity and its declared source directory.');
+    aliases.add(connection.alias);
+    expectedRoots.push({name:'OAuth-' + connection.alias,path:connection.directory,kind:'directory'});
+  }
+  need(original.roots.length === expectedRoots.length && original.roots.every(root => {
+    const expected = expectedRoots.find(item => item.name === root?.name);
+    return fields(root, ['name','path','kind']) && expected && root.path === expected.path && root.kind === expected.kind;
+  }) && new Set(original.roots.map(root => root.name)).size === original.roots.length,
+    'Map exactly the captured QuickBooks configuration, selection and OAuth roots.');
+  const mapped = path => {
+    need(absolute(path), 'Use an original normalized source path.');
+    const destination = mapPath(path);
+    need(absolute(destination), 'The native recovery source map must return a captured absolute destination.');
+    return destination;
+  };
+  const result = structuredClone(original);
+  result.binding.connectionsFile = mapped(binding.connectionsFile);
+  result.binding.selectionDirectory = mapped(binding.selectionDirectory);
+  for (const connection of result.binding.connections) connection.directory = mapped(connection.directory);
+  for (const root of result.roots) root.path = mapped(root.path);
+  return result;
 }

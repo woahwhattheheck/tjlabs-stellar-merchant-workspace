@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "research-client",
-  "description": "Operate the authenticated Research workspace, Europe PMC literature searches, registered protocol review, eligibility and study extraction, evidence tables, independent appraisal, customer update delivery, Documents/Pipelines, and complete Python analyst receiving through client, CLI and Merchant tools.",
+  "description": "Operate the authenticated Research workspace, Europe PMC literature searches, registered protocol review, eligibility and study extraction, evidence tables, independent appraisal, complete customer programmes, source-linked quotations and recurring delivery, paid publication/receiving, original pricing and supplier-cost reports, Documents/Pipelines, full Python analyst receiving, and Applications commissioning through client, CLI and Merchant tools.",
   "commands": {
     "research-client": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-cli.mjs",
     "research-crossref-documents": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/crossref-document-cli.mjs",
@@ -13,7 +13,11 @@
     "research-protocol-review": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/study-protocol-operator.mjs",
     "research-ris": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/cli.mjs",
     "research-ris-receiving": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/ris-source/native.mjs",
-    "research-customer-programme": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/programme.mjs"
+    "research-customer-programme": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/programme.mjs",
+    "research-quotes": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/cli.mjs",
+    "research-quotes-setup": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/setup-cli.mjs",
+    "research-dossier-returns": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/cli.mjs",
+    "research-quotes-programme": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-cli.mjs"
   },
   "commandDescriptions": {
     "research-client": "Operate the Research listener, source and eligibility reviews, study extraction, evidence tables, appraisals, customer updates, Documents/Pipelines, and complete receiving",
@@ -26,7 +30,11 @@
     "research-protocol-review": "Inspect the original registered protocol, retain the complete question preview and recover its exact SourceBundle request on the existing Research workspace.",
     "research-ris": "Review original RIS sources, recover saved requests and export complete source editions through the existing Research listener.",
     "research-ris-receiving": "Run the selected complete RIS browser, Merchant and cold receiving operation with its exact original source and request identities.",
-    "research-customer-programme": "Receive the selected original customer sources, citation decisions, chronology and Europe PMC programme through Python/Analysis, browser, Merchant and a complete editable handover."
+    "research-customer-programme": "Receive the selected original customer sources, citation decisions, chronology and Europe PMC programme through Python/Analysis, browser, Merchant and a complete editable handover.",
+    "research-quotes": "Operate original customer cases and pricing, review quote-bound Research briefs and customer responses, publish native paid delivery, and retain complete realized receiving reports.",
+    "research-quotes-setup": "Retain the complete original quotation configuration and source review, save Applications settings and reopen or export the same commissioning operation.",
+    "research-dossier-returns": "Retain a complete returned dossier, review its original common-base/current/returned comparison, recover full drafts and saved requests, and export the reviewed return through the existing Research listener.",
+    "research-quotes-programme": "Operate one retained original quotation programme, carry all native case/quote/pricing/delivery files, and receive the complete customer case and dossier."
   },
   "exports": {
     "./buyer/research-dossiers/client": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/workspace-client.mjs",
@@ -91,10 +99,33 @@
     "./buyer/research-dossiers/customer-programme/selection": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/selection.mjs",
     "./buyer/research-dossiers/customer-programme/chronology": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/chronology.mjs",
     "./buyer/research-dossiers/customer-programme/europe-pmc": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/europe-pmc.mjs",
-    "./buyer/research-dossiers/customer-programme/receiving": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/receiving.mjs"
+    "./buyer/research-dossiers/customer-programme/receiving": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/receiving.mjs",
+    "./buyer/research-dossiers/customer-quotes": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/client.mjs",
+    "./buyer/research-dossiers/customer-quotes/contracts": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/contracts.mjs",
+    "./buyer/research-dossiers/customer-quotes/operator": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/operator.mjs",
+    "./buyer/research-dossiers/customer-quotes/workspace": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/workspace.mjs",
+    "./buyer/research-dossiers/customer-quotes/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/cli.mjs",
+    "./merchant/mcp/research-quotes": "./source/stellar-forge/mcp-merchant-operator/research-quotes.mjs",
+    "./buyer/research-dossiers/quotes/setup": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/setup.mjs",
+    "./buyer/research-dossiers/quotes/launch": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/launch-inspection.mjs",
+    "./buyer/research-dossiers/quotes/configuration": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/configuration.mjs",
+    "./buyer/research-dossiers/returns/client": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/client.mjs",
+    "./buyer/research-dossiers/returns/contracts": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/contracts.mjs",
+    "./buyer/research-dossiers/returns/engine": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/engine.mjs",
+    "./buyer/research-dossiers/returns/store": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/store.mjs",
+    "./buyer/research-dossiers/returns/cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/cli.mjs",
+    "./merchant/mcp/research-dossier-returns": "./source/stellar-forge/mcp-merchant-operator/research-dossier-returns.mjs",
+    "./buyer/research-dossiers/returns/source": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/source.mjs",
+    "./buyer/research-dossiers/customer-quotes/programme": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme.mjs",
+    "./buyer/research-dossiers/customer-quotes/programme-files": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-files.mjs",
+    "./buyer/research-dossiers/customer-quotes/programme-receiving": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-receiving.mjs",
+    "./buyer/research-dossiers/customer-quotes/programme-cli": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-cli.mjs",
+    "./buyer/research-dossiers/customer-quotes/case-transfer": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/case-transfer.mjs"
   },
   "components": [
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/europe-pmc"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/europe-pmc",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console",
+    "stellar/scf-starforge-20261009/sf97-merchant-revenue-ops"
   ],
   "supportFiles": [
     "LICENSE",
@@ -291,6 +322,60 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/europe-pmc.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/programme.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/EUROPE_PMC.md",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-programme/README.md",
+    "stellar-forge/mcp-merchant-operator/catalog/research-quotes.mjs",
+    "stellar-forge/mcp-merchant-operator/research-quotes.mjs",
+    "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/browser-assets.json",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/client.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/client.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/configuration.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/contracts.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/files.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/model.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/operator.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/browser.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/index.html",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/style.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/routes.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/workspace.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/launch-inspection.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/launch-inspection.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/setup.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/setup.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/setup-cli.mjs",
+    "products/research/COMMISSIONING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/client.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/contracts.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/engine.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/source.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/store.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/routes.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/dossier-returns/OPERATING.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/dossier-returns.js",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/dossier-return-drafts.js",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/public/dossier-returns.css",
+    "stellar-forge/mcp-merchant-operator/research-dossier-returns.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/research-dossier-returns.mjs",
+    "stellar-forge/mcp-merchant-operator/DOSSIER_RETURNS.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-files.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-receiving.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-cli.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-files.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-receiving.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/PROGRAMME.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/case-transfer.d.mts",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/CASE_TRANSFER.md"
+  ],
+  "browserAssets": [
+    {
+      "server": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/routes.mjs",
+      "manifest": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/browser-assets.json"
+    }
   ]
 }

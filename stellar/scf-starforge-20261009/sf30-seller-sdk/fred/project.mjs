@@ -1,6 +1,7 @@
 // MIT. A private FRED project owns source editions, reviews and recovery.
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { canonicalJSONInfo, canonicalJSONDigest } from './canonical-stream.mjs';
 import { privateDirectory, atomicJson, readPrivateJson, withPrivateLock } from '../routescan/quota.mjs';
 import { canonical, clone, need, plain, date, operationId, normalizeSelection, projectionPolicy, compareCaptures, MAX_CAPTURE_BYTES, PUBLIC_CAPTURE, PUBLIC_SET_CAPTURE, FRED_NOTICE, FRED_TERMS } from './model.mjs';
 import { hash, digest, jsonBytes, optionalJson, validateCapture, captureFred, storeFredCapture, sealFredPublicTable, sealFredPublicTables } from './source.mjs';
@@ -21,9 +22,9 @@ import { planFredReleaseCatchUp, validateFredReleasePlan, pageFredReleasePlan } 
 import { createFredDdpProjectExtension } from './ddp/project-state.mjs';
 import { FRED_DDP_PROJECT_BUNDLE, FRED_DDP_PROJECT_KEYS, FRED_DDP_PROJECT_BUNDLE_MAX_BYTES,
   fredDdpStatePresent, validateFredDdpProjectState, validateFredDdpProjectBundle } from './ddp/project-validation.mjs';
-
 import { validateQcewState, qcewStatePresent } from './qcew/state.mjs';
 import { exportQcewExtension, validateQcewExtension, receiveQcewExtension } from './qcew/bundle.mjs';
+
 const QCEW_BUNDLE = 'stellar-forge.fred-project-bundle.v6';
 const SCHEMA = 'stellar-forge.fred-project.v1';
 const BUNDLE = 'stellar-forge.fred-project-bundle.v1';
@@ -904,17 +905,16 @@ export async function exportFredProject({ directory, qcewSourceContexts = null }
         releasePlans.push(await retainedFredReleasePlan(directory, state, summary.id));
       await validateReleaseBundle(state, releaseCaptures, releasePlans, captures);
     }
-    const ddp = fredDdpStatePresent(state);
+    const ddp = fredDdpStatePresent(state), ddpValues = ddp ? await ddpProject.exportDdp(directory, state, captures) : null;
     const qcew = await exportQcewExtension(directory, state, captures, { sourceContexts: qcewSourceContexts });
-    const extended = ddp || Boolean(qcew);
-    const ddpValues = ddp ? await ddpProject.exportDdp(directory, state, captures) :
-      Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, []]));
+    const extended = ddp || qcew !== null;
     const bundle = { schema: qcew ? QCEW_BUNDLE : ddp ? FRED_DDP_PROJECT_BUNDLE : release ? RELEASE_BUNDLE : recurring ? RECURRING_BUNDLE : briefings.length ? BRIEFING_BUNDLE : BUNDLE,
       state, captures, publicationPlans, ...(extended || release || briefings.length ? { briefings } : {}),
-      ...(extended || release ? { releaseCaptures, releasePlans } : {}), ...(extended ? ddpValues : {}),
+      ...(extended || release ? { releaseCaptures, releasePlans } : {}),
+      ...(extended ? ddpValues ?? Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, []])) : {}),
       ...(qcew ? { qcew } : {}) };
-    bundle.bundleSha256 = digest(bundle);
-    need(jsonBytes(bundle).length <= (extended ? FRED_DDP_PROJECT_BUNDLE_MAX_BYTES : 256 * 1024 * 1024),
+    bundle.bundleSha256 = canonicalJSONDigest(bundle);
+    need(canonicalJSONInfo(bundle).prettyBytes + 1 <= (extended ? FRED_DDP_PROJECT_BUNDLE_MAX_BYTES : 256 * 1024 * 1024),
       extended ? 'The complete project bundle exceeds the 480 MiB receiving capacity; export original sources separately.' :
         'Project bundle exceeds 256 MiB; export captures separately.');
     return bundle;
@@ -923,34 +923,36 @@ export async function exportFredProject({ directory, qcewSourceContexts = null }
 export async function receiveFredProject({ directory, bundle, qcewSourceContexts = null } = {}) {
   const qcewContextOptions = { sourceContexts: qcewSourceContexts ?? new Map() };
   directory = await privateDirectory(resolve(directory));
-  const qcewBundle = bundle?.schema === QCEW_BUNDLE, ddpBundle = bundle?.schema === FRED_DDP_PROJECT_BUNDLE;
-  const extended = qcewBundle || ddpBundle;
+  const county = bundle?.schema === QCEW_BUNDLE, extended = county || bundle?.schema === FRED_DDP_PROJECT_BUNDLE;
+  const ddpFields = FRED_DDP_PROJECT_KEYS.some(key => bundle?.[key] !== undefined), qcew = bundle?.qcew !== undefined;
   need([BUNDLE, BRIEFING_BUNDLE, RECURRING_BUNDLE, RELEASE_BUNDLE, FRED_DDP_PROJECT_BUNDLE, QCEW_BUNDLE].includes(bundle?.schema) && Array.isArray(bundle.captures) &&
     Array.isArray(bundle.publicationPlans) &&
     (bundle.schema === BUNDLE ? bundle.briefings === undefined : Array.isArray(bundle.briefings) &&
       (extended || bundle.schema === RELEASE_BUNDLE || bundle.briefings.length > 0)) &&
     (extended || bundle.schema === RELEASE_BUNDLE ? Array.isArray(bundle.releaseCaptures) && Array.isArray(bundle.releasePlans) :
       bundle.releaseCaptures === undefined && bundle.releasePlans === undefined) &&
-    FRED_DDP_PROJECT_KEYS.every(key => extended ? Array.isArray(bundle[key]) : bundle[key] === undefined) &&
-    (qcewBundle ? plain(bundle.qcew) : bundle.qcew === undefined),
+    (county ? qcew && ddpFields : extended ? ddpFields || qcew : !ddpFields && !qcew) &&
+    FRED_DDP_PROJECT_KEYS.every(key => ddpFields ? Array.isArray(bundle[key]) : bundle[key] === undefined) &&
+    (qcew ? plain(bundle.qcew) : bundle.qcew === undefined),
     'Receive the complete original versioned project bundle.');
-  need(jsonBytes(bundle).length <= (extended ? FRED_DDP_PROJECT_BUNDLE_MAX_BYTES : 256 * 1024 * 1024),
+  need(canonicalJSONInfo(bundle).prettyBytes + 1 <= (extended ? FRED_DDP_PROJECT_BUNDLE_MAX_BYTES : 256 * 1024 * 1024),
     'The complete project bundle exceeds this version’s receiving capacity.');
   const identity = { schema: bundle.schema, state: bundle.state, captures: bundle.captures, publicationPlans: bundle.publicationPlans,
     ...(bundle.schema !== BUNDLE ? { briefings: bundle.briefings } : {}),
     ...(extended || bundle.schema === RELEASE_BUNDLE ? { releaseCaptures: bundle.releaseCaptures, releasePlans: bundle.releasePlans } : {}),
-    ...(extended ? Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, bundle[key]])) : {}),
-    ...(qcewBundle ? { qcew: bundle.qcew } : {}) };
-  need(bundle.bundleSha256 === digest(identity), 'Project bundle identity changed.');
+    ...(ddpFields ? Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, bundle[key]])) : {}),
+    ...(qcew ? { qcew: bundle.qcew } : {}) };
+  need(bundle.bundleSha256 === canonicalJSONDigest(identity), 'Project bundle identity changed.');
   const original = projectState(clone(bundle.state));
   need(!original.pending, 'A receiving bundle must contain a completed project state.');
   const recurring = (original.briefingTemplates?.length ?? 0) > 0 ||
     (original.briefingSuccessors?.length ?? 0) > 0;
   const release = releaseStatePresent(original), ddp = fredDdpStatePresent(original);
-  need(qcewBundle === qcewStatePresent(original) && (qcewBundle || ddpBundle === ddp) &&
-    (extended || (bundle.schema === RELEASE_BUNDLE) === release &&
-      (release || (bundle.schema === RECURRING_BUNDLE) === recurring)),
-    'Use the complete versioned bundle for this county-report, DDP, release and recurring briefing project.');
+  need((county ? qcew && (ddp || FRED_DDP_PROJECT_KEYS.every(key => bundle[key].length === 0)) : ddpFields === ddp) &&
+    qcew === qcewStatePresent(original) && (extended ||
+    (bundle.schema === RELEASE_BUNDLE) === release &&
+    (release || (bundle.schema === RECURRING_BUNDLE) === recurring)),
+    'Use the complete versioned bundle for this DDP, county, release and recurring briefing project.');
   const analystReviews = original.reviews.filter(review => review.briefing);
   need((bundle.briefings ?? []).length === analystReviews.length &&
     new Set((bundle.briefings ?? []).map(item => item.manifest?.reviewId)).size === analystReviews.length &&
@@ -963,7 +965,7 @@ export async function receiveFredProject({ directory, bundle, qcewSourceContexts
     new Set(bundle.captures.map(item => item.captureSha256)).size === bundle.captures.length, 'Bundle source inventory differs.');
   await validateRecurringBundle(original, bundle.captures);
   if (release || extended) await validateReleaseBundle(original, bundle.releaseCaptures, bundle.releasePlans, bundle.captures);
-  if (extended) validateFredDdpProjectBundle({ state: original, captures: bundle.captures,
+  if (ddp) validateFredDdpProjectBundle({ state: original, captures: bundle.captures,
     ...Object.fromEntries(FRED_DDP_PROJECT_KEYS.map(key => [key, bundle[key]])) });
   validateQcewExtension(bundle.qcew, original, bundle.captures, qcewContextOptions);
   return withPrivateLock(directory, 'project.lock', async () => {
@@ -1001,7 +1003,6 @@ export async function receiveFredProject({ directory, bundle, qcewSourceContexts
       for (const plan of bundle.releasePlans) await storeProjectReleasePlan(directory, plan);
     }
     if (ddp) await ddpProject.receiveDdp(directory, original, bundle);
-    if (qcewBundle) await receiveQcewExtension(directory, bundle.qcew, original, bundle.captures, qcewContextOptions);
     // Reconstruct native merchant files with the original retained analyst bytes, source and payment inputs.
     for (const publication of original.publications) {
       const { prepareFredEdition, stageFredMerchant } = await import('./merchant.mjs');
@@ -1020,6 +1021,7 @@ export async function receiveFredProject({ directory, bundle, qcewSourceContexts
       need(edition.snapshot === publication.snapshot && edition.editionId === publication.editionId, 'Receiving edition identity changed.');
       await stageFredMerchant({ directory: root, origin: plan.origin, path: plan.path, payment: plan.payment });
     }
+    await receiveQcewExtension(directory, bundle.qcew, original, bundle.captures, qcewContextOptions);
     await atomicJson(directory, 'project.json', original);
     const receipt = { schema: 'stellar-forge.fred-receiving.v1', bundleSha256: bundle.bundleSha256,
       projectId: original.id, revision: original.revision, receivedAt: new Date().toISOString() };
@@ -1058,5 +1060,5 @@ export const { listFredDdpSources, getFredDdpCrosswalk, importFredDdpCrosswalk, 
   getFredDdpMigration, downloadFredDdpMigration, acquireFredDdpMigration, getFredDdpReceiving,
   downloadFredDdpReceiving } = ddpProject;
 
-// County reports share the original lock, revision, pending operation and replay journal.
+// County reports use the same original operation IDs, revisions and pending journal.
 export { transact as transactFredProject };

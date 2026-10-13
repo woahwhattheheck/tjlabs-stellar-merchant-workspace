@@ -55,6 +55,14 @@ these paths can be loaded without a static JavaScript import. The console's
 OpenAPI, gRPC and reviewer workflow source remains selected. The upstream
 `OPENLINEAGE_LICENSE` is an explicit original source file.
 
+The reviewer retains the original Buyer quote store, result store, MCP server and
+protocol modules that it loads from the selected source root. Its
+`/native-client.mjs` route serves the same explicitly retained Buyer browser client.
+The Buyer's maintained console asset map carries its complete pages and shared
+route-identity modules. These original runtime and browser inputs are part of the
+package even when the reviewer reaches them through a dynamic module load or file
+read.
+
 This scope is defined by the product's installed interfaces. A required imported
 module is included even when it lives in another repository component. Applications
 and merchant services load their providers from the selected distribution record.

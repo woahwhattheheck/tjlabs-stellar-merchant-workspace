@@ -3,6 +3,7 @@ import {lstat} from 'node:fs/promises';
 import {dirname,resolve,join,basename} from 'node:path';
 import {preparationWorkspaceTools} from './tools.mjs';
 import {PreparationCustomerFiles} from './files.mjs';
+import {PreparationPipelineClient} from './pipeline-connection.mjs';
 import {receivePreparationWorkspace,inspectReceivedPreparation} from './managed.mjs';
 import {PreparationWorkspaceClient,PREPARATION_CONNECTION_FILENAME,PREPARATION_HASH,PREPARATION_DEFAULT_RECEIVING_BYTES,
   preparationNeed,preparationExact,preparationPlain,preparationAbsolute,preparationPrivateDirectory,
@@ -129,7 +130,7 @@ export class MerchantPreparationWorkspaces{
       await client?.close();await this.#files.disconnect(scope);this.#clients.delete(scope.alias);
       return {workspace:scope.alias,state:'DISCONNECTED',instanceId:args.instanceId};
     }
-    if(name==='merchant_preparation_export'){
+    if(name==='merchant_preparation_export'||name==='merchant_preparation_pipeline_export'){
       const {workspace,...request}=args;
       const fileId=preparationDigest(Buffer.from(JSON.stringify([scope.workspaceSha256,args.operationId])));
       let selected;
@@ -170,6 +171,43 @@ export class MerchantPreparationWorkspaces{
     if(name==='merchant_preparation_status'&&!this.#clients.has(scope.alias))
       return {workspace:scope.alias,state:'DISCONNECTED',workspaceSha256:scope.workspaceSha256};
     const client=this.#client(scope),{workspace,...value}=args;
+    if(name.startsWith('merchant_preparation_pipeline_')){
+      const pipelines=new PreparationPipelineClient(client);
+      switch(name){
+        case 'merchant_preparation_pipeline_status':return pipelines.status();
+        case 'merchant_preparation_pipeline_browser':return pipelines.browser();
+        case 'merchant_preparation_pipeline_list':return pipelines.list(args.collection,value);
+        case 'merchant_preparation_pipeline_definition':return pipelines.definition(args.pipelineId,value);
+        case 'merchant_preparation_pipeline_save':return pipelines.save(args.definition,value);
+        case 'merchant_preparation_pipeline_from_recipe':return pipelines.fromRecipe(args.recipeId,value);
+        case 'merchant_preparation_pipeline_enqueue':return pipelines.enqueue(args.pipelineId,args.requestKey,value);
+        case 'merchant_preparation_pipeline_execute':return pipelines.execute(args.executionId,value);
+        case 'merchant_preparation_pipeline_execution':return pipelines.execution(args.executionId);
+        case 'merchant_preparation_pipeline_events':return pipelines.events(args.executionId,value);
+        case 'merchant_preparation_pipeline_rows':return pipelines.rows(args.executionId,args.stageId,value);
+        case 'merchant_preparation_pipeline_cancel':return pipelines.cancel(args.executionId);
+        case 'merchant_preparation_pipeline_recover':return pipelines.recover();
+        case 'merchant_preparation_pipeline_review':return pipelines.review(args.executionId,args.stageId,value);
+        case 'merchant_preparation_pipeline_compare':return pipelines.compare(args.beforeId,args.afterId);
+        case 'merchant_preparation_pipeline_received':return pipelines.received();
+        case 'merchant_preparation_pipeline_open_received':return pipelines.openReceived(args.receivedId);
+        case 'merchant_preparation_pipeline_receive':{
+          preparationNeed(Boolean(args.sourceInput)!==Boolean(args.fileId),'PREPARATION_RECEIVING_SOURCE_INVALID',
+            'Choose exactly one declared sourceInput or complete retained pipeline-project fileId.');
+          let archive;
+          if(args.sourceInput)archive=this.#input(scope,args,'project').file;
+          else{
+            const selected=await this.#files.record(scope,args.fileId);
+            preparationNeed(selected.record.kind==='pipeline-project'&&selected.record.sha256===args.expectedSourceSha256&&
+              selected.record.bytes<=this.#config.preparationWorkspaces.maxFileBytes,
+            'PREPARATION_PIPELINE_RECEIVING_SOURCE_CHANGED','Choose the complete original pipeline-project delivery and its reviewed SHA-256.',409);
+            archive=selected.path;
+          }
+          return pipelines.receiveProject(archive,{requestKey:args.requestKey,expectedSha256:args.expectedSourceSha256});
+        }
+        default:preparationNeed(false,'PREPARATION_TOOL_UNKNOWN','Choose a declared original pipeline operation.');
+      }
+    }
     switch(name){
       case 'merchant_preparation_status':return {workspace,state:'CONNECTED',...client.connection,native:await client.status()};
       case 'merchant_preparation_browser':return client.browser();

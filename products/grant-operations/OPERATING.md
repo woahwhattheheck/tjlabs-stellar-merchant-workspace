@@ -1,5 +1,9 @@
 # Grant Operations — installed operating and receiving guide
 
+## Issuer correspondence and award terms
+
+Open **Operations → Issuer terms** to receive an original email or text file and selected attachments, retain complete message bytes, record the observed application stage and explicitly selected proposal or issuer track, and review the original source for each term. The same workspace compares issued amount, duration, tranche criteria and any stated metric window with the saved proposal, then saves a reviewed native plan through the existing amendment transaction. Local drafts, exact pending requests, all issuer editions, original attachments and commissioned plan history reopen through the complete case handover. The browser, original Operations CLI and authenticated API share this workflow. See [Issuer correspondence and award terms](../../stellar/scf_2026/sf47_budget_model/workspace/AWARD_TERMS.md) for the full operating procedure, source formats and receiving commands.
+
 ## Recorded work and supplier invoice intake
 
 The original Operations case now receives CSV/TSV timesheets and invoice lines through **Work / invoice intake**. Operators map positions and source formats, match existing contributors and packages, retain corrections and duplicate decisions, and apply the complete reviewed batch atomically. Saved drafts, original bytes, grouped invoice lines and applied native record links survive complete case export/import. The existing CLI, typed GrantWorkspaceClient and six `merchant_grant_work_intake*` tools expose the same workflow. See [the complete operator guide](../../stellar/scf_2026/sf47_budget_model/workspace/WORK_INTAKE.md).
@@ -27,6 +31,44 @@ This guide is also retained at `package/source/products/grant-operations/OPERATI
 A plan revision, case version, installed source commit and original request ID identify different things. Record each from its native response. The installed source can advance without rewriting an older plan or review. A case remains pinned to the plan revision chosen when it was created.
 
 Use named recording and reviewing operators. A contributor invoice, a prospective customer's quote, an issuer submission and an observed receipt retain their separate native meanings. Enter unknown facts as unknown; a testnet observation remains visibly testnet.
+
+## Plan useful customer adoption and complete-task costs
+
+Open **Delivery operations → Customer adoption plan** before choosing the original
+installation workorders. Start from the case's proposed tranche and select the
+customer's intended first date. The window length and targets come from the
+original case's saved proposal.
+
+Name the actual accountable buyers, merchants and facilitator operators, then
+describe each complete useful task and its expected output. Choose the customer's
+normal work calendar, holidays, recurring schedule or explicit delivery dates.
+Price the charged unit and account for all requests needed to finish the task.
+The planner keeps prepaid passes, consumed allowance, individual paid requests,
+complete tasks and expected output dates separately visible.
+
+The calendar and target tables show which normal-use schedule supplies the intended
+purchase population, which customers return on another completion day, and where
+the proposed timing leaves work unfinished. Fee, supplier-cost and active-hours
+inputs produce separate results for each currency; workshare alternatives show
+the effect of delivery effort on the original quote.
+
+Choose **Save new edition** to retain the entire reviewed plan, original
+proposal and calculation as one immutable source attachment. The original case
+journal supplies its recording operator, request identity and version. Reopen
+saved editions in this same pane, export the complete JSON/CSV or readable report,
+and use **Export complete case** for the existing whole-case receiving workflow.
+A revised plan creates another source edition and preserves its parent.
+
+The installed command is **starforge grant-cohort-plan** and the public application
+module is **@tokenjunkielabs/starforge-merchant/grant/cohort-planning**. The complete
+[Customer adoption planning guide](../../stellar/scf_2026/sf47_budget_model/workspace/COHORT-PLANNING.md)
+covers source seeding, calendar choices, exact costs, saved-edition recovery and
+command-line source preparation.
+
+Use the resulting calendar and complete-task estimate with the original
+[Customer launch guide](../merchant-workspace/CUSTOMER_LAUNCH.md). Actual purchases
+continue through Buyer receiving and the existing Cohort acceptance pane.
+
 
 ## 2. Receive and install one selected source edition
 
@@ -151,13 +193,29 @@ Source-intake packets use the original [Workshare intake](../../stellar/scf_2026
 
 ### Receive account statements into the same cash records
 
-Open **Delivery and cash operations → Account statements** and choose the original UTF-8 CSV. Give the account a stable, nonsecret key and map its exact source headings, separator, date order and number format. Select one signed amount column or separate debit and credit columns. Keep one currency per file; a foreign-currency row can carry an explicit source USD valuation and its basis.
+Open **Delivery and cash operations → Account statements** and choose the original CSV, OFX / QFX or MT940 file. Retain the original bytes and source observation. Give the account a stable, nonsecret key and reuse it for overlapping statements from the same bank account and currency.
 
-Preview the complete file before importing. The review shows original physical source lines, transaction references, new and existing cash records, and exact statement inflow, outflow and net movement. When the source supplies opening and closing balances, enter both: the comparison includes every original movement, including explicitly excluded rows. Record a reason for each exclusion. Classify grant receipts and their tranches, customer cash and supplier payments; allocate supplier payments to retained invoices.
+| Source | Original selection and interpretation |
+| --- | --- |
+| CSV | Map exact source headings, separator, date order and number format. Choose one signed amount column or separate debit and credit columns. Keep one currency per file; a source USD valuation can accompany a foreign-currency row. |
+| OFX / QFX | Inspect the original file, select its returned cash-eligible account and currency section, and keep the source's declared encoding. The original FITID identifies the movement and its posted local calendar date supplies the cash date. |
+| MT940 | Select the original transport, encoding, debit/reversal profile, century window, value-date basis and currency precision. Inspect the file and select its returned account section. Original statement year, number, page sequence and transaction position distinguish each movement. |
 
-**Import reviewed cash movements** commits the original CSV, complete review and new cash records in one case transaction. Overlapping statements reconcile by account, asset and original provider reference. Changed or voided payment identities remain visible for correction. The same reviewed statement and request ID recover an interrupted response without adding duplicate cash. The browser retains a full draft and offers a recovery download; **Open cash records** shows the saved result.
+For native bank files, **merchant_grant_statement_inspect**, the typed client's **statementInspect**, and CLI **statement-inspect** return the exact selectable section IDs and original account findings without changing the case. Use **sourceFormat: OFX** for an original QFX file. Carry the selected **statementId**, exact source and **statementOptions** into preview and receiving. Native bank inputs use their original fields; CSV inputs retain their explicit column and number mapping.
 
-The [Statement receiving guide](../../stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md) includes the complete input object, source format rules, CLI and typed client. Merchant clients use **merchant_grant_statement_preview** and **merchant_grant_statement_receive** with those same inputs. Inputs can be inline or selected from a complete retained JSON file through the existing input and byte-transfer tools. Case export carries the original CSV, review, invoice allocations and cash identities together.
+MT940 options are the original transport **TEXT_BODY** or **FIN_ENVELOPE**; **ASCII**, **UTF-8** or **ISO-8859-1** encoding; **CD_ONLY** or **CD_REVERSALS**; a century window starting from 1900 through 2000; **VALUE_DATE**; and one through 32 uppercase currency codes with decimal precision from zero through six. Choose the profile used by the actual file. Those options remain with its full original parser report after export and reopening.
+
+Preview the complete selected account before importing. The review shows source positions and references, new and existing cash records, classifications, invoice allocations and original statement totals. Native review row numbers identify the selected account's ordered movements; the separate source-line field retains its physical source location. Record a reason for each exclusion. Classify grant receipts and their tranches, customer cash and supplier payments; allocate supplier payments to retained invoices.
+
+When the source supplies opening and closing balances for the same interval, enter both. Reconciliation includes every readable original movement, including already recorded and explicitly excluded rows. Original OFX ledger snapshots retain their own dates and do not establish an opening balance. MT940 page balances and connecting statement pages keep their native findings; a booked-balance difference prevents receiving. Pending OFX observations stay in the retained parser report. Review native correction instructions and reconcile an existing cash observation through the original Cash action before receiving a replacement.
+
+**Import reviewed cash movements** commits the exact original file, complete review and new cash records in one case transaction. The full native parser report accompanies OFX / QFX and MT940 sources. Overlapping statements reconcile against their account, currency and original payment identities. Changed payment facts and voided observations remain visible for correction; existing correction history stays attached to the original account. A failed batch rolls back its sources, new cash and event together.
+
+The same reviewed statement and request ID recover an interrupted response without adding duplicate cash. The browser retains the complete source, selected native options or CSV mapping, decisions and exact pending request. It offers a full recovery download and **Open cash records** for the saved result. Complete case export carries the original statement, parser report, review, invoice allocations and cash identities through independent receiving and reopening.
+
+The [Statement receiving guide](../../stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md) supplies complete inputs and the browser, CLI, HTTP and typed-client workflows. Merchant clients use **merchant_grant_statement_inspect**, **merchant_grant_statement_preview** and **merchant_grant_statement_receive** with those same inputs. An input can be inline or selected from a complete retained JSON file through the existing verified host-input, snapshot and byte-transfer mechanism. Full inspection and preview responses remain available through the original retained snapshot, row and file readers.
+
+The [maintained reader provenance](../../stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/README.md) identifies the unchanged original OFX and MT940 modules. The **grant-operations** package includes both readers and the grant adapter; both managed launchers bind those files to the selected source edition.
 
 ## Review the operating period against the pinned budget
 
@@ -289,6 +347,14 @@ selection. Its source/control-archive validation has completed; the existing
 scientific report and portal receiving remain in their original correction
 journey. No report sale or customer acceptance is asserted by this guide.
 
+### Receive original merchant settlement cash
+
+Open **Merchant settlements** next to Cash to receive the original merchant accounting run, source-inclusive period close or accountant TAR. The original reconciliation, verification, accountant and refund readers retain the complete source and its original transfer identities.
+
+Select the row's cash treatment, explicit native unit/precision/date, any separately sourced USD value and the existing deployment/work associations. The full native preview shows the exact cash effects before receiving. Existing-cash links retain their original monetary fields. Saved reviews support attribution changes, void-and-replace corrections, complete source download and original review history.
+
+The seven settlement CLI commands and the corresponding Merchant MCP tools operate these same case records. Complete operating-case export/import preserves the source, native inspection, every settlement review and the associated cash/event history. [The complete settlement operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/SETTLEMENTS.md) provides the row decision table, exact commands, input bodies, typed client, routes and receiving workflow.
+
 ### Merchant Support
 
 Select an original SF74 portable handoff. Its exact filename and full bytes are inputs to the native preview. Choose an existing deployment or enter the complete reviewed new deployment fields.
@@ -361,6 +427,14 @@ covers the original case selection, full source/receiving contract, exact native
 preview and save, whole export/reopen and later installation editions. The
 installed Grant Operations source includes both profiles and their preparation
 module, alongside the existing native Installation implementation.
+
+### Stellarcarbon and CFCE / GiveCredit reporting workorders
+
+The same installed preparation and complete receiving commands accept **stellarcarbon** and **cfce-givecredit**. Their full profiles carry the original customer task, source semantics, reporting periods, complete file set, correction flow and independent editable handover into the existing Customer installations desk. The selected original Workshare retains the actual commercial terms, fee milestones, phase criteria and funding assignments.
+
+Use `starforge grant-installation-workorder template|prepare --profile stellarcarbon` or `--profile cfce-givecredit` against the original native seed. The whole receiving driver accepts either profile in its current customer input. Both complete reporting products remain their own Merchant Applications entries.
+
+The [complete carbon reporting installation guide](../../stellar/scf_2026/sf49_data_commissioning/installation-workorders/CARBON_REPORTING.md) supplies the exact source bindings, outputs, native save/receiving sequence and reporting operations.
 
 ### Review original implementation evidence
 
@@ -608,6 +682,24 @@ The command line exposes the same workflow under `operations`: `commercial-conne
 
 The planning workspace includes **Compare saved plans** for two explicit saved revisions, including named alternatives. It connects work-package and payment changes, milestone and delivery scope, staffing allocation, exact funding and capacity deltas, and complete daily cash outputs. A complete receiving package carries the selected snapshots and each original native plan ZIP. Browser, CLI and Merchant MCP use the same comparison engine. See the [saved plan comparison guide](../../stellar/scf_2026/sf47_budget_model/workspace/COMPARISON.md) for the full workflow.
 
+## Customer task outcomes
+
+Open **Delivery operations → Customer task outcomes** to compare the complete
+prior and installed customer methods. Retain the source population, period,
+useful output, quality, active person-time, corrections, receiving effort and
+one-currency cost. An explicit scope review controls total and per-task
+comparisons, while missing measurements remain visible.
+
+The complete editor saves immutable Draft or Reviewed editions through the
+original case transaction. Browser, CLI, typed client and five Merchant tools
+share the same model and request recovery. The complete customer ZIP includes
+the original operating case, all comparison revisions, selected sources,
+offline HTML and full effort/cost CSVs; importing it reopens the chosen
+comparison for the receiving operator.
+
+See the [Customer task outcomes guide](../../stellar/scf_2026/sf47_budget_model/workspace/TASK_OUTCOMES.md)
+for the complete input, calculation, review and receiving workflow.
+
 ## Complete cash accounts and original corrections
 
 Open **Delivery operations → Cash / issuer** for the complete cash account. Choose original dates and exact network/currency/asset, inspect full payments and refund allocations, and retain the original source documents. The Accounts section keeps unspecified native values distinct from an all-account selection.
@@ -618,6 +710,18 @@ The full account ZIP contains offline HTML, complete JSON/CSVs, original correct
 
 Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model/workspace/CASH_ACCOUNTS.md) for the complete workflow and original native receiving continuation.
 
+## Customer reporting procedures and returned operating history
+
+Open the installed **Command finder → Operating plans → Create Grant reporting plan** to prepare ordered reporting work from the original complete Grant case and Source Tables project. Enter the customer, period, responsible operator, original workspace paths and receiving workspace. Keep the browser's explicit loopback address and port, including when reopening saved preparation inputs.
+
+The creator retains the complete original case/project/catalog inputs, selected file editions, mappings, reviews, workbook lineage and native command/runtime registrations. A preview contains planned work. Record actual native results and save revisions in the existing Operating plans editor as the reporting work proceeds.
+
+Download the complete preparation JSON to reopen its entered fields and exact original sources. Download the ordinary Operating plan JSON to carry its full revision history; readable HTML and Markdown accompany the same plan. The installed starforge grant-reporting-plan command creates that same procedure from a complete preparation, native input object or selected compact references.
+
+Return to the original Grant case's **Operating procedures** pane to attach the full plan and its explicit source/table/Installation/task-outcome selections. Save and export through the original case transaction, then receive the complete directory with starforge grant-procedures or the existing receiving pane. The delivery includes the whole source case. Each receiving workspace records its actual native IDs; procedure revisions retain the full original parent history.
+
+Use the [reporting creator guide](../../stellar/scf-starforge-20261009/distribution/discovery/GRANT_REPORTING.md), [Operating plans guide](../../stellar/scf-starforge-20261009/distribution/discovery/OPERATING_PLANS.md), [native case procedure guide](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES.md) and [complete receiving command](../../stellar/scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md) for the complete browser/CLI workflow.
+
 ## Original source references
 
 | Area | Maintained source |
@@ -626,6 +730,8 @@ Use the [Cash accounts operating guide](../../stellar/scf_2026/sf47_budget_model
 | Builder and immutable source | [source selection](../../stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md), [build](../../stellar/scf-starforge-20261009/distribution/BUILDING.md), [Git object receiving](../../stellar/scf-starforge-20261009/distribution/GIT_OBJECT_RECEIVING.md) |
 | Planning | [workspace](../../stellar/scf_2026/sf47_budget_model/workspace/README.md), [CLI](../../stellar/scf_2026/sf47_budget_model/workspace/CLI.md) |
 | Delivery, API and intake | [Operations](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS.md), [API](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATIONS-API.md), [Workshare intake](../../stellar/scf_2026/sf47_budget_model/workspace/WORKSHARE_INTAKE.md) |
+| Original account reconciliation | [Statement comparison, cash resolutions, dated closes and complete receiving](../../stellar/scf_2026/sf47_budget_model/workspace/ACCOUNT_RECONCILIATION.md) |
+| Original bank statements | [Statement receiving](../../stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md), [native reader provenance](../../stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/README.md) |
 | Resource and cash assumptions | [Forecast](../../stellar/scf_2026/sf47_budget_model/workspace/FORECAST.md), [Portfolio](../../stellar/scf_2026/sf47_budget_model/workspace/PORTFOLIO.md) |
 | Contributor agreements and receiving | [Complete engagements workflow](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS.md), [native receiving](../../stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS_RECEIVING.md) |
 | Customer installation | [Commissioning, editions and complete handover](../../stellar/scf_2026/sf47_budget_model/workspace/INSTALLATIONS.md) |

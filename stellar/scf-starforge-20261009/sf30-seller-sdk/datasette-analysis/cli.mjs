@@ -9,19 +9,23 @@ import { inspectPythonInstallation } from '../../distribution/python-runtime/wor
 import { absolute, canonical, digest, json, need, plain, regular } from '../../distribution/runtime-workspace/storage.mjs';
 
 export const DATASETTE_ANALYSIS_SOURCE = 'stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/';
+export const SUPPLIER_REPORT_SOURCE = 'products/conapi/supplier-report/';
 const SCHEMA = 'stellar-forge.datasette-analysis-python-selection.v1';
 const HASH = /^[a-f0-9]{64}$/;
 const CORE = ['cli.mjs', 'cli.py', 'model.py', 'source.py', 'recipes.py',
   'operator_server.py', 'operator_client.py', 'operator.html', 'operator.css', 'operator.mjs',
   'workflow_engine.py', 'workflow_cli.py', 'workflow_server.py', 'workflow_analysis.py',
-  'workflow_app.html', 'workflow_app.mjs', 'workflow_app.css', 'WORKFLOW.md', 'WORKFLOW_ANALYSIS.md'];
+  'workflow_app.html', 'workflow_app.mjs', 'workflow_app.css', 'WORKFLOW.md', 'WORKFLOW_ANALYSIS.md',
+  'operator_client.pyi', 'edition_bridge.mjs', 'receiving.py',
+  'nld_contract.py', 'nld_task.py', 'nld_worker.py', 'nld_adapter.py',
+  'nld_cli.py', 'nld_receiving.py', 'nld_operator.mjs', 'NLD.md', 'NLD_SOURCE_CONTRACT.json'];
 const OPTIONS = new Map([
   ['--runtime-workspace', 'root'], ['--runtime-directory', 'runtimeDirectory'],
   ['--runtime-id', 'runtimeId'], ['--installation-id', 'installationId'],
   ['--expected-binding-sha256', 'expectedBindingSha256'],
 ]);
 const COMMANDS = new Set(['serve', 'status', 'prepare', 'rows', 'compare', 'export',
-  'call', 'request', 'download', 'receive', 'workflow']);
+  'call', 'request', 'download', 'receive', 'workflow', 'nld', 'nld-receive']);
 const fingerprint = value => digest(json(canonical(value)));
 
 export function parseDatasetteAnalysisCommand(args) {
@@ -96,6 +100,15 @@ export async function inspectDatasetteAnalysisInstallation(root, {
       'DATASETTE_ANALYSIS_SOURCE_CHANGED');
     required.add(path);
   }
+  // Supplier modules, editable browser, rules and source examples travel in
+  // the original selected product. Bind every selected component member.
+  for (const path of files.keys()) {
+    if (typeof path !== 'string' || !path.startsWith(SUPPLIER_REPORT_SOURCE)) continue;
+    const name = path.slice(SUPPLIER_REPORT_SOURCE.length);
+    need(!name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
+      'DATASETTE_ANALYSIS_SOURCE_CHANGED');
+    required.add(path);
+  }
   const sourceFiles = [];
   for (const path of [...required].sort()) {
     const member = files.get(path);
@@ -128,8 +141,11 @@ export async function resolveDatasetteAnalysisCommand(args, { leaseFd } = {}) {
       'DATASETTE_ANALYSIS_CHECKOUT_CHANGED', 'Use the source carried by the selected original installation.');
     if (checkout === undefined) commandArgs.push('--checkout', selected.binding.sourceRoot);
   }
-  const entry = join(selected.binding.sourceRoot, DATASETTE_ANALYSIS_SOURCE,
-    workflow ? 'workflow_cli.py' : 'cli.py');
+  const entryName = workflow ? 'workflow_cli.py'
+    : commandArgs[0] === 'nld' ? 'nld_cli.py'
+    : commandArgs[0] === 'nld-receive' ? 'nld_receiving.py' : 'cli.py';
+  if (!workflow && entryName !== 'cli.py') commandArgs.shift();
+  const entry = join(selected.binding.sourceRoot, DATASETTE_ANALYSIS_SOURCE, entryName);
   return { executable: selected.installation.python, args: ['-I', entry, ...commandArgs],
     cwd: selected.binding.directory, binding: selected.selection, fingerprint: selected.fingerprint };
 }
@@ -144,6 +160,8 @@ function usage() {
     'rows, compare, export, call, request, download and receive.\n' +
     'Use workflow followed by its native arguments to open the request, report,\n' +
     'delivery and receiving operator; workflow --help lists those commands.\n' +
+    'nld forwards to the complete original-workspace NLD CLI; nld-receive runs its\n' +
+    'retained whole-workspace receiving programme with explicit original IDs.\n' +
     'Use the same workspace and operation ID when reopening existing work.\n' +
     'Install workbooks in the existing Python workspace before launch.\n';
 }

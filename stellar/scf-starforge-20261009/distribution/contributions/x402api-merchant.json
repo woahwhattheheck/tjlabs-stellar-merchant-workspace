@@ -1,0 +1,36 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "x402api-merchant",
+  "description": "Complete x402api invoice, payment, signed-webhook and paid-result merchant application",
+  "components": [
+    "products/x402api-merchant-workspace"
+  ],
+  "commands": {
+    "x402api-merchant": "products/x402api-merchant-workspace/server.mjs"
+  },
+  "commandDescriptions": {
+    "x402api-merchant": "Operate variable-price invoices, original wallet authorizations and retained paid results"
+  },
+  "exports": {
+    "./merchant/x402api": "./source/products/x402api-merchant-workspace/workspace.mjs",
+    "./merchant/x402api/server": "./source/products/x402api-merchant-workspace/server.mjs",
+    "./merchant/x402api/protocol": "./source/products/x402api-merchant-workspace/protocol.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",
+    "stellar/scf-starforge-20261009/sf31-buyer-client/response-stream.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/result.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/store.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs"
+  ],
+  "excludeFiles": [
+    "products/x402api-merchant-workspace/native-receiving.mjs",
+    "products/x402api-merchant-workspace/installed-receiving.mjs"
+  ],
+  "applicationProviders": {
+    "x402api-merchant": "products/x402api-merchant-workspace/application-provider.mjs"
+  },
+  "runtimePackageManifests": {
+    "x402api-merchant": "products/x402api-merchant-workspace/package.json"
+  }
+}
