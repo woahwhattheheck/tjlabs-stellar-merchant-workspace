@@ -29,8 +29,8 @@ No new publisher acquisition is needed for these already selected operations.
 | Decoded SHA256 | `600a4ad86a698d68e0ee3f582dfef1fd0ae008e12a37f2f91d393c4c698ed3be` |
 | Original packet source selection | `3bbeeb3cef95dd159343ec298b5595ffa4e970dd1606469ed03f5152f475d873` |
 | Packet commit | `9bfca6df8ebbd8e6c4583557df1978accd015a23` |
-| Selected receiving commit | `00088295757e19fba1f1c90c10b8d27719283346` |
-| Complete installed source selection | `a1c29b078f870a4badee1f04dd138b0b4ca2fe90d7c98c4226fc0919294c2cae` |
+| Selected receiving commit | `8b7223a2f0c627ff167d133934d7583ae003f803` |
+| Complete installed source selection | `54796845ae06cf30c1a8a143b4174a8a11d83352a888056255ccc448bbe89f0c` |
 | Native/Applications source binding | The same 167 runtime files |
 
 ## Prepare the exact source
@@ -66,9 +66,9 @@ not mean that the case, browser or customer handover has run.
 
 The original complete packet stays byte-for-byte intact. Preparation selects three
 subsequent original repository files from commit
-`00088295757e19fba1f1c90c10b8d27719283346`: the two Python receiving entrypoints
+`8b7223a2f0c627ff167d133934d7583ae003f803`: the two Python receiving entrypoints
 and their browser continuation. They correct direct Python imports and loading
-the installed Playwright module, follow the current “Following edition” tab, and
+the installed Playwright module, follow the current “Following edition” tab and saved Programme comparisons, and
 retain a browser failure’s actual page errors and screenshot. The browser uses
 Chromium’s ordinary process model and verifies the initial HTML response against
 the exact selected console file before inspecting the workspace. No financial,
@@ -78,7 +78,7 @@ Programme, publishing, refresh, organisation or AMP source is replaced.
 | --- | ---: | --- |
 | `results/receiving.py` | 24069 | `df718f79bf34b3c1ca50abb0beb2d422ef46c31f1ffc5054666de79fec836530` |
 | `results/receiving_console.py` | 7448 | `4023d2780c3885870e95dc4621b917a25138f1a362f2506b6a62929074e77750` |
-| `results/browser_receiving.mjs` | 18314 | `02f634e381d35b967e8c5c9ffed4c1b4b58d132c4eb8f48544e8afe12800228e` |
+| `results/browser_receiving.mjs` | 18314 | `a49589190608b927323780bc46a7dbb54e727e090b5be76816796238ef0aeaf1` |
 
 For every selected file, the preparer first verifies the original packet member’s
 size and digest, then verifies the selected file’s exact size, SHA256 and Git blob

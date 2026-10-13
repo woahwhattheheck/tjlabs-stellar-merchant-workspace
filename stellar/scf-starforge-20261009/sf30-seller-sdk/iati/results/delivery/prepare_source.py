@@ -41,7 +41,7 @@ BINARY_BYTES = 664228
 
 # The complete packet remains the original source authority. These three exact
 # repository files are the subsequent receiving corrections, pinned separately.
-RECEIVING_SOURCE_COMMIT = "00088295757e19fba1f1c90c10b8d27719283346"
+RECEIVING_SOURCE_COMMIT = "8b7223a2f0c627ff167d133934d7583ae003f803"
 RECEIVING_SOURCE_BASE_URL = (
     "https://raw.githubusercontent.com/woahwhattheheck/"
     "tjlabs-stellar-merchant-workspace/" + RECEIVING_SOURCE_COMMIT + "/")
@@ -67,8 +67,8 @@ RECEIVING_SOURCES = [
         "baseBytes": 15621,
         "baseSha256": "313551b0751329ba25796412d250c416248a9997890b48e322a4848be46cd6e1",
         "bytes": 18314,
-        "sha256": "02f634e381d35b967e8c5c9ffed4c1b4b58d132c4eb8f48544e8afe12800228e",
-        "gitBlob": "a0042545ec5f848973afc1a897f8a716f749c5e5"
+        "sha256": "a49589190608b927323780bc46a7dbb54e727e090b5be76816796238ef0aeaf1",
+        "gitBlob": "08169d45df9b4c34587e14e093cc9bfdd1a0a280"
     }
 ]
 
