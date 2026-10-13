@@ -14,6 +14,7 @@ import {QUOTE_REQUEST_LIMIT,QUOTE_FILE_LIMIT,QUOTE_CASE_TRANSFER_LIMIT} from './
 import {createClinicalTrialsClient} from './clinical-trials-client.mjs';
 import {createStudyExtractionClient} from './study-extraction-client.mjs';
 import {createStudyFlowClient} from './study-flow/client.mjs';
+import {createComparisonClient} from './comparison/client.mjs';
 import {createStudyProtocolClient} from './study-protocol-client.mjs';
 import {createTemplateExchangeClient} from './template-exchange/client.mjs';
 import {createDocumentWorkspaceClient,createPipelineWorkspaceClient,sendPipelineFiles} from './document-workspace-client.mjs';
@@ -145,13 +146,14 @@ export class ResearchWorkspaceClient{
       const templateRoute=/^\/api\/research\/dossiers\/[^/]+\/template-exchange(?:\/|\?|$)/.test(route);
       const returnRoute=/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route);
       const studyFlowRoute=/^\/api\/dossiers\/[^/]+\/study-flow(?:\/|\?|$)/.test(route);
+      const comparisonRoute=/^\/api\/dossiers\/[^/]+\/comparison(?:\/|\?|$)/.test(route);
       const programmeRoute=route.startsWith('/api/customer-quote-programmes/');
-      const maximum=programmeRoute?(route==='/api/customer-quote-programmes/jobs/case-transfer'?QUOTE_CASE_TRANSFER_LIMIT+65536:QUOTE_REQUEST_LIMIT+65536):studyFlowRoute?16*1024*1024:returnRoute?(/\/returns\/preview(?:\?|$)/.test(route)?1024*1024:16*1024*1024):route==='/api/customer-quotes/case-transfers/prepare'?QUOTE_CASE_TRANSFER_LIMIT:route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
+      const maximum=comparisonRoute?128*1024*1024+65536:programmeRoute?(route==='/api/customer-quote-programmes/jobs/case-transfer'?QUOTE_CASE_TRANSFER_LIMIT+65536:QUOTE_REQUEST_LIMIT+65536):studyFlowRoute?16*1024*1024:returnRoute?(/\/returns\/preview(?:\?|$)/.test(route)?1024*1024:16*1024*1024):route==='/api/customer-quotes/case-transfers/prepare'?QUOTE_CASE_TRANSFER_LIMIT:route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
         /^\/api\/dossiers\/[^/]+\/source-bundles\/(?:preview|receive)(?:\?projection=metadata)?$/.test(route)
         ?128*1024*1024+65536:96*1024*1024+65536;
       need(bytes===undefined||Buffer.byteLength(bytes)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');
       return this.#request(route,{...options,body:bytes,headers:{...(options.headers??{}),
-        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,programmeRoute?QUOTE_FILE_LIMIT:templateRoute?PORTABLE_LIMIT:studyFlowRoute?64*1024*1024:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||route.startsWith('/api/customer-quotes/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources|returns)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
+        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,comparisonRoute?64*1024*1024:programmeRoute?QUOTE_FILE_LIMIT:templateRoute?PORTABLE_LIMIT:studyFlowRoute?64*1024*1024:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||route.startsWith('/api/customer-quotes/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources|returns)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
   }
   async status(options={}){
     const status=await this.#json('/api/status',undefined,options);
@@ -328,6 +330,14 @@ export class ResearchWorkspaceClient{
   /** @returns {import('./study-flow/client.mjs').FlowClient} */
   studyFlows(){return createStudyFlowClient({request:(route,body,options)=>this.#json(route,body,options),
     download:(route,file,options)=>this.#download(route,file,options)});}
+  /** @returns {import('./comparison/client.mjs').ComparisonClient} */
+  comparisons(){return createComparisonClient({request:(route,body,options)=>this.#json(route,body,options),
+    download:(route,file,options)=>this.#download(route,file,options)});}
+  comparison(id,options={}){return this.comparisons().comparison(id,options);}
+  comparisonReport(id,options={}){return this.comparisons().comparisonReport(id,options);}
+  reviewComparison(id,input,options={}){return this.comparisons().reviewComparison(id,input,options);}
+  exportComparison(id,options={}){return this.comparisons().exportComparison(id,options);}
+  comparisonFile(id,options={}){return this.comparisons().comparisonFile(id,options);}
   studyFlow(id,options={}){return this.studyFlows().studyFlow(id,options);}
   studyFlowSources(id,options={}){return this.studyFlows().studyFlowSources(id,options);}
   studyFlowReport(id,options={}){return this.studyFlows().studyFlowReport(id,options);}

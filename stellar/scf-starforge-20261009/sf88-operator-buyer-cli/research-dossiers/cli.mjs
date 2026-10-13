@@ -11,6 +11,7 @@ import { receiveOpenAlexEdition } from './openalex.mjs';
 import { openSavedOpenAlexWorkspace } from './openalex-workspace.mjs';
 
 const usage = 'Research dossiers\n\n' +
+  '  comparison read|review|report|export|file --store DIR --id ID [OPTIONS]\n' +
   '  remote COMMAND --connection-file FILE --directory ORIGINAL_STORE [OPTIONS]\n' +
   '  bundle-create --manifest FILE --source-directory DIR --out FILE\n' +
   '  bundle-preview --file SOURCE_BUNDLE_JSON\n' +
@@ -32,6 +33,7 @@ const usage = 'Research dossiers\n\n' +
 
 export async function main(argv = process.argv.slice(2)) {
   const command = argv[0];
+  if(command==='comparison')return (await import('./comparison/cli.mjs')).main(argv.slice(1));
   if(command==='remote')return (await import('./workspace-cli.mjs')).main(argv.slice(1));
   if (!command || ['help', '--help', '-h'].includes(command)) { process.stdout.write(usage); return; }
   const keys = ['store', 'id', 'title', 'description', 'text', 'revision', 'question', 'file',

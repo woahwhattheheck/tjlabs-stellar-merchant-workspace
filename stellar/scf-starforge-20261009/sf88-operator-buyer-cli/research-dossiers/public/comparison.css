@@ -1,0 +1,26 @@
+/* SPDX-License-Identifier: MIT */
+#view-comparison{color:#20242a;background:#f5f6f7;padding:20px;border:1px solid #c4c9cf;border-radius:4px;min-width:0}
+#view-comparison h2,#view-comparison h3,#view-comparison legend{color:#20242a}
+#view-comparison .comparison-card{background:#fff;color:#20242a;border:1px solid #c4c9cf;border-radius:3px;padding:18px;margin:16px 0;min-width:0}
+#view-comparison .comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#view-comparison .comparison-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-width:0}
+#view-comparison label>span{font-weight:600;color:#303740}
+#view-comparison input,#view-comparison select,#view-comparison textarea{width:100%;max-width:100%;box-sizing:border-box;background:#fff;color:#20242a;border:1px solid #7d8691;border-radius:3px;padding:9px;font:inherit;min-width:0}
+#view-comparison textarea{resize:vertical;line-height:1.45}
+#view-comparison fieldset{border:1px solid #c4c9cf;margin:16px 0;padding:14px;min-width:0}
+#view-comparison .comparison-source-row,#view-comparison .comparison-criterion{border-top:1px solid #d8dde2;padding-top:14px;margin-top:14px}
+#view-comparison .comparison-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:12px 0}
+#view-comparison button{color:#20242a;background:#eef0f2;border:1px solid #858e98;border-radius:3px;padding:9px 12px;white-space:normal;overflow-wrap:anywhere;line-height:1.3}
+#view-comparison button:hover:not(:disabled){background:#dfe3e7}
+#view-comparison button:disabled,#view-comparison input:disabled,#view-comparison select:disabled,#view-comparison textarea:disabled{color:#555e68;background:#e9ecef;opacity:1;border-color:#a3abb4}
+#view-comparison :focus-visible{outline:3px solid #34495e;outline-offset:3px}
+#view-comparison .comparison-hint{color:#49525c;font-size:.9rem;overflow-wrap:anywhere}
+#view-comparison .comparison-error{background:#f5eeee;color:#5f2525;border:1px solid #9b7575;padding:12px;overflow-wrap:anywhere}
+#view-comparison pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:480px;overflow:auto;background:#f2f4f6;color:#20242a;padding:12px;border:1px solid #c4c9cf}
+#view-comparison details{margin:8px 0;min-width:0}#view-comparison summary{cursor:pointer;overflow-wrap:anywhere}
+#view-comparison .comparison-table{overflow:auto;max-width:100%;border:1px solid #c4c9cf;margin:12px 0}
+#view-comparison table{border-collapse:collapse;width:100%;min-width:600px}
+#view-comparison th,#view-comparison td{padding:10px;text-align:left;vertical-align:top;border-bottom:1px solid #d8dde2;overflow-wrap:anywhere}
+#view-comparison th{background:#e9ecef;color:#20242a}#view-comparison td{background:#fff;color:#20242a;max-width:420px}
+@media(max-width:680px){#view-comparison{padding:10px}#view-comparison .comparison-card{padding:12px}#view-comparison .comparison-grid{grid-template-columns:1fr}#view-comparison .comparison-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}#view-comparison .comparison-actions select{grid-column:1/-1}#view-comparison .comparison-actions button{width:100%;min-height:42px}#view-comparison fieldset{padding:10px}}
+@media print{#view-comparison button,#view-comparison input[type=file]{display:none}#view-comparison pre{max-height:none}#view-comparison .comparison-table{overflow:visible}#view-comparison table{min-width:0}}
