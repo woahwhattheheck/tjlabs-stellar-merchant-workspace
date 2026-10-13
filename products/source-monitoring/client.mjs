@@ -13,10 +13,12 @@ export const GET_OPERATIONS = Object.freeze([
   'state', 'contract', 'entity', 'entities', 'aliases', 'changes', 'impacts',
   'case', 'statements', 'response', 'request', 'update-plan',
   'cycles', 'cycle', 'cycle-request', 'cycle-report', 'gleif-intake',
+  'review-exchanges', 'review-exchange', 'review-exchange-request', 'review-exchange-compare',
   'portfolio-cycle-reviews', 'portfolio-refreshes', 'portfolio-refresh', 'portfolio-refresh-request', 'portfolio-refresh-report',
 ]);
 export const POST_OPERATIONS = Object.freeze([
   'published-edition', 'edition', 'portfolio', 'statement-set', 'compare', 'update',
+  'review-exchange-issue', 'review-exchange-command', 'review-exchange-return-preview',
   'fetch-update', 'select-update', 'review', 'case', 'profile', 'prepare',
   'dispatch', 'receive-response', 'query', 'cycle-command', 'gleif-preview', 'gleif-receive', 'portfolio-refresh-prepare', 'portfolio-refresh-command',
 ]);
@@ -469,16 +471,23 @@ export class MonitoringClient {
     return this.post('receive-response', { id, original: original.json.id, status, sourceNote, expected,
       ...(headers === undefined ? {} : { headers }) });
   }
-  download(kind, { id, output } = {}) {
-    need(['workspace', 'object', 'source'].includes(kind), 'MONITORING_OPERATION',
-      'Choose the complete workspace, retained object or original source.');
+  download(kind, { id, role, output, expectedSha256 } = {}) {
+    need(['workspace', 'object', 'source', 'review-exchange'].includes(kind), 'MONITORING_OPERATION',
+      'Choose the complete workspace, retained object, original source or reviewer file.');
     if (kind !== 'workspace') need(SHA.test(id ?? ''), 'MONITORING_INPUT', 'Select the original object/source SHA-256.');
-    const path = kind === 'workspace' ? '/api/os/export' : '/api/os/' + kind + '?id=' + encodeURIComponent(id);
+    if (kind === 'review-exchange') need(['issued_json', 'issued_html', 'returned_file'].includes(role),
+      'MONITORING_INPUT', 'Select the exact original issued JSON, issued HTML or returned file role.');
+    need(expectedSha256 === undefined || SHA.test(expectedSha256), 'MONITORING_INPUT',
+      'Use the complete expected original file SHA-256.');
+    const path = kind === 'workspace' ? '/api/os/export' : kind === 'review-exchange' ?
+      '/api/os/review-exchange-file?' + new URLSearchParams({ id, role }) :
+      '/api/os/' + kind + '?id=' + encodeURIComponent(id);
     const destination = resolve(string(output, 'Output path'));
     return this.#run(async () => {
       const connection = await this.#connect();
       const temporary = join(dirname(destination), '.monitoring-download-' + randomUUID());
-      const exchange = await this.#exchange(connection, path);
+      const exchange = await this.#exchange(connection, path,
+        { headers: { 'X-Review-Workspace': encodeURIComponent(this.#identity.workspace) } });
       let out;
       try {
         const response = exchange.response;
@@ -505,11 +514,13 @@ export class MonitoringClient {
         }
         need(response.complete && bytes === expected, 'MONITORING_INTERRUPTED', 'The complete native download was interrupted.');
         const sha256 = hash.digest('hex');
-        if (kind !== 'workspace') need(sha256 === id, 'MONITORING_DOWNLOAD_CHANGED',
+        if (kind === 'object' || kind === 'source') need(sha256 === id, 'MONITORING_DOWNLOAD_CHANGED',
           'The downloaded original differs from its selected content identity.');
+        if (expectedSha256 !== undefined) need(sha256 === expectedSha256, 'MONITORING_DOWNLOAD_CHANGED',
+          'The complete downloaded reviewer file differs from its selected original descriptor.');
         await exchange.writing;
         await out.sync(); await out.close(); out = undefined;
-        return await publishFile(temporary, destination, { bytes, sha256, kind, ...(id ? { id } : {}) });
+        return await publishFile(temporary, destination, { bytes, sha256, kind, ...(id ? { id } : {}), ...(role ? { role } : {}) });
       } finally {
         if (out) await out.close();
         await exchange.finish();

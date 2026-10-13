@@ -194,3 +194,9 @@ The current cycle implementation supports up to 10,000 retained unmerged cases f
 Review the complete intended population before creating a cycle. If the complete retained creation population exceeds capacity, retain its original files and current workspace; arrange a supported complete operating scope before starting this cycle. No list is silently sampled or truncated.
 
 The complete handover exercise should use an actual source comparison and its real customer case history: create the cycle, assign work, review the original cases, retain evidence, complete and sign, receive the whole workspace independently, reopen it, and continue a later review. Record the actual observed result in the existing customer Installation.
+
+## 12. Send assigned work to an independent reviewer
+
+The **Reviewer exchange** view uses this same saved cycle and its exact current assignments. Select the named reviewer and complete intended case population, issue the editable HTML and original JSON, then retain their complete returned file. Unfinished work can be received without inventing a named decision. For a named edition, compare original/current/returned case values and completion, explicitly resolve conflicts, and apply through the same case writer and cycle transaction. A signed or changed cycle must be reviewed through its current original workflow before adoption.
+
+For a customer portfolio cycle, a reviewed completion selects the original retained portfolio retain/continue event. The returned file preserves that event and the original portfolio source. It does not create another portfolio-refresh decision. See [REVIEWER_EXCHANGE.md](REVIEWER_EXCHANGE.md) for the complete source inspection, local draft recovery, command replay and onward receiving course.

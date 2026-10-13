@@ -12,3 +12,13 @@
 #view-portfolio-refresh [data-refresh-page] {align-self:center}
 #view-portfolio-refresh select {max-width:100%;min-width:0}
 @media(max-width:600px){#view-portfolio-refresh .actions{display:grid;grid-template-columns:1fr}#view-portfolio-refresh th,#view-portfolio-refresh td{min-width:10rem}}
+
+/* Independent reviewer exchange, within the original console. */
+#view-review-exchange .table-scroll{max-width:100%;overflow:auto}
+#view-review-exchange .table-scroll table{min-width:38rem}
+#view-review-exchange input[type=checkbox]{width:auto;margin-right:.5rem}
+#view-review-exchange code,#view-review-exchange p,#view-review-exchange summary{overflow-wrap:anywhere}
+#view-review-exchange .error{border-left:3px solid #555;padding:.6rem;background:#eee}
+#view-review-exchange .actions{align-items:center}
+#view-review-exchange pre{max-height:28rem;overflow:auto}
+@media(max-width:600px){#view-review-exchange .actions{align-items:stretch}#view-review-exchange .actions>*{max-width:100%}}
