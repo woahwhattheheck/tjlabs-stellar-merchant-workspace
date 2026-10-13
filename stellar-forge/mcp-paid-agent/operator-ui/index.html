@@ -35,6 +35,8 @@
       <section id="view-discover" class="view" aria-labelledby="discover-title">
         <div class="section-heading"><div><h2 id="discover-title">Find a resource</h2><p>Inspect the original declaration, then review the exact request and payment choice.</p></div></div>
         <form id="search-form" class="panel search-form">
+          <div class="inline-form"><label class="grow">Catalog<select id="search-catalog" disabled><option value="">Connect to read catalogs</option></select></label><button id="refresh-catalogs" type="button" disabled>Read catalogs</button></div>
+          <p id="catalog-note" class="field-note" aria-live="polite"></p>
           <div class="inline-form"><label class="grow">Search (optional)<input id="search-query" type="search" placeholder="Leave blank to browse the catalog" maxlength="1024"></label><button class="primary" type="submit">Explore catalog</button></div>
           <p class="field-note">Browse all resources or search by resource, tool, field or dataset. Exact filters apply to either mode.</p>
           <details><summary>Resource and payment filters</summary><div class="filter-grid">
