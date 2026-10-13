@@ -30,8 +30,9 @@ export async function readApiPassPrivateFile(path,maximum,{sha256}={}){
  }finally{await handle.close();}
 }
 function parse(bytes,code){try{return JSON.parse(decode(bytes));}catch{throw apiPassFailure(code,'The selected original file is not valid complete UTF-8 JSON.');}}
-export async function readApiPassWorkspaceConfiguration(filename){
- filename=apiPassHostPath(filename);const raw=parse(await readApiPassPrivateFile(filename,1024*1024),'API_PASS_CONFIGURATION');
+/** Decode the original connection without creating directories or contacting its writer. */
+export function decodeApiPassWorkspaceConfiguration(bytes,filename){
+ filename=apiPassHostPath(filename);const raw=parse(bytes,'API_PASS_CONFIGURATION');
  apiPassExact(raw,['schema','workspaces'],['schema','workspaces']);
  apiPassNeed(raw.schema===API_PASS_CONNECTION_SCHEMA&&apiPassPlain(raw.workspaces)&&Object.keys(raw.workspaces).length>=1&&Object.keys(raw.workspaces).length<=32,'Declare 1–32 original API-pass workspace connections.','API_PASS_CONFIGURATION');
  const base=dirname(filename),workspaces=Object.create(null),ownedPaths=new Set();
@@ -44,7 +45,7 @@ export async function readApiPassWorkspaceConfiguration(filename){
   if(input.expectedEntrySha256!==undefined)definition.expectedEntrySha256=apiPassChecked(input.expectedEntrySha256,API_PASS_SHA,'configured original source SHA');
   for(const path of [definition.exportDirectory,definition.snapshotDirectory,definition.operationDirectory]){
    apiPassNeed([...ownedPaths].every(owned=>path!==owned&&!path.startsWith(owned+'/')&&!owned.startsWith(path+'/')),'Each workspace must have separate nonoverlapping export, snapshot and operation directories.','API_PASS_CONFIGURATION');
-   await apiPassPrivateDirectory(path);ownedPaths.add(path);
+   ownedPaths.add(path);
   }
   apiPassNeed(definition.exportDirectory!==definition.snapshotDirectory&&!definition.exportDirectory.startsWith(definition.snapshotDirectory+'/')&&!definition.snapshotDirectory.startsWith(definition.exportDirectory+'/'),'Keep export storage and temporary snapshot storage separate.','API_PASS_CONFIGURATION');
   apiPassNeed(input.files===undefined||apiPassPlain(input.files)&&Object.keys(input.files).length<=128,'Declare at most 128 original file handles.','API_PASS_CONFIGURATION');
@@ -62,6 +63,14 @@ export async function readApiPassWorkspaceConfiguration(filename){
   workspaces[alias]=definition;
  }
  return {schema:API_PASS_CONNECTION_SCHEMA,workspaces};
+}
+export async function readApiPassWorkspaceConfiguration(filename){
+ filename=apiPassHostPath(filename);
+ const value=decodeApiPassWorkspaceConfiguration(await readApiPassPrivateFile(filename,1024*1024),filename);
+ for(const definition of Object.values(value.workspaces))
+  for(const path of [definition.exportDirectory,definition.snapshotDirectory,definition.operationDirectory])
+   await apiPassPrivateDirectory(path);
+ return value;
 }
 export async function readApiPassResponse(response,maximum){
  const chunks=[];let size=0;

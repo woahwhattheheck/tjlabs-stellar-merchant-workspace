@@ -1,20 +1,20 @@
 # Complete API customer handover and receiving
 
-This application retains and restores the **existing managed Buyer API-customer workspace** through the original SF88 workspace recovery engine, its native ledger checkpoint and SF101 authenticated encryption. No recovery action creates a purchase, approves a payment, submits an API request, refreshes allowance or retries a saved customer task.
+This application retains and restores the **existing API-customer workspace** through the original SF88 recovery engine and SF101 authenticated encryption. An initialized managed Buyer retains its native ledger checkpoint. A customer whose configuration has no Buyer, or whose configured Buyer directory is absent or empty, retains that exact original state without creating an operator or ledger. No recovery action creates a purchase, approves a payment, submits an API request, refreshes allowance or retries a saved customer task.
 
 The original customer workspace remains authoritative for passes, replacement relationships, prepared requests, returned response bytes, purchase reviews, payment proofs, reports and portfolio settings. Its original Buyer/Inbox owns all business execution.
 
 ## Complete retained data
 
-The handover contains the selected original customer configuration and complete customer directory; managed Buyer operator, policy, signing keys and consistent ledger; complete purchase inbox; Buyer client state when present; every external purchase directory and original handoff referenced by the customer; optional complete agent setup, operation/export/read journals and host-declared original inputs/purchases.
+The handover contains the selected original customer configuration and complete customer directory; managed Buyer operator, policy, signing keys and consistent ledger when initialized; the original purchase inbox and Buyer client state when present; every external purchase directory and original handoff referenced by the customer; optional complete generated or manual agent connection, operation/export/read journals and host-declared original inputs/purchases.
 
 Capture checks saved hashes for request bodies, responses, reviews, proofs, reports and agent inputs. The application record binds the full original workspace JSON, workspace ID/revision, configuration, dependencies, pass/order/manifest identities, unresolved tasks and agent setup. Every retained file is also authenticated by the original native recovery manifest.
 
-Runtime code and named environment values are installed separately. Review lists the original runtime requirements and claim environment names. Supply claim tokens and backup passphrase separately. A customer without a managed Buyer keeps its existing individual exports; this complete ledger-based handover requires an actual managed Buyer and does not invent one.
+Runtime code and named environment values are installed separately. Review lists the original runtime requirements and claim environment names. Supply claim tokens and backup passphrase separately. A customer without an initialized managed Buyer uses the same complete-file staging, inventory checks, authenticated encryption and restore publication. Its application record retains whether the configured Buyer was absent, empty or not configured, and explicitly binds absent ledger/WAL/SHM paths. If managed ledger files are present, the managed checkpoint path is required. A nonempty unrecognized Buyer directory is rejected for review. An absent inbox or client directory remains absent. See [RECOVERY_MANUAL_AGENT.md](./RECOVERY_MANUAL_AGENT.md) for preserved manual MCP connections and original entry-code pins.
 
 ## Source setup
 
-Stop the original customer cleanly. Stop its agent and all other writers of included data, Buyer, inbox and agent journals. Review/capture acquire the original customer OS lease. The existing native engine locks/checkpoints the ledger and compares inventories before and after copying. Other native writers must be quiesced explicitly.
+Stop the original customer cleanly. Stop its agent and all other writers of included data, Buyer, inbox and agent journals. Review/capture acquire the original customer OS lease. The existing native engine locks/checkpoints an initialized ledger and compares complete inventories before and after copying. The unmanaged path verifies that no ledger exists and runs the same complete original application validator against staged bytes. Other native writers must be quiesced explicitly.
 
 Choose a private absolute state root containing every customer data dependency. Keep the recovery journal, recovery configuration, programme output and encrypted output outside that root and outside each other. Paths must be ordinary private files/directories owned by the current user, without links or shared hardlinks. Optional not-yet-created client state is recorded as absent.
 
@@ -101,7 +101,7 @@ A restore refers to that **completed verification in the same journal**:
 
 The exact original root must be absent or empty. The operation never deletes, merges or overwrites populated customer state. A separate receiving host creates only the ordinary parent directory and installs the original runtime prerequisites. Original absolute paths remain unchanged: relocation and rewritten signed configurations are not supported.
 
-After completion, open-result returns current verified original config/agent pins. The browser's Open restored customer uses the maintained launcher in terminal approval mode. It reads retained data immediately. Native purchases/API calls still require their normal original controls and explicit actions. On opening, interrupted saved tasks become the existing application's INTERRUPTED records; they are never automatically executed.
+After completion, open-result returns current verified original config/agent pins. A retained manual agent is returned as a `manualAgent` descriptor; it does not trigger generated setup or start MCP. The browser's Open restored customer uses the maintained launcher in terminal approval mode. It reads retained data immediately. Native purchases/API calls still require their normal original controls and explicit actions. On opening, interrupted saved tasks become the existing application's INTERRUPTED records; they are never automatically executed.
 
 ## Agent and HTTP interface
 

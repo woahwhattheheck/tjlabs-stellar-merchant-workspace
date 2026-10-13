@@ -1,6 +1,22 @@
 /** Exact retained request interface for the API customer recovery journal. */
 /** Complete original application binding retained inside the encrypted recovery record. */
 export interface OriginalFile {path:string;bytes:number;sha256:Sha256;}
+export interface GeneratedRecoveryAgent {
+  directory:string;members:Array<OriginalFile&{name:string}>;sha256:Sha256;
+}
+export interface ManualRecoveryAgent extends GeneratedRecoveryAgent {
+  schema:"stellar-forge.sf101.api-pass-manual-agent-recovery.v1";kind:"manual";
+  workspaceDirectory:string;workspaceId:string;workspace:string;
+  connectionFile:string;connectionSha256:Sha256;expectedEntrySha256:Sha256|null;
+  operationDirectory:string;exportDirectory:string;snapshotDirectory:string;
+}
+export interface RetainedManualAgentSelection {
+  schema:"stellar-forge.sf101.api-pass-manual-agent-recovery.v1";
+  directory:string;workspace:string;workspaceId:string;connectionFile:string;
+  expectedConnectionSha256:Sha256;expectedEntrySha256:Sha256|null;
+  operationDirectory:string;exportDirectory:string;snapshotDirectory:string;
+  setupCreated:false;executionStarted:false;
+}
 export interface RecoveryProfile {
   schema:"stellar-forge.sf101.api-customer-recovery.v1"; source:RecoverySource;
   stateRoot:string; configFile:string; configSha256:Sha256; directory:string; workspaceId:string;
@@ -9,7 +25,8 @@ export interface RecoveryProfile {
   callCount:number;taskCount:number;
   unresolvedTasks:Array<{id:string;kind:string;status:string;profileId:string;callId:string|null}>;
   retainedInputs:OriginalFile[]; selectedPaths:string[]; missingPaths:string[];
-  agent:null|{directory:string;members:Array<OriginalFile&{name:string}>;sha256:Sha256};
+  buyerState?:{kind:"UNMANAGED";directory:string|null;originalPresence:"NOT_CONFIGURED"|"ABSENT"|"EMPTY_DIRECTORY"};
+  agent:null|GeneratedRecoveryAgent|ManualRecoveryAgent;
   reviewSha256:Sha256;
 }
 export interface RecoveryApplication {
@@ -31,6 +48,8 @@ export interface RestoredCustomerSelection {
   schema:"stellar-forge.sf101.api-customer-recovery.v1";configFile:string;
   expectedConfigSha256:Sha256;expectedWorkspaceSha256:Sha256;workspaceId:string;revision:number;
   approvalMode:"terminal";agentDirectory?:string;expectedAgentSetupSha256?:Sha256;
+  /** Original manual connection is retained; it is not generated setup or an active session. */
+  manualAgent?:RetainedManualAgentSelection;
   recordSha256:Sha256;existingOnly:true;executionStarted:false;
 }
 
