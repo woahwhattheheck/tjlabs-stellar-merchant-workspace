@@ -1,4 +1,4 @@
-import type { OperatingPlan, OperatingRegistration, OperatingStep, OperatingStepState } from
+import type { OperatingPlan, OperatingRegistration, OperatingStep, OperatingStepState, OperatingFileComparison } from
   '../../../stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs';
 export const GRANT_OPERATING_SELECTION_SCHEMA: 'stellar-forge.grant-operating-selection.v1';
 export const GRANT_OPERATING_PREPARATION_SCHEMA: 'stellar-forge.grant-operating-preparation.v1';
@@ -46,6 +46,7 @@ export interface GrantOperatingReturnedPackage {
   packageId: string; stepId: string; native: Record<string, any>;
   original: OperatingStep; previous: OperatingStep | null; returned: OperatingStep | null;
   status: OperatingStepState | 'missing'; changedFromPrepared: string[]; changedFromPrevious: string[];
+  filesFromPrepared: OperatingFileComparison; filesFromPrevious: OperatingFileComparison;
 }
 export interface GrantOperatingReturnComparison {
   schema: typeof GRANT_OPERATING_RETURN_COMPARISON_SCHEMA;

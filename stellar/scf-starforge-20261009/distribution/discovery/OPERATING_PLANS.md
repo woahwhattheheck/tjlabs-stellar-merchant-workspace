@@ -175,3 +175,107 @@ The maintained distribution/contributions/operator-discovery.json contribution r
 ## Grant reporting
 
 Select **Create Grant reporting plan** to prepare a complete procedure from the original Grant case, Source Tables project, reporting period and selected toolkit. The creation interface retains complete preparation inputs and opens its result in this same plan editor. Continue with [Grant reporting procedures](./GRANT_REPORTING.md) for preparation, native work and receiving.
+
+
+## Carry complete customer result files
+
+An operating step can retain the actual report, dataset, image or other output
+that the customer receives. Open that step and choose **Add result files**.
+Select the complete original files; their names, media types, original byte
+counts and full binary contents stay with that step. Enter a receiving note
+for each file and save the plan revision.
+
+The file's identity belongs to that step. A corrected output is a new file
+selection with its own identity. Remove an obsolete file from the working
+draft and add the complete replacement, then save. Earlier saved revisions
+retain the original file. Removing a file or replacing the current working
+draft also preserves the previous complete working draft in the editor's
+recovery list.
+
+**Download original file** returns the complete selected file without
+reformatting it. Selecting an earlier saved plan revision exposes that
+revision's original files. Complete editable JSON retains every saved file
+and revision. The standalone HTML handover contains the selected revision's
+actual file bytes behind named download links; keep that HTML with its
+intended customer handover. Markdown lists each file, byte count, media type,
+identity and receiving note. Its companion editable JSON or HTML supplies
+the complete file contents.
+
+The existing full-plan receiving rule includes file contents. Receiving a
+later matching history carries its complete outputs. Reopening an identical
+or older matching history keeps the newer current record. A divergent saved
+history keeps its original complete copy through the existing conflict and
+copy flow. IATI procedure packages and grant reporting plans use this same
+operating model and carry the saved result files with their original native
+source.
+
+### Attach and extract from the installed command
+
+Use the actual step ID from the original plan and choose a new output file:
+
+~~~sh
+starforge discover plan attach \
+  --file customer-plan.json --step-id original-step-id \
+  --attachment ./period-report.pdf --attachment ./period-data.csv \
+  --note "Complete reporting-period outputs for the receiving operator." \
+  --out customer-plan-with-results.json
+
+starforge discover plan files --file customer-plan-with-results.json
+
+starforge discover plan extract \
+  --file customer-plan-with-results.json --step-id original-step-id \
+  --attachment-id actual-file-id --revision 2 \
+  --out ./received-period-report.pdf
+
+starforge discover plan remove-file \
+  --file customer-plan-with-results.json --step-id original-step-id \
+  --attachment-id actual-file-id --out customer-plan-corrected.json
+~~~
+
+The attach action reads each whole regular file and saves one complete later
+revision. Optional --media-type applies an explicitly selected media type
+to that attachment batch; the default is application/octet-stream. The files
+command lists metadata from the selected saved revision without printing its
+encoded bodies. The extract action writes original bytes to the explicit new
+destination using exclusive creation. The supplied file name never chooses
+a filesystem path. Existing input and output files remain preserved.
+
+The original browser/CLI plan limit remains **32 MiB for the complete JSON,
+including every saved revision and encoded file**. Each individual input
+must fit within 24 MiB before encoding, and the completed plan must still fit
+the whole-document limit. The grant submission has its separate existing
+16 MiB whole-draft limit, including its previous versions and original
+sources. Choose complete output files appropriate to the receiving record;
+larger original native workspaces remain in their maintained file delivery.
+The editor checks the complete next plan before accepting new files and
+retains the current working plan when that check fails.
+
+### File API
+
+~~~js
+import {
+  createOperatingFile, addOperatingFile, operatingFileBytes,
+  operatingPlanDraft, saveOperatingPlanRevision, compareOperatingFiles,
+} from '@tokenjunkielabs/starforge-merchant/operator/operating-plans';
+
+const output = createOperatingFile({
+  id: crypto.randomUUID(),
+  name: 'period-data.csv',
+  mediaType: 'text/csv',
+  bytes: originalOutputBytes,
+  note: 'Complete selected period.',
+});
+const nextDraft = addOperatingFile(
+  operatingPlanDraft(originalPlan), originalStepId, output,
+);
+const saved = saveOperatingPlanRevision(originalPlan, nextDraft);
+const originalBytes = operatingFileBytes(output);
+~~~
+
+The inspectOperatingFile function validates the complete representation and
+canonical base64 padding against its original byte count. The
+operatingFileSummary function returns metadata for a receiving list.
+compareOperatingFiles compares complete bodies and notes and reports added,
+removed and changed files plus file order; comparison metadata avoids
+duplicating encoded bodies. The full step and plan retain those bodies.
+Older steps have no added field and keep their exact original history.
