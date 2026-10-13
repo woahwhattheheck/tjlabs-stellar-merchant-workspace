@@ -15,6 +15,8 @@ const HELP = 'Facilitator commissioning — original seller releases and complet
 '  run --directory DIR --provider ALIAS --operation-id UUID --expect GENERATION [--store ORIGINAL_STORE]\n' +
 '  export --directory DIR --out NEW_PRIVATE_DIRECTORY [--store ORIGINAL_STORE]\n' +
 '  inspect-transfer --directory RECEIVED_DIRECTORY\n' +
+'  serve --directory DIR [--store ORIGINAL_STORE] [--setup HOST_SETUP_JSON] [--exports SEPARATE_PRIVATE_DIR] [--port 0]\n' +
+'  receive-operator --archive COMPLETE_TAR --directory NEW_PRIVATE_DIRECTORY\n' +
 '  report-html --directory DIR --out NEW_HTML [--store ORIGINAL_STORE]\n\n' +
 'The request command retains one UUID and current job revision. Apply continues that exact file.\n' +
 'Provider selection changes the next original seller run. Run owns and drains only that selected seller.\n' +
@@ -34,6 +36,7 @@ function options(args) {
     apply:['directory','store','command'],run:['directory','store','provider','operation-id','expect'],
     export:['directory','store','out'],'inspect-transfer':['directory'],
     'report-html':['directory','store','out'],
+    serve:['directory','store','setup','exports','port'],'receive-operator':['archive','directory'],
   };
   if(!allowed[action] || Object.keys(out).some(k=>k!=='action'&&!allowed[action].includes(k)))
     throw new TypeError('Choose a documented command and its options.');
@@ -50,7 +53,30 @@ export async function main(args=process.argv.slice(2)) {
   if(o.action==='help'){process.stdout.write(HELP);return;}
   if(!o.directory)throw new TypeError('--directory is required.');
   let result;
-  if(action==='init') {
+  if(action==='serve'){
+    const {startCommissioningOperator}=await import('./operator-server.mjs');
+    let server,stopping=false,signalResolve;
+    const stopped=new Promise(resolve=>{signalResolve=resolve;});
+    const onSignal=()=>{stopping=true;signalResolve();};
+    process.on('SIGINT',onSignal);process.on('SIGTERM',onSignal);
+    let primary;
+    try{
+      server=await startCommissioningOperator({directory:resolve(o.directory),...(o.store?{store:resolve(o.store)}:{}),...(o.setup?{setupFile:resolve(o.setup)}:{}),...(o.exports?{exportDirectory:resolve(o.exports)}:{}),port:o.port===undefined?0:Number(o.port)});
+      if(!stopping)process.stdout.write(JSON.stringify({schema:'stellar-forge.facilitator-operator-listener.v1',url:server.url,directory:resolve(o.directory),lifetime:'Keep this foreground owner running; Ctrl-C drains its original seller.'},null,2)+'\n');
+      if(!stopping)await stopped;
+    }catch(e){primary=e;}
+    finally{
+      try{if(server)await server.close();}catch(e){primary=primary?new AggregateError([primary,e],'The operator and owner close both failed.'):e;}
+      process.off('SIGINT',onSignal);process.off('SIGTERM',onSignal);
+    }
+    if(primary)throw primary;
+    return {state:'OPERATOR_CLOSED'};
+  }
+  if(action==='receive-operator'){
+    if(!o.archive)throw new TypeError('--archive is required.');
+    const {receiveOperatorTransfer}=await import('./receive-operator.mjs');
+    result=await receiveOperatorTransfer({archive:resolve(o.archive),directory:resolve(o.directory)});
+  } else if(action==='init') {
     if(!o.selection)throw new TypeError('--selection is required.');
     result=await createCommissioningJob({directory:resolve(o.directory),selection:await parse(o.selection),
       baseDirectory:dirname(resolve(o.selection))});

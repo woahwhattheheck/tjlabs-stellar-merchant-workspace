@@ -33,7 +33,7 @@ Continue that archive through the original distribution's runtime installation a
 
 A previously installed selected product has its own exact contribution inventory. To add this command, rebuild a source selection that explicitly includes facilitator-commissioning and that same native operating closure, or use the standard complete distribution above. Keep the resulting archive's original source commit, manifest and installed profile with the commissioned workspace.
 
-The component provides a private command-line operating workflow and a readable HTML report. All file inputs and outputs are on the operator's host. The HTML report uses the actual saved job and remains useful at desktop and phone widths. It is a static customer review; changing an operating selection uses the original command.
+The component provides a private authenticated local operator application, the original command-line workflow and a readable complete HTML report. The application supports the full operating course on desktop and phone. All source, commands and receiving records stay in the same original private job.
 
 ## 1. Choose the original useful task
 
@@ -337,7 +337,7 @@ starforge facilitator-commissioning status \
   --store /private/received-original-seller-releases
 ~~~
 
-The commissioner verifies the original retained release digest, routes and full source identity before operating. Its historical source paths and commands remain unchanged. Already prepared buyer configs retain their original buyer paths; restore those through the original buyer workflow, or prepare a new explicitly selected buyer plan for a later operation.
+The commissioner verifies the original retained release digest, routes and full source identity before operating. Its historical source paths and commands remain unchanged. Already prepared buyer configurations retain their original byte representation. The interactive operator's current-host execution copy resolves verified body locations and response destinations while preserving the original buyer intent and terms.
 
 ## Implementation and programme placement
 
@@ -346,3 +346,118 @@ This component completes a reusable operating job above the already delivered pr
 For the existing SCF programme, the selected customer commissioning belongs in the T2 provider-and-ledger package: one complete useful service through two separately operated providers, actual approved buyer work, observed transfers, full customer output and maintainable handover. The existing programme retains its two independent merchants, two independent buyers, ten useful testnet purchases during seven consecutive days, later mainnet thresholds and six original budget packages. Existing source development stays the starting product; customer-specific integration and acceptance use the original workorders.
 
 The public interfaces are createCommissioningJob, openCommissioningJob and inspectCommissioningTransfer. The original source files retain their normal module paths in the installed distribution. No separate database or payment dependency is introduced.
+
+
+## Interactive operator application
+
+The foreground operator gives the same retained native job a complete local interface. It includes service setup, complete source-file upload, both provider reviews and staging, selected seller operation, original buyer-plan preparation, actual customer receiving, full history and portable handover. The source engine remains the authority for release identity, command replay, payment interpretation and full service completion.
+
+### Host setup and foreground ownership
+
+Create a private host setup file. Paths are interpreted relative to that file, and the browser sees the configured aliases.
+
+~~~json
+{
+  "store": "/private/original-release-store",
+  "profilesFile": "/private/original-facilitators.json",
+  "buyerTemplates": {
+    "original-customer": {
+      "title": "Original customer buyer configuration",
+      "file": "/private/original-buyer-template.json"
+    }
+  }
+}
+~~~
+
+The buyer template uses the existing SF88 configuration and approval boundaries. The interface prepares complete request configurations; execute them through the original installed buyer workflow.
+
+Start the application in the foreground:
+
+~~~sh
+starforge facilitator-commissioning serve \
+  --directory /private/commissioning-job \
+  --setup /private/operator-setup.json \
+  --exports /private/commissioning-exports \
+  --port 0
+~~~
+
+The job directory and export directory must be private, ordinary directories owned by the current operator. The export directory must be outside the job. A newly selected export directory is empty; its owner descriptor then binds it to this original operator instance. The default export directory is a sibling named after the job with the suffix `-commissioning-exports`.
+
+Open the exact private URL printed by the command. The listener binds to 127.0.0.1 and exchanges the fragment token for an HttpOnly same-site session. The fragment is removed from browser history. Keep this foreground owner alive while reviewing or serving. Refreshing the browser reads its current saved job; it does not restart a seller. Ctrl-C or SIGTERM closes the listener, drains pending operations, and closes the original seller owned by that job.
+
+An already prepared job can open with `--directory` and, after transfer, explicit `--store`. A setup file supplies the provider configuration for new service setup and the host-selected buyer template aliases. Existing source-bound commands retain their captured original template bytes.
+
+### Operating course
+
+1. **Files.** Upload the complete scope, schema, acceptance criteria, authority documents and original expected outputs. Add existing native reviews and actual buyer summaries/evidence/output files when applicable. Every file retains its complete byte count and SHA256. Files are limited to 64 MiB. Select the same file again after an interrupted upload; the original server offset determines continuation.
+2. **Service setup.** Enter the retained release ID, source edition, receiving operator and exactly two provider profiles. Add every agreed request or page, with its literal route, full URL, method, content type and original expected output. Review the complete saved command, then apply it. The native source rules validate the release and whole request set.
+3. **Providers.** Review each actual provider or receive its complete existing native review. Stage the selected completed review. Select the desired provider at the current saved generation with an explicit reason. Start only that selected provider and generation. Current runtime state and the owned original run remain visible. Stop closes only this foreground owner’s selected seller. A separately recovered native observation uses its original run UUID and native instance ID.
+4. **Buyer plans.** Load the actual staged provider’s native payment alternatives. Choose one displayed alternative and a distinct original intent for each request, plus a host-declared buyer template. The engine validates the full request set, exact terms, cap and native matching rules. Download the original configurations and, when needed, their current-host execution copies.
+5. **Receiving.** Select the original provider, request and run. Receive the actual complete buyer summary, evidence and returned output together with the receiving operator, decision, time and note. A later observation explicitly names the prior receiving operation it supersedes. The original observed-at time and later recovery time remain distinct.
+6. **Overview and History.** Inspect both providers’ complete service position, every original request, payment outcomes, source observations and saved commands. History is paginated by its retained job revision and exposes each complete original record. Pending work stays available for explicit continuation.
+7. **Handover.** Stop the owned seller, review a complete export, and apply it once. Download the complete TAR and its source manifest. Download the readable full HTML report for the recipient. Each completed transfer retains its exact original source cut; a later operating state receives a new export operation.
+
+All action forms first save their full original request on the host. The review panel displays that request before applying it. Before the first send, the browser atomically retains the full exact request in IndexedDB under the stable operator instance. Another tab cannot replace its pending UUID. The host retains the same complete payload, source references, original revision, native command binding and receipt. A NOT_FOUND host result reuses the complete browser request. Per-tab screen drafts preserve values, original revision and selected service/provider basis across reloads; an explicit review applies the current basis to a stale draft. Navigation and form editing are locked during asynchronous capture, uploads and operations. Completing a command clears only the matching saved request and unchanged submitted draft. A draft edited after preparation stays saved.
+
+### Interrupted command and cold receiving
+
+| Saved state | Continuation |
+| --- | --- |
+| Complete operator receipt | Receive that exact result; no action is repeated. |
+| Original request prepared, native action absent | Apply the same request and original revision. A stale first application reports the actual revision conflict for an explicit new decision. |
+| Native command complete, operator receipt absent | Apply the same saved request. The unchanged original native command hash recovers its exact result before the operator receipt is completed. |
+| Native command prepared, result absent | Continue the original command. Its source reads are resolved through the retained complete input binding; original command content and hash remain unchanged. |
+| Original seller intent already recorded | Inspect its exact provider and generation. The original run UUID is received, not restarted. |
+| Host has no saved request | Retry preparation with the exact complete request retained in IndexedDB. |
+| A rejected or superseded request needs a replacement | Keep the original request pending, return to the preserved form, review the current source basis, and deliberately prepare a new command. The original request remains in local and host history. |
+
+The operator captures a `native-requests` record before invoking a native command. It binds the exact logical request, complete native command, original root, and the byte identity of each original input file. During cold receiving, the native engine’s narrow input resolver verifies the original command hash and complete source bytes before resolving those reads at the received location. It changes neither command semantics nor the saved command representation. It does not create directories at historical host paths.
+
+Buyer-plan recovery preserves its original configuration byte representation, including the original path strings. The **current-host execution copy** maps only a verified original request body to the received job’s actual body file and selects the current private response destination. Its buyer intent, URL, method, payment terms, limits and expected output remain the original plan. Download that copy on the host where the original buyer will run, then use the existing SF88 review and execution commands. The original configuration remains separately downloadable.
+
+The optional `resolveCommandInputs` function on `openCommissioningJob` is a host receiving adapter. Its result binds `commandSha256`, `originalRoot` and the permitted input fields. Each field carries the original path, current read path, complete SHA256 and byte count. The engine allows only `reviewFile` for review, `summaryFile/evidenceFile/outputFile` for receiving, and `templateFile` for a buyer plan. All hashes are checked before source interpretation. Other payload fields remain unchanged.
+
+### Receive the complete package on another host
+
+Keep the complete installed application and the original native release-store transfer with the operator TAR. The operator TAR contains the job’s original source, reviews, commands, results, runs and buyer files; the operator’s complete input files, logical requests, native input bindings and results; both full manifests; and the original completed export receipt.
+
+The complete package uses uncompressed POSIX ustar. The receiver accepts ordinary files and directories, rejects links and special files, validates every source byte/hash against both complete manifests, and rejects unlisted files. It supports packages up to 8 GiB, 100,000 members and 64 MiB per member. The selected receiving parent must be private and owned by the receiving operator.
+
+~~~sh
+starforge facilitator-commissioning receive-operator \
+  --archive /private/incoming/commissioning-ORIGINAL-UUID.tar \
+  --directory /private/received-job
+
+starforge facilitator-commissioning serve \
+  --directory /private/received-job \
+  --store /private/received-original-release-store \
+  --setup /private/received-operator-setup.json \
+  --exports /private/received-job-exports
+~~~
+
+Receiving stages the complete source under an archive-bound private operation and atomically publishes the new job directory only after full validation. An interrupted receive reuses that exact staging and original archive. An exact repeated completed receive validates the originally received members while preserving later legitimate job files. A different archive cannot replace the original destination.
+
+The received job retains the same operator instance. Its completed export receipt is reconstructed from the exact receipt carried by the archive, so an interrupted response to the original export does not create a new source cut. The browser recovery store is local to its browser profile. The transferred server-side requests and native bindings remain sufficient to recover prepared operations from the Pending commands screen on another browser. The receiving receipt under `.operator/received-transfer` records the complete original archive and source identities. Original release-store selection remains explicit; receiving alone does not contact a provider or launch a seller or buyer.
+
+### Typed client and authenticated routes
+
+The package exports `./facilitator/commissioning-client`, `./facilitator/commissioning-operator`, `./facilitator/commissioning-server` and `./facilitator/commissioning-receive`, with matching declaration files. The existing native engine export remains available.
+
+`CommissioningClient` accepts the original origin and optional private bearer token. Browser use shares the same-site session. Every server response is no-store. All API actions require the original authenticated loopback session, exact host, and same origin when supplied.
+
+| Route | Complete operation |
+| --- | --- |
+| GET /api/state | Current job, report, native runtime, complete uploads, pending commands and saved transfers |
+| GET /api/history | Full original result/run/pending records with offset, limit and expected revision |
+| GET /api/release | Exact native release review and payment alternatives |
+| POST /api/uploads | Begin or recover a file with its original UUID, name, bytes and SHA256 |
+| GET /api/uploads/UUID | Recover the actual retained upload offset |
+| PUT /api/uploads/UUID?offset=N | Retain a complete original chunk, at most 1 MiB |
+| POST /api/uploads/UUID/complete | Verify and retain the full input once |
+| POST /api/requests | Prepare the complete original command without applying it |
+| POST /api/action | Apply or reconcile that exact retained command |
+| GET /api/receive?operationId=UUID | Receive its current original request/receipt state |
+| GET /api/file | Download a complete source, original buyer configuration, current-host execution copy, command, report or transfer member |
+| GET /api/archive?operationId=UUID | Download the completed original full TAR package |
+
+The HTTP request/JSON limit is 1 MiB; complete file inputs use the retained chunk route. Downloads carry their complete byte count and SHA256 response header. Source hashes and complete JSON records are available under disclosures in the interface, while ordinary operating screens keep the main labels, states and decisions readable on desktop and phone.
