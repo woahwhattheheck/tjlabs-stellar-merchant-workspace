@@ -25,6 +25,8 @@ const SOURCE_FILES = [
   "products/x402api-merchant-workspace/web/index.html",
   "products/x402api-merchant-workspace/web/style.css",
   "products/x402api-merchant-workspace/web/app.mjs",
+  "products/x402api-merchant-workspace/web/payment-desk.mjs",
+  "products/x402api-merchant-workspace/PAYMENTS.md",
   "products/x402api-merchant-workspace/fulfillment/file-delivery.mjs",
   "products/x402api-merchant-workspace/config.example.json",
   "products/x402api-merchant-workspace/README.md",

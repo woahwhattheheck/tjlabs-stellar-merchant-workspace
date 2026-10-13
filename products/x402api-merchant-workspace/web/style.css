@@ -23,3 +23,9 @@ label select{display:block;margin-top:6px;font-weight:400}
 @media(max-width:420px){.register-filter-grid{grid-template-columns:1fr}.register-pagination{padding:14px 10px;gap:6px}.register-pagination button{padding:8px}}
 
 #intake-panel small{display:block;overflow-wrap:anywhere;color:var(--muted,#555);margin-top:4px}#intake-panel select{max-width:100%}#intake-panel .form-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}#intake-digest,#intake-source-summary{overflow-wrap:anywhere}
+
+/* The original payment desk uses the same neutral industrial workspace. */
+#payment-work-identity,#payment-envelope-sha {overflow-wrap:anywhere;}
+#payment-envelope-review summary {cursor:pointer;font-weight:600;margin:0.8rem 0;}
+#payment-envelope-content {max-height:22rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:0.8rem;border:1px solid #c9cdd1;background:#f5f6f7;color:#202428;font-size:0.8rem;}
+#payment-work .actions {flex-wrap:wrap;}
