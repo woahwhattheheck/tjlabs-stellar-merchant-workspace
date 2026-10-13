@@ -39,11 +39,11 @@
     },
     {
       "id": "forecast-financing-forecast-financing-desk-mjs",
-      "label": "Full industrial options, comparison and Planning limits browser",
+      "label": "Full industrial options, comparison, Planning limits and complete handover browser",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-desk.mjs",
-      "commit": "6adf92aedec30f7932940bbc573459d1ed97f4ed",
+      "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
       "required": false,
       "editions": [
         {
@@ -51,6 +51,12 @@
           "git_blob": "1120dc676e3a337675bf0ab63012791493a1d84b",
           "bytes": 34961,
           "sha256": "26ee230521f56203ab10861c7af5b00abbf28c3a89c2145b90d3317a9276a8c1"
+        },
+        {
+          "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
+          "git_blob": "193976a2dc6cd66520a8f6701639208e021188e8",
+          "bytes": 36558,
+          "sha256": "fb5014657f6f6277a6e732dec4b7376856325f332f047417f7c2630f03dacbd5"
         }
       ]
     },
@@ -73,11 +79,11 @@
     },
     {
       "id": "forecast-financing-forecast-financing-md",
-      "label": "Whole financing operation, installed access and original receiving guide",
+      "label": "Whole financing operation, handover, installed access and original receiving guide",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/FORECAST_FINANCING.md",
-      "commit": "5ed79311d3e378893e95b7e3ff08b018fbba5ed6",
+      "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
       "required": false,
       "editions": [
         {
@@ -91,16 +97,22 @@
           "git_blob": "1775e5ed80df9e99e08fa01d125a793d1710e88b",
           "bytes": 35675,
           "sha256": "0641945a2338b0b2e2436e044badd52f81c3dc0b41dc7ff9e63234445d2a5784"
+        },
+        {
+          "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
+          "git_blob": "247455dd6e3ae3121e4128bf994c8cc6fda1886d",
+          "bytes": 42472,
+          "sha256": "575a9c669ebbb8a6212c041f94f3094502924409f50f531062e85090ad2e8131"
         }
       ]
     },
     {
       "id": "forecast-financing-operations-http-py",
-      "label": "Original authenticated HTTP and static-module routes",
+      "label": "Original authenticated HTTP and complete static-module routes",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_http.py",
-      "commit": "6adf92aedec30f7932940bbc573459d1ed97f4ed",
+      "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
       "required": false,
       "editions": [
         {
@@ -108,16 +120,22 @@
           "git_blob": "d1004325120a6c7408c155c2d473807c6bfe61c4",
           "bytes": 50021,
           "sha256": "33defea060f7a2a3cb239428426afc947c616021917c6013fcb03e37e43ad55b"
+        },
+        {
+          "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
+          "git_blob": "f49e57785401cd4b0b5553d992ea6facfd5a2391",
+          "bytes": 50607,
+          "sha256": "e0b18759d0777bea10b8a2a37e8eb5354835d51fcb1624e4c569a6ecb833283d"
         }
       ]
     },
     {
       "id": "forecast-financing-managed-source-json",
-      "label": "Complete original 902-file managed execution source selection",
+      "label": "Cumulative original managed source including the complete handover",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json",
-      "commit": "de9ef1a5819bb16999bd83ae7991253ff1ab3189",
+      "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
       "required": false,
       "editions": [
         {
@@ -131,6 +149,12 @@
           "git_blob": "83594395a1504482e8138b360a295bff1e62dfe7",
           "bytes": 55481,
           "sha256": "7a982eb3d8ab4d8f3537d685c348d1482fbe7c4c264bd86ef9b5dfaa5270a854"
+        },
+        {
+          "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
+          "git_blob": "2088f8c9b351e1a794878b142dbbd5d622ed3bcf",
+          "bytes": 82655,
+          "sha256": "da963aea09356a63a0bf31926ef892caf405a3a042b08722d1a2a579dbd26688"
         }
       ]
     },
@@ -701,7 +725,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "tree",
       "path": "stellar/scf_2026/sf47_budget_model/workspace",
-      "commit": "5ed79311d3e378893e95b7e3ff08b018fbba5ed6",
+      "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
       "required": false
     },
     {
@@ -786,6 +810,23 @@
           "git_blob": "81b4924cfb951418d5a63d745a7c862e40200087",
           "bytes": 18108,
           "sha256": "ca563673799a7aa7cd7b5d038b53e2200b5b860a0629a0879d7c38a62dbafa11"
+        }
+      ]
+    },
+    {
+      "id": "forecast-financing-forecast-financing-handover-mjs",
+      "label": "Complete standalone financial decision, CSV/JSON and exact-source handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/forecast-financing-handover.mjs",
+      "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
+      "required": false,
+      "editions": [
+        {
+          "commit": "25f57a035317991f6eb9d9aadfb87af30a0868e2",
+          "git_blob": "270acc78bb2cc307aa324a80e13adc1600f55ab5",
+          "bytes": 24263,
+          "sha256": "7a41cec25da060aa75409391ec1b3419fb6f044e512eadf8557b2f89a204332e"
         }
       ]
     }
