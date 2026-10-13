@@ -183,6 +183,55 @@
         "../SOURCE_PROFILES.md",
         "text/markdown; charset=utf-8"
       ]
+    ],
+    [
+      "/bank-statements/source-preparation.html",
+      [
+        "source-preparation.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-preparation.mjs",
+      [
+        "source-preparation.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-preparation-state.mjs",
+      [
+        "source-preparation-state.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-preparation-client.mjs",
+      [
+        "source-preparation-client.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/source-preparation.css",
+      [
+        "source-preparation.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/SOURCE_PREPARATION_DESK.md",
+      [
+        "../SOURCE_PREPARATION_DESK.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/bank-statements/SOURCE_PREPARATIONS_DESK.md",
+      [
+        "../SOURCE_PREPARATIONS_DESK.md",
+        "text/markdown; charset=utf-8"
+      ]
     ]
   ]
 }
