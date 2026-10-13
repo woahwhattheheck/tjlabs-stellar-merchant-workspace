@@ -45,14 +45,14 @@ def run(destination):
    if len(baseline["derived"]["datasets"]["catalogue"])!=26:raise AssertionError("Full public catalogue absent")
    if not any(x["code"]=="weekday-conflict" for x in baseline["derived"]["issues"]):raise AssertionError("Real source conflict was lost")
    regs={x["id"]:x for x in baseline["derived"]["registrations"]}
-   if regs["SYN-R1"]["balance_minor"]!=0 or regs["SYN-R4"]["paid_minor"]!=0:raise AssertionError("Fees or pending payment affected student balance")
+   if regs["SYN-R1"]["balance_minor"]!="0" or regs["SYN-R4"]["paid_minor"]!="0":raise AssertionError("Fees or pending payment affected student balance")
    if w.save(req)!=baseline:raise AssertionError("Exact request replay changed")
    conflict=copy.deepcopy(req);conflict["definition"]["notes"]="Changed body"
    try:w.save(conflict);raise AssertionError("Changed request replay accepted")
    except Conflict:pass
    corrected=copy.deepcopy(definitions);corrected["matches"]=[{"transaction":"SYN-T3","registration":"SYN-R3","reviewer":"7108 engineering receiver","note":"Synthetic source record deliberately omitted its registration ID; named test match to the original generated student record.","at":STAMP}]
    second=w.save({"requestId":"berea-engineering-match-7108","id":baseline["id"],"expectedRevision":1,"actor":"7108 engineering receiver","at":STAMP,"definition":corrected})
-   if next(r for r in second["derived"]["registrations"] if r["id"]=="SYN-R3")["balance_minor"]!=0:raise AssertionError("Original matching decision not applied")
+   if next(r for r in second["derived"]["registrations"] if r["id"]=="SYN-R3")["balance_minor"]!="0":raise AssertionError("Original matching decision not applied")
    # Actual catalogue source conflicts remain open; no fabricated school policy approval.
    packet=w.export(second["id"],2);atomic(root/"Berea_Source_Review_Complete.zip",packet)
    retained.append(root/"Berea_Source_Review_Complete.zip")
@@ -72,7 +72,11 @@ def run(destination):
    rolled=w.save({"requestId":"class-intake-engineering-rollback","id":ready["id"],"expectedRevision":2,"actor":"7108 engineering receiver","at":STAMP,"definition":eng})
    engpacket=w.export(rolled["id"],3);atomic(root/"Engineering_Cutover_Complete.zip",engpacket);retained.append(root/"Engineering_Cutover_Complete.zip")
    expected=[(second["id"],2,packet),(rolled["id"],3,engpacket)]
-   compare=w.compare(second["id"],1,2);atomic(root/"comparison.json",canonical(compare));retained.append(root/"comparison.json")
+   compare=w.compare(second["id"],1,2)
+   allocation=next((x for x in compare["allocationChanges"] if x["id"]=="SYN-R3"),None)
+   if not allocation or allocation["before"]["paid_minor"]!="0" or allocation["after"]["paid_minor"]!="2000" or allocation["after"]["balance_minor"]!="0":raise AssertionError("Named payment allocation absent from comparison")
+   if not any(x["id"]=="matches" for x in compare["decisionChanges"]):raise AssertionError("Original match decision absent from comparison")
+   atomic(root/"comparison.json",canonical(compare));retained.append(root/"comparison.json")
   finally:w.close()
   receiver=Workspace(root/"independent-receiver",True)
   try:

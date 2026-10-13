@@ -15,6 +15,7 @@ FIELDS={
  "confirmations":("id","registration_id","status","actor","at")}
 REQUIRED={"catalogue":("id","title","schedule","amount","currency"),"registrations":("id","class_id","student_key","status","fee","currency"),"transactions":("id","gross","refund","currency","status"),"confirmations":("id","registration_id","status","actor")}
 class Conflict(ValueError): pass
+class ReceiveRejected(ValueError): pass
 def canonical(v): return json.dumps(v,ensure_ascii=False,sort_keys=True,separators=(",",":"),allow_nan=False).encode("utf-8")
 def sha(b): return hashlib.sha256(b).hexdigest()
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -38,9 +39,11 @@ def csv_bytes(columns,rows):
  s=io.StringIO(newline=""); w=csv.writer(s,lineterminator="\r\n");w.writerow([csv_cell(x) for x in columns]);w.writerows([[csv_cell(x) for x in row] for row in rows]);return s.getvalue().encode("utf-8-sig")
 def money(v,digits):
  if not isinstance(v,str) or not re.fullmatch(r"-?(?:0|[1-9][0-9]{0,14})(?:\.[0-9]+)?",v): raise ValueError("Amount must be an unformatted decimal string")
- n=decimal.Decimal(v)*(10**digits)
- if n!=n.to_integral_value(): raise ValueError("Amount exceeds currency precision")
- return int(n)
+ negative=v.startswith("-");unsigned=v[1:] if negative else v
+ whole,separator,fraction=unsigned.partition(".");fraction=fraction.rstrip("0")
+ if len(fraction)>digits:raise ValueError("Amount exceeds currency precision")
+ n=int(whole)*(10**digits)+(int(fraction.ljust(digits,"0")) if fraction else 0)
+ return -n if negative else n
 def amount(n,digits):
  sign="-" if n<0 else "";n=abs(n)
  return sign+str(n//10**digits)+(("." + str(n%10**digits).zfill(digits)) if digits else "")
@@ -77,18 +80,24 @@ def parse_table(raw,format,sheet=None):
    strings=[]
    if "xl/sharedStrings.xml" in z.namelist():
     strings=["".join(e.itertext()) for e in ET.fromstring(z.read("xl/sharedStrings.xml"))]
-   rows=[]
+   rows=[];row_numbers=[];previous_row=0
    for row in ET.fromstring(z.read(target)).findall(".//s:sheetData/s:row",ns):
+    r=row.attrib.get("r",str(previous_row+1))
+    if not re.fullmatch("[1-9][0-9]*",r) or not previous_row<int(r)<=1048576:raise ValueError("Invalid or unordered worksheet row")
+    physical_row=int(r);previous_row=physical_row;row_numbers.append(physical_row)
     cells={}
     for c in row:
-     addr=c.attrib.get("r","");letters=re.match(r"[A-Z]+",addr)
-     if not letters:raise ValueError("Workbook cell lacks address")
+     addr=c.attrib.get("r","");cell=re.fullmatch(r"([A-Z]{1,3})([1-9][0-9]*)",addr)
+     if not cell or int(cell[2])!=physical_row:raise ValueError("Workbook cell address disagrees with its actual row")
      col=0
-     for ch in letters[0]:col=col*26+ord(ch)-64
+     for ch in cell[1]:col=col*26+ord(ch)-64
+     if col>16384 or col-1 in cells:raise ValueError("Invalid or duplicate worksheet column")
      if c.find("s:f",ns) is not None:raise ValueError("Formula cells require an explicitly values-only source export")
      val=c.find("s:v",ns); t=c.attrib.get("t")
      value=val.text or "" if val is not None else ""
-     if t=="s":value=strings[int(value)]
+     if t=="s":
+      if not re.fullmatch("[0-9]+",value) or not 0<=int(value)<len(strings):raise ValueError("Invalid shared-string index")
+      value=strings[int(value)]
      elif t=="inlineStr":value="".join(c.find("s:is",ns).itertext())
      cells[col-1]=value
     rows.append([cells.get(i,"") for i in range(max(cells,default=-1)+1)])
@@ -103,7 +112,7 @@ def parse_table(raw,format,sheet=None):
   if any(not isinstance(x,str) for x in row):raise ValueError("Every source cell must be a string")
   out.append(row)
  if len(out)>100000:raise ValueError("Maximum 100,000 rows per selected source")
- return {"columns":columns,"rows":out}
+ return {"columns":columns,"rows":out,**({"rowNumbers":row_numbers[1:],"headerRow":row_numbers[0]} if format=="xlsx" else {})}
 def mapped(table,selection,kind):
  exact_keys(selection,("source","format","sheet","headers","fields","valueMaps"),("source","format","headers","fields"))
  if selection["headers"]!=table["columns"]:raise ValueError("Mapping headers do not match the complete original source")
@@ -117,8 +126,9 @@ def mapped(table,selection,kind):
   if "constant" in v:text(v["constant"],"constant",empty=True)
  for field,values in vm.items():
   if not isinstance(values,dict) or any(not isinstance(k,str) or not isinstance(v,str) for k,v in values.items()):raise ValueError("Value maps require exact original strings")
- out=[]
- for line,row in enumerate(table["rows"],2):
+ out=[];row_numbers=table.get("rowNumbers")
+ for index,row in enumerate(table["rows"]):
+  line=row_numbers[index] if row_numbers is not None else index+2
   item={k:(row[v["index"]] if "index" in v else v["constant"]) for k,v in fields.items()}
   for k,values in vm.items():
    if item[k] in values:item[k]=values[item[k]]
@@ -145,8 +155,9 @@ def derive(d,source_get):
   raw=source_get(selected["source"])
   datasets[kind]=mapped(parse_table(raw,selected["format"],selected.get("sheet")),selected,kind)
  issues=[]
+ evidence=sha(canonical({k:d[k] for k in ("selections","catalogueDecisions","matches","currencyDigits")}))
  def issue(code,kind,item,note,severity="blocking"):
-  raw={"code":code,"kind":kind,"source":item.get("_source",""),"row":item.get("_row",0),"id":item.get("id",""),"note":note,"severity":severity}
+  raw={"code":code,"kind":kind,"source":item.get("_source",""),"row":item.get("_row",0),"id":item.get("id",""),"note":note,"severity":severity,"evidenceSha256":evidence}
   raw["key"]=sha(canonical(raw));issues.append(raw)
  def unique(kind):
   found={}
@@ -254,6 +265,17 @@ def derive(d,source_get):
  for x in issues:x["decision"]=decisions.get(x["key"])
  unresolved=[i for i in issues if i["severity"]=="blocking" or not i["decision"]]
  if d["cutover"]["state"] in ("ready","released") and unresolved:raise ValueError("Resolve source blockers and explicitly review all open exceptions before cutover")
+ # Native derived monetary fields are exact integer strings before canonical hashing and export.
+ for c in datasets.get("catalogue",[]):
+  if c.get("_amount") is not None:c["_amount"]=str(c["_amount"])
+ for t in datasets.get("transactions",[]):
+  for field in ("_gross","_refund","_service_fee","_student_fee","_net"):
+   if t.get(field) is not None:t[field]=str(t[field])
+ for r in registration_rows:
+  for field in ("fee_minor","paid_minor","balance_minor"):
+   if r.get(field) is not None:r[field]=str(r[field])
+ for values in totals.values():
+  for field in ("gross","refund","paid","service_fee","student_fee","reported_net"):values[field]=str(values[field])
  return {"datasets":datasets,"registrations":registration_rows,"issues":issues,"unresolved":len(unresolved),"totals":totals,"classCounts":counts,"matches":matches}
 
 def course_sheet(view):
@@ -280,7 +302,7 @@ def course_sheet(view):
   continuous=c.get("continuous_enrollment","")
   if c["schedule"]=="flexible" and continuous!="yes":raise ValueError("Flexible attendance requires a reviewed continuous-enrollment decision and target-site confirmation")
   if not c.get("capacity"):raise ValueError("Confirm capacity rather than importing a blank unlimited maximum")
-  price=amount(c["_amount"],view["definition"]["currencyDigits"]["USD"])
+  price=amount(int(c["_amount"]),view["definition"]["currencyDigits"]["USD"])
   out.append([c["title"],c.get("description",""),price,start.date().isoformat(),end.date().isoformat(),start.strftime("%H:%M"),end.strftime("%H:%M"),c.get("instructor",""),c.get("location",""),c["capacity"],c.get("minimum",""),c.get("class_type",""),c.get("categories",""),continuous or "no","hidden"])
  return {"catalogue":plan["catalogue"],"columns":columns,"rows":out,"csv":csv_bytes(columns,out),"reviewer":plan["reviewer"],"note":plan["note"]}
 
@@ -369,7 +391,17 @@ class Workspace:
     ac=None if av is None else {k:v for k,v in av.items() if not k.startswith("_")}
     bc=None if bv is None else {k:v for k,v in bv.items() if not k.startswith("_")}
     if ac!=bc:changes.append({"kind":kind,"id":key,"before":av,"after":bv})
-  return {"id":id,"beforeRevision":before,"afterRevision":after,"changes":changes,"beforeTotals":a["derived"]["totals"],"afterTotals":b["derived"]["totals"]}
+  allocations=[]
+  aa={r["id"]:r for r in a["derived"]["registrations"]};bb={r["id"]:r for r in b["derived"]["registrations"]}
+  for key in sorted(set(aa)|set(bb)):
+   av=None if key not in aa else {f:aa[key].get(f) for f in ("fee_minor","paid_minor","balance_minor","currency","confirmation")}
+   bv=None if key not in bb else {f:bb[key].get(f) for f in ("fee_minor","paid_minor","balance_minor","currency","confirmation")}
+   if av!=bv:allocations.append({"kind":"registration-allocation","id":key,"before":av,"after":bv})
+  decisions=[]
+  for field in sorted(set(a["definition"])|set(b["definition"])):
+   av=a["definition"].get(field);bv=b["definition"].get(field)
+   if av!=bv:decisions.append({"kind":"review-definition","id":field,"before":av,"after":bv})
+  return {"id":id,"beforeRevision":before,"afterRevision":after,"changes":changes+allocations+decisions,"allocationChanges":allocations,"decisionChanges":decisions,"beforeTotals":a["derived"]["totals"],"afterTotals":b["derived"]["totals"]}
  def export(self,id,revision=None):
   view=self.view(id,revision);history=self.history(id)[:view["revision"]];members={}
   for h in history:
@@ -387,12 +419,22 @@ class Workspace:
    except ValueError as error:members["reports/coursestorm-import-not-ready.json"]=canonical({"state":"NEEDS_REVIEW","reason":str(error),"plan":view["definition"]["importPlan"]})
   members["READ_ME.txt"]=("Complete class intake handover. Raw sources, immutable requests and review history are retained. No payment/refund or CourseStorm action has been performed. Reports use integer minor units with explicit currency precision. Any synthetic source remains labelled in source metadata. Receive with class_intake.py receive --workspace NEW --packet FILE.").encode()
   manifest={"schema":"class-intake.packet.v1","selected":{"id":id,"revision":view["revision"]},"files":[{"path":n,"bytes":len(b),"sha256":sha(b)} for n,b in sorted(members.items())]}
-  members["manifest.json"]=canonical(manifest);out=io.BytesIO()
+  members["manifest.json"]=canonical(manifest)
+  if sum(len(b) for b in members.values())>MAX_PACKET:raise ValueError("Complete selected packet exceeds 128 MiB expanded bound")
+  out=io.BytesIO()
   with zipfile.ZipFile(out,"w",compression=zipfile.ZIP_DEFLATED) as z:
    for n,b in sorted(members.items()):
     info=zipfile.ZipInfo(n,(2020,1,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=0o100600<<16;z.writestr(info,b)
-  return out.getvalue()
+  result=out.getvalue()
+  if len(result)>MAX_PACKET:raise ValueError("Complete selected packet exceeds 128 MiB archive bound")
+  return result
  def receive(self,raw):
+  admission={"state":"NOT_ADOPTED"}
+  try:return self._receive(raw,admission)
+  except Exception as error:
+   if admission["state"]=="NOT_ADOPTED":raise ReceiveRejected(str(error)) from error
+   raise
+ def _receive(self,raw,admission):
   if len(raw)>MAX_PACKET:raise ValueError("Packet exceeds bound")
   with zipfile.ZipFile(io.BytesIO(raw)) as z:
    names=z.namelist()
@@ -418,7 +460,7 @@ class Workspace:
      if {k:v for k,v in actual.items() if k!="derived"}!=item["view"]:raise ValueError("History does not derive from the complete original request")
     rebuilt=verification.export(selected["id"],selected["revision"])
     if rebuilt!=raw:raise ValueError("Packet has unexplained derived or structural differences")
-    self.db.execute("BEGIN IMMEDIATE")
+    self.db.execute("BEGIN IMMEDIATE");admission["state"]="IN_PROGRESS"
     try:
      for sid,body,metadata in verification.db.execute("SELECT id,raw,metadata FROM sources"):
       prior=self.db.execute("SELECT raw FROM sources WHERE id=?",(sid,)).fetchone()
@@ -432,8 +474,11 @@ class Workspace:
       prior=self.db.execute("SELECT sha,body,result FROM requests WHERE id=?",(rid,)).fetchone()
       if prior and prior!=(digest,body,result):raise Conflict("Request diverges")
       if not prior:self.db.execute("INSERT INTO requests VALUES(?,?,?,?)",(rid,digest,body,result))
-     self.db.commit()
-    except BaseException:self.db.rollback();raise
+     admission["state"]="UNKNOWN";self.db.commit();admission["state"]="ADOPTED"
+    except BaseException:
+     previous=admission["state"];self.db.rollback()
+     if previous=="IN_PROGRESS":admission["state"]="NOT_ADOPTED"
+     raise
    finally:verification.close()
   return {"selected":self.view(selected["id"],selected["revision"]),"history":self.history(selected["id"]),"packet":{"bytes":len(raw),"sha256":sha(raw)}}
 def main():

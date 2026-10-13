@@ -1,8 +1,10 @@
 """Loopback operator for the original class intake workspace."""
-import argparse, base64, json, pathlib, secrets
+import argparse, base64, fcntl, json, pathlib, secrets
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from urllib.parse import urlsplit,parse_qs
-from class_intake import Workspace,Conflict,MAX_SOURCE,MAX_PACKET,atomic,canonical,sha,course_sheet
+from class_intake import Workspace,Conflict,ReceiveRejected,MAX_SOURCE,MAX_PACKET,atomic,canonical,sha,course_sheet
+import attendance_http
+
 def serve(directory,port=0):
  root=pathlib.Path(directory).resolve();w=Workspace(root,True);w.close();token=secrets.token_urlsafe(32);assets=pathlib.Path(__file__).parent/"public"
  class Handler(BaseHTTPRequestHandler):
@@ -15,10 +17,14 @@ def serve(directory,port=0):
    try:
     parts=urlsplit(self.path);path=parts.path;q={k:v[0] for k,v in parse_qs(parts.query).items()}
     if self.headers.get("Host")!=self.server.expected_host:raise ValueError("Unexpected host")
+    if method=="GET" and path in attendance_http.ASSETS:
+     name=attendance_http.ASSETS[path];mime="text/html; charset=utf-8" if name.endswith(".html") else "text/javascript; charset=utf-8" if name.endswith(".js") else "text/css; charset=utf-8"
+     self.send(200,(assets/name).read_bytes(),mime);return
     if method=="GET" and path in ("/","/app.js","/style.css"):
      name={"/":"index.html","/app.js":"app.js","/style.css":"style.css"}[path];self.send(200,(assets/name).read_bytes(),{"/":"text/html; charset=utf-8","/app.js":"text/javascript; charset=utf-8","/style.css":"text/css; charset=utf-8"}[path]);return
     w=Workspace(root)
     if method=="GET":
+     if path.startswith("/api/attendance/"):self.json(200,attendance_http.get(w,path,q));return
      if path=="/api/state":self.json(200,{**w.state(),"token":token});return
      if path=="/api/request":self.json(200,w.request(q["id"]));return
      if path=="/api/view":self.json(200,w.view(q["id"],int(q["revision"]) if "revision" in q else None));return
@@ -35,10 +41,12 @@ def serve(directory,port=0):
     origin=self.headers.get("Origin")
     if origin and origin!="http://"+self.server.expected_host:raise ValueError("Foreign origin")
     length=int(self.headers.get("Content-Length","-1"))
-    limit=MAX_SOURCE if path=="/api/source" else MAX_PACKET if path=="/api/receive" else 4*1024*1024
+    limit=MAX_SOURCE if path=="/api/source" else MAX_PACKET if path in ("/api/receive","/api/attendance/receive") else 4*1024*1024
     if not 0<=length<=limit:raise ValueError("Request length exceeds bound")
     body=self.rfile.read(length)
     if len(body)!=length:raise ValueError("Incomplete request")
+    if path.startswith("/api/attendance/"):
+     self.json(200,attendance_http.post(w,path,body));return
     if path=="/api/source":
      meta=json.loads(base64.b64decode(self.headers["X-Source-Metadata"],validate=True));result=w.add_source(body,meta)
     elif path=="/api/receive":result=w.receive(body)
@@ -54,6 +62,7 @@ def serve(directory,port=0):
       digest=sha(out);atomic(root/"exports"/digest,out);result={"filename":filename,"bytes":len(out),"sha256":digest,"url":"/download/"+digest}
      else:raise ValueError("Unknown route")
     self.json(200,result)
+   except ReceiveRejected as error:self.json(400,{"error":str(error),"adoptionState":"NOT_ADOPTED"})
    except Conflict as error:self.json(409,{"error":str(error)})
    except (ValueError,KeyError,FileNotFoundError) as error:self.json(400,{"error":str(error)})
    except Exception as error:self.json(500,{"error":str(error),"type":type(error).__name__})
@@ -61,9 +70,19 @@ def serve(directory,port=0):
     if w is not None:w.close()
   def do_GET(self):self.run("GET")
   def do_POST(self):self.run("POST")
- server=ThreadingHTTPServer(("127.0.0.1",port),Handler);server.expected_host="127.0.0.1:"+str(server.server_port)
- print(json.dumps({"state":"READY","url":"http://"+server.expected_host,"workspace":str(root)}),flush=True)
- try:server.serve_forever()
- finally:server.server_close()
+ with (root/".operator.lock").open("a+b") as ownership:
+  fcntl.flock(ownership,fcntl.LOCK_EX|fcntl.LOCK_NB)
+  endpoint=root/"operator-endpoint.json"
+  if endpoint.exists():
+   selected=json.loads(endpoint.read_text())
+   if selected.get("host")!="127.0.0.1" or type(selected.get("port")) is not int or not 1<=selected["port"]<=65535:raise ValueError("Invalid retained operator endpoint")
+   if port not in (0,selected["port"]):raise ValueError("Use the retained original operator port so pending browser state remains in its original origin")
+   port=selected["port"]
+  server=ThreadingHTTPServer(("127.0.0.1",port),Handler);server.expected_host="127.0.0.1:"+str(server.server_port)
+  try:
+   atomic(endpoint,canonical({"host":"127.0.0.1","port":server.server_port}))
+   print(json.dumps({"state":"READY","url":"http://"+server.expected_host,"workspace":str(root)}),flush=True)
+   server.serve_forever()
+  finally:server.server_close()
 if __name__=="__main__":
  p=argparse.ArgumentParser();p.add_argument("--workspace",required=True);p.add_argument("--port",type=int,default=0);a=p.parse_args();serve(a.workspace,a.port)

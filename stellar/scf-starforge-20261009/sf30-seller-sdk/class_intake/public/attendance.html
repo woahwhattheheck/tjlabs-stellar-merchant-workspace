@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Class attendance</title><link rel="stylesheet" href="/attendance.css"><script type="module" src="/attendance.js"></script></head>
+<body><header><div><strong>CLASS OPERATIONS</strong><h1>Sessions and attendance</h1></div><nav><a href="/">Intake and payments</a><button id="refresh">Refresh</button></nav></header>
+<main><p id="status" role="status">Opening the local workspace…</p>
+<section id="pending" hidden><h2>Saved operation awaiting its result</h2><p id="pending-label"></p><button id="resume">Continue the same operation</button><button id="discard" hidden>Discard the rejected operation</button></section>
+<section class="bar"><label>Saved attendance review<select id="reviews"><option value="">Choose a review</option></select></label><label>Edition<select id="history"></select></label><button id="export">Download complete handover</button><label class="file">Receive complete handover<input id="packet" type="file" accept=".zip"></label></section>
+<section><h2>Start from a saved intake</h2><form id="new-review" class="grid">
+<label>Intake review<select id="intakes" required></select></label><label>Attendance name<input name="name" required maxlength="160" value="Class attendance"></label><label>Named operator<input id="actor" name="actor" required maxlength="160"></label><label class="wide">Reason for this attendance book<input name="reason" required></label><button>Start attendance book</button></form>
+<p id="anchor"></p><div id="source-update" hidden><button id="adopt-source">Select the newer intake edition</button><input id="source-reason" aria-label="Reason to select the newer intake edition" placeholder="Explain the catalogue/registration edition change"></div></section>
+<div id="book" hidden><section><h2>Visit balances</h2><p>Booked places reserve visits. Attendance consumes visits. Cancellation and missed-session decisions explicitly record zero or one visit. Payment amounts remain in the selected intake.</p><div id="totals"></div><div class="scroll" id="balances"></div></section>
+<section><h2>Dated teaching sessions</h2><div class="scroll" id="sessions"></div><form id="session-form" class="grid">
+<label>Session to edit<select name="existing"><option value="">New session</option></select></label><label>Class<select name="classId" required></select></label>
+<label>Start, including UTC offset<input name="start" required placeholder="2026-10-21T16:30:00-04:00"></label><label>End, including UTC offset<input name="end" required placeholder="2026-10-21T18:00:00-04:00"></label>
+<label>IANA timezone<input name="timezone" required value="America/New_York"></label><label>Places<input name="capacity" type="number" min="1" max="1000" value="6" required></label>
+<label>Instructor<input name="instructor" required></label><label>State<select name="state"><option>planned</option><option>scheduled</option><option>completed</option><option>cancelled</option></select></label>
+<label class="wide">Planning or correction reason<input name="reason" required></label><button>Save session</button></form></section>
+<section><h2>Enrollments and visit grants</h2><form id="enrollment-form" class="grid"><label>Original registration<select name="registrationId" required></select></label><label>Visits granted<input name="granted" type="number" value="4" min="0" max="1000" required></label><label class="wide">Basis for this grant<input name="reason" required placeholder="Selected four-visit course registration"></label><button>Save original visit grant</button></form>
+<form id="adjustment-form" class="grid"><label>Enrollment<select name="registrationId" required></select></label><label>Visit adjustment<input name="units" type="number" min="-1000" max="1000" required placeholder="-1 or 1"></label><label class="wide">Named accommodation or correction<input name="reason" required></label><button>Save credit adjustment</button></form></section>
+<section><h2>Attendance register</h2><div class="scroll" id="visits"></div><form id="visit-form" class="grid">
+<label>Visit to edit<select name="existing"><option value="">New visit</option></select></label><label>Enrollment<select name="registrationId" required></select></label><label>Session<select name="sessionId" required></select></label>
+<label>State<select name="state"><option>proposed</option><option>waitlist</option><option>booked</option><option>attended</option><option>missed</option><option>cancelled</option></select></label>
+<label>Visits consumed<select name="units"><option value="0">0 — retain credit</option><option value="1">1 — consume credit</option></select></label>
+<label>Confirming instructor<input name="instructor"></label><label>Confirmation time with offset<input name="confirmedAt" placeholder="2026-10-20T14:00:00-04:00"></label>
+<label>Confirmation method<select name="method"><option>email</option><option>phone</option><option>in-person</option><option>source-record</option></select></label>
+<label class="wide">Actual confirmation reference<input name="reference" placeholder="Original email, call note or source record"></label><label class="wide">Attendance or cancellation reason<input name="reason" required></label><button>Save visit decision</button></form>
+<form id="reschedule-form" class="grid"><label>Original visit<select name="visitId" required></select></label><label>New session<select name="sessionId" required></select></label><label class="wide">Rescheduling reason<input name="reason" required></label><button>Move to a new proposed visit</button></form></section>
+<section><h2>Review notes</h2><div id="issues"></div><p id="revision"></p></section></div>
+</main></body></html>
