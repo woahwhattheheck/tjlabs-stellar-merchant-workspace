@@ -107,3 +107,11 @@ The comparison does not contain the encrypted backup bytes. Preserve the origina
 ## Source and execution status
 
 The comparison extends the maintained Object recovery engine, existing workspace queue, original SDK process lifetime and browser/MCP/CLI surfaces. Pure source checks and native execution are separate evidence. A saved comparison is authenticated only when its actual native result reports both verifications complete with a clean subprocess outcome.
+
+## Carry the original comparison into Support
+
+A host profile with an existing `casesDirectory` can capture its saved `object-compare` request through the existing Support panel or `workspace support-review` selection. Use the original request ID, review hash and observed attempt, an existing case revision, observation slot and stable transfer ID. Review and save retain the complete original request, every referenced JSON/HTML/Markdown artifact across all attempts and the ordered local history. Prepared, partial, failed and complete observations remain distinct.
+
+The Support capture uses **OBJECT_COMPARISON** and preserves both external bundle identities. It does not rerun native verification, decrypt a backup, attach encrypted bytes or claim that a saved authentication result describes the current path contents. Its complete three-file transport is capped at 64 MiB including base64 wrappers, within the existing 192 MiB case runtime. A larger native artifact is rejected without dropping any history; keep its full original comparison downloads and native delivery.
+
+The existing Support handoff and complete case-source export carry every retained capture and case revision through the maintained independent receiver. See [Recovery and comparison operations in an existing Support case](RECOVERY_SUPPORT.md) for exact commands, limits, same-request continuation and rendered-browser acceptance.

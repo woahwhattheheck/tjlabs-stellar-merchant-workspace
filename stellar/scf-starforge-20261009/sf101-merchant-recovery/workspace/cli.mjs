@@ -19,7 +19,7 @@ export const HELP = 'SF101 recovery workspace\n\n' +
   'support-cases List existing cases: --profile ID [--limit N].\n' +
   'support-transfers List saved/prepared transfers: --profile ID.\n' +
   'support-transfer Read the original transfer: --profile ID --transfer-id ID.\n' +
-  'support-review Freeze complete request/evidence and case selection: --selection ABS_JSON.\n' +
+  'support-review Freeze complete recovery/comparison request, artifacts and case selection: --selection ABS_JSON.\n' +
   'support-save Commit that exact review: --profile ID --transfer-id ID --expected-support-review HASH.\n' +
   'support-handoff Read the complete saved Support handoff: --profile ID --transfer-id ID.\n' +
   'support-export Export full case/history/source: --profile ID --transfer-id ID --expected-support-review HASH.\n' +
