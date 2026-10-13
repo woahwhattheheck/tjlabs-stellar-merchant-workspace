@@ -53,7 +53,20 @@ export interface RecoveryPage { cursor?: string; limit?: number; }
 export interface RecoveryWorkspaceInput { workspace: RecoveryWorkspaceAlias; }
 export interface RecoveryProfileInput extends RecoveryWorkspaceInput { profileId: RecoveryProfileId; }
 export interface RecoveryOriginalInput extends RecoveryProfileInput { id: RecoveryOperationId; }
+export interface RecoverySupportSelection {
+  profileId:RecoveryProfileId; id:RecoveryOperationId; transferId:string; caseId:string;
+  expectedRevision:RecoveryDigest;slot:'before'|'after';expectedReviewHash:RecoveryDigest;afterAttempt:number;
+}
+export interface RecoverySupportInput extends RecoveryProfileInput {transferId:string;}
 export interface RecoveryToolInputs {
+  merchant_recovery_support_cases:RecoveryProfileInput & {q?:string;offset?:number;limit?:number};
+  merchant_recovery_support_transfers:RecoveryProfileInput;
+  merchant_recovery_support_transfer:RecoverySupportInput;
+  merchant_recovery_support_review:RecoveryWorkspaceInput & {selection:RecoverySupportSelection};
+  merchant_recovery_support_save:RecoverySupportInput & {expectedReviewSha256:RecoveryDigest};
+  merchant_recovery_support_handoff:RecoverySupportInput;
+  merchant_recovery_support_export:RecoverySupportInput & {expectedReviewSha256:RecoveryDigest};
+  merchant_recovery_support_package:RecoverySupportInput;
   merchant_recovery_status: RecoveryWorkspaceInput;
   merchant_recovery_object_session: RecoveryProfileInput & { objectSessionId: string };
   merchant_recovery_object_evidence: RecoveryWorkspaceInput & { sha256: RecoveryDigest };

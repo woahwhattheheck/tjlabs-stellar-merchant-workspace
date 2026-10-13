@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stellar Prices workbench</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">TOKENJUNKIELABS / RUMBLE FISH INTEGRATION</p><h1>Stellar Prices workbench</h1></div>
+    <div class="badges"><span id="access-badge">Connecting</span><span id="run-badge">Workspace</span></div>
+  </header>
+  <main>
+    <section id="authentication" class="panel" hidden>
+      <h2>Open your workspace</h2><p>Use the complete private operator link printed by the owning process, or enter its operator capability below.</p>
+      <form id="auth-form"><label for="operator-capability">Operator capability</label><input id="operator-capability" type="password" autocomplete="off" required><button>Open workspace</button></form>
+    </section>
+    <div id="application" hidden>
+      <div id="notice" role="status" aria-live="polite" hidden></div>
+      <div id="access-note" class="callout" hidden>The workspace is open for saved data and request planning. Start the owning process with its existing STELLAR_PRICES_API_KEY to collect provider data. <a href="https://sorobanscan.rumblefish.dev/prices-api/" target="_blank" rel="noreferrer">Provider access</a></div>
+      <nav class="tabs" aria-label="Workspace sections">
+        <button class="selected" data-view="assets" aria-current="page">Assets &amp; prices</button>
+        <button data-view="runs">Collections</button>
+        <button data-view="consumer">Customer values</button>
+        <button data-view="quality">Data quality</button>
+        <button data-view="settings">Settings</button>
+        <button data-view="handoff">Handoff</button>
+      </nav>
+      <div class="workspace-heading"><div><h2 id="workspace-name">Prices workspace</h2><p id="provider-origin" class="muted"></p></div><button id="refresh-state" class="secondary">Refresh workspace</button></div>
+      <div class="metrics">
+        <div><strong id="selected-count">0</strong><span>Selected assets</span></div>
+        <div><strong id="price-count">0</strong><span>Saved price observations</span></div>
+        <div><strong id="history-count">0</strong><span>Saved histories</span></div>
+        <div><strong id="month-attempts">0</strong><span>Workspace requests this month</span></div>
+      </div>
+      <section data-panel="assets">
+        <div class="two-columns selection-layout">
+          <article class="panel">
+            <div class="section-head"><div><h3>Asset selection</h3><p class="muted">Use native, CODE:ISSUER or a Soroban contract address. Asset codes preserve case.</p></div></div>
+            <form id="collection-form">
+              <label for="asset-selection">One exact identifier per line</label><textarea id="asset-selection" rows="5" spellcheck="false"></textarea>
+              <div class="form-grid">
+                <div><label for="history-timeframe">History window</label><select id="history-timeframe"><option>1h</option><option>24h</option><option selected>7d</option><option>30d</option><option>1y</option><option>all</option></select></div>
+                <div><label for="history-granularity">Candle size</label><select id="history-granularity"><option>1m</option><option>15m</option><option selected>1h</option><option>4h</option><option>1d</option><option>1w</option><option>1M</option></select></div>
+                <div><label for="history-currency">History currency</label><select id="history-currency"><option>USD</option><option>XLM</option></select></div>
+                <div><label for="collection-name">Collection name</label><input id="collection-name" placeholder="Wallet price coverage"></div>
+                <div><label for="history-start">Start override</label><input id="history-start" placeholder="Optional ISO date or epoch"></div>
+                <div><label for="history-end">End override</label><input id="history-end" placeholder="Optional ISO date or epoch"></div>
+              </div>
+              <fieldset class="checks"><legend>Collect</legend><label><input type="checkbox" name="operation" value="batch" checked> Current prices in batches</label><label><input type="checkbox" name="operation" value="history" checked> Price history</label><label><input type="checkbox" name="operation" value="detail" checked> Asset details</label><label><input type="checkbox" name="operation" value="oracles"> Oracle readings</label><label><input type="checkbox" name="operation" value="price"> Individual price sources</label></fieldset>
+              <button id="preview-collection">Save selection &amp; preview</button><p class="hint">Review the exact planned requests before starting collection.</p>
+            </form>
+          </article>
+          <article class="panel">
+            <h3>Browse the provider catalog</h3><p class="muted">Opaque pagination stays attached to the selected sort and order.</p>
+            <form id="catalog-form">
+              <div class="form-grid">
+                <div><label for="catalog-type">Asset type</label><select id="catalog-type"><option value="all">All assets</option><option value="classic">Classic assets</option><option value="soroban">Soroban contracts</option></select></div>
+                <div><label for="catalog-search">Classic code prefix</label><input id="catalog-search" placeholder="Case-sensitive, e.g. USDC"></div>
+                <div><label for="catalog-sort">Sort by</label><select id="catalog-sort"><option value="volume_24h">24h volume</option><option value="price">Price</option><option value="change_24h">24h change</option><option value="code">Code</option></select></div>
+                <div><label for="catalog-order">Order</label><select id="catalog-order"><option value="desc">Descending</option><option value="asc">Ascending</option></select></div>
+                <div><label for="catalog-limit">Rows per page</label><input id="catalog-limit" type="number" min="1" max="200" value="50"></div>
+                <div><label for="catalog-pages">Pages in collection</label><input id="catalog-pages" type="number" min="1" value="5"></div>
+                <div><label for="catalog-volume">Minimum venue volume, USD</label><input id="catalog-volume" type="number" min="0" step="any" placeholder="Provider default"></div>
+              </div>
+              <button>Save filters &amp; preview catalog</button>
+            </form>
+            <div class="rule"></div><h3>Original price semantics</h3>
+            <p class="muted">Price age comes from <code>as_of</code>. Snapshot refresh time is separate. Decimal values stay in their original string form in data exports.</p>
+            <p class="muted">A carried price may be part of the provider's normal hourly USD calculation. An unpriced observation and a candle with null prices remain visible as such.</p>
+          </article>
+        </div>
+        <article class="panel"><div class="section-head"><div><h3>Current saved prices</h3><p class="muted">Original values, method and price time for each collected asset.</p></div></div><div class="table-wrap" tabindex="0" aria-label="Saved current prices"><table><thead><tr><th>Asset</th><th>USD price / VWAP</th><th>24h volume</th><th>Price status / method</th><th>Price age</th><th>Result</th></tr></thead><tbody id="price-rows"></tbody></table></div></article>
+        <article class="panel"><div class="section-head"><div><h3>Saved catalog page</h3><p id="catalog-meta" class="muted">Collect a catalog request to browse assets.</p></div><button id="catalog-next" class="secondary" disabled>Preview next page</button></div><div class="table-wrap" tabindex="0" aria-label="Provider asset catalog"><table><thead><tr><th>Asset</th><th>Type</th><th>USD price</th><th>24h volume</th><th>Price status</th><th>Selection</th></tr></thead><tbody id="catalog-rows"></tbody></table></div></article>
+      </section>
+      <section data-panel="runs" hidden>
+        <article class="panel"><div class="form-grid"><div><label for="saved-plan">Retained request plan</label><select id="saved-plan"><option value="">Select a saved plan</option></select></div><div class="actions"><button id="open-plan" class="secondary">Open saved plan</button></div></div></article>
+        <article class="panel" id="plan-panel">
+          <div class="section-head"><div><h3>Request plan</h3><p id="plan-summary" class="muted">Prepare a collection from Assets &amp; prices, or refresh service coverage.</p></div><button id="start-plan" disabled>Start collection</button></div>
+          <div id="plan-notices" class="muted"></div><div class="table-wrap compact-scroll" tabindex="0" aria-label="Planned provider requests"><table><thead><tr><th>Operation</th><th>Asset</th><th>Exact provider request</th></tr></thead><tbody id="plan-rows"></tbody></table></div>
+        </article>
+        <div class="two-columns">
+          <article class="panel"><h3>Saved collections</h3><div id="run-list" class="run-list"></div></article>
+          <article class="panel"><div class="section-head"><h3 id="run-title">Collection detail</h3><div class="actions"><button id="pause-run" class="secondary" disabled>Pause after current read</button><button id="resume-run" disabled>Resume</button></div></div><div id="run-detail" class="muted">Select a saved collection.</div></article>
+        </div>
+        <article class="panel"><h3>Retained requests and results</h3><div class="table-wrap compact-scroll" tabindex="0" aria-label="Retained collection results"><table><thead><tr><th>Operation / asset</th><th>State</th><th>Attempts</th><th>Received</th><th>Response</th><th>Export</th></tr></thead><tbody id="task-rows"></tbody></table></div></article>
+      </section>
+      <section data-panel="quality" hidden>
+        <article class="panel"><div class="section-head"><div><h3>Provider coverage</h3><p id="coverage-meta" class="muted">Refresh the published history coverage and current ingest progress.</p></div><div class="actions"><button id="preview-health" class="secondary">Preview service health</button><button id="preview-coverage">Preview coverage refresh</button></div></div><div id="coverage-cards" class="three-columns"></div></article>
+        <article class="panel"><h3>Collected histories</h3><p class="muted">Each history retains the provider's actual granularity, source, quality and backfill note. Null prices keep their original activity counts.</p><div class="table-wrap" tabindex="0" aria-label="Collected price histories"><table><thead><tr><th>Asset</th><th>Window / currency</th><th>Candles</th><th>Quality / coverage</th><th>Result</th></tr></thead><tbody id="history-rows"></tbody></table></div></article>
+        <article class="panel"><h3>Interpret the original fields</h3><dl class="terms"><dt>as_of</dt><dd>The time of the price observation; the configured age threshold applies here.</dd><dt>updated_at</dt><dd>When the snapshot row refreshed. A refreshed row can still carry an older price.</dd><dt>price_status</dt><dd>priced, carried or unpriced; a temporarily empty status stays unknown.</dd><dt>volume_24h_usd</dt><dd>The provider's total trade volume across both sides of pairs. Per-venue source volumes need not add to this total.</dd><dt>null OHLC values</dt><dd>Retain null and the reported trade/activity counts. Collection does not fill a missing market price.</dd></dl></article>
+      </section>
+      <section data-panel="settings" hidden>
+        <article class="panel"><h3>Workspace configuration</h3><p id="settings-version" class="muted"></p>
+          <form id="settings-form"><div class="form-grid">
+            <div><label for="setting-name">Workspace name</label><input id="setting-name" required></div>
+            <div><label for="setting-base">Provider base URL</label><input id="setting-base" type="url" required></div>
+            <div><label for="setting-interval">Request interval, milliseconds</label><input id="setting-interval" type="number" min="1000"></div>
+            <div><label for="setting-freshness">Price age threshold, seconds</label><input id="setting-freshness" type="number" min="1"></div>
+            <div><label for="setting-maximum">Requests before pausing</label><input id="setting-maximum" type="number" min="1"></div>
+            <div><label for="setting-retries">Transient retry allowance</label><input id="setting-retries" type="number" min="0"></div>
+            <div><label for="setting-timeout">Request timeout, milliseconds</label><input id="setting-timeout" type="number" min="1"></div>
+            <div><label for="setting-volume">Individual price minimum venue volume</label><input id="setting-volume" type="number" min="0" step="any" placeholder="Provider default"></div>
+          </div><div class="actions"><button>Save configuration</button><button id="reload-settings" type="button" class="secondary">Reload saved values</button></div></form>
+          <p class="hint">The API key belongs to the owning process. Reopen with the approved provider configuration to change its destination.</p>
+        </article>
+        <article class="panel"><h3>Provider allowance and local use</h3><p id="usage-detail"></p><p class="muted">Workspace request counts cover this workspace. Other applications and users can share the same provider allowance. A provider rate or quota response remains attached to the original collection for continuation.</p></article>
+      </section>
+      <section data-panel="consumer" hidden>
+        <article class="panel"><div class="section-head"><div><h3>Customer price consumer</h3><p class="muted">Receive exact native prices into a saved asset book. Each edition preserves quantities, source quality, observation times and its original collection.</p></div><button id="consumer-new" class="secondary">New customer</button></div><label for="consumer-select">Saved customer</label><select id="consumer-select"><option value="">New customer</option></select><p id="consumer-state" class="muted"></p></article>
+        <div class="two-columns">
+          <article class="panel"><h3>Asset book and valuation policy</h3><p id="consumer-version" class="muted"></p><form id="consumer-book-form">
+            <div class="form-grid"><div><label for="consumer-id">Stable customer ID</label><input id="consumer-id" placeholder="wallet-reference" pattern="[a-z][a-z0-9-]{1,95}" required></div><div><label for="consumer-name">Customer name</label><input id="consumer-name" required></div><div><label for="consumer-reference">Customer reference</label><input id="consumer-reference"></div><div><label for="consumer-currency">Value denomination</label><select id="consumer-currency"><option>USD</option><option>XLM</option></select></div></div>
+            <label for="consumer-positions">Asset, quantity, optional label — separated by tabs</label><textarea id="consumer-positions" rows="7" spellcheck="false" required></textarea><p class="hint">One exact identifier per row. Quantities stay decimal strings. Combine multiple positions in the same asset before saving.</p>
+            <div class="actions"><button id="consumer-use-watchlist" type="button" class="secondary">Copy saved watchlist</button><label class="secondary" for="consumer-import-book">Load configuration JSON</label><input id="consumer-import-book" type="file" accept=".json,application/json"></div>
+            <label for="consumer-age">Price age target, seconds</label><input id="consumer-age" type="number" min="1" max="2592000" value="7200" required>
+            <fieldset class="checks"><legend>Include these source states in values</legend><label><input id="consumer-carried" type="checkbox" checked> Carried prices</label><label><input id="consumer-older" type="checkbox"> Prices older than the saved target</label><label><input id="consumer-unknown" type="checkbox"> Real prices with unknown status or observation time</label></fieldset>
+            <p class="hint">Unpriced observations and the provider’s zero-price sentinel remain unavailable. XLM values use independently dated conversion observations.</p>
+            <div class="actions"><button>Save customer asset book</button><button id="consumer-download-book" type="button" class="secondary" disabled>Download saved configuration</button></div>
+          </form></article>
+          <article class="panel"><h3>Receive a source edition</h3><p class="muted">Choose one saved current-price collection. Every asset comes from that collection; missing prices stay missing. Discovery and collection remain available in the existing workspace tabs.</p><form id="consumer-edition-form">
+            <div class="actions"><button id="consumer-plan-book" type="button" class="secondary" disabled>Plan prices for saved book</button></div>
+            <label for="consumer-source-run">Original price collection</label><select id="consumer-source-run" required><option value="">Choose a retained price collection</option></select>
+            <label for="consumer-edition-name">Edition name</label><input id="consumer-edition-name" placeholder="Customer values — latest collection">
+            <label for="consumer-edition-note">Source and operating note</label><input id="consumer-edition-note">
+            <button id="consumer-create-edition" disabled>Receive collection into customer values</button>
+          </form><div class="rule"></div><h3>Saved editions</h3><div id="consumer-edition-list" class="run-list"></div></article>
+        </div>
+        <article class="panel"><div class="section-head"><div><h3 id="consumer-saved-name">Customer values</h3><h4 id="consumer-edition-title">Selected source edition</h4><p id="consumer-edition-meta" class="muted"></p></div><div class="actions"><button id="consumer-json" class="secondary" disabled>Selected edition JSON</button><button id="consumer-csv" class="secondary" disabled>Selected edition CSV</button></div></div>
+          <div class="metrics"><div><strong id="consumer-total">—</strong><span id="consumer-total-label">Complete value</span></div><div><strong id="consumer-subtotal">—</strong><span>Priced subtotal</span></div><div><strong id="consumer-coverage">—</strong><span>Valued positions</span></div></div>
+          <div class="table-wrap" tabindex="0" aria-label="Customer values"><table><thead><tr><th>Exact asset</th><th>Quantity</th><th>Unit price</th><th>Value</th><th>Quality</th><th>Observation time</th><th>Source</th></tr></thead><tbody id="consumer-rows"></tbody></table></div>
+        </article>
+        <article class="panel"><h3>Change from the previous edition</h3><p id="consumer-comparison-meta" class="muted"></p><div class="table-wrap" tabindex="0" aria-label="Customer edition comparison"><table><thead><tr><th>Asset</th><th>Change</th><th>Quantity change</th><th>Unit price change</th><th>Value change and attribution</th></tr></thead><tbody id="consumer-comparison-rows"></tbody></table></div></article>
+        <article class="panel"><h3>Review and publish customer values</h3><p class="muted">Publishing selects the feed consumed by the customer integration. Incomplete values retain their coverage and priced subtotal. All source editions and prior review decisions remain available.</p><div class="form-grid"><div><label for="consumer-reviewer">Reviewer</label><input id="consumer-reviewer" autocomplete="name"></div><div><label for="consumer-review-note">Review note</label><input id="consumer-review-note"></div></div><div class="actions"><button id="consumer-review-publish" disabled>Publish selected values</button><button id="consumer-review-reject" class="secondary" disabled>Mark edition rejected</button><button id="consumer-published-download" class="secondary" disabled>Download published feed</button></div><pre id="consumer-review-history"></pre><details><summary>Original collection and saved valuation policy</summary><pre id="consumer-source-details"></pre></details></article>
+      </section>
+      <section data-panel="handoff" hidden>
+        <article class="panel"><h3>Complete operator handoff</h3><p>Export the runnable source, saved configuration, immutable request plans, collection state and exact retained responses. The export pauses collection after its current read to preserve one coherent state.</p><div class="actions"><button id="download-delivery">Pause &amp; export complete workspace</button><button id="download-configuration" class="secondary">Download configuration</button></div><p class="hint">Resume the original collection from Collections when ready.</p></article>
+        <article class="panel"><h3>Reopen the delivered workspace</h3><pre>node cli.mjs unpack --file stellar-prices-workbench.json --out ./prices-handoff
+node ./prices-handoff/cli.mjs inspect --dir ./prices-handoff/workspace
+node ./prices-handoff/cli.mjs serve --dir ./prices-handoff/workspace</pre><p>Set the provider's existing API key in STELLAR_PRICES_API_KEY for new collection. Saved results remain available independently of provider access.</p></article>
+        <article class="panel"><h3>Original provider references</h3><p><a href="https://prices-api.sorobanscan.rumblefish.dev/api-docs-json" target="_blank" rel="noreferrer">Live OpenAPI contract</a> · <a href="https://github.com/rumblefishdev/stellar-prices-api" target="_blank" rel="noreferrer">Provider source</a> · <a href="https://sorobanscan.rumblefish.dev/prices-api/" target="_blank" rel="noreferrer">Provider access portal</a></p></article>
+      </section>
+    </div>
+  </main>
+  <dialog id="result-dialog"><div class="section-head"><div><h2 id="result-title">Retained result</h2><p id="result-meta" class="muted"></p></div><button id="close-result" class="secondary">Close</button></div><div id="result-summary"></div><div id="result-series"></div><div class="actions result-actions"><button id="result-json">Download exact JSON</button><button id="result-csv" class="secondary">Download CSV</button></div><details><summary>Original response and request metadata</summary><pre id="result-raw"></pre></details></dialog>
+  <footer>Retained customer workspace · Original provider data and request lifecycle</footer>
+</body>
+</html>

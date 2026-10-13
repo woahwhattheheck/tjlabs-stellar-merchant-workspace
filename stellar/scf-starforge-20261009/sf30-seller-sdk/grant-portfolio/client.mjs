@@ -10,7 +10,7 @@ export const GRANT_PORTFOLIO_MAX_ACTION_BYTES = 1024 * 1024;
 const HASH = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const OPERATION = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
-const TABLES = new Set(['entities','financial','links','decisions','candidates','changes','sources',
+const TABLES = new Set(['entities','financial','links','decisions','candidates','changes','sources','planning_scenarios','planning_lines',
   ...['nodes','partners','grants','milestones','indicators','observations','risks','issues','documents',
       'reports','closures','bindings','positions','results'].map(name => 'programme_' + name),
   ...['rounds','applications','checks','assignments','assessments','decisions','agreements','claims','monitoring',
@@ -222,6 +222,66 @@ export class GrantPortfolioClient {
         item.reference.rowKey === item.record.rowKey),
       'AWARDS_FINANCIAL', 'The complete original financial row page changed.');
     return result;
+  }
+  planningSchema(options) { return this.#json('/api/planning/schema', undefined, options); }
+  planningRecord(input, options) { return this.#planning('record', input, options); }
+  planningHistory(input, options) { return this.#planning('history', input, options); }
+  planningSummary(input, options) { return this.#planning('summary', input, options); }
+  #planningSelection(route, input) {
+    const detail = route === 'record' || route === 'history';
+    exact(input, ['portfolioId','revision', ...(detail ? ['collection','id'] :
+      ['scenarioId','compareScenarioId','granularity', ...(route === 'report' ? ['format'] : [])])],
+      ['portfolioId','revision', ...(detail ? ['collection','id'] : ['scenarioId']),
+        ...(route === 'report' ? ['format'] : [])]);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    if (detail) {
+      checked(input.id, UUID, 'planning record ID');
+      need(['scenarios','lines'].includes(input.collection), 'PLANNING_REGISTER', 'Select scenarios or budget lines.');
+    } else {
+      checked(input.scenarioId, UUID, 'planning scenario ID');
+      if (input.compareScenarioId !== undefined) checked(input.compareScenarioId, UUID, 'comparison scenario ID');
+      if (input.granularity !== undefined) need(['month','year'].includes(input.granularity),
+        'PLANNING_PERIOD', 'Select month or year periods.');
+    }
+    if (route === 'report') need(['json','csv','html'].includes(input.format),
+      'PLANNING_FORMAT', 'Select the complete JSON, CSV or HTML report.');
+    return input;
+  }
+  async #planning(route, input, options) {
+    this.#planningSelection(route, input);
+    const result = await this.#json('/api/planning/' + route + '?' + query(input), undefined, options);
+    need(plain(result) && result.schema === 'stellar-forge.grant-budget-planning.v1' &&
+      result.portfolioId === input.portfolioId && result.revision === input.revision &&
+      HASH.test(result.snapshot ?? '') && Number.isSafeInteger(result.planningRevision) &&
+      result.planningRevision >= 0, 'PLANNING_SELECTION', 'The original planning revision differs.');
+    if (route === 'summary') need(result.scenario?.id === input.scenarioId && plain(result.summary),
+      'PLANNING_SCENARIO', 'The summary belongs to another original scenario.');
+    else if (route === 'record') need(result.collection === input.collection && result.record?.id === input.id,
+      'PLANNING_RECORD', 'The original planning record differs.');
+    else need(result.collection === input.collection && result.id === input.id && Array.isArray(result.history),
+      'PLANNING_HISTORY', 'The original planning history differs.');
+    return result;
+  }
+  openPlanningReport(input, options = {}) {
+    this.#planningSelection('report', input);
+    return this.#track(async () => {
+      const response = await this.#http('/api/planning/report?' + query(input), options);
+      if (!response.ok) return this.#response(response);
+      try {
+        const bytes = response.headers.get('content-length'), sha256 = response.headers.get('x-content-sha256'),
+          contentType = (response.headers.get('content-type') ?? '').split(';')[0].trim(),
+          wanted = {json:'application/json',csv:'text/csv',html:'text/html'}[input.format],
+          filename = /^attachment;\s*filename="([A-Za-z0-9][A-Za-z0-9._-]{0,199})"$/.exec(response.headers.get('content-disposition') ?? '')?.[1];
+        need(/^[1-9]\d*$/.test(bytes ?? '') && Number.isSafeInteger(Number(bytes)) &&
+          Number(bytes) <= GRANT_PORTFOLIO_MAX_PACKET_BYTES && HASH.test(sha256 ?? '') &&
+          response.headers.get('etag') === '"' + sha256 + '"' && contentType === wanted && filename,
+          'PLANNING_REPORT', 'The complete native report descriptor is missing or changed.');
+        return {descriptor:{bytes:Number(bytes),sha256,contentType,filename},response};
+      } catch (error) { await response.body?.cancel().catch(() => {}); throw error; }
+    });
+  }
+  async downloadPlanningReport(input, filename, options) {
+    return saveGrantPortfolioFile(await this.openPlanningReport(input, options), filename);
   }
   programmeSchema(options) { return this.#json('/api/programme/schema', undefined, options); }
   programmeRecord(input, options) { return this.#programme('record', input, options); }

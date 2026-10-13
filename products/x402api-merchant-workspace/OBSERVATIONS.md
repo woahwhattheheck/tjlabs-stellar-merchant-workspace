@@ -1,201 +1,158 @@
-# Observe the original merchant workspace
+# Operational observations
 
-The running merchant exposes a protected operational snapshot at `GET /api/observations`.
-SF93 can retain this exact snapshot, track each original order, and carry an aged
-payment or delivery condition into its existing incident workflow. The endpoint
-reads the merchant application's existing SQLite store in one synchronous read
-transaction. It does not open another store or call the provider or fulfillment
-handler.
+The running merchant serves two authorized observation routes from its existing
+SQLite owner. The Support workflow uses the complete original metadata capture.
+Its optional summary polling reads the same original records and supplies the
+same seven incident conditions with bounded order details.
 
-## Select the original running application
-
-Use the existing merchant configuration, private directory and operator token.
-When starting through the maintained `server.mjs serve` command, retain the
-original reviewed `--expect-inputs-sha256` and `--input-files` selection. The
-existing input reviewer verifies the complete configured input family before
-the handler is loaded. The observation carries that exact `inputsSha256`,
-the SHA-256 of the complete configuration-file bytes, and the original store UUID.
-
-A server started without a reviewed input fingerprint continues to operate. Its
-snapshot explicitly reports `configuration-file` and an unreviewed input binding.
-Direct programmatic construction uses `programmatic-config` and the SHA-256 of
-the original canonical configuration JSON. Neither substitutes a configuration
-digest for the complete reviewed input family.
-
-Read the endpoint with the same bearer token used by the operator API. The
-existing origin checks, duplicate-header checks, no-query rule, response
-`no-store` policy and shutdown draining remain in force. The endpoint accepts
-GET at its exact path; it has no write or payment action. Saved-project review
-mode returns `MERCHANT_OBSERVATIONS_LIVE_REQUIRED` (409). Activate the original
-application before collecting live observations; reopening an archive for review
-does not turn its saved business state into a fresh live signal.
-
-For example, from the operator's private environment:
-
-```sh
-umask 077
-curl --fail --silent --show-error \
-  --header "Authorization: Bearer $MERCHANT_OPERATOR_TOKEN" \
-  http://127.0.0.1:8764/api/observations \
-  --output merchant-observations.json
-```
-
-Keep the resulting JSON with the protected operational capture. It contains
-original order identifiers. Public metrics should use aggregate counts and
-condition kinds; the original order references belong in the protected capture
-and incident case.
-
-## Binding and snapshot identity
-
-The response schema is `merchant-workspace.observations.v1`. Its top-level
-`capturedAt` is the merchant clock's UTC ISO timestamp for this read. The
-collector's receive time is separate.
-
-`source` contains these exact fields:
-
-| Field | Meaning |
+| Route | Useful result |
 | --- | --- |
-| `storeId` | UUID retained in the original merchant metadata across reopen |
-| `tenantId` | Selected configured tenant |
-| `resourceVersionId` | Selected configured resource version |
-| `configSha256` | Complete raw configuration-file digest, or canonical programmatic-config digest as identified by `kind` |
-| `inputsSha256` | Original verified input-family digest; null when no reviewed selection was supplied |
-| `kind` | `reviewed-file-inputs`, `configuration-file`, or `programmatic-config` |
-| `bindingSha256` | Digest over the six fields above |
+| `GET /api/observation` | Complete order, history, provider exchange, webhook and fulfillment metadata for the original incident and customer Support capture. |
+| `GET /api/observation/summary` | Complete operational counts and original age anchors, with up to 1,024 condition-bearing order details. |
 
-To reproduce `bindingSha256`, SHA-256 the UTF-8 bytes of JavaScript
-`JSON.stringify({storeId,tenantId,resourceVersionId,configSha256,inputsSha256,kind})`
-with those keys in that order, nulls retained, and no trailing newline.
-The snapshot exposes hashes and selected UUIDs; it does not expose the private
-configuration path, credentials, webhook secrets or source-file paths.
+Both routes use the merchant's existing operator bearer authorization, origin
+checks and no-query policy. Use the existing loopback host and original token
+environment variable. Summary polling is available only on the running original
+owner; the saved-invoice review facade does not operate it.
 
-`snapshot.historySequence` is the original merchant history high-water mark
-read in the same transaction as the orders and counts.
-`snapshot.revision` is `storeId + ":" + historySequence`.
-A restart preserves the store identity and history. A lower sequence for the
-same store requires review by the collector; a different store must not silently
-replace the selected source. Multiple reads may legitimately share a sequence
-and have different capture times.
+## Configure the existing x402 registration
 
-The high-water mark covers the original order history. Standalone signed test
-webhooks and runtime lease metadata are outside this endpoint's order scope.
+Keep the existing SF93 x402 registration and its fixed
+`http://127.0.0.1:PORT/api/observation` endpoint. The optional
+`polling: "summary"` selection lets the collector derive the summary
+route. Registrations without that option retain their original complete-capture
+behavior and identity.
 
-## Counts, order rows and completeness
+The existing expected source fields remain the original `storeId`,
+`tenantId`, `resourceVersionId` and
+`configurationSha256`. The configuration hash is SHA-256 over the
+original canonical validated configuration, exactly as the complete observation
+uses. It is distinct from the exact configuration-file byte hash.
 
-The snapshot counts all original orders and each known state:
+The summary's `binding` also carries the reviewed input fingerprint when
+the original launch selected `--expect-inputs-sha256`. An optional expected
+`inputsSha256` on the x402 registration can bind this exact reviewed source.
+A configuration-file launch without that selected review reports a null input
+fingerprint. A programmatic launch identifies itself explicitly.
 
-`CREATED`, `CHARGE_UNCERTAIN`, `CHARGE_REJECTED`, `AWAITING_PAYMENT`,
-`PAYMENT_PENDING`, `PAYMENT_UNCERTAIN`, `PAYMENT_FAILED`,
-`SETTLEMENT_CONFIRMED`, `FULFILLMENT_PENDING`,
-`FULFILLMENT_INTERRUPTED`, and `COMPLETE`.
+The loader returns its original configuration file and reviewed inputs together
+with this immutable observation binding. It does not reopen the application,
+load another database, call the provider, or begin payment or fulfillment work.
 
-`counts` carries `totalOrders`, `activeOrders`, `returnedOrders`,
-`omittedOrders`, `unknownStateOrders`, and `states`.
-Known-state counts and the unknown-state total are complete even when order rows
-are truncated. `orders` includes all nonterminal orders, ordered by original
-creation time and ID, up to 1,024 rows. The terminal states are `COMPLETE`,
-`PAYMENT_FAILED`, and `CHARGE_REJECTED`.
+## Preserve the seven existing conditions
 
-Each row contains its exact `orderId`, `state`, original `source`, `createdAt`,
-`updatedAt`, original latest `historySequence`, `charge`, `payment`,
-`settlement`, `fulfillment`, `delivery`, and `coverage`.
-The row's `source.tenantId` and `source.resourceVersionId` are read from that
-order's original frozen terms. Top-level `source` identifies the currently
-selected runtime configuration. A store can retain active orders from older
-configurations; those original rows remain included. Use `storeId + orderId`
-for incident identity, and the row's source when describing its tenant or
-resource version. Missing or malformed original UUIDs make the row unknown.
-
-It omits title, customer reference, amount, wallet details, signatures, provider
-headers or bodies, webhook bodies and returned file contents.
-
-Top-level `coverage` explicitly describes the read:
-
-| Field | Values |
+| Existing condition | Original source used by summary polling |
 | --- | --- |
-| `status` | `complete` or `partial` |
-| `stateCounts` | `complete` |
-| `activeOrders` | `complete` or `truncated` |
-| `transitionTimes` | `complete` or `incomplete` |
-| `inputBinding` | `reviewed` or `unreviewed` |
-| `reasons` | Any of `active-orders-truncated`, `unknown-order-state`, `required-transition-unavailable`, `inputs-not-reviewed` |
+| Source unavailable | Unusable, stale or changed source, incomplete continuity, or a failed observation. |
+| Identity changed | Selected original store, tenant, resource version, canonical configuration or an explicitly required input fingerprint differs. |
+| Payment unresolved | The original analyzer's current state/signature condition until a retained receipt verification exists. The first event of that current unresolved episode supplies its age. |
+| Verified receipt output pending | The original retained receipt verification exists, but a complete returned and recorded fulfillment result does not. Its first original receipt-verification event supplies the age. |
+| Fulfillment interrupted | The original fulfillment row is interrupted. |
+| Result contradiction | A completed order lacks a complete recorded/returned result, or a complete result disagrees with its receipt verification, payment ID, byte count or digest. Completed orders remain in this check. |
+| Authority rejected | The original allowed authority-error codes on the order, or rejected bound webhook records before receipt verification. |
 
-Per-order `coverage` is exactly `complete` or `unknown`. An unknown original
-state, unavailable original source binding, an unavailable required transition time, or unconfirmed delivery
-evidence makes that row unknown. An invalid or future transition timestamp is
-reported as null; the original sequence remains available for investigation.
+A complete HTTP 200, a saved payment ID, or a finalized webhook does not replace
+the original verified-receipt predicate. An incomplete 200 can leave the original
+order in SETTLEMENT_CONFIRMED; it remains unresolved according to the maintained
+analyzer until its receipt verification exists. The summary reports merchant
+records and does not make a new independent ledger or output-byte verification.
 
-A partial snapshot can supply positive observations for the rows it actually
-contains. An absent row in partial coverage must not close an existing incident.
-A missing timestamp must not become age zero or the collector's current time.
-The collector must match the selected source, enforce freshness and reject a
-regressed history sequence before interpreting either positive or absent rows.
+The current episode starts when the original history's state/signature predicate
+becomes active after being inactive. Pending-to-uncertain updates do not reset
+that episode. Receipt verification ends it. A missing usable timestamp produces
+an unknown age, not zero.
 
-## Original condition ages
+## Complete totals with bounded details
 
-`charge` and `payment` each contain `active`, `firstRelevantAt`, and
-`historySequence`.
+The summary schema is
+`stellar-forge.x402api-merchant-observation-summary.v1`.
+Its coverage is COMPLETE only after every original order and all required event
+and exchange counts have been processed in one consistent read transaction.
+Unknown or disagreeing original order/history metadata rejects the observation.
 
-The charge family contains `CHARGE_UNCERTAIN`. The payment family contains
-`PAYMENT_PENDING` and `PAYMENT_UNCERTAIN`. For an active family, the endpoint
-finds its first original state transition after the most recent departure from
-that entire family. Retries, reconciliation schedules and transitions between
-pending and uncertain payment preserve the same first time and sequence.
-Leaving and later re-entering a family creates a new episode. This remains true
-after reopening the application because the original history is durable.
+The count names match the existing full analyzer:
 
-An order merely awaiting a buyer's authorization has no active payment episode.
-Inactive families carry null time and sequence. `updatedAt` is available for
-inspection and must not be used as the incident age origin.
+- orders, receiptVerified, unresolved, receiptOutputPending;
+- recordedResultComplete, resultProjectionPending, fulfillmentInterrupted;
+- contradictions, authorityRejected, authorityRejectionRecords;
+- providerExchanges, incompleteProviderExchanges, pendingWebhooks.
 
-## Settlement and unfinished delivery
+The two age groups are `ages.unresolved` and
+`ages.receiptOutputPending`. Each contains requests, unknown,
+oldestPendingSeconds and oldestSince. With zero requests, the age is zero and its
+timestamp is null. If every requested age is unknown, both oldest fields are
+null. Otherwise oldestSince is the earliest usable original timestamp and
+oldestPendingSeconds uses the snapshot time. The original analyzer's five-second
+clock tolerance is retained.
 
-The endpoint describes the payment evidence already retained by the original
-merchant application. It does not perform an independent network settlement
-verification. The payment authority remains x402api.
+Every count and age group covers all orders. The `orders` array contains
+only condition-bearing details, selected in original createdAt/ID order, up to
+1,024 rows and the response-byte budget. Each uses the existing analyzer row
+fields plus its own original frozen tenant/resource source. The
+`details` object reports matchingOrders, returnedOrders, omittedOrders and
+limit. Missing detailed rows cannot clear a condition whose complete aggregate
+remains positive or unknown.
 
-`settlement` contains `observed`, `firstRelevantAt`,
-`historySequence`, and `basis`. The first original qualifying history record
-selects the anchor and one of these bases:
+Old orders can retain an earlier resource version than the current runtime.
+Attribute each detailed row to its frozen `source`, and retain
+storeId plus order ID as its protected identity. The response does not include
+original bodies, signatures, credentials, raw receipt envelopes, provider
+responses or filesystem paths.
 
-| Basis | Original retained event |
-| --- | --- |
-| `payment-response-200` | Original complete terminal HTTP 200 response with its validated, matching payment identity |
-| `bound-finalized-webhook` | Signed finalized event after original tenant, order, resource, payment and frozen-rail binding checks |
-| `verified-receipt` | Original receipt verification completed |
-| `verified-fulfillment-claim` | Original paid fulfillment claim following receipt verification |
+## Continue the original history
 
-An incomplete HTTP 200, or a complete return without its original validated
-payment identity, remains unconfirmed even when the original application state
-is already `SETTLEMENT_CONFIRMED`. The observation preserves that state and
-reports unknown delivery coverage. A payment HTTP 409 alone does not establish
-settlement.
-`FULFILLMENT_PENDING` alone also does not establish it: that state is used by
-conflict and rejected-event reconciliation.
+Send the previously accepted original history sequence as the single header
+`X-Merchant-History-Sequence`. It is optional; a present value must be a
+positive safe decimal integer. Duplicate headers, other syntax and query
+parameters are rejected through the original server's validation.
 
-`delivery` contains `active`, `status`, `firstRelevantAt`, and
-`historySequence`. For a nonterminal order with settlement evidence, status is
-`pending`, active is true, and the delivery age starts at that same original
-settlement anchor. Handler retries and result-file publication do not reset it.
-A delivery-related state without qualifying evidence is `unconfirmed`; an
-order outside delivery is `not_applicable`.
+The same snapshot returns:
 
-`fulfillment` is null when no original fulfillment exists. Otherwise it carries
-only the original state, attempt count, and original claim time. Its states are
-`CLAIMED`, `RUNNING`, `INTERRUPTED`, `RETURNED`, and `COMPLETE`.
-A completed handler job can briefly coexist with a nonterminal order while the
-original result publication finishes; the order remains in the snapshot until
-the original application records its terminal completion.
+- `historyBoundary`: the latest original history sequence and SHA-256 of
+  that row's exact data_json, or null for an empty history;
+- `continuity`: the requested sequence and its exact sourceSha256, or a
+  null digest if that original sequence no longer exists. Without the header,
+  continuity is null.
 
-## Join the retained SF93 workflow
+Compare the returned proof with the previously captured boundary before treating
+absence as recovery. A missing, mismatched or regressed boundary is an unavailable
+observation, not recovery. The checksum is the exact same source hash retained
+in the complete observation's history. It is not a substitute for an entire
+history capture.
 
-Register the reviewed source with its exact store, tenant, resource version,
-configuration and input-family digests. Set charge, payment and delivery age
-thresholds for the original operation. SF93's merchant-workspace collector
-retains the complete response and checks the binding, freshness, sequence and
-coverage before advancing per-order condition episodes.
+The snapshot starts when the original metadata SELECT establishes SQLite's
+consistent view. capturedAt records that snapshot time; all reported ages use
+it. startedAt records entry into the observation. snapshotSha256 is SHA-256 over
+UTF-8 JSON.stringify of the complete response before adding snapshotSha256,
+without a trailing newline.
 
-Keep independent network or delivery-provider checks in their own explicit
-coverage. The protected merchant observation complements those checks and the
-existing SF74 incident/support case; it does not replace their source or
-verification authority.
+The binding hash uses that same UTF-8 JSON encoding over these keys in order:
+storeId, tenantId, resourceVersionId, configurationSha256, kind, inputsSha256,
+configFileSha256. Null values remain present. bindingSha256 is added afterward.
+
+## Keep the complete Support capture
+
+The maintained collector can use summaries for repeated operational polling and
+request the original complete observation when incident state changes, the
+selected source changes, or a periodic complete-capture interval expires. A
+later full fetch is evaluated as its own later snapshot; it must never be labeled
+as the earlier summary.
+
+If the full metadata exceeds its original 8 MiB/100,000-record workload limit,
+retain the complete summary capture and disclose why the full capture is
+unavailable. Keep existing conditions and their original recovery rules.
+Summary captures retain complete aggregate evidence and bounded details; the
+original full capture retains its complete history for customer Support
+comparison and export.
+
+The summary reuses the original per-order sequence index and streams only state,
+signature and receipt metadata required for the active episodes. It counts
+events and provider exchanges without exporting their original payloads. It
+does not create a second watcher, queue, MerchantStore, table or writer.
+
+## Receive the complete application
+
+The original complete project/source writer includes observation.mjs,
+observation-summary.mjs and this guide alongside the unchanged store and
+original application. Its existing source digest, private receiving,
+installation and editable project handover remain the receiving contract.

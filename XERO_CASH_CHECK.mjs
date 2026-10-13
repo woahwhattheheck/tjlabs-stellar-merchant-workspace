@@ -40,6 +40,7 @@ const directory=join(scratch,'accounting'),outboxDir=join(scratch,'outbox'),
 let workspace=null,service=null,controller=null,xero=null,client=null,commissioningService=null,commissioningClient=null,stage='original workspace setup',result=null;
 let baselineCycleId,secondCycleId,firstPackageId,secondPackageId,baselineRequest,secondRequest;
 let commissioningOriginalSourceId,commissioningSourceId,commissioningBaselineId,commissioningCaptureId,commissioningRequest;
+let mcpHost=null,mcpServer=null,mcpClient=null;
 const persistResult=async value=>{
   const text=json(value);
   if(process.env.SCF_CASH_RESULT)await writeFile(resolve(process.env.SCF_CASH_RESULT),text,{mode:0o600});
@@ -716,6 +717,195 @@ try {
   assert.equal(cashStateSha(),economicBeforeReopen);
   outcomes.push('Both original workshare editions, baseline and final commissioning captures, complete private files and original request recovery survive the same owner close/reopen; the dated customer ledger remains unchanged.');
 
+
+  if(process.argv.includes('--commissioning-mcp')) {
+    stage='original commissioning MCP owner and loopback transport';
+    const [{MerchantAccounting,normalizeAccountingConfig},{accountingTools},{createMcpToolHandler},
+      {merchantOperationError},{createServer},{connectAccountingCommissioningClient,
+      accountingCommissioningImportArguments,accountingCommissioningCaptureArguments},
+      {prepareAccountingCommissioningOperation,runAccountingCommissioningOperation}]=await Promise.all([
+      import('./stellar-forge/mcp-merchant-operator/accounting.mjs'),
+      import('./stellar-forge/mcp-merchant-operator/catalog/accounting.mjs'),
+      import('./stellar-forge/mcp-paid-agent/http-tools.mjs'),
+      import('./stellar-forge/mcp-merchant-operator/operation-error.mjs'),
+      import('node:http'),
+      import('./stellar-forge/mcp-merchant-operator/accounting-commissioning-client.mjs'),
+      import('./stellar-forge/mcp-merchant-operator/accounting-commissioning-cli.mjs'),
+    ]);
+    const economicBeforeMCP=cashStateSha();
+    await commissioningService.close();commissioningService=null;
+    await service.close();service=null;await workspace.close();workspace=null;
+    const aliasFile=join(scratch,'configured-workshare-edition.json');
+    await writeFile(aliasFile,workshareBytes2,{mode:0o600});
+    const accounting=normalizeAccountingConfig({workspaces:{cash:{
+      directory,outboxDir,proofDir,termsFile,receivablesInputs:{workshares:aliasFile},
+    }}},scratch);
+    mcpHost=new MerchantAccounting({accounting});
+    const tools=accountingTools((name,description,properties,required,annotations)=>({
+      name,description,inputSchema:{type:'object',properties,required,additionalProperties:false},annotations,
+    }));
+    assert.equal(tools.filter(tool=>tool.name.startsWith('merchant_accounting_commissioning_')).length,11);
+    const bearerToken='private-commissioning-native-'+randomUUID();
+    const handler=createMcpToolHandler({tools,call:(name,args)=>mcpHost.call(name,args)},{
+      bearerToken,maxRequestBytes:32*1024*1024,toolErrorView:merchantOperationError,
+      serverName:'original-commissioning-check',instructions:'Private original source-to-customer cash receiving.',
+    });
+    mcpServer=createServer((request,response)=>{
+      if(request.url!=='/mcp'){response.writeHead(404);response.end();return;}
+      void handler(request,response).catch(error=>{
+        if(!response.headersSent)response.writeHead(500);
+        response.end();process.stderr.write(String(error.stack??error)+'\n');
+      });
+    });
+    await new Promise((resolve,reject)=>{
+      mcpServer.once('error',reject);mcpServer.listen(0,'127.0.0.1',resolve);
+    });
+    const mcpUrl='http://127.0.0.1:'+mcpServer.address().port+'/mcp';
+    const connectMCP=()=>connectAccountingCommissioningClient({url:mcpUrl,workspace:'cash',bearerToken});
+    mcpClient=await connectMCP();
+    const configured=await mcpClient.configuredSources();
+    assert.ok(configured.workspaces.find(row=>row.workspace==='cash').receivablesInputs.includes('workshares'));
+    await mcpClient.open();
+
+    stage='configured original source resolved once and retained via MCP';
+    const mcpInspection=await mcpClient.inspectSource({sourceAlias:'workshares',
+      file:{name:'configured-workshare-edition.json'},currencyScales:{USD:2},
+      label:'MCP retained original workshare edition',replacesSourceId:commissioningSourceId});
+    assert.equal(mcpInspection.file.sha256,sha(workshareBytes2));
+    assert.equal(mcpInspection.sourceInput.file.dataBase64,workshareBytes2.toString('base64'));
+    assert.equal(mcpInspection.projectCount,4);
+    const mcpImportRequest=accountingCommissioningImportArguments(mcpInspection,{actor,requestId:randomUUID()});
+    const mcpImportDirectory=join(scratch,'mcp-original-source-operation');
+    const mcpPreparedImport=await prepareAccountingCommissioningOperation({
+      directory:mcpImportDirectory,url:mcpUrl,workspace:'cash',kind:'source_import',
+      preview:mcpInspection,actor,requestId:mcpImportRequest.requestId,
+    });
+    assert.deepEqual(mcpPreparedImport.arguments,mcpImportRequest);
+    // Changing the configured file after inspection cannot change the retained native request.
+    await writeFile(aliasFile,Buffer.concat([workshareBytes2,Buffer.from(' \n')]),{mode:0o600});
+    const mcpImported=await runAccountingCommissioningOperation({
+      directory:mcpImportDirectory,execute:true,client:mcpClient,
+    });
+    assert.equal(mcpImported.found,true);assert.equal(mcpImported.submitted,true);
+    const mcpImportRecovered=await runAccountingCommissioningOperation({
+      directory:mcpImportDirectory,execute:false,client:mcpClient,
+    });
+    assert.equal(mcpImportRecovered.found,true);
+    assert.equal(mcpImportRecovered.source.id,mcpImported.source.id);
+    const mcpSourceId=mcpImported.source.id;
+    assert.equal(mcpImported.source.sha256,sha(workshareBytes2));
+    assert.equal((await mcpClient.importSource(mcpImportRequest)).operation.replayed,true);
+    const mcpImportLookup=await mcpClient.request({requestId:mcpImportRequest.requestId});
+    const mcpImportIntent=copy(mcpImportRequest);delete mcpImportIntent.revision;
+    assert.equal(mcpImportLookup.source.id,mcpSourceId);
+    assert.equal(mcpImportLookup.operation.intentSha256,sha(json({
+      action:'commissioning_source_imported',value:mcpImportIntent,
+    })));
+    const mcpSources=await mcpClient.sources({projectId:'cash-a',offset:0,limit:200});
+    assert.ok(mcpSources.items.some(row=>row.id===mcpSourceId));
+    const mcpProjects1=await mcpClient.source({sourceId:mcpSourceId,view:'projects',offset:0,limit:2}),
+      mcpProjects2=await mcpClient.source({sourceId:mcpSourceId,view:'projects',offset:2,limit:2});
+    assert.equal(mcpProjects1.total,4);assert.equal(mcpProjects2.total,4);
+    assert.deepEqual([...mcpProjects1.items,...mcpProjects2.items].map(row=>row.id),projectIds);
+    const mcpOriginal=await mcpClient.fileBytes({kind:'commissioning-source',sourceId:mcpSourceId,
+      file:'original-workshares.json'},{expectedSha256:sha(workshareBytes2),chunkBytes:1024});
+    assert.deepEqual(mcpOriginal.bytes,workshareBytes2);
+    const mcpCandidates=await mcpClient.candidates({view:'invoices',sourceId:mcpSourceId,projectId:'cash-a',
+      customerId:customer.id,asOf,offset:0,limit:200});
+    assert.equal(mcpCandidates.items.find(row=>row.id===a.id).invoiceSha256,invoiceHashes[a.id]);
+
+    stage='original commissioning MCP preview and immutable capture';
+    const mcpSelection={...copy(scopeSelection),label:'Original commissioning captured through MCP',
+      baselineCaptureId:commissioningCaptureId};
+    const mcpPreview=await mcpClient.preview({sourceId:mcpSourceId,...mcpSelection});
+    assert.equal(mcpPreview.review.status,'READY',json(mcpPreview.review.findings));
+    assert.equal(mcpPreview.source.id,mcpSourceId);
+    assert.equal(mcpPreview.review.baseline.captureId,commissioningCaptureId);
+    const mcpUnsealed=copy(mcpPreview.review);delete mcpUnsealed.previewSha256;
+    assert.equal(sha(json(mcpUnsealed)),mcpPreview.previewSha256);
+    const mcpCaptureRequest=accountingCommissioningCaptureArguments(mcpPreview,{actor,requestId:randomUUID()});
+    const mcpCaptureDirectory=join(scratch,'mcp-original-capture-operation');
+    const mcpPreparedCapture=await prepareAccountingCommissioningOperation({
+      directory:mcpCaptureDirectory,url:mcpUrl,workspace:'cash',kind:'capture',
+      preview:mcpPreview,actor,requestId:mcpCaptureRequest.requestId,
+    });
+    assert.deepEqual(mcpPreparedCapture.arguments,mcpCaptureRequest);
+    const mcpNotYetCaptured=await runAccountingCommissioningOperation({
+      directory:mcpCaptureDirectory,execute:false,client:mcpClient,
+    });
+    assert.equal(mcpNotYetCaptured.found,false);
+    const mcpSaved=await runAccountingCommissioningOperation({
+      directory:mcpCaptureDirectory,execute:true,client:mcpClient,
+    }),mcpCaptureId=mcpSaved.capture.id;
+    assert.equal(mcpSaved.found,true);assert.equal(mcpSaved.submitted,true);
+    assert.equal(mcpSaved.capture.status,'READY');
+    assert.equal((await mcpClient.capture(mcpCaptureRequest)).operation.replayed,true);
+    const mcpLookup=await mcpClient.request({requestId:mcpCaptureRequest.requestId});
+    const mcpCaptureIntent=Object.fromEntries(Object.entries(mcpCaptureRequest).filter(([key])=>key!=='sourceId'));
+    mcpCaptureIntent.commissioningSourceId=mcpSourceId;delete mcpCaptureIntent.revision;
+    assert.equal(mcpLookup.capture.id,mcpCaptureId);
+    assert.equal(mcpLookup.operation.intentSha256,sha(json({
+      action:'commissioning_collections_captured',value:mcpCaptureIntent,
+    })));
+    const mcpDetail=await mcpClient.detail({captureId:mcpCaptureId});
+    assert.equal(mcpDetail.capture.review.previewSha256,mcpPreview.previewSha256);
+    const mcpReviewDescriptor=mcpDetail.capture.files.find(row=>row.name==='commissioning-review.json');
+    assert.deepEqual(mcpReviewDescriptor.selection,{
+      kind:'commissioning-capture',captureId:mcpCaptureId,file:'commissioning-review.json',
+    });
+    const mcpReview=await mcpClient.fileBytes(mcpReviewDescriptor.selection,{
+      expectedSha256:mcpReviewDescriptor.sha256,chunkBytes:1024,
+    });
+    assert.equal(sha(mcpReview.bytes),mcpReviewDescriptor.sha256);
+    assert.deepEqual(JSON.parse(mcpReview.bytes),mcpPreview.review);
+    const mcpSnapshotFile=await mcpClient.fileBytes({kind:'commissioning-capture',captureId:mcpCaptureId,
+      file:'commissioning-account-snapshot.json'});
+    const mcpSnapshot=JSON.parse(mcpSnapshotFile.bytes);
+    const mcpEconomic=sha(json(Object.fromEntries(['invoices','credits','receipts','allocations','refunds','creditDispositions']
+      .map(key=>[key,mcpSnapshot.data[key]??[]]))));
+    assert.equal(mcpEconomic,economicBeforeMCP);
+    const mcpManifest=await mcpClient.export({captureId:mcpCaptureId});
+    assert.equal(mcpManifest.value.id,mcpCaptureId);assert.equal(mcpManifest.scope,'PRIVATE_COMPLETE_ACCOUNT');
+    const mcpArchive=await mcpClient.fileBytes(mcpManifest.archive);
+    assert.equal(mcpArchive.bytes.length%512,0);
+    assert.ok(mcpArchive.bytes.includes(Buffer.from('commissioning-account-snapshot.json')));
+    sourceHashes.commissioningMCPReview=sha(mcpReview.bytes);
+    sourceHashes.commissioningMCPSnapshot=sha(mcpSnapshotFile.bytes);
+    sourceHashes.commissioningMCPArchive=sha(mcpArchive.bytes);
+    identities.commissioningMCPSourceId=mcpSourceId;identities.commissioningMCPCaptureId=mcpCaptureId;
+
+    stage='original MCP uncertainty, file drain and owner reopen';
+    const mcpUncertainty={at:new Date().toISOString(),action:'commissioning_collections_captured',
+      revision:mcpSaved.revision,causeCode:'PRIVATE_MCP_RECEIVING_FAULT'};
+    // Borrow the host's existing live admission solely to exercise its original
+    // uncertain-commit producer; no parallel workspace is opened.
+    await mcpHost.withServiceAgreementsWorkspace('cash',original=>{
+      original.commitUncertainty=copy(mcpUncertainty);
+    });
+    await assert.rejects(mcpClient.capture(mcpCaptureRequest),error=>{
+      assert.equal(error.code,'WORKSPACE_COMMIT_UNKNOWN');assert.equal(error.status,409);
+      assert.equal(error.outcomeUnknown,true);assert.equal(error.reopenRequired,true);
+      assert.deepEqual(error.commitUncertainty,mcpUncertainty);return true;
+    });
+    const closed=await mcpClient.closeWorkspace();assert.equal(closed.ownership,'CLOSED');mcpClient=null;
+    mcpClient=await connectMCP();await mcpClient.open();
+    const recovered=await runAccountingCommissioningOperation({
+      directory:mcpCaptureDirectory,execute:false,client:mcpClient,
+    });
+    assert.equal(recovered.capture.id,mcpCaptureId);
+    assert.equal((await mcpClient.capture(mcpCaptureRequest)).operation.replayed,true);
+    assert.equal(sha((await mcpClient.fileBytes(mcpReviewDescriptor.selection,{
+      expectedSha256:mcpReviewDescriptor.sha256})).bytes),sourceHashes.commissioningMCPReview);
+    const capturePage=await mcpClient.captures({sourceId:mcpSourceId,offset:0,limit:200});
+    assert.equal(capturePage.total,1);
+    await mcpClient.closeWorkspace();mcpClient=null;
+    await mcpHost.close();mcpHost=null;
+    await new Promise((resolve,reject)=>mcpServer.close(error=>error?reject(error):resolve()));mcpServer=null;
+    await openOriginal();
+    assert.equal(cashStateSha(),economicBeforeMCP);
+    outcomes.push('The original MerchantAccounting MCP host resolves declared source bytes once, preserves full native request identities, reviews and captures the same cohort, returns exact private/source/report bytes through its owned reader, and recovers the same request after native uncertainty and close/reopen without a second ledger or lease.');
+  }
+
   result={schema:'stellar-forge.xero-cash-native-check.v1',status:'PASS',asOf,node:process.version,
     workspaceDirectory:directory,firstPackageId,secondPackageId,baselineCycleId,secondCycleId,
     commissioning:{sourceId:commissioningSourceId,originalSourceId:commissioningOriginalSourceId,baselineCaptureId:commissioningBaselineId,captureId:commissioningCaptureId},
@@ -730,6 +920,9 @@ try {
     identities,sourceHashes,outcomes,
     completedAt:new Date().toISOString()};
 } finally {
+  try{if(mcpClient)await mcpClient.disconnect();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='drain commissioning MCP client';result.message=error.message;process.exitCode=1;}}
+  try{if(mcpHost)await mcpHost.close();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close commissioning MCP owner';result.message=error.message;process.exitCode=1;}}
+  try{if(mcpServer)await new Promise((resolve,reject)=>mcpServer.close(error=>error?reject(error):resolve()));}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close commissioning MCP transport';result.message=error.message;process.exitCode=1;}}
   try{if(commissioningService)await commissioningService.close();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close commissioning service';result.message=error.message;process.exitCode=1;}}
   try{if(service)await service.close();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close HTTP service';result.message=error.message;process.exitCode=1;}}
   try{if(workspace)await workspace.close();}catch(error){if(result?.status==='PASS'){result.status='FAIL';result.stage='close original workspace';result.message=error.message;process.exitCode=1;}}

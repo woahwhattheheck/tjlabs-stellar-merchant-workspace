@@ -1,0 +1,237 @@
+#!/usr/bin/env node
+// MIT. Complete retained-source projection, correction and two-receiver operator journey.
+import {promises as fs} from "node:fs";
+import {join,resolve,dirname} from "node:path";
+import {pathToFileURL,fileURLToPath} from "node:url";
+import {createHash} from "node:crypto";
+import {HaystackWorkspace} from "./store.mjs";
+import {receiveBundle,verifyBundle,PACKAGE_FORMAT} from "./portable.mjs";
+import {parseGrid,encodeGrid} from "./haystack-types.mjs";
+import {stringifyJson,canonicalJson} from "./json-codec.mjs";
+import {plainRead,createOnlyFile,exists} from "./files.mjs";
+import {PROJECTION_BROWSER_SCHEMA} from "./PROJECTION_BROWSER.mjs";
+
+export const PROJECTION_RECEIVING_SCHEMA="commons.haystack.projection-receiving.v1";
+const ROOT=dirname(fileURLToPath(import.meta.url));
+const CHARLIE_SHA="c44a410c183f9ef9add5757955637d1ce0bad0dabf418f80e6b9a7b4a2b9afe9";
+const sha=b=>createHash("sha256").update(b).digest("hex");
+const bytes=v=>Buffer.from(stringifyJson(v,2)+"\n");
+const equal=(a,b)=>canonicalJson(a)===canonicalJson(b);
+const copy=v=>JSON.parse(stringifyJson(v));
+const clean=v=>{const result=copy(v);delete result.replayed;return result;};
+function need(value,message){if(!value)throw Error(message);}
+function uuid(seed){const h=sha(Buffer.from(seed));return h.slice(0,8)+"-"+h.slice(8,12)+"-4"+h.slice(13,16)+"-a"+h.slice(17,20)+"-"+h.slice(20,32);}
+async function read(path){return JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await plainRead(path)));}
+async function optional(path){return await exists(path)?read(path):null;}
+async function retain(path,value){await createOnlyFile(path,bytes(value));return value;}
+async function retainBytes(path,value){await createOnlyFile(path,value);const actual=await plainRead(path);need(actual.length===value.length&&sha(actual)===sha(value),"A retained original artifact changed.");return{path,bytes:actual.length,sha256:sha(actual)};}
+function sameSource(source,expected){need(source.bytes.length===expected.bytes&&sha(source.bytes)===expected.sha256,"The original native source bytes changed.");}
+
+/**
+ * This programme has its own explicitly named receiving lineage. It never sends
+ * a grid to a remote station or creates customer acceptance. All mutations use
+ * the original workspace action catalogue and immutable original request IDs.
+ */
+export async function runProjectionReceiving(input){
+ need(input?.schema===PROJECTION_RECEIVING_SCHEMA&&/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(input.operationId),"Supply the complete programme with its original UUID.");
+ need(typeof input.directory==="string"&&input.directory.startsWith("/")&&typeof input.author==="string"&&input.author.trim(),"Use an absolute owned programme directory and the actual operator name.");
+ need(["public-charlie","provided-source"].includes(input.mode),"Choose the retained public Charlie source or an explicitly supplied original source.");
+ const root=resolve(input.directory);need(root!==dirname(root),"Choose an ordinary owned programme directory.");
+ await fs.mkdir(root,{recursive:true,mode:0o700});
+ need(!(await fs.lstat(root)).isSymbolicLink(),"The programme directory must be ordinary.");
+ await retain(join(root,"input.json"),input);
+ const phases=join(root,"phases"),outputs=join(root,"outputs");await fs.mkdir(phases,{recursive:true});await fs.mkdir(outputs,{recursive:true});
+ const artifacts=[],actions=[];
+ async function artifact(name,value){const result=await retainBytes(join(outputs,name),value);artifacts.push({name,...result});return result;}
+ async function saved(name,producer){const path=join(phases,name+".json"),old=await optional(path);if(old)return old;return retain(path,await producer());}
+ async function action(workspace,name,kind,fields){
+  const intentPath=join(phases,name+".request.json"),resultPath=join(phases,name+".result.json");
+  let intent=await optional(intentPath),result=await optional(resultPath);
+  const current=await workspace.read();
+  if(intent){
+   const selected={...intent.args};delete selected.expectedRevision;delete selected.operationId;
+   need(intent.workspaceId===current.workspaceId&&intent.action===kind&&equal(selected,fields),"The original retained action belongs to another selection: "+name);
+  }else{
+   intent={schema:"commons.haystack.projection-programme-request.v1",workspaceId:current.workspaceId,action:kind,
+    args:{...copy(fields),expectedRevision:current.revision,operationId:uuid(input.operationId+"/"+name)}};
+   await retain(intentPath,intent);
+  }
+  let actual;
+  try{actual=await workspace.dispatch("operation.read",{operationId:intent.args.operationId});}
+  catch(error){if(error.status!==404)throw error;actual=await workspace.dispatch(kind,intent.args);}
+  need(actual.workspaceId===intent.workspaceId&&actual.operationId===intent.args.operationId,"The original native response identity changed: "+name);
+  if(result)need(equal(clean(result),clean(actual)),"The saved native operation result changed: "+name);
+  else result=await retain(resultPath,actual);
+  actions.push({name,workspaceId:intent.workspaceId,action:kind,operationId:intent.args.operationId,revision:result.revision});
+  return result;
+ }
+ async function query(workspace,kind,args){const s=await workspace.read();return workspace.dispatch(kind,{...args,expectedRevision:s.revision});}
+ async function projection(workspace,projectionId,versionId){return query(workspace,"projection.read",{projectionId,...(versionId?{versionId}:{})});}
+ async function deliver(workspace,name,fields){
+  const result=await action(workspace,name,"delivery.prepare",fields),received=await workspace.deliveryBytes(result.operationId);
+  need(received.bytes.length===result.bytes&&sha(received.bytes)===result.sha256,"A native delivery differs from its actual original return.");
+  const file=await artifact(name+"-"+result.name.replace(/[^A-Za-z0-9._-]/g,"_"),received.bytes);
+  return{result,file,bytes:received.bytes};
+ }
+ async function completeComparison(workspace,name,id,before,after){
+  return saved(name,async()=>{let offset=0,total=null,rows=[];const state=await workspace.read();
+   for(;;){const result=await workspace.dispatch("projection.compare",{expectedRevision:state.revision,projectionId:id,beforeVersionId:before,afterVersionId:after,offset,limit:250});
+    if(total===null)total=result.total;need(result.total===total&&result.offset===offset,"Projection comparison pagination changed.");
+    rows.push(...result.items);if(!result.hasMore)break;need(result.nextOffset>offset,"Projection comparison did not advance.");offset=result.nextOffset;
+   }
+   need(rows.length===total,"Projection comparison omitted original rows.");return{workspaceId:state.workspaceId,projectionId:id,beforeVersionId:before,afterVersionId:after,rows};
+  });
+ }
+ async function reports(workspace,name,id,versionId){
+  const result=[];
+  for(const [kind,format]of[["projection-grid","json"],["projection-lineage","json"],["projection-lineage","csv"],["projection-report","json"],["projection-report","html"]]){
+   const d=await deliver(workspace,name+"-"+kind+"-"+format,{kind,projectionId:id,versionId,format});result.push({kind,format,operationId:d.result.operationId,...d.file});
+  }return result;
+ }
+ async function received(bundle,destination,name){
+  const verified=verifyBundle(bundle);need(JSON.parse(bundle.toString("utf8")).format===PACKAGE_FORMAT,"The complete projection needs its original v4 application.");
+  const receipt=await receiveBundle(bundle,destination);
+  // Load the received application itself; the authoring checkout is not its runtime.
+  const module=await import(pathToFileURL(join(destination,"application","store.mjs")).href);
+  const workspace=new module.HaystackWorkspace(destination),state=await workspace.read();
+  need(state.workspaceId===verified.state.workspaceId,"The receiver opened a different workspace.");
+  for(const [leaf,original]of verified.application){const actual=await plainRead(join(destination,"application",leaf));need(equal([actual.length,sha(actual)],[original.length,sha(original)]),"A received complete application file changed: "+leaf);}
+  const baselinePath=join(phases,name+"-baseline.json"),baseline=await optional(baselinePath);
+  if(baseline){
+   need(baseline.packageSha256===verified.packageSha256&&baseline.stateSha256===sha(bytes(verified.state)),"The original receiver baseline differs.");
+   // Recipient edits must not be overwritten or compared against the old baseline.
+  }else{
+   need(equal(state,verified.state),"The first independent receiver did not reopen the exact original state.");
+   await retain(baselinePath,{packageSha256:verified.packageSha256,payloadSha256:verified.payloadSha256,stateSha256:sha(bytes(verified.state)),workspaceId:state.workspaceId,revision:state.revision,applicationFiles:verified.application.size,installationId:receipt.installationId});
+  }
+  return workspace;
+ }
+ async function cold(workspace,name,sourceIdentity,projectionId,versionId){
+  const module=await import(pathToFileURL(join(workspace.directory,"application","store.mjs")).href);
+  const reopened=new module.HaystackWorkspace(workspace.directory),state=await reopened.read();
+  sameSource(await reopened.originalSource(sourceIdentity.sha256),sourceIdentity);
+  const value=await projection(reopened,projectionId,versionId);need(value.version.id===versionId,"The cold receiver did not reopen its retained version.");
+  const result={workspaceId:state.workspaceId,revision:state.revision,projectionId,versionId,history:value.history.map(x=>x.id),returns:value.returns.map(x=>x.id),gridSha256:value.gridSha256};
+  return saved(name,async()=>result);
+ }
+ const done=await optional(join(root,"COMPLETE.json"));
+ if(done){
+  for(const item of done.artifacts){const raw=await plainRead(item.path);need(raw.length===item.bytes&&sha(raw)===item.sha256,"A complete programme artifact changed.");}
+  for(const recipient of done.receivers){
+   const module=await import(pathToFileURL(join(recipient.directory,"application","store.mjs")).href),workspace=new module.HaystackWorkspace(recipient.directory);
+   const state=await workspace.read();need(state.workspaceId===done.workspaceId,"A completed receiving workspace changed identity.");
+   sameSource(await workspace.originalSource(done.source.sha256),done.source);
+   const original=await projection(workspace,done.projectionId,recipient.versionId);need(original.version.id===recipient.versionId,"A retained recipient version disappeared.");
+  }return{...done,reused:true};
+ }
+ const nativePath=input.mode==="public-charlie"?join(ROOT,"fixture-charlie.json"):resolve(input.source?.path||"");
+ need(input.mode!=="provided-source"||input.source?.sha256&&input.source?.name&&input.source?.sourceUrl!==undefined,"Bind the supplied original source to its name, exact SHA-256 and original URL (which may be empty).");
+ const sourceRaw=await plainRead(nativePath),expectedSha=input.mode==="public-charlie"?CHARLIE_SHA:input.source.sha256;
+ need(sha(sourceRaw)===expectedSha,"The supplied complete original source differs from the reviewed input.");
+ const originalGrid=parseGrid(sourceRaw,{format:"json-v4"}).grid;
+ const sourceIdentity={name:input.mode==="public-charlie"?"fixture-charlie.json":input.source.name,bytes:sourceRaw.length,sha256:expectedSha,
+  sourceUrl:input.mode==="public-charlie"?"https://project-haystack.org/example/download/charlie.json":input.source.sourceUrl,
+  meaning:input.mode==="public-charlie"?"Retained public Charlie fixture; no customer, live station or vendor acceptance.":"Operator-selected original source; programme edits are explicitly labelled."};
+ if(input.mode==="public-charlie")need(originalGrid.rows.length===624&&originalGrid.cols.length===87,"The retained Charlie edition is not the original complete grid.");
+ await artifact("original-source.json",sourceRaw);await artifact("original-source-identity.json",bytes(sourceIdentity));
+ const workspaceDirectory=join(root,"authoring-workspace"),workspace=new HaystackWorkspace(workspaceDirectory);
+ if(!(await exists(join(workspaceDirectory,"workspace.json"))))await workspace.initialize(input.title||"Retained-source typed projection");
+ const originalWorkspace=await saved("workspace-identity",async()=>{const s=await workspace.read();return{workspaceId:s.workspaceId};});
+ need((await workspace.read()).workspaceId===originalWorkspace.workspaceId,"The programme authoring workspace was replaced.");
+ const imported=await action(workspace,"01-source-import","source.import",{name:sourceIdentity.name,base64:sourceRaw.toString("base64"),format:"json-v4",sourceUrl:sourceIdentity.sourceUrl,select:true});
+ need(imported.source.id===expectedSha,"The original importer did not retain the complete input identity.");
+ const selection={nativeSourceIds:[imported.source.id],intakeIds:[]};
+ const modelPreview=await saved("02-model-preview",()=>query(workspace,"semantic.model.preview",{
+  title:input.model?.title||"Retained original source model",namespace:input.model?.namespace||"urn:commons:projection:"+input.operationId+":",
+  selection,mappings:[],naming:input.model?.naming||{template:"{nativeId}",case:"preserve",separator:"_",description:"Original native identity, with no inferred station observation."}}));
+ const content=input.model?.content?copy(input.model.content):copy(modelPreview.content);
+ content.notes=(content.notes||"")+"\nOperator programme "+input.operationId+". Original observation status is preserved; no site visit, live station or customer acceptance is inferred.";
+ const model=await action(workspace,"03-model-save","semantic.model.create",{contextId:modelPreview.contextId,selection,content,author:input.author,note:"Complete retained-source model for explicit typed projection."});
+ const profile=input.profile?copy(input.profile):{
+  title:"Native-preserve complete original grid",description:"Explicit original-column selection. Preserve typed values, null and empty values; absent cells remain absent.",
+  entityIds:modelPreview.content.entities.map(e=>e.id),columns:originalGrid.cols.map(c=>({tag:c.name,source:{kind:"native",sourceId:expectedSha,tag:c.name},conversion:{kind:"preserve",blank:"keep",trim:false},...(c.meta?{meta:copy(c.meta)}:{})})),
+  overrides:[],meta:copy(originalGrid.meta)
+ };
+ const firstPreview=await saved("04-projection-preview",()=>query(workspace,"projection.preview",{modelId:model.model.id,versionId:model.version.id,profile}));
+ need(firstPreview.canPublish,"The full projection contains unresolved structural or semantic errors; retain its diagnostics and correct the reviewed profile.");
+ if(!input.profile)need(equal(firstPreview.grid,originalGrid),"The complete native-preserve projection changed an original typed cell, absence, order or metadata.");
+ const created=await action(workspace,"05-projection-save","projection.create",{modelId:model.model.id,versionId:model.version.id,profile,author:input.author,note:"Explicit complete native-preserve profile."});
+ const projectionId=created.projection.id;
+ await action(workspace,"06-projection-review","projection.review",{projectionId,expectedHeadId:created.version.id,decision:"ready",author:input.author,note:"Operator reviewed complete source-bound grid and lineage; this is not station or customer acceptance."});
+ const published=await action(workspace,"07-native-publish","projection.publish",{projectionId,expectedHeadId:created.version.id,author:input.author,note:"Publish only into this original local native source store.",select:true});
+ const actualNative=await workspace.originalSource(published.source.id);
+ need(sha(actualNative.bytes)===firstPreview.gridSha256,"The original native publication differs from the reviewed complete grid.");
+ await artifact("published-native-grid.json",actualNative.bytes);
+ await reports(workspace,"08-before",projectionId,created.version.id);
+ const incoming=await saved("09-return-input",async()=>{
+  const selected=parseGrid(actualNative.bytes,{format:"json-v4"}).grid;
+  const original=await projection(workspace,projectionId,created.version.id);
+  if(input.returned){
+   const raw=await plainRead(resolve(input.returned.path));need(sha(raw)===input.returned.sha256,"The provided returned grid changed.");
+   return{name:input.returned.name,base64:raw.toString("base64"),bindings:input.returned.bindings,consumerReference:input.returned.consumerReference,decisions:input.returned.decisions,meaning:"Explicitly supplied actual returned grid and operator decisions."};
+  }
+  need(input.mode==="public-charlie","A provided-source programme needs its actual returned grid and explicit decisions.");
+  const candidates=selected.rows.map((row,index)=>({row,index})).filter(x=>typeof x.row.dis==="string");
+  need(candidates.length>=2,"Choose two original text-bearing rows for the labelled public-source operator correction.");
+  const [kept,adopted]=candidates;
+  selected.rows[kept.index].dis+=" [operator programme "+input.operationId+" proposed; keep original]";
+  selected.rows[adopted.index].dis+=" [operator programme "+input.operationId+" adopted correction]";
+  return{name:"operator-programme-return.json",base64:Buffer.from(encodeGrid(selected,{format:"json-v4",indent:2})).toString("base64"),
+   bindings:original.rows.map(r=>({entityId:r.entityId,rowIndex:r.rowIndex})),
+   consumerReference:"Operator programme "+input.operationId+"; correction constructed from the actual locally published public-source grid, not an external consumer response.",
+   decisions:original.rows.map(r=>({entityId:r.entityId,decision:r.rowIndex===adopted.index?"adopt":"keep"})),
+   keptRowIndex:kept.index,adoptedRowIndex:adopted.index,meaning:"Explicit operator-only correction over the retained public fixture."};
+ });
+ await artifact("incoming-return.json",Buffer.from(incoming.base64,"base64"));
+ const returnFields={projectionId,name:incoming.name,base64:incoming.base64,bindings:incoming.bindings,consumerReference:incoming.consumerReference};
+ const returnPreview=await saved("10-return-preview",()=>query(workspace,"projection.return.preview",{...returnFields,versionId:created.version.id}));
+ const applied=await action(workspace,"11-return-apply","projection.return.apply",{...returnFields,expectedHeadId:created.version.id,expectedReturnSha256:returnPreview.returnSha256,decisions:incoming.decisions,author:input.author,note:"Explicit original-grid keep/adopt decisions from the retained programme input."});
+ const corrected=await projection(workspace,projectionId,applied.version.id);
+ need(corrected.returns.some(r=>r.id===applied.return.id&&r.source.sha256===returnPreview.source.sha256),"The complete original returned file and decisions are not retained.");
+ if(input.mode==="public-charlie"&&!input.returned){
+  const selected=parseGrid(actualNative.bytes,{format:"json-v4"}).grid,returned=parseGrid(Buffer.from(incoming.base64,"base64"),{format:"json-v4"}).grid;
+  need(equal(corrected.grid.rows[incoming.keptRowIndex],selected.rows[incoming.keptRowIndex])&&equal(corrected.grid.rows[incoming.adoptedRowIndex],returned.rows[incoming.adoptedRowIndex]),"The original explicit keep/adopt decisions were not applied to complete rows.");
+ }
+ await artifact("return-comparison.json",bytes(await completeComparison(workspace,"12-compare",projectionId,created.version.id,applied.version.id)));
+ await action(workspace,"13-corrected-review","projection.review",{projectionId,expectedHeadId:applied.version.id,decision:"ready",author:input.author,note:"Review the source-bound corrected projection, including kept original cells."});
+ await reports(workspace,"14-after",projectionId,applied.version.id);
+ const first=await deliver(workspace,"15-first-complete-workspace",{kind:"workspace"});
+ const receiverOneDirectory=join(root,"receiver-one"),receiverOne=await received(first.bytes,receiverOneDirectory,"16-receiver-one");
+ sameSource(await receiverOne.originalSource(expectedSha),sourceIdentity);
+ const receiverOneBase=await projection(receiverOne,projectionId,applied.version.id);
+ const recipientProfile=copy(receiverOneBase.profile);recipientProfile.description+="\nIndependent receiver one operator edit "+input.operationId+".";
+ const recipient=await action(receiverOne,"17-recipient-edit","projection.save",{projectionId,expectedHeadId:applied.version.id,modelId:receiverOneBase.modelId,versionId:receiverOneBase.modelVersionId,profile:recipientProfile,author:input.author,note:"Independent editable receiving; complete earlier source and return history retained."});
+ await action(receiverOne,"18-recipient-review","projection.review",{projectionId,expectedHeadId:recipient.version.id,decision:"ready",author:input.author,note:"Review the independent recipient's explicit local edit."});
+ let browser=null,firstRecipientVersion=recipient.version.id;
+ if(input.browser){
+  const module=await import(pathToFileURL(join(receiverOneDirectory,"application","PROJECTION_BROWSER.mjs")).href);
+  browser=await module.runProjectionBrowser({schema:PROJECTION_BROWSER_SCHEMA,operationId:uuid(input.operationId+"/browser"),directory:receiverOneDirectory,outputDirectory:join(root,"browser"),
+   workspaceId:originalWorkspace.workspaceId,modelId:model.model.id,projectionId,versionId:recipient.version.id,author:input.author,
+   playwrightModule:input.browser.module,chromiumExecutable:input.browser.executable});
+  firstRecipientVersion=browser.versionId;
+  for(const item of browser.artifacts)artifacts.push({name:"browser/"+item.path.split("/").at(-1),...item});
+ }
+ await reports(receiverOne,"19-recipient",projectionId,firstRecipientVersion);
+ const second=await deliver(receiverOne,"20-second-complete-workspace",{kind:"workspace"});
+ const receiverTwoDirectory=join(root,"receiver-two"),receiverTwo=await received(second.bytes,receiverTwoDirectory,"21-receiver-two");
+ const receiverTwoBase=await projection(receiverTwo,projectionId,firstRecipientVersion),secondProfile=copy(receiverTwoBase.profile);
+ secondProfile.description+="\nIndependent receiver two operator edit "+input.operationId+".";
+ const secondEdit=await action(receiverTwo,"22-second-recipient-edit","projection.save",{projectionId,expectedHeadId:firstRecipientVersion,modelId:receiverTwoBase.modelId,versionId:receiverTwoBase.modelVersionId,profile:secondProfile,author:input.author,note:"Second independently restored application edit with original source history."});
+ await action(receiverTwo,"23-second-recipient-review","projection.review",{projectionId,expectedHeadId:secondEdit.version.id,decision:"ready",author:input.author,note:"Review the second recipient's explicit local edit."});
+ await reports(receiverTwo,"24-second-recipient",projectionId,secondEdit.version.id);
+ const third=await deliver(receiverTwo,"25-final-complete-workspace",{kind:"workspace"});
+ const reopenOne=await cold(receiverOne,"26-first-cold-reopen",sourceIdentity,projectionId,firstRecipientVersion);
+ const reopenTwo=await cold(receiverTwo,"27-second-cold-reopen",sourceIdentity,projectionId,secondEdit.version.id);
+ need(reopenTwo.history.includes(created.version.id)&&reopenTwo.history.includes(applied.version.id)&&reopenTwo.returns.includes(applied.return.id),"The independent final receiver lost original projection or returned-grid history.");
+ const result={schema:PROJECTION_RECEIVING_SCHEMA,operationId:input.operationId,inputSha256:sha(bytes(input)),status:"COMPLETED",workspaceId:originalWorkspace.workspaceId,source:sourceIdentity,modelId:model.model.id,modelVersionId:model.version.id,projectionId,
+  originalVersionId:created.version.id,correctedVersionId:applied.version.id,returnId:applied.return.id,
+  counts:firstPreview.counts,returnChangedRows:returnPreview.changedRows,actions,artifacts,
+  archives:[first.file,second.file,third.file],receivers:[{directory:receiverOneDirectory,...reopenOne},{directory:receiverTwoDirectory,...reopenTwo}],browser,
+  meaning:"Actual local source, model, typed projection, original-store publication, explicit correction, complete v4 export and two independent editable receiving journeys. No remote station write or customer acceptance is inferred."};
+ await retain(join(root,"COMPLETE.json"),result);return result;
+}
+export async function main(argv=process.argv.slice(2)){
+ need(argv.length===2&&argv[0]==="--input","Use --input COMPLETE_PROGRAMME_JSON.");
+ const result=await runProjectionReceiving(await read(resolve(argv[1])));process.stdout.write(stringifyJson(result)+"\n");
+}
+if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)main().catch(error=>{process.stderr.write(stringifyJson({error:error.message,code:error.code??null})+"\n");process.exitCode=1;});

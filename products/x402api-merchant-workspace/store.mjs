@@ -2,7 +2,6 @@
 // x402api remains the payment authority. This store records its verified
 // identifiers and original bytes; it never interprets a signature as payment.
 import { DatabaseSync } from 'node:sqlite';
-import { merchantObservationSnapshot } from './observations.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { constants, openSync, closeSync, fstatSync, lstatSync, fsyncSync } from 'node:fs';
 import { mkdir, realpath, lstat } from 'node:fs/promises';
@@ -412,10 +411,6 @@ export class MerchantStore {
   getOrder(id, { private: privateFields = false } = {}) {
     this._assertOpen();
     return this._orderView(this._order(id, privateFields), privateFields);
-  }
-
-  observations(options) {
-    return merchantObservationSnapshot(this, options);
   }
 
   listOrders({ state, reference, query, limit, offset = 0, private: privateFields = false } = {}) {
