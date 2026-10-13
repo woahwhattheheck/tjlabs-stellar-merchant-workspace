@@ -1,6 +1,7 @@
 // MIT. Live SF93 operations inside the existing SF74 merchant case workspace.
 import {parseWorkspace} from './workspace-file.mjs';
 import {mountIncidentRecoveryDesk} from './incident-recovery-desk.mjs';
+import {oauthSummaryHtml} from './oauth-render.mjs';
 
 const add=(parent,tag,text,className='')=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;parent.append(n);return n;};
 const button=(parent,text,action,className='secondary')=>{const n=add(parent,'button',text,className);n.type='button';n.addEventListener('click',action);return n;};
@@ -12,7 +13,10 @@ const labels={ENDPOINT_UNAVAILABLE:'Endpoint unavailable',OBSERVER_INCOMPLETE:'I
   CKAN_SOURCE_UNAVAILABLE:'CKAN source unavailable',CKAN_IDENTITY_CHANGED:'CKAN project identity changed',
   CKAN_SOURCE_INTEGRITY:'CKAN source integrity',CKAN_OPERATION_FAILED:'CKAN operation failed',
   CKAN_OPERATION_OVERDUE:'CKAN operation overdue',CKAN_REVIEW_PENDING:'CKAN refresh review pending',
-  CKAN_PUBLICATION_PENDING:'CKAN publication pending'};
+  CKAN_PUBLICATION_PENDING:'CKAN publication pending',OAUTH_SOURCE_UNAVAILABLE:'OAuth source unavailable',
+  OAUTH_CONFIGURATION_CHANGED:'OAuth configuration changed',OAUTH_SOURCE_INTEGRITY:'OAuth source integrity',
+  OAUTH_OBSERVER_INCOMPLETE:'OAuth observer incomplete',OAUTH_VERIFIER_UNAVAILABLE:'OAuth verifier unavailable',
+  OAUTH_HOST_AUTHORITY_ERROR:'OAuth host authority error',OAUTH_JWKS_UNAVAILABLE:'OAuth JWKS unavailable',OAUTH_JWKS_RATE_LIMITED:'OAuth JWKS rate limited'};
 const human=value=>String(value??'').toLowerCase().replaceAll('_',' ').replace(/^\w/,c=>c.toUpperCase());
 const when=value=>value?new Date(value).toLocaleString():'—';
 const terminal=new Set(['DELIVERED','CANCELLED']);
@@ -23,6 +27,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   let configDirty=false,loadedConfigRevision=null,prepared=null,recovery=null;
   let objectReview=null,objectEpoch=0,objectChoicesKey='';
   let ckanReview=null,ckanEpoch=0,ckanChoicesKey='';
+  let oauthReview=null,oauthEpoch=0,oauthChoicesKey='';
   const downloads=new Set();
   root.id='incidents';root.className='card incident-desk';root.hidden=true;
   const heading=add(root,'div',undefined,'section-heading'),copy=add(heading,'div');
@@ -44,6 +49,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const objectStatus=add(root,'section',undefined,'runtime-captures');objectStatus.id='incident-object-status';objectStatus.hidden=true;
 
   const ckanStatus=add(root,'section',undefined,'runtime-captures');ckanStatus.id='incident-ckan-status';ckanStatus.hidden=true;
+  const oauthStatus=add(root,'section',undefined,'runtime-captures');oauthStatus.id='incident-oauth-status';oauthStatus.hidden=true;
   const workerPanel=add(root,'div',undefined,'incident-worker');
   const workerCopy=add(workerPanel,'div');add(workerCopy,'h3','Watcher');
   const workerState=add(workerCopy,'p','','incident-worker-state'),workerObserved=add(workerCopy,'p','','hint');
@@ -71,6 +77,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const facts=add(details,'div',undefined,'scope');
   const objectDetails=add(details,'div',undefined,'runtime-captures');objectDetails.id='incident-object-captures';
   const ckanDetails=add(details,'div',undefined,'runtime-captures');ckanDetails.id='incident-ckan-captures';
+  const oauthDetails=add(details,'div',undefined,'runtime-captures');oauthDetails.id='incident-oauth-captures';
   const acknowledgeForm=add(details,'form',undefined,'incident-ack-form');
   const operatorLabel=add(acknowledgeForm,'label','Operator name'),operator=add(operatorLabel,'input');
   operator.id='incident-operator';operator.required=true;operator.maxLength=160;operator.autocomplete='name';
@@ -162,6 +169,26 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   const ckanDraft=button(ckanActions,'Add or replace source in draft',addCkanDraft);ckanDraft.id='incident-ckan-add';
   const ckanReviewStatus=add(ckanPanel,'p','Choose a saved CKAN workspace to inspect.','hint');ckanReviewStatus.setAttribute('role','status');
   const ckanReviewFacts=add(ckanPanel,'div',undefined,'scope');
+  const oauthPanel=add(configPanel,'section',undefined,'incident-oauth-registration');oauthPanel.hidden=true;
+  add(oauthPanel,'h3','Watch an original OAuth resource');
+  add(oauthPanel,'p','Inspect a protected source already registered for this console. Review the actual resource and normalized verifier configuration, then add that selection to the existing watcher draft.');
+  const oauthForm=add(oauthPanel,'form'),oauthGrid=add(oauthForm,'div',undefined,'form-grid');
+  const oauthSourceLabel=add(oauthGrid,'label','Registered protected source'),oauthSource=add(oauthSourceLabel,'select');oauthSource.id='incident-oauth-source';
+  const oauthIdLabel=add(oauthGrid,'label','Watcher source ID'),oauthId=add(oauthIdLabel,'input');oauthId.id='incident-oauth-id';oauthId.required=true;oauthId.maxLength=64;oauthId.pattern='[A-Za-z0-9_-]{1,64}';
+  const oauthNameLabel=add(oauthGrid,'label','Source label'),oauthName=add(oauthNameLabel,'input');oauthName.id='incident-oauth-label';oauthName.required=true;oauthName.maxLength=120;
+  const oauthLimits={};
+  for(const [key,label,value,min,max]of [
+    ['timeoutMs','Protected read timeout (ms)',5000,100,30000],['windowMinutes','Rolling window (minutes)',5,1,60],
+    ['unavailableMinimum','Unavailable checks minimum',1,1,1000000000],['unavailablePercent','Unavailable share threshold (%)',10,0,100],
+    ['hostErrorMinimum','Host callback failures minimum',1,1,1000000000],['hostErrorPercent','Host failure share threshold (%)',10,0,100]]) {
+    const field=add(oauthGrid,'label',label),input=add(field,'input');input.type='number';input.id='incident-oauth-'+key;
+    input.value=String(value);input.min=String(min);input.max=String(max);input.step='1';input.required=true;oauthLimits[key]=input;
+  }
+  const oauthActions=add(oauthForm,'div',undefined,'actions'),inspectOauth=add(oauthActions,'button','Inspect protected source','secondary');
+  inspectOauth.type='submit';inspectOauth.id='incident-oauth-inspect';
+  const oauthDraft=button(oauthActions,'Add or replace source in draft',addOauthDraft);oauthDraft.id='incident-oauth-add';
+  const oauthReviewStatus=add(oauthPanel,'p','No protected source selected.','hint');oauthReviewStatus.setAttribute('role','status');
+  const oauthReviewFacts=add(oauthPanel,'div',undefined,'scope');
   const configForm=add(configPanel,'form');
   const configLabel=add(configForm,'label','Current watcher configuration'),configText=add(configLabel,'textarea');
   configText.id='incident-config-json';configText.rows=14;configText.spellcheck=false;configText.maxLength=60000;
@@ -198,12 +225,16 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     for(const input of [ckanSource,ckanId,ckanName,requirePublication,...Object.values(ckanRecords),...Object.values(ckanLimits)])input.disabled=busy||!current;
     inspectCkan.disabled=busy||!current||!ckanSource.value||loadedConfigRevision!==current.configRevision;
     ckanDraft.disabled=busy||!ckanReview||!current||loadedConfigRevision!==current.configRevision;
+    for(const input of [oauthSource,oauthId,oauthName,...Object.values(oauthLimits)])input.disabled=busy||!current;
+    inspectOauth.disabled=busy||!current||!oauthSource.value||loadedConfigRevision!==current.configRevision;
+    oauthDraft.disabled=busy||!oauthReview||!current||loadedConfigRevision!==current.configRevision;
     for(const node of queueRows.querySelectorAll('button'))node.disabled=busy||!operator.value.trim();
     recovery?.refreshControls();
   }
   function drawConfig() {
     if(!current)return;
-    drawObjectChoices();drawCkanChoices();
+    drawObjectChoices();drawCkanChoices();drawOauthChoices();
+    if(oauthReview&&oauthReview.configRevision!==current.configRevision)invalidateOauth('Watcher settings changed. Inspect this protected source against the current revision.');
     if(ckanReview&&ckanReview.configRevision!==current.configRevision)invalidateCkan('Watcher settings changed. Inspect this CKAN project against the current revision.');
     if(objectReview&&objectReview.configRevision!==current.configRevision)invalidateObject('Watcher settings changed. Inspect this session against the current revision.');
     if(!configDirty&&loadedConfigRevision!==current.configRevision) {
@@ -373,6 +404,73 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
       else {const box=add(ckanStatus,'section',undefined,'runtime-capture');add(box,'h4',row.label);add(box,'p','Start the existing watcher to read this registered project.','hint');}
     }
   }
+  function invalidateOauth(message='Inspect the selected protected source before adding it to the draft.') {
+    oauthEpoch++;oauthReview=null;oauthReviewFacts.replaceChildren();oauthReviewStatus.textContent=message;oauthReviewStatus.className='hint';
+  }
+  function oauthInput() {
+    const limits=Object.fromEntries(Object.entries(oauthLimits).map(([key,input])=>[key,Number(input.value)]));
+    if(Object.values(limits).some(value=>!Number.isSafeInteger(value)))throw new Error('Use whole numbers for OAuth observation settings.');
+    return {oauthSourceId:oauthSource.value,expectedConfigRevision:current.configRevision,...limits};
+  }
+  function oauthFormKey(){return JSON.stringify({profile:source.value,input:oauthInput(),id:oauthId.value,label:oauthName.value});}
+  function drawOauthChoices() {
+    const choices=current.source.oauthResources??[],key=JSON.stringify({source:current.source.id,choices});
+    oauthPanel.hidden=!choices.length;if(key===oauthChoicesKey)return;
+    oauthChoicesKey=key;invalidateOauth();const prior=oauthSource.value;oauthSource.replaceChildren();
+    for(const choice of choices)add(oauthSource,'option',choice.label).value=choice.id;
+    if(choices.some(choice=>choice.id===prior))oauthSource.value=prior;
+    const chosen=choices.find(choice=>choice.id===oauthSource.value);oauthId.value=chosen?.id??'';oauthName.value=chosen?.label??'';
+  }
+  async function inspectProtectedOauth() {
+    if(busy||!current||!oauthForm.reportValidity()||loadedConfigRevision!==current.configRevision)return;
+    invalidateOauth('Reading the original protected observation…');
+    const epoch=oauthEpoch,profile=source.value,key=oauthFormKey(),input=oauthInput();
+    busy=true;sequence++;clearTimeout(timer);controls();
+    try {
+      const result=await api(base()+'/inspect-oauth',input);
+      if(destroyed||epoch!==oauthEpoch||profile!==source.value||key!==oauthFormKey())return;
+      if(result.source?.id!==profile||result.oauthSourceId!==input.oauthSourceId||result.configRevision!==input.expectedConfigRevision)
+        throw new Error('The protected review returned a different source or watcher revision.');
+      oauthReview={result,configRevision:result.configRevision,key};
+      const fact=(label,value)=>{const row=add(oauthReviewFacts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));};
+      fact('Actual resource',result.oauth.resource);fact('Configuration SHA-256',result.oauth.configurationSha256);
+      fact('Original session',result.sourceObservation.sessionId);fact('Read bytes',result.sourceObservation.bytes);fact('Observed',when(result.observedAt));
+      fact('Host authority callback',result.authority.hostCallback?'Present':'Absent');
+      fact('Observer errors',result.state.observerErrors);fact('Clock error',result.state.clockError);
+      oauthReviewStatus.textContent='Protected source inspected. Review the actual configuration and thresholds, then add this selection to the draft.';
+      say('Original protected source inspected; no configuration change has been applied.');
+    } catch(error) {
+      if(!destroyed&&epoch===oauthEpoch){oauthReview=null;oauthReviewStatus.textContent=error.message;oauthReviewStatus.className='status error';say(error.message,true);}
+    } finally {busy=false;controls();schedule();}
+  }
+  function addOauthDraft() {
+    if(busy||!oauthReview||!current||!oauthForm.reportValidity())return;
+    try {
+      if(oauthReview.configRevision!==current.configRevision||loadedConfigRevision!==current.configRevision||oauthReview.key!==oauthFormKey())
+        throw new Error('The reviewed protected source or watcher settings changed. Inspect it again.');
+      const config=JSON.parse(configText.value),id=oauthId.value;
+      if(!Array.isArray(config.merchants)||['__proto__','constructor','prototype'].includes(id))throw new Error('Use a valid watcher configuration and source ID.');
+      const row={id,label:oauthName.value,oauth:oauthReview.result.oauth},index=config.merchants.findIndex(item=>item.id===id);
+      if(index<0){if(config.merchants.length>=8)throw new Error('The watcher already has eight sources. Remove or replace one in the draft first.');config.merchants.push(row);}
+      else config.merchants[index]=row;
+      configText.value=JSON.stringify(config,null,2);configDirty=true;
+      oauthReviewStatus.textContent='Reviewed OAuth selection added to the draft. Apply configuration explicitly to register it.';
+      drawConfig();controls();say('OAuth watcher draft updated. Other sources and notification settings are preserved.');
+    } catch(error){say(error.message,true);}
+  }
+  function oauthFacts(parent,summary,title) {
+    const box=add(parent,'section',undefined,'runtime-capture');add(box,'h4',title);
+    const body=add(box,'div');body.innerHTML=oauthSummaryHtml(summary);
+    if(summary.poll&&!summary.poll.successful)add(box,'p','Current original poll: '+human(summary.poll.reason),'status error');
+  }
+  function drawOauth() {
+    oauthStatus.replaceChildren();const resources=current.merchants.filter(row=>row.kind==='OAUTH_RESOURCE');
+    oauthStatus.hidden=!resources.length;if(!resources.length)return;add(oauthStatus,'h3','Original OAuth observations');
+    for(const row of resources) {
+      if(row.observation)oauthFacts(oauthStatus,row.observation,row.label);
+      else {const box=add(oauthStatus,'section',undefined,'runtime-capture');add(box,'h4',row.label);add(box,'p','No retained observation yet. The existing watcher reads this registered source.','hint');}
+    }
+  }
   function drawList() {
     listRows.replaceChildren();recovery?.update(current);if(!current)return;
     for(const item of current.incidents) {
@@ -391,14 +489,15 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     const worker=current.worker;
     workerState.textContent=(worker.ownership==='console'?'This console · ':worker.ownership==='external'?'Recorded external service · ':'')+human(worker.status);
     workerObserved.textContent='Last sweep: '+when(worker.recorded?.lastSweepAt)+(worker.error?' · '+human(worker.error):'');
-    badge.textContent=current.source.label;drawConfig();drawObjects();drawCkan();controls();
+    badge.textContent=current.source.label;drawConfig();drawObjects();drawCkan();drawOauth();controls();
   }
   function fact(label,value){const row=add(facts,'div',undefined,'scope-row');add(row,'b',label);add(row,'span',String(value??'—'));}
   function drawDetail() {
-    details.hidden=!detail;objectDetails.replaceChildren();ckanDetails.replaceChildren();if(!detail){controls();return;}
+    details.hidden=!detail;objectDetails.replaceChildren();ckanDetails.replaceChildren();oauthDetails.replaceChildren();if(!detail){controls();return;}
     const incident=detail.incident;
     for(const [side,summary]of Object.entries(detail.objectObservations??{}))objectFacts(objectDetails,summary,human(side)+' original Object capture');
     for(const [side,summary]of Object.entries(detail.ckanObservations??{}))ckanFacts(ckanDetails,summary,human(side)+' original CKAN capture');
+    for(const [side,summary]of Object.entries(detail.oauthObservations??{}))oauthFacts(oauthDetails,summary,human(side)+' original OAuth capture');
     routeChoices.replaceChildren();
     for(const choice of detail.routes??[]){const option=add(routeChoices,'option');option.value=choice.id;option.label=choice.method+' '+(choice.path??'')+' · '+choice.sides.join(' and ');}
     captureStatus.textContent=Object.entries(detail.captureProblems??{}).map(([side,problem])=>human(side)+' capture: '+problem.detail).join(' ');
@@ -469,7 +568,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
         destinationStatus.textContent=result.accepted?'Verified workspace '+result.teamId+' · actor '+result.actorId+' · channel '+result.channelId:human(result.reason);
         say(result.accepted?'Slack workspace and actor verified.':'Slack verification needs attention.',!result.accepted);
       } else {
-        if(action==='configure'){configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();destinationStatus.textContent='';}
+        if(action==='configure'){configDirty=false;loadedConfigRevision=null;invalidateObject();invalidateCkan();invalidateOauth();destinationStatus.textContent='';}
         if(action==='ack')notes.value='';
         say(action==='start'?'Watcher start requested. Its state appears above.':action==='stop'?'This console’s watcher stopped and drained.':
           action==='configure'?'Watcher configuration applied.':action==='ack'?'Incident acknowledged.':action==='notify'?'Operator reminder queued.':'Operation completed.');
@@ -528,6 +627,7 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
     selection++;sequence++;offset=0;selectedId=null;current=null;detail=null;configDirty=false;loadedConfigRevision=null;
     invalidateObject();objectChoicesKey='';objectStatus.replaceChildren();objectStatus.hidden=true;
     invalidateCkan();ckanChoicesKey='';ckanStatus.replaceChildren();ckanStatus.hidden=true;
+    invalidateOauth();oauthChoicesKey='';oauthStatus.replaceChildren();oauthStatus.hidden=true;
     destinationStatus.textContent='';merchant.value='';routeId.value='';configText.value='';configSummary.textContent='Loading settings…';listRows.replaceChildren();
     clearPrepared();recovery?.update(null);drawDetail();await refresh({force:true});
   }
@@ -550,6 +650,12 @@ export function mountIncidentDesk({root,exportCase,importCase}) {
   },{signal:abort.signal});
   for(const input of [ckanId,ckanName,requirePublication,...Object.values(ckanRecords),...Object.values(ckanLimits)])
     input.addEventListener('input',()=>{invalidateCkan();controls();},{signal:abort.signal});
+  oauthForm.addEventListener('submit',event=>{event.preventDefault();inspectProtectedOauth();},{signal:abort.signal});
+  oauthSource.addEventListener('change',()=>{
+    invalidateOauth();const chosen=current?.source.oauthResources?.find(row=>row.id===oauthSource.value);
+    oauthId.value=chosen?.id??'';oauthName.value=chosen?.label??'';controls();
+  },{signal:abort.signal});
+  for(const input of [oauthId,oauthName,...Object.values(oauthLimits)])input.addEventListener('input',()=>{invalidateOauth();controls();},{signal:abort.signal});
   configText.addEventListener('input',()=>{configDirty=true;drawConfig();controls();},{signal:abort.signal});
   configForm.addEventListener('submit',event=>{event.preventDefault();let config;
     try{config=JSON.parse(configText.value);}catch{say('Enter valid configuration JSON before applying settings.',true);return;}
