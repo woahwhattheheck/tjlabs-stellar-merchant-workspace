@@ -167,6 +167,48 @@ async function openRecovery(path){
  const chooser=await waiting;await chooser.setFiles(path);
  await page.locator('.statement-desk [name="accountId"]').waitFor({state:'visible'});
 }
+async function receiveStatementCopiesInFreshBrowser(archive,csvEdition,originalInputs){
+ const browser=context.browser();need(browser,'Use the existing browser to open an independent private receiving context.');
+ const originalPage=page;
+ const receiving=await browser.newContext({viewport:{width:1360,height:1000},acceptDownloads:true});
+ try{
+  await receiving.route('**/*',async route=>{
+   const request=route.request(),url=new URL(request.url());
+   if(!['http:','https:'].includes(url.protocol)){await route.continue();return;}
+   if(url.origin!==origin||request.method()==='POST'&&url.pathname.endsWith('/command')){await route.abort();return;}
+   await route.continue();
+  });
+  page=await receiving.newPage();const errors=[];page.on('pageerror',error=>errors.push(String(error).replaceAll(token||'\0','[workspace key]')));
+  await openOperations(origin+'/#access='+token,state.caseId);await openStatements();
+  const desk=page.locator('.statement-desk'),act=name=>desk.locator('[data-statement-action="copies-'+name+'"]');
+  await desk.locator('.statement-copies .statement-empty').waitFor();
+  await capture('00-copies-independent-empty-desktop');
+  const chooser=page.waitForEvent('filechooser');await act('import').click();await(await chooser).setFiles(archive.path);
+  await desk.locator('.statement-notice').filter({hasText:'Received '+JSON.parse(archive.raw).editions.length+' complete saved editions'}).waitFor();
+  await desk.locator('[name="copyQuery"]').fill('Operating USD');await act('filter').click();
+  await desk.locator('[data-statement-action="copies-select"][data-copy-id="'+csvEdition.id+'"]').click();
+  await desk.locator('[name="copyEdition"]').fill(String(csvEdition.revision));
+  await act('review').click();await desk.locator('.statement-copy-comparison').waitFor();
+  await capture('00-copies-independent-complete-review-desktop');
+  await page.setViewportSize({width:390,height:844});await capture('00-copies-independent-complete-review-phone');
+  await act('open').click();await desk.locator('.statement-notice').filter({hasText:'Opened Operating USD'}).waitFor();
+  const recovered=await download('draft-export','statement-working-copies-independent-recovery.json');
+  need(canonical(JSON.parse(recovered.raw).inputs)===canonical(originalInputs),'Independent browser receiving preserves every original CSV source/mapping/decision/allocation.');
+  const reviewed=await preview('csv-independent-working-copy-native-preview');
+  need(reviewed.canImport&&reviewed.summary.newCount===3,'The original case accepts the independently reopened working copy for its original reviewed receiving.');
+  await capture('00-copies-independent-native-preview-phone');
+  const full=await download('copies-export','statement-working-copies-independent-complete.json'),fullValue=JSON.parse(full.raw);
+  const original=JSON.parse(archive.raw);
+  for(const edition of original.editions){
+   const received=fullValue.editions.find(row=>row.id===edition.id&&row.revision===edition.revision);
+   need(received&&canonical(received)===canonical(edition),'Independent browser export preserves every complete original immutable edition.');
+  }
+  need(errors.length===0,'The independent working-copy browser reported: '+errors.join('; '));
+  await stage('original-statement-copies-independently-received',{caseId:state.caseId,csvCopyId:csvEdition.id,
+   originalEditions:original.editions.length,receivedEditions:fullValue.editions.length,
+   archiveSha256:sha(archive.raw),receivedArchiveSha256:sha(full.raw),nativePreviewSha256:reviewed.previewSha256});
+ }finally{page=originalPage;await receiving.close();}
+}
 async function statementCopiesBrowser(prepared){
  const desk=page.locator('.statement-desk');
  if(!await desk.locator('.statement-copies').count())return;
@@ -208,6 +250,7 @@ async function statementCopiesBrowser(prepared){
  const complete=JSON.parse(archive.raw);
  need(complete.index.copies.some(row=>row.filename==='bank-initial.ofx'),'Full archive includes the independently prepared original OFX.');
  need(complete.editions.every(row=>row.draft.caseId===state.caseId),'Every complete edition keeps the original case.');
+ await receiveStatementCopiesInFreshBrowser(archive,csvEdition,initial.inputs);
  const chooser=page.waitForEvent('filechooser');await act('import').click();await(await chooser).setFiles(archive.path);
  await desk.locator('.statement-notice').filter({hasText:'Received 0 complete saved editions'}).waitFor();
  const conflict=structuredClone(complete),firstEdition=conflict.editions[0];
