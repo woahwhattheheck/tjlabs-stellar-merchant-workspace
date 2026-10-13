@@ -16,6 +16,8 @@ Published path inputs use the original route-identity helper in the offline requ
 
 The offline customer report now completes the catalogue-change handover itself. Customers receive both exact source editions, inspect all original before/after rows and payment alternatives with the original comparison semantics, and read source scope, incomplete enumeration and repeated identities alongside observed changes. Review notes, earlier views and exact customer request drafts remain attached. Complete JSON and self-contained HTML reopen independently, while printing includes every filtered identity and its full original source rows. The live request editor stays on its exact catalogue and original row; restored drafts retain the earlier customer work. Browser writes coalesce while the customer edits, and a failed import preserves the open review.
 
+The source decision also travels within the actual customer operation. The original select command accepts the complete downloaded review, verifies its after catalogue and exact selected row before staging, and retains its byte-exact review, both complete source editions and self-contained report. The original request verifies every retained file when it reopens. Full private receiving and the existing Customer Installation snapshot carry that decision with the customer's task, source, request and native history. The original Installation annex links the complete review and returns the receiving machine's local report path, while earlier editions retain their established summaries.
+
 ### Complete source
 
 [Complete Rialto customer receiving and independent reopening](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/7b2c8e94a9dc08124c75e372c802839db18ebb15/stellar/scf-starforge-20261009/partners/rialto/OPERATING.md)
@@ -44,6 +46,14 @@ The offline customer report now completes the catalogue-change handover itself. 
 
 [Installed Rialto customer, comparison and native Installation journeys](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/a1ec07c422132af070399ba368587a167ad3ed23/products/rialto/README.md)
 
+[Complete source decision bound to original request and private receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32383f4efb956ad95341629278546c0c201ec0f7/stellar/scf-starforge-20261009/partners/rialto/review-request.mjs)
+
+[Original Rialto customer command with complete catalogue review receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32383f4efb956ad95341629278546c0c201ec0f7/stellar/scf-starforge-20261009/partners/rialto/customer.mjs)
+
+[Original Installation source decision and independent customer handover](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32383f4efb956ad95341629278546c0c201ec0f7/stellar/scf-starforge-20261009/partners/rialto/installation.mjs)
+
+[Complete catalogue decision through request and Installation operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/32383f4efb956ad95341629278546c0c201ec0f7/stellar/scf-starforge-20261009/partners/rialto/CATALOGUE_COMPARISON.md)
+
 ## Source registration
 
-The original grant composer reads `stellar-forge/developer-site/grant-products/rialto-customer.json`. It selects all thirteen measured immutable source editions only when the complete H2 above is present in the selected manuscript or companion. The existing source index and all other registered products remain with their original cumulative composition. The application owner can use this complete chapter through the maintained chapter chooser and original save/export workflow.
+The original grant composer reads `stellar-forge/developer-site/grant-products/rialto-customer.json`. It selects all seventeen measured immutable source editions only when the complete H2 above is present in the selected manuscript or companion. The existing source index and all other registered products remain with their original cumulative composition. The application owner can use this complete chapter through the maintained chapter chooser and original save/export workflow.
