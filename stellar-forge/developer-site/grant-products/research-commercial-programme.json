@@ -1,0 +1,112 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "research-commercial-programme",
+  "heading": "## Research quotations, paid delivery and complete customer programmes",
+  "sources": [
+    {
+      "id": "research-commercial-commissioning",
+      "label": "Research Applications commissioning and original host selections",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/research/COMMISSIONING.md",
+      "editions": [
+        {
+          "commit": "4cd7288a061bb8943619804f8211916f881e7c28",
+          "bytes": 18331,
+          "sha256": "605e93801640146146ec58b175ab030814677451ec696e8ea5fe445259b842b0",
+          "git_blob": "3a2e873752f1c7dce1f2521dfd8e232680b40c61"
+        }
+      ]
+    },
+    {
+      "id": "research-commercial-quotation",
+      "label": "Complete customer quotation and realized delivery operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/OPERATING.md",
+      "editions": [
+        {
+          "commit": "4cd7288a061bb8943619804f8211916f881e7c28",
+          "bytes": 41244,
+          "sha256": "7bcde398547425f9e074659e6d64156e9bf7a385c27d784f90d4b462b1ebc053",
+          "git_blob": "fdf00c585130e59082c680f4889ccec27f5efadd"
+        }
+      ]
+    },
+    {
+      "id": "research-commercial-programme",
+      "label": "Retained quotation programme and complete case and dossier receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/PROGRAMME.md",
+      "editions": [
+        {
+          "commit": "4cd7288a061bb8943619804f8211916f881e7c28",
+          "bytes": 26255,
+          "sha256": "12977bf871939e374d6c0957584eec27b103ff49e2616945c22f344c271c1c88",
+          "git_blob": "9d46d6887863215ebec048e9834bbb7fe5dcc60f"
+        }
+      ]
+    },
+    {
+      "id": "research-commercial-commerce",
+      "label": "Original paid Research publication and Buyer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-commerce/OPERATING.md",
+      "editions": [
+        {
+          "commit": "4cd7288a061bb8943619804f8211916f881e7c28",
+          "bytes": 24421,
+          "sha256": "71f3de318d5f000d3cb3f0569a949bc24f4ebb6fcae80ce2483300710a416bc4",
+          "git_blob": "8f7ea54048a06b2c76dc85a9bb4e75bad74bf1bc"
+        }
+      ]
+    },
+    {
+      "id": "research-commercial-python",
+      "label": "Installed Python programme and two-workspace receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/RESEARCH-QUOTE-PROGRAMMES.md",
+      "editions": [
+        {
+          "commit": "4cd7288a061bb8943619804f8211916f881e7c28",
+          "bytes": 23126,
+          "sha256": "7edbfc5fca256233b60eab521d313e5492335cb0e8325b87f822a898a1a92763",
+          "git_blob": "663e18c23cbc3502b3a294d538aadeba928c3588"
+        }
+      ]
+    },
+    {
+      "id": "research-commercial-merchant",
+      "label": "Whole Merchant programme and streamed destination transfer",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/RESEARCH_PROGRAMMES.md",
+      "editions": [
+        {
+          "commit": "4cd7288a061bb8943619804f8211916f881e7c28",
+          "bytes": 17497,
+          "sha256": "8933f6ee492405ce90de80c9c94b13f5ba67e5f03035f78615b8a410e4467b00",
+          "git_blob": "f350c25c0b516621e13f84f1a23fa58c7d2d78ee"
+        }
+      ]
+    },
+    {
+      "id": "research-commercial-remote",
+      "label": "Installed remote terminal and complete source-to-customer workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/RESEARCH_PROGRAMME_TERMINAL.md",
+      "editions": [
+        {
+          "commit": "4cd7288a061bb8943619804f8211916f881e7c28",
+          "bytes": 14031,
+          "sha256": "3096155eed6aa44d46f2d5d52aada73d9ba38687fea335e4a8ba0ea5bd718ecc",
+          "git_blob": "2a9733fbdd1f4c1fdb8654387b89df93d0d99ebc"
+        }
+      ]
+    }
+  ]
+}
