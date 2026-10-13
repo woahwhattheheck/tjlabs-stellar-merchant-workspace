@@ -1,5 +1,6 @@
 /* MIT. Original-source operator on the retained NDJSON Workspace. */
 import {mountReviewCycles} from "./review-cycles.js";
+import {mountGleifIntake} from "./gleif-intake.js";
 const $ = (selector, root=document) => root.querySelector(selector);
 const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
 const pretty = value => JSON.stringify(value, null, 2);
@@ -121,7 +122,7 @@ function renderState() {
 async function refresh() {
   state=await api("state");
   if (!contract) contract=await api("contract");
-  renderState();
+  renderState();gleifIntake.refresh(state);
   await Promise.all([loadEntities(),loadCounterparties(),loadChanges()]);
   if (selectedUpdate) inspectUpdate(selectedUpdate.id);
   if (selectedRequest) await inspectRequest(selectedRequest.id);
@@ -414,5 +415,12 @@ document.addEventListener("click",event=>{
     if (action==="candidate") await reviewNativeCandidate(id,trigger.dataset.counterparty);
   });
 });
+const gleifIntake=await mountGleifIntake({root:$("#gleif-intake"),api,refresh,getState:()=>state,escape,download,message,
+  openPortfolio:async id=>{$("#portfolio-selection").value=id;counterpartyOffset=0;await loadCounterparties();navigate("portfolios");},
+  useMonitoringPolicy:policy=>{
+    const form=$("#case-form"),current=objectValue(form,"monitoring",contract.monitoring);
+    named(form,"monitoring").value=pretty({...current,resolutionProperties:[...new Set([...(current.resolutionProperties??policy.resolutionProperties),"leiCode"])]});
+    navigate("review");message("LEI is included in this case monitoring draft. Review the unchanged identity and relevance choices before saving.");
+  }});
 await mountReviewCycles({api,run,navigate,inspectCase,getState:()=>state,refresh,escape,pretty});
 await run("Open retained source workspace",refresh);

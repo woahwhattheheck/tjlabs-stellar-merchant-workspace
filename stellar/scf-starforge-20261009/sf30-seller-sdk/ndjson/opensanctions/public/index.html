@@ -61,6 +61,7 @@
 <section id="view-portfolios" hidden>
 <div class="page-heading"><div><p class="eyebrow">Customer-owned source</p><h1>Counterparties</h1><p>Original customer IDs remain in their selected portfolio namespace. The provider receives only the native requests you prepare and dispatch.</p></div></div>
 <article><h2>Receive customer FtM objects</h2><form id="portfolio-form"><div class="form-grid"><label>Stable portfolio key<input name="key" required maxlength="128" placeholder="Customer-selected key"></label><label>Label<input name="label" required maxlength="160"></label><label>Original FtM JSON Lines<input name="original" type="file" required accept=".json,.jsonl,.ndjson,.gz"></label></div><button type="submit">Receive original counterparties</button></form></article>
+<article id="gleif-intake"></article>
 <article><h2>Retained portfolio editions</h2><div id="portfolio-table" class="table-wrap"></div><label>Inspect portfolio<select id="portfolio-selection" data-portfolios></select></label><div id="counterparty-table" class="table-wrap"></div><div id="counterparty-pager" class="pager"></div><pre id="counterparty-detail" class="scroll-box"></pre></article>
 </section>
 

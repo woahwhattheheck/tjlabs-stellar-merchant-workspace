@@ -27,5 +27,9 @@
   "applicationProviders": {
     "ndjson": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/ndjson.mjs",
     "opensanctions": "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/application-provider.mjs"
-  }
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/gleif_portfolio.py",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/public/gleif-intake.js"
+  ]
 }

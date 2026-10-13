@@ -29,6 +29,13 @@
         "../core.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/monitoring.mjs",
+      [
+        "monitoring.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

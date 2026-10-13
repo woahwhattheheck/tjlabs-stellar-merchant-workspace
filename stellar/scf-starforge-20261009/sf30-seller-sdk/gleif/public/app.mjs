@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { escapeHtml as e, plan, COMPANY_FACT_LABELS, sourceFact, sourceReferenceDetails } from '/core.mjs';
+import { mountMonitoring } from '/monitoring.mjs';
 const $=id=>document.getElementById(id),forms=['capture-form','review-form','batch-form','report-form','compare-form','query-form'];
 let token=new URLSearchParams(location.hash.slice(1)).get('token')??sessionStorage.getItem('gleif-token')??'';
 if(token){sessionStorage.setItem('gleif-token',token);history.replaceState(null,'',location.pathname);}
@@ -13,7 +14,7 @@ async function api(path,{method='GET',body,raw=false}={}) {
 }
 
 const reviewFields=['decision','reviewer','rationale','useCase','nextWork'];
-const actionNames={'capture':'Capture source','capture.resume':'Continue source pages','source.import':'Receive original responses','review.save':'Save company review','review.batch':'Review selected companies','report.prepare':'Prepare customer files','dataset.prepare':'Prepare native dataset'};
+const actionNames={'capture':'Capture source','capture.resume':'Continue source pages','source.import':'Receive original responses','review.save':'Save company review','review.batch':'Review selected companies','report.prepare':'Prepare customer files','dataset.prepare':'Prepare native dataset','monitoring.prepare':'Prepare Monitoring handover'};
 const actionName=value=>actionNames[value]??value;
 const stateName=value=>({COMPLETE:'Complete',INTERRUPTED:'Ready to continue',PENDING:'Saved',RUNNING:'Running',FETCHING:'Capturing source',SOURCE_REVIEW:'Source review needed'}[value]??value);
 function observedTime(value){const date=new Date(value);return Number.isFinite(date.getTime())?new Intl.DateTimeFormat('en-GB',{dateStyle:'medium',timeStyle:'short',timeZone:'UTC'}).format(date)+' UTC':'Time unavailable';}
@@ -108,7 +109,7 @@ async function refresh({loadRows=true}={}) {
     (op.state==='INTERRUPTED'?'<button data-resume="'+e(op.id)+'">Resume original request</button>':'')+'</article>').join('');
   if(!selectedCapture&&editions.length)selectedCapture=editions.at(-1).id;
   const completed=pending&&state.operations.find(op=>op.id===pending.id&&op.state==='COMPLETE');if(completed)await finishRequest(completed);
-  renderPending();renderEditingContexts();if(selectedCapture&&loadRows)await loadEntityRows();
+  monitoring.refresh(state);renderPending();renderEditingContexts();if(selectedCapture&&loadRows)await loadEntityRows();
 }
 function renderPending() {
   $('pending').hidden=!pending&&!state?.active;$('pause').hidden=!['capture','capture.resume'].includes(state?.active?.action);
@@ -219,6 +220,7 @@ for(const id of ['reports','datasets'])$(id).onclick=run(async event=>{const b=e
 $('operations').onclick=run(async event=>{const b=event.target.closest('[data-resume]');if(!b)return;const op=await api('/api/operations/'+b.dataset.resume);await execute({id:op.id,action:op.action,input:op.input});});
 $('export').onclick=run(async()=>{const file=await api('/api/package-file',{method:'POST',body:{}});await download(file.sha256,file.name);notice('Complete project exported. Use gleif receive to open it in an independent private directory.');});
 for(const id of forms){const form=$(id);form.addEventListener('input',()=>saveDraft(form));}
+const monitoring=mountMonitoring({root:$('monitoring-handover'),api,execute,request,getState:()=>state,escape:e,notice});
 async function start(){
   const identity=await api('/api/identity');workspaceId=identity.workspaceId;instanceId=identity.instanceId;db=await database();pending=await stored('get')??null;
   await refresh();await renderRequestHistory();for(const id of forms)restoreDraft($(id));
