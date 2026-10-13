@@ -6,6 +6,18 @@ The source workspace is useful for scientific and engineering arrays whose sourc
 
 The full operator guide is [WORKSPACE.md](WORKSPACE.md). The exact native command schema is [CLI_CONTRACT.json](CLI_CONTRACT.json). Original engine, example provenance, licenses and actual source-stage results are described in [UPSTREAM.md](UPSTREAM.md).
 
+## Compare retained result editions
+
+Open **Compare results** to compare two complete native results already saved in this workspace. Choose Left result and Right result, enter a title and a purpose note, then use **Create saved comparison**. The comparison pins both original content hashes and retains their complete source, array metadata, selection and review context. It adds a new saved comparison under the original operation journal; the retained results and source stores stay intact.
+
+Pairing is explicitly `source-index`: an original index tuple such as `[2, 4]` is matched only to the exact same tuple on the other side. The four row classes are **same**, **changed**, **left-only** and **right-only**. “Same” means the typed JSON value representations are identical. It does not establish the same physical location, time, unit, coordinate meaning or scientific interpretation. The view shows source-edition, array-path, dtype, shape and metadata equality separately. A full-versus-strided selection can legitimately contain one-sided positions.
+
+Open a saved comparison to read every row through paging, inspect both original contexts, and download its complete JSON, CSV or self-contained HTML report. CSV keeps each original typed row in a JSON cell, including exact integer text, non-finite float text, signed zero and compound values. The HTML report includes every paired or unmatched position and both full contexts; it can be opened independently.
+
+Record **accepted**, **needs-changes** or **rejected** with an interpretation note against the exact comparison hash. This adds an immutable comparison review. It does not change the report’s creation-time context or approve a frozen scalar source for publication. The existing native result review, freeze and dataset publisher remain their own explicit steps.
+
+A new complete source-workspace packet carries comparison rows, all three reports, comparison review history and the six-file native application including `python/comparison.py`. Complete historical five-file packets remain supported, and an existing completed historical export keeps its original bytes. See [the operating workflow](WORKSPACE.md#compare-two-saved-native-results) and [the original receiving continuation](RECEIVING.md#continue-the-original-workspace-with-retained-result-comparison).
+
 ## A complete operating workflow
 
 1. Declare an authorized local directory or complete ZIP on the host. ZIP declarations can bind an exact SHA-256.
@@ -196,3 +208,35 @@ The complete-source import and explicit selection boundaries are enforced before
 - `requirements.txt`, `UPSTREAM.md`: exact selected native runtime and original-source provenance.
 
 The selected distribution includes the existing publisher, dataset refresh, merchant and managed runtime dependencies. The ordinary source build does not claim a native receiving result; the actual saved completion report names the input edition, workspace and completed stages.
+
+
+## Current delivery and receiving owner instructions
+
+# Repository delivery instructions
+
+Use the current README and the existing product's build/receiving guide. Coordinate through the original implementation and receiving owners, preserve concurrent source, and carry work through its authorized delivery.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## GitHub Actions zero spend — existing owner instruction
+
+Keep GitHub Actions disabled in this repository's provider settings and preserve the disabled source policy in [.github/hosted-ci-policy.json](.github/hosted-ci-policy.json). Every workflow job must retain the established literal-false condition, including manual dispatch and reusable jobs. Preserve its original condition inside the wrapper, and preserve the complete steps, commands, source and delivery artifacts.
+
+Run focused product work in the existing cloud Linux or original local receiving operation. A public repository, available free minutes, cloud admission failure or a missing green check does not authorize enabling or dispatching hosted Actions. Do not set `HOSTED_CI=on`, add scheduled hosted runs or choose a paid runner. Keep source-native receiving moving with its original owner and saved operation.
+
+Before publishing workflow changes, use the maintained Commons `tools/hosted_ci_gate.py --zero-spend REPO_ROOT` and `--check REPO_ROOT` source operation where that existing runtime is available. Its canonical wrapper is `${{ (false) && (ORIGINAL_CONDITION) }}`; the original condition is retained for native continuation. Provider disablement, the whole-account spending budget and dated billing remain separate controls; preserve current artifacts and their original custody.
+
+This carries Bryce's existing zero-spend instruction from [Commons RULES, CI and spend](https://github.com/woahwhattheheck/commons/blob/main/RULES.md#4-ci-and-spend) into this repository's consumed entry guidance. Original cost coordination: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791755765336589 .

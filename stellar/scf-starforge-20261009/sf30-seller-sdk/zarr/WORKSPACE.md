@@ -156,6 +156,84 @@ Choose an explicit public value type:
 
 The frozen source includes all reviewed rows, original source coordinates, engine/source/result identities and the exact accepted review. The native frozen file uses **text** as its projection label. The original dataset query maps text to the publisher’s **string** type. Build dataset columns from the returned query projection or its named columnTypes entries, not by copying private projection labels.
 
+## Compare two saved native results
+
+Use this workflow when an analyst needs a retained, reviewable account of how two existing result selections differ. It consumes original saved results. It does not rerun array extraction or replace their scientific source workflow.
+
+### Select and save the comparison
+
+1. Open **Compare results**. Under **Compare saved results**, choose the exact **Left result** and **Right result** from the current workspace. Read their source, array, selection and typed-result identities.
+2. Enter the comparison title (1–200 characters) and purpose/limitations note (1–4,000 characters). Explain what the two selections represent and whether their source indices have the same scientific meaning.
+3. Use **Create saved comparison**. The browser retains the intent UUID, expected revision, both result IDs and both full content SHA-256 values, and the explicit `source-index` pairing before it uses the existing prepare/apply path.
+4. If a response is lost, reopen **Operations** and recover that exact saved request. Do not generate a replacement UUID or edit its source selection. A new intended comparison is a separate explicit operation.
+5. Choose the resulting entry under **Saved comparison**. Page through the complete population and expand the original source/selection/metadata contexts. The page count is a display limit; complete downloads retain all rows.
+
+The union is deterministic: left rows retain their original order, followed by right-only rows in their original order. Each row contains the original index tuple and complete left/right original typed row, or null for the absent side.
+
+| Classification | Exact meaning |
+| --- | --- |
+| same | Both selections contain the index tuple and their full typed value representations match. |
+| changed | Both contain the tuple and their typed value representations differ. |
+| left-only | Only the left selection contains the tuple. |
+| right-only | Only the right selection contains the tuple. |
+
+An index tuple is a position in an original array. It is not a latitude/longitude, timestamp, pressure level or unit. The source coordinate arrays and attributes remain the authority for those meanings. The comparison does not align coordinates, convert units, resample, regrid, calculate differences or aggregate scientific metrics. Two independently sourced arrays can contain identical index tuples with different meanings. Keep that distinction explicit in the purpose and review note.
+
+The context records each side’s full original source receipt/provenance, selection, result metadata, native array metadata and source-result reviews present when the comparison was created. The equality indicators `metadataEqual`, `sourceEditionEqual`, `arrayPathEqual`, `dtypeEqual` and `sourceShapeEqual` help inspect context; none is a scientific acceptance decision.
+
+### Review, download and reopen
+
+Use **Download complete HTML**, **Download complete CSV** or **Download complete JSON** from the saved comparison. The HTML is a complete independent report with all original rows and contexts. The CSV contains eight columns: comparison operation, left result, right result, ordinal, source-index JSON, status, left original-row JSON and right original-row JSON. Typed JSON cells preserve the complete original values, including source ordinals and index tuples. Use JSON when retaining the full comparison identity, counts and context as machine-readable data.
+
+Select a review decision and enter a nonempty comment of at most 4,000 characters, then use **Record comparison review**. The review binds the saved comparison ID and content hash. Later reviews are separate immutable operations; an earlier HTML/CSV/JSON report remains byte-exact and retains creation-time context. Export the complete source-workspace packet to hand over the accumulated review history.
+
+Comparison review does not mutate either original result, supersede native result review, freeze a scalar output, publish a resource or imply physical/scientific equivalence. Continue those original workflows explicitly when they are part of the selected customer task.
+
+### Native, installed and agent interfaces
+
+The original Node CLI reads saved comparisons and retained reports:
+
+```sh
+zarr-workspace comparison --directory /srv/zarr/workspace --id COMPARISON_SHA --offset 0 --limit 100
+zarr-workspace comparison-file --directory /srv/zarr/workspace --id COMPARISON_SHA --format html
+zarr-workspace comparison-file-read --directory /srv/zarr/workspace --id COMPARISON_SHA --format json --offset 0 --limit 262144
+```
+
+The direct native entry has `python python/cli.py comparison --directory ABS --id HASH --offset 0 --limit 100` and `comparison-file --directory ABS --id HASH --format json|csv|html`. `comparison-file` returns a verified file descriptor; it does not inline or truncate the report.
+
+For mutations, use the already documented prepare/apply flow. The `compare` intent input is:
+
+```json
+{
+  "leftResultId": "LEFT_RESULT_SHA",
+  "rightResultId": "RIGHT_RESULT_SHA",
+  "leftContentSha256": "LEFT_COMPLETE_CONTENT_SHA",
+  "rightContentSha256": "RIGHT_COMPLETE_CONTENT_SHA",
+  "title": "Complete selection compared with retained strided selection",
+  "note": "Explain the source editions, purpose and coordinate/unit limitations.",
+  "pairing": "source-index"
+}
+```
+
+Replace all four placeholders with actual retained 64-character hashes. The complete intent also retains its original UUID, `expectedRevision` and `action: "compare"`. The later `comparison-review` input is `{comparisonId,contentSha256,decision,comment}`; the decision is `accepted`, `needs-changes` or `rejected`. A direct Python apply consumes the original native request on stdin; the Node/MCP apply consumes the original prepared envelope. Preserve that existing distinction.
+
+Merchant agents use `merchant_zarr_comparison_page` with `workspace, comparisonId, offset, limit`, or `merchant_zarr_comparison_file_read` with `workspace, comparisonId, format, expectedSha256, offset, limit`. Bind every file chunk to the expected whole-file hash, verify its returned chunk hash, and finish through `next: null` before declaring a complete download. The existing `merchant_zarr_prepare` / `merchant_zarr_apply` tools own both mutations; no second workspace or command journal is introduced.
+
+| Interface | Current route |
+| --- | --- |
+| Paged comparison | GET /api/comparisons/HASH?offset=0&limit=100 |
+| Complete saved report | GET /api/comparisons/HASH/files/json, /csv or /html |
+| Exact report byte range | GET /api/comparisons/HASH/files/FORMAT/read?offset=0&limit=262144 |
+| Create or review | Original POST /api/prepare then POST /api/apply |
+
+The existing workspace identity, source pins, bearer token, loopback/Host/Origin boundary and original source headers apply to these reads and writes.
+
+### Capacity and complete packet continuity
+
+The comparison admits at most two million union positions and 96 MiB of complete typed JSON. Each complete saved report is at most 384 MiB. Request bodies stay at 1 MiB; pages contain 1–500 rows; byte-range reads contain at most 1 MiB. Source import, individual original result and whole-packet limits remain unchanged. A capacity failure must be addressed with an explicitly selected smaller task; no rows or originals are silently dropped.
+
+New source packets include `files.py`, `native.py`, `workspace.py`, `packet.py`, `cli.py` and `comparison.py`, their exact source pins, all retained comparison reports and the original operation/review history. The receiver still accepts the complete historical five-file application inventory when no comparison engine was included. Replaying an already completed old export verifies and preserves that old export. A current application export uses a new export identity. The source packet continues to exclude publisher/dataset/deployment stores; retain the existing complete merchant handover when those belong to the customer deliverable.
+
 ## Operate the original dataset publisher
 
 Select a frozen edition in **Dataset publisher**. Each version opens one original publisher under **publishers/FROZEN_ID**, with its target under **datasets/FROZEN_ID**. Stored source and target declarations are relative to the publisher workspace so a complete merchant handover can restore them on another host.
@@ -332,3 +410,35 @@ Health returns only the fixed original service identity and readiness. It does n
 This implementation composes the original zarr-python engine, retained source workspace and dataset publisher. Public source contains no customer credentials or private customer data.
 
 The component’s shared original receiving workflow is the authority for executed results and complete merchant handover. Source parsing or startup alone does not claim publication or purchase. Inspect its retained result for the exact source inputs, original workspace UUID/revision, completed results, reviewed frozen editions, publisher runs and full archive identities.
+
+
+## Current delivery and receiving owner instructions
+
+# Repository delivery instructions
+
+Use the current README and the existing product's build/receiving guide. Coordinate through the original implementation and receiving owners, preserve concurrent source, and carry work through its authorized delivery.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## GitHub Actions zero spend — existing owner instruction
+
+Keep GitHub Actions disabled in this repository's provider settings and preserve the disabled source policy in [.github/hosted-ci-policy.json](.github/hosted-ci-policy.json). Every workflow job must retain the established literal-false condition, including manual dispatch and reusable jobs. Preserve its original condition inside the wrapper, and preserve the complete steps, commands, source and delivery artifacts.
+
+Run focused product work in the existing cloud Linux or original local receiving operation. A public repository, available free minutes, cloud admission failure or a missing green check does not authorize enabling or dispatching hosted Actions. Do not set `HOSTED_CI=on`, add scheduled hosted runs or choose a paid runner. Keep source-native receiving moving with its original owner and saved operation.
+
+Before publishing workflow changes, use the maintained Commons `tools/hosted_ci_gate.py --zero-spend REPO_ROOT` and `--check REPO_ROOT` source operation where that existing runtime is available. Its canonical wrapper is `${{ (false) && (ORIGINAL_CONDITION) }}`; the original condition is retained for native continuation. Provider disablement, the whole-account spending budget and dated billing remain separate controls; preserve current artifacts and their original custody.
+
+This carries Bryce's existing zero-spend instruction from [Commons RULES, CI and spend](https://github.com/woahwhattheheck/commons/blob/main/RULES.md#4-ci-and-spend) into this repository's consumed entry guidance. Original cost coordination: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791755765336589 .

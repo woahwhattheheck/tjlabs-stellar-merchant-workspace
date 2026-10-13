@@ -183,3 +183,63 @@ When NATIVE_COMPLETE exists, completed native legs are skipped and package/recei
 Do not change the prepared input, source manifest or native request under the same operation. A source correction must explicitly preserve and continue its original saved state. The native packet implementation separately supports completed export replay after a code upgrade: it validates the original retained intent/application/manifest first. A new application edition receives a new export ID.
 
 Completion claims follow the actual receipts. Authored source, a READY runtime, a complete source packet, complete merchant/customer work and a fully received archive are separate observations.
+
+## Continue the original workspace with retained-result comparison
+
+Use the existing 14F5 receiving owner and its original workspace. The earlier source course already retained forty original upstream arrays / 338 cells, plus a four-cell strided temperature result, at workspace `fd072b35-cafe-4e00-93bd-cee34265c5bc` revision 166. Those are original interoperability example results; this addition is a comparison of retained results, not a new array extraction or environmental measurement.
+
+The original complete packet has a known existing file reference: `Zarr_Original_Source_Workspace_20261012.zip`, `libfile_9ace9a199b488191b1b637689b2f6de1` / `file_00000000c44081f7a575bf2c5bfe7027`, 335,104 bytes, saved 2026-10-12T21:49:58Z. That metadata supplies no version or whole-file SHA. Materialize through the existing supported file route, verify the full packet/manifest and reconcile its original 14F5 identity before use. Do not invent a hash or regenerate the forty arrays because only metadata was available to the source author.
+
+The comparison source extension is `SCF-ZARR-RETAINED-COMPARISON-B3909-20261013`. It joins the existing source workspace and same native receiving course. The new source has been authored and independently reviewed; actual comparison execution, generated report inspection and receiving completion require the original equipped operator's actual receipts.
+
+### A concrete continuation over the existing complete and strided results
+
+1. Receive or reopen the verified original workspace with its full saved sources, selections, result files, reviews and UUID/revision. Select the actual complete temperature result and its actual saved four-cell strided result from status. Retain both exact result IDs/content hashes. If either is absent, ask the original source owner for its existing complete packet rather than reconstructing observations or rerunning extraction.
+2. Load the full selected current application. Use **Compare results** to choose the two retained results, title and interpretation note, then create the saved comparison through the existing retained UUID/revision prepare/apply flow. Pairing must be explicitly `source-index`.
+3. Read the complete saved comparison population and both full source/selection/metadata contexts. Reconcile every original cell: equal typed representations are `same`, different representations are `changed`, and a tuple present on only one side remains `left-only` or `right-only`. Record actual counts from the output; do not prefill expected counts from an assumed array shape.
+4. Operate the original request recovery where needed. Lost response means inspect/resume the same UUID and complete body. Preserve original results and source history. No new array run, controller, watcher or competing issuer is needed.
+5. Open the complete generated HTML as a recipient and look at it at screenshare and narrow widths. Operate its source-context disclosures; inspect long typed values, absent-side labels, table scrolling and print output. Download and open all JSON/CSV/HTML exports. CSV must retain complete original-row JSON, including integers/compound values, rather than spreadsheet-coerced replacements.
+6. Record a named comparison decision with the actual interpretation/limitations in the original review operation. Read the comparison hash and review receipt back. Reports remain frozen at creation; the later review lives in the retained workspace/packet. Accepted comparison review does not change either native result's acceptance or publish/freeze a scalar source.
+7. Export a new complete current source-workspace packet with its retained export UUID. Check its actual member inventory, then independently receive it into the declared destination using the original complete packet receiver. Reopen the saved comparison and later review, open all three reports, and confirm the same original source/results and complete request history. Keep prior historical export bytes and inventories exact.
+8. Continue the established complete merchant/publisher handover only where it is already selected. A native source packet is not the full publisher/dataset/deployment delivery.
+
+Include both original typed result bodies, saved comparison/review receipts, whole generated reports, current complete application/guide source, the actual full source packet and receiver observations in the existing operation's delivery. Use the established complete file-saving step. Preserve the original operation/host/recipient handles and report actual closure. When no runtime is available, hand the whole current source and known existing input reference to the existing equipped receiver, then continue independent work.
+
+### Exact new limits and packet application inventory
+
+The new native comparison limit is 96 MiB of complete JSON and two million union positions; each complete report is bounded at 384 MiB. Reads use 1–500 rows or byte ranges up to 1 MiB. The original whole packet remains limited to 2 GiB and 200,000 entries. Capacity rejection retains the original task and source; it does not authorize truncation.
+
+A current native packet contains six Python files, adding `comparison.py` to the original `files.py`, `native.py`, `workspace.py`, `packet.py` and `cli.py`. Complete historical five-file packets remain accepted. An already completed historical export stays its own original application edition; a new current export includes its complete six-file inventory and comparison reports. The package preserves the original source-workspace scope and its declared exclusions.
+
+
+
+## Current delivery and receiving owner instructions
+
+# Repository delivery instructions
+
+Use the current README and the existing product's build/receiving guide. Coordinate through the original implementation and receiving owners, preserve concurrent source, and carry work through its authorized delivery.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
+
+## GitHub Actions zero spend — existing owner instruction
+
+Keep GitHub Actions disabled in this repository's provider settings and preserve the disabled source policy in [.github/hosted-ci-policy.json](.github/hosted-ci-policy.json). Every workflow job must retain the established literal-false condition, including manual dispatch and reusable jobs. Preserve its original condition inside the wrapper, and preserve the complete steps, commands, source and delivery artifacts.
+
+Run focused product work in the existing cloud Linux or original local receiving operation. A public repository, available free minutes, cloud admission failure or a missing green check does not authorize enabling or dispatching hosted Actions. Do not set `HOSTED_CI=on`, add scheduled hosted runs or choose a paid runner. Keep source-native receiving moving with its original owner and saved operation.
+
+Before publishing workflow changes, use the maintained Commons `tools/hosted_ci_gate.py --zero-spend REPO_ROOT` and `--check REPO_ROOT` source operation where that existing runtime is available. Its canonical wrapper is `${{ (false) && (ORIGINAL_CONDITION) }}`; the original condition is retained for native continuation. Provider disablement, the whole-account spending budget and dated billing remain separate controls; preserve current artifacts and their original custody.
+
+This carries Bryce's existing zero-spend instruction from [Commons RULES, CI and spend](https://github.com/woahwhattheheck/commons/blob/main/RULES.md#4-ci-and-spend) into this repository's consumed entry guidance. Original cost coordination: https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791755765336589 .

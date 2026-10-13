@@ -6,7 +6,7 @@ export const ZARR_STARTUP_SCHEMA='stellar-forge.zarr-workspace-startup.v1';
 export const ZARR_APPLICATION_ID='zarr-workspace';
 export const ZARR_COMMAND='zarr-workspace';
 const REQUIRED=[
- 'CLI_CONTRACT.json','python/cli.py','python/files.py','python/native.py','python/workspace.py','python/packet.py',
+ 'CLI_CONTRACT.json','python/cli.py','python/files.py','python/native.py','python/workspace.py','python/packet.py','python/comparison.py',
  'source.mjs','publisher/driver.mjs','publisher/model.mjs',
  'workspace/bridge.mjs','workspace/server.mjs','workspace/cli.mjs','workspace/launch.mjs',
  'workspace/browser.mjs','workspace/index.html','workspace/style.css','workspace/mcp.mjs',

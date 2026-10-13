@@ -184,7 +184,7 @@ export async function startZarrServer({
   try{
    const s=await handle.stat({bigint:true});
    need(s.isFile()&&String(s.dev)===file.device&&String(s.ino)===file.inode&&s.size===BigInt(file.bytes),'ZARR_FILE_CHANGED','The complete export changed',409);
-   res.writeHead(200,{'content-type':'application/zip','content-length':file.bytes,
+   res.writeHead(200,{'content-type':file.contentType??'application/zip','content-length':file.bytes,
     'content-disposition':'attachment; filename="'+file.name+'"','x-content-sha256':file.sha256,'cache-control':'no-store','x-content-type-options':'nosniff'});
    const hash=createHash('sha256'),buffer=Buffer.alloc(1024*1024);let offset=0;
    while(offset<file.bytes){
@@ -219,6 +219,8 @@ export async function startZarrServer({
    'ZARR_ORIGIN','Use the original same-origin JSON interface',403);
   const op=u.pathname.match(/^\/api\/operations\/([a-f0-9-]{36})$/);
   const result=u.pathname.match(/^\/api\/results\/([a-f0-9]{64})$/);
+  const comparison=u.pathname.match(/^\/api\/comparisons\/([a-f0-9]{64})$/);
+  const comparisonFile=u.pathname.match(/^\/api\/comparisons\/([a-f0-9]{64})\/files\/(json|csv|html)(\/read)?$/);
   const frozen=u.pathname.match(/^\/api\/frozen\/([a-f0-9]{64})$/);
   const file=u.pathname.match(/^\/api\/files\/([a-f0-9-]{36})(\/read)?$/);
   if(req.method==='GET'&&u.pathname==='/api/session')return json(res,200,{schema:'stellar-forge.zarr-operator-session.v1',
@@ -227,6 +229,7 @@ export async function startZarrServer({
   if(req.method==='GET'&&u.pathname==='/api/status')return json(res,200,await workspace.status());
   if(req.method==='GET'&&op)return json(res,200,await workspace.operation(op[1]));
   if(req.method==='GET'&&result)return json(res,200,await workspace.result(result[1],Number(u.searchParams.get('offset')??0),Number(u.searchParams.get('limit')??100)));
+  if(req.method==='GET'&&comparison)return json(res,200,await workspace.comparison(comparison[1],Number(u.searchParams.get('offset')??0),Number(u.searchParams.get('limit')??100)));
   if(req.method==='GET'&&frozen){const value=await workspace.frozen(frozen[1]);return json(res,200,value);}
   if(req.method==='POST'&&u.pathname==='/api/prepare')return json(res,200,await workspace.prepare(await body(req)));
   if(req.method==='POST'&&u.pathname==='/api/apply')return json(res,200,await workspace.apply(await body(req)));
@@ -249,9 +252,9 @@ export async function startZarrServer({
     const value=await workspace.exportIdentity(name.slice(0,-4));rows.push({id:value.id,name:value.name,bytes:value.bytes,sha256:value.sha256});
    }return json(res,200,{files:rows});
   }
-  if(req.method==='GET'&&file){
-   const value=await workspace.exportIdentity(file[1]);
-   if(!file[2])return sendFile(res,value);
+  if(req.method==='GET'&&(file||comparisonFile)){
+   const value=comparisonFile?await workspace.comparisonFile(comparisonFile[1],comparisonFile[2]):await workspace.exportIdentity(file[1]);
+   if(!(comparisonFile?comparisonFile[3]:file[2]))return sendFile(res,value);
    const offset=Number(u.searchParams.get('offset')??0),limit=Number(u.searchParams.get('limit')??262144);
    need(Number.isSafeInteger(offset)&&offset>=0&&offset<=value.bytes&&Number.isSafeInteger(limit)&&limit>=1&&limit<=1048576,'ZARR_FILE_RANGE','Use an exact byte range of at most 1 MiB');
    const handle=await fsp.open(value.path,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
@@ -259,7 +262,7 @@ export async function startZarrServer({
     const s=await handle.stat({bigint:true});need(String(s.dev)===value.device&&String(s.ino)===value.inode&&s.size===BigInt(value.bytes),'ZARR_FILE_CHANGED','The original export changed',409);
     const buffer=Buffer.alloc(Math.min(limit,value.bytes-offset)),r=await handle.read(buffer,0,buffer.length,offset);
     need(r.bytesRead===buffer.length,'ZARR_FILE_CHANGED','The exact retained range ended early',409);
-    return json(res,200,{file:{id:value.id,name:value.name,bytes:value.bytes,sha256:value.sha256},offset,bytes:buffer.length,
+    return json(res,200,{file:{id:value.id,name:value.name,bytes:value.bytes,sha256:value.sha256,...(value.format?{format:value.format}:{})},offset,bytes:buffer.length,
      next:offset+buffer.length<value.bytes?offset+buffer.length:null,sha256:sha(buffer),encoding:'base64',content:buffer.toString('base64')});
    }finally{await handle.close();}
   }

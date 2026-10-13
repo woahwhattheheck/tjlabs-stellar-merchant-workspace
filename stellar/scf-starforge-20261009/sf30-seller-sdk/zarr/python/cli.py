@@ -8,13 +8,14 @@ from workspace import Workspace
 def main(argv=None):
     parser=argparse.ArgumentParser(description="Retain and review original Zarr stores through zarr-python.")
     commands=parser.add_subparsers(dest="command",required=True)
-    for name in ("init","status","operation","result","frozen","apply","export"):
+    for name in ("init","status","operation","result","comparison","comparison-file","frozen","apply","export"):
         command=commands.add_parser(name)
         command.add_argument("--directory",required=True)
-        if name in ("operation","result","frozen","export"):command.add_argument("--id",required=True)
-        if name=="result":
+        if name in ("operation","result","comparison","comparison-file","frozen","export"):command.add_argument("--id",required=True)
+        if name in ("result","comparison"):
             command.add_argument("--offset",type=int,default=0)
             command.add_argument("--limit",type=int,default=100)
+        if name=="comparison-file":command.add_argument("--format",choices=("json","csv","html"),required=True)
         if name=="export":command.add_argument("--out",required=True)
     receive=commands.add_parser("receive")
     receive.add_argument("--archive",required=True);receive.add_argument("--directory",required=True)
@@ -42,6 +43,8 @@ def main(argv=None):
                 if args.command=="status":result=workspace.status()
                 elif args.command=="operation":result=workspace.operation(args.id)
                 elif args.command=="result":result=workspace.read_result(args.id,args.offset,args.limit)
+                elif args.command=="comparison":result=workspace.read_comparison(args.id,args.offset,args.limit)
+                elif args.command=="comparison-file":result=workspace.comparison_file(args.id,args.format)
                 elif args.command=="frozen":result=workspace.frozen_source(args.id)
                 else:
                     raw=sys.stdin.buffer.read(1024*1024+1)

@@ -125,11 +125,15 @@ const OWNER_SOURCE=[
 const ACTION_FIELDS={
  import:['inputId','title','maxBytes','maxFiles'],selection:['sourceId','array','axes','title','maxCells','maxNativeBytes'],
  run:['selectionId'],review:['resultId','contentSha256','decision','comment'],
- freeze:['resultId','reviewId','title','valueType'],abandon:['operationId','reason']
+ freeze:['resultId','reviewId','title','valueType'],abandon:['operationId','reason'],
+ compare:['leftResultId','rightResultId','leftContentSha256','rightContentSha256','title','note','pairing'],
+ 'comparison-review':['comparisonId','contentSha256','decision','comment']
 };
 const ACTION_REQUIRED={
  import:['inputId','title'],selection:['sourceId','array','axes','title'],run:['selectionId'],
- review:['resultId','contentSha256','decision','comment'],freeze:['resultId','reviewId','title','valueType'],abandon:['operationId','reason']
+ review:['resultId','contentSha256','decision','comment'],freeze:['resultId','reviewId','title','valueType'],abandon:['operationId','reason'],
+ compare:['leftResultId','rightResultId','leftContentSha256','rightContentSha256','title','note','pairing'],
+ 'comparison-review':['comparisonId','contentSha256','decision','comment']
 };
 export class ZarrWorkspace {
  constructor({directory,python='python3',sourceDirectory=ZARR_ROOT,connections}){
@@ -215,6 +219,38 @@ export class ZarrWorkspace {
   need(HASH.test(id)&&Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=500,
    'ZARR_RESULT_PAGE','Select an exact result and 1–500 rows');
   return this.native('result',['--directory',this.directory,'--id',id,'--offset',String(offset),'--limit',String(limit)]);
+ }
+ async comparison(id,offset=0,limit=100){
+  need(HASH.test(id)&&Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=500,
+   'ZARR_COMPARISON_PAGE','Select an exact comparison and 1–500 rows');
+  return this.native('comparison',['--directory',this.directory,'--id',id,'--offset',String(offset),'--limit',String(limit)]);
+ }
+ async comparisonFile(id,format){
+  need(HASH.test(id)&&['json','csv','html'].includes(format),'ZARR_COMPARISON_FILE','Select an exact comparison report');
+  const selected=await this.native('comparison-file',['--directory',this.directory,'--id',id,'--format',format]);
+  need(selected.id===id&&selected.format===format&&inside(join(this.directory,'comparisons'),selected.path),
+   'ZARR_COMPARISON_FILE','The retained report is outside its original comparison',409);
+  const file=await fileIdentity(selected.path,{maximum:384*1024*1024});
+  need(file.sha256===selected.sha256&&file.bytes===selected.bytes,'ZARR_COMPARISON_CHANGED','The complete retained report changed',409);
+  return {...selected,...file};
+ }
+ async comparisonFileRead(id,format,offset=0,limit=262144){
+  const value=await this.comparisonFile(id,format);
+  need(Number.isSafeInteger(offset)&&offset>=0&&offset<=value.bytes&&Number.isSafeInteger(limit)&&limit>=1&&limit<=1048576,
+   'ZARR_FILE_RANGE','Use an exact byte range of at most 1 MiB');
+  const handle=await fsp.open(value.path,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
+  try{
+   const before=await handle.stat({bigint:true});
+   need(before.isFile()&&String(before.dev)===value.device&&String(before.ino)===value.inode&&before.size===BigInt(value.bytes),
+    'ZARR_FILE_CHANGED','The complete original report changed',409);
+   const buffer=Buffer.alloc(Math.min(limit,value.bytes-offset)),r=await handle.read(buffer,0,buffer.length,offset);
+   const after=await handle.stat({bigint:true});
+   need(r.bytesRead===buffer.length&&['dev','ino','size','mtimeNs','ctimeNs'].every(k=>before[k]===after[k]),
+    'ZARR_FILE_CHANGED','The complete original report changed during the range read',409);
+   return {file:{id:value.id,format:value.format,name:value.name,bytes:value.bytes,sha256:value.sha256},
+    offset,bytes:buffer.length,next:offset+buffer.length<value.bytes?offset+buffer.length:null,
+    sha256:sha(buffer),encoding:'base64',content:buffer.toString('base64')};
+  }finally{await handle.close();}
  }
  async frozen(id){need(HASH.test(id),'ZARR_FROZEN_ID','Choose a reviewed frozen source');return this.native('frozen',['--directory',this.directory,'--id',id]);}
  async checkedInput(id,kinds=['directory','zip','packet']){

@@ -19,6 +19,8 @@ export interface IntentInputMap{
  selection:{sourceId:Sha256;array:string;axes:Axis[];title:string;maxCells?:number;maxNativeBytes?:number};
  run:{selectionId:Sha256};
  review:{resultId:Sha256;contentSha256:Sha256;decision:'accepted'|'needs-changes'|'rejected';comment:string};
+ compare:{leftResultId:Sha256;rightResultId:Sha256;leftContentSha256:Sha256;rightContentSha256:Sha256;title:string;note:string;pairing:'source-index'};
+ 'comparison-review':{comparisonId:Sha256;contentSha256:Sha256;decision:'accepted'|'needs-changes'|'rejected';comment:string};
  freeze:{resultId:Sha256;reviewId:Sha256;title:string;valueType:'text'|'number'|'boolean'};
  abandon:{operationId:UUID;reason:string};
 }
@@ -37,9 +39,31 @@ export interface FrozenSource{id:Sha256;title:string;file:string;sourceSha256:Sh
 export interface NativeOperation{id:UUID;request:Record<string,unknown>;request_sha:Sha256;admitted_revision:number;state:'RUNNING'|'INTERRUPTED'|'COMPLETE'|'ABANDONED';result:NativeReceipt|null;error:unknown}
 export interface NativeStatus{
  schema:'stellar-forge.zarr-workspace.v1';workspaceId:UUID;revision:number;sources:Record<string,unknown>[];
- selections:Record<string,unknown>[];results:Record<string,unknown>[];reviews:Record<string,unknown>[];frozen:FrozenSource[];operations:NativeOperation[]
+ selections:Record<string,unknown>[];results:Record<string,unknown>[];reviews:Record<string,unknown>[];frozen:FrozenSource[];comparisons:Comparison[];comparisonReviews:ComparisonReview[];operations:NativeOperation[]
 }
 export interface ResultPage{result:Record<string,unknown>;rows:ResultRow[];offset:number;next:number|null;total:number}
+export type ComparisonStatus='same'|'changed'|'left-only'|'right-only';
+export type ComparisonFormat='json'|'csv'|'html';
+export interface ComparisonFile{file:string;bytes:number;sha256:Sha256}
+export interface Comparison{
+ id:Sha256;title:string;note:string;createdAt:string;operationId:UUID;pairing:'source-index';
+ leftResultId:Sha256;rightResultId:Sha256;leftContentSha256:Sha256;rightContentSha256:Sha256;
+ contentSha256:Sha256;rowCount:number;counts:Record<ComparisonStatus,number>;files:Record<ComparisonFormat,ComparisonFile>
+}
+export interface ComparisonReview{
+ id:Sha256;comparisonId:Sha256;contentSha256:Sha256;decision:'accepted'|'needs-changes'|'rejected';comment:string;createdAt:string
+}
+export interface ComparisonRow{ordinal:number;sourceIndex:number[];status:ComparisonStatus;left:ResultRow|null;right:ResultRow|null}
+export interface ComparisonSide{
+ source:Record<string,unknown>;selection:Record<string,unknown>;result:Record<string,unknown>;metadata:Record<string,unknown>;reviews:Record<string,unknown>[]
+}
+export interface ComparisonContext{
+ left:ComparisonSide;right:ComparisonSide;pairing:'source-index';meaning:string;
+ metadataEqual:boolean;sourceEditionEqual:boolean;arrayPathEqual:boolean;dtypeEqual:boolean;sourceShapeEqual:boolean;leftRows:number;rightRows:number
+}
+export interface ComparisonPage{comparison:Comparison;context:ComparisonContext;rows:ComparisonRow[];offset:number;next:number|null;total:number}
+export interface ComparisonFileIdentity{id:Sha256;format:ComparisonFormat;name:string;bytes:number;sha256:Sha256}
+export interface ComparisonFileRange{file:ComparisonFileIdentity;offset:number;bytes:number;next:number|null;sha256:Sha256;encoding:'base64';content:string}
 export interface FileIdentity{id:UUID;name:string;bytes:number;sha256:Sha256}
 export interface FileRange{file:FileIdentity;offset:number;bytes:number;next:number|null;sha256:Sha256;encoding:'base64';content:string}
 export type PublisherAction='source'|'status'|'target'|'plan'|'run'|'inspect'|'buyer-offer'|'save-plan'|'extract'|'cancel'|'review'|'publish'|'recover'|'prepare-buyer';
@@ -64,6 +88,9 @@ export declare class ZarrWorkspace{
  identity:WorkspaceIdentity;directory:string;sourceDirectory:string;
  open(options?:{create?:boolean;owner?:boolean}):Promise<this>;status():Promise<NativeStatus>;
  operation(id:UUID):Promise<NativeOperation>;result(id:Sha256,offset?:number,limit?:number):Promise<ResultPage>;
+ comparison(id:Sha256,offset?:number,limit?:number):Promise<ComparisonPage>;
+ comparisonFile(id:Sha256,format:ComparisonFormat):Promise<ComparisonFileIdentity & {path:string;contentType:string}>;
+ comparisonFileRead(id:Sha256,format:ComparisonFormat,offset?:number,limit?:number):Promise<ComparisonFileRange>;
  frozen(id:Sha256):Promise<FrozenSource>;prepare(intent:Intent):Promise<PreparedRequest>;
  apply(request:PreparedRequest):Promise<NativeReceipt>;resume(id:UUID):Promise<NativeReceipt>;
  export(id:UUID):Promise<{operationId:UUID;native:unknown;file:FileIdentity}>;
