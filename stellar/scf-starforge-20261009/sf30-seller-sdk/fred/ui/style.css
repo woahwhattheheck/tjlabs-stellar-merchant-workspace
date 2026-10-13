@@ -21,3 +21,8 @@ p,.metadata,code{overflow-wrap:anywhere}
 #operating-handover summary{cursor:pointer;font-weight:600}#handover-source-rows td:first-child{width:4rem}
 #handover-source-rows details{max-width:70ch}#handover-plan-steps details{padding:12px;border:1px solid #bcbcb8;background:#fafaf8}
 #handover-plan-steps p{white-space:pre-wrap}#handover-summary{margin:18px 0}#handover-summary strong{font-size:18px}
+
+/* Keep Research columns readable inside their existing horizontal scrollers. */
+[data-panel=research] .table-wrap table{min-width:960px}
+[data-panel=research] .table-wrap th,[data-panel=research] .table-wrap td{min-width:100px}
+#research-table th:nth-child(2),#research-table td:nth-child(2){min-width:220px}
