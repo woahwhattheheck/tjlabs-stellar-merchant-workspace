@@ -68,3 +68,19 @@ The same complete original course opens both working packages through the select
 The writer lifecycle check executes the actual changed `flushWorking` body with a controlled asynchronous persistence boundary. Holding the first write while 50 more generations are requested produces only one further complete snapshot, containing the last generation. A stored revision conflict stays unchanged; separate-copy selection and a failed-save retry retain current fields. A settled save returns no complete graph. This checks the queue risk directly and does not substitute for the actual IndexedDB/browser receiving course above.
 
 The complete returned source-function artifacts and exact executing module manifest are retained at `operations/scf-review-working-memory-1b40-20261013/complete-source-receiving.json`. All three corrected outputs match the unchanged original-module course byte for byte. This result remains explicitly separate from native storage and rendered-browser completion.
+
+## Saved selector opening
+
+The shared `listDrafts()` metadata route now walks the existing object store with its ordinary forward cursor. It collects each record's complete metadata and lets the cursor advance before receiving the next full record. It no longer requests one array containing every saved `input` just to build a selector. The database version, store and public return shape stay unchanged.
+
+Forward object-store key order is preserved before applying the same descending `updatedAt` comparison, including the original tie order. All enumerable metadata other than `input` remains available, including extension fields. Selecting a submission, review or working copy still loads that one complete original record through `loadDraft()` and its existing validation. This change bounds redundant input retention during a metadata listing; it does not limit one record's size, total metadata, IndexedDB's internal buffers or total browser heap.
+
+Full `readDraftRecords()` inventory and export, revision-checked saves, deletion, atomic receiving and selective restoration are unchanged. Complete library receiving still intentionally requests full records and is not described as a metadata-only operation.
+
+### Original opening and receiving course
+
+In the same original browser/profile, open Prepare submission's saved drafts and Review submission's original submissions, saved rounds and complete working copies. Check the entire metadata selection and timestamp order, then select the actual original record, inspect its full retained sources and unfinished values, save an explicit permitted change and reopen its full export independently. Preserve the original request and record identities, revision conflict behavior and any later recipient edits. Use the existing saved-project library for complete archive receiving; its full-record and atomic receipt contracts remain authoritative.
+
+Continue the already owned receiving operation and frozen source selection. Adopt this store module only in a deliberate complete following application edition; do not replace files beneath an admitted source manifest. The exact outgoing desktop and narrow/mobile views, populated/empty/error states, important controls, full downloads and cold reopen still require actual operation and viewed output before a customer-ready claim, as specified in the owner instruction above.
+
+The actual source-event check compares the old and current `listDrafts()` bodies using retained complete source-course working/review/submission data with explicitly authored metadata. It confirms identical metadata and tie ordering, complete extension retention, one cursor value per event and the empty-store result. Only the listing function differs in the complete module; all original store, CAS and full-record receiving source is byte-identical. This is not an IndexedDB, native browser or rendered-product result.
