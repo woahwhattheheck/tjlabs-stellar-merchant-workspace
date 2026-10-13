@@ -224,3 +224,132 @@ flow. It does not claim browser execution. The shipped browser, HTTP, CLI and
 MCP interfaces expose the same persisted product records and original native
 files; their source integration and any separate browser execution retain
 their own evidence.
+
+## Inspect the exact rendered product and outgoing attachments
+
+Before presenting this project, a demo or its exports as client/prospect ready,
+the producing peer must open the exact outgoing application, look at its
+rendered screens and use the important controls. The native result above
+establishes its recorded API and archive journey. It does not establish that
+someone has seen the browser, opened an exported report, or used the outgoing
+attachments. Source review, HTTP success, DOM counts, screenshots that nobody
+views and another peer's approval do not replace that work.
+
+This is normal completion of the already authorized delivery, with repairs
+made in the same work. It adds no separate release permission or repeated
+approval ceremony. Bryce's original direction and its all-attachments
+clarification are retained at:
+
+- https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+- https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791884278483419
+
+### Open the saved project through the original application
+
+Wait until the programme has closed its project owners. Use the exact selected
+source checkout or installed product and the same private environment. Open
+one of the actual project paths listed below through the installed command:
+
+~~~sh
+starforge dcat serve --workspace /absolute/private/SELECTED_SAVED_PROJECT
+~~~
+
+From that same source checkout, the equivalent original entrypoint is:
+
+~~~sh
+SCF_DCAT_SEMANTIC_PYTHON=/absolute/prepared-semantic-environment/bin/python \
+node /absolute/merchant-source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-cli.mjs \
+  serve --workspace /absolute/private/SELECTED_SAVED_PROJECT
+~~~
+
+The original command starts the authenticated local listener and prints its
+private browser URL. Open that exact URL in the producer's browser; retain the
+URL only in the private host session. The existing **DCAT catalog migration**
+Applications entrypoint can open the same saved directory. Do not start a
+second owner while the programme or an existing Applications instance holds
+the project. Close the original server normally before moving to another
+project, and preserve its saved state.
+
+Use an actual desktop or screenshare width and a relevant narrow viewport,
+for example 390 CSS pixels. Look at the rendered page or open the captured
+images at readable size. Inspect the whole screen, including long identifiers,
+typed values, tables, explanatory text, controls and download links. Repair
+clipping, overflow, broken styles, unreadable contrast or cramped spacing in
+the owned source, then reopen the exact repaired version.
+
+The intended presentation is plain and industrial: readable tables, clear
+hierarchy, consistent type and spacing, restrained controls and useful labels.
+The narrow layout must keep values and actions usable rather than hide the
+customer's evidence.
+
+### Use the controls, then reopen what will be delivered
+
+Follow the project-specific journey below using its actual retained IDs.
+Navigate between populated panels, change the relevant filters and page
+through real rows. Use a search with no matches to see the empty result state.
+Inspect initial loading and any actual failed/interrupted attempt if present;
+do not relabel a successful attempt or fabricate a native failure for a
+screenshot. If a requested state is absent from this real case, say so in the
+receiving note. Any additional destructive or state-changing exercise belongs
+in an explicitly selected working copy, with its resulting history retained.
+
+Download the files the recipient will receive through the actual browser
+controls. Open readable JSON/text/CSV/RDF files in an appropriate viewer and
+render HTML reports as documents. Review their complete structure and useful
+content, not only their filenames or hashes. For a large machine-readable
+artifact, use its normal parser or reader over the full file and examine the
+actual relevant records; retain both its full-byte identity and any practical
+viewing limit. Keep incomplete response bodies and failure logs labeled as
+such. Use the original whole-workspace receiver for .ckanw archives and reopen
+the received project; a ZIP inventory alone does not demonstrate this.
+
+Open every outgoing attachment in the form the recipient will use. If the
+delivery includes images, open and view them; if it includes video or audio,
+play the final exported file and watch/listen through its useful content.
+Use natural, clear, high-quality voice/TTS when a narrated video is appropriate.
+Only include media that helps explain the actual product. Do not claim an
+attachment was used merely because it was generated or copied.
+
+Return the actual desktop and narrow images to the integrating owner/root,
+together with the source pin, saved project identity, selected record IDs,
+what controls were operated, downloads opened, repairs made and any remaining
+limitation. The producer and integrating owner must actually view the images;
+a path-only list is insufficient. Keep browser bearer tokens out of images,
+shared URLs and published receipts. Retain exact original artifacts privately,
+with any intentionally redacted presentation image labeled as a derivative.
+
+Finish with a concise account of the observed product and the corrections
+made. Keep native/API completion and rendered/attachment observations distinct
+so the recipient can tell what was actually exercised. This work should
+improve and complete the delivery, not turn into another broad test bundle.
+
+### Comparison producer and recipient journey
+
+For this programme, the producer is
+semanticOutputDirectory/producer and the recipient is
+outputDirectory/recipient. These are different project locations; the
+recipient includes its local receiving acknowledgement. Inspect each through
+the opening route above, closing one owner before opening the other.
+
+In **Semantic validation**, inspect the saved **Profiles** and **Runs**, then
+open **Compare editions** and the retained comparisons. Select each actual
+ordered-editions, same-current-snapshot and bounded-impact ID from result.json.
+Check the before/after catalogue, run/profile hashes, context treatment and
+base IRI. Read the full graph-difference summary separately from relationship
+impact, including the actual node limit and any truncation qualification.
+
+Operate Changes, Nodes and Relationships views, search, added/removed and
+snapshot filters where available, and previous/following pages. Open long
+typed RDF values and original provenance. Check that a genuine same-snapshot
+empty result is distinguishable from an empty filter or DOWNLOAD_REQUIRED.
+Download the comparison record, complete original sections, native rendered
+report and saved decisions, then open those exact downloaded files.
+
+Read the actual producer acknowledgements and recipient-local decision. If
+the operator intentionally appends another review, use the inspected
+comparison/review hashes, keep its real purpose in the note and export a
+following archive. Do not replay a native comparison just to populate a
+presentation. Use **Workspace** to inspect the whole handover and the
+programme's complete-gsa-comparisons.ckanw and
+received-gsa-comparisons-following.ckanw through their original receiving
+results. After ordinary server shutdown, reopen the same recipient and verify
+the selected comparison and local history remain visible.

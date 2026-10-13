@@ -166,3 +166,130 @@ If a native attempt was interrupted, the domain and bridge inventory the retaine
 If process loss occurred before a selected import or profile appeared in saved state, the program reports that its original phase needs reconciliation. Inspect `progress.json` and the original workspace before another mutation. Archive receiving uses its existing exact archive-hash continuation. A completed independent receive can be reopened without retransferring or rerunning native semantic work.
 
 A submitted process call, a source-only review or a pre-CreateProcess environment error is not a native execution. Record the actual admitted process, terminal exit, selected runtime, complete `result.json` and artifact hashes in the existing operation thread. The separate LDA two-host receiving programme remains under its original single-owner request.
+
+## Inspect the exact rendered product and outgoing attachments
+
+Before presenting this project, a demo or its exports as client/prospect ready,
+the producing peer must open the exact outgoing application, look at its
+rendered screens and use the important controls. The native result above
+establishes its recorded API and archive journey. It does not establish that
+someone has seen the browser, opened an exported report, or used the outgoing
+attachments. Source review, HTTP success, DOM counts, screenshots that nobody
+views and another peer's approval do not replace that work.
+
+This is normal completion of the already authorized delivery, with repairs
+made in the same work. It adds no separate release permission or repeated
+approval ceremony. Bryce's original direction and its all-attachments
+clarification are retained at:
+
+- https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+- https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791884278483419
+
+### Open the saved project through the original application
+
+Wait until the programme has closed its project owners. Use the exact selected
+source checkout or installed product and the same private environment. Open
+one of the actual project paths listed below through the installed command:
+
+~~~sh
+starforge dcat serve --workspace /absolute/private/SELECTED_SAVED_PROJECT
+~~~
+
+From that same source checkout, the equivalent original entrypoint is:
+
+~~~sh
+SCF_DCAT_SEMANTIC_PYTHON=/absolute/prepared-semantic-environment/bin/python \
+node /absolute/merchant-source/stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/dcat-cli.mjs \
+  serve --workspace /absolute/private/SELECTED_SAVED_PROJECT
+~~~
+
+The original command starts the authenticated local listener and prints its
+private browser URL. Open that exact URL in the producer's browser; retain the
+URL only in the private host session. The existing **DCAT catalog migration**
+Applications entrypoint can open the same saved directory. Do not start a
+second owner while the programme or an existing Applications instance holds
+the project. Close the original server normally before moving to another
+project, and preserve its saved state.
+
+Use an actual desktop or screenshare width and a relevant narrow viewport,
+for example 390 CSS pixels. Look at the rendered page or open the captured
+images at readable size. Inspect the whole screen, including long identifiers,
+typed values, tables, explanatory text, controls and download links. Repair
+clipping, overflow, broken styles, unreadable contrast or cramped spacing in
+the owned source, then reopen the exact repaired version.
+
+The intended presentation is plain and industrial: readable tables, clear
+hierarchy, consistent type and spacing, restrained controls and useful labels.
+The narrow layout must keep values and actions usable rather than hide the
+customer's evidence.
+
+### Use the controls, then reopen what will be delivered
+
+Follow the project-specific journey below using its actual retained IDs.
+Navigate between populated panels, change the relevant filters and page
+through real rows. Use a search with no matches to see the empty result state.
+Inspect initial loading and any actual failed/interrupted attempt if present;
+do not relabel a successful attempt or fabricate a native failure for a
+screenshot. If a requested state is absent from this real case, say so in the
+receiving note. Any additional destructive or state-changing exercise belongs
+in an explicitly selected working copy, with its resulting history retained.
+
+Download the files the recipient will receive through the actual browser
+controls. Open readable JSON/text/CSV/RDF files in an appropriate viewer and
+render HTML reports as documents. Review their complete structure and useful
+content, not only their filenames or hashes. For a large machine-readable
+artifact, use its normal parser or reader over the full file and examine the
+actual relevant records; retain both its full-byte identity and any practical
+viewing limit. Keep incomplete response bodies and failure logs labeled as
+such. Use the original whole-workspace receiver for .ckanw archives and reopen
+the received project; a ZIP inventory alone does not demonstrate this.
+
+Open every outgoing attachment in the form the recipient will use. If the
+delivery includes images, open and view them; if it includes video or audio,
+play the final exported file and watch/listen through its useful content.
+Use natural, clear, high-quality voice/TTS when a narrated video is appropriate.
+Only include media that helps explain the actual product. Do not claim an
+attachment was used merely because it was generated or copied.
+
+Return the actual desktop and narrow images to the integrating owner/root,
+together with the source pin, saved project identity, selected record IDs,
+what controls were operated, downloads opened, repairs made and any remaining
+limitation. The producer and integrating owner must actually view the images;
+a path-only list is insufficient. Keep browser bearer tokens out of images,
+shared URLs and published receipts. Retain exact original artifacts privately,
+with any intentionally redacted presentation image labeled as a derivative.
+
+Finish with a concise account of the observed product and the corrections
+made. Keep native/API completion and rendered/attachment observations distinct
+so the recipient can tell what was actually exercised. This work should
+improve and complete the delivery, not turn into another broad test bundle.
+
+### Validation producer and recipient journey
+
+For the validation programme, the producer is outputDirectory/producer and
+the recipient is outputDirectory/recipient. Open each through the original
+application route above after the programme has closed its owners.
+
+In **Semantic validation → Profiles**, select both original profiles and read
+their base IRI, context treatment, complete context/shapes/audit and original
+GSA attachments. In **Runs**, select the actual legacy and current IDs from
+result.json. Inspect the catalogue selection, snapshot and class-count
+coverage, native conformance, full finding terms and the recorded
+acknowledgements. Keep class presence, shape conformance, original JSON
+validation and operator acceptance visibly distinct.
+
+Operate severity/search filters and previous/following findings pages.
+Inspect complete typed values and long IRIs at desktop and narrow widths.
+Download each selected run record, original native report, graph/provenance,
+profile files and review, and open the actual downloaded documents. Look at
+rendered native reports when present. An empty findings list is not evidence
+that every intended source class was mapped or validated.
+
+Open **Catalogue migration** and **Workspace** to see the preserved source
+catalogues and whole-project handover. Use the programme's actual
+complete-gsa-semantic.ckanw and received-gsa-semantic-following.ckanw receiving
+results, inspect the recipient-local acknowledgement, then close and reopen
+that same saved recipient. The normal review control remains available for an
+intentional later operator decision; retain its actual history and export a
+following archive if used. Keep the original recorded native attempts and
+result.json intact.
