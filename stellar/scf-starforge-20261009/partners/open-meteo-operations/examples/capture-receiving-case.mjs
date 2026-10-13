@@ -88,7 +88,12 @@ export async function captureWeatherReceivingCase({runtime,output,forecastStart,
     if(read&&isWeatherSourceRead(read)){
      if(read.specSha256!==request.specSha256)fail('RETAINED_PROVIDER_REQUEST_CHANGED',{requestId});
      if(request.state!=='ACQUIRING')request=store.beginSource(requestId,request.revision,{reprocess:true});
-     capture=store.attachCapture(requestId,request.specSha256,read.raw,read.provenance);
+     try{capture=store.attachCapture(requestId,request.specSha256,read.raw,read.provenance);}
+     catch(error){
+      store.sourceFailed(requestId,request.specSha256,{code:error.code??error.name,
+       retainedRead:{id:read.id,sha256:read.sha256,bytes:read.bytes,reprocessable:true},observedAt:new Date().toISOString()});
+      throw error;
+     }
     }else{
      request=store.beginSource(requestId,request.revision);
      const url=providerUrl(selected.request,profile);
