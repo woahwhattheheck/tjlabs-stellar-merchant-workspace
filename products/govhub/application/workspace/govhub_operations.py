@@ -267,15 +267,16 @@ class OperationsMixin:
             if (payload.get("native_workflow_id") or payload.get("native_backup_files")
                     or "runtime_bindings" in payload or payload.get("skpr_native_request_id")
                     or "skpr_snapshot_choices" in payload or payload.get("tugboat_job_id")
-                    or payload.get("upsun_activity_id") or payload.get("upsun_activity_ids_json")):
+                    or payload.get("upsun_activity_id") or payload.get("upsun_activity_ids_json")
+                    or payload.get("castor_command_receipt")):
                 try:
                     value.update(self._native().native_resume_fields(value, payload, reason))
                 except ValueError as exc:
-                    code = "UPSUN_CONTINUATION" if str(value.get("native_action", "")).startswith("upsun-") else "TUGBOAT_CONTINUATION" if str(value.get("native_action", "")).startswith("tugboat-") else "SKPR_CONTINUATION" if str(value.get("native_action", "")).startswith("skpr-") else "PANTHEON_CONTINUATION"
+                    code = "CASTOR_CONTINUATION" if str(value.get("native_action", "")).startswith("castor-") else "UPSUN_CONTINUATION" if str(value.get("native_action", "")).startswith("upsun-") else "TUGBOAT_CONTINUATION" if str(value.get("native_action", "")).startswith("tugboat-") else "SKPR_CONTINUATION" if str(value.get("native_action", "")).startswith("skpr-") else "PANTHEON_CONTINUATION"
                     raise GovHubError(code, str(exc), 409) from exc
             value.update(state="QUEUED", cancel_requested=False, error=None)
             value["progress"] = dict(value["progress"], stage="QUEUED", detail="Continuing the retained native checkpoint")
-            value = self._write_operation(db, value, actor, "Retained native operation resumed", {"reason": reason, "resume_checkpoint": value.get("resume_checkpoint"), "native_task_id": value.get("native_task_id"), "native_workflow_id": value.get("native_workflow_id"), "native_workflow_step": value.get("native_workflow_step"), "native_backup_selections": value.get("native_backup_selections"), "runtime_bindings": value.get("runtime_bindings"), "skpr_native_associations": value.get("skpr_native_associations"), "skpr_snapshot_selections": value.get("skpr_snapshot_selections"), "tugboat_job_association": value.get("tugboat_job_association"), "upsun_activity_association": value.get("upsun_activity_association")})
+            value = self._write_operation(db, value, actor, "Retained native operation resumed", {"reason": reason, "resume_checkpoint": value.get("resume_checkpoint"), "native_task_id": value.get("native_task_id"), "native_workflow_id": value.get("native_workflow_id"), "native_workflow_step": value.get("native_workflow_step"), "native_backup_selections": value.get("native_backup_selections"), "runtime_bindings": value.get("runtime_bindings"), "skpr_native_associations": value.get("skpr_native_associations"), "skpr_snapshot_selections": value.get("skpr_snapshot_selections"), "tugboat_job_association": value.get("tugboat_job_association"), "upsun_activity_association": value.get("upsun_activity_association"), "castor_command_receipt": value.get("castor_command_receipt")})
             result = {"operation": value}
             self._remember(db, key, fingerprint, result, actor)
         self._worker_wake.set()
@@ -436,7 +437,7 @@ class OperationsMixin:
                 checkpoint = lambda data: self._native_checkpoint(value["id"], data)
                 cancelled = lambda: self._cancelled(value["id"])
                 if value["type"] == "CAPTURE":
-                    native_result = native.capture(value["profile"]["config"], {"operation_id": value["id"], "environment_id": value["environment_id"], "output_dir": str(output_dir), "checkpoint": source_paths["checkpoint"], "target_fingerprint": value["target_fingerprint"], "workspace_relocations": source_paths["workspace_relocations"], "runtime_bindings": value.get("runtime_bindings")}, checkpoint=checkpoint, cancelled=cancelled)
+                    native_result = native.capture(value["profile"]["config"], {"operation_id": value["id"], "environment_id": value["environment_id"], "output_dir": str(output_dir), "checkpoint": source_paths["checkpoint"], "target_fingerprint": value["target_fingerprint"], "workspace_relocations": source_paths["workspace_relocations"], "runtime_bindings": value.get("runtime_bindings"), "castor_command_receipt": value.get("castor_command_receipt")}, checkpoint=checkpoint, cancelled=cancelled)
                 else:
                     operation = dict(value, resume_checkpoint=source_paths["checkpoint"])
                     native_result = native.execute(operation, value["profile"]["config"], source_paths, checkpoint=checkpoint, cancelled=cancelled)

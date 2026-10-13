@@ -1,0 +1,24 @@
+{
+  "schema": "govhub-castor-browser-receiving/v1",
+  "origin": "http://127.0.0.1:SELECT_ACTUAL_PORT/",
+  "username": "SELECT_EXISTING_STAFF",
+  "password_env": "SELECT_EXISTING_PASSWORD_ENV",
+  "output_directory": "/PRIVATE/SELECT_BROWSER_RESULTS",
+  "environment_ids": [
+    "SELECT_EXISTING_LOCAL_ENVIRONMENT_RECORD"
+  ],
+  "operation_ids": [
+    "SELECT_ACTUAL_CAPTURE_OPERATION",
+    "SELECT_ACTUAL_BACKUP_OPERATION",
+    "SELECT_ACTUAL_RESTORE_OPERATION"
+  ],
+  "downloads": [
+    {
+      "operation_id": "SELECT_ACTUAL_CAPTURE_OPERATION",
+      "name": "SELECT_ORIGINAL_COMPLETE_SOURCE_FILENAME"
+    }
+  ],
+  "playwright_path": "/ABS/SELECT_EXISTING_PLAYWRIGHT",
+  "browser_executable": "/ABS/SELECT_EXISTING_CHROMIUM",
+  "headless": true
+}

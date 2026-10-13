@@ -35,6 +35,8 @@ The original command journal retains argv, cwd, stdout, stderr, file identities 
 
 The native provider snapshots and local source packages also have different meanings. Upsun snapshots cannot be downloaded as source archives: its complete source arm receives actual Git, database dump and selected writable mounts. Pantheon, Skpr, Tugboat and the other adapters retain their native provider IDs and exact source semantics. Read the selected provider guide before choosing a recovery action.
 
+For Castor, choose the actual existing task and verification task from the selected native context, with reviewed arguments and explicit JSON outcome checks. Source capture retains the original Git index and working files, selected Compose configuration, immutable Docker image identities and full image-save bytes. A successful process exit alone does not establish successful backup or restoration. Keep an uncertain process on its original command receipt; use the separate source receiving continuation for an interrupted independent Git reopen. The complete native and browser course is in CASTOR_RECEIVING.md.
+
 ## CLI operation and backup
 
 Arguments after the launcher command are passed unchanged to the maintained programme. Obtain each full native syntax through:
@@ -43,6 +45,7 @@ Arguments after the launcher command are passed unchanged to the maintained prog
 starforge govhub cli --help
 starforge govhub build --help
 starforge govhub upsun-receive --help
+starforge govhub castor-receive --help
 starforge govhub pantheon-receive --help
 starforge govhub static-releases --help
 starforge govhub dnn --help

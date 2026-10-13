@@ -795,9 +795,10 @@ def reopen_source(session, received_directory, checkout_directory):
 
         command("init", ["init"], True)
         command("bundle-verify", ["bundle", "verify", str(data / "repository.bundle")])
-        command("refs", ["fetch", "--force", str(data / "repository.bundle"), "+refs/*:refs/*"], True)
         command("head-fetch", ["fetch", str(data / "repository.bundle"), "HEAD"], True)
         command("checkout", ["checkout", "--detach", "--force", repository["head"]], True)
+        # Fetch original heads only after leaving init's current branch.
+        command("refs-after-detach", ["fetch", "--force", str(data / "repository.bundle"), "+refs/*:refs/*"], True)
         if (data / "staged.patch").stat().st_size:
             command("index", ["apply", "--cached", "--binary", str(data / "staged.patch")], True)
         entries = _load(data / "worktree.json")
