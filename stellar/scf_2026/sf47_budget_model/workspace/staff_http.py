@@ -30,7 +30,7 @@ READ_POSTS = {
     "installation-workshare-seed", "installation-seed", "installation-preview",
     "installation-effort-seed", "installation-effort-selection",
     "installation-commissioning-seed", "installation-commissioning-review",
-    "completion-seed", "completion-preview", "completion-corrections-seed", "completion-corrections-preview", "support-preview", "buyer-preview",
+    "completion-installations", "completion-installations-preview", "completion-seed", "completion-preview", "completion-corrections-seed", "completion-corrections-preview", "support-preview", "buyer-preview",
     "forecast-preview", "portfolio-preview", "portfolio-seed", "portfolio-selection",
     "expense-preview", "expense-request",
     "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio",

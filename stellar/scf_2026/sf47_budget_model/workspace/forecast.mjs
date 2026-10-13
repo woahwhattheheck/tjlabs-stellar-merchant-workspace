@@ -1,4 +1,5 @@
 import { createForecastCurrencyUI, formatNativeMoney, formatCurrencyValuation } from './forecast_currency.mjs';
+import { mountForecastComparison } from './forecast-comparison.mjs';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd = value => value === null || value === undefined ? 'Not entered' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value));
@@ -25,7 +26,7 @@ function download(raw,filename,type='application/json') {
 
 export function mountForecast({container,current,api:transport,mutationId,recordingActor,onSaved,initialForecastId=null,initialInputs=null,onSelection=()=>{}}) {
   const root=document.createElement('section');root.className='operating-forecast';container.replaceChildren(root);
-  let active=true,busy=false,hostBusy=false,selected=null,preview=null,editing=true,inputState=null,request=null;
+  let active=true,busy=false,hostBusy=false,selected=null,preview=null,editing=true,inputState=null,request=null,comparison=null;
   const blocked=()=>busy||hostBusy;
   const available=()=>active&&root.isConnected;
   function requireActive(){if(!available())throw new Error('This forecast view is closed. Reopen its original case to continue.');}
@@ -40,7 +41,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function defaults(){return {name:current.program.name+' — operating forecast',asOfDate:today(),calendarStart:current.program.calendarStart||current.plan.planning.calendarStart||'',
     openingCash:{amountUsd:null,basis:'NOT_ENTERED',sourceIds:[],note:''},packageOverrides:[],invoiceOverrides:[],grantReceipts:[],commercial:[],capacity:{weeklyHours:null,note:''},note:''};}
   function status(message,error=false){if(!available())return;const node=$('[data-forecast-status]');node.textContent=message;node.setAttribute('role',error?'alert':'status');}
-  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(state));root.querySelectorAll('input,select,textarea,button').forEach(node=>node.disabled=state||node.dataset.forecastFixed==='true');}
+  function applyBusy(){if(!available())return;const state=blocked();root.setAttribute('aria-busy',String(state));root.querySelectorAll('input,select,textarea,button').forEach(node=>node.disabled=state||node.dataset.forecastFixed==='true');comparison?.setHostBusy();}
   function setBusy(state){busy=state;applyBusy();}
   function setHostBusy(state){hostBusy=!!state;applyBusy();}
   async function run(task){if(blocked()||!available())return;setBusy(true);try{await task();}catch(error){status(error.message,true);}finally{if(available())setBusy(false);}}
@@ -220,11 +221,14 @@ export function mountForecast({container,current,api:transport,mutationId,record
   }
   function render(){
     if(!available())return;
+    comparison?.dispose();comparison=null;
     root.innerHTML='<div class="forecast-heading"><div><h3>Operating forecast</h3><p>Replan remaining cash and delivery work from this retained case.</p></div><div class="forecast-actions">'+button('New forecast','new')+(selected?button('Reforecast current case','reforecast'):'')+'</div></div>'
       +'<label class="forecast-saved-label">Saved forecasts<select data-forecast-selection><option value="">Current draft</option>'+current.forecasts.map(row=>'<option value="'+esc(row.id)+'"'+(selected?.id===row.id?' selected':'')+'>'+esc(row.name)+' · '+esc(row.asOfDate)+' · original v'+row.source.version+'</option>').join('')+'</select></label>'
+      + '<div data-forecast-comparison></div>'
       +'<p data-forecast-status role="status" aria-live="polite"></p>'
       +(current.program.state==='CLOSED'?'<p class="forecast-note">This case is closed. You can inspect and preview forecasts; reopen the case in its original controls before saving a new forecast.</p>':'')
       +(editing?editor(inputState||defaults()):'')+'<div data-forecast-report>'+(selected&&!editing?reportHtml(selected):'')+'</div>';
+    comparison=mountForecastComparison({container:$('[data-forecast-comparison]'),caseId:current.program.id,forecasts:current.forecasts,api,available,isBlocked:blocked});
     root.querySelectorAll('[data-forecast-commercial]').forEach(syncCommercialTiming);
     const form=$('[data-forecast-form]');if(form)currency.syncRates(form,{busy:blocked()});
   }
@@ -274,5 +278,5 @@ export function mountForecast({container,current,api:transport,mutationId,record
   });
   inputState=initialInputs?structuredClone(initialInputs):defaults();render();
   const ready=initialForecastId&&!initialInputs?(async()=>{setBusy(true);try{await loadSaved(initialForecastId);}finally{if(available())setBusy(false);}})():Promise.resolve();
-  return {ready,setHostBusy,draftInputs(){return editing&&available()?structuredClone(readEditor()):null;},dispose(){active=false;},root};
+  return {ready,setHostBusy,draftInputs(){return editing&&available()?structuredClone(readEditor()):null;},dispose(){active=false;comparison?.dispose();},root};
 }

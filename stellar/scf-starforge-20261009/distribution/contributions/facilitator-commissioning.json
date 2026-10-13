@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "facilitator-commissioning",
-  "description": "Complete same-service two-provider commissioning and customer receiving",
+  "description": "Complete same-service two-provider commissioning, authenticated operator and portable customer receiving",
   "components": [
     "products/facilitator-commissioning"
   ],
@@ -9,9 +9,13 @@
     "facilitator-commissioning": "products/facilitator-commissioning/cli.mjs"
   },
   "commandDescriptions": {
-    "facilitator-commissioning": "Prepare, operate and receive one complete retained service on two original facilitator profiles"
+    "facilitator-commissioning": "Prepare, operate, receive and hand over one complete retained service on two original facilitator profiles"
   },
   "exports": {
-    "./facilitator/commissioning": "./source/products/facilitator-commissioning/commissioning.mjs"
+    "./facilitator/commissioning": "./source/products/facilitator-commissioning/commissioning.mjs",
+    "./facilitator/commissioning-client": "./source/products/facilitator-commissioning/client.mjs",
+    "./facilitator/commissioning-operator": "./source/products/facilitator-commissioning/operator.mjs",
+    "./facilitator/commissioning-server": "./source/products/facilitator-commissioning/operator-server.mjs",
+    "./facilitator/commissioning-receive": "./source/products/facilitator-commissioning/receive-operator.mjs"
   }
 }

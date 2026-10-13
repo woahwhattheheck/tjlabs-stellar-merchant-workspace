@@ -561,3 +561,7 @@ under a newly registered native workspace alias.
 ## Reviewed lineage and portable handover
 
 Use the [Analysis lineage agent workflow](ANALYSIS_LINEAGE.md) to discover operator-selected collector connections, review dependencies from completed native jobs, save an exact publication plan, publish or reopen its original job, and receive the complete hash-bound handover. The same original Analysis workspace owns its browser, Python and MCP history. The installed `mcp-analysis-lineage-download` command uses the maintained retained-file transfer and supports same-directory continuation and offline complete reopen. It does not execute the original query or acquire data again.
+
+## Acquired event windows and customer programmes
+
+The [complete event agent workflow](ANALYSIS_EVENTS.md) receives both original subscriber files, selects payload meaning, reviews and applies the original customer programme, preserves report/workbook edits across later windows, and carries the full sixteen-file handover into independent receiving. Its durable actions and private input chunks are the same records used by the Event programmes browser. The installed `mcp-analysis-events` command receives complete source files, inspects and downloads a selected whole delivery, resumes interrupted transfer and verifies every delivered file offline. Exact large native reviews remain available through digest-bound complete-record files.

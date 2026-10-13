@@ -11,6 +11,7 @@ import { checkCkanProjectDeclaration, CkanWorkspaceTransferInspections, ckanTran
   ckanTransferPage, CKAN_TRANSFER_MAX_BYTES, CKAN_TRANSFER_MAX_ARCHIVE_BYTES } from './ckan-workspace-transfers.mjs';
 import { ExactCkanNumber } from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/capture.mjs';
 import { executeCkanDcat, pageDcatState, forgetDcatReview, DCAT_INPUT_MAX_BYTES } from './ckan-dcat.mjs';
+import { SEMANTIC_INPUT_MAX_BYTES } from './ckan-dcat-semantic.mjs';
 
 export const CKAN_WORKSPACE_CONNECTION_SCHEMA = 'stellar-forge.ckan-workbench-connection.v1';
 const NATIVE_SCHEMA = 'stellar-forge.ckan-workbench.v1';
@@ -103,8 +104,9 @@ export async function readCkanWorkspaceConfiguration(path) {
       identifier(key, 'CKAN input alias');
       exact(item, ['file', 'label', 'kind'], ['file']);
       const kind = item.kind ?? 'capture';
-      if (!['capture', 'workspace-archive', 'dcat-catalog', 'dcat-mappings'].includes(kind))
-        throw failure('CONFIGURATION_ERROR', 'Declare capture, workspace-archive, dcat-catalog or dcat-mappings as the original input kind.');
+      if (!['capture', 'workspace-archive', 'dcat-catalog', 'dcat-mappings',
+        'dcat-semantic-context', 'dcat-semantic-shapes', 'dcat-semantic-ontology', 'dcat-semantic-attachment'].includes(kind))
+        throw failure('CONFIGURATION_ERROR', 'Declare capture, workspace-archive, dcat-catalog, dcat-mappings or an original dcat-semantic context/shapes/ontology/attachment input kind.');
       inputs[key] = { file: hostPath(item.file, base), label: line(item.label ?? key, 'CKAN input label'), kind };
     }
     let merchant = null;
@@ -222,7 +224,10 @@ export class MerchantCkanWorkspaces {
     if (native.dcat) {
       const selected = pageDcatState(native.dcat, { limit,
         catalogsOffset: options.dcatCatalogsOffset, reviewsOffset: options.dcatReviewsOffset,
-        releasesOffset: options.dcatReleasesOffset });
+        releasesOffset: options.dcatReleasesOffset,
+        sourcesOffset: options.dcatSourcesOffset, acquisitionsOffset: options.dcatAcquisitionsOffset,
+        semanticProfilesOffset: options.dcatSemanticProfilesOffset,
+        semanticRunsOffset: options.dcatSemanticRunsOffset, semanticReviewsOffset: options.dcatSemanticReviewsOffset });
       native.dcat = selected.dcat; paging.dcat = selected.paging;
     }
     return { workspace: entry.alias, instanceId: entry.instanceId, browserUrl: entry.service.url,
@@ -285,6 +290,9 @@ export class MerchantCkanWorkspaces {
       ...(started.sourceId ? { sourceId: started.sourceId } : {}),
       ...(started.acquisitionId ? { acquisitionId: started.acquisitionId } : {}),
       ...(started.reviewId ? { reviewId: started.reviewId } : {}),
+      ...(started.profileId ? { profileId: started.profileId } : {}),
+      ...(started.runId ? { runId: started.runId } : {}),
+      ...(started.semanticReviewId ? { semanticReviewId: started.semanticReviewId } : {}),
       native: view({ operation: native.operation, active: native.active }) };
   }
   #input(alias, input) {
@@ -299,6 +307,7 @@ export class MerchantCkanWorkspaces {
       inputs: Object.entries(configured).map(([input, item]) => ({ input, label: item.label, kind: item.kind ?? 'capture' })) };
     const input = this.#input(alias, selectedInput);
     const current = await privateFile(input.file, input.kind === 'workspace-archive' ? CKAN_TRANSFER_MAX_ARCHIVE_BYTES
+      : input.kind?.startsWith('dcat-semantic-') ? SEMANTIC_INPUT_MAX_BYTES
       : ['dcat-catalog', 'dcat-mappings'].includes(input.kind) ? DCAT_INPUT_MAX_BYTES : 16777216);
     return { workspace: alias, input: selectedInput, label: input.label, kind: input.kind ?? 'capture',
       file: { name: basename(input.file), bytes: current.bytes, sha256: current.sha256 } };

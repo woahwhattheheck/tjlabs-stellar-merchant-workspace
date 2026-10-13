@@ -17,12 +17,17 @@ const MCP = 'stellar-forge/mcp-merchant-operator/';
 const SOURCE_FILES = [
   ...['ckan-workspace-launcher.mjs', 'ckan-workspace.mjs', 'ckan-workspace-transfers.mjs',
     'catalog/ckan-workspace.mjs', 'ckan-dcat.mjs', 'catalog/ckan-dcat.mjs',
+    'ckan-dcat-semantic.mjs', 'catalog/ckan-dcat-semantic.mjs',
     'providers/ckan-workspaces.mjs', 'retained-file-reads.mjs', 'retained-file-contracts.mjs',
     'config.mjs', 'operator.mjs', 'serve.mjs'].map(name => MCP + name),
   ...['model.mjs', 'server.mjs', 'source.mjs', 'capture.mjs', 'semantics.mjs', 'declaration.mjs',
     'archive.mjs', 'source-locations.mjs', 'refresh.mjs', 'reviewed-refresh.mjs',
     'dcat-workspace.mjs', 'dcat-acquisition.mjs', 'dcat_migration.py', 'DCAT_ENGINE.md', 'MIGRATION_OPERATING.md', 'RECURRING_CATALOGS.md',
     'PORTABLE_RUNTIME.md', 'portable-runtime-requirements.txt',
+    'dcat-semantic.mjs', 'dcat-semantic-native.mjs', 'dcat_semantic_prepare.py',
+    'dcat-semantic-cli.mjs', 'SEMANTIC_CATALOGS.md', 'public/dcat-semantic.mjs',
+    'semantic-profiles/dcat-us-faithful-current.json', 'semantic-profiles/dcat-us-observed-current.json',
+    'semantic-profiles/dcat-us-faithful-legacy.json',
     'public/index.html', 'public/app.mjs', 'public/migration.mjs', 'public/dcat-sources.mjs', 'public/dcat-json.mjs',
     'public/style.css'].map(name => CKAN + name),
   ...[
@@ -65,6 +70,29 @@ const SOURCE_FILES = [
     "jsonschema/v1.1_definitions/vcard.json",
     "source-manifest.json"
 ].map(name => CKAN + 'vendor/gsa-dcat-us/' + name),
+  ...[
+      "source-manifest.json",
+      "selected-runtime.json",
+      "semantic_operator/__init__.py",
+      "semantic_operator/worker.py",
+      "semantic_operator/rdf_engine.py",
+      "semantic_operator/dataset_engine.py",
+      "semantic_operator/security.py",
+      "semantic_operator/store.py",
+      "requirements.txt",
+      "LICENSE",
+      "NOTICE",
+      "NATIVE_CONTRACT.json"
+  ].map(name => CKAN + 'vendor/semantic-operator/' + name),
+  ...[
+      "build/dcat-us-3.0.context.jsonld",
+      "build/dcat-us-3.0.observed.context.jsonld",
+      "build/dcat-us-3.0-shapes.ttl",
+      "build/audit.json",
+      "README.md",
+      "LICENSE",
+      "source-manifest.json"
+  ].map(name => CKAN + 'vendor/dcat-us-binding/' + name),
   ...['releases.mjs', 'release-installation.mjs'].map(name =>
     'stellar/scf-starforge-20261009/sf82-seller-pilot/' + name),
 ].sort();

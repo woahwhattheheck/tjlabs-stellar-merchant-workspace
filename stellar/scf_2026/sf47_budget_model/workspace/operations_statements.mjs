@@ -1,6 +1,7 @@
 import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
 import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 import {statementSetupPanel,statementSetupComparison,statementSetupSettings,statementSetupLink,sameSetupValue} from './operations_statement_profiles.mjs';
+import {statementMatchingRows,statementSelection,statementBatchPanel,prepareStatementBatch,applyStatementBatch,undoStatementBatch} from './operations_statement_batch.mjs';
 // Statement source mapping and reviewed cash receiving in the existing Operations case.
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=value=>structuredClone(value);
@@ -123,12 +124,14 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statements.css';link.dataset.statementStyle='true';document.head.append(link);
   }
   if(!document.querySelector('link[data-statement-setup-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_profiles.css';link.dataset.statementSetupStyle='true';document.head.append(link);}
+  if(!document.querySelector('link[data-statement-batch-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statement_batch.css';link.dataset.statementBatchStyle='true';document.head.append(link);}
   let active=true,busy=false,hostBusy=false,loading=true,caseValue=current,persistQueue=Promise.resolve(),persistTimer=null;
   const prefix='/api/operations/'+encodeURIComponent(current.program.id);
   const available=()=>active&&root.isConnected;
   const $=selector=>root.querySelector(selector);
   const defaults=()=>({source:null,accountId:'',accountLabel:'',currency:'USD',format:{delimiter:',',decimalMark:'.',groupMark:'',dateFormat:'YYYY-MM-DD',amountMode:'SIGNED',positiveDirection:'IN'},columns:{date:'',reference:'',description:'',amount:'',debit:'',credit:''},defaultCategory:'OTHER',decisions:[]});
-  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationDraft:[]};
+  const values={inputs:defaults(),headers:[],inspection:null,nativeScalesText:'USD: 2',optionsError:'',editRevision:0,preview:null,dirty:true,confirmed:false,page:0,status:'ALL',query:'',appliedQuery:'',pending:null,accepted:null,setupPending:null,setupChoice:'',setupName:'',setupNote:'',inflight:null,error:'',notice:'',allocationRow:null,allocationDraft:[],batchSelection:[],batchChange:{mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''},batchProposal:null,batchUndo:null,batchReviewPage:0};
+  if(!Object.hasOwn(session,'appliedQuery'))session.appliedQuery=session.query||'';
   for(const [key,value] of Object.entries(values))if(!Object.hasOwn(session,key))session[key]=value;
   session.currentCaseVersion=current.program.version;
   const source=()=>session.inputs.source;
@@ -136,7 +139,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   const locked=()=>loading||busy||hostBusy||!!session.inflight||!!session.pending||!!session.accepted||!!session.setupPending;
   const editable=()=>!locked()&&caseValue.program.state==='OPEN';
   const rowDecision=number=>session.inputs.decisions.find(row=>row.rowNumber===number);
-  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null)};}
+  function snapshot(){return {schema:'sf47.statement-draft.v1',caseId:current.program.id,inputs:clone(session.inputs),headers:clone(session.headers),inspection:clone(session.inspection),nativeScalesText:session.nativeScalesText,preview:clone(session.preview),dirty:session.dirty,pending:clone(session.pending),accepted:clone(session.accepted),setupPending:clone(session.setupPending),setupChoice:session.setupChoice,setupName:session.setupName,setupNote:session.setupNote,originalInputHandoff:clone(session.originalInputHandoff||null),batchSelection:clone(session.batchSelection),batchChange:clone(session.batchChange),batchUndo:clone(session.batchUndo)};}
   async function persist(critical=false){
     const value=snapshot();
     persistQueue=persistQueue.catch(()=>{}).then(()=>storeDraft(current.program.id,value));
@@ -154,6 +157,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       const recovery=el.dataset.statementRecovery==='true';
       el.disabled=el.dataset.statementFixed==='true'||loading||busy||hostBusy||!!session.inflight||(!recovery&&!!(session.pending||session.accepted||session.setupPending))||(el.dataset.statementWrite==='true'&&caseValue.program.state!=='OPEN');
     });
+    root.querySelectorAll('[data-statement-row-select]').forEach(el=>{el.checked=session.batchSelection.includes(Number(el.dataset.statementRowSelect));el.disabled=!editable()||session.dirty;});
     const importButton=$('[data-statement-action="import"]');
     if(importButton)importButton.disabled=!editable()||session.dirty||!session.confirmed||!session.preview?.canImport;
     const warning=$('[data-statement-stale]');if(warning)warning.hidden=!session.dirty;
@@ -163,7 +167,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     const row=(caseValue.statementSetups||[]).find(item=>sameSetupValue(statementSetupLink(item),selected));
     if(!row||!sameSetupValue(statementSetupSettings(session.inputs),row.settings)){delete session.inputs.statementSetup;session.notice='The account or interpretation changed. Save this mapping as a new setup edition to retain its reusable choice.';}
   }
-  function changed(){session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();controls();}
+  function clearBatch(){session.batchSelection=[];session.batchProposal=null;session.batchUndo=null;session.batchReviewPage=0;}
+  function changed(keepBatch=false){if(!keepBatch)clearBatch();session.editRevision++;session.dirty=true;session.confirmed=false;session.error='';schedulePersist();if(!keepBatch)redrawBatch();controls();}
   function setDecision(number,patch){
     let decision=rowDecision(number);
     if(!decision){decision={rowNumber:number,action:'IMPORT'};session.inputs.decisions.push(decision);}
@@ -287,7 +292,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     const result=await saveApi(prefix+'/statement-preview',{expectedVersion,inputs});
     if(result.caseId!==current.program.id||result.expectedVersion!==expectedVersion||result.schema!=='stellar-forge.sf47-statements.v1'||!Array.isArray(result.rows))throw new Error('The preview belongs to another case or version. Refresh the case and preview again.');
     if(session.editRevision!==revision||session.currentCaseVersion!==expectedVersion)return;
-    session.preview=result;session.dirty=false;session.confirmed=false;session.page=0;session.allocationRow=null;session.allocationDraft=[];
+    clearBatch();session.preview=result;session.dirty=false;session.confirmed=false;session.page=0;session.allocationRow=null;session.allocationDraft=[];
     session.notice='Reviewed '+result.rows.length+' source rows against the current cash records.';
     await persist();
   }
@@ -295,7 +300,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     const next=await saveApi(prefix);
     if(next.program.id!==current.program.id)throw new Error('The refreshed case has another identity.');
     caseValue=next;session.currentCaseVersion=next.program.version;
-    if(session.preview?.expectedVersion!==next.program.version){session.dirty=true;session.confirmed=false;}
+    if(session.preview?.expectedVersion!==next.program.version){clearBatch();session.dirty=true;session.confirmed=false;}
     return next;
   }
   async function finishAccepted(){
@@ -308,7 +313,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if((result.sourceIds||[]).some(id=>!sourceIds.has(id)))throw new Error('A retained statement source is missing from the case readback.');
     const original=next.sources.find(row=>row.id===result.recordId);
     if(!original||original.sha256!==result.statementSha256)throw new Error('The saved statement source differs from the import receipt.');
-    session.lastReceipt=clone(result);session.accepted=null;session.pending=null;session.preview=null;session.dirty=true;session.confirmed=false;
+    clearBatch();session.lastReceipt=clone(result);session.accepted=null;session.pending=null;session.preview=null;session.dirty=true;session.confirmed=false;
     session.notice='Imported '+(result.cashIds?.length||0)+' cash movements; '+(result.existingCashIds?.length||0)+' existing records reconciled. Case version '+result.version+'.';
     await persist();
     if(available())await onCase(next,result);
@@ -462,20 +467,64 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       (isNative?'<p class="statement-native-note">Original snapshots keep their own dates. Pending observations stay in the report. OFX totals describe the supplied posted occurrences, including replacements or repeated occurrences.</p>':'')+
       '<div class="statement-actions">'+button('Preview statement','preview',!source()||(isNative&&!selected),'class="statement-primary"')+button('Download recovery copy','draft-export',!source(),'data-statement-recovery="true"')+button('Open recovery copy','draft-import',!!(session.pending||session.accepted||session.setupPending),'data-statement-recovery="true"')+'</div></form></section>';
   }
+  function batchReady(){
+    if(caseValue.program.state!=='OPEN'||session.pending||session.accepted||session.setupPending||session.dirty||!session.preview)
+      throw new Error('Preview the current open case and finish its retained request before editing selected rows.');
+  }
+  function batchPage(){
+    return statementBatchPanel({preview:session.preview,selected:session.batchSelection,options:session.batchChange,
+      proposal:session.batchProposal,undo:session.batchUndo,dirty:session.dirty,page:session.batchReviewPage,open:caseValue.program.state==='OPEN'});
+  }
+  function redrawBatch(){
+    const panel=$('[aria-label="Review selected statement rows"]');if(panel){panel.outerHTML=batchPage();controls();}
+  }
+  function selectBatch(numbers){
+    batchReady();
+    session.batchSelection=statementSelection(session.preview,[...new Set([...session.batchSelection,...numbers])]).map(row=>row.rowNumber);
+    session.batchProposal=null;session.batchReviewPage=0;schedulePersist();
+  }
+  async function batchAction(action){
+    if(action==='batch-cancel'){session.batchProposal=null;return;}
+    if(action==='batch-export'){download(session.batchProposal,'statement-selected-row-changes.json');return;}
+    if(action==='batch-previous'){session.batchReviewPage=Math.max(0,session.batchReviewPage-1);return;}
+    if(action==='batch-next'){session.batchReviewPage++;return;}
+    if(action==='batch-undo'){
+      if(caseValue.program.state!=='OPEN'||session.pending||session.accepted||session.setupPending)throw new Error('Finish the retained request before editing rows.');
+      const restored=undoStatementBatch(session.preview,session.inputs,session.batchUndo);
+      session.inputs.decisions=restored;changed();session.notice='Restored the exact row decisions from before the last group change. Preview again to review them.';await persist();return;
+    }
+    batchReady();
+    if(action==='batch-page'||action==='batch-matching'){
+      const rows=statementMatchingRows(session.preview,session.status,session.appliedQuery);
+      const picked=action==='batch-page'?rows.slice(session.page*pageSize,(session.page+1)*pageSize):rows;
+      selectBatch(picked.map(row=>row.rowNumber));return;
+    }
+    if(action==='batch-clear'){session.batchSelection=[];session.batchProposal=null;return;}
+    if(action==='batch-prepare'){
+      session.batchProposal=prepareStatementBatch(session.preview,session.inputs,session.batchSelection,session.batchChange);
+      session.batchReviewPage=0;return;
+    }
+    if(action==='batch-apply'){
+      const proposal=session.batchProposal,result=applyStatementBatch(session.preview,session.inputs,proposal);
+      session.inputs.decisions=result.decisions;session.batchUndo=result.undo;session.batchProposal=null;session.batchSelection=[];
+      changed(true);session.notice='Applied '+proposal.changes.length+' explicit row decisions to this draft. Preview updated decisions to review native classifications and balances before importing.';await persist();
+    }
+  }
   function rowState(row){return {rowNumber:row.rowNumber,action:row.action||'IMPORT',category:row.category,tranche:row.tranche,allocations:row.allocations||[],...rowDecision(row.rowNumber)};}
   function rowTable(){
     const preview=session.preview;if(!preview)return '';
-    const needle=session.query.trim().toLowerCase();
-    const filtered=preview.rows.filter(row=>(session.status==='ALL'||row.status===session.status)&&(!needle||[row.reference,row.description,row.date,String(row.rowNumber)].join(' ').toLowerCase().includes(needle)));
+    const filtered=statementMatchingRows(preview,session.status,session.appliedQuery);
     const pages=Math.max(1,Math.ceil(filtered.length/pageSize));session.page=Math.min(session.page,pages-1);
     const rows=filtered.slice(session.page*pageSize,(session.page+1)*pageSize);
     return '<div class="statement-review-controls">'+
       field('Review status','reviewStatus',session.status,{options:[['ALL','All rows'],...Object.entries(statuses)]})+
       field('Find reference, description or row','reviewQuery',session.query)+
       '<div class="statement-page">'+button('Apply filter','filter')+button('Previous','previous',session.page===0)+'<span>Page '+(session.page+1)+' of '+pages+' · '+filtered.length+' rows</span>'+button('Next','next',session.page+1>=pages)+'</div></div>'+
-      (rows.length?table(['Source row / reference','Date / description','Movement','Cash classification','Review / action'],rows.map(row=>{
+      batchPage()+
+      (rows.length?table(['Select','Source row / reference','Date / description','Movement','Cash classification','Review / action'],rows.map(row=>{
         const decision=rowState(row),unchanged=row.status==='EXISTING',category=decision.category||row.category;
         return [
+          '<label class="statement-batch-check"><input type="checkbox" data-statement-row-select="'+row.rowNumber+'" aria-label="Select source row '+row.rowNumber+'"'+(session.batchSelection.includes(row.rowNumber)?' checked':'')+(session.dirty||caseValue.program.state!=='OPEN'?' disabled data-statement-fixed="true"':'')+'>Select</label>',
           '<strong>Row '+esc(row.rowNumber)+'</strong><small>'+esc(row.reference||'Missing reference')+'</small>'+(row.sourceLine!==undefined?'<small>Original source line '+esc(row.sourceLine)+'</small>':'')+(row.providerReference?'<small>Provider reference '+esc(row.providerReference)+'</small>':''),
           esc(row.date||'—')+'<small>'+esc(row.description||'')+'</small>',
           esc(label(row.direction))+' '+amount(row.amount,row.currency)+(row.currency!=='USD'?'<small>Recorded value: '+amount(row.usdValue,'USD')+'</small>':''),
@@ -531,8 +580,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     const incoming=editingInput(selected.inputs),headers=bankFormat(incoming)?[]:statementHeaders(sourceText(incoming.source.contentBase64),incoming.format.delimiter);
     if(source()&&JSON.stringify(session.inputs)!==JSON.stringify(incoming))download(snapshot(),'statement-before-original-source.json');
     session.inputs=incoming;session.headers=headers;session.inspection=null;session.nativeScalesText=scaleText(incoming.statementOptions?.currencyScales);
-    session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.editRevision++;
-    session.page=0;session.status='ALL';session.query='';session.allocationRow=null;session.allocationDraft=[];
+    clearBatch();session.batchChange={mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''};session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.editRevision++;
+    session.page=0;session.status='ALL';session.query='';session.appliedQuery='';session.allocationRow=null;session.allocationDraft=[];
     session.originalInputHandoff=null;
     await persist();
     if(native())await inspect();
@@ -587,11 +636,12 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     session.inputs=editingInput(original?.data.inputs||saved.inputs);session.pending=clone(saved.pending||null);session.accepted=clone(saved.accepted||null);
     session.inspection=usableInspection(saved.inspection,session.inputs,current.program.id)?clone(saved.inspection):null;
     session.nativeScalesText=original?scaleText(session.inputs.statementOptions?.currencyScales):saved.nativeScalesText??scaleText(session.inputs.statementOptions?.currencyScales);
-    session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.page=0;session.editRevision++;session.allocationRow=null;session.allocationDraft=[];headersFromSource();
+    clearBatch();session.batchChange={mode:'CLASSIFY',category:'',tranche:'KEEP',reason:''};session.optionsError='';session.preview=null;session.dirty=true;session.confirmed=false;session.page=0;session.editRevision++;session.allocationRow=null;session.allocationDraft=[];headersFromSource();
     session.notice='Opened the original source and interpretation. Resume a retained request or inspect and preview against the current case.';
     await persist(true);
   }
   root.addEventListener('input',event=>{
+    if(event.target.name==='batchReason'){session.batchChange.reason=event.target.value;session.batchProposal=null;$('[class="statement-batch-proposal"]')?.remove();schedulePersist();return;}
     if(event.target.name==='setupName'){session.setupName=event.target.value;schedulePersist();return;}
     if(event.target.name==='setupNote'){session.setupNote=event.target.value;schedulePersist();return;}
     const form=event.target.closest('[data-statement-mapping]');
@@ -601,6 +651,16 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(event.target.name==='reviewQuery')session.query=event.target.value;
   });
   root.addEventListener('change',event=>{
+    if(event.target.dataset.statementRowSelect){
+      try{batchReady();const number=Number(event.target.dataset.statementRowSelect);
+        if(event.target.checked)selectBatch([number]);else{session.batchSelection=session.batchSelection.filter(value=>value!==number);session.batchProposal=null;schedulePersist();}
+        redrawBatch();
+      }catch(error){session.error=error.message;render();}return;
+    }
+    if(['batchMode','batchCategory','batchTranche'].includes(event.target.name)){
+      const key={batchMode:'mode',batchCategory:'category',batchTranche:'tranche'}[event.target.name];
+      session.batchChange[key]=event.target.value;session.batchProposal=null;schedulePersist();redrawBatch();return;
+    }
     if(event.target.name==='setupChoice'){session.setupChoice=event.target.value;session.setupName=setupRows().find(row=>row.sourceId===session.setupChoice)?.name||'';session.setupNote='';schedulePersist();render();return;}
     if(event.target.matches('[data-statement-file]')){void run(()=>chooseFile(event.target.files?.[0]));return;}
     const mapping=event.target.closest('[data-statement-mapping]');
@@ -637,7 +697,8 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(action==='preview'||action==='inspect'){const form=$('[data-statement-mapping]');if(form)captureMapping(form);}
     if(['add-allocation','remove-allocation'].includes(action)){const form=$('[data-statement-allocations]');if(form)captureAllocations(form);}
     void run(async()=>{
-      if(action==='setup-apply')await applySetup();
+      if(action.startsWith('batch-'))await batchAction(action);
+      else if(action==='setup-apply')await applySetup();
       else if(action==='setup-new')await saveSetup('new');
       else if(action==='setup-revise')await saveSetup('revise');
       else if(action==='setup-archive')await saveSetup('archive');
@@ -658,7 +719,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
         const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
         input.addEventListener('change',()=>{void run(()=>importDraft(input.files?.[0]));},{once:true});input.click();
       }
-      else if(action==='filter')session.page=0;
+      else if(action==='filter'){session.appliedQuery=session.query;session.page=0;}
       else if(action==='previous')session.page=Math.max(0,session.page-1);
       else if(action==='next')session.page++;
       else if(action==='allocations'){
@@ -683,7 +744,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(!session.loadingDraft)session.loadingDraft=(async()=>{
         try{
           const saved=await storeDraft(current.program.id);
-          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;}
+          if(saved?.schema==='sf47.statement-draft.v1'&&saved.caseId===current.program.id&&draftInput(saved.inputs)){session.inputs=editingInput(saved.inputs);session.headers=saved.headers||[];session.inspection=usableInspection(saved.inspection,saved.inputs,current.program.id)?saved.inspection:null;session.nativeScalesText=saved.nativeScalesText??scaleText(saved.inputs.statementOptions?.currencyScales);session.preview=saved.preview||null;session.dirty=saved.dirty!==false;session.pending=saved.pending||null;session.accepted=saved.accepted||null;session.setupPending=saved.setupPending||null;session.setupChoice=saved.setupChoice||'';session.setupName=saved.setupName||'';session.setupNote=saved.setupNote||'';session.originalInputHandoff=saved.originalInputHandoff||null;session.batchSelection=statementSelection(session.preview,saved.batchSelection).map(row=>row.rowNumber);if(saved.batchChange&&typeof saved.batchChange==='object')session.batchChange={...session.batchChange,...saved.batchChange};session.batchUndo=saved.batchUndo||null;}
         }catch{session.storageWarning='This browser could not open its saved draft. A downloaded recovery copy can be opened here.';}
         session.loaded=true;
       })();
@@ -696,7 +757,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       if(!session.pending&&!session.accepted&&!session.setupPending&&!session.inflight){try{await openOriginalInputs();}catch(error){session.error=error.message||String(error);}}
     }
     loading=false;
-    if(session.preview?.expectedVersion!==current.program.version){session.dirty=true;session.confirmed=false;}
+    if(session.preview?.expectedVersion!==current.program.version){clearBatch();session.dirty=true;session.confirmed=false;}
     if(available())render();
     if(session.inflight){try{await session.inflight;}catch{}if(available())render();}
     if(available()&&session.accepted)await run(finishAccepted);
