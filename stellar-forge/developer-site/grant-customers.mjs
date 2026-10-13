@@ -224,6 +224,7 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
   for (const heading of [
     '## Current alternatives, commercial units and customer value',
     '## Customer value and delivery economics',
+    '## Application review, corrections and complete handover',
   ]) {
     const incoming = section(manuscript, heading);
     if (incoming) companion = installSection(companion, heading, projectGrantMarkdown(incoming.text));
