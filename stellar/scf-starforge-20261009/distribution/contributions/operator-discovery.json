@@ -11,7 +11,7 @@
   },
   "commandDescriptions": {
     "discover": "Find installed commands, match complete product requirements, prepare source build reviews and save customer operating plans with original registrations and revision history",
-    "grant-reporting-plan": "Create the original reporting procedure from a complete browser preparation, native case/source project or compact selected references"
+    "grant-reporting-plan": "Create the original reporting procedure from a complete preparation or selected references; capture an existing managed Grant case and full source project for native receiving"
   },
   "exports": {
     "./operator/discovery": {

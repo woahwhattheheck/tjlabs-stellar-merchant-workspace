@@ -48,7 +48,7 @@ Use **Use current source catalog** when intentionally preparing against a refres
 
 ## Native work and receiving
 
-Save the complete plan at the exact native filename shown in the preview, then perform its generated steps in order using the entered workspaces and paths. Close the original Grant listener before running the headless Grant commands; reopen that same workspace and browser address when returning to its page. The procedure retains the original case and saved plan selections, the Source Tables project and its baseline, the reporting period and the selected native registrations.
+Save the complete plan at the exact native filename shown in the preview, then perform its generated steps in order using the entered workspaces and paths. For generated headless Grant commands, close the original Grant listener first; reopen that same workspace and browser address when returning to its page. Native reporting capture and the original grant-procedures commands use the managed client lifecycle described below. The procedure retains the original case and saved plan selections, the Source Tables project and its baseline, the reporting period and the selected native registrations.
 
 Record the completed native command result or reviewed output in the corresponding step, then save a plan revision. Export the complete plan JSON for the receiving operator. The original Grant-case receiver attaches that existing plan to its case; the complete Grant case, source tables and reporting outputs continue through their maintained native receiving paths.
 
@@ -92,6 +92,103 @@ The command also accepts one full input JSON with catalog, case, sourceProject, 
 The complete creator is exported as @tokenjunkielabs/starforge-merchant/operator/grant-reporting. Its prepareGrantReportingPlan function returns the plan, complete normalized selection and retained procedure filename. The source entry discovery/grant-reporting.mjs forwards to the same maintained grant-reporting-core.mjs; both expose the complete input helpers and grantReportingProcedureFile. The original compact builder remains exported as @tokenjunkielabs/starforge-merchant/operator/grant-reporting-plan. Both create the original OperatingPlan model and leave every generated step planned.
 
 The original preparation retains file-byte hashes separately from the normalized native case/project hashes shown in the procedure. On the operating host, compare the actual selected paths with the retained original files before recording their receiving results. Native table edition, mapping, binding, review and workbook identities are retained explicitly; a stale review or baseline remains visible.
+
+## Capture the running case into a complete preparation
+
+Use `starforge grant-reporting-plan capture` on the original operating computer when the case already runs in the managed Grant application. Capture reads that selected case, the complete original Source Tables JSON and the selected toolkit catalog, then builds the same portable preparation and canonical Operating plan used by Command finder.
+
+Keep the existing private client binding with the operator. Its `directory`, `scenarioFile` and `pythonExecutable` select the original managed workspace and source. With `allowStart` omitted or false, the client borrows the running application. Closing that connection drains its admitted reads and leaves the application running. Explicit `allowStart: true` permits the maintained launcher to start the selected service when needed; the client closes only the service it starts. Capture checks the reviewed source selection when opening and finishes this lifecycle before publishing its completed directory. The portable preparation retains the operating selections and complete inputs; the private launch record and access token stay with the original client.
+
+Create a report-fields file such as:
+
+~~~json
+{
+  "id": "reporting-period-01",
+  "title": "Period 01 grant reporting",
+  "customer": "Selected customer or programme",
+  "period": "Period 01",
+  "owner": "Recording operator",
+  "receiving": "Return the complete procedure and original case delivery to the selected receiving workspace.",
+  "startDate": "2026-10-01",
+  "asOfDate": "2026-10-31",
+  "receivingWorkspace": "/absolute/private/receiving-grant-workspace",
+  "commandFinderUrl": "http://127.0.0.1:8846"
+}
+~~~
+
+Use the actual report dates, owner and listener address. Required report fields are `id`, `title`, `asOfDate`, `receivingWorkspace` and `commandFinderUrl`. The optional `savedAt` fixes the Operating plan's original UTC creation time; otherwise capture selects and retains it once. Omit `startDate` for cumulative reporting. Keep the plan ID for that preparation; use a new ID and output directory for a different prepared report.
+
+Run the complete capture against the selected case and reviewed current version:
+
+~~~sh
+starforge grant-reporting-plan capture \
+  --binding /absolute/private/original-client.json \
+  --case "$GRANT_CASE_ID" \
+  --expected-version "$GRANT_CASE_VERSION" \
+  --source-project /absolute/inputs/planning-source-project.json \
+  --input /absolute/inputs/report-fields.json \
+  --catalog /absolute/inputs/selected-toolkit-catalog.json \
+  --out /absolute/reports/period-01
+~~~
+
+Use an existing ordinary parent directory and a new output directory. The workspace path comes from the inspected client binding; the source-project path comes from the complete selected file; the report output directory comes from `--out`. The fields file supplies the receiving workspace and exact loopback HTTP address, including its explicit port. To load the toolkit from a selected checkout instead of a catalog file, replace `--catalog` with `--source-root /absolute/checkout --selection PRODUCT`. The preparation retains that checkout and selection for the plan's registration-comparison step, including when reopened in the browser. **Use current source catalog** deliberately replaces the catalog and clears the earlier checkout selection.
+
+Capture brackets the operation with complete case reads and checks the exact Source Tables file again before completing. `--expected-version` selects the reviewed case version; when omitted, the first complete native read selects it. A case or original-file change requires a new reviewed capture. The selected source editions, workbook selections, mappings, reviews and planning baseline pass through the same maintained importer and reporting builder as browser creation.
+
+The completed output contains:
+
+| File | Complete retained result |
+| --- | --- |
+| `reporting-preparation.json` | Portable preparation with all report fields, full original case, Source Tables and catalog files, their byte counts and hashes, and the complete canonical preview. |
+| `grant-reporting-plan.json` | The same Operating plan JSON, with its retained ID, UTC creation time and original registration selections. |
+| `grant-reporting-plan.html` and `grant-reporting-plan.md` | Complete readable handovers rendered from that same Operating plan. |
+| `capture.json` | The capture's original selections, native read metadata and complete output identities. |
+| `grant-procedure.json` | Present when `--procedure-selection` is supplied; the existing native receiver's complete reviewed procedure for this case. |
+
+Open a completed capture without reconnecting to the application:
+
+~~~sh
+starforge grant-reporting-plan capture-show \
+  --directory /absolute/reports/period-01
+~~~
+
+The inspector checks the frozen files and their complete identities. Moving a completed directory preserves the original command paths inside the preparation and plan; choose a new preparation when intentionally changing those operating paths. In Command finder, **Open preparation JSON** opens `reporting-preparation.json` with the original plan ID, creation time, original files and complete preview. The existing `create` command also accepts this portable format; the captured directory already contains its native `grant-reporting-plan.json`, so use that complete result and `capture-show` when continuing this capture. Keep a completed capture unchanged. Review revised inputs in a new preparation and output directory.
+
+The completion manifest is written after all declared members. If publication is interrupted, retain that original directory. A complete `reporting-preparation.json` can still reopen the captured inputs in Command finder. `capture-show` requires both the complete manifest and all declared members; a partial directory remains available alongside that portable preparation. Keep a partial directory for recovery and choose a new directory for a new native capture.
+
+### Prepare, save and deliver through the original receiver
+
+To prepare the case attachment during capture, add `--procedure-selection /absolute/inputs/procedure-selection.json`. This is the existing `grant-procedures prepare` selection: a named `actor`, optional `note` and `selectedRevision`, an optional preceding `parentSourceId`, and explicit `sourceIds`, `tables`, `editions` and `stepLinks`. A local-original table uses its complete absolute `file` path. Installation and task-outcome choices name their original record and revision. Use the selected case's actual source IDs and reviewed step links; the [Grant procedures guide](../../../scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES.md) describes each field.
+
+The optional preparation leaves the complete reviewed `grant-procedure.json` in the capture directory. Save it with the original command and one retained request identity:
+
+~~~sh
+starforge grant-procedures save \
+  --binding /absolute/private/original-client.json \
+  --procedure /absolute/reports/period-01/grant-procedure.json \
+  --request-id "$PROCEDURE_SAVE_ID" \
+  --operation /absolute/private/period-01-save
+~~~
+
+The original writer checks the prepared case version and selected sources, adds the complete procedure as a case source, and independently reopens its bytes. Retain the returned `complete.native.recordId` as the procedure source ID and `complete.native.version` as the resulting case version. An interrupted save resumes with the same command, operation directory and request ID plus `--resume`. Preserve the exact prepared file for that continuation.
+
+If capture omitted a procedure selection, run the existing `grant-procedures prepare` with the captured `grant-reporting-plan.json`, the same binding and case, and the reviewed selection before saving.
+
+Export the complete saved case and procedure:
+
+~~~sh
+starforge grant-procedures export \
+  --binding /absolute/private/original-client.json \
+  --case "$GRANT_CASE_ID" \
+  --source "$PROCEDURE_SOURCE_ID" \
+  --expected-version "$PROCEDURE_CASE_VERSION" \
+  --out /absolute/deliveries/period-01
+
+starforge grant-procedures inspect \
+  --directory /absolute/deliveries/period-01
+~~~
+
+Use the saved source ID and the reviewed current case version from the native return. If the case has advanced since that save, review its current version before exporting. The delivery contains the original case ZIP, full procedure and Operating plan, selected source tables and native editions, readable handovers and complete member hashes. Continue through the original `grant-procedures receive` command and the [two-operator receiving programme](../../../scf_2026/sf47_budget_model/workspace/GRANT_PROCEDURES_RECEIVING.md), retaining its actual case mapping and complete revision history.
 
 ## Attach the complete procedure to the customer case
 
