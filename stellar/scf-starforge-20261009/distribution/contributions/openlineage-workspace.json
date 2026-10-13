@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "openlineage-workspace",
-  "description": "OpenLineage operations with original synchronous and asynchronous producers, schema and quality review, service levels and complete customer receiving, saved-evaluation comparison and versioned follow-up, with reviewed multi-job policy rollouts",
+  "description": "OpenLineage operations, original producers, schema and dataset quality, service levels, reviewed policy rollouts, immutable customer reviews and complete source-bound recipient return receiving",
   "commands": {
     "openlineage": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/cli.mjs"
   },
   "commandDescriptions": {
-    "openlineage": "Operate original lineage and native producers, review schema and dataset quality, manage service levels, retain staff decisions and deliver complete editable workspaces; review and apply atomic multi-job policy rollouts"
+    "openlineage": "Operate lineage, producers, quality and service levels; review policy rollouts and customer handovers; issue source-bound recipient reviews, retain returned responses and receive complete editable workspaces"
   },
   "exports": {
     "./seller/openlineage": {
@@ -44,7 +44,16 @@
     "./seller/openlineage/policy-rollout": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.mjs"
-    }
+    },
+    "./seller/openlineage/customer-review": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/customer-service-review-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/customer-service-review-client.mjs"
+    },
+    "./seller/openlineage/review-return": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-client.mjs"
+    },
+    "./seller/openlineage/review-return/receiving": "./source/operations/openlineage-recipient-review-returns-e496-20261013/RECIPIENT_RETURNS_RECEIVING.mjs"
   },
   "applicationProviders": {
     "openlineage-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/application-provider.mjs"
@@ -63,6 +72,23 @@
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_POLICY_ROLLOUT.md"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_POLICY_ROLLOUT.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/CUSTOMER_SERVICE_REVIEW.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/CUSTOMER_SERVICE_REVIEW_OPERATOR.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-editor.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-source.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-reports.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-store.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-drafts.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-ui.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return.css",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-catalog.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-client.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-client.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/review-return-cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/REVIEW_RETURNS.md",
+    "operations/openlineage-recipient-review-returns-e496-20261013/RECIPIENT_RETURNS_RECEIVING.mjs",
+    "operations/openlineage-recipient-review-returns-e496-20261013/RECEIVING.md"
   ]
 }

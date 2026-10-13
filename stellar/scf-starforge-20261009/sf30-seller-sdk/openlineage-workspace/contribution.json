@@ -8,7 +8,7 @@
     "openlineage-airflow": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/cli.mjs"
   },
   "commandDescriptions": {
-    "openlineage": "Operate original lineage and native producers, review schema and dataset quality, manage service levels, retain staff decisions and deliver complete editable workspaces; review and apply atomic multi-job policy rollouts; prepare and reopen attributed customer reviews with frozen original decisions and complete receiving; prepare recipient review requests, receive complete attributed responses and reopen their original history",
+    "openlineage": "Operate lineage, producers, quality and service levels; review policy rollouts and customer handovers; issue source-bound recipient reviews, retain returned responses and receive complete editable workspaces",
     "openlineage-google": "Deliver reviewed original lineage editions to Google with stable requests, exact table receiving and complete editable handover",
     "openlineage-airflow": "Commission the selected original Airflow provider, review saved native editions and deliver or receive the complete operator handover"
   },
