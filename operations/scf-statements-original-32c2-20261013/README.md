@@ -166,3 +166,23 @@ The adjacent `statement-recipient-model-course.mjs` receives the actual original
 Actual outputs include `recipient-worklist-first-progress.json`, `recipient-worklist-two-independent-returns.json`, `recipient-worklist-duplicate-received.json`, `recipient-second-complete-attributed-return.json`, the existing full recipient archive and its independent cold receiver. The existing capture phase records the desktop worklist, narrow stale choices and empty search. Open those rendered captures and the current browser pages to inspect text, controls, table overflow, focus and legibility at both widths, then fix any observed defect in the maintained source.
 
 The full customer guide is `stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_REVIEW_WORKLIST.md`. Preserve the original A0D5/390E/0C75 account and navigation ownership when composing this source into the existing receiving installation.
+
+
+## Recurring classifications and following-period reuse
+
+The same independent Statements browser now continues through **Recurring statement classifications** after the complete recipient-review phase. It preserves the actual October file and current supplier invoice decision, clears only the two inflow classifications in its explicit preparatory recovery copy, then obtains a fresh native preview.
+
+The operator builds an immutable account rulebook from the original grant/customer descriptions plus an intentionally overlapping reference rule. Both inflows require explicit choice; the actual supplier allocation remains protected. The course saves unfinished choices, reopens the desk, inspects narrow overlap and empty-search views, then saves a following edition removing the broad rule. Exact complete-library receiving is idempotent; a changed original edition is rejected without altering the retained library. Selected rules apply through the original grouped-decision model, followed by an actual native statement preview.
+
+A complete named working-copy archive is received in another empty BrowserContext on the same browser and original server. It first receives the saved rules without replacing the empty statement, then opens the original complete edition, retains application history and requires a current preview. The final reuse exercise creates the visibly named **authored-following-period.csv** by changing only the original CSV's date to 2026-11-12 and TRX100 prefixes to TRX200. This is authored software-course input. It exercises fresh matching in a later period and is never sent to the financial command. The private contexts retain their original command-POST restriction.
+
+The continuation stage \`original-recurring-statement-classification-operated\` records actual original case/invoice, rulebook, library/archive and native-preview identities. Full outputs include:
+
+- \`rules-first-complete-edition.json\`, \`rules-overlap-explicit-review.json\` and \`rules-saved-original-row-choices.json\`;
+- \`rules-complete-library.json\`, its exact replay and complete conflicting-edition input/outcome;
+- \`rules-applied-original-source.json\` and \`rules-selected-native-preview.json\`;
+- \`rules-full-original-workspace-archive.json\`, empty-browser recovery and unchanged historical-edition onward archive;
+- \`rules-authored-following-period-native-preview.json\` and \`rules-authored-following-period-review.json\`;
+- actual desktop/narrow \`captures/00-rules-*\` views for the producing operator to open, look at and use alongside the live controls.
+
+The full customer operating guide is \`workspace/STATEMENT_RULES.md\`. Original named-copy archives carry every rule edition, unfinished form, earlier matching choice and application. The native row decision carries its selected rulebook/rule identity, exact conditions and reason through the existing statement review. Actual cash receiving uses the unchanged original main-context inputs restored at the end of this independent course.
