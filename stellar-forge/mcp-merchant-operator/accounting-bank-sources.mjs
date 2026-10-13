@@ -170,7 +170,7 @@ export class MerchantBankSources{
   try{
    const generated=await runBankSourceTransform(intent.request,inputs,intent.createdAt);let total=0;
    need(generated.files.size+before.files.length+1<=MAX_FILES,'This complete preparation exceeds the retained file inventory limit.','CAPACITY');
-   for(const [name,bytes]of generated.files){basename(name);total+=bytes.length;need(!before.files.some(p=>p.name===name)&&name!=='result.json'&&total<=MAX_OUTPUT_BYTES,'The complete generated outputs exceed the 768 MB budget.','CAPACITY');}
+   for(const [name,bytes]of generated.files){basename(name);total+=bytes.length;need(!before.files.some(p=>p.name===name)&&name!=='result.json'&&bytes.length<=BANK_SOURCE_MAX_BYTES&&total<=MAX_OUTPUT_BYTES,'The complete generated outputs exceed the 192 MB file or 768 MB aggregate budget.','CAPACITY');}
    const files=[...before.files];for(const[name,bytes]of generated.files){await retain(join(path,name),bytes);files.push(filePin(name,bytes,'output'));}
    result=this.preparedReceipt(intent,'COMPLETE',files,{summary:generated.summary,viewType:generated.viewType});
   }catch(error){
