@@ -1,0 +1,61 @@
+{
+  "operationId": "camino-original-date-review-publication-preparation-20261013",
+  "source": {
+    "editionId": "camino-original-parser-observations-c12e248-20261013",
+    "producer": "original supplier-report.mjs parser 776e81d5f4ae95a57fcabd33efdee8daa2449d09 in retained V8 observation",
+    "file": {
+      "bytes": 68708,
+      "sha256": "886ba5ff1ceb71d8c6c4d2dbaab02fac655cb81d6ffffaca19cc273bf45c9eb3"
+    },
+    "rowsPointer": "/national_valid_research/comparisons",
+    "path": "camino-parser-observations.json"
+  },
+  "selection": {
+    "kind": "tabular",
+    "key": "title_id",
+    "columns": [
+      {
+        "source": "/id",
+        "target": "title_id",
+        "type": "text",
+        "nullable": false
+      },
+      {
+        "source": "/publisher_raw/start",
+        "target": "publisher_start_raw",
+        "type": "text",
+        "nullable": false
+      },
+      {
+        "source": "/publisher_raw/end",
+        "target": "publisher_end_raw",
+        "type": "text",
+        "nullable": false
+      },
+      {
+        "source": "/publisher_day_first/start",
+        "target": "publisher_start_iso",
+        "type": "text",
+        "nullable": false
+      },
+      {
+        "source": "/publisher_day_first/end",
+        "target": "publisher_end_iso",
+        "type": "text",
+        "nullable": false
+      },
+      {
+        "source": "/tabular/start",
+        "target": "tabular_start_iso",
+        "type": "text",
+        "nullable": false
+      },
+      {
+        "source": "/tabular/end",
+        "target": "tabular_end_iso",
+        "type": "text",
+        "nullable": false
+      }
+    ]
+  }
+}
