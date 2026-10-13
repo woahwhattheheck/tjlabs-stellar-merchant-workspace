@@ -195,7 +195,7 @@ export function mountInstallationReturns({container,current,api,saveApi,session,
       (session.mode==='package'?'<div data-company-intake></div>':session.mode==='receiver'?receiver():session.mode==='owner'?owner():saved())+'<input type="file" data-return-draft-file accept="application/json,.json" hidden>';
     if(session.mode==='package')packageDesk=mountCompanyReturnIntake({
       container:root.querySelector('[data-company-intake]'),current:caseValue,api,saveApi,mutationId,recordingActor,
-      locked:()=>!!session.pending||!!session.accepted||!writable(),
+      locked:()=>!!session.pending||!!session.accepted,
       onBusy:value=>{packageBusy=value;controls();},
       onDraft:async(draft,next)=>{
         if(session.pending||session.accepted)throw new Error('Finish the original receiving request before replacing its draft.');

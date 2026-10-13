@@ -102,6 +102,7 @@ export function mountCompanyReturnIntake({container,current,api,saveApi,mutation
     if(!step){
       if(!note.trim())throw Error('Enter the reason for retaining this company return.');
       const current=await api(prefix);
+      if(current.program.state!=='OPEN')throw Error('Reopen this native case before admitting a new source. Its original retained files remain readable.');
       const body={expectedVersion:current.program.version,actor:recordingActor(),note:note.trim(),action:'source.add',data:copy(sourceOf(row,kind))};
       body.requestId=await mutationId('operations:company-return:'+caseId+':'+row.id+':'+kind,body);
       step={state:'pending',body};row.steps[kind]=step;
