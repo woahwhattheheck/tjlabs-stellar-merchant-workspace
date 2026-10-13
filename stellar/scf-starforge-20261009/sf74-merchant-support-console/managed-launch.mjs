@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {request as httpRequest} from 'node:http';
 import {normalizeOAuthSource} from '../sf93-seller-support-bundle/oauth-observation.mjs';
+import {normalizeX402Source} from '../sf93-seller-support-bundle/x402-observation.mjs';
 
 export const SUPPORT_SELECTION_SCHEMA='stellar-forge.support-console-selection.v1';
 export const SUPPORT_LAUNCH_SCHEMA='stellar-forge.support-console-launch.v1';
@@ -140,10 +141,25 @@ export async function inspectSupportSelection({casesDir,incidentSources,allowLoo
         return {id:row.id,label:row.label,oauth:normalizeOAuthSource(row.oauth)};
       });
     }
+    let x402Merchants;
+    if(source.x402Merchants!==undefined) {
+      need(Array.isArray(source.x402Merchants)&&source.x402Merchants.length<=16,
+        'SUPPORT_APPLICATION_X402_SELECTION_CHANGED');
+      const ids=new Set();
+      x402Merchants=source.x402Merchants.map(row=>{
+        need(plain(row)&&typeof row.id==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(row.id)&&
+          !ids.has(row.id)&&typeof row.label==='string'&&row.label.length<=120&&plain(row.x402),
+          'SUPPORT_APPLICATION_X402_SELECTION_CHANGED');
+        ids.add(row.id);
+        // Bind the original reviewed endpoint, credential reference and authority;
+        // resolving a token or reading that endpoint belongs to the original collector.
+        return {id:row.id,label:row.label,x402:normalizeX402Source(row.x402)};
+      });
+    }
     sources.push({id:source.id,label:source.label,store,
       configuration:{revision:source.configuration.revision,sha256:source.configuration.sha256},
       ...(objectSessions?.length?{objectSessions}:{}),...(ckanWorkspaces?.length?{ckanWorkspaces}:{}),
-      ...(oauthResources?.length?{oauthResources}:{})});
+      ...(oauthResources?.length?{oauthResources}:{}),...(x402Merchants?.length?{x402Merchants}:{})});
   }
   const connections=serviceConnectionSelection??(accountingConfig!==null||buyerExpenseConnection!==null
     ?(await (await import('./service-connections.mjs')).inspectServiceConnections({accountingConfig,buyerExpenseConnection})).selected:null);
