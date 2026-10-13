@@ -5,7 +5,8 @@ import { installGrantReportingEditor } from '/grant-reporting-editor.mjs';
 import { inspectOperatingPlan, createOperatingPlan, createOperatingStep, snapshotRegistration,
   operatingPlanDraft, operatingPlanRevision, saveOperatingPlanRevision, forkOperatingPlan,
   receiveOperatingPlan, compareOperatingPlan, summarizeOperatingPlan, shellArgument,
-  renderOperatingPlanMarkdown, renderOperatingPlanHTML } from '/operating-plan-core.mjs';
+  renderOperatingPlanMarkdown, renderOperatingPlanHTML,
+  createOperatingFile, addOperatingFile, removeOperatingFile, operatingFileBytes, OPERATING_FILE_MAX_BYTES } from '/operating-plan-core.mjs';
 
 import { IATI_OPERATING_SOURCE_SCHEMA, IATI_OPERATING_PROCEDURE_SCHEMA,
   createDocumentOperatingProcedure, inspectDocumentOperatingProcedure,
@@ -273,8 +274,47 @@ function renderStep() {
   $('step-up').disabled = !editing || position === 0;
   $('step-down').disabled = !editing || position === body().steps.length - 1;
   $('step-remove').disabled = !editing;
-  renderCommand(step); renderRegistration(step);
+  renderCommand(step); renderRegistration(step); renderOperatingFiles();
 }
+
+function downloadOperatingFile(file) {
+  const url = URL.createObjectURL(new Blob([operatingFileBytes(file)], { type: 'application/octet-stream' }));
+  const link = node('a'); link.href = url; link.download = file.name;
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function renderOperatingFiles() {
+  const list = $('step-file-list'), step = selected();
+  list.replaceChildren();
+  $('step-file-add').disabled = !editable();
+  const files = step?.files ?? [];
+  $('step-file-summary').textContent = files.length + ' complete files · ' +
+    files.reduce((total, file) => total + file.bytes, 0).toLocaleString() +
+    ' original bytes. Save a revision to include current file changes in the complete customer handover.';
+  for (const file of files) {
+    const row = node('section', undefined, 'card');
+    row.append(node('h4', file.name), node('p', file.bytes.toLocaleString() + ' bytes · ' + file.mediaType, 'hint'));
+    const note = node('textarea'); note.value = file.note; note.rows = 2; note.maxLength = 32000;
+    note.setAttribute('aria-label', 'Receiving note for ' + file.name); note.disabled = !editable();
+    note.addEventListener('input', () => {
+      if (!editable()) return;
+      const saved = selected()?.files?.find(item => item.id === file.id);
+      if (saved) { saved.note = note.value; queueDraft(); }
+    });
+    const actions = node('div', undefined, 'actions'), get = node('button', 'Download original file');
+    get.type = 'button'; get.addEventListener('click', () => run(() => downloadOperatingFile(file)));
+    const remove = node('button', 'Remove from this draft'); remove.type = 'button'; remove.disabled = !editable();
+    remove.addEventListener('click', () => run(async () => {
+      if (!editable()) return;
+      const target = selected(); if (!target) return;
+      const next = removeOperatingFile(draft, target.id, file.id);
+      await retainWorkingDraft(); draft = next; queueDraft(); renderOperatingFiles(); await refreshRecovery();
+      status('Removed ' + file.name + ' from the working draft. Its previous complete copy remains in retained work and saved revisions.');
+    }));
+    actions.append(get, remove); row.append(note, actions); list.append(row);
+  }
+}
+
 function renderCatalog() {
   const parent = $('catalog-results'); parent.replaceChildren();
   if (!catalog) { $('catalog-status').textContent = 'Refresh the source to select original registrations.'; return; }
@@ -352,7 +392,7 @@ async function savePlan() {
     request.onsuccess = () => {
       try {
         if (!request.result) throw new Error('The original saved plan is unavailable.');
-        const next = saveOperatingPlanRevision(request.result, editableDraft); bytes(next);
+        const next = completePlanCapacity(saveOperatingPlanRevision(request.result, editableDraft)); bytes(next);
         plans.put(next); tx.objectStore('drafts').delete(draftKey(next.id)); done(next);
       } catch (error) { abort(error); }
     };
@@ -460,6 +500,39 @@ async function run(action, { propagate = false } = {}) {
   try { return await action(); } catch (error) { errorMessage(error); if (propagate) throw error; }
   finally { busy = false; document.querySelector('main').inert = false; if (current) { $('save-plan').disabled = !editable(); $('copy-plan').disabled = false; } }
 }
+
+
+const operatingFileSection = node('section', undefined, 'handover-section');
+operatingFileSection.setAttribute('aria-labelledby', 'step-file-heading');
+const operatingFileHeading = node('h3', 'Complete result files'); operatingFileHeading.id = 'step-file-heading';
+const operatingFileSummary = node('p', '', 'hint'); operatingFileSummary.id = 'step-file-summary';
+const operatingFileList = node('div'); operatingFileList.id = 'step-file-list';
+const operatingFileAdd = node('button', 'Add result files'); operatingFileAdd.type = 'button'; operatingFileAdd.id = 'step-file-add';
+const operatingFileInput = node('input'); operatingFileInput.type = 'file'; operatingFileInput.multiple = true; operatingFileInput.hidden = true;
+operatingFileSection.append(operatingFileHeading,
+  node('p', 'Keep the actual reports, datasets, images or customer outputs with this step. Complete JSON and HTML carry the original bytes. The complete plan, including saved file history, fits within the existing 32 MiB receiving limit.', 'hint'),
+  operatingFileSummary, operatingFileAdd, operatingFileInput, operatingFileList);
+$('step-editor').append(operatingFileSection);
+operatingFileAdd.addEventListener('click', () => { operatingFileInput.value = ''; operatingFileInput.click(); });
+operatingFileInput.addEventListener('change', () => run(async () => {
+  if (!editable() || !selected()) return;
+  const files = Array.from(operatingFileInput.files ?? []); if (!files.length) return;
+  const originalDraft = draft, originalPlanId = current.id, stepId = selected().id;
+  let next = draft;
+  for (const file of files) {
+    if (file.size > OPERATING_FILE_MAX_BYTES) throw new TypeError('Select a complete result file within 24 MiB.');
+    const attached = createOperatingFile({ id: crypto.randomUUID(), name: file.name,
+      mediaType: file.type, bytes: new Uint8Array(await file.arrayBuffer()) });
+    next = addOperatingFile(next, stepId, attached);
+  }
+  if (!editable() || current.id !== originalPlanId || draft !== originalDraft || selected()?.id !== stepId)
+    throw new Error('The selected procedure changed while files were read. Reopen the intended step before adding them.');
+  bytes({ ...recordDraft(), draft: next });
+  completePlanCapacity(saveOperatingPlanRevision(current, next));
+  await retainWorkingDraft(); draft = next; queueDraft(); await flushDraft();
+  renderOperatingFiles(); await refreshRecovery();
+  status('Retained ' + files.length + ' complete result files in this working step. Save a revision to return them with the customer plan.');
+}));
 
 $('new-plan-form').addEventListener('submit', event => {
   event.preventDefault();
