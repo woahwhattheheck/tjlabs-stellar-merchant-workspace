@@ -11,6 +11,8 @@ The actual installed browser course is
 [Event programmes](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_PROGRAMMES.md);
 its original native engine/CLI course is
 [Event Feed Analysis](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_FEED_ANALYSIS.md).
+The installed agent course is
+[Analysis Event receiving](../../stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md).
 
 ## Customer outcome and accountable roles
 
@@ -82,6 +84,21 @@ their state. A fresh linked delivery uses a new archive operation while retainin
 the original accepted result, publication, workbook and complete event export.
 The delivered programme record comes from that exact archived SQLite snapshot.
 
+The installed agent receives the same original files and controls the same
+programme through the host's named Analysis alias. Its input helper saves both
+complete files and their original receiving request before dispatch. The native
+coordinator owns accepted chunk offsets and durable review/apply/delivery
+actions. The browser and agent can therefore continue the same selected customer
+work without introducing a second application or source history.
+
+Whole reviews remain readable as immutable complete native response files; an
+agent receives every range before selecting the actual reviewed digest. The
+sixteen-file index binds the selected result and the actual archived programme.
+The receiving helper composes with the existing resumable download writer,
+retains per-operation cancellation and the original alias, and can verify the
+whole package offline. Use the installed `starforge mcp-analysis-events`
+input, inspect, download and reopen commands from the full agent guide.
+
 An installation can therefore proceed through this complete course:
 
 1. Receive the original subscriber's complete file pair and review the actual
@@ -102,6 +119,39 @@ These steps consume the same acquired subscriber operation. Their native result
 is retained by the original commissioning owner with its exact source inputs and
 outputs. Product/source completion and the actual deployed customer result each
 retain their own recorded state.
+
+## Operate and inspect the outgoing customer result
+
+Before presenting an application, demonstration, report or export as ready,
+the producing maintainer must open, run or render the exact outgoing version,
+look at its actual screen or real screenshots, and operate its important
+controls. This applies to every local or cloud provider and to future delegated
+work. Include the instruction in each delegated receiving assignment.
+
+For this course, open the populated Event programmes workspace and its actual
+report and workbook at the intended screenshare width and at a narrow width
+where relevant. Operate original-file receiving, complete-review selection,
+apply, customer edits, later-window continuation and fresh delivery. Check the
+empty, loading and error states used by the workflow. Download every outgoing
+attachment, open its intended view, and reopen the exact complete package and
+restored workspace. Inspect all attachments, including readable tables and
+instructions. Play any final video or audio and inspect its actual presentation
+and voice quality before including it.
+
+Use plain industrial presentation: readable tables, clear hierarchy,
+consistent typography and spacing, restrained controls and useful labels.
+Repair unreadable, unstyled, cramped, clipped or overflowing output directly in
+the original product. A captured screenshot must actually be viewed; source
+review, DOM counts, HTTP responses, automated checks and another peer's
+approval do not replace the producer seeing the result.
+
+Where the existing native owner operates the equipped host, return the exact
+outgoing source edition, resulting file locations, actual normal/narrow
+screenshots and control/download/reopen outcomes to the producing maintainer
+in the original receiving operation. The producer opens those images and
+resolves concrete defects there. Continue the same implementation and native
+operation; keep the existing focused-validation policy and owner schedule.
+The current fleet cutoff is October 13, 2026 at 14:00 UTC.
 
 ## Financial units and recurring service
 
@@ -141,7 +191,10 @@ merchant installations together:
 | T3 production recovery and handover | 70 | 6,650 | Off-host retention, rotation, receiving-host restore, later reconciliation and independent Support case |
 | Total | 400 | 38,000 | Two maintainable independent merchant installations |
 
-T1 completes by day 30, T2 by day 90 and T3 by day 150. T2 requires at least ten useful
+T1 completes by day 30, T2 by day 90 and T3 by day 150. T1 includes one approved
+testnet purchase for each selected merchant through a supported facilitator,
+complete useful output and an independently observed native RPC transfer.
+T2 requires at least ten useful
 testnet purchases by two independent buyers in seven consecutive calendar days,
 both merchants represented and the same useful service successfully completed
 through both selected facilitators. T3 requires thirty useful purchases in
@@ -164,6 +217,10 @@ The same declaration adds the original subscriber, projector and installed
 Analysis guide at that merge, then the native programme, browser, coordinator,
 private HTTP integration and browser guide at
 cf0a48c99dd896a9dc315b6f9883db850d9f232c.
+The agent provider, operation/index contracts, typed input and delivery clients,
+installed contribution and complete operating guide select merged commit
+3cc516d47cb5ca2a692ee1bc750905cfaab4e2e9. The complete original nine records
+and their accepted source editions remain in this same contribution.
 
 The independent registration is
 stellar-forge/developer-site/grant-products/webhook-customer-analysis.json.
