@@ -47,7 +47,7 @@ Receiving completeness and provider coverage are separate fields:
 | `captureComplete` | Every page named by the saved capture is received and the original core has finished receiving it. |
 | `receivedRows / expectedRows` | Original rows present compared with rows named by that saved manifest. |
 | `reportedTotal` | A consistent total actually declared by the retained provider pages, when available. |
-| `allReportedRowsPresent` | True only when the received pages cover a contiguous range from zero through that declared total. False denotes partial coverage; null means the provider has not supplied a usable total. |
+| `allReportedRowsPresent` | True only when the received pages cover a contiguous range from zero through that declared total and the final page does not advertise more results. False denotes partial coverage; null means the provider has not supplied a usable total. |
 | `totalChanged` | The retained pages disagree on the provider total. |
 | `unindexedRows` | Original source rows retained for browsing whose catalog declarations do not satisfy the existing search projection. |
 

@@ -261,7 +261,7 @@ export async function openAtlasWorkspace({ directory, create = true }) {
     const captureComplete = item.status === 'READY' && missingPages.length === 0;
     const allReportedRowsPresent = reportedTotal === null ? null :
       captureComplete && contiguous && rows === reportedTotal && end === reportedTotal &&
-      pages.every(page => page.partialResults !== true);
+      pages.at(-1)?.partialResults !== true;
     const coverage = { captureStatus: item.status, nativeStatus: item.nativeStatus ?? item.originalStatus ?? null,
       expectedPages: item.files.length, receivedPages: pages.length, missingPages,
       expectedRows: item.rows, receivedRows: rows, reportedTotal, captureComplete, allReportedRowsPresent,
@@ -461,7 +461,7 @@ export async function openAtlasWorkspace({ directory, create = true }) {
       }
       return { ...current.captures[id], captureId: id, pages: 1 };
     }); },
-    capture(input) { return mutate(async () => {
+    async capture(input) { return mutate(async () => {
       const request = normalizeCaptureSearch(input), item = await entry(request.captureId);
       const indexed = await indexedCapture(item);
       need(request.snapshotId === null || request.snapshotId === indexed.snapshotId, 'ATLAS_SEARCH_SNAPSHOT_CHANGED');

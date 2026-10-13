@@ -168,7 +168,7 @@ export async function runAtlasSearchJourney(configuration) {
       searchSnapshotId: cold.snapshotId, matchingRows: cold.offers.length };
     const second = await writeWorkspaceTransfer(received, join(config.outputDirectory, 'received-workspace.ndjson'));
     need(second.transferId === report.transfer.transferId, 'ATLAS_JOURNEY_RECEIVED_EXPORT_CHANGED');
-    report.artifacts.receivedTransfer = second.output ?? join(config.outputDirectory, 'received-workspace.ndjson');
+    report.artifacts.receivedTransfer = second.file;
     report.state = 'COMPLETED';
   } catch (error) {
     report.state = 'FAILED'; report.error = { code: error.code ?? 'ATLAS_SEARCH_JOURNEY_FAILED', message: error.message };
