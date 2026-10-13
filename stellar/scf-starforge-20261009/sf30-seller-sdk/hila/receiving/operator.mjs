@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import { mkdir, open, readFile, lstat, realpath, rename, readdir } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 import { dirname, join, resolve, isAbsolute, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { runHilaBrowserReceiving, inspectHilaReceivedPage } from './browser.mjs';
@@ -46,6 +47,20 @@ const CRITICAL=[
  ROOT+'distribution/runtime-workspace/application-provider.mjs',ROOT+'distribution/runtime-workspace/managed-workspace.mjs',
  ROOT+'sf46-release/runtime-package.mjs',ROOT+'merchant-fleet-gateway/state-lease.mjs'
 ];
+async function selectLocalPort(){
+ return new Promise((resolvePort,reject)=>{
+  const server=createServer();
+  server.unref();server.once('error',reject);
+  server.listen({host:'127.0.0.1',port:0,exclusive:true},()=>{
+   const address=server.address(),port=typeof address==='object'&&address?address.port:null;
+   server.close(error=>{
+    if(error)return reject(error);
+    try{need(Number.isSafeInteger(port)&&port>0&&port<=65535,'The original local port selection failed.');resolvePort(port);}
+    catch(error){reject(error);}
+   });
+  });
+ });
+}
 async function stat(path){try{return await lstat(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function json(path){try{return JSON.parse(await readFile(path,'utf8'));}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function privateDirectory(path){
@@ -148,7 +163,7 @@ export async function runHilaOperatorReceiving({
  const original=path=>import(pathToFileURL(join(sourceRoot,path)).href);
  const {acquireStateLease}=await original(ROOT+'merchant-fleet-gateway/state-lease.mjs');
  const lease=await acquireStateLease(outputDirectory);
- let progress,selection,result,failure,appsModel,appsServer,appApi,browser,installedRoot,runtime,sourceClient,receivedClient;
+ let progress,selection,result,failure,appsModel,appsServer,appApi,installedRoot,runtime,sourceClient,receivedClient;
  const contexts=new Set(),clients=new Set(),files=new Map();
  const progressPath=join(outputDirectory,'progress.json');
  let writing=Promise.resolve();
@@ -166,7 +181,7 @@ export async function runHilaOperatorReceiving({
  };
  let appState,stopApplication;
  try{
-  for(const name of ['observations','downloads','cli','browser','attempts','connections','requests'])
+  for(const name of ['observations','downloads','cli','browser','browser-profiles','attempts','connections','requests'])
    await privateDirectory(join(outputDirectory,name));
   const core=await coreSelection(coreResult,expected);
   need(core.sourceDirectory===directory,'Use the same closed core-created source workspace.');
@@ -251,16 +266,16 @@ export async function runHilaOperatorReceiving({
    need(attached.status==='READY','Applications did not receive the original READY runtime.');
    const {createHilaClient,downloadHilaFile}=await installed(HILA+'client.mjs');
    const loaded=await import(pathToFileURL(await realpath(playwrightModule)).href),playwright=loaded.chromium?loaded:loaded.default;
-   need(playwright?.chromium?.launch,'Select the actual installed Playwright module.');
-   browser=await playwright.chromium.launch({executablePath:chromiumExecutable,headless:true,
-    downloadsPath:join(outputDirectory,'downloads'),args:['--disable-dev-shm-usage']});
+   need(playwright?.chromium?.launchPersistentContext,'Select the actual installed Playwright module.');
    async function setup(name,workspaceDirectory){
     let owned=progress.applications[name];
     if(!owned){owned={name,workspace:workspaceDirectory,label:actor.label.slice(0,90)+' / '+name+' HILA',
+      port:await selectLocalPort(),browserProfile:join(outputDirectory,'browser-profiles',name),
       saveRequestId:uuid(operationId+':application:'+name),runs:[]};progress.applications[name]=owned;await save();}
-    need(owned.workspace===workspaceDirectory,'The original application workspace changed.');
+    need(owned.workspace===workspaceDirectory&&Number.isSafeInteger(owned.port)&&owned.port>0&&owned.port<=65535&&
+     owned.browserProfile===join(outputDirectory,'browser-profiles',name),'The original application workspace, port or browser profile changed.');
     if(!owned.reviewId){const value=await appApi('/api/applications/review',{runtimeId:attached.runtimeId,kind:'hila',
-      label:owned.label,settings:{workspaceDirectory,pythonExecutable,port:0}});owned.reviewId=value.id;await save();}
+      label:owned.label,settings:{workspaceDirectory,pythonExecutable,port:owned.port}});owned.reviewId=value.id;await save();}
     if(!owned.id){const value=await appApi('/api/applications/save',{requestId:owned.saveRequestId,reviewId:owned.reviewId});
      owned.id=value.applicationId;owned.revision=value.revision;await save();}
     let value=await appState(owned.id);
@@ -296,8 +311,9 @@ export async function runHilaOperatorReceiving({
     need(owned.runs.some(run=>(run.operationId??run.requestId)===current.current.id),
      'The active Application is not this receiving operation\'s original run.');
     const launched=current.current.url?.original;
-    need(launched?.schema==='stellar-forge.hila-workspace-launch.v1'&&launched.workspace===owned.workspace,
-     'Original Applications observed a different HILA workspace.');
+    need(launched?.schema==='stellar-forge.hila-workspace-launch.v1'&&launched.workspace===owned.workspace&&
+     new URL(current.current.privateUrl).origin==='http://127.0.0.1:'+owned.port,
+     'Original Applications observed a different HILA workspace or original browser origin.');
     await publish(join(outputDirectory,'connections',owned.name+'.json'),{url:current.current.privateUrl,launch:launched});
     const client=createHilaClient(current.current.privateUrl,{timeoutMs:240000});clients.add(client);
     const actual=await client.launch();
@@ -307,10 +323,14 @@ export async function runHilaOperatorReceiving({
     return{owned,client,url:current.current.privateUrl};
    }
    async function pageFor(opened,name){
-    const context=await browser.newContext({acceptDownloads:true});contexts.add(context);
-    const page=await context.newPage();page.setDefaultTimeout(90000);
+    await privateDirectory(opened.owned.browserProfile);
+    const context=await playwright.chromium.launchPersistentContext(opened.owned.browserProfile,{
+     executablePath:chromiumExecutable,headless:true,acceptDownloads:true,
+     downloadsPath:join(outputDirectory,'downloads'),args:['--disable-dev-shm-usage']});
+    contexts.add(context);
+    const page=context.pages()[0]??await context.newPage();page.setDefaultTimeout(90000);
     await page.goto(opened.url,{waitUntil:'domcontentloaded'});
-    return{page,context,name};
+    return{page,context,name,profile:opened.owned.browserProfile};
    }
    async function closePage(view){if(!view)return;await view.context.close();contexts.delete(view.context);}
    async function closeClient(client){if(!client)return;await client.close();clients.delete(client);}
@@ -532,7 +552,7 @@ export async function runHilaOperatorReceiving({
    const receivedPage=await pageFor(receivedOpened,'received');
    const receivedBrowser=await inspectHilaReceivedPage({page:receivedPage.page,client:receivedClient,directory:receiver,
     outputDirectory:receivedFolder,operationId:operationId+'-received-browser',actor,
-    review:reviewed.reviewed,report:reviewed.report,name:'Independent original HILA receiving',
+    review:reviewed.reviewed,report:reviewed.report,name:'independent-received',
     checkpoint:progress.browser.received??null,retain:value=>retainBrowser('received',value),receiveFile:sourcePacket});
    verifyView(await receivedClient.review(before.id,reviewed.reviewed.revision),selectedView(reviewed.reviewed));
    need(equal(await receivedClient.report(before.id,{revision:reviewed.reviewed.revision}),reviewed.report),
@@ -580,7 +600,7 @@ export async function runHilaOperatorReceiving({
    await privateDirectory(reopenFolder);
    const reopened=await inspectHilaReceivedPage({page:finalPage.page,client:receivedClient,directory:receiver,
     outputDirectory:reopenFolder,operationId:operationId+'-reopened-browser',actor,review:local,report:localReport,
-    name:'Cold reopened complete HILA receiving',checkpoint:progress.browser.reopened??null,
+    name:'cold-reopened',checkpoint:progress.browser.reopened??null,
     retain:value=>retainBrowser('reopened',value)});
    await stage('reopened-browser',reopened.receipt??reopened);
    await closePage(finalPage);await closeClient(receivedClient);receivedClient=null;await stopApplication(receivedOwned);
@@ -615,7 +635,6 @@ export async function runHilaOperatorReceiving({
   for(const client of [...clients])try{await client.close();clients.delete(client);}catch(error){errors.push(detail(error));}
   if(appApi&&stopApplication)for(const owned of Object.values(progress?.applications??{}))
    try{await stopApplication(owned);}catch(error){errors.push({applicationId:owned.id,...detail(error)});}
-  if(browser)try{await browser.close();}catch(error){errors.push(detail(error));}
   if(appsServer)try{await appsServer.close();}catch(error){errors.push(detail(error));}
   if(appsModel)try{await appsModel.close();}catch(error){errors.push(detail(error));}
   await writing;

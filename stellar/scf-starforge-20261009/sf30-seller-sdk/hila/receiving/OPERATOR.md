@@ -65,7 +65,9 @@ On reentry, the receiver reads the actual current Application entries first. It 
 
 Applications owns command preparation, source binding, process startup observation, retained run history, recovery and Stop. The receiver verifies the authenticated HILA launch against the original Applications observation before using its private URL. URLs, bearer material and connection records remain in private operation storage.
 
-The borrowed Page helpers in `browser.mjs` own no browser or server. This receiver creates and closes their Page contexts, typed clients and Chromium instance, and closes both original Applications server/model handles after Stop. If cleanup reports an error, the exact error is retained and the same operation can finish its original cleanup on reentry before continuing.
+Each application retains its selected loopback port before its original review/save. That stable origin and an operator-owned persistent Chromium profile under `browser-profiles/source` or `browser-profiles/received` preserve the original IndexedDB request and complete receiving Blob across an interrupted parent invocation. The recipient uses its same profile for cold reopen. If the original port or profile is still in use, the original startup error remains available for the same operation; the selected origin and profile remain unchanged.
+
+The borrowed Page helpers in `browser.mjs` own no browser or server. This receiver opens one persistent context at a time, closes its owned Chromium context and typed client, and closes both original Applications server/model handles after Stop. Profiles remain private continuation state and are excluded from the customer selection. If cleanup reports an error, the exact error is retained and the same operation can finish its original cleanup on reentry before continuing.
 
 ## Complete source workflow
 
