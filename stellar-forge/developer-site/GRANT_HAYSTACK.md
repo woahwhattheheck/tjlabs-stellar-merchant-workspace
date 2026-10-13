@@ -62,6 +62,85 @@ The [point-list modelling guide](https://github.com/woahwhattheheck/tjlabs-stell
 
 The full source includes 21 semantic actions in the normal action catalogue and the original merchant tool interfaces, full-file delivery/range mechanisms and Applications contribution. The managed application uses its existing private environmentFile to select HAYSTACK_SEMANTIC_PYTHON and opens the same modelling route. Actual managed Start/Stop receiving remains dependent on the original READY runtime selection; the source join is not recorded as a completed installed lifecycle.
 
+### Selected consumer receiving: agreed expectations, complete results and separate acceptance
+
+The next handoff is from the reviewed building model to the application that must use it. A successful file export alone does not establish that the receiving product imported the intended points, preserved their values or answered the agreed questions. The merged [consumer operating workflow](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_OPERATING.md) lets the commissioning engineer specify that useful result before execution, retain the actual target's evidence and make an explicit acceptance decision. It extends the same Haystack workspace, typed projections, original files and contractor history.
+
+The plan identifies one immutable projection and its originating semantic model, the selected consumer family/product/version/build/environment/operator, its input interface and complete input/mapping files. For each question it records the actual query or command, every expected original identity and required typed values, and independently retained evidence for those expectations. A named reviewer marks that exact plan ready. An intentionally empty population still needs evidence and a scope explanation. Each run binds the ready review; later plan changes or a renewed ready review require a new run and decision. Earlier acceptance is retained as history and is not silently restored.
+
+The target's own installed interface performs its execution. The receiving desk retains its original external operation, actual command, timestamps, target, complete input/output files, available stdout/stderr and completed, failed or interrupted outcome. Each comparison shows missing, unexpected and duplicate identities and differing values. Equal row counts cannot hide substituted identities. A separate engineering mode supports worked exercises but cannot receive business acceptance. Technical matches, a customer's review and the author's acceptance remain separate records.
+
+| Operator step | Complete retained result |
+| --- | --- |
+| Prepare the agreement | Original projection/model bindings, independently evidenced questions, expected identities/values, complete target input and the exact ready review. |
+| Receive the target result | The original opened run, actual target/command/outcome and full observations for every question, including those not run. Complete output files accompany the observations. |
+| Decide | Accept, accept explicit exceptions or request changes. An exception requires a reason for each unmatched question; its underlying differences remain in the report. |
+| Correct and continue | A new run links to the preceding result without editing its evidence. A lost reply resumes the original saved operation and its exact reviewed heads. |
+| Receive contractor work | The complete original-run package, all required files, frozen plan/review, observations and customer decisions; the author records a separate subsequent decision. |
+
+The browser's Consumer receiving desk, eighteen retained CLI commands and sixteen native/MCP actions expose this same workflow. The typed client reads complete evidence and report ranges. Eight configured Merchant file routes retain host-pinned evidence, plan/observation content and returned packages without giving a model filesystem authority. The installed application, maintained source selection and the existing request/replay machinery stay together. The [complete domain](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-acceptance.mjs), [browser](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer.js), [native action schemas](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-actions.mjs) and [installed guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/products/haystack/OPERATING.md) are selected at the actual PR1478 merge.
+
+Return preview reports whether the whole original package can be applied, the prospective complete workspace size and any dependency issue. Apply checks the same complete candidate, including retained raw return bytes, evidence, metadata and the original operation journal. Individual evidence files are limited to 32 MiB, the original serialized workspace to 128 MiB and the portable package to 192 MiB. A return envelope may be up to 96 MiB, but acceptance also depends on that full workspace capacity; the envelope limit is not a promise that every such package fits. Large installed-agent inputs use configured files rather than exceeding the 8 MiB inline request limit.
+
+A recipient's linked projection correction travels with its complete original signed decision, returned grid and resulting projection version. The author can inspect that evidence even when the recipient's decision did not previously exist locally. Receiving it does not change the author's projection head or imply acceptance of that grid. Wanted grid changes use the existing explicit projection decision. A conflicting result for the same original run requires a separately opened corrected run; returned customer reviews do not replace the author's acceptance.
+
+JSON, CSV and grayscale HTML reports retain the plan, full comparisons, target execution evidence and review history. The complete v7 editable workspace contains all 96 portable application files and the original consumer state; the selected installed product contains 100 application files plus the product guide and distribution selection. Earlier v1–v6 workspaces retain their own original receiving inventories. All original semantic, Brick, Zinc, VOLTTRON and corrective-work interfaces remain part of the same selected product.
+
+### Consumer source delivery and actual receiving status
+
+The consumer edition is merged in [PR1478](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/1478) at `7fec77105fa591f550c10e6407d8d66fa7f7907b`; all 102 full source bodies were independently read back. Its complete immutable source carrier is Merchant blob `3925b911a14671ada3d349d263f5caad3995bd7a`, decoded 5,268,466 bytes / SHA-256 `58eebe5ff78193d7150686613b55424d46dda04321271a328813649e09b92ba9`. This following source edition supplements the dated original modelling evidence below.
+
+| Evidence | Observed result and limit |
+| --- | --- |
+| Complete original source execution | The retained V8 course executed the actual domain against all 624 original identities. It detected equal-count identity substitutions and duplicates, retained failed/interrupted outcomes, kept renewed-review acceptance pending, and required the author's own decision after recipient return. |
+| Recipient-only projection evidence | The actual source course validated the complete recipient decision, grid and resulting version through export, author preview and apply. The author's original projection heads and returns remained unchanged. |
+| Interface and recovery | Complete domain, typed/MCP/CLI/Merchant, browser and native-programme source reviews are closed. These source results do not establish a target application's import or a rendered browser outcome. |
+| Original native/browser course | The prepared [native programme](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_RECEIVING.mjs) and [browser companion](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_BROWSER.mjs) retain operation UUID `e82b4578-de39-44c6-a241-a4a5e03e1300`. Its source-only native attempt ended before process creation with environment-offline 409. The full course remains unstarted at this handoff and stays with its existing receiver. |
+| Customer and financial adoption | No partner Haystack/Niagara/native-target acceptance, live building commissioning, independent paying consumer or additional Stellar purchase is claimed. Those require the named target's actual evidence, customer decision and the existing payment/fulfillment records. |
+
+The receiving operator uses that same original programme and source selection. After actual execution, inspect the exact outgoing report, complete editable package and restored project; operate the important desktop and narrow-screen controls, interrupted-request recovery, downloads and reopening, and view the captured screens. Extract archives and open their actual contained deliverables. Source review and screenshots merely captured do not establish readiness. The complete current owner rule is retained in this chapter's receiving guidance.
+
+The selected customer adaptation fits the existing six packages: T1-resource binds the useful target input, independent expectations and paid result; T1-handover assigns the receiving and acceptance owners; T2-provider joins the same actual result to the selected independent facilitators and approved purchases; T2-threat operates failed/interrupted target and delivery outcomes without losing payment or evidence; T3-mainnet commissions the selected production consumer and its recurring useful work; T3-recovery restores the complete original plan/run/customer-return history and obtains the maintainer's own receiving decision. The existing $38,000, 400 prospective hours, 150 days, six allocations and ten/thirty purchase targets are unchanged. This merged pre-award implementation is not charged again to the award; any commissioned customer-specific work is assigned once to its grant package or separate workorder.
+
+### Complete consumer source selection
+
+The following complete files are selected at the same immutable PR1478 merge. The declaration binds each file's full byte length, SHA-256 and Git blob. The existing ten modelling source IDs and their original selections remain, except that the installed operating guide advances with its earlier measured edition preserved. These are source references for the same product, not extra funded deliverables or purchase counts.
+
+| Source record | Complete maintained source |
+| --- | --- |
+| `haystack-consumer-operating` | [Complete consumer plan, target-result and acceptance operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_OPERATING.md) |
+| `haystack-consumer-domain` | [Frozen expectations, exact identities, target evidence and explicit acceptance](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-acceptance.mjs) |
+| `haystack-consumer-actions` | [All sixteen consumer action schemas and original mutation fields](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-actions.mjs) |
+| `haystack-consumer-cli` | [Eighteen consumer commands through original saved-request lifecycle](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-cli.mjs) |
+| `haystack-consumer-types` | [Complete consumer plans, runs, files, previews and decisions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-types.d.mts) |
+| `haystack-consumer-reports` | [Full consumer reports and original-run return packages](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer-reports.mjs) |
+| `haystack-consumer-browser-document` | [Consumer receiving operator forms and complete review surface](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer.html) |
+| `haystack-consumer-browser-controller` | [Retained browser drafts, exact requests and customer return controls](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer.js) |
+| `haystack-consumer-browser-style` | [Responsive industrial consumer receiving layout](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/consumer.css) |
+| `haystack-consumer-native-receiving` | [Original complete consumer receiving programme and recovery](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_RECEIVING.mjs) |
+| `haystack-consumer-browser-receiving` | [Original consumer desktop/mobile and independent receiving continuation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/CONSUMER_BROWSER.mjs) |
+| `haystack-consumer-workspace-model` | [Consumer state validation joined to the original workspace model](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/model.mjs) |
+| `haystack-consumer-workspace-store` | [Original atomic workspace writer, operation replay and consumer actions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/store.mjs) |
+| `haystack-consumer-portable-workspace` | [Complete v7 editable application and original v1–v6 receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/portable.mjs) |
+| `haystack-consumer-projection-evidence` | [Original signed projection return and resulting-version verifier](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/projection-model.mjs) |
+| `haystack-consumer-projection-reports` | [Consumer status joined to complete native projection reports](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/projection-reports.mjs) |
+| `haystack-consumer-action-catalog` | [Consumer actions in the existing native catalogue](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/catalog.mjs) |
+| `haystack-consumer-command-entry` | [Installed original CLI dispatch and retained request recovery](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/cli.mjs) |
+| `haystack-consumer-typed-client` | [Complete original-client actions, evidence and delivery ranges](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/client.mjs) |
+| `haystack-consumer-client-declarations` | [Deep typed action/result map for the cumulative workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/client.d.mts) |
+| `haystack-consumer-agent-configuration` | [Configured workspace and host-pinned consumer source aliases](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/merchant.mjs) |
+| `haystack-consumer-agent-client` | [Configured full-file mutations and SHA-bound large view reads](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/merchant-client.mjs) |
+| `haystack-consumer-agent-tools` | [All consumer actions and configured-file tools in Merchant](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/merchant-tools.mjs) |
+| `haystack-consumer-application-provider` | [Consumer route in the original managed application](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/application-provider.mjs) |
+| `haystack-consumer-installed-contribution` | [Installed CLI, exported API and support-source selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/contribution.json) |
+| `haystack-consumer-browser-inventory` | [Complete consumer assets in the original browser inventory](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/browser-assets.json) |
+| `haystack-consumer-navigation` | [Consumer receiving link in the original workspace](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/index.html) |
+| `haystack-consumer-package-export` | [Consumer domain export in the original package](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/package.json) |
+| `haystack-consumer-native-guide` | [Whole current native API and source receiving instructions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/README.md) |
+| `haystack-consumer-agent-guide` | [Current original host configuration, full files and request replay](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/MERCHANT.md) |
+| `haystack-consumer-workspace-guide` | [Whole current grid, model and consumer operator journey](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/sf30-seller-sdk/haystack-workspace/OPERATING.md) |
+| `haystack-consumer-installation-selection` | [Complete cumulative Haystack installed source and distribution selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/7fec77105fa591f550c10e6407d8d66fa7f7907b/stellar/scf-starforge-20261009/distribution/selections/haystack-turnover.json) |
+
 ### Delivered model, reports and independent handover
 
 A completed native validation retains all seven original files: model.ttl, model.json, validation-report.ttl, validation-report.txt, brick-wrapper-report.ttl, brick-wrapper-report.txt and validation-expanded.ttl. They retain their own bytes, hashes, original request, source versions and effective runtime. The complete pySHACL report and unchanged original Brick-wrapper report remain distinguishable. Warnings, informational results, mapping observations and a nonconforming result remain available to the reviewer.
@@ -132,3 +211,71 @@ Keep the original $38,000 request, 400 prospective hours, 150 days, six package 
 Preserve the current 81CF/7108 review correction linking its Connected Systems reference to the complete named chapter. Preserve the following review/submission case and its original saved version as the existing 25FD/81CF/018A/F8C1/8910 publication and receiving owners compose this edition. The four reader files travel together, with their actual full SHA-256 and Git blob identities, through that original Page, draft/review and Site continuation. No issuer submission is performed by this source integration.
 
 The accepted composer is run twice against the complete selected source and manuscript. Compare the full four outputs and source catalogue, while retaining the earlier application request, purchase baseline, milestones, staffing, cash and submission observations. The unchanged budget file remains authoritative. The source-only composition receipt records this operation separately from a product native or browser result.
+
+
+## Receive the following consumer source edition
+
+The original modelling contribution and its dated observations above remain intact. This following edition receives merged PR1478's consumer workflow into the same Haystack chapter. The current declaration retains all ten original source IDs, advances the installed guide with its original edition preserved, and adds 32 complete measured consumer/shared/distribution sources: 42 total. The immutable 100+2-file source carrier preserves the complete application beyond those selected review links. Receive both the current canonical chapter and `grant-products/haystack.json` through the existing registered-chapter/source receiver; preserve every unrelated chapter and the current cumulative source union. BC3D/DBC61/25FD retain the original four-output/source-package publisher. The consumer receiver retains UUID `e82b4578-de39-44c6-a241-a4a5e03e1300`; this grant integration does not launch a second programme or replace its input.
+
+The declaration's `editions` keep source history; its selected `commit` and measured complete file pins identify the following edition. Record the actual resulting four-output/source-package tuple after that publisher composes it. A source handoff or canonical insertion alone is not a newly published cumulative index, a target-native acceptance or customer traction.
+
+## TJLabs owner rule: actual rendered-product inspection
+
+Revision: `rendered-product-inspection-20261013-all-attachments-v1`.
+Applies to all current and future peers and providers, in local and cloud sessions.
+
+Before calling a client/prospect-facing app, website, dashboard, demo, report,
+presentation or export ready, the producing peer must actually open, run or
+render the exact outgoing version, LOOK at the rendered screen or its real
+screenshots, and operate the important user controls. Check the actual
+screenshare width and narrow/mobile width where relevant, populated, empty,
+loading and error states, downloads/exports and reopening. Capturing screenshots
+without viewing them is insufficient. Fix ugly, broken, unstyled, cramped,
+clipped, overflowing or unreadable output within the authorized work before
+presenting it. Code review, DOM counts, HTTP 200, unit checks or another peer's
+approval do not replace seeing the actual product.
+
+ALL ATTACHMENTS count. Literally open, view, play and use the final delivered
+HTML, PDF, report, slides, spreadsheet, map, image, video, audio, archive and
+project as its recipient would. For archives, extract and open the actual
+contained deliverables and working project. Tests, checklists and screenshots
+merely captured are not substitutes. Use available high-quality generative media
+models and natural voice generation/TTS for videos; avoid robotic default
+voices. Watch and listen to the final export for pronunciation, pacing, timing
+and audio alignment. Keep building and fixing; inspection is not review/test
+performance theatre.
+
+For the Ecosystem product use plain industrial design: readable tables, clear
+hierarchy, consistent typography and spacing, restrained controls, useful labels
+and responsive layouts. No decorative template slop. Keep the real workflows,
+data and computation. Reviews must lead directly to repairs and must not replace
+hard implementation/integration or become endless rechecking. The existing
+focused-validation policy remains; do not run broad suites or build a separate
+verification product. Prior empty-Workspace screenshots are not acceptance of a
+completed scientific Workspace.
+
+PERSISTENT PROPAGATION REQUIRED: copy this rule into every active owner-controlled
+policy/instruction surface the provider and workers actually read: global and
+project AGENTS, CLAUDE, GEMINI and rules files, provider-specific boot instructions,
+Commons source mirrors, cloud repository instruction copies, and current build
+and receiving guides. Every delegating peer includes this complete rule in child
+assignments, including its all-attachments and final-media clarification. Return
+exact changed paths, source/version and readback. A Slack ACK alone is not
+propagation. Preserve all existing owner controls and do not alter historical
+evidence or third-party/vendor policies. No forced restarts, new watchers or
+revival of owner-stopped work.
+
+Continue the same Ecosystem Sprint Integration assembled product and its original
+scientific, run, browser and receiver owners. Continue native source, runtime and
+archive joins rather than diverting everyone to cosmetic review. Preserve the
+October 13, 2026 fleet cutoff at 10:00 a.m. Eastern (EDT), 14:00 UTC. This project
+cutoff does not expire the standing inspection rule or change other projects'
+owner-directed schedules.
+
+The machine canonical policy is maintained by Root at
+`C:/Users/lucys/.commons/rendered-product-inspection-policy.md` and `.json`.
+This portable copy carries Bryce's instruction to the actual provider hooks and
+receiving guides; it does not claim to update another host merely by being
+published. Bryce's placement instruction is: "that rule goes in every policy
+file the agents read not just a slack ping" and "and not just local sessions or
+ones from this provider".
