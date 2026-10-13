@@ -204,3 +204,13 @@ The profile is discovered through the existing profiles.mjs loader. The source-n
 The selected Rialto package carries that bridge, profile and both original preparation dependencies. Grant Operations carries the whole maintained workorder component, so the same profile is available through its existing profile catalogue. Full Merchant source combines both original applications. Reuse their complete source, runtime and receiving procedures.
 
 The original current source is the merged Rialto product and route-input workflow, the maintained SF47 preparation/importer, and the retained customer's actual Workshare and request. Preserve current same-file owner changes when joining source into an existing installation.
+
+## Complete customer catalogue decision
+
+A source comparison and the customer’s review can be retained with the original request before preparing this Installation. Download the original request selection and complete comparison from the offline Rialto report, then add `--catalogue-review /absolute/downloads/rialto-complete-comparison.json` to `starforge rialto-customer select`.
+
+Receiving validates the complete review against the selected after catalogue and original row before creating the request stage. The byte-exact review, complete before/after sources and self-contained report remain under `catalogue-review/` with the original request. Review notes and carried drafts preserve the customer’s source decision while the explicit selected URL, request body/headers, offer and cap retain their established meanings.
+
+The existing Installation preparation snapshots and verifies that whole request. `RIALTO_REQUEST.md` links the complete review at `request/catalogue-review/report.html` and original JSON at `request/catalogue-review/received.json`; the structured annex retains the exact source binding. `installation-open` verifies the full receiving edition and returns its local review-report path. The complete Installation pack and ordinary receiving command carry all of these files. Existing editions without a review retain their original summary and workorder.
+
+Use the [complete source-comparison and customer receiving guide](../../../scf-starforge-20261009/partners/rialto/CATALOGUE_COMPARISON.md) for the exact select command, source coverage interpretation, original request continuation and independent reopening.

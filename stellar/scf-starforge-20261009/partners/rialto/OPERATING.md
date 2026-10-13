@@ -55,6 +55,8 @@ node "$RIALTO_HOME/customer.mjs" select \
   --directory "$RIALTO_WORK/customer-001"
 ```
 
+To retain the complete catalogue comparison and customer notes with this request, add `--catalogue-review /absolute/downloads/rialto-complete-comparison.json`. The full before/after sources must match the selected after catalogue and original row. The complete review JSON, both original source catalogues and self-contained receiving report are retained under `catalogue-review/` in the same atomic request edition. The existing request verifier checks every retained file; pack/receive and the original Customer Installation carry them together. See [the complete review-to-request workflow](CATALOGUE_COMPARISON.md#carry-the-customer-decision-into-the-original-request-and-installation).
+
 For binary bodies, add `--body-file /absolute/original-request.bin`. That file takes precedence over the browser's UTF-8 body. To supply original ordinary headers from a private JSON file, add `--headers-file /absolute/headers.json`. A deliberately present zero-byte body is supported through a file or `requestBodyUtf8: ""` in the selection JSON. GET and HEAD have no body.
 
 The complete source catalogue is copied with the selected request. The selection keeps its exact catalogue hash, page, original row, original acceptance index, payment requirements, task, useful output, URL, method, stable intent, cap, headers and body bytes/hash. Drafts in the browser are scoped to catalogue hash and resource identity; the downloaded file is the portable form.

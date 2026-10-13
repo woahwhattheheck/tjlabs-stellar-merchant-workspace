@@ -48,6 +48,8 @@ async function select(o){
  const c=await originalCatalogue(required(o,'source')),input=await readJson(required(o,'selection'));
  need(input.catalogueSha256===undefined||input.catalogueSha256===c.sha256,'Selected catalogue edition has changed');
  const s=selection(c.value,input,c.sha256),out=path.resolve(required(o,'directory'));
+ const reviewModule=o['catalogue-review']?await import('./review-request.mjs'):null;
+ const review=reviewModule?await reviewModule.readRequestReview(o['catalogue-review'],c,s):null;
  need(out!==c.root&&!out.startsWith(c.root+path.sep),'Request destination must be outside original catalogue');
  need(!await exists(out),'Request destination already exists; reopen its original selection');
  const stage=path.join(path.dirname(out),'.rialto-selection-'+randomUUID());await privateDir(stage,{create:true});
@@ -56,10 +58,12 @@ async function select(o){
  const headers=o['headers-file']?await readJson(o['headers-file']):(input.headers??{});
  need(headers&&typeof headers==='object'&&!Array.isArray(headers)&&Object.values(headers).every(v=>typeof v==='string'),'Request headers must be string values');
  if(o['content-type'])headers['Content-Type']=o['content-type'];
- s.headers=ordinaryHeaders(headers);need(s.body===undefined||!['GET','HEAD'].includes(s.method),'Original GET and HEAD requests must have no body');await writeNew(path.join(stage,'request.headers.json'),json(s.headers));await writeNew(path.join(stage,'selection.json'),json(s));
+ s.headers=ordinaryHeaders(headers);need(s.body===undefined||!['GET','HEAD'].includes(s.method),'Original GET and HEAD requests must have no body');await writeNew(path.join(stage,'request.headers.json'),json(s.headers));
+ if(review)s.catalogueReview=await reviewModule.retainRequestReview(stage,review,c,s);
+ await writeNew(path.join(stage,'selection.json'),json(s));
  await fs.rename(stage,out);
  }catch(error){await fs.rm(stage,{recursive:true,force:true});throw error;}
- return{directory:out,intentId:s.intentId,url:s.url,method:s.method,selectedTerms:s.selectedTerms,maxAtomic:s.maxAtomic,selectionSha256:sha(json(s))};
+ return{directory:out,intentId:s.intentId,url:s.url,method:s.method,selectedTerms:s.selectedTerms,maxAtomic:s.maxAtomic,selectionSha256:sha(json(s)),...(s.catalogueReview?{catalogueReview:{...s.catalogueReview,report:path.join(out,'catalogue-review','report.html')}}:{})};
 }
 async function selected(root){
  root=await privateDir(root);const saved=await readJson(path.join(root,'selection.json')),c=await originalCatalogue(path.join(root,'source'));
@@ -67,7 +71,8 @@ async function selected(root){
  for(const key of Object.keys(rebuilt)){if(key==='pathBinding'&&!Object.hasOwn(saved,key))continue;need(canonical(rebuilt[key])===canonical(saved[key]),'Selected original request changed: '+key);}
  const headers=ordinaryHeaders(await readJson(path.join(root,'request.headers.json')));need(canonical(headers)===canonical(saved.headers),'Selected request headers changed');
  let body;if(saved.body){need(saved.body.path==='request.body','Body path changed');body=await read(path.join(root,'request.body'));need(body.length===saved.body.bytes&&sha(body)===saved.body.sha256,'Original request body changed');}
- return{root,value:saved,body,headers};
+ const catalogueReview=saved.catalogueReview!==undefined?await (await import('./review-request.mjs')).verifyRequestReview(root,saved,c):null;
+ return{root,value:saved,body,headers,...(catalogueReview?{catalogueReview}:{})};
 }
 function challengeName(o){const id=o['capture-id'];need(id===undefined||/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(id),'Capture ID must use1..64 letters, digits, underscore or hyphen');return id===undefined?'challenge.http.json':'challenge-'+id+'.http.json';}
 async function captureChallenge(o){
@@ -144,7 +149,7 @@ async function prepare(o){
 }
 async function main(){
  const [command,...rest]=process.argv.slice(2),o=flags(rest);
- const allowed={capture:['plan','discovery','facilitator','network','limit','directory'],inspect:['directory'],select:['source','selection','directory','body-file','headers-file','content-type'],challenge:['directory','capture-id'],prepare:['directory','checkout','accept','capture-id','node'],pack:['directory','out'],receive:['file','directory'],compare:['before','after','out'],report:['directory','out'],installation:['directory','seed','bindings','out'],'installation-open':['directory'],'installation-pack':['directory','out']};
+ const allowed={capture:['plan','discovery','facilitator','network','limit','directory'],inspect:['directory'],select:['source','selection','directory','body-file','headers-file','content-type','catalogue-review'],challenge:['directory','capture-id'],prepare:['directory','checkout','accept','capture-id','node'],pack:['directory','out'],receive:['file','directory'],compare:['before','after','out'],report:['directory','out'],installation:['directory','seed','bindings','out'],'installation-open':['directory'],'installation-pack':['directory','out']};
  if(command!==undefined&&command!=='help'){need(Object.hasOwn(allowed,command),'Unknown command: '+command);for(const key of Object.keys(o))need(allowed[command].includes(key),'Unknown --'+key+' for '+command);}
  if(['installation','installation-open','installation-pack'].includes(command)){
   const bridge=await import('./installation.mjs'),context={verifyRequest:selected};
@@ -168,7 +173,7 @@ async function main(){
  'capture --directory NEW_OR_ORIGINAL [--plan plan.json]',
  'inspect --directory CATALOGUE',
  'compare --before FIRST --after SECOND --out comparison.json',
- 'select --source CATALOGUE --selection saved-selection.json --directory NEW_REQUEST [--body-file FILE] [--headers-file FILE] [--content-type TYPE]',
+ 'select --source CATALOGUE --selection saved-selection.json --directory NEW_REQUEST [--body-file FILE] [--headers-file FILE] [--content-type TYPE] [--catalogue-review COMPLETE_REVIEW.json]',
  'challenge --directory ORIGINAL_REQUEST [--capture-id EXPLICIT_NEW_ATTEMPT]',
  'prepare --directory ORIGINAL_REQUEST --accept EXACT_CHALLENGE_INDEX [--checkout ORIGINAL_INSTALLATION] [--capture-id ORIGINAL_ATTEMPT] [--node PATH]',
  'pack --directory ORIGINAL --out OUTSIDE_PACKET.json',
