@@ -103,3 +103,8 @@ Use build.mjs for the full working application ZIP in addition to the engine han
 The offline application prepares source-qualified files and records a real returned file. Hosting, licensing, permissions, paid/live feeds, integration credentials and target import execution are separately defined partner/platform responsibilities. Keep the complete original evidence and contract with any actual implementation workshare.
 
 Follow BROWSER_OPERATING.md for the original receiving programme. Producing workers must actually run and use the exact outgoing files and inspect the rendered screens/attachments before calling them ready. Preserve the same programme and explicit source edition when continuing a native run.
+
+
+## Installed agent continuation
+
+The installed Tourism contribution also includes the complete typed agent client and source-owned merchant Tools provider. See [AGENT_OPERATING.md](AGENT_OPERATING.md) for original workspace configuration, full request replay, source/mapping/report/target operations and whole-file downloads. The original CLI accepts both complete plain workspaces and full browser recoveries, retaining unfinished form drafts, selected controls and copy identity. [AGENT_RECEIVING.md](AGENT_RECEIVING.md) continues the same native and rendered customer programme. Run merchant integration inside the complete selected distribution; the browser HTML remains self-contained. The earlier prospect attachment is a separately frozen source edition.
