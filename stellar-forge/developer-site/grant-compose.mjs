@@ -272,6 +272,9 @@ export function composeGrantApplication({
     customerClosingSources = attached.customerClosingSources;
   }
   // Register complete canonical source identities before projecting reader links.
+  // Normalize retained identities before receiving raw or already projected companion text.
+  // Original authenticated references keep their repository, commit and path.
+  index = projectGrantSourceIndex(index);
   receiveGrantCustomerSources(index, productAndFinanceMarkdown);
   receiveGrantProductSources(index, productAndFinanceMarkdown, productRegistrations);
   index = projectGrantSourceIndex(index);
