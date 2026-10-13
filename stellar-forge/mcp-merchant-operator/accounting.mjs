@@ -476,6 +476,8 @@ export class MerchantAccounting {
       pricing: ['reviewId', 'runId', 'file'], period: ['closeId', 'file'], accountant: ['handoffId', 'revisionId', 'file'], adjustment: ['adjustmentId', 'jobId', 'file'], qbo: ['planId', 'responseId', 'nativePost', 'attemptId', 'file'], xero: ['planId', 'file'],
       'qbo-source-change': ['changeId', 'file'], 'xero-source-change': ['changeId', 'file'],
       'customer-statement': ['statementId', 'file'],
+      'receivables-customer-account': ['publicationId','file'],
+      'receivables-customer-response': ['customerResponseId','file'],
       'receivables-collection': ['collectionCaseId', 'asOf', 'file'],
       'receivables-collections': ['customerId', 'asOf', 'owner', 'status', 'search', 'file'],
       'receivables-cash-plan': ['cashPlanId', 'editionId', 'file'],
