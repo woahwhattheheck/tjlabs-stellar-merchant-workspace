@@ -1,0 +1,55 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "ckan",
+  "heading": "## CKAN merchant editions, analytical customer use and staff Support",
+  "sources": [
+    {
+      "id": "ckan-merchant-operations",
+      "label": "CKAN merchant editions and original installed operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/ckan/OPERATING.md",
+      "commit": "496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c"
+    },
+    {
+      "id": "ckan-complete-workspace-receiving",
+      "label": "Complete CKAN publisher workspace and customer handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/ckan/RECEIVING.md",
+      "commit": "496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c"
+    },
+    {
+      "id": "ckan-reviewed-source-meaning",
+      "label": "Original CKAN dictionary, reviewed publication and customer meaning",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/ckan/SEMANTIC_WORKFLOW.md",
+      "commit": "f6c37fede046f2e234da5cd35421415f06969654"
+    },
+    {
+      "id": "ckan-analytical-customer-receiving",
+      "label": "Original Python, SQLite and DuckDB semantic receiving",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/SEMANTICS.md",
+      "commit": "38bcf07416c67e44f5be5c251cb3c4edaa803ba3"
+    },
+    {
+      "id": "ckan-merchant-support",
+      "label": "CKAN source monitoring and complete staff case handoff",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/ckan/SUPPORT.md",
+      "commit": "496e1e1d2f69bc66bd6c3ef24c5d830c04ecc68c"
+    },
+    {
+      "id": "ckan-support-agent-recovery",
+      "label": "Original incident snapshot, receive, reopen and reconciliation through Merchant",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf74-merchant-support-console/RECOVERY_MCP.md",
+      "commit": "b4569b07d8929ef013c69da425467c548eb3e47a"
+    }
+  ]
+}
