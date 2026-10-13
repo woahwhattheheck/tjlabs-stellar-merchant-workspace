@@ -811,7 +811,7 @@ async function continueCompletedCustomerResponse(previous) {
   await save(join(folder,'application-saved.json'),{applicationId:saved.applicationId,revision:saved.revision},{original:true});
   await model.applicationsConnect({applicationId});const started=Date.now();
   for(;;){stopped();const observed=await applicationView(applicationId);
-    if(observed.release){assert.equal(observed.revision,saved.revision);assert.equal(observed.release.sourceCommit,responseSourceCommit);break;}
+    if(observed.release){assert.equal(observed.revision,saved.revision);assert.equal(observed.release.sourceCommit,selected.responseSourceCommit);break;}
     assert(!['FAILED','INTERRUPTED'].includes(observed.adoption?.phase),'Reconcile the original current-runtime adoption.');
     assert(Date.now()-started<120000,'Retain the original current-runtime adoption before continuing.');await pause(200);}
   // Copy exact original replay inputs; keep original paths inside the verified recipient checkpoint.
