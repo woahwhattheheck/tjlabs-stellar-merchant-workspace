@@ -3,43 +3,83 @@ os.umask(0o077)
 root=pathlib.Path(payload.get("workDirectory","/dev/commons-ckan-acquisition-814b")).absolute()
 root.mkdir(mode=0o700,exist_ok=True)
 if root.is_symlink() or root.stat().st_uid!=os.geteuid() or root.stat().st_mode&0o077: raise ValueError("private original programme directory required")
+import tempfile
+def private_directory(path):
+    path=path.absolute()
+    relative=path.relative_to(root)
+    current=root
+    for part in relative.parts:
+        current=current/part
+        try: current.mkdir(mode=0o700)
+        except FileExistsError: pass
+        info=current.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.geteuid(): raise ValueError("owned directory required")
+        if info.st_mode&0o077: current.chmod(0o700)
+    return path
+def checksum(path,kind):
+    with path.open("rb") as incoming:
+        return hashlib.file_digest(incoming,kind).hexdigest()
+def admit(target,parts,size,sha256=None,blob_sha=None):
+    target=target.absolute()
+    target.relative_to(root)
+    private_directory(target.parent)
+    def matches(path):
+        info=path.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.geteuid() or info.st_size!=size: return False
+        if sha256 and checksum(path,"sha256")!=sha256: return False
+        if blob_sha:
+            value=hashlib.sha1(b"blob "+str(size).encode()+b"\0")
+            with path.open("rb") as incoming:
+                for chunk in iter(lambda:incoming.read(65536),b""): value.update(chunk)
+            if value.hexdigest()!=blob_sha:return False
+        return True
+    if target.exists() or target.is_symlink():
+        if not matches(target):raise ValueError("changed original received file: "+str(target))
+        return
+    stage_root=private_directory(root/".receiving")
+    fd,name=tempfile.mkstemp(prefix="member-",dir=str(stage_root))
+    stage=pathlib.Path(name)
+    try:
+        total=0
+        with os.fdopen(fd,"wb") as output:
+            for chunk in parts:
+                total+=len(chunk)
+                if total>size:raise ValueError("received file exceeds original size")
+                output.write(chunk)
+            output.flush();os.fsync(output.fileno())
+        if not matches(stage):raise ValueError("received original file identity mismatch")
+        try: os.link(stage,target)
+        except FileExistsError:
+            if not matches(target):raise ValueError("concurrent received file differs")
+    finally:
+        stage.unlink(missing_ok=True)
 for name,body in payload["files"].items():
     path=pathlib.PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts: raise ValueError("source path")
-    target=root/path
-    target.parent.mkdir(parents=True,mode=0o700,exist_ok=True)
     raw=body.encode("utf8")
     expected=payload["sourceBlobs"][name]
     if hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()!=expected: raise ValueError("source identity "+name)
-    if target.exists():
-        if target.is_symlink() or target.read_bytes()!=raw: raise ValueError("changed original source "+name)
-    else:
-        with target.open("xb") as output: output.write(raw)
-(root/"capture-acquisition-journey.mjs").write_text(payload["program"],encoding="utf8")
+    admit(root/path,[raw],len(raw),blob_sha=expected)
+program=payload["program"].encode("utf8")
+admit(root/"capture-acquisition-journey.mjs",[program],len(program),sha256=hashlib.sha256(program).hexdigest())
 transfer=payload["transfer"]
 capture=root/"Liip_Zurich_Source_Captures.tar.gz"
+capture_sha="b093a0a66b12830f7daf507980b77a9f6f692e22dcf44cd195ef2e599998979c"
 if not capture.exists():
     retained=pathlib.Path("/workspace/scratch/814bb67cccdc/liip-complete-delivery-20261013/Liip_Zurich_Complete_Delivery.tar.gz")
     if retained.is_file():
         with tarfile.open(retained,"r:gz") as existing:
             members=[m for m in existing.getmembers() if m.isfile() and m.name.endswith("/Liip_Zurich_Source_Captures.tar.gz")]
             if len(members)==1:
-                with existing.extractfile(members[0]) as source_stream, capture.open("xb") as output:
-                    while True:
-                        chunk=source_stream.read(65536)
-                        if not chunk: break
-                        output.write(chunk)
+                with existing.extractfile(members[0]) as source_stream:
+                    admit(capture,iter(lambda:source_stream.read(65536),b""),434557,sha256=capture_sha)
 if not capture.exists():
     request=urllib.request.Request(transfer["download_url"],headers=transfer.get("headers") or {},method=transfer.get("method","GET"))
-    with urllib.request.urlopen(request,timeout=60) as response, capture.open("xb") as output:
-        while True:
-            chunk=response.read(65536)
-            if not chunk: break
-            output.write(chunk)
-if capture.stat().st_size!=434557 or hashlib.file_digest(capture.open("rb"),"sha256").hexdigest()!="b093a0a66b12830f7daf507980b77a9f6f692e22dcf44cd195ef2e599998979c": raise ValueError("capture mismatch")
+    with urllib.request.urlopen(request,timeout=60) as response:
+        admit(capture,iter(lambda:response.read(65536),b""),434557,sha256=capture_sha)
+admit(capture,[],434557,sha256=capture_sha)
 for x in transfer.get("xattrs",[]): os.setxattr(capture,x["name"],x["value"].encode())
-source=root/"captures"
-source.mkdir(mode=0o700,exist_ok=True)
+source=private_directory(root/"captures")
 with tarfile.open(capture,"r:gz") as archive:
     members=archive.getmembers()
     if len(members)>200 or sum(m.size for m in members)>33554432: raise ValueError("capture size")
@@ -47,12 +87,11 @@ with tarfile.open(capture,"r:gz") as archive:
         part=pathlib.PurePosixPath(member.name)
         if part.is_absolute() or ".." in part.parts or not(member.isdir() or member.isfile()): raise ValueError("capture member")
         dest=source/part
-        if member.isdir(): dest.mkdir(parents=True,mode=0o700,exist_ok=True)
+        if member.isdir():private_directory(dest)
         else:
-            dest.parent.mkdir(parents=True,mode=0o700,exist_ok=True)
-            body=archive.extractfile(member).read()
-            if len(body)!=member.size: raise ValueError("capture length")
-            dest.write_bytes(body)
+            with archive.extractfile(member) as incoming:raw=incoming.read()
+            if len(raw)!=member.size:raise ValueError("capture length")
+            admit(dest,[raw],len(raw),sha256=hashlib.sha256(raw).hexdigest())
 captures=sorted(str(p) for p in source.rglob("capture.json"))
 if len(captures)!=2: raise ValueError("capture manifests")
 browser_executable=payload.get("browserExecutable") or os.environ.get("CKAN_ACQUISITION_BROWSER_EXECUTABLE")
