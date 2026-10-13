@@ -344,7 +344,9 @@ function validateRequest(request, id, operationId) {
     request.inputs.reviewSha256 === request.review.reviewSha256 &&
     digest(encoded(request.inputs)) === request.requestSha256 &&
     request.actor === request.inputs.actor && request.notes === request.inputs.notes &&
-    same(request.decisions, request.inputs.decisions), 'EDGAR_RETURN_REQUEST_CHANGED');
+    same(request.decisions, request.inputs.decisions) &&
+    (request.inputs.issuedRevision === null || request.inputs.issuedRevision === request.review.issuedRevision),
+    'EDGAR_RETURN_REQUEST_CHANGED');
   const compiled = compileEdgarMerchant(resolveReturnedEdgarReview(request.review, request.decisions));
   invalid(same(compiled.config, request.config), 'EDGAR_RETURN_REQUEST_CHANGED');
   return request;
@@ -366,8 +368,10 @@ async function findApplied(directory, request) {
   return selected;
 }
 async function preflightSources(storeDirectory, capture, config) {
-  const store = await openEdgarStore(storeDirectory), incoming = await openEdgarStore(join(capture.root, 'source', 'source-store')), required = new Map();
+  const store = await openEdgarStore(storeDirectory), required = new Map();
+  let incoming;
   try {
+    incoming = await openEdgarStore(join(capture.root, 'source', 'source-store'));
     for (const product of config.products) {
       let local = null;
       try { local = (await store.getEdition(product.editionId)).record; }
@@ -388,7 +392,7 @@ async function preflightSources(storeDirectory, capture, config) {
       required.set(source.id, { record: source, path: join(capture.root, 'source', rawDescriptor.path), descriptor: rawDescriptor });
     }
     return required;
-  } finally { await incoming.close(); await store.close(); }
+  } finally { try { await incoming?.close(); } finally { await store.close(); } }
 }
 async function importRequiredSources(storeDirectory, required) {
   const store = await openEdgarStore(storeDirectory);
@@ -527,7 +531,8 @@ export function openEdgarReturns({ directory, storeDirectory, workspace, python,
       for (const id of (await readdir(await realDirectory(root))).sort()) {
         if (!HASH.test(id)) continue;
         const { record, root: folder } = await readCapturedReturn(directory, id, { verify: false });
-        rows.push(summary(record, folder));
+        const { source, archivePath, ...compact } = summary(record, folder);
+        rows.push(compact);
       }
       return { returns: rows };
     },
