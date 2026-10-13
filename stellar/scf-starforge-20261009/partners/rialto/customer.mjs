@@ -149,7 +149,7 @@ async function prepare(o){
 }
 async function main(){
  const [command,...rest]=process.argv.slice(2),o=flags(rest);
- const allowed={capture:['plan','discovery','facilitator','network','limit','directory'],inspect:['directory'],select:['source','selection','directory','body-file','headers-file','content-type','catalogue-review'],challenge:['directory','capture-id'],prepare:['directory','checkout','accept','capture-id','node'],pack:['directory','out'],receive:['file','directory'],compare:['before','after','out'],report:['directory','out'],installation:['directory','seed','bindings','out'],'installation-open':['directory'],'installation-pack':['directory','out']};
+ const allowed={'capture-progress':['directory','out'],'capture-progress-open':['file','directory','out'],capture:['plan','discovery','facilitator','network','limit','directory'],inspect:['directory'],select:['source','selection','directory','body-file','headers-file','content-type','catalogue-review'],challenge:['directory','capture-id'],prepare:['directory','checkout','accept','capture-id','node'],pack:['directory','out'],receive:['file','directory'],compare:['before','after','out'],report:['directory','out'],installation:['directory','seed','bindings','out'],'installation-open':['directory'],'installation-pack':['directory','out']};
  if(command!==undefined&&command!=='help'){need(Object.hasOwn(allowed,command),'Unknown command: '+command);for(const key of Object.keys(o))need(allowed[command].includes(key),'Unknown --'+key+' for '+command);}
  if(['installation','installation-open','installation-pack'].includes(command)){
   const bridge=await import('./installation.mjs'),context={verifyRequest:selected};
@@ -157,6 +157,8 @@ async function main(){
   if(command==='installation-open')return bridge.inspectInstallation(required(o,'directory'),context);
   return bridge.packInstallation(required(o,'directory'),required(o,'out'),context);
  }
+ if(command==='capture-progress')return (await import('./capture-progress.mjs')).inspectCaptureProgress(required(o,'directory'),{out:o.out});
+ if(command==='capture-progress-open')return (await import('./capture-progress.mjs')).receiveCaptureProgress(required(o,'file'),required(o,'directory'),{out:required(o,'out')});
  if(command==='capture')return capture(o);
  if(command==='inspect')return inspect(o);
  if(command==='select')return select(o);
@@ -172,6 +174,8 @@ async function main(){
  return{usage:[
  'capture --directory NEW_OR_ORIGINAL [--plan plan.json]',
  'inspect --directory CATALOGUE',
+ 'capture-progress --directory ORIGINAL_OR_RECEIVED_CAPTURE [--out NEW_OUTSIDE_REPORT.html]',
+ 'capture-progress-open --file COMPLETE_PACKET.json --directory NEW_RECEIVING --out NEW_REPORT.html',
  'compare --before FIRST --after SECOND --out comparison.json',
  'select --source CATALOGUE --selection saved-selection.json --directory NEW_REQUEST [--body-file FILE] [--headers-file FILE] [--content-type TYPE] [--catalogue-review COMPLETE_REVIEW.json]',
  'challenge --directory ORIGINAL_REQUEST [--capture-id EXPLICIT_NEW_ATTEMPT]',
