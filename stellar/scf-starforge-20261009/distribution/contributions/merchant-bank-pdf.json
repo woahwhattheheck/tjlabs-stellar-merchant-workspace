@@ -1,12 +1,14 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "merchant-bank-pdf",
-  "description": "Original PDF statements, complete page geometry, explicit reviewed cash interpretation and original Bank receiving",
+  "description": "Original PDF statements, complete page geometry, explicit reviewed cash interpretation and original Bank receiving; named recipient proposals, complete offline review and explicit author return reconciliation",
   "commands": {
-    "bank-pdf": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/cli.mjs"
+    "bank-pdf": "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/cli.mjs",
+    "merchant-accounting-bank-pdf-review": "stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-cli.mjs"
   },
   "commandDescriptions": {
-    "bank-pdf": "Extract every original PDF page, inspect or export the complete editable working copy and reviewed Bank source"
+    "bank-pdf": "Extract every original PDF page, inspect or export the complete editable working copy and reviewed Bank source",
+    "merchant-accounting-bank-pdf-review": "Issue and reconcile complete named PDF interpretation reviews through the original PDF engine"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/model.d.ts",
@@ -14,7 +16,19 @@
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/PDF_STATEMENTS.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/EXTRACTION.md",
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/receive-browser.mjs",
-    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/RECEIVING.md"
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/RECEIVING.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-model.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-state.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-app.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-portable.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review.html",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review.css",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/receive-review-browser.mjs",
+    "stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-client.mjs",
+    "stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-client.d.mts",
+    "stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-cli.mjs",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/REVIEW.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/review-source.json"
   ],
   "exports": {
     "./merchant/bank-pdf/model": {
@@ -22,7 +36,11 @@
       "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/model.mjs"
     },
     "./merchant/bank-pdf/extractor": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/extractor.mjs",
-    "./merchant/bank-pdf/source": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-pdf.mjs"
+    "./merchant/bank-pdf/source": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/source-pdf.mjs",
+    "./merchant/accounting-bank-pdf-review": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-client.d.mts",
+      "default": "./source/stellar-forge/mcp-merchant-operator/accounting-bank-pdf-review-client.mjs"
+    }
   },
   "featurePeers": {
     "bank-pdf": {

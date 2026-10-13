@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "merchant-bank-pdf",
   "title": "Merchant PDF statements and cash reconciliation",
-  "description": "Complete original PDF page review, editable source mapping, retained PDF financial intake and original Bank reconciliation",
+  "description": "Complete original PDF page review, editable source mapping, retained PDF financial intake and original Bank reconciliation; named recipient editions and explicit original-author return decisions",
   "base": {
     "commands": [
       "installation",
@@ -95,14 +95,15 @@
     "products/merchant-service-agreements/README.md",
     "products/merchant-bank-statements/README.md",
     "stellar-forge/mcp-paid-agent/package.json",
-    "products/merchant-bank-pdf/README.md"
+    "products/merchant-bank-pdf/README.md",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/REVIEW.md"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete original PDF page review, editable source mapping, retained PDF financial intake and original Bank reconciliation",
+    "description": "Complete original PDF page review, editable source mapping, retained PDF financial intake and original Bank reconciliation; named recipient editions and explicit original-author return decisions",
     "repository": {
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "directory": ""

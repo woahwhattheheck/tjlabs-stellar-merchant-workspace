@@ -25,3 +25,21 @@ Generic source collections and recurring profiles retain their existing supporte
 [PDF native operating guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/EXTRACTION.md) · [Bank installation](../merchant-bank-statements/INSTALLATION.md) · [Bank handover](../merchant-bank-statements/HANDOVER.md) · [source selection](../../stellar/scf-starforge-20261009/distribution/selections/merchant-bank-pdf.json)
 
 The exact outgoing product must be opened, operated and visually inspected at desktop and narrow widths before customer-ready delivery. Preserve the original source and full resulting operating case when handing it to another equipped host.
+
+## Named recipient interpretation reviews
+
+Open **Named recipient review** from the PDF statement desk, or
+`/bank-statements/pdf/review.html`. Issue a named review from the complete original
+PDF working copy. A recipient can inspect original pages and geometry, retain
+interpretation drafts and submitted editions, and return the complete proposal.
+The author compares issued, current and returned fields, chooses keep or adopt
+explicitly, and receives another complete original PDF working copy with its
+history intact.
+
+The desk offers complete offline HTML, source project, original files and working
+records, plus explicit recovery of saved competing drafts. The installed
+`merchant-accounting-bank-pdf-review` command and typed
+`./merchant/accounting-bank-pdf-review` export operate the same source-bound
+workflow. Financial preview and receiving continue through the original PDF/Bank
+actions. Read [the complete review guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/bank-pdf/REVIEW.md) for the original
+receiving course, capacities and exact outgoing inspection requirements.
