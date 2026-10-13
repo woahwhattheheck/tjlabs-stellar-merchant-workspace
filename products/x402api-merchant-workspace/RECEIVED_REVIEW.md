@@ -90,3 +90,9 @@ node products/x402api-merchant-workspace/received-review-receiving.mjs \
 ```
 
 Add `--allow-loopback` for the original local commissioning case. The programme requires the original five completed invoices, reads and downloads each result and payment request, and compares every original user table before review and after each stopped opening. Its two retained openings use the same saved application; the second follows a close and reopen of the existing Applications model. Resume uses the original per-opening operation and its real native outcome. Captured browser images remain private working output; customer delivery retains the complete project, returned files, structured operation and original source.
+
+## Complete installed receiving source
+
+The complete portable project retains its original native commissioning programme and protocol module. `receiving-protocol.mjs` contains that module at a path included by the installed runtime package. Both browser and directory source inventories name this same original implementation. The historical `fixtures/protocol-fixture.mjs` entrypoint re-exports it for existing source-checkout callers.
+
+This source arrangement keeps the original receiving programme available after installation and independent project receiving. Its local commissioning inputs, receipt signatures, published webhook vectors and original five-invoice case remain governed by the original native programme. Continue the retained case through the included Applications workflow and its saved source selection.
