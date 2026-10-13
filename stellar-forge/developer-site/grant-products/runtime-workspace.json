@@ -2107,6 +2107,306 @@
           "sha256": "5de4694f5849ae783a5bcc36f9ccfde97456d177f53ae47a23e2cc7fa78e20d1"
         }
       ]
+    },
+    {
+      "id": "runtime-output-procedure-output-procedure-mjs",
+      "label": "Complete selected-output source capture and received-plan verification",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/output-procedure.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 8644,
+          "sha256": "f3e0f13a99229fb6200d9e223b0808504ed033c51726aa24877d13625a776a25"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-public-output-review-mjs",
+      "label": "Independent carried-output reader, original downloads and complete match index",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/output-review.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 6130,
+          "sha256": "83ecb15b05857e3eb4c79a10ecba19cd9ef2559897dbdca18793fc68e1109cf4"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-operating-procedures-mjs",
+      "label": "Original procedure writer with complete output source and return admission",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operating-procedures.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 27290,
+          "sha256": "e1bac2717a7482a17392db2ff40c93d3cd9256225a168deba4df06c354d6a49d"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-public-output-search-mjs",
+      "label": "Original fixed-end search to retained operating procedure choice",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/output-search.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 11774,
+          "sha256": "92780551c11cf78137d8e193839dde915aa06f7c63fdc1a8aa6b5addfdaf6424"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-public-application-output-mjs",
+      "label": "Application output selection and original procedure handoff",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-output.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 11797,
+          "sha256": "927b72c3cafd40314546e29a120a0819864e7ce87d110d98a146782ceaba620b"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-public-runtime-output-mjs",
+      "label": "Runtime and retained npm-attempt output handoff",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/runtime-output.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 7307,
+          "sha256": "3a59612f2bfd24adadac0b7ce43e12a81f2c427a73a80d8ad906526f5878190c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-public-app-mjs",
+      "label": "Installed workspace navigation for original output and procedure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/app.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 38555,
+          "sha256": "e4f14f45a1d4a33345f606325fe9749a3f89bb0898ace81ef2d15d248b322c3c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-public-operating-procedures-mjs",
+      "label": "Retained output choices, complete procedure capture and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operating-procedures.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 47004,
+          "sha256": "f0d9b558582a98361f71326952f3f3b0dc218570d7747ba2d05f98a6d4714dcc"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-operating-procedures-d-mts",
+      "label": "Typed complete output and original procedure API",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operating-procedures.d.mts",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 4121,
+          "sha256": "7f8400f23ca271b82dcb9785744f209451ac2ea2b964f40bfe4fceec331ddefe"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-operating-procedures-cli-mjs",
+      "label": "Original procedure and complete output export commands",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/operating-procedures-cli.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 3499,
+          "sha256": "0daca2c7894d9beea55ffbae2144e6c34096e2626ebf977155a5afe2b5542065"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-server-mjs",
+      "label": "Authenticated installed routes and original complete output downloads",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 56019,
+          "sha256": "a535432e1e57e4a57454c082e7710142763a7a9bc998343b0675df7c1c09f248"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-browser-assets-json",
+      "label": "Complete installed output-procedure browser assets",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 6904,
+          "sha256": "d387488eb15d6df6dbd5108ea3fee6eb28de104a7c3e737ca0bcef30b3fbefe0"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-output_procedures-md",
+      "label": "Complete output-to-procedure operator guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/OUTPUT_PROCEDURES.md",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 7228,
+          "sha256": "905ff6d7c6e1101bf51bb409824e2c2d6cc31907dcb26b6a7249208718f59c09"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-runtime_procedures-md",
+      "label": "Maintained operating procedure and source handover guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/RUNTIME_PROCEDURES.md",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 14593,
+          "sha256": "e4c881468988425eb4d1a3cca2d95a1090d2104f9f4ed0e4ee2aa98290b29002"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-receiving-output_procedures_receive-mjs",
+      "label": "Complete original browser, independent receiving and CLI course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OUTPUT_PROCEDURES_RECEIVE.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 15309,
+          "sha256": "abd4b20a51c24ea0baeb5aa254c5b40c0a74c4ef0f3c19c68c9deb30b0ca4bcd"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-output-review-core-mjs",
+      "label": "Complete literal-match projection and original-byte verification",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/output-review-core.mjs",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 5872,
+          "sha256": "7b7ccf7cf0bfafccb5f1d972e34dca83b7d0267792cf06d520f5515cea4fb668"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-public-output-review-css",
+      "label": "Neutral responsive retained-output reader",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/output-review.css",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 805,
+          "sha256": "d6b0127e56d2753763d017c045611528dfea23092eb938310db0943e2429e910"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-output-review-core-d-mts",
+      "label": "Typed full-source projection and independent verification",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/output-review-core.d.mts",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 590,
+          "sha256": "748daa270da2a8e38faff8381b10cfe14ae6921dd3fafec214d23442a38b766c"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-receiving-output_procedures_receive-md",
+      "label": "Original equipped receiving and rendered-product inspection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OUTPUT_PROCEDURES_RECEIVE.md",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 6984,
+          "sha256": "f74d65cf69a45fd8cb47c7dbd76f94834b3668ed9686aa87b4949b720b646291"
+        }
+      ]
+    },
+    {
+      "id": "runtime-output-procedure-runtime-output-procedures-json",
+      "label": "Complete installed output-procedure source contribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/runtime-output-procedures.json",
+      "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+      "editions": [
+        {
+          "commit": "f03a3b4f24069aa251e6a883b7905d1bad72432a",
+          "bytes": 3225,
+          "sha256": "6e8439b5680999a20a9f713119499b0df27a7acfa17c5c2b72e683663680f49a"
+        }
+      ]
     }
   ]
 }
