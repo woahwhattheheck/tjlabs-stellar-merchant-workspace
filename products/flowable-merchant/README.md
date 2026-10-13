@@ -101,3 +101,19 @@ and original-request recovery.
 See [Adaptive case operations](CASES.md) for the complete case programme,
 all eleven native collections, the pinned engine's plan item semantics and
 customer receiving.
+
+## Native job recovery
+
+Open **Native jobs** on the original process REST connection to retain complete
+executable, timer, suspended, dead-letter and history queue captures. Inspect
+the exact job, complete exception evidence and native history detail, preserve
+unfinished recovery notes, then prepare the supported native action for review.
+Dispatch and reconcile that saved request through the same workspace.
+
+The browser, installed SDK, command line and merchant agent expose these same
+captures and job operation records. The complete workspace handover preserves
+their source bytes, native exchanges, revisions and original request journal.
+
+See [Native job inspection, recovery and receiving](JOBS.md) for the complete
+workflow, exact timer dates, native move semantics, stable request recovery,
+source-bound working copies and cold handover.

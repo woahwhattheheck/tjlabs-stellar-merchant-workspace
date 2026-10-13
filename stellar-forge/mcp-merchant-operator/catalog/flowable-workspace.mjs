@@ -42,6 +42,11 @@ export const FLOWABLE_AGENT_METHODS=Object.freeze({
   "merchant_flowable_dispatch_case_plan_item": "dispatchCasePlanItem",
   "merchant_flowable_prepare_case_task": "prepareCaseTask",
   "merchant_flowable_dispatch_case_task": "dispatchCaseTask",
+  "merchant_flowable_job_portfolio": "readJobPortfolio",
+  "merchant_flowable_job": "readJob",
+  "merchant_flowable_capture_jobs": "captureJobPortfolio",
+  "merchant_flowable_prepare_job": "prepareJobOperation",
+  "merchant_flowable_dispatch_job": "dispatchJobOperation",
   "merchant_flowable_reconcile": "reconcileOperation",
   "merchant_flowable_export": "exportWorkspace",
   "merchant_flowable_adopt_delivery": "adoptDelivery"

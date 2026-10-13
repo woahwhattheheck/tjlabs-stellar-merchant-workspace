@@ -1,6 +1,7 @@
 // MIT. Original Flowable operator workspace; all native mutations use saved reviewed requests.
 import {FLOWABLE_WORKSPACE_ACTIONS,FLOWABLE_RECORD_KINDS,FLOWABLE_OPERATION_KINDS,validateFlowableAction,
   flowableCaseInstanceId as nativeCaseId} from './actions.mjs';
+import {installFlowableJobs} from './job-browser.mjs';
 import {installFlowableHistory} from './history-browser.mjs';
 import {installFlowableDocumentIntake} from './document-intake-browser.mjs';
 import {installFlowableEventIntake} from './event-intake-browser.mjs';
@@ -255,9 +256,10 @@ async function historyAPI(method,args={}){
 const historyAnalysis=installFlowableHistory({api,historyAPI,write,busy,button,node,keyValues,notice,reload,openRecord,records,requireEngine,workspaceId:()=>state.view?.workspaceId,portfolio:()=>state.portfolio});
 const documentIntake=installFlowableDocumentIntake({api,documentAPI,write,busy,button,node,pre,keyValues,notice,reload,openRecord,records,forEngine,requireEngine,workspaceId:()=>state.view?.workspaceId,portfolio:()=>state.portfolio});
 const eventIntake=installFlowableEventIntake({api,eventAPI,write,busy,button,node,pre,keyValues,notice,reload,openRecord,records,forEngine,requireEngine,workspaceId:()=>state.view?.workspaceId,casePortfolio:()=>state.casePortfolio});
+const jobBrowser=installFlowableJobs({api,write,busy,button,node,pre,keyValues,table,originalLink,notice,reload,openRecord,requireEngine,records,forEngine,detail,workspaceId:()=>state.view?.workspaceId,engine:()=>state.engine});
 const programmeBrowser=installProgrammeBrowser({api,write,busy,button,node,pre,keyValues,table,originalLink,notice,reload,openRecord,requireEngine,records,forEngine,detail,workspaceId:()=>state.view?.workspaceId});
 async function renderAll(){
-  await programmeBrowser.render();
+  await programmeBrowser.render();await jobBrowser.render();
   if(state.engine){await documentIntake.render();await eventIntake.render();await historyAnalysis.render();}
   retainSelectedCollections();
   const metrics=$('#metrics');metrics.replaceChildren();
@@ -272,7 +274,7 @@ async function renderAll(){
   for(const[label,value]of measurements){
     const metric=node('div',null,{class:'metric'});metric.append(node('strong',value),node('span',label));metrics.append(metric);
   }
-  const recent=['portfolio','decisionPortfolio','casePortfolio',...FLOWABLE_OPERATION_KINDS]
+  const recent=['portfolio','decisionPortfolio','casePortfolio','jobPortfolio',...FLOWABLE_OPERATION_KINDS]
     .flatMap(kind=>forEngine(records(kind))).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
   table($('#recent-records'),[{label:'Type',key:'kind'},...recordColumns()],recent);
   for(const kind of FLOWABLE_OPERATION_KINDS)table($('#'+kind+'-records'),recordColumns(kind),forEngine(records(kind)));
@@ -556,7 +558,7 @@ async function openRecord(kind,id){
     const review=await api('readReview',{kind,id,revision:record.revision});
     const toolbar=node('div',null,{class:'toolbar'});
     if(review.phase==='PREPARED'){
-      const label={release:'Deploy release',process:'Start process',task:'Execute task action',migration:'Migrate process',decisionRelease:'Deploy decisions',decisionEvaluation:'Evaluate decisions',caseRelease:'Deploy case release',caseInstance:'Execute case action',casePlanItem:'Execute plan item action',caseTask:'Execute case task action'}[kind];
+      const label={release:'Deploy release',process:'Start process',task:'Execute task action',migration:'Migrate process',decisionRelease:'Deploy decisions',decisionEvaluation:'Evaluate decisions',caseRelease:'Deploy case release',caseInstance:'Execute case action',casePlanItem:'Execute plan item action',caseTask:'Execute case task action',jobOperation:'Execute reviewed job recovery'}[kind];
       toolbar.append(button(label,async()=>{
         const method='dispatch'+kind[0].toUpperCase()+kind.slice(1);
         const result=await write(method,{id,expectedRevision:record.revision,planSha256:review.request.planSha256});
@@ -598,18 +600,18 @@ async function openRecord(kind,id){
     jsonSection(container,'Native state before the request',review.before);
     jsonSection(container,'Native state after the request',review.after);
     jsonSection(container,'Original response',review.response);
-  }else if(['portfolio','decisionPortfolio','casePortfolio'].includes(kind)){
+  }else if(['portfolio','decisionPortfolio','casePortfolio','jobPortfolio'].includes(kind)){
     if(record.value.state==='CAPTURED')container.append(button('Open saved native portfolio',async()=>{
       state.engine=record.value.connectionId;
-      if(kind==='portfolio')state.portfolio=id;else if(kind==='casePortfolio')state.casePortfolio=id;else state.decisionPortfolio=id;
-      await reload();switchPage(kind==='portfolio'?'definitions':kind==='casePortfolio'?'cases':'decisions');$('#detail').hidden=true;
+      if(kind==='jobPortfolio')jobBrowser.selectCapture(id);else if(kind==='portfolio')state.portfolio=id;else if(kind==='casePortfolio')state.casePortfolio=id;else state.decisionPortfolio=id;
+      await reload();switchPage(kind==='jobPortfolio'?'jobs':kind==='portfolio'?'definitions':kind==='casePortfolio'?'cases':'decisions');$('#detail').hidden=true;
     },{primary:true}));
     if(record.value.phase==='INTERRUPTED'&&record.value.captureInput)container.append(button('Resume original capture',async()=>{
       const original=await api('readSource',{reference:record.value.captureInput});
-      const result=await write(kind==='decisionPortfolio'?'captureDecisionPortfolio':kind==='casePortfolio'?'captureCasePortfolio':'capturePortfolio',original.value);
+      const result=await write(kind==='jobPortfolio'?'captureJobPortfolio':kind==='decisionPortfolio'?'captureDecisionPortfolio':kind==='casePortfolio'?'captureCasePortfolio':'capturePortfolio',original.value);
       if(result.value.state==='CAPTURED'){
         state.engine=record.value.connectionId;
-        if(kind==='portfolio')state.portfolio=id;else if(kind==='casePortfolio')state.casePortfolio=id;else state.decisionPortfolio=id;
+        if(kind==='jobPortfolio')jobBrowser.selectCapture(id);else if(kind==='portfolio')state.portfolio=id;else if(kind==='casePortfolio')state.casePortfolio=id;else state.decisionPortfolio=id;
       }
       await reload();await openRecord(kind,id);notice('Original capture: '+result.value.state+'.');
     },{primary:true}));
@@ -629,6 +631,7 @@ async function openRecord(kind,id){
   revealDetail();
 }
 function reuseSelection(kind,review){
+  if(kind==='jobOperation'){switchPage('jobs');return jobBrowser.reuse(review);}
   const form=$('#'+kind+'-form');switchPage({process:'processes',task:'tasks',release:'releases',migration:'migrations',
     decisionRelease:'decisions',decisionEvaluation:'decisions',caseRelease:'cases',caseInstance:'cases',casePlanItem:'cases',caseTask:'cases'}[kind]);
   if(form.elements.label)form.elements.label.value=review.label??'';
@@ -833,7 +836,11 @@ $('#resume').addEventListener('click',()=>busy('Read original request outcome',a
   notice('Original request result received.');
 }));
 $('#dismiss').addEventListener('click',()=>busy('Close local request notice',async()=>{
-  const item=state.pending[0];if(item)await pendingRemove(item);
+  const item=state.pending[0];
+  if(item&&['prepareJobOperation','dispatchJobOperation'].includes(item.method)){
+    notice('Continue this original job request with Read original result. Its exact request remains retained.');return;
+  }
+  if(item)await pendingRemove(item);
   notice('The saved operation remains in workspace history.');
 }));
 await busy('Open saved workspace',async()=>{

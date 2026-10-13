@@ -3,9 +3,10 @@ const ref=(role,reference,extra={})=>reference?{role,reference,...extra}:null;
 const summary=state=>state?{
   connectionId:state.connectionId,observedAt:state.observedAt,
   ...Object.fromEntries(['definitions','deployments','processes','historicProcesses','tasks','historicTasks','activities','historicActivities','historicExecutions',
-    'cases','planItems','variables','historicCases','historicPlanItems','historicVariables','milestones']
+    'cases','planItems','variables','historicCases','historicPlanItems','historicVariables','milestones',
+    'jobs','timerJobs','suspendedJobs','deadLetterJobs','historyJobs']
     .map(key=>[key,state[key]??[]])),
-  resources:state.resources??[],
+  resources:state.resources??[],exceptionObservations:state.exceptionObservations??[],
 }:null;
 const exchange=value=>value?{id:value.id,status:value.status,statusText:value.statusText,ok:value.ok,
   bodyBytes:value.bodyBytes,bodySha256:value.bodySha256,
@@ -23,6 +24,7 @@ export function buildFlowableReview({record,value,plan,selection,before,after,va
       deploymentName:selection?.deploymentName,deploymentKey:selection?.deploymentKey,tenantId:selection?.tenantId,
       processInstanceId:selection?.processInstanceId,taskId:selection?.taskId,
       caseInstanceId:selection?.caseInstanceId,planItemInstanceId:selection?.planItemInstanceId,
+      collection:selection?.collection,jobId:selection?.jobId,dueDate:selection?.dueDate,
       mode:selection?.mode,singleResult:selection?.singleResult}:null,
     before:summary(before),after:summary(after),validation:exchange(validation),response:exchange(response),
     reconciliation:reconciliation??null,failure:value.failure??null,

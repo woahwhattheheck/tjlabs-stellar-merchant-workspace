@@ -2,7 +2,7 @@
 import { defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA } from '../provider-contract.mjs';
 import { flowableWorkspaceTools } from '../catalog/flowable-workspace.mjs';
 export default defineMerchantProvider({
-  schema:MERCHANT_PROVIDER_SCHEMA,id:'flowable-workspaces',family:'flowableWorkspaces',title:'Flowable process, case, decision and commissioning operations',
+  schema:MERCHANT_PROVIDER_SCHEMA,id:'flowable-workspaces',family:'flowableWorkspaces',title:'Flowable process, case, decision, native job and commissioning operations',
   order:450,catalogOrder:450,configKey:'flowableWorkspaces',summary:true,dependencies:[],
   concurrentTools:['merchant_flowable_cancel_request','merchant_flowable_export_file_release'],shutdown:'provider',maxRequestBytes:128*1024*1024,
   configuration:{input:'flowableWorkspaceConnection',privateExports:true,
@@ -19,6 +19,10 @@ export default defineMerchantProvider({
     'Read the captured native definition and its current selection before evaluating; the engine resolves its actual decision version. '+
     'Retain complete native results and historic execution audit detail with the same operation and source handover. '+
     'Use the original CMMN REST connection for case deployment, selected case and plan-item actions, human work and history. '+
+    'Capture native executable, timer, suspended, dead-letter and history job queues through the original process REST connection. '+
+    'Read the captured full job detail and exception availability, retain corrective notes, and prepare only an action exposed for that queue. '+
+    'Timer reschedule preserves the exact dueDate string; native moves use the engine job type and configured retries. '+
+    'An acknowledged move does not prove execution. Preserve UNKNOWN replies and reconcile the same saved job operation rather than preparing a replacement automatically. '+
     'Receive a complete commissioning programme with its original source bytes and ordered native steps. '+
     'Read current programme progress; prepare a ready step, inspect its returned original operation review and dispatch through that operation. '+
     'Recover a saved preparation through its original programme command and reconcile dispatched native work through its existing record. '+

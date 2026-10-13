@@ -2,9 +2,26 @@
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type RecordKind = 'connection' | 'portfolio' | 'release' | 'process' | 'task' | 'migration'
   | 'decisionPortfolio' | 'decisionRelease' | 'decisionEvaluation'
-  | 'casePortfolio' | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask' | 'programme' | 'delivery' | 'receiving';
+  | 'casePortfolio' | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask' | 'jobPortfolio' | 'jobOperation' | 'programme' | 'delivery' | 'receiving';
 export type OperationKind = 'release' | 'process' | 'task' | 'migration' | 'decisionRelease' | 'decisionEvaluation'
-  | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask';
+  | 'caseRelease' | 'caseInstance' | 'casePlanItem' | 'caseTask' | 'jobOperation';
+export type JobCollectionKind = 'jobs' | 'timerJobs' | 'suspendedJobs' | 'deadLetterJobs' | 'historyJobs';
+export type JobSelection =
+  | { collection: 'jobs' | 'historyJobs'; jobId: string; action: 'execute' | 'delete' }
+  | { collection: 'timerJobs'; jobId: string; action: 'move' | 'delete' }
+  | { collection: 'timerJobs'; jobId: string; action: 'reschedule'; dueDate: string }
+  | { collection: 'suspendedJobs'; jobId: string; action: 'delete' }
+  | { collection: 'deadLetterJobs'; jobId: string; action: 'move' | 'moveToHistoryJob' | 'delete' };
+export interface ReadJobPortfolioInput extends Paging { id: string; revision?: number; collection: JobCollectionKind }
+export interface JobExceptionObservation { collection: JobCollectionKind; jobId: string;
+  availability: 'RETAINED' | 'NATIVE_404' | 'NO_NATIVE_STACKTRACE_ENDPOINT';
+  status?: number; found?: boolean; bodyBytes?: number; bodySha256?: string }
+export interface CapturedJob { portfolio: RecordReference; collection: JobCollectionKind; job: NativeEntity;
+  resources: NativeResource[]; exceptionObservations: JobExceptionObservation[]; capturedAt: string; connectionId: string }
+export interface JobPortfolioPage extends Omit<PortfolioPage, 'collection'> { collection: JobCollectionKind }
+export interface PrepareJobOperationInput extends RequestIdentity {
+  connectionId: string; label?: string; note?: string; selection: JobSelection;
+}
 export type CaseCollectionKind = 'deployments' | 'definitions' | 'cases' | 'planItems' | 'tasks' | 'variables'
   | 'historicCases' | 'historicPlanItems' | 'historicTasks' | 'historicVariables' | 'milestones';
 export type DecisionCollectionKind = 'deployments' | 'definitions' | 'historicExecutions';
@@ -51,7 +68,7 @@ export interface FlowableRecord<Value = Record<string, unknown>> extends RecordR
   schema: 'stellar-forge.flowable-workspace.v1';
   requestId: string; requestSha256: string; createdAt: string; updatedAt: string; bytes: number; value: Value;
   portfolio?: { startedAt: string; completedAt: string;
-    collections: Partial<Record<CollectionKind | DecisionCollectionKind | CaseCollectionKind, { total: number; retained: number; complete: boolean; pages: number }>>;
+    collections: Partial<Record<CollectionKind | DecisionCollectionKind | CaseCollectionKind | JobCollectionKind, { total: number; retained: number; complete: boolean; pages: number }>>;
     resources: number };
   plan?: NativeRequestPlan;
   reconciliation?: NativeReconciliation;
@@ -321,6 +338,11 @@ export interface ActionInputs {
   dispatchCasePlanItem: DispatchOperationInput;
   prepareCaseTask: PrepareCaseTaskInput;
   dispatchCaseTask: DispatchOperationInput;
+  readJobPortfolio: ReadJobPortfolioInput;
+  readJob: { portfolioId: string; revision?: number; collection: JobCollectionKind; jobId: string };
+  captureJobPortfolio: CapturePortfolioInput;
+  prepareJobOperation: PrepareJobOperationInput;
+  dispatchJobOperation: DispatchOperationInput;
   reconcileOperation: ReconcileOperationInput;
   exportWorkspace: ExportWorkspaceInput;
   inspectDelivery: InspectDeliveryInput;
@@ -368,6 +390,11 @@ export interface ActionResults {
   dispatchCasePlanItem: FlowableRecord<OperationValue>;
   prepareCaseTask: FlowableRecord<OperationValue>;
   dispatchCaseTask: FlowableRecord<OperationValue>;
+  readJobPortfolio: JobPortfolioPage;
+  readJob: CapturedJob;
+  captureJobPortfolio: FlowableRecord;
+  prepareJobOperation: FlowableRecord<OperationValue>;
+  dispatchJobOperation: FlowableRecord<OperationValue>;
   reconcileOperation: FlowableRecord<OperationValue>;
   exportWorkspace: FlowableRecord<DeliveryValue>;
   inspectDelivery: FlowableRecord<ReceivingValue>;
@@ -447,6 +474,11 @@ export class FlowableProductClient {
   dispatchCasePlanItem(input: DispatchOperationInput): Promise<FlowableRecord<OperationValue>>;
   prepareCaseTask(input: PrepareCaseTaskInput): Promise<FlowableRecord<OperationValue>>;
   dispatchCaseTask(input: DispatchOperationInput): Promise<FlowableRecord<OperationValue>>;
+  readJobPortfolio(input: ReadJobPortfolioInput): Promise<JobPortfolioPage>;
+  readJob(input: ActionInputs['readJob']): Promise<CapturedJob>;
+  captureJobPortfolio(input: CapturePortfolioInput): Promise<FlowableRecord>;
+  prepareJobOperation(input: PrepareJobOperationInput): Promise<FlowableRecord<OperationValue>>;
+  dispatchJobOperation(input: DispatchOperationInput): Promise<FlowableRecord<OperationValue>>;
   reconcileOperation(input: ReconcileOperationInput): Promise<FlowableRecord<OperationValue>>;
   exportWorkspace(input: ExportWorkspaceInput): Promise<FlowableRecord<DeliveryValue>>;
   inspectDelivery(input: InspectDeliveryInput): Promise<FlowableRecord<ReceivingValue>>;
