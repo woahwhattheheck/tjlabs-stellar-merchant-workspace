@@ -37,6 +37,12 @@ try {
     }
     $registry = $container->get('doctrine');
     $connection = $registry->getConnection($config['connection'] ?? null);
+    if ($connection !== $registry->getConnection() || $connection !== $registry->getManager()->getConnection()) {
+        throw new RuntimeException('Select the original default Doctrine connection shared by the catalogue Store and native Sylius entity manager.');
+    }
+    if (!$connection->createSchemaManager()->tablesExist(['tjl_catalogue_record'])) {
+        throw new RuntimeException('The original catalogue record schema is not installed on this native connection.');
+    }
     $parameters = $connection->getParams();
     $identity = [];
     foreach (['driver', 'host', 'port', 'dbname', 'path', 'unix_socket', 'serverVersion'] as $key) {
@@ -47,7 +53,7 @@ try {
     $hashDirectory = Files::privateDirectory($options['hash-directory']);
     $tables = $connection->createSchemaManager()->listTableNames();
     sort($tables, SORT_STRING);
-    $digests = [];
+    $digests = []; $catalogueRecords = [];
     foreach ($tables as $table) {
         $parts = []; $hashes = []; $count = 0;
         $writePart = static function () use (&$parts, &$hashes, $hashDirectory): void {
@@ -59,6 +65,10 @@ try {
         };
         $result = $connection->executeQuery('SELECT * FROM ' . $connection->quoteIdentifier($table));
         while (($row = $result->fetchAssociative()) !== false) {
+            if (preg_match('/(?:^|\.)tjl_catalogue_record$/D', $table)) {
+                $catalogueRecords[] = ['kind' => $row['kind'], 'id' => $row['id'], 'project_id' => $row['project_id'],
+                    'revision' => (int) $row['revision'], 'payload_sha256' => hash('sha256', (string) $row['payload'])];
+            }
             ksort($row, SORT_STRING);
             $native = [];
             foreach ($row as $column => $value) {
@@ -95,6 +105,7 @@ try {
             foreach ($parts as $path) { if (is_file($path)) { unlink($path); } }
         }
     }
+    usort($catalogueRecords, static fn (array $a, array $b): int => strcmp($a['kind'] . "\0" . $a['id'], $b['kind'] . "\0" . $b['id']));
     $file = static function (string $path): array {
         if (!is_file($path)) { throw new RuntimeException('Installed native dependency member is missing: ' . $path); }
         return ['bytes' => filesize($path), 'sha256' => hash_file('sha256', $path)];
@@ -106,7 +117,7 @@ try {
         'composer' => ['json' => $file($project . '/composer.json'), 'lock' => $file($project . '/composer.lock'),
                        'installed' => $file($project . '/vendor/composer/installed.json')],
         'console' => $file($project . '/' . Files::relative($config['console'])),
-        'store_root' => realpath($configuredStore), 'queue_mode' => $config['queue_mode'], 'observed_at' => gmdate(DATE_ATOM)];
+        'catalogue_records' => $catalogueRecords, 'store_root' => realpath($configuredStore), 'queue_mode' => $config['queue_mode'], 'observed_at' => gmdate(DATE_ATOM)];
     Files::writeJson($options['output'], $result);
     echo Files::json(['state' => 'COMPLETE', 'output' => $options['output'], 'sha256' => hash_file('sha256', $options['output'])]) . "\n";
 } finally { $kernel->shutdown(); }

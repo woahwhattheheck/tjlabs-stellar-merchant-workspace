@@ -459,6 +459,8 @@ final class NativeProject
     public function export(string $archive, string $key): array
     {
         $archive = Files::absolute($archive);
+        if (isset($this->state['export_path']) && $this->state['export_path'] !== $archive) { throw new HandoverFailure('Continue the original retained export destination.'); }
+        $this->state['export_path'] = $archive; $this->save();
         if (isset($this->state['export'])) {
             if ($this->state['export']['path'] !== $archive) { throw new HandoverFailure('Continue the original archive destination.'); }
             if (($this->state['status'] ?? null) === 'EXPORTED') { return $this->state['export']; }
@@ -480,6 +482,10 @@ final class NativeProject
             return $this->state['review'];
         }
         $received = $this->authenticated($archive, $key, 'incoming');
+        if (isset($this->state['incoming_sha256']) && $this->state['incoming_sha256'] !== $received['archive_sha256']) {
+            throw new HandoverFailure('Continue the same original incoming archive before target review.');
+        }
+        $this->state['incoming_sha256'] = $received['archive_sha256']; $this->save();
         $source = $received['manifest']['source'];
         if ($source['roots'] !== array_keys($this->roots)
             || $source['store_root_key'] !== 'private/' . array_search($this->config['store_root'], $this->config['roots']['private'], true)) {

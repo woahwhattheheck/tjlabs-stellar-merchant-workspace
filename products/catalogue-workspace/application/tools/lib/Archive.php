@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Tjl\CatalogueWorkspace\Handover;
 
-// Maintained authenticated native-project Archive v1, namespace-only adaptation.
+// Maintained authenticated native-project Archive v1, namespace adaptation.
+// Final publication uses a create-only link; encrypted framing remains unchanged.
 // Original code and format retained from the shared native handover engine.
 
 use RuntimeException;
@@ -342,9 +343,10 @@ final class Archive
         } finally {
             fclose($out);
         }
-        if (!rename($temporary, $path)) {
-            throw new HandoverFailure('Cannot commit the complete encrypted archive.', 'FILE_RENAME');
+        if (!@link($temporary, $path)) {
+            throw new HandoverFailure('Encrypted archive destination already exists or cannot be published create-only.', 'OUTPUT_EXISTS');
         }
+        if (!unlink($temporary)) { throw new HandoverFailure('Complete archive published; its owned temporary link could not be retired.', 'FILE_UNLINK'); }
         return [
             'format' => self::FORMAT,
             'path' => $path,

@@ -20,7 +20,7 @@ Required fields:
 | console | Actual project-relative console file |
 | kernel_class / environment | Installed Symfony kernel class and original native environment |
 | bootstrap | Optional actual project-relative bootstrap; otherwise installed Dotenv reads the native .env |
-| connection | Optional actual Doctrine connection name |
+| connection | Optional actual default Doctrine connection name, verified to be the same connection used by the native Sylius entity manager and catalogue Store |
 | store_root | Actual shared private catalogue Store, also mapped in roots.private |
 | roots.public / roots.private | Objects mapping stable logical names to existing absolute ordinary directories |
 | queue_mode | database or external, selected from the actual Messenger transports |
@@ -79,7 +79,7 @@ Every invocation uses:
 ```
 
 
-Phases inspect and status need no archive key. inspect boots the actual installed Symfony kernel in a separate native PHP process and reads its original Doctrine connection. It returns the actual database platform/identity hash, every native table's row count and complete sorted row digest, Composer JSON/lock/installed-vendor identities, console identity and selected queue mode. Binary values are hashed without JSON number coercion. Duplicate rows remain part of the digest. No database password is emitted.
+Phases inspect and status need no archive key. inspect boots the actual installed Symfony kernel in a separate native PHP process and reads its original Doctrine connection. It returns the actual database platform/identity hash, every native table's row count and complete sorted row digest, Composer JSON/lock/installed-vendor identities, console identity and selected queue mode. It also retains every original catalogue kind/id/project/revision/payload digest and requires the actual installed catalogue record table on that same native connection. Binary values are hashed without JSON number coercion. Duplicate rows remain part of the digest. No database password is emitted.
 
 export and review additionally take --archive and --key-file. receive, reopen and recover take --key-file and --expect-target with the exact returned review_sha256.
 
@@ -104,7 +104,7 @@ The authenticated encrypted archive includes complete project/, public/<logical-
 
 The export result schema is tjl.catalogue.native-export.v1, state COMPLETE. It includes path, bytes, sha256, manifest_sha256, manifest and source. source is exactly the original authenticated manifest.source, not a later observation. It includes the frozen native probe, root keys, actual Store root key, exclusions, SQL identity and actual native command receipts. The file manifest contains every original Store/source/media journal and blob.
 
-The archive authenticates every record with AES-256-GCM, monotonic sequence binding, HKDF-SHA256 and a mandatory authenticated final record. It uses the maintained native-project v1 framing. The framing label remains ydw.native-project-encrypted.v1 for format compatibility; source.schema identifies this Symfony catalogue implementation. No Drupal runtime is used.
+The original export path and incoming archive identity are persisted before drain/review. Encrypted final publication is create-only; a concurrent unrelated archive cannot be replaced. The archive authenticates every record with AES-256-GCM, monotonic sequence binding, HKDF-SHA256 and a mandatory authenticated final record. It uses the maintained native-project v1 framing. The framing label remains ydw.native-project-encrypted.v1 for format compatibility; source.schema identifies this Symfony catalogue implementation. No Drupal runtime is used.
 
 Only after the complete archive has been authenticated and retained does the programme call the original resume command. Interrupted export reuses its frozen manifest and complete original archive. It does not replace that manifest with a new source snapshot.
 
