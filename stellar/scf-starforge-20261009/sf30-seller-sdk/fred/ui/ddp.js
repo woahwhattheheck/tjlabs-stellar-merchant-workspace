@@ -1,3 +1,4 @@
+import { mountFredAlfredAcquisition } from './alfred.js';
 // MIT. Original DDP packages, reviewed mappings and complete receiving in the economic workspace.
 const $ = id => document.getElementById(id);
 const kinds = new Set(['ddp-crosswalk-import', 'ddp-crosswalk-capture', 'ddp-package-import',
@@ -25,6 +26,8 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
   const choice = (id, text) => [id, text + ' · ' + id.slice(-10)];
   const selectedSeries = () => series.get($('ddp-decision-series').value);
   const uploadKey = request => state().id + ':' + request.id;
+  const alfred = mountFredAlfredAcquisition({ api, table, getState, getMigration: () => current, getRequest: () => request(),
+    onChange: () => sync(), message });
 
   function bind(id, callback, type = 'click') {
     $(id).addEventListener(type, async event => {
@@ -63,6 +66,7 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
   function sync() {
     if (!state()) return;
     const busy = working > 0;
+    alfred.sync({ busy });
     const source = Boolean($('ddp-crosswalk').value), pkg = Boolean($('ddp-package').value);
     const migration = Boolean($('ddp-migration').value), result = Boolean($('ddp-receiving').value);
     for (const id of ['ddp-crosswalk-capture', 'ddp-export-project']) $(id).disabled = busy;
@@ -75,7 +79,7 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
     $('ddp-migration-save').disabled = busy || current?.mode !== 'preview' || current.value?.revision !== state().revision;
     for (const id of ['ddp-migration-open', 'ddp-migration-download']) $(id).disabled = busy || !migration;
     $('ddp-migration-acquire').disabled = busy || current?.mode !== 'saved' ||
-      current.migrationId !== $('ddp-migration').value || !current.value?.migration?.summary?.ready;
+      current.migrationId !== $('ddp-migration').value || !current.value?.migration?.summary?.ready || !alfred.ready();
     for (const id of ['ddp-receiving-open', 'ddp-receiving-html', 'ddp-receiving-csv', 'ddp-receiving-json'])
       $(id).disabled = busy || !result;
     for (const id of ['ddp-open-observations', 'ddp-use-release-watch'])
@@ -95,6 +99,10 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
     if (saved) $('ddp-recovery-text').textContent = records('operations').some(item => item.id === saved.id)
       ? 'The retained action completed. Continue to open its saved result.'
       : 'The original request is retained. Continue it to finish the same source import or acquisition.';
+    if (saved?.sourceMode === 'ALFRED_VINTAGE') $('ddp-recovery-text').textContent +=
+      ' ALFRED historical acquisition · metadata identity ' + saved.metadataSha256 +
+      (state().pending?.id === saved.id && state().pending.lastError?.retryAt
+        ? ' · source retry available at ' + state().pending.lastError.retryAt : '');
     $('ddp-resume').disabled = busy || !saved;
     $('ddp-discard').disabled = busy || Boolean(state().pending);
   }
@@ -143,7 +151,13 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
     select('ddp-package', records('ddpPackages').map(item => choice(item.id,
       (item.release ?? '') + ' · ' + (item.source?.name ?? item.format ?? 'Original package'))));
     select('ddp-migration', records('ddpMigrations').map(item => choice(item.id,item.name ?? item.input?.name ?? 'Saved migration')));
-    select('ddp-receiving', records('ddpReceivings').map(item => choice(item.id,records('ddpMigrations').find(plan=>plan.id===item.planId)?.name ?? 'Saved comparison')));
+    select('ddp-receiving', records('ddpReceivings').map(item => {
+      const operation = records('operations').find(entry => entry.kind === 'ddp-migration-acquire' && entry.result?.receivingId === item.id);
+      const plan = records('ddpMigrations').find(entry => entry.id === item.planId);
+      return choice(item.id, (plan?.name ?? 'Saved comparison') + ' · ' +
+        (operation?.result?.sourceMode === 'ALFRED_VINTAGE' ? 'ALFRED vintage' : 'FRED API') +
+        (plan?.input?.asOf ? ' ' + plan.input.asOf : ''));
+    }));
     if (changed) {
       decisions = []; bindings = []; series.clear(); current = null; receiving = null;
       $('ddp-as-of').value = state().selection.asOf;
@@ -221,6 +235,18 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
         form.set('request',JSON.stringify(metadata)); form.set('source',retained.file);
         for (const file of retained.supplements) form.append('supplement',file);
         result = await upload('/api/ddp-import',form);
+      } else if (saved.action === 'ddp-migration-acquire' && saved.sourceMode === 'ALFRED_VINTAGE' && saved.alfredMetadataFile) {
+        const entryKey = uploadKey(saved);
+        let retained = memoryUploads.get(entryKey);
+        if (!retained) { try { retained = await uploadStore('get', entryKey); } catch {} }
+        const metadata = await alfred.recover(saved, retained?.file);
+        const { alfredMetadataFile: originalFile, ...input } = saved;
+        try { result = await api('/api/action', { ...input, ...(metadata === null ? {} : { metadata }) }); }
+        catch (error) {
+          if (metadata === null) error.message = 'The original request is retained. Re-select ' +
+            originalFile.name + ' if its metadata has not reached the project, then continue this same acquisition. ' + error.message;
+          throw error;
+        }
       } else result = await api('/api/action',saved);
       await discardRequest(saved); await refresh(); return result;
     } catch (error) {
@@ -237,6 +263,23 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
     if (retained) throw new Error('Continue the retained action before starting another source change.');
     const saved = { action, id: action + '-' + crypto.randomUUID().replaceAll('-',''),
       expectedRevision: revision, ...payload };
+    return transmit(saved);
+  }
+  async function acquireReviewedMigration() {
+    if (current?.mode !== 'saved' || current.migrationId !== $('ddp-migration').value ||
+      !current.value?.migration?.summary?.ready) throw new Error('Open a complete saved migration that is ready to acquire.');
+    if (request()) throw new Error('Continue the retained action before acquiring another historical edition.');
+    const migrationId = current.migrationId, originalProject = state().id;
+    const prepared = await alfred.prepare();
+    if (state().id !== originalProject || current?.mode !== 'saved' || current.migrationId !== migrationId)
+      throw new Error('The opened migration changed while preparing its original source.');
+    if (!prepared.record) return mutate('ddp-migration-acquire', { migrationId, ...prepared.payload });
+    const saved = { action: 'ddp-migration-acquire', id: 'ddp-migration-acquire-' + crypto.randomUUID().replaceAll('-', ''),
+      expectedRevision: state().revision, migrationId, ...prepared.payload };
+    const record = { ...prepared.record, key: uploadKey(saved), request: saved };
+    memoryUploads.set(record.key, record);
+    try { await uploadStore('put', record); }
+    catch { message('Keep this page open until the metadata reaches the project; this browser could not retain its original file across reloads.'); }
     return transmit(saved);
   }
   async function retainUpload(action) {
@@ -454,7 +497,8 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
     select('ddp-receiving-series',[['','All retained series'],...meanings.map(item=>[item.seriesId,names.get(item.seriesId)])]);
     select('ddp-result-capture',(model.captures ?? []).map(item=>[item.id,
       item.selection.asOf + ' · ' + item.selection.series.join(', ')]));
-    $('ddp-receiving-context').textContent = (model.source.package?.name ?? 'Original package') + ' · FRED as of ' +
+    $('ddp-receiving-context').textContent = (model.source.package?.name ?? 'Original package') +
+      (model.source.targetSourceMode === 'ALFRED_VINTAGE' ? ' · ALFRED vintage ' : ' · FRED API as of ') +
       model.source.fredAsOf + ' · ' + summary.rowCount + ' complete comparison rows';
     metrics('ddp-receiving-summary',[['Compared values',summary.comparedCount],['Value differences',summary.differentCount],
       ['Missing-value changes',summary.missingChangedCount],['Series meanings to review',summary.meaningReviewSeriesCount],
@@ -578,11 +622,7 @@ export function mountFredDdp({ api, upload, download, table, select, getState, r
   bind('ddp-migration-next',()=>migrationPage?.nextOffset!==null ? openMigration(migrationPage.nextOffset) : undefined);
   bind('ddp-migration-download',()=>download('/api/ddp-migration?' + new URLSearchParams({
     migration:$('ddp-migration').value,download:'1'}),'fred-ddp-migration.json'));
-  bind('ddp-migration-acquire',async()=>{
-    if (current?.mode!=='saved' || current.migrationId!==$('ddp-migration').value ||
-      !current.value?.migration?.summary?.ready) throw new Error('Open a complete saved migration that is ready to acquire.');
-    await showResult(await mutate('ddp-migration-acquire',{migrationId:current.migrationId}));
-  });
+  bind('ddp-migration-acquire', async () => showResult(await acquireReviewedMigration()));
   $('ddp-receiving').addEventListener('change',()=>{
     serial('receiving');receiving=null;receivingPage=null;
     select('ddp-receiving-series',[['','All retained series']]);select('ddp-result-capture',[]);sync();
