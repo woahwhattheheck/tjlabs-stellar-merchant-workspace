@@ -42,7 +42,7 @@
       </section>
       <section id="empty-plan" class="panel"><h2>Create or open a plan</h2><p>Give the work a customer and useful result, then add ordered steps from the selected toolkit or write a manual step.</p><p id="pending-registration" hidden></p></section>
       <section id="plan-editor" class="plan-editor panel" tabindex="-1" hidden>
-        <div class="editor-heading"><div><p id="plan-identity" class="hint"></p><h2 id="plan-heading"></h2></div><div class="actions"><button id="save-plan" type="button">Save revision</button><button id="copy-plan" type="button">Save as a copy</button></div></div>
+        <div class="editor-heading"><div><p id="plan-identity" class="hint"></p><h2 id="plan-heading"></h2></div><div class="actions"><button id="save-plan" type="button">Save revision</button><button id="copy-plan" type="button">Save as a copy</button><button id="prepare-cycle" type="button">Prepare next cycle</button></div></div>
         <div class="revision-row"><div><label for="plan-revision">Saved history</label><select id="plan-revision"></select></div><button id="continue-revision" type="button" hidden>Continue from this revision</button><button id="open-current" type="button">Open current saved revision</button></div>
         <p id="draft-status" class="hint"></p>
         <div id="draft-recovery" class="revision-row" hidden><div><label for="recovery-select">Retained working drafts</label><select id="recovery-select"></select></div><button id="recover-draft" type="button">Open selected working draft</button></div>
@@ -151,6 +151,35 @@
       <div id="reporting-preview-content"></div>
     </section>
     <p id="reporting-identity" class="hint reporting-identity"></p>
+  </dialog>
+
+  <dialog id="cycle-dialog" class="cycle-dialog" aria-labelledby="cycle-heading">
+    <header class="editor-heading"><div><p class="eyebrow">OPERATING PROCEDURE</p><h2 id="cycle-heading">Prepare next cycle</h2></div><button id="cycle-close" type="button" data-cycle-action>Close</button></header>
+    <p>Choose saved instructions for the next period. Every earlier revision and complete result file stays in the new plan's history. Your original working draft remains separate.</p>
+    <p id="cycle-source" class="hint"></p><p id="cycle-storage" class="hint" role="status"></p>
+    <div id="cycle-error" role="alert" hidden></div>
+    <p id="cycle-created" class="hint" hidden>This preparation already created a saved cycle. <button id="cycle-open-created" type="button" data-cycle-action>Open created cycle</button> Change a preparation field to prepare another cycle.</p>
+    <form id="cycle-form">
+      <fieldset id="cycle-fields" class="field-grid">
+        <legend>Source and next period</legend>
+        <div><label for="cycle-revision">Saved source revision</label><select id="cycle-revision" data-cycle-field="revision"></select></div>
+        <div><label for="cycle-title">New cycle title</label><input id="cycle-title" data-cycle-field="title" maxlength="300" required></div>
+        <div class="wide"><label for="cycle-period">New period</label><input id="cycle-period" data-cycle-field="period" maxlength="1000" required placeholder="For example: November 2026 close"></div>
+        <div class="wide"><label for="cycle-datePolicy">Due dates</label><select id="cycle-datePolicy" data-cycle-field="datePolicy"><option value="clear">Clear due dates for explicit scheduling</option><option value="shift">Shift all dated steps by the same number of days</option><option value="keep">Keep the exact original dates</option></select></div>
+        <div id="cycle-from-field" hidden><label for="cycle-shiftFrom">Original anchor date</label><input id="cycle-shiftFrom" data-cycle-field="shiftFrom" type="date"></div>
+        <div id="cycle-to-field" hidden><label for="cycle-shiftTo">Next anchor date</label><input id="cycle-shiftTo" data-cycle-field="shiftTo" type="date"></div>
+        <p class="hint wide">All steps start Planned with empty recorded results. Customer, owners, instructions, inputs, expected results, command arguments and registration selections remain unchanged. Review period-specific paths and instructions before doing the work.</p>
+        <section class="wide"><h3>Original files to carry as references</h3><p class="hint">Select only files needed for the next period. Unselected files remain complete in their original saved revisions.</p><div id="cycle-files"></div></section>
+      </fieldset>
+      <div class="actions"><button type="submit" data-cycle-action>Preview next cycle</button><button id="cycle-export-preparation" type="button" data-cycle-action>Download preparation JSON</button><button id="cycle-import-preparation" type="button" data-cycle-action>Open preparation JSON</button></div>
+    </form>
+    <input id="cycle-preparation-file" type="file" accept=".json,application/json" hidden>
+    <section id="cycle-preview" class="handover-section" hidden>
+      <h3>Review the complete next cycle</h3><p id="cycle-preview-summary"></p>
+      <div class="table-wrap"><table><thead><tr><th>Work and owner</th><th>Original due date</th><th>Next due date</th><th>Reference files</th></tr></thead><tbody id="cycle-steps"></tbody></table></div>
+      <p class="hint">The new plan has an independent identity. Product-specific Grant, IATI, Support and economic work continues through its original application; this generic preparation does not change their original case, period definitions or saved source.</p>
+      <div class="actions"><button id="cycle-create" type="button" data-cycle-action>Create cycle and open</button><button id="cycle-export-json" type="button" data-cycle-action>Complete plan JSON</button><button id="cycle-export-html" type="button" data-cycle-action>HTML handover</button></div>
+    </section>
   </dialog>
 
 </body>
