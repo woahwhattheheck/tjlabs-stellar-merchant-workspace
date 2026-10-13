@@ -13,6 +13,13 @@
 </section>
 <nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button><button data-view="operating">Operating plans</button></nav>
 <main id="main">
+<details id="op-complete-editor">
+<summary>Complete operating editor recovery</summary>
+<p id="op-editor-storage-state" class="note">Open the original workspace to restore its working editor.</p>
+<p class="help">Each window keeps a separate complete copy with original source selections, unfinished text, returned files and retained requests. A complete download remains available if browser storage fails.</p>
+<div class="actions"><button id="op-editor-download" type="button">Download complete working editor</button><label>Open complete working editor<input id="op-editor-open" type="file" accept=".json,application/json"></label></div>
+<div class="actions"><button id="op-editor-list" type="button">List saved editors</button><label>Original workspace copies<select id="op-editor-copies"><option value="">No copy selected</option></select></label><button id="op-editor-open-saved" type="button">Open saved editor as separate copy</button></div>
+</details>
 <fieldset id="workspace-controls" disabled><legend class="visually-hidden">Source workspace controls</legend>
 <section data-panel="overview">
 <div class="section-title"><h2>Retained work</h2><button id="refresh" type="button">Refresh workspace</button></div>
@@ -68,7 +75,7 @@
 <div class="pager"><button id="op-plan-prev" type="button">Previous procedures</button><span id="op-plan-page"></span><button id="op-plan-next" type="button">Next procedures</button></div>
 <details><summary>Create a procedure from retained source</summary>
 <div class="grid"><label>Source kind<select id="op-source-kind"><option value="documents">Document catalogs</option><option value="discoveries">Table discoveries</option><option value="captures">Complete captures</option><option value="versions">Saved source versions</option><option value="operations">Original operations</option></select></label><button id="op-source-refresh" type="button">Read retained source</button></div>
-<p class="help">Select exact retained records across pages and source kinds. Their original identities become procedure bindings. Select at least one retained source for the original procedure.</p>
+<p class="help">Select exact retained records across pages and source kinds. Their original identities become procedure bindings. An empty selection creates a manual procedure; add its authored steps in the same editor.</p>
 <p id="op-source-origin" class="path"></p><div id="op-sources" class="table-wrap"></div>
 <div class="pager"><button id="op-source-prev" type="button">Previous sources</button><span id="op-source-page"></span><button id="op-source-next" type="button">Next sources</button></div>
 <h3>Selected original records</h3><div id="op-selected-sources"></div>
@@ -84,10 +91,10 @@
 </details>
 <details><summary>Adopt a complete saved procedure</summary>
 <p>Use an original Grist procedure JSON exported from this workspace. Adoption retains its source binding and complete history; an existing identity is not overwritten. A generic plan returned to an existing procedure belongs in Returned work below.</p>
-<form id="op-adopt"><label>Complete original procedure JSON<input id="op-adopt-file" type="file" accept=".json,application/json" required></label><button type="submit">Adopt original identity and history</button></form>
+<form id="op-adopt"><label>Complete original procedure JSON<input id="op-adopt-file" type="file" accept=".json,application/json"></label><p id="op-adopt-retained" class="help"></p><button type="submit">Adopt original identity and history</button></form>
 </details>
 <p id="op-draft-retained" class="note"></p><div class="actions"><button id="op-restore-draft" type="button">Restore retained browser draft</button><label>Open editable draft backup<input id="op-draft-file" type="file" accept=".json,application/json"></label></div>
-<p class="help">This browser retains authored drafts and exact pending plan requests in local storage for the original workspace. It stores no connection credential or source-table rows. Download complete procedure JSON for durable handover; browser storage may be cleared or unavailable.</p>
+<p class="help">Each window retains its complete working editor in browser storage, bound to the original workspace settings and creation identity. Selected source identities, authored fields, returned files and exact pending requests remain together. Complete editor downloads reopen through the recovery controls above; complete procedure exports remain the native customer handover.</p>
 <section id="op-editor" hidden aria-label="Procedure editor">
 <div class="section-title"><h3>Editable next revision</h3><div class="actions"><button id="op-save" type="button">Save procedure revision</button><button id="op-reload" type="button">Reload saved procedure</button><button id="op-draft-download" type="button">Download editable draft</button></div></div>
 <div id="op-plan-fields" class="grid"></div>
