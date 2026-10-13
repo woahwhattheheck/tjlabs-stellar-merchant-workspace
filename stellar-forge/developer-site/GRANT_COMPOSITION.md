@@ -375,3 +375,26 @@ Each source keeps the repository, commit and path selected by the current chapte
 The product is merged in PR726 at `c451614467b688b8306adb512fa6105898ac634e`. Its complete reviewed source is `b47099ffa5acf15f2c70d9d12662ee81dca0d3fe`; the receiving manifest selects runtime `68ad5adf250e9f100f84d034881ebabc9fa48117`, 91 full source files and 1,124,639 bytes. The complete receiving correction is merged in PR899 at `25dd8b0aa9b32eb99507cfb95e682248fcbf2922`, with controller/driver/guide source `ca518e3aba84eed4dbc56147fa5ac9090904424e`. Its original transfer contract keeps every portable file and saved run field while reconstructing the native SQLite descriptor. The original 120,012-row customer case supplies the current continuation. Its complete checkpoint receiver transfers the same saved operation, native identities and earlier histories to the receiving host, then uses the existing operation lock. The dated completed customer result joins this original case and chapter.
 
 Run the same complete composer described above and retain all four resulting reader pins. The original saved draft/review, Page and owner-private Site receive that cumulative edition. The chapter maps this reusable starting product into the existing six funded packages and the current independent merchant/buyer acceptance, with the same selected funding, capacity and schedule. The [complete preparation contribution](./GRANT_PREPARATION.md) retains the chapter and source-selection contract.
+
+## Receive Weather, CanadaBuys, Document and Groundwater customer work
+
+The canonical §9A operator chapter includes complete **Weather report receiving and renewal**, **CanadaBuys qualification, bid decisions and complete customer receiving**, and **Document processing and complete customer receiving** sections. The existing **Groundwater scenario modelling and receiving** section also includes its managed Applications lifecycle, complete scientific backup receiving, independent working copy and original scientific/Report Desk assignment. Receive these complete sections through the existing `--manuscript` operation.
+
+The original `grant-customers.mjs` source upsert registers the selected operating guides directly from their chapter links:
+
+| Source identity | Maintained operating source |
+| --- | --- |
+| weather-report-renewal | partners/open-meteo-operations/REPORT_RENEWAL.md |
+| weather-report-renewal-contribution | distribution/contributions/open-meteo-report-renewal.json |
+| canadabuys-bidder-desk | sf30-seller-sdk/canadabuys/BIDDER_DESK.md |
+| document-merchant-applications | products/document-merchant/APPLICATIONS.md |
+| groundwater-application-operator | sf30-seller-sdk/groundwater-application/OPERATOR.md |
+| groundwater-installed-operation | products/groundwater/OPERATING.md |
+
+Paths under partners, distribution and sf30-seller-sdk retain their original stellar/scf-starforge-20261009 prefix. Each source receives the full immutable commit selected in its own chapter. The original receiver preserves all other records and their additional fields, retains a matching prior source identity and clears an obsolete blob pin when the selected source changes. The complete current projector includes the existing financial, IATI document, IATI geography and other accepted registrations. New customer sections continue through the same whole-chapter receiver.
+
+The canonical **Weather operating reports** catalogue row retains its original product and operation links and adds **Customer receiving and report renewal**. The resulting complete companion carries the usable customer sequence and its commissioning assignment; the source index opens each operating guide.
+
+Compose the current manuscript with the entire maintained authoring source and four reader outputs. Keep the nine application answers, original six funded packages, hours, tranches, payment history and prospective customer criteria. The existing composer records the updated projector's Git blob and derives each output's complete bytes, SHA-256 and Git blob. Repeating composition against the same complete inputs should retain the same four output bodies.
+
+Continue the original saved draft and review, Page and owner-private Site with that complete edition. Customer native receiving remains attached to each original working application and producing operation: the CanadaBuys delivered bidder case, the original Weather programme, the configured Document merchant/customer task and the original Groundwater scientific study and supplied backup. Their completed operating outcomes enter the application from those retained results.
