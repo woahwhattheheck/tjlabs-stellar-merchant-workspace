@@ -780,6 +780,414 @@
           "bytes": 19365
         }
       ]
+    },
+    {
+      "id": "grant-commercial-changes-guide",
+      "label": "Customer milestone amendments and original invoice corrections",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/COMMERCIAL_CHANGES.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "cd0d50d32689f67c207c8b18141c53a4cdb51c13",
+          "sha256": "5ee14d1a69a901977b8cceaa804efbfe078c1da0e834f4d0ca561f4c09eca9c2",
+          "bytes": 10707
+        }
+      ]
+    },
+    {
+      "id": "grant-commercial-changes-native",
+      "label": "Milestone source, original request history and native invoice actions",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_commercial_changes.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "09452d9d7054112113ab623a13892061f0ec9797",
+          "sha256": "24e910147f4a3ea37ce4c33b5d40ac707a15e26045020a32ab3f275699b0dae0",
+          "bytes": 60734
+        }
+      ]
+    },
+    {
+      "id": "grant-commercial-changes-desk",
+      "label": "Customer milestone comparison and original correction controls",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_commercial_changes.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "9468ed4d162d56da8dfa6a8e088f68dcdf4b5f41",
+          "sha256": "dbea6cf2f1e2a2b718f8bcd4cc3eeb348124f85dd1449b0c0ed25aff9f610cb3",
+          "bytes": 26121
+        }
+      ]
+    },
+    {
+      "id": "grant-expense-billing-guide",
+      "label": "Reviewed customer expense recovery and complete source receiving",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/EXPENSE_BILLING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "51e7fa0eae006675410cbb6290673dff2eb8b421",
+          "sha256": "84109886fcc94be3f7947dc4d4c4033753b67009c33d4cefd5585b21a1d82a0e",
+          "bytes": 12125
+        }
+      ]
+    },
+    {
+      "id": "grant-expense-billing-native",
+      "label": "Original expense portions, recovery authority and invoice history",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_expense_billing.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "0107931a6d0d28d8b61189ceadc564e5702c9a06",
+          "sha256": "fb74bbb443d0cca078624b18aa4376849ce403529c5d7e16770b67b1d272a8fe",
+          "bytes": 46145
+        }
+      ]
+    },
+    {
+      "id": "grant-expense-billing-desk",
+      "label": "Reviewed expense charges and original request recovery",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_expense_billing.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "9f6fc86305c7fcfe3b537482ad65f1b03f306fe7",
+          "sha256": "438ecf5274028a80e3a6fb440627e360ce88dce38bd782a37575d3836f7f75a2",
+          "bytes": 34218
+        }
+      ]
+    },
+    {
+      "id": "grant-hourly-work-guide",
+      "label": "Accepted customer Work, hourly authority and native billing",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/WORK_BILLING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "0d4258494fef326b4d8ff1bb54375ee59e20a9a9",
+          "sha256": "45fbb439d059def976ca5dec344a10d3d8cdacbaf2b8f5f9f95e7727ce5c716e",
+          "bytes": 11501
+        }
+      ]
+    },
+    {
+      "id": "grant-hourly-work-native",
+      "label": "Source-bound hourly authority, caps and original Work charges",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_work_billing.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "e846e34f4a74182ef3da5697a54bb740da58f9c7",
+          "sha256": "9648d4c7322a060a38d5511b994c62e7b10a09704e180e795ccfb26277581416",
+          "bytes": 55833
+        }
+      ]
+    },
+    {
+      "id": "grant-hourly-work-desk",
+      "label": "Fractional-hour review, retained authority and native charge controls",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_work_billing.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "bae69de5c6991f09ddc124bf153a3e979051d0f5",
+          "sha256": "5092b6a3fc6b47f8ca2cfd5c09a013c3ea5b6a28cc91e882e887dc54d1ab6f30",
+          "bytes": 39428
+        }
+      ]
+    },
+    {
+      "id": "grant-source-billing-lifecycle",
+      "label": "Shared original billing requests, correction chains and import validation",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_source_billing.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "e041f3577b2fba6a44057960d79af9630c6eff9d",
+          "sha256": "012909e0ce824e5c4d3ecadf17a04a763539cdf7a31660b047af69e1793842c9",
+          "bytes": 44654
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-evidence-guide",
+      "label": "Customer Billing evidence, frozen reviews and complete handover",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/BILLING_EVIDENCE.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "433fe60e8ffa7191fd033ef5dda82f8540e94610",
+          "sha256": "8ec04a849b8efeed831dab26902604a439e2a958039f92f2cda2133191f4b028",
+          "bytes": 9237
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-evidence-native",
+      "label": "Immutable evidence editions, original account and financial document bytes",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_billing_evidence.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "63e9dbb3fa38f7524316185558ff3bf8953c3b95",
+          "sha256": "f1b11d5a1c412817ca58d73a413bb2cc8004af9229082eaf05871f9269300ebf",
+          "bytes": 57549
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-evidence-desk",
+      "label": "Saved customer explanations, evidence comparison and complete downloads",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_billing_evidence.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "74ad3fafcb4303596add5d70b3bb88085dbc3d55",
+          "sha256": "7e027df3d047445bc7c32e66cdf377fe050aefb40ec9c370685501debdb9b1e3",
+          "bytes": 25052
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-complete-source",
+      "label": "Complete frozen original financial programme and exact source manifest",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/COMPLETE_SOURCE_RECEIVING.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "2d4a6ae3454157c419928ac305afb6eaed9e1c3d",
+          "sha256": "5fd1e28572b03ca8f40259f81f7e5815f637f6701258d3b5c6c14dd8fe91afeb",
+          "bytes": 2764396
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-complete-receiver",
+      "label": "Original complete-source materializer and programme receiving",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/receive_complete.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "f1c8b72c0319b8a964ee4d0ece2fd56ce527dc03",
+          "sha256": "56933dbdffaa8f4828814014fa35e907b1e757f2a8403fad1fd8e889383f321a",
+          "bytes": 4371
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-operating-course",
+      "label": "Whole milestone, expense, hourly and evidence operating course",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "4a81c76a3dbd47e120fee844b1a672f017f4ebef",
+          "sha256": "b9c30b9031770c8f692bb0d0f2bdafeda0806653b0edfd2fdde938819ac1d0cf",
+          "bytes": 33224
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-milestone-course",
+      "label": "Original customer milestone correction and cold receiving course",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/course.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "a7943b48535bc38a6f261da9ca8f57f2315c2c37",
+          "sha256": "88c218476bd19774a31222e09e403022f2fa14b89bef66cdce1264b371130edb",
+          "bytes": 39459
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-milestone-browser",
+      "label": "Actual milestone desk controls, original downloads and reopening",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/browser.cjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "bb348258da26263e29c74abee19c1374f4e892ba",
+          "sha256": "9728c1439b0ae5c295087097239dad271be60198ee0730202c0c0e4527b3a619",
+          "bytes": 19143
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-expense-course",
+      "label": "Issued expense source through customer charge and independent receiving",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/expense_course.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "6bfd3b744fe4725f32cd46121198a6b221325df8",
+          "sha256": "1795c1f662c0191a19b04115b877c08831090900288461663b39ba773d4f6d13",
+          "bytes": 20981
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-expense-browser",
+      "label": "Actual customer expense review, native actions and complete downloads",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/browser-expense.cjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "d278ccfe20ad71c59845323f45e813c1564a9180",
+          "sha256": "f8019eada343a135703c555c8e3872b59cf30df1b1e5ab98e21663af1db0ae3b",
+          "bytes": 25516
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-hourly-course",
+      "label": "Original accepted Work, hourly authority and independent receiving",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/hourly_course.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "d8d11299ddb7c37d80fe77bd3c41872389e47333",
+          "sha256": "cd97d40e609b06b83cdadd37825a67c9d308bdd5d6be429dc90692f9f3995a93",
+          "bytes": 13301
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-hourly-browser",
+      "label": "Actual hourly desk controls and preserved original request outcomes",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/browser-hourly.cjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "55389ae7c6a29894ae7d90e909001cf3c63dd47a",
+          "sha256": "92953b5ae1ea5f581457a3911a84cb9746836be837f2d6ad09f5a534cd6e47e3",
+          "bytes": 26681
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-evidence-browser",
+      "label": "Actual evidence desk, customer/internal exports and cold receiving",
+      "path": "operations/scf-commercial-changes-receiving-f8c1-20261013/course/browser-evidence.cjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "7366a694dda95f47803e1302a65af8804316d9a9",
+          "sha256": "a4741fa85e701012e65656b87e509fa534fea76b238492bffc204ca910f70b4a",
+          "bytes": 15262
+        }
+      ]
+    },
+    {
+      "id": "grant-billing-evidence-course",
+      "label": "Native frozen evidence course over all three original billing families",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/billing_evidence_course.py",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+      "required": false,
+      "editions": [
+        {
+          "commit": "570d62dfc75086a71be0829ca70ff304028f0b35",
+          "git_blob": "60f045cc1fc3cdf4aec13e933f2774d1c50d5a78",
+          "sha256": "3295256d366ae0d91377eb94c280d7f0f77ba27e80ac67e8436fd76c3541a8ac",
+          "bytes": 6705
+        }
+      ]
     }
   ]
 }
