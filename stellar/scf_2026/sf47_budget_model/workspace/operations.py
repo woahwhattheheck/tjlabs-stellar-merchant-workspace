@@ -62,6 +62,7 @@ import operations_work_billing as work_billing
 import operations_billing_evidence as billing_evidence
 import operations_dcat_sources as dcat_sources
 import operations_airflow_sources as airflow_sources
+import operations_material_catalogue_sources as material_sources
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -294,14 +295,15 @@ class Operations:
         self.db.execute("INSERT INTO ops_records VALUES(?,?,?,?,?) ON CONFLICT(program_id,kind,id) DO UPDATE SET state=excluded.state,body_json=excluded.body_json",
                         (program_id, kind, row["id"], row["state"], canonical(row)))
 
-    def _source_add(self, program_id, data, *, _maximum=MAX_SOURCE, _dcat=False, _airflow=False):
-        if ((_dcat and _airflow) or
+    def _source_add(self, program_id, data, *, _maximum=MAX_SOURCE, _dcat=False, _airflow=False, _material=False):
+        if (sum((_dcat, _airflow, _material)) > 1 or
                 (_dcat and _maximum != dcat_sources.MAX_SOURCE) or
                 (_airflow and _maximum != airflow_sources.MAX_SOURCE) or
-                not (_dcat or _airflow) and _maximum not in (MAX_SOURCE, buyer.MAX_CUSTOMER_USE_HANDOFF)):
+                (_material and _maximum != material_sources.MAX_SOURCE) or
+                not (_dcat or _airflow or _material) and _maximum not in (MAX_SOURCE, buyer.MAX_CUSTOMER_USE_HANDOFF)):
             domain.fail("Use the supported original source bound.", status=413)
         content = decoded(data.get("contentBase64"), maximum=_maximum)
-        if not (_dcat or _airflow) and _maximum > MAX_SOURCE:
+        if not (_dcat or _airflow or _material) and _maximum > MAX_SOURCE:
             if json.loads(content).get("schema") != buyer.CUSTOMER_USE_SCHEMA:
                 domain.fail("The larger source bound is reserved for the native customer-use return.", status=413)
         name = text(data.get("filename"), "Original source filename", 240, True)
@@ -325,14 +327,19 @@ class Operations:
             if hashlib.sha256(content).hexdigest() != expected:
                 domain.fail("The selected Airflow handover bytes differ.", "AIRFLOW_SOURCE_CHANGED", 409)
             transport = airflow_sources.inspect(content)
+        elif _material:
+            expected = domain.sha(data.get("expectedSha256"), "Selected complete material catalogue SHA256", False)
+            if hashlib.sha256(content).hexdigest() != expected:
+                domain.fail("The selected material catalogue bytes differ.", "MATERIAL_SOURCE_CHANGED", 409)
+            transport = material_sources.inspect(content)
         row = {"id": generated("source"), "filename": name, "mediaType": media,
                "kind": domain.enum(data.get("kind", "other"), ("invoice", "work", "grant", "payment", "deployment", "purchase", "other"), "Source kind"),
                "sourceUrl": domain.url(data.get("sourceUrl", ""), "Original source URL"),
                "observedAt": domain.timestamp(data.get("observedAt") or now(), "Source observation"),
                "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest(), "createdAt": now()}
         if transport is not None:
-            row["airflowHandover" if _airflow else "dcatWorkspace"] = transport
-        airflow_sources.source_budget(retained + [row])
+            row["materialCatalogue" if _material else "airflowHandover" if _airflow else "dcatWorkspace"] = transport
+        material_sources.source_budget(retained + [row])
         self.db.execute("INSERT INTO ops_sources VALUES(?,?,?,?)", (program_id, row["id"], canonical(row), content))
         return row
 
@@ -381,6 +388,9 @@ class Operations:
                 kind, record_id = "source", after["id"]
             elif command == dcat_sources.ACTION:
                 after = self._source_add(program_id, data, _maximum=dcat_sources.MAX_SOURCE, _dcat=True)
+                kind, record_id = "source", after["id"]
+            elif command == material_sources.ACTION:
+                after = self._source_add(program_id, data, _maximum=material_sources.MAX_SOURCE, _material=True)
                 kind, record_id = "source", after["id"]
             elif command == airflow_sources.ACTION:
                 after = self._source_add(program_id, data, _maximum=airflow_sources.MAX_SOURCE, _airflow=True)
@@ -1674,7 +1684,9 @@ class Operations:
             metadata, raw = json.loads(row[0]), bytes(row[1])
             if len(raw) != metadata["bytes"] or hashlib.sha256(raw).hexdigest() != metadata["sha256"]:
                 domain.fail("The retained original source differs from its stored identity.", "SOURCE_CHANGED", 409)
-            if "airflowHandover" in metadata:
+            if "materialCatalogue" in metadata:
+                material_sources.validate_source(metadata, raw, inspect_original=False)
+            elif "airflowHandover" in metadata:
                 airflow_sources.validate_source(metadata, raw)
             elif "dcatWorkspace" in metadata:
                 dcat_sources.validate_source(metadata, raw)
@@ -1697,10 +1709,10 @@ class Operations:
         with self._snapshot():
             context = self._context(program_id)
             program = context["program"]
-            bundle_limit = airflow_sources.source_budget(context["sources"].values())
+            bundle_limit = material_sources.source_budget(context["sources"].values())
             reviews = [json.loads(row[0]) for row in self.db.execute("SELECT body_json FROM ops_reviews WHERE program_id=? ORDER BY rowid", (program_id,))]
             events = [json.loads(row[0]) for row in self.db.execute("SELECT body_json FROM ops_events WHERE program_id=? ORDER BY version", (program_id,))]
-            airflow_sources.validate_events(context["sources"].values(), events)
+            material_sources.validate_events(context["sources"].values(), events)
             original = self.workspace.export(program["planId"])
             saved_forecasts = [json.loads(row[0]) for row in self.db.execute(
                 "SELECT body_json FROM ops_forecasts WHERE program_id=? ORDER BY rowid", (program_id,))]
@@ -1805,11 +1817,11 @@ class Operations:
                 document = json.loads(archive.read("operations.json"))
                 if not isinstance(document, dict) or document.get("schema") != SCHEMA:
                     domain.fail("Select the complete original Operations document.")
-                bundle_limit = airflow_sources.source_budget(document.get("sources", []))
+                bundle_limit = material_sources.source_budget(document.get("sources", []))
                 if len(raw) > bundle_limit or expanded > bundle_limit:
                     domain.fail("The complete case exceeds its selected ordinary/typed-source bound.", status=413)
                 typed_names = {"sources/" + row["id"] for row in document["sources"]
-                               if "dcatWorkspace" in row or "airflowHandover" in row}
+                               if "dcatWorkspace" in row or "airflowHandover" in row or "materialCatalogue" in row}
                 if any(row.file_size > (airflow_sources.MAX_SOURCE if row.filename in typed_names else MAX_BUNDLE)
                        for row in infos):
                     domain.fail("An original case member exceeds its selected bound.", status=413)
@@ -1885,7 +1897,12 @@ class Operations:
             association = item.get("buyerHandoff", {})
             maximum = buyer.MAX_CUSTOMER_USE_HANDOFF if (isinstance(association, dict)
                 and association.get("sourceSchema") == buyer.CUSTOMER_USE_SCHEMA) else MAX_SOURCE
-            if "airflowHandover" in item:
+            if "materialCatalogue" in item:
+                maximum = material_sources.MAX_SOURCE
+                if association:
+                    domain.fail("A material catalogue cannot impersonate a customer-use source.")
+                material_sources.validate_source(item, content)
+            elif "airflowHandover" in item:
                 maximum = airflow_sources.MAX_SOURCE
                 if association:
                     domain.fail("An Airflow handover cannot impersonate a customer-use source.")
@@ -1897,8 +1914,8 @@ class Operations:
                 dcat_sources.validate_source(item, content)
             if len(content) != item["bytes"] or hashlib.sha256(content).hexdigest() != item["sha256"] or len(content) > maximum:
                 domain.fail("An original attachment differs from its source record.")
-        airflow_sources.source_budget(document["sources"])
-        airflow_sources.validate_events(document["sources"], document.get("events", []))
+        material_sources.source_budget(document["sources"])
+        material_sources.validate_events(document["sources"], document.get("events", []))
         installations.selection_from_files(document, files)
         task_outcomes.selection_from_files(document, files)
         award_terms.selection_from_files(document, files)
@@ -1922,7 +1939,7 @@ class Operations:
                     raise Problem("This request identity already describes a different operation.", 409, "REQUEST_CONFLICT")
                 return json.loads(existing[1])
         billing_native_raw, billing_evidence_selection = billing_evidence.unwrap_bundle(raw)
-        if airflow_sources.native_bundle(billing_native_raw):
+        if material_sources.native_bundle(billing_native_raw):
             # A native case is not a report wrapper. Its own complete importer
             # validates the selected capacity, every source and original history.
             native_raw = billing_native_raw
@@ -1953,7 +1970,7 @@ class Operations:
         if sum(len(values) for values in document["records"].values()) > MAX_RECORDS:
             domain.fail("The operations bundle has too many records.")
         sources = {row["id"]: row for row in document["sources"]}
-        airflow_sources.source_budget(sources.values())
+        material_sources.source_budget(sources.values())
         context = {"program": source_program, "plan": plan, "records": document["records"], "sources": sources,
                    "restoring": True, "completionPlans": document.get("completionPlans", [])}
         for kind, values in document["records"].items():

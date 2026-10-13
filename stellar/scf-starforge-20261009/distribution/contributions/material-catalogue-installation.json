@@ -1,0 +1,32 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "material-catalogue-installation",
+  "description": "Original complete material source custody, edition review and commercial Customer Installation handover",
+  "components": [
+    "products/material-catalog/recipient",
+    "products/material-catalog/commissioning",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders"
+  ],
+  "commands": {
+    "material-installation": "products/material-catalog/commissioning/cli.mjs"
+  },
+  "commandDescriptions": {
+    "material-installation": "Inspect original material sources, prepare their commercial Customer Installation and independently reopen the complete handover"
+  },
+  "exports": {
+    "./grant/material-installation": "./source/products/material-catalog/commissioning/core.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_sources.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_engine.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_cli.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue_model.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/operations_material_catalogue.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_SOURCE_DESK.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/material-catalogue-source-desk-receiving.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/material-catalogue-source-desk-browser.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/MATERIAL_CATALOGUE_OPERATOR.md"
+  ]
+}
