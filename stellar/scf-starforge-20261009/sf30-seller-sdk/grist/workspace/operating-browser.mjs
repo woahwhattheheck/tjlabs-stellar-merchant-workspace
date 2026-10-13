@@ -105,7 +105,7 @@ export function mountGristOperatingPlans({api,getContext,setBlocked,notice}){
     for(const kind of sourceKinds)for(const item of selected[kind].values()){
       const line=element('div',null,'op-selection');line.append(element('span',kind+' · '+item.title+' · '+item.id),button('Remove',()=>{selected[kind].delete(item.id);renderSelection();}));out.append(line);
     }
-    if(!out.childElementCount)out.append(element('p','No source selected. A manual procedure is also available.','help'));
+    if(!out.childElementCount)out.append(element('p','Select at least one retained source to create a procedure.','help'));
   }
   async function sources(){
     const intent=++sourceEpoch,k=sourceKind,at=sourceOffset,result=await call('source',{kind:k,offset:at,limit:25});
@@ -272,6 +272,7 @@ export function mountGristOperatingPlans({api,getContext,setBlocked,notice}){
   $('op-create').addEventListener('submit',event=>{event.preventDefault();run(async()=>{
     if(!confirmReplace())return;const form=new FormData(event.currentTarget),args={planId:String(form.get('planId')).trim(),expectedVersion:0,selection:selectedInputs()};
     for(const [name]of fields)args[name]=String(form.get(name)??'');
+    if(!Object.values(args.selection).some(ids=>ids.length))throw Error('Select at least one original retained source before creating a procedure.');
     await mutate('create',args);
   });});
   $('op-adopt').addEventListener('submit',event=>{event.preventDefault();run(async()=>{
@@ -299,8 +300,8 @@ export function mountGristOperatingPlans({api,getContext,setBlocked,notice}){
   }));
   $('op-return-file').addEventListener('change',()=>run(async()=>{
     const intent=++incomingEpoch,value=await readFile($('op-return-file').files[0]);if(intent!==incomingEpoch)return;
-    incoming=clone(planFrom(value));decisions=new Map();discardReview();$('op-review-id').value=uuid();$('op-return-comparison').replaceChildren();
-    $('op-incoming').textContent='Returned '+incoming.id+' · '+incoming.revisions.length+' complete saved revisions. Preview differences before receiving.';
+    const displayPlan=planFrom(value);incoming=clone(value);decisions=new Map();discardReview();$('op-review-id').value=uuid();$('op-return-comparison').replaceChildren();
+    $('op-incoming').textContent='Returned '+displayPlan.id+' · '+displayPlan.revisions.length+' complete saved revisions. Preview differences before receiving.';
   }));
   for(const id of ['op-return-reviewer','op-return-notes'])$(id).addEventListener('input',discardReview);
   $('op-preview-return').addEventListener('click',()=>run(previewReturn));

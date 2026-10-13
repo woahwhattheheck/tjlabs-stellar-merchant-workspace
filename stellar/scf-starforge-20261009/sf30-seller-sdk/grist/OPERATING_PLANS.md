@@ -28,7 +28,7 @@ Each page shows 25 records. **Previous sources** and **Next sources** enumerate 
 
 Enter a new stable plan ID using letters, numbers, dots, underscores or hyphens, up to 128 characters. Give the procedure a title, customer, useful outcome, period or recurrence, operating owner, receiving instructions and notes. **Create original procedure** retains the exact selected IDs and authoring input before dispatching one original request. The service binds each selected source record to its original identity and generated operating step.
 
-An empty source selection creates a manual procedure. This is useful for preparation or receiving tasks that do not yet correspond to retained source. A manual step has no native source binding and carries `selection: null` with an empty `argv` initially.
+Creation requires at least one retained source binding. After creating that source-bound procedure, add manual preparation or receiving steps as needed. A manual step has no native source binding and carries `selection: null` with an empty `argv` initially.
 
 Creation uses expected procedure version zero. An existing identity is not overwritten. Use **Open** for a saved procedure, or adopt its complete original export.
 
@@ -93,7 +93,7 @@ To bring a saved procedure into its permitted original destination, use **Adopt 
 
 ## Receive returned work
 
-Open the original saved procedure and save or retain any local unsaved edits. Select a complete returned generic operating plan or complete Grist procedure JSON. The panel takes the original plan history from a procedure file; the destination's original bindings and source state stay under the service's receiving rules.
+Open the original saved procedure and save or retain any local unsaved edits. Select a complete returned generic operating plan or complete Grist procedure JSON. The panel retains the full selected object. A complete procedure is sent with its original source origin, bindings, captures and return records; the original service validates that binding and receives its permitted history. A generic plan remains a generic plan. The displayed label reads the nested plan without discarding the complete procedure.
 
 ### Identical shared history
 
