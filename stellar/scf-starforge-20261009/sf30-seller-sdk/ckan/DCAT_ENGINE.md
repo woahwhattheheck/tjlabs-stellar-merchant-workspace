@@ -89,6 +89,8 @@ The keyword arguments after source_bytes are keyword-only. original_root is a tr
 
 New reviews carry numeric_comparison: exact-decimal.v1. Their inventory, typed identity mappings, field comparisons and displayed validation identifiers use exact decimal values parsed from each retained document. The unchanged GSA converter and validator still receive their original Python JSON model, and automatic candidate bytes use the original converter serialization. If that converter rounds a source decimal, the review exposes the actual before and after values. Existing saved report files, intrinsic review hashes and releases stay unchanged.
 
+Equivalent JSON numeric spellings, such as 1e0 and 1, keep the same exact numeric identity after browser or agent serialization. Strings and booleans remain distinct from numbers, and signed zero retains its original sign. Decimal output keeps a decimal or exponent token for raw and Python readers.
+
 The callable result can contain Python Decimal values. Serialize the complete result with encode_review(result), then encode that returned JSON text as UTF-8 when saving a report. This preserves decimal numbers as JSON numbers through the original Node, browser, CLI and Merchant readers. The process interface performs this serialization itself.
 
 ## Result contract

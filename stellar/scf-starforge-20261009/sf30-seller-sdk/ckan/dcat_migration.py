@@ -72,7 +72,12 @@ def _json_exact(value, *, canonical=False):
     if isinstance(value, Decimal):
         if not value.is_finite():
             raise ValueError("Non-JSON numeric constant: " + str(value))
-        return _decimal_canonical(value) if canonical else str(value)
+        rendered = str(value)
+        return _decimal_canonical(value) if canonical else (
+            rendered if any(marker in rendered for marker in ".eE") else rendered + "e0")
+    if canonical and isinstance(value, int) and not isinstance(value, bool):
+        # JSON has one numeric type: the browser may render 1e0 as 1.
+        return _decimal_canonical(Decimal(value))
     if canonical and isinstance(value, float):
         return _decimal_canonical(Decimal(str(value)))
     if isinstance(value, dict):
