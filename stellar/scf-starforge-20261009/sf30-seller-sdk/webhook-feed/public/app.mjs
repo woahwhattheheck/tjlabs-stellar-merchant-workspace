@@ -242,17 +242,25 @@ function renderCurrent(kind){
   $(kind+'-draft-state').textContent=(draft.expectedRevision?'Editing native revision '+draft.expectedRevision.slice(0,16):'New native definition')+' · '+draft.attempts.length+' retained save attempts';
   updateWorking();
 }
+function initialFields(kind,value){
+  if(kind==='plan')return {text:JSON.stringify(value??{schema:'stellar-forge.webhook-feed-merchant.v1',publicOrigin:'',feeds:[]},null,2)};
+  if(kind==='source'){
+    const source=value??{id:'',label:'',secretEnv:'EVENTS_WEBHOOK_SECRET',typePointer:'/type',occurredAtPointer:null,maxEventBytes:65536,toleranceSeconds:300,enabled:true};
+    return {id:source.id,label:source.label,secretEnv:source.secretEnv,typePointer:source.typePointer,occurredAtPointer:source.occurredAtPointer??'',maxEventBytes:String(source.maxEventBytes),toleranceSeconds:String(source.toleranceSeconds),enabled:source.enabled};
+  }
+  const feed=value??{id:'',label:'',description:'',sourceIds:[],types:[],projection:[{name:'objectId',pointer:'/data/id'}],enabled:true,defaultPageSize:50,maxPageSize:100,maxPageBytes:1048576};
+  return {id:feed.id,label:feed.label,description:feed.description,sourceIds:clone(feed.sourceIds),types:feed.types.join(', '),projection:clone(feed.projection),enabled:feed.enabled,defaultPageSize:String(feed.defaultPageSize),maxPageSize:String(feed.maxPageSize),maxPageBytes:String(feed.maxPageBytes)};
+}
 function selectDraft(kind,value=null){
   capture(kind);
-  const id=kind==='plan'?'merchant':value?.id??'';
-  let draft=value||kind==='plan'?working.drafts.find(d=>d.kind===kind&&d.id===id):null;
+  const candidate=clone(working),id=kind==='plan'?'merchant':value?.id??'';
+  let draft=value||kind==='plan'?candidate.drafts.find(d=>d.kind===kind&&d.id===id):null;
   if(!draft){
-    if(kind==='source')renderSource(value);if(kind==='feed'){renderFeed(value);$('feed-page-bytes').value=String(value?.maxPageBytes??1048576);}
-    if(kind==='plan')$('plan-json').value=JSON.stringify(state.merchant.plan??{schema:'stellar-forge.webhook-feed-merchant.v1',publicOrigin:'',feeds:[]},null,2);
-    draft={key:uid(),kind,id,expectedRevision:kind==='plan'?state.merchant.revision:value?.revision??null,base:kind==='plan'?clone(state.merchant.plan):value?clean(value):null,fields:captureFields(kind),attempts:[]};
-    working.drafts.push(draft);
+    const base=kind==='plan'?clone(state.merchant.plan):value?clean(value):null;
+    draft={key:uid(),kind,id,expectedRevision:kind==='plan'?state.merchant.revision:value?.revision??null,base,fields:initialFields(kind,base),attempts:[]};
+    candidate.drafts.push(draft);
   }
-  working.selected[kind]=draft.key;persist();renderCurrent(kind);
+  candidate.selected[kind]=draft.key;adoptWorking(candidate);renderCurrent(kind);
 }
 function loadSource(value=null){selectDraft('source',value);}
 function loadFeed(value=null){selectDraft('feed',value);}
@@ -364,7 +372,7 @@ function exportWorking(){
 }
 for(const kind of ['source','feed'])$(kind+'-draft-list').addEventListener('change',event=>run(()=>{
   const key=event.target.value;capture(kind);need(working.drafts.some(d=>d.kind===kind&&d.key===key),'Select a retained draft.');
-  working.selected[kind]=key;persist();renderCurrent(kind);
+  const candidate=clone(working);candidate.selected[kind]=key;adoptWorking(candidate);renderCurrent(kind);
 }));
 for(const kind of ['source','feed','plan']){
   $(kind+'-form').addEventListener('input',()=>{if(!busy)try{capture(kind);}catch(error){notice(error.message,true);}});
@@ -423,7 +431,7 @@ for (const tab of document.querySelectorAll('[data-tab]')) tab.addEventListener(
   if (tab.dataset.tab === 'events') run(() => readEvents(true));
 });
 $('refresh').addEventListener('click', () => run(refresh));
-$('new-source').addEventListener('click', () => loadSource()); $('new-feed').addEventListener('click', () => loadFeed());
+$('new-source').addEventListener('click', () => run(() => loadSource())); $('new-feed').addEventListener('click', () => run(() => loadFeed()));
 $('add-field').addEventListener('click', () => { if (busy) return; projectionRow(); try { capture('feed'); } catch(error) { notice(error.message,true); } });
 $('source-form').addEventListener('submit', event => { event.preventDefault(); run(() => saveDraft('source')); });
 $('feed-form').addEventListener('submit', event => { event.preventDefault(); run(() => saveDraft('feed')); });
