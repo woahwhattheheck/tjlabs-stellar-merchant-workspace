@@ -15,8 +15,8 @@ import urllib.request
 REPOSITORY = "woahwhattheheck/tjlabs-stellar-merchant-workspace"
 OPERATION = "SCF-RECEIVABLES-NATIVE-2A51-20261012"
 SOURCE_COMMIT = "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5"
-RUNNER_CAPSULE = "5dfec853b254e0f67dc489d650b1ec85affa0f43"
-CORRECTION_CAPSULE = "93d2f87ceab7c1ba17dbbc2f2e276c3e977f3aaa"
+RUNNER_CAPSULE = "4ea4c09fde74c471ce7e497d5bcfb69c0cc3c842"
+CORRECTION_CAPSULE = "bbc06b338f4ee7b51640ec0e241b05d39e71cee8"
 SOURCE_CAPSULE = "7fcaec7a66deb03c5d9fed00f193138218d8c323"
 DEPENDENCY_CAPSULE = "0907e1444c7418266e128db60b3e94a02496d34f"
 SDK_LOCK = "320cee72638cf1d4bc0fc1e48c4fe9b8547dc223"
@@ -25,8 +25,8 @@ SDK_PACKAGE = "038f1824d7e2703b449fe50a5446b988d8f3bc3f"
 PREFIX = "operations/scf-receivables-native-2a51-20261012/"
 RUNNER_FILES = {
     "receive-capsule.py": "0abd5865264c604dae2127131e80447f27818814",
-    "source.json": "eb96f3fc67335986767266547fe00d02abbb8922",
-    "README.md": "7e0e000211b10c15173d0379a980d0d9b525a408",
+    "source.json": "74781fd23abf0a37db88af5dc2c0c4574608cee6",
+    "README.md": "f65e666a022b95bcd4a5e65ff305c7891e8b7c9d",
 }
 
 def now():
