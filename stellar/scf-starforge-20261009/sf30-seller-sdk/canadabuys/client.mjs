@@ -22,8 +22,9 @@ export class CanadaBuysClient {
     this.maxResponseBytes = maxResponseBytes;
   }
 
-  async request(path, { method = 'GET', body, signal, raw = false, binary = false, timeoutMs = this.timeoutMs } = {}) {
+  async request(path, { method = 'GET', body, signal, raw = false, binary = false, onChunk, timeoutMs = this.timeoutMs } = {}) {
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) throw new TypeError('Use a positive integer request timeout.');
+    if (onChunk !== undefined && (typeof onChunk !== 'function' || (!raw && !binary))) throw new TypeError('A download sink requires raw or binary response mode.');
     const url = new URL(path, this.baseUrl);
     if (url.origin !== this.baseUrl || url.username || url.password) throw new TypeError('Requests must target the configured operator origin.');
     const controller = new AbortController();
@@ -43,6 +44,7 @@ export class CanadaBuysClient {
         throw new CanadaBuysClientError('Response exceeds the configured client limit.', { code: 'RESPONSE_TOO_LARGE', status: response.status });
       }
       const reader = response.body?.getReader();
+      const streaming = response.ok && typeof onChunk === 'function';
       const binaryResponse = binary && response.ok;
       const decoder = binaryResponse ? null : new TextDecoder('utf-8', { fatal: true });
       const chunks = [], textParts = [];
@@ -56,13 +58,25 @@ export class CanadaBuysClient {
             if (bytes > this.maxResponseBytes) {
               throw new CanadaBuysClientError('Response exceeds the configured client limit.', { code: 'RESPONSE_TOO_LARGE', status: response.status });
             }
-            if (binaryResponse) chunks.push(value);
+            if (streaming) {
+              if (decoder) decoder.decode(value, { stream: true });
+              // Await the caller's durable write before reading another chunk.
+              await onChunk(value);
+            } else if (binaryResponse) chunks.push(value);
             else textParts.push(decoder.decode(value, { stream: true }));
           }
         } catch (error) {
           await reader.cancel().catch(() => {});
           throw error;
         } finally { reader.releaseLock(); }
+      }
+      if (streaming) {
+        if (decoder) decoder.decode();
+        return {
+          mime: response.headers.get('content-type') ?? 'application/octet-stream',
+          filename: response.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1] ?? null,
+          bytes
+        };
       }
       if (binaryResponse) {
         const joined = new Uint8Array(bytes);
@@ -164,6 +178,12 @@ export class CanadaBuysClient {
     const query = new URLSearchParams({ format, scope });
     for (const noticeId of noticeIds) query.append('noticeId', noticeId);
     return this.request('/api/export?' + query, { ...options, raw: true });
+  }
+  reportTo(onChunk, { format = 'json', scope = 'all', noticeIds = [], ...options } = {}) {
+    if (typeof onChunk !== 'function') throw new TypeError('Supply a report chunk consumer.');
+    const query = new URLSearchParams({ format, scope });
+    for (const noticeId of noticeIds) query.append('noticeId', noticeId);
+    return this.request('/api/export?' + query, { ...options, raw: true, binary: false, onChunk });
   }
   exportPackage({ scope = 'all', noticeIds = [], ...options } = {}) {
     const query = new URLSearchParams({ scope });
