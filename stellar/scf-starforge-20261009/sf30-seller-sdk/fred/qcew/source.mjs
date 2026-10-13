@@ -48,6 +48,43 @@ function unpack(file, maximum) {
 function captureIdentity(capture) {
   return {schema:capture.schema,originalManifest:capture.originalManifest,files:capture.files};
 }
+
+function quarterlySelection(intake) {
+  if(intake.request?.sourceKind!=='current_published_quarterly_api_slices') return null;
+  const periods=intake.request.periods,areas=intake.request.areas,years=intake.request.years;
+  need(Array.isArray(periods)&&periods.length>0&&periods.length<=444&&
+    periods.every(value=>typeof value==='string'&&/^(?:19[9][0-9]|20[0-9]{2}|2100)-Q[1-4]$/.test(value))&&
+    new Set(periods).size===periods.length&&Array.isArray(areas)&&areas.length>0&&
+    areas.every(value=>typeof value==='string'&&/^(?:US000|[0-9]{5})$/.test(value))&&new Set(areas).size===areas.length,
+    'Select distinct complete original quarterly periods and areas.');
+  const selectedYears=[...new Set(periods.map(value=>Number(value.slice(0,4))))].sort((a,b)=>a-b);
+  need(canonical([...years].sort((a,b)=>a-b))===canonical(selectedYears)&&intake.archives.length===0&&!intake.seed,
+    'Quarterly slices retain their original periods and receipts separately from annual archives.');
+  return new Set(periods);
+}
+function validateQuarterlyReceipt(entry,periods) {
+  need(Number.isInteger(entry.year)&&Number.isInteger(entry.quarter)&&entry.quarter>=1&&entry.quarter<=4&&
+    periods.has(entry.year+'-Q'+entry.quarter)&&entry.sourceKind==='quarterly_api_slice',
+    'An original quarterly slice has an unselected period.');
+  const url='https://data.bls.gov/cew/data/api/'+entry.year+'/'+entry.quarter+'/area/'+entry.area+'.csv';
+  need(official(entry.sourceUrl)===url,'Retain the exact official quarterly area-slice URL.');
+  const receipt=entry.receipt;
+  need(plain(receipt)&&receipt.sourceUrl===url&&receipt.bytes===entry.bytes&&receipt.sha256===entry.sha256&&
+    typeof receipt.completedAt==='string','Retain the complete original quarterly-source receipt.');
+  if(receipt.kind==='official_http') {
+    need(receipt.requestedUrl===url&&receipt.finalUrl===url&&receipt.status===200&&
+      typeof receipt.receivedAt==='string','Retain the actual complete official CSV response.');
+  } else {
+    need(receipt.kind==='retained_provider_file'&&receipt.provider==='Notion'&&
+      typeof receipt.recordedAt==='string'&&plain(receipt.upload)&&
+      receipt.upload.status==='uploaded'&&receipt.upload.content_length===entry.bytes&&
+      typeof receipt.upload.content_type==='string'&&receipt.upload.content_type.split(';')[0].trim()==='text/csv'&&
+      typeof receipt.upload.file_upload_id==='string'&&
+      /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(receipt.upload.file_upload_id),
+      'Retain the actual original provider upload and complete materialized file receipt.');
+  }
+}
+
 function inspectOriginalCapture(capture,{select=null}={}) {
   need(capture?.schema===QCEW_CAPTURE && hashPattern.test(capture.captureSha256) &&
     Array.isArray(capture.files) && capture.files.length>0 && capture.files.length<=5000,
@@ -67,6 +104,7 @@ function inspectOriginalCapture(capture,{select=null}={}) {
     files.set(file.name,file); encodedBytes+=file.body?.length??0;
   }
   need(encodedBytes<=MAX_QCEW_CAPTURE_BYTES, 'The complete original source edition exceeds portable capture capacity.');
+  const quarters=quarterlySelection(intake);
   const archives=new Map();
   for(const archive of intake.archives) {
     need(Number.isInteger(archive.year) && archive.complete===true && !archives.has(archive.year) &&
@@ -80,26 +118,32 @@ function inspectOriginalCapture(capture,{select=null}={}) {
     }
     archives.set(archive.year,archive);
   }
-  need(intake.request.years.length===archives.size && intake.request.years.every(year=>archives.has(year)),
+  need(quarters!==null || (intake.request.years.length===archives.size && intake.request.years.every(year=>archives.has(year))),
     'The source edition does not contain every requested original archive year.');
   const coverage=new Map(), rows=new Map(), classifications=new Set(), sourceFiles=[], used=new Set();
   let originalRows=0;
   for(const entry of intake.sources) {
     const file=files.get(entry.file), archive=archives.get(entry.year);
-    need(file && archive && !used.has(entry.file) && entry.sourceUrl===archive.sourceUrl &&
-      entry.sha256===file.sha256 && entry.bytes===file.bytes && entry.gzipSha256===file.gzipSha256 &&
-      intake.request.areas.includes(entry.area), 'An original area source is missing or changed.');
-    const member=archive.inventory.find(item=>item.name===entry.member);
-    need(member && member.bytes===entry.bytes && member.crc32===entry.memberCrc32 &&
-      member.compressedBytes===entry.memberCompressedBytes, 'An original ZIP member receipt differs from its archive inventory.');
+    need(file && !used.has(entry.file) && entry.sha256===file.sha256 && entry.bytes===file.bytes &&
+      entry.gzipSha256===file.gzipSha256 && intake.request.areas.includes(entry.area),
+      'An original area source is missing or changed.');
+    if(quarters) validateQuarterlyReceipt(entry,quarters);
+    else {
+      need(archive && entry.sourceUrl===archive.sourceUrl,'An original area archive is missing or changed.');
+      const member=archive.inventory.find(item=>item.name===entry.member);
+      need(member && member.bytes===entry.bytes && member.crc32===entry.memberCrc32 &&
+        member.compressedBytes===entry.memberCompressedBytes, 'An original ZIP member receipt differs from its archive inventory.');
+    }
     const bytes=unpack(file,MAX_CSV_BYTES);
-    need(crc32(bytes)===entry.memberCrc32, 'The original area member CRC differs.');
+    if(!quarters) need(crc32(bytes)===entry.memberCrc32, 'The original area member CRC differs.');
     const inspected=inspectCsv(utf8(bytes), {expectedArea:entry.area,expectedYear:entry.year,select:row=>{
       classifications.add(qcewIndustryPeriodKey(row));
       return select===null?false:select(row);
     }});
     need(inspected.rowCount===entry.rowCount && canonical(inspected.columns)===canonical(entry.columns) &&
       canonical(inspected.periods)===canonical(entry.periods), 'The complete original CSV header, row count or periods changed.');
+    if(quarters) need(canonical(inspected.periods)===canonical([entry.year+'-Q'+entry.quarter]),
+      'The complete original quarterly slice must contain exactly its selected period.');
     for(const when of inspected.periods) {
       const key=entry.area+'|'+when;
       need(!coverage.has(key), 'The original source edition contains overlapping area/period files.');
@@ -113,8 +157,14 @@ function inspectOriginalCapture(capture,{select=null}={}) {
     originalRows+=inspected.rowCount;
     used.add(entry.file); sourceFiles.push(clone(entry));
   }
+  if(quarters) {
+    need(sourceFiles.length===quarters.size*intake.request.areas.length,'Retain every selected complete quarterly slice exactly once.');
+    for(const when of quarters) for(const area of intake.request.areas)
+      need(coverage.has(area+'|'+when),'The complete source edition omitted a selected area/quarter slice.');
+  } else {
   for(const year of intake.request.years) for(const area of intake.request.areas)
     need(intake.sources.some(item=>item.year===year&&item.area===area), 'The complete source edition omitted a requested year/area member.');
+  }
   if(intake.seed) {
     const file=files.get(intake.seed.file);
     need(file && file.sha256===intake.seed.sha256 && file.bytes===intake.seed.bytes && file.gzipSha256===intake.seed.gzipSha256 &&
@@ -127,9 +177,9 @@ function inspectOriginalCapture(capture,{select=null}={}) {
   }
   need(used.size===files.size,'The source edition contains unreferenced original files.');
   return {captureSha256:capture.captureSha256,intake,sourceFiles,originalRows,coverage,rows,classifications,
-    sourceSummary:{kind:'Current published BLS QCEW quarterly NAICS area archives',retrievedFrom:intake.startedAt,
+    sourceSummary:{kind:quarters?'Current published BLS QCEW original quarterly area CSV slices':'Current published BLS QCEW quarterly NAICS area archives',retrievedFrom:intake.startedAt,
       retrievedThrough:intake.completedAt,years:[...intake.request.years],areas:[...intake.request.areas],
-      originalFiles:sourceFiles.length,originalRows,originalBytes:sourceFiles.reduce((sum,item)=>sum+item.bytes,0)}};
+      ...(quarters?{periods:[...quarters]}:{}),originalFiles:sourceFiles.length,originalRows,originalBytes:sourceFiles.reduce((sum,item)=>sum+item.bytes,0)}};
 }
 
 // A published industry's classification is comparable across the original

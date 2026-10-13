@@ -32,6 +32,8 @@ export interface QcewCapture {
   originalManifest: QcewCompressedOriginal; files: Array<QcewCompressedOriginal & { name: string }>;
 }
 export interface QcewSourceSummary {
+  /** Present for complete official quarterly CSV slice intakes. */
+  periods?: string[];
   kind: string; retrievedFrom: string; retrievedThrough: string; years: number[]; areas: string[];
   originalFiles: number; originalRows: number; originalBytes: number;
 }
