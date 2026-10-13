@@ -19,6 +19,7 @@
     </section>
     <p id="message" class="notice" role="status" aria-live="polite" hidden></p>
     <div id="workspace" hidden>
+      <p id="review-banner" class="notice" hidden>Saved project review · Original invoices, activity and completed files.</p>
       <section class="summary" aria-label="Order overview">
         <div><span>Total invoices</span><strong id="count-total">0</strong></div>
         <div><span>Awaiting payment</span><strong id="count-awaiting">0</strong></div>
@@ -51,6 +52,12 @@
           </div>
         </section>
       </div>
+      <section id="project-panel" class="panel project-panel" aria-labelledby="project-title">
+        <div class="section-heading"><div><h2 id="project-title">Project handover</h2><p id="project-guidance" class="muted">Package the invoices, saved results, fulfillment files and application source for another operator.</p></div><button id="export-project" class="secondary" hidden>Export project</button></div>
+        <p id="project-state" class="muted"></p>
+        <div class="table-scroll"><table id="project-exports" hidden><thead><tr><th>Created</th><th>Contents</th><th>State</th><th>Files</th></tr></thead><tbody id="project-export-rows"></tbody></table></div>
+        <p id="project-empty" class="empty">A complete package appears here after export.</p>
+      </section>
       <footer><span id="tenant-label"></span><span>Merchant operations · x402 API</span></footer>
     </div>
   </main>

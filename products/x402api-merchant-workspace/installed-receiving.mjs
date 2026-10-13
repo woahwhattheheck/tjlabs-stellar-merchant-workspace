@@ -15,13 +15,16 @@ import { prepareRuntimeInstall, recoverRuntime, installRuntime, inspectRuntimeIn
 import { verifyRuntimeProfile } from '../../stellar/scf-starforge-20261009/distribution/runtime-profile.mjs';
 import { operationLease } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
 
-const OPERATION = 'SCF-X402API-MERCHANT-INSTALLED-7DE2-20261012';
+import { exportProjectFromBrowser, receivePortableProject, verifyPortableReceiving } from './portable-receiving.mjs';
 const ORIGINAL_OPERATION = 'SCF-X402API-MERCHANT-COMMISSIONING-7DE2-20261012';
 const ORIGINAL_SHA = '8275abdb2768178cd10685d3631996ec90f9ec3f41227850921eea54dfea354d';
 const { values } = parseArgs({ strict: true, options: {
   repo: { type: 'string' }, 'source-commit': { type: 'string' }, original: { type: 'string' },
   root: { type: 'string' }, playwright: { type: 'string' }, chromium: { type: 'string' },
+  portable: { type: 'boolean', default: false },
 } });
+const OPERATION = values.portable ? 'SCF-X402API-MERCHANT-PORTABLE-PROJECT-7DE2-20261012' :
+  'SCF-X402API-MERCHANT-INSTALLED-7DE2-20261012';
 for (const name of ['repo', 'original', 'root', 'playwright', 'chromium'])
   assert(typeof values[name] === 'string' && isAbsolute(values[name]) && resolve(values[name]) === values[name], 'Use each original absolute ' + name + ' selection.');
 assert(/^[0-9a-f]{40}$/.test(values['source-commit']), 'Select one immutable accepted source commit.');
@@ -62,16 +65,32 @@ async function save(path, value, { original = false } = {}) {
     finally { await handle.close(); }
     await syncDirectory(dirname(path)); return value;
   }
-  const temporary = path + '.' + randomUUID() + '.partial', handle = await open(temporary, 'wx', 0o600);
-  try { await handle.writeFile(body); await handle.sync(); } finally { await handle.close(); }
+  const temporary = path + '.' + randomUUID() + '.partial';
+  let handle = null, created = false;
   try {
+    handle = await open(temporary, 'wx', 0o600); created = true;
+    await handle.writeFile(body); await handle.sync();
+    await handle.close(); handle = null;
     if (original) {
       try { await link(temporary, path); }
-      catch (error) { if (error.code !== 'EEXIST') throw error; assert.deepEqual(await readFile(path), body); }
+      catch (error) {
+        if (error.code !== 'EEXIST') throw error;
+        const target = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+        try { assert((await target.stat()).isFile()); assert.deepEqual(await target.readFile(), body); await target.sync(); }
+        finally { await target.close(); }
+      }
       await unlink(temporary);
     } else await rename(temporary, path);
     await syncDirectory(dirname(path));
-  } finally { try { await unlink(temporary); } catch (error) { if (error.code !== 'ENOENT') throw error; } }
+  } finally {
+    try { if (handle) await handle.close(); }
+    finally {
+      if (created) {
+        try { await unlink(temporary); await syncDirectory(dirname(path)); }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
+      }
+    }
+  }
   return value;
 }
 let stopping = null, model = null, activeRun = null, commandChild = null, browser = null, browserContext = null, sentinel = null;
@@ -110,9 +129,10 @@ async function runCommand(label, command, env = process.env) {
       return record;
     }
   }
-  // These two original commands are read-only doctors. A missing ended receipt
-  // can resume only after the owning foreground has closed its previous child.
-  // Each retained attempt has separate output files; returned JSON is not joined.
+  // Each doctor or portable command retains one selected argv. Portable writes
+  // additionally bind their original UUID and complete request in a private file.
+  // Resume follows the original foreground's child drain and uses that same
+  // request. Each attempt keeps separate complete stdout and stderr files.
   const attempt = { directory: join(dir, 'attempt-' + randomUUID()), previous: last?.directory ?? null,
     startedAt: new Date().toISOString() };
   await directory(attempt.directory);
@@ -144,8 +164,8 @@ async function runCommand(label, command, env = process.env) {
   stopped(); return record;
 }
 function sqlName(name) { return '"' + name.replaceAll('"', '""') + '"'; }
-function databaseSnapshot() {
-  const db = new DatabaseSync(DATABASE, { readOnly: true, enableDoubleQuotedStringLiterals: false });
+function databaseSnapshot(databasePath = DATABASE) {
+  const db = new DatabaseSync(databasePath, { readOnly: true, enableDoubleQuotedStringLiterals: false });
   try {
     db.exec('BEGIN');
     const definitions = db.prepare("SELECT name,sql FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all();
@@ -165,7 +185,8 @@ function databaseSnapshot() {
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_events WHERE state='PENDING'").get().count, 0);
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_fulfillments WHERE state!='COMPLETE'").get().count, 0);
     db.exec('ROLLBACK');
-    return { businessSha256: sha(encoding(business)), business, runtimes, orders };
+    return { businessSha256: sha(encoding(business)),
+      allUserRowsSha256: sha(encoding({ ...business, tables })), business, runtimes, orders };
   } finally { db.close(); }
 }
 async function originalSnapshot(name) {
@@ -351,12 +372,20 @@ async function receiveReads(opening, scenario, completed, label) {
     assert.equal(downloaded.raw.length, expected.bytes); assert.equal(sha(downloaded.raw), expected.sha256);
     const path = join(ROOT, 'downloads', label, expected.paymentId + '.txt');
     await save(path, downloaded.raw, { original: true });
+    let envelope = null;
+    if (values.portable) {
+      const original = await get(opening.url, scenario.operatorToken, '/api/orders/' + expected.merchantOrderId + '/envelope');
+      const envelopePath = join(ROOT, 'downloads', label, expected.paymentId + '-payment-request.json');
+      await save(envelopePath, original.raw, { original: true });
+      envelope = { path: envelopePath, bytes: original.raw.length, sha256: sha(original.raw) };
+    }
     invoices.push({ ...expected, reference: inspected.order.reference, title: inspected.order.title,
-      historySha256: sha(encoding(inspected.history)), download: { path, bytes: downloaded.raw.length, sha256: sha(downloaded.raw) } });
+      historySha256: sha(encoding(inspected.history)), download: { path, bytes: downloaded.raw.length, sha256: sha(downloaded.raw) },
+      ...(envelope ? { envelope } : {}) });
   }
-  return { invoices, apiStateSha256: sha(encoding(state)), nativeUrlRecord: opening.operationId };
+  return { invoices, mode: state.mode, apiStateSha256: sha(encoding(state)), nativeUrlRecord: opening.operationId };
 }
-async function receiveBrowser(opening, scenario, reads) {
+async function receiveBrowser(opening, scenario, reads, { label = 'installed', review = false, exportProject = false } = {}) {
   const require = createRequire(import.meta.url), loaded = require(values.playwright);
   const chromium = loaded.chromium ?? loaded.default?.chromium; assert(chromium?.launch);
   browser = await chromium.launch({ executablePath: values.chromium, headless: true,
@@ -368,7 +397,9 @@ async function receiveBrowser(opening, scenario, reads) {
   page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await browserContext.route('**/*', async route => {
     const request = route.request(), url = new URL(request.url());
-    if (url.origin !== origin || request.method() !== 'GET') {
+    const projectWrite = exportProject && request.method() === 'POST' &&
+      (url.pathname === '/api/project/exports' || /^\/api\/project\/exports\/[0-9a-f-]{36}\/download$/.test(url.pathname));
+    if (url.origin !== origin || request.method() !== 'GET' && !projectWrite) {
       failures.push({ kind: 'unexpected-browser-request', method: request.method(), origin: url.origin, path: url.pathname });
       return route.abort();
     }
@@ -377,8 +408,9 @@ async function receiveBrowser(opening, scenario, reads) {
       const headers = {};
       for (const [name, value] of Object.entries(await request.allHeaders()))
         if (!['host','connection','accept-encoding','content-length'].includes(name)) headers[name] = value;
-      const response = await fetch(request.url(), { headers, redirect: 'error', signal: AbortSignal.timeout(15000) });
-      const body = Buffer.from(await response.arrayBuffer()); assert(body.length <= 16 * 1024 * 1024);
+      const response = await fetch(request.url(), { method: request.method(), headers,
+        ...(projectWrite ? { body: request.postDataBuffer() } : {}), redirect: 'error', signal: AbortSignal.timeout(15000) });
+      const body = Buffer.from(await response.arrayBuffer()); assert(body.length <= 64 * 1024 * 1024);
       const selected = {};
       for (const name of ['content-type','cache-control','content-security-policy','x-content-type-options','content-disposition','referrer-policy'])
         if (response.headers.has(name)) selected[name] = response.headers.get(name);
@@ -400,6 +432,12 @@ async function receiveBrowser(opening, scenario, reads) {
     assert.equal(await page.locator('#count-awaiting').innerText(), '0');
     assert.equal(await page.locator('#count-progress').innerText(), '0');
     assert.equal(await page.locator('#order-rows tr').count(), 5);
+    if (review) {
+      assert.equal(await page.locator('#review-banner').isVisible(), true);
+      assert.equal(await page.locator('#show-create').isVisible(), false);
+      assert.equal(await page.locator('#export-project').isVisible(), false);
+      assert.equal(await page.locator('#connection-state').innerText(), 'Project review');
+    }
     for (const [index, invoice] of reads.invoices.entries()) {
       stopped();
       await page.getByRole('row', { name: invoice.reference + ', Delivered', exact: true }).click();
@@ -410,29 +448,41 @@ async function receiveBrowser(opening, scenario, reads) {
       assert.equal(await page.locator('#create-charge').isVisible(), false);
       assert.equal(await page.locator('#download-result').isVisible(), true);
       const desktop = await dimensions(); assert(desktop.document <= desktop.viewport + 1, 'The original desktop layout overflows.');
-      if (index === 0) await capture('merchant-installed-desktop.png');
+      if (index === 0) await capture('merchant-' + label + '-desktop.png');
       const pending = page.waitForEvent('download', { timeout: 15000 }); await page.locator('#download-result').click();
-      const download = await pending, path = join(ROOT, 'downloads', 'browser', invoice.paymentId + '.txt');
+      const download = await pending, path = join(ROOT, 'downloads', 'browser-' + label, invoice.paymentId + '.txt');
       await directory(dirname(path)); await download.saveAs(path); assert.equal(await download.failure(), null);
       assert.equal(download.suggestedFilename(), 'Merchant_Commissioned_Delivery.txt');
       downloads.push(await originalFile(path, { bytes: invoice.bytes, sha256: invoice.sha256 }));
+      if (values.portable) {
+        const envelopeEvent = page.waitForEvent('download', { timeout: 15000 });
+        await page.locator('#download-envelope').click();
+        const envelopeDownload = await envelopeEvent;
+        const envelopePath = join(ROOT, 'downloads', 'browser-' + label, invoice.paymentId + '-payment-request.json');
+        await envelopeDownload.saveAs(envelopePath); assert.equal(await envelopeDownload.failure(), null);
+        downloads.push(await originalFile(envelopePath, { bytes: invoice.envelope.bytes, sha256: invoice.envelope.sha256 }));
+      }
     }
+    const project = exportProject ? await exportProjectFromBrowser({ page, opening, scenario, root: ROOT,
+      identity, get, save, directory, originalFile, capture, stopped, retainCompleted }) : null;
     await page.setViewportSize({ width: 390, height: 844 }); await page.evaluate(() => scrollTo(0, 0));
-    await capture('merchant-installed-phone-invoices.png');
+    await capture('merchant-' + label + '-phone-invoices.png');
     const first = reads.invoices[0];
     await page.getByRole('row', { name: first.reference + ', Delivered', exact: true }).click();
     await page.locator('#detail-content[data-order-id="' + first.merchantOrderId + '"]').waitFor({ state: 'visible' });
     await page.locator('#detail-panel').evaluate(element => element.scrollIntoView({ block: 'start' }));
     const phone = await dimensions(); assert(phone.document <= phone.viewport + 1, 'The original phone layout overflows.');
-    await capture('merchant-installed-phone-detail.png'); await capture('merchant-installed-phone-complete.png', true);
+    await capture('merchant-' + label + '-phone-detail.png'); await capture('merchant-' + label + '-phone-complete.png', true);
     await page.locator('#search').fill(reads.invoices.at(-1).reference); assert.equal(await page.locator('#order-rows tr').count(), 1);
     await page.locator('#search').fill(''); assert.equal(await page.locator('#order-rows tr').count(), 5);
     await page.locator('#disconnect').click(); await page.locator('#connect-panel').waitFor({ state: 'visible' });
     await page.locator('#operator-token').fill(scenario.operatorToken); await page.locator('#connect-form button').click();
     await page.locator('#workspace').waitFor({ state: 'visible' }); assert.equal(await page.locator('#count-complete').innerText(), '5');
     assert.deepEqual(failures, []); assert.deepEqual(consoleErrors, []);
-    return { browser: await browser.version(), chromium: values.chromium, mode: 'ORIGINAL_INSTALLED_HTTP_GET_BRIDGE',
-      dimensions: { phone }, images, downloads, requests, pageErrors: failures, consoleErrors };
+    return { browser: await browser.version(), chromium: values.chromium,
+      mode: exportProject ? 'ORIGINAL_INSTALLED_PORTABLE_HTTP_BRIDGE' : 'ORIGINAL_INSTALLED_HTTP_GET_BRIDGE',
+      dimensions: { phone }, images, downloads, requests, pageErrors: failures, consoleErrors,
+      ...(project ? { project } : {}) };
   } finally {
     await browserContext.close(); browserContext = null; await browser.close(); browser = null;
   }
@@ -486,7 +536,8 @@ async function receive() {
   await directory(ROOT);
   const selection = { schema: 'stellar-forge.merchant-installed-receiving-selection.v1', operation: OPERATION,
     originalOperation: ORIGINAL_OPERATION, originalArchiveSha256: ORIGINAL_SHA, root: ROOT, original: ORIGINAL,
-    repository: values.repo, sourceCommit: values['source-commit'], playwright: values.playwright, chromium: values.chromium };
+    repository: values.repo, sourceCommit: values['source-commit'], playwright: values.playwright, chromium: values.chromium,
+    ...(values.portable ? { portable: true } : {}) };
   await save(join(ROOT, 'selection.json'), selection, { original: true });
   const previous = await readJSON(join(ROOT, 'complete.json'));
   if (previous) {
@@ -496,6 +547,7 @@ async function receive() {
     try { const current = databaseSnapshot(); assert.equal(current.businessSha256, previous.afterBusinessSha256); }
     finally { await lease.close(); }
     for (const file of [...previous.browser.images, ...previous.browser.downloads]) await originalFile(file.path, file);
+    if (values.portable) await verifyPortableReceiving(previous.portable, { originalFile });
     return { ...previous, reopened: true };
   }
   const scenario = await readJSON(join(RECEIVED, 'scenario.json')), completed = await readJSON(join(RECEIVED, 'complete.json'));
@@ -572,7 +624,7 @@ async function receive() {
     if (opening.completed) first = { ...opening.completed.result, operationId: opening.operationId, originalProcess: opening.completed.native };
     else {
       const reads = await receiveReads(opening, scenario, completed, 'first');
-      const visual = await receiveBrowser(opening, scenario, reads);
+      const visual = await receiveBrowser(opening, scenario, reads, { exportProject: values.portable });
       const ended = await finishOpening(opening, { reads, browser: visual });
       first = { reads, browser: visual, operationId: opening.operationId, originalProcess: ended.result };
     }
@@ -597,6 +649,10 @@ async function receive() {
   const after = await originalSnapshot('after-reopen');
   assert.equal(after.businessSha256, before.businessSha256); assert.equal(sentinel.requests.length, 0);
   assert.equal(first.reads.apiStateSha256, second.reads.apiStateSha256);
+  const portable = values.portable ? await receivePortableProject({ root: ROOT, sourceRoot, scenario, completed,
+    exported: first.browser.project, firstReads: first.reads, identity, get, save, directory, originalFile,
+    databaseSnapshot, receiveReads, receiveBrowser, runCommand, stopped, retainCompleted }) : null;
+  assert.equal(sentinel.requests.length, 0);
   const history = []; let cursor = null;
   do {
     const page = await model.applicationsHistory({ applicationId, limit: 100, cursor }); history.push(...page.runs); cursor = page.nextCursor;
@@ -611,7 +667,8 @@ async function receive() {
     beforeBusinessSha256: before.businessSha256, afterBusinessSha256: after.businessSha256,
     businessTables: after.business.tables.map(table => ({ name: table.name, rows: table.rows.length })),
     runtimeHistory: after.runtimes, invoices: second.reads.invoices, browser: first.browser,
-    providerCalls: sentinel.requests, createdInvoices: 0, submittedPayments: 0, completedAt: new Date().toISOString() };
+    providerCalls: sentinel.requests, createdInvoices: 0, submittedPayments: 0, completedAt: new Date().toISOString(),
+    ...(portable ? { portable } : {}) };
   await retainCompleted('original-installed-completion', () => save(join(ROOT, 'complete.json'), result, { original: true }));
   return result;
 }
@@ -640,7 +697,7 @@ try {
   process.off('SIGTERM', terminated); process.off('SIGINT', interrupted);
 }
 if (failure) { process.exitCode = 1; }
-else emit({ state: 'INSTALLED_MERCHANT_COMPLETE', operation: OPERATION, sourceCommit: result.sourceCommit,
+else emit({ state: values.portable ? 'PORTABLE_MERCHANT_COMPLETE' : 'INSTALLED_MERCHANT_COMPLETE', operation: OPERATION, sourceCommit: result.sourceCommit,
   invoices: result.invoices.length, browser: result.browser.browser, screenshots: result.browser.images,
   beforeBusinessSha256: result.beforeBusinessSha256, afterBusinessSha256: result.afterBusinessSha256,
   providerCalls: result.providerCalls.length });
