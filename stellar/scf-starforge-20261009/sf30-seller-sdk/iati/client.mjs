@@ -1,5 +1,6 @@
 // MIT. Original IATI console client. All values and native query parameters retain their source strings.
 import { createOrganisationReconciliationClient } from './organisation_reconciliation_client.mjs';
+import { createDocumentEvidenceClient } from './document_evidence_client.mjs';
 import { open, lstat, realpath } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { request as httpRequest } from 'node:http';
@@ -74,6 +75,8 @@ export class IatiWorkspaceClient{
   this.#origin=selected.origin;this.#token=selected.hash.slice(1);this.#timeout=timeoutMs;
   Object.defineProperty(this, 'organisationReconciliation', { enumerable: true, value:
    createOrganisationReconciliationClient((path, options) => this.#request(path, options)) });
+  Object.defineProperty(this, 'documentEvidence', { enumerable: true, value:
+   createDocumentEvidenceClient((path, options) => this.#request(path, options)) });
  }
  get origin(){return this.#origin;}
  async #request(path,{body,headers={},signal,raw=false,maximum=16*1024*1024}={}){
@@ -356,6 +359,83 @@ export class IatiWorkspaceClient{
  ampReceive({body,bytes},options={}){
   if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('AMP_PACKET','Choose the complete AMP handover ZIP up to 4 GiB.');
   return this.#request('/api/iati/amp/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
+ }
+
+
+ // Saved geography uses the original complete activity source; no amount is allocated per location.
+ #geographyPost(path,input,options){
+  if(!object(input))throw problem('GEOGRAPHY_INPUT','Use the complete original geography request object.');
+  const body=JSON.stringify(input);
+  if(Buffer.byteLength(body)>64*1024*1024)throw problem('GEOGRAPHY_INPUT','The complete geography request exceeds 64 MiB.');
+  return this.#request('/api/iati/geography/'+path,{...options,maximum:64*1024*1024,headers:{'content-type':'application/json'},body});
+ }
+ #geographyRows(input,points){
+  if(!object(input))throw problem('GEOGRAPHY_QUERY','Use an exact saved review and revision.');
+  const selected={...input},allowed=new Set(['id','revision','source','search','activityId','rowId','coordinateStatus','decision','exactness','locationClass','locationReach','offset','limit']);
+  if(Object.keys(selected).some(key=>!allowed.has(key)))throw problem('GEOGRAPHY_QUERY','The geography query contains an unknown field.');
+  hash(selected.id);if(selected.revision===undefined)throw problem('REVISION','Choose the explicit saved geographic revision.');revision(selected.revision);
+  for(const key of ['source','rowId'])if(selected[key]!==undefined&&selected[key]!=='')hash(selected[key]);
+  for(const key of ['search','activityId','coordinateStatus','decision','exactness','locationClass','locationReach'])if(selected[key]!==undefined&&typeof selected[key]!=='string')throw problem('GEOGRAPHY_QUERY','Keep original geography filters as exact scalar strings.');
+  if(selected.coordinateStatus!==undefined&&!['','valid','missing','invalid','not-reported'].includes(selected.coordinateStatus))throw problem('GEOGRAPHY_QUERY','Choose a reported coordinate status.');
+  if(selected.decision!==undefined&&!['','accepted','needs-correction','note','unreviewed'].includes(selected.decision))throw problem('GEOGRAPHY_QUERY','Choose a saved analyst decision or unreviewed records.');
+  if(points&&selected.coordinateStatus!==undefined&&!['','valid'].includes(selected.coordinateStatus))throw problem('GEOGRAPHY_POINTS','Map points use valid reported coordinates.');
+  selected.offset??=0;selected.limit??=50;
+  if(!Number.isSafeInteger(selected.offset)||selected.offset<0||selected.offset>1000000||!Number.isSafeInteger(selected.limit)||selected.limit<1||selected.limit>1000)throw problem('GEOGRAPHY_PAGE','Choose an original geographic page of 1–1000 records.');
+  return selected;
+ }
+ geographyState(options){return this.#request('/api/iati/geography/state',{...options,maximum:64*1024*1024});}
+ /** Read the retained original request and its exact historical result before any caller-controlled retry. */
+ geographyRequest(requestId,options){
+  if(typeof requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(requestId))throw problem('GEOGRAPHY_REQUEST','Read the original geographic requestId.');
+  return this.#request('/api/iati/geography/requests/'+encodeURIComponent(requestId),{...options,maximum:129*1024*1024});
+ }
+ geographyReview(id,{revision:selectedRevision,...options}={}){
+  return this.#request('/api/iati/geography/reviews/'+hash(id)+'?'+query({revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});
+ }
+ geographyHistory(id,options){return this.#request('/api/iati/geography/reviews/'+hash(id)+'/history',{...options,maximum:64*1024*1024});}
+ geographyReport(id,{revision:selectedRevision,...options}={}){
+  return this.#request('/api/iati/geography/reviews/'+hash(id)+'/report?'+query({revision:revision(selectedRevision)}),{...options,maximum:64*1024*1024});
+ }
+ /** Keep this complete object and requestId unchanged after a lost response or CAS conflict. */
+ geographySave(input,options){
+  if(!object(input)||typeof input.requestId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(input.requestId))throw problem('GEOGRAPHY_REQUEST','Retain one original geographic requestId.');
+  if((input.id===undefined)!==(input.expectedRevision===undefined))throw problem('REVISION','An edit requires its exact id and expectedRevision together.');
+  if(input.id!==undefined){hash(input.id);revision(input.expectedRevision);}
+  if(input.sources!==undefined&&(!Array.isArray(input.sources)||input.sources.length>32||input.sources.some(id=>!HASH.test(id))))throw problem('GEOGRAPHY_SOURCES','Select the complete publisher source IDs.');
+  if(input.portfolio!=null){if(!object(input.portfolio)||input.portfolio.revision===undefined)throw problem('GEOGRAPHY_PORTFOLIO','Link the explicit original portfolio revision.');hash(input.portfolio.id);revision(input.portfolio.revision);}
+  return this.#geographyPost('reviews',input,options);
+ }
+ geographyRows(input,options){return this.#geographyPost('rows',this.#geographyRows(input,false),options);}
+ geographyPoints(input,options){return this.#geographyPost('points',this.#geographyRows(input,true),options);}
+ geographyCompare(input,options){
+  if(!object(input))throw problem('GEOGRAPHY_COMPARE','Select the exact before and after review revisions.');
+  hash(input.id);if(input.beforeRevision===undefined||input.afterRevision===undefined)throw problem('REVISION','Choose both saved geography revisions.');
+  revision(input.beforeRevision);revision(input.afterRevision);
+  if(input.beforeRevision>=input.afterRevision)throw problem('GEOGRAPHY_COMPARE','Compare an earlier and later revision of the same review.');
+  if(input.pairs!==undefined){if(!Array.isArray(input.pairs))throw problem('GEOGRAPHY_COMPARE','Pass the explicit replacement source pairs.');for(const pair of input.pairs){if(!object(pair))throw problem('GEOGRAPHY_COMPARE','Each replacement identifies both complete source editions.');hash(pair.before);hash(pair.after);}}
+  return this.#geographyPost('compare',input,options);
+ }
+ geographyComparison(id,options){return this.#request('/api/iati/geography/comparisons/'+hash(id),{...options,maximum:64*1024*1024});}
+ geographyComparisonChanges(id,{native,offset=0,limit=50,...options}={}){
+  hash(native);if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>250)throw problem('GEOGRAPHY_PAGE','Choose a bounded original native change page.');
+  return this.#request('/api/iati/geography/comparisons/'+hash(id)+'/changes?'+query({native,offset,limit}),{...options,maximum:64*1024*1024});
+ }
+ /** Returns the saved native descriptor; its artifact id differs from the content SHA. */
+ geographyExport(input,options){
+  if(!object(input))throw problem('GEOGRAPHY_EXPORT','Select one complete saved geography export.');
+  hash(input.id);revision(input.revision);
+  if(!['packet','geojson','csv','json','html'].includes(input.format))throw problem('GEOGRAPHY_EXPORT','Choose packet, GeoJSON, CSV, JSON or HTML.');
+  return this.#geographyPost('export',input,options);
+ }
+ /** Consume or cancel the complete original file stream and verify its descriptor bytes/SHA. */
+ geographyDownload(artifactId,options){return this.#request('/api/iati/geography/download/'+hash(artifactId),{...options,raw:true});}
+ geographyReceive(input,options){
+  if(!object(input)||typeof input.path!=='string'||!input.path||input.path.includes('\0'))throw problem('GEOGRAPHY_RECEIVE','Select the original complete local packet path.');
+  return this.#geographyPost('receive',input,options);
+ }
+ geographyReceivePacket({body,bytes},options={}){
+  if(!Number.isSafeInteger(bytes)||bytes<1||bytes>4*1024*1024*1024)throw problem('GEOGRAPHY_PACKET','Choose the complete original geography ZIP up to 4 GiB.');
+  return this.#request('/api/iati/geography/receive',{...options,maximum:64*1024*1024,body,headers:{'content-type':'application/zip','content-length':String(bytes)}});
  }
 
  async dispose(){if(this.#closed)return;this.#closed=true;this.#controller.abort(problem('CLOSED','The local IATI client is closing.'));

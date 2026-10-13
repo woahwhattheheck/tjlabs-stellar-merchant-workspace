@@ -7,6 +7,8 @@ const fail = (code, message) => { throw Object.assign(new Error(message), {code}
 const atomic = value => typeof value === 'string' && /^(0|[1-9]\d*)$/.test(value);
 const filters = ['type', 'payTo', 'network', 'extensions', 'scheme', 'asset', 'maxAmount'];
 const filterProperties = {
+  catalogId: {type:'string', minLength:1, maxLength:64, pattern:'^[a-z0-9][a-z0-9-]{0,63}$',
+    description:'Configured source ID from bazaar_catalogs. Retained through the original page and request.'},
   type: {type:'string', enum:['http','mcp'], description:'Exact advertised resource transport.'},
   payTo: {type:'string', minLength:1, maxLength:4096, description:'Exact recipient within the selected payment option.'},
   network: {type:'string', minLength:1, maxLength:4096, description:'Exact advertised payment network.'},
@@ -20,6 +22,12 @@ const filterProperties = {
 const annotations = {readOnlyHint:true, destructiveHint:false, idempotentHint:true, openWorldHint:true};
 
 export const BAZAAR_DISCOVERY_TOOLS = {
+  bazaar_catalogs: {
+    name:'bazaar_catalogs',
+    description:'List the host-configured discovery catalogs and exact default source. Select a catalog ID for browsing or searching.',
+    annotations,
+    inputSchema:{type:'object', properties:{}, additionalProperties:false},
+  },
   bazaar_search: {
     name:'bazaar_search',
     description:'Search the configured Bazaar. Return original-page context and exact continuation arguments. Inspect a returned handle before preparing a request.',
@@ -45,7 +53,7 @@ export const BAZAAR_DISCOVERY_TOOLS = {
 export function normalizeDiscoveryArguments(mode, args = {}) {
   if (!['search','resources'].includes(mode)) fail('INVALID_PARAMS', 'Unknown discovery mode');
   if (!plain(args)) fail('INVALID_PARAMS', 'Discovery arguments must be an object');
-  const allowed = new Set([...filters, 'limit', ...(mode === 'search' ? ['query','cursor'] : ['offset'])]);
+  const allowed = new Set([...filters, 'catalogId', 'limit', ...(mode === 'search' ? ['query','cursor'] : ['offset'])]);
   if (Object.keys(args).some(key => !allowed.has(key))) fail('INVALID_PARAMS', 'Unknown discovery argument');
   const result = {limit:args.limit === undefined ? 25 : args.limit};
   if (!Number.isSafeInteger(result.limit) || result.limit < 1 || result.limit > 100)
@@ -61,6 +69,11 @@ export function normalizeDiscoveryArguments(mode, args = {}) {
     result.offset = args.offset === undefined ? 0 : args.offset;
     if (!Number.isSafeInteger(result.offset) || result.offset < 0 || result.offset > 1000000)
       fail('INVALID_PARAMS', 'offset must be an integer from 0 to 1000000');
+  }
+  if (args.catalogId !== undefined) {
+    if (typeof args.catalogId !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(args.catalogId))
+      fail('INVALID_PARAMS', 'Choose an original configured catalog ID');
+    result.catalogId = args.catalogId;
   }
   for (const key of filters) {
     if (args[key] === undefined) continue;
@@ -78,8 +91,8 @@ export function discoveryRequestUrl(base, mode, args) {
   if (!url.pathname.endsWith('/')) url.pathname += '/';
   url.pathname += 'discovery/' + mode;
   for (const [key, value] of Object.entries(args)) {
-    // The cap is a buyer-side filter, not part of the native discovery protocol.
-    if (key !== 'maxAmount') url.searchParams.set(key, String(value));
+    // The cap and host catalog selection are local; preserve the native provider protocol.
+    if (key !== 'maxAmount' && key !== 'catalogId') url.searchParams.set(key, String(value));
   }
   return url;
 }

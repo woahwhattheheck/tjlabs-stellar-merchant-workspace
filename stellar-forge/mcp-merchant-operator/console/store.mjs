@@ -53,7 +53,20 @@ export class MerchantConsoleStore {
     const depth=this.transactionDepth??0,savepoint='console_nested_'+depth;
     this.db.exec(depth?'SAVEPOINT '+savepoint:'BEGIN IMMEDIATE');this.transactionDepth=depth+1;
     try { const value=fn();this.db.exec(depth?'RELEASE SAVEPOINT '+savepoint:'COMMIT');return value; }
-    catch(error){this.db.exec(depth?'ROLLBACK TO SAVEPOINT '+savepoint:'ROLLBACK');if(depth)this.db.exec('RELEASE SAVEPOINT '+savepoint);throw error;}
+    catch (error) {
+      try {
+        this.db.exec(depth ? 'ROLLBACK TO SAVEPOINT ' + savepoint : 'ROLLBACK');
+        if (depth) this.db.exec('RELEASE SAVEPOINT ' + savepoint);
+      } catch (rollbackError) {
+        // SQLite may already have rolled back after a full disk or an I/O error.
+        // Preserve the operation failure and retain cleanup details for callers.
+        if (error && (typeof error === 'object' || typeof error === 'function')) {
+          try { Object.defineProperty(error, 'rollbackError', { value: rollbackError, configurable: true }); }
+          catch { /* A frozen thrown value must retain its original identity. */ }
+        }
+      }
+      throw error;
+    }
     finally{this.transactionDepth=depth;}
   }
   profiles() {

@@ -81,6 +81,16 @@ Open the saved plan's full issue index. Its count covers the whole capture. Filt
 
 Record **Accepted** or **Changes requested** with the original operator note. This review selects the exact saved plan and original source document.
 
+## Exchange the complete mapping workbook
+
+In **Mapping → Customer mapping workbook**, choose the actual saved plan and **Export complete mapping workbook**. The installed operator produces a complete ZIP with the editable 16-sheet XLSX, matching JSON register, all declared original inputs, a customer guide and a file manifest. Open that complete delivery and keep its files together. The command-line equivalent is **starforge migration-operator workbook-export** with the original workspace, Python, workspace ID, plan ID and output path. **Export Mapping-Register.json** and the included original authoring renderer remain available for the same source. Use [Mapping workbooks](../../stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/MAPPING_WORKBOOK.md) for the complete authoring and receiving sequence.
+
+Return the original register and reviewed XLSX through **Review workbook changes → Load complete plan into mapping editor**. Review the complete field, layer, key, coordinate and project choices in the existing editor, make any further agreed changes, then use the normal Save plan and Review actions. The saved input retains the exact workbook and register, the complete proposed and saved plans, and every additional edit.
+
+A complete workbook-return JSON can be prepared with **starforge migration-operator workbook-propose** and imported in this same panel. Its proposal is recomputed against the selected original workspace. The existing merchant provides **merchant_migration_mapping_workbook**, **merchant_migration_mapping_register** and **merchant_migration_workbook_propose**; **merchant_migration_save_plan** accepts the complete workbookSourceJson with its original planJson and write identity.
+
+Keep worksheet names, headers, gray source cells and exported row order intact. Filters are available. Make added/removed field, key or project structures in the native editor after loading the proposal. Use **Retained mapping workbooks** on the saved plan to reopen all five input files; the full workspace export carries them onward.
+
 ## Build native data and maps
 
 Build the selected valid, reviewed plan. The original vector engine writes and reopens its actual output, including native layers, features, fields, geometry, CRS and complete sidecars. The resulting edition retains its native manifest and readback.
@@ -151,7 +161,7 @@ Connect retains the original `starforge.migration-merchant-connection.v1` config
 
 Declare approved selection, capture and handover aliases in its original `inputs` object, with the complete observed byte counts and hashes. Independent destinations name their actual directory and selected incoming workspace ID. The original configuration validator checks these fields before the merchant opens them. Keep other existing merchant families when adding `migrationWorkspaceConnection` to a current host.
 
-The complete attachment provides 44 `merchant_migration_*` tools. It exposes source paging, mapping and constraint review, native maps, cartography, retained request and file reads, export and independent receiving. Its SDK and CLI use the same operation and workspace identity.
+The complete attachment provides 46 `merchant_migration_*` tools. It exposes source paging, mapping and constraint review, native maps, cartography, retained request and file reads, export and independent receiving. Its SDK and CLI use the same operation and workspace identity.
 
 ~~~sh
 starforge migration-workspace call \
@@ -162,7 +172,7 @@ starforge migration-workspace call \
 
 For State, the payload file contains `{}`. Substitute the observed workspace ID. Other commands take their complete native arguments from the original result and reviewed input.
 
-Use [MERCHANT.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/MERCHANT.md) for the typed client, all 44 tools, running MCP connection, complete result downloads, chunk recovery and exact numeric JSON. A borrowed merchant retains its existing lifecycle. A private one-command CLI invocation drains its own attachment after completion.
+Use [MERCHANT.md](../../stellar/scf-starforge-20261009/sf30-seller-sdk/stac/migration/merchant/MERCHANT.md) for the typed client, merchant tools, running MCP connection, complete result downloads, chunk recovery and exact numeric JSON. A borrowed merchant retains its existing lifecycle. A private one-command CLI invocation drains its own attachment after completion.
 
 ## Deliver the whole project
 

@@ -144,6 +144,7 @@ export interface PlanningPaymentBase {
 }
 
 export type PlanningPayment =
+  | { kind: "FUNDED"; atomicUnitPrice: null; network: ""; asset: "" }
   | (PlanningPaymentBase & { kind: "PER_REQUEST" })
   | (PlanningPaymentBase & { kind: "UNPAID" })
   | (PlanningPaymentBase & {
@@ -165,7 +166,100 @@ export interface PlanningEconomics {
   hourlyCost: DecimalText | null;
 }
 
+
+/** Exact native reference. The full selected source also remains in calendarSource. */
+export interface PlanningFundingOrigin {
+  installationId: string;
+  revision: number;
+  sha256: string;
+  taskId?: string;
+  fundingId?: string;
+  entryId?: string;
+  mode?: "PURCHASE" | "ALLOWANCE_USE" | "REOPEN" | "FREE_USE";
+  state?: "PLANNED" | "CANCELLED";
+}
+export interface PlanningFundingEconomics {
+  currency: string;
+  unitRevenue: DecimalText | null;
+  feePerPayment: DecimalText | null;
+}
+export interface PlanningExplicitFunding extends PlanningEvidence {
+  id: string;
+  label: string;
+  kind: "DIRECT" | "PREPAID";
+  date: DateText;
+  buyerId: string;
+  /** Original purchased operation, retained separately from the later result's task. */
+  operationId: string;
+  facilitatorId: string | null;
+  atomicUnitPrice: AtomicText | null;
+  network: string;
+  asset: string;
+  economics: PlanningFundingEconomics | null;
+  origin: PlanningFundingOrigin | null;
+}
+export interface PlanningCalendarSource {
+  schema: "stellar-forge.sf47-cohort-plan-calendar-source.v1";
+  groupId: string;
+  /** Complete original native JSON documents, including saved records and source inventory. */
+  selection: Record<string, unknown>;
+  cohortSeed: NativeCohortPlanningSeed;
+}
+export interface PlanningExplicitFundingReport extends Omit<PlanningExplicitFunding, "economics">, PlannedMetrics {
+  merchantId: string;
+  buyerOperatorId: string;
+  merchantOperatorId: string;
+  facilitatorOperatorId: string | null;
+  scheduleIds: string[];
+  useOccurrenceIds: string[];
+  firstUsefulResultAt: TimestampText | null;
+  firstUsefulResultDate: DateText | null;
+  firstUseOccurrenceId: string | null;
+  withinWindow: boolean | null;
+  unpricedPaymentRequests: number;
+  unpricedIndependentOpportunities: number;
+  qualificationGaps: string[];
+  atomicAmount: AtomicText | null;
+  status: "UNUSED" | "EXISTING_FUNDING" | "UNPRICED" | "ZERO_PRICE" | "PLANNED";
+  sourceEconomics: PlanningFundingEconomics | null;
+  economics: PlanningEconomicAmounts | null;
+}
+
+
+export declare const COHORT_SCHEDULING_SCHEMA: "stellar-forge.sf47-delivery-scheduling.v1";
+export interface PlanningDateAllocation {
+  /** Date selected by the unchanged original cadence and source calendar. */
+  sourceDate: DateText;
+  /** Reviewed delivery date inside that same complete rule window. */
+  date: DateText;
+}
+export interface PlanningSchedulingPolicy {
+  scheduleId: string;
+  flexible: boolean;
+  /** Tolerances are anchored to sourceDate; replanning does not reset them. */
+  advanceDays: number;
+  delayDays: number;
+  releaseDate: DateText | null;
+  /** The complete output must arrive by the end of this UTC date. */
+  dueDate: DateText | null;
+  weekdays: Weekday[];
+  minimumGapDays: number;
+  /** Larger values receive shared capacity first. */
+  priority: number;
+  note: string;
+}
+export interface PlanningDeliveryScheduling {
+  schema: typeof COHORT_SCHEDULING_SCHEMA;
+  strategy: "NEAREST" | "EARLIEST";
+  schedules: PlanningSchedulingPolicy[];
+  note: string;
+}
+export declare function normalizeCohortScheduling(raw: unknown, schedules: PlanningSchedule[]): PlanningDeliveryScheduling;
+
 export interface PlanningSchedule {
+  dateAllocations?: PlanningDateAllocation[];
+  fundingGroupIds?: string[];
+  origin?: PlanningFundingOrigin | null;
   /** Shared active-hours pool; omission keeps delivery effort unassigned. */
   capacityPoolId?: string | null;
   id: string;
@@ -203,6 +297,7 @@ export interface PlanningSensitivity {
 
 /** Complete normalized plan; the edition may also retain the original caller JSON. */
 export interface CohortPlan {
+  deliveryScheduling?: PlanningDeliveryScheduling;
   schema: typeof COHORT_PLAN_SCHEMA;
   draftId: string;
   name: string;
@@ -218,6 +313,8 @@ export interface CohortPlan {
   schedules: PlanningSchedule[];
   workshares: PlanningWorkshare[];
   capacityPools?: PlanningCapacityPool[];
+  fundingGroups?: PlanningExplicitFunding[];
+  calendarSource?: PlanningCalendarSource | null;
   sensitivity: PlanningSensitivity;
   note: string;
 }
@@ -234,6 +331,8 @@ export interface PlannedMetrics {
 }
 
 export interface PlanningSummary extends PlannedMetrics {
+  unpricedPaymentRequests?: number;
+  unpricedIndependentOpportunities?: number;
   independentBuyerOperators: number;
   independentMerchantOperators: number;
   returningBuyerOperators: number;
@@ -297,6 +396,10 @@ export interface PlanningEconomicAmounts {
 }
 
 export interface PlanningOccurrence extends PlannedMetrics {
+  /** Present when this original occurrence has a reviewed date allocation. */
+  sourceDate?: DateText;
+  originalScheduledAt?: TimestampText;
+  fundingGroupIds?: string[];
   id: string;
   scheduleId: string;
   label: string;
@@ -313,7 +416,7 @@ export interface PlanningOccurrence extends PlannedMetrics {
   completionDate: DateText;
   withinWindow: boolean;
   asOfPosition: AsOfPosition;
-  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID";
+  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID" | "FUNDED";
   network: string;
   asset: string;
   allowance: PlanningAllowance | null;
@@ -364,12 +467,16 @@ export interface PlanningTarget {
   expected: number;
   planned: number | null;
   gap: number | null;
-  status: "PLANNED_CAPACITY" | "SHORTFALL" | "OUTSIDE_SCHEDULE_SCOPE";
+  status: "PLANNED_CAPACITY" | "SHORTFALL" | "OUTSIDE_SCHEDULE_SCOPE" | "PRICE_UNSPECIFIED";
+  unpricedAdditional?: number;
 }
 
 export type PlanningComponent = "revenue" | "supplierCost" | "paymentFees" | "activeHours" | "laborCost";
 
 export interface PlanningCurrency extends PlanningEconomicAmounts {
+  /** Unallocated linked estimates keep affected currency totals incomplete. */
+  unallocatedFundingIds?: string[];
+  unallocatedDeliveryIds?: string[];
   records: number;
   knownSubtotals: Record<PlanningComponent, DecimalText>;
   unknownRecordCounts: Record<PlanningComponent, number>;
@@ -380,7 +487,9 @@ export interface PlanningCurrency extends PlanningEconomicAmounts {
 export interface PlanningAsset {
   network: string;
   asset: string;
-  atomicAmount: AtomicText;
+  atomicAmount: AtomicText | null;
+  knownAtomicAmount?: AtomicText;
+  unpricedPaymentRequests?: number;
   plannedPaymentRequests: number;
   plannedPaidPurchases: number;
 }
@@ -503,11 +612,13 @@ export interface PlanningCapacityReport {
   sensitivity: Array<PlanningCapacitySummary & { poolId: string; label: string; effortIncreasePct: DecimalText }>;
 }
 export interface PlanningServicePricing {
+  fundingGroupIds?: string[];
+  currencies?: string[];
   id: string;
   label: string;
   scheduleIds: string[];
   currency: string | null;
-  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID";
+  paymentKind: "PER_REQUEST" | "PREPAID" | "UNPAID" | "FUNDED";
   scheduledTasks: number;
   chargeUnits: number;
   unitRevenue: DecimalText | null;
@@ -527,6 +638,7 @@ export interface CohortPlanReport {
   /** Complete newer reports retain these extensions; earlier saved editions can omit them. */
   capacity?: PlanningCapacityReport;
   servicePricing?: PlanningServicePricing[];
+  fundingGroups?: PlanningExplicitFundingReport[];
 
   schema: typeof COHORT_PLAN_REPORT_SCHEMA;
   kind: "PLAN";
@@ -570,3 +682,131 @@ export declare function evaluateCohortPlan(input: CohortPlan, options?: Planning
 export declare function evaluateCohortPlan(input: unknown, options?: PlanningEvaluationOptions): CohortPlanReport;
 /** One complete wide CSV string with RFC-style quoting, CRLF and formula-safe text cells. */
 export declare function exportCohortPlanCsv(report: CohortPlanReport): string;
+
+
+export declare const COHORT_PLAN_COMPARISON_SCHEMA: "stellar-forge.sf47-cohort-plan-comparison.v1";
+export type CohortPlanDocument = CohortPlan | CohortPlanReport | import('./cohort_planning_scheduling.mjs').CohortDeliverySchedule | {
+  schema: "stellar-forge.sf47-cohort-plan-edition.v1";
+  plan: CohortPlan;
+  [originalField: string]: unknown;
+};
+export interface PlanningNumberChange { before: number | null; after: number | null; delta: number | null; }
+export interface PlanningDecimalChange { before: DecimalText | null; after: DecimalText | null; delta: DecimalText | null; }
+export interface PlanningFieldChange {
+  key: string;
+  beforePresent: boolean;
+  afterPresent: boolean;
+  before: unknown;
+  after: unknown;
+}
+export interface PlanningRowChange<T> {
+  id: string;
+  status: "ADDED" | "REMOVED" | "CHANGED" | "MOVED";
+  beforeIndex: number | null;
+  afterIndex: number | null;
+  before: T | null;
+  after: T | null;
+  changes: PlanningFieldChange[];
+}
+export type PlanningMoneyComparisonField = PlanningComponent | "totalCost" | "contribution" | "marginPercent";
+export type PlanningWorkshareComparisonField = "fee" | "hours" | "otherCosts" | "laborCost" | "totalCost" | "contribution";
+export type PlanningWorkshareTotals = {
+  currency: string;
+  records: number;
+  complete: boolean;
+  knownSubtotals: Record<PlanningWorkshareComparisonField, DecimalText>;
+  unknownRecordCounts: Record<PlanningWorkshareComparisonField, number>;
+} & Record<PlanningWorkshareComparisonField, DecimalText | null>;
+export interface PlanningComparisonOrigin {
+  label?: string; caseId?: string; sourceId?: string; filename?: string;
+  sha256?: string; bytes?: number; capturedAt?: TimestampText;
+}
+export interface PlanningComparisonOptions {
+  title?: string; note?: string;
+  origins?: { before?: PlanningComparisonOrigin | null; after?: PlanningComparisonOrigin | null };
+}
+
+export interface PlanningAmountComparison<T> {
+  id: string; before: T | null; after: T | null;
+  amounts: Record<string, PlanningDecimalChange>;
+}
+export interface PlanningDeliveryComparison {
+  status: { before: PlanningCapacityReport["status"]; after: PlanningCapacityReport["status"] };
+  pools: Array<PlanningAmountComparison<PlanningCapacityPoolReport>>;
+  days: Array<PlanningAmountComparison<PlanningCapacityDay>>;
+  weeks: Array<PlanningAmountComparison<PlanningCapacityWeek>>;
+  dayChanges: Array<PlanningRowChange<PlanningCapacityDay>>;
+  weekChanges: Array<PlanningRowChange<PlanningCapacityWeek>>;
+  unassigned: Array<PlanningRowChange<PlanningCapacityReport["unassigned"][number]>>;
+  sensitivity: Array<PlanningRowChange<PlanningCapacityReport["sensitivity"][number]>>;
+}
+export interface PlanningPriceComparison extends PlanningAmountComparison<PlanningServicePricing> {
+  /** Monetary differences exist only when both groups retain the same known currency. */
+  counts: Record<"chargeUnits" | "scheduledTasks", PlanningNumberChange>;
+  minimumMarginPct: PlanningDecimalChange;
+}
+
+export interface CohortPlanComparison {
+  schema: typeof COHORT_PLAN_COMPARISON_SCHEMA;
+  kind: "PLAN_COMPARISON";
+  capacity: PlanningDeliveryComparison;
+  servicePricing: PlanningPriceComparison[];
+  review: { title: string; note: string; origins: { before: PlanningComparisonOrigin | null; after: PlanningComparisonOrigin | null } };
+  /** The complete original JSON inputs, including original edition metadata/report when present. */
+  documents: { before: CohortPlanDocument; after: CohortPlanDocument };
+  /** Both reports are recalculated from each input's own complete retained rule. */
+  before: CohortPlanReport;
+  after: CohortPlanReport;
+  basis: Array<{ key: string; before: unknown; after: unknown; match: boolean }>;
+  summary: Array<{ key: keyof PlanningSummary } & PlanningNumberChange>;
+  economicsCoverage: Record<"before" | "after", { occurrences: number; withEconomics: number; withoutEconomics: number; schedulesWithoutEconomics: string[] }>;
+  targets: Array<{
+    key: string; before: PlanningTarget | null; after: PlanningTarget | null;
+    expected: PlanningNumberChange; planned: PlanningNumberChange; gap: PlanningNumberChange;
+  }>;
+  currencies: Array<{
+    currency: string; before: PlanningCurrency | null; after: PlanningCurrency | null;
+    amounts: Record<PlanningMoneyComparisonField, PlanningDecimalChange>;
+  }>;
+  /** One-time commissioning totals, kept separate from recurring schedule economics. */
+  workshareTotals: Array<{
+    currency: string; before: PlanningWorkshareTotals | null; after: PlanningWorkshareTotals | null;
+    amounts: Record<PlanningWorkshareComparisonField, PlanningDecimalChange>;
+  }>;
+  assets: Array<{
+    network: string; asset: string; before: PlanningAsset | null; after: PlanningAsset | null;
+    atomicAmount: PlanningDecimalChange; plannedPaymentRequests: PlanningNumberChange; plannedPaidPurchases: PlanningNumberChange;
+  }>;
+  days: Array<{
+    date: DateText; before: PlanningDay | null; after: PlanningDay | null;
+    metrics: Record<keyof PlannedMetrics, PlanningNumberChange>;
+  }>;
+  inputChanges: {
+    settings: PlanningFieldChange[];
+    collections: Array<{
+      kind: "buyers" | "merchants" | "facilitators" | "operations" | "schedules" | "workshares" | "capacityPools" | "fundingGroups";
+      beforeOrder: string[]; afterOrder: string[];
+      rows: Array<PlanningRowChange<PlanningParticipant | PlanningFacilitator | PlanningOperation | PlanningSchedule | PlanningWorkshare | PlanningCapacityPool | PlanningExplicitFunding>>;
+    }>;
+  };
+  occurrences: Array<PlanningRowChange<PlanningOccurrence>>;
+  participants: Array<{
+    kind: "buyers" | "merchants" | "operations" | "facilitators";
+    rows: Array<PlanningRowChange<PlanningBuyerGroup | PlanningMerchantGroup | PlanningOperationGroup | PlanningFacilitatorGroup>>;
+  }>;
+  passGroups: Array<PlanningRowChange<PlanningPassGroup>>;
+  fundingGroups: Array<PlanningRowChange<PlanningExplicitFundingReport>>;
+  workshares: Array<PlanningRowChange<PlanningWorkshareReport>>;
+  sensitivity: {
+    completion: Array<PlanningRowChange<PlanningCompletionSensitivity>>;
+    effort: Array<PlanningRowChange<PlanningEffortSensitivity>>;
+  };
+  findings: { added: PlanningFinding[]; removed: PlanningFinding[] };
+}
+/** Absolute candidate-minus-baseline values; no currency conversion or automatic plan choice. */
+export declare function compareCohortPlans(baseline: CohortPlanDocument, candidate: CohortPlanDocument, options?: PlanningComparisonOptions): CohortPlanComparison;
+export declare function compareCohortPlans(baseline: unknown, candidate: unknown, options?: PlanningComparisonOptions): CohortPlanComparison;
+/** Reopens both complete documents and recalculates all derived comparison values. */
+export declare function reopenCohortPlanComparison(document: unknown): CohortPlanComparison;
+/** Complete comparative CSV rows with exact decimal text and formula-safe cells. */
+export declare function exportCohortPlanComparisonCsv(comparison: CohortPlanComparison): string;

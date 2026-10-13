@@ -1,12 +1,14 @@
 // MIT. Borrow the original Research HTTP workspace without taking its listener lifecycle.
 import {isAbsolute,resolve} from 'node:path';
 import {Readable} from 'node:stream';
+import {createHash} from 'node:crypto';
+import {createDossierReturnsClient} from './dossier-returns/client.mjs';
 import {createEuropePmcClient} from './europe-pmc-client.mjs';
 import {createRisSourceClient} from './ris-source/client.mjs';
 import {createCustomerUpdatesClient} from './customer-updates/client.mjs';
 import {createResearchCommerceClient} from './customer-commerce/client.mjs';
 import {createResearchQuotesClient} from './customer-quotes/client.mjs';
-import {QUOTE_REQUEST_LIMIT} from './customer-quotes/contracts.mjs';
+import {QUOTE_REQUEST_LIMIT,QUOTE_CASE_TRANSFER_LIMIT} from './customer-quotes/contracts.mjs';
 import {createClinicalTrialsClient} from './clinical-trials-client.mjs';
 import {createStudyExtractionClient} from './study-extraction-client.mjs';
 import {createStudyProtocolClient} from './study-protocol-client.mjs';
@@ -57,7 +59,7 @@ function downloadFilename(disposition){
     disposition.match(/(?:^|;)\s*filename\*=UTF-8''([^;]*)/i)?.[1]:undefined;
   if(encoded!==undefined){
     let value;try{value=decodeURIComponent(encoded);}catch{need(false,'RESEARCH_DOWNLOAD_FILENAME_INVALID');}
-    need(typeof value==='string'&&value.length>0&&value.length<=240&&!/[\u0000-\u001f\u007f/\\]/.test(value),
+    need(typeof value==='string'&&value.length>0&&value.length<=512&&!/[\u0000-\u001f\u007f/\\]/.test(value),
       'RESEARCH_DOWNLOAD_FILENAME_INVALID');
     return value;
   }
@@ -107,9 +109,10 @@ export class ResearchWorkspaceClient{
           ...(connection.instanceId?{'X-Research-Instance-Id':connection.instanceId}:{})},
         ...(body===undefined?{}:{body,...(typeof body==='string'||body instanceof Uint8Array?{}:{duplex:'half'})})});
       if(!response.ok){
-        let detail={};try{detail=parseJson(await readResponse(response,65536));}catch{}
+        let detail={};try{detail=parseJson(await readResponse(response,/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route)?64*1024*1024:65536));}catch{}
         throw new BuyerError(safeCode(detail.error,'RESEARCH_HTTP_REJECTED'),{status:response.status,
           ...(detail.openAlexImport?{openAlexImport:detail.openAlexImport}:{}),
+          ...(/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route)&&object(detail.details)?{details:detail.details}:{}),
           ...(typeof detail.outcomeUnknown==='boolean'?{outcomeUnknown:detail.outcomeUnknown}:{}),
           ...(detail.researchCommerce?{researchCommerce:detail.researchCommerce}:{}),
           ...(detail.requestId?{requestId:detail.requestId}:{}),
@@ -135,12 +138,13 @@ export class ResearchWorkspaceClient{
   async #jsonAccepted(route,body,options={}){
       const bytes=body===undefined?undefined:JSON.stringify(body);
       const templateRoute=/^\/api\/research\/dossiers\/[^/]+\/template-exchange(?:\/|\?|$)/.test(route);
-      const maximum=route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
+      const returnRoute=/^\/api\/dossiers\/[^/]+\/returns(?:\/|\?|$)/.test(route);
+      const maximum=returnRoute?(/\/returns\/preview(?:\?|$)/.test(route)?1024*1024:16*1024*1024):route==='/api/customer-quotes/case-transfers/prepare'?QUOTE_CASE_TRANSFER_LIMIT:route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:route.startsWith('/api/customer-commerce/')?2*1024*1024:templateRoute?48*1024*1024:/^\/api\/dossiers\/[^/]+\/(?:citation-updates|eligibility|extraction(?:\/publications)?|risk-of-bias|customer-updates)\/reviews(?:\?projection=metadata)?$/.test(route)?16*1024*1024:
         /^\/api\/dossiers\/[^/]+\/source-bundles\/(?:preview|receive)(?:\?projection=metadata)?$/.test(route)
         ?128*1024*1024+65536:96*1024*1024+65536;
       need(bytes===undefined||Buffer.byteLength(bytes)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');
       return this.#request(route,{...options,body:bytes,headers:{...(options.headers??{}),
-        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,templateRoute?PORTABLE_LIMIT:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||route.startsWith('/api/customer-quotes/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
+        ...(bytes===undefined?{}:{'Content-Type':'application/json'})}},async response=>parseJson(await readResponse(response,templateRoute?PORTABLE_LIMIT:(route.startsWith('/api/europe-pmc')||route.startsWith('/api/customer-commerce/')||route.startsWith('/api/customer-quotes/')||/^\/api\/dossiers\/[^/]+\/(?:customer-updates|ris-sources|returns)(?:\/|\?|$)/.test(route))?64*1024*1024:RESEARCH_CONTROL_LIMIT)));
   }
   async status(options={}){
     const status=await this.#json('/api/status',undefined,options);
@@ -217,6 +221,23 @@ export class ResearchWorkspaceClient{
         send:(route,requestOptions)=>this.#request(route,{...requestOptions,method:'POST'},
           async response=>parseJson(await readResponse(response))),
       },id,input,options)),
+    });
+  }
+  dossierReturns(dossierId){
+    return createDossierReturnsClient({dossierId,
+      ensureSelected:()=>this.#workspaceId?Promise.resolve(this.#workspaceId):this.status().then(value=>value.workspaceId),
+      request:(route,body,options)=>this.#json(route,body,options),
+      download:(route,file,options)=>this.#download(route,file,options),
+      readValue:(route,options)=>this.#run(()=>this.#request(route,{...options,readOnly:true},async response=>{
+        const bytes=await readResponse(response,64*1024*1024),expected=response.headers.get('x-content-sha256');
+        need(/^[a-f0-9]{64}$/.test(expected??'')&&createHash('sha256').update(bytes).digest('hex')===expected,
+          'RETURN_VALUE_CHANGED');
+        return parseJson(bytes);
+      })),
+      upload:(route,source,options={})=>this.#run(()=>this.#request(route,
+        {...options,method:'POST',readOnly:false,body:source.stream,headers:{...(options.headers??{}),
+          'Content-Type':options.contentType??'application/octet-stream','Content-Length':String(source.bytes)}},
+        async response=>parseJson(await readResponse(response,64*1024*1024)))),
     });
   }
   risSources(){return createRisSourceClient({request:(route,body,options)=>this.#json(route,body,options),
@@ -326,8 +347,10 @@ export class ResearchWorkspaceClient{
   }
 
   #download(route,file,options={}){return this.#run(()=>this.#downloadAccepted(route,file,options));}
-  async #downloadAccepted(route,file,{signal,expectedSha256,request,headers={}}={}){
+  async #downloadAccepted(route,file,{signal,expectedSha256,verifySha256Header=false,request,headers={}}={}){
     const body=request===undefined?undefined:JSON.stringify(request);
+    const fileMaximum=/^\/api\/customer-quotes\/cases\/[a-f0-9-]{36}\/download$/.test(route)&&request?.kind==='CASE_RECORD'
+      ?QUOTE_CASE_TRANSFER_LIMIT:PORTABLE_LIMIT;
     const maximum=route.startsWith('/api/customer-quotes/')?QUOTE_REQUEST_LIMIT:RESEARCH_CONTROL_LIMIT;
     need(body===undefined||Buffer.byteLength(body)<=maximum,'RESEARCH_REQUEST_TOO_LARGE');
     return this.#request(route,{signal,readOnly:true,headers,...(body===undefined?{}:{
@@ -337,10 +360,12 @@ export class ResearchWorkspaceClient{
       const filename=downloadFilename(disposition);
       const contentType=response.headers.get('content-type')??'application/octet-stream';
       const declared=response.headers.get('content-length');let count=0;
-      if(declared!==null)need(/^[0-9]+$/.test(declared)&&Number(declared)<=PORTABLE_LIMIT,'RESEARCH_DOWNLOAD_SIZE_INVALID');
+      const responseSha256=verifySha256Header?response.headers.get('x-content-sha256'):null;
+      if(verifySha256Header)need(/^[a-f0-9]{64}$/.test(responseSha256??''),'RESEARCH_DOWNLOAD_SHA256_REQUIRED');
+      if(declared!==null)need(/^[0-9]+$/.test(declared)&&Number(declared)<=fileMaximum,'RESEARCH_DOWNLOAD_SIZE_INVALID');
       const body=Readable.from((async function*(){
         for await(const chunk of response.body??[]){
-          count+=chunk.length;need(count<=PORTABLE_LIMIT,'RESEARCH_DOWNLOAD_TOO_LARGE');yield chunk;
+          count+=chunk.length;need(count<=fileMaximum,'RESEARCH_DOWNLOAD_TOO_LARGE');yield chunk;
         }
         need(declared===null||Number(declared)===count,'RESEARCH_DOWNLOAD_INCOMPLETE');
       })());
@@ -358,8 +383,22 @@ export class ResearchWorkspaceClient{
         ...(editionId&&/^e_[a-f0-9]{64}$/.test(editionId)?{editionId}:{}),
         ...(occurrenceId&&/^o_[a-f0-9]{64}$/.test(occurrenceId)?{occurrenceId}:{})};
       // Preserve complete file and original source identity on a checksum error.
-      if(expectedSha256!==undefined&&saved.sha256!==expectedSha256)
+      if((expectedSha256!==undefined&&saved.sha256!==expectedSha256)||(verifySha256Header&&saved.sha256!==responseSha256))
         throw new BuyerError('RESEARCH_EXPORTED_FILE_CHANGED',{file:saved,destinationPublished:true});
+      if(verifySha256Header&&/^\/api\/dossiers\/[^/]+\/returns\//.test(route)){
+        const reviewId=response.headers.get('x-research-return-review-id'),returnId=response.headers.get('x-research-return-id'),
+          sourceId=response.headers.get('x-research-return-source-id'),comparisonSha256=response.headers.get('x-research-return-comparison-sha256'),
+          revisionSha256=response.headers.get('x-research-return-revision-sha256'),
+          itemId=response.headers.get('x-research-return-item-id'),side=response.headers.get('x-research-return-side');
+        try{
+        if(reviewId)need(/^drv_[a-f0-9]{64}$/.test(reviewId)&&/^drs_[a-f0-9]{64}$/.test(sourceId??'')&&
+          /^[a-f0-9]{64}$/.test(comparisonSha256??'')&&(!returnId||/^drr_[a-f0-9]{64}$/.test(returnId))&&
+          (!revisionSha256||/^[a-f0-9]{64}$/.test(revisionSha256)),'RETURN_EXPORT_SELECTION_CHANGED');
+        if(itemId)need(/^dri_[a-f0-9]{64}$/.test(itemId)&&['base','current','returned'].includes(side),'RETURN_VALUE_CHANGED');
+        }catch(error){Object.assign(error,{file:saved,destinationPublished:true});throw error;}
+        return {...saved,selection:{...(reviewId?{reviewId,returnId,sourceId,comparisonSha256,revisionSha256}:{}),
+          ...(itemId?{itemId,side}:{})}};
+      }
       return saved;
     });
   }

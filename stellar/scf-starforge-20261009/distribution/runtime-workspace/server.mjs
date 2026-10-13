@@ -63,9 +63,14 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
     ['/image.mjs', 'image.mjs', 'text/javascript; charset=utf-8'],
     ['/python.mjs', 'python.mjs', 'text/javascript; charset=utf-8'],
     ['/source-build.mjs', 'source-build.mjs', 'text/javascript; charset=utf-8'],
+    ['/product-plan-briefing.css', 'product-plan-briefing.css', 'text/css; charset=utf-8'],
   ].map(async ([path, name, type]) => [path, { bytes: await readFile(new URL('./public/' + name, import.meta.url)), type }])));
   assets.set('/product-catalog/catalog.mjs', {
     bytes: await readFile(new URL('../product-catalog/catalog.mjs', import.meta.url)),
+    type: 'text/javascript; charset=utf-8',
+  });
+  assets.set('/product-plan-runtime.mjs', {
+    bytes: await readFile(new URL('./product-plan-runtime.mjs', import.meta.url)),
     type: 'text/javascript; charset=utf-8',
   });
   assets.set('/product-requirements.mjs', {
@@ -156,6 +161,12 @@ export async function startRuntimeWorkspace({ directory, port = 8465, openApiSet
       }
       if (req.method === 'GET' && url.pathname === '/api/source-builds/plan')
         return send(200, await model.sourcePlanRead(params(url, ['planId', 'bindingId'])));
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-runtimes')
+        return send(200, await model.sourcePlanRuntimes(params(url, ['planId', 'bindingId'])));
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-handoff')
+        return send(200, await model.sourcePlanHandoff(params(url, ['planId', 'bindingId', 'runtimeId'])));
+      if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-briefing')
+        return send(200, await model.sourcePlanBriefing(params(url, ['planId', 'bindingId', 'format', 'runtimeId'])));
       if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-export')
         return send(200, await model.sourcePlanExport(params(url, ['planId'])));
       if (req.method === 'GET' && url.pathname === '/api/source-builds/plan-receiving')

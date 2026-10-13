@@ -1,5 +1,7 @@
 import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
-export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
+import {performGrantPlanningSourceOperation} from './source-tables-agent.mjs';
+export {grantPlanningSourceProfiles,GRANT_PLANNING_SOURCE_SCHEMA,GRANT_PLANNING_SOURCE_ACTIONS} from './source-tables-agent.mjs';
+export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_MAX_WORKBOOK_HANDOVER_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 // MIT. Typed agent access to the original SF47 planning and delivery service.
 // This client owns no planning database, business records or financial model.
 import { constants } from 'node:fs';
@@ -485,6 +487,72 @@ function ownGrantLauncher(child) {
   return owned;
 }
 
+const SETTLEMENT_CASH_FIELDS = ['date','currency','decimals','unitSourceIds','unitNote','usdValue',
+  'valuationSourceIds','valuationNote','category','tranche','allocations'];
+const settlementRecordId = (value,prefix) => {
+  need(typeof value==='string'&&/^[a-z][a-z0-9-]{1,99}$/.test(value)&&value.startsWith(prefix+'-'),
+    'GRANT_INVALID_INPUT','Use the original retained '+prefix+' identity.');return value;
+};
+const SETTLEMENT_UNIT_FIELDS = ['currency','decimals','unitSourceIds','unitNote'];
+const SETTLEMENT_CORRECTION_FIELDS = ['reviewId','rowId','expectedCashId','decision','reason','cashId','cash','deploymentIds','workIds'];
+function settlementIds(value,prefix) {
+  need(Array.isArray(value)&&new Set(value).size===value.length,'GRANT_INVALID_INPUT','Use distinct original '+prefix+' IDs.');
+  for(const selected of value)settlementRecordId(selected,prefix);
+}
+function settlementCash(value,unitsOnly=false) {
+  exact(value,unitsOnly?SETTLEMENT_UNIT_FIELDS:SETTLEMENT_CASH_FIELDS,
+    [...SETTLEMENT_UNIT_FIELDS,...(unitsOnly?[]:['date'])]);
+  text(value.currency,'Original cash currency',40);integer(value.decimals,'Original asset decimals',0,12);
+  settlementIds(value.unitSourceIds,'source');text(value.unitNote,'Original unit source',4000);
+  if(unitsOnly)return;
+  completionDate(value.date);
+  if(value.usdValue!==undefined&&value.usdValue!==null) {
+    text(value.usdValue,'Exact USD valuation',80);text(value.valuationNote,'Original valuation explanation',4000);
+  }
+  if(value.category!==undefined)need(['INVOICE','CUSTOMER','REFUND','OTHER'].includes(value.category),'GRANT_INVALID_INPUT','Use the original merchant cash category.');
+  if(value.valuationSourceIds!==undefined)settlementIds(value.valuationSourceIds,'source');
+  if(value.valuationNote!==undefined)text(value.valuationNote,'Original valuation explanation',4000,true);
+  if(value.tranche!==undefined&&value.tranche!==null)integer(value.tranche,'Tranche attribution',0,3);
+  if(value.allocations!==undefined) {
+    need(Array.isArray(value.allocations),'GRANT_INVALID_INPUT','Cash allocations must be an array.');
+    for(const allocation of value.allocations) {
+      exact(allocation,['invoiceId','amountUsd'],['invoiceId','amountUsd']);
+      settlementRecordId(allocation.invoiceId,'invoice');text(allocation.amountUsd,'Exact allocated USD',80);
+    }
+  }
+}
+function settlementReview(value) {
+  exact(value,['name','selections'],['name','selections']);text(value.name,'Settlement review name',300);
+  need(Array.isArray(value.selections)&&value.selections.length<=5000,'GRANT_INVALID_INPUT','Select original settlement rows.');
+  for(const row of value.selections) {
+    exact(row,['rowId','decision','reason','cashId','cash','deploymentIds','workIds'],['rowId','decision','reason','deploymentIds','workIds']);
+    text(row.rowId,'Original settlement row',300);text(row.reason,'Settlement decision reason',4000);
+    need(['RECORD_CASH','LINK_CASH','OBSERVE','OMIT'].includes(row.decision),'GRANT_INVALID_INPUT','Choose an original settlement receiving decision.');
+    settlementIds(row.deploymentIds,'deployment');settlementIds(row.workIds,'work');
+    if(row.decision==='RECORD_CASH'||row.decision==='LINK_CASH')settlementCash(row.cash,row.decision==='LINK_CASH');
+    if(row.decision==='LINK_CASH')settlementRecordId(row.cashId,'cash');
+  }
+}
+function settlementCorrection(value) {
+  exact(value,SETTLEMENT_CORRECTION_FIELDS,['reviewId','rowId','expectedCashId','decision','reason']);
+  id(value.reviewId,'settlement');text(value.rowId,'Original settlement row',300);
+  if(value.expectedCashId!==null)settlementRecordId(value.expectedCashId,'cash');
+  need(['CORRECT_CASH','LINK_CASH','VOID_CASH','RELINK'].includes(value.decision),'GRANT_INVALID_INPUT','Choose an original settlement correction.');
+  text(value.reason,'Original correction reason',4000);
+  if(value.cash!==undefined)settlementCash(value.cash,value.decision==='LINK_CASH');
+  if(value.decision==='CORRECT_CASH')need(value.cash!==undefined,'GRANT_INVALID_INPUT','Supply the complete reviewed replacement cash fields.');
+  if(value.decision==='LINK_CASH'){settlementRecordId(value.cashId,'cash');need(value.cash!==undefined,'GRANT_INVALID_INPUT','Supply the original unit fields for the selected existing cash.');}
+  else need(value.cashId===undefined,'GRANT_INVALID_INPUT','An existing cash selection belongs to the link correction.');
+  if(value.deploymentIds!==undefined)settlementIds(value.deploymentIds,'deployment');
+  if(value.workIds!==undefined)settlementIds(value.workIds,'work');
+}
+function settlementArchive(bytes,filename) {
+  need(Buffer.isBuffer(bytes)&&bytes.length>0&&bytes.length<=GRANT_MAX_SOURCE_BYTES,'GRANT_INVALID_INPUT','Use the complete original accounting archive within the native source limit.');
+  text(filename,'Original accounting archive filename',240);
+  need(!/[\x00-\x1f\x7f\\/]/.test(filename)&&!['.','..'].includes(filename),'GRANT_INVALID_INPUT','Use the original plain archive filename.');
+  return {filename,contentBase64:bytes.toString('base64')};
+}
+
 export class GrantWorkspaceClient {
   #binding; #child = null; #connection = null; #opening = null; #closing = false; #close;
   #detaching = false; #detach = null; #pending = new Set();
@@ -635,6 +703,13 @@ export class GrantWorkspaceClient {
       cases:() => '/api/operations' + (args.planId === undefined ? '' : '?planId=' + pid()),
       case:() => '/api/operations/' + cid(),
       'case-report':() => '/api/operations/' + cid() + '/report',
+      'cost-funding':() => '/api/operations/' + cid() + '/cost-funding',
+      'funding-edition':() => '/api/operations/' + cid() + '/cost-funding/edition' +
+        (args.revision===undefined?'':'?revision='+integer(args.revision,'Funding edition',1,1000000)),
+      'funding-request':() => '/api/operations/' + cid() + '/cost-funding/request?requestId=' + encodeURIComponent(requestId(args.requestId)),
+      'task-outcomes':() => '/api/operations/' + cid() + '/task-outcomes',
+      'task-outcome':() => '/api/operations/' + cid() + '/task-outcomes/' + id(args.comparisonId,'task-outcomes') +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Task comparison revision',1,1000000)),
       'supplier-account':() => '/api/operations/' + cid() + '/supplier-account' + supplierAccountQuery(args),
       performance:() => '/api/operations/' + cid() + '/performance' + performanceQuery(args),
       'cash-account':() => '/api/operations/' + cid() + '/cash-account' + cashAccountQuery(args),
@@ -657,6 +732,8 @@ export class GrantWorkspaceClient {
       engagements:() => '/api/operations/' + cid() + '/engagements',
       engagement:() => '/api/operations/' + cid() + '/engagements/' + id(args.reviewId, 'review'),
       review:() => '/api/operations/' + cid() + '/reviews/' + id(args.reviewId, 'review'),
+      settlements:() => '/api/operations/' + cid() + '/settlements',
+      settlement:() => '/api/operations/' + cid() + '/settlements/' + id(args.reviewId,'settlement'),
       'delivery-queue':() => '/api/operations/' + cid() + '/delivery-queue' +
         (args.asOfDate === undefined ? '' : '?asOfDate=' + encodeURIComponent(completionDate(args.asOfDate))),
       'installation-returns':() => '/api/operations/' + cid() + '/installation-returns',
@@ -672,6 +749,18 @@ export class GrantWorkspaceClient {
     };
     need(Object.hasOwn(routes, view), 'GRANT_INVALID_VIEW', 'Choose a declared native grant view.');
     return this.#request(routes[view](), {});
+  }
+  workbook(action, body) {
+    need(['inspect','project'].includes(action),'GRANT_WORKBOOK_ACTION','Choose original workbook inspection or projection.');
+    exact(body, action === 'inspect' ? ['source','preview','headerRow'] : ['source','mapping'],
+      action === 'inspect' ? ['source'] : ['source','mapping']);
+    object(body.source,'Original workbook source');
+    if (body.preview !== undefined) object(body.preview,'Original worksheet selection');
+    if (body.mapping !== undefined) object(body.mapping,'Original workbook mapping');
+    return this.#request('/api/source-tables/workbook/' + action,{body,mutation:false});
+  }
+  planningSources(action, body) {
+    return this.#admit(() => performGrantPlanningSourceOperation(this,action,body));
   }
   plan(action, planId, body) {
     id(planId, 'plan');
@@ -735,6 +824,13 @@ export class GrantWorkspaceClient {
     integer(body.expectedVersion, 'Current case version', 1, 10000000);
     sha(body.expectedPreviewSha256); requestId(body.requestId);
     return this.#request('/api/operations/' + caseId + '/ledger-intake-apply', {body, originalRequestId:body.requestId});
+  }
+  statementInspect(caseId, expectedVersion, inputs) {
+    id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
+    exact(inputs, ['sourceFormat', 'source', 'statementOptions'], ['sourceFormat', 'source']);
+    need(inputs.sourceFormat === 'OFX' || inputs.sourceFormat === 'MT940', 'GRANT_INVALID_INPUT',
+      'Choose an original OFX / QFX or MT940 source format.'); object(inputs.source, 'Original bank source');
+    return this.#request('/api/operations/' + caseId + '/statement-inspect', {body:{expectedVersion, inputs}, mutation:false});
   }
   statementPreview(caseId, expectedVersion, inputs) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version'); object(inputs, 'Statement inputs');
@@ -896,6 +992,56 @@ export class GrantWorkspaceClient {
     return this.#request('/api/operations/' + caseId + '/portfolio-selection',
       {body:{expectedVersion, portfolioId, alternativeId}, mutation:false});
   }
+  fundingSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','revision'],['expectedVersion']);
+    integer(body.expectedVersion,'Current case version');
+    if(body.revision!==undefined)integer(body.revision,'Selected funding edition',1,1000000);
+    return this.#request('/api/operations/'+caseId+'/funding-seed',{body,mutation:false});
+  }
+  fundingPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current case version'); object(body.inputs,'Complete funding inputs');
+    return this.#request('/api/operations/'+caseId+'/funding-preview',{body,mutation:false});
+  }
+  async fundingSave(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256','acceptedResult'],
+      ['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete funding inputs'); requestId(body.requestId);
+    const {inputs,expectedPreviewSha256,acceptedResult,...original}=body;
+    const command={...original,action:'funding.save',data:{inputs,expectedPreviewSha256}};
+    const ordered=value=>Array.isArray(value)?value.map(ordered):plain(value)
+      ?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+    const canonical=value=>JSON.stringify(ordered(value));
+    const fingerprint=digest(Buffer.from(canonical({domain:'stellar-forge.sf47-operations.v1',programId:caseId,body:command})));
+    const read=await this.read('funding-request',{caseId,requestId:body.requestId}), native=read.value;
+    need(native?.caseId===caseId&&native.requestId===body.requestId&&typeof native.found==='boolean',
+      'GRANT_FUNDING_REQUEST_CHANGED','The original funding request journal changed.');
+    if(native.found) {
+      need(native.fingerprint===fingerprint&&native.resultSha256===digest(Buffer.from(canonical(native.result))),
+        'GRANT_FUNDING_REQUEST_CHANGED','The original request identifies another complete funding input.');
+      if(acceptedResult!==undefined)need(canonical(native.result)===canonical(acceptedResult),
+        'GRANT_FUNDING_ACCEPTANCE_CHANGED','The retained accepted response differs from the original commitment.');
+    }else need(acceptedResult===undefined,'GRANT_FUNDING_COMMITMENT_MISSING',
+      'The restored workspace lacks this accepted original funding save. Restore matching state before continuing.');
+    // The unchanged native command recovers its original result before its case CAS.
+    return this.command(caseId,command);
+  }
+  taskOutcomesSeed(caseId, expectedVersion) {
+    id(caseId,'operation'); integer(expectedVersion,'Current case version');
+    return this.#request('/api/operations/'+caseId+'/task-outcomes-seed',{body:{expectedVersion},mutation:false});
+  }
+  taskOutcomesPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
+    integer(body.expectedVersion,'Current case version'); object(body.inputs,'Complete customer task comparison inputs');
+    return this.#request('/api/operations/'+caseId+'/task-outcomes-preview',{body,mutation:false});
+  }
+  taskOutcomesSave(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','requestId','actor','note','inputs','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','inputs','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.inputs,'Complete customer task comparison inputs');
+    const {inputs,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'task-outcomes.save',data:{inputs,expectedPreviewSha256}});
+  }
   installationReturnSeed(caseId, body) {
     id(caseId,'operation');
     exact(body,['expectedVersion','installationId','revision','sha256'],['expectedVersion','installationId','revision','sha256']);
@@ -907,6 +1053,13 @@ export class GrantWorkspaceClient {
     id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
     integer(body.expectedVersion,'Current receiving case version'); object(body.inputs,'Complete receiving observations');
     return this.#request('/api/operations/'+caseId+'/installation-return-preview',{body,mutation:false});
+  }
+  installationReturnReviewSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','retainedReview'],['expectedVersion','retainedReview']);
+    integer(body.expectedVersion,'Current owner case version');
+    exact(body.retainedReview,['id','sha256'],['id','sha256']);
+    id(body.retainedReview.id,'review'); sha(body.retainedReview.sha256);
+    return this.#request('/api/operations/'+caseId+'/installation-return-review-seed',{body,mutation:false});
   }
   installationReturnReviewPreview(caseId, body) {
     id(caseId,'operation'); exact(body,['expectedVersion','inputs'],['expectedVersion','inputs']);
@@ -1028,18 +1181,19 @@ export class GrantWorkspaceClient {
   }
   installationPreview(caseId, body) {
     id(caseId,'operation');
-    exact(body,['expectedVersion','installationId','expectedRevision','document'],
+    exact(body,['expectedVersion','installationId','expectedRevision','document','returnReview'],
       ['expectedVersion','installationId','expectedRevision','document']);
     integer(body.expectedVersion,'Current case version'); integer(body.expectedRevision,'Current installation edition',0,500);
     if(body.installationId!==null)id(body.installationId,'installation');
     need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
       'GRANT_INVALID_INPUT','Select edition zero for a new installation or the original current installation edition.');
     object(body.document,'Complete installation document');
+    if(body.returnReview!==undefined){exact(body.returnReview,['id','sha256'],['id','sha256']);id(body.returnReview.id,'review');sha(body.returnReview.sha256);}
     return this.#request('/api/operations/'+caseId+'/installation-preview',{body,mutation:false});
   }
   installationSave(caseId, body) {
     id(caseId,'operation');
-    exact(body,['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256'],
+    exact(body,['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256','returnReview'],
       ['expectedVersion','requestId','actor','note','installationId','expectedRevision','document','expectedPreviewSha256']);
     integer(body.expectedVersion,'Current case version'); integer(body.expectedRevision,'Current installation edition',0,500);
     requestId(body.requestId); sha(body.expectedPreviewSha256);
@@ -1048,9 +1202,11 @@ export class GrantWorkspaceClient {
     need(body.installationId===null?body.expectedRevision===0:body.expectedRevision>=1,
       'GRANT_INVALID_INPUT','Select edition zero for a new installation or the original current installation edition.');
     object(body.document,'Complete installation document');
-    const {installationId,expectedRevision,document,expectedPreviewSha256,...original}=body;
+    if(body.returnReview!==undefined){exact(body.returnReview,['id','sha256'],['id','sha256']);id(body.returnReview.id,'review');sha(body.returnReview.sha256);}
+    const {installationId,expectedRevision,document,expectedPreviewSha256,returnReview,...original}=body;
     return this.#request('/api/operations/'+caseId+'/command',{originalRequestId:body.requestId,
-      body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256}}});
+      body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256,
+        ...(returnReview===undefined?{}:{returnReview})}}});
   }
   commercialConnections() {
     return this.#request('/api/operations/commercial-connections', {});
@@ -1173,6 +1329,35 @@ export class GrantWorkspaceClient {
   completionExtension(caseId, body) { return this.command(caseId,completionCommandBody('extension',body)); }
   completionSubmit(caseId, body) { return this.command(caseId,completionCommandBody('submit',body)); }
   completionDecision(caseId, body) { return this.command(caseId,completionCommandBody('decision',body)); }
+  settlementPreview(caseId, expectedVersion, bytes, filename, selection) {
+    id(caseId,'operation');integer(expectedVersion,'Current case version');
+    if(selection!==undefined)settlementReview(selection);
+    return this.#request('/api/operations/'+caseId+'/settlement/preview',
+      {body:{expectedVersion,...settlementArchive(bytes,filename),...(selection??{})},mutation:false});
+  }
+  settlementReceive(caseId,bytes,body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','filename','name','selections','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','filename','name','selections','expectedPreviewSha256']);
+    const {filename,name,selections,expectedPreviewSha256,...original}=body;
+    sha(expectedPreviewSha256);settlementReview({name,selections});
+    return this.command(caseId,{...original,action:'settlement.receive',
+      data:{...settlementArchive(bytes,filename),name,selections,expectedPreviewSha256}});
+  }
+  settlementCorrectionPreview(caseId,body) {
+    id(caseId,'operation');exact(body,['expectedVersion',...SETTLEMENT_CORRECTION_FIELDS],['expectedVersion',...SETTLEMENT_CORRECTION_FIELDS.slice(0,5)]);
+    const {expectedVersion,...correction}=body;integer(expectedVersion,'Current case version');settlementCorrection(correction);
+    return this.#request('/api/operations/'+caseId+'/settlement/correction-preview',{body,mutation:false});
+  }
+  settlementCorrect(caseId,body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','expectedPreviewSha256',...SETTLEMENT_CORRECTION_FIELDS],
+      ['expectedVersion','requestId','actor','expectedPreviewSha256',...SETTLEMENT_CORRECTION_FIELDS.slice(0,5)]);
+    const {expectedVersion,requestId,actor,note,expectedPreviewSha256,...correction}=body;
+    sha(expectedPreviewSha256);settlementCorrection(correction);
+    return this.command(caseId,{expectedVersion,requestId,actor,...(note===undefined?{}:{note}),action:'settlement.correct',
+      data:{...correction,expectedPreviewSha256}});
+  }
   supportPreview(caseId, expectedVersion, bytes, filename) {
     id(caseId, 'operation'); integer(expectedVersion, 'Current case version');
     return this.#request('/api/operations/' + caseId + '/support-preview',
@@ -1229,7 +1414,8 @@ export class GrantWorkspaceClient {
   download(kind, args) {
     object(args);
     const routes = {
-      plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip',
+      plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip' +
+        (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Selected plan revision',1,1000000)),
       'plan-comparison':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/export.zip' + planComparisonQuery(args,true),
       'plan-comparison-report':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/report.html' + planComparisonQuery(args,true),
       'plan-comparison-changes':() => '/api/plans/' + id(args.planId,'plan') + '/comparison/changes.csv' + planComparisonQuery(args,true),
@@ -1239,6 +1425,12 @@ export class GrantWorkspaceClient {
       'daily-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/daily.csv',
       'costs-csv':() => '/api/plans/' + id(args.planId, 'plan') + '/costs.csv',
       case:() => '/api/operations/' + id(args.caseId, 'operation') + '/export.zip',
+      'cost-funding':() => '/api/operations/' + id(args.caseId,'operation') + '/cost-funding/export.zip?revision=' +
+        integer(args.revision,'Funding edition',1,1000000) + '&expectedVersion=' +
+        integer(args.expectedVersion,'Reviewed case version') + '&expectedReportSha256=' + sha(args.expectedReportSha256),
+      'task-outcomes':() => '/api/operations/' + id(args.caseId,'operation') + '/task-outcomes/' +
+        id(args.comparisonId,'task-outcomes') + '/export.zip?revision=' + integer(args.revision,'Task comparison revision',1,1000000) +
+        '&expectedVersion=' + integer(args.expectedVersion,'Reviewed export case version'),
       'supplier-account':() => '/api/operations/' + id(args.caseId,'operation') + '/supplier-account/export.zip' + supplierAccountQuery(args,true),
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       'cash-account':() => '/api/operations/' + id(args.caseId,'operation') + '/cash-account/export.zip' + cashAccountQuery(args,true),
@@ -1253,6 +1445,7 @@ export class GrantWorkspaceClient {
       'installation-return':() => '/api/operations/' + id(args.caseId,'operation') + '/installation-returns/' + id(args.reviewId,'review') + '/export.zip',
       commercial:() => commercialPath(args.caseId, args.billingId) + '/export.zip',
       source:() => '/api/operations/' + id(args.caseId, 'operation') + '/sources/' + id(args.sourceId, 'source'),
+      settlement:() => '/api/operations/' + id(args.caseId,'operation') + '/settlements/' + id(args.reviewId,'settlement') + '/export',
       'customer-use-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/customer-use-calendar/export.' +
         deliveryCalendarFormat(args.format ?? 'json') + customerUseQuery(args),
       'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +

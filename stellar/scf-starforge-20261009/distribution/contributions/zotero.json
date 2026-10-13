@@ -10,6 +10,9 @@
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/COPYING"
   ],
+  "sourceFormats": {
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/reference/zotero/itemJSON.js": "json"
+  },
   "commands": {
     "zotero": "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/cli.mjs",
     "zotero-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/zotero/cli.mjs"

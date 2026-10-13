@@ -40,5 +40,5 @@ export interface FredDdpReceivingContext {
   packageCapture:FredDdpPackageCapture;crosswalk:FredDdpCrosswalkCapture;plan:FredDdpMigrationPlan;captures:FredDdpOriginalFredCapture[];
 }
 export function buildFredDdpReceiving(input:FredDdpReceivingContext):FredDdpReceiving;
-export function validateFredDdpReceiving(value:unknown,context?:Partial<{[K in keyof FredDdpReceivingContext]:FredDdpReceivingContext[K]|null}>):FredDdpReceiving;
+export function validateFredDdpReceiving(value:unknown,context?:Partial<{[K in keyof FredDdpReceivingContext]:FredDdpReceivingContext[K]|null}> & {copy?:boolean}):FredDdpReceiving;
 export function pageFredDdpReceiving(value:FredDdpReceiving,options?:FredDdpReceivingPageOptions):FredDdpReceivingPage;

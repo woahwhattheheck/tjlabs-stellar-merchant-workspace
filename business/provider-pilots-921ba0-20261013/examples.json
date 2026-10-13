@@ -1,0 +1,62 @@
+{
+  "notice": "Authored documentation examples. No provider request, payment, customer result, or top-up occurred.",
+  "nevermined": {
+    "payg": {
+      "success": true,
+      "billingModel": "pay-as-you-go",
+      "creditsRedeemed": "0",
+      "remainingBalance": "0",
+      "orderTx": "example-fiat-charge-reference"
+    },
+    "credits": {
+      "success": true,
+      "billingModel": "credits",
+      "creditsRedeemed": "2",
+      "remainingBalance": "98",
+      "transaction": "example-credit-settlement-reference",
+      "network": "example-network"
+    },
+    "rejected": {
+      "success": false,
+      "billingModel": "pay-as-you-go",
+      "errorReason": "example-delegation-budget-limit"
+    }
+  },
+  "aisa": {
+    "keyReference": "example-selected-key",
+    "startTime": 1788220800,
+    "endTime": 1790985600,
+    "captures": [
+      {
+        "selection": {
+          "keyReference": "example-selected-key",
+          "startTime": 1788220800,
+          "endTime": 1790899200,
+          "scope": "key",
+          "bucketWidth": "1d"
+        },
+        "response": {
+          "totals": {
+            "charged_micros_usd": "1500000",
+            "usage_value_micros_usd": "2000000"
+          }
+        }
+      },
+      {
+        "selection": {
+          "keyReference": "example-selected-key",
+          "startTime": 1790899200,
+          "endTime": 1790985600,
+          "scope": "key",
+          "bucketWidth": "1d"
+        },
+        "response": {
+          "totals": {
+            "charged_micros_usd": "250000",
+            "usage_value_micros_usd": "400000"
+          }
+        }
+      }
+    ]
+  }
+}

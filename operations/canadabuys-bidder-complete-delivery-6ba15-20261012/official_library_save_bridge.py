@@ -6,8 +6,16 @@ observed-response validation. Artifact restoration remains with the caller.
 from __future__ import annotations
 import json
 import os
+import re
 from pathlib import Path
 import sys
+
+def library_name_matches(actual,requested):
+ """Accept the original basename or Library's observed numbered collision name."""
+ if not isinstance(actual,str) or Path(actual).name!=actual:return False
+ if actual==requested:return True
+ stem,suffix=os.path.splitext(requested)
+ return re.fullmatch(re.escape(stem)+r"\([1-9][0-9]*\)"+re.escape(suffix),actual) is not None
 
 def install_original_library_tool_bridge(n):
  original_finish=n["finish_saved_artifact"]
@@ -39,7 +47,7 @@ def install_original_library_tool_bridge(n):
   n["require"](isinstance(raw,dict) and raw.get("isError") is False,"Official Library tool did not return success")
   item=raw.get("structuredContent")
   n["require"](isinstance(item,dict) and item.get("operation")=="create_library_file"
-      and item.get("status")=="succeeded" and item.get("file_name")==name
+      and item.get("status")=="succeeded" and library_name_matches(item.get("file_name"),name)
       and item.get("file_size_bytes")==size and isinstance(item.get("file_id"),str)
       and item["file_id"].startswith("file_") and isinstance(item.get("library_file_id"),str)
       and item["library_file_id"].startswith("libfile_")

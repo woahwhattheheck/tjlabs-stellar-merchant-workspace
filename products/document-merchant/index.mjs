@@ -6,9 +6,9 @@ export {
   documentPriceReview
 } from './contracts.mjs';
 export {
-  DOCUMENT_PLAN_SCHEMA, DOCUMENT_INSTALLATION_SCHEMA,
+  DOCUMENT_PLAN_SCHEMA, DOCUMENT_INSTALLATION_SCHEMA, DOCUMENT_REVIEW_SCHEMA,
   documentSetupTemplate, normalizeDocumentSetup, documentJobConfiguration,
-  prepareDocumentMerchant, inspectDocumentMerchant, readDocumentSetupRequest
+  prepareDocumentMerchant, inspectDocumentMerchant, readDocumentSetupRequest, reviewDocumentMerchant
 } from './setup.mjs';
 export {renderDocumentBytes, renderPaidDocument, readDocumentSupplierUsage} from './renderer.mjs';
 export {
@@ -18,3 +18,16 @@ export {
   exportDocumentBatch, receiveDocumentBatchCollection, openDocumentBatchCustomer
 } from './batch.mjs';
 export {renderDocumentBatchHtml, renderDocumentBatchCsv} from './batch-render.mjs';
+export {
+  DOCUMENT_SERVICE_SELECTION_SCHEMA, DOCUMENT_SERVICE_SOURCE, DOCUMENT_SERVICE_SOURCE_FILES,
+  normalizeDocumentServiceOptions, assertDocumentServiceSource, readDocumentServiceSelection,
+  assertDocumentServiceSelection, openDocumentService, runDocumentServiceCommand, readDocumentServiceLaunch
+} from './launch.mjs';
+export {
+  DOCUMENT_COMPOSITION_SCHEMA, DOCUMENT_COMPOSITION_PLAN_SCHEMA,
+  documentCompositionTemplate, normalizeDocumentComposition, parseDocumentCsv,
+  parseDocumentDataset, compileDocumentTemplate, renderDocumentTemplate,
+  composeDocumentSources, reviewDocumentComposition, readDocumentComposition,
+  prepareDocumentComposition, receiveDocumentComposition,
+  prepareDocumentCompositionBatch, readDocumentCompositionBatch, exportDocumentComposition
+} from './composition.mjs';

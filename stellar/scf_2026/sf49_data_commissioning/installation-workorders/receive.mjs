@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /** Receive complete customer Workshares through the original SF47 Operations CLI. */
 import {readFileSync, writeFileSync, openSync, closeSync, fsyncSync, linkSync, unlinkSync,
-  existsSync, mkdirSync, lstatSync, realpathSync} from "node:fs";
+  existsSync, mkdirSync, lstatSync, fstatSync, realpathSync, constants} from "node:fs";
 import {dirname, join, resolve} from "node:path";
-import {fileURLToPath} from "node:url";
 import {createHash, randomUUID} from "node:crypto";
 import {spawnSync} from "node:child_process";
 import {bindingTemplate, prepareInstallation, renderWorkorder} from "./prepare-core.mjs";
+import {profileCatalog, readProfile} from "./profiles.mjs";
 
-const here = dirname(fileURLToPath(import.meta.url));
 const schema = "stellar-forge.installation-workshare-receiving.v1";
 const usage = "node receive.mjs --operations-cli /absolute/workspace/cli.py --workspace /absolute/original-workspace --case operation-ID --plan plan-ID --inputs PAIR_RECEIVING.json --source-root /absolute/original-files --out /absolute/private-output --receiving-workspace /absolute/receiving-workspace --actor ACTUAL_OPERATOR [--receiving-actor ACTUAL_RECEIVER] [--python python3]";
 const fail = message => { throw new Error(message); };
@@ -45,10 +44,28 @@ function regular(path, maximum = 8 * 1024 * 1024) {
     fail("Use the complete regular source file: " + path);
   return readFileSync(path);
 }
+function syncDirectory(path) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try { fsyncSync(fd); } finally { closeSync(fd); }
+}
+function syncRetained(path, bytes) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  try {
+    const before = fstatSync(fd);
+    if (!before.isFile() || before.size > 128 * 1024 * 1024 ||
+        !readFileSync(fd).equals(bytes))
+      fail("The retained operation file differs: " + path);
+    const after = fstatSync(fd), named = lstatSync(path);
+    if (["dev", "ino", "size", "mtimeMs", "ctimeMs"].some(key => before[key] !== after[key]) ||
+        named.dev !== after.dev || named.ino !== after.ino)
+      fail("The retained operation file changed while being read: " + path);
+    fsyncSync(fd);
+  } finally { closeSync(fd); }
+}
 function retain(path, bytes) {
   if (existsSync(path)) {
-    if (!regular(path, 128 * 1024 * 1024).equals(bytes))
-      fail("The retained operation file differs: " + path);
+    syncRetained(path, bytes);
+    syncDirectory(dirname(path));
   } else {
     const temporary = path + "." + randomUUID() + ".tmp";
     const fd = openSync(temporary, "wx", 0o600);
@@ -56,11 +73,15 @@ function retain(path, bytes) {
       writeFileSync(fd, bytes); fsyncSync(fd);
       try { linkSync(temporary, path); }
       catch (error) {
-        if (error.code !== "EEXIST" || !regular(path, 128 * 1024 * 1024).equals(bytes)) throw error;
+        if (error.code !== "EEXIST") throw error;
+        syncRetained(path, bytes);
       }
-      const directory = openSync(dirname(path), "r");
-      try { fsyncSync(directory); } finally { closeSync(directory); }
-    } finally { closeSync(fd); unlinkSync(temporary); }
+      syncDirectory(dirname(path));
+    } finally {
+      closeSync(fd);
+      unlinkSync(temporary);
+      syncDirectory(dirname(path));
+    }
   }
   return {path, bytes: bytes.length, sha256: hash(bytes)};
 }
@@ -69,6 +90,11 @@ function privateDirectory(path) {
   const stat = lstatSync(path);
   if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 0o077) || realpathSync(path) !== path)
     fail("Use a private 0700 output directory without symbolic-link ancestors: " + path);
+  // Complete the same parent flushes when an earlier mkdir attempt was interrupted.
+  for (let current = path; ; current = dirname(current)) {
+    syncDirectory(current);
+    if (dirname(current) === current) break;
+  }
 }
 function native(args, workspace = options.workspace) {
   const command = [options["operations-cli"], "operations", "--workspace", workspace, ...args];
@@ -114,8 +140,9 @@ function readInputs() {
       !Array.isArray(value.customers) || !value.customers.length || value.customers.length > 20)
     fail("Use a complete receiving input with a stable requestPrefix and customer list.");
   const cases = new Set();
+  const profileIds = new Set(profileCatalog().map(profile => profile.id));
   for (const customer of value.customers) {
-    if (!record(customer) || !["cocart", "blockscout", "queryfarm", "ars-air-quality", "supplier-catalogues", "supplier-orders", "stellarcarbon", "cfce-givecredit"].includes(customer.profile) ||
+    if (!record(customer) || !profileIds.has(customer.profile) ||
         typeof customer.workshareCaseId !== "string" || !customer.workshareCaseId ||
         cases.has(customer.workshareCaseId) || !/^[a-f0-9]{64}$/.test(customer.planSha256 || "") ||
         !Array.isArray(customer.files) || !customer.files.length)
@@ -193,7 +220,7 @@ function appliedBindings(base, supplied, sourceIds) {
   return result;
 }
 function receiveCustomer(customer, attached) {
-  const profile = JSON.parse(regular(join(here, customer.profile + ".json")).toString("utf8"));
+  const profile = readProfile(customer.profile).value;
   return retryCurrent(state => {
     const before = existingInstallation(state, customer.workshareCaseId);
     const version = state.program.version;
