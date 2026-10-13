@@ -9,6 +9,7 @@ MANIFEST_SHA = "fc4cb47a2e47795dbf026f734cfa7c493b4f141315a4f4fa63c165325e944322
 SESSION = "socrata-hpd-queens-paid-customer-1fb3-20261011"
 CUSTOMER = "a3618289-2faa-4634-9ab6-f063995229ed"
 SNAPSHOT = "11e07ef6b87c34cbf38dd975b8fbe44e2de22d50d273315736080162983c72ea"
+CONFIGURATION = "4ff12cd2f60b2f37670883c135266835ffd7f9fed86ea65215acc5cc44403aa7"
 PAGES = [
     (23970, "634374a493ae506b4ad4ed28cc37d5c24690057d5a0f3e9833b78b75a3502218", 100),
     (11875, "0fe2d6ced0a0f981d58769f067febc2cdf829e22f8da6d26e68200584fd33e1c", 44),
@@ -57,10 +58,97 @@ def publish(path, raw):
             os.close(d)
     finally:
         os.unlink(temp)
+
+def ordinary(path, maximum):
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    with os.fdopen(descriptor, "rb") as stream:
+        info = os.fstat(stream.fileno())
+        require(stat.S_ISREG(info.st_mode) and info.st_size <= maximum,
+                "Use a complete ordinary original acquisition source file.")
+        raw = stream.read(maximum + 1)
+    require(len(raw) <= maximum, "The original acquisition source exceeds its intake limit.")
+    return raw
+def receive_acquisition(directory, archive_path, destination):
+    """Copy only exact original page/evidence records and their saved session definition."""
+    require(not (directory and archive_path), "Choose one original acquisition directory or complete archive.")
+    if directory is None and archive_path is None:
+        return None, []
+    wanted = {item[1] for item in PAGES} | set(EVIDENCE)
+    accepted = []
+    def consider(name, raw):
+        digest = sha(raw)
+        selected = digest in wanted
+        definition = None
+        if name.rsplit("/", 1)[-1] == "session.json":
+            try:
+                value = json.loads(raw)
+                if (isinstance(value, dict) and value.get("schema") == "stellar-forge.sf88.dataset-session.v1"
+                    and isinstance(value.get("config"), dict)
+                    and value["config"].get("operation", {}).get("intentId") == SESSION
+                    and value.get("configurationSha256") == CONFIGURATION):
+                    # SF88 dataset-page.canonical sorts JSON object keys recursively.
+                    canonical = json.dumps(value["config"], ensure_ascii=False, sort_keys=True,
+                                           separators=(",", ":"), allow_nan=False).encode()
+                    require(sha(canonical) == CONFIGURATION,
+                            "The original saved acquisition configuration bytes changed.")
+                    selected, definition = True, value
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                pass
+        if not selected:
+            return
+        target = destination / (digest + ".json")
+        publish(target, raw)
+        accepted.append({"name": name, "path": str(target), "bytes": len(raw), "sha256": digest,
+                         "source_kind": "original-acquisition", "session_definition": definition is not None})
+    private(destination, True)
+    if directory is not None:
+        root = directory.absolute()
+        private(root)
+        names = ["session.json", "pages/000001/response.json", "pages/000002/response.json",
+                 "evidence/23f93ab9a4629b0c4c92d9c8b861d3e8de7590d37c6f85e8f87b1baa2c63dbd2.json",
+                 "evidence/b92391525d2c554bd9c7b8092e82ce303bd192375caa6ced0ba4636d5da09ca3.json"]
+        for name in names:
+            path = root / name
+            require(path.resolve() == path and path.is_relative_to(root),
+                    "Use the original ordinary acquisition path without symbolic links.")
+            consider(name, ordinary(path, 16 * 1024 * 1024))
+        origin = {"kind": "directory", "path": str(root)}
+    else:
+        path = archive_path.absolute()
+        raw = ordinary(path, 256 * 1024 * 1024)
+        origin = {"kind": "zip", "path": str(path), "bytes": len(raw), "sha256": sha(raw)}
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            seen, total = set(), 0
+            require(len(archive.infolist()) <= 10000, "The original acquisition archive has too many members.")
+            for member in archive.infolist():
+                name, path = member.filename, pathlib.PurePosixPath(member.filename)
+                require(name and "\\" not in name and not path.is_absolute()
+                        and all(part not in ("", ".", "..") for part in path.parts)
+                        and name not in seen, "The acquisition archive has an unsafe or repeated member.")
+                seen.add(name)
+                require(stat.S_IFMT(member.external_attr >> 16) in {0, stat.S_IFREG, stat.S_IFDIR}
+                        and not member.flag_bits & 1, "Use ordinary unencrypted acquisition source members.")
+                if member.is_dir():
+                    continue
+                require(member.file_size <= 64 * 1024 * 1024,
+                        "An acquisition archive member exceeds the complete intake limit.")
+                total += member.file_size
+                require(total <= 256 * 1024 * 1024, "The acquisition archive exceeds its complete intake limit.")
+                if name.lower().endswith(".json"):
+                    consider(name, archive.read(member))
+    require(wanted <= {item["sha256"] for item in accepted},
+            "Select the original acquisition source with both complete response/evidence pairs.")
+    definitions = {item["sha256"] for item in accepted if item["session_definition"]}
+    require(len(definitions) == 1, "Select the one complete original saved session definition.")
+    return origin, accepted
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", type=pathlib.Path, required=True)
     parser.add_argument("--out", type=pathlib.Path, required=True)
+    original_acquisition = parser.add_mutually_exclusive_group()
+    original_acquisition.add_argument("--acquisition-directory", type=pathlib.Path)
+    original_acquisition.add_argument("--acquisition-archive", type=pathlib.Path)
     args = parser.parse_args()
     out = args.out.absolute()
     require(out == out.resolve(), "Select a canonical intake output path.")
@@ -103,15 +191,25 @@ def main():
                     continue
                 if isinstance(value, dict):
                     documents.append((row, value))
+    acquisition, supplemental = receive_acquisition(args.acquisition_directory, args.acquisition_archive,
+                                                   out / "original-acquisition")
+    for row in supplemental:
+        inventory.append(row)
+        by_hash.setdefault(row["sha256"], []).append(row)
+        value = json.loads(pathlib.Path(row["path"]).read_bytes())
+        if isinstance(value, dict):
+            documents.append((row, value))
     def original(digest):
         found = by_hash.get(digest, [])
-        require(found, "The complete original archive is missing expected source " + digest)
+        require(found, "The selected original sources are missing expected acquisition source " + digest +
+                "; supply its complete original --acquisition-directory or --acquisition-archive.")
         return sorted(found, key=lambda row: row["name"])[0]
     manifest_ref = original(MANIFEST_SHA)
     manifest = json.loads(pathlib.Path(manifest_ref["path"]).read_bytes())
     require(manifest.get("schema") == "stellar-forge.sf88.dataset-acquisition.v1"
             and manifest.get("status") == "COMPLETE"
             and manifest.get("sessionId") == SESSION
+            and manifest.get("configurationSha256") == CONFIGURATION
             and manifest.get("snapshot") == SNAPSHOT
             and manifest.get("completedPages") == 2 and manifest.get("acquiredRows") == 144
             and manifest.get("totalRows") == 144
@@ -215,6 +313,7 @@ def main():
                           "bytes": len(raw), "sha256": ARCHIVE_SHA},
               "original_customer_id": CUSTOMER, "original_session_id": SESSION, "snapshot": SNAPSHOT,
               "manifest": manifest_ref, "definition": definition_ref, "pages": pages,
+              "original_acquisition": acquisition,
               "buyer_template": str(template_path), "customer_delivery": delivery_ref,
               "customer_outputs": outputs, "scope_file": str(out / "source-scope.md"),
               "schema_file": str(out / "output-schema.json"), "acceptance_file": str(out / "acceptance.md"),
