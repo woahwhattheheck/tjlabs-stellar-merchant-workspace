@@ -1,0 +1,79 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grant-submission-review",
+  "heading": "## Application review, corrections and complete handover",
+  "sources": [
+    {
+      "id": "grant-submission-review-operating-guide",
+      "label": "Original submission review, complete working copies and independent receiving",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/GRANT_REVIEW_ROUNDS.md",
+      "commit": "9e9cbea315c2a19ef84db8dea513f6c3c4a8417a",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "9e9cbea315c2a19ef84db8dea513f6c3c4a8417a",
+          "git_blob": "e1dc1a34de9502c57f2244136fc398e21250d566",
+          "sha256": "65614d67d47211df15560edf262b496471e76711b2e8dbb1b9d724ee2f485830",
+          "bytes": 24764
+        }
+      ]
+    },
+    {
+      "id": "grant-required-content-review-guide",
+      "label": "Output-specific canonical answer and issuer-field review with complete handover",
+      "kind": "blob",
+      "path": "stellar-forge/developer-site/GRANT_REQUIRED_CONTENT_REVIEW.md",
+      "commit": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "editions": [
+        {
+          "commit": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
+          "git_blob": "e49e1e305c423ff02263bca7a720b04cbb8e94c0",
+          "sha256": "e3e351206174ce26ba845494e0d2beb31015f46bbdebac149150491245c17bc2",
+          "bytes": 7898
+        }
+      ]
+    },
+    {
+      "id": "grant-submission-review-complete-source",
+      "label": "Complete selected application review, working-copy, required-content and handover source",
+      "kind": "tree",
+      "path": "stellar-forge/developer-site",
+      "commit": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace"
+    },
+    {
+      "id": "grant-submission-review-working-copy-receiving",
+      "label": "Complete original and recipient review working packages and original recorded-review receiving",
+      "kind": "blob",
+      "path": "operations/scf-submission-review-working-copies-5403-20261013/complete-source-receiving.json",
+      "commit": "9e9cbea315c2a19ef84db8dea513f6c3c4a8417a",
+      "editions": [
+        {
+          "commit": "9e9cbea315c2a19ef84db8dea513f6c3c4a8417a",
+          "git_blob": "65f2b7ab147b955fd9488f4a1197c742df50dd15",
+          "sha256": "d056667ca7f102ce444bac443ca8a9913723817b1fb2821b96bd7074e84585e4",
+          "bytes": 1157083
+        }
+      ],
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace"
+    },
+    {
+      "id": "grant-required-content-review-source-receiving",
+      "label": "Complete required-content review source, original dependencies and source-function receiving",
+      "kind": "blob",
+      "path": ".swarm-delivery/scf-required-content-review-7108-20261013/review-source.json",
+      "commit": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
+      "editions": [
+        {
+          "commit": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
+          "git_blob": "adba552f0626e252b3b5665c670519ef2cfeba76",
+          "sha256": "b8ae40a17d0f51d78dd0c4a5564b87acde205b61568d6cff235af0d24c09a2bc",
+          "bytes": 691327
+        }
+      ],
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace"
+    }
+  ]
+}
