@@ -37,7 +37,7 @@ export async function receiveMonitoring({gleifWorkspace,monitoringWorkspace,sele
   reviewer=label(reviewer,'receiving reviewer',160);need(typeof note==='string'&&note.length<=4000,'GLEIF_RECEIVING_NOTE');
   if(refreshSelection!==null){
     need(refreshSelection&&typeof refreshSelection==='object'&&!Array.isArray(refreshSelection)&&
-      Object.keys(refreshSelection).every(key=>['beforePortfolio','reviews'].includes(key))&&
+      Object.keys(refreshSelection).every(key=>['beforePortfolio','reviews','cycle'].includes(key))&&
       /^[a-f0-9]{64}$/.test(refreshSelection.beforePortfolio)&&Array.isArray(refreshSelection.reviews),
       'GLEIF_REFRESH_SELECTION','Choose an original earlier portfolio and explicit review requests.');
     need(refreshSelection.reviews.every(value=>value&&typeof value==='object'&&!Array.isArray(value)&&
@@ -97,6 +97,68 @@ export async function receiveMonitoring({gleifWorkspace,monitoringWorkspace,sele
     }
     refreshResult={comparisonId:comparison.id,beforePortfolio:comparison.before,afterPortfolio:comparison.after,decisions,reports};
   }
+  if(refreshSelection?.cycle){
+    const specification=refreshSelection.cycle;
+    need(specification&&typeof specification==='object'&&!Array.isArray(specification)&&
+      Object.keys(specification).every(key=>['create','commands'].includes(key))&&
+      specification.create&&Array.isArray(specification.commands),
+      'GLEIF_REFRESH_CYCLE','Supply the original attributed create command and complete command sequence.');
+    const definitions=[{...specification.create,action:'create'},...specification.commands];
+    const cycleResults=[];let current=null;
+    for(const [index,definition] of definitions.entries()){
+      need(definition&&typeof definition==='object'&&!Array.isArray(definition)&&
+        Object.keys(definition).every(key=>['requestId','action','actor','body','reviewIndex'].includes(key))&&
+        definition.body&&typeof definition.body==='object'&&!Array.isArray(definition.body),
+        'GLEIF_REFRESH_CYCLE','Use the original authored cycle actor/body and optional explicit review index.');
+      let body={...definition.body};
+      if(index===0){
+        need(!Object.hasOwn(body,'comparison')&&!Object.hasOwn(body,'sourceKind')&&
+          !Object.hasOwn(definition,'reviewIndex'),'GLEIF_REFRESH_CYCLE','Creation binds this exact customer comparison.');
+        body={...body,comparison:refreshResult.comparisonId,sourceKind:'portfolio_refresh'};
+      }else{
+        need(['assign','complete','reopen','signoff'].includes(definition.action),'GLEIF_REFRESH_CYCLE','Choose an original cycle action.');
+        if(definition.action==='complete'&&Object.hasOwn(definition,'reviewIndex')){
+          const selected=refreshResult.decisions[definition.reviewIndex];
+          need(Number.isSafeInteger(definition.reviewIndex)&&definition.reviewIndex>=0&&selected?.result.case&&
+            !Object.hasOwn(body,'caseId')&&!Object.hasOwn(body,'caseRevision')&&!Object.hasOwn(body,'portfolioReviewRequestId'),
+            'GLEIF_REFRESH_CYCLE','Select one actual retained retain/continue request; do not replace its case binding.');
+          body={...body,caseId:selected.result.case.id,caseRevision:selected.result.case.revision,
+            portfolioReviewRequestId:selected.request.requestId};
+        }else{
+          need(!Object.hasOwn(definition,'reviewIndex'),'GLEIF_REFRESH_CYCLE','A review index belongs only to completion.');
+          if(definition.action==='complete')body={...body,portfolioReviewRequestId:body.portfolioReviewRequestId??null};
+        }
+      }
+      const filename=join(output,'portfolio-cycle-command-'+index+'.json');
+      const basis={requestId:definition.requestId,cycleId:current?.cycleId??null,expectedVersion:current?.version??0,
+        action:definition.action,actor:definition.actor,body};
+      let command;
+      if(await exists(filename)){
+        command=JSON.parse(await readPrivate(filename));
+        const {at,...retainedBasis}=command;
+        need(stable(retainedBasis)===stable(basis),'GLEIF_REFRESH_CYCLE_CHANGED','The exact original cycle command changed.');
+      }else{
+        command={...basis,at:new Date().toISOString()};await retained(filename,bytes(command));
+      }
+      current=await python(pythonCommand,[cli,'--workspace',monitoringWorkspace,'cycle-command','--input',filename]);
+      need(current.requestId===command.requestId,'GLEIF_REFRESH_CYCLE_IDENTITY');cycleResults.push({command,result:current});
+    }
+    const originalCycle=await python(pythonCommand,[cli,'--workspace',monitoringWorkspace,'cycle','--id',current.cycleId]);
+    const cycleSnapshotPath=join(output,'Portfolio_Review_Cycle.json');
+    if(await exists(cycleSnapshotPath)){
+      const priorCycle=JSON.parse(await readPrivate(cycleSnapshotPath,128*1024*1024));
+      need(priorCycle.id===originalCycle.id&&priorCycle.version===originalCycle.version&&priorCycle.revision===originalCycle.revision,
+        'GLEIF_REFRESH_CYCLE_CHANGED','The original cycle progressed beyond this receiving course; preserve its snapshot and choose a new output.');
+    }else await retained(cycleSnapshotPath,bytes(originalCycle));
+    const reports=[];
+    for(const report of originalCycle.reports)for(const format of ['json','html']){
+      const filename=join(output,'Portfolio_Review_Cycle_v'+report.version+'.'+format);
+      const file=await python(pythonCommand,[cli,'--workspace',monitoringWorkspace,'cycle-report','--id',current.cycleId,
+        '--version',String(report.version),'--output',filename,...(format==='html'?['--html']:[])]);
+      reports.push({version:report.version,format,file});
+    }
+    refreshResult.cycle={cycleId:current.cycleId,version:originalCycle.version,revision:originalCycle.revision,commands:cycleResults,reports};
+  }
   const archive=join(output,'Monitoring_Research_Receiving.zip');
   if(!await exists(archive)){
     const temporary=join(output,'Monitoring_Research_Receiving.pending.zip');
@@ -121,6 +183,24 @@ export async function receiveMonitoring({gleifWorkspace,monitoringWorkspace,sele
         '--output',outputPath,...(format==='html'?['--html']:[])]);
       need(report.sha256===refreshResult.reports[format].sha256&&report.bytes===refreshResult.reports[format].bytes,
         'GLEIF_REFRESH_COLD_REPORT','The received complete population, attributed decisions or original case history differs.');
+    }
+    if(refreshResult.cycle){
+      const cycle=refreshResult.cycle;
+      const reopenedCycle=await python(pythonCommand,[cli,'--workspace',restored,'cycle','--id',cycle.cycleId]);
+      need(reopenedCycle.id===cycle.cycleId&&reopenedCycle.version===cycle.version&&reopenedCycle.revision===cycle.revision,
+        'GLEIF_REFRESH_CYCLE_COLD','The original customer review cycle did not reopen at its captured revision.');
+      for(const event of cycle.commands){
+        const replay=await python(pythonCommand,[cli,'--workspace',restored,'cycle-command','--input',
+          join(output,'portfolio-cycle-command-'+cycle.commands.indexOf(event)+'.json')]);
+        need(stable(replay)===stable(event.result),'GLEIF_REFRESH_CYCLE_REPLAY','The original receiving request result changed.');
+      }
+      for(const report of cycle.reports){
+        const filename=join(output,'Received_Portfolio_Review_Cycle_v'+report.version+'.'+report.format);
+        const actual=await python(pythonCommand,[cli,'--workspace',restored,'cycle-report','--id',cycle.cycleId,
+          '--version',String(report.version),'--output',filename,...(report.format==='html'?['--html']:[])]);
+        need(actual.bytes===report.file.bytes&&actual.sha256===report.file.sha256,'GLEIF_REFRESH_CYCLE_REPORT','The complete signed report changed on receiving.');
+      }
+      cycle.coldReopened=true;
     }
     refreshResult.coldReopened=true;
   }

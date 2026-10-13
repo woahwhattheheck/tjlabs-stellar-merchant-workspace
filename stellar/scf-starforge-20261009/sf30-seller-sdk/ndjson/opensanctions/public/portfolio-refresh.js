@@ -142,7 +142,13 @@ export async function mountPortfolioRefresh({root,api,getState,refresh,inspectCa
     try{const result=await call('source?'+new URLSearchParams({id}),undefined,{download:true});if(!valid(turn))return;const url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download='Original_'+side+'_'+id+'.ftm.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){if(valid(turn))message(error.message,true);}
   });
   portfolios();pendingView();
-  return {activate:async()=>{active=true;generation++;portfolios();pendingView();await lists();if(selected)await load();},
+  return {openComparison:async(id,entityId='')=>{
+      if(!/^[a-f0-9]{64}$/.test(id))throw Error('Choose an original saved portfolio comparison.');
+      active=true;generation++;selected=id;row=null;data=null;offset=0;
+      q('[data-refresh-kind]').value='';q('[data-refresh-search]').value=entityId;
+      q('[data-refresh-detail]').hidden=true;const turn=generation+1;await load();
+      if(valid(turn)&&selected===id&&data?.rows.some(item=>item.entityId===entityId))openRow(entityId);
+    },activate:async()=>{active=true;generation++;portfolios();pendingView();await lists();if(selected)await load();},
     deactivate:()=>{active=false;generation++;try{storeForm();}catch(error){message('Draft storage failed: '+error.message,true);}},refresh:()=>{portfolios();},
     dispose:()=>{active=false;generation++;try{storeForm();}catch(error){message('Draft storage failed: '+error.message,true);}}};
 }

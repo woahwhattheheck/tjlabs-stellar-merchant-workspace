@@ -15,6 +15,7 @@ import updates
 import review_cycles
 import gleif_portfolio
 import portfolio_refresh
+import portfolio_review_cycles
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -35,6 +36,8 @@ def main():
     change = sub.add_parser("receive-update"); change.add_argument("--before", required=True); change.add_argument("--after", required=True)
     export = sub.add_parser("export"); export.add_argument("--output", required=True)
     receive = sub.add_parser("import"); receive.add_argument("--input", required=True)
+    choices = sub.add_parser("portfolio-cycle-reviews", help="List original attributed portfolio reviews for cycle completion")
+    choices.add_argument("--comparison-id", required=True)
     sub.add_parser("cycles", help="List finite customer review cycles")
     cycle = sub.add_parser("cycle"); cycle.add_argument("--id", required=True)
     command = sub.add_parser("cycle-command"); command.add_argument("--input", required=True)
@@ -137,6 +140,8 @@ def main():
             result = gleif_portfolio.receive(d, load_json(Path(args.request).read_bytes()))
         elif args.action == "gleif-intake":
             result = gleif_portfolio.operation(d, args.request_id)
+        elif args.action == "portfolio-cycle-reviews":
+            result = portfolio_review_cycles.choices(d, args.comparison_id)
         elif args.action == "cycles":
             result = review_cycles.view(d)
         elif args.action == "cycle":

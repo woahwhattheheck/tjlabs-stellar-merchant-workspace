@@ -79,6 +79,10 @@ class Handler(ndjson_application.Handler):
                 return self._json(portfolio_refresh.report(d, q["id"]))
             raw = portfolio_refresh.report_html(d, q["id"]).encode("utf-8")
             self._headers(200, "text/html; charset=utf-8", len(raw)); self.wfile.write(raw); return
+        if path == "portfolio-cycle-reviews":
+            self._cycle_branch()
+            import portfolio_review_cycles
+            return self._json(portfolio_review_cycles.choices(d, q["comparisonId"]))
         if path == "gleif-intake":
             self._cycle_branch()
             return self._json(gleif_portfolio.operation(d, q["requestId"]))
