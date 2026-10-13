@@ -12,6 +12,7 @@ import { createOperationHandoff } from '../sf88-operator-buyer-cli/operation-han
 import { MAX_REQUEST_BODY_BYTES, requestBodyPin } from '../sf88-operator-buyer-cli/request-body.mjs';
 import { parseOperationTicketBytes, operationTicketView } from '../sf88-operator-buyer-cli/operation-ticket.mjs';
 import { InputError, need } from '../sf88-operator-buyer-cli/config.mjs';
+import { AtlasCaptureSearch, ATLAS_CAPTURE_SEARCH_SCHEMA, normalizeCaptureSearch, matchingCaptureAcceptIndexes } from './capture-search.mjs';
 
 export const ATLAS_WORKSPACE_SCHEMA = 'stellar-forge.sf61.workspace.v1';
 const CATALOG_SCHEMA = 'stellar-forge.sf88.catalog-acquisition.v1';
@@ -97,6 +98,10 @@ export async function openAtlasWorkspace({ directory, create = true }) {
     (process.platform === 'win32' || (rootInfo.mode & 0o077) === 0 && rootInfo.uid === process.getuid()), 'ATLAS_PRIVATE_DIRECTORY_REQUIRED');
   const release = await lock(directory);
   let closed = false, queue = Promise.resolve();
+  // Read indexes are disposable. Every durable byte stays in the original store.
+  const searchCache = new Map();
+  const cacheLimits = { captures: 4, sourceBytes: 64 * 1048576, rows: 20000 };
+  let cachedBytes = 0, cachedRows = 0;
   const path = rel => join(directory, relative(rel));
   async function sync(dir) {
     if (process.platform === 'win32') return;
@@ -184,6 +189,95 @@ export async function openAtlasWorkspace({ directory, create = true }) {
     const value = decode(bytes), rows = rowsOf(value);
     need(rows.length === page.rows, 'ATLAS_SOURCE_ROW_COUNT_CHANGED');
     return { bytes, value, rows };
+  }
+  async function retainedStamp(rel, limit, optional = false) {
+    const filename = path(rel);
+    try {
+      need(await realpath(filename) === filename, 'ATLAS_FILE_SYMLINK_REFUSED');
+      const info = await lstat(filename, { bigint: true });
+      need(info.isFile() && !info.isSymbolicLink() && info.size <= BigInt(limit) &&
+        (process.platform === 'win32' || (info.mode & 0o077n) === 0n && info.uid === BigInt(process.getuid())),
+      'ATLAS_PRIVATE_FILE_REQUIRED');
+      return [info.dev, info.ino, info.size, info.mtimeNs, info.ctimeNs].map(String);
+    } catch (error) {
+      if (error.code === 'ENOENT' && optional) return null;
+      throw error;
+    }
+  }
+  async function pageStamp(item, expected) {
+    need(pageOK(expected.file) && digestOK(expected.sha256) && Number.isSafeInteger(expected.rows) && expected.rows >= 0,
+      'ATLAS_NATIVE_MANIFEST_INVALID');
+    return retainedStamp(`captures/${item.id}/native/${expected.file}`, PAGE_BYTES, item.status === 'RECEIVING');
+  }
+  function forgetSearch(id) {
+    const previous = searchCache.get(id);
+    if (!previous) return;
+    cachedBytes -= previous.bytes; cachedRows -= previous.rows; searchCache.delete(id);
+  }
+  async function indexedCapture(item) {
+    const stamps = [];
+    for (const file of item.files) stamps.push(await pageStamp(item, file));
+    const sourceStamps = item.kind === 'NATIVE_CAPTURE' ? [
+      await retainedStamp(`captures/${item.id}/source-session.json`, PAGE_BYTES),
+      await retainedStamp(`captures/${item.id}/source-manifest.json`, MANIFEST_BYTES)
+    ] : [];
+    const stamp = identity({ item, stamps, sourceStamps }), hit = searchCache.get(item.id);
+    if (hit?.stamp === stamp) {
+      searchCache.delete(item.id); searchCache.set(item.id, hit);
+      return hit;
+    }
+    forgetSearch(item.id);
+    let sourceRequest = null;
+    if (item.kind === 'NATIVE_CAPTURE') {
+      const sessionBytes = await read(`captures/${item.id}/source-session.json`, PAGE_BYTES);
+      const manifestBytes = await read(`captures/${item.id}/source-manifest.json`, MANIFEST_BYTES);
+      need(hash(sessionBytes) === item.sessionSha256 && hash(manifestBytes) === item.manifestSha256, 'ATLAS_CAPTURE_SOURCE_CHANGED');
+      const { session, manifest } = captureInputs(sessionBytes.toString('utf8'), manifestBytes.toString('utf8'));
+      need(identity(manifest.pages) === identity(item.files), 'ATLAS_CAPTURE_SOURCE_CHANGED');
+      sourceRequest = copy(session.request);
+    }
+    const engine = new AtlasCaptureSearch(), pages = [], missingPages = [];
+    let bytes = 0, rows = 0;
+    for (const [index, file] of item.files.entries()) {
+      if (stamps[index] === null) { missingPages.push(file.file); continue; }
+      const source = await sourcePage(item, file.file), pagination = source.value.pagination;
+      bytes += source.bytes.length; rows += source.rows.length;
+      engine.addPage({ pageFile: file.file, sha256: file.sha256, rows: source.rows });
+      pages.push({ pageFile: file.file, sha256: file.sha256, bytes: source.bytes.length, rows: source.rows.length,
+        offset: Number.isSafeInteger(pagination?.offset) && pagination.offset >= 0 ? pagination.offset
+          : Number.isSafeInteger(file.offset) && file.offset >= 0 ? file.offset : null,
+        reportedTotal: Number.isSafeInteger(pagination?.total) && pagination.total >= 0 ? pagination.total : null,
+        partialResults: typeof source.value.partialResults === 'boolean' ? source.value.partialResults : null });
+    }
+    engine.finish();
+    const totals = [...new Set(pages.map(page => page.reportedTotal).filter(total => total !== null))];
+    if (!totals.length && Number.isSafeInteger(item.reportedTotal) && item.reportedTotal >= 0) totals.push(item.reportedTotal);
+    const reportedTotal = totals.length === 1 ? totals[0] : null;
+    let end = 0, contiguous = pages.length > 0;
+    for (const page of pages) {
+      if (page.offset !== end) contiguous = false;
+      end = page.offset === null ? null : page.offset + page.rows;
+    }
+    const captureComplete = item.status === 'READY' && missingPages.length === 0;
+    const allReportedRowsPresent = reportedTotal === null ? null :
+      captureComplete && contiguous && rows === reportedTotal && end === reportedTotal &&
+      pages.every(page => page.partialResults !== true);
+    const coverage = { captureStatus: item.status, nativeStatus: item.nativeStatus ?? item.originalStatus ?? null,
+      expectedPages: item.files.length, receivedPages: pages.length, missingPages,
+      expectedRows: item.rows, receivedRows: rows, reportedTotal, captureComplete, allReportedRowsPresent,
+      totalChanged: totals.length > 1, sourceRequest,
+      observation: 'RETAINED_PAGES_NOT_AN_ATOMIC_PROVIDER_SNAPSHOT' };
+    const snapshotId = identity({ captureId: item.id, kind: item.kind, source: item.source,
+      sessionSha256: item.sessionSha256 ?? null, manifestSha256: item.manifestSha256 ?? null, pages, coverage });
+    const built = { engine, stamp, snapshotId, pages, coverage, bytes, rows };
+    // Large complete captures still search in full; their temporary index is
+    // released after the response instead of displacing the retained small ones.
+    if (bytes <= cacheLimits.sourceBytes && rows <= cacheLimits.rows) {
+      while (searchCache.size >= cacheLimits.captures || cachedBytes + bytes > cacheLimits.sourceBytes ||
+          cachedRows + rows > cacheLimits.rows) forgetSearch(searchCache.keys().next().value);
+      searchCache.set(item.id, built); cachedBytes += bytes; cachedRows += rows;
+    }
+    return built;
   }
   async function record(selectionId, current) {
     need(idOK(selectionId), 'ATLAS_SELECTION_ID_INVALID');
@@ -367,27 +461,35 @@ export async function openAtlasWorkspace({ directory, create = true }) {
       }
       return { ...current.captures[id], captureId: id, pages: 1 };
     }); },
-    async capture({ captureId, query = '', page = 0, pageSize = 50 }) {
-      need(!closed, 'ATLAS_WORKSPACE_CLOSED'); await queue;
-      need(typeof query === 'string' && query.length <= 512 && Number.isSafeInteger(page) && page >= 0 &&
-        Number.isSafeInteger(pageSize) && pageSize >= 1 && pageSize <= 200, 'ATLAS_QUERY_INVALID');
-      const item = await entry(captureId), matches = [], start = page * pageSize;
-      need(Number.isSafeInteger(start), 'ATLAS_QUERY_INVALID');
-      let total = 0;
-      const tokens = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
-      for (const file of item.files) {
-        const saved = await read(`captures/${captureId}/native/${file.file}`, PAGE_BYTES, true);
-        if (!saved && item.status === 'RECEIVING') continue;
-        need(saved && hash(saved) === file.sha256, 'ATLAS_SOURCE_PAGE_CHANGED');
-        for (const [row, listing] of rowsOf(decode(saved)).entries()) {
-          const searchable = JSON.stringify(listing).toLocaleLowerCase();
-          if (!tokens.every(token => searchable.includes(token))) continue;
-          if (total >= start && matches.length < pageSize) matches.push({ pageFile: file.file, row, listing });
-          total++;
-        }
+    capture(input) { return mutate(async () => {
+      const request = normalizeCaptureSearch(input), item = await entry(request.captureId);
+      const indexed = await indexedCapture(item);
+      need(request.snapshotId === null || request.snapshotId === indexed.snapshotId, 'ATLAS_SEARCH_SNAPSHOT_CHANGED');
+      const result = indexed.engine.select(request), loaded = new Map(), offers = [];
+      for (const reference of result.offers) {
+        if (!loaded.has(reference.pageFile)) loaded.set(reference.pageFile, await sourcePage(item, reference.pageFile));
+        const listing = loaded.get(reference.pageFile).rows[reference.row];
+        need(plain(listing), 'ATLAS_SOURCE_ROW_COUNT_CHANGED');
+        offers.push({ ...reference, listing, matchingAcceptIndexes: matchingCaptureAcceptIndexes(listing, request.filters) });
       }
-      return { capture: { ...item, pages: item.files.length }, offers: matches,
-        pagination: { page, pageSize, total, nextPage: start + matches.length < total ? page + 1 : null } };
+      const { captureId, query, filters, page, pageSize } = request;
+      return { schema: ATLAS_CAPTURE_SEARCH_SCHEMA, capture: { ...copy(item), pages: item.files.length },
+        snapshotId: indexed.snapshotId, sourcePages: copy(indexed.pages), coverage: copy(indexed.coverage),
+        search: { query, filters, order: result.order, indexedRows: result.indexedRows, unindexedRows: result.unindexedRows,
+          matchingRows: result.total }, offers,
+        pagination: { page, pageSize, total: result.total, nextPage: result.nextPage },
+        continuation: result.nextPage === null ? null :
+          { captureId, query, filters: copy(filters), page: result.nextPage, pageSize, snapshotId: indexed.snapshotId } };
+    }); },
+    async *capturePages(input) {
+      let next = normalizeCaptureSearch(copy(input));
+      while (next) {
+        const page = await api.capture(next);
+        // Capture continuation before yielding: caller edits cannot change the
+        // original source snapshot, query, filters or page size of this walk.
+        next = page.continuation === null ? null : copy(page.continuation);
+        yield page;
+      }
     },
     saveSelection(input) { return mutate(async () => {
       const current = await state(), item = await entry(input.captureId, current);
@@ -468,7 +570,7 @@ export async function openAtlasWorkspace({ directory, create = true }) {
       need((await read('workspace.json')).equals(snapshot), 'ATLAS_SNAPSHOT_CHANGED_RETRY');
       yield { path: 'workspace.json', bytes: snapshot };
     },
-    async close() { if (!closed) { closed = true; await queue; await release(); } },
+    async close() { if (!closed) { closed = true; await queue; searchCache.clear(); await release(); } },
   };
   return api;
 }
