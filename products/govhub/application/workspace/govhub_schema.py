@@ -22,7 +22,7 @@ def configure(schema):
             f("source_reference", "Original scope source"), f("notes", "Operating notes", "textarea"), *review]},
         "environments": {"title": "Operating environments", "singular": "Environment", "fields": [
             f("name", "Environment name", required=True),
-            f("provider", "Provider", "select", options=["Drupal native", "Acquia Cloud", "Lagoon", "Pantheon", "Skpr", "Tugboat", "Upsun", "Prime supplied"], default="Prime supplied"),
+            f("provider", "Provider", "select", options=["Drupal native", "Acquia Cloud", "Lagoon", "Pantheon", "Skpr", "Tugboat", "Upsun", "Castor", "Prime supplied"], default="Prime supplied"),
             f("purpose", "Operating purpose", "select", options=["Incumbent", "Candidate", "Rehearsal", "Production"], default="Rehearsal"),
             f("provider_resource_id", "Actual provider environment identifier"),
             f("canonical_url", "Environment HTTPS URL"), f("owner", "Operating owner"),

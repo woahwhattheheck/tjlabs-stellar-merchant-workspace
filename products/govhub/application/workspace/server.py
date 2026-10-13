@@ -278,7 +278,7 @@ class Handler(BaseHTTPRequestHandler):
             if len(parts) == 2 and parts[0] == "govhub-static" and parts[1] in ("visitor.css", "visitor.js"):
                 self.send((ROOT / "visitor_journeys" / "web" / parts[1]).read_bytes(), mime="text/css; charset=utf-8" if parts[1].endswith(".css") else "text/javascript; charset=utf-8")
                 return
-            if len(parts) == 2 and parts[0] == "govhub-static" and parts[1] in ("style.css", "app.js", "packages.css", "packages.js", "skpr.css", "skpr.js", "upsun.css", "upsun.js"):
+            if len(parts) == 2 and parts[0] == "govhub-static" and parts[1] in ("style.css", "app.js", "packages.css", "packages.js", "skpr.css", "skpr.js", "upsun.css", "upsun.js", "castor.css", "castor.js"):
                 self.send((ROOT / "web" / parts[1]).read_bytes(), mime="text/css; charset=utf-8" if parts[1].endswith(".css") else "text/javascript; charset=utf-8")
                 return
             if len(parts) == 2 and parts[0] == "release-static" and parts[1] in ("static.css", "static.js"):
