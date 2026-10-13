@@ -46,11 +46,34 @@ function small(kind,doc){
   if(kind==='publications')return{...common,merchantId:doc.merchantId,editionId:doc.editionId,snapshot:doc.snapshot,native:doc.native};
   return{...common,editionId:doc.editionId,snapshot:doc.snapshot,label:doc.label,resource:doc.resource,versionGroup:doc.versionGroup};
 }
+
+// Cleanup handles keep the exact original owners reachable across failed admission.
+export function retainedSupersetCleanup({close,requestClose=()=>{},instanceId=randomUUID(),summary={}}){
+  let completed=false,pending=null;
+  return{instanceId,get summary(){return{...summary,instanceId,admitted:false,cleanupPending:!completed};},
+    requestClose,
+    close(){
+      requestClose();
+      if(completed)return Promise.resolve({instanceId,state:'CLOSED'});
+      if(pending)return pending;
+      const attempt=Promise.resolve().then(close).then(()=>{completed=true;return{instanceId,state:'CLOSED'};});
+      pending=attempt;void attempt.catch(()=>{if(pending===attempt)pending=null;});return attempt;
+    }};
+}
+export function retainSupersetCleanupError(primary,owner,secondary){
+  Object.defineProperty(primary,'supersetCleanup',{value:owner,enumerable:false,configurable:true});
+  primary.cleanupFailure={code:secondary?.code??'SUPERSET_CLOSE_INCOMPLETE',
+    message:secondary?.message??'Retry cleanup of the original owned instance.'};
+  return primary;
+}
+
 export class SupersetWorkspace{
   constructor({directory,db,unlock,env,fetchImpl}){
     this.directory=directory;this.db=db;this.unlock=unlock;this.env=env;this.fetchImpl=fetchImpl;
-    this.tail=Promise.resolve();this.closed=false;this.closing=false;this.active=null;this.pending=new Map();
+    this.tail=Promise.resolve();this.closed=false;this.closing=false;this.active=null;this.pending=new Map();this.cleanupOwners=new Set();
   }
+  retainCleanup(error){if(error?.supersetCleanup)this.cleanupOwners.add(error.supersetCleanup);}
+  async drainCleanup(){for(const owner of this.cleanupOwners){await owner.close();this.cleanupOwners.delete(owner);}}
   meta(key){const row=this.db.prepare('SELECT value FROM meta WHERE key=?').get(key);return row?JSON.parse(row.value):null;}
   setMeta(key,value){this.db.prepare('INSERT INTO meta VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,JSON.stringify(value));}
   revision(){return this.meta('revision');}
@@ -105,6 +128,7 @@ export class SupersetWorkspace{
       operations:this.db.prepare('SELECT id,status,started_at,updated_at,error FROM operations ORDER BY rowid DESC LIMIT 100').all()
         .map(row=>({id:row.id,status:row.status,startedAt:row.started_at,updatedAt:row.updated_at,error:row.error?JSON.parse(row.error):null})),
       operationCount:this.db.prepare('SELECT COUNT(*) AS n FROM operations').get().n,
+      cleanupPending:this.cleanupOwners.size>0,
       connectionRequirements:[...new Set(this.list('sources').flatMap(source=>{
         const auth=this.get('sources',source.id).options.auth;
         return Object.entries(auth).filter(([name])=>name.endsWith('Env')).map(([,name])=>name);
@@ -173,6 +197,7 @@ export class SupersetWorkspace{
         this.db.prepare('UPDATE operations SET progress=?,updated_at=? WHERE id=?').run(JSON.stringify(previousProgress),now(),input.operationId);
       };
       try{
+        await this.drainCleanup();
         if(this.closing)throw fault('SUPERSET_PROCESS_INTERRUPTED','The workspace closed before this queued operation started.',409);
         if(input.expectedRevision!==this.revision())throw fault('SUPERSET_REVISION_CHANGED','An earlier committed operation changed the reviewed revision.',409);
         this.db.prepare("UPDATE operations SET status='RUNNING',updated_at=? WHERE id=?").run(now(),input.operationId);
@@ -190,8 +215,10 @@ export class SupersetWorkspace{
           this.db.exec('COMMIT');
         }catch(error){this.db.exec('ROLLBACK');throw error;}
       }catch(error){
+        this.retainCleanup(error);
         const safe={code:typeof error.code==='string'?error.code:'SUPERSET_OPERATION_FAILED',
-          message:error.code?error.message:'The original operation did not complete.',nativeStatus:error.nativeStatus??null,job:error.job??null};
+          message:error.code?error.message:'The original operation did not complete.',nativeStatus:error.nativeStatus??null,job:error.job??null,
+          cleanupPending:this.cleanupOwners.size>0};
         this.db.prepare('UPDATE operations SET status=?,updated_at=?,error=? WHERE id=?')
           .run(controller.signal.aborted?'CANCELLED':error.code==='SUPERSET_PROCESS_INTERRUPTED'?'INTERRUPTED':'FAILED',now(),JSON.stringify(safe),input.operationId);
       }finally{if(this.active?.id===input.operationId)this.active=null;}
@@ -430,17 +457,23 @@ export class SupersetWorkspace{
   close(){
     if(this.closePromise)return this.closePromise;
     this.requestClose();
-    const attempt=(async()=>{await this.tail;if(!this.closed){this.db.close();this.closed=true;}if(!this.leaseReleased){await this.unlock();this.leaseReleased=true;}})();
+    const attempt=(async()=>{await this.tail;await this.drainCleanup();if(!this.closed){this.db.close();this.closed=true;}if(!this.leaseReleased){await this.unlock();this.leaseReleased=true;}})();
     this.closePromise=attempt;void attempt.catch(()=>{if(this.closePromise===attempt)this.closePromise=null;});
     return attempt;
   }
 }
 export async function openSupersetWorkspace({directory,env=process.env,fetchImpl=globalThis.fetch}={}){
   directory=absolute(resolve(directory));await privateDirectory(directory,true);
-  const unlock=await acquireWorkspace(directory);let db;
+  const unlock=await acquireWorkspace(directory);let db,createdFile,leaseReleased=false;
+  const cleanup=retainedSupersetCleanup({summary:{directory,mode:'owned'},close:async()=>{
+    if(createdFile){await createdFile.close();createdFile=null;}
+    if(db){db.close();db=null;}
+    if(!leaseReleased){await unlock();leaseReleased=true;}
+  }});
   try{
     const file=join(directory,WORKSPACE_FILE);
-    try{const handle=await open(file,'wx',0o600);await handle.close();}catch(e){if(e.code!=='EEXIST')throw e;}
+    try{createdFile=await open(file,'wx',0o600);}catch(e){if(e.code!=='EEXIST')throw e;}
+    if(createdFile){await createdFile.close();createdFile=null;}
     const stat=await lstat(file);
     if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1||stat.mode&0o077)throw fault('SUPERSET_PRIVATE_DATABASE','Use a private original workspace database.');
     db=new DatabaseSync(file);
@@ -462,24 +495,38 @@ export async function openSupersetWorkspace({directory,env=process.env,fetchImpl
     db.prepare("UPDATE operations SET status='INTERRUPTED',updated_at=?,error=? WHERE status IN ('RUNNING','QUEUED')")
       .run(now(),JSON.stringify({code:'SUPERSET_PROCESS_INTERRUPTED',message:'The original process ended before completing this operation. Its retained reads are preserved; retry the same operation explicitly.'}));
     return workspace;
-  }catch(e){db?.close();await unlock();throw e;}
+  }catch(error){
+    try{await cleanup.close();}catch(secondary){retainSupersetCleanupError(error,cleanup,secondary);}
+    throw error;
+  }
 }
 export async function receiveSupersetWorkspace({file,directory}={}){
   file=absolute(resolve(file));directory=absolute(resolve(directory));
   const sourceIdentity=await hashPrivate(file,2*1024*MiB);
   await privateDirectory(directory,true);
   const unlock=await acquireWorkspace(directory),finalFile=join(directory,WORKSPACE_FILE);
-  let source,target,versionCustody,sessionCustody;
+  let source,target,prior,workspace,versionCustody,sessionCustody,primary;
+  let leaseReleased=false;const inheritedOwners=new Set();
+  const closeResources=async()=>{
+    for(const owner of inheritedOwners){await owner.close();inheritedOwners.delete(owner);}
+    if(target){await target.close();target=null;}
+    if(prior){prior.close();prior=null;}
+    if(source){source.close();source=null;}
+    if(workspace){await workspace.close();workspace=null;}
+    if(!leaseReleased){await unlock();leaseReleased=true;}
+  };
+  const cleanup=retainedSupersetCleanup({summary:{directory,mode:'owned'},close:closeResources});
   const receiving={schema:'stellar-forge.superset-receiving.v1',bytes:sourceIdentity.bytes,sha256:sourceIdentity.hash};
   try{
     let exists=true;try{await lstat(finalFile);}catch(e){if(e.code==='ENOENT')exists=false;else throw e;}
     if(exists){
-      const prior=new DatabaseSync(finalFile,{readOnly:true});
-      try{
+      prior=new DatabaseSync(finalFile,{readOnly:true});
+      {
         prior.exec('PRAGMA trusted_schema=OFF');
         const row=prior.prepare('SELECT value FROM meta WHERE key=?').get('receiving_source');
         if(!row||identity(JSON.parse(row.value))!==identity(receiving))throw fault('SUPERSET_RECEIVING_EXISTS','The destination retains another workspace.',409);
-      }finally{prior.close();}
+      }
+      prior.close();prior=null;
       // A later export can update the received workspace's version_custody.
       // Resume the exact original archive identified by receiving_source instead.
       source=new DatabaseSync(file,{readOnly:true});source.exec('PRAGMA trusted_schema=OFF;BEGIN');
@@ -575,9 +622,10 @@ export async function receiveSupersetWorkspace({file,directory}={}){
       await rename(stageFile,finalFile);await syncDirectory(stage);await syncDirectory(directory);
       source.exec('COMMIT');source.close();source=null;
     }
-  }finally{try{await target?.close();source?.close();}finally{await unlock();}}
-  const workspace=await openSupersetWorkspace({directory});
-  try{
+    // Release the receiving boundary only after its original holders have closed.
+    // Reopening obtains the original workspace's own writer lease.
+    await closeResources();
+    workspace=await openSupersetWorkspace({directory});
     // The original engine verifies every reconstructed public dataset on receiving.
     for(const summary of workspace.list('editions')){
       const edition=workspace.get('editions',summary.id),staged=await workspace.materialize(edition.id,edition.csv.sha256,edition.config.sha256);
@@ -601,5 +649,14 @@ export async function receiveSupersetWorkspace({file,directory}={}){
     }
     for(const item of workspace.list('deliveries'))await workspace.materializeDelivery(item.id);
     return{...workspace.state(),receiving};
-  }finally{await workspace.close();}
+  }catch(error){
+    primary=error;if(error.supersetCleanup)inheritedOwners.add(error.supersetCleanup);throw error;
+  }finally{
+    try{
+      await cleanup.close();
+      if(primary?.supersetCleanup)delete primary.supersetCleanup;
+    }catch(secondary){
+      throw retainSupersetCleanupError(primary??secondary,cleanup,secondary);
+    }
+  }
 }
