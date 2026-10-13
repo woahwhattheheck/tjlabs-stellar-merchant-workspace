@@ -14,11 +14,11 @@ This delivery contains the complete paid county-report source packet and the com
 
 The original three-file programme is already delivered at https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C8REC7QHF and the original case is https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791827742861299. The existing original controller's source-packet.json is **2,158,543 bytes**, SHA256 **d392e198af16678277b4cfe71c96cdf26a61652f42bcbe7de96980541c687ec5**, Git blob **afad6d2d88f7999a176ad5afafe33f426b63ed7f**. Keep that exact packet for --packet. The following paid packet is selected separately with --merchant-packet.
 
-The complete paid packet contains **208 files / 2,645,687 source bytes**. Its packet is **2,800,376 bytes**, SHA256 **03e0aac4846ae426107ce1fd555a7e26cc94534598bbf94009b6269db4c5e6d3**, Git blob **034baf16a6da0a68b07965ac212949bb0582dcdf**. The preserved original runtime base is **0b005caa01350f7763a1905dcec9ce9edd45d781**. The complete county/DDP application composition is published at **53e5c6d6f10c2e501326716da52cdc390c48f5f2**, with complete current FRED/DDP support received from **5d51b802eea4ee45929985f944b1d0bccccf7e65**. Every member records its own selected source commit and complete byte identity.
+The complete paid packet contains **208 files / 2,657,227 source bytes**. Its packet is **2,812,138 bytes**, SHA256 **20ee9628389382853626cbd018d6b36751b8e8b8e7d084cbd720a0d02b1dee32**, Git blob **23f9d7a7e4ccde0ee6df95e1c869b08143b9fbef**. The preserved original runtime base is **0b005caa01350f7763a1905dcec9ce9edd45d781**. The complete county/DDP application composition is merged at **7aa35eda5fe25bbbb177772c533e425f31b6da6b** through [PR #656](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/656), from reviewed head **21fff2ebbb1c57457d8dc1ded3bbee79b56275c0**, with complete current FRED/DDP support received from **5d51b802eea4ee45929985f944b1d0bccccf7e65**. Every member records its own selected source commit and complete byte identity.
 
 This receiving edition joins the current DDP package and publication desks with the county Merchant and Customer flows in the same workspace. It includes the complete published-source CLI, collector, comparison and receiving modules, their declarations, current browser assets and the original Buyer worker resources. The native controller continues the same retained intake, project, report ancestry and purchase intentions. Its original source phase still selects the unchanged 156-file packet; the full shared application is selected separately for the paid continuation.
 
-The complete extended controller is **52,355 bytes**, SHA256 **3c971bb47bb13c739828b1eb204ee2f1c41060b3a014a1fe442483e99a1232ef**, Git blob **53720f5611548d95ae53452524c2711075762b9f**.
+The complete extended controller is **52,488 bytes**, SHA256 **7ea5bbad01f0103518673d7adb8e92bc02bfd1d62667330ad57eb58f29a20a0b**, Git blob **dc07cec1c4bdb724bbfdb798fda7d4a566e4967a**.
 
 Receive this complete delivery into a new private receiving directory, separate from the original operation. The Canvas carrier provides the complete compressed JSON and its encoded standard-library Python receiver. The receiver verifies the whole transfer and every individual file before writing the selected files. Its final output gives the actual receiving paths.
 
@@ -74,7 +74,7 @@ python3 /absolute/paid-receiving/run_native.py \
   --directory /dev/needecon48db-receiving-20261012/operation \
   --intake-directory /dev/needecon48db-receiving-20261012/original-intake \
   --merchant-packet /absolute/paid-receiving/merchant-source-packet.json \
-  --merchant-packet-sha256 03e0aac4846ae426107ce1fd555a7e26cc94534598bbf94009b6269db4c5e6d3 \
+  --merchant-packet-sha256 20ee9628389382853626cbd018d6b36751b8e8b8e7d084cbd720a0d02b1dee32 \
   --original-native-host /workspace/scratch/39daa82f3fbd/routescan_native_39da \
   --node /absolute/installed/node \
   --chromium /absolute/installed/chromium \
@@ -99,7 +99,7 @@ python3 /absolute/paid-receiving/run_native.py \
   --directory /dev/needecon48db-receiving-20261012/operation \
   --intake-directory /dev/needecon48db-receiving-20261012/original-intake \
   --merchant-packet /absolute/paid-receiving/merchant-source-packet.json \
-  --merchant-packet-sha256 03e0aac4846ae426107ce1fd555a7e26cc94534598bbf94009b6269db4c5e6d3 \
+  --merchant-packet-sha256 20ee9628389382853626cbd018d6b36751b8e8b8e7d084cbd720a0d02b1dee32 \
   --node /absolute/installed/node \
   --chromium /absolute/installed/chromium \
   --playwright-module /absolute/installed/playwright/index.js \
@@ -123,6 +123,8 @@ The default command resumes the original source, production and browser sequence
 
 The controller stages the complete paid source under operation/paid-sources/<packet-sha256>/source and retains every controller version under operation/controllers. The source paths in the original packet remain unchanged. Each selected source member is checked against the packet's complete byte and Git identities.
 
+Each native child inherits a private temporary directory beside the original operation, named <operation-directory-name>-runtime-tmp. That directory serves source acquisition, report production, Chromium and Buyer workers through TMPDIR. It remains outside the complete archived operation and its materialized source inventories.
+
 ## What the paid programme does
 
 The complete maintained entrypoint is stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/merchant-journey.mjs. It opens the original native-result.json and original project, selects the final actual report and follows every predecessor retained by the real report engine.
@@ -135,11 +137,15 @@ The complete maintained entrypoint is stellar/scf-starforge-20261009/sf30-seller
 
 4. It downloads every current and predecessor report member through the received-report controls. A separate report recipient receives the complete purchased gzip through the maintained package receiver, opens the complete ancestry and verifies every original file.
 
-5. It exports the complete outer-v6 economic project through the original browser workspace, receives that complete file into the original selected project receiving destination, and reopens the resulting project's Merchant view. The original merchant plan, delivered gzip and report files retain their exact bytes in that independently received project.
+5. It prepares one additional original Customer intent while leaving its native Buyer operation unstarted. It retains the complete customer inventory in original-customer-inventory.json before exporting the whole outer-v6 economic project. The v3 customer extension carries every original prepared request and receiving selection alongside the merchant plan, delivered gzip and complete report chain.
 
-6. It retains desktop and phone views and the original native Buyer results, all report downloads, receiving journals and complete project transfer. An invalid payment-alternative preparation also exercises the actual created-but-unprepared directory and confirms that the complete request catalogue still reopens. The cumulative application also retains prepared and delivered Customer requests in the complete v3 project handover, with saved offer and destination identities.
+6. It receives the complete project at the selected separate directory, reopens the Merchant and Customer workspace with the same original Buyer settings, re-prepares the original unstarted request and recovers the original completed package purchase. It opens the existing report receiving destination and downloads every current and predecessor file through the relocated Customer controls into relocated-customer-downloads. Exact prepared bytes, configuration hashes, response destinations and the whole customer inventory stay unchanged.
+
+7. It retains desktop and phone views and the original native Buyer results, all report downloads, receiving journals and complete project transfer. An invalid payment-alternative preparation also exercises the actual created-but-unprepared directory and confirms that the complete request catalogue still reopens.
 
 The programme operates the maintained product and configured native runtime. Its journal records actual dispatched request identities and full host results, and preserves the original publication and receiving selections across restart. Use that same operation to recover an interrupted payment or receiving run.
+
+This cumulative programme continues the original source/report operation before its first paid project export. If an earlier version has already completed a publication-only v2 project handover, retain that original immutable complete-paid-project.json and its selected receiving directory. The maintained MERCHANT.md guide includes the ordinary project export and receive commands for producing a new complete v3 handover from the saved source project and receiving it into a new directory.
 
 ## Complete output and receiving
 
@@ -150,6 +156,8 @@ The original native host setup is retained under native/native-host, including t
 | journey.json | Original launch identity, durable selections, dispatches, payment intents, results and receiving destinations |
 | merchant-result.json | Actual complete programme result and exact publication, delivery and project identities |
 | original-native-result.json | Original production result selected for this paid continuation |
+| original-customer-inventory.json | Every original prepared Customer request and its saved receiving selection before project transfer |
+| relocated-customer-downloads | Complete package and every current and predecessor report file downloaded through the independently received Customer workspace |
 | purchases | Original Buyer result records and paid downloaded files for every advertised resource |
 | downloaded report and project files | The complete original gzip, all report members and complete project export |
 | independent report receiver | The full report chain reopened by the original package receiver |

@@ -712,6 +712,8 @@ def main():
         product = source / PREFIX
         environment = dict(os.environ)
         environment["QCEW_EXPECTED_SEED_SHA256"] = SEED_SHA
+        runtime_tmp = private_directory(root.parent / (root.name + "-runtime-tmp"))
+        environment["TMPDIR"] = str(runtime_tmp)
         original_native_host, native_ca = None, None
         if options.original_native_host:
             original_native_host = pathlib.Path(options.original_native_host).resolve(strict=True)
