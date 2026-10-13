@@ -164,18 +164,18 @@
     },
     {
       "path": "app.mjs",
-      "bytes": 13387,
-      "sha256": "611ef6b316f64b6fa5005d4ac34ba6f42a150186ef3561eafa33d0ae8e87566e"
+      "bytes": 13449,
+      "sha256": "9852e079b7a62f96df2204d5a3343f96bd50c3dfcdeb6cfea92357680a390d19"
     },
     {
       "path": "OPERATING.md",
-      "bytes": 9278,
-      "sha256": "3f99731b9e13b8e7702a2aeaa14a2e5c5d947484819649c7ed0642ae736b7720"
+      "bytes": 10439,
+      "sha256": "867563fd813edfc924f7e4dbcd0202744a18e326d0515d44038f45f6d16262b4"
     },
     {
       "path": "browser-receive.mjs",
-      "bytes": 9390,
-      "sha256": "9427ba9276ece4f3dd7dc441ef531b2da68fb270c2f2e702912c300417adfa51"
+      "bytes": 9697,
+      "sha256": "5bb69dfd8196c56cd18ce2ebcc075ebcde53bfafbd9321b8ef2cabedfab58c1b"
     },
     {
       "path": "examples/reviewed-project.json",
@@ -186,6 +186,11 @@
       "path": "examples/CORE-OPERATION.json",
       "bytes": 776,
       "sha256": "d730d8808ac11a21a1e4b764646c31ac536570889b6a8f55f73abb905f7429e4"
+    },
+    {
+      "path": "build-review.mjs",
+      "bytes": 9304,
+      "sha256": "6fa067ea3533cfc5db15e0eba3e61a3e011aa8b165176fecc85874e5b0831261"
     }
   ]
 }

@@ -82,3 +82,10 @@ Open and actually use the exact outgoing desktop and narrow application. Inspect
 Literally open/use every outgoing attachment. Extract archives and open contained deliverables and the project. Inspect every PDF page; operate spreadsheet/map controls and actual downloaded/reopened versions. If producing media, use the actual final export and watch/listen to it with natural voice/TTS. Source review, DOM checks and command success do not replace observing the rendered customer result. Repair obvious errors in the same edition and keep original receiving identity.
 
 The provider core's in-process operation demonstrates its complete input/output contract. The native and browser result is recorded only from the actual original runtime and rendered receiving course.
+
+
+## Complete offline review on the existing browser
+
+When the existing browser uses ordinary files instead of loopback navigation, run `node adaptations/airtable-netsuite/build-review.mjs /absolute/path/provider-review.html` from the installed source. The builder verifies the full addon manifest and both exact native browser dependencies, retains every addon file plus the native browser source and manifest, and embeds the unchanged module graph into one HTML file. The original reviewed project remains the input; this is the same editor and writer.
+
+Open that literal HTML file in the existing owned browser. Download the complete embedded source and authored reference project from its source section, open the selected project through the original control, and use the same full receiving journey. The helper accepts an explicit `applicationUrl` with that file URL instead of the original product-root `baseUrl`. It waits for the actual module initialization before using controls. Blob module URLs remain valid for the document lifetime and back/forward restores. Native dlt execution still uses the complete original Workbench and its pinned runtime.
