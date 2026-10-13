@@ -20,6 +20,8 @@ export default {
           'Choose the original private workspace or a new private directory.'),
         field('operator','Recording operator','text',true,
           'The accountable operator for this retained field-data workspace.'),
+        field('externalOrigin','Trusted browser HTTPS origin','text',false,
+          'Optional exact external origin for this operator. Requires the selected loopback port; forwarded headers never grant trust.'),
         field('commissioningConnection','Central host connection','path',false,
           'Optional original private connection or bootstrap file for the customer commissioning editor.'),
         field('commissioningEnvironment','Central authorization file','path',false,
@@ -36,6 +38,8 @@ export default {
   },
   validateSettings(_type,settings){
     const args=['--workspace',settings.workspaceDirectory,'--operator',settings.operator];
+    if(settings.port!==undefined&&settings.port!=='')args.push('--port',String(settings.port));
+    if(settings.externalOrigin)args.push('--external-origin',settings.externalOrigin);
     if(settings.commissioningConnection)args.push('--commissioning-connection',settings.commissioningConnection);
     if(settings.commissioningEnvironment)args.push('--commissioning-environment',settings.commissioningEnvironment);
     if(settings.warehouseProfiles)args.push('--warehouse-profiles',settings.warehouseProfiles);
@@ -48,6 +52,7 @@ export default {
     const workspace=await path('workspaceDirectory','directory',true,true);
     if(!workspace.exists)createDirectories.push(workspace.path);
     option('--workspace',workspace.path);option('--operator',settings.operator);
+    if(settings.externalOrigin)option('--external-origin',settings.externalOrigin);
     const commissioning=await path('commissioningConnection','file',false,true);
     if(commissioning)option('--commissioning-connection',commissioning.path);
     const authorization=await path('commissioningEnvironment','file',false,true);
@@ -73,10 +78,11 @@ export default {
   },
   matchRequest(request){return !request.pythonCommand&&request.command==='odk-central-workspace';},
   createObserver(request,directory){
+    const selected=centralManagedOptions(request.args);
     return observeApplicationStartup(request,directory,text=>{
       if(!text.startsWith('{"schema":"'+ODK_STARTUP_SCHEMA+'",'))return null;
       return ()=>centralApplicationStartup(request,text);
-    });
+    },{externalOrigin:selected.externalOrigin});
   },
 };
 export async function centralApplicationStartup(request,text){
@@ -93,8 +99,18 @@ export async function centralApplicationStartup(request,text){
     connection.value.operator===selected.operator&&connection.value.origin===announced.origin&&
     connection.value.url===announced.url&&(!selected.port||Number(new URL(connection.value.origin).port)===selected.port),
   'ODK_APPLICATION_STARTUP_CHANGED','The original listener differs from its retained startup.',409);
+  odkNeed((connection.value.browserOrigin??null)===(selected.externalOrigin??null)&&
+    (announced.browserOrigin??null)===(connection.value.browserOrigin??null)&&
+    (announced.browserUrl??null)===(connection.value.browserUrl??null),
+    'ODK_APPLICATION_STARTUP_CHANGED','The browser origin differs from the explicit reviewed proxy selection.',409);
+  const browserOrigin=connection.value.browserOrigin??connection.value.origin;
+  const browserUrl=connection.value.browserUrl??connection.value.url;
   const live=await inspectCentralListener(connection),warehouse=await inspectCentralWarehouse(connection);
-  const warehouseUrl=connection.value.origin+'/warehouse/'+new URL(connection.value.url).hash;
+  const tokenHash=new URL(connection.value.url).hash;
+  const warehouseUrl=browserOrigin+'/warehouse/'+tokenHash;
+  odkNeed(announced.commissioningUrl===browserOrigin+'/commissioning/'+tokenHash&&
+    announced.formReleasesUrl===browserOrigin+'/form-releases/'+tokenHash,
+    'ODK_APPLICATION_STARTUP_CHANGED','The browser workspaces differ from the selected operator origin.',409);
   odkNeed(announced.warehouseUrl===warehouseUrl,'ODK_APPLICATION_STARTUP_CHANGED',
     'The warehouse URL differs from the selected Central listener.',409);
   if(selected.warehouseProfilesFile){
@@ -117,10 +133,14 @@ export async function centralApplicationStartup(request,text){
   }else if(input?.exists)odkNeed(connection.value.directoryIdentity.dev===String(input.dev)&&
     connection.value.directoryIdentity.ino===String(input.ino),
   'ODK_APPLICATION_STARTUP_CHANGED','The selected original directory changed after review.',409);
-  return {url:connection.value.url,workspaceId:live.id,connectionFile:connection.path,original:{
+  return {url:connection.value.url,
+    ...(connection.value.browserOrigin?{browserOrigin:connection.value.browserOrigin,browserUrl}:{}),
+    workspaceId:live.id,connectionFile:connection.path,original:{
     schema:ODK_STARTUP_SCHEMA,workspaceId:live.id,directory:selected.directory,
     instanceId:connection.value.instanceId,connectionSha256:connection.sha256,pid:connection.value.pid,
-    operator:connection.value.operator,warehouse:{schema:warehouse.schema,url:warehouseUrl,
+    operator:connection.value.operator,
+    ...(connection.value.browserOrigin?{browserOrigin:connection.value.browserOrigin}:{}),
+    warehouse:{schema:warehouse.schema,url:warehouseUrl,
       profilesSha256:announced.warehouseProfilesSha256,profileIds:warehouse.profiles.map(value=>value.id)},
     ...(selected.restoreArchive?{receivedArchive:live.receivedArchive}:{}),
   }};
