@@ -668,6 +668,13 @@
     "commercial_effort_example.py",
     "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-example.mjs",
     "../../../../stellar-forge/developer-site/dist/source-table-corrections.mjs",
-    "../sf10_current_candidate.json"
+    "../sf10_current_candidate.json",
+    "operations_source_billing.py",
+    "operations_work_billing.py",
+    "operations_work_billing_http.py",
+    "operations_work_billing_cli.py",
+    "operations_work_billing.mjs",
+    "operations_work_billing.css",
+    "WORK_BILLING.md"
   ]
 }
