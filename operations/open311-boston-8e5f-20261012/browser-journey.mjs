@@ -24,7 +24,11 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const isoLocal = value => {
   const date = new Date(value);
   assert(Number.isFinite(date.valueOf()), 'A source range needs an explicit valid timestamp.');
-  return date.toISOString().slice(0, -1);
+  // Match the browser's normalized datetime-local value while preserving the instant.
+  return date.toISOString().slice(0, -1)
+    .replace(/:00\.000$/, '')
+    .replace(/\.000$/, '')
+    .replace(/(\.\d*?[1-9])0+$/, '$1');
 };
 const keyName = value => {
   assert(/^[a-z0-9][a-z0-9_-]{0,80}$/.test(value), 'Use a simple unique output key.');
