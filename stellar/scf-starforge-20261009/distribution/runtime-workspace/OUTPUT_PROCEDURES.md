@@ -64,6 +64,16 @@ Retained output choices have their own immutable entries in the existing procedu
 
 When browser storage fails, no capture is dispatched through this choice handoff. The original output/search downloads remain available. A failed or uncertain native write leaves its complete original request in the existing procedure journal for replay.
 
+## Installed merchant fleet
+
+The maintained `merchant-fleet` source selection includes both `merchant-recovery` and `runtime-output-procedures`. Build or install the complete selected release through the existing distribution workflow. Keep its original source commit, recipe, manifest and package together.
+
+The installed package exposes `@tokenjunkielabs/starforge-merchant/runtime-workspace/output-review` with its original TypeScript declaration and complete review implementation. Its Runtime command, browser output reader, procedure writer, carried source, returned-plan comparison and receiving course use the same selected source. Selecting the contribution also retains the full output/search and Operating Plan dependencies and operating guides.
+
+The same product's `merchant-recovery-host` command follows [the complete recovery host guide](../../sf101-merchant-recovery/workspace/HOST_HANDOFF.md). A host handoff preserves its explicitly reviewed roots and original workspace/request identities; it does not implicitly select an unrelated Runtime workspace. Retain the complete original Runtime workspace, including configuration history, procedure revisions, captured output and browser handoff source, through its existing backup/receiving workflow or an explicitly selected handoff root. Reopen and inspect both original saved workspaces before continuing their respective operations.
+
+Use the existing installed receiving owner for the output-to-procedure course below. A source build or authenticated host adoption is separate from actual browser use and the complete independent procedure receiving/return course.
+
 ## Native receiving
 
 The additive manual course is receiving/OUTPUT_PROCEDURES_RECEIVE.mjs. Join it to an existing equipped Runtime receiving session with its actual original output selector, writer and independent receiving workspace. It runs the existing complete-output search journey, captures through the browser, verifies the carried raw and full index, opens the receiving workspace, saves an attributed receiving observation, returns that original plan, exports through the maintained CLI command and reopens every carried source.
