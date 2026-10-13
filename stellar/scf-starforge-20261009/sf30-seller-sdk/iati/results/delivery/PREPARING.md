@@ -19,18 +19,18 @@ No new publisher acquisition is needed for these already selected operations.
 
 | Item | Exact identity |
 | --- | --- |
-| Text source | 201 files; 3,846,277 UTF-8 bytes |
+| Text source in the original packet | 201 files; 3,846,277 UTF-8 bytes |
 | Original binary publisher inputs | 2 files; 664,228 bytes |
 | Original packet closure | 203 files; 4,510,505 bytes |
-| Installed closure with receiving corrections | 203 files; 4,512,424 bytes |
+| Installed closure with receiving corrections | 203 files; 4,513,722 bytes |
 | Compressed envelope | 1,539,216 bytes |
 | Envelope SHA256 | `2ee3332f9e254d40076fad1a0f5bd8dc8c5c3f3286383d64296c830183f1b952` |
 | Decoded envelope | 4,952,476 bytes |
 | Decoded SHA256 | `600a4ad86a698d68e0ee3f582dfef1fd0ae008e12a37f2f91d393c4c698ed3be` |
-| Source selection | `3bbeeb3cef95dd159343ec298b5595ffa4e970dd1606469ed03f5152f475d873` |
+| Original packet source selection | `3bbeeb3cef95dd159343ec298b5595ffa4e970dd1606469ed03f5152f475d873` |
 | Packet commit | `9bfca6df8ebbd8e6c4583557df1978accd015a23` |
-| Selected receiving commit | `63bea8d5b701c98f2f8f2498bc4c3cfebfbffa6a` |
-| Complete installed source selection | `d2bcb160fdb3e1646b3542b0222807d1e2976c63ee8a8caee8a90290466ed5cd` |
+| Selected receiving commit | `00088295757e19fba1f1c90c10b8d27719283346` |
+| Complete installed source selection | `a1c29b078f870a4badee1f04dd138b0b4ca2fe90d7c98c4226fc0919294c2cae` |
 | Native/Applications source binding | The same 167 runtime files |
 
 ## Prepare the exact source
@@ -66,17 +66,19 @@ not mean that the case, browser or customer handover has run.
 
 The original complete packet stays byte-for-byte intact. Preparation selects three
 subsequent original repository files from commit
-`63bea8d5b701c98f2f8f2498bc4c3cfebfbffa6a`: the two Python receiving entrypoints
+`00088295757e19fba1f1c90c10b8d27719283346`: the two Python receiving entrypoints
 and their browser continuation. They correct direct Python imports and loading
 the installed Playwright module, follow the current “Following edition” tab, and
-retain a browser failure’s actual page errors and screenshot. No financial,
+retain a browser failure’s actual page errors and screenshot. The browser uses
+Chromium’s ordinary process model and verifies the initial HTML response against
+the exact selected console file before inspecting the workspace. No financial,
 Programme, publishing, refresh, organisation or AMP source is replaced.
 
 | Original repository file under `iati/` | Selected bytes | Selected SHA256 |
 | --- | ---: | --- |
 | `results/receiving.py` | 24069 | `df718f79bf34b3c1ca50abb0beb2d422ef46c31f1ffc5054666de79fec836530` |
 | `results/receiving_console.py` | 7448 | `4023d2780c3885870e95dc4621b917a25138f1a362f2506b6a62929074e77750` |
-| `results/browser_receiving.mjs` | 17016 | `a6e5f5e6589df4c31809812f643435351d506cb455dfebed9ff879416fb05de0` |
+| `results/browser_receiving.mjs` | 18314 | `02f634e381d35b967e8c5c9ffed4c1b4b58d132c4eb8f48544e8afe12800228e` |
 
 For every selected file, the preparer first verifies the original packet member’s
 size and digest, then verifies the selected file’s exact size, SHA256 and Git blob

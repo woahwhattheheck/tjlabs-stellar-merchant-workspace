@@ -41,7 +41,7 @@ BINARY_BYTES = 664228
 
 # The complete packet remains the original source authority. These three exact
 # repository files are the subsequent receiving corrections, pinned separately.
-RECEIVING_SOURCE_COMMIT = "63bea8d5b701c98f2f8f2498bc4c3cfebfbffa6a"
+RECEIVING_SOURCE_COMMIT = "00088295757e19fba1f1c90c10b8d27719283346"
 RECEIVING_SOURCE_BASE_URL = (
     "https://raw.githubusercontent.com/woahwhattheheck/"
     "tjlabs-stellar-merchant-workspace/" + RECEIVING_SOURCE_COMMIT + "/")
@@ -66,9 +66,9 @@ RECEIVING_SOURCES = [
         "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/iati/results/browser_receiving.mjs",
         "baseBytes": 15621,
         "baseSha256": "313551b0751329ba25796412d250c416248a9997890b48e322a4848be46cd6e1",
-        "bytes": 17016,
-        "sha256": "a6e5f5e6589df4c31809812f643435351d506cb455dfebed9ff879416fb05de0",
-        "gitBlob": "a3af68ad2c76f58bd5f5e82a7a216e6553a985d3"
+        "bytes": 18314,
+        "sha256": "02f634e381d35b967e8c5c9ffed4c1b4b58d132c4eb8f48544e8afe12800228e",
+        "gitBlob": "a0042545ec5f848973afc1a897f8a716f749c5e5"
     }
 ]
 
