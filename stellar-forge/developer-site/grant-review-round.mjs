@@ -1,6 +1,9 @@
 // MIT. Add review rounds to the existing SCF reader and installed browser assets.
 export const REVIEW_ROUND_OPERATION = 'SCF-SUBMISSION-REVIEW-ROUND-7108-20261012';
 export const REVIEW_ROUND_ROUTES = [
+  ["/grant-review-offline-package.mjs",["grant-review-offline-package.mjs","text/javascript; charset=utf-8"]],
+  ["/grant-review-offline-source.mjs",["grant-review-offline-source.mjs","text/javascript; charset=utf-8"]],
+  ["/grant-review-round-guide.md",["../GRANT_REVIEW_ROUNDS.md","text/markdown; charset=utf-8"]],
   ['/grant-review-working-copy.mjs',['grant-review-working-copy.mjs','text/javascript; charset=utf-8']],
   ['/grant-review-round.html',['grant-review-round.html','text/html; charset=utf-8']],
   ['/grant-review-round.css',['grant-review-round.css','text/css; charset=utf-8']],
@@ -20,6 +23,9 @@ export function attachGrantReviewRounds({templateHtml,sourceIndex}){
     draft_schema:'stellar-forge.grant-submission-draft.v1',draft_export_schema:'stellar-forge.grant-submission-export.v1',
     review_schema:'stellar-forge.grant-review-round.v1',review_export_schema:'stellar-forge.grant-review-round-export.v1',
     working_schema:'stellar-forge.grant-review-working-copy.v1',working_export_schema:'stellar-forge.grant-review-working-export.v1',
+    offline_schema:'stellar-forge.review-offline/1',offline_source_schema:'stellar-forge.review-offline-source/1',
+    offline_package_route:'/grant-review-offline-package.mjs',offline_source_route:'/grant-review-offline-source.mjs',
+    guide_route:'/grant-review-round-guide.md',
     operation:REVIEW_ROUND_OPERATION,
     guide:'https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar-forge/developer-site/GRANT_REVIEW_ROUNDS.md',
   };
