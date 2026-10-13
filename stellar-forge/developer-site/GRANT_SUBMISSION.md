@@ -44,6 +44,72 @@ See [submission handover](GRANT_HANDOVER.md#receive-and-share-a-source-package)
 for the complete source-package API and [native export](GRANT_EXPORT.md#receive-source-into-the-same-saved-draft)
 for the same source receiving from the terminal.
 
+## Select the concise working edition
+
+Under **Source editions**, choose **Read concise working edition** to open the
+dated nine-answer edition prepared from the complete original manuscript. Its
+funding request remains $38,000 for 400 prospective hours over 150 days. The
+working edition puts the problem, Stellar contribution, demonstrated results,
+six priced packages, measurement, capacity and applicant information in the
+answers themselves. This supports the issuer's requirement for a self-contained
+submission.
+
+The current full manuscript remains the default source. The concise edition is
+an explicit alternative: read the comparison, then use **Receive source and keep
+edited answers** or select individual source answers. Existing manual edits,
+issuer fields, native planning, review decisions, prepared submissions and saved
+versions remain in the original draft. Reading a source alone does not change
+an open draft.
+
+The concise package freezes four complete files: its nine-answer Markdown,
+source index, original budget and original product/finance companion. Its source
+index also retains the entire original manuscript with byte, SHA-256 and Git
+blob identities, the exact original source commit, and the original index
+identity. A later canonical publication does not silently change this frozen
+edition. **Read current source** returns to the current full manuscript for
+comparison.
+
+Use **Download source package** for this selected source, or download
+[the complete concise source package](dist/grant-data/reviewer-working-source.json)
+and open it through the existing source-package chooser on another installation.
+The [nine-answer Markdown](dist/grant-data/application-reviewer.md) and
+[complete source index](dist/grant-data/reviewer-working-index.json) are available
+for reading. Full draft export retains every selected source and the operator's
+editorial state.
+
+### Compose a later complete working edition
+
+After editing all nine answers against a selected original source, run:
+
+```sh
+node stellar-forge/developer-site/grant-reviewer-edition.mjs \
+  --application /absolute/edited-nine-answers.md \
+  --source-root /absolute/original/dist/grant-data \
+  --source-commit ORIGINAL_40_CHARACTER_COMMIT \
+  --out /absolute/new-reviewer-edition
+```
+
+The original source directory must contain its complete application, source
+index, budget and companion. The composer verifies original application and
+companion byte counts, SHA-256 and Git blob identities through the maintained
+source receiver. It retains the full original application and the financial
+source unchanged, then writes the three working-edition files to a new directory.
+A malformed source or reused output directory fails before an earlier edition
+can be overwritten.
+
+Review the actual issuer requirements and all nine answers before publishing a
+later working edition. The source index records the October 13 requirements
+review; it is a dated source statement, not an automatic programme update. Apply
+the real form's prompts and limits when available. Interest acknowledgment,
+invitation, submission and award retain their existing separate issuer states.
+
+Publish all three returned files together through the existing browser asset
+manifest and original source release. The submission route registration carries
+them through subsequent composition; the maintained static exporter also
+includes them. The complete package opens through the existing
+`openReviewerSourcePackage` and `receiveReviewerSource` functions, with the same
+original draft schema and receiving history.
+
 ## Edit the complete answers
 
 Choose one of the nine answers in the sidebar. Edit its full text and, if useful, add a working note. The preview shows the exact text selected for copying.
@@ -260,7 +326,7 @@ For an equipped receiving operator, exercise the whole real workflow on the orig
 
 ## Primary issuer sources
 
-Reviewed October 12, 2026:
+Reviewed October 13, 2026:
 
 - [Build submission criteria](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria).
 - [Budget and deliverable guidance](https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines).
