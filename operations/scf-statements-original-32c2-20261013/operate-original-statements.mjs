@@ -167,6 +167,62 @@ async function openRecovery(path){
  const chooser=await waiting;await chooser.setFiles(path);
  await page.locator('.statement-desk [name="accountId"]').waitFor({state:'visible'});
 }
+async function statementCopiesBrowser(prepared){
+ const desk=page.locator('.statement-desk');
+ if(!await desk.locator('.statement-copies').count())return;
+ const act=name=>desk.locator('[data-statement-action="copies-'+name+'"]');
+ const original=await download('draft-export','copies-original-csv-before-switch.json');
+ const initial=JSON.parse(original.raw);
+ await desk.locator('[name="copyName"]').fill('Operating USD · original October');
+ await desk.locator('[name="copyNote"]').fill('Complete original CSV mapping, classifications and supplier allocation before bank-file switch.');
+ await act('new').click();
+ await desk.locator('.statement-notice').filter({hasText:'Saved Operating USD'}).waitFor();
+ await capture('00-copies-saved-csv-desktop');
+ const firstArchive=await download('copies-export','statement-working-copies-first-complete.json');
+ const first=JSON.parse(firstArchive.raw),csv=first.index.copies.find(row=>row.name==='Operating USD · original October');
+ need(csv,'Save the original named CSV working copy.');
+ const csvEdition=first.editions.find(row=>row.id===csv.id&&row.revision===csv.revision);
+ need(canonical(csvEdition.draft.inputs)===canonical(initial.inputs),'Keep every original CSV input and applied invoice allocation.');
+ await desk.locator('[data-statement-mapping] [name="sourceFormat"]').selectOption('OFX');
+ await desk.locator('[data-statement-file]').setInputFiles(join(config.originalsDirectory,'bank-initial.ofx'));
+ await desk.locator('[name="copyName"]').fill('Original OFX · account inspection');
+ await desk.locator('[name="copyNote"]').fill('Original unchanged OFX bytes; precision exception remains for the later original account phase.');
+ await act('new').click();
+ await desk.locator('.statement-notice').filter({hasText:'Saved Original OFX'}).waitFor();
+ await desk.locator('[name="copyQuery"]').fill('no-original-copy-has-this-name');await act('filter').click();
+ await desk.locator('.statement-copies .statement-empty').waitFor();
+ await capture('00-copies-empty-search-desktop');
+ await desk.locator('[name="copyQuery"]').fill('October');await act('filter').click();
+ await desk.locator('[data-statement-action="copies-select"][data-copy-id="'+csv.id+'"]').click();
+ await desk.locator('[name="copyEdition"]').fill(String(csvEdition.revision));
+ await act('review').click();await desk.locator('.statement-copy-comparison').waitFor();
+ await capture('00-copies-before-open-desktop');
+ await page.setViewportSize({width:390,height:844});await capture('00-copies-before-open-phone');
+ const selected=await download('copies-download','statement-selected-edition-recovery.json');
+ need(canonical(JSON.parse(selected.raw))===canonical(csvEdition.draft),'Selected edition download retains its exact complete original draft.');
+ await act('open').click();
+ await desk.locator('.statement-notice').filter({hasText:'Opened Operating USD'}).waitFor();
+ const restored=await download('draft-export','statement-working-copies-restored-csv.json');
+ need(canonical(JSON.parse(restored.raw).inputs)===canonical(initial.inputs),'Opening the saved CSV retains all source decisions and the original supplier allocation.');
+ const archive=await download('copies-export','statement-working-copies-complete.json');
+ const complete=JSON.parse(archive.raw);
+ need(complete.index.copies.some(row=>row.filename==='bank-initial.ofx'),'Full archive includes the independently prepared original OFX.');
+ need(complete.editions.every(row=>row.draft.caseId===state.caseId),'Every complete edition keeps the original case.');
+ const chooser=page.waitForEvent('filechooser');await act('import').click();await(await chooser).setFiles(archive.path);
+ await desk.locator('.statement-notice').filter({hasText:'Received 0 complete saved editions'}).waitFor();
+ const conflict=structuredClone(complete),firstEdition=conflict.editions[0];
+ firstEdition.draft.inputs.source.sourceUrl=(firstEdition.draft.inputs.source.sourceUrl||'')+'#conflicting-received-copy';
+ const conflictPath=join(work,'statement-working-copies-conflicting-receiving.json');await atomic(conflictPath,conflict);
+ const conflictChooser=page.waitForEvent('filechooser');await act('import').click();await(await conflictChooser).setFiles(conflictPath);
+ await desk.locator('[role="alert"]').filter({hasText:'different complete content'}).waitFor();
+ await capture('00-copies-conflict-preserves-original-phone');
+ const afterConflict=await download('draft-export','statement-working-copies-after-conflict.json');
+ need(canonical(JSON.parse(afterConflict.raw).inputs)===canonical(initial.inputs),'Conflict rejection preserves the current complete CSV.');
+ await page.setViewportSize({width:1360,height:1000});
+ await stage('original-statement-working-copies-operated',{caseId:state.caseId,csvCopyId:csv.id,csvEdition:csvEdition.revision,
+  originalRequestId:initial.pending?.payload?.requestId||null,archiveSha256:sha(archive.raw),
+  completeEditions:complete.editions.length,originalInvoiceId:prepared.invoiceId});
+}
 async function csvBrowser(href,prepared){
  await openOperations(href,state.caseId);await openStatements();
  const originalPath=join(nativeOutput,'browser-csv-operation.json');
@@ -248,6 +304,7 @@ async function csvBrowser(href,prepared){
   await desk.locator('[data-statement-allocations] [name="amount.0"]').fill('250.00');
   await desk.locator('[data-statement-allocations] button[type="submit"]').click();
  }
+ await statementCopiesBrowser(prepared);
  const reviewed=await preview('csv-complete-reviewed-preview');
  need(reviewed.canImport&&reviewed.summary.newCount===3&&reviewed.balance.status==='MATCH',
   'Finish the original CSV classifications, allocation and source balances.');

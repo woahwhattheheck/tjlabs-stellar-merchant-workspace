@@ -547,6 +547,8 @@
     "portfolio-availability.mjs",
     "portfolio-availability-desk.mjs",
     "portfolio-availability.css",
-    "PORTFOLIO_AVAILABILITY.md"
+    "PORTFOLIO_AVAILABILITY.md",
+    "operations_statement_copies.mjs",
+    "STATEMENT_WORKING_COPIES.md"
   ]
 }
