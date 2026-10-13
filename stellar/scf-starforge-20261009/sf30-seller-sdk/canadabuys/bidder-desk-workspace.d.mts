@@ -73,9 +73,22 @@ export const BIDDER_DESK_SCHEMA:'starforge.canadabuys.bidder-desk.v1';
 export const BIDDER_PACKAGE_SCHEMA:'starforge.canadabuys.package.v2';
 export function validateDeskEnvelope(packet:unknown):BidderDeskPackage;
 export function mergeBidderDeskPackages(packets:BidderDeskPackage[]):BidderDeskPackage;
+export interface EvidenceIntakeInput {
+ workspaceId:string;noticeId:string;expectedRevision:number;commandId:string;
+ /** Fresh workspace guard for an explicit retry; original intake identity stays unchanged. */
+ applyRevision?:number;
+ documents:Array<Omit<EvidenceDocumentInput,'id'|'noticeId'|'revision'|'createdAt'|'updatedAt'|'operator'|'editionSha256'|'review'>&{
+  bodyBase64:string;capturedAt:string;review?:{state:'UNREVIEWED';note?:string}
+ }>;
+}
+export interface EvidenceIntakeResult {
+ schema:'starforge.canadabuys.evidence-intake.v1';commandId:string;intakeSha256:string;noticeId:string;
+ records:Array<BidderRecordMap['evidence']>;workspace:WorkspaceMetadata;alreadyApplied:boolean;
+}
 export class CanadaBuysBidderDesk {
  constructor(workspace:CanadaBuysWorkspace,options?:{maximumEvidenceBytes?:number});
  status():BidderDeskStatus;
+ intakeEvidence(input:EvidenceIntakeInput):EvidenceIntakeResult;
  list<K extends BidderKind>(kind:K,options?:{noticeId?:string;offset?:number;limit?:number}):BidderPage<K>;
  get<K extends BidderKind>(kind:K,id:string,options?:{revision?:number;history?:false}):BidderRecordMap[K];
  get<K extends BidderKind>(kind:K,id:string,options:{revision?:number;history:true}):BidderRecordMap[K]&{history:BidderRecordMap[K][]};
