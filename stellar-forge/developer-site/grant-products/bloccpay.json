@@ -1,0 +1,135 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "bloccpay",
+  "heading": "## Payroll, invoice and treasury reconciliation with complete receiving",
+  "sources": [
+    {
+      "id": "bloccpay-original-application",
+      "label": "Complete payroll, invoice and treasury application",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/README.md",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "3f0613baa6ae99bff9ddec22145b157aea27d798",
+          "sha256": "25aaa10b9df89dd786a9e20c1b22939d1e3563971bcc0f31bafb7b1ac45ddd5a",
+          "bytes": 7371
+        }
+      ]
+    },
+    {
+      "id": "bloccpay-complete-operations",
+      "label": "Complete operating programme and independent receiving",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/OPERATIONS.md",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "8165642fac8aa00eb95c367a3c8498884ec44624",
+          "sha256": "02eacfcd6b2216a78fd5766bf12e8c3f7e6b153026da7c7339af7b2d05bdc73c",
+          "bytes": 22350
+        }
+      ]
+    },
+    {
+      "id": "bloccpay-payroll-semantics",
+      "label": "Native payroll, asset and treasury meanings",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/docs/payroll-semantics.md",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "a335a20c51d14ff50671d0b8d987eeccf5bccf8f",
+          "sha256": "7f502578964b146349849dad5ed673fbfbcd287361ea505b5d0976a096edb960",
+          "bytes": 7384
+        }
+      ]
+    },
+    {
+      "id": "bloccpay-horizon-review",
+      "label": "Retained original Horizon payment review",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/docs/horizon-payroll-review.md",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "39aa2d5f0f3484ca64dc73ef1f6b2fbc0bf9a21e",
+          "sha256": "1d35e679d0f7441d309b7eaac3ac22e11aef116ebd3f6565098bd56b58d8c461",
+          "bytes": 10156
+        }
+      ]
+    },
+    {
+      "id": "bloccpay-invoice-sdp-integration",
+      "label": "Invoice SDK delegation to the original company writer",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/docs/invoice-sdp-integration.md",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "261f8228dfb9f1bab4a892674a0e7f9505f25e7f",
+          "sha256": "1fad6d4ab9b939022de918f94aba8a6a504ebfa2435b0f3f7868d0d52834ceaa",
+          "bytes": 7502
+        }
+      ]
+    },
+    {
+      "id": "bloccpay-sdp-event-inbox",
+      "label": "Signed SDP event intake and original resource readbacks",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/docs/sdp-events-inbox.md",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "f75ded969681fa08791b97018528c51035fc583d",
+          "sha256": "de508ae3667baa957beb6def9e971fcd9b01a0953fa415119c13a827fe2002c9",
+          "bytes": 13032
+        }
+      ]
+    },
+    {
+      "id": "bloccpay-bridge-intake",
+      "label": "Complete Bridge source intake and incident decisions",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/docs/bridge-intake.md",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "a2066ce9952d5f27d19ab6d3f4acb2dd623758c4",
+          "sha256": "a6248363b37f8115993d392a1e44a643b5d1497c55800b68f0721dca3fc8a0b2",
+          "bytes": 17631
+        }
+      ]
+    },
+    {
+      "id": "bloccpay-original-receiving",
+      "label": "Original complete workspace and runtime receiving",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "opportunities/bloccpay_payroll_reconciliation_commissioning_20261013/engineering/bloccpay-payroll/lib/receiving.mjs",
+      "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+      "editions": [
+        {
+          "commit": "54a3898a24be659879e6eafe5f0f0773a4ef7dd0",
+          "git_blob": "e0c02e56bfbde84970cf3487d8ccc8e69b2e6f76",
+          "sha256": "5014776e0d69a395a44df7cf9911a5877bba01be9b7c5c388f243340d197c97c",
+          "bytes": 18849
+        }
+      ]
+    }
+  ]
+}

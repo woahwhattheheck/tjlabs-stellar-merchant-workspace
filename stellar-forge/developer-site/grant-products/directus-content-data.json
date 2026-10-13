@@ -9,7 +9,14 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/directus-content-data/OPERATING.md",
-      "commit": "6bf48482bcde72e03698df3b6bd63cf584ce64df"
+      "editions": [
+        {
+          "commit": "b05029e94bd5a309267ad5c2a52ed44d91aa40af",
+          "bytes": 35515,
+          "sha256": "179d6410f6767c2b7e14998e06d3bbe56f0965549655b3f510f2bf3668ecabfb",
+          "git_blob": "88dca60fb8a23bb5558688e02ed3c67d801c827c"
+        }
+      ]
     },
     {
       "id": "directus-content-data-selection",
@@ -18,6 +25,102 @@
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/selections/directus-content-data.json",
       "commit": "6bf48482bcde72e03698df3b6bd63cf584ce64df"
+    },
+    {
+      "id": "directus-customer-agent-setup",
+      "label": "Complete private Directus customer-agent setup",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/MERCHANT_SETUP.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b05029e94bd5a309267ad5c2a52ed44d91aa40af",
+          "bytes": 8096,
+          "sha256": "940aa90cc5b784d43a0f2ecac1a60626a0fb47f0dd42dd5bcb0a0edc7077a739",
+          "git_blob": "886a88521a19d8a9cc104f52694184f1ac066b40"
+        }
+      ]
+    },
+    {
+      "id": "directus-customer-agent-catalog",
+      "label": "Directus original customer-agent tools",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/catalog.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b05029e94bd5a309267ad5c2a52ed44d91aa40af",
+          "bytes": 5153,
+          "sha256": "19c5093407dafc2212e6189e0ce2dc2a6e7b1400560b1b016775dbc3409897fe",
+          "git_blob": "b3e7b2c5a8064831f0d9abbd7df1253129355a81"
+        }
+      ]
+    },
+    {
+      "id": "directus-customer-operator-client",
+      "label": "Typed durable client for the original Directus operator",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/operator-client.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b05029e94bd5a309267ad5c2a52ed44d91aa40af",
+          "bytes": 23775,
+          "sha256": "5358a4979ec42f72ff6600a94cdb07e087f0442caa54523c8093ee28ff4de732",
+          "git_blob": "9454de22aca3583af7e74c9c453ece47ea4b2b76"
+        }
+      ]
+    },
+    {
+      "id": "directus-customer-agent-operations",
+      "label": "Saved Directus source, publisher and original buyer operations",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/agent-operations.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b05029e94bd5a309267ad5c2a52ed44d91aa40af",
+          "bytes": 25861,
+          "sha256": "7c74db5330f5c981dee6a1f03c78d9aaa9c87c21652852a3d14507a068aaed24",
+          "git_blob": "e6de6b10997c1846c0e66d9fd2dd0fe4f6ec175c"
+        }
+      ]
+    },
+    {
+      "id": "directus-customer-agent-runtime",
+      "label": "Complete Directus customer-agent operation and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/directus/merchant-agent.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b05029e94bd5a309267ad5c2a52ed44d91aa40af",
+          "bytes": 18281,
+          "sha256": "b5233117df0eb4f806dedbe9440b53116b763f5d610d4d85d7cb690d8c227393",
+          "git_blob": "079e48b91559f77fc9475af8a2b6323003ee50f8"
+        }
+      ]
+    },
+    {
+      "id": "directus-customer-agent-distribution",
+      "label": "Directus Applications and customer-agent product declaration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/directus.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b05029e94bd5a309267ad5c2a52ed44d91aa40af",
+          "bytes": 3711,
+          "sha256": "45881c8878e7fd086977da222631e1a2d914042f0005a67758ad391588993f44",
+          "git_blob": "ca74845eb77a94e6729f83c6e74b119fbca5028a"
+        }
+      ]
     }
   ]
 }

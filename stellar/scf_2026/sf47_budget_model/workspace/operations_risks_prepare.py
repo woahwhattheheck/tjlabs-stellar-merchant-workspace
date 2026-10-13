@@ -162,8 +162,13 @@ def prepare(config):
         module = ast.parse(bodies[WORKSPACE + "/managed_launch.py"])
         declarations = [node.value for node in module.body if isinstance(node, ast.Assign)
                         and any(isinstance(name, ast.Name) and name.id == "BOOT_FILES" for name in node.targets)]
-        need(len(declarations) == 1, "Retain the original literal BOOT_FILES.")
-        boot = ast.literal_eval(declarations[0])
+        if declarations:
+            need(len(declarations) == 1, "Retain the original literal BOOT_FILES.")
+            boot = ast.literal_eval(declarations[0])
+        else:
+            from managed_source import manifest_selector
+            boot, _manifest_raw = manifest_selector(bodies[WORKSPACE + "/managed_launch.py"],
+                lambda: bodies[WORKSPACE + "/managed-source.json"])
         need(boot == tuple(row["relative"] for row in selection["files"])
              or boot == [row["relative"] for row in selection["files"]],
              "The whole current managed selection changed.")

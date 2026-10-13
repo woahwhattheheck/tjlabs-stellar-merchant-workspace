@@ -1,0 +1,11 @@
+{
+  "name": "@tokenjunkielabs/bloccpay-operations",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Original payroll, invoice and treasury reconciliation with complete source/runtime receiving",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {}
+}

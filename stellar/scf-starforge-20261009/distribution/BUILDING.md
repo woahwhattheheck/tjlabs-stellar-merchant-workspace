@@ -259,3 +259,25 @@ the complete formatted file bytes and parses their JSON before exposing the
 installed specification. Legacy packages without declarations retain their
 original manifest form. The complete build/resume and runtime/source inspection
 continue to bind the ordinary manifest and original input hashes.
+
+
+## Complete managed application sources
+
+A managed application can declare its exact runtime inventory with
+managedSourceManifests in its original distribution contribution or selected
+recipe. Each JSON manifest uses stellar-forge.managed-source-manifest.v1 and
+retains its repository basePath plus an ordered files array relative to that
+directory. The declaration includes the manifest itself.
+
+The builder resolves only those explicit members inside the original Git tree.
+It retains each member through the existing exclusion, file-type, hash and
+overall package limits, with the managed launcher's 1 MiB per-file boundary.
+All members are required package entries, including files outside the
+application's normal component directories. Ordinary module and browser
+dependency discovery continues afterward.
+
+Grant Operations uses this path for both its Node review and actual Python
+launch. See [Managed Grant source selection](../../scf_2026/sf47_budget_model/workspace/MANAGED_SOURCE.md)
+for adding a capability, selected/executing source comparison and existing
+managed release recovery. Older immutable source editions keep their original
+reader and launch inventory.

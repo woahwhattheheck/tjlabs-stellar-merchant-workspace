@@ -1,0 +1,92 @@
+{
+  "name": "Bloccpay original-source commissioning",
+  "connections": {
+    "horizonPublic": {
+      "provider": "horizon",
+      "environment": "production",
+      "baseUrl": "https://horizon.stellar.org",
+      "networkPassphrase": "Public Global Stellar Network ; September 2015"
+    }
+  },
+  "connectionTemplates": {
+    "sdpCreator": {
+      "provider": "sdp",
+      "environment": "sandbox",
+      "baseUrl": "https://YOUR_EXISTING_SDP_HOST",
+      "token": "SELECT_EXISTING_PRIVATE_CREATOR_TOKEN",
+      "tenantName": "SELECT_ACTUAL_TENANT",
+      "sourceWalletId": "SELECT_ORIGINAL_DISTRIBUTION_WALLET_ID",
+      "networkPassphrase": "Test SDF Network ; September 2015",
+      "actorId": "configured-creator"
+    },
+    "sdpApprover": {
+      "provider": "sdp",
+      "environment": "sandbox",
+      "baseUrl": "https://YOUR_EXISTING_SDP_HOST",
+      "token": "SELECT_EXISTING_PRIVATE_APPROVER_TOKEN",
+      "tenantName": "SELECT_ACTUAL_TENANT",
+      "sourceWalletId": "SELECT_ORIGINAL_DISTRIBUTION_WALLET_ID",
+      "networkPassphrase": "Test SDF Network ; September 2015",
+      "actorId": "configured-approver"
+    },
+    "horizonTestnet": {
+      "provider": "horizon",
+      "environment": "sandbox",
+      "baseUrl": "https://horizon-testnet.stellar.org",
+      "networkPassphrase": "Test SDF Network ; September 2015"
+    },
+    "bridgeSandbox": {
+      "provider": "bridge",
+      "environment": "sandbox",
+      "baseUrl": "https://api.sandbox.bridge.xyz/v0",
+      "apiKey": "SELECT_EXISTING_PRIVATE_BRIDGE_API_KEY",
+      "customerId": "SELECT_ORIGINAL_CUSTOMER_ID",
+      "webhookEndpoints": {
+        "SELECT_ORIGINAL_SUBSCRIPTION_ID": {
+          "publicKey": "SELECT_ORIGINAL_ENDPOINT_RSA_PUBLIC_KEY_PEM",
+          "developerId": "SELECT_ACTUAL_DEVELOPER_ID",
+          "maxAgeMs": 600000,
+          "futureToleranceMs": 60000
+        }
+      }
+    }
+  },
+  "collections": {
+    "enabled": false,
+    "pollSeconds": 15,
+    "maxPages": 100
+  },
+  "programmeFile": null,
+  "payroll": {
+    "file": null,
+    "format": "csv",
+    "recordsPath": ""
+  },
+  "commissioning": {
+    "dispatch": false,
+    "creatorAlias": null,
+    "approverAlias": null,
+    "wallet": {
+      "versionId": null,
+      "resourceId": null,
+      "connectionAlias": null
+    },
+    "disbursement": {
+      "versionId": null,
+      "resourceId": null,
+      "connectionAlias": null
+    },
+    "uploadInstructions": false,
+    "startDisbursement": false,
+    "evidenceSourceIds": {},
+    "operations": []
+  },
+  "enableReadOnlyCollection": false,
+  "collectionIntervalSeconds": 900,
+  "maximumReadPasses": 100,
+  "maxPagesPerPass": 100,
+  "retainedWebhookDeliveries": [],
+  "runtimeLicenseFiles": [],
+  "playwrightModule": null,
+  "chromiumExecutable": null
+}

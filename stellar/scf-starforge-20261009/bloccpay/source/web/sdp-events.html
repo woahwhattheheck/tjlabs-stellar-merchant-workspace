@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SDP event inbox · Bloccpay</title><link rel="stylesheet" href="/sdp-events.css"><script type="module" src="/sdp-events.mjs"></script></head>
+<body><header><div><p class="eyebrow">Bloccpay / native provider evidence</p><h1>SDP event inbox</h1><p id="workspace">Select the original company workspace</p><p id="revision" class="mono"></p></div>
+<div class="header-actions"><button id="refresh" class="secondary" type="button">Refresh retained state</button><button id="leave" class="secondary" type="button">Close inbox &amp; return</button></div></header>
+<p class="notice">Signed events select a resource read. Financial state comes from the complete native response. Recovery here uses read-only GETs; it cannot send a payment or change a balance.</p>
+<p id="status" role="status" aria-live="polite">Opening the original browser request journal…</p>
+<form id="access" class="panel"><h2>Original operator access</h2><label>Company operator token<input name="token" type="password" required autocomplete="off" spellcheck="false"></label><button type="submit">Open retained workspace</button><p class="muted">Uses the same host and operator token as the company workspace. Provider credentials remain on the host.</p></form>
+<main id="desk" inert><section class="inbox panel"><div class="section-head"><h2>Signed delivery history</h2><p id="counts"></p></div>
+<label>Filter event, status, connection or ID<input id="filter" type="search" autocomplete="off" placeholder="Event ID, wallet.created, INCOMPLETE…"></label>
+<div class="pagination"><button id="previous" class="secondary" type="button">Previous 50</button><span id="page" class="mono">1 / 1</span><button id="next" class="secondary" type="button">Next 50</button></div>
+<div id="events" aria-live="polite"></div></section>
+<section class="panel detail-pane"><div id="event"><p>Select an original signed event.</p></div></section>
+<section id="proposal" class="panel full-width" hidden><p class="eyebrow">Explicit recovery selection</p><h2 id="proposal-title"></h2><p id="proposal-note"></p><details open><summary>Exact command to retain before dispatch</summary><pre id="proposal-body"></pre></details><div class="actions"><button id="confirm" type="button">Retain &amp; run this exact request</button><button id="cancel-proposal" class="secondary" type="button">Discard unsubmitted selection</button></div></section>
+<section class="panel full-width"><h2>Original recovery requests</h2><p class="muted">Uncertain work keeps its original request ID, body and workspace. Reconcile it before preparing a different recovery. A completed native request remains readable.</p><div id="requests"></div></section>
+<section class="panel full-width"><h2>Selected request receipt</h2><pre id="result">No request selected.</pre></section></main>
+<footer><p>Complete signed originals, source files, requests and readback history remain in the existing private company export. Use the original Export &amp; receive workflow after closing this inbox.</p></footer></body></html>

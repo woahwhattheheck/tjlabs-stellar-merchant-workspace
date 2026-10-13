@@ -1,0 +1,16 @@
+{
+  "schema": "bloccpay.bridge-provider-source.v1",
+  "operation": "BLOCCPAY-BRIDGE-8F43-20261013",
+  "localPath": "vendor/invoice-bridge-provider.mjs",
+  "source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/bridge-provider.mjs",
+    "gitBlob": "99804e98e7fc6be505e2cef19b5a456a88c66406",
+    "bytes": 15764,
+    "sha256": "3e11e81da66e73dc5d0713a31859d4d61d505bb891848b57e8cf04286f97cb30",
+    "carrierRepository": "woahwhattheheck/commons",
+    "carrierBlob": "0b0d20012a8575e9b39e3ade2399e25d1afab79f"
+  },
+  "license": "MIT; original source license header and complete source bytes preserved.",
+  "behavior": "Unchanged pure interpretation; original company webhook verifier and ledger remain authoritative."
+}

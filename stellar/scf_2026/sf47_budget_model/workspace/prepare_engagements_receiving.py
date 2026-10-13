@@ -100,9 +100,19 @@ def source_manifest(root, selection_sha, repository_root=None, additional_files=
     tree = ast.parse(raw.decode("utf-8"), filename=str(selector))
     declarations = [node for node in tree.body if isinstance(node, ast.Assign)
                     and any(isinstance(target, ast.Name) and target.id == "BOOT_FILES" for target in node.targets)]
-    native.need(len(declarations) == 1, "ORIGINAL_SELECTOR",
-                "Use the complete original managed BOOT_FILES declaration.")
-    original = ast.literal_eval(declarations[0].value)
+    inventory_information = None
+    if declarations:
+        native.need(len(declarations) == 1, "ORIGINAL_SELECTOR",
+                    "Use the complete original managed BOOT_FILES declaration.")
+        original = ast.literal_eval(declarations[0].value)
+    else:
+        from managed_source import manifest_selector
+        def read_inventory():
+            nonlocal inventory_information
+            inventory_information, body = native.descriptor(workspace / "managed-source.json",
+                maximum=1024 * 1024, capture=True)
+            return body
+        original, _inventory_raw = manifest_selector(raw, read_inventory)
     native.need(isinstance(original, (list, tuple)) and original
                 and all(isinstance(value, str) for value in original)
                 and len(original) == len(set(original)), "ORIGINAL_SELECTOR",
@@ -131,6 +141,11 @@ def source_manifest(root, selection_sha, repository_root=None, additional_files=
                             for key in ("bytes", "sha256", "mode")),
                         "ORIGINAL_SELECTOR_CHANGED",
                         "Retain the exact original selector bytes and mode used for this source selection.")
+        if inventory_information is not None and name == prefix + "workspace/managed-source.json":
+            native.need(all(information[key] == inventory_information[key]
+                            for key in ("bytes", "sha256", "mode")),
+                        "ORIGINAL_SELECTOR_CHANGED",
+                        "Retain the exact manifest bytes used for this source selection.")
         total += information["bytes"]
         native.need(total <= native.MAX_SOURCE and len(files) < 8192, "SOURCE_SIZE",
                     "The complete selected runtime and receiving source exceeds its original bound.")

@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md",
-      "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
+      "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
@@ -20,6 +20,11 @@
           "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
           "git_blob": "5a0801628886a29d40dfc25b763781d6c1eaf473",
           "bytes": 24867
+        },
+        {
+          "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
+          "git_blob": "f5f116f74a0b849ed5b62f7271f054974abd4477",
+          "bytes": 28586
         }
       ]
     },
@@ -175,6 +180,36 @@
           "commit": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
           "git_blob": "89e22fadfe120286e30380d17f09f1f4986b7932",
           "bytes": 8218
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-batch-browser",
+      "label": "Complete selected-row changes, exact totals and guarded undo",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_batch.mjs",
+      "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
+      "editions": [
+        {
+          "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
+          "git_blob": "3acd45d7ed7786df23f34e3b7c94e815fe548ac7",
+          "bytes": 12968
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-desk-browser",
+      "label": "Original statement desk selection, draft recovery and native review",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statements.mjs",
+      "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
+      "editions": [
+        {
+          "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
+          "git_blob": "e03f00a30ba7ff2bfca179f1c3f64a2f41616c1e",
+          "bytes": 72948
         }
       ]
     }
