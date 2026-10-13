@@ -211,6 +211,24 @@ class InstallationSourceDeskClient:
     def read(self, revision: int | None = None) -> dict:
         return self.desk.get(self.case_id, self.draft_id, revision)
 
+    def edition_compare(self, selection: dict) -> dict:
+        return self.desk.edition_compare(self.case_id, self.draft_id, deepcopy(selection))
+
+    def edition_preview(self, selection: dict) -> dict:
+        return self.desk.edition_preview(self.case_id, self.draft_id, deepcopy(selection))
+
+    def prepare_edition(self, plan: dict, *, actor: str, request_id: str,
+                        note: str = "") -> dict:
+        from operations_installation_source_editions import PLAN, unseal
+        value = unseal(plan, PLAN)
+        need(value.get("caseId") == self.case_id and
+             value.get("target", {}).get("draftId") == self.draft_id,
+             "Select this client's original complete target edition.")
+        context = _context(actor, request_id, note)
+        body = {**context, "expectedRevision": _revision(value["target"]["revision"]),
+                "action": "edition.apply", "data": {"plan": deepcopy(plan)}}
+        return self.prepare_command(body)
+
     def archive_inspect(self, archive_file_id: str, expected_revision: int,
                         replace_file_ids: list[str] | None = None) -> dict:
         return self.desk.commissioning_archive_inspect(self.case_id, self.draft_id, {

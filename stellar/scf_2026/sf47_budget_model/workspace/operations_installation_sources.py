@@ -26,6 +26,7 @@ from model import Problem, canonical, digest, now, short_id, text
 import operations_workshare_installations as workshares
 import operations_installation_commissioning as merchant_commissioning
 import operations_installation_commissioning_archive as commissioning_archive
+import operations_installation_source_editions as source_editions
 
 SCHEMA = "stellar-forge.installation-source-desk.v1"
 PREPARATION = "stellar-forge.installation-source-desk-preparation.v1"
@@ -689,6 +690,12 @@ class SourceDesk:
         state["attachments"].append(deepcopy(receipt))
         return receipt
 
+    def edition_compare(self, case_id, draft_id, body):
+        return source_editions.compare(self, case_id, draft_id, body)
+
+    def edition_preview(self, case_id, draft_id, body):
+        return source_editions.preview(self, case_id, draft_id, body)
+
     def command(self, case_id, draft_id, body):
         identifier(draft_id, DRAFT_ID, "source draft")
         exact(body, ("requestId", "expectedRevision", "actor", "note", "action", "data"),
@@ -696,7 +703,7 @@ class SourceDesk:
         request_id = short_id(body["requestId"], "Original source-desk request ID")
         actor, note = text(body["actor"], "Recording operator", 300, True), text(body.get("note", ""), "Preparation note", 12000)
         action = body["action"]
-        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive"),
+        need(action in ("create", "file.add", "file.remove", "selection.save", "prepare", "native.receive", "attach", "commissioning.attach", "commissioning.archive.receive", "edition.apply"),
              "Choose a supported original source preparation action.")
         need(isinstance(body["data"], dict), "Use the complete source action data.")
         expected = integer(body["expectedRevision"], "source draft revision")
@@ -769,6 +776,8 @@ class SourceDesk:
                     need(isinstance(data["selection"], dict) and len(json_bytes(data["selection"])) <= MAX_FILE,
                          "Keep the complete editable native selection within 8 MiB.", status=413)
                     state["selection"] = deepcopy(data["selection"])
+                elif action == "edition.apply":
+                    result = source_editions.apply(self, state, data, context)
                 elif action == "prepare":
                     exact(data, ("expectedEngineSha256", "expectedSelectionSha256", "expectedProfiles"),
                           ("expectedEngineSha256", "expectedSelectionSha256", "expectedProfiles"), "reviewed preparation")
@@ -803,6 +812,8 @@ class SourceDesk:
             if isinstance(returned, dict) and returned.get("state") == "PREPARED_SOURCE":
                 need(self._preparation(draft["caseId"], draft["id"], returned["id"]) == returned,
                      "The complete original preparation receipt differs.", "INSTALLATION_SOURCE_CHANGED", 409)
+            elif isinstance(returned, dict) and returned.get("state") == "EDITABLE_SOURCE_EDITION":
+                source_editions.verify_receipt(self, draft, returned)
             elif isinstance(returned, dict) and returned.get("state") == "RECEIVED_COMMISSIONING_ARCHIVE":
                 commissioning_archive.verify_receipt(self, returned)
             elif isinstance(returned, dict) and returned.get("state") == "ATTACHED_COMMISSIONING":
@@ -834,6 +845,7 @@ class SourceDesk:
 def register_static(static):
     static.update({
         "/operations_installation_sources.mjs": ("operations_installation_sources.mjs", "text/javascript; charset=utf-8"),
+        "/operations_installation_source_editions.mjs": ("operations_installation_source_editions.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_source_collection.mjs": ("operations_installation_source_collection.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_commissioning.mjs": ("operations_installation_commissioning.mjs", "text/javascript; charset=utf-8"),
         "/operations_installation_sources.css": ("operations_installation_sources.css", "text/css; charset=utf-8"),
@@ -848,6 +860,16 @@ def register_static(static):
 def handle(handler, parsed, operations, method):
     """Join the existing authenticated handler after its original guard."""
     from urllib.parse import parse_qs, unquote
+    edition_path = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/installation-sources/"
+        r"(source-desk-[a-f0-9]{32})/editions/(compare|preview)", parsed.path)
+    if edition_path:
+        need(method == "POST" and not parsed.query, "Read one complete original edition comparison or preview.", status=405)
+        case_id, draft_id, action = edition_path.groups()
+        desk = SourceDesk(operations)
+        selected = desk.edition_compare if action == "compare" else desk.edition_preview
+        handler.send(200, selected(case_id, draft_id, handler.json_body()))
+        return True
     commissioning_path = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/installation-sources/"
         r"(source-desk-[a-f0-9]{32})/commissioning/(inspect|preview|archive-inspect)", parsed.path)
