@@ -33,7 +33,7 @@ Run the maintained merchant MCP host with its existing bearer-token environment.
 
 ## Complete operating workflow
 
-1. Read `material_inputs`, then `material_upload` the selected original file with a retained `requestId`, `inputId`, complete source format and provenance. Retain the returned source ID. Supported original formats are CSV, TSV, JSONL, JSON and native ETIM xChange JSON. JSON may select its original `rowsPath`; xChange uses `format:{"kind":"xchange-json"}` and retains its complete nested message.
+1. Read `material_inputs`, then `material_upload` the selected original file with a retained `requestId`, `inputId`, complete source format and provenance. Retain the returned source ID. Supported original formats are CSV, TSV, JSONL, JSON, native ETIM xChange JSON and original ETIM BMEcat XML. JSON may select its original `rowsPath`; xChange uses `format:{"kind":"xchange-json"}` and retains its complete nested message.
 2. Save the complete catalogue mapping with `material_save`: `title`, `tenantId`, `mapping` and a retained request ID. A new catalogue omits both `catalogId` and `expectedRevision`; an update supplies both. Mapping expressions, joins and lookups use the existing catalogue schema. Material identifiers remain text, and unit ratios remain exact decimal/rational data.
 3. `material_preview` binds the source to the current catalogue revision. Full and delta modes retain the original edition and changes. Read `material_edition`, every `material_rows` and `material_changes` page, and any individual `material_get` record needed for a decision. `material_select` supplies the exact catalogue revision, edition ID and its `reviewSha256`.
 4. For customer matching, use `material_suggest` with the actual description and customer. Inspect the complete returned material, then save `material_decision` with its `expectedMaterialSha256`, current catalogue revision and `APPROVED` or `REJECTED`. Updates also identify the existing decision and revision. The raw decision history retains what was decided; current suggestions expose whether that decision still matches the selected material. `material_quantity` takes an exact decimal string, the original unit and current material hash.
@@ -65,6 +65,16 @@ Export generation reads a single transaction on the original catalogue database.
 `material_export_manifest` returns the original `manifest.json` identity (`name`, `bytes`, `sha256`). `material_export_file` requires `exportId`, `file`, `expectedManifestSha256`, `expectedSha256`, `offset` and `limit`; it returns a base64 chunk, original file identity, `readId` and `nextOffset`. Continue until `nextOffset:null`. A file read lease can be released explicitly with `material_export_file_release`.
 
 The typed client and CLI perform this receiving protocol for every file. They lock the private output directory, verify retained partial prefixes, resume the original offsets, verify the full file hashes and retain completion. Keep the same directory, endpoint, alias and manifest. An expired read lease can be reopened at the original file hash and offset; it does not change the selected export. Output files have private permissions. Each complete file is limited to 8 GiB, the manifest to 64 KiB and each retained chunk to 196,608 bytes.
+
+## Original BMEcat XML through the same client
+
+Declare the original XML as a host-owned input with its actual name, bytes and SHA-256. Upload with `format:{"kind":"bmecat-xml"}`, then call `client.materialBMEcatProfile({sourceId})` (tool suffix `material_bmecat_profile`; CLI `material-bmecat-profile`). The response contains the original catalogue mapping, supplier bindings, header-derived source/supplier profile and allowed transaction modes.
+
+Save the reviewed catalogue mapping and use the existing preview/select operations. `T_NEW_CATALOG` permits full editions; `T_UPDATE_PRODUCTS` permits explicit deltas against a selected base. All original supplier IDs and delete/upsert operations must survive the mapping before any new edition is seeded. Price-only and partial-product-data transactions remain retained source inputs until a reviewed merge is supplied.
+
+The supplier profile's recipient agreement flags are under `envelope`. Original buyer/supplier/language/currency/date values do not establish agreement. Review `sourceProfile`, `supplierBindings` and the actual recipient requirements before `supplierSave`; the original BMEcat and xChange shapes retain their separate profiles. A large source-faithful row can exceed the small upload sample budget: use `source.bmecat` and `materialBMEcatProfile` for metadata and mapping, then inspect the complete edition record.
+
+The raw XML and complete source metadata accompany the existing catalogue bundle into the receiving client. Read the [complete BMEcat operating guide](../../products/material-catalog/BMECAT.md). The existing full material MCP receiving course accepts `--input-format bmecat-xml`; use the same original supplier directory/operation and a distinct retained MCP receiving directory/operation. It uploads the actual XML through the host alias, reads the new profile, preserves the full source through all exports, and receives the exact final customer attachment before cold reopening.
 
 ## Typed client
 
@@ -149,6 +159,7 @@ All tools below require a configured `workspace`. The SDK offers matching camelC
 | `material_history` | `kind`, `id` |
 | `material_decision_get` | `decisionId` |
 | `material_source` | `sourceId` |
+| `material_bmecat_profile` | Optional `sourceId`; omission returns the original generic mapping |
 | `material_edition` | `editionId` |
 | `material_rows` | `editionId` |
 | `material_changes` | `editionId` |

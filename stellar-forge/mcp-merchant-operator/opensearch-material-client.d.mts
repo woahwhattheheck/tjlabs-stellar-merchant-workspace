@@ -37,7 +37,7 @@ export interface NativeOperation<T=Record<string,unknown>> {
   result?:NativeOperationResult<T>; error?:{code?:string;message?:string;[key:string]:unknown}; [key:string]:unknown;
 }
 export interface InputFormat {
-  kind?:'csv'|'tsv'|'jsonl'|'json'|'xchange-json'; delimiter?:string; hasHeader?:boolean; columns?:string[]; rowsPath?:string;
+  kind?:'csv'|'tsv'|'jsonl'|'json'|'xchange-json'|'bmecat-xml'; delimiter?:string; hasHeader?:boolean; columns?:string[]; rowsPath?:string;
 }
 export interface Provenance { url?:string; revision?:string; publisher?:string; kind?:string; note?:string }
 export interface HostMaterialInput { inputId:string; name:string; bytes:number; sha256:Sha256; [key:string]:unknown }
@@ -60,9 +60,23 @@ export interface Catalog {
   createdAt:string; updatedAt:string; [key:string]:unknown;
 }
 export type CatalogSummary=Pick<Catalog,'schema'|'id'|'revision'|'title'|'tenantId'|'mappingSha256'|'activeEditionId'|'createdAt'|'updatedAt'>;
+export type BMEcatTransactionName='T_NEW_CATALOG'|'T_UPDATE_PRODUCTS'|'T_UPDATE_PRICES'|'T_NEW_PRODUCTDATA';
+export type BMEcatCatalogMode='full'|'delta';
+export type BMEcatSupplierProfile=JsonObject&{envelope:JsonObject&{receiverAccepted:boolean;subsetAgreed:boolean}};
+export interface BMEcatSourceMetadata {
+  schema:string;bytes:number;sha256:Sha256;productCount:number;
+  transaction:JsonObject&{name:BMEcatTransactionName};root:JsonObject;header:JsonObject;
+  sourceProfile:BMEcatSupplierProfile;catalogModes:BMEcatCatalogMode[];
+  etimVersions:string[];projectionIssues:JsonValue[];conformance:JsonValue;
+}
+export interface BMEcatInputProfile {
+  catalogMapping:CatalogMapping;supplierBindings:SupplierBindings;
+  sourceProfile:BMEcatSupplierProfile|null;supplierProfile:BMEcatSupplierProfile|null;
+  transactionModes:Record<BMEcatTransactionName,BMEcatCatalogMode[]>;note:string;
+}
 export interface CatalogSource {
   schema:string; id:RecordId; name:string; format:InputFormat; bytes:number; sha256:Sha256;
-  provenance:Provenance; columns:string[]; sample:JsonObject[]; createdAt:string; [key:string]:unknown;
+  provenance:Provenance; columns:string[]; sample:JsonObject[]; createdAt:string; bmecat?:BMEcatSourceMetadata; [key:string]:unknown;
 }
 export type CatalogSourceReference=Pick<CatalogSource,'id'|'name'|'bytes'|'sha256'|'provenance'>;
 export type CatalogSourceSummary=Pick<CatalogSource,'schema'|'id'|'name'|'format'|'bytes'|'sha256'|'provenance'|'createdAt'>&{columnCount:number};
@@ -287,6 +301,7 @@ export interface MaterialClientRequests {
   materialHistory:HistoryArgs&{kind:'catalog'|'decision'};
   materialDecisionGet:{decisionId:RecordId;revision?:number};
   materialSource:{sourceId:RecordId};
+  materialBMEcatProfile:{sourceId?:RecordId};
   materialEdition:{editionId:RecordId};
   materialRows:PageArgs&{editionId:RecordId;search?:string};
   materialChanges:PageArgs&{editionId:RecordId};
@@ -331,6 +346,7 @@ export interface MaterialClientResults {
   materialHistory:HistoryPage<CatalogSummary|MaterialDecision>;
   materialDecisionGet:MaterialDecision;
   materialSource:CatalogSource;
+  materialBMEcatProfile:BMEcatInputProfile;
   materialEdition:CatalogEdition;
   materialRows:RowsPage<MaterialRecord>;
   materialChanges:RowsPage<MaterialChange>;
@@ -376,6 +392,7 @@ export declare const OPENSEARCH_MATERIAL_CLIENT_METHODS:Readonly<{
   materialHistory:'material_history';
   materialDecisionGet:'material_decision_get';
   materialSource:'material_source';
+  materialBMEcatProfile:'material_bmecat_profile';
   materialEdition:'material_edition';
   materialRows:'material_rows';
   materialChanges:'material_changes';
@@ -424,6 +441,7 @@ export declare class OpenSearchMaterialClient {
   materialHistory(args:MaterialClientRequests['materialHistory'],options?:CallOptions):Promise<MaterialClientResults['materialHistory']>;
   materialDecisionGet(args:MaterialClientRequests['materialDecisionGet'],options?:CallOptions):Promise<MaterialClientResults['materialDecisionGet']>;
   materialSource(args:MaterialClientRequests['materialSource'],options?:CallOptions):Promise<MaterialClientResults['materialSource']>;
+  materialBMEcatProfile(args?:MaterialClientRequests['materialBMEcatProfile'],options?:CallOptions):Promise<MaterialClientResults['materialBMEcatProfile']>;
   materialEdition(args:MaterialClientRequests['materialEdition'],options?:CallOptions):Promise<MaterialClientResults['materialEdition']>;
   materialRows(args:MaterialClientRequests['materialRows'],options?:CallOptions):Promise<MaterialClientResults['materialRows']>;
   materialChanges(args:MaterialClientRequests['materialChanges'],options?:CallOptions):Promise<MaterialClientResults['materialChanges']>;
