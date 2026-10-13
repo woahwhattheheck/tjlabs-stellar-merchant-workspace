@@ -2,10 +2,10 @@
 import type {CentralConnection,CentralRequestOptions,CentralAction,CentralCommissioningAction,CentralWarehouseAction,RecordValue} from './index.mjs';
 export {CentralWorkspaceClient,connectCentralWorkspace,readCentralConnection,inspectCentralListener,
   ODK_CONNECTION_FILENAME,ODK_CONNECTION_SCHEMA,ODK_STARTUP_SCHEMA,
-  centralOperationId,centralActionRoute,requestCentralAction,inspectCentralCommissioning,inspectCentralWarehouse} from './index.mjs';
+  centralOperationId,centralActionRoute,requestCentralAction,inspectCentralCommissioning,inspectCentralWarehouse,inspectCentralReleaseOperations} from './index.mjs';
 export type {CentralConnection,CentralConnectionValue,CentralRequestOptions,CentralAction,
   CentralActionNamespace,CentralCommissioningAction,CentralCommissioningState,CentralWarehouseAction,
-  CentralWarehouseState,CentralWarehouseRequest,CentralWarehousePrepareInput,CentralWarehouseConnectInput,
+  CentralReleaseOperationsState,CentralWarehouseState,CentralWarehouseRequest,CentralWarehousePrepareInput,CentralWarehouseConnectInput,
   CentralWarehouseInspectInput,CentralWarehouseReviewInput,CentralWarehouseImportInput,
   CentralWarehousePeriodReportInput,CentralWarehouseOperation,CentralWarehouseApproval} from './index.mjs';
 export const ODK_MAX_RESPONSE_BYTES:number,ODK_MAX_INPUT_BYTES:number,ODK_MAX_CONTROL_BYTES:number;

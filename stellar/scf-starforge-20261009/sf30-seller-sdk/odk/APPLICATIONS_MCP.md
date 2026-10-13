@@ -517,7 +517,8 @@ report selects the original `previousImportId`, `currentImportId` and title.
 | `warehouseApproval` | `merchant_odk_warehouse_approval` |
 | `warehouseResume` | `merchant_odk_warehouse_resume` |
 
-These 11 operations bring the complete ODK catalog to57 tools. Warehouse state
+These 11 warehouse operations remain in the original catalog; the two read-only
+software-desk discovery tools below bring the complete catalog to 59 tools. Warehouse state
 uses the same explicit pagination for profiles, deliveries, approvals and
 operations. Each saved operation exposes its original command, attempts,
 source binding, complete native output/result receipts and any retained report.
@@ -537,6 +538,144 @@ original resources retain approved exports, full command outputs, complete
 result records and the exact period report ZIP. After original archive receiving,
 those files resolve under the current workspace and remain readable through
 the existing authenticated downloads and retained-file tools.
+
+## Software releases and recovery in the installed application
+
+The same managed Application now exposes **Software releases and recovery** at
+`/release-operations/`. Its source captures, decisions, immutable plans and
+actual outcome acceptance use the original Store and workspace UUID. The desk
+receives exact app/GitLab and Central source records and retains the reviewed
+handoff to the existing deployment, form-publication and host operators.
+It does not run a GitLab job, upgrade Central, restore a host or publish a form.
+
+In the saved Applications configuration, choose the optional **Software release
+GitLab connections** file. The corresponding managed option is
+`releaseConnectionsFile`; its command-line flag is `--release-connections`.
+This is a private, host-owned file, not a browser upload. The accepted shape is
+an array of trusted profiles, or an object with schema
+`stellar-forge.central-release-connections.v1` and that array in `connections`:
+
+~~~json
+{
+  "schema": "stellar-forge.central-release-connections.v1",
+  "connections": [
+    {
+      "id": "reviewed-gitlab",
+      "name": "Existing delivery GitLab",
+      "url": "https://gitlab.example.org",
+      "tokenEnv": "DELIVERY_GITLAB_TOKEN",
+      "projectIds": ["123"]
+    }
+  ]
+}
+~~~
+
+These are illustrative values. Select the actual existing GitLab base URL,
+credential alias and numeric project IDs; a URL has no user info, query or
+fragment. Supply the alias's value through the existing **Private environment
+JSON** input or original process environment. The profile file carries no token
+value. Omitting `projectIds` permits projects accessible to the configured
+credential; an empty array permits none. The browser chooses a configured ID
+and receives only its safe name, URL and project selection. It cannot choose
+an arbitrary server or environment variable.
+
+Prepare and review the ordinary application start after saving that selection.
+Applications retains the profile file's original identity, reads its private
+bytes, validates the provider shape without contacting GitLab, and passes its
+absolute path to the original managed command. On startup it compares the
+announced `releaseConnectionsSha256`, current private file identity and live
+safe connection list. It also verifies the software desk's schema and workspace
+UUID through the original authenticated listener.
+
+The returned `releaseOperationsUrl` must equal the selected local or trusted
+HTTPS browser origin plus `/release-operations/` and the same token fragment.
+Applications saves that verified link as **Software releases and recovery**.
+Its related HTTPS link is visible only at the already validated saved browser
+origin; unrelated origins remain excluded. Ordinary Open still opens the field
+workspace, whose navigation reaches the same software desk. Ended runs retain
+their historical source but do not expose a live Open link.
+
+For an already configured host, the equivalent original launch is:
+
+~~~sh
+starforge odk-central-workspace serve \
+  --workspace /private/field-workspace \
+  --operator "Field reporting operator" \
+  --release-connections /private/field-inputs/gitlab-connections.json
+~~~
+
+Retain the existing commissioning, warehouse, environment and trusted-origin
+options when they apply. A trusted programmatic launcher can instead provide
+`releaseConnections` as an array; it cannot also provide the file. The
+Applications route selects the file only. With no file selected, the software
+desk still opens with no GitLab connections and supports retained-source
+inspection and actual original uploads. Starting the desk does not call GitLab.
+
+### Read-only SDK and merchant discovery
+
+The existing SDK client adds `releaseOperationsState(options)`. It attaches to
+the original running instance and rejects a changed workspace or desk identity.
+The merchant workspace configuration remains unchanged: select its existing
+workspace alias and connect to the same Applications-owned instance.
+
+| Work | Typed tool | Inputs |
+| --- | --- | --- |
+| Inspect the software desk | `merchant_odk_release_operations_state` | `workspace`, optional `offset` and `limit` |
+| Open the same software desk | `merchant_odk_release_operations_browser` | `workspace` |
+
+The state response pages connections, Central connections, sources, operations,
+active operations and form plans using the existing per-array `pages` metadata.
+Follow each applicable `nextOffset`; the initial page is not a complete source
+inventory. These two tools are read-only and do not create an operation or
+receive new provider data. Browser and SDK calls preserve the current private
+connection/instance checks; stopping or replacing the Application requires the
+ordinary explicit reconnect. The complete catalog now contains 59 tools.
+
+In the desk, retain the original source selection before dispatch, continue
+uncertain receiving with its same source ID and exact input, and reconcile
+returned native outcomes before accepting the operation. A pipeline's success
+does not prove a deployment, a snapshot manifest does not prove a restore, and
+an earlier restore rehearsal does not establish a later recovery. Follow
+[the complete release and recovery guide](./release-operations/README.md) for
+exact source bindings, ordered steps, failed-response downloads and handover.
+
+### Receive this installed route with its original owner
+
+Continue the existing equipped Applications/ODK receiving operation. Use the
+exact selected installed source version, original private workspace and current
+host file. Preserve any already-bound receiving request and all original
+deployment, form-publication and backup/restore ownership.
+
+Observe the saved settings, reviewed profile selection, managed startup and
+actual live link. Open the software desk both through ordinary field navigation
+and the saved Applications link at the actual local or trusted HTTPS origin.
+Read its current state through the SDK and the two typed tools; compare the same
+workspace, safe connection choices and original source/operation IDs. Verify
+that no secret value or environment alias appears in the software state.
+Use actual approved sources for any provider receiving; this handover does not
+authorize a new tenant, deployment or recovery.
+
+Inspect the actual desktop, 390-pixel and 320-pixel screens and important
+populated, empty, pending and error states. Operate the relevant source
+downloads, failed original responses, saved drafts, reopen and handover controls;
+open every applicable outgoing file or archive member. Retain observed results
+in the same original course. Source inspection or syntax parsing does not claim
+those live/rendered steps have happened.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Bryce's standing rule is: “that includes all attachments and this does not become review theatre or test theatre you need to literally observe the actual thing the way a user would see and use it”.
+
+Before presenting a client/prospect-facing application, website, dashboard, demo, report, presentation, export or any attachment, the producing peer must open/run/render the exact outgoing version, LOOK at it and normally use it as the recipient would. View the actual screenshots you capture. Inspect the actual presentation/screenshare width and relevant narrow/mobile width, important user controls, populated/empty/loading/error states, downloads and reopened exports. Open the usable contents of ZIPs/projects and every applicable report/PDF page. Source review, schemas, HTTP 200, DOM counts, tests, checklists and another worker's approval cannot substitute for observing and using the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and continued delivery; it must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk. Do not run broad test sweeps, repeat accepted checks, build a verification product or create review bureaucracy or an approval queue.
+
+For video and audio, Bryce directs: “also add that if u make a video use voice gen tts not robot voices, use generative stuff we have models, use them”. Use available high-quality generative voice/TTS and useful generative media, with natural professional delivery. Actually watch/listen to the final outgoing export, including pacing, pronunciation, timing and audio alignment. Preserve existing spending, voice and attribution controls.
+
+Include this complete instruction in delegated assignments and the active owner-controlled provider/project/cloud policy, boot, build and receiving guidance those workers actually read. Reuse already updated copies and return exact updated paths/version in the original policy thread with the next substantive result. Delivery of source does not establish that every runtime loaded it. Preserve all other owner controls and original operation identities; leave historical records and third-party/vendor policies intact. This instruction creates no restarts, watchers, credential gate or new release permission and does not revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
 
 ## Source and implementation references
 
