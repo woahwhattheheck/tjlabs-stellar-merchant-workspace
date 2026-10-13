@@ -60,6 +60,9 @@ export function installQualityFollowupDesk({getState, action, mutate, refresh, n
     clearTimeout(ui.timer); ui.timer = setTimeout(() => void persist().catch(fail), 200);
   }
   function fail(error) { ui.error = error.message; notify(error.message, true); paint(); }
+  const openedCopy = () => ({workspaceId: ui.workspaceId, draftId: ui.draftId, work: ui.work});
+  const ownsCopy = opened => opened.workspaceId === identity().workspaceId &&
+    opened.workspaceId === ui.workspaceId && opened.draftId === ui.draftId && opened.work === ui.work;
   function persist() {
     clearTimeout(ui.timer);
     const workspaceId = ui.workspaceId, draftId = ui.draftId, work = clone(ui.work), dirty = ui.dirty;
@@ -72,7 +75,10 @@ export function installQualityFollowupDesk({getState, action, mutate, refresh, n
           ui.draftVersion = result.version; ui.savedDirty = dirty;
           ui.copies = [result, ...ui.copies.filter(row => row.id !== draftId)];
         }
-      } catch (error) { ui.draftError = error.message; throw error; }
+      } catch (error) {
+        if (workspaceId === ui.workspaceId && draftId === ui.draftId) ui.draftError = error.message;
+        throw error;
+      }
     });
     return ui.queue;
   }
@@ -109,23 +115,33 @@ export function installQualityFollowupDesk({getState, action, mutate, refresh, n
   function authoringCopies() {
     const upload = el("input", {type: "file", accept: ".json,application/json", "aria-label": "Open quality working copy",
       onchange: event => task(async () => {
-        const file = event.target.files[0]; if (!file) return;
+        const file = event.target.files[0], opened = openedCopy(); if (!file) return;
         if (file.size > 10000000) throw new Error("Working copy exceeds 10 MB");
-        const value = validateQualityDraft(JSON.parse(await file.text()), ui.workspaceId);
-        await persist(); ui.work = value; ui.draftId = crypto.randomUUID(); ui.draftVersion = 0;
+        const text = await file.text();
+        if (!ownsCopy(opened)) return;
+        const value = validateQualityDraft(JSON.parse(text), opened.workspaceId);
+        await persist();
+        if (!ownsCopy(opened)) return;
+        ui.work = value; ui.draftId = crypto.randomUUID(); ui.draftVersion = 0;
         ui.dirty = 1; ui.savedDirty = 0; ui.draftError = ""; ui.preview = null; await persist();
       })});
     return el("details", {className: "qf-working"}, el("summary", {}, "Working copies and complete authoring files"),
       p("Entered comparison choices and follow-up notes are saved in this browser for this workspace. Download the complete copy to continue on another computer."),
       select("Saved working copy", [["", "Choose a saved copy"], ...ui.copies.map(row => [row.id,
         (row.value.selection.title || "Untitled working copy") + " · " + date(row.updatedAt)])], ui.draftId, id => task(async () => {
-          if (!id) return; await persist(); const rows = await listQualityDrafts(ui.workspaceId), saved = rows.find(row => row.id === id);
+          if (!id) return;
+          const opened = openedCopy(); await persist();
+          if (!ownsCopy(opened)) return;
+          const rows = await listQualityDrafts(opened.workspaceId), saved = rows.find(row => row.id === id);
+          if (!ownsCopy(opened)) return;
           if (!saved) throw new Error("This saved copy is no longer available");
-          ui.work = validateQualityDraft(saved, ui.workspaceId); ui.draftId = id; ui.draftVersion = saved.version;
+          ui.work = validateQualityDraft(saved, opened.workspaceId); ui.draftId = id; ui.draftVersion = saved.version;
           ui.savedDirty = ui.dirty = 0; ui.draftError = ""; ui.preview = null; ui.copies = rows;
         })),
       btn("Save these entries as a separate working copy", () => task(async () => {
-        await ui.queue.catch(() => {}); ui.draftId = crypto.randomUUID(); ui.draftVersion = 0; ui.savedDirty = 0; ui.dirty = 1;
+        const opened = openedCopy(); await ui.queue.catch(() => {});
+        if (!ownsCopy(opened)) return;
+        ui.work = clone(ui.work); ui.draftId = crypto.randomUUID(); ui.draftVersion = 0; ui.savedDirty = 0; ui.dirty = 1;
         ui.draftError = ""; await persist();
       })),
       btn("Download complete working copy", () => task(async () => {

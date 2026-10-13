@@ -65,7 +65,7 @@ node QUALITY_FOLLOWUP_RECEIVING.mjs /absolute/quality-followup-course
 node QUALITY_FOLLOWUP_BROWSER.mjs /absolute/quality-followup-course /absolute/browser-config.json
 ```
 
-The browser configuration contains the actual installed `playwrightModule` and `executablePath`, plus optional browser `args`. The native result, original source inventory, request/receipt files and saved browser origin/profile remain in the same directory. The browser captures exact intents before mutation, recovers an existing request by its original body, retains completed steps and downloads, and exports and receives the final full workspace. Reentry verifies the original selected source. Reuse the original course directory after interruption.
+The browser configuration contains the actual installed `playwrightModule` and `executablePath`, plus optional browser `args`. The native result, original source inventory, request/receipt files and saved browser origin/profile remain in the same directory. The browser captures the actual initial loading view, empty comparison, explicit ambiguous correspondence, populated review and invalid working-copy recovery. It captures exact intents before mutation, recovers an existing request by its original body, retains completed steps and downloads, and exports and receives the final full workspace. The invalid-file course opens a complete copy from a different workspace, verifies the actual rejection and retained entered fields, then reopens the original valid copy. Reentry verifies the original selected source. Reuse the original course directory after interruption.
 
 # Repository delivery instructions
 

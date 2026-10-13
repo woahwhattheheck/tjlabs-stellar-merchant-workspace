@@ -61,25 +61,37 @@ export async function receiveQualityBrowser(directory, configuration) {
       viewport: {width: 1440, height: 1000}, acceptDownloads: true});
     report.runtime = {playwrightModule: resolve(config.playwrightModule), browser: resolve(config.executablePath),
       browserVersion: context.browser()?.version() ?? "persistent context", node: process.version};
-    let active = null, capturing = Promise.resolve();
-    await context.route("**/api/action", async route => {
-      const request = route.request();
-      const bytes = request.postDataBuffer(), body = bytes ? JSON.parse(bytes.toString("utf8")) : null;
-      if (body?.args?.operationId) {
-        if (!active) throw new Error("Unexpected browser mutation outside the original receiving step");
-        assert.equal(body.action, active.action);
-        const intent = {workspaceId: native.workspaceId, action: body.action, args: body.args,
-          bodyUtf8: bytes.toString("utf8"), bytes: bytes.length, sha256: sha256(bytes)};
-        await fixed(join(output, "intent-" + active.label + ".json"), intent);
-      }
-      await route.continue();
-    });
+    let active = null, routeFailure = null;
     const page = context.pages()[0] ?? await context.newPage();
+    await context.route("**/api/action", async route => {
+      try {
+        const request = route.request();
+        const bytes = request.postDataBuffer(), body = bytes ? JSON.parse(bytes.toString("utf8")) : null;
+        if (body?.args?.operationId) {
+          if (!active) throw new Error("Unexpected browser mutation outside the original receiving step");
+          assert.equal(body.action, active.action);
+          const intent = {workspaceId: native.workspaceId, action: body.action, args: body.args,
+            bodyUtf8: bytes.toString("utf8"), bytes: bytes.length, sha256: sha256(bytes)};
+          await fixed(join(output, "intent-" + active.label + ".json"), intent);
+        }
+        if (body?.action === "quality.followup.overview" &&
+            !report.captures.some(item => item.name === "desktop-loading-evaluations")) {
+          await page.getByText("Loading the current saved evaluations and follow-up history…", {exact: true}).waitFor();
+          await captureRaw("desktop-loading-evaluations");
+        }
+        await route.continue();
+      } catch (error) {
+        routeFailure = error;
+        await route.abort("failed").catch(() => {});
+      }
+    });
     page.on("pageerror", error => {report.pageErrors.push(error.message);});
     async function ready() {
+      if (routeFailure) throw routeFailure;
       await page.locator(".qf-desk").waitFor({state: "visible"});
       await page.waitForFunction(() => document.querySelector(".qf-desk")?.getAttribute("aria-busy") === "false" &&
         !document.querySelector(".qf-desk")?.textContent.includes("Loading the current saved evaluations"));
+      if (routeFailure) throw routeFailure;
     }
     async function open() {
       await page.goto(host.url, {waitUntil: "domcontentloaded"});
@@ -115,7 +127,7 @@ export async function receiveQualityBrowser(directory, configuration) {
           await save(reportPath, report); return result;
         }
         await click();
-        await page.waitForFunction(() => document.querySelector("#pending-panel")?.hidden, {timeout: 30000});
+        await page.waitForFunction(() => document.querySelector("#pending-panel")?.hidden, null, {timeout: 30000});
         await ready();
         assert.ok(await exists(intentPath), "Original browser intent must be retained before dispatch");
         const intent = await read(intentPath);
@@ -127,8 +139,15 @@ export async function receiveQualityBrowser(directory, configuration) {
       } finally {active = null;}
     }
     async function capture(name) {
-      if (report.captures.some(item => item.name === name)) return;
-      await ready(); await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await ready(); return captureRaw(name);
+    }
+    async function captureRaw(name) {
+      const retained = report.captures.find(item => item.name === name);
+      if (retained) {
+        assert.equal(sha256(await fs.readFile(join(output, retained.path))), retained.sha256);
+        return;
+      }
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const file = name + ".png"; await page.screenshot({path: join(output, file), fullPage: true});
       const bytes = await fs.readFile(join(output, file));
       report.captures.push({name, path: file, bytes: bytes.length, sha256: sha256(bytes), width: page.viewportSize().width,
@@ -147,6 +166,7 @@ export async function receiveQualityBrowser(directory, configuration) {
     await open();
     const selections = await read(join(root, "selection.json"));
     if (!await exists(join(output, "intent-browser-comparison.json"))) {
+      await capture("desktop-empty-comparison");
       await page.getByLabel("Earlier saved evaluation", {exact: true}).selectOption(native.beforeEvaluationId);
       await page.getByLabel("Later saved evaluation", {exact: true}).selectOption(native.afterEvaluationId);
       await page.getByText("Explicit correspondence between different runs", {exact: true}).click();
@@ -175,6 +195,15 @@ export async function receiveQualityBrowser(directory, configuration) {
       await page.getByLabel("Earlier decision reference", {exact: true}).selectOption("1");
       await page.getByText("Working copies and complete authoring files", {exact: true}).click();
       const draftFile = await download("working-copy", () => page.getByRole("button", {name: "Download complete working copy", exact: true}).click());
+      const wrongWorkspace = await read(draftFile);
+      wrongWorkspace.workspaceId = "different-workspace-fixture";
+      const wrongFile = join(output, "working-copy-different-workspace.json");
+      await fixed(wrongFile, wrongWorkspace);
+      await page.getByLabel("Open quality working copy", {exact: true}).setInputFiles(wrongFile);
+      await page.getByRole("alert").filter({hasText: "Choose a complete working copy belonging to this original workspace"}).waitFor();
+      await capture("desktop-working-copy-error");
+      assert.equal(await page.getByLabel("Follow-up reason", {exact: true}).inputValue(),
+        "Reviewed original fixture output, source scope and retained rule changes.");
       await page.getByLabel("Open quality working copy", {exact: true}).setInputFiles(draftFile);
       await ready(); assert.equal(await page.getByLabel("Follow-up owner", {exact: true}).inputValue(), "Browser receiving operator");
       await page.reload({waitUntil: "domcontentloaded"});
