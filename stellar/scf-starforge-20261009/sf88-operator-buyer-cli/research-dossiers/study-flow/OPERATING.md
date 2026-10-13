@@ -128,3 +128,8 @@ Deliver the source version, selected flow/edition/revision, complete portable, S
 ## Installed closure
 
 The existing Research contribution includes all Study Flow domain, renderer, route/client/CLI, browser and guide files. The original installed command dispatches reporting commands and the public Research index exposes the client/model. There is no additional package dependency or Applications provider; the maintained Research setup, saved store and lifecycle remain authoritative.
+
+
+## Completed original-source operation
+
+The retained [native operation](../../../../../operations/research-study-flow-63dd-20261012/README.md) completed source import, explicit automated metadata review, three reporting editions, original count-file retention, prior-report linkage, all exports and complete portable receiving on 2026-10-13. Its two screened records and one exclusion remain distinct from the eleven unestablished active counts. All fifteen dossier revisions and the original SVG were preserved in receiving. This is a metadata-only source selection; complete-search and full-text coverage are not claimed. The browser continues the same dossier through the original authenticated server.
