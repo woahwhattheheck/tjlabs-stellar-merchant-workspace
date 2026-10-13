@@ -808,6 +808,24 @@ export class MerchantGrantWorkspaces {
       original=verb==='installation_preview'?await client.installationPreview(caseId,{...body,document}):
         await client.installationSave(caseId,{...body,document});
     }
+    else if (verb === 'work_billing_catalog') original=await client.workBillingCatalog(args.caseId);
+    else if (verb === 'work_billing_authority') original=await client.workBillingAuthority(args.caseId,args.authorityId);
+    else if (verb === 'work_billing_authority_save') {
+      const {caseId,...body}=rest;original=await client.workBillingSaveAuthority(caseId,body);
+    }
+    else if (verb === 'work_billing') original=await client.workBilling(args.caseId,args.chargeId);
+    else if (verb === 'work_billing_preview'||verb === 'work_billing_prepare') {
+      const {caseId,...body}=rest;
+      original=verb==='work_billing_preview'?await client.workBillingPreview(caseId,body):
+        await client.workBillingPrepare(caseId,body);
+    }
+    else if (['work_billing_apply','work_billing_cancel','work_billing_issue'].includes(verb)) {
+      const {caseId,chargeId,...body}=rest;
+      const methods={work_billing_apply:'workBillingApply',work_billing_cancel:'workBillingCancel',work_billing_issue:'workBillingIssue'};
+      original=await client[methods[verb]](caseId,chargeId,body);
+    }
+    else if (verb === 'work_billing_preview_issue') original=await client.workBillingPreviewIssue(args.caseId,args.chargeId);
+    else if (verb === 'work_billing_refresh') original=await client.workBillingRefresh(args.caseId,args.chargeId);
     else if (verb === 'expense_billing_catalog') original=await client.expenseBillingCatalog(args.caseId);
     else if (verb === 'expense_billing') original=await client.expenseBilling(args.caseId,args.chargeId);
     else if (verb === 'expense_billing_preview'||verb === 'expense_billing_prepare') {

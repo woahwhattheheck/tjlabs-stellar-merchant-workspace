@@ -17,6 +17,7 @@ import operations_use_calendar as use_calendar
 import operations_workflows as operating_workflows
 from operations_commercial_http import handle as commercial_http
 from operations_expense_billing_http import handle as expense_billing_http
+from operations_work_billing_http import handle as work_billing_http
 import operations_installation_sources as installation_sources
 import operations_gravitee as gravitee_source
 from award_terms_http import handle as award_terms_http
@@ -31,6 +32,9 @@ def register_static(static):
                    "/portfolio-effort-desk.mjs": ("portfolio-effort-desk.mjs", "text/javascript; charset=utf-8"),
                    "/portfolio-effort.css": ("portfolio-effort.css", "text/css; charset=utf-8"),
                    "/PORTFOLIO_EFFORT.md": ("PORTFOLIO_EFFORT.md", "text/markdown; charset=utf-8")})
+    static.update({"/operations_work_billing.mjs": ("operations_work_billing.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_work_billing.css": ("operations_work_billing.css", "text/css; charset=utf-8"),
+                   "/WORK_BILLING.md": ("WORK_BILLING.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_expense_billing.mjs": ("operations_expense_billing.mjs", "text/javascript; charset=utf-8"),
                    "/operations_expense_billing.css": ("operations_expense_billing.css", "text/css; charset=utf-8"),
                    "/EXPENSE_BILLING.md": ("EXPENSE_BILLING.md", "text/markdown; charset=utf-8")})
@@ -207,6 +211,8 @@ def read(handler, parsed):
     if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):
         return True
     if award_terms_http(handler, parsed, ops, "GET"):
+        return True
+    if work_billing_http(handler, parsed, ops, "GET"):
         return True
     if expense_billing_http(handler, parsed, ops, "GET"):
         return True
@@ -510,6 +516,8 @@ def write(handler, parsed):
     if workbook_http.handle(handler, parsed, ops, "POST"):
         return True
     if award_terms_http(handler, parsed, ops, "POST"):
+        return True
+    if work_billing_http(handler, parsed, ops, "POST"):
         return True
     if expense_billing_http(handler, parsed, ops, "POST"):
         return True

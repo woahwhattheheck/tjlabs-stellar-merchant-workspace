@@ -57,6 +57,7 @@ import operations_commercial_receivables as commercial_receivables
 import operations_commercial_changes as commercial_changes
 import operations_expenses as expenses
 import operations_expense_billing as expense_billing
+import operations_work_billing as work_billing
 
 SCHEMA = "stellar-forge.sf47-operations.v1"
 MAX_SOURCE = 8 * 1024 * 1024
@@ -142,6 +143,7 @@ class Operations:
             self.commercial = commercial_receivables.CommercialReceivables(self)
             self.commercial_changes = commercial_changes.CommercialChanges(self.commercial)
             self.expense_billing = expense_billing.ExpenseBilling(self)
+            self.work_billing = work_billing.WorkBilling(self)
 
     @property
     def db(self):
@@ -1678,6 +1680,9 @@ class Operations:
             expense_billing_rows = self.expense_billing.export_rows(program_id)
             if expense_billing_rows["items"]:
                 document["expenseBilling"] = expense_billing_rows
+            work_billing_rows = self.work_billing.export_rows(program_id)
+            if work_billing_rows["items"] or work_billing_rows["authorities"]:
+                document["workBilling"] = work_billing_rows
             report = domain.report(**context)
             files = {"planning.zip": original,
                      "operations.json": (canonical(document) + "\n").encode(),
@@ -1956,6 +1961,7 @@ class Operations:
         selected_award_terms = award_terms.selection_from_files(document, files)
         selected_task_outcomes = task_outcomes.selection_from_files(document, files)
         expense_billing_rows = expense_billing.validate_import(document.get("expenseBilling"), context, events, files)
+        work_billing_rows = work_billing.validate_import(document.get("workBilling"), context, events, files)
         commercial_rows = document.get("commercialReceivables")
         if commercial_rows is not None:
             commercial_rows = commercial_receivables.validate_import(
@@ -2105,6 +2111,7 @@ class Operations:
             if change_rows is not None:
                 self.commercial_changes.restore_rows(pid, change_rows)
             self.expense_billing.restore_rows(pid, expense_billing_rows)
+            self.work_billing.restore_rows(pid, work_billing_rows)
             for value in saved_forecasts:
                 self.db.execute("INSERT INTO ops_forecasts VALUES(?,?,?)", (pid, value["id"], canonical(value)))
             for value in saved_portfolios:

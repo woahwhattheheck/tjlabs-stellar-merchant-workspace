@@ -106,6 +106,69 @@ function expenseBillingInput(body,prepare=false){
 const expenseBillingPath=(caseId,chargeId)=>'/api/operations/'+encodeURIComponent(id(caseId,'operation'))+'/expense-billing'+
   (chargeId===undefined?'':'/'+encodeURIComponent(id(chargeId,'expense-billing')));
 
+
+const hourlyAuthorityId=value=>{
+  need(typeof value==='string'&&/^hourly-authority-[a-f0-9]{32}-r[1-9][0-9]*$/.test(value),
+    'GRANT_INVALID_INPUT','Use the original customer hourly authority edition.');return value;
+};
+const workBillingPath=(caseId,chargeId)=>'/api/operations/'+encodeURIComponent(id(caseId,'operation'))+'/work-billing'+
+  (chargeId===undefined?'':'/'+encodeURIComponent(id(chargeId,'work-billing')));
+const workHours=value=>{
+  need(typeof value==='string'&&/^(?:0|[1-9][0-9]{0,19})(?:\.[0-9]{1,4})?$/.test(value),
+    'GRANT_INVALID_INPUT','Keep exact nonnegative hour text with at most four decimal places.');return value;
+};
+function hourlyAuthorityInput(body){
+  exact(body,['requestId','actor','expectedVersion','previousId','expectedAuthoritySha256','terms'],
+    ['requestId','actor','expectedVersion','terms']);
+  requestId(body.requestId);text(body.actor,'Recording operator',300);integer(body.expectedVersion,'Current case version');
+  if(body.previousId!==undefined&&body.previousId!==null){hourlyAuthorityId(body.previousId);sha(body.expectedAuthoritySha256);}
+  if(body.expectedAuthoritySha256!==undefined)sha(body.expectedAuthoritySha256);
+  const terms=body.terms,fields=['title','authorization','authorizedOn','sourceIds','endpointId','customerId','currency','periodStart','periodEnd','rates','rounding','hoursCap','amountCap'];
+  exact(terms,fields,fields);text(terms.title,'Customer hourly authority',300);text(terms.authorization,'Actual customer terms',12000);
+  for(const key of ['authorizedOn','periodStart','periodEnd'])completionDate(terms[key]);
+  need(terms.periodEnd>=terms.periodStart,'GRANT_INVALID_INPUT','The customer service period must end on or after its start.');
+  need(Array.isArray(terms.sourceIds)&&terms.sourceIds.length>0&&new Set(terms.sourceIds).size===terms.sourceIds.length,'GRANT_INVALID_INPUT','Retain distinct original customer authority sources.');
+  terms.sourceIds.forEach(value=>id(value,'source'));
+  text(terms.endpointId,'Original accounting endpoint',200);text(terms.customerId,'Original native customer',100);
+  exact(terms.currency,['code','scale'],['code','scale']);
+  need(typeof terms.currency.code==='string'&&/^[A-Z]{3}$/.test(terms.currency.code),'GRANT_INVALID_INPUT','Keep the native currency code.');
+  integer(terms.currency.scale,'Native currency precision',0,6);
+  need(['EXACT','HALF_UP'].includes(terms.rounding),'GRANT_INVALID_INPUT','Choose the declared per-line rounding policy.');
+  if(terms.hoursCap!==null)workHours(terms.hoursCap);
+  if(terms.amountCap!==null)text(terms.amountCap,'Whole authority amount cap',100);
+  need(Array.isArray(terms.rates)&&terms.rates.length>=1&&terms.rates.length<=200,'GRANT_INVALID_INPUT','Retain one through 200 explicitly scoped hourly rates.');
+  const ids=new Set();
+  for(const rate of terms.rates){
+    exact(rate,['id','label','contributorIds','costIds','hourlyRate'],['id','label','contributorIds','costIds','hourlyRate']);
+    requestId(rate.id);need(!ids.has(rate.id),'GRANT_INVALID_INPUT','Hourly rate identities must be distinct.');ids.add(rate.id);
+    text(rate.label,'Hourly rate description',300);text(rate.hourlyRate,'Exact hourly rate amount',100);
+    for(const key of ['contributorIds','costIds']){
+      need(Array.isArray(rate[key])&&rate[key].length>0&&new Set(rate[key]).size===rate[key].length,'GRANT_INVALID_INPUT','Retain explicit distinct rate scopes.');
+      rate[key].forEach(value=>text(value,key,300));
+    }
+  }
+}
+const WORK_BILLING_FIELDS=['requestId','actor','expectedVersion','previousId','mode','authorityId','expectedAuthoritySha256','reason','issueDate','dueDate','effectiveDate','resolution','purchaseOrder','note','lines','expectedPreviewSha256'];
+function workBillingInput(body,prepare=false){
+  exact(body,WORK_BILLING_FIELDS,['requestId','actor','expectedVersion','mode','authorityId','expectedAuthoritySha256','reason','lines',...(prepare?['expectedPreviewSha256']:[])]);
+  requestId(body.requestId);text(body.actor,'Original recording operator',300);integer(body.expectedVersion,'Current case version');
+  hourlyAuthorityId(body.authorityId);sha(body.expectedAuthoritySha256);text(body.reason,'Hourly charge or correction reason',3000);
+  need(['NEW','DRAFT_EDIT','CREDIT','VOID','REPLACE'].includes(body.mode),'GRANT_INVALID_INPUT','Choose an original hourly charge or reviewed correction.');
+  if(body.previousId!==undefined&&body.previousId!==null)id(body.previousId,'work-billing');
+  need(body.mode==='NEW'?!body.previousId:!!body.previousId,'GRANT_INVALID_INPUT','A correction retains its original charge; a new charge has no previous ID.');
+  for(const key of ['issueDate','dueDate','effectiveDate'])if(body[key]!==undefined)completionDate(body[key]);
+  if(body.resolution!==undefined)need(['CREDIT','VOID'].includes(body.resolution),'GRANT_INVALID_INPUT','Choose the original invoice credit or void disposition.');
+  for(const [key,max]of [['purchaseOrder',300],['note',6000]])if(body[key]!==undefined)text(body[key],key,max,true);
+  if(body.expectedPreviewSha256!==undefined)sha(body.expectedPreviewSha256);
+  need(Array.isArray(body.lines)&&body.lines.length>=1&&body.lines.length<=200,'GRANT_INVALID_INPUT','Retain one through 200 original Work portions.');
+  const selected=new Set();
+  for(const line of body.lines){
+    exact(line,['workId','expectedWorkSha256','rateId','hours','description'],['workId','expectedWorkSha256','rateId','hours','description']);
+    id(line.workId,'work');sha(line.expectedWorkSha256);requestId(line.rateId);workHours(line.hours);text(line.description,'Native hourly invoice description',3000);
+    need(!selected.has(line.workId),'GRANT_INVALID_INPUT','Combine each original Work record once in this charge.');selected.add(line.workId);
+  }
+}
+
 const CHANGE_FIELDS=['expectedVersion','previousChangeId','actor','sourceIds','mode','resolution','targetAmount','issueDate','dueDate','effectiveDate','authorizedOn','description','reason','authorization','purchaseOrder','note'];
 function commercialChangeSource(body, prepare=false){
   const fields=prepare?[...CHANGE_FIELDS,'requestId','expectedPreviewSha256']:CHANGE_FIELDS;
@@ -1515,6 +1578,55 @@ export class GrantWorkspaceClient {
       body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256,
         ...(returnReview===undefined?{}:{returnReview})}}});
   }
+  workBillingCatalog(caseId){
+    return this.#request(workBillingPath(caseId),{});
+  }
+  workBillingAuthority(caseId,authorityId){
+    return this.#request(workBillingPath(caseId)+'/authorities/'+encodeURIComponent(hourlyAuthorityId(authorityId)),{});
+  }
+  workBillingSaveAuthority(caseId,body){
+    hourlyAuthorityInput(body);
+    return this.#request(workBillingPath(caseId)+'/authorities',{body,originalRequestId:body.requestId});
+  }
+  workBilling(caseId,chargeId){
+    id(chargeId,'work-billing');
+    return this.#request(workBillingPath(caseId,chargeId),{});
+  }
+  workBillingPreview(caseId,body){
+    workBillingInput(body);
+    return this.#request(workBillingPath(caseId)+'/preview',{body,mutation:false});
+  }
+  workBillingPrepare(caseId,body){
+    workBillingInput(body,true);
+    return this.#request(workBillingPath(caseId)+'/prepare',{body,originalRequestId:body.requestId});
+  }
+  workBillingApply(caseId,chargeId,body){
+    id(chargeId,'work-billing');
+    exact(body,['actor','expectedProposalSha256'],['actor','expectedProposalSha256']);
+    text(body.actor,'Original recording operator',300);sha(body.expectedProposalSha256);
+    return this.#request(workBillingPath(caseId,chargeId)+'/apply',{body,recovery:'Reopen this same hourly Work charge and resume its exact apply body. The retained native requests remain authoritative; do not prepare a replacement for an uncertain response.'});
+  }
+  workBillingCancel(caseId,chargeId,body){
+    id(chargeId,'work-billing');
+    exact(body,['requestId','actor','expectedProposalSha256','reason'],['requestId','actor','expectedProposalSha256','reason']);
+    requestId(body.requestId);text(body.actor,'Recording operator',300);sha(body.expectedProposalSha256);text(body.reason,'Cancellation reason',6000);
+    return this.#request(workBillingPath(caseId,chargeId)+'/cancel',{body,originalRequestId:body.requestId});
+  }
+  workBillingPreviewIssue(caseId,chargeId){
+    id(chargeId,'work-billing');
+    return this.#request(workBillingPath(caseId,chargeId)+'/preview-issue',{body:{},mutation:false});
+  }
+  workBillingIssue(caseId,chargeId,body){
+    id(chargeId,'work-billing');
+    exact(body,['actor','expectedIssuePreviewSha256','creditDecisionId'],['actor','expectedIssuePreviewSha256']);
+    text(body.actor,'Original recording operator',300);sha(body.expectedIssuePreviewSha256);
+    if(body.creditDecisionId!==undefined)text(body.creditDecisionId,'Original native credit decision',100);
+    return this.#request(workBillingPath(caseId,chargeId)+'/issue',{body,recovery:'Read the same hourly Work charge and recover its exact retained issue review and credit decision. Reuse this original body; do not create another invoice or request.'});
+  }
+  workBillingRefresh(caseId,chargeId){
+    id(chargeId,'work-billing');
+    return this.#request(workBillingPath(caseId,chargeId)+'/refresh',{body:{},mutation:false});
+  }
   expenseBillingCatalog(caseId){
     return this.#request(expenseBillingPath(caseId),{});
   }
@@ -1904,6 +2016,7 @@ export class GrantWorkspaceClient {
       'cost-funding':() => '/api/operations/' + id(args.caseId,'operation') + '/cost-funding/export.zip?revision=' +
         integer(args.revision,'Funding edition',1,1000000) + '&expectedVersion=' +
         integer(args.expectedVersion,'Reviewed case version') + '&expectedReportSha256=' + sha(args.expectedReportSha256),
+      'work-billing':() => workBillingPath(args.caseId,id(args.chargeId,'work-billing'))+'/export.zip',
       'expense-billing':() => expenseBillingPath(args.caseId,id(args.chargeId,'expense-billing'))+'/export.zip',
       'expense-attributions':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attributions.csv',
       'expense-sources':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-sources.csv',

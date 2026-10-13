@@ -737,6 +737,93 @@ export interface GrantExpenseBillingApplyInput {actor:string;expectedProposalSha
 export interface GrantExpenseBillingCancelInput extends GrantExpenseBillingApplyInput {requestId:string;reason:string}
 export interface GrantExpenseBillingIssueInput {actor:string;expectedIssuePreviewSha256:string;creditDecisionId?:string}
 
+
+/** Source-backed accepted CUSTOMER Work; exact quantities/rates stay strings.
+ * Reservations coordinate copies in one Operations workspace, not independent installations. */
+export type GrantWorkBillingMode = GrantExpenseBillingMode;
+export interface GrantHourlyRate {
+  id:string; label:string; contributorIds:string[]; costIds:string[]; hourlyRate:string;
+}
+export interface GrantHourlyAuthorityTerms {
+  title:string; authorization:string; authorizedOn:GrantCivilDate; sourceIds:string[];
+  endpointId:string; customerId:string; currency:GrantCommercialCurrency;
+  periodStart:GrantCivilDate; periodEnd:GrantCivilDate; rates:GrantHourlyRate[];
+  rounding:'EXACT'|'HALF_UP'; hoursCap:string|null; amountCap:string|null;
+}
+export interface GrantHourlyAuthorityInput {
+  requestId:string; actor:string; expectedVersion:number; previousId?:string|null;
+  expectedAuthoritySha256?:string; terms:GrantHourlyAuthorityTerms;
+}
+export interface GrantHourlyAuthority extends GrantObject {
+  schema:'stellar-forge.customer-hourly-authority.v1'; id:string; familyId:string; revision:number;
+  previousId:string|null; createdAt:string; actor:string; programId:string; expectedVersion:number;
+  terms:GrantHourlyAuthorityTerms; termsSha256:string; accountingIdentity:GrantObject; customer:GrantObject;
+  sources:Array<{id:string;metadata:GrantObject;contentBase64:string}>;
+  sourceSnapshot:GrantObject; sourceSnapshotSha256:string;
+  request:{body:GrantHourlyAuthorityInput;sha256:string}; sha256:string;
+}
+export interface GrantWorkBillingLineInput {
+  workId:string; expectedWorkSha256:string; rateId:string; hours:string; description:string;
+}
+export interface GrantWorkBillingInput {
+  requestId:string; actor:string; expectedVersion:number; previousId?:string|null;
+  mode:GrantWorkBillingMode; authorityId:string; expectedAuthoritySha256:string; reason:string;
+  issueDate?:GrantCivilDate; dueDate?:GrantCivilDate; effectiveDate?:GrantCivilDate;
+  resolution?:'CREDIT'|'VOID'; purchaseOrder?:string; note?:string;
+  lines:GrantWorkBillingLineInput[]; expectedPreviewSha256?:string;
+}
+export type GrantWorkBillingPrepareInput = GrantWorkBillingInput & {expectedPreviewSha256:string};
+export interface GrantWorkBillingLine extends GrantObject {
+  portionKey:string; originalKey:string; work:GrantObject; workSha256:string;
+  workContentSha256:string; rate:GrantHourlyRate; nativeAmount:string; hours:string;
+  amount:string; description:string;
+}
+export interface GrantWorkBillingProposal extends GrantObject {
+  schema:'stellar-forge.customer-work-billing.v1'; programId:string; expectedVersion:number; caseMode:string;
+  requestId:string; chainId:string; previousId:string|null; mode:GrantWorkBillingMode; actor:string;
+  sourceSnapshot:GrantObject; sourceSnapshotSha256:string; authority:GrantHourlyAuthority;
+  endpointId:string; accountingIdentity:GrantObject; customerId:string; customer:GrantObject;
+  currency:GrantCommercialCurrency; invoiceId:string|null;
+  sources:Array<{id:string;metadata:GrantObject;contentBase64:string}>;
+  authorization:string; authorizedOn:GrantCivilDate; authorizationSourceIds:string[];
+  reason:string; issueDate:GrantCivilDate; dueDate:GrantCivilDate; effectiveDate:GrantCivilDate;
+  resolution:'CREDIT'|'VOID'; purchaseOrder:string; note:string; lines:GrantWorkBillingLine[];
+  terms:GrantObject; termsSha256:string; amount:string; nativeBefore:GrantObject|null;
+  nativeFingerprint:string|null; steps:Array<{action:'draft'|'credit'|'void';body:GrantObject}>; consequences:GrantObject;
+}
+export interface GrantWorkBillingCommand extends GrantObject {
+  index:number; action:'draft'|'credit'|'void'|'issue'; body:GrantObject; requestId:string;
+  state:'PENDING'|'REJECTED'|'ACKNOWLEDGED'; createdAt:string; attempts:GrantObject[]; intentSha256:string;
+  review?:GrantWorkBillingIssuePreview; result?:GrantObject; lastError?:GrantObject;
+}
+export interface GrantWorkBillingCharge extends GrantObject {
+  schema:'stellar-forge.customer-work-billing.v1'; id:string; chainId:string; sequence:number; createdAt:string;
+  state:'PREPARED'|'RUNNING'|'APPLIED'|'CANCELLED'; proposal:GrantWorkBillingProposal; proposalSha256:string;
+  activeInvoiceId:string|null; commands:GrantWorkBillingCommand[]; history:GrantObject[];
+  preparationRequest:{body:GrantWorkBillingPrepareInput;sha256:string};
+  appliedAt?:string; current?:boolean; currentNative?:GrantObject[];
+}
+export interface GrantWorkBillingCatalog extends GrantObject {
+  schema:'stellar-forge.customer-work-billing.v1'; programId:string; version:number; mode:string;
+  sources:GrantObject[]; contributors:GrantObject[]; costs:GrantObject[];
+  work:Array<{record:GrantObject;workSha256:string;workContentSha256:string;originalKey:string;
+    reservedHours:string;availableHours:string;selectable:boolean}>;
+  authorities:Array<{authority:GrantHourlyAuthority;current:boolean}>;
+  items:Array<{id:string;chainId:string;sequence:number;state:GrantWorkBillingCharge['state'];mode:GrantWorkBillingMode;
+    customerName:string;currency:GrantCommercialCurrency;amount:string;createdAt:string;activeInvoiceId:string|null;pending:boolean}>;
+}
+export interface GrantWorkBillingPreview {
+  schema:'stellar-forge.customer-work-billing.v1';proposal:GrantWorkBillingProposal;previewSha256:string;
+}
+export interface GrantWorkBillingIssuePreview extends GrantObject {
+  schema:'stellar-forge.customer-work-billing.v1';id:string;proposalSha256:string;invoiceId:string;
+  nativePreview:GrantCommercialIssuePreview['nativePreview'];supersedesRejectedCommand:number|null;
+  termsSha256:string;issuePreviewSha256:string;retainedCommand?:GrantWorkBillingCommand;
+}
+export type GrantWorkBillingApplyInput = GrantExpenseBillingApplyInput;
+export type GrantWorkBillingCancelInput = GrantExpenseBillingCancelInput;
+export type GrantWorkBillingIssueInput = GrantExpenseBillingIssueInput;
+
 export interface GrantAmendmentInputs {
   /** Explicit budget attribution; null leaves a retained observation unassigned. */
   packageMappings?: Array<{ fromCostId: string; toCostId: string | null; note: string }>;
@@ -4226,6 +4313,7 @@ export interface GrantRiskComparisonView {
 }
 
 export interface GrantDownloadSelections {
+  'work-billing': {caseId:string;chargeId:string};
   'expense-billing': {caseId:string;chargeId:string};
   'risk-comparison': GrantRiskComparisonZipSelection;
   'risk-comparison-json': GrantRiskComparisonExportSelection;
@@ -4398,6 +4486,20 @@ export class GrantWorkspaceClient {
   installationEffortSelection(caseId: string, body: GrantInstallationEffortSelectionInput): Promise<GrantJsonResponse<GrantInstallationEffortSelection>>;
   installationPreview(caseId: string, body: GrantInstallationPreviewInput): Promise<GrantJsonResponse<GrantInstallationPreview>>;
   installationSave(caseId: string, body: GrantInstallationSaveInput): Promise<GrantJsonResponse<GrantInstallationSaveReceipt>>;
+
+  workBillingCatalog(caseId:string):Promise<GrantJsonResponse<GrantWorkBillingCatalog>>;
+  workBillingAuthority(caseId:string,authorityId:string):Promise<GrantJsonResponse<GrantHourlyAuthority>>;
+  /** Save/replay the same original customer authorization, complete sources and request body. */
+  workBillingSaveAuthority(caseId:string,body:GrantHourlyAuthorityInput):Promise<GrantJsonResponse<GrantHourlyAuthority>>;
+  workBilling(caseId:string,chargeId:string):Promise<GrantJsonResponse<GrantWorkBillingCharge>>;
+  workBillingPreview(caseId:string,body:GrantWorkBillingInput):Promise<GrantJsonResponse<GrantWorkBillingPreview>>;
+  workBillingPrepare(caseId:string,body:GrantWorkBillingPrepareInput):Promise<GrantJsonResponse<GrantWorkBillingCharge>>;
+  /** Resume the original native requests after response loss; no replacement preparation. */
+  workBillingApply(caseId:string,chargeId:string,body:GrantWorkBillingApplyInput):Promise<GrantJsonResponse<GrantWorkBillingCharge>>;
+  workBillingCancel(caseId:string,chargeId:string,body:GrantWorkBillingCancelInput):Promise<GrantJsonResponse<GrantWorkBillingCharge>>;
+  workBillingPreviewIssue(caseId:string,chargeId:string):Promise<GrantJsonResponse<GrantWorkBillingIssuePreview>>;
+  workBillingIssue(caseId:string,chargeId:string,body:GrantWorkBillingIssueInput):Promise<GrantJsonResponse<GrantWorkBillingCharge>>;
+  workBillingRefresh(caseId:string,chargeId:string):Promise<GrantJsonResponse<GrantWorkBillingCharge>>;
   expenseBillingCatalog(caseId:string):Promise<GrantJsonResponse<GrantExpenseBillingCatalog>>;
   expenseBilling(caseId:string,chargeId:string):Promise<GrantJsonResponse<GrantExpenseBillingCharge>>;
   expenseBillingPreview(caseId:string,body:GrantExpenseBillingInput):Promise<GrantJsonResponse<GrantExpenseBillingPreview>>;
