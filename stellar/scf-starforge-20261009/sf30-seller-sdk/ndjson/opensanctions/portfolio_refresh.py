@@ -77,9 +77,13 @@ def prepare(domain, before, after):
         if prior:
             return _comparison(domain, ident)
         rows = _population(domain, before, after)
+        original_sources = [{"side": side, "portfolio": deepcopy(original),
+                             "source": deepcopy(domain.ws.source(original["source"]))}
+                            for side, original in (("before", left), ("after", right))]
         record = {"schema": SCHEMA, "id": ident, "identity": identity,
                   "before": before, "after": after, "portfolioKey": left["key"],
-                  "rows": rows, "counts": dict(Counter(row["kind"] for row in rows)),
+                  "rows": rows, "originalSources": original_sources,
+                  "counts": dict(Counter(row["kind"] for row in rows)),
                   "population": len(rows), "createdAt": time.time()}
         record["contentSha256"] = _digest(record)
         with domain.db:
@@ -98,6 +102,16 @@ def _comparison(domain, ident, verify=True):
                 "builds": [left["build"], right["build"]]}
     if left["key"] != right["key"] or left["id"] == right["id"] or value["identity"] != expected:
         raise InputError("The retained comparison no longer binds its original customer sources")
+    captured_sources = value.get("originalSources")
+    if not isinstance(captured_sources, list) or len(captured_sources) != 2:
+        raise InputError("The comparison lost its exact original customer source descriptors")
+    for index, (side, original) in enumerate((("before", left), ("after", right))):
+        captured = captured_sources[index]
+        current_source = domain.ws.source(original["source"])
+        if (captured.get("side") != side or stable(captured.get("portfolio")) != stable(original)
+                or any(stable(captured.get("source", {}).get(key)) != stable(current_source.get(key))
+                       for key in ("id", "bytes", "inventory"))):
+            raise InputError("The retained comparison source bytes or inventory changed")
     if verify:
         rows = _population(domain, left["id"], right["id"])
         if stable(rows) != stable(value["rows"]) or value["population"] != len(rows) or value["counts"] != dict(Counter(row["kind"] for row in rows)):
@@ -338,10 +352,9 @@ def report(domain, comparison_id):
             raise InputError("Select an original retained portfolio comparison")
         cases = [load_json(row[0]) for row in domain.db.execute("SELECT body FROM os_cases")]
         cases = [case for case in cases if case["portfolioKey"] == value["portfolioKey"]]
-        sources = []
-        for side in ("before", "after"):
-            original = _portfolio(domain, value[side])
-            sources.append({"side": side, "portfolio": original, "source": domain.ws.source(original["source"])})
+        # Import may give the same native source a local label/time. Keep the
+        # author's exact descriptors captured in the immutable comparison.
+        sources = deepcopy(value["originalSources"])
         body = {"schema": SCHEMA + ".report", "comparison": value, "sources": sources,
                 "reviewEvents": _events(domain, comparison_id), "currentCases": sorted(cases, key=lambda row: row["id"]),
                 "interpretation": "Explicit source and case review. No screening dispatch, legal conclusion, automatic match or implicit case retirement."}

@@ -64,6 +64,8 @@ The original typed Monitoring client exposes GET portfolio-refreshes, portfolio-
 
 The original workspace exporter includes both additive tables, all prior case events, original builds, source bytes and object attachments. It validates comparison and review history before export. Original import validates the same history inside its existing acceptance transaction. Older archives without refresh tables remain accepted with empty additive collections.
 
+The immutable comparison retains both original source descriptors, including the author's labels and timestamps. Native cold import may assign local source labels/times; receiving validates stable source ID, byte count and inventory while reports retain the captured originals.
+
 Reports are complete snapshots of the immutable comparison and current original case observations, not a new report-edition registry. JSON includes its source snapshot SHA; HTML includes all source descriptors, changed attributes, attributed events and cases. Later case edits may create a different report snapshot. Existing CLI output with different bytes is protected; select a new output path.
 
 The original **gleif-monitoring-receive** course optionally continues into this workflow using **--refresh-selection PRIVATE_REFRESH_SELECTION.json**. Keep all original1853 arguments and select a new receiving output for a different authored course. The optional file contains:
