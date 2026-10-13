@@ -26,6 +26,12 @@
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/OPERATOR.md",
       "editions": [
         {
+          "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+          "bytes": 35831,
+          "sha256": "f2c66f333e7cc9599a3957906b672369726fab46ae58170b9d41e6c50663ea44",
+          "git_blob": "614de2bbafe53edcba65ab700f5e553f361f19d3"
+        },
+        {
           "commit": "b783bdd51f491253d6335e51817532359e8ba784",
           "bytes": 30796,
           "sha256": "896602f44113f7ac0a72ccd15b73f1d3c5785d0ce71fdedb3763bce0c93f4a7b",
@@ -61,6 +67,12 @@
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/audit-exchange-workspace/ANALYSIS.md",
       "editions": [
+        {
+          "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+          "bytes": 16551,
+          "sha256": "ef60bb42bb31e38d6e8e3db04f6c78ed2e3bf57d8d1556ed4402402a12887ba7",
+          "git_blob": "9b2bb66e5301e2efab96e65642cbcbca22b27fc4"
+        },
         {
           "commit": "b783bdd51f491253d6335e51817532359e8ba784",
           "bytes": 11532,
@@ -102,6 +114,36 @@
           "bytes": 21762,
           "sha256": "0daa824798c4ea6e3c7a105ec018bbef51644a79dcc9a5173c3139567fa31ed4",
           "git_blob": "f910ffadfbda95ef669003d383d667d7f3fd70d8"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-customer-installation",
+      "label": "Complete customer Installation, rendered receiving and engineering handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/AUDIT_EXCHANGE.md",
+      "editions": [
+        {
+          "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+          "bytes": 19236,
+          "sha256": "02b4af42c60fc9cb6fdffd3106d8e3d8649d990e3f7ad2ba1185c33f5cb851eb",
+          "git_blob": "549dd888d0aa987924762f05cbd6be38ecf6e5c0"
+        }
+      ]
+    },
+    {
+      "id": "audit-exchange-installation-profile",
+      "label": "Selected Installation workorder and complete operating source identities",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/audit-exchange.json",
+      "editions": [
+        {
+          "commit": "a2015e81184b90493c3a51e36626397fdc2ba623",
+          "bytes": 16165,
+          "sha256": "e93c7c16ecd12096f3c1b249bebd343512baf7281a1d2f04c4fe6bf6ceec7fed",
+          "git_blob": "14ecbcab63bc7a8159a04c8fd7e7a7ea6ef794df"
         }
       ]
     }
