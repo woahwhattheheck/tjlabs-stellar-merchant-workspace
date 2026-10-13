@@ -106,3 +106,7 @@ The setup command creates the original merchant host for an existing Support con
 ## Continue customer work
 
 Receive the whole case package through **Complete delivery**, then open the receiving case named by the original completion. Keep that case directory and native source directory together through reopening. The package retains the complete captured sender history and every original native source archive.
+
+## Grafana source and implementation receiving
+
+Use `starforge merchant-grafana-delivery --help` for the complete original handover-to-case workflow. The [browser operating guide](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY.md) and [full CLI receiving guide](source/stellar/scf-starforge-20261009/sf74-merchant-support-console/GRAFANA_CASE_DELIVERY_CLI.md) describe the exact source, task review and fresh receiving inputs. The matching original Observability inspector source is selected separately by the local host.

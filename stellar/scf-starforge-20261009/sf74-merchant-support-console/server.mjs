@@ -16,6 +16,7 @@ import {MAX_WORKSPACE_BYTES} from './workspace-file.mjs';
 import {createCaseSourceDelivery} from './case-source-delivery.mjs';
 import {openCasePackageOperations} from './case-package-operations.mjs';
 import {createCasePackageHttp} from './case-package-http.mjs';
+import {createGrafanaDeliveryRoutes} from './case-grafana-http.mjs';
 import {createSourceEditionDeliveryRoutes} from '../../scf_2026/sf49_data_commissioning/source-edition-http.mjs';
 import {openIncidentSources, incidentProblem} from './incident-sources.mjs';
 import {inspectSupportSelection, supportSelectionSha256, createSupportLaunch, supportListenerIdentity} from './managed-launch.mjs';
@@ -30,6 +31,9 @@ import {openCommercialReceivingController} from './commercial/operator.mjs';
 import {openCommercialTariffController} from './commercial/tariff-controller.mjs';
 
 const ASSETS = Object.freeze({
+  '/grafana-delivery': ['grafana-delivery.html', 'text/html; charset=utf-8'],
+  '/grafana-delivery/app.mjs': ['grafana-delivery.mjs', 'text/javascript; charset=utf-8'],
+  '/grafana-delivery/style.css': ['grafana-delivery.css', 'text/css; charset=utf-8'],
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/adjustments': ['adjustments.html', 'text/html; charset=utf-8'],
   '/adjustments.mjs': ['adjustments.mjs', 'text/javascript; charset=utf-8'],
@@ -160,7 +164,7 @@ function compareUploadedSources(input) {
 export {workorderFromSources} from './workorder-source.mjs';
 
 // Injection is only for the focused loopback HTTP-contract check, not for deployed usage.
-export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, renewalDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, providerExtension = null, launchRecord = () => null} = {}) {
+export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, renewalDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, grafanaDelivery = null, providerExtension = null, launchRecord = () => null} = {}) {
   let active = false;
   const sourceRoutes=sourceDelivery?createSourceEditionDeliveryRoutes({service:sourceDelivery.service}):null;
   const packageRoutes=createCasePackageHttp(casePackages);
@@ -176,7 +180,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
     }
     const route = (req.url || '').split('?')[0];
     if (req.method === 'GET' && route === '/health') {
-      json(res, 200, {status: 'LOCAL_READY', originalIntake: 'SF70', providerCallsOnPageLoad: 0, paidCalls: 0, casesEnabled:Boolean(caseStore),commercialEnabled:Boolean(commercialDesk),renewalsEnabled:Boolean(renewalDesk),commercialReceivingEnabled:Boolean(commercialReceivingDesk),commercialTariffEnabled:Boolean(commercialTariffDesk),adjustmentsEnabled:Boolean(adjustmentDesk),handoffsEnabled:Boolean(handoffDesk),incidentsEnabled:Boolean(incidentDesk),sourceBundlesEnabled:Boolean(sourceDelivery),casePackagesEnabled:Boolean(casePackages)}); return;
+      json(res, 200, {status: 'LOCAL_READY', originalIntake: 'SF70', providerCallsOnPageLoad: 0, paidCalls: 0, casesEnabled:Boolean(caseStore),commercialEnabled:Boolean(commercialDesk),renewalsEnabled:Boolean(renewalDesk),commercialReceivingEnabled:Boolean(commercialReceivingDesk),commercialTariffEnabled:Boolean(commercialTariffDesk),adjustmentsEnabled:Boolean(adjustmentDesk),handoffsEnabled:Boolean(handoffDesk),incidentsEnabled:Boolean(incidentDesk),sourceBundlesEnabled:Boolean(sourceDelivery),casePackagesEnabled:Boolean(casePackages),grafanaDeliveryEnabled:Boolean(grafanaDelivery)}); return;
     }
     if (route === '/api/support-launch') {
       if (req.method !== 'GET') {json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
@@ -196,6 +200,10 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
       } catch { json(res, 500, {error: 'STATIC_ASSET_UNAVAILABLE'}); }
       return;
     }
+    if(!grafanaDelivery&&(route==='/api/grafana-delivery'||route.startsWith('/api/grafana-delivery/'))){
+      json(res,503,{error:'GRAFANA_DELIVERY_DISABLED',detail:'Open this saved-case workspace with its installed Grafana source selected by --grafana-source. The original case and source files remain available.'});return;
+    }
+    if (grafanaDelivery && await grafanaDelivery.handle(req,res,{origin:ownOrigin}))return;
     if (providerExtension && await providerExtension.handle(req,res,{origin:ownOrigin}))return;
     if (await packageRoutes(req,res,{origin:ownOrigin}))return;
     if (route === '/api/services/renewals') {
@@ -657,20 +665,22 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
   server.closeCasePackages=()=>casePackages?.close()??Promise.resolve();
   server.closeCommercialReceiving=()=>commercialReceivingDesk?.close()??Promise.resolve();
   server.closeCommercialTariffs=()=>commercialTariffDesk?.close()??Promise.resolve();
-  server.once('close',()=>{void Promise.allSettled([providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>server.closeSourceDelivery()).catch(()=>{});});
+  server.once('close',()=>{void Promise.allSettled([grafanaDelivery?.close(),providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>server.closeSourceDelivery()).catch(()=>{});});
   return server;
 }
 
 export async function start({port = 0, allowLoopback = false, runCapture = capture, casesDir = null, handoffSources = null,
-  incidentSources = null, sourceDir = null, packageDir = null, accountingConfig = null, buyerExpenseConnection = null, environment = process.env, startupFormat = 'text', expectedSelectionSha256 = null, providerExtensionFactory = null} = {}) {
+  incidentSources = null, sourceDir = null, packageDir = null, grafanaSource = null, accountingConfig = null, buyerExpenseConnection = null, environment = process.env, startupFormat = 'text', expectedSelectionSha256 = null, providerExtensionFactory = null} = {}) {
   if (!Number.isSafeInteger(port) || port < 0 || port > 65535) throw new TypeError('Invalid port');
   if (!['text','json'].includes(startupFormat)) throw new TypeError('Startup format must be text or json');
   if (expectedSelectionSha256 !== null &&
       (startupFormat !== 'json' || !/^[a-f0-9]{64}$/.test(expectedSelectionSha256)))
     throw new TypeError('Managed startup requires the reviewed selection SHA-256 and JSON format');
+  if(startupFormat==='json'&&grafanaSource!==null)
+    throw new TypeError('The managed selection does not yet bind an external Grafana source. Open this source receiving through the explicit local --grafana-source option.');
   if (startupFormat === 'json' && (casesDir === null || incidentSources === null))
     throw new TypeError('Managed startup requires private cases and incident source profiles');
-  if((sourceDir!==null||packageDir!==null)&&casesDir===null)throw new TypeError('Source and package delivery require the original saved-case directory.');
+  if((sourceDir!==null||packageDir!==null||grafanaSource!==null)&&casesDir===null)throw new TypeError('Source and package delivery require the original saved-case directory.');
   if((accountingConfig!==null||buyerExpenseConnection!==null)&&casesDir===null)throw new TypeError('Service connections require the original saved-case directory.');
   if(providerExtensionFactory!==null&&(typeof providerExtensionFactory!=='function'||casesDir===null))
     throw new TypeError('A provider extension requires the original private case workspace and a host factory.');
@@ -680,7 +690,7 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
   const commercialReceivingDesk=caseStore?openCommercialReceivingController({store:caseStore,casesDirectory:resolve(casesDir),environment}):null;
   const commercialTariffDesk=caseStore?openCommercialTariffController({store:caseStore,casesDirectory:resolve(casesDir)}):null;
   const handoffDesk = handoffSources === null ? null : await (await import('./handoff-store.mjs')).openHandoffDesk({configPath:handoffSources,casesDir,environment});
-  let incidentDesk,sourceDelivery,casePackages,serviceConnections,adjustmentDesk,providerExtension,selection=null,launch=null;
+  let incidentDesk,sourceDelivery,casePackages,grafanaDelivery,serviceConnections,adjustmentDesk,providerExtension,selection=null,launch=null;
   const closeAdjustments=async()=>{
     const errors=[];try{await adjustmentDesk?.close();}catch(error){errors.push(error);}
     try{await serviceConnections?.close();}catch(error){errors.push(error);}
@@ -697,6 +707,9 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
     casePackages=caseStore?await openCasePackageOperations({store:caseStore,casesDirectory:resolve(casesDir),
       ...(packageDir===null?{}:{directory:resolve(packageDir)}),sourceDelivery,handoffDesk,
       python:environment.SCF_PYTHON??'python3',environment}):null;
+    grafanaDelivery=grafanaSource===null?null:await createGrafanaDeliveryRoutes({store:caseStore,sourceDelivery,
+      grafanaSource:resolve(grafanaSource),casesDirectory:resolve(casesDir),casePackages,
+      python:environment.SCF_PYTHON??'python3',environment});
     incidentDesk = incidentSources === null ? null : await openIncidentSources({configPath:incidentSources,environment});
     if(providerExtensionFactory){
       providerExtension=await providerExtensionFactory({store:caseStore,casesDirectory:resolve(casesDir),sourceDelivery,incidentDesk,environment});
@@ -712,26 +725,26 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
         throw Object.assign(new Error('The selected support configuration changed; review the current application before starting.'),
           {code:'SUPPORT_APPLICATION_SELECTION_CHANGED'});
     }
-  } catch(error) {await Promise.allSettled([providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
+  } catch(error) {await Promise.allSettled([grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   let server;
-  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,renewalDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,providerExtension,launchRecord:()=>launch});}
-  catch(error){await Promise.allSettled([providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
+  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,renewalDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,grafanaDelivery,providerExtension,launchRecord:()=>launch});}
+  catch(error){await Promise.allSettled([grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   try {await new Promise((resolveListen, reject) => {
     server.once('error', reject);server.listen(port, '127.0.0.1', resolveListen);
-  });}catch(error){await Promise.allSettled([providerExtension?.close()]);await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]);throw error;}
+  });}catch(error){await Promise.allSettled([grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]);throw error;}
   const url='http://127.0.0.1:'+server.address().port+'/';
   if(selection)launch=createSupportLaunch(selection,url);
   let closing;
   const close=()=>closing??=(async()=>{
     if(launch)launch.state='STOPPING';
-    const providerResults=await Promise.allSettled([providerExtension?.close()]);
+    const providerResults=await Promise.allSettled([grafanaDelivery?.close(),providerExtension?.close()]);
     const packageResults=await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);
     const results=providerResults.concat(packageResults,await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]));
     await new Promise((done,reject)=>{server.close(error=>error?reject(error):done());server.closeAllConnections();});
     const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;
   })();
-  server.once('close',()=>{if(launch)launch.state='STOPPED';void Promise.allSettled([providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()])).catch(()=>{});});
-  return {server,url,close,launch,adjustmentDesk,providerExtension};
+  server.once('close',()=>{if(launch)launch.state='STOPPED';void Promise.allSettled([grafanaDelivery?.close(),providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()])).catch(()=>{});});
+  return {server,url,close,launch,adjustmentDesk,grafanaDelivery,providerExtension};
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -748,14 +761,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         if (writerAction) throw new TypeError('Choose one case writer operation');
         writerAction = flag; continue;
       }
-      if (!['--port','--cases-dir','--source-dir','--package-dir','--handoff-sources','--incident-sources','--accounting-config','--buyer-expense-connection','--startup-format','--expected-selection-sha256'].includes(flag)) throw new TypeError('Unknown option: ' + flag);
+      if (!['--port','--cases-dir','--source-dir','--package-dir','--grafana-source','--handoff-sources','--incident-sources','--accounting-config','--buyer-expense-connection','--startup-format','--expected-selection-sha256'].includes(flag)) throw new TypeError('Unknown option: ' + flag);
       const value = separator < 0 ? args[++index] : token.slice(separator + 1);
       if (!value || value.startsWith('--')) throw new TypeError('Missing value for ' + flag);
       if (flag === '--port' && !/^\d+$/.test(value)) throw new TypeError('Invalid port');
-      options[{'--port':'port','--cases-dir':'casesDir','--source-dir':'sourceDir','--package-dir':'packageDir','--handoff-sources':'handoffSources','--incident-sources':'incidentSources','--accounting-config':'accountingConfig','--buyer-expense-connection':'buyerExpenseConnection','--startup-format':'startupFormat','--expected-selection-sha256':'expectedSelectionSha256'}[flag]] = flag === '--port' ? Number(value) : value;
+      options[{'--port':'port','--cases-dir':'casesDir','--source-dir':'sourceDir','--package-dir':'packageDir','--grafana-source':'grafanaSource','--handoff-sources':'handoffSources','--incident-sources':'incidentSources','--accounting-config':'accountingConfig','--buyer-expense-connection':'buyerExpenseConnection','--startup-format':'startupFormat','--expected-selection-sha256':'expectedSelectionSha256'}[flag]] = flag === '--port' ? Number(value) : value;
     }
     if (writerAction) {
-      if (!options.casesDir || seen.has('--port') || seen.has('--source-dir') || seen.has('--package-dir') || seen.has('--allow-loopback') || seen.has('--handoff-sources') || seen.has('--incident-sources') || seen.has('--accounting-config') || seen.has('--buyer-expense-connection') || seen.has('--startup-format') || seen.has('--expected-selection-sha256'))
+      if (!options.casesDir || seen.has('--port') || seen.has('--source-dir') || seen.has('--package-dir') || seen.has('--grafana-source') || seen.has('--allow-loopback') || seen.has('--handoff-sources') || seen.has('--incident-sources') || seen.has('--accounting-config') || seen.has('--buyer-expense-connection') || seen.has('--startup-format') || seen.has('--expected-selection-sha256'))
         throw new TypeError('A case writer operation requires --cases-dir and does not start a server');
       const action = writerAction === '--inspect-case-writer' ? inspectCaseWriter : recoverCaseWriter;
       process.stdout.write(JSON.stringify(await action(options.casesDir), null, 2) + '\n');
@@ -769,7 +782,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         (options.casesDir ? 'Merchant case desk enabled.\n' : 'Session mode. Use --cases-dir /absolute/private/directory to retain merchant cases.\n'));
     }
   } catch (error) {
-    process.stderr.write('SF74: ' + String(error.message) + '\nUsage: node server.mjs [--cases-dir /absolute/private/directory] [--source-dir /absolute/private/sources] [--package-dir /absolute/private/packages] [--handoff-sources PRIVATE_CONFIG.json] [--incident-sources PRIVATE_CONFIG.json] [--accounting-config PRIVATE_CONFIG.json] [--buyer-expense-connection PRIVATE_CONFIG.json] [--port 8784] [--allow-loopback] [--startup-format text|json] [--expected-selection-sha256 SHA256]\n' +
+    process.stderr.write('SF74: ' + String(error.message) + '\nUsage: node server.mjs [--cases-dir /absolute/private/directory] [--source-dir /absolute/private/sources] [--package-dir /absolute/private/packages] [--grafana-source /absolute/installed/grafana-source] [--handoff-sources PRIVATE_CONFIG.json] [--incident-sources PRIVATE_CONFIG.json] [--accounting-config PRIVATE_CONFIG.json] [--buyer-expense-connection PRIVATE_CONFIG.json] [--port 8784] [--allow-loopback] [--startup-format text|json] [--expected-selection-sha256 SHA256]\n' +
       '       node server.mjs --cases-dir /absolute/private/directory --inspect-case-writer|--recover-case-writer\n');
     process.exitCode = 1;
   }

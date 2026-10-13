@@ -98,3 +98,7 @@ Use the installed [complete case source package](CASE_SOURCE_PACKAGE.md) workflo
 The **Complete delivery** desk exports the selected saved case, every retained case revision and every native source edition, including unassigned original attachments. It receives complete folders or existing Handoffs sources, resumes the same original operation, and reopens the resulting case in this desk. The installed Support MCP provider exposes the same original operations and retained file streams.
 
 See [CASE_PACKAGE_WORKSPACE.md](CASE_PACKAGE_WORKSPACE.md) for browser, host configuration, MCP, streaming and receiving instructions. [CASE_SOURCE_PACKAGE.md](CASE_SOURCE_PACKAGE.md) documents the unchanged native package and CLI. Existing case, service and quotation operations remain in the same application.
+
+## Operated Grafana delivery
+
+The [Grafana delivery desk](GRAFANA_CASE_DELIVERY.md) retains a complete original Grafana handover as an SF49 source, reviews its native outcomes against existing implementation tasks, and preserves that exact delivery through full case export and fresh receiving. Start the original host with the matching `--grafana-source` and select **Grafana delivery**. The [operator CLI](GRAFANA_CASE_DELIVERY_CLI.md) uses the same source and case engines. Target activity and customer acceptance remain separate original records.
