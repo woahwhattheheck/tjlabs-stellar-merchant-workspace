@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/DATASET_STUDIES.md",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
@@ -22,6 +22,12 @@
           "git_blob": "33afd5bcc37c3db69435b2c56eef9a2fc24205d7",
           "bytes": 15654,
           "sha256": "7575b4d5ecbe6c9d841b12363d1d0f9a6e8dd46b3504d52e4609ee6c09396f7d"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "bee6347bba056b85d5fb752aaf4fb4d9fcbbd659",
+          "bytes": 16571,
+          "sha256": "3dcc1b8bd094d328871f15fa6780392e9f675880404cb0cd0c4f01cfd0c31a94"
         }
       ]
     },
@@ -47,7 +53,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-query-studies.mjs",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
@@ -60,6 +66,12 @@
           "git_blob": "5686e355d46a9bb7fcefaa140b3921edee638b75",
           "bytes": 29851,
           "sha256": "7a629f9b34ec15dcf59cfb872e6c471e8b8f5a855e5f480c4ac302c900c1ff30"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "b1dcde6231362da83bd77c3e9d50bea0093d217a",
+          "bytes": 30399,
+          "sha256": "0d8222b9759b453abb57298be5cc99617f2867bbf308a942cdb293843e94e703"
         }
       ]
     },
@@ -69,13 +81,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-workspace.js",
-      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
           "git_blob": "ee229987146e22e5e415cc0a20fbbc0ba03fa31f",
           "bytes": 37478,
           "sha256": "e530ebbad1fca83da96a394cc9a3d864a01954a3b3634bd6c090df702f20e64e"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "8159460c88eaf2b6bf7c67c09f75b76ce9e6acfb",
+          "bytes": 38146,
+          "sha256": "eb6ef226a012bb950126117d1d0729f3d8c436ef65f973019b73fb300305cba6"
         }
       ]
     },
@@ -85,7 +103,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-workspace.mjs",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
@@ -98,6 +116,12 @@
           "git_blob": "d38b922b2c49173c99ae256e383d0630b3f529f8",
           "bytes": 21802,
           "sha256": "7add604267989cf63fae315cee06de5d39331e366f94195d356d6502ad575f7b"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "d59d748fb57dc6469981364a4e3f85fff6664180",
+          "bytes": 24570,
+          "sha256": "c4b959a2821355237e9eaf48ed91828f868a53b70ec72491fee8050b39af8b6f"
         }
       ]
     },
@@ -107,13 +131,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-cli.mjs",
-      "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "0c5fcdb7c1aeb40639a75bbea8f9416dfa5adde5",
           "git_blob": "2df6c6a8299d44b41b291d295f74c136a6f0b008",
           "bytes": 9324,
           "sha256": "19a020005596b3c8f4f03ebde28e1b55f24db71fa9c7cd56813ad02628087621"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "46d939fdf75e3f6773599378085efb0f4f94c4b0",
+          "bytes": 12962,
+          "sha256": "a11104b67e19ca7240b82ab0d72e0848b4292f758bfd636902588aba5b8e5fd2"
         }
       ]
     },
@@ -155,29 +185,41 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/dataset-studies.mjs",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
           "git_blob": "020d6fe740aaf6efcbecdb3cb7e4b62fd52c907f",
           "bytes": 28474,
           "sha256": "18aa3ae897a30dbe3a2445bc9a77f9c2f5ee85aab03e029a38f5b376366ae071"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "6b4a17160e7b96bc773cf54cfe8efb581d905f23",
+          "bytes": 31037,
+          "sha256": "81511347dcb0398b9ff25141066ccaae442c17a2fb7f0c319a545d6fdd296c7a"
         }
       ]
     },
     {
       "id": "dataset-studies-agent-catalog",
-      "label": "Twenty-one exact source-owned agent operation schemas",
+      "label": "Twenty-seven exact study and saved-result comparison operation schemas",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/catalog/dataset-studies.mjs",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
           "git_blob": "afb5be7541bed8a4aa1f4980817f2f5903d758cb",
           "bytes": 7152,
           "sha256": "a8db62163c75422c75084b65019367ba39d5719babdfd36407ce25d515a9d16c"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "bce8a69cac125f0492d171b0b69c7e44386f9091",
+          "bytes": 9239,
+          "sha256": "feb3daa0bc566157810e343034b71adca935a86a725ea8acad9c69d6dfc53c0d"
         }
       ]
     },
@@ -187,13 +229,19 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/dataset-studies-client.mjs",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
           "git_blob": "8db7dba3831f370d6af418c76b612b07db484b02",
           "bytes": 7730,
           "sha256": "9882bf91b18485b4b97dcccff6c4c607008547facb2a94d4c5e82444d895f52b"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "7fe59f1602674798848d808289d8ac8a61ffe5b8",
+          "bytes": 9772,
+          "sha256": "e800965ad35300ec34e56c1ddce976a1b7bb5adf7378e959d5ab3f46975abba3"
         }
       ]
     },
@@ -215,17 +263,23 @@
     },
     {
       "id": "dataset-studies-downloads",
-      "label": "Exact complete study/result manifest and original file inventory",
+      "label": "Complete study, result and original comparison package manifests",
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/dataset-studies-download-contract.mjs",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
           "git_blob": "39e90c4289d8e3e1e751f8a4829b0b04562be205",
           "bytes": 4562,
           "sha256": "603b9b372850995d6ea549df9a0974ae4828a8186b0cb5468ea203db5e9c9044"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "9699947c202b8b2045d6aedba5254700138471bc",
+          "bytes": 6224,
+          "sha256": "9bec4c864a9d8eacc131efcbf3d89fa160e80b7338eee57c9f772ed5ec9e051f"
         }
       ]
     },
@@ -235,13 +289,83 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar-forge/mcp-merchant-operator/DATASET_STUDIES.md",
-      "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
       "editions": [
         {
           "commit": "d736701dbb5e52f7df46aa5190f4a9ce96ec27e8",
           "git_blob": "db9147bd373858160b2cb0cbe1532a2ace3cc946",
           "bytes": 18039,
           "sha256": "b79a62eb1f5d15f155ea0849cbceb39e98347a8598cea9a969b6aa4c992d9b2e"
+        },
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "71f1f86ce9cc0dde9aab65f740274cd3c8a5e76f",
+          "bytes": 19658,
+          "sha256": "197694cdb58e25049d524b2797b7ce30810f6abfa44d906e840c19252e275634"
+        }
+      ]
+    },
+    {
+      "id": "dataset-study-comparison-core",
+      "label": "Complete typed key groups, original scalar meanings and explicit field mapping",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-comparison-core.mjs",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+      "editions": [
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "9150ce3aacd5186490109b59c3c5710805c7ff8e",
+          "bytes": 9845,
+          "sha256": "6e7f9b60f03d9873773dbb9b201b8107a7d4a4d267c1a1027ff81c9c7b175ece"
+        }
+      ]
+    },
+    {
+      "id": "dataset-study-comparison-native",
+      "label": "Original completed-result custody, immutable requests and full indexed comparison reports",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-comparisons.mjs",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+      "editions": [
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "94b6ed6a55389be9eab9881cbc1e7ead6ea6ee3a",
+          "bytes": 30764,
+          "sha256": "1ab07bd238ca1a53fcceb22e3552f3dc955b823a12a66a7b6aaf31126c05d45e"
+        }
+      ]
+    },
+    {
+      "id": "dataset-study-comparison-browser",
+      "label": "Source review, complete mapping drafts, original group and member inspection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-study-comparison-browser.mjs",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+      "editions": [
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "21529a38eb525fde6b21551608f639c3b5194a0c",
+          "bytes": 33448,
+          "sha256": "98be25627d27be5c1ab0de87b86bbf4efaadddc93165e91c02ae7a759c263d51"
+        }
+      ]
+    },
+    {
+      "id": "dataset-study-comparison-guide",
+      "label": "Complete browser, CLI, agent and original comparison receiving journey",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/DATASET_COMPARISONS.md",
+      "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+      "editions": [
+        {
+          "commit": "51e2cfc01878fcf8fa32eaed19c1db29eff6b42a",
+          "git_blob": "e4e847dfabd39e99a1d8fda5dde9ca4657897c4a",
+          "bytes": 17787,
+          "sha256": "f68810f0e8b872b25e3055544a1bc16d8d2899f4b9bda103d97f815b8cb7c168"
         }
       ]
     }
