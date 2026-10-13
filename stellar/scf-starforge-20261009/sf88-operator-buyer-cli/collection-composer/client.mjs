@@ -24,12 +24,12 @@ export function createCollectionComposerClient({ url, fetch: send = globalThis.f
   const token = parsed.hash.slice(1);
   need(/^[a-f0-9]{64}$/.test(token), 'COLLECTION_AUTHORING_SESSION_REQUIRED');
   const origin = parsed.origin;
-  async function request(path, input, { signal } = {}, responseType = 'json') {
+  async function request(path, input, { signal, raw = false } = {}, responseType = 'json') {
     const response = await send(origin + path, {
       method: input === undefined ? 'GET' : 'POST',
       headers: { Authorization: 'Bearer ' + token,
-        ...(input === undefined ? {} : { 'Content-Type': 'application/json' }) },
-      ...(input === undefined ? {} : { body: JSON.stringify(input) }),
+        ...(input === undefined ? {} : { 'Content-Type': raw ? 'application/octet-stream' : 'application/json' }) },
+      ...(input === undefined ? {} : { body: raw ? input : JSON.stringify(input) }),
       cache: 'no-store', credentials: 'omit', redirect: 'error', signal,
     });
     need(response && typeof response.json === 'function', 'COLLECTION_AUTHORING_RESPONSE_INVALID');
@@ -49,6 +49,7 @@ export function createCollectionComposerClient({ url, fetch: send = globalThis.f
     need(plain(payload), 'COLLECTION_AUTHORING_RESPONSE_INVALID');
     return payload;
   }
+  const inputPath = uploadId => '/api/composer/inputs/' + revision(uploadId);
   const packagePath = packageSha256 => '/api/composer/sharing/packages/' + revision(packageSha256);
   const adoption = (action, input, options) => {
     const { packageSha256, ...bindings } = input;
@@ -56,6 +57,22 @@ export function createCollectionComposerClient({ url, fetch: send = globalThis.f
   };
   return Object.freeze({
     origin,
+    inputs: Object.freeze({
+      begin: ({manifest},options) => request('/api/composer/inputs',{manifest},options),
+      list: (input={},options) => request('/api/composer/inputs/list',input,options),
+      inspect: ({uploadId},options) => request(inputPath(uploadId),undefined,options),
+      receiveChunk: ({uploadId,index,source},options) => {
+        need(Number.isSafeInteger(index) && index>=0 && index<16,'COLLECTION_INPUT_CHUNK_INDEX_INVALID');
+        need(source instanceof Uint8Array || source instanceof ArrayBuffer
+          || typeof Blob!=='undefined' && source instanceof Blob,'COLLECTION_INPUT_CHUNK_REQUIRED');
+        const bytes=source.byteLength??source.size;
+        need(bytes>0 && bytes<=1048576,'COLLECTION_INPUT_CHUNK_SIZE_INVALID');
+        return request(inputPath(uploadId)+'/chunks/'+index,source,{...options,raw:true});
+      },
+      complete: ({uploadId},options) => request(inputPath(uploadId)+'/complete',{},options),
+      catalog: ({uploadId},options) => request(inputPath(uploadId)+'/catalog',undefined,options),
+      downloadFile: ({uploadId},options) => request(inputPath(uploadId)+'/file',undefined,options,'file'),
+    }),
     sharing: Object.freeze({
       listPackages: options => request('/api/composer/sharing/packages', undefined, options),
       exportPackage: ({ collectionId, expectedEditionSha256, headerSelections }, options) =>

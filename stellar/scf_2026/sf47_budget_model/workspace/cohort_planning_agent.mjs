@@ -10,7 +10,7 @@ import {COHORT_DELIVERY_SCHEDULE_SCHEMA,seedCohortDeliveryScheduling,scheduleCoh
 import {COHORT_DELIVERY_INPUT_SCHEMA,COHORT_DELIVERY_COMPARISON_SCHEMA,
   compareCohortDelivery,reopenCohortDeliveryComparison,
   exportCohortDeliveryCsv,exportCohortDeliveryHtml,COHORT_RECORDED_COST_PLAN_SCHEMA,
-  planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv} from './cohort_delivery_comparison.mjs';
+  planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv,inspectCohortTaskMeasurements} from './cohort_delivery_comparison.mjs';
 
 export const COHORT_PLAN_EDITION_SCHEMA='stellar-forge.sf47-cohort-plan-edition.v1';
 export const COHORT_ADOPTION_SEED_SCHEMA='stellar-forge.sf47-cohort-adoption-seed.v1';
@@ -155,6 +155,26 @@ async function currentDeliverySources(client,current,comparison){
     previewSha256:response.value.cohort.previewSha256}};
 }
 
+async function currentTaskMeasurementSources(client,current,costPlan){
+  const selected=new Map();
+  for(const row of costPlan.choices.allocations){
+    for(const basis of [row.measurement,...(row.measurementHistory||[]).map(previous=>previous.measurement)].filter(Boolean)){
+      const catalog=inspectCohortTaskMeasurements(basis.original),key=catalog.sourceId,prior=selected.get(key);
+      need(!prior||same(prior.original.source,catalog.original.source)&&same(prior.original.edition,catalog.original.edition),
+        'GRANT_ADOPTION_MEASUREMENT_CHANGED','One original measurement source cannot carry conflicting saved editions.');
+      selected.set(key,catalog);
+    }
+  }
+  for(const catalog of selected.values()){
+    const original=catalog.original,source=current.sources.find(row=>row.id===catalog.sourceId);
+    need(source&&same(source,original.source),'GRANT_ADOPTION_MEASUREMENT_CHANGED',
+      'The selected task measurement source differs from this case. Keep the old basis and explicitly select its current original.');
+    const saved=await client.read('task-outcome',{caseId:current.program.id,comparisonId:catalog.comparisonId,revision:catalog.revision});
+    need(same(saved.value?.source,original.source)&&same(saved.value?.edition,original.edition),
+      'GRANT_ADOPTION_MEASUREMENT_CHANGED','The complete selected Task Outcomes revision differs from its native original. Select that saved revision again.');
+  }
+}
+
 function sourceCase(current){
   const p=current.program;
   return {id:p.id,createdAt:p.createdAt,version:p.version,planId:p.planId,planRevision:p.planRevision,
@@ -212,7 +232,7 @@ export async function reviewGrantCohortAdoption(client,selected,expected,documen
   if(checked.recordedDelivery)return {...reviewCohortAdoption(document),case:sourceCase(current),
     nativeSources:await currentDeliverySources(client,current,checked.recordedDelivery)};
   if(!checked.plan)return {...reviewCohortAdoption(document),case:sourceCase(current)};
-  if(checked.recordedCostPlan)await currentDeliverySources(client,current,checked.recordedCostPlan.sourceDocument);
+  if(checked.recordedCostPlan){await currentDeliverySources(client,current,checked.recordedCostPlan.sourceDocument);await currentTaskMeasurementSources(client,current,checked.recordedCostPlan);}
   const nativeSeed=await currentSeed(client,current,checked.plan.rule.target.tranche);
   return {...reviewCohortAdoption(document,{nativeSeed}),case:sourceCase(current),nativeSeed};
 }
@@ -324,7 +344,7 @@ export async function prepareGrantCohortAdoption(client,selected,body){
     filename='sf47-cohort-delivery-'+input.recording.editionId+'.json';
   }else if(checked.plan){
     need(checked.plan.source.programId===selected,'GRANT_ADOPTION_SOURCE_CHANGED','Save this plan in its original Operations case.');
-    if(checked.recordedCostPlan)await currentDeliverySources(client,current,checked.recordedCostPlan.sourceDocument);
+    if(checked.recordedCostPlan){await currentDeliverySources(client,current,checked.recordedCostPlan.sourceDocument);await currentTaskMeasurementSources(client,current,checked.recordedCostPlan);}
     nativeSeed=await currentSeed(client,current,checked.plan.rule.target.tranche);
     const report=evaluateCohortPlan(checked.plan,{nativeSeed});
     const comparison=checked.deliverySchedule?compareCohortPlans(checked.deliverySchedule.sourceDocument,checked.deliverySchedule.candidate,
@@ -511,6 +531,7 @@ export function exportCohortAdoption(document,format='JSON'){
     }
     if(checked.recordedCostPlan){
       html+=table('Recorded cost basis',checked.recordedCostPlan.derivations,['targetScheduleId','sourceServiceId','outputQuantity','outputUnit','outputSource','supplierCoverage','laborCoverage','derivedEconomics','coverageNote']);
+      html+=table('Selected task measurements',checked.recordedCostPlan.derivations.filter(row=>row.measurement).map(row=>({targetScheduleId:row.targetScheduleId,...row.measurement})),['targetScheduleId','customer','task','comparisonId','revision','kind','observationId','quantity','unit','basis','status','acceptance','method','serviceBasis']);
       html+=table('Original cost portions',checked.recordedCostPlan.costBalances,['costId','costType','selectedShare','unselectedShare']);
     }
     if(checked.deliverySchedule){

@@ -67,7 +67,7 @@ export function buildRetail(input,sha) {
     arithmetic_difference:g.difference,review_state:[...g.flags].sort().join(";")||"MATCHED_SOURCE_TOTAL"});
   function group(payoutId,currency,test,scale) {
     const key=JSON.stringify([payoutId,currency,test]);
-    if(!groups.has(key))groups.set(key,{payoutId,currency,test,scale,count:0,contribution:0n,transfer:0n,unknown:0n,flags:new Set(),payoutAmount:"",status:"",direction:"",difference:""});
+    if(!groups.has(key))groups.set(key,{payoutId,currency,test,scale,count:0,contribution:0n,transfer:0n,unknown:0n,flags:new Set(["PAYOUT_NOT_VALIDATED"]),payoutAmount:"",status:"",direction:"",difference:""});
     return groups.get(key);
   }
   for(let n=0;n<tx.length;n++) {
@@ -109,7 +109,7 @@ export function buildRetail(input,sha) {
     const matching=[...groups.values()].filter(g=>g.payoutId===id && !g.test);
     if(!matching.length){const g=group(id,m.currency,false,m.scale);g.flags.add("PAYOUT_WITHOUT_SELECTED_TRANSACTIONS");matching.push(g);}
     for(const g of matching) {
-      g.payoutAmount=m.original;g.status=text(p.status);g.direction=text(p.transactionType);
+      g.flags.delete("PAYOUT_NOT_VALIDATED");g.payoutAmount=m.original;g.status=text(p.status);g.direction=text(p.transactionType);
       if(payoutdups.has(id))g.flags.add("DUPLICATE_PAYOUT_ID");
       if(g.currency!==m.currency)g.flags.add("PAYOUT_CURRENCY_MISMATCH");
       if(p.transactionType!=="DEPOSIT")g.flags.add("PAYOUT_DIRECTION_REVIEW");
@@ -148,11 +148,20 @@ export function buildContacts(input,sha) {
     if(r.targetExternalId&&!target)flags.add("MAPPED_TARGET_NOT_IN_EXPORTED_BASELINE");
     if(input.targetBaselineComplete!==true)flags.add("TARGET_BASELINE_INCOMPLETE");
     let parent="";
-    if(kind==="person"&&nonblank(r.companySourceId)) {
+    const parentSupplied=own(r,"companySourceId"),baselineParent=target&&own(target,"parentExternalId")?text(target.parentExternalId):"";
+    if(target&&!own(target,"parentExternalId"))flags.add("TARGET_PARENT_BASELINE_REQUIRED");
+    if(!parentSupplied&&target)parent=baselineParent;
+    else if(parentSupplied&&!nonblank(r.companySourceId)) {
+      if(target&&baselineParent&&!(r.clearFields||[]).includes("parent")) {
+        flags.add("EXPLICIT_CLEAR_REVIEW_PARENT");parent=baselineParent;
+      }
+    } else if(parentSupplied&&nonblank(r.companySourceId)) {
+      if(kind==="company")flags.add("COMPANY_HIERARCHY_REVIEW");
       const p=companyIndex.get(r.companySourceId);
       if(!p)flags.add("PARENT_COMPANY_NOT_IN_SOURCE");
       else {parent=nonblank(p.targetExternalId)?p.targetExternalId:externalId(namespace,"company",r.companySourceId,sha);if(dcompanies.has(r.companySourceId))flags.add("AMBIGUOUS_PARENT_SOURCE");}
     }
+    if(!parentSupplied&&parent&&(!targetIndex.has(parent)||targetIndex.get(parent).kind!=="company"))flags.add("PRESERVED_PARENT_NOT_IN_TARGET_BASELINE");
     const fields={name:text(r.name).trim()};
     for(const f of ownedFields.filter(x=>x!=="name")){
       const has=own(r,f);

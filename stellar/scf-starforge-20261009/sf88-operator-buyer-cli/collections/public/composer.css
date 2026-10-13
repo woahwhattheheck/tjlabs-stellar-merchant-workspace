@@ -57,3 +57,9 @@
   .composer-field input, .composer-field textarea, .composer-field select { font-size: 16px; }
   .composer-table-wrap th, .composer-table-wrap td { padding: .6rem .4rem; }
 }
+
+/* Saved inputs reuse the original neutral authoring views. */
+.composer-input-list { margin: 1rem 0; }
+.composer-input-reference { margin: 1rem 0; }
+.composer-input-reference dt { font-weight: 600; margin-top: .65rem; }
+.composer-input-reference dd { margin: .25rem 0 .8rem; overflow-wrap: anywhere; }

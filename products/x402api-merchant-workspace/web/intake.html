@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Receive merchant project</title><link rel="stylesheet" href="/intake.css"><script type="module" src="/intake.mjs"></script></head>
+<body><header><div><p class="eyebrow">MERCHANT WORKSPACE</p><h1>Receive merchant project</h1></div><span id="phase" class="status">Disconnected</span></header>
+<main>
+<section id="connection"><h2>Open the private intake desk</h2><p>Use the review credential selected for this application. It stays in this page while connected.</p>
+<form id="connect"><label for="credential">Review credential</label><div class="actions"><input id="credential" type="password" autocomplete="off" required minlength="32"><button type="submit">Connect</button></div></form></section>
+<p id="notice" role="status" aria-live="polite"></p>
+<div id="desk" hidden>
+<section><div class="section-head"><h2>Original project</h2><button id="disconnect" type="button">Disconnect</button></div><dl id="identity"></dl>
+<p>The saved archive stays intact. Receiving prepares its original source, configuration, results and independent runtime in the selected directory.</p>
+<div class="actions"><button id="manifest" type="button">Download complete manifest</button><button id="receipt" type="button" hidden>Download receiving record</button></div></section>
+<section><h2>Receive and review</h2><p id="progress"></p><p id="receiving-error" class="error" hidden></p>
+<div class="actions"><button id="receive" type="button">Receive project</button><button id="refresh" type="button">Refresh status</button><a id="open-review" class="button" target="_blank" rel="noopener noreferrer" hidden>Open original invoices</a></div>
+<p id="review-help" hidden>Connect in the invoice workspace with this same private review credential. The original invoices, payment requests, history and retained files open there.</p></section>
+<section><h2>Original business tables</h2><div class="table-wrap"><table><thead><tr><th>Table</th><th>Rows</th></tr></thead><tbody id="tables"></tbody></table></div></section>
+<section><div class="section-head"><h2>Complete archive inventory</h2><span id="file-count"></span></div>
+<form id="search"><label for="filter">Find a retained path</label><div class="actions"><input id="filter" type="search" maxlength="512"><button type="submit">Find files</button></div></form>
+<div class="table-wrap"><table><thead><tr><th>Original archive path</th><th>Bytes</th><th>SHA-256</th></tr></thead><tbody id="files"></tbody></table></div>
+<div class="actions"><button id="previous" type="button">Previous files</button><span id="page-position"></span><button id="next" type="button">Next files</button></div></section>
+</div></main><footer>The application uses the original Merchant project reader and the saved receiving request.</footer></body></html>

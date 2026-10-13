@@ -1326,3 +1326,123 @@ prepare/save/request/open flow attached one complete 779,545-byte edition in the
 in-memory transport and reopened it exactly. The original browser form saved and
 reopened its complete source, and the working-session validator retained its cost
 basis. CLI calculation, complete reopen and CSV used the same production core.
+
+## Use saved Customer task outcomes as the output basis
+
+The **Recorded cost basis** allocation form can receive the original saved
+Customer task outcomes comparison. This connects the useful result to its
+selected delivery costs without retyping the completed-task count or losing the
+original population, period, output, quality and customer response.
+
+1. Open the intended future adoption plan and its original commercial
+   reconciliation as described above.
+2. In the allocation form, choose the **Saved measurement edition** and open
+   it. The source selector includes every original saved comparison revision,
+   including historical editions.
+3. Select **Initial installed method** or one exact recurring observation.
+   Review its whole task, completed count, stable unit, measurement basis,
+   scope, operator review and original customer response.
+4. Explain why that complete task and the selected commercial service costs
+   describe the same output. The product does not infer this relationship from
+   a matching customer name, purchase count or overlapping dates.
+5. Choose **Use this complete measurement in allocation**. Its count, unit and
+   original reference now come from that saved source. Select the actual cost
+   portions and coverage, then **Keep complete allocation**.
+6. Calculate the full successor, review its original measured scope alongside
+   the financial/capacity result, and apply or save the complete edition.
+
+A selected measurement keeps its **OBSERVED**, **ESTIMATED** or **MIXED** basis.
+The source's Draft/Reviewed decision and Pending/Accepted/Declined customer
+response remain separately visible. Selecting an estimate does not turn it into
+an observed result, and using a completed-task count does not record a sale or
+customer acceptance. A missing or zero count cannot divide the selected cost;
+complete that measurement through its original Customer task outcomes desk.
+The prior baseline is retained inside the original comparison but is not offered
+as the installed-service output denominator.
+
+Opening a source or refreshing the case does not replace the allocation's
+selected measurement. To use a later comparison revision, open that exact
+edition, review it and explicitly use it in the allocation. The complete former
+selection remains in **Earlier retained measurement choices**. The original
+count/unit/reference fields stay read-only while bound. **Continue with a manual
+denominator** retains the former measurement and makes the denominator editable
+for a separately explained planning assumption.
+
+The complete native response includes its original source metadata, saved
+comparison, original case/Installation/source selection and history directory.
+The retained planning document carries all of it. Native review and preparation
+reopen each selected comparison revision through the original Task Outcomes
+reader, which validates the original source and calculation. Newer comparison
+history can coexist with a pinned earlier edition. An altered selected source
+requires explicit re-selection; the existing allocation and entered cost
+portions remain available for review.
+
+The full working-session download also retains an opened measurement that has
+not yet been applied, its selected observation and unfinished service explanation.
+The complete JSON and CSV retain every selected and earlier source. Readable
+HTML shows the original basis, review, customer response and scope beside the
+future schedule. The existing source.add request, recovery, saved-plan reopening
+and complete case transfer carry this operation without a separate source store.
+
+### Installed command and Merchant continuation
+
+Use the original Task Outcomes reader to export the complete response, including
+`source`, `edition` and `history`. Keep the original case and selected revision.
+Do not use `--inputs-only`, which intentionally omits its saved source.
+
+~~~sh
+starforge grant-workspace operations task-outcomes-show \
+  --workspace /absolute/private/grant --case ORIGINAL_CASE_ID \
+  --comparison ORIGINAL_COMPARISON_ID --revision SAVED_REVISION \
+  --output /absolute/working/saved-task-response.json
+
+node cohort_planning_cli.mjs task-measurements \
+  --input /absolute/working/saved-task-response.json \
+  --output /absolute/working/measurement-selection.json
+
+node cohort_planning_cli.mjs recorded-cost-bind \
+  --choices /absolute/working/cost-choices.json \
+  --allocation ORIGINAL_ALLOCATION_ID \
+  --measurement /absolute/working/saved-task-response.json \
+  --kind FOLLOWUP --observation ORIGINAL_OBSERVATION_ID \
+  --service-basis "Original scope and selected service-cost relationship" \
+  --output /absolute/working/bound-cost-choices.json
+
+node cohort_planning_cli.mjs recorded-cost-plan \
+  --recorded /absolute/working/commercial-result.json \
+  --baseline /absolute/working/future-plan.json \
+  --choices /absolute/working/bound-cost-choices.json \
+  --output /absolute/working/measured-cost-plan.json
+~~~
+
+Choose `--kind INSTALLED` and omit `--observation` for the original installed
+method. The source and choices commands keep existing destinations intact.
+
+The pure module exposes `inspectCohortTaskMeasurements` and
+`bindCohortRecordedCostMeasurement`. The latter receives the complete allocation,
+native saved response and explicit `{kind, observationId, serviceBasis}`; it
+returns the complete editable allocation and retains an earlier selected
+measurement before accepting another. `planCohortFromRecordedCosts` checks the
+bound count/unit/reference and calculates through the same existing engine.
+
+Merchant agents obtain the full selected response through
+`merchant_grant_task_outcome`. In the existing adoption edit operation, select
+`FROM_RECORDED_COSTS` and keep the full original reconciliation and choices.
+An allocation's optional `measurement` is:
+
+~~~json
+{
+  "schema": "stellar-forge.sf47-cohort-task-measurement.v1",
+  "original": {"source": {}, "edition": {}, "history": []},
+  "kind": "FOLLOWUP",
+  "observationId": "ORIGINAL_OBSERVATION_ID",
+  "serviceBasis": "Original measured task and selected cost relationship"
+}
+~~~
+
+The empty objects above identify the fields; supply the entire native source,
+edition and history. The operation derives `outputQuantity`, `outputUnit` and
+`outputSource` when omitted; supplied values must equal that original selection.
+Continue the existing adoption review, prepare, save, request recovery and open
+tools. The Task Outcomes writer, its original revisions and any measurement
+workbook remain in their own native workflow.

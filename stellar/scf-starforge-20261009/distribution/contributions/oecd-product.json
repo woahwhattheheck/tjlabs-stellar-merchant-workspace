@@ -12,5 +12,6 @@
   },
   "exports": {
     "./products/oecd": "./source/products/oecd/cli.mjs"
-  }
+  },
+  "description": "Complete OECD source, analyst, installed merchant and customer operations"
 }

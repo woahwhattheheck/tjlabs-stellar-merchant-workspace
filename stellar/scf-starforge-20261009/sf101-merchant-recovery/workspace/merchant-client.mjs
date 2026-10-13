@@ -94,15 +94,16 @@ const definitions = new Map(recoveryWorkspaceTools((name, description, propertie
   ({ name, properties, required, options })).map(value => [value.name, value]));
 const paged = new Set(['merchant_recovery_inventory', 'merchant_recovery_requests', 'merchant_recovery_operations']);
 const writes = new Set(['merchant_recovery_start', 'merchant_recovery_resume', 'merchant_recovery_cancel',
-  'merchant_recovery_support_review','merchant_recovery_support_save','merchant_recovery_support_export']);
+  'merchant_recovery_support_review','merchant_recovery_support_save','merchant_recovery_support_export',
+  'merchant_recovery_bundle_inspection','merchant_recovery_bundle_attach','merchant_recovery_bundle_case_export']);
 function validateSelection(value) {
   exact(value, ['profileId', 'action', 'id', 'bundleId', 'snapshotId', 'destinationName',
     'capturePlanId', 'quiesced', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId',
-    'objectSessionId', 'expectedRecordSha256'],
+    'objectSessionId', 'expectedRecordSha256','archiveId','sourceRequestId','sourceReviewHash','sourceAttempt'],
     ['profileId', 'action', 'id']);
   checked(value.profileId, ID, 'profile ID'); checked(value.id, ID, 'operation ID');
   if (!['snapshot', 'verify', 'publisher-prepare', 'fleet-prepare', 'push', 'pull', 'restore', 'resume',
-    'object-snapshot', 'object-verify', 'object-restore'].includes(value.action))
+    'object-snapshot', 'object-verify', 'object-restore','object-bundle-export','object-bundle-receive'].includes(value.action))
     throw failure('INVALID_PARAMS', 'Choose an original recovery action.');
   for (const key of ['destinationName', 'capturePlanId', 'restoreId', 'publisherRestoreId', 'fleetRestoreId', 'fleetTargetId'])
     if (value[key] !== undefined) checked(value[key], ID, key);
@@ -112,7 +113,15 @@ function validateSelection(value) {
     throw failure('INVALID_PARAMS', 'Use the exact bundleId returned by this original workspace.');
   if (value.quiesced !== undefined && value.quiesced !== true)
     throw failure('INVALID_PARAMS', 'Capture and fleet preparation require the explicit actual producer-quiescence acknowledgment.');
-  if (value.action.startsWith('object-')) {
+  if(value.action==='object-bundle-export'){
+    exact(value,['profileId','action','id','sourceRequestId','sourceReviewHash','sourceAttempt'],
+      ['profileId','action','id','sourceRequestId','sourceReviewHash','sourceAttempt']);
+    checked(value.sourceRequestId,ID,'original recovery request');checked(value.sourceReviewHash,SHA,'original recovery review');
+    if(!Number.isSafeInteger(value.sourceAttempt)||value.sourceAttempt<0)throw failure('INVALID_PARAMS','Select the exact observed original attempt.');
+  }else if(value.action==='object-bundle-receive'){
+    exact(value,['profileId','action','id','archiveId','objectSessionId'],['profileId','action','id','archiveId','objectSessionId']);
+    checked(value.archiveId,ID,'host-declared archive');checked(value.objectSessionId,ID,'declared original receiving session');
+  }else if (value.action.startsWith('object-')) {
     const snapshot = value.action === 'object-snapshot';
     exact(value, ['profileId', 'action', 'id', 'objectSessionId', ...(snapshot ? ['quiesced'] : ['expectedRecordSha256'])],
       ['profileId', 'action', 'id', 'objectSessionId', ...(snapshot ? ['quiesced'] : ['expectedRecordSha256'])]);
@@ -152,6 +161,12 @@ function validate(name, input) {
     }else validateSelection(input.selection);
   }
   if(input.transferId!==undefined)checked(input.transferId,/^[a-z0-9][a-z0-9_-]{0,63}$/,'Support transfer');
+  if(input.archiveId!==undefined)checked(input.archiveId,ID,'host-declared archive');
+  if(input.archiveSha256!==undefined)checked(input.archiveSha256,SHA,'original archive');
+  if(input.expectedRevision!==undefined)checked(input.expectedRevision,SHA,'original saved case revision');
+  if(input.kind!==undefined&&!['report','verification','publication'].includes(input.kind))throw failure('INVALID_PARAMS','Select report or verification.');
+  if(input.actor!==undefined&&(typeof input.actor!=='string'||!input.actor.trim()||Buffer.byteLength(input.actor)>200))
+    throw failure('INVALID_PARAMS','Supply the actual operator within 200 UTF-8 bytes.');
   if(input.expectedReviewSha256!==undefined)checked(input.expectedReviewSha256,SHA,'Support review');
   if(name==='merchant_recovery_support_cases'){
     if(input.q!==undefined&&(typeof input.q!=='string'||input.q.length>1000))throw failure('INVALID_PARAMS','Use a bounded case search.');
@@ -232,7 +247,11 @@ export class MerchantRecoveryWorkspaces {
     const launch = await this.#launch(workspace);
     const action = name.slice('merchant_recovery_'.length);
     let method = 'GET', route, body;
-    if(action==='support_cases')route=urlQuery('/api/support-cases',{profile:input.profileId,q:input.q,offset:input.offset,limit:input.limit});
+    if(action==='bundle_inspection')route=urlQuery('/api/bundle-inspection',{profile:input.profileId,archive:input.archiveId});
+    else if(action==='bundle_attachment')route=urlQuery('/api/bundle-attachment',{profile:input.profileId,id:input.transferId,sha256:input.archiveSha256});
+    else if(action==='bundle_report')route=urlQuery('/api/bundle-report',{profile:input.profileId,id:input.id,kind:input.kind});
+    else if(action==='bundle_artifact')route=urlQuery('/api/bundle-artifact',{profile:input.profileId,id:input.id});
+    else if(action==='support_cases')route=urlQuery('/api/support-cases',{profile:input.profileId,q:input.q,offset:input.offset,limit:input.limit});
     else if(action==='support_transfers')route=urlQuery('/api/support-transfers',{profile:input.profileId});
     else if(['support_transfer','support_handoff','support_package'].includes(action))
       route=urlQuery('/api/'+action.replaceAll('_','-'),{profile:input.profileId,id:input.transferId});

@@ -37,8 +37,10 @@ export async function openStore(directory){
    if(previous){need(JSON.parse(previous.metadata).sha256===metadata.sha256,'CAPTURE_ID_COLLISION');return metadata;}
    db.prepare('INSERT INTO captures(id,sha256,body,metadata)VALUES(?,?,?,?)').run(metadata.id,metadata.rawSha256,raw,canonical(metadata));return metadata;
   }
-  function tasks(planId){assert();return db.prepare('SELECT * FROM tasks WHERE plan_id=? ORDER BY rowid').all(planId);}
-  function task(planId,key){assert();return db.prepare('SELECT * FROM tasks WHERE plan_id=? AND task_key=?').get(planId,key);}
+  // DatabaseSync rows have null prototypes; handover records are strict JSON objects.
+  const jsonRow=row=>row&&{...row};
+  function tasks(planId){assert();return db.prepare('SELECT * FROM tasks WHERE plan_id=? ORDER BY rowid').all(planId).map(jsonRow);}
+  function task(planId,key){assert();return jsonRow(db.prepare('SELECT * FROM tasks WHERE plan_id=? AND task_key=?').get(planId,key));}
   function setTask(planId,key,status,{captureId=null,error=null,updatedAt=now()}={}){
    assert();db.prepare('INSERT INTO tasks(plan_id,task_key,status,capture_id,error,updated_at)VALUES(?,?,?,?,?,?) ON CONFLICT(plan_id,task_key)DO UPDATE SET status=excluded.status,capture_id=excluded.capture_id,error=excluded.error,updated_at=excluded.updated_at').run(planId,key,status,captureId,error,updatedAt);
   }
@@ -84,9 +86,9 @@ export async function openStore(directory){
    },
    markAttemptResponse(id,{status,captureId}){assert();db.prepare('UPDATE attempts SET status=?,capture_id=? WHERE id=? AND finished_at IS NULL').run(status,captureId,id);},
    finishAttempt(id,{status=null,captureId=null,error=null}){assert();db.prepare('UPDATE attempts SET finished_at=?,status=?,capture_id=?,error=? WHERE id=?').run(now(),status,captureId,error,id);},
-   attempts(planId){assert();return db.prepare('SELECT * FROM attempts WHERE plan_id=? ORDER BY started_at,id').all(planId);},
+   attempts(planId){assert();return db.prepare('SELECT * FROM attempts WHERE plan_id=? ORDER BY started_at,id').all(planId).map(jsonRow);},
    importAttempt(value){
-    assert();const old=db.prepare('SELECT * FROM attempts WHERE id=?').get(value.id);
+    assert();const old=jsonRow(db.prepare('SELECT * FROM attempts WHERE id=?').get(value.id));
     if(old){
      need(['id','plan_id','task_key','started_at'].every(k=>old[k]===value[k]),'ATTEMPT_HISTORY_COLLISION');
      if(old.capture_id!==null&&value.capture_id!==null)need(old.capture_id===value.capture_id&&old.status===value.status,'ATTEMPT_RESPONSE_COLLISION');

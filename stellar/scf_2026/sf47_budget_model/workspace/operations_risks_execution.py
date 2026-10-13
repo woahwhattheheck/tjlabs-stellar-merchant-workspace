@@ -105,6 +105,174 @@ def checked(reference):
     return raw, info
 
 
+def fingerprint(path, maximum=512 * 1024 * 1024):
+    """Verify a complete regular file using a bounded hash window."""
+    path = Path(path)
+    require(path.is_absolute() and path.resolve(strict=True) == path,
+            "Select an actual nonsymlink runtime or execution source.")
+    descriptor = None
+    first = None
+    result = None
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        before = os.fstat(descriptor)
+        require(stat.S_ISREG(before.st_mode) and before.st_size <= maximum,
+                "Select a bounded regular runtime or source.")
+        digest = hashlib.sha256()
+        size = 0
+        while True:
+            chunk = os.read(descriptor, 128 * 1024)
+            if not chunk:
+                break
+            size += len(chunk)
+            require(size <= maximum, "The selected runtime exceeded its original bound.")
+            digest.update(chunk)
+        after = os.fstat(descriptor)
+        current = path.lstat()
+        identity = lambda value: (value.st_dev, value.st_ino, value.st_size,
+                                  value.st_mtime_ns, value.st_ctime_ns, value.st_mode)
+        require(identity(before) == identity(after) == identity(current) and size == before.st_size,
+                "The selected complete runtime changed while hashing.")
+        result = ({"path": str(path), "bytes": size, "sha256": digest.hexdigest(),
+                   "mode": stat.S_IMODE(before.st_mode)}, before)
+    except BaseException as error:
+        first = error
+    finally:
+        if descriptor is not None:
+            owned, descriptor = descriptor, None
+            try:
+                os.close(owned)
+            except BaseException as error:
+                first = first or error
+    if first:
+        raise first
+    return result
+
+
+def checked_fingerprint(reference):
+    actual, info = fingerprint(reference["path"])
+    require(actual["bytes"] == reference["bytes"] and actual["sha256"] == reference["sha256"],
+            "The complete selected runtime identity differs: " + reference["path"])
+    if "mode" in reference:
+        mode = reference["mode"]
+        mode = int(mode, 8) & 0o777 if isinstance(mode, str) else mode
+        require(actual["mode"] == mode, "The selected runtime or correction mode differs.")
+    return actual, info
+
+
+def simple_reference(reference):
+    return {key: reference[key] for key in ("path", "bytes", "sha256")}
+
+
+def continuation_directory(config, reference):
+    return Path(config["outputDirectory"]) / "execution-continuations" / reference["sha256"]
+
+
+def validate_execution_continuation(config, manifest, reference):
+    require(isinstance(reference, dict), "Select the complete execution continuation descriptor.")
+    raw, _ = checked(reference)
+    document = json.loads(raw)
+    require(document.get("schema") == "stellar-forge.sf47-risk-execution-continuation.v1"
+            and document.get("operationId") == config["operationId"]
+            and isinstance(document.get("reason"), str) and document["reason"].strip(),
+            "Use the explicit same-operation execution continuation.")
+    original = document["original"]
+    require(simple_reference(original["sourceManifest"]) == simple_reference(config["sourceManifest"]),
+            "Retain the original complete application selection.")
+    checked(original["sourceManifest"])
+    original_input, _ = checked(original["executionInput"])
+    require(json.loads(original_input) == config, "The original frozen execution input changed.")
+    output = Path(config["outputDirectory"])
+    expected_paths = {"executionSelection": output / "EXECUTION_SELECTION.json",
+                      "executionJournal": output / "EXECUTION_JOURNAL.json",
+                      "browserSelection": output / "browser/SELECTION.json",
+                      "browserJournal": output / "browser/risk-browser-journal.json"}
+    for key, expected in expected_paths.items():
+        require(Path(original[key]["path"]) == expected and expected.resolve(strict=True) == expected,
+                "The continuation selects another original case member: " + key)
+    execution_selection, _ = checked(original["executionSelection"])
+    require(json.loads(execution_selection) == {"schema": SCHEMA, "config": config},
+            "The original execution selection differs.")
+    browser_selection, _ = checked(original["browserSelection"])
+    browser = json.loads(browser_selection)
+    native_path = output / "course/risk-course-browser.json"
+    require(Path(browser["native"]["path"]) == native_path,
+            "The browser must retain its original native course handover.")
+    native = json.loads(checked(browser["native"])[0])
+    require(native.get("schema") == "stellar-forge.sf47-delivery-risks-course.v1.result"
+            and native.get("status") == "PASS" and browser["operationId"] == native["operationId"]
+            and browser["repositoryRoot"] == config["repositoryRoot"]
+            and simple_reference(browser["sourceManifest"]) == simple_reference(config["sourceManifest"])
+            and browser["outputDirectory"] == str(output / "browser"),
+            "Retain the same original browser operation and source selection.")
+    root = Path(config["repositoryRoot"]).resolve(strict=True)
+    selected = {row["path"]: row for row in manifest["files"]}
+    expected_names = {"python": "operations_risks_execution.py", "node": config["browserScript"]}
+    require(set(document["corrections"]) == set(expected_names), "Select the two complete execution corrections.")
+    prefix = "stellar/scf_2026/sf47_budget_model/workspace/"
+    for language, name in expected_names.items():
+        correction = document["corrections"][language]
+        relative = prefix + name
+        require(correction["repositoryPath"] == relative and relative in selected,
+                "The correction changed the selected original execution leaf.")
+        before = correction["original"]
+        row = selected[relative]
+        require(Path(before["path"]) == root / relative
+                and before["bytes"] == row["bytes"] and before["sha256"] == row["sha256"],
+                "The correction does not bind its complete original source.")
+        checked_fingerprint(before)
+        current = correction["current"]
+        target = Path(current["path"])
+        require(target.is_absolute() and target.resolve(strict=True) == target
+                and target.name == name and not target.is_relative_to(root)
+                and not target.is_relative_to(output),
+                "Keep the complete corrected execution source separate from original source and case.")
+        require(current.get("mode") in (0o600, 0o644, 0o700, 0o755),
+                "Bind the complete corrected source mode.")
+        checked_fingerprint(current)
+    require(Path(__file__).resolve(strict=True) == Path(document["corrections"]["python"]["current"]["path"]),
+            "Run the explicitly selected complete Python correction.")
+    record = {"reference": simple_reference(reference), "document": document}
+    directory = continuation_directory(config, reference)
+    retained = directory / "ADOPTED.json"
+    if retained.exists():
+        adopted, _ = read(retained)
+        require(json.loads(adopted) == {
+            "schema": "stellar-forge.sf47-risk-execution-continuation-adopted.v1",
+            "executionContinuation": record}, "The retained execution adoption differs.")
+    for key, filename in (("browserJournal", "prior-browser-journal.json"),
+                          ("executionJournal", "prior-execution-journal.json")):
+        snapshot = directory / filename
+        source = snapshot if snapshot.exists() else Path(original[key]["path"])
+        require(source.resolve(strict=True) == source, "The prior journal snapshot traverses a symlink.")
+        checked({**original[key], "path": str(source)})
+    return record
+
+
+def retain_execution_continuation(config, manifest, reference):
+    # No receiving journal is changed until both exact predecessors and the
+    # complete sidecar have been published and verified under the original guard.
+    record = validate_execution_continuation(config, manifest, reference)
+    directory = private(continuation_directory(config, reference))
+    original = record["document"]["original"]
+    for key, filename in (("browserJournal", "prior-browser-journal.json"),
+                          ("executionJournal", "prior-execution-journal.json")):
+        target = directory / filename
+        source = target if target.exists() else Path(original[key]["path"])
+        raw, _ = checked({**original[key], "path": str(source)})
+        publish(target, raw)
+    raw, _ = checked(reference)
+    publish(directory / "execution-continuation.json", raw)
+    publish(directory / "ADOPTED.json", encoded({
+        "schema": "stellar-forge.sf47-risk-execution-continuation-adopted.v1",
+        "executionContinuation": record}))
+    sync(directory)
+    sync(directory.parent)
+    sync(directory.parent.parent)
+    validate_execution_continuation(config, manifest, reference)
+    return record
+
+
 def publish(path, raw, *, replace=False):
     path = Path(path)
     private(path.parent)
@@ -188,7 +356,7 @@ class Guard:
             raise failure
 
 
-def verify_source(config):
+def verify_source(config, execution_continuation=None):
     raw, _ = checked(config["sourceManifest"])
     manifest = json.loads(raw)
     root = Path(config["repositoryRoot"]).resolve(strict=True)
@@ -227,17 +395,20 @@ def verify_source(config):
                 config["browserScript"]]
     for name in required:
         require((workspace / name).relative_to(root).as_posix() in actual, "The manifest omits receiving source: " + name)
-    require(Path(__file__).resolve() == workspace / "operations_risks_execution.py", "Run the selected execution source.")
+    if execution_continuation is None:
+        require(Path(__file__).resolve() == workspace / "operations_risks_execution.py", "Run the selected execution source.")
+    else:
+        validate_execution_continuation(config, manifest, execution_continuation)
     checked(config["scenario"])
     for key in ("node", "python"):
-        _data, info = checked(config[key])
+        _identity, info = checked_fingerprint(config[key])
         require(stat.S_IMODE(info.st_mode) & 0o111, "Use an executable selected runtime.")
     require(Path(sys.executable).resolve() == Path(config["python"]["path"]).resolve(),
             "The selected Python executable differs from this process.")
     browser = config["browser"]
     for key, digest_key in (("playwrightModule", "playwrightSha256"), ("executablePath", "executableSha256")):
-        data, _ = read(browser[key], 512 * 1024 * 1024)
-        require(sha(data) == browser[digest_key], "The selected browser runtime differs.")
+        identity, _ = fingerprint(browser[key])
+        require(identity["sha256"] == browser[digest_key], "The selected browser runtime differs.")
     library = config.get("library")
     if library is not None:
         helper_root = Path(library["helperDirectory"]).resolve(strict=True)
@@ -251,8 +422,9 @@ def verify_source(config):
 
 
 class Owner:
-    def __init__(self, config, output, guard):
+    def __init__(self, config, output, guard, execution_continuation=None):
         self.config, self.output, self.guard = config, output, guard
+        self.execution_continuation = execution_continuation
         self.state_path = output / "EXECUTION_JOURNAL.json"
         self.selection = {"schema": SCHEMA, "config": config}
         publish(output / "EXECUTION_SELECTION.json", encoded(self.selection))
@@ -262,6 +434,11 @@ class Owner:
         require(self.state["selectionSha256"] == sha(encoded(self.selection)), "Resume this exact original execution.")
         self.host = self.workspace_owner = self.thread = None
         self.thread_error = None
+        retained_execution = self.state.get("executionContinuation")
+        require(retained_execution is None or retained_execution == execution_continuation,
+                "Resume the same declared execution correction.")
+        if execution_continuation is not None:
+            self.state["executionContinuation"] = execution_continuation
         self.save()
 
     def save(self):
@@ -440,8 +617,11 @@ class Owner:
             "sourceManifest": self.config["sourceManifest"], "native": descriptor(course_output / "risk-course-browser.json"),
             "outputDirectory": str(private(self.output / "browser")), "browser": self.config["browser"],
             "ownerKeyFile": str(self.output / "workspace/access.key"), "parentGuard": self.guard.wire()}
-        self.child("browser", [self.config["node"]["path"], str(workspace_source / self.config["browserScript"]), "run"],
-                   input_value=input_value)
+        script = workspace_source / self.config["browserScript"]
+        if self.execution_continuation is not None:
+            input_value["executionContinuation"] = self.execution_continuation["reference"]
+            script = Path(self.execution_continuation["document"]["corrections"]["node"]["current"]["path"])
+        self.child("browser", [self.config["node"]["path"], str(script), "run"], input_value=input_value)
         return self.verify_browser(workspace_source, course_output)
 
     def verify_browser(self, workspace_source, course_output):
@@ -450,6 +630,11 @@ class Owner:
         root = self.output / "browser"
         result = json.loads(read(root / "risk-browser-result.json")[0])
         native = json.loads(read(course_output / "risk-course-browser.json")[0])
+        require(result.get("executionContinuation") == self.execution_continuation,
+                "The completed browser result changed its explicit execution source.")
+        journal = json.loads(read(root / "risk-browser-journal.json")[0])
+        require(journal.get("executionContinuation") == self.execution_continuation,
+                "The retained browser journal changed its explicit execution source.")
         require(result.get("schema") == "stellar-forge.sf47-delivery-risks-browser.v1.result"
                 and result.get("status") == "COMPLETED", "Complete the original browser course.")
         for key in ("operationId", "installationId", "originalCaseId", "receivedCaseId",
@@ -481,6 +666,8 @@ class Owner:
                 and all(closed["owners"].get(key) is True for key in
                         ("browser", "contexts", "downloads", "tasks", "files", "guard")),
                 "The actual browser owners have not all closed.")
+        require(closed.get("executionContinuation") == self.execution_continuation,
+                "The closed browser owner changed its execution continuation.")
         candidate = json.loads(checked(closed["candidate"])[0])
         require(candidate == {k: v for k, v in result.items() if k not in ("closure", "attemptId")},
                 "The browser result differs from its closed immutable candidate.")
@@ -535,7 +722,7 @@ class Owner:
     def archive(self, outcome):
         require(self.host is None and self.workspace_owner is None and self.thread is None, "Close original owners before archiving.")
         files = []
-        for category in ("workspace", "course", "browser", "attempts"):
+        for category in ("workspace", "course", "browser", "attempts", "execution-continuations"):
             root = self.output / category
             if not root.exists():
                 continue
@@ -706,9 +893,9 @@ class Owner:
                         "A complete closed-case member differs.")
 
 
-def execute(config):
+def execute(config, *, execution_continuation=None):
     require(config.get("schema") == SCHEMA, "Use the complete original risk execution input.")
-    repository, workspace_source, _manifest = verify_source(config)
+    repository, workspace_source, _manifest = verify_source(config, execution_continuation)
     output = private(Path(config["outputDirectory"]))
     require(not output.is_relative_to(repository) and not repository.is_relative_to(output),
             "Separate source and the private receiving case.")
@@ -721,13 +908,17 @@ def execute(config):
     try:
         for sig in previous:
             signal.signal(sig, stop)
-        owner = Owner(config, output, guard)
+        continuation_record = (retain_execution_continuation(config, _manifest, execution_continuation)
+                               if execution_continuation is not None else None)
+        owner = Owner(config, output, guard, continuation_record)
         native_path = output / "NATIVE_OUTCOME.json"
         if native_path.exists():
             result = json.loads(read(native_path)[0])
             require(result["operationId"] == config["operationId"] and result["state"] == "COMPLETED"
                     and result["sourceManifest"] == config["sourceManifest"],
                     "Resume the original closed native outcome.")
+            require(result.get("executionContinuation") == owner.execution_continuation,
+                    "Retain the declared execution source on native-outcome recovery.")
             for key in ("native", "reopen", "browser"):
                 checked(result[key])
         else:
@@ -743,6 +934,8 @@ def execute(config):
                       "sourceManifest": config["sourceManifest"], "hostLifetimes": owner.state["hostLifetimes"],
                       "native": descriptor(course_output / "risk-course-result.json"),
                       "browser": browser_receipt, "reopen": descriptor(course_output / "risk-course-reopen.json")}
+            if owner.execution_continuation is not None:
+                result["executionContinuation"] = owner.execution_continuation
             publish(native_path, encoded(result))
     except BaseException as error:
         first = error
@@ -759,6 +952,8 @@ def execute(config):
                 outcome = result if first is None else {"schema": SCHEMA + ".result",
                     "operationId": config["operationId"], "state": "INTERRUPTED",
                     "error": {"name": type(first).__name__, "message": str(first)}}
+                if owner.execution_continuation is not None:
+                    outcome["executionContinuation"] = owner.execution_continuation
                 try:
                     if "pendingArchive" in owner.state and owner.state["pendingArchive"]["outcome"] == outcome:
                         archive = owner.state["pendingArchive"]["archive"]
@@ -793,8 +988,10 @@ def execute(config):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True)
+    parser.add_argument("--execution-continuation", help="Absolute JSON descriptor of the explicit complete same-case execution correction.")
     args = parser.parse_args()
-    execute(json.loads(read(args.input)[0]))
+    continuation = json.loads(read(args.execution_continuation)[0]) if args.execution_continuation else None
+    execute(json.loads(read(args.input)[0]), execution_continuation=continuation)
     return 0
 
 

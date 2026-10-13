@@ -19,13 +19,18 @@ export function customerDeliveryRoutes({getCollections,receivingDirectory,mutate
   opening=current.catch(()=>{});return current;
  }
  const fields=(value,names)=>{need(value&&Object.keys(value).every(k=>names.includes(k)),'CUSTOMER_DELIVERY_FIELDS');return value;};
- const project=value=>{if(value?.request){const {sourceRoot,sourceManifest,...safe}=value.request;return{...value,request:safe};}return value;};
+ const project=value=>{if(value?.request){const {sourceRoot,sourceManifest,packetDirectory,...safe}=value.request;return{...value,request:safe};}return value;};
  const download=async(response,file)=>downloadFile(response,{...file,name:file.filename??file.name??'customer-delivery.ndjson'});
  async function route({request,response,url,send}){
   if(!url.pathname.startsWith('/api/customer-delivery/'))return false;
   const desk=await controller(),path=url.pathname.slice('/api/customer-delivery/'.length);
   const progressOptions=url.searchParams.get('progress')==='compact'?{includeParts:false}:{};
-  if(path==='status'&&request.method==='GET'){send({schema:'stellar-forge.sf88.customer-delivery-status.v1',scope:binding,canPrepare:Boolean(getCollections()),uploadBatchChunks:UPLOAD_BATCH_CHUNKS,...(await desk.list())});return true;}
+  if(path==='status'&&request.method==='GET'){send({schema:'stellar-forge.sf88.customer-delivery-status.v1',scope:binding,canPrepare:Boolean(getCollections()),canPrepareTask:true,uploadBatchChunks:UPLOAD_BATCH_CHUNKS,...(await desk.list())});return true;}
+  if(['task-inspect','task-preview','task-prepare'].includes(path)&&request.method==='POST'){
+   const input=fields(await jsonBody(request),path==='task-inspect'?['packetDirectory','expectedTaskSha256']:['kind','id','packetDirectory','expectedTaskSha256','title','note','intentIds','sourceRoot','sourceManifest',...(path==='task-prepare'?['expectedPreviewSha256']:[])]);
+   const method={'task-inspect':'inspectTask','task-preview':'previewTask','task-prepare':'prepareTask'}[path];
+   send(project(await mutate(()=>desk[method](input))),path==='task-prepare'?201:200);return true;
+  }
   if(['preview','prepare'].includes(path)&&request.method==='POST'){
    const input=fields(await jsonBody(request),['id','collectionId','expectedManifestSha256','title','note','intentIds','sourceRoot','sourceManifest','maxVerifyBytes','allowIncomplete',...(path==='prepare'?['expectedPreviewSha256']:[])]);
    send(project(await mutate(()=>desk[path](input))),path==='prepare'?201:200);return true;

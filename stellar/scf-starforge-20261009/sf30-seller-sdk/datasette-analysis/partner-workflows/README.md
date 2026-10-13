@@ -72,7 +72,7 @@ The partner's existing Python/n8n/MCP worker can call the original CLI with an a
 
 A co-located service can use the original loopback gateway, with the current X-Workflow-Capability from its private operator launch:
 
-1. POST /api/requests with the actual request and executionId.
+1. POST /api/requests with {request: originalRequest, executionId: actualExecutionId}.
 2. POST /api/requests/{encoded-request-id}/run.
 3. GET /api/requests/{encoded-request-id}?history=true for the retained state.
 4. GET /api/requests/{encoded-request-id}/envelope for the exact completed native result.
@@ -98,7 +98,7 @@ Generated IDs combine a stable migration namespace, record kind and SHA-256 of t
 
 The selected target baseline must be complete for the namespace and records being imported. Otherwise every mapping remains review-only. Missing/duplicate original IDs, colliding target IDs, wrong target kind, missing parent companies and ambiguous parents stay in the exception report and are excluded from import files. Their dependent people are excluded too.
 
-fields declares the target columns this operation owns. name is required. email and phone are optional. For an existing target, a source field omitted entirely preserves its baseline value. An explicit empty string that would clear a nonempty target value requires that field in the source record's clearFields list. This implements Odoo's actual distinction between omitted columns and empty field values.
+fields declares the target columns this operation owns. name is required. email and phone are optional. For an existing target, a source field omitted entirely preserves its baseline value. An explicit empty string that would clear a nonempty target value requires that field in the source record's clearFields list. An omitted companySourceId on an existing target likewise preserves its actual exported parentExternalId. An explicit blank relation requires parent in clearFields before it can detach an existing company; missing baseline relations remain review items. This implements Odoo's actual distinction between omitted columns and empty field values.
 
 Import companies.csv first and people.csv second through the selected Odoo database's original Contacts importer. The files use the documented External ID, Name, Is a Company and Related Company/External ID headers, plus explicitly owned contact fields. Use Odoo's Test operation, inspect the actual resulting records, and retain its report. The same External IDs make a later import address the same records. Confirm that behavior and one real correction in the customer's selected staging database before its production cutover.
 

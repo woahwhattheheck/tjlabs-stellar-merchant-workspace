@@ -865,6 +865,81 @@ function ocHtml(commercial){
       r.overlaps.map(x=>[x.workId,x.invoiceId+' / '+x.lineId,x.reviewedDistinctCosts,x.note]));
 }
 
+
+/** Read the complete saved native task comparison; its original writer remains authoritative. */
+export const COHORT_TASK_MEASUREMENT_SCHEMA='stellar-forge.sf47-cohort-task-measurement.v1';
+const TASK_OUTCOMES_SCHEMA='stellar-forge.sf47-customer-task-outcomes.v1';
+export function inspectCohortTaskMeasurements(value){
+  const original=jsonSource(value?.value?.edition?value.value:value,'taskMeasurement'),edition=object(original.edition,'taskMeasurement.edition'),source=object(original.source,'taskMeasurement.source');
+  if(edition.schema!==TASK_OUTCOMES_SCHEMA||!/^task-outcomes-[a-f0-9]{32}$/.test(edition.id||'')||
+    !Number.isSafeInteger(edition.revision)||edition.revision<1||!/^source-[a-f0-9]{32}$/.test(source.id||'')||
+    source.mediaType!=='application/vnd.stellar-forge.customer-task-outcomes+json'||!Number.isSafeInteger(source.bytes)||source.bytes<1||
+    !/^[a-f0-9]{64}$/.test(source.sha256||'')||!source.customerTaskOutcomes||
+    canonical(source.customerTaskOutcomes)!==canonical({schema:TASK_OUTCOMES_SCHEMA,id:edition.id,revision:edition.revision,sha256:edition.sha256}))
+    fail('COST_PLAN_MEASUREMENT_SOURCE','Select the complete original saved Task Outcomes response, including source metadata and edition.','taskMeasurement');
+  const captured=object(edition.source,'taskMeasurement.edition.source'),caseSource=object(captured.case,'taskMeasurement.edition.source.case');
+  if(!/^operation-[a-f0-9]{32}$/.test(caseSource.id||'')||!Array.isArray(captured.sources)||!Array.isArray(captured.deployments)||!Array.isArray(captured.purchases))
+    fail('COST_PLAN_MEASUREMENT_SOURCE','Retain the original case, attachments, deployment and purchase context.','taskMeasurement.edition.source');
+  const document=object(edition.document,'taskMeasurement.edition.document');
+  for(const field of ['title','customer','task','unit'])cmRequired(document[field],'taskMeasurement.document.'+field);
+  object(edition.report,'taskMeasurement.edition.report');timestamp(edition.savedAt,'taskMeasurement.edition.savedAt');
+  for(const field of ['sha256','reportSha256','previewSha256'])if(!/^[a-f0-9]{64}$/.test(edition[field]||''))fail('COST_PLAN_MEASUREMENT_SOURCE','Retain every complete original edition digest.','taskMeasurement.edition.'+field);
+  const observed=[{kind:'INSTALLED',observationId:'',label:'Initial installed method',method:document.installed,
+    status:document.status,comparison:document.comparison,conclusion:document.conclusion,acceptance:null,
+    deploymentIds:document.deploymentIds,purchaseIds:document.purchaseIds},
+    ...list(document.followups||[],'taskMeasurement.followups',100).map(row=>({...copy(row),kind:'FOLLOWUP',observationId:row.id}))];
+  const observations=observed.map((row,i)=>{
+    const path='taskMeasurement.observations['+i+']',method=object(row.method,path+'.method');
+    if(!['OBSERVED','ESTIMATED','MIXED','UNRECORDED'].includes(method.basis)||!['DRAFT','REVIEWED'].includes(row.status))
+      fail('COST_PLAN_MEASUREMENT_SOURCE','Retain the original measurement basis and reviewed state.',path);
+    for(const field of ['name','sourceReference','population','period','output','quality','notes'])text(method[field],path+'.'+field);
+    for(const field of ['sourceIds','effort','costs'])list(method[field],path+'.'+field,1000);
+    if(method.observedAt!==null)timestamp(method.observedAt,path+'.observedAt');
+    const quantity=method.completedTasks;
+    if(quantity!==null&&(typeof quantity!=='string'||!/^(0|[1-9][0-9]{0,12})$/.test(quantity)||BigInt(quantity)>1000000000000n))
+      fail('COST_PLAN_MEASUREMENT_SOURCE','Retain the original whole completed-task count.',path+'.completedTasks');
+    const unavailable=[];
+    if(quantity===null||quantity==='0')unavailable.push('Enter a positive completed-task count in the original comparison.');
+    if(method.basis==='UNRECORDED')unavailable.push('Record the measurement basis in the original comparison.');
+    return {kind:row.kind,observationId:row.observationId,label:row.label,quantity,unit:document.unit,
+      basis:method.basis,observedAt:method.observedAt,status:row.status,comparison:copy(row.comparison),
+      acceptance:copy(row.acceptance??null),conclusion:row.conclusion,method:copy(method),
+      deploymentIds:copy(row.deploymentIds),purchaseIds:copy(row.purchaseIds),usable:!unavailable.length,unavailable};
+  });
+  unique(observations.filter(row=>row.kind==='FOLLOWUP'),'observationId','taskMeasurement recurring observations');
+  return {schema:COHORT_TASK_MEASUREMENT_SCHEMA+'.catalog',original,caseId:caseSource.id,comparisonId:edition.id,
+    revision:edition.revision,sourceId:source.id,sourceSha256:source.sha256,title:document.title,customer:document.customer,
+    task:document.task,unit:document.unit,installation:copy(document.installation),observations};
+}
+function fpTaskMeasurement(value,caseId){
+  cmFields(value,['schema','original','kind','observationId','serviceBasis'],'measurement');
+  if(value.schema!==COHORT_TASK_MEASUREMENT_SCHEMA)fail('COST_PLAN_MEASUREMENT_SOURCE','Use the original selected task measurement.','measurement.schema');
+  const catalog=inspectCohortTaskMeasurements(value.original);
+  if(caseId&&catalog.caseId!==caseId)fail('COST_PLAN_MEASUREMENT_CASE','Select the saved measurement in the original commercial case.','measurement.original');
+  if(!['INSTALLED','FOLLOWUP'].includes(value.kind)||typeof value.observationId!=='string')
+    fail('COST_PLAN_MEASUREMENT_SELECTION','Select the installed method or one exact recurring observation.','measurement');
+  const selected=catalog.observations.find(row=>row.kind===value.kind&&row.observationId===value.observationId);
+  if(!selected||!selected.usable)fail('COST_PLAN_MEASUREMENT_SELECTION',selected?.unavailable.join(' ')||'The original selected observation is absent.','measurement');
+  const measurement={schema:COHORT_TASK_MEASUREMENT_SCHEMA,original:catalog.original,kind:value.kind,
+    observationId:value.observationId,serviceBasis:cmRequired(value.serviceBasis,'measurement.serviceBasis',12000)};
+  const outputSource=catalog.customer+' · '+catalog.title+'; '+catalog.comparisonId+' revision '+catalog.revision+
+    '; '+(selected.kind==='INSTALLED'?'installed method':'observation '+selected.observationId)+
+    '; '+selected.basis+'; source '+catalog.sourceId+' / '+catalog.sourceSha256+'. '+measurement.serviceBasis;
+  return {measurement,selected,catalog,outputQuantity:selected.quantity,outputUnit:selected.unit,outputSource};
+}
+/** Explicit acceptance replaces the selected denominator and retains every earlier selected basis. */
+export function bindCohortRecordedCostMeasurement(allocation,original,selection){
+  object(allocation,'allocation');cmFields(selection,['kind','observationId','serviceBasis'],'measurement selection');
+  const next=copy(allocation),bound=fpTaskMeasurement({schema:COHORT_TASK_MEASUREMENT_SCHEMA,original,
+    kind:selection.kind,observationId:selection.observationId??'',serviceBasis:selection.serviceBasis});
+  if(next.measurement&&canonical(next.measurement)!==canonical(bound.measurement)){
+    next.measurementHistory=[...(next.measurementHistory||[]),{measurement:copy(next.measurement),
+      outputQuantity:next.outputQuantity,outputUnit:next.outputUnit,outputSource:next.outputSource}];
+  }
+  Object.assign(next,{measurement:bound.measurement,outputQuantity:bound.outputQuantity,outputUnit:bound.outputUnit,outputSource:bound.outputSource});
+  return jsonSource(next,'allocation');
+}
+
 /** Complete original actual-cost basis for a prospective adoption plan. */
 export const COHORT_RECORDED_COST_PLAN_SCHEMA='stellar-forge.sf47-cohort-recorded-cost-plan.v1';
 function fpDivide(a,b,path){
@@ -893,13 +968,28 @@ export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
   const totals=new Map(),targets=new Set(),derivations=[];
   for(const [index,mapping]of mappings.entries()){
     const path='choices.allocations['+index+']';
-    cmFields(mapping,['id','targetScheduleId','sourceServiceId','outputQuantity','outputUnit','outputSource','supplierCoverage','laborCoverage','coverageNote','costs'],path);
+    cmFields(mapping,['id','targetScheduleId','sourceServiceId','outputQuantity','outputUnit','outputSource','supplierCoverage','laborCoverage','coverageNote','costs','measurement','measurementHistory'],path);
+    let measured=mapping.measurement?fpTaskMeasurement(mapping.measurement,sourceDocument.source.programId):null;
     const row={id:mapping.id,targetScheduleId:cmRequired(mapping.targetScheduleId,path+'.targetScheduleId',500),
       sourceServiceId:cmRequired(mapping.sourceServiceId,path+'.sourceServiceId',500),
-      outputQuantity:cmText(cmDecimal(mapping.outputQuantity,path+'.outputQuantity')),
-      outputUnit:cmRequired(mapping.outputUnit,path+'.outputUnit',300),outputSource:cmRequired(mapping.outputSource,path+'.outputSource'),
+      outputQuantity:cmText(cmDecimal(mapping.outputQuantity??measured?.outputQuantity,path+'.outputQuantity')),
+      outputUnit:cmRequired(mapping.outputUnit??measured?.outputUnit,path+'.outputUnit',300),outputSource:cmRequired(mapping.outputSource??measured?.outputSource,path+'.outputSource'),
       supplierCoverage:mapping.supplierCoverage,laborCoverage:mapping.laborCoverage,
       coverageNote:cmRequired(mapping.coverageNote,path+'.coverageNote'),costs:[]};
+    if(measured){
+      if(row.outputQuantity!==measured.outputQuantity||row.outputUnit!==measured.outputUnit||row.outputSource!==measured.outputSource)
+        fail('COST_PLAN_MEASUREMENT_CHANGED','The selected count, unit or original reference differs from the retained measurement. Explicitly select a new measurement or return this allocation to manual input.',path);
+      row.measurement=measured.measurement;
+    }
+    if(mapping.measurementHistory!==undefined){
+      row.measurementHistory=list(mapping.measurementHistory,path+'.measurementHistory',1000).map((previous,i)=>{
+        cmFields(previous,['measurement','outputQuantity','outputUnit','outputSource'],path+'.measurementHistory.'+i);
+        const retained=fpTaskMeasurement(previous.measurement,sourceDocument.source.programId);
+        if(previous.outputQuantity!==retained.outputQuantity||previous.outputUnit!==retained.outputUnit||previous.outputSource!==retained.outputSource)
+          fail('COST_PLAN_MEASUREMENT_CHANGED','Retain the complete preceding measurement selection.',path+'.measurementHistory.'+i);
+        return copy(previous);
+      });
+    }
     if(cmDecimal(row.outputQuantity,path).n===0n)fail('COST_PLAN_OUTPUT_REQUIRED','Enter the actual positive useful-output quantity, with its original measurement basis.',path);
     if(!['PARTIAL','COMPLETE'].includes(row.supplierCoverage)||!['PARTIAL','COMPLETE'].includes(row.laborCoverage))
       fail('COST_PLAN_COVERAGE_REQUIRED','Explicitly classify supplier and labor coverage as PARTIAL or COMPLETE.',path);
@@ -938,6 +1028,9 @@ export function planCohortFromRecordedCosts(recordedDocument,planDocument,raw){
     derivations.push({id:row.id,targetScheduleId:row.targetScheduleId,sourceServiceId:row.sourceServiceId,
       outputQuantity:row.outputQuantity,outputUnit:row.outputUnit,outputSource:row.outputSource,
       sourceService:copy(service),originalEconomics:copy(schedule.economics),derivedEconomics:copy(next),
+      ...(measured?{measurement:{...copy(measured.selected),comparisonId:measured.catalog.comparisonId,revision:measured.catalog.revision,
+        sourceId:measured.catalog.sourceId,sourceSha256:measured.catalog.sourceSha256,customer:measured.catalog.customer,task:measured.catalog.task,
+        serviceBasis:measured.measurement.serviceBasis}}:{}),
       supplierCoverage:row.supplierCoverage,laborCoverage:row.laborCoverage,coverageNote:row.coverageNote,
       knownSupplierCost:cmText(supplier),knownLaborCost:cmText(labor),knownActiveHours:cmText(hours),
       supplierComplete:completeSupplier,laborComplete:completeLabor,hoursComplete:completeHours,contributions,
@@ -964,6 +1057,7 @@ export function exportCohortRecordedCostPlanCsv(document){
     ['recorded_source','original',JSON.stringify(result.sourceDocument)],['baseline_plan','original',JSON.stringify(result.planDocument)],
     ...result.derivations.map(row=>['derived_schedule',row.targetScheduleId,JSON.stringify(row)]),
     ...result.costBalances.map(row=>['recorded_cost_balance',row.costId,JSON.stringify(row)]),
+    ...(result.choices.allocations.some(row=>row.measurement||row.measurementHistory?.length)?[['planning_choices','original',JSON.stringify(result.choices)]]:[]),
     ['candidate_plan','successor',JSON.stringify(result.candidate)],['comparison','complete',JSON.stringify(result.comparison)]];
   return rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n')+'\r\n';
 }

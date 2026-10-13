@@ -69,9 +69,9 @@ The complete input adds:
 - targetExisting: complete selected target export for the namespace/mapped records.
 - targetBaselineComplete: true only for that complete declared target baseline.
 
-Each source company/person has string sourceId and name. It can also have email, phone, explicit targetExternalId and clearFields. Each person can have companySourceId; an absent parent preserves a standalone person in this selected import.
+Each source company/person has string sourceId and name. It can also have email, phone, explicit targetExternalId and clearFields. Each person can have companySourceId. For a new person, omission creates a standalone contact. For an existing target, omission preserves its exported parentExternalId; the complete baseline includes that parent company. An explicit empty companySourceId clears an existing relation only with parent in clearFields. Existing target rows must include parentExternalId, including an actual empty string. New company-to-company hierarchy selections remain explicit review items for the commissioned target ordering.
 
-Each targetExisting row has externalId, kind (company or person), and the actual baseline values of every owned contact field. A baseline field used for preservation must exist. Keep the corresponding original Odoo export in the input's source originals.
+Each targetExisting row has externalId, kind (company or person), parentExternalId, and the actual baseline values of every owned contact field. A baseline field used for preservation must exist. Keep the corresponding original Odoo export in the input's source originals.
 
 Example source record:
 

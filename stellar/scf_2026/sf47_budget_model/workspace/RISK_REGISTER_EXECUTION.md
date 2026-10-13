@@ -39,3 +39,48 @@ Archives are private full-state handovers and contain authentication material re
 With the library cohort selected, the owner invokes the unchanged full upload workflow once for the closed archive, saves its exact request and original ordered result under upload-state, and emits every ordered result before aggregate failure. A passive observer retains the exact original prepare/finalize request and response envelopes under upload-state; an observer failure never prevents or changes the original delegate invocation or result. Provider/helper state stays outside the case archive. An existing request without a returned result is retained for reconciliation before any second upload. It does not rerun a native case to recover a save. Ordinary successful successors use the original returned file identity and actual observed version.
 
 The final immutable closure receipt is published only after the execution guard's owned descriptor closes. It identifies the complete closed ZIP and save result. Native or browser failures still produce an interrupted closed-case archive only after all actual owners drain. A source-level prepared package is not a completed runtime result.
+
+## Bounded runtime identity checks
+
+Runtime and corrected-source identity checks read the complete regular file through a 128 KiB hash window. They preserve the selected byte count, SHA256, mode and descriptor/path inode identity, and reject size, modification-time or change-time drift during the read. They do not retain full interpreter or Chromium binaries in memory. Original application source still receives complete member verification. This reduces transient verifier allocations; it does not provide memory for Chromium when the shared host is already full.
+
+## Explicit execution continuation of an existing case
+
+An interrupted original case may need a correction to this owner and its browser companion while its accepted domain course and source selection remain pinned. The optional `--execution-continuation` argument points to a private JSON descriptor `{path,bytes,sha256}` of a complete sidecar. Ordinary invocation retains its original source checks and behavior.
+
+The sidecar schema is `stellar-forge.sf47-risk-execution-continuation.v1`. Its top-level fields are:
+
+- `operationId`: the original execution input's operationId.
+- `original`: exact absolute path/bytes/sha256 descriptors named `sourceManifest`, `executionInput`, `executionSelection`, `executionJournal`, `browserSelection` and `browserJournal`.
+- `corrections`: exactly `python` and `node`. Each has the original repository-relative `repositoryPath` and complete `original` and `current` descriptors with `path`, `bytes`, `sha256` and integer permission `mode`.
+- `reason`: the concrete execution correction.
+- `sourcePublication`: the real repository, reachable source commit or complete source-packet identity, and selected leaf identities needed to reacquire the corrected source.
+
+The Python correction selects `operations_risks_execution.py`; the Node correction selects the original `browserScript`. Both original files must still match the unchanged full manifest. Put corrected complete source in a separate source directory outside both the original repository and private case. The original scenario, full source manifest, execution input and browser SELECTION remain byte-for-byte unchanged.
+
+The outer operation and native course use different original identifiers. The sidecar operationId binds the outer execution input. The native UUID prefix remains bound by the original native handover and browser SELECTION. The continuation does not rename either operation or manufacture a new request identity.
+
+Before constructing the case owner or rewriting a journal, the parent acquires the original execution guard and publishes these exact files beneath `execution-continuations/<sidecar-sha256>/`:
+
+1. `prior-browser-journal.json`: complete exact predecessor selected by the sidecar.
+2. `prior-execution-journal.json`: complete exact parent predecessor.
+3. `execution-continuation.json`: exact selected sidecar bytes.
+4. `ADOPTED.json`: schema `stellar-forge.sf47-risk-execution-continuation-adopted.v1` and `executionContinuation:{reference,document}`.
+
+ADOPTED is the final publication, after both predecessors and the sidecar are retained. A failed admission leaves the original journals unchanged. Reentry verifies the retained predecessors and record instead of interpreting an advanced journal as the original snapshot.
+
+The parent passes the sidecar descriptor to the same selected browser child. The browser verifies both corrected modules, unchanged complete original source and stable selection, exact ADOPTED and both predecessor snapshots. Its journal, immutable result candidate, completed result and every closure carry the same `executionContinuation:{reference,document}` separately from the original selection. The parent checks those records before accepting the three native ZIP exports.
+
+Run the corrected complete owner directly with the original input:
+
+```sh
+SELECTED_PYTHON -B /absolute/corrected-source/operations_risks_execution.py \
+  --input /absolute/original-preparation/RISK_EXECUTION_INPUT.json \
+  --execution-continuation /absolute/private/execution-continuation-reference.json
+```
+
+Do not rerun preparation with new packets over the existing selected source. The retained native course result republishes or verifies its original accepted requests; the resumed browser retains its original draft, third-edition request and download journal. If the interrupted browser never committed its third command, the same declared browser course performs that original assigned action once through the operator controls.
+
+The existing guard, fixed host port, actual installation identity and full owner drain remain authoritative. Before a replacement browser launch, the companion reconciles all recorded prior processes and performs a complete census for the original attempt profiles. A killed Node process does not itself prove its browser descendants have closed. Reclaim shared capacity through its actual owner before repeating a run that was interrupted by memory exhaustion.
+
+The closed private case includes the continuation metadata and exact predecessor journals. Git-backed corrected code remains in the source publication. The original source manifest stays unchanged, and the complete private case continues the existing saved file and observed version through the unchanged upload helper. The continuation record accompanies interrupted as well as completed outcomes.

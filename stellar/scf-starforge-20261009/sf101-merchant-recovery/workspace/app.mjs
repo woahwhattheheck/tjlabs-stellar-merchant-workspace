@@ -1,3 +1,4 @@
+import {createObjectBundleDesk} from './object-bundles-desk.mjs';
 import {createRecoverySupportDesk} from './recovery-support-desk.mjs';
 import {createObjectRecoveryDesk} from './object-sessions-desk.mjs';
 // MIT. Industrial operator interface; all recovery actions use the original engine.
@@ -653,6 +654,7 @@ function applyState(value, initialize = false) {
     selected.store.bucket + '/' + selected.store.prefix + ' · ' + selected.store.region : 'Local recovery';
   objectDesk.update(value,profileId);
   supportDesk.update(value,profileId,[...requests.values()]);
+  bundleDesk.update(value,profileId,[...requests.values()]);
   renderDeclaredRestores(); renderFleetRestores(); syncCapabilities();
   if (review && !localCommand(review.command) && !remoteConfigured(selected)) invalidateReview();
   $('passphrase-summary').textContent = selected.passphraseAvailable ? 'Available from host environment' :
@@ -901,13 +903,14 @@ function progressText(row) {
 }
 
 function renderRequests() {
-  if(current){objectDesk.update(current,profileId);supportDesk.update(current,profileId,[...requests.values()]);}
+  if(current){objectDesk.update(current,profileId);supportDesk.update(current,profileId,[...requests.values()]);bundleDesk.update(current,profileId,[...requests.values()]);}
   const rows = [...requests.values()].filter(row => row.profileId === profileId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const signature = JSON.stringify([profileId, remoteConfigured(), rows]);
   if (signature === lastRequests) return;
   lastRequests = signature;
   const children = [];
   for (const row of rows) {
+    if(bundleDesk.isRequest(row)){children.push(bundleDesk.requestCard(row));continue;}
     if(objectDesk.isRequest(row)){children.push(objectDesk.requestCard(row));continue;}
     const isLocal = localCommand(row.review.command);
     const item = element('article', undefined, 'request'), heading = element('div', undefined, 'request-head');
@@ -1110,6 +1113,26 @@ async function boot() {
     setTimeout(poll, 5000);
   } catch (error) { notice(errorText(error), true); }
 }
+async function downloadEncryptedBundle(path,selection){
+  if(typeof showSaveFilePicker!=='function'){
+    showDetails('Complete native encrypted archive',await selection.resolve());
+    throw new Error('This browser cannot stream directly to a chosen file. Transfer the displayed native archive path with the existing file tools; preserve its full byte length and SHA-256.');
+  }
+  const file=await showSaveFilePicker({suggestedName:selection.filename,types:[{description:'Complete encrypted recovery archive',accept:{'application/x-tar':['.tar']}}]});
+  const identity=await selection.resolve();
+  const output=await file.createWritable();let reader;
+  try{
+    const response=await fetch(path,{headers:{'X-Recovery-Token':token},credentials:'omit',cache:'no-store'});
+    if(!response.ok||response.headers.get('x-source-sha256')!==identity.sha256||
+      response.headers.get('content-length')!==String(identity.bytes))throw new Error('The archive response does not match the selected complete identity.');
+    reader=response.body.getReader();let count=0;
+    while(true){const {done,value}=await reader.read();if(done)break;
+      count+=value.byteLength;if(count>identity.bytes)throw new Error('The archive exceeded its retained byte count.');await output.write(value);}
+    if(count!==identity.bytes)throw new Error('The encrypted archive transfer was incomplete.');
+    await output.close();
+  }catch(error){await reader?.cancel().catch(()=>{});await output.abort().catch(()=>{});throw error;}
+}
+const bundleDesk=createObjectBundleDesk({root:$('object-bundle-panel'),api,post,refresh:refreshState,notice,showDetails,download:downloadEncryptedBundle});
 const supportDesk=createRecoverySupportDesk({root:$('recovery-support-panel'),api,post,notice,showDetails});
 const objectDesk=createObjectRecoveryDesk({root:$('object-recovery-panel'),api,post,refresh:refreshState,notice,showDetails});
 boot();

@@ -8,12 +8,15 @@ import { initializationDirectory, initializationBytes, optionalInitializationByt
 import { openCustomerDelivery } from '../model.mjs';
 import { bytes, need, identity, digest, measure, copyFile, inspectPackage, MAX_PACKAGE } from '../format.mjs';
 
-export async function receiveCustomerDelivery({directory,collections,sourceRoot,sourceManifest,collectionId,intentIds,playwright,chromium,onProgress=()=>{}}){
- need(collections&&playwright?.chromium&&typeof chromium==='string','CUSTOMER_DELIVERY_RECEIVING_INPUT');
+export async function receiveCustomerDelivery({directory,collections=null,sourceRoot,sourceManifest,collectionId,intentIds,taskPacket,expectedTaskSha256,playwright,chromium,onProgress=()=>{}}){
+ const taskOrigin=collections===null;
+ need((collections||typeof taskPacket==='string'&&/^[a-f0-9]{64}$/.test(expectedTaskSha256??''))&&playwright?.chromium&&typeof chromium==='string','CUSTOMER_DELIVERY_RECEIVING_INPUT');
+ const senderDirectory=taskOrigin?join(directory,'sender'):collections.directory;
+ const previewPath='/api/customer-delivery/'+(taskOrigin?'task-preview':'preview'),preparePath='/api/customer-delivery/'+(taskOrigin?'task-prepare':'prepare');
  await initializationDirectory(directory,{create:true});const release=await acquireCollectionLease(directory);
  const statePath=join(directory,'operation.json');let state;
  try{state=JSON.parse((await optionalInitializationBytes(statePath))??'null');}catch(error){await release();throw error;}
- const selection={sourceRoot,sourceManifest,collectionId,intentIds,collectionsDirectory:collections.directory,queueRoot:collections.queueRoot,chromium};
+ const selection=taskOrigin?{kind:'inbox-task',sourceRoot,sourceManifest,taskPacket,expectedTaskSha256,intentIds,senderDirectory,chromium}:{sourceRoot,sourceManifest,collectionId,intentIds,collectionsDirectory:collections.directory,queueRoot:collections.queueRoot,chromium};
  const save=async()=>{const temporary=join(directory,'.operation-'+randomUUID());await writeFile(temporary,bytes(state),{mode:0o600});const h=await import('node:fs/promises').then(m=>m.open(temporary,'r+'));try{await h.sync();}finally{await h.close();}await rename(temporary,statePath);const d=await import('node:fs/promises').then(m=>m.open(directory,'r'));try{await d.sync();}finally{await d.close();}};
  let sender,recipient,browser,context,desk,receivingDesk;let error=null;
  const files=join(directory,'files');try{await initializationDirectory(files,{create:true});}catch(error){await release();throw error;}
@@ -46,46 +49,54 @@ export async function receiveCustomerDelivery({directory,collections,sourceRoot,
   return page;
  }
  try{
-  if(!state){const original=await collections.inspect(collectionId);state={schema:'stellar-forge.sf88.customer-delivery-receiving.v1',operationId:'customer-delivery-'+randomUUID(),selection,request:{id:'receiving-'+randomUUID(),collectionId,expectedManifestSha256:original.manifestSha256,title:'Complete original customer results',note:'Customer delivery programme over original retained Inbox jobs.',intentIds,sourceRoot,sourceManifest,maxVerifyBytes:1073741824,allowIncomplete:false},steps:{},files:[],pageErrors:[]};await save();}
+  if(!state){const original=taskOrigin?null:await collections.inspect(collectionId);state={schema:'stellar-forge.sf88.customer-delivery-receiving.v1',operationId:'customer-delivery-'+randomUUID(),selection,request:taskOrigin?{kind:'inbox-task',id:'receiving-'+randomUUID(),packetDirectory:taskPacket,expectedTaskSha256,title:'Complete original customer results',note:'Customer delivery from the original received InboxTask; original attempt and recovered response remain separate.',intentIds,sourceRoot,sourceManifest}:{id:'receiving-'+randomUUID(),collectionId,expectedManifestSha256:original.manifestSha256,title:'Complete original customer results',note:'Customer delivery programme over original retained Inbox jobs.',intentIds,sourceRoot,sourceManifest,maxVerifyBytes:1073741824,allowIncomplete:false},steps:{},files:[],pageErrors:[]};await save();}
   need(identity(state.selection)===identity(selection),'CUSTOMER_DELIVERY_RECEIVING_SELECTION_CHANGED');
   if(state.complete){
    for(const row of state.files)await measure(join(files,row.name),row,row.kind==='package'?MAX_PACKAGE:undefined);
    const result=JSON.parse(await initializationBytes(join(directory,'result.json')));need(result.operationId===state.operationId,'CUSTOMER_DELIVERY_RECEIVING_RESULT');return result;
   }
-  desk=await openCustomerDelivery({collections,directory:join(collections.directory,'customer-delivery')});
+  await initializationDirectory(senderDirectory,{create:true});
+  desk=await openCustomerDelivery({collections,directory:join(senderDirectory,'customer-delivery')});
   const receiveRoot=join(directory,'customer');await initializationDirectory(receiveRoot,{create:true});
   receivingDesk=await openCustomerDelivery({directory:join(receiveRoot,'customer-delivery')});
-  if(!state.preview){state.preview=await desk.preview(state.request);await save();}
-  sender=await serveCollections(collections,{port:state.senderPort??0,approvalMode:'TERMINAL'});
+  if(!state.preview){state.preview=await desk[taskOrigin?'previewTask':'preview'](state.request);await save();}
+  sender=await serveCollections(collections,{port:state.senderPort??0,approvalMode:'TERMINAL',...(taskOrigin?{receivingDirectory:senderDirectory}:{})});
   if(!state.senderPort){state.senderPort=Number(new URL(sender.origin).port);await save();}
   let page=await browserOpen(sender.origin,sender.token);
+  if(taskOrigin)await page.locator('[data-tab="prepare"]').click();
   if(!state.steps.prepared){
    let original;
    try{original=await desk.inspect(state.request.id);}catch(cause){if(cause.code!=='CUSTOMER_DELIVERY_NOT_FOUND')throw cause;}
    if(original){
     need(original.previewSha256===state.preview.previewSha256&&identity(original.request)===identity(state.request),'CUSTOMER_DELIVERY_ORIGINAL_REQUEST_CHANGED');
-    const pending={kind:'prepare',path:'/api/customer-delivery/prepare',body:{...state.request,expectedPreviewSha256:state.preview.previewSha256}};
+    const pending={kind:'prepare',path:preparePath,body:{...state.request,expectedPreviewSha256:state.preview.previewSha256}};
     await page.evaluate(async pending=>{
      const scope=window.customerDelivery.inspect().scope;
      const database=await new Promise((resolve,reject)=>{const request=indexedDB.open('sf88-customer-delivery',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
      try{await new Promise((resolve,reject)=>{const tx=database.transaction('states','readwrite'),store=tx.objectStore('states'),read=store.get(scope);let failure;
-      read.onsuccess=()=>{const existing=read.result??null;if(existing?.pending&&JSON.stringify(existing.pending)!==JSON.stringify(pending)){failure=new Error('Another retained request owns this browser scope.');tx.abort();return;}store.put({pending,last:existing?.last??null},scope);};
+      read.onsuccess=()=>{const existing=read.result??null;if(existing?.pending&&JSON.stringify(existing.pending)!==JSON.stringify(pending)){failure=new Error('Another retained request owns this browser scope.');tx.abort();return;}store.put({...existing,pending,last:existing?.last??null},scope);};
       tx.oncomplete=resolve;tx.onerror=()=>reject(failure??tx.error);tx.onabort=()=>reject(failure??tx.error);
      });}finally{database.close();}
     },pending);
    }else{
-    await page.locator('#collection').selectOption(collectionId);await page.waitForFunction(id=>document.querySelector('#collection').value===id&&!window.customerDelivery.inspect().busy,collectionId);
-    for(const [selector,value] of [['#delivery-id',state.request.id],['#title',state.request.title],['#note',state.request.note],['#source-root',sourceRoot],['#source-manifest',sourceManifest],['#verify-limit',String(state.request.maxVerifyBytes)]])await page.locator(selector).fill(value);
+    if(taskOrigin){
+     await page.locator('#origin-kind').selectOption('inbox-task');await page.waitForFunction(()=>!window.customerDelivery.inspect().busy);
+     await page.locator('#task-packet').fill(taskPacket);await page.locator('#task-sha').fill(expectedTaskSha256);
+     const read=page.waitForResponse(response=>response.url().endsWith('/api/customer-delivery/task-inspect')&&response.request().method()==='POST');
+     await page.locator('#load-task').click();const observedTask=await(await read).json();need(observedTask.task.taskSha256===expectedTaskSha256,'CUSTOMER_DELIVERY_ORIGINAL_TASK_CHANGED');
+     await page.waitForFunction(()=>!window.customerDelivery.inspect().busy&&document.querySelector('[data-intent]'));
+    }else{await page.locator('#collection').selectOption(collectionId);await page.waitForFunction(id=>document.querySelector('#collection').value===id&&!window.customerDelivery.inspect().busy,collectionId);}
+    for(const [selector,value] of [['#delivery-id',state.request.id],['#title',state.request.title],['#note',state.request.note],['#source-root',sourceRoot],['#source-manifest',sourceManifest],...(taskOrigin?[]:[['#verify-limit',String(state.request.maxVerifyBytes)]])])await page.locator(selector).fill(value);
     for(const checkbox of await page.locator('[data-intent]').all())await checkbox.setChecked(intentIds.includes(await checkbox.getAttribute('value')));
-    const previewResponse=page.waitForResponse(response=>response.url().endsWith('/api/customer-delivery/preview')&&response.request().method()==='POST');
+    const previewResponse=page.waitForResponse(response=>response.url().endsWith(previewPath)&&response.request().method()==='POST');
     await page.locator('#review-selection').click();const observedPreview=await (await previewResponse).json();need(observedPreview.previewSha256===state.preview.previewSha256,'CUSTOMER_DELIVERY_ORIGINAL_PREVIEW_CHANGED');
     await page.locator('#preview').waitFor({state:'visible'});
     // Lose only the response after the real original server has completed it.
     let lost=false;
-    await page.route('**/api/customer-delivery/prepare',async route=>{if(lost)return route.continue();lost=true;const response=await route.fetch();need(response.ok(),'CUSTOMER_DELIVERY_PREPARE_FAILED');await route.abort('failed');});
+    await page.route('**'+preparePath,async route=>{if(lost)return route.continue();lost=true;const response=await route.fetch();need(response.ok(),'CUSTOMER_DELIVERY_PREPARE_FAILED');await route.abort('failed');});
     await page.locator('#prepare-package').click();await page.waitForFunction(()=>window.customerDelivery.inspect().pending&&!window.customerDelivery.inspect().busy);
     state.steps.originalRequestRetained=true;await save();
-    await page.unroute('**/api/customer-delivery/prepare');
+    await page.unroute('**'+preparePath);
    }
    await page.reload();await page.locator('#token').fill(sender.token);await page.locator('#login-form button').click();await page.waitForFunction(()=>window.customerDelivery.inspect().storageReady&&!window.customerDelivery.inspect().busy);
    await page.locator('#retry').click();await page.waitForFunction(()=>!window.customerDelivery.inspect().pending&&!window.customerDelivery.inspect().busy);
@@ -115,7 +126,10 @@ export async function receiveCustomerDelivery({directory,collections,sourceRoot,
    state.received=await receivingDesk.received(state.original.package.sha256);need(state.received.outputsComplete&&identity(state.received.manifest)===identity(state.original.manifest),'CUSTOMER_DELIVERY_RECEIVED_IDENTITY');state.steps.received=true;await save();
   }else{await page.locator('[data-received-open="'+state.original.package.sha256+'"]').click();await page.locator('#received-view h3').waitFor();}
   const history=await receivingDesk.listReceived();
-  need(history.packages.some(row=>row.sha256===state.original.package.sha256&&row.state==='COMPLETE'&&row.manifestSha256===state.original.package.manifestSha256),'CUSTOMER_DELIVERY_RECEIVED_HISTORY');
+  const historyRow=history.packages.find(row=>row.sha256===state.original.package.sha256&&row.state==='COMPLETE'&&row.manifestSha256===state.original.package.manifestSha256);
+  need(historyRow,'CUSTOMER_DELIVERY_RECEIVED_HISTORY');
+  if(taskOrigin)need(historyRow.collectionId===null&&historyRow.task?.taskSha256===expectedTaskSha256&&identity(historyRow.task)===identity(state.original.manifest.task),'CUSTOMER_DELIVERY_RECEIVED_TASK_HISTORY');
+  else need(historyRow.collectionId===collectionId&&!historyRow.task,'CUSTOMER_DELIVERY_RECEIVED_COLLECTION_HISTORY');
   // The same browser restores its verified selection without re-entering a hash.
   await page.reload();await page.locator('#token').fill(recipient.token);await page.locator('#login-form button').click();
   await page.waitForFunction(sha=>!window.customerDelivery.inspect().busy&&window.customerDelivery.inspect().selectedReceivedSha256===sha&&document.querySelector('#received-view')?.dataset.sha256===sha&&document.querySelector('#received-view h3'),state.original.package.sha256);
@@ -147,7 +161,7 @@ export async function receiveCustomerDelivery({directory,collections,sourceRoot,
   }
   await screenshot(page,'recipient-history-cold-reopen.png');state.steps.recipientHistoryColdReopened=true;await save();
   const repeated=await receivingDesk.receive({file:join(files,'customer-delivery.ndjson'),expectedSha256:state.original.package.sha256});const {directory:ignored,...exact}=repeated;need(identity(exact)===identity(state.received),'CUSTOMER_DELIVERY_SAME_RECEIVE');
-  const replay=await desk.prepare({...state.request,expectedPreviewSha256:state.preview.previewSha256});need(identity(replay)===identity(state.original),'CUSTOMER_DELIVERY_ORIGINAL_REQUEST_REPLAY');
+  const replay=await desk[taskOrigin?'prepareTask':'prepare']({...state.request,expectedPreviewSha256:state.preview.previewSha256});need(identity(replay)===identity(state.original),'CUSTOMER_DELIVERY_ORIGINAL_REQUEST_REPLAY');
   need(state.pageErrors.length===0,'CUSTOMER_DELIVERY_BROWSER_ERRORS');
   state.steps.coldReopened=true;await save();
  }catch(cause){error=cause;}

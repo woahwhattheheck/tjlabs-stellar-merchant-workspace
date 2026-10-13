@@ -10,7 +10,7 @@ Use the complete current Merchant installation with the `x402api-merchant` featu
 - `original/`: complete original business and source files.
 - `runtime/`: original received source archive, source tree, review configuration and independently received workspace.
 
-Finish an interrupted original receiving through its existing request before adding the review application. The review entry reads the complete saved result and uses that exact receiving request to verify the original archive, source and runtime publication. It keeps the current runtime records and file-recovery progress.
+[Receive merchant project](PROJECT_INTAKE.md) can inspect, receive and resume the original archive through Applications. Finish that same receiving before adding a separate review application. The review entry reads the complete saved result and uses that exact receiving request to verify the original archive, source and runtime publication. It keeps the current runtime records and file-recovery progress.
 
 ## Prepare the private review credential
 
@@ -65,10 +65,11 @@ stellar-forge x402api-merchant-review \
 
 Supply the private credential through the original environment. Use `--operator-token-env NAME` to select its environment name. Managed Applications additionally pins `--expect-project-sha256` to the exact reviewed project selection.
 
-The source provider retains both application kinds:
+The source provider retains these application kinds:
 
 | Application | Command | Original resource |
 | --- | --- | --- |
+| Receive merchant project | `x402api-merchant-intake` | The original receive destination's workspace |
 | Merchant invoices | `x402api-merchant serve` | Selected live workspace |
 | Received merchant review | `x402api-merchant-review` | The completed project's received workspace |
 
@@ -77,14 +78,14 @@ The receiving programme `received-review-receiving.mjs` operates one original co
 Run that full receiving against the original completed five-invoice case and its existing installed runtime:
 
 ```sh
-node products/x402api-merchant-workspace/received-review-receiving.mjs \\
-  --project /absolute/original-received-project \\
-  --runtime /absolute/installed-merchant-runtime \\
-  --applications /absolute/existing-applications-workspace \\
-  --output /absolute/private/received-review-operation \\
-  --environment-file /absolute/private/review-environment.json \\
-  --python /absolute/path/to/python3 \\
-  --playwright /absolute/path/to/playwright/index.js \\
+node products/x402api-merchant-workspace/received-review-receiving.mjs \
+  --project /absolute/original-received-project \
+  --runtime /absolute/installed-merchant-runtime \
+  --applications /absolute/existing-applications-workspace \
+  --output /absolute/private/received-review-operation \
+  --environment-file /absolute/private/review-environment.json \
+  --python /absolute/path/to/python3 \
+  --playwright /absolute/path/to/playwright/index.js \
   --chromium /absolute/path/to/chromium
 ```
 

@@ -4,7 +4,7 @@ import {COHORT_PLAN_SCHEMA, COHORT_PLAN_REPORT_SCHEMA, COHORT_PLAN_COMPARISON_SC
 import {seedCohortPlanFromCalendar} from './cohort_planning_calendar.mjs';
 import {COHORT_DELIVERY_SCHEDULE_SCHEMA, seedCohortDeliveryScheduling, scheduleCohortDelivery, reopenCohortDeliverySchedule, exportCohortDeliveryScheduleCsv} from './cohort_planning_scheduling.mjs';
 
-import {COHORT_RECORDED_COST_PLAN_SCHEMA,seedCohortRecordedCostPlan,planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv,reopenCohortDeliveryComparison} from './cohort_delivery_comparison.mjs';
+import {COHORT_RECORDED_COST_PLAN_SCHEMA,seedCohortRecordedCostPlan,planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv,reopenCohortDeliveryComparison,inspectCohortTaskMeasurements,bindCohortRecordedCostMeasurement} from './cohort_delivery_comparison.mjs';
 
 const EDITION_SCHEMA='stellar-forge.sf47-cohort-plan-edition.v1';
 const SESSION_SCHEMA='stellar-forge.sf47-cohort-planning-session.v1';
@@ -75,7 +75,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   const sourceOptions=()=>{const values=new Map();for(const item of [...(state.latestSeed?.sources||[]),...(caseValue.sources||[])])values.set(item.id,item);return [...values.values()].map(item=>[item.id,item.filename+' · '+String(item.sha256||'').slice(0,12)]);};
   const inputMatchesReport=()=>Boolean(state.report&&plan()&&state.reportInput===JSON.stringify(plan()));
   function persist(critical=false){
-    const retained={};for(const key of ['recordedCostSource','recordedCostBaseline','recordedCostChoices','recordedCostPreview','recordedCostPlan','recordedCostDraft','recordedCostSelectedSource','recordedCostHistory','schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions','viewedSource','rejected','workingSnapshots','workingHistory','workingIncoming','workingSnapshotIds','workingStorage'])retained[key]=state[key];
+    const retained={};for(const key of ['recordedCostMeasurementEditor','recordedCostSource','recordedCostBaseline','recordedCostChoices','recordedCostPreview','recordedCostPlan','recordedCostDraft','recordedCostSelectedSource','recordedCostHistory','schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions','viewedSource','rejected','workingSnapshots','workingHistory','workingIncoming','workingSnapshotIds','workingStorage'])retained[key]=state[key];
     if(state.workingStorage==='INDEXED_DB'){delete retained.workingSnapshots;retained.workingSnapshotIds=Object.keys(state.workingSnapshots||{}).length?Object.keys(state.workingSnapshots):state.workingSnapshotIds||[];}
     try{sessionStorage.setItem(storageKey,JSON.stringify(retained));state.storageWarning='';}catch(error){state.storageWarning='This browser could not retain the latest local draft. Download its JSON before closing this tab.';if(critical)throw new Error('The browser could not retain the exact source request before dispatch. Download the draft or free this site’s session storage, then save again. '+error.message);}
   }
@@ -637,7 +637,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   let planningReadSequence=0;
   function planningFingerprint(){
     return JSON.stringify([state.plan,state.parentSourceId,state.savedSourceId,state.editor,state.editorDraft,state.rowDrafts,
-      state.comparison,state.schedulingResult,state.schedulingOptions,state.recordedCostSource,state.recordedCostBaseline,state.recordedCostChoices,state.recordedCostPlan,state.recordedCostDraft,state.pending,state.accepted]);
+      state.comparison,state.schedulingResult,state.schedulingOptions,state.recordedCostSource,state.recordedCostBaseline,state.recordedCostChoices,state.recordedCostPlan,state.recordedCostDraft,state.recordedCostMeasurementEditor,state.pending,state.accepted]);
   }
   function receivePlanning(document,{meta=null,raw=null,origin={}}={},expected,sequence){
     if(!available()||sequence!==planningReadSequence||planningFingerprint()!==expected){
@@ -1265,6 +1265,60 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
 
 
   
+
+  function taskMeasurementEditor(){
+    if(!state.recordedCostMeasurementEditor)state.recordedCostMeasurementEditor={sourceId:'',source:null,kind:'INSTALLED',observationId:'',serviceBasis:''};
+    return state.recordedCostMeasurementEditor;
+  }
+  function taskMeasurementView(){
+    const editor=taskMeasurementEditor(),catalog=editor.source?inspectCohortTaskMeasurements(editor.source):null;
+    const sources=(caseValue.sources||[]).filter(row=>row.customerTaskOutcomes?.schema==='stellar-forge.sf47-customer-task-outcomes.v1');
+    const current=state.recordedCostDraft?.measurement;
+    return '<fieldset><legend>Use a saved task measurement</legend>'+note('Select the original saved comparison and one complete installed or recurring task. Its count and unit are retained from that source; measurement basis, operator review and customer response stay separate. Refreshing the source list does not replace the current allocation.')+
+      '<label>Saved measurement edition<select data-cp-task-measurement="sourceId"><option value="">Select original comparison…</option>'+
+      sources.map(row=>'<option value="'+esc(row.id)+'"'+(editor.sourceId===row.id?' selected':'')+'>'+esc(row.filename)+' · r'+esc(row.customerTaskOutcomes.revision)+'</option>').join('')+'</select></label>'+
+      btn('Open selected saved measurement','recorded-task-load','',!editor.sourceId)+
+      (catalog?'<p><strong>'+esc(catalog.customer)+' — '+esc(catalog.task)+'</strong><br>'+esc(catalog.comparisonId)+' · revision '+esc(catalog.revision)+' · '+esc(catalog.unit)+'</p>'+
+        '<label>Original installed / recurring task<select data-cp-task-observation>'+catalog.observations.map(row=>'<option value="'+esc(JSON.stringify([row.kind,row.observationId]))+'"'+(row.kind===editor.kind&&row.observationId===editor.observationId?' selected':'')+'>'+esc(row.label)+' · '+esc(fmt(row.quantity))+' '+esc(row.unit)+' · '+esc(row.basis)+'</option>').join('')+'</select></label>'+
+        table(['Task','Count','Original basis / state','Customer response','Source and scope'],catalog.observations.map(row=>[esc(row.label),esc(fmt(row.quantity))+' '+esc(row.unit),esc(row.basis)+' / '+esc(row.status),esc(row.acceptance?.status||'Not recorded for initial method'),esc(row.method.sourceReference)+'<br>'+esc(row.method.population)+'<br>'+esc(row.method.period)+'<br>'+esc(row.method.output)+'<br>'+esc(row.method.quality)+(row.usable?'':'<br>'+esc(row.unavailable.join(' ')))]))+
+        '<label>Why this task and selected costs describe the same service output<textarea data-cp-task-measurement="serviceBasis">'+esc(editor.serviceBasis)+'</textarea></label>'+
+        btn('Use this complete measurement in allocation','recorded-task-bind')+
+        jsonDetail('Complete original saved task comparison and selected sources',catalog.original):'')+
+      (current?note('Allocation is bound to '+current.original.edition.id+' revision '+current.original.edition.revision+' / '+current.kind+(current.observationId?' / '+current.observationId:'')+'. Keep this source or explicitly select another edition.')+btn('Continue with a manual denominator; retain prior measurement','recorded-task-manual')+jsonDetail('Current allocation’s original measurement',current):'')+
+      (state.recordedCostDraft?.measurementHistory?.length?jsonDetail('Earlier retained measurement choices',state.recordedCostDraft.measurementHistory):'')+'</fieldset>';
+  }
+  async function loadTaskMeasurement(){
+    const editor=taskMeasurementEditor(),selected=editor.sourceId;
+    await refreshSource();
+    const meta=caseValue.sources.find(row=>row.id===selected&&row.customerTaskOutcomes?.schema==='stellar-forge.sf47-customer-task-outcomes.v1');
+    if(!meta)throw new Error('Select an original saved Task Outcomes source in this case.');
+    const mark=meta.customerTaskOutcomes;
+    const native=await saveApi(prefix+'/task-outcomes/'+encodeURIComponent(mark.id)+'?revision='+mark.revision);
+    const raw=JSON.parse(await readSource(meta));
+    const equal=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b));};
+    if(!equal(native.source,meta)||!equal(native.edition,raw))throw new Error('The saved task response differs from its original retained source. Refresh the selection.');
+    const catalog=inspectCohortTaskMeasurements(native);
+    if(editor!==state.recordedCostMeasurementEditor||editor.sourceId!==selected)throw new Error('The measurement selection changed while its source was opening. Current work is retained.');
+    editor.source=copy(catalog.original);
+    if(!catalog.observations.some(row=>row.kind===editor.kind&&row.observationId===editor.observationId)){editor.kind='INSTALLED';editor.observationId='';}
+    state.notice='Opened the exact saved measurement. Review its complete scope and explicitly use it in the allocation.';
+  }
+  function bindTaskMeasurement(){
+    const editor=taskMeasurementEditor();
+    if(!editor.source||editor.source.source.id!==editor.sourceId)throw new Error('Open the currently selected original measurement first.');
+    state.recordedCostDraft=bindCohortRecordedCostMeasurement(state.recordedCostDraft||{},editor.source,
+      {kind:editor.kind,observationId:editor.observationId,serviceBasis:editor.serviceBasis});
+    state.notice='Retained the original count, unit, complete saved comparison and explicit service relationship. Keep the allocation, then calculate the whole future plan.';
+  }
+  function manualTaskMeasurement(){
+    const draft=state.recordedCostDraft||{};
+    if(draft.measurement){
+      draft.measurementHistory=[...(draft.measurementHistory||[]),{measurement:copy(draft.measurement),outputQuantity:draft.outputQuantity,outputUnit:draft.outputUnit,outputSource:draft.outputSource}];
+      delete draft.measurement;
+    }
+    state.recordedCostDraft=draft;
+    state.notice='The allocation is editable manually; its earlier saved measurement remains retained.';
+  }
   function recordedCostState(){
     if(!state.recordedCostChoices)state.recordedCostChoices={name:plan()?.name+' · recorded cost basis',note:'',allocations:[]};
     return state.recordedCostChoices;
@@ -1273,7 +1327,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const source=state.recordedCostSource,commercial=source?.commercial,choices=recordedCostState(),preview=state.recordedCostPreview;
     const options=(caseValue.sources||[]).filter(row=>row.filename?.startsWith('sf47-cohort-delivery-'));
     const select=(name,rows,value)=>'<select name="'+esc(name)+'">'+rows.map(([id,title])=>'<option value="'+esc(id)+'"'+(id===value?' selected':'')+'>'+esc(title)+'</option>').join('')+'</select>';
-    const input=(name,value='')=>'<input name="'+esc(name)+'" value="'+esc(value)+'">';
+    const input=(name,value='')=>'<input name="'+esc(name)+'" value="'+esc(value)+'"'+(state.recordedCostDraft?.measurement&&['outputQuantity','outputUnit','outputSource'].includes(name)?' readonly':'')+'>';
     const draft=state.recordedCostDraft||{},selected=choices.allocations.find(row=>row.id===draft.id);
     const parts=draft.costs||selected?.costs||[];
     return section('Recorded costs → future plan',note('Open the intended future plan first. Choose the complete saved delivery reconciliation, identify the useful output actually delivered, and select its cost portions. This changes only the future schedules you select. Existing funding groups, purchased prices, dates and source records remain attached to their original documents.')+
@@ -1287,7 +1341,8 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
         '<form data-cp-recorded-cost-form class="cp-form"><label>Allocation identity'+input('id',draft.id||'')+'</label>'+
         '<label>Future schedule'+select('targetScheduleId',rowOptions('schedules'),draft.targetScheduleId)+'</label>'+
         '<label>Original service'+select('sourceServiceId',commercial.services.map(row=>[row.id,row.label]),draft.sourceServiceId)+'</label>'+
-        '<label>Measured useful-output quantity'+input('outputQuantity',draft.outputQuantity||'')+'</label>'+
+        taskMeasurementView()+
+        '<label>Useful-output quantity'+input('outputQuantity',draft.outputQuantity||'')+'</label>'+
         '<label>Useful-output unit'+input('outputUnit',draft.outputUnit||'')+'</label>'+
         '<label>Original measurement/source basis'+input('outputSource',draft.outputSource||'')+'</label>'+
         '<label>Supplier cost coverage'+select('supplierCoverage',[['PARTIAL','Partial / unknown remainder'],['COMPLETE','Complete for this measured output']],draft.supplierCoverage)+'</label>'+
@@ -1299,11 +1354,12 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
           esc(row.sourceReference)+(row.originalCost?'<small>'+esc(row.originalCost.recordId)+' / '+esc(row.originalCost.lineId)+'</small>':'')]))+
         '<button type="submit">Keep complete allocation</button>'+btn('Clear allocation form','recorded-cost-clear')+'</form>'+
         note('Leave an unselected cost share empty. Each cost can be apportioned across several schedules, with a total at most 1. Payment fees retain their existing funding/payment model. Partial coverage produces unknown estimates. Complete coverage, including a zero-cost category, needs the entered explanation.')+
-        table(['Allocation','Future schedule','Measured output','Coverage',''],choices.allocations.map(row=>[esc(row.id),esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit),esc(row.supplierCoverage)+' supplier / '+esc(row.laborCoverage)+' labor',btn('Edit','recorded-cost-edit','data-id="'+esc(row.id)+'"')+btn('Remove','recorded-cost-remove','data-id="'+esc(row.id)+'"')]))+
+        table(['Allocation','Future schedule','Measured output','Coverage',''],choices.allocations.map(row=>[esc(row.id),esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit)+(row.measurement?'<small>'+esc(row.measurement.original.edition.id)+' / r'+esc(row.measurement.original.edition.revision)+'</small>':''),esc(row.supplierCoverage)+' supplier / '+esc(row.laborCoverage)+' labor',btn('Edit','recorded-cost-edit','data-id="'+esc(row.id)+'"')+btn('Remove','recorded-cost-remove','data-id="'+esc(row.id)+'"')]))+
         '<label>Successor name<input data-cp-recorded-choice="name" value="'+esc(choices.name)+'"></label><label>Planning note<textarea data-cp-recorded-choice="note">'+esc(choices.note)+'</textarea></label>'+
         '<div class="cp-actions">'+btn('Calculate complete successor','recorded-cost-calculate','',!choices.allocations.length)+btn('Download full editable source and choices','recorded-cost-working')+'</div>'):'')+
       (preview?section('Reviewed cost basis and prospective result',
         table(['Future schedule','Measured outputs','Supplier / result','Hours / result','Hourly cost'],preview.derivations.map(row=>[esc(row.targetScheduleId),esc(row.outputQuantity)+' '+esc(row.outputUnit),esc(fmt(row.derivedEconomics.unitCost)),esc(fmt(row.derivedEconomics.activeHoursPerTask)),esc(fmt(row.derivedEconomics.hourlyCost))]))+
+        table(['Future schedule','Original measurement','Basis / review','Customer response','Service relationship'],preview.derivations.filter(row=>row.measurement).map(row=>[esc(row.targetScheduleId),esc(row.measurement.comparisonId)+' / r'+esc(row.measurement.revision)+' / '+esc(row.measurement.observationId||'Installed'),esc(row.measurement.basis)+' / '+esc(row.measurement.status),esc(row.measurement.acceptance?.status||'Not recorded for initial method'),esc(row.measurement.serviceBasis)]))+
         table(['Actual cost row','Selected share','Unselected share'],preview.costBalances.map(row=>[esc(row.costId),esc(row.selectedShare),esc(row.unselectedShare)]))+
         '<div class="cp-actions">'+btn('Apply to editable future plan','recorded-cost-adopt')+btn('Apply and save complete edition','recorded-cost-save')+
         btn('Open before / after comparison','recorded-cost-compare')+btn('Complete JSON','recorded-cost-json')+btn('Complete CSV','recorded-cost-csv')+'</div>'+
@@ -1348,6 +1404,19 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const review=await saveApi(prefix+'/reviews/'+encodeURIComponent(source.source.reviewId));
     if(!equal(original,source.input.planDocument)||!equal(review,source.input.review))
       throw new Error('The recorded-cost basis differs from its original saved plan or frozen review. Keep the retained proposal and select the complete original source again.');
+    const measurements=new Map();
+    for(const allocation of result.choices.allocations)for(const basis of [allocation.measurement,...(allocation.measurementHistory||[]).map(row=>row.measurement)].filter(Boolean)){
+      const catalog=inspectCohortTaskMeasurements(basis.original),prior=measurements.get(catalog.sourceId);
+      if(prior&&(!equal(prior.original.source,catalog.original.source)||!equal(prior.original.edition,catalog.original.edition)))throw new Error('Conflicting original measurement editions use one source identity.');
+      measurements.set(catalog.sourceId,catalog);
+    }
+    for(const catalog of measurements.values()){
+      const meta=caseValue.sources.find(row=>row.id===catalog.sourceId);
+      if(!meta||!equal(meta,catalog.original.source))throw new Error('A selected original task measurement differs from the current case source.');
+      const native=await saveApi(prefix+'/task-outcomes/'+encodeURIComponent(catalog.comparisonId)+'?revision='+catalog.revision);
+      if(!equal(native.source,catalog.original.source)||!equal(native.edition,catalog.original.edition))
+        throw new Error('Select the complete original saved task revision again before saving this cost basis.');
+    }
   }
 
   function editions(){
@@ -1376,9 +1445,11 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   function closeEditor(){if(state.editor){state.rowDrafts[state.editor.key]={editor:copy(state.editor),data:copy(state.editorDraft)};state.lastEditorKey=state.editor.key;}state.editor=null;state.editorDraft=null;state.editorError='';persist();}
   root.addEventListener('input',event=>{
     const el=event.target;if(!editable())return;
+    if(el.hasAttribute('data-cp-task-measurement')){taskMeasurementEditor()[el.dataset.cpTaskMeasurement]=el.value;persist();if(el.dataset.cpTaskMeasurement==='sourceId')render();return;}
+    if(el.hasAttribute('data-cp-task-observation')){const [kind,observationId]=JSON.parse(el.value);Object.assign(taskMeasurementEditor(),{kind,observationId});persist();return;}
     if(el.hasAttribute('data-cp-recorded-source')){state.recordedCostSelectedSource=el.value;persist();render();return;}
     if(el.dataset.cpRecordedChoice){recordedCostState()[el.dataset.cpRecordedChoice]=el.value;state.recordedCostPreview=null;persist();return;}
-    const costForm=el.closest('[data-cp-recorded-cost-form]');if(costForm){const values=Object.fromEntries(new FormData(costForm));state.recordedCostDraft=Object.fromEntries(Object.entries(values).filter(([key])=>!key.startsWith('share:')));state.recordedCostDraft.costs=Object.entries(values).filter(([key,value])=>key.startsWith('share:')&&value.trim()&&!/^0(?:\.0+)?$/.test(value.trim())).map(([key,share])=>({costId:key.slice(6),share:share.trim()}));persist();return;}
+    const costForm=el.closest('[data-cp-recorded-cost-form]');if(costForm){const values=Object.fromEntries(new FormData(costForm));state.recordedCostDraft={...state.recordedCostDraft,...Object.fromEntries(Object.entries(values).filter(([key])=>!key.startsWith('share:')))};state.recordedCostDraft.costs=Object.entries(values).filter(([key,value])=>key.startsWith('share:')&&value.trim()&&!/^0(?:\.0+)?$/.test(value.trim())).map(([key,share])=>({costId:key.slice(6),share:share.trim()}));persist();return;}
     if(el.hasAttribute('data-cp-filter')){state.filter=el.value;return;}
     if(el.dataset.cpSchedulingOption)return;
     if(el.dataset.cpComparisonSelect){comparisonState();state.comparisonSelections[el.dataset.cpComparisonSelect]=el.value;persist();return;}
@@ -1414,7 +1485,7 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
   root.addEventListener('submit',event=>{
     if(event.target.matches('[data-cp-recorded-cost-form]')){
       event.preventDefault();if(!editable())return;
-      run(async()=>{const values=Object.fromEntries(new FormData(event.target)),row=Object.fromEntries(Object.entries(values).filter(([key])=>!key.startsWith('share:')));
+      run(async()=>{const values=Object.fromEntries(new FormData(event.target)),row={...state.recordedCostDraft,...Object.fromEntries(Object.entries(values).filter(([key])=>!key.startsWith('share:')))};
         row.id=row.id.trim()||uid('cost-basis');row.costs=Object.entries(values).filter(([key,value])=>key.startsWith('share:')&&value.trim()&&!/^0(?:\.0+)?$/.test(value.trim())).map(([key,share])=>({costId:key.slice(6),share:share.trim()}));
         const choices=recordedCostState(),i=choices.allocations.findIndex(item=>item.id===row.id);
         if(i<0)choices.allocations.push(row);else choices.allocations[i]=row;
@@ -1432,6 +1503,9 @@ export function mountCohortPlanning({container,current,saveApi,getActor,mutation
     const action=target.dataset.cpAction;
     run(async()=>{
       if(action==='tab'){state.tab=target.dataset.tab;if(state.tab==='scheduling'&&plan()&&!isPending())ensureScheduling();return;}
+      if(action==='recorded-task-load'){await loadTaskMeasurement();return;}
+      if(action==='recorded-task-bind'){bindTaskMeasurement();return;}
+      if(action==='recorded-task-manual'){manualTaskMeasurement();return;}
       if(action==='recorded-cost-load'){await loadRecordedCostSource();return;}
       if(action==='recorded-cost-baseline'){state.recordedCostBaseline=editionEnvelope(inputMatchesReport()?state.report:null,'');state.recordedCostPreview=null;return;}
       if(action==='recorded-cost-clear'){state.recordedCostDraft={};return;}
