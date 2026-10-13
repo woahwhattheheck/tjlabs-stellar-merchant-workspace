@@ -189,9 +189,8 @@ def selected_case(cases, requested):
     if requested:
         rows = [row for row in cases if row["id"] == requested]
     else:
-        rows = [row for row in cases if row["mode"] == "WALKTHROUGH" and "calendar" in row["name"].lower()]
-        if len(rows) != 1:
-            rows = [row for row in cases if row["mode"] == "WALKTHROUGH"]
+        rows = [row for row in cases if row["mode"] == "WALKTHROUGH"
+                and row["name"] == "SCF delivery calendar walkthrough - original grant plan"]
     if len(rows) != 1 or not CASE.fullmatch(rows[0]["id"]):
         raise ValueError("Use --case-id to select the exact original operated calendar walkthrough.")
     if rows[0]["mode"] != "WALKTHROUGH":
@@ -200,32 +199,30 @@ def selected_case(cases, requested):
 
 
 def retained_date(directory, case):
-    candidates = []
+    selected = case["program"]["id"]
+    readings = []
     for path in directory.rglob("*.json"):
-        if path.stat().st_size > 500000 or path.name not in {"native-result.json", "result.json", "calendar.json", "NATIVE_RESULT.json"}:
+        if path.stat().st_size > 2 * 1024 * 1024:
+            continue
+        if path.name not in {"native-result.json", "calendar.json", "browser-calendar.json", "HANDOVER.json"}:
             continue
         try:
             value = read_json(path)
         except (ValueError, UnicodeError):
             continue
-        def visit(node):
-            if isinstance(node, dict):
-                date = node.get("asOfDate")
-                if isinstance(date, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
-                    candidates.append(date)
-                for child in node.values():
-                    visit(child)
-            elif isinstance(node, list):
-                for child in node:
-                    visit(child)
-        visit(value)
-    if candidates:
-        # Complete exported calendar values are the original operator's chosen clock.
-        return max(set(candidates), key=lambda value: (candidates.count(value), value))
-    anchor = case["program"].get("calendarStart")
-    if anchor:
-        return anchor
-    raise ValueError("Supply the original calendar comparison date with --as-of-date.")
+        original = None
+        if value.get("schema") == "stellar-forge.sf47-delivery-calendar.v1" and value.get("case", {}).get("id") == selected:
+            original = value.get("asOfDate")
+        elif path.name == "native-result.json" and value.get("demoCaseId") == selected:
+            original = value.get("asOfDate")
+        elif path.name == "HANDOVER.json" and value.get("calendarCase", {}).get("id") == selected:
+            original = value["calendarCase"].get("asOfDate")
+        if isinstance(original, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", original):
+            readings.append({"path": str(path.relative_to(directory)), "caseId": selected, "asOfDate": original})
+    dates = {row["asOfDate"] for row in readings}
+    if len(dates) != 1:
+        raise ValueError("Supply --as-of-date from the selected original case's calendar result; no unrelated result or anchor chooses this clock.")
+    return dates.pop()
 
 
 def run_browser(node, context_path, root, mode="operate"):
@@ -325,6 +322,7 @@ def complete_archive(root, result):
                 relative = source.relative_to(root)
                 if (not source.is_file() or source in {path, pending}
                         or any(part in skipped for part in relative.parts)
+                        or (relative.parts[0] in {"browser", "browser-cold"} and source.suffix.lower() == ".png")
                         or source.name.endswith(("-wal", "-shm")) or source.name == "workspace.lock"):
                     continue
                 data = source.read_bytes()

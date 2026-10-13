@@ -60,7 +60,7 @@ async function waitFor(check,message,timeout=45000){
 async function ready(){await page.locator('#workbench').waitFor({state:'visible'});await waitFor(()=>page.locator('#workbench').getAttribute('aria-busy').then(v=>v!=='true'),'Original application is still receiving');}
 async function click(selector){const control=typeof selector==='string'?page.locator(selector):selector;
   await waitFor(()=>control.isEnabled(),'The original action is unavailable');await control.click();await ready();}
-async function labelled(name){return page.getByRole('button',{name,exact:true});}
+function labelled(name){return page.getByRole('button',{name,exact:true});}
 async function download(action,filename){
   const pending=page.waitForEvent('download',{timeout:120000});await action();const received=await pending;
   const path=join(exportsDirectory,filename);await received.saveAs(path);const result=await fileIdentity(path);
@@ -68,7 +68,9 @@ async function download(action,filename){
 }
 async function screenshot(filename,viewport={width:1440,height:1000}){
   await page.setViewportSize(viewport);await ready();const path=join(out,filename);await page.screenshot({path,fullPage:true});
-  const result=await fileIdentity(path);progress.files[filename]=result;await saveProgress();return result;
+  const result=await fileIdentity(path);progress.visualReview??={};
+  progress.visualReview[filename]={filename,bytes:result.bytes,sha256:result.sha256,viewport,stage:'CAPTURED_FOR_INTERNAL_REVIEW'};
+  await saveProgress();return result;
 }
 async function openApplication(){
   await page.goto(input.baseUrl+'/#access='+encodeURIComponent(input.ownerKey),{waitUntil:'domcontentloaded'});await ready();
@@ -105,7 +107,7 @@ async function amendDrafts(){
 async function settledDraft(predicate=()=>true){return waitFor(async()=>{const value=await storedCaseDraft();return value&&predicate(value)?value:null;},'Receive the complete retained case draft');}
 async function openRetainedDraft(){
   if(await page.locator('.case-planning-route').isVisible().catch(()=>false))return;
-  await click(await labelled('Saved case planning work'));
+  await click(labelled('Saved case planning work'));
   await click('[data-case-planning-draft="'+progress.draftId+'"]');
   await page.locator('.case-planning-route').waitFor({state:'visible'});
 }
@@ -133,7 +135,7 @@ try{
       return {caseId:actual.program.id,version:actual.program.version,planId:actual.plan.id,revision:actual.plan.revision,contentSha256:actual.plan.contentSha256};
     });
     await phase('cold-working-draft-reopen',async()=>{
-      const chooser=page.waitForEvent('filechooser');await click(await labelled('Open case planning draft'));
+      const chooser=page.waitForEvent('filechooser');await click(labelled('Open case planning draft'));
       await (await chooser).setFiles(input.workingDraft);await page.locator('.case-planning-route').waitFor({state:'visible'});
       const draft=await settledDraft(value=>value.savedSelection?.revision===input.selectedRevision);
       assert.equal(draft.savedSelection.contentSha256,input.selectedContentSha256);assert.equal(draft.caseBasis.id,input.caseId);
@@ -151,7 +153,7 @@ try{
     });
     const result={schema:progress.schema,operationId:input.operationId,caseId:input.caseId,planId:input.planId,
       savedRevision:input.selectedRevision,savedContentSha256:input.selectedContentSha256,asOfDate:input.asOfDate,
-      completedAt:stamp(),phases:progress.phases,files:progress.files,pageErrors};
+      completedAt:stamp(),phases:progress.phases,files:progress.files,visualReview:progress.visualReview||{},pageErrors};
     await atomic(join(root,'browser-cold-result.json'),result);
   }else{
     await phase('open-original-case-and-clock',async()=>{
@@ -169,20 +171,20 @@ try{
         contentSha256:plan.contentSha256,asOfDate:calendar.asOfDate,dated:calendar.entries.length,undated:calendar.undated.length};
     });
     await phase('open-complete-case-planning',async()=>{
-      await openCase('calendar');await click(await labelled('Edit plan and workbook for this case'));
+      await openCase('calendar');await click(labelled('Edit plan and workbook for this case'));
       const draft=await settledDraft(value=>value.tab==='source-tables');
       progress.draftId=draft.id;await saveProgress();
       assert.equal(draft.caseBasis.id,input.caseId);assert.equal(draft.asOfDate,input.asOfDate);
-      if(await (await labelled('Create source tables from saved plan')).count())await click(await labelled('Create source tables from saved plan'));
+      if(await (labelled('Create source tables from saved plan')).count())await click(labelled('Create source tables from saved plan'));
       return {draftId:draft.id,planRevision:draft.plan.revision,caseVersion:draft.caseBasis.version};
     });
     progress.draftId=progress.draftId||progress.phases['open-complete-case-planning'].result.draftId;
     await openRetainedDraft();
     if(!progress.phases['calculate-and-apply-complete-workbook']?.complete&&!(await storedCaseDraft())?.pending)await click('[data-case-planning-action=planning]');
     await phase('export-original-complete-workbook',async()=>{
-      await click(await labelled('Export saved plan workbook'));
-      const file=await download(()=>click(await labelled('Download complete handover again')),'original-planning-workbook-handover.zip');
-      await click(await labelled('Use exported source project'));
+      await click(labelled('Export saved plan workbook'));
+      const file=await download(()=>click(labelled('Download complete handover again')),'original-planning-workbook-handover.zip');
+      await click(labelled('Use exported source project'));
       const draft=await settledDraft(value=>Boolean(value.draft.planning.sourceTables));
       await atomic(join(out,'exported-source-draft.json'),draft);
       return file;
@@ -202,15 +204,15 @@ try{
         if(!(await details.getAttribute('open')))await details.locator('summary').click();
         await page.getByLabel('Returned workbook review note',{exact:true}).fill(edit.edit.reason);
         await page.getByLabel('Returned workbook review note',{exact:true}).dispatchEvent('change');
-        const chooser=page.waitForEvent('filechooser');await click(await labelled('Receive returned workbook'));
+        const chooser=page.waitForEvent('filechooser');await click(labelled('Receive returned workbook'));
         await (await chooser).setFiles(returnedPath);
         await settledDraft(value=>JSON.stringify(value.draft.planning.sourceTables||{}).includes(edit.returnedWorkbookSha256));
       }
       for(const name of ['Work packages','Milestones','Contributors','Assignments']){
-        await click(await labelled(name+' · source retained'));
-        await click(await labelled('Review current table mapping'));
+        await click(labelled(name+' · source retained'));
+        await click(labelled('Review current table mapping'));
       }
-      const project=await download(()=>click(await labelled('Download source project')),'reviewed-returned-source-project.json');
+      const project=await download(()=>click(labelled('Download source project')),'reviewed-returned-source-project.json');
       await screenshot('reviewed-workbook-desktop.png');
       return {returnedWorkbookSha256:edit.returnedWorkbookSha256,roles:['packages','milestones','contributors','assignments'],project};
     });
@@ -218,13 +220,13 @@ try{
       const draft=await storedCaseDraft(),edit=progress.phases['edit-original-workbook'].result.edit;
       const row=draft.draft.scenario.future_costs.find(item=>item.id===edit.costId);
       if(String(row?.end_day)!==edit.after){
-        await click(await labelled('Calculate native preview'));
+        await click(labelled('Calculate native preview'));
         await page.getByLabel('Source-import review note',{exact:true}).waitFor();
-        await download(()=>click(await labelled('Download complete native preview')),'complete-workbook-native-preview.json');
+        await download(()=>click(labelled('Download complete native preview')),'complete-workbook-native-preview.json');
         await page.getByLabel('Source-import review note',{exact:true}).fill(edit.reason);
         await page.getByLabel('Source-import review note',{exact:true}).dispatchEvent('change');
         await page.getByLabel('I have reviewed the complete native result and these exact changes.',{exact:true}).check();
-        await click(await labelled('Apply reviewed changes to working plan'));
+        await click(labelled('Apply reviewed changes to working plan'));
       }
       await page.locator('#change-note').fill(edit.reason);await page.locator('#change-note').dispatchEvent('input');
       const applied=await settledDraft(value=>value.dirty&&String(value.draft.scenario.future_costs.find(row=>row.id===edit.costId)?.end_day)===edit.after&&value.note===edit.reason);
@@ -281,7 +283,7 @@ try{
       const textarea=page.locator('textarea[data-path]').first();await textarea.waitFor();
       const before=await textarea.inputValue(),entered=before+'\nReceiving-only unsaved planner transition.';
       await textarea.fill(entered);await textarea.dispatchEvent('input');
-      dialogDecision='dismiss';await click(await labelled('Saved case planning work'));
+      dialogDecision='dismiss';await click(labelled('Saved case planning work'));
       await click('[data-case-planning-draft="'+progress.draftId+'"]');
       assert.equal(await textarea.inputValue(),entered);
       assert.equal(await page.locator('.case-planning-route').isVisible(),false);
@@ -366,8 +368,8 @@ try{
       await click(page.locator('[data-calendar-action=source][data-calendar-id="'+deadline.id+'"]').first());
       await page.locator('[name=completionAsOfDate]').waitFor();
       assert.equal(await page.locator('[name=completionAsOfDate]').inputValue(),input.asOfDate);
-      const html=await page.locator('[data-ops-completion]').textContent();
-      assert.ok(html.includes(deadline.sourceId)||await page.locator('[data-receipt="'+deadline.sourceId+'"]').count(),'Original payment receipt remains selected in Completion');
+      assert.equal(await page.locator('[name=completionReceipt]').inputValue(),deadline.sourceId);
+      assert.equal(Number(await page.locator('[name=completionTranche]').inputValue()),deadline.tranche);
       await screenshot('selected-completion-phone.png',{width:390,height:844});
       await screenshot('selected-completion-desktop.png');
       await atomic(join(out,'calendar-after.json'),report);
@@ -381,10 +383,10 @@ try{
         const path=join(exportsDirectory,filename);await atomic(path,await native('/api/plans/'+input.planId+'/'+filename+'?revision='+saved.savedRevision,{binary:true}));
         progress.files[filename]=await fileIdentity(path);
       }
-      await download(()=>click(await labelled('Export complete case')),'original-case-complete.zip');
+      await download(()=>click(labelled('Export complete case')),'original-case-complete.zip');
       await click('[data-case-planning-action=planning]');
-      await click(await labelled('Export saved plan workbook'));
-      await download(()=>click(await labelled('Download complete handover again')),'selected-complete-workbook-handover.zip');
+      await click(labelled('Export saved plan workbook'));
+      await download(()=>click(labelled('Download complete handover again')),'selected-complete-workbook-handover.zip');
       const draft=await storedCaseDraft();
       assert.equal(draft.savedSelection.contentSha256,saved.contentSha256);
       return {savedRevision:saved.savedRevision,savedContentSha256:saved.contentSha256,draftId:draft.id};
@@ -392,7 +394,7 @@ try{
     const result={schema:progress.schema,operationId:input.operationId,caseId:input.caseId,planId:input.planId,asOfDate:input.asOfDate,
       draftId:progress.draftId,amendmentDraftId:progress.amendmentDraftId,
       savedRevision:saved.savedRevision,savedContentSha256:saved.contentSha256,originalSaveRequestId:saved.requestId,
-      completedAt:stamp(),phases:progress.phases,files:progress.files,pageErrors};
+      completedAt:stamp(),phases:progress.phases,files:progress.files,visualReview:progress.visualReview||{},pageErrors};
     await atomic(join(root,'browser-result.json'),result);
   }
 }catch(error){
