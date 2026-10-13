@@ -100,7 +100,7 @@ export async function runPipelineJobCommand(argv = process.argv.slice(2),
     return;
   }
   const controller = new AbortController(), stop = () => controller.abort(new Error('Pipeline customer operation interrupted'));
-  process.once('SIGINT', stop); process.once('SIGTERM', stop);
+  process.on('SIGINT', stop); process.on('SIGTERM', stop);
   try {
     const common = { directory: resolve(required(out, '--directory')), signal: controller.signal,
       ...(out.has('--python') ? { python: out.get('--python') } : {}) };
