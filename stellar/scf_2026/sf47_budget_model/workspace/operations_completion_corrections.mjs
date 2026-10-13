@@ -9,7 +9,7 @@ const inputKeys=['roundId','previousReviewId','outcomeId','expectedOutcomeSha256
 const findingKeys=['id','request','basis','costIds','ownerIds','state','dueOn','completedOn','response','workIds','deploymentIds','sourceIds'];
 const arrayKeys=['costIds','ownerIds','workIds','deploymentIds','sourceIds'];
 const textKeys=['id','request','basis','state','response'];
-function structural(inputs){
+export function validateCompletionCorrectionInputs(inputs){
   if(!exact(inputs,inputKeys)||!/^corrections-[a-f0-9]{32}$/.test(inputs.roundId)||
     !(inputs.previousReviewId===null||/^review-[a-f0-9]{32}$/.test(inputs.previousReviewId))||
     !/^outcome-[a-f0-9]{32}$/.test(inputs.outcomeId)||!/^[a-f0-9]{64}$/.test(inputs.expectedOutcomeSha256)||
@@ -28,6 +28,7 @@ function structural(inputs){
   }
   return inputs;
 }
+const structural=validateCompletionCorrectionInputs;
 function download(blob,name){const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),10000);}
 const jsonDownload=(x,name)=>download(new Blob([JSON.stringify(x,null,2)+'\n'],{type:'application/json'}),name);
 const button=(name,action,attrs='',disabled=false)=>'<button type="button" data-completion-action="correction-'+action+'" '+attrs+(disabled?' disabled data-completion-fixed="true"':'')+'>'+esc(name)+'</button>';
