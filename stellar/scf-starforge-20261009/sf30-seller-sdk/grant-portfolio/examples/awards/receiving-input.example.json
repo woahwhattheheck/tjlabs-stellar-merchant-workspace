@@ -1,0 +1,8 @@
+{
+  "schema": "stellar-forge.awards-receiving-input.v1",
+  "actor": "Internal grant administration receiver",
+  "assessor": "Internal independent assessor",
+  "asOf": "2026-10-13",
+  "fixture": "internal-grant-awards-v1",
+  "externalSources": []
+}

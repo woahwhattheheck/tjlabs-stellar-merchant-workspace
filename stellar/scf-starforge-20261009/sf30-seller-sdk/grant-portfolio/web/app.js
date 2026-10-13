@@ -537,6 +537,8 @@ function requestsView(container) {
 }
 const programmeConsole = GrantProgrammeConsole({state:() => S, node, button, field, panel, heading, metric,
   table, api, response, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
+const awardsConsole = GrantAwardsConsole({state:() => S, node, button, field, panel, heading, metric,
+  table, api, response, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 async function render() {
   const epoch = ++S.epoch, content = $("#content"), fragment = node("div");
   document.querySelectorAll("nav button").forEach(button => button.classList.toggle("active", button.dataset.view === S.view));
@@ -544,6 +546,7 @@ async function render() {
   if (S.view === "sources") sourcesView(fragment);
   else if (S.view === "portfolios") portfoliosView(fragment);
   else if (S.view === "programme") await programmeConsole.render(fragment, epoch);
+  else if (S.view === "awards") await awardsConsole.render(fragment, epoch);
   else if (S.view === "review") await reviewView(fragment, epoch);
   else if (S.view === "ledger") await ledgerView(fragment, epoch);
   else if (S.view === "history") await historyView(fragment, epoch);

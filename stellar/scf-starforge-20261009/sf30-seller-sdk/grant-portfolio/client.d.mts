@@ -2,13 +2,16 @@
 import type { ProgrammeTable, ProgrammeChangeSet, ProgrammeRecordSelection, ProgrammeScopeSelection,
   ProgrammeDocumentSelection, ProgrammeRecordRead, ProgrammeHistoryRead, ProgrammePositionRead,
   ProgrammeQaRead } from "./programme-client.mjs";
+import type {AwardTable, AwardCollection, AwardChangeSet, AwardRecordSelection, AwardRecordRead,
+  AwardHistoryRead, AwardRoundSelection, AwardRoundRead, AwardPositionSelection, AwardPositionRead,
+  AwardFinancialSelection, AwardFinancialRead} from "./awards-client.mjs";
 import type {SupportAction, SupportActionInput} from './support-client.mjs';
 export type Sha256 = string;
 export type PortfolioId = string;
 export type OperationId = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | {[key:string]:JsonValue};
 export type JsonObject = {[key:string]:JsonValue};
-export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable;
+export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable|AwardTable;
 export type SourceStandard = 'iati'|'360giving';
 export type RequestState = 'RUNNING'|'COMPLETED'|'FAILED';
 export type CorePortfolioAction = 'source.receive'|'portfolio.save'|'review.save'|'portfolio.export'|'portfolio.receive';
@@ -29,6 +32,7 @@ export interface PortfolioSaveInput {
   id?:PortfolioId; expectedPortfolioRevision?:number; name:string; notes:string;
   sources:Sha256[]; sourceReplacements?:{before:Sha256; after:Sha256}[]; review:PortfolioReview;
   programme?:ProgrammeChangeSet;
+  awards?:AwardChangeSet;
 }
 export interface ReviewReference { sourceId:Sha256; entityKey:Sha256; sha256:Sha256; }
 export type ReviewDecision =
@@ -104,6 +108,12 @@ export declare class GrantPortfolioClient {
     onPage?:(page:RowPage<Row>)=>void|Promise<void>;
   }):AsyncGenerator<RowPage<Row>,void,void>;
   detail(input:DetailInput, options?:RequestOptions):Promise<JsonObject>;
+  awardsSchema(options?:RequestOptions):Promise<JsonObject>;
+  awardsRecord<C extends AwardCollection>(input:AwardRecordSelection<C>, options?:RequestOptions):Promise<AwardRecordRead<C>>;
+  awardsHistory<C extends AwardCollection>(input:AwardRecordSelection<C>, options?:RequestOptions):Promise<AwardHistoryRead<C>>;
+  awardsRound(input:AwardRoundSelection, options?:RequestOptions):Promise<AwardRoundRead>;
+  awardsPosition(input:AwardPositionSelection, options?:RequestOptions):Promise<AwardPositionRead>;
+  awardsFinancial(input:AwardFinancialSelection, options?:RequestOptions):Promise<AwardFinancialRead>;
   programmeSchema(options?:RequestOptions):Promise<JsonObject>;
   programmeRecord(input:ProgrammeRecordSelection, options?:RequestOptions):Promise<ProgrammeRecordRead>;
   programmeHistory(input:ProgrammeRecordSelection, options?:RequestOptions):Promise<ProgrammeHistoryRead>;

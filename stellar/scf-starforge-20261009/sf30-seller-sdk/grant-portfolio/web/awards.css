@@ -1,0 +1,16 @@
+/* MIT. Neutral industrial award-administration forms. */
+.awards-form{align-items:start}.awards-field{min-width:0;margin:0;padding:12px;border:1px solid #d1d5db;border-radius:4px}
+.awards-field legend{padding:0 5px;font-size:13px;font-weight:600}.awards-field.full{grid-column:1/-1}
+.awards-object{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.awards-object>.field:has(textarea),.awards-object>.full{grid-column:1/-1}
+.awards-repeat-row{border:1px solid #d1d5db;border-radius:4px;margin:0 0 12px;padding:12px;background:#fafafa}
+.awards-repeat-row>.awards-object{margin-bottom:10px}.awards-reference{display:grid;gap:8px}
+.awards-reference select{width:100%;max-width:100%;padding:8px}.awards-selected{display:grid;gap:6px}
+.awards-money{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.awards-definition{display:grid;grid-template-columns:minmax(120px,1fr) minmax(0,3fr);gap:8px 16px}
+.awards-definition dt{font-weight:600;color:#41464d}.awards-definition dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.awards-prose{white-space:pre-wrap}.awards-scope .field{min-width:220px;flex:1}
+.awards-form textarea{min-height:100px}.awards-repeat .table-wrap{max-width:100%}
+@media(max-width:650px){.awards-object,.awards-definition{grid-template-columns:minmax(0,1fr)}
+.awards-field{padding:10px}.awards-money{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.awards-scope .field{min-width:0;width:100%}.awards-repeat-row{padding:8px}.awards-definition dd{margin-bottom:8px}}
