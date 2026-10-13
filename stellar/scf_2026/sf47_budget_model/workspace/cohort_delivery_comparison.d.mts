@@ -137,6 +137,8 @@ export const COHORT_RECORDED_COST_PLAN_SCHEMA:'stellar-forge.sf47-cohort-recorde
 export interface CohortRecordedCostAllocation {
   id:string;targetScheduleId:string;sourceServiceId:string;
   outputQuantity:string;outputUnit:string;outputSource:string;
+  measurement?:CohortTaskMeasurementSelection;
+  measurementHistory?:Array<{measurement:CohortTaskMeasurementSelection;outputQuantity:string;outputUnit:string;outputSource:string}>;
   supplierCoverage:'PARTIAL'|'COMPLETE';laborCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;
   costs:Array<{costId:string;share:string}>;
 }
@@ -151,6 +153,7 @@ export interface CohortRecordedCostPlan {
   comparison:import('./cohort_planning.mjs').CohortPlanComparison;
   derivations:Array<{
     id:string;targetScheduleId:string;sourceServiceId:string;outputQuantity:string;outputUnit:string;outputSource:string;
+    measurement?:CohortTaskMeasurementObservation & {comparisonId:string;revision:number;sourceId:string;sourceSha256:string;customer:string;task:string;serviceBasis:string};
     sourceService:Record<string,unknown>;originalEconomics:Record<string,unknown>|null;
     derivedEconomics:{unitCost:string|null;activeHoursPerTask:string|null;hourlyCost:string|null};
     supplierCoverage:'PARTIAL'|'COMPLETE';laborCoverage:'PARTIAL'|'COMPLETE';coverageNote:string;
@@ -165,3 +168,30 @@ export function seedCohortRecordedCostPlan(recordedDocument:CohortDeliveryInput|
 export function planCohortFromRecordedCosts(recordedDocument:CohortDeliveryInput|CohortDeliveryComparison,planDocument:import('./cohort_planning.mjs').CohortPlanDocument,choices:CohortRecordedCostChoices):CohortRecordedCostPlan;
 export function reopenCohortRecordedCostPlan(document:CohortRecordedCostPlan):CohortRecordedCostPlan;
 export function exportCohortRecordedCostPlanCsv(document:CohortRecordedCostPlan):string;
+
+/** Complete native Task Outcomes source, selected without changing its original writer. */
+export const COHORT_TASK_MEASUREMENT_SCHEMA:'stellar-forge.sf47-cohort-task-measurement.v1';
+export interface CohortTaskMeasurementOriginal {
+  source:Record<string,unknown>&{id:string;sha256:string;bytes:number;mediaType:string;customerTaskOutcomes:Record<string,unknown>};
+  edition:Record<string,unknown>&{schema:'stellar-forge.sf47-customer-task-outcomes.v1';id:string;revision:number;document:Record<string,unknown>;source:Record<string,unknown>};
+  history?:Record<string,unknown>[];
+}
+export interface CohortTaskMeasurementObservation {
+  kind:'INSTALLED'|'FOLLOWUP';observationId:string;label:string;quantity:string|null;unit:string;
+  basis:'OBSERVED'|'ESTIMATED'|'MIXED'|'UNRECORDED';observedAt:string|null;status:'DRAFT'|'REVIEWED';
+  comparison:Record<string,unknown>;acceptance:Record<string,unknown>|null;conclusion:string;
+  method:Record<string,unknown>;deploymentIds:string[];purchaseIds:string[];usable:boolean;unavailable:string[];
+}
+export interface CohortTaskMeasurementSelection {
+  schema:typeof COHORT_TASK_MEASUREMENT_SCHEMA;original:CohortTaskMeasurementOriginal;
+  kind:'INSTALLED'|'FOLLOWUP';observationId:string;serviceBasis:string;
+}
+export interface CohortTaskMeasurementCatalog {
+  schema:'stellar-forge.sf47-cohort-task-measurement.v1.catalog';original:CohortTaskMeasurementOriginal;
+  caseId:string;comparisonId:string;revision:number;sourceId:string;sourceSha256:string;
+  title:string;customer:string;task:string;unit:string;installation:Record<string,unknown>|null;
+  observations:CohortTaskMeasurementObservation[];
+}
+export function inspectCohortTaskMeasurements(original:CohortTaskMeasurementOriginal|{value:CohortTaskMeasurementOriginal}):CohortTaskMeasurementCatalog;
+export function bindCohortRecordedCostMeasurement(allocation:CohortRecordedCostAllocation|Record<string,unknown>,original:CohortTaskMeasurementOriginal,
+  selection:{kind:'INSTALLED'|'FOLLOWUP';observationId?:string;serviceBasis:string}):CohortRecordedCostAllocation;

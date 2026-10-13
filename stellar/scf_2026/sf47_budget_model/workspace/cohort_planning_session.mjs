@@ -1,11 +1,11 @@
-import {COHORT_RECORDED_COST_PLAN_SCHEMA,reopenCohortRecordedCostPlan,reopenCohortDeliveryComparison} from './cohort_delivery_comparison.mjs';
+import {COHORT_RECORDED_COST_PLAN_SCHEMA,reopenCohortRecordedCostPlan,reopenCohortDeliveryComparison,inspectCohortTaskMeasurements} from './cohort_delivery_comparison.mjs';
 import {COHORT_PLAN_SCHEMA,COHORT_PLAN_REPORT_SCHEMA,COHORT_PLAN_COMPARISON_SCHEMA,evaluateCohortPlan,reopenCohortPlanComparison,compareCohortPlans} from './cohort_planning.mjs';
 import {COHORT_DELIVERY_SCHEDULE_SCHEMA,reopenCohortDeliverySchedule} from './cohort_planning_scheduling.mjs';
 
 export const COHORT_WORKING_SESSION_SCHEMA='stellar-forge.sf47-cohort-working-session.v1';
 export const COHORT_WORKING_STATE_SCHEMA='stellar-forge.sf47-cohort-planning-session.v1';
 export const COHORT_WORKING_SESSION_MAX_BYTES=64*1024*1024;
-export const COHORT_WORKING_STATE_FIELDS=Object.freeze(['recordedCostSource','recordedCostBaseline','recordedCostChoices','recordedCostPreview','recordedCostPlan','recordedCostDraft','recordedCostSelectedSource','recordedCostHistory','schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions','viewedSource','rejected']);
+export const COHORT_WORKING_STATE_FIELDS=Object.freeze(['recordedCostMeasurementEditor','recordedCostSource','recordedCostBaseline','recordedCostChoices','recordedCostPreview','recordedCostPlan','recordedCostDraft','recordedCostSelectedSource','recordedCostHistory','schema','caseId','plan','report','reportInput','rowDrafts','lastEditorKey','selectedDate','caseRefreshReceipt','latestSeed','tranche','tab','editor','editorDraft','pending','accepted','priorDrafts','parentSourceId','savedSourceId','savedEnvelope','filter','pages','reportSection','importText','incomingCalendar','comparison','comparisonSelections','comparisonHistory','comparisonIncoming','comparisonSavedSourceId','comparisonMetric','schedulingResult','schedulingInput','schedulingEditorId','schedulingOptions','viewedSource','rejected']);
 const editionSchema='stellar-forge.sf47-cohort-plan-edition.v1';
 const collections=['buyers','merchants','facilitators','operations','schedules','workshares','capacityPools','fundingGroups'];
 const tabs=['setup','participants','operations','schedules','workshares','capacity','recorded-cost','scheduling','funding','report','compare','editions'];
@@ -148,6 +148,12 @@ export function validateCohortPlanningState(value,caseId){
   exact(value,COHORT_WORKING_STATE_FIELDS,'Retained state');
   for(const key of ['schema','caseId','plan','report','reportInput','rowDrafts','tranche','tab','editor','editorDraft','priorDrafts','pages'])need(Object.hasOwn(value,key),'The complete working state is missing '+key+'.');
   need(value.schema===COHORT_WORKING_STATE_SCHEMA&&value.caseId===caseId,'The original selected case does not match this working session.');
+  if(value.recordedCostMeasurementEditor){
+    const editor=object(value.recordedCostMeasurementEditor,'Saved measurement working selection');
+    exact(editor,['sourceId','source','kind','observationId','serviceBasis'],'Saved measurement working selection');
+    for(const key of ['sourceId','kind','observationId','serviceBasis'])string(editor[key],'Saved measurement '+key);
+    if(editor.source){const catalog=inspectCohortTaskMeasurements(editor.source);need(catalog.caseId===caseId,'The opened measurement belongs to another original case.');}
+  }
   if(value.recordedCostSource){reopenCohortDeliveryComparison(value.recordedCostSource);need(value.recordedCostSource.source.programId===caseId,'The recorded-cost source belongs to another case.');}
   if(value.recordedCostBaseline)checkDocument(value.recordedCostBaseline,'Recorded-cost baseline');
   for(const key of ['recordedCostPreview','recordedCostPlan'])if(value[key]){reopenCohortRecordedCostPlan(value[key]);need(value[key].candidate.source.programId===caseId,'The cost proposal belongs to another case.');}
