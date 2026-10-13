@@ -388,6 +388,147 @@ async function recipientReviewBrowser(receiving,originalInputs){
   nativePreviewSha256:reviewed.previewSha256});
 }
 
+
+async function recurringClassificationBrowser(receiving,originalInputs){
+ const desk=page.locator('.statement-desk'),act=name=>desk.locator('[data-statement-action="rules-'+name+'"]');
+ need(await desk.locator('.statement-rules').count(),'Compose the recurring classification source before this same original receiving.');
+ const original=await download('draft-export','rules-original-complete-before-course.json'),base=JSON.parse(original.raw);
+ base.inputs.decisions=base.inputs.decisions.filter(value=>value.rowNumber===3);
+ base.allocationWorks={};base.allocationRow=null;base.preview=null;base.dirty=true;delete base.classificationRules;
+ const basePath=join(work,'rules-original-source-base.json');await atomic(basePath,base);await openRecovery(basePath);
+ const originalPreview=await preview('rules-original-source-native-preview');
+ need(originalPreview.rows.length===3&&originalPreview.summary.newCount===3,'Use the original three CSV movements before the first financial import.');
+ await act('new').click();
+ await desk.locator('[name="rule.bookName"]').fill('Operating USD · recurring inflows');
+ await desk.locator('[name="rule.bookNote"]').fill('Original receiving: exact source patterns with explicit overlapping-rule review.');
+ const add=async({name,description='',reference='',category='OTHER',tranche='KEEP',minimum='',maximum=''})=>{
+  await desk.locator('[name="rule.name"]').fill(name);
+  await desk.locator('[name="rule.direction"]').selectOption('IN');
+  await desk.locator('[name="rule.description"]').fill(description);
+  await desk.locator('[name="rule.descriptionMode"]').selectOption('EXACT');
+  await desk.locator('[name="rule.reference"]').fill(reference);
+  await desk.locator('[name="rule.referenceMode"]').selectOption('PREFIX');
+  await desk.locator('[name="rule.minimum"]').fill(minimum);
+  await desk.locator('[name="rule.maximum"]').fill(maximum);
+  await desk.locator('[name="rule.category"]').selectOption(category);
+  await desk.locator('[name="rule.tranche"]').selectOption(tranche);
+  await desk.locator('[name="rule.reason"]').fill('Original operator selected '+name+' after reviewing its exact conditions.');
+  await act('put-rule').click();
+  await desk.locator('.statement-notice').filter({hasText:'Updated the unfinished rulebook'}).waitFor();
+ };
+ await add({name:'Original grant receipt',description:'grant',category:'GRANT',tranche:'1',minimum:'1000.000',maximum:'1500'});
+ await add({name:'Original customer receipt',description:'customer',category:'CUSTOMER',tranche:'CLEAR',minimum:'50.000',maximum:'50.00'});
+ await add({name:'Broad original reference',reference:'TRX'});
+ await capture('00-rules-complete-editor-desktop');
+ await act('save').click();
+ await desk.locator('.statement-notice').filter({hasText:'Saved Operating USD · recurring inflows edition 1'}).waitFor();
+ const first=JSON.parse((await download('draft-export','rules-first-complete-edition.json')).raw);
+ const edition=first.classificationRules.library.editions[0],grantRule=edition.rules.find(value=>value.name==='Original grant receipt'),
+  customerRule=edition.rules.find(value=>value.name==='Original customer receipt'),broadRule=edition.rules.find(value=>value.name==='Broad original reference');
+ need(edition.basis.sourceSha256===sha(await readFile(join(config.originalsDirectory,'operating-october.csv'))),'Saved rulebook retains the original CSV source identity.');
+ await act('review').click();await desk.locator('[data-statement-rule-choice="2"]').waitFor();
+ await act('unambiguous').click();
+ const overlap=JSON.parse((await download('draft-export','rules-overlap-explicit-review.json')).raw).classificationRules.review;
+ need(overlap.rows.filter(value=>value.candidates.length===2).length===2&&Object.keys(overlap.choices).length===0,'Two overlapping inflow recommendations require actual operator selection.');
+ need(overlap.rows.find(value=>value.rowNumber===3).protectedReason.includes('explicit'),'Original supplier decision remains protected.');
+ await desk.locator('[data-statement-rule-choice="2"]').selectOption(grantRule.id);
+ await desk.locator('[data-statement-rule-choice="4"]').selectOption(customerRule.id);
+ await act('persist').click();
+ const progress=JSON.parse((await download('draft-export','rules-saved-original-row-choices.json')).raw);
+ await openOperations(origin+'/#access='+token,state.caseId);await openStatements();
+ need(await desk.locator('[data-statement-rule-choice="2"]').inputValue()===grantRule.id,'Ordinary reopening retains exact rule choices against the same original preview.');
+ await page.setViewportSize({width:390,height:844});await capture('00-rules-overlapping-choices-phone');
+ await desk.locator('[name="rule.query"]').fill('no-original-rule-row-matches');await act('filter').click();
+ need((await desk.locator('.statement-rules').textContent()).includes('0 matching rows'),'Show empty full-population rule search.');
+ await capture('00-rules-empty-search-phone');
+ await desk.locator('[name="rule.query"]').fill('');await act('filter').click();
+ await act('edit').click();
+ await desk.locator('[data-statement-action="rules-remove-rule"][data-rule-id="'+broadRule.id+'"]').click();
+ await desk.locator('[name="rule.bookNote"]').fill('Following edition removes the overlapping broad reference after explicit operator review.');
+ await act('save').click();
+ await desk.locator('.statement-notice').filter({hasText:'Saved Operating USD · recurring inflows edition 2'}).waitFor();
+ const library=await download('rules-export','rules-complete-library.json'),libraryValue=JSON.parse(library.raw);
+ need(libraryValue.editions.length===2&&canonical(libraryValue.editions[0])===canonical(edition),'Following edition preserves every original rule and condition.');
+ const receiveLibrary=async path=>{
+  const chooser=page.waitForEvent('filechooser');await act('import').click();await(await chooser).setFiles(path);
+ };
+ await receiveLibrary(library.path);await desk.locator('.statement-notice').filter({hasText:'Received complete rulebook editions'}).waitFor();
+ const replay=JSON.parse((await download('draft-export','rules-library-replay.json')).raw);
+ need(replay.classificationRules.library.editions.length===2,'Exact library receiving does not duplicate editions.');
+ const conflict=structuredClone(libraryValue);conflict.editions[0].note+=' Changed retained body.';
+ const conflictPath=join(work,'rules-divergent-original-edition.json');await atomic(conflictPath,conflict);await receiveLibrary(conflictPath);
+ await desk.locator('[role="alert"]').filter({hasText:'same rulebook edition has different content'}).waitFor();
+ await capture('00-rules-conflicting-edition-phone');
+ const untouched=JSON.parse((await download('draft-export','rules-after-divergent-receiving.json')).raw);
+ need(canonical(untouched.classificationRules.library)===canonical(replay.classificationRules.library),'Divergent receiving leaves the complete original library unchanged.');
+ await act('review').click();await act('unambiguous').click();
+ const chosen=JSON.parse((await download('draft-export','rules-current-selected-review.json')).raw).classificationRules.review;
+ need(Object.keys(chosen.choices).length===2,'The operator can select both now-unambiguous inflow recommendations.');
+ await page.setViewportSize({width:1360,height:1000});await capture('00-rules-before-selected-apply-desktop');
+ await act('apply').click();
+ const applied=JSON.parse((await download('draft-export','rules-applied-original-source.json')).raw);
+ const decisions=new Map(applied.inputs.decisions.map(value=>[value.rowNumber,value]));
+ need(decisions.get(2).category==='GRANT'&&decisions.get(2).tranche===1&&decisions.get(4).category==='CUSTOMER','Apply only the selected original inflow classifications.');
+ need(canonical(decisions.get(3))===canonical(originalInputs.decisions.find(value=>value.rowNumber===3)),'Retain every actual supplier invoice decision field.');
+ need(applied.inputs.source.contentBase64===originalInputs.source.contentBase64&&applied.classificationRules.applications.length===1,'Full original source and complete rule application remain together.');
+ const reviewed=await preview('rules-selected-native-preview');need(reviewed.canImport&&reviewed.summary.newCount===3,'Original native preview accepts the selected classifications and actual invoice.');
+ await desk.locator('[name="copyName"]').fill('Original October · recurring classification review');
+ await desk.locator('[name="copyNote"]').fill('Complete original source, two rule editions, explicit row choices and original invoice after native preview.');
+ await desk.locator('[data-statement-action="copies-new"]').click();
+ await desk.locator('.statement-notice').filter({hasText:'Saved Original October · recurring classification review'}).waitFor();
+ const archive=await download('copies-export','rules-full-original-workspace-archive.json'),archiveValue=JSON.parse(archive.raw);
+ const selected=archiveValue.editions.filter(value=>value.name==='Original October · recurring classification review').sort((a,b)=>b.revision-a.revision)[0];
+ need(selected,'Select the original complete rules working copy for independent receiving.');
+ const originalPage=page,cold=await receiving.browser().newContext({viewport:{width:1360,height:1000},acceptDownloads:true});
+ const errors=[];
+ try{
+  await cold.route('**/*',async route=>{
+   const request=route.request(),url=new URL(request.url());
+   if(['http:','https:'].includes(url.protocol)&&(url.origin!==origin||request.method()==='POST'&&url.pathname.endsWith('/command'))){await route.abort();return;}
+   await route.continue();
+  });
+  page=await cold.newPage();page.on('pageerror',error=>errors.push(String(error).replaceAll(token||'\0','[workspace key]')));
+  await openOperations(origin+'/#access='+token,state.caseId);await openStatements();
+  const coldDesk=page.locator('.statement-desk'),coldAct=name=>coldDesk.locator('[data-statement-action="rules-'+name+'"]');
+  const chooser=page.waitForEvent('filechooser');await coldDesk.locator('[data-statement-action="copies-import"]').click();await(await chooser).setFiles(archive.path);
+  await coldDesk.locator('.statement-notice').filter({hasText:'Received '+archiveValue.editions.length+' complete saved editions'}).waitFor();
+  await coldDesk.locator('[name="copyQuery"]').fill(selected.name);await coldDesk.locator('[data-statement-action="copies-filter"]').click();
+  await coldDesk.locator('[data-statement-action="copies-select"][data-copy-id="'+selected.id+'"]').click();
+  await coldDesk.locator('[name="copyEdition"]').fill(String(selected.revision));
+  await coldAct('from-copy').click();
+  let coldDraft=JSON.parse((await download('draft-export','rules-cold-library-received-before-source.json')).raw);
+  need(coldDraft.inputs.source===null&&coldDraft.classificationRules.library.editions.length===2,'Receive complete classification history without replacing the empty current source.');
+  await coldDesk.locator('[data-statement-action="copies-review"]').click();await coldDesk.locator('[data-statement-action="copies-open"]').click();
+  await coldDesk.locator('.statement-notice').filter({hasText:'Opened Original October · recurring classification review'}).waitFor();
+  coldDraft=JSON.parse((await download('draft-export','rules-cold-complete-recovery.json')).raw);
+  need(coldDraft.classificationRules.library.editions.length===2&&coldDraft.classificationRules.applications.length===1&&coldDraft.dirty,'Empty-browser receiving preserves full rules and requires a current preview.');
+  need(await coldAct('apply').isDisabled(),'The earlier matching review cannot apply after cold opening.');
+  await capture('00-rules-cold-complete-source-desktop');
+  const coldPreview=await preview('rules-cold-original-native-preview');need(coldPreview.canImport,'The cold original source re-previews through the actual native API.');
+  // Explicit authored later-period file exercises reuse; it is never imported as customer cash.
+  const authored=Buffer.from(await readFile(join(config.originalsDirectory,'operating-october.csv'),'utf8').then(value=>value.replaceAll('2026-10-12','2026-11-12').replaceAll('TRX100','TRX200')));
+  const nextPath=join(work,'authored-following-period.csv');await atomic(nextPath,authored);
+  await coldDesk.locator('[data-statement-file]').setInputFiles(nextPath);
+  await coldDesk.locator('[name="openingBalance"]').fill('100.00');await coldDesk.locator('[name="closingBalance"]').fill('1100.00');
+  const nextPreview=await preview('rules-authored-following-period-native-preview');
+  need(nextPreview.rows.length===3,'Operate the explicitly authored next-period source in the same private software course.');
+  await coldDesk.locator('[name="rule.selected"]').selectOption(edition.id+':2');await coldAct('review').click();await coldAct('unambiguous').click();
+  await page.setViewportSize({width:390,height:844});await capture('00-rules-authored-following-period-phone');
+  const following=JSON.parse((await download('draft-export','rules-authored-following-period-review.json')).raw);
+  need(Object.keys(following.classificationRules.review.choices).length===2&&following.inputs.decisions.length===0,'Next-period matching makes fresh selected recommendations while preserving its unmodified draft.');
+  const onward=await download('copies-export','rules-cold-full-onward-archive.json'),onwardValue=JSON.parse(onward.raw);
+  for(const retained of archiveValue.editions)need(onwardValue.editions.some(value=>value.id===retained.id&&value.revision===retained.revision&&canonical(value)===canonical(retained)),'Onward export preserves every exact original immutable edition.');
+  need(errors.length===0,'Independent recurring-rule browser errors: '+errors.join('; '));
+ }finally{page=originalPage;await cold.close();}
+ await openRecovery(original.path);await preview('rules-restored-original-main-inputs');
+ const restored=JSON.parse((await download('draft-export','rules-restored-original-complete.json')).raw);
+ need(canonical(restored.inputs)===canonical(originalInputs),'Original financial receiving inputs remain unchanged after the independent rules course.');
+ await stage('original-recurring-statement-classification-operated',{caseId:state.caseId,invoiceId:state.invoiceId,
+  originalPreviewSha256:originalPreview.previewSha256,rulebookId:edition.id,editions:2,protectedInvoice:true,
+  applications:1,librarySha256:sha(library.raw),archiveSha256:sha(archive.raw),nativePreviewSha256:reviewed.previewSha256,
+  followingPeriodKind:'explicitly authored software receiving source; no financial command'});
+}
+
 async function receiveStatementCopiesInFreshBrowser(archive,csvEdition,originalInputs){
  const browser=context.browser();need(browser,'Use the existing browser to open an independent private receiving context.');
  const originalPage=page;
@@ -419,6 +560,7 @@ async function receiveStatementCopiesInFreshBrowser(archive,csvEdition,originalI
   need(reviewed.canImport&&reviewed.summary.newCount===3,'The original case accepts the independently reopened working copy for its original reviewed receiving.');
   await capture('00-copies-independent-native-preview-phone');
   await recipientReviewBrowser(receiving,originalInputs);
+  await recurringClassificationBrowser(receiving,originalInputs);
   const full=await download('copies-export','statement-working-copies-independent-complete.json'),fullValue=JSON.parse(full.raw);
   const original=JSON.parse(archive.raw);
   for(const edition of original.editions){
