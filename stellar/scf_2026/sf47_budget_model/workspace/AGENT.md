@@ -399,3 +399,12 @@ The original launch process remains owned through its `close` event and complete
 ## Saved customer-use calendar
 
 The optional `document.useCalendar` records complete useful tasks, dated uses, separate DIRECT/PREPAID funding groups and original buyer receipt associations in the same immutable Installation history. The **Customer use** tab reads exact saved reports alongside current receipt/source changes, expands explicit working dates into an editable draft, exports JSON/CSV/ICS, and stages the original Cohort inputs while preserving an existing edited draft. See [Customer-use calendar](CUSTOMER_USE_CALENDAR.md) for the full document, CLI, typed client, MCP and independent receiving workflow.
+
+
+## Named staff and complete installation receiving
+
+Open **Team workspace** at `/team` from the original private owner link. Enroll lead, finance, reviewer and contributor profiles against the existing case and contributor identities. Named HTTP sessions use individual cookies and a CSRF value; the original case commands record the enrolled actor. The contributor desk records original work and invoices and shows their paid, open and credit balances.
+
+[STAFF_ACCESS.md](STAFF_ACCESS.md) contains the operating workflow and role matrix. [STAFF_INSTALLATION.md](STAFF_INSTALLATION.md) covers whole-database backup, source and attachment transfer, individual SSH access and independent recovery. Both Applications launchers include the same named-staff source inventory.
+
+The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py --output /absolute/private/receiving --node /absolute/path/to/node`. It operates the original local server through named staff HTTP and browser sessions, then opens the same complete installation in a separate recovered destination. Existing trusted integrations retain the original owner bearer API.
