@@ -1,7 +1,8 @@
 // MIT. Local, read-only recipient UI for complete original catalogue handovers.
-import {openText,compareEditions,tableJsonl,materialCsv,TABLES,decodeBase64} from './core.mjs';
+import {openText,compareEditions,tableJsonl,materialCsv,TABLES,decodeBase64,canonical} from './core.mjs';
 import {createRecipientReviewPanel} from './review-panel.mjs';
 import {exportRecipientWorking,openRecipientWorking} from './review.mjs';
+import {openRecipientRenewal} from './renewal.mjs';
 export function mount(document){
  const root=document.getElementById('app'),template='<!doctype html>\n'+document.documentElement.outerHTML;
  const state={bundle:null,tab:'overview',edition:null,before:null,after:null,query:'',page:0,table:'catalog_decisions',review:null,selected:null,error:null,busy:false};
@@ -71,7 +72,7 @@ export function mount(document){
   let output=template.replace(/(<script id="catalog-payload" type="application\/json">)[\s\S]*?(<\/script>)/,(_all,start,end)=>start+payload+end);
   if(output===template&&!template.includes(payload))throw new Error('The complete reader template is unavailable.');
   const working=reviewPanel?.snapshot();
-  const reviewPayload=working?JSON.stringify({review:working.review,draft:working.draft,author:working.author}).replaceAll('<','\\u003c'):'';
+  const reviewPayload=working?JSON.stringify({review:working.review,draft:working.draft,author:working.author,renewal:working.renewal}).replaceAll('<','\\u003c'):'';
   output=output.replace(/(<script id="catalog-review-payload" type="application\/json">)[\s\S]*?(<\/script>)/,(_all,start,end)=>start+reviewPayload+end);
   download('Material_Catalog_'+filename(b.catalog.id)+'.html',output,'text/html;charset=utf-8');
  }
@@ -172,7 +173,15 @@ export function mount(document){
    const bundle=openText(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),{name:p.name});
    if(p.sha256&&bundle.identity.sha256!==p.sha256)throw new Error('The embedded original bundle differs from the reader manifest.');
    const retained=document.getElementById('catalog-review-payload')?.textContent.trim();
-   let working={};if(retained){const record=JSON.parse(retained);working=openRecipientWorking(exportRecipientWorking(bundle,record.review??null,record.draft??{},record.author??null));}
+   let working={};if(retained){
+    const record=JSON.parse(retained);
+    working=openRecipientWorking(exportRecipientWorking(bundle,record.review??null,record.draft??{},record.author??null));
+    if(record.renewal){
+     const renewal=openRecipientRenewal(record.renewal);
+     if(renewal.previous.bundle.text!==bundle.text||canonical(renewal.previous.review)!==canonical(working.review)||canonical(renewal.previous.draft)!==canonical(working.draft)||canonical(renewal.previous.author)!==canonical(working.author))throw Error('The complete embedded prior working state differs from the re-review source.');
+     working.renewal=renewal;
+    }
+   }
    start(bundle,working);
   }catch(error){state.error=error.message;render();}
  }
