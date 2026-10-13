@@ -104,7 +104,8 @@ export async function startCanadaBuysServer({ directory, operator = 'operator', 
       }
       if (request.method === 'POST' && url.pathname === '/api/import') {
         const body = await requestJSON(request, maxRequestBytes);
-        sendJSON(response, 200, workspace.importCsv(body.rawText, { stream: body.stream, label: body.label, url: body.url, retrievedAt: body.retrievedAt, expectedSha256: body.expectedSha256 }, body.expectedRevision)); return;
+        sendJSON(response, 200, workspace.importCsv(body.rawText, { stream: body.stream, label: body.label, url: body.url, retrievedAt: body.retrievedAt, expectedSha256: body.expectedSha256, response: body.response, coverage: body.coverage,
+          bodyKind: body.bodyKind, derivation: body.derivation, derivationSha256: body.derivationSha256 }, body.expectedRevision)); return;
       }
       if (request.method === 'PATCH' && /^\/api\/notices\/[^/]+\/review$/.test(url.pathname)) {
         const ocid = decodeURIComponent(url.pathname.slice('/api/notices/'.length, -'/review'.length));
