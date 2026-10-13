@@ -87,6 +87,7 @@ async function foreground(session, connectionFile) {
   return { state: 'CLOSED' };
 }
 export async function main(args = process.argv.slice(2)) {
+  if (args[0] === 'research') return (await import('./research/cli.mjs')).main(args.slice(1));
   if (args[0] === 'alfred') return (await import('./alfred/cli.mjs')).main(args.slice(1));
   if (args[0] === 'qcew') return (await import('./qcew/cli.mjs')).runQcewCli(args.slice(1));
   if (args[0] === 'releases') return runFredReleaseAcquisitionCli(args.slice(1));

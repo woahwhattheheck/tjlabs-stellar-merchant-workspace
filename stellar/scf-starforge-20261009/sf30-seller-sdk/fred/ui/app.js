@@ -1,6 +1,7 @@
 import { mountFredBriefing } from './briefing.js';
 import { mountFredRecurring } from './recurring.js';
 import { mountFredReleases } from './releases.js';
+import { mountFredResearch } from './research.js';
 import { mountFredQcew } from './qcew.js';
 import { mountFredDdp } from './ddp.js';
 import { mountFredDdpPublished } from './ddp-published.js';
@@ -139,6 +140,7 @@ const ddp = mountFredDdp({ api, upload, download, table, select, getState: () =>
   } });
 const published = mountFredDdpPublished({ api, table, select, getState: () => state,
   getBusy: () => workspaceBusy, refresh, message });
+const research = mountFredResearch({api,download,getState:()=>state,getBusy:()=>workspaceBusy,refresh,message});
 const qcew = mountFredQcew({ api, download, table, select, getState: () => state,
   getBusy: () => workspaceBusy, refresh, message, onPublication: async result => {
     await acceptPublication(result,'QCEW',publicationSubmission);
@@ -281,6 +283,7 @@ async function renderState(value) {
   ddp.onState();
   published.onState();
   qcew.onState();
+  research.onState();
   if (nativeWorkspace?.projectId!==state.id || typeof nativeWorkspace?.directory!=='string')
     throw new Error('The complete customer host did not return its original workspace binding.');
   await customerWork.open(state.id);

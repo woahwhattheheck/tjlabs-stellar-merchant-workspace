@@ -98,7 +98,8 @@
     "./seller/fred/alfred/cli": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.d.mts",
       "default": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/cli.mjs"
-    }
+    },
+    "./seller/fred/research": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/project.mjs"
   },
   "applicationProviders": {
     "fred": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/fred.mjs"
@@ -207,6 +208,14 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/alfred/README.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/alfred.js",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-profile.json",
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-programme.json"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/qcew/examples/philadelphia-programme.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/model.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/source.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/project.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/bundle.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/README.md",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/ui/research.js",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/fred/research/native-journey.mjs"
   ]
 }

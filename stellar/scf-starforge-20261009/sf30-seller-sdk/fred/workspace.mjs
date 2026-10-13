@@ -1,3 +1,4 @@
+import { RESEARCH_ACTIONS, runResearchAction, researchView, researchEntry, researchCsv, researchSourceDownload } from './research/project.mjs';
 // MIT. Private industrial operator UI over the maintained FRED project and native engines.
 import { createServer } from 'node:http';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
@@ -112,6 +113,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
     ['/ddp-guide', ['../ddp/PROJECT.md', 'text/plain; charset=utf-8']],
     ['/ddp-published.js', ['ddp-published.js', 'text/javascript; charset=utf-8']],
     ['/ddp-published-guide', ['../ddp/PUBLISHED-WORKSPACE.md', 'text/plain; charset=utf-8']],
+    ['/research.js', ['research.js', 'text/javascript; charset=utf-8']],
     ['/qcew.js', ['qcew.js', 'text/javascript; charset=utf-8']],
     ['/customer-work.mjs', ['customer-work.mjs', 'text/javascript; charset=utf-8']],
     ['/qcew-guide', ['../qcew/WORKSPACE.md', 'text/plain; charset=utf-8']],
@@ -137,6 +139,7 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
   };
   const run = async request => {
     const id = request.id, expectedRevision = request.expectedRevision, common = { directory, id, expectedRevision };
+    if (RESEARCH_ACTIONS.includes(request.action)) return runResearchAction({directory,request,signal:abort.signal});
     if (FRED_DDP_ACTIONS.has(request.action))
       return runFredDdpAction({ request, directory, environment, signal: abort.signal });
     if (QCEW_WORKSPACE_ACTIONS.includes(request.action))
@@ -248,6 +251,10 @@ export async function startFredWorkspace({ directory, port = 0, buyerConfig, env
           'The original project directory changed.', 'FRED_WORKSPACE_BINDING_CHANGED', 409);
         return send(res, 200, launchView());
       }
+      if (req.method === 'GET' && url.pathname === '/api/research/catalog') return send(res,200,await researchView(directory,{query:url.searchParams.get('query')??'',topic:url.searchParams.get('topic')??'',geography:url.searchParams.get('geography')??'',status:url.searchParams.get('status')??'',due:url.searchParams.get('due')==='true',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??100)}));
+      if (req.method === 'GET' && url.pathname === '/api/research/entry') return send(res,200,await researchEntry(directory,url.searchParams.get('id')));
+      if (req.method === 'GET' && url.pathname === '/api/research/catalog.csv') return send(res,200,Buffer.from(await researchCsv(directory),'utf8'),'text/csv; charset=utf-8','research-source-catalog.csv');
+      if (req.method === 'GET' && url.pathname === '/api/research/source') {const source=await researchSourceDownload(directory,url.searchParams.get('id'));return send(res,200,source.bytes,source.contentType,source.filename.replace(/[^\x20-\x7e]|["\\]/g,'_'));}
       if (req.method === 'GET' && url.pathname === '/api/state')
         return send(res, 200, { project: await fredProjectView(directory),
           workspace:{projectId:binding.projectId,directory}, merchant: runtimeView(),
