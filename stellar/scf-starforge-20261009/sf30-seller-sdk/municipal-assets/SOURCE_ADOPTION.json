@@ -257,6 +257,16 @@
   ],
   "files": [
     {
+      "path": "AGENT_OPERATING.md",
+      "bytes": 11534,
+      "sha256": "1ce535400e86d45340a93b44c4f3843854b052bdceac2169efab36dc168775fe"
+    },
+    {
+      "path": "agent-contracts.mjs",
+      "bytes": 5245,
+      "sha256": "8ecb4d065148c00ce45c8663f841d2cbf3d60e115dcc527e3660a898dc57c33d"
+    },
+    {
       "path": "application-provider.mjs",
       "bytes": 3567,
       "sha256": "87851c6245df5011bcf3a082fbdd71dfb4302326ac92f2f026913079915b44f0"
@@ -272,6 +282,16 @@
       "sha256": "ac32af416c7ff6fa8ee3f862a8eb25de84aae3e352dbc1f4da34f549c62dd45e"
     },
     {
+      "path": "client.d.mts",
+      "bytes": 8282,
+      "sha256": "a722ea51b2281aede984a1a8cb5e29ed8332450257cd74684f5b5e7ee70145a5"
+    },
+    {
+      "path": "client.mjs",
+      "bytes": 25143,
+      "sha256": "f96ca311b41f7e69696a1f2380cc0b7b80b48aa23a42c85c2254ca715f86ba35"
+    },
+    {
       "path": "LICENSE",
       "bytes": 1091,
       "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
@@ -285,6 +305,36 @@
       "path": "managed.mjs",
       "bytes": 12079,
       "sha256": "6d0a73962deac7dbffdff728980ad8fe33c33bad332b3ea68fab35a1c1a92ba2"
+    },
+    {
+      "path": "mcp-client.d.mts",
+      "bytes": 4730,
+      "sha256": "c538955ff79614ee5066eff78be82469c4e79a39d9a074f9c0e8f685d530c28c"
+    },
+    {
+      "path": "mcp-client.mjs",
+      "bytes": 7483,
+      "sha256": "45a9c67090281602947698be499e88618e44bb4fe12e7cd81f715b8291f31f06"
+    },
+    {
+      "path": "mcp-setup.mjs",
+      "bytes": 5439,
+      "sha256": "0d93208f7234dcdf61f4f09f47b91c213c106af98cecde7304c635a9bc167491"
+    },
+    {
+      "path": "mcp-tools.mjs",
+      "bytes": 10056,
+      "sha256": "5b29a0175f3a84249be2d31334a7f96e33073f3d54d1916385df50f21aaa369f"
+    },
+    {
+      "path": "mcp.mjs",
+      "bytes": 8798,
+      "sha256": "47adfbf7b87d4d404e0993f4ec408fd7b7530e0e087027b33aa1a2d6e1796ed0"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "bytes": 2233,
+      "sha256": "ec1d85e29027235959d2324ba6a3275a5d8a47391085752391561ddb118ea658"
     },
     {
       "path": "native/acceptance/README.md",

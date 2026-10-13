@@ -12,7 +12,17 @@
     "./seller/municipal-assets": {
       "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.mjs"
-    }
+    },
+    "./seller/municipal-assets/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/client.mjs"
+    },
+    "./merchant/municipal-assets": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp.mjs",
+    "./merchant/municipal-assets/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp-client.mjs"
+    },
+    "./merchant/municipal-assets/setup": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp-setup.mjs"
   },
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets",
@@ -28,13 +38,23 @@
     }
   ],
   "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/AGENT_OPERATING.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/LICENSE",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/SOURCE_ADOPTION.json",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/agent-contracts.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/application-provider.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/browser-assets.json",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/cli.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/client.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/client.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.d.mts",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/managed.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp-client.d.mts",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp-client.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp-setup.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp-tools.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/mcp.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/merchant-provider.mjs",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/acceptance/README.md",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/acceptance/verify.py",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/managed.py",
@@ -71,5 +91,8 @@
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/ui/app.css",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/ui/app.js",
     "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/native/workspace/ui/index.html"
-  ]
+  ],
+  "merchantProviders": {
+    "municipal-assets": "stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/merchant-provider.mjs"
+  }
 }

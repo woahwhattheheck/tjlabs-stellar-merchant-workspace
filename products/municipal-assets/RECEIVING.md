@@ -36,3 +36,9 @@ Use readable industrial layout, tables, typography, spacing and restrained contr
 If the delivery adds voice or video, use available high-quality generative voice/TTS and useful generative media with natural professional delivery. Actually watch/listen to the final outgoing export, including timing, pronunciation and audio alignment.
 
 Retain actual desktop/narrow views, the original complete package, downloaded customer files, original/reopened workspace identities, actual native result and the producer's rendered observations in the same original receiving operation. Return them in the existing D1CC thread and current SCF source/application thread. Preserve the equipped receiver's prior active programme and its source/native lease.
+
+## Same-application typed and merchant continuation
+
+Carry the [agent operating course](../../stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/AGENT_OPERATING.md) through this same installed edition. Import both declared typed clients and discover the municipal provider from the normal merchant registry. Connect to the exact current Applications startup as the original named actor. In the separate labelled development workspace, import its original inventory and round-trip JSONL, save explicit mappings and settings, run the unchanged checker, then read the complete report and selected release through the merchant's retained-file transport. Reopen the actual downloaded files.
+
+Repeat one already completed request and inspect its unchanged native operation/result. A changed-input reuse must retain the original conflict. Preserve the configured host's full agent request and original response files. The existing customer project then continues its already selected source/target operation under its actual current revision. This joins the original native course; it does not restart an accepted source acquisition or send a prepared Maximo load externally.

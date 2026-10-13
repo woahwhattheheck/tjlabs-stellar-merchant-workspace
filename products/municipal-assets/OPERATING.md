@@ -94,3 +94,11 @@ Original sidecar journal paths and request identities remain byte-exact historic
 [SOURCE_ADOPTION.json](../../stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/SOURCE_ADOPTION.json) binds the complete original source and each installed launch dependency. The original D1CC programme remains `MCPHERSON-ASSET-WORKORDER-WORKSPACE-20261011-D1CC`; SCF installed adoption is its same-workspace continuation `SCF-MUNICIPAL-ASSET-ADOPTION-90ED-20261013`. The complete current operator course is in [RECEIVING.md](RECEIVING.md).
 
 Actual native results from the original product remain separate from operation of this new installed source edition. The equipped original receiver opens and uses the exact composed product and all outgoing files, and returns the actual desktop/narrow views and complete receiving result to the same original thread.
+
+## Agent and merchant operation
+
+The same managed application is available through the complete [agent operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/municipal-assets/AGENT_OPERATING.md). The typed native client and the merchant provider use the original Applications request and observed startup, verify the actual authenticated instance, and operate as the configured named actor. Host-selected input files carry their actual SHA-256; original round-trip observations use JSONL. Mapped record kinds and the separate round-trip input retain their native meanings.
+
+Each mutating request is retained before dispatch with its original body and expected revision. A lost reply resumes that same request; independent intended edits use distinct request IDs. Complete reports, releases, source captures, target returns and request history use the maintained retained-file reader. Configure the private connection and original operation directory as described in that guide, then discover the source-owned municipal provider through the existing merchant installation.
+
+The agent request directory belongs to its configured physical host. Preserve it and the actual connection during host continuation. A received native workspace has its own physical identity and current Applications startup; its next agent setup must select that receiving instance explicitly.
