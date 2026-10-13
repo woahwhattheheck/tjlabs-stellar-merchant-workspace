@@ -102,20 +102,32 @@ async function verifyReceived(directory,receipt){
   return receipt;
 }
 /** Source-only receiving. Original providers, listeners, buyers and signers stay untouched. */
-export async function receiveOperatorTransfer({archive,directory}={}){
+export async function receiveOperatorTransfer({archive,directory,expected}={}){
+  if(expected!==undefined)need(expected&&typeof expected==='object'&&!Array.isArray(expected)&&
+    Object.keys(expected).every(key=>['jobId','operatorManifestSha256','selectionSha256','transferId','archiveSha256','archiveBytes'].includes(key))&&
+    ['jobId','operatorManifestSha256','selectionSha256','transferId'].every(key=>Object.hasOwn(expected,key))&&
+    /^[a-z0-9][a-z0-9_-]{0,63}$/.test(expected.jobId??'')&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(expected.transferId??'')&&
+    /^[a-f0-9]{64}$/.test(expected.selectionSha256??'')&&/^[a-f0-9]{64}$/.test(expected.operatorManifestSha256??'')&&
+    (!Object.hasOwn(expected,'archiveSha256')&&!Object.hasOwn(expected,'archiveBytes')||
+      /^[a-f0-9]{64}$/.test(expected.archiveSha256??'')&&Number.isSafeInteger(expected.archiveBytes)&&expected.archiveBytes>=0&&expected.archiveBytes<=MAX_ARCHIVE),
+    'Retain the complete original selected export and optional archive identity.','OPERATOR_RECEIVE_SELECTION');
+  const matchExpected=value=>{if(expected)need(['jobId','transferId','selectionSha256','operatorManifestSha256'].every(key=>value[key]===expected[key]),
+    'The complete archive belongs to a different selected export.','OPERATOR_RECEIVE_SELECTION');};
   const source=resolve(archive),target=resolve(directory),parent=dirname(target);await privateDir(parent);
   const sourceId=await identity(source,MAX_ARCHIVE);need(sourceId.bytes<=MAX_ARCHIVE,'The complete archive exceeds 8 GiB.');
+  if(expected?.archiveSha256!==undefined)need(sourceId.sha256===expected.archiveSha256&&sourceId.bytes===expected.archiveBytes,'The complete original archive byte identity differs.','OPERATOR_RECEIVE_SELECTION');
   const release=await lockPrivateDirectory({directory:parent,filename:'.commissioning-receive-'+digest(target).slice(0,24)+'.lock',namespace:'facilitator-operator-receive',busyCode:'RECEIVE_ALREADY_OWNED',unavailableCode:'RECEIVE_LOCK_UNAVAILABLE'});
   try{
     let exists=false;try{await lstat(target);exists=true;}catch(e){if(e.code!=='ENOENT')throw e;}
     if(exists){
       await privateDir(target);const receipt=await json(join(target,'.operator','received-transfer','receipt.json'));
       need(receipt.archive.sha256===sourceId.sha256&&receipt.archive.bytes===sourceId.bytes,'This destination received a different complete archive.','OPERATOR_RECEIVE_CONFLICT');
-      await verifyReceived(target,receipt);return{...receipt,directory:target,replayed:true};
+      matchExpected(receipt);await verifyReceived(target,receipt);return{...receipt,directory:target,replayed:true};
     }
     const stage=join(parent,'.'+basename(target)+'-receive-'+sourceId.sha256.slice(0,20));await privateDir(stage,true);
     await publish(join(stage,'intent.json'),encode({schema:'stellar-forge.facilitator-operator-receive-intent.v1',target,archive:sourceId}));
     const raw=join(stage,'archive');await privateDir(raw,true);const extracted=await extract(source,raw,sourceId),verified=await inspectExtracted(raw,extracted);
+    matchExpected({jobId:verified.manifest.jobId,transferId:verified.manifest.id,selectionSha256:verified.manifest.selectionSha256,operatorManifestSha256:digest(verified.manifestBytes)});
     const assembled=join(stage,'job');await privateDir(assembled,true);
     for(const dir of ['blobs','commands','results','reviews','runs','buyers','.operator'])await privateDir(join(assembled,dir),true);
     for(const dir of ['uploads','inputs','requests','results','native-requests','plans','received-transfer'])await privateDir(join(assembled,'.operator',dir),true);
