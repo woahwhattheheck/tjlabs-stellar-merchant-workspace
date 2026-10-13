@@ -6,12 +6,15 @@ import type {AwardTable, AwardCollection, AwardChangeSet, AwardRecordSelection, 
   AwardHistoryRead, AwardRoundSelection, AwardRoundRead, AwardPositionSelection, AwardPositionRead,
   AwardFinancialSelection, AwardFinancialRead} from "./awards-client.mjs";
 import type {SupportAction, SupportActionInput} from './support-client.mjs';
+import type {PlanningCollection, PlanningChangeSet, PlanningRecordSelection, PlanningRecordRead,
+  PlanningHistoryRead, PlanningSummarySelection, PlanningSummaryRead, PlanningReportSelection,
+  PlanningFile, SavedPlanningFile} from './budget-planning-client.mjs';
 export type Sha256 = string;
 export type PortfolioId = string;
 export type OperationId = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | {[key:string]:JsonValue};
 export type JsonObject = {[key:string]:JsonValue};
-export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable|AwardTable;
+export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable|AwardTable|'planning_scenarios'|'planning_lines';
 export type SourceStandard = 'iati'|'360giving';
 export type RequestState = 'RUNNING'|'COMPLETED'|'FAILED';
 export type CorePortfolioAction = 'source.receive'|'portfolio.save'|'review.save'|'portfolio.export'|'portfolio.receive';
@@ -33,6 +36,7 @@ export interface PortfolioSaveInput {
   sources:Sha256[]; sourceReplacements?:{before:Sha256; after:Sha256}[]; review:PortfolioReview;
   programme?:ProgrammeChangeSet;
   awards?:AwardChangeSet;
+  planning?:PlanningChangeSet;
 }
 export interface ReviewReference { sourceId:Sha256; entityKey:Sha256; sha256:Sha256; }
 export type ReviewDecision =
@@ -114,6 +118,12 @@ export declare class GrantPortfolioClient {
   awardsRound(input:AwardRoundSelection, options?:RequestOptions):Promise<AwardRoundRead>;
   awardsPosition(input:AwardPositionSelection, options?:RequestOptions):Promise<AwardPositionRead>;
   awardsFinancial(input:AwardFinancialSelection, options?:RequestOptions):Promise<AwardFinancialRead>;
+  planningSchema(options?:RequestOptions):Promise<JsonObject>;
+  planningRecord<C extends PlanningCollection>(input:PlanningRecordSelection<C>, options?:RequestOptions):Promise<PlanningRecordRead<C>>;
+  planningHistory<C extends PlanningCollection>(input:PlanningRecordSelection<C>, options?:RequestOptions):Promise<PlanningHistoryRead<C>>;
+  planningSummary(input:PlanningSummarySelection, options?:RequestOptions):Promise<PlanningSummaryRead>;
+  openPlanningReport(input:PlanningReportSelection, options?:RequestOptions):Promise<PlanningFile>;
+  downloadPlanningReport(input:PlanningReportSelection, filename:string, options?:RequestOptions):Promise<SavedPlanningFile>;
   programmeSchema(options?:RequestOptions):Promise<JsonObject>;
   programmeRecord(input:ProgrammeRecordSelection, options?:RequestOptions):Promise<ProgrammeRecordRead>;
   programmeHistory(input:ProgrammeRecordSelection, options?:RequestOptions):Promise<ProgrammeHistoryRead>;
