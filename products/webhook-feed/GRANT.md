@@ -2,8 +2,9 @@
 
 The complete event product now carries a customer's original acquired window
 through useful application work and independent receiving. This guide connects
-that delivered foundation to the existing SCF application, the original
-Mercury/Xycloo candidate and the selected future installation workorder.
+that delivered foundation to the existing SCF application and the selected
+future installation workorder. Company qualification, correspondence and
+commercial proposals remain in the original internal customer case.
 
 The complete reviewer chapter is [GRANT_CHAPTER.md](GRANT_CHAPTER.md).
 The customer implementation contract is [COMMISSIONING.md](COMMISSIONING.md).
@@ -22,10 +23,10 @@ window, output destination and completion acknowledgment. Agree when a later
 window is useful. An event count by itself is an acquired-data fact; the customer
 accepts the complete report, reconciled table or application update.
 
-The original Mercury/Xycloo implementation proposal connects one selected Stellar
-contract/event family to an existing customer database or internal API and
-provides source, deployment instructions and receiving-engineer handover.
-The existing company relationship retains its original sender and terms.
+The selected installation connects one authorized Stellar contract/event family
+to an existing customer database or internal API and provides complete source,
+deployment instructions and receiving-engineer handover. Company-specific
+scope, correspondence and commercial terms remain in the internal case.
 The selected installation workorder names the actual commissioning payer and
 accepting operator before prospective implementation begins.
 
@@ -254,7 +255,7 @@ exact originals. The full `analysis-events` contribution registers
 complete direct source and dependencies. Working JSON/HTML retain a 192 MiB
 allowance; the native-review companion retains the original 32 MiB limit.
 
-Continue this capability inside the existing Mercury/22B7/A66C customer
+Continue this capability inside the existing authorized customer
 receiving operation. Use its actual accepted/current windows and original
 controller. The producing worker opens and LOOKS at the exact normal/narrow
 screens, full original value pages, comparison/history, save/reopen, source
@@ -352,9 +353,9 @@ Export and independently import the whole saved operating-case archive.
 Keep the complete Event preparation alongside that archive so every original
 source, report, workbook and native analytical workspace remains available.
 Continue the next useful source window through the same customer programme.
-The original proposed Mercury USD 2,400 / five-business-day commercial scope
-and its start/acceptance milestones stay in the original Workshare; assigned
-effort and actual customer acceptance remain its native records.
+The customer's commercial scope, start and acceptance milestones stay in its
+original internal Workshare. Assigned effort and actual customer acceptance
+remain in that case's native records.
 
 ## Receive a colleague's worksheet review while preserving current customer work
 
@@ -559,7 +560,7 @@ The complete command sequence and exact retained filenames are in
 [EVENT_MAPPING_RECEIVING.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_RECEIVING.md).
 The named agent and source operation contract is in
 [ANALYSIS_EVENTS.md](../../stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md).
-The producing peer must open and use the actual outgoing HTML and every attachment, inspect desktop and narrow layouts, original populations/full values, unfinished fields/reasons, saves and independently reopened files, and the native Saved actions review. Keep real images and whole returned outputs with the existing Mercury/A66C/22B7 receiving operation and repair visible defects before presentation.
+The producing peer must open and use the actual outgoing HTML and every attachment, inspect desktop and narrow layouts, original populations/full values, unfinished fields/reasons, saves and independently reopened files, and the native Saved actions review. Keep real images and whole returned outputs with the existing authorized customer receiving operation and repair visible defects before presentation.
 
 The complete same-H2 author chapter now joins this source-to-agent-to-customer course. Seven existing source IDs select their measured current Merchant editions, and six new complete contract/helper/types/request-receiver/CLI/guide IDs bring the declaration to 54 entries. Each of those thirteen current paths has an explicit `repository`, `commit` and matching immutable chapter link. The compact Analysis recipe also has the explicit current `e971839b16b169ef3bbf2ad664331878fc715062` pin requested by the original publisher. The previously declared colleague-review typed contract now has its exact historical link. Every earlier ID and measured edition is retained, including its actual original repository.
 
@@ -572,6 +573,20 @@ The complete source-bound colleague workflow extends the same customer Event map
 
 The full operator course is [EVENT_MAPPING_COLLEAGUE.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_COLLEAGUE.md). It covers complete browser and installed command use, separate original/reviewer cache identities, immutable two-file publication and recovery, saved preview checks, full source histories and explicit local receiving authority. The original [mapping receiver](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_RECEIVING.md) accepts the complete wrapper, retains its raw bytes beside the original capture and derives only the selected mapping for the existing native Review. New six-source captures and existing four-source captures retain their exact selected implementation; the original customer action, native Apply and later report/workbook/delivery remain the same operation.
 
-Use the actual named customer source and original host/browser for the producing course. The producing operator opens and uses both roles' real HTML, original populations and full values, concurrent fields/reasons, explicit conflicts, complete source downloads, independently reopened result and exact saved native action. Inspect ordinary and narrow views and repair actual visible problems before presenting the outgoing edition. Preserve the real returned images and all complete files with the existing Mercury/A66C/22B7 operation.
+Use the actual named customer source and original host/browser for the producing course. The producing operator opens and uses both roles' real HTML, original populations and full values, concurrent fields/reasons, explicit conflicts, complete source downloads, independently reopened result and exact saved native action. Inspect ordinary and narrow views and repair actual visible problems before presenting the outgoing edition. Preserve the real returned images and all complete files with the existing authorized customer receiving operation.
 
 This complete author successor selects the delivered mapping collaboration at `db56e8ba4435a3351109a77490beab9a75e5c958`. It preserves every earlier source ID and measured edition, adds the four complete colleague model/controls/command/guide sources, and advances actual changed paths to their measured current bodies. Keep the same canonical H2, every other contributor, full companion, application and original cumulative publisher's saved-v7 operation. The original six prospective packages remain USD 38,000 / 400 hours / 150 days across two installations.
+
+## Following complete native mapping source and workspace restore
+
+Public Merchant PR2054 is merged at `6eccde70806d8768658afde83f1b7abb2b4bc336`. All eighteen complete product files were read back after merge. The original Event Review now retains the complete selected mapping working file and its generated editable HTML in the customer's Analysis SQLite database. The normal full workspace archive therefore carries both originals, all colleague work and the complete saved editor alongside the accepted action.
+
+Use [EVENT_MAPPING_NATIVE_SOURCE.md](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_NATIVE_SOURCE.md) with the actual named customer workspace, programme, input and existing Review operation. Select the complete file, preserve its original raw identity, and let the installed validator compare its source, full receiving graph, current comparison and attributed mapping to the original native request. Continue that same saved action through interruption; a complete native source and its derived editor remain independently recoverable.
+
+The browser's Saved actions controls download the full JSON and HTML from the restored workspace. The existing `event-mapping-receiving saved-source` command and typed `downloadNativeAnalysisEventMappingSavedSource` helper recover both from the exact original action. `saved-source-reopen` and `reopenNativeAnalysisEventMappingSavedSource` verify the completed private copy without the service or producer folder. They retain the action record, whole source, editable HTML and their selected index. The receiver uses explicit 64 KiB ranges against the original file writer; every range and each entire file are verified before completed publication.
+
+The original source and working limit remains 192 MiB, the native compact request is at most 1,046,528 bytes, and the retained editable HTML has a separate 256 MiB ceiling. Complete source and completed HTML/evidence each commit atomically in the native database. Invalid final bytes do not discard earlier valid received chunks. Earlier prepared requests continue their exact retained request; new full-source preparation validates the same strict original UTF-8/JSON representation as the native checker before retaining its request.
+
+For the producing course, use the existing authorized customer operation and its actual acquired windows and proposal. Review the complete file, take the original full workspace archive, restore separately, remove the producer/helper receiving directory, recover the complete JSON and HTML through the saved action, then operate both source history and editable controls. Edit, request a save, reopen the actual saved file, and inspect real normal and narrow screens. Preserve every full output with that original operation and repair visible defects before presentation.
+
+This same-H2 successor retains all 58 earlier source IDs and their measured editions, advances thirteen existing files, and adds five complete native source/validator/browser/guide entries for 63 declared sources. Receive the whole chapter and declaration through the unchanged cumulative source selector and original E496 publisher. Keep all other authors, full companion, concise application and original saved-v7 composition. The delivered native custody foundation supports the agreed two installations; the six prospective packages remain USD 38,000 / 400 hours / 150 days.
