@@ -143,7 +143,6 @@
       },
       "plan_id": "SELECT_REVIEWED_ORIGINAL_PLAN",
       "expected_plan_revision": "SELECT_CURRENT_REVIEWED_REVISION",
-      "restored_snapshot_id": "SELECT_ACTUAL_RETAINED_RESTORED_INVENTORY",
       "backup_sources": [
         {
           "step": "02-backup",

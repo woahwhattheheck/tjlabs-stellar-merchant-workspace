@@ -150,7 +150,7 @@ async function main() {
         const disclosures = page.locator('.castor-native details');
         for (let index = 0; index < await disclosures.count(); index++) {
           const disclosure = disclosures.nth(index);
-          if (!(await disclosure.getAttribute('open'))) await disclosure.locator('summary').first().click();
+          if (!(await disclosure.evaluate(node => node.open))) await disclosure.locator('summary').first().click();
         }
         await screenshot(page,label+'-original-native-details');
         result.checks.push({label,state:'OPERATED',profile_kind:kind,

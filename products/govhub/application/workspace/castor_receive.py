@@ -46,6 +46,8 @@ def source_pointer(value, pointer, json_value=False):
     if not isinstance(pointer, str) or not pointer.startswith("/"):
         raise ValueError("Select an explicit JSON pointer into the complete original operation.")
     for raw in pointer.split("/")[1:]:
+        if re.search(r"~(?![01])", raw):
+            raise ValueError("Use the original valid JSON pointer escaping.")
         key = raw.replace("~1", "/").replace("~0", "~")
         if isinstance(value, list):
             if not re.fullmatch(r"0|[1-9][0-9]*", key):
@@ -108,6 +110,12 @@ class Receiving:
                 raise ValueError("Continuation must name this immutable original course request.")
             if not isinstance(value.get("operations", {}), dict):
                 raise ValueError("Continuation operations must be keyed by their original operation IDs.")
+            source_commands = value.get("source_commands", {})
+            if not isinstance(source_commands, dict) or any(
+                    not isinstance(key, str) or not re.fullmatch(r"0|[1-9][0-9]*", key)
+                    or not isinstance(receipt, str) or not Path(receipt).is_absolute()
+                    for key, receipt in source_commands.items()):
+                raise ValueError("Source command receipts must bind an export index to its actual absolute receipt path.")
             self.continuation = value
             self.continuation_identity = original
 
@@ -370,7 +378,7 @@ class Receiving:
             if key in seen:
                 raise ValueError("Receive each original source artifact once in this handover.")
             seen.add(key)
-            operation = self.original_operation(selection["step"])
+            operation = handover["operation_cohort"][selection["step"]]
             item = self.workspace.operation_file(operation["id"], selection["file_name"])
             slot = directory(target / ("native-source-" + str(index).zfill(2)), True)
             archive = slot / "original-source.zip"
@@ -450,6 +458,9 @@ class Receiving:
             saved = session.out / "native-state.json"
             if saved.exists():
                 session.state = session.read_private_json(saved)
+            source_receipt = (self.continuation.get("source_commands") or {}).get(str(index))
+            if source_receipt:
+                castor_source.receive_command_receipt(session, source_receipt)
             reopened = castor_source.reopen_source(session, slot / "members", slot / "checkout")
             receipt = {"step": selection["step"], "operation_id": operation["id"],
                        "file_name": selection["file_name"], "archive": actual,
@@ -478,12 +489,24 @@ class Receiving:
                 "schema": SCHEMA, "binding": digest(selected), "phase": "prepared", "destination": str(target)}
             if handover["binding"] != digest(selected):
                 raise ValueError("Continue the same original whole handover selection.")
+            if "operation_cohort" not in handover:
+                # Freeze the complete original course before any backup or source
+                # receiving. Later source revisions never rewrite this handover.
+                handover["operation_cohort"] = {
+                    step["id"]: self.original_operation(step["id"]) for step in self.steps}
+                handover["original_course"] = {"request": self.request, "receiving": self.state}
+                handover["cohort_sha256"] = digest(handover["operation_cohort"])
+                save(path, handover)
+            if digest(handover["operation_cohort"]) != handover["cohort_sha256"]:
+                raise ValueError("The retained original handover operation cohort changed.")
+            if set(handover["operation_cohort"]) != {step["id"] for step in self.steps}:
+                raise ValueError("The retained handover differs from its original course selection.")
             save(path, handover)
             if handover.get("phase") == "complete":
                 application = handover["application"]["archive"]
                 if identity(application["path"])["sha256"] != application["sha256"]:
                     raise ValueError("The original received application archive changed.")
-                if read_json(target / "original-course.json") != {"request": self.request, "receiving": self.state}:
+                if read_json(target / "original-course.json") != handover["original_course"]:
                     raise ValueError("The completed original course changed after receiving.")
                 return {"state": "RECEIVED", "workspace": handover["reopened"]["workspace"],
                         "operation_count": len(handover["reopened"]["operations"]),
@@ -523,13 +546,13 @@ class Receiving:
             original = received_workspace.snapshot()
             saved_operations = {row["id"]: row for row in original["govhub"]["operations"]}
             for step in self.steps:
-                source_operation = self.original_operation(step["id"])
+                source_operation = handover["operation_cohort"][step["id"]]
                 if saved_operations.get(source_operation["id"]) != source_operation:
                     raise ValueError("The coherent private backup does not contain the completed original course.")
             selection_path = target / "original-course.json"
             if not selection_path.exists():
-                save(selection_path, {"request": self.request, "receiving": self.state})
-            elif read_json(selection_path) != {"request": self.request, "receiving": self.state}:
+                save(selection_path, handover["original_course"])
+            elif read_json(selection_path) != handover["original_course"]:
                 raise ValueError("The received original course differs from its completed source.")
             commands = Commands(self.root / "cold-reopen", 600)
             receipt = commands.run("original-project-reopen", [
@@ -543,7 +566,7 @@ class Receiving:
             if original.get("workspace") != reopened.get("workspace") or expected != actual:
                 raise ValueError("Independent receiving changed the original workspace or native operation population.")
             handover.update(phase="complete", reopened=reopened, cold_command=receipt,
-                            receiving_state=self.state, completed_at=utc())
+                            receiving_state=handover["original_course"]["receiving"], completed_at=utc())
             save(path, handover)
             return {"state": "RECEIVED", "workspace": reopened["workspace"],
                     "operation_count": len(actual), "destination": str(target),
