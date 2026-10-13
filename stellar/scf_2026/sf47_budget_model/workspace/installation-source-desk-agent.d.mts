@@ -9,7 +9,7 @@ export const INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES:number;
 export const INSTALLATION_SOURCE_ACTIONS:readonly InstallationSourceAction[];
 export const INSTALLATION_SOURCE_READS:readonly string[];
 export type InstallationSourceAction='create'|'file.add'|'file.remove'|'selection.save'|'prepare'|
-  'native.receive'|'attach'|'commissioning.attach'|'commissioning.archive.receive'|'edition.apply';
+  'native.receive'|'attach'|'commissioning.attach'|'commissioning.archive.receive'|'edition.apply'|'mapping.apply';
 export interface InstallationSourceSelection {caseId:string;draftId:string}
 export interface InstallationSourceContext {requestId:string;actor:string;note?:string}
 export interface InstallationSourceCommand<Data extends GrantObject=GrantObject> extends InstallationSourceContext {
@@ -28,6 +28,7 @@ export interface InstallationSourceDraft extends GrantObject {
   schema:typeof INSTALLATION_SOURCE_SCHEMA;caseId:string;id:string;revision:number;title:string;
   createdAt:string;updatedAt:string;files:InstallationSourceOriginalFile[];
   selection:GrantObject|null;preparations:GrantObject[];attachments:GrantObject[];history:InstallationSourceHistory[];
+  mappingReconciliations?:InstallationMappingReceipt[];
 }
 export interface InstallationSourceDraftSummary extends GrantObject {
   id:string;revision:number;title:string;createdAt:string;updatedAt:string;fileCount:number;selectedBytes:number;
@@ -51,6 +52,7 @@ export interface InstallationSourcePreparation extends GrantObject {
 export interface InstallationSourceReceipt<Result extends GrantObject|null=GrantObject|null> {
   schema:typeof INSTALLATION_SOURCE_SCHEMA;requestId:string;requestSha256:string;
   draft:InstallationSourceDraft;result:Result;
+  nativeMapping?:InstallationMappingWire;
 }
 export type InstallationSourceRequest=
   |{schema:typeof INSTALLATION_SOURCE_SCHEMA;requestId:string;state:'NOT_RECORDED'}
@@ -123,6 +125,11 @@ export interface InstallationSourceInputs {
     body:{expectedRevision:number;archiveFileId:string;replaceFileIds?:string[]}};
   'edition-compare':InstallationSourceSelection&{body:InstallationEditionComparisonInput};
   'edition-preview':InstallationSourceSelection&{body:InstallationEditionPreviewInput};
+  'mapping-compare':InstallationSourceSelection&{body:InstallationMappingComparisonInput};
+  'mapping-preview':InstallationSourceSelection&{body:InstallationMappingPreviewInput};
+  'mapping-compare-wire':InstallationSourceSelection&{body:InstallationMappingComparisonInput};
+  'mapping-preview-wire':InstallationSourceSelection&{body:InstallationMappingPreviewInput};
+  'mapping-draft-wire':InstallationSourceSelection&{body:{revision:number|null}};
   execute:{operation:InstallationSourceOperation};
   reconcile:{operation:InstallationSourceOperation};
 }
@@ -143,6 +150,11 @@ export interface InstallationSourceResponses {
   'archive-inspect':GrantJsonResponse<InstallationCommissioningArchivePreview>;
   'edition-compare':GrantJsonResponse<InstallationEditionComparison>;
   'edition-preview':GrantJsonResponse<InstallationEditionPlan>;
+  'mapping-compare':GrantJsonResponse<InstallationMappingComparison>;
+  'mapping-preview':GrantJsonResponse<InstallationMappingPlan>;
+  'mapping-compare-wire':GrantJsonResponse<InstallationMappingWire<InstallationMappingComparison>>;
+  'mapping-preview-wire':GrantJsonResponse<InstallationMappingWire<InstallationMappingPlan>>;
+  'mapping-draft-wire':GrantJsonResponse<InstallationMappingWire<InstallationSourceDraft>>;
   execute:InstallationSourceExecution;
   reconcile:InstallationSourceExecution;
 }
@@ -208,3 +220,48 @@ export interface InstallationEditionPreparedFileChange {
   filename:string;status:'same'|'changed'|'added'|'removed';
   source:InstallationSourcePreparedFile|null;target:InstallationSourcePreparedFile|null;
 }
+
+export interface InstallationMappingComparisonInput {
+  source:InstallationEditionRef;target:InstallationEditionRef;expandedArrays:string[];
+}
+export interface InstallationMappingRow {
+  pointer:string;sourcePresent:boolean;targetPresent:boolean;source:unknown;target:unknown;
+  sourceType:'absent'|'null'|'boolean'|'string'|'number'|'array'|'object';
+  targetType:'absent'|'null'|'boolean'|'string'|'number'|'array'|'object';
+}
+export interface InstallationMappingComparison extends InstallationMappingComparisonInput,GrantObject {
+  schema:'stellar-forge.installation-mapping-comparison.v1';caseId:string;
+  sourceSelection:GrantObject|null;targetSelection:GrantObject|null;
+  arrays:Array<{pointer:string;sourceLength:number;targetLength:number;expanded:boolean}>;
+  rows:InstallationMappingRow[];sha256:string;
+}
+export type InstallationMappingDecision =
+  |{pointer:string;choice:'source'|'target'|'absent';value:null}
+  |{pointer:string;choice:'custom';value:unknown};
+export interface InstallationMappingPreviewInput extends InstallationMappingComparisonInput {
+  decisions:InstallationMappingDecision[];files:InstallationEditionFileDecision[];
+}
+export interface InstallationMappingPlan extends InstallationMappingComparisonInput,GrantObject {
+  schema:'stellar-forge.installation-mapping-plan.v1';caseId:string;comparisonSha256:string;
+  decisions:InstallationMappingDecision[];selection:GrantObject|null;selectionSha256:string;
+  arrayChanges:Array<{pointer:string;positions:Array<{originalIndex:number;resultIndex:number|null}>}>;
+  editionPlan:InstallationEditionPlan;sha256:string;
+}
+export interface InstallationMappingReceipt extends GrantObject {
+  schema:'stellar-forge.installation-mapping-reconciliation.v1';state:'RECONCILED_SOURCE_MAPPING';
+  caseId:string;draftId:string;draftRevision:number;requestId:string;actor:string;at:string;
+  source:InstallationEditionRef;target:InstallationEditionRef;plan:InstallationMappingPlan;
+  editionTransition:GrantObject;sha256:string;
+}
+export function prepareInstallationSourceMapping(plan:InstallationMappingPlan,
+  context:InstallationSourceContext):InstallationSourceOperation;
+
+export interface InstallationMappingWire<Value=unknown> {
+  schema:'stellar-forge.installation-mapping-wire.v1';canonicalJSON:string;sha256:string;
+  /** Read-route convenience view; canonicalJSON is the exact numeric authority. */
+  value?:Value;
+}
+export function prepareInstallationSourceMappingWire(wire:InstallationMappingWire<InstallationMappingPlan>,
+  context:InstallationSourceContext):InstallationSourceOperation;
+
+export const INSTALLATION_SOURCE_MAX_JSON_BYTES:number;

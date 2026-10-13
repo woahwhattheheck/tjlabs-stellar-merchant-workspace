@@ -1,3 +1,4 @@
+import {createMappingReconciliationDesk, validateMappingReconciliationWork} from './operations_installation_mapping_reconciliation.mjs';
 // Customer source-edition comparison and explicit successor composition.
 // Mounted by the original Source Desk; its journal owns every write and recovery.
 const WORK='stellar-forge.installation-source-edition-work.v1';
@@ -53,12 +54,13 @@ export function validateSourceEditionWork(value,{caseId,draftId}){
   if(!object(value)||value.schema!==WORK||value.targetDraftId!==draftId||
      !['sourceDraftId','sourceRevisionText','sourcePreparationId','targetPreparationId','mappingMode','mappingText'].every(k=>typeof value[k]==='string')||
      !object(value.choices)||!object(value.views)||typeof value.dirty!=='boolean'||
-     !['','source','target','explicit'].includes(value.mappingMode))
+     !['','source','target','explicit','reconcile'].includes(value.mappingMode))
     throw new Error('Keep the complete customer-edition fields and original target draft.');
   for(const entry of Object.values(value.choices))if(!object(entry)||!['','retain','replace','remove'].includes(entry.choice)||typeof entry.targetFileId!=='string')
     throw new Error('Keep every explicit retained-file decision.');
   for(const entry of Object.values(value.views))if(!object(entry)||typeof entry.search!=='string'||!Number.isSafeInteger(entry.page)||entry.page<0)
     throw new Error('Keep the original customer-edition table position and search.');
+  validateMappingReconciliationWork(value.mappingWork,{caseId,draftId});
   if(value.comparison)assertComparison(value.comparison,caseId);
   if(value.plan)assertPlan(value.plan,caseId);
   if(value.applied&&(!object(value.applied)||value.applied.schema!==TRANSITION||value.applied.caseId!==caseId||value.applied.draftId!==draftId))
@@ -97,7 +99,7 @@ export function createSourceEditionDesk(H){
     try{return H.stable(w.comparisonInput)===H.stable(fields(w))&&w.comparison.target.ref.draftId===H.currentDraft()?.id&&w.comparison.target.ref.revision===H.currentDraft()?.revision;}
     catch{return false;}
   }
-  function planBody(w){
+  function fileChoices(w){
     if(!comparisonCurrent(w))throw new Error('Compare the current target revision with the exact source revision again before previewing.');
     const source=w.comparison.source.draft,target=w.comparison.target.draft;
     const files=source.files.map(f=>{
@@ -107,6 +109,12 @@ export function createSourceEditionDesk(H){
       if(choice.choice==='replace'&&!target.files.some(t=>t.id===targetFileId))throw new Error('Choose the exact replacement file for '+f.filename+'.');
       return {sourceFileId:f.id,choice:choice.choice,targetFileId};
     });
+    return files;
+  }
+  const mappings=createMappingReconciliationDesk({...H,editionWork:()=>needWork(),
+    comparisonCurrent:()=>comparisonCurrent(work()),fileChoices:()=>fileChoices(work())});
+  function planBody(w){
+    const files=fileChoices(w);
     if(!['source','target','explicit'].includes(w.mappingMode))throw new Error('Choose which complete mapping the successor will use.');
     return {source:clone(w.comparison.source.ref),target:clone(w.comparison.target.ref),files,
       mapping:{mode:w.mappingMode,selection:w.mappingMode==='explicit'?selection(w.mappingText):null}};
@@ -200,10 +208,11 @@ export function createSourceEditionDesk(H){
       '<details><summary>'+newTargets.length+' new target files remain retained</summary>'+
       (newTargets.length?H.table(['Target file'],newTargets.map(f=>[meta(f,'target')])):H.empty('There are no new target files.'))+'</details>'+
       '<div class="source-desk-fields">'+field('Complete mapping for successor','mappingMode',w.mappingMode,{options:[
-        ['','Choose mapping'],['source','Carry forward source mapping'],['target','Use current target mapping'],['explicit','Use complete explicit JSON mapping']
+        ['','Choose mapping'],['source','Carry forward source mapping'],['target','Use current target mapping'],['explicit','Use complete explicit JSON mapping'],['reconcile','Reconcile individual mapping fields']
       ],help:'Carry forward rewrites known native file descriptors, sourceFile bindings and programme filenames only. Original plan hashes, hours and other values remain available for review.'})+
       (w.mappingMode==='explicit'?field('Complete explicit mapping JSON','mappingText',w.mappingText,{area:true,help:'Paste the whole mapping object. Use null to save an unmapped draft. Your exact editor text is retained in the original working copy.'}):'')+'</div>'+
-      '<div class="source-desk-actions">'+button('Preview complete successor','edition-preview','',!canPreview()||!H.editing(),true)+'</div>';
+      (w.mappingMode==='reconcile'?mappings.render():
+        '<div class="source-desk-actions">'+button('Preview complete successor','edition-preview','',!canPreview()||!H.editing(),true)+'</div>');
   }
   function planView(w){
     const plan=w.plan;if(!plan)return '';
@@ -245,6 +254,7 @@ export function createSourceEditionDesk(H){
       transitionView(w)+comparisonView(w)+choicesView(w)+planView(w);
   }
   function edit(target){
+    if(mappings.edit(target))return true;
     if(!target?.matches?.('[data-source-edition-field]'))return false;
     const w=needWork(),key=target.dataset.sourceEditionField,view=target.dataset.sourceEditionView;
     if(key==='search'){
@@ -306,6 +316,7 @@ export function createSourceEditionDesk(H){
     return H.issue('edition.apply',{plan},plan.target.revision);
   }
   function verifyReceipt(value,original){
+    if(original?.body?.action==='mapping.apply'){mappings.verifyReceipt(value,original);return;}
     if(original?.body?.action!=='edition.apply')return;
     const transition=value.result;
     if(!transition||transition.schema!==TRANSITION||transition.state!=='EDITABLE_SOURCE_EDITION'||
@@ -315,6 +326,12 @@ export function createSourceEditionDesk(H){
       throw new Error('Keep the complete saved source-edition receipt with its original request.');
   }
   function adoptReceipt(value,original){
+    if(original?.body?.action==='mapping.apply'){
+      if(mappings.adoptReceipt(value,original)){
+        const w=needWork();w.applied=clone(value.result.editionTransition);w.appliedPlan=clone(w.mappingWork.appliedPlan.editionPlan);
+      }
+      return;
+    }
     if(original?.body?.action!=='edition.apply'||value.draft?.id!==H.state().draftId)return;
     verifyReceipt(value,original);
     const w=needWork(),transition=value.result;
@@ -323,6 +340,7 @@ export function createSourceEditionDesk(H){
     H.state().tab='editions';
   }
   async function action(name,target){
+    if(name.startsWith('edition-mapping-')||name.startsWith('edition-download-mapping-'))return mappings.action(name,target);
     const w=needWork();
     if(name==='edition-download-review')return H.download(P(w),'customer-source-edition-review.json');
     if(name==='edition-download-comparison'){
@@ -364,5 +382,5 @@ export function createSourceEditionDesk(H){
     }
     throw new Error('Choose an installed customer source-edition action.');
   }
-  return {render,edit,action,verifyReceipt,adoptReceipt,canPreview,canApply:()=>planCurrent(work()),isDirty:()=>!!work()?.dirty,reset:()=>{H.state().editionWork=null;}};
+  return {render,edit,action,verifyReceipt,adoptReceipt,exactDraft:mappings.exactDraft,adoptNativeDraft:mappings.adoptNativeDraft,canPreview,canMappingPreview:mappings.canPreview,canMappingApply:mappings.canApply,canApply:()=>planCurrent(work()),isDirty:()=>!!work()?.dirty,reset:()=>{H.state().editionWork=null;}};
 }

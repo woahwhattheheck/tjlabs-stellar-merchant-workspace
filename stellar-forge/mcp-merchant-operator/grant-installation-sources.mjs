@@ -2,6 +2,7 @@
 import {
   INSTALLATION_SOURCE_MAX_FILE_BYTES, INSTALLATION_SOURCE_SCHEMA,
   prepareInstallationSourceCommand, prepareInstallationSourceUpload, prepareInstallationSourceReview,
+  prepareInstallationSourceMapping, prepareInstallationSourceMappingWire,
   validateInstallationSourceOperation,
 } from '../../stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs';
 import {createHash} from 'node:crypto';
@@ -11,11 +12,11 @@ const reads={
   profiles:'profiles',list:'list',detail:'detail',request:'request',file_inspect:'file-inspect',
   file:'file',preparation:'preparation',archive_describe:'archive-describe',archive:'archive',
   output:'output',commissioning_inspect:'commissioning-inspect',commissioning_preview:'commissioning-preview',
-  archive_inspect:'archive-inspect',
+  archive_inspect:'archive-inspect',mapping_compare:'mapping-compare-wire',mapping_preview:'mapping-preview-wire',
 };
 export const grantInstallationSourceVerbs=new Set([
   ...Object.keys(reads).map(key=>prefix+key),
-  prefix+'command_prepare',prefix+'upload_prepare',prefix+'review_prepare',prefix+'execute',prefix+'reconcile',
+  prefix+'command_prepare',prefix+'upload_prepare',prefix+'review_prepare',prefix+'mapping_prepare',prefix+'execute',prefix+'reconcile',
 ]);
 const need=(test,message)=>{if(!test)throw Object.assign(new Error(message),{code:'GRANT_INSTALLATION_SOURCE_INPUT'});};
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -23,7 +24,7 @@ const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const decode=bytes=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
 const clone=value=>JSON.parse(JSON.stringify(value));
 const without=(value,...keys)=>Object.fromEntries(Object.entries(value).filter(([key])=>!keys.includes(key)));
-async function originalJSON(args,ctx,inlineKey){
+async function originalJSON(args,ctx,inlineKey,maximum=32*1024*1024){
   need((args[inlineKey]!==undefined)!==(args.input!==undefined),
     'Select one complete inline original or a SHA-bound retained input.');
   if(args[inlineKey]!==undefined){
@@ -33,7 +34,7 @@ async function originalJSON(args,ctx,inlineKey){
   }
   need(typeof args.expectedInputSha256==='string','Keep the complete original input SHA256.');
   const selected=await ctx.load(args.input,args.expectedInputSha256);
-  need(selected.bytes.length<=32*1024*1024,'The original prepared operation fits its complete native request bound.');
+  need(selected.bytes.length<=maximum,'The original prepared operation fits its complete native request bound.');
   const value=decode(selected.bytes);need(plain(value),'Select the complete original JSON object.');return value;
 }
 function frozenResponse(value,ctx){
@@ -70,6 +71,15 @@ export async function executeGrantInstallationSourceTool(verb,args,ctx){
     const context={expectedRevision:args.expectedRevision,requestId:args.requestId,actor:args.actor,
       ...(args.note===undefined?{}:{note:args.note})};
     operation=bindOperation(prepareInstallationSourceUpload(args.caseId,args.draftId,loaded.bytes,metadata,context),ctx);
+  }else if(suffix==='mapping_prepare'){
+    const plan=await originalJSON(args,ctx,'plan',96*1024*1024);
+    const isWire=plan.schema==='stellar-forge.installation-mapping-wire.v1';
+    const prepare=isWire?prepareInstallationSourceMappingWire:prepareInstallationSourceMapping;
+    const prepared=prepare(plan,{
+      requestId:args.requestId,actor:args.actor,...(args.note===undefined?{}:{note:args.note})});
+    need(prepared.caseId===args.caseId&&prepared.draftId===args.draftId,
+      'Keep the full mapping review bound to its original case and target draft.');
+    operation=bindOperation(prepared,ctx);
   }else if(suffix==='review_prepare'){
     const review=await originalJSON(args,ctx,'review');
     need(review.caseId===args.caseId&&review.draftId===args.draftId,

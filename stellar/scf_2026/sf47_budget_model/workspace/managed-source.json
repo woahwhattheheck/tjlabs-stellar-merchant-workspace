@@ -616,6 +616,10 @@
     "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics.mjs",
     "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/EFFORT_ECONOMICS.md",
     "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/effort-economics-receiving.mjs",
-    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-cli.mjs"
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-cli.mjs",
+    "operations_installation_mapping_reconciliation.py",
+    "operations_installation_mapping_cli.py",
+    "operations_installation_mapping_reconciliation.mjs",
+    "INSTALLATION_MAPPING_RECONCILIATION.md"
   ]
 }
