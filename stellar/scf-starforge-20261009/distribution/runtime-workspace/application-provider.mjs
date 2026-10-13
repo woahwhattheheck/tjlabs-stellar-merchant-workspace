@@ -81,17 +81,30 @@ export function applicationPrivateUrl(text) {
   } catch { return null; }
 }
 
+/** An external browser origin must come from the provider's reviewed launch selection. */
+function applicationBrowserOrigin(text) {
+  let url; try { url = new URL(text); } catch {}
+  need(typeof text === 'string' && url && url.protocol === 'https:' &&
+    !url.username && !url.password && text === url.origin && text.length <= 4096,
+  'APPLICATION_PROVIDER_BROWSER_ORIGIN_INVALID',
+  'Select one exact HTTPS browser origin in the reviewed application configuration.');
+  return url.origin;
+}
+
 /**
  * A provider synchronously reads original normalized startup lines. It returns a URL,
- * {url, original?, links?, workspaceId?, connectionFile?}, a deferred resolver function, an array of those values, or null.
+ * {url, browserOrigin?, browserUrl?, original?, links?, workspaceId?, connectionFile?}, a deferred resolver function, an array of those values, or null.
  * Defer asynchronous source checks so ignored later announcements never run them. Stateful original
  * multi-line readers live in that provider. This one writer retains the first
  * accepted announcement, its original identity and the shared operation ID.
+ * Optional externalOrigin must be supplied by the provider's reviewed request;
+ * stdout alone cannot authorize an external browser address. The saved url remains local.
  */
-export function observeApplicationStartup(request, directory, readLine, { lineLimit = 16384 } = {}) {
+export function observeApplicationStartup(request, directory, readLine, { lineLimit = 16384, externalOrigin } = {}) {
   need(typeof readLine === 'function', 'APPLICATION_PROVIDER_OBSERVER_REQUIRED');
   need(Number.isSafeInteger(lineLimit) && lineLimit >= 1 && lineLimit <= 1024 * 1024,
     'APPLICATION_PROVIDER_LINE_LIMIT_INVALID');
+  const selectedBrowserOrigin = externalOrigin === undefined ? null : applicationBrowserOrigin(externalOrigin);
   let buffer = '', seen = false, closed = false, saveError = null, saving = Promise.resolve();
   const decoder = new StringDecoder('utf8');
   function line(value) {
@@ -108,11 +121,27 @@ export function observeApplicationStartup(request, directory, readLine, { lineLi
         const startup = typeof candidate === 'string' ? { url: candidate } : candidate;
         const url = startup && applicationPrivateUrl(startup.url);
         if (!url) return;
+        const hasBrowserOrigin = Object.hasOwn(startup, 'browserOrigin');
+        const hasBrowserUrl = Object.hasOwn(startup, 'browserUrl');
+        let browser;
+        if (selectedBrowserOrigin || hasBrowserOrigin || hasBrowserUrl) {
+          let browserUrl; try { browserUrl = new URL(startup.browserUrl); } catch {}
+          need(selectedBrowserOrigin && hasBrowserOrigin && hasBrowserUrl &&
+            startup.browserOrigin === selectedBrowserOrigin &&
+            typeof startup.browserUrl === 'string' && startup.browserUrl.length <= 4096 &&
+            browserUrl && browserUrl.protocol === 'https:' &&
+            !browserUrl.username && !browserUrl.password &&
+            browserUrl.origin === selectedBrowserOrigin && browserUrl.href === startup.browserUrl,
+          'APPLICATION_PROVIDER_BROWSER_URL_CHANGED',
+          'The announced browser URL differs from the explicitly reviewed HTTPS origin.');
+          browser = { browserOrigin: selectedBrowserOrigin, browserUrl: browserUrl.href };
+        }
         seen = true;
         await saveJSON(join(directory, 'application-url.json'), {
           schema: 'stellar-forge.application-url.v1', applicationId: request.applicationId,
           operationId: directory.split('/').at(-1), command: request.command,
           source: 'original-command-stdout', observedAt: now(), url,
+          ...(browser ?? {}),
           ...(Object.hasOwn(startup, 'links') ? { links: startup.links } : {}),
           ...(Object.hasOwn(startup, 'original') ? { original: startup.original } : {}),
           ...(Object.hasOwn(startup, 'workspaceId') ? { workspaceId: startup.workspaceId } : {}),
