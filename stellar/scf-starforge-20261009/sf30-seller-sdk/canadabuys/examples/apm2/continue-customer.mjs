@@ -86,10 +86,29 @@ try {
   result.stage = 'source-preserving-merchant'; await save(); globalThis.gc?.();
   const merchant = await load('merchant.mjs');
   let prepared = result.merchant?.prepared;
-  if (!prepared) prepared = await merchant.prepareMerchant(server.workspace, {
-    scope:'selected', noticeIds:[noticeId], expectedRevision:server.workspace.metadata().revision,
-    name:'APM2 engineering workshare'
-  });
+  if (!prepared) {
+    const priorRevision = result.merchant?.intent?.sourceRevision;
+    const candidates = priorRevision === undefined ? [] : server.workspace.view().publications
+      .filter(publication => publication.kind === 'canadabuys-merchant' &&
+        publication.sourceRevision === priorRevision && !publication.configured &&
+        publication.noticeIds?.length === 1 && publication.noticeIds[0] === noticeId)
+      .sort((a, b) => a.at.localeCompare(b.at) || a.id.localeCompare(b.id));
+    if (candidates.length) {
+      const publication = candidates[0];
+      const loaded = await merchant.loadMerchant(publication.directory, {expectedBundleSha256:publication.bundleSha256});
+      prepared = {publication, bundle:loaded.bundle, directory:loaded.directory, bundleSha256:loaded.bundleSha256};
+    } else {
+      const sourceRevision = server.workspace.metadata().revision;
+      result.merchant = {...result.merchant, intent:{noticeIds:[noticeId], sourceRevision}};
+      await save();
+      prepared = await merchant.prepareMerchant(server.workspace, {
+        scope:'selected', noticeIds:[noticeId], expectedRevision:sourceRevision,
+        name:'APM2 engineering workshare'
+      });
+    }
+    result.merchant = {...result.merchant, prepared, directory:prepared.directory || prepared.publication?.directory};
+    await save();
+  }
   await writeFile(join(root, 'merchant-preparation.json'), JSON.stringify(prepared, null, 2) + '\n', {mode:0o600});
   const directory = prepared.directory || prepared.publication?.directory;
   need(directory, 'The original merchant publication must identify its retained directory.');
