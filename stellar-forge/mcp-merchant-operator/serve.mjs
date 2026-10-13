@@ -247,7 +247,7 @@ export async function startMerchantMcp({ configPath, port = 3211, tokenEnv = 'MC
     throw failure('CONFIGURATION_ERROR', 'Supply a plain providerOptions object for trusted native startup.');
   port = portNumber(port, 3211);
   const operator = await openMerchantOperator(configPath,
-    { environment, stellarExpert: { environment, fetchImpl: stellarExpertFetchImpl }, woocommerce: { environment, fetchImpl: woocommerceFetchImpl }, mpp: { environment, fetchImpl: mppFetchImpl }, opensearch: { environment }, opencage: { env: environment }, grpc: { environment }, openapi: { environment }, arcgis: { environment }, opendatasoft: { environment }, accounting: { ...accounting, environment }, ...providerOptions });
+    { environment, stellarExpert: { environment, fetchImpl: stellarExpertFetchImpl }, woocommerce: { environment, fetchImpl: woocommerceFetchImpl }, mpp: { environment, fetchImpl: mppFetchImpl }, opensearch: { environment }, opencage: { env: environment }, grpc: { environment }, openapi: { environment }, arcgis: { environment }, opendatasoft: { environment }, accounting: { ...accounting, environment }, ...providerOptions, consoleDirectory });
   let server, access, operatorConsole, draining=false;
   try {
     access = await loadOAuthResourceHost({configPath:oauthConfigPath ?? environment.MCP_OAUTH_CONFIG,
