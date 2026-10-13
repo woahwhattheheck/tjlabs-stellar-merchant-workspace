@@ -87,6 +87,10 @@ review_catalog(
 
 The keyword arguments after source_bytes are keyword-only. original_root is a trusted local application setting and defaults to the adjacent vendor directory.
 
+New reviews carry numeric_comparison: exact-decimal.v1. Their inventory, typed identity mappings, field comparisons and displayed validation identifiers use exact decimal values parsed from each retained document. The unchanged GSA converter and validator still receive their original Python JSON model, and automatic candidate bytes use the original converter serialization. If that converter rounds a source decimal, the review exposes the actual before and after values. Existing saved report files, intrinsic review hashes and releases stay unchanged.
+
+The callable result can contain Python Decimal values. Serialize the complete result with encode_review(result), then encode that returned JSON text as UTF-8 when saving a report. This preserves decimal numbers as JSON numbers through the original Node, browser, CLI and Merchant readers. The process interface performs this serialization itself.
+
 ## Result contract
 
 The main schema is migration-review.v1.
