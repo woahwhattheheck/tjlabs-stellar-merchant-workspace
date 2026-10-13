@@ -3,10 +3,10 @@ import {createAuthorWorklist,openAuthorWorklist,exportAuthorWorklist,retainAutho
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function database(){
  return new Promise((resolve,reject)=>{
-  const request=indexedDB.open('stellar-forge-material-author-worklists',1);
+  const request=indexedDB.open('stellar-forge-material-author-worklists',1);let blocked=false;
   request.onupgradeneeded=()=>request.result.createObjectStore('worklists');
-  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
-  request.onblocked=()=>reject(Error('Another tab is upgrading browser storage. Keep this worklist open or download it.'));
+  request.onsuccess=()=>{if(blocked)request.result.close();else resolve(request.result);};request.onerror=()=>reject(request.error);
+  request.onblocked=()=>{blocked=true;reject(Error('Another tab is upgrading browser storage. Keep this worklist open or download it.'));};
  });
 }
 async function stored(workspaceId){
@@ -35,6 +35,7 @@ export function createAuthorWorklistPanel({container,element,getWorkspaceId,getC
  let value=null,workspaceId=null,revision=0,active=null,unsaved=false,generation=0,loading=false,saving=false,error=null,chain=Promise.resolve(),timer=null,page=0;
  const message=text=>{$('author-worklist-status').textContent=text;};
  function capture({archivePrevious=false}={}){
+  if(workspaceId&&getWorkspaceId()!==workspaceId)throw Error('A different workspace is open. Download the retained original worklist and reload before selecting the new workspace.');
   const draft=getDraft();
   if(loading||!value||!draft?.returnText||!draft.draft)return;
   const result=retainAuthorReturn(value,draft.returnText),item=result.worklist.items.find(x=>x.id===result.id);
@@ -63,7 +64,7 @@ export function createAuthorWorklistPanel({container,element,getWorkspaceId,getC
  }
  async function bind(){
   const id=getWorkspaceId();if(!id||id===workspaceId)return;
-  if(workspaceId&&unsaved)throw Error('Download or save the previous workspace worklist before switching workspace.');
+  if(workspaceId)throw Error('A different workspace is open. Download the retained original worklist and reload before selecting the new workspace.');
   workspaceId=id;value=createAuthorWorklist(id);revision=0;loading=true;error=null;const mark=++generation;render();
   try{const existing=await stored(id);if(mark!==generation||id!==workspaceId)return;
    if(existing){const received=openAuthorWorklist(existing.raw);if(received.workspaceId!==id)throw Error('Browser worklist identifies another workspace.');value=received;revision=existing.revision;}
@@ -98,6 +99,7 @@ export function createAuthorWorklistPanel({container,element,getWorkspaceId,getC
   if(current.catalogId!==getCatalog()?.id)throw Error('Choose the original catalogue '+current.catalogId+' first; all work remains retained.');
   loadDraft(current,draft);active=current.id;capture({archivePrevious:index>=0});void save();render();
  }
+ function identifierText(value){const span=element('span');String(value).match(/.{1,16}/gu)?.forEach((part,index)=>{if(index)span.append(element('wbr'));span.append(document.createTextNode(part));});return span;}
  function render(){
   const held=loading||saving||isHeld();
   for(const control of section.querySelectorAll('button,input,select'))control.disabled=held||!value;
@@ -110,7 +112,7 @@ export function createAuthorWorklistPanel({container,element,getWorkspaceId,getC
   $('author-worklist-previous').disabled=held||page===0;$('author-worklist-next').disabled=held||(page+1)*20>=filtered.length;
   for(const item of filtered.slice(page*20,page*20+20)){
    const article=element('article',undefined,{'data-author-return':item.id});
-   article.append(element('h4',item.reviewer+' · '+item.catalogId),element('p',item.id,{class:'help'}));
+   const heading=element('h4');heading.append(document.createTextNode(item.reviewer+' · '),identifierText(item.catalogId));const identity=element('p',undefined,{class:'help'});identity.append(identifierText(item.id));article.append(heading,identity);
    const state=item.draft?.comparison.catalog,selected=getCatalog();
    const current=state?.id===selected?.id&&state?.revision===selected?.revision&&state?.activeEditionId===selected?.activeEditionId;
    article.append(element('p',(active===item.id?'Selected · ':'')+(current?'Saved comparison; refresh before adoption.':'Different or changed catalogue; retain choices and explicitly compare again.')+' '+item.history.length+' earlier drafts · '+item.requests.length+' exact requests · '+item.outcomes.length+' outcomes.'));
@@ -120,7 +122,7 @@ export function createAuthorWorklistPanel({container,element,getWorkspaceId,getC
    article.append(actions);
    const history=element('details');history.append(element('summary','Complete retained draft history and original requests'));
    item.history.forEach((draft,index)=>{const button=element('button','Open earlier draft '+(index+1)+' · catalogue revision '+draft.comparison.catalog.revision,{type:'button','data-author-history':String(index)});button.disabled=held||item.catalogId!==selected?.id;button.addEventListener('click',()=>run(()=>select(item,index)));history.append(button);});
-   for(const saved of item.requests){const button=element('button','Download original request '+saved.request.requestId,{type:'button'});button.disabled=held;button.addEventListener('click',()=>download('Material_Review_Receive_'+saved.request.requestId+'.json',saved.raw));history.append(button);}
+   for(const saved of item.requests){const button=element('button','Download original request ',{type:'button'});button.append(identifierText(saved.request.requestId));button.disabled=held;button.addEventListener('click',()=>download('Material_Review_Receive_'+saved.request.requestId+'.json',saved.raw));history.append(button);}
    history.addEventListener('toggle',()=>{if(history.open&&!history.querySelector('pre'))history.append(element('pre',JSON.stringify({history:item.history,outcomes:item.outcomes},null,2)));});article.append(history);target.append(article);
   }
  }
@@ -132,7 +134,7 @@ export function createAuthorWorklistPanel({container,element,getWorkspaceId,getC
  $('author-worklist-merge-browser').addEventListener('click',()=>run(mergeBrowser));
  $('author-worklist-file').addEventListener('change',()=>run(()=>importFile($('author-worklist-file').files[0])));
  return{
-  bind:()=>{if(!workspaceId&&getWorkspaceId())void bind().catch(failed);},isLoading:()=>loading,capture,schedule,save,buttons:render,hasUnsaved:()=>unsaved||saving,
+  bind:()=>{if(getWorkspaceId()!==workspaceId)void bind().catch(failed);},isLoading:()=>loading,capture,schedule,save,buttons:render,hasUnsaved:()=>unsaved||saving,
   selected:()=>active,
   retainDraft(raw,draft){if(!value)throw Error('Open the original workspace worklist first.');const kept=retainAuthorReturn(value,raw);value=retainAuthorDraft(kept.worklist,kept.id,draft,{archivePrevious:true});active=kept.id;unsaved=true;generation++;},
   refresh(){capture();void save();render();},
