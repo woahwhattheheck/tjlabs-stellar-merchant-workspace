@@ -6,6 +6,12 @@
     "grant-workspaces": "stellar-forge/mcp-merchant-operator/providers/grant-workspaces.mjs"
   },
   "supportFiles": [
+    "stellar-forge/mcp-merchant-operator/grant-reporting-capture.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/grant-reporting-capture.mjs",
+    "stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-native.mjs",
+    "stellar/scf-starforge-20261009/distribution/discovery/grant-reporting-native.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures_native.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/grant_procedures.mjs",
     "stellar-forge/mcp-merchant-operator/grant-planning-sources.mjs",
     "stellar-forge/mcp-merchant-operator/catalog/grant-planning-sources.mjs"
   ]

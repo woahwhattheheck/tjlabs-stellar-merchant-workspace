@@ -8,6 +8,7 @@ import {seedGrantCohortAdoption,reviewGrantCohortAdoption,editCohortAdoption,reb
   inspectGrantCohortAdoptionRequest,saveGrantCohortAdoption,openGrantCohortAdoption,exportCohortAdoption}
   from '../../stellar/scf_2026/sf47_budget_model/workspace/cohort_planning_agent.mjs';
 import {grantPlanningSourceVerbs,executeGrantPlanningSourceTool} from './grant-planning-sources.mjs';
+import {grantReportingCaptureVerbs,executeGrantReportingCaptureTool} from './grant-reporting-capture.mjs';
 import {GRANT_MAX_WORKBOOK_HANDOVER_BYTES} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 export {grantWorkspaceTools} from './catalog/grant-workspace.mjs';
 import {GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
@@ -188,6 +189,7 @@ function presentation(value, base = '') {
 export class MerchantGrantWorkspaces {
   #config; #clients = new Map(); #readers = new RetainedFileReads({errorPrefix:'GRANT'});
   #planningHandovers = new Map();
+  #reportingCaptures = new Map();
   #closing = false; #close; #pending = new Set();
   constructor(config) { this.#config = config; }
   get summary() { return {configured:Boolean(this.#config.grantWorkspaces),
@@ -542,6 +544,12 @@ export class MerchantGrantWorkspaces {
         ({workspace, label:value.label, selectionSha256:value.selectionSha256, allowStart:value.allowStart,
           inputs:Object.keys(value.inputs)}))};
     const binding = this.#binding(alias);
+    if (grantReportingCaptureVerbs.has(verb)) return executeGrantReportingCaptureTool(verb,args,{
+      binding,root:()=>this.#root(alias),directory,immutable,pending:this.#reportingCaptures,
+      load:(input,expected)=>this.#input(alias,input,expected),
+      loadRetained:(id,expected)=>this.#loadSnapshot(alias,id,expected),
+      retain:(original,selection)=>this.#snapshot(alias,original,selection),
+    });
     if (verb === 'receive_begin') return this.#receiveBegin(alias, args);
     if (verb === 'receive_chunk') return this.#receiveChunk(alias, args);
     if (verb === 'receive_status') return this.#transferStatus(await this.#transfer(alias, args.transferId));
