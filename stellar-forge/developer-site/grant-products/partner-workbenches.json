@@ -1,0 +1,167 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "partner-workbenches",
+  "heading": "## Mobility and education managed workbenches",
+  "sources": [
+    {
+      "id": "partner-workbench-operating",
+      "label": "Complete mobility and education product operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/partner-workspace/SCF.md",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "f3c4400b3896bec3472bfe9223c4bdb9f5478944",
+          "sha256": "9f3bc3c79707a0fc5da7f2b083f080727739eb67e83eebf698edd67b142b83d7",
+          "bytes": 7301
+        }
+      ]
+    },
+    {
+      "id": "partner-workbench-native-contract",
+      "label": "Complete original-source and native installation contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/partner-workspace/native/API.md",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "41d863fb40538397405c6b30e11c7e7d7e654ace",
+          "sha256": "c63f70e2d99e9fc1e7df6f0da8a3406d8134a4908d48f74243c98733e4b156e5",
+          "bytes": 6937
+        }
+      ]
+    },
+    {
+      "id": "partner-mobility-installation",
+      "label": "Full mobility source-review Installation workorder",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/mobility-source-review.json",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "4ad8301646a1aa3ae2aaf1446bf60a357fda03c1",
+          "sha256": "0f356730dc4028fd88e40e2b76f98a6b836d2c6f465a3e9c1839e7bdb94a2d4c",
+          "bytes": 8140
+        }
+      ]
+    },
+    {
+      "id": "partner-education-installation",
+      "label": "Full education quality-review Installation workorder",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/education-quality-review.json",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "014d23dc133f6eb04e3b1ee7dd3449746649bbd5",
+          "sha256": "c43fa727e4b8cfaaf8b94bc97289bf57aa5248c8b9185ab11af3e5c541259d38",
+          "bytes": 8203
+        }
+      ]
+    },
+    {
+      "id": "partner-workbench-commissioning",
+      "label": "Original Workshare to Customer Installation source commissioning",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/partner-workspace/commission.mjs",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "4ddf6a53d8e35ed9070c018c1952097d6ee41dba",
+          "sha256": "0bce32c940f4f9324e7687ec14a1902e7425f43d12bfbd81d975aaf4052bd166",
+          "bytes": 9505
+        }
+      ]
+    },
+    {
+      "id": "partner-workbench-applications",
+      "label": "Direct original managed staff applications and source-bound readiness",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/partner-workspace/application.mjs",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "941de2871ad5837fe2e52e04d84fff05153f1729",
+          "sha256": "4b2295b8c21e8357b4778f288779bb357a2dc29e5069b46f5a0d28b55a69ba80",
+          "bytes": 9921
+        }
+      ]
+    },
+    {
+      "id": "partner-workbench-merchant",
+      "label": "Complete typed Merchant workspace and original operation binding",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/partner-workspace/workspace.mjs",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "c19da99a877ed7a7bc9cc9c63d64e4d7535d1268",
+          "sha256": "4f0aab42c607448abe5a6ebd7727771862a1bb25d3520b4a00343bdaf6e895af",
+          "bytes": 8942
+        }
+      ]
+    },
+    {
+      "id": "partner-workbench-receiving-guide",
+      "label": "Complete original-to-installed independent receiving procedure",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/partner-workspace/receiving/README.md",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "afbeb6dd71059430de4c1589fc588e988eaf6c05",
+          "sha256": "77c4d8a9c2fd4ea0a39a7339167d4b94678397e349de4d00acba093f72cdb4f4",
+          "bytes": 7436
+        }
+      ]
+    },
+    {
+      "id": "partner-workbench-original-selection",
+      "label": "Original complete final-workspace and runtime selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/partner-workspace/receiving/select-original.py",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "0e637df8ce2904c8cba9cc168b53bf87ff584a97",
+          "sha256": "8e8b500da7aef0b3e8a92ae146242ba474ec1dc8f4f3e6eb3ea833e6d360a611",
+          "bytes": 4615
+        }
+      ]
+    },
+    {
+      "id": "partner-workbench-complete-receiver",
+      "label": "Closed complete product and original framework receiving source",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": ".swarm-delivery/partner-installed-64b7-20261013/Partner_Installed_Receiving_Source.json",
+      "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+      "editions": [
+        {
+          "commit": "ae97decd04f04b2ffc1989498140c9cbefec502e",
+          "git_blob": "1f105f7eef50bd05f263b1f68ebd27b3308352f8",
+          "sha256": "d547ed6bba7698a9653ac8d701b2f6a5684b8b1e5805e37a4fa1d1eb6c610af3",
+          "bytes": 278479
+        }
+      ]
+    }
+  ]
+}
