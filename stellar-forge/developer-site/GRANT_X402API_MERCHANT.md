@@ -44,7 +44,7 @@ The invoice register keeps exact original amounts and independent asset options 
 
 ### Agent-assisted operation and complete file receiving
 
-The live Merchant invoice agent exposes 27 operations through the existing Merchant host. It selects a private connection to the running merchant, checks the original store and tenant, and uses the maintained typed operator client. A local source alias or supplied original source text begins a retained intake. After complete plan review, the agent continues the original invoices through charge creation, review of the exact wallet envelope, buyer-provided authorization and reconciliation. It receives the original completed files, register and whole project through the same operating records.
+The live Merchant invoice agent exposes 37 operations through the existing Merchant host: the original 27 invoice, payment and project operations plus the ten customer-review operations described below. It selects a private connection to the running merchant, checks the original store and tenant, and uses the maintained typed operator client. A local source alias or supplied original source text begins a retained intake. After complete plan review, the agent continues the original invoices through charge creation, review of the exact wallet envelope, buyer-provided authorization and reconciliation. It receives the original completed files, register and whole project through the same operating records.
 
 Original request artifacts are saved before a mutation is dispatched. An authorization first checks its complete encoded size and the reviewed envelope's SHA, so a failed selection leaves that invoice available for correction. The complete validated buyer authorization is kept privately and rechecked against the same envelope before its original POST. An unknown response points back to that invoice's payment review; a received response whose local file save failed retains its received state. Explicit recovery replays the exact saved charge, authorization or reconciliation request. The original engine owns due times, provider responses, settlement and fulfillment.
 
@@ -205,6 +205,77 @@ The following complete files are selected at the immutable merged product editio
 | [installed-receiving.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/installed-receiving.mjs) | Same five-invoice installed and portable continuation |
 | [CUSTOMER_REVIEWS.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/CUSTOMER_REVIEWS.md) | Complete customer and operator guide |
 | [web/style.css](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d48c6988791f349348ca35eba8e2d3af23f6be1/products/x402api-merchant-workspace/web/style.css) | Original Merchant stylesheet with scoped review layout |
+
+### Operate customer reviews through the original invoice agent
+
+The installed invoice agent now carries the same issued review, complete customer return, merchant disposition and Support handover used by the browser and typed client. A merchant or implementation partner can keep this work in the existing invoice operation while receiving the complete original files through the agent's established artifact reader. The provider retains its original 27 invoice, payment and project tools and adds ten review tools, for 37 in total. The review tools use the original local Merchant writer; they do not send customer messages or change payment, settlement or fulfillment.
+
+This continuation is delivered in [PR2003](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/pull/2003), source commit `d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42`. Its [complete operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/INVOICE_AGENT.md) covers configuration, every request, complete file receiving and recovery. The preceding customer-review model, recipient application and Support case lifecycle remain the same product.
+
+#### Select, issue and receive the original review
+
+The operator selects the existing merchant connection and invoice, then reads `merchant_invoice_review_status`. Its complete history artifact carries the current review version and invoice revision. `merchant_invoice_review_issue` uses a stable request UUID and those exact revisions; the native writer checks the invoice inside the same transaction that records the issue. `merchant_invoice_review_document` receives the complete independently editable HTML for the resulting issue. The existing authorized customer channel handles its delivery.
+
+A returned JSON file is selected by its host-owned `reviewReturns` alias, original filename and SHA-256. The host accepts a complete private return up to 48 MiB, including its original attachments and recorded editions. A smaller complete return can be supplied inline up to 1 MiB of UTF-8. Neither route truncates a file. The selected bytes are hashed before parsing, and the consumer verifies the issued invoice, original owner, edition history and original files.
+
+`merchant_invoice_review_source` inspects and retains that complete input without adding it to the invoice history. The operator reads its source artifact, including the recorded editions and any later unfinished draft. A return must contain a recorded edition before `merchant_invoice_review_receive` can adopt it. That call retains the exact returned bytes and a stable request UUID before invoking the existing native writer; later changes to the host input cannot change its pending request.
+
+#### Compare the exact edition and continue Support
+
+`merchant_invoice_review_compare` receives the complete issued/current invoice comparison and customer return. An invoice that changed after issue is shown as changed; the customer's recorded review stays attached to the original issued source. The operator selects the exact recorded edition, current invoice revision, full comparison SHA and review version, then uses `merchant_invoice_review_decide` to record the actual actor, disposition reason and one of `accepted`, `follow_up` or `declined`.
+
+The request can name an existing Support case UUID. That reference does not create another case. `merchant_invoice_review_support` downloads the full Support workspace, including issued invoice bytes, original returns, attachments, merchant decisions and unfinished returned work. The operator opens or merges it through the normal Support case writer, which preserves the existing diagnosis, original source slots, commissioning, service commitments and runtime handoff while merging immutable review history. The complete file uses the original workspace codec and a timestamp derived from retained review events, so receiving the same history gives the same source bytes.
+
+`merchant_invoice_review_return` downloads the exact original returned JSON. The Merchant project's whole archive retains both customer-review tables with the original invoices, payment records, source and files. Thus the operated review remains available when the installation is received and independently reopened.
+
+| Agent action | Retained original result |
+| --- | --- |
+| Status, issue and document | Complete history, original issue response and independently editable customer HTML. |
+| Source and receive | Hash-selected original return, full inspection artifact and native adoption response. |
+| Compare and decide | Whole issued/current comparison, selected recorded edition and attributed merchant disposition. |
+| Return and Support | Exact returned JSON and complete workspace for the existing Support case. |
+| Resume and file receiving | The same saved mutation, full original response and SHA-verified retained artifacts. |
+
+#### Recover a lost response and reopen complete files
+
+Issue, receive and decide save the complete private request before dispatch. A result marked `UNKNOWN` retains that request and its original invoice selection. The operator reads the current history, then explicitly calls `merchant_invoice_review_resume` with the original action, UUID and request payload SHA when receiving the original save. The native transaction journal returns an already completed request before checking newer history revisions. A new version is never substituted into the old request.
+
+A `RECEIVED` result with a local artifact publication error records that the native response arrived. Its original response and recovery selection remain available. A definite native conflict keeps its actual error and requires a fresh comparison before a separately prepared operation. This distinction prevents a lost file or response from silently producing a replacement business decision.
+
+Complete request and response artifacts, source files, comparisons, HTML and Support workspaces use the existing paged artifact reader. It verifies the complete byte count and SHA, supports the original descriptor release/reopen operation and preserves the private immutable output. The retained files remain readable after the live application stops and the agent owner reopens without a server or credential. Private customer text and authorization material are not substituted into compact status summaries.
+
+#### Demonstrate the continuation on the same five invoices
+
+The complete agent receiving programme consumes the original customer-review course's saved issue, receive and decision request/result files. It replays those three exact operations through the installed provider, compares their original native responses, downloads the original HTML, returned JSON and whole Support file, then verifies all five invoice identities and the retained review history. It creates no customer return, invoice, payment authorization or replacement request UUID.
+
+For a fresh current receiving operation, the original Applications course gives this consumer a separate managed opening after the customer-review browser course, stops its actual owner, and then verifies every retained artifact offline. Its original payment-provider sentinel must remain at zero calls, and the established business-table fingerprints must remain unchanged.
+
+For an already completed installation, the current receiving programme provides `--review-agent-continuation`. The operator keeps the original repository, source-commit, commissioned archive, root, browser and portable selections. The current consumer source is separately pinned by its full 128-file inventory, including the receiving script. It reopens the same saved Application against its original installation, uses the saved customer-review request files and stops that process through the existing lifecycle.
+
+That continuation writes a separate selection and completion bound to the original completion SHA, customer-review course, invoice, owner and consumer source. The original root completion, source selection and browser result files remain unchanged. Repeating the continuation verifies its original stopped process and complete output files. These are executable receiving instructions; the source merge and independent source review are not claims that the pending native or visual course has run.
+
+The producing operator still opens and LOOKS at the actual customer HTML, complete printed review, every outgoing original attachment and the usable project contents on desktop and narrow screens. The resulting original native output and viewed files belong to the existing receiving delivery.
+
+#### Contribution and complete current source selection
+
+The continuation supports the same funded merchant/buyer installation and customer handover work. It adds no grant hours, budget line, participant count or payment claim. The application remains USD 38,000 for 400 prospective hours over 150 days in six packages; its 18 actual Stellar purchases remain distinct from the five local protocol fixtures.
+
+The following 14 measured files select the complete agent addition and its shared current sources. The existing declaration retains all 28 preceding source IDs and measured historical editions, advances five shared paths to this edition, and adds nine source IDs. Older manuscript editions can still receive their original selected sources. The cumulative publisher owns the complete manuscript, four reader outputs and saved application.
+
+- [Original invoice host configuration and selected returned files](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/stellar-forge/mcp-merchant-operator/merchant-invoice-connection.mjs).
+- [Private immutable requests, response artifacts and verified downloads](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/stellar-forge/mcp-merchant-operator/merchant-invoice-files.mjs).
+- [Complete invoice-agent review consumer and exact-request recovery](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/stellar-forge/mcp-merchant-operator/merchant-invoice-reviews.mjs).
+- [Original invoice protocol and ten review tool contracts](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/stellar-forge/mcp-merchant-operator/merchant-invoice-protocol.mjs).
+- [Existing invoice owner and shared operation lifecycle](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/stellar-forge/mcp-merchant-operator/merchant-invoices.mjs).
+- [Installed invoice provider and all 37 tool definitions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/stellar-forge/mcp-merchant-operator/providers/merchant-invoices.mjs).
+- [Same-case agent replay, complete files and offline receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/customer-review-agent-receiving.mjs).
+- [Original five-invoice agent course and unchanged payment tools](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/invoice-agent-receiving.mjs).
+- [Original Applications course and completed-case continuation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/installed-receiving.mjs).
+- [Complete portable project and 127-source selection](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/portable-directory.mjs).
+- [Independent receiver for the same full project source](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/receive-portable-native.py).
+- [Existing installed Merchant distribution contribution](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/stellar/scf-starforge-20261009/distribution/contributions/x402api-merchant.json).
+- [Complete invoice, payment, review and Support agent guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/INVOICE_AGENT.md).
+- [Complete recipient, merchant and Support operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42/products/x402api-merchant-workspace/CUSTOMER_REVIEWS.md).
 
 ### Complete operating sources
 

@@ -366,7 +366,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/x402api-merchant-workspace/portable-directory.mjs",
-      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
       "required": false,
       "editions": [
         {
@@ -374,6 +374,12 @@
           "git_blob": "7f19fd89077e3bda5dedcaf89f0da37c32c061fe",
           "sha256": "392e73d0041a5328982760a66b04d3da6c6ae4523c52b9e16faf045242a5c134",
           "bytes": 52260
+        },
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "6619723f3ddb5572b9d3c9c03f345513af70aa63",
+          "bytes": 52407,
+          "sha256": "f85ea38d925eff186fea05ac152f577f627836dc4f1ff0e703cd24058a5e9988"
         }
       ]
     },
@@ -383,7 +389,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/x402api-merchant-workspace/receive-portable-native.py",
-      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
       "required": false,
       "editions": [
         {
@@ -391,6 +397,12 @@
           "git_blob": "7847a734aff8d8ea6a28b4ce687ee701471ccea7",
           "sha256": "42ba5bfaeba952b620fdebfd01aa7eb3f94c39c6b72f37de770dde6c7943a3f1",
           "bytes": 21484
+        },
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "d5eb2b4f046c2091b3f92c48c02d183d1425f106",
+          "bytes": 21631,
+          "sha256": "7f83fe5213d47fb6be467bd8c5c0345d9e89709aaddb8d6d399354c5a9ea3e22"
         }
       ]
     },
@@ -400,7 +412,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/contributions/x402api-merchant.json",
-      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
       "required": false,
       "editions": [
         {
@@ -408,6 +420,12 @@
           "git_blob": "76d1c5ea6b1661e1565b046a01901986d42fe5f2",
           "sha256": "f33e40ec6491ff4a4c14f22959a481a688eb951a9c780e2a1282830c07aca0b0",
           "bytes": 6799
+        },
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "faff594f9186e89e8980d6b4157f8b5d103b42ce",
+          "bytes": 6871,
+          "sha256": "5c4cfc7a325d84eab503419d4e41ad6a1b6bfe1a10ef858b9dc61082bb0d1acb"
         }
       ]
     },
@@ -434,7 +452,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/x402api-merchant-workspace/installed-receiving.mjs",
-      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
       "required": false,
       "editions": [
         {
@@ -442,6 +460,12 @@
           "git_blob": "9e711f853f48496d86f2ac14ca902aaaf4e39cb3",
           "sha256": "2c4d311daa228295d5e6bc01be718b2c14fb3d0630b0d461219e77694b4b61a8",
           "bytes": 64322
+        },
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "5682a1cb272897337d095979e66399203fe26c40",
+          "bytes": 70704,
+          "sha256": "3120c480b39a575fc6e2dbf9760408534336be175be5b332a532f7ec408446e1"
         }
       ]
     },
@@ -451,7 +475,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/x402api-merchant-workspace/CUSTOMER_REVIEWS.md",
-      "commit": "6d48c6988791f349348ca35eba8e2d3af23f6be1",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
       "required": false,
       "editions": [
         {
@@ -459,6 +483,12 @@
           "git_blob": "37ad698049e1a2e2c16e6d3c4953c9cbc0473ab9",
           "sha256": "e2f7cc4f3509ea542a859f0bffabcb701418e2dc5b32a2186f0eb5d01f257eab",
           "bytes": 14009
+        },
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "24414cf6be3087577ef41d2f7d77d39caa9b69b1",
+          "bytes": 15050,
+          "sha256": "77f4cdb641401fc32560888aedc9d65c987b21d031896772c2b0985856b83115"
         }
       ]
     },
@@ -476,6 +506,159 @@
           "git_blob": "03d485fa432b6d33ab5eaecff63e98d29eac02f6",
           "sha256": "ddac57331eefc7d00f8c4092ae0925c190f384277dfef6dc45c3230d732e7dc5",
           "bytes": 10996
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-agent-merchant-invoice-connection.mjs",
+      "label": "Original invoice host configuration and selected returned files",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/merchant-invoice-connection.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "14f90a8058f05631bb1ad94ab0d698bd954ec37f",
+          "bytes": 7405,
+          "sha256": "13b57b9fa8caa7f2206fe5d1fb55622390a40af38270f1e5ee52fef80d2b096a"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-agent-merchant-invoice-files.mjs",
+      "label": "Private immutable requests, response artifacts and verified downloads",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/merchant-invoice-files.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "4cd2d2f0f503b5b7c699d6fd0a3444f74821cbb6",
+          "bytes": 10365,
+          "sha256": "c1cbc526bc725c825ab89d69bd2c7e1777c486e554af5241235d32c13e30cd5f"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-agent-merchant-invoice-reviews.mjs",
+      "label": "Complete invoice-agent review consumer and exact-request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/merchant-invoice-reviews.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "4903e65433e7791048e7f2015d6b2e4f6c93a40a",
+          "bytes": 8720,
+          "sha256": "1db893048505f15cab971101ae8f48e2d3aea052c0d16d0c4172a044a5429cf1"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-agent-merchant-invoice-protocol.mjs",
+      "label": "Original invoice protocol and ten review tool contracts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/merchant-invoice-protocol.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "10d934858d16a45d1f536a57974688d765c2acd1",
+          "bytes": 12718,
+          "sha256": "f3dcd5c353bd706bf2be23c34e74982d8d4404f116023013bab1f97ce5fd4fb9"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-agent-merchant-invoices.mjs",
+      "label": "Existing invoice owner and shared operation lifecycle",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/merchant-invoices.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "cfed0a4d4464e2a85f55f52bc23829417be25dd7",
+          "bytes": 13761,
+          "sha256": "19f08288bf76538ccae93ac691667f0affac3139c2809bf71ea6faf4f730e6cc"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-agent-providers-merchant-invoices.mjs",
+      "label": "Installed invoice provider and all 37 tool definitions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar-forge/mcp-merchant-operator/providers/merchant-invoices.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "8b220b4be2949a7dc8171f7ba668a321769471fa",
+          "bytes": 3551,
+          "sha256": "85457e71ec7b55fc461cf6474648677e3306dc935595249bdf1cc96f199b8d9e"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-customer-review-agent-receiving.mjs",
+      "label": "Same-case agent replay, complete files and offline receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/customer-review-agent-receiving.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "cd4752cf8fabc92fea5795f9ce442de0854143c7",
+          "bytes": 12097,
+          "sha256": "f71db5892a9744ebf90860f637cd5677b02f80ce1d66223962a35dd53cdaf90c"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-invoice-agent-receiving.mjs",
+      "label": "Original five-invoice agent course and unchanged payment tools",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/invoice-agent-receiving.mjs",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "087d94d192e4e90bbb3141fc5c0a5a78f4a77ecf",
+          "bytes": 14694,
+          "sha256": "601dc80b8a8dcce0710ef313932dc9a7325d41e9b59c036e83a8265425e48c31"
+        }
+      ]
+    },
+    {
+      "id": "x402api-review-invoice_agent.md",
+      "label": "Complete invoice, payment, review and Support agent guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/x402api-merchant-workspace/INVOICE_AGENT.md",
+      "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+      "required": false,
+      "editions": [
+        {
+          "commit": "d2397fd81f4cf6baf4c0ca5b59fb7003fc574c42",
+          "git_blob": "43717986bab6adafeaf240cec6a8be774c0d9831",
+          "bytes": 32770,
+          "sha256": "4053fc7866682ed5bf2a51398cffac18f7cb7664ef88326bc3983cae4e16ad6e"
         }
       ]
     }
