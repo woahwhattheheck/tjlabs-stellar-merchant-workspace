@@ -1,10 +1,13 @@
 /** Original grant-portfolio console and retained action contracts. */
+import type { ProgrammeTable, ProgrammeChangeSet, ProgrammeRecordSelection, ProgrammeScopeSelection,
+  ProgrammeDocumentSelection, ProgrammeRecordRead, ProgrammeHistoryRead, ProgrammePositionRead,
+  ProgrammeQaRead } from "./programme-client.mjs";
 export type Sha256 = string;
 export type PortfolioId = string;
 export type OperationId = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | {[key:string]:JsonValue};
 export type JsonObject = {[key:string]:JsonValue};
-export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources';
+export type PortfolioTable = 'entities'|'financial'|'links'|'decisions'|'candidates'|'changes'|'sources'|ProgrammeTable;
 export type SourceStandard = 'iati'|'360giving';
 export type RequestState = 'RUNNING'|'COMPLETED'|'FAILED';
 export type PortfolioAction = 'source.receive'|'portfolio.save'|'review.save'|'portfolio.export'|'portfolio.receive';
@@ -23,6 +26,7 @@ export interface PortfolioReview { status:'draft'|'reviewed'|'needs-correction';
 export interface PortfolioSaveInput {
   id?:PortfolioId; expectedPortfolioRevision?:number; name:string; notes:string;
   sources:Sha256[]; sourceReplacements?:{before:Sha256; after:Sha256}[]; review:PortfolioReview;
+  programme?:ProgrammeChangeSet;
 }
 export interface ReviewReference { sourceId:Sha256; entityKey:Sha256; sha256:Sha256; }
 export type ReviewDecision =
@@ -96,6 +100,13 @@ export declare class GrantPortfolioClient {
     onPage?:(page:RowPage<Row>)=>void|Promise<void>;
   }):AsyncGenerator<RowPage<Row>,void,void>;
   detail(input:DetailInput, options?:RequestOptions):Promise<JsonObject>;
+  programmeSchema(options?:RequestOptions):Promise<JsonObject>;
+  programmeRecord(input:ProgrammeRecordSelection, options?:RequestOptions):Promise<ProgrammeRecordRead>;
+  programmeHistory(input:ProgrammeRecordSelection, options?:RequestOptions):Promise<ProgrammeHistoryRead>;
+  programmePosition(input:ProgrammeScopeSelection, options?:RequestOptions):Promise<ProgrammePositionRead>;
+  programmeQa(input:ProgrammeScopeSelection, options?:RequestOptions):Promise<ProgrammeQaRead>;
+  uploadProgrammeDocument(input:UploadInput, options?:RequestOptions):Promise<FileDescriptor>;
+  openProgrammeDocument(input:ProgrammeDocumentSelection, options?:RequestOptions):Promise<PortfolioFile>;
   action<Result = JsonValue>(input:ActionInput, options?:RequestOptions):Promise<RetainedRequest<Result>>;
   request<Result = JsonValue>(operationId:OperationId, options?:RequestOptions):Promise<RetainedRequest<Result>>;
   resume<Result = JsonValue>(operationId:OperationId, options?:RequestOptions):Promise<RetainedRequest<Result>>;

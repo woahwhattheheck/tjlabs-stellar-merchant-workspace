@@ -10,7 +10,9 @@ export const GRANT_PORTFOLIO_MAX_ACTION_BYTES = 1024 * 1024;
 const HASH = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const OPERATION = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
-const TABLES = new Set(['entities','financial','links','decisions','candidates','changes','sources']);
+const TABLES = new Set(['entities','financial','links','decisions','candidates','changes','sources',
+  ...['nodes','partners','grants','milestones','indicators','observations','risks','issues','documents',
+      'reports','closures','bindings','positions','results'].map(name => 'programme_' + name)]);
 const ACTIONS = new Set(['source.receive','portfolio.save','review.save','portfolio.export','portfolio.receive']);
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const issue = (code, message, details = {}) => Object.assign(new Error(message), { code: 'GRANT_PORTFOLIO_' + code, ...details });
@@ -177,6 +179,58 @@ export class GrantPortfolioClient {
     exact(input, ['portfolioId','revision','sourceId','entityKey'], ['portfolioId','revision','sourceId','entityKey']);
     return this.#json('/api/detail?' + query({...selection({portfolioId:input.portfolioId, revision:input.revision}),
       sourceId:checked(input.sourceId, HASH, 'source SHA-256'), entityKey:checked(input.entityKey, HASH, 'entity key')}), undefined, options);
+  }
+  programmeSchema(options) { return this.#json('/api/programme/schema', undefined, options); }
+  programmeRecord(input, options) { return this.#programme('record', input, options); }
+  programmeHistory(input, options) { return this.#programme('history', input, options); }
+  programmePosition(input, options) { return this.#programme('position', input, options); }
+  programmeQa(input, options) { return this.#programme('qa', input, options); }
+  #programme(route, input, options) {
+    const detail = route === 'record' || route === 'history';
+    const extra = detail ? ['collection','id'] : ['nodeId','grantId'];
+    exact(input, ['portfolioId','revision', ...extra],
+      ['portfolioId','revision', ...(detail ? ['collection','id'] : ['nodeId'])]);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    checked(input[detail ? 'id' : 'nodeId'], UUID, 'programme record ID');
+    if (input.grantId !== undefined) checked(input.grantId, UUID, 'grant ID');
+    if (detail) need(['nodes','partners','grants','milestones','indicators','observations','risks','issues',
+      'documents','reports','closures'].includes(input.collection), 'REGISTER', 'Select a programme register.');
+    return this.#json('/api/programme/' + route + '?' + query(input), undefined, options);
+  }
+  uploadProgrammeDocument({body, bytes, sha256}, options = {}) {
+    need(Number.isSafeInteger(bytes) && bytes > 0 && bytes <= GRANT_PORTFOLIO_MAX_PACKET_BYTES,
+      'DOCUMENT_SIZE', 'Select a complete original document up to 4 GiB.');
+    if (sha256 !== undefined) checked(sha256, HASH, 'document SHA-256');
+    return this.#track(async () => {
+      const result = await this.#response(await this.#http('/api/programme/upload', {...options, body,
+        headers:{'content-type':'application/octet-stream', 'content-length':String(bytes),
+          ...(sha256 === undefined ? {} : {'x-content-sha256':sha256})}}));
+      need(HASH.test(result.sha256 ?? '') && result.bytes === bytes &&
+        (sha256 === undefined || result.sha256 === sha256),
+      'DOCUMENT_CHANGED', 'The complete document upload differs from its selected bytes.');
+      return result;
+    });
+  }
+  openProgrammeDocument(input, options = {}) {
+    exact(input, ['portfolioId','revision','id'], ['portfolioId','revision','id']);
+    selection({portfolioId:input.portfolioId, revision:input.revision});
+    checked(input.id, UUID, 'document ID');
+    return this.#track(async () => {
+      const record = await this.programmeRecord({...input, collection:'documents'}, options);
+      need(plain(record.record?.object), 'DOCUMENT', 'The selected document has no original uploaded file.');
+      const expected = record.record.object;
+      const response = await this.#http('/api/programme/document?' + query(input), options);
+      if (!response.ok) return this.#response(response);
+      try {
+        need(response.headers.get('content-length') === String(expected.bytes) &&
+          response.headers.get('x-content-sha256') === expected.sha256 &&
+          response.headers.get('etag') === '"' + expected.sha256 + '"' &&
+          response.headers.get('content-type') === expected.contentType &&
+          response.headers.get('content-disposition') === 'attachment; filename="' + expected.filename + '"',
+        'DOCUMENT_CHANGED', 'The original document descriptor changed.');
+        return {descriptor:expected, response};
+      } catch (error) { await response.body?.cancel().catch(() => {}); throw error; }
+    });
   }
   async action(input, options) {
     exact(input, ['operationId','action','payload','expectedRevision'], ['operationId','action','payload']);

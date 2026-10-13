@@ -309,9 +309,10 @@ function portfoliosView(container) {
   }
   boxes.forEach(box => box.addEventListener("change", updateReplacements));
   form.append(sourceList, replacements); updateReplacements();
-  if (!S.state.sources.length) form.append(node("p", "Receive the original source editions first.", "small"));
+  if (!S.state.sources.length && !p?.definition.programme)
+    form.append(node("p", "Receive the original source editions, or start a programme in Programme delivery.", "small"));
   const submit = node("button", p ? "Save revision" : "Create portfolio", "primary"); submit.type = "submit";
-  submit.disabled = !S.state.sources.length || !currentEdit();
+  submit.disabled = (!S.state.sources.length && !p?.definition.programme) || !currentEdit();
   if (!currentEdit()) form.append(node("p", "Open the latest revision to save changes.", "small"));
   const buttons = node("div", null, "actions"); buttons.append(submit); form.append(buttons);
   form.addEventListener("submit", async event => {
@@ -534,12 +535,15 @@ function requestsView(container) {
       nextOffset: S.offset + entries.length < S.state.requests.length ? S.offset + entries.length : null },
     offset => { S.offset = offset; return render(); }));
 }
+const programmeConsole = GrantProgrammeConsole({state:() => S, node, button, field, panel, heading, metric,
+  table, api, response, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 async function render() {
   const epoch = ++S.epoch, content = $("#content"), fragment = node("div");
   document.querySelectorAll("nav button").forEach(button => button.classList.toggle("active", button.dataset.view === S.view));
   if (!S.state) return;
   if (S.view === "sources") sourcesView(fragment);
   else if (S.view === "portfolios") portfoliosView(fragment);
+  else if (S.view === "programme") await programmeConsole.render(fragment, epoch);
   else if (S.view === "review") await reviewView(fragment, epoch);
   else if (S.view === "ledger") await ledgerView(fragment, epoch);
   else if (S.view === "history") await historyView(fragment, epoch);
