@@ -10,7 +10,7 @@ from pathlib import Path
 import sqlite3
 
 from workspace import InputError, json_bytes, load_json, private_write, file_digest
-from humanitarian_source import identifier, text, hxl_tag, RESERVED
+from humanitarian_source import identifier, text, hxl_tag, RESERVED, canonical_decimal
 from humanitarian_reference import reference_index, alias_index, resolve, ancestors
 
 SCHEMA = "stellar-forge.humanitarian-report.v1"
@@ -118,6 +118,8 @@ def validate_outputs(raw, fields):
                           (kind == "number" and type(value) in (int, float)))
             if not compatible:
                 raise InputError("Filter equality must use the selected field's scalar type; decimal values use exact strings")
+            if kind == "decimal" and value is not None:
+                value = canonical_decimal(value)
             where.append({"field": condition["field"], "equals": value})
         results.append({"id": ident, "title": text(layout.get("title"), "Output title", 160),
                         "groupBy": groups, "measures": measures, "columns": selected, "where": where})

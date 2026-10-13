@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import _bootstrap
 from collections import defaultdict
+from contextlib import contextmanager
 import csv
 import hashlib
 import html
@@ -13,6 +14,7 @@ import shutil
 import sqlite3
 import stat
 import zipfile
+import uuid
 
 from workspace import InputError, json_bytes, load_json, digest, private_write, file_digest, regular, sync_dir, checked_id
 from humanitarian_reference import reference_index, ancestors
@@ -234,6 +236,81 @@ def _report_assets(ws, review, directory, *, include_database=True, database_lin
     return report
 
 
+
+@contextmanager
+def _destination_lease(output):
+    """Serialize complete publication with the original typed-download lease."""
+    if os.name != "posix":
+        raise InputError("Complete output publication requires the original POSIX file lease")
+    import fcntl
+    output = output.expanduser().absolute()
+    output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if output.parent.resolve(strict=True) != output.parent:
+        raise InputError("Choose an original output directory without path aliases")
+    directory = output.parent / (".humanitarian-output-" + digest(output.name.encode("utf-8")))
+    directory.mkdir(mode=0o700, exist_ok=True)
+    info = directory.lstat()
+    if (not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077):
+        raise InputError("The complete output lease directory must remain private and operator-owned")
+    path = directory / "lease.lock"
+    descriptor = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+
+    def held():
+        actual, named = os.fstat(descriptor), path.lstat()
+        if (not stat.S_ISREG(actual.st_mode) or not stat.S_ISREG(named.st_mode)
+                or actual.st_uid != os.getuid() or actual.st_mode & 0o077
+                or (actual.st_dev, actual.st_ino) != (named.st_dev, named.st_ino)):
+            raise InputError("The original complete output lease changed")
+        current = directory.lstat()
+        if (not stat.S_ISDIR(current.st_mode) or current.st_uid != os.getuid()
+                or current.st_mode & 0o077
+                or (current.st_dev, current.st_ino) != (info.st_dev, info.st_ino)):
+            raise InputError("The original complete output lease directory changed")
+
+    try:
+        held()
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise InputError("Another original operation owns this complete output") from error
+        held()
+        yield output, directory, held
+    finally:
+        os.close(descriptor)
+
+
+def _publish_archive(target, output):
+    """Keep interrupted stages; expose only a fully verified complete ZIP."""
+    expected_bytes = regular(target, MAX_ARCHIVE).st_size
+    checksum = file_digest(target, MAX_ARCHIVE)
+    with _destination_lease(output) as (output, directory, held):
+        if output.exists() or output.is_symlink():
+            info = regular(output, MAX_ARCHIVE)
+            if info.st_size != expected_bytes or file_digest(output, MAX_ARCHIVE) != checksum:
+                raise InputError("Output already exists with different bytes; retain it and select a new export filename")
+            held()
+            return output, expected_bytes, checksum
+        stage = directory / ("export-" + uuid.uuid4().hex + ".partial")
+        _copy(target, stage, MAX_ARCHIVE)
+        if regular(stage, MAX_ARCHIVE).st_size != expected_bytes or file_digest(stage, MAX_ARCHIVE) != checksum:
+            raise InputError("The complete output stage failed its full byte verification")
+        held()
+        # Link publication is atomic and refuses a newly occupied final name.
+        # The complete stage remains retained if publication or directory sync fails.
+        try:
+            os.link(stage, output, follow_symlinks=False)
+        except FileExistsError:
+            info = regular(output, MAX_ARCHIVE)
+            if info.st_size != expected_bytes or file_digest(output, MAX_ARCHIVE) != checksum:
+                raise InputError("The selected complete output changed before publication")
+        sync_dir(output.parent)
+        if regular(output, MAX_ARCHIVE).st_size != expected_bytes or file_digest(output, MAX_ARCHIVE) != checksum:
+            raise InputError("The published complete output failed readback")
+        held()
+        stage.unlink()
+        sync_dir(directory)
+        return output, expected_bytes, checksum
+
 def _archive(directory, output, envelope):
     paths = sorted(p for p in directory.rglob("*") if p.is_file())
     if len(paths) + 1 > MAX_MEMBERS:
@@ -241,10 +318,11 @@ def _archive(directory, output, envelope):
     files = [{"path": p.relative_to(directory).as_posix(), "bytes": p.stat().st_size,
               "sha256": file_digest(p, MAX_ARCHIVE)} for p in paths]
     total = sum(f["bytes"] for f in files)
-    if total > MAX_ARCHIVE:
-        raise InputError("Complete receiving archive exceeds two GiB of expanded content")
     manifest = envelope | {"files": files, "expandedBytes": total}
-    _write(directory / "manifest.json", json_bytes(manifest))
+    encoded_manifest = json_bytes(manifest)
+    if len(encoded_manifest) > 8 * 1024 * 1024 or total + len(encoded_manifest) > MAX_ARCHIVE:
+        raise InputError("Complete receiving archive including its manifest exceeds the expanded-content bound")
+    _write(directory / "manifest.json", encoded_manifest)
     target = directory.parent / "complete.zip"
     private_write(target, b"")
     with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6, allowZip64=True) as archive:
@@ -257,21 +335,11 @@ def _archive(directory, output, envelope):
                 shutil.copyfileobj(incoming, outgoing, 1024 * 1024)
     if target.stat().st_size > MAX_ARCHIVE:
         raise InputError("Compressed receiving archive exceeds two GiB")
-    output = output.expanduser().absolute()
-    output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    checksum = file_digest(target, MAX_ARCHIVE)
-    if output.exists() or output.is_symlink():
-        if output.is_symlink() or file_digest(output, MAX_ARCHIVE) != checksum:
-            raise InputError("Output already exists with different bytes; choose a new export filename")
-    else:
-        with target.open("rb") as incoming, os.fdopen(os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as outgoing:
-            shutil.copyfileobj(incoming, outgoing, 1024 * 1024)
-            outgoing.flush()
-            os.fsync(outgoing.fileno())
-        sync_dir(output.parent)
-    return {"path": str(output), "bytes": output.stat().st_size, "sha256": checksum,
+    with target.open("rb") as completed:
+        os.fsync(completed.fileno())
+    published, size, checksum = _publish_archive(target, output)
+    return {"path": str(published), "bytes": size, "sha256": checksum,
             "review": envelope["review"], "revision": envelope["revision"], "report": envelope["report"]}
-
 
 def write_report(ws, ident, output, revision=None):
     review = ws.review(ident, revision)
@@ -280,6 +348,19 @@ def write_report(ws, ident, output, revision=None):
         report = _report_assets(ws, review, directory)
         return _archive(directory, output, {"schema": REPORT_ARCHIVE, "review": ident,
                                            "revision": review["revision"], "report": report["id"]})
+
+
+def _receiving_readme():
+    return (
+            "COMPLETE HUMANITARIAN RECEIVING\n\n"
+            "This archive contains all selected original source bytes, the pinned reference editions, mappings, "
+            "named decisions, native Dataset builds, every review revision through the selected revision, complete reports "
+            "and the original mutation inputs/results.\n\n"
+            "Open report/index.html for the current offline report. Use dataset-humanitarian to create a private workspace "
+            "and receive this complete archive; the application reconstructs the original native builds and complete reports "
+            "from the retained source bytes. Repeating an older receive preserves any later local review revisions.\n\n"
+            "Read report/README.txt for the correction, SQL, Excel, Kobo and operator-transfer workflow.\n"
+    ).encode()
 
 
 def export_review(ws, ident, output, revision=None):
@@ -337,16 +418,7 @@ def export_review(ws, ident, output, revision=None):
                    "sources": source_bodies, "plans": plan_bodies, "builds": build_bodies,
                    "objects": objects, "reviews": history, "requests": requests}
         _write(directory / "catalog.json", json_bytes(catalog))
-        _write(directory / "README.txt", (
-            "COMPLETE HUMANITARIAN RECEIVING\n\n"
-            "This archive contains all selected original source bytes, the pinned reference editions, mappings, "
-            "named decisions, native Dataset builds, every review revision through the selected revision, complete reports "
-            "and the original mutation inputs/results.\n\n"
-            "Open report/index.html for the current offline report. Use dataset-humanitarian to create a private workspace "
-            "and receive this complete archive; the application reconstructs the original native builds and complete reports "
-            "from the retained source bytes. Repeating an older receive preserves any later local review revisions.\n\n"
-            "Read report/README.txt for the correction, SQL, Excel, Kobo and operator-transfer workflow.\n"
-        ).encode())
+        _write(directory / "README.txt", _receiving_readme())
         return _archive(directory, output, {"schema": SCHEMA, "review": ident,
                                            "revision": current["revision"], "report": current["report"]})
 
@@ -471,88 +543,283 @@ def _catalog(catalog, manifest):
     return requests, objects
 
 
+def _verify_retained_history(directory, catalog, manifest):
+    """Verify declared original bytes before isolated source reconstruction."""
+    requests, objects = _catalog(catalog, manifest)
+    original_reports = {}
+    for expected in catalog["reviews"]:
+        retained = directory / "history" / ("r" + str(expected["revision"]).zfill(6))
+        _same(load_json((retained / "review.json").read_bytes()), expected, "history revision")
+        original = load_json((retained / "report.json").read_bytes())
+        if (original.get("id") != expected["report"] or report_identity(original) != expected["report"]
+                or original.get("definition") != expected.get("definition")):
+            raise InputError("Received complete report identity changed")
+        metadata = original["files"].get("rows.sqlite")
+        if (set(original["files"]) != {"rows.sqlite"} or not metadata
+                or file_digest(retained / "rows.sqlite", MAX_REPORT) != metadata["sha256"]
+                or (retained / "rows.sqlite").stat().st_size != metadata["bytes"]):
+            raise InputError("Received complete report database changed")
+        original_reports[expected["revision"]] = original
+    return requests, objects, original_reports
+
+
+def _receive_native_inputs(ws, directory, catalog):
+    """Use only the original immutable source/plan/build intake operations."""
+    for source in catalog["sources"]:
+        source_path = directory / "sources" / (source["id"] + ".source")
+        if file_digest(source_path) != source["id"]:
+            raise InputError("Received original source identity changed")
+        with source_path.open("rb") as incoming:
+            actual = ws.add_source(incoming, source["label"], source["name"])
+        if actual["id"] != source["id"] or actual["bytes"] != source["bytes"]:
+            raise InputError("Original source intake differs from the complete receiving source")
+    for plan in catalog["plans"]:
+        actual = ws.save_plan(plan["plan"])
+        _same(actual, plan, "native table mapping")
+    for build in catalog["builds"]:
+        retained = load_json((directory / "native" / build["id"] / "review.json").read_bytes())
+        _same(retained, build, "native build record")
+        for name in ("data.csv", "dataset.json", "rows.sqlite"):
+            metadata = build["files"][name]
+            selected = directory / "native" / build["id"] / name
+            if selected.stat().st_size != metadata["bytes"] or file_digest(selected, MAX_ARCHIVE) != metadata["sha256"]:
+                raise InputError("Received native build file changed")
+        actual = ws.build(build["source"], build["plan"], expected=build)
+        _same({k: v for k, v in actual.items() if k != "files"},
+              {k: v for k, v in build.items() if k != "files"}, "complete reconstructed native build")
+        if set(actual["files"]) != {"data.csv", "dataset.json", "rows.sqlite"} or set(build["files"]) != set(actual["files"]):
+            raise InputError("The original native build has a different complete file selection")
+        for name in ("data.csv", "dataset.json"):
+            _same(actual["files"][name], build["files"][name], "original native " + name + " descriptor")
+            rebuilt = ws._build_path(build["id"], name)
+            if (regular(rebuilt, MAX_ARCHIVE).st_size != build["files"][name]["bytes"]
+                    or file_digest(rebuilt, MAX_ARCHIVE) != build["files"][name]["sha256"]):
+                raise InputError("The reconstructed native file changed: " + name)
+        _same_database(directory / "native" / build["id"] / "rows.sqlite",
+                       ws._build_path(build["id"], "rows.sqlite"),
+                       ("SELECT ordinal,k,cells,values_json FROM rows ORDER BY ordinal",), "native")
+
+
+def _same_database(original, reconstructed, queries, description):
+    """Compare every logical record while permitting different SQLite encoding."""
+    regular(original, MAX_REPORT)
+    regular(reconstructed, MAX_REPORT)
+    left = sqlite3.connect(original.as_uri() + "?mode=ro", uri=True)
+    right = None
+    try:
+        right = sqlite3.connect(reconstructed.as_uri() + "?mode=ro", uri=True)
+        for db in (left, right):
+            db.execute("PRAGMA trusted_schema=OFF")
+            if list(db.execute("PRAGMA integrity_check")) != [("ok",)]:
+                raise InputError("A complete " + description + " database failed its integrity check")
+        query = "SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name,tbl_name"
+        _same([list(row) for row in left.execute(query)],
+              [list(row) for row in right.execute(query)], description + " database schema")
+        for query in queries:
+            original_rows, rebuilt_rows = left.execute(query), right.execute(query)
+            while True:
+                before, after = original_rows.fetchmany(256), rebuilt_rows.fetchmany(256)
+                _same([list(row) for row in before], [list(row) for row in after],
+                      "complete " + description + " database records")
+                if not before:
+                    break
+    except sqlite3.DatabaseError as error:
+        raise InputError("The complete " + description + " database cannot be independently verified") from error
+    finally:
+        left.close()
+        if right is not None:
+            right.close()
+
+
+def _verify_complete_package(staged, directory, catalog, manifest, objects, original_reports):
+    """Bind the complete package, not only the self-declared manifest."""
+    if set(catalog) != {"schema", "review", "revision", "sources", "plans", "builds",
+                        "objects", "reviews", "requests"}:
+        raise InputError("The receiving catalog has an unsupported complete field selection")
+    selected_objects = {"reference": set(), "mapping": set(), "alias": set()}
+    source_ids, plan_ids, build_ids = set(), set(), set()
+    for review in catalog["reviews"]:
+        selected_objects["reference"].add(review["reference"])
+        selected_objects["alias"].update(review["aliases"])
+        for edition in review["editions"]:
+            selected_objects["mapping"].add(edition["mapping"])
+            source_ids.add(edition["source"])
+            build_ids.add(edition["build"])
+    object_keys = {(kind, ident) for kind, identifiers in selected_objects.items() for ident in identifiers}
+    if set(objects) != object_keys:
+        raise InputError("The complete receiving objects differ from the retained review selection")
+    for kind, ident in object_keys:
+        body = objects[(kind, ident)]
+        if kind == "reference":
+            source_ids.add(body["source"])
+        elif kind == "mapping":
+            plan_ids.add(body["plan"])
+    for key, expected in (("sources", source_ids), ("plans", plan_ids), ("builds", build_ids)):
+        if {value["id"] for value in catalog[key]} != expected:
+            raise InputError("The complete receiving " + key + " differ from the retained review selection")
+    members = {"catalog.json", "README.txt"}
+
+    def canonical(name, body):
+        members.add(name)
+        if (directory / name).read_bytes() != json_bytes(body):
+            raise InputError("The complete original JSON member changed: " + name)
+
+    canonical("catalog.json", catalog)
+    if (directory / "README.txt").read_bytes() != _receiving_readme():
+        raise InputError("The complete original receiving guide changed")
+    for source in catalog["sources"]:
+        members.add("sources/" + source["id"] + ".source")
+    for plan in catalog["plans"]:
+        canonical("plans/" + plan["id"] + ".json", plan["plan"])
+    for build in catalog["builds"]:
+        prefix = "native/" + build["id"] + "/"
+        canonical(prefix + "review.json", build)
+        members.update(prefix + name for name in ("data.csv", "dataset.json", "rows.sqlite"))
+    for review in catalog["reviews"]:
+        prefix = "history/r" + str(review["revision"]).zfill(6) + "/"
+        canonical(prefix + "review.json", review)
+        canonical(prefix + "report.json", original_reports[review["revision"]])
+        members.add(prefix + "rows.sqlite")
+    current = staged.review(catalog["review"], catalog["revision"])
+    with staged.scratch() as temporary:
+        rebuilt = temporary / "report"
+        _report_assets(staged, current, rebuilt, include_database=False,
+                       database_link="../history/r" + str(current["revision"]).zfill(6) + "/rows.sqlite")
+        for path in sorted(p for p in rebuilt.rglob("*") if p.is_file()):
+            relative = path.relative_to(rebuilt).as_posix()
+            name = "report/" + relative
+            members.add(name)
+            supplied = directory / name
+            if relative == "report.json":
+                # The semantic report is reconstructed. Its original physical
+                # SQLite descriptor still binds the separately verified bytes.
+                canonical(name, original_reports[current["revision"]])
+            elif (regular(supplied, MAX_ARCHIVE).st_size != path.stat().st_size
+                  or file_digest(supplied, MAX_ARCHIVE) != file_digest(path, MAX_ARCHIVE)):
+                raise InputError("A complete report asset differs from its reconstructed review: " + name)
+    if {record["path"] for record in manifest["files"]} != members:
+        raise InputError("The receiving package has missing or unexpected complete source, history or report members")
+
+
+def _reconstruct_history(staged, directory, catalog, requests, objects, original_reports):
+    """Reject the entire packet before publishing any destination domain record."""
+    _receive_native_inputs(staged, directory, catalog)
+    for kind in ("reference", "mapping", "alias"):
+        for (object_kind, object_id), expected in sorted(objects.items()):
+            if kind != object_kind:
+                continue
+            candidates = [r for r in requests.values() if r["kind"] == kind and r["result"].get("id") == object_id]
+            if not candidates:
+                raise InputError("Each received object requires its complete original mutation input")
+            for request in candidates:
+                _same(request["result"], expected, kind + " request result")
+                actual = getattr(staged, "save_" + kind)(request["input"])
+                _same(actual, expected, kind)
+    for expected in catalog["reviews"]:
+        request = requests[expected["requestId"]]
+        actual = staged.save_review(request["input"])
+        _same(actual, expected, "reconstructed complete review")
+        actual_report = staged.report(expected["id"], expected["revision"])
+        original_report = original_reports[expected["revision"]]
+        _same({k: v for k, v in actual_report.items() if k != "files"},
+              {k: v for k, v in original_report.items() if k != "files"}, "complete report content")
+        _same_database(directory / "history" / ("r" + str(expected["revision"]).zfill(6)) / "rows.sqlite",
+                       staged.root / "reports" / actual_report["id"] / "rows.sqlite", (
+                           "SELECT edition,source_row,k,valid,values_json,resolution_json,issues_json FROM rows ORDER BY edition,source_row",
+                           "SELECT edition,output,ordinal,values_json FROM layout_rows ORDER BY edition,output,ordinal",
+                           "SELECT ordinal,kind,body FROM changes ORDER BY ordinal",
+                       ), "report")
+    retained_ids = {r["id"] for r in staged.db.execute("SELECT id FROM human_requests")}
+    if retained_ids != set(requests):
+        raise InputError("Receiving requests do not match the complete reconstructed object and review history")
+    for request in requests.values():
+        _same(staged.request(request["id"]), request, "reconstructed original request")
+
+
+def _compatible_destination(ws, catalog, requests, objects):
+    """Check the complete existing prefix without replacing a later local head."""
+    local = [load_json(r["body"]) for r in ws.db.execute(
+        "SELECT body FROM human_reviews WHERE id=? ORDER BY revision", (catalog["review"],))]
+    if [r.get("revision") for r in local] != list(range(1, len(local) + 1)):
+        raise InputError("Existing receiving review history is not a complete ordered prefix")
+    by_revision = {r["revision"]: r for r in local}
+    for expected in catalog["reviews"]:
+        if expected["revision"] in by_revision:
+            _same(by_revision[expected["revision"]], expected, "existing complete review")
+    for request in requests.values():
+        if ws.db.execute("SELECT id FROM human_requests WHERE id=?", (request["id"],)).fetchone():
+            _same(ws.request(request["id"]), request, "existing request")
+    for (kind, ident), expected in objects.items():
+        if ws.db.execute("SELECT id FROM human_objects WHERE kind=? AND id=?", (kind, ident)).fetchone():
+            _same(ws._object(kind, ident), expected, "existing " + kind)
+    return len(local) >= catalog["revision"]
+
+
+def _publish_history(ws, directory, catalog, requests, objects, original_reports):
+    """Commit the already-reconstructed complete domain journal as one unit."""
+    if ws.db.in_transaction:
+        raise InputError("Finish the original native cache transaction before receiving the domain history")
+    ws.db.execute("BEGIN IMMEDIATE")
+    try:
+        already_present = _compatible_destination(ws, catalog, requests, objects)
+        for (kind, _), expected in sorted(objects.items()):
+            ws._save_object(kind, expected)
+        for expected in catalog["reviews"]:
+            report = original_reports[expected["revision"]]
+            destination = ws.root / "reports" / report["id"]
+            if destination.exists() or destination.is_symlink():
+                # _retain_report verifies a previously committed report or a
+                # complete pre-commit directory left by an interrupted receive.
+                ws._retain_report(report, destination)
+            else:
+                with ws.scratch() as temporary:
+                    selected = temporary / "complete-report"
+                    selected.mkdir(mode=0o700)
+                    _write(selected / "report.json", json_bytes(report))
+                    _copy(directory / "history" / ("r" + str(expected["revision"]).zfill(6)) / "rows.sqlite",
+                          selected / "rows.sqlite", MAX_REPORT)
+                    ws._retain_report(report, selected)
+            old = ws.db.execute("SELECT body FROM human_reviews WHERE id=? AND revision=?",
+                                (expected["id"], expected["revision"])).fetchone()
+            if old:
+                _same(load_json(old["body"]), expected, "existing complete review")
+            else:
+                ws.db.execute("INSERT INTO human_reviews VALUES(?,?,?,?)",
+                              (expected["id"], expected["revision"], expected["requestId"],
+                               json_bytes(expected).decode()))
+        for request in requests.values():
+            old = ws.db.execute("SELECT id FROM human_requests WHERE id=?", (request["id"],)).fetchone()
+            if old:
+                _same(ws.request(request["id"]), request, "existing request")
+            else:
+                ws.db.execute("INSERT INTO human_requests VALUES(?,?,?,?,?)",
+                              (request["id"], request["kind"], request["inputSha256"],
+                               json_bytes(request["input"]).decode(), json_bytes(request["result"]).decode()))
+        ws.db.commit()
+        return already_present
+    except BaseException:
+        ws.db.rollback()
+        raise
+
+
 def receive_review(ws, path):
+    from humanitarian_workspace import HumanitarianWorkspace
+
     with ws.scratch() as temporary:
         directory = temporary / "received"
         manifest = _unpack(path, directory)
         catalog = load_json((directory / "catalog.json").read_bytes())
-        requests, objects = _catalog(catalog, manifest)
-        reviews = catalog["reviews"]
-        original_reports = {}
-        # Verify all retained history before the first receiving mutation.
-        for expected in reviews:
-            retained = directory / "history" / ("r" + str(expected["revision"]).zfill(6))
-            _same(load_json((retained / "review.json").read_bytes()), expected, "history revision")
-            original = load_json((retained / "report.json").read_bytes())
-            if original.get("id") != expected["report"] or report_identity(original) != expected["report"] or original.get("definition") != expected.get("definition"):
-                raise InputError("Received complete report identity changed")
-            metadata = original["files"].get("rows.sqlite")
-            if set(original["files"]) != {"rows.sqlite"} or not metadata or file_digest(retained / "rows.sqlite", MAX_REPORT) != metadata["sha256"] or (retained / "rows.sqlite").stat().st_size != metadata["bytes"]:
-                raise InputError("Received complete report database changed")
-            original_reports[expected["revision"]] = original
-            old = ws.db.execute("SELECT body FROM human_reviews WHERE id=? AND revision=?", (expected["id"], expected["revision"])).fetchone()
-            if old:
-                _same(load_json(old["body"]), expected, "existing complete review")
-        for request in requests.values():
-            if ws.db.execute("SELECT id FROM human_requests WHERE id=?", (request["id"],)).fetchone():
-                _same(ws.request(request["id"]), request, "existing request")
-        for source in catalog["sources"]:
-            source_path = directory / "sources" / (source["id"] + ".source")
-            if file_digest(source_path) != source["id"]:
-                raise InputError("Received original source identity changed")
-            with source_path.open("rb") as incoming:
-                actual = ws.add_source(incoming, source["label"], source["name"])
-            if actual["id"] != source["id"] or actual["bytes"] != source["bytes"]:
-                raise InputError("Original source intake differs from the complete receiving source")
-        for plan in catalog["plans"]:
-            actual = ws.save_plan(plan["plan"])
-            _same(actual, plan, "native table mapping")
-        for build in catalog["builds"]:
-            retained = load_json((directory / "native" / build["id"] / "review.json").read_bytes())
-            _same(retained, build, "native build record")
-            for name in ("data.csv", "dataset.json", "rows.sqlite"):
-                metadata = build["files"][name]
-                selected = directory / "native" / build["id"] / name
-                if selected.stat().st_size != metadata["bytes"] or file_digest(selected, MAX_ARCHIVE) != metadata["sha256"]:
-                    raise InputError("Received native build file changed")
-            actual = ws.build(build["source"], build["plan"], expected=build)
-            if actual["id"] != build["id"]:
-                raise InputError("Reconstructed native build has a different identity")
-        for kind in ("reference", "mapping", "alias"):
-            for (object_kind, object_id), expected in sorted(objects.items()):
-                if kind != object_kind:
-                    continue
-                candidates = [r for r in requests.values() if r["kind"] == kind and r["result"].get("id") == object_id]
-                if not candidates:
-                    raise InputError("Each received object requires its complete original mutation input")
-                for request in candidates:
-                    _same(request["result"], expected, kind + " request result")
-                    actual = getattr(ws, "save_" + kind)(request["input"])
-                    _same(actual, expected, kind)
-        received, already_present = [], True
-        for expected in reviews:
-            request = requests[expected["requestId"]]
-            old = ws.db.execute("SELECT body FROM human_reviews WHERE id=? AND revision=?", (expected["id"], expected["revision"])).fetchone()
-            if old:
-                actual = load_json(old["body"])
-                definition, revision, reference, mappings, decisions = ws._review_definition(request["input"], current_revision=expected["revision"] - 1)
-                _same(definition, actual["definition"], "existing review input")
-                if revision != expected["revision"]:
-                    raise InputError("Received original request selects another revision")
-                existing_request = ws.db.execute("SELECT id FROM human_requests WHERE id=?", (request["id"],)).fetchone()
-                if not existing_request:
-                    with ws.db:
-                        ws.db.execute("INSERT INTO human_requests VALUES(?,?,?,?,?)",
-                                      (request["id"], request["kind"], request["inputSha256"],
-                                       json_bytes(request["input"]).decode(), json_bytes(expected).decode()))
-            else:
-                already_present = False
-                actual = ws.save_review(request["input"])
-                _same(actual, expected, "reconstructed complete review")
-            actual_report = ws.report(expected["id"], expected["revision"])
-            original_report = original_reports[expected["revision"]]
-            _same({k: v for k, v in actual_report.items() if k != "files"},
-                  {k: v for k, v in original_report.items() if k != "files"}, "complete report content")
-            received.append(expected["revision"])
+        requests, objects, original_reports = _verify_retained_history(directory, catalog, manifest)
+        # A malformed later revision or changed expected result may write only
+        # this isolated workspace. No destination review/request is exposed.
+        with HumanitarianWorkspace(temporary / "reconstructed", create=True) as staged:
+            _reconstruct_history(staged, directory, catalog, requests, objects, original_reports)
+            _verify_complete_package(staged, directory, catalog, manifest, objects, original_reports)
+            _compatible_destination(ws, catalog, requests, objects)
+            # Native source/plan/build objects are immutable cache entries.
+            # Their original intake may commit independently of domain history.
+            _receive_native_inputs(ws, directory, catalog)
+            already_present = _publish_history(ws, directory, catalog, requests, objects, original_reports)
         return {"schema": "stellar-forge.humanitarian-received.v1", "review": ws.review(catalog["review"]),
-                "receivedRevisions": received, "alreadyPresent": already_present, "requestCount": len(requests)}
+                "receivedRevisions": [r["revision"] for r in catalog["reviews"]],
+                "alreadyPresent": already_present, "requestCount": len(requests)}

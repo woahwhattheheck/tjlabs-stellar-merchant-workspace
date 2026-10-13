@@ -328,6 +328,22 @@ def inventory(stream, cancel=None):
             "format": kind, "bytes": size, "tables": tables}
 
 
+def canonical_decimal(value):
+    """Exact finite decimal text shared by source typing and equality filters."""
+    if not isinstance(value, str):
+        raise InputError("Exact decimals require quoted decimal text")
+    try:
+        number = Decimal(value)
+    except InvalidOperation as error:
+        raise InputError("An exact decimal requires finite decimal text") from error
+    if not number.is_finite() or len(number.as_tuple().digits) > 38 or (number != 0 and not -38 <= number.adjusted() <= 37):
+        raise InputError("Decimals must be finite, contain at most 38 significant digits, and have a magnitude between 1e-38 and 1e38")
+    if number == 0:
+        return "0"
+    result = format(number, "f")
+    return result.rstrip("0").rstrip(".") if "." in result else result
+
+
 def validate_plan(raw):
     if isinstance(raw, dict) and "selectors" in raw:
         selected = raw.get("selectors")
@@ -436,11 +452,12 @@ def extract(stream, plan, on_record, cancel=None):
             actual = typed(value, column, f"Source row {number}, {column['name']}")
             if selector["type"] == "decimal" and actual is not None:
                 try:
-                    decimal = Decimal(actual)
-                except InvalidOperation as e:
-                    raise InputError(f"Source row {number}, {column['name']}: requires a finite decimal") from e
-                if not decimal.is_finite() or len(decimal.as_tuple().digits) > 38 or (decimal != 0 and not -38 <= decimal.adjusted() <= 37):
-                    raise InputError("Decimals must be finite, contain at most 38 significant digits, and have a magnitude between 1e-38 and 1e38")
+                    actual = canonical_decimal(actual)
+                except InputError as error:
+                    raise InputError(f"Source row {number}, {column['name']}: {error}") from error
+                # The native CSV and complete row index use the same typed value;
+                # the retained original file still preserves its exact source text.
+                value = actual
             cells.append(value)
             values.append(actual)
         count += 1

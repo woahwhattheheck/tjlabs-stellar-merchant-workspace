@@ -44,7 +44,7 @@ A mapping selects one pinned reference and the complete original table plan:
 
 Dates use explicitly named string columns. Codes should remain strings when leading zeroes matter. Decimal measures preserve exact decimal text; missing values remain distinct from zero.
 
-The ordinary controls support tabular outputs and aggregated outputs. Aggregates select grouping fields and named sum, count, count-distinct, min or max measures. Equality filters retain the exact selected scalar type. Grouped layouts require a named measure. There are at most 16 measures, 12 grouping fields, 16 filters and 64 output columns per layout. The mapping chooses at most 63 original reporting columns; generated administrative fields are additionally available.
+The ordinary controls support tabular outputs and aggregated outputs. Aggregates select grouping fields and named sum, count, count-distinct, min or max measures. Equality filters require the mapped scalar type: strings remain strings, booleans use true or false, integer/number fields use their corresponding JSON numeric values, and decimal fields use quoted exact decimal text. The complete submitted request remains retained. Grouped layouts require a named measure. There are at most 16 measures, 12 grouping fields, 16 filters and 64 output columns per layout. The mapping chooses at most 63 original reporting columns; generated administrative fields are additionally available.
 
 Opening a saved normalized mapping reconstructs its original column selectors while preserving filters, ranges, sorts, limits, nullability and semantic decimal types. Editing ordinary controls preserves these retained plan settings. The full JSON editor can explicitly edit every supported plan setting. It remains the route for a layout or selector that cannot be represented faithfully in ordinary controls.
 
@@ -66,7 +66,7 @@ Select one edition or two comparison editions, each with source, mapping, label 
 
 Every output shows included, excluded and total source rows, completeness and row policy. Results also show the count of valid rows matching that layout's filter. Native output descriptors retain row counts; the UI reads their full data through bounded native pages. The page filter is explicitly limited to the currently loaded page. The complete exports always contain the entire selected output.
 
-The comparison view pages every retained added, removed or changed key and opens the full original before/after values and per-field presence changes. A count of unchanged keys does not imply those rows were omitted from the complete normalized edition data. The source-row view independently pages every normalized row or only rows with issues.
+The comparison view pages every retained added, removed or changed key and opens the full original before/after values, per-field presence changes and declared mapped type changes. The complete change descriptors include beforeType and afterType alongside the original values. A count of unchanged keys does not imply those rows were omitted from the complete normalized edition data. The source-row view independently pages every normalized row or only rows with issues.
 
 ## Retained browser requests and continuation
 

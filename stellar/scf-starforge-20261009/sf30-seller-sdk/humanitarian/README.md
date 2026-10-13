@@ -8,7 +8,7 @@ The product uses the existing Stellar Forge Dataset engine for each selected tab
 
 The console provides source intake, complete header inspection, reference selection, editable mappings and reporting layouts, named alias review, saved review history, output paging and full package transfer. The same operations are available through the command line, authenticated HTTP service and typed JavaScript client. See [OPERATOR.md](OPERATOR.md) for the complete interface and [receiving/INPUTS_AND_HANDOVER.md](receiving/INPUTS_AND_HANDOVER.md) for the analyst handover.
 
-A review selects one or two complete editions. Each edition binds its own original source and mapping; both editions use the same retained reference and ordered business-key fields. Column order and labels may differ between editions because each mapping explicitly selects its own physical input positions.
+A review selects one or two complete editions. Comparisons preserve declared mapped types as well as canonical values, so changing a field from an integer to a boolean remains an explicit change even when its scalar values could otherwise compare equal. Each edition binds its own original source and mapping; both editions use the same retained reference and ordered business-key fields. Column order and labels may differ between editions because each mapping explicitly selects its own physical input positions.
 
 The report keeps these results together:
 
@@ -99,7 +99,7 @@ The mapping also selects:
 - One or two complete output definitions.
 - Original Dataset filters, ranges, sort capabilities and row/byte limits when needed.
 
-A tabular output lists selected fields in exact order. An aggregate output selects groupBy fields and named sum, count, count-distinct, min or max measures. Equality filters are part of the saved output definition. Measures and currencies remain separate unless an explicit input or mapping defines a conversion.
+A tabular output lists selected fields in exact order. An aggregate output selects groupBy fields and named sum, count, count-distinct, min or max measures. Equality filters are part of the saved output definition and must use the mapped scalar type: strings stay quoted strings, booleans use true or false, integers and numbers use their numeric types, and exact decimal filters use quoted decimal text such as "0.30". The original submitted request is retained while the saved decimal comparison uses its canonical decimal value. Measures and currencies remain separate unless an explicit input or mapping defines a conversion.
 
 Decimal sums are returned as exact decimal text. Missing values remain missing. A nullable blank amount does not become zero; count of all rows and count of nonmissing amounts can have different meanings. Keep the chosen measure's denominator and coverage visible.
 
