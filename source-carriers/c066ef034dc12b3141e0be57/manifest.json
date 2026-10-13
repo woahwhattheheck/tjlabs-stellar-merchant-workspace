@@ -1,0 +1,20 @@
+{
+  "schema": "commons.github_blob_carrier.manifest/v1",
+  "operation_id": "CONAPI-WORKBOOK-ORIGINAL-B06EA664-20261013",
+  "request_sha256": "e8058d82f81281e093edbc8fec9322482e555e8bf0580eea33217bf7019b8e29",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "base": {
+    "commit": "e3b8f1dc5f9493d4b087b51c0d863136041885a3",
+    "tree": "986edc1bc211cec3bff2d134ea391002e398da62"
+  },
+  "branch": "source-carriers/conapi-workbook-b06ea664-20261013",
+  "blobs": [
+    {
+      "path": "products/conapi/supplier-report/source-carriers/workbook-successor-b06ea664.json",
+      "blob_sha": "b06ea66479890cf240f725547fee0e76794d5781",
+      "mode": "100644",
+      "bytes": 201625
+    }
+  ],
+  "purpose": "Original Git objects made readable at an isolated ref; compose original source files before product integration."
+}
