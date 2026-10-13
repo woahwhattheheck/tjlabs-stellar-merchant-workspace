@@ -6,7 +6,7 @@
     "dataset-humanitarian": "stellar/scf-starforge-20261009/sf30-seller-sdk/humanitarian/cli.mjs"
   },
   "commandDescriptions": {
-    "dataset-humanitarian": "Retain complete table and administrative reference sources, select explicit typed columns and reporting layouts, resolve geographic identifiers with named decisions, review row coverage and edition changes, and export or receive complete original source and saved history."
+    "dataset-humanitarian": "Retain original tables and administrative references, map typed columns and reporting layouts, review geographic matches, row coverage and edition changes, and export or receive complete source and review history."
   },
   "exports": {
     "./seller/humanitarian/client": {
