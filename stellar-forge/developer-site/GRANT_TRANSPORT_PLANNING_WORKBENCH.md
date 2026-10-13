@@ -121,6 +121,62 @@ These exact retained maintained editions establish the generic distribution, sou
 [G8] [Shared managed command actual child and observer closure](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/27d26efaf6d0caa4f09e4999613bac05cf4505a3/stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs) — 7682 bytes; SHA256 `b9ab9e43ad4281be435644c736dd8ce3ad24758611895fd88eff1eed97abb3f0`; Git blob `2b143b028be28947518139e4afc0a3b1d276fffb`.
 
 
+### Published Transport Planning product source
+
+The complete installed product source below is selected from its actual published commit. It includes the original command adapters, managed browser/Applications lifetime, customer-agent request and full-file handling, private source preparation, complete receiving course, Installation profile and distribution declarations. Private application and customer data remain external.
+
+[P1] [products/transport-planning-workbench/OPERATING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/OPERATING.md) — 29428 bytes; SHA256 `bc12a66b033d3d3ae21b8326ad5d402a5f245191e8e87227596dd9c9c80aab97`; Git blob `ed6b4d1bccf0f802698811fd0ac291ce603002ea`.
+
+[P2] [products/transport-planning-workbench/PREPARING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/PREPARING.md) — 23703 bytes; SHA256 `d047e167e2dd88eecb6b0f6f9277f6927c27034bb5e4e869daf74fe2ad558c9b`; Git blob `d0c9b63223e32bd510b41d702c03973463fa2119`.
+
+[P3] [products/transport-planning-workbench/RECEIVING.md](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/RECEIVING.md) — 28005 bytes; SHA256 `897042b9b48d15af7222ed4f0f987bf73b382c1d50b3ecc8a5ba86caa645d3ba`; Git blob `6c7609610b54588cdac8520c98e6a2146a78df14`.
+
+[P4] [products/transport-planning-workbench/application-provider.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/application-provider.mjs) — 6256 bytes; SHA256 `3823a1c3f41b768ef372094f0bbf72a2e2df73155b39ae741894792ffe8452f5`; Git blob `977bc0fd2386e29b860f043d4c22fceafa10d8e1`.
+
+[P5] [products/transport-planning-workbench/browser-bootstrap.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/browser-bootstrap.mjs) — 2055 bytes; SHA256 `54575b6f9c5bcb332657f759e6337895b7dbeb309c2b961694288e0666d5c710`; Git blob `060a2077e4d57247d2f37a28e16521f26dc2385d`.
+
+[P6] [products/transport-planning-workbench/cli.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/cli.mjs) — 5734 bytes; SHA256 `9d94145b275908fcdbdca7d976257bd73c972eb54ae72428a235ade9e4b1dbfd`; Git blob `cd203da7a5466d8514ca1c2e0540aa519e6b62fe`.
+
+[P7] [products/transport-planning-workbench/connection.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/connection.mjs) — 19774 bytes; SHA256 `70334ed83918dbb369d2076cac1b66ac2efb952d1ba69e11a30327e566e09dd7`; Git blob `9e5bc6255f88537ac6a3e2f66e33a285c340b98e`.
+
+[P8] [products/transport-planning-workbench/files.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/files.mjs) — 12237 bytes; SHA256 `c8675104a8b61c1ccca0d04d84dca07dda1383214fef0d3e6e69a21c9c135b1f`; Git blob `dd3289990c548aa0ff33b033e0101ae1bb21c21d`.
+
+[P9] [products/transport-planning-workbench/managed.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/managed.mjs) — 15718 bytes; SHA256 `bc23aacd5cf7c699f1a890716ff787dfd5a5af99f20236dc16bd58eb59e70e97`; Git blob `bcc9a00f6452ced1c9ba13bc09521f9656521d8b`.
+
+[P10] [products/transport-planning-workbench/managed_host.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/managed_host.py) — 23085 bytes; SHA256 `87d78da301b74ed63afa472afaeedd0f4c84b990258c582746affd3c92135d52`; Git blob `eb6eb30e1de301e62b0e935949f439bdac8c7b0f`.
+
+[P11] [products/transport-planning-workbench/mcp.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/mcp.mjs) — 23417 bytes; SHA256 `5b000b257fc65c34576ec3bf29daf2eca063d0c4ee2d84b8eb2dbd2936eb6a61`; Git blob `a5408c1ec10669421e46d467ec76b648c057bb89`.
+
+[P12] [products/transport-planning-workbench/merchant-provider.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/merchant-provider.mjs) — 3768 bytes; SHA256 `1214ab15c3275ca810d436dc724f32682b977547218e81f5362eb83998e73bc3`; Git blob `17156e83ee0a8cc9f2e5ae0f66cd641781c29968`.
+
+[P13] [products/transport-planning-workbench/preparation.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/preparation.py) — 49126 bytes; SHA256 `025e1eb8dce72732978502d695d3b93e5e1fcee7d21d61a4570415cb8e900141`; Git blob `c38b89f8e66ac708dc12e8e8dbb29f2eaa0bf4fe`.
+
+[P14] [products/transport-planning-workbench/prepare.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/prepare.mjs) — 7159 bytes; SHA256 `0a990bb7722196939df2b789e203ae921e86f10effd3c74b3eb0c00545fe694d`; Git blob `2d67f2cb88dcd8ceeece4df8c7291012ac967091`.
+
+[P15] [products/transport-planning-workbench/receive.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/receive.mjs) — 590 bytes; SHA256 `367ce383dc39c1a0c73e2621535673312544c1500b4effdcdcf8ed6221a197dc`; Git blob `f1673f87583341a28384ca9f2e2c681c15214b74`.
+
+[P16] [products/transport-planning-workbench/receiving-browser.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/receiving-browser.mjs) — 29135 bytes; SHA256 `ce6cb5c37318b5ee08131554f06c2699c3f2aca6c86d2e34f1a388468e1dcc49`; Git blob `53a2a299b6b4fd1d27f6db9a44b238df643a44a5`.
+
+[P17] [products/transport-planning-workbench/receiving-original.py](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/receiving-original.py) — 41847 bytes; SHA256 `67f0cb11bee62e1a0d837c1ce8d5970dfcb1c633e558c0890a7f4135a97b52a0`; Git blob `fecda07bd3f4524e4af274f54242c2e47e605add`.
+
+[P18] [products/transport-planning-workbench/receiving.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/receiving.mjs) — 53582 bytes; SHA256 `617b7e9ffffc878ee240a6ccda83743241182936e4d2fc602ce7f7f5040b0f9f`; Git blob `9bcbff064550b8e82e542d9f07558ea7cdb90de1`.
+
+[P19] [products/transport-planning-workbench/requests.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/requests.mjs) — 6976 bytes; SHA256 `926049d65feaf952cc54ac2ea27940fbc22e3122d972c48a61a508df6eebd06e`; Git blob `685ebb444b871f80a3517b8608db7e0b1005b338`.
+
+[P20] [products/transport-planning-workbench/runtime-package.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/runtime-package.json) — 172 bytes; SHA256 `2f0858a40f304d18f2c5bbe24a16dd4cc906abf5b2f1f175765cfd7fc9342794`; Git blob `d3c9d9cd268f9df7f0c542d41cb180112df143b1`.
+
+[P21] [products/transport-planning-workbench/setup.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/setup.mjs) — 3648 bytes; SHA256 `97420b81ee178e26fd1985ea07a174d3166f8c26881d71d45f0fb5caa95dae9a`; Git blob `de20758b416e70a392c5d21226faa2f93310b87a`.
+
+[P22] [products/transport-planning-workbench/source-manifest.schema.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/source-manifest.schema.json) — 936 bytes; SHA256 `f165b5f29794f8a581b3f9c2b410641282a62320a997eec6857faa513d9c13fa`; Git blob `129e8fbe5c5b5d49ab2574070948a2a0d6358d6a`.
+
+[P23] [products/transport-planning-workbench/tools.mjs](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/products/transport-planning-workbench/tools.mjs) — 6386 bytes; SHA256 `3b01099ea299bb74747a10e92ffc9ac14f5ce8e9f203e3aaf5442562947eb063`; Git blob `eabe2d7e6b07f112ceebd8bfe3f9275ad42214b7`.
+
+[P24] [stellar/scf-starforge-20261009/distribution/contributions/transport-planning-workbench.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/stellar/scf-starforge-20261009/distribution/contributions/transport-planning-workbench.json) — 4019 bytes; SHA256 `3b2c62eb034a1f8937a1876e2cce85cd65871ba056720b9028faca07ed844e97`; Git blob `f7ff1c3e4230e0646d3936983ed7d44389111d3d`.
+
+[P25] [stellar/scf-starforge-20261009/distribution/selections/transport-planning-workbench.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/stellar/scf-starforge-20261009/distribution/selections/transport-planning-workbench.json) — 11166 bytes; SHA256 `7d7abcf0c3ad3d0f0caedbe8c34baa6ad8efcabf15aa84c4e62fde92fa843cb0`; Git blob `a77c13a55c3a7ebbe05ac5531a8d8cd3241bcda7`.
+
+[P26] [stellar/scf_2026/sf49_data_commissioning/installation-workorders/transport-planning-workbench.json](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/79f9c7085c1abbd27f29f4cfc5e7b990aa18ab54/stellar/scf_2026/sf49_data_commissioning/installation-workorders/transport-planning-workbench.json) — 11408 bytes; SHA256 `75a5a3902b82c292fbde94470d946dee52960698ea29423d4df5b68d33f79e75`; Git blob `92aa36b877780539ba65e2c122e9a5780a4cc322`.
+
 ### Operating ownership and presentation
 
 Preserve original source/native/receiver and relationship owners. Every positive human contact and every subsequent outgoing message or attachment requires Bryce approval of that exact content. Internal implementation and authorized cold work continue under their standing directions.
