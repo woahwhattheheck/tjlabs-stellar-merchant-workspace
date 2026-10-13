@@ -6,7 +6,7 @@ import {pipeline} from 'node:stream/promises';
 import {randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {openSupersetWorkspace} from './workspace.mjs';
+import {openSupersetWorkspace,retainedSupersetCleanup,retainSupersetCleanupError} from './workspace.mjs';
 import {createSupersetAgentRoutes} from './agent-http.mjs';
 import {startSupersetMerchant,supersetMerchantStatus} from './merchant.mjs';
 import {reviewSupersetBuyer,inspectSupersetDelivery} from './customer.mjs';
@@ -30,19 +30,29 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
     throw fault('SUPERSET_MANAGED_MOUNT','Managed Applications uses the original root mount.');
   const selectedSource=await verifySupersetOperatorSourceSelection({directory,workspaceDirectory,sourceDirectory,expectedSelectionSha256});
   const workspaceRoot=workspaceDirectory??directory;
-  let unlockOperator=null,workspace;
+  let unlockOperator=null,workspace,server,service;
+  const instanceId=randomUUID(),operatorId='superset-'+digest(directory).slice(0,32),inheritedOwners=new Set();
+  let origin,launch,closing=false,closePromise,httpClosed=false,operatorReleased=false;
+  const startupCleanup=retainedSupersetCleanup({instanceId,summary:{directory,workspaceDirectory,operatorId,mode:'owned'},
+    requestClose(){closing=true;workspace?.requestClose();},
+    close:async()=>{
+      for(const owner of inheritedOwners){await owner.close();inheritedOwners.delete(owner);}
+      if(service){await service.close();return;}
+      if(server){
+        await new Promise((done,reject)=>server.close(error=>error&&error.code!=='ERR_SERVER_NOT_RUNNING'?reject(error):done()));
+        server=null;
+      }
+      if(workspace){await workspace.close();workspace=null;}
+      if(!operatorReleased){await unlockOperator?.();operatorReleased=true;}
+    }});
   try{
-    if(workspaceRoot!==directory)unlockOperator=await acquireWorkspace(directory);
-    workspace=await openSupersetWorkspace({directory:workspaceRoot,env,fetchImpl});
-  }catch(error){await unlockOperator?.();throw error;}
+  if(workspaceRoot!==directory)unlockOperator=await acquireWorkspace(directory);
+  workspace=await openSupersetWorkspace({directory:workspaceRoot,env,fetchImpl});
   const assets=new Map();
-  try{for(const [path,name,type]of [['','index.html','text/html; charset=utf-8'],['app.mjs','app.mjs','text/javascript; charset=utf-8'],['style.css','style.css','text/css; charset=utf-8']])
-    assets.set(path,{body:await readFile(new URL('./ui/'+name,import.meta.url)),type});}
-  catch(error){await workspace.close();await unlockOperator?.();throw error;}
+  for(const [path,name,type]of [['','index.html','text/html; charset=utf-8'],['app.mjs','app.mjs','text/javascript; charset=utf-8'],['style.css','style.css','text/css; charset=utf-8']])
+    assets.set(path,{body:await readFile(new URL('./ui/'+name,import.meta.url)),type});
   const token=randomBytes(32).toString('base64url'),authorization='Bearer '+token;
   const cookieName='superset_operator_'+digest(directory+'\n'+mountPath).slice(0,24);
-  const instanceId=randomUUID(),operatorId='superset-'+digest(directory).slice(0,32);
-  let origin,launch,closing=false,closePromise,httpClosed=false,operatorReleased=false;
   const publicLaunch=()=>({...launch,projectKey:workspace.meta('workspace_id'),workspaceId:workspace.meta('workspace_id')});
   const runs=new Map();
   const running=async merchantId=>{
@@ -173,23 +183,11 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
         message:error.code?error.message:'The operation could not be completed.'});
     }
   };
-  const server=createServer({maxHeaderSize:16384,requestTimeout:30000,headersTimeout:15000,keepAliveTimeout:1000},(req,res)=>{
+  server=createServer({maxHeaderSize:16384,requestTimeout:30000,headersTimeout:15000,keepAliveTimeout:1000},(req,res)=>{
     const task=handleRequest(req,res);handlers.add(task);void task.finally(()=>handlers.delete(task)).catch(()=>{});
   });
   server.setTimeout(60000);
-  try{
-    await new Promise((done,reject)=>{server.once('error',reject);server.listen(port,host,done);});
-    origin=new URL('http://127.0.0.1:'+server.address().port).origin;
-    launch={schema:SUPERSET_OPERATOR_LAUNCH_SCHEMA,state:'running',operatorId,instanceId,pid:process.pid,
-      directory,workspaceDirectory,url:origin,serverFile:join(selectedSource.executionSourceDirectory,'server.mjs'),
-      serverSha256:selectedSource.serverSha256,sourceDirectory:selectedSource.selection.sourceDirectory,
-      executionSourceDirectory:selectedSource.executionSourceDirectory,sourceSha256:selectedSource.selection.sourceSha256,
-      selectionSha256:selectedSource.selectionSha256,startedAt:new Date().toISOString()};
-    await atomicJson(directory,'operator-launch.json',{...launch,token});
-  }catch(error){
-    await new Promise(done=>server.close(()=>done()));await workspace.close();await unlockOperator?.();throw error;
-  }
-  return{server,workspace,url:origin+mountPath,sessionUrl:origin+mountPath+'#session='+token,launch:publicLaunch(),
+  service={server,workspace,
     async close(){
       if(closePromise)return closePromise;
       closing=true;const keeper=setInterval(()=>{},1000);
@@ -208,7 +206,7 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
           // Keep the original leases while a native service still needs its
           // same-owner close continuation. A retry resumes this exact instance.
           if(issues.length)throw issues[0];
-          await atomicJson(directory,'operator-launch.json',{...launch,state:'stopped',stoppedAt:new Date().toISOString()});
+          if(launch)await atomicJson(directory,'operator-launch.json',{...launch,state:'stopped',stoppedAt:new Date().toISOString()});
           await workspace.close();
           if(!operatorReleased){await unlockOperator?.();operatorReleased=true;}
         }finally{clearInterval(keeper);}
@@ -216,6 +214,25 @@ export async function startSupersetWorkspaceServer({directory,workspaceDirectory
       const attempt=closePromise;void attempt.catch(()=>{if(closePromise===attempt)closePromise=null;});
       return attempt;
     }};
+    await new Promise((done,reject)=>{server.once('error',reject);server.listen(port,host,done);});
+    origin=new URL('http://127.0.0.1:'+server.address().port).origin;
+    launch={schema:SUPERSET_OPERATOR_LAUNCH_SCHEMA,state:'running',operatorId,instanceId,pid:process.pid,
+      directory,workspaceDirectory,url:origin,serverFile:join(selectedSource.executionSourceDirectory,'server.mjs'),
+      serverSha256:selectedSource.serverSha256,sourceDirectory:selectedSource.selection.sourceDirectory,
+      executionSourceDirectory:selectedSource.executionSourceDirectory,sourceSha256:selectedSource.selection.sourceSha256,
+      selectionSha256:selectedSource.selectionSha256,startedAt:new Date().toISOString()};
+    await atomicJson(directory,'operator-launch.json',{...launch,token});
+
+  service.url=origin+mountPath;service.sessionUrl=origin+mountPath+'#session='+token;service.launch=publicLaunch();
+  return service;
+  }catch(error){
+    if(error.supersetCleanup)inheritedOwners.add(error.supersetCleanup);
+    try{
+      await startupCleanup.close();
+      if(error.supersetCleanup)delete error.supersetCleanup;
+    }catch(secondary){retainSupersetCleanupError(error,startupCleanup,secondary);}
+    throw error;
+  }
 }
 
 export const startSupersetOperator=startSupersetWorkspaceServer;
