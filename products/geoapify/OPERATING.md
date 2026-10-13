@@ -32,3 +32,9 @@ Use one actual authorized source with original identity/coordinate fields, its a
 A successful source build is followed by operating the exact populated interface, reviewing desktop and narrow widths, inspecting every outgoing report/data/package file, reopening the complete original workspace and exercising the selected merchant/customer continuation. Review actual returned screenshots and fix any rendering or user-flow defect before presenting the outgoing version. Preserve the exact operator and original receiving operation.
 
 Commercial scoping and the proposed customer installation workshare are in [Customer onboarding](CUSTOMER_ONBOARDING.md). The existing broader SCF pilot/customer launch plan remains in products/merchant-workspace/CUSTOMER_LAUNCH.md.
+
+## Following customer editions
+
+Following source stages a complete refreshed CSV/JSON against an existing frozen edition, reviews original business-record changes and chooses explicit reuse of exact-query baseline decisions. Source switching restores each source's working forms and preserves every original provider job. The selected customer dataset remains independent. Build and select the following edition, then inspect its full source-comparison HTML/JSON together with the original review, dataset, GeoJSON and full workspace package.
+
+The complete browser/CLI/eighteen-tool action contract and same-case receiving continuation are in the [recurring source section of the operating guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/geoapify/README.md#recurring-customer-sources-and-following-editions). Exercise both retained sources and both frozen editions in the original receiving operation. Inspect actual desktop/narrow controls and every outgoing export/reopened package before customer presentation.

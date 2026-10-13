@@ -84,3 +84,13 @@ Use the application's existing six work packages, proposed$38000/400h/150-day sc
 
 Current source operation: GEOAPIFY-CUSTOMER-ONBOARDING-9125-20261013, original SCF application thread:
 https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791898352323789?thread_ts=1791730668.369819
+
+## Recurring delivery after the first installation
+
+The same customer workspace now supports later original source editions. Its commissioning view compares a complete refreshed source against a chosen delivered edition, shows added/removed/changed records and preserves duplicate or missing identities as unpaired originals. The operator can explicitly reuse selected exact-address decisions from that frozen baseline, with a new reviewer and reason, or start the following source with undecided candidates. Prior candidate responses and new source coordinates remain distinct.
+
+The operator retains the complete history, original provider jobs and per-source forms, builds a following dataset and delivers its full comparison, review, CSV, GeoJSON and source-bearing package. The buyer can receive an earlier selected edition while the merchant works on the next source; exports use the chosen edition's original identity. This supports a repeat delivery conversation without rewriting or losing the first customer case.
+
+The original proposed $4,800 installation remains scoped to its stated first source/account/receiving work. Later edition frequency, data volume, review responsibility, delivery destination and commercial terms are to be agreed for that actual customer; the software does not infer a subscription or extra fee. API use remains on the selected authorized account. Any favorable human reply places subsequent individual messages and attachments with Bryce for exact-message approval.
+
+Use the complete recurring-source receiving course in the operator README on the same original equipped host. Obtain the actual following customer source internally where available. Clearly identify any operator-authored exercise data. The producing peer opens the real desktop/narrow workflow, every outgoing report/data/archive and independent reopen, reviews the actual frames and repairs concrete defects before presenting that customer edition.

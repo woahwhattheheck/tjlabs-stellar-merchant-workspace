@@ -8,7 +8,8 @@ import {loadDatasetConfig} from '../dataset-handler.mjs';
 import {buildDatasetSellerConfig,datasetQueryParameters} from '../dataset-cli.mjs';
 import {hash,canonical,json,object,own,fail,parseJSON,text,integer,readCsvRecords,readJSONSourceRecords,
   createIntake,inspectIntake,prepareBatch,inspectRequest,sanitizeReply,inspectReply,reviewIntake,validateDecision,buildRows,csvBytes} from './source.mjs';
-import {reviewHtml} from './report.mjs';
+import {reviewHtml,sourceComparisonHtml} from './report.mjs';
+import {compareSources,inheritedMatches,reusableDecisions,validateComparison} from './source-history.mjs';
 const SCHEMA='stellar-forge.geoapify-workspace.v1',PACKAGE='stellar-forge.geoapify-package.v1';
 const MAX=256*1024*1024,HASH=/^[a-f0-9]{64}$/,now=()=>new Date().toISOString();
 const exists=async p=>{try{await lstat(p);return true;}catch(e){if(e.code==='ENOENT')return false;throw e;}};
@@ -64,7 +65,14 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     activeEditionId:null,exports:[],queries:{},merchant:null};shape(state);
     if(!await exists(statePath))await atomic(statePath,json(state));
   }catch(e){lease.close();throw e;}
-  let closed=false,tail=Promise.resolve(),cache=null;
+  // Legacy untagged records belong to the original first intake, never the current selection.
+  const originalIntake=()=>state.sources?.[0]?.intake??state.intake;
+  const sourceEntries=()=>state.sources??(state.intake?[{intake:state.intake,createdAt:state.createdAt,activatedAt:state.createdAt,baselineEditionId:null}]:[]);
+  const sourceEntry=sha=>{const found=sourceEntries().find(v=>v.intake.sha256===(sha??state.intake?.sha256));
+    if(!found)throw fail('SOURCE_SELECTION','Choose an original retained intake SHA-256.',404);return found;};
+  const boundSource=record=>record.intakeSha256??originalIntake()?.sha256;
+  const ensureHistory=s=>{s.sources??=s.intake?[{intake:s.intake,createdAt:s.createdAt,activatedAt:s.createdAt,baselineEditionId:null}]:[];s.editors??={};};
+  let closed=false,tail=Promise.resolve(),cache=null,comparisonCache=null;
   const serial=fn=>{if(closed)return Promise.reject(fail('CLOSED','The workspace is closed.',409));
     const p=tail.then(fn);tail=p.catch(()=>{});return p;};
   const commit=async mutate=>{
@@ -93,15 +101,19 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     }
     return descriptor(file,b);
   };
-  const getIntake=async()=>{
+  const getIntake=async sha=>{
     if(!state.intake)throw fail('INTAKE_REQUIRED','Import the original source first.');
-    const v=parseJSON(await read(state.intake));inspectIntake(v);return v;
+    const v=parseJSON(await read(sourceEntry(sha).intake));inspectIntake(v);return v;
   };
   const request=async job=>parseJSON(await read(job.request));
-  async function review(){
-    if(cache?.revision===state.revision)return cache.value;
-    const intake=await getIntake(),matches={};
-    for(const job of state.jobs){
+  async function review(sha=state.intake?.sha256){
+    if(cache?.revision===state.revision&&cache.sha===sha)return cache.value;
+    const entry=sourceEntry(sha),intake=await getIntake(sha);
+    const baseline=entry.baselineEditionId?state.editions.find(e=>e.id===entry.baselineEditionId):null;
+    if(entry.baselineEditionId&&!baseline)throw fail('EDITION','The retained baseline edition is missing.');
+    const matches=inheritedMatches({intake,baselineReview:baseline?parseJSON(await read(baseline.review)):null});
+    if(baseline)for(const match of Object.values(matches))match.inheritedFrom={editionId:baseline.id,intakeSha256:boundSource(baseline),reviewSha256:baseline.review.sha256};
+    for(const job of state.jobs.filter(j=>boundSource(j)===sha)){
       const req=await request(job);inspectRequest(intake,req);
       for(const event of job.events){
         if(!responseTypes.includes(event.outcome))continue;
@@ -111,7 +123,9 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
         for(const [id,m] of Object.entries(parsed.matches))matches[id]={...m,responseSha256:event.response.sha256,jobId:job.id};
       }
     }
-    const value=reviewIntake({intake,matches,decisions:state.decisions});cache={revision:state.revision,value};return value;
+    const value={...reviewIntake({intake,matches,decisions:state.decisions.filter(d=>boundSource(d)===sha)}),intakeSha256:sha};
+    value.rows=value.rows.map(row=>({...row,inheritedFrom:matches[row.id]?.inheritedFrom??null}));
+    cache={revision:state.revision,sha,value};return value;
   }
   const active=()=>state.editions.find(e=>e.id===state.activeEditionId);
   async function dataset(edition=active()){
@@ -124,9 +138,9 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
   async function view(){
     const r=state.intake?await review():null;
     return {schema:SCHEMA,id:state.id,directory,revision:state.revision,createdAt:state.createdAt,updatedAt:state.updatedAt,
-      intake:state.intake,source:r?.source??null,mapping:r?.mapping??null,summary:r?.summary??null,
-      jobs:state.jobs.map(({queryIds,...job})=>({...job,queryCount:queryIds.length})),
-      editions:state.editions,activeEditionId:state.activeEditionId,exports:state.exports,merchant:state.merchant,
+      intake:state.intake,source:r?.source??null,mapping:r?.mapping??null,summary:r?.summary??null,sourceCount:sourceEntries().length,
+      jobs:state.jobs.map(({queryIds,...job})=>({...job,intakeSha256:boundSource(job),queryCount:queryIds.length})),
+      editions:state.editions.map(e=>({...e,intakeSha256:boundSource(e)})),activeEditionId:state.activeEditionId,exports:state.exports,merchant:state.merchant,
       lastQuery:active()?state.queries[active().id]??null:null,editor:state.editor??null,
       api:{configured:Boolean(apiKey),maximumBatch:1000,minimumPollMs:60000,retentionHours:24,
         notBefore:state.providerNotBefore??null,
@@ -144,11 +158,106 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     const value=createIntake({records,source,mapping:input.mapping});
     const original=await immutable('source/'+source.sha256+(input.format==='csv'?'.csv':'.json'),raw);
     const body=json(value),record={...await immutable('source/intake-'+hash(body)+'.json',body),original};
-    await commit(s=>{s.intake=record;});return {intake:record,summary:inspectIntake(value)};
+    await commit(s=>{s.intake=record;ensureHistory(s);});return {intake:record,summary:inspectIntake(value)};
+  }
+  async function describeSource(entry,retained){
+    const intake=retained?.after??await getIntake(entry.intake.sha256);
+    return structuredClone({...entry,source:intake.source,summary:retained?.afterSummary??inspectIntake(intake),active:entry.intake.sha256===state.intake?.sha256});
+  }
+  async function sourceHistory(input){
+    const offset=integer(input.offset??0,'Offset',0,1000000),limit=integer(input.limit??25,'Limit',1,250),entries=sourceEntries();
+    return {activeIntakeSha256:state.intake?.sha256??null,total:entries.length,offset,
+      sources:await Promise.all(entries.slice(offset,offset+limit).map(describeSource))};
+  }
+  async function comparisonData(entry){
+    if(!entry.comparison||!entry.baselineEditionId)throw fail('COMPARISON','The first source has no prior frozen edition to compare.');
+    if(comparisonCache?.sha===entry.comparison.sha256)return comparisonCache.value;
+    const edition=state.editions.find(e=>e.id===entry.baselineEditionId);
+    if(!edition)throw fail('EDITION','The original comparison baseline edition is missing.');
+    const beforeSha256=boundSource(edition),before=await getIntake(beforeSha256),after=await getIntake(entry.intake.sha256);
+    const comparison=parseJSON(await read(entry.comparison));
+    validateComparison(comparison,{before,after,beforeSha256,afterSha256:entry.intake.sha256,edition});
+    const baselineReview=parseJSON(await read(edition.review));
+    const reusable=reusableDecisions({intake:after,baselineReview});
+    const value={comparison,before,after,afterSummary:inspectIntake(after),edition,reusable};comparisonCache={sha:entry.comparison.sha256,value};return value;
+  }
+  const comparisonHeader=(comparison,entry)=>{
+    const {rows,...header}=comparison;return structuredClone({...header,sha256:entry.comparison.sha256});
+  };
+  async function stageSource(input){
+    if(!state.intake)throw fail('INTAKE_REQUIRED','Import the first original source before staging a following edition.');
+    const baseline=state.editions.find(e=>e.id===input.baselineEditionId);
+    if(!baseline)throw fail('EDITION','Choose the actual frozen edition used as the comparison baseline.');
+    const raw=typeof input.text==='string'?Buffer.from(input.text):await fileBytes(resolve(text(input.path,'Refreshed original source path')));
+    if(raw.length>MAX)throw fail('SOURCE_LIMIT','The original source exceeds256MiB.');
+    const records=input.format==='csv'?readCsvRecords(raw).rows:input.format==='json'?readJSONSourceRecords(raw):
+      (()=>{throw fail('FORMAT','Choose CSV or JSON records.');})();
+    const beforeSha256=boundSource(baseline),before=await getIntake(beforeSha256);
+    const source={name:text(input.name??(input.path?basename(input.path):'following-address-source'),'Source name',200),
+      url:input.sourceURL??null,format:input.format,bytes:raw.length,sha256:hash(raw),rows:records.length,
+      provenance:text(input.provenance,'Source rights and provenance')};
+    const value=createIntake({records,source,mapping:input.mapping??before.mapping}),body=json(value),sha=hash(body);
+    const prior=sourceEntries().find(e=>e.intake.sha256===sha);
+    if(prior){
+      if(prior.baselineEditionId!==baseline.id)throw fail('SOURCE_EXISTS','This exact intake already has its own retained original history and baseline. Select it in source history.',409);
+      const {comparison}=await comparisonData(prior);return {source:await describeSource(prior),comparison:comparisonHeader(comparison,prior),reused:true};
+    }
+    const comparison=compareSources({before,after:value,beforeSha256,afterSha256:sha,edition:baseline});
+    const original=await immutable('source/'+source.sha256+(input.format==='csv'?'.csv':'.json'),raw);
+    const intake={...await immutable('source/intake-'+sha+'.json',body),original};
+    const entry={intake,createdAt:now(),activatedAt:null,baselineEditionId:baseline.id,
+      comparison:await immutable('source/'+comparison.id+'.json',json(comparison))};
+    await commit(s=>{ensureHistory(s);s.sources.push(entry);});
+    return {source:await describeSource(entry),comparison:comparisonHeader(comparison,entry),reused:false};
+  }
+  async function inspectComparison(input){
+    const entry=sourceEntry(input.sourceSha256),retained=await comparisonData(entry),{comparison,before,after,reusable}=retained;
+    const offset=integer(input.offset??0,'Offset',0,2000000),limit=integer(input.limit??25,'Limit',1,250),
+      reuseOffset=integer(input.reuseOffset??0,'Reuse offset',0,1000000),reuseLimit=integer(input.reuseLimit??25,'Reuse limit',1,250);
+    let rows=comparison.rows;
+    if(input.status)rows=rows.filter(r=>r.status===input.status);
+    if(input.search){const needle=text(input.search,'Comparison search',1000).toLowerCase();rows=rows.filter(r=>
+      canonical({identity:r.identity,beforeOrdinal:r.beforeOrdinal,afterOrdinal:r.afterOrdinal,beforeQueryId:r.beforeQueryId,afterQueryId:r.afterQueryId}).toLowerCase().includes(needle));}
+    return {source:await describeSource(entry,retained),comparison:comparisonHeader(comparison,entry),total:rows.length,offset,
+      rows:structuredClone(rows.slice(offset,offset+limit).map(r=>({...r,before:r.beforeOrdinal?before.rows[r.beforeOrdinal-1]:null,after:r.afterOrdinal?after.rows[r.afterOrdinal-1]:null}))),
+      reusableTotal:reusable.length,reuseOffset,reusableQueries:structuredClone(reusable.slice(reuseOffset,reuseOffset+reuseLimit))};
+  }
+  async function activateSource(input){
+    const entry=sourceEntry(input.sourceSha256),sha=entry.intake.sha256;
+    if(input.reuseAllEligible!==undefined&&typeof input.reuseAllEligible!=='boolean')throw fail('REUSE','Choose an explicit all-eligible policy.');
+    if(input.reuseAllEligible===true&&input.reuseQueryIds!==undefined)throw fail('REUSE','Choose explicit query IDs OR all eligible decisions.');
+    if(input.reuseQueryIds!==undefined&&(!Array.isArray(input.reuseQueryIds)||new Set(input.reuseQueryIds).size!==input.reuseQueryIds.length))
+      throw fail('REUSE','Choose distinct eligible original query IDs.');
+    const requested=input.reuseAllEligible===true||Boolean(input.reuseQueryIds?.length);
+    if(entry.activatedAt&&requested)throw fail('REUSE_ALREADY_APPLIED','This source was already activated. Reopen its original review to make further decisions.',409);
+    let decisions=[];
+    if(!entry.activatedAt){
+      const {comparison,reusable}=await comparisonData(entry);
+      if(input.expectedComparisonSha256!==entry.comparison.sha256)throw fail('COMPARISON_CHANGED','Review the exact retained source comparison before activating it.',409);
+      const chosen=input.reuseAllEligible===true?reusable.map(r=>r.queryId):(input.reuseQueryIds??[]);
+      const byId=new Map(reusable.map(r=>[r.queryId,r]));
+      if(chosen.some(id=>!byId.has(id)))throw fail('REUSE_CHANGED','A selected query is not an eligible decision in this frozen baseline.',409);
+      if(chosen.length){
+        const reviewer=text(input.reviewer,'Reviewer',200),note=text(input.note,'Reason for reusing these exact baseline decisions'),current=await review(sha),currentRows=new Map(current.rows.map(r=>[r.id,r]));
+        decisions=chosen.map(queryId=>{const old=byId.get(queryId),d=old.baselineDecision;
+          return {...validateDecision({review:{rows:[currentRows.get(queryId)]},queryId,action:d.action,candidateId:d.candidateId,
+            coordinateChoice:d.coordinateChoice,reviewer,note,expectedResponseSha256:old.baselineResponseSha256}),
+            intakeSha256:sha,reusedFrom:{editionId:entry.baselineEditionId,comparisonSha256:entry.comparison.sha256,decision:structuredClone(d)}};});
+      }
+    }
+    await commit(s=>{
+      ensureHistory(s);
+      if(s.intake&&s.editor)s.editors[s.intake.sha256]=s.editor;
+      s.intake=entry.intake;s.editor=s.editors[sha]??null;s.decisions.push(...decisions);
+      const saved=s.sources.find(v=>v.intake.sha256===sha);
+      if(!saved.activatedAt){saved.activatedAt=now();saved.reuse={count:decisions.length,allEligible:input.reuseAllEligible===true,
+        reviewer:decisions[0]?.reviewer??null,note:decisions[0]?.note??null,comparisonSha256:entry.comparison.sha256};}
+    });
+    return {source:await describeSource(sourceEntry(sha)),reusedDecisions:decisions.length,count:decisions.length};
   }
   async function prepare(input){
     const intake=await getIntake(),r=await review();
-    const blocked=new Set(state.jobs.filter(j=>['PREPARED','SENDING','UNCERTAIN','PENDING','POLLING'].includes(j.status)).flatMap(j=>j.queryIds));
+    const blocked=new Set(state.jobs.filter(j=>boundSource(j)===state.intake.sha256&&['PREPARED','SENDING','UNCERTAIN','PENDING','POLLING'].includes(j.status)).flatMap(j=>j.queryIds));
     const eligible=r.rows.filter(row=>!blocked.has(row.id)&&(input.refresh===true||['UNQUERIED','MISSING','ERROR','NO_MATCH','AMBIGUOUS'].includes(row.providerStatus))).map(r=>r.id);
     const max=integer(input.maximumInputs??1000,'Explicit batch maximum',1,1000);
     const ids=input.queryIds??eligible.slice(0,max),eligibleSet=new Set(eligible);
@@ -158,7 +267,7 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     if(input.refresh===true&&!Array.isArray(input.queryIds))throw fail('REFRESH_REQUIRED','Choose explicit original IDs for a refreshed provider request.');
     if(ids.length>max)throw fail('BATCH_LIMIT','The selected IDs exceed the explicit batch maximum.');
     const req=prepareBatch(intake,ids,input.options??{}),id='job-'+randomUUID();
-    const job={id,createdAt:now(),status:'PREPARED',queryIds:ids,providerBodySha256:hash(json(req.body)),providerBodyBytes:json(req.body).length,request:await immutable('requests/'+id+'.json',json(req)),
+    const job={id,intakeSha256:state.intake.sha256,createdAt:now(),status:'PREPARED',queryIds:ids,providerBodySha256:hash(json(req.body)),providerBodyBytes:json(req.body).length,request:await immutable('requests/'+id+'.json',json(req)),
       jobId:null,events:[],nextPollAt:null,abandonment:null};
     await commit(s=>{s.jobs.push(job);});
     return {job,request:req,selected:ids.length,remainingEligible:eligible.length-ids.length,totalQueries:r.summary.queries};
@@ -200,7 +309,7 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     if(state.providerNotBefore&&Date.now()<Date.parse(state.providerNotBefore))
       throw fail('PROVIDER_RETRY','The retained provider retry floor is '+state.providerNotBefore+'.',429);
     if(!apiKey||typeof fetcher!=='function')throw fail('ACCOUNT','Start this workspace with GEOAPIFY_API_KEY and its native HTTP transport.');
-    const req=await request(job);inspectRequest(await getIntake(),req);
+    const req=await request(job);inspectRequest(await getIntake(boundSource(job)),req);
     if(method==='POST'&&job.status!=='PREPARED')throw fail('ALREADY_DISPATCHED','Continue the original job. An already dispatched POST is never repeated automatically.',409);
     if(method==='GET'&&(!job.jobId||['COMPLETE','PARTIAL','ABANDONED','REJECTED','EXPIRED'].includes(job.status)))
       throw fail('POLL','Choose an original pending job with its returned provider ID.');
@@ -242,14 +351,14 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     const config={schema:'stellar-forge.csv-dataset.v1',file:'dataset.csv',name,columns,
       filters:['review_state','result_type','match_type','coordinate_choice'],ranges:['confidence','distance_m'],
       sorts:['source_ordinal','confidence','distance_m'],defaultLimit:50,maxLimit:250};
-    const csv=csvBytes(output.rows,output.columns),basis={intake:state.intake.sha256,decisions:state.decisions,
-      responses:state.jobs.flatMap(j=>j.events.filter(e=>['COMPLETE','PARTIAL'].includes(e.outcome)).map(e=>({jobId:j.id,sha256:e.response.sha256}))),
+    const csv=csvBytes(output.rows,output.columns),basis={intake:state.intake.sha256,decisions:state.decisions.filter(d=>boundSource(d)===state.intake.sha256),
+      responses:state.jobs.filter(j=>boundSource(j)===state.intake.sha256).flatMap(j=>j.events.filter(e=>['COMPLETE','PARTIAL'].includes(e.outcome)).map(e=>({jobId:j.id,sha256:e.response.sha256}))),
       sourceColumns:input.sourceColumns??[],scope:input.scope??'all-source'};
     const id='edition-'+hash(canonical({csv:hash(csv),config,basis})),prior=state.editions.find(e=>e.id===id);
     if(prior){await commit(s=>{s.activeEditionId=id;});return {edition:prior,reused:true};}
     const prefix='editions/'+id,csvFile=await immutable(prefix+'/dataset.csv',csv),configFile=await immutable(prefix+'/dataset.json',json(config));
     const model=await loadDatasetConfig(await inside(configFile.file)),description=model.describe();
-    const record={id,name,createdAt:now(),rowCount:output.rows.length,snapshot:description.snapshot,scope:basis.scope,
+    const record={id,name,intakeSha256:state.intake.sha256,createdAt:now(),rowCount:output.rows.length,snapshot:description.snapshot,scope:basis.scope,
       csv:csvFile,config:configFile,basis:await immutable(prefix+'/review-basis.json',json(basis)),
       review:await immutable(prefix+'/address-review.json',json(reviewed)),
       geojson:await immutable(prefix+'/dataset.geojson',json(output.geojson)),
@@ -260,7 +369,7 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
   }
   async function retainedFiles(){
     const entries=new Map(),add=async d=>{if(d&&!entries.has(d.file))entries.set(d.file,await read(d));};
-    await add(state.intake);await add(state.intake?.original);
+    for(const source of sourceEntries()){await add(source.intake);await add(source.intake.original);await add(source.comparison);}
     for(const job of state.jobs){await add(job.request);for(const e of job.events)await add(e.response);}
     for(const e of state.editions)for(const key of ['csv','config','basis','review','geojson','report'])await add(e[key]);
     return entries;
@@ -275,16 +384,21 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
     const id='export-'+randomUUID(),prefix='exports/'+id,values={'starforge-geoapify.json.gz':compressed};
     const edition=active();
     if(edition){
-      const model=await dataset(),intake=await getIntake();
+      const model=await dataset(),editionSource=sourceEntry(boundSource(edition)),intake=await getIntake(editionSource.intake.sha256);
       for(const [name,key] of [['dataset.csv','csv'],['dataset.json','config'],['dataset.geojson','geojson'],['address-review.json','review'],['review.html','report']])
         values[name]=await read(edition[key]);
       const manifest={schema:'stellar-forge.geoapify-source.v1',provider:'Geoapify',originalSource:intake.source,mapping:intake.mapping,
-        intakeSha256:state.intake.sha256,edition,nativeSnapshot:edition.snapshot,rawRoot:'raw',
+        intakeSha256:editionSource.intake.sha256,currentIntakeSha256:state.intake.sha256,edition,nativeSnapshot:edition.snapshot,rawRoot:'raw',
         providerDocs:'https://apidocs.geoapify.com/docs/batch',termsURL:'https://www.geoapify.com/terms-and-conditions/',
         attribution:'Geoapify; OpenStreetMap contributors and the original per-feature datasource attributions. Review the applicable plan and source licences before distribution.',
-        jobs:state.jobs,coordinatePolicy:'Original coordinates and chosen provider coordinates are separate. Only explicit retained reviewer decisions choose the published pair.'};
+        jobs:state.jobs.filter(j=>boundSource(j)===editionSource.intake.sha256),sources:sourceEntries(),coordinatePolicy:'Original coordinates and chosen provider coordinates are separate. Only explicit retained reviewer decisions choose the published pair.'};
       values['query.json']=json({schema:'stellar-forge.dataset-query.v1',snapshot:edition.snapshot,query:state.queries[edition.id]?.initialQuery??{limit:'50'},queryParameters:datasetQueryParameters(model.describe())});
       if(state.merchant)values['seller.json']=json(await buildDatasetSellerConfig(model,state.merchant));
+      if(editionSource.comparison){
+        const c=await comparisonData(editionSource);
+        values['source-comparison.json']=await read(editionSource.comparison);
+        values['source-comparison.html']=Buffer.from(sourceComparisonHtml({...c,edition}));
+      }
       for(const [name,b] of entries)values['raw/'+name]=b;
       values['README.md']=Buffer.from('# Geoapify address review delivery\n\nOpen review.html for the complete frozen edition. Dataset and GeoJSON keep every selected original record, original and proposed coordinates, confidence, match type, source attribution and retained reviewer decision. Review state is explicit; no score automatically approves an address.\n\nImport starforge-geoapify.json.gz into an empty Geoapify workspace to restore original source, requests, provider jobs, complete candidates, review history and dataset editions. Continue original pending job IDs; never repeat an uncertain POST. The provider retains completed jobs for24hours, so retain returned results locally.\n\nThe original merchant publisher reads dataset.csv/dataset.json/source.json and optional seller.json from this directory. Publish only source and provider data you are permitted to distribute and preserve the original attribution fields.\n');
       manifest.sourceFiles=Object.entries(values).filter(([name])=>!['dataset.csv','dataset.json','seller.json'].includes(name))
@@ -307,19 +421,33 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
       entries.set(item.file,b);
     }
     const check=d=>{const b=entries.get(safeFile(d?.file));if(!b||b.length!==d.bytes||hash(b)!==d.sha256)throw fail('PACKAGE','A required original file is missing.');return b;};
-    const source=saved.intake?parseJSON(check(saved.intake)):null;
-    if(source){inspectIntake(source);const original=check(saved.intake.original);
+    const sources=saved.sources??(saved.intake?[{intake:saved.intake,createdAt:saved.createdAt,activatedAt:saved.createdAt,baselineEditionId:null}]:[]);
+    if(!Array.isArray(sources)||sources.length>10000||new Set(sources.map(e=>e.intake?.sha256)).size!==sources.length)
+      throw fail('PACKAGE','Retained intake history must have distinct original identities.');
+    const sourceMap=new Map();
+    for(const entry of sources){
+      const source=parseJSON(check(entry.intake)),original=check(entry.intake.original);inspectIntake(source);
       if(hash(original)!==source.source.sha256||original.length!==source.source.bytes)throw fail('PACKAGE','Original source bytes differ.');
       const records=source.source.format==='csv'?readCsvRecords(original).rows:source.source.format==='json'?readJSONSourceRecords(original):null;
-      if(!records||canonical(createIntake({records,source:source.source,mapping:source.mapping}))!==canonical(source))throw fail('PACKAGE','The intake mapping differs from the complete original source bytes.');}
-    else if(saved.jobs.length||saved.editions.length||saved.decisions.length)throw fail('PACKAGE','A populated workspace needs its original source.');
+      if(!records||canonical(createIntake({records,source:source.source,mapping:source.mapping}))!==canonical(source))
+        throw fail('PACKAGE','The intake mapping differs from its complete original source bytes.');
+      sourceMap.set(entry.intake.sha256,source);
+    }
+    const originalSha=sources[0]?.intake.sha256,savedBinding=record=>record.intakeSha256??originalSha;
+    const source=saved.intake?sourceMap.get(saved.intake.sha256):null;
+    if(saved.intake&&(!source||canonical(saved.intake)!==canonical(sources.find(e=>e.intake.sha256===saved.intake.sha256).intake)))
+      throw fail('PACKAGE','The active source must be an exact retained intake.');
+    if(!source&&(saved.jobs.length||saved.editions.length||saved.decisions.length||sources.length))
+      throw fail('PACKAGE','A populated workspace needs its original source.');
     for(const d of saved.decisions){
-      if(!object(d)||!own(source?.queries??{},d.queryId)||!['accept','keep-source'].includes(d.action)||!['preserve-source','use-provider','fill-missing'].includes(d.coordinateChoice)||
+      const intake=sourceMap.get(savedBinding(d));
+      if(!object(d)||!own(intake?.queries??{},d.queryId)||!['accept','keep-source'].includes(d.action)||!['preserve-source','use-provider','fill-missing'].includes(d.coordinateChoice)||
         d.action==='accept'&&(!HASH.test(d.candidateId??'')||!HASH.test(d.responseSha256??'')))throw fail('PACKAGE','A retained decision has a different source or candidate binding.');
       text(d.reviewer,'Retained reviewer',200);text(d.note,'Retained decision reason');
     }
     for(const job of saved.jobs){
-      const req=parseJSON(check(job.request));inspectRequest(source,req);
+      const intake=sourceMap.get(savedBinding(job));if(!intake)throw fail('PACKAGE','The original job source is missing.');
+      const req=parseJSON(check(job.request));inspectRequest(intake,req);
       if(canonical(req.body.inputs.map(i=>i.id))!==canonical(job.queryIds)||!Array.isArray(job.events))throw fail('PACKAGE','A retained job has changed source IDs.');
       for(const event of job.events){
         const b=check(event.response);
@@ -327,32 +455,52 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
       }
     }
     for(const e of saved.editions){
+      const intake=sourceMap.get(savedBinding(e));if(!intake)throw fail('PACKAGE','A frozen edition source is missing.');
       for(const key of ['csv','config','basis','review','geojson','report'])check(e[key]);
-      const config=parseJSON(check(e.config));
+      const config=parseJSON(check(e.config)),basis=parseJSON(check(e.basis)),reviewed=parseJSON(check(e.review));
+      if(basis.intake!==savedBinding(e)||canonical(reviewed.source)!==canonical(intake.source)||canonical(reviewed.mapping)!==canonical(intake.mapping))
+        throw fail('PACKAGE','The frozen edition is bound to another original source.');
       if(config.file!=='dataset.csv'||basename(e.csv.file)!=='dataset.csv'||dirname(e.csv.file)!==dirname(e.config.file))
         throw fail('PACKAGE','An edition must bind its adjacent original CSV.');
     }
+    for(const entry of sources){
+      if(entry.baselineEditionId){
+        const edition=saved.editions.find(e=>e.id===entry.baselineEditionId);
+        if(!edition)throw fail('PACKAGE','The original comparison baseline edition is missing.');
+        validateComparison(parseJSON(check(entry.comparison)),{before:sourceMap.get(savedBinding(edition)),
+          after:sourceMap.get(entry.intake.sha256),beforeSha256:savedBinding(edition),afterSha256:entry.intake.sha256,edition});
+      }else if(entry.comparison)throw fail('PACKAGE','A retained comparison needs its original frozen edition.');
+    }
+    if(saved.editors!==undefined&&(!object(saved.editors)||Object.keys(saved.editors).some(k=>!sourceMap.has(k))||
+      Object.values(saved.editors).some(e=>!object(e)||json(e).length>262144)))throw fail('PACKAGE','Retained working forms must stay bound to original intake identities.');
     if(saved.activeEditionId&&!saved.editions.some(e=>e.id===saved.activeEditionId))throw fail('PACKAGE','The selected edition is missing.');
     for(const [file,b] of entries)await immutable(file,b);
     for(const e of saved.editions){const model=await loadDatasetConfig(join(directory,e.config.file));
       if(model.describe().snapshot!==e.snapshot||model.describe().rowCount!==e.rowCount)throw fail('PACKAGE','Restored native dataset identity differs.');}
     const previous=state,next={...saved,exports:[],restoredAt:now(),revision:saved.revision+1};
-    await atomic(statePath,json(next));state=next;cache=null;
-    try{if(source)await review();}catch(error){await atomic(statePath,json(previous));state=previous;cache=null;throw error;}
+    await atomic(statePath,json(next));state=next;cache=null;comparisonCache=null;
+    try{for(const entry of sources)await review(entry.intake.sha256);}catch(error){await atomic(statePath,json(previous));state=previous;cache=null;comparisonCache=null;throw error;}
     return {restored:true,id:state.id,rows:source?.rows.length??0,jobs:state.jobs.length,editions:state.editions.length};
   }
-  const reads=new Set(['status','review.list','review.query','provider.request','source.inspect']);
+  const reads=new Set(['status','review.list','review.query','provider.request','source.inspect','source.history','source.compare']);
   async function dispatch(action,input){
     if(!reads.has(action)&&input.expectedRevision!==state.revision)throw fail('REVISION_CONFLICT','Refresh the original workspace before saving this change.',409);
+    if(input.expectedIntakeSha256!==undefined&&['review.decide','provider.prepare','edition.build','editor.save'].includes(action)&&input.expectedIntakeSha256!==state.intake?.sha256)
+      throw fail('INTAKE_CHANGED','The selected active intake differs. Reopen its source and review before saving.',409);
     if(action==='status')return {};
+    if(action==='source.history')return sourceHistory(input);
+    if(action==='source.stage')return stageSource(input);
+    if(action==='source.compare')return inspectComparison(input);
+    if(action==='source.activate')return activateSource(input);
     if(action==='source.inspect'){
-      const source=await getIntake(),offset=integer(input.offset??0,'Offset',0,1000000),limit=integer(input.limit??25,'Limit',1,250);
-      return {source:source.source,mapping:source.mapping,summary:inspectIntake(source),rows:source.rows.slice(offset,offset+limit),offset,
+      const entry=sourceEntry(input.sourceSha256),source=await getIntake(entry.intake.sha256),offset=integer(input.offset??0,'Offset',0,1000000),limit=integer(input.limit??25,'Limit',1,250);
+      return {intakeSha256:entry.intake.sha256,source:source.source,mapping:source.mapping,summary:inspectIntake(source),rows:source.rows.slice(offset,offset+limit),offset,
         duplicateIdentities:source.duplicateIdentities.slice(0,250)};
     }
     if(action==='editor.save'){
       if(!object(input.editor)||json(input.editor).length>262144)throw fail('EDITOR','Save the complete working forms within256KiB.');
-      await commit(s=>{s.editor={...structuredClone(input.editor),savedAt:now()};});return {editor:state.editor};
+      await commit(s=>{ensureHistory(s);s.editor={...structuredClone(input.editor),intakeSha256:s.intake?.sha256??null,savedAt:now()};
+        if(s.intake)s.editors[s.intake.sha256]=s.editor;});return {editor:state.editor};
     }
     if(action==='intake.import')return importSource(input);
     if(action==='provider.prepare')return prepare(input);
@@ -367,16 +515,16 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
         originalJobId:job.jobId,originalRequestSha256:job.request.sha256};});return chooseJob(job.id);
     }
     if(action==='review.list'){
-      const r=await review(),offset=integer(input.offset??0,'Offset',0,1000000),limit=integer(input.limit??25,'Limit',1,250);
+      const r=await review(input.sourceSha256),offset=integer(input.offset??0,'Offset',0,1000000),limit=integer(input.limit??25,'Limit',1,250);
       let rows=r.rows;if(input.status)rows=rows.filter(row=>row.state===input.status);
       if(input.search){const needle=String(input.search).toLowerCase();rows=rows.filter(row=>canonical({id:row.id,params:row.params,ordinals:row.sourceOrdinals}).toLowerCase().includes(needle));}
-      return {summary:r.summary,total:rows.length,offset,rows:rows.slice(offset,offset+limit)};
+      return {intakeSha256:r.intakeSha256,summary:r.summary,total:rows.length,offset,rows:rows.slice(offset,offset+limit)};
     }
     if(action==='review.query'){
-      const r=await review(),row=r.rows.find(row=>row.id===input.queryId);if(!row)throw fail('QUERY','Choose an original source query.');
-      return {...row,originalRows:(await getIntake()).rows.filter(r=>r.queryId===row.id)};
+      const r=await review(input.sourceSha256),row=r.rows.find(row=>row.id===input.queryId);if(!row)throw fail('QUERY','Choose an original source query.');
+      return {...row,intakeSha256:r.intakeSha256,originalRows:(await getIntake(r.intakeSha256)).rows.filter(r=>r.queryId===row.id)};
     }
-    if(action==='review.decide'){const d=validateDecision({review:await review(),...input});await commit(s=>{s.decisions.push(d);});return d;}
+    if(action==='review.decide'){const d={...validateDecision({review:await review(),...input}),intakeSha256:state.intake.sha256};await commit(s=>{s.decisions.push(d);});return d;}
     if(action==='edition.build')return buildEdition(input);
     if(action==='edition.activate'){if(!state.editions.some(e=>e.id===input.editionId))throw fail('EDITION','Choose a retained original edition.');
       await commit(s=>{s.activeEditionId=input.editionId;});return active();}
@@ -404,6 +552,6 @@ export async function openGeoapifyWorkspace({directory,apiKey=process.env.GEOAPI
         filename.endsWith('.html')?'text/html; charset=utf-8':filename.endsWith('.csv')?'text/csv; charset=utf-8':
         filename.endsWith('.json')||filename.endsWith('.geojson')?'application/json; charset=utf-8':'text/plain; charset=utf-8'};
     }),
-    close:async()=>{if(closed)return;closed=true;await tail;cache=null;try{lease.exec('ROLLBACK');}finally{lease.close();}}
+    close:async()=>{if(closed)return;closed=true;await tail;cache=null;comparisonCache=null;try{lease.exec('ROLLBACK');}finally{lease.close();}}
   };
 }

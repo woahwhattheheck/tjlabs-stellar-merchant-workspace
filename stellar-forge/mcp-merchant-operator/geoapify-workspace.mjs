@@ -248,7 +248,45 @@ export class MerchantGeoapifyWorkspaces {
     };
     switch (name) {
       case 'merchant_geoapify_source':
-        return call('source.inspect',{offset:count(args.offset??0,'Source offset',0,1000000),limit:count(args.limit??25,'Source page size',1,250)});
+        return call('source.inspect',{...(args.sourceSha256===undefined?{}:{sourceSha256:args.sourceSha256}),
+          offset:count(args.offset??0,'Source offset',0,1000000),limit:count(args.limit??25,'Source page size',1,250)});
+      case 'merchant_geoapify_sources': {
+        const payload=args.payload??{};
+        if(!plain(payload))throw failure('INVALID_PARAMS','Use an original source revision payload.');
+        if(args.action==='history') {
+          only(payload,['offset','limit']);
+          return call('source.history',{offset:count(payload.offset??0,'Source history offset',0,1000000),
+            limit:count(payload.limit??25,'Source history page size',1,250)});
+        }
+        if(args.action==='stage') {
+          only(payload,['sourceImport','mapping','baselineEditionId','expectedRevision']);
+          const source=entry.imports[identifier(payload.sourceImport,'Successor source import')];
+          if(!source||source.kind!=='intake')throw failure('GEOAPIFY_IMPORT_NOT_CONFIGURED','Choose a declared complete CSV or JSON successor source.');
+          const {file,label,kind,...input}=source;
+          return call('source.stage',{...input,path:file,mapping:payload.mapping??source.mapping,
+            baselineEditionId:originalId(payload.baselineEditionId),expectedRevision:payload.expectedRevision});
+        }
+        if(args.action==='compare') {
+          only(payload,['sourceSha256','offset','limit','status','search','reuseOffset','reuseLimit','sourceOffset','sourceLimit']);
+          const {sourceOffset=0,sourceLimit=25,...selected}=payload;
+          const offset=count(sourceOffset,'Reusable query source offset',0,1000000),
+            limit=count(sourceLimit,'Reusable query source page size',1,100);
+          const response=await original.act('source.compare',{...selected,
+            offset:count(payload.offset??0,'Comparison offset',0,2000000),
+            limit:count(payload.limit??25,'Comparison page size',1,250),
+            reuseOffset:count(payload.reuseOffset??0,'Reusable query offset',0,1000000),
+            reuseLimit:count(payload.reuseLimit??25,'Reusable query page size',1,250)});
+          return {...response,result:{...response.result,reusableQueries:(response.result.reusableQueries??[]).map(query=>{
+            const {values:sourceOrdinals,page:sourceOrdinalsPage}=pageRows(query.sourceOrdinals??[],offset,limit);
+            return {...query,sourceOrdinals,sourceOrdinalsPage};
+          })},state:sourceView(response.state)};
+        }
+        if(args.action==='activate') {
+          only(payload,['sourceSha256','expectedComparisonSha256','reuseQueryIds','reuseAllEligible','reviewer','note','expectedRevision']);
+          return call('source.activate',payload);
+        }
+        throw failure('INVALID_PARAMS','Choose history, stage, compare or activate.');
+      }
       case 'merchant_geoapify_intake': {
         const source=entry.imports[identifier(args.sourceImport,'Source import')];
         if(!source||source.kind!=='intake')throw failure('GEOAPIFY_IMPORT_NOT_CONFIGURED','Choose a declared original CSV or JSON intake.');
@@ -260,7 +298,7 @@ export class MerchantGeoapifyWorkspaces {
         const payload=args.payload??{};
         if(!plain(payload))throw failure('INVALID_PARAMS','Use an original provider action payload.');
         if(args.action==='prepare') {
-          only(payload,['expectedRevision','maximumInputs','queryIds','refresh','options']);
+          only(payload,['expectedRevision','expectedIntakeSha256','maximumInputs','queryIds','refresh','options']);
           return call('provider.prepare',payload);
         }
         if(['run','poll'].includes(args.action)) {
@@ -294,19 +332,19 @@ export class MerchantGeoapifyWorkspaces {
         const payload=args.payload??{};
         if(!plain(payload))throw failure('INVALID_PARAMS','Use an original review payload.');
         if(args.action==='list'){
-          only(payload,['status','search','offset','limit']);
+          only(payload,['sourceSha256','status','search','offset','limit']);
           const response=await original.act('review.list',payload);
           return {...response,result:{...response.result,rows:response.result.rows.map(row=>reviewRow(row))},state:sourceView(response.state)};
         }
         if(args.action==='query'){
-          only(payload,['queryId','sourceOffset','sourceLimit']);
+          only(payload,['sourceSha256','queryId','sourceOffset','sourceLimit']);
           const offset=count(payload.sourceOffset??0,'Original source offset',0,1000000),limit=count(payload.sourceLimit??25,'Original source page size',1,100);
-          const response=await original.act('review.query',{queryId:payload.queryId});
+          const response=await original.act('review.query',{queryId:payload.queryId,...(payload.sourceSha256===undefined?{}:{sourceSha256:payload.sourceSha256})});
           const {values:originalRows,page:originalRowsPage}=pageRows(response.result.originalRows,offset,limit);
           return {...response,result:{...reviewRow(response.result,offset,limit),originalRows,originalRowsPage},state:sourceView(response.state)};
         }
         if(args.action==='decide'){
-          only(payload,['expectedRevision','queryId','action','candidateId','coordinateChoice','reviewer','note','expectedResponseSha256']);
+          only(payload,['expectedRevision','expectedIntakeSha256','queryId','action','candidateId','coordinateChoice','reviewer','note','expectedResponseSha256']);
           return call('review.decide',payload);
         }
         throw failure('INVALID_PARAMS','Choose list, query or decide.');
@@ -314,13 +352,14 @@ export class MerchantGeoapifyWorkspaces {
       case 'merchant_geoapify_editor': {
         if(args.action==='read'){const state=await original.state();return {editor:state.editor??{},state:sourceView(state)};}
         if(args.action!=='save')throw failure('INVALID_PARAMS','Choose read or save.');
-        return call('editor.save',{editor:args.editor,expectedRevision:args.expectedRevision});
+        return call('editor.save',{editor:args.editor,expectedRevision:args.expectedRevision,
+          ...(args.expectedIntakeSha256===undefined?{}:{expectedIntakeSha256:args.expectedIntakeSha256})});
       }
       case 'merchant_geoapify_edition': {
         const payload = { ...(args.payload ?? {}) };
         if (!plain(args.payload ?? {})) throw failure('INVALID_PARAMS', 'Use an original edition payload.');
         if (args.action === 'build') {
-          only(payload, ['expectedRevision','name','scope','sourceColumns']);
+          only(payload, ['expectedRevision','expectedIntakeSha256','name','scope','sourceColumns']);
           return call('edition.build', payload);
         }
         if (args.action === 'activate') {

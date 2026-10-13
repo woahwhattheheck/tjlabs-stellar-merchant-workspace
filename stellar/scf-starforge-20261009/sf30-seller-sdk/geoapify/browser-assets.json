@@ -17,6 +17,13 @@
       ]
     ],
     [
+      "/source-history.mjs",
+      [
+        "public/source-history.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/style.css",
       [
         "public/style.css",
