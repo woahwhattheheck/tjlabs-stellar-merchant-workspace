@@ -1,0 +1,183 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "oecd-economic-editions",
+  "heading": "## Recurring economic-report installation",
+  "sources": [
+    {
+      "id": "oecd-economic-operating",
+      "label": "OECD installed analyst operation and recurring source/customer workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/oecd/OPERATING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 10636,
+          "sha256": "74b33e764ceda4c5996004817d8fc568727e158b585c8e90b0a71684685b5dac",
+          "git_blob": "0124d3ff3e00005da3e0824f7865461ce30c6c34"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-receiving",
+      "label": "OECD complete original analyst, merchant, buyer and fresh-customer programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/oecd/RECEIVING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 8954,
+          "sha256": "a63a61809b67dcd777fefe6c148bef231f2e2282212e89cc2a0d41ed373f1487",
+          "git_blob": "a2940c747b2a628800f9a4a5e90007e83cfa1d86"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-product",
+      "label": "OECD complete customer operation and SCF implementation scope",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/oecd/SCF_PRODUCT.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 6666,
+          "sha256": "c26545c5a9f91ea0f19b709c89294f34cb2dce5143dba071927010647d1fb2d5",
+          "git_blob": "e569e2ffbcc5d91288adf20882d66b503226965d"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-source",
+      "label": "OECD complete published product and original source identities",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/oecd/SOURCE.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 18674,
+          "sha256": "9cda7e607d14f03fb8f0b0bd044c09415993f4a59107da04a22b581f1a1e81e5",
+          "git_blob": "8df7b270cc68ab862f5ffa6ecee9839f0d301352"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-selection",
+      "label": "OECD complete installed source selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/oecd.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 5092,
+          "sha256": "9b774e68ace1114f45215a3656eb75d600cf72c00c252511bf078b7ea9827ff4",
+          "git_blob": "af8f6f1c91ec115bc8923b9d0767be920e4d0566"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-bundle",
+      "label": "OECD fifteen original data, structure and codelist responses",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/sources/bundle.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 9283,
+          "sha256": "00c7ec37a912034ce9e179b354b05678e24dfe5d03b06368315aa942185a8254",
+          "git_blob": "07c57b63aa434e8e27cbe0263ed402fb8805f273"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-rights",
+      "label": "OECD original data terms and complete customer acknowledgment",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/SOURCE_RIGHTS.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 5609,
+          "sha256": "1503f6555d994c9608680f1f3a9f3dee1bfe175d84894b03a8d8f54061ac5dfe",
+          "git_blob": "34b22e273d17bc15720bd044862fa198310054fc"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-model",
+      "label": "OECD original source project, revisions and customer reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/workspace.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 35300,
+          "sha256": "d6a9699279ea583756f29c8f96500822e8996dcce26373fe6764270b9cb7d94a",
+          "git_blob": "0cf305e17b9a491d3a243fb9aad352863b377b00"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-programme",
+      "label": "OECD original complete merchant and dataset delivery receiver",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/receiving.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 19954,
+          "sha256": "62f015384ce4c81add93c44a6b2f0712e383f9efb00763b79631ac80758416cc",
+          "git_blob": "c2166be9efefc7a876ccb6898582afdf2e6f7b5d"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-report",
+      "label": "OECD exact-decimal reports and complete source-qualified comparison",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/briefing.py",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 18789,
+          "sha256": "4ba43e9ac354e3de2f30b03c0d1122e9a64e4b5c306427aaabf9d87dd455f2f4",
+          "git_blob": "5cfa2537229ec39dbbac1c0eeb58d68ee5635937"
+        }
+      ]
+    },
+    {
+      "id": "oecd-economic-client",
+      "label": "OECD full typed analyst, publisher and customer client",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sdmx/oecd/client.d.ts",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b4990e24cc0d8dcb8bd173428160e17ce52dfb7b",
+          "bytes": 8157,
+          "sha256": "ae61402f7e1369df27253731d8607262d0df11d8c2448c447f474b7e03a49dd4",
+          "git_blob": "5c3f9bb7354dd9350dccb82f49ea51ec6a9d4f3d"
+        }
+      ]
+    }
+  ]
+}
