@@ -594,6 +594,7 @@ export class MerchantGrantWorkspaces {
     const reads = {plans:'plans', plan:'plan', plan_history:'plan-history', plan_comparison:'plan-comparison', cases:'cases', case:'case',
       case_report:'case-report', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
+      settlements:'settlements',settlement:'settlement',
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar',
       work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
       cost_funding:'cost-funding',funding_edition:'funding-edition',funding_request:'funding-request',
@@ -811,6 +812,12 @@ export class MerchantGrantWorkspaces {
       const {caseId,input,inputPointer,expectedInputSha256,...body}=rest;
       original=await client.cohortPrepare(caseId,{...body,inputs:await this.#modelInputs(alias,args,'Cohort',GRANT_MAX_BUNDLE_BYTES)});
     }
+    else if (verb === 'settlement_correction_preview') {
+      const {caseId,...body}=rest;original=await client.settlementCorrectionPreview(caseId,body);
+    }
+    else if (verb === 'settlement_correct') {
+      const {caseId,...body}=rest;original=await client.settlementCorrect(caseId,body);
+    }
     else if (verb === 'implementation_source') original=await client.implementationSource(args.caseId,args.expectedVersion,args.sourceId,args.asOfAt);
     else if (verb === 'implementation_preview') original=await client.implementationPreview(args.caseId,args.expectedVersion,
       await this.#modelInputs(alias,args,'Implementation',GRANT_MAX_BUNDLE_BYTES));
@@ -855,9 +862,14 @@ export class MerchantGrantWorkspaces {
     } else if (verb === 'portfolio_selection') original = await client.portfolioSelection(args.caseId, args.expectedVersion,
       args.portfolioId, args.alternativeId);
     else if (verb === 'export') original = await client.download(args.kind, rest);
-    else if (['plan_import','case_import','source_attach','intake','support_preview','support_receive','buyer_preview','buyer_receive'].includes(verb)) {
+    else if (['plan_import','case_import','source_attach','intake','support_preview','support_receive','buyer_preview','buyer_receive','settlement_preview','settlement_receive'].includes(verb)) {
       const {input, expectedInputSha256, ...body} = rest, selected = await this.#input(alias, input, expectedInputSha256);
-      if (verb === 'support_preview') {
+      if (verb === 'settlement_preview') {
+        const selection=body.name===undefined&&body.selections===undefined?undefined:{name:body.name,selections:body.selections};
+        original=await client.settlementPreview(body.caseId,body.expectedVersion,selected.bytes,body.filename,selection);
+      } else if (verb === 'settlement_receive') {
+        const {caseId,...fields}=body;original=await client.settlementReceive(caseId,selected.bytes,fields);
+      } else if (verb === 'support_preview') {
         original = await client.supportPreview(body.caseId, body.expectedVersion, selected.bytes, body.filename);
       } else if (verb === 'support_receive') {
         const {caseId, ...fields} = body;
@@ -885,7 +897,7 @@ export class MerchantGrantWorkspaces {
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256','installationRefs','groupId',
         'expectedPreparedSha256','parentSourceId','expectedParentSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',
-        'startDate','endDate','expectedReportSha256','expectedReviewSha256','confirmedOn','deadlineOn','submittedOn','formReference','outcomeId','state','date'].includes(key)))});
+        'startDate','endDate','expectedReportSha256','rowId','expectedCashId','decision','expectedReviewSha256','confirmedOn','deadlineOn','submittedOn','formReference','outcomeId','state','date'].includes(key)))});
   }
   async call(name, args = {}) {
     need(!this.#closing, 'GRANT_CLOSING', 'The original grant client is closing.');
