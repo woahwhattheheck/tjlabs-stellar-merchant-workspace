@@ -14,10 +14,11 @@ import {
   saveApplicationSetup, applicationSetupStatus,
 } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/application-setup-operations.mjs';
 import {
-  readSetupFile, setupDocumentFamily,
+  FAMILY_SCHEMA, createSetupDocument, readSetupFile, setupDocumentFamily,
 } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-setup-codec.mjs';
 
 export const GRANT_HANDOFF_SCHEMA = 'stellar-forge.grant-application-handoff.v1';
+export const GRANT_NATIVE_HANDOFF_SCHEMA = 'stellar-forge.native-grant-application-handoff.v1';
 export const GRANT_HANDOFF_OPERATION_SCHEMA = 'stellar-forge.grant-application-handoff-operation.v1';
 export const GRANT_HANDOFF_MAX_BYTES = 48 * 1024 * 1024;
 const MAX_CASE = 32 * 1024 * 1024, MAX_SETUP = 2 * 1024 * 1024;
@@ -100,7 +101,7 @@ function originalBytes(value, maximum, mediaType) {
 }
 function checkedPackage(value) {
   exact(value, ['schema', 'id', 'createdAt', 'name', 'source', 'files']);
-  need(value.schema === GRANT_HANDOFF_SCHEMA, 'GRANT_HANDOFF_PACKAGE_INVALID');
+  need([GRANT_HANDOFF_SCHEMA, GRANT_NATIVE_HANDOFF_SCHEMA].includes(value.schema), 'GRANT_HANDOFF_PACKAGE_INVALID');
   operationId(value.id); text(value.name, 'handoff name');
   need(typeof value.createdAt === 'string' && Number.isFinite(Date.parse(value.createdAt)),
     'GRANT_HANDOFF_PACKAGE_INVALID');
@@ -109,6 +110,13 @@ function checkedPackage(value) {
   const setupBytes = originalBytes(value.files.setup, MAX_SETUP, 'application/json');
   const setup = readSetupFile(decode(setupBytes)), family = setupDocumentFamily(setup);
   const selected = family.entries.find(entry => entry.id === family.active);
+  if (value.schema === GRANT_NATIVE_HANDOFF_SCHEMA) {
+    exact(value.source, ['kind']);
+    need(value.source.kind === 'native-archive' && family.entries.length === 1 &&
+      selected?.kind === 'grant-workspace' && selected.applicationId === null && selected.baseRevision === null,
+    'GRANT_HANDOFF_NATIVE_SETUP_INVALID');
+    return { document: value, caseBytes, setupBytes, setup };
+  }
   const source = exact(value.source, ['workspaceId', 'applicationId', 'applicationRevision', 'runtimeId',
     'runtime', 'nativeSelectionSha256', 'nativeSource', 'case']);
   exact(source.case, ['id', 'version', 'mode', 'planId', 'planRevision']);
@@ -365,6 +373,41 @@ export async function exportGrantHandoff(model, {
     } catch (error) { await retainFailure(root, record, error); throw error; }
   }, true);
 }
+async function readNativeCase(path, encoded, filename) {
+  if (path) return { bytes: await regular(absolute(resolve(path)), MAX_CASE), filename: basename(path) };
+  need(typeof encoded === 'string' && encoded.length <= Math.ceil(MAX_CASE / 3) * 4,
+    'GRANT_HANDOFF_NATIVE_CASE_INVALID', 'Choose the complete native case ZIP, up to 32 MiB.');
+  const bytes = Buffer.from(encoded, 'base64');
+  need(bytes.length > 0 && bytes.length <= MAX_CASE && bytes.toString('base64') === encoded,
+    'GRANT_HANDOFF_NATIVE_CASE_INVALID');
+  return { bytes, filename: text(filename, 'original native archive filename', 240) };
+}
+async function nativeCasePackage(model, native, bindings, selected, stamp, id, name) {
+  const state = await model.applicationsState({ historyLimit: 1 });
+  const declaration = state.catalog.find(item => item.id === 'grant-workspace');
+  need(declaration, 'GRANT_HANDOFF_APPLICATION_REQUIRED', 'Use a workspace containing the Grant planning and delivery provider.');
+  const fields = declaration.fields ?? [], values = bindings.settings;
+  const names = new Set([...Object.keys(values), ...fields.map(field => field.name)]);
+  const form = { label: bindings.label, runtimeId: bindings.runtimeId, kind: 'grant-workspace',
+    settings: Object.fromEntries([...names].map(key => {
+      const type = fields.find(field => field.name === key)?.type;
+      const checked = type === 'boolean' || typeof values[key] === 'boolean';
+      return [key, { value: checked ? 'on' : String(values[key] ?? (type === 'port' ? '0' : '')),
+        checked: checked && values[key] === true }];
+    })) };
+  const contextId = 'native-grant:' + id, entryId = contextId + '/grant-workspace';
+  const setup = createSetupDocument({ schema: FAMILY_SCHEMA, workspaceId: selected.state.workspaceId,
+    active: entryId, entries: [{ workspaceId: selected.state.workspaceId, contextId, id: entryId,
+      applicationId: null, kind: 'grant-workspace', baseRevision: null, updatedAt: stamp,
+      baseline: clone(form), form, sourceCatalog: clone(declaration) }] },
+  name, { catalog: state.catalog, runtimes: selected.state.runtimes });
+  const document = { schema: GRANT_NATIVE_HANDOFF_SCHEMA, id, createdAt: stamp, name,
+    source: { kind: 'native-archive' }, files: {
+      case: bytesRecord(native.filename, native.bytes, 'application/zip'),
+      setup: bytesRecord('new-application-setup.json', Buffer.from(json(setup)), 'application/json'),
+    } };
+  return packageBytes(Buffer.from(json(document)));
+}
 function receivingBindings(value) {
   exact(value, ['runtimeId', 'label', 'settings', 'caseName', 'actor', 'allowStart'],
     ['runtimeId', 'label', 'settings', 'caseName', 'actor', 'allowStart']);
@@ -414,10 +457,13 @@ function checkApplicationSelection(application, record, received, bindings) {
 }
 export async function prepareGrantHandoff(model, {
   operation: directory, package: packagePath = null, bindings: bindingsPath = null, requestId = null,
-  packageText = null, bindingsValue = null,
+  packageText = null, bindingsValue = null, caseArchive = null, caseBase64 = null, caseFilename = null, name = null,
 }) {
-  need(!(packagePath && packageText !== null) && !(bindingsPath && bindingsValue !== null),
-    'GRANT_HANDOFF_INPUT_INVALID', 'Choose one complete package and one complete destination binding.');
+  const incomingCount = [Boolean(packagePath), packageText !== null, Boolean(caseArchive), caseBase64 !== null].filter(Boolean).length;
+  const nativeInputSelected = Boolean(caseArchive) || caseBase64 !== null;
+  need(incomingCount <= 1 && !(bindingsPath && bindingsValue !== null) &&
+    (caseFilename === null || caseBase64 !== null) && (name === null || nativeInputSelected),
+  'GRANT_HANDOFF_INPUT_INVALID', 'Choose one complete handoff or native case ZIP and one complete destination binding.');
   const readIncoming = () => packageText !== null ? inlinePackage(packageText) : readPackage(packagePath);
   const readBindings = async () => bindingsValue !== null ? Buffer.from(json(receivingBindings(bindingsValue))) :
     regular(absolute(resolve(bindingsPath)), MAX_SETUP);
@@ -427,6 +473,13 @@ export async function prepareGrantHandoff(model, {
       record = await readRecord(root); await selectedWorkspace(model, record);
       await readReceiving(root, record);
       if (packagePath || packageText !== null) need((await readIncoming()).sha256 === record.package.sha256, 'GRANT_HANDOFF_PACKAGE_CHANGED');
+      if (nativeInputSelected) {
+        const native = await readNativeCase(caseArchive, caseBase64, caseFilename);
+        const original = await readPackage(join(root, record.package.file));
+        need(original.document.schema === GRANT_NATIVE_HANDOFF_SCHEMA && original.caseBytes.equals(native.bytes),
+          'GRANT_HANDOFF_NATIVE_CASE_CHANGED');
+        if (name !== null) need(name === original.document.name, 'GRANT_HANDOFF_INPUT_CHANGED');
+      }
       if (bindingsPath || bindingsValue !== null) need(digest(await readBindings()) === record.bindings.sha256,
         'GRANT_HANDOFF_BINDINGS_CHANGED');
       if (requestId) need(requestId === record.id, 'GRANT_HANDOFF_REQUEST_CHANGED');
@@ -438,19 +491,21 @@ export async function prepareGrantHandoff(model, {
       }
       return report(root, record);
     }
-    need((packagePath || packageText !== null) && (bindingsPath || bindingsValue !== null),
-      'GRANT_HANDOFF_RECEIVING_REQUIRED', 'Choose the complete handoff file and explicit receiving host bindings.');
-    const received = await readIncoming();
+    need(incomingCount === 1 && (bindingsPath || bindingsValue !== null),
+      'GRANT_HANDOFF_RECEIVING_REQUIRED', 'Choose the complete handoff or native case ZIP and explicit receiving host bindings.');
     const bindingBytes = await readBindings();
     need(bindingBytes.length <= MAX_SETUP, 'GRANT_HANDOFF_BINDINGS_INVALID');
     const bindings = receivingBindings(JSON.parse(decode(bindingBytes)));
     const selected = await nativeSelection(model, bindings.runtimeId, bindings.settings, bindings.allowStart);
     const stamp = now(), id = operationId(requestId ?? randomUUID());
+    const received = nativeInputSelected ? await nativeCasePackage(model,
+      await readNativeCase(caseArchive, caseBase64, caseFilename), bindings, selected, stamp, id,
+      text(name ?? bindings.caseName, 'handoff name')) : await readIncoming();
     record = { schema: GRANT_HANDOFF_OPERATION_SCHEMA, id, direction: 'RECEIVE', phase: 'PREPARED',
       createdAt: stamp, updatedAt: stamp, workspaceDirectory: model.directory, workspaceId: selected.state.workspaceId,
       package: { file: 'handoff/' + PACKAGE, filename: received.filename, bytes: received.bytes.length,
         sha256: received.sha256, name: received.document.name },
-      originalCase: received.document.source.case,
+      originalCase: received.document.source.case ?? null,
       bindings: { file: 'host-bindings.json', bytes: bindingBytes.length, sha256: digest(bindingBytes) },
       selection: { bindings: clone(bindings), native: nativeIdentity(selected) },
       importRequest: { requestId: 'grant-handoff-import-' + id, name: bindings.caseName, actor: bindings.actor },
@@ -479,6 +534,19 @@ async function retainedNative(model, record, bindings) {
 }
 function checkReceivedCase(result, record, received) {
   const program = result?.program;
+  if (received.document.schema === GRANT_NATIVE_HANDOFF_SCHEMA) {
+    const imported = record.imported.result;
+    need(program?.id === imported.id && program.origin?.archiveSha256 === received.document.files.case.sha256 &&
+      program.planId === imported.planId && program.mode === imported.mode && program.version >= imported.version,
+    'GRANT_HANDOFF_RECEIVED_CASE_CHANGED', 'Reopen the original native case import before continuing its Application.');
+    const original = { id: caseId(program.origin.programId), version: version(imported.version),
+      mode: imported.mode, planId: program.origin.planId };
+    need(['OPERATIONS', 'WALKTHROUGH'].includes(original.mode) &&
+      /^plan-[a-f0-9]{32}$/.test(original.planId ?? ''), 'GRANT_HANDOFF_RECEIVED_CASE_CHANGED');
+    if (record.originalCase) need(hash(record.originalCase) === hash(original), 'GRANT_HANDOFF_RECEIVED_CASE_CHANGED');
+    else record.originalCase = original;
+    return;
+  }
   need(program?.origin?.archiveSha256 === received.document.files.case.sha256 &&
     program.origin.programId === record.originalCase.id && program.origin.planId === record.originalCase.planId &&
     program.mode === record.originalCase.mode && program.planRevision === record.originalCase.planRevision &&

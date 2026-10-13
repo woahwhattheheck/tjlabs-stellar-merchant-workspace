@@ -10,6 +10,16 @@ The complete Merchant setup, tools, input references, source-bound pages, downlo
 
 Read `client.read('delivery-queue', {caseId, asOfDate})` and download the complete handover with `client.download('delivery-queue', {caseId, asOfDate})`. The package now includes adjacent TypeScript declarations for the public client, complete queue, installation document and saved-edition workflow. [Installation delivery queue](DELIVERY_QUEUE.md) covers assignment editing, typed consumption, MCP paging, date semantics and complete receiving.
 
+## Complete customer adoption operations
+
+The original Merchant owner now carries native case or Calendar source through whole-plan authoring, pricing, shared capacity scheduling, full comparison, durable source saving and reopening. Use the eleven adoption tools or the typed `grant/cohort-agent` module described in [Complete adoption work through Merchant MCP](COHORT-PLANNING.md#complete-adoption-work-through-merchant-mcp). Full inputs, original funding groups and the native save request remain attached throughout the operation.
+
+## Original merchant settlements
+
+The browser, CLI and typed client now receive original merchant accounting, period-close and accountant sources into the same case. Use settlementPreview for source inspection and a full selected cash preview, settlementReceive for the original atomic save, and settlementCorrectionPreview/settlementCorrect for reviewed corrections. Read saved editions with read('settlements') and read('settlement'); download('settlement') returns their complete source handover. Adjacent TypeScript declarations retain exact decimal strings, settlement IDs, original cash records and both preview shapes.
+
+[Merchant settlements](SETTLEMENTS.md) covers the complete row decisions, original asset units, separate USD valuation, existing-cash links, correction lifecycle, native routes, CLI, MCP and full-case receiving.
+
 ## Direct API
 
 First call inspectGrantAgentBinding with directory and optional scenarioFile, pythonExecutable, allowStart and label. It reads the original host selection without launching a process. Construct a GrantWorkspaceClient from that result.
@@ -391,3 +401,16 @@ The complete typed client, eight Merchant tools and original Forecast/Portfolio 
 `detach(expectedInstanceId?)` stops new client requests before it waits for already accepted operations. It coalesces concurrent detach/close calls, reads the final retained connection after those operations drain, and stops only its own original launcher. Borrowed application processes remain owned by their original host. After successful detach, an explicit `open()` can reconnect the same client. A failed detach keeps admission stopped and preserves the same child/connection for another detach attempt. Permanent `close()` keeps admission stopped and can be called again after a failed close; it does not create a replacement launcher.
 
 The original launch process remains owned through its `close` event and complete stdout/stderr closure, including late output errors. Its result retains the first output/launcher error and a bounded diagnostic tail. Startup failures remain primary if stopping that same child also reports an error. The Merchant provider drains all accepted calls, then attempts every retained file reader and client close even when another independent owner fails. Retry `close()` on that same provider after resolving the reported owner failure; its original objects and immutable results remain retained.
+
+## Saved customer-use calendar
+
+The optional `document.useCalendar` records complete useful tasks, dated uses, separate DIRECT/PREPAID funding groups and original buyer receipt associations in the same immutable Installation history. The **Customer use** tab reads exact saved reports alongside current receipt/source changes, expands explicit working dates into an editable draft, exports JSON/CSV/ICS, and stages the original Cohort inputs while preserving an existing edited draft. See [Customer-use calendar](CUSTOMER_USE_CALENDAR.md) for the full document, CLI, typed client, MCP and independent receiving workflow.
+
+
+## Named staff and complete installation receiving
+
+Open **Team workspace** at `/team` from the original private owner link. Enroll lead, finance, reviewer and contributor profiles against the existing case and contributor identities. Named HTTP sessions use individual cookies and a CSRF value; the original case commands record the enrolled actor. The contributor desk records original work and invoices and shows their paid, open and credit balances.
+
+[STAFF_ACCESS.md](STAFF_ACCESS.md) contains the operating workflow and role matrix. [STAFF_INSTALLATION.md](STAFF_INSTALLATION.md) covers whole-database backup, source and attachment transfer, individual SSH access and independent recovery. Both Applications launchers include the same named-staff source inventory.
+
+The full operating receiving entrypoint is `python3 STAFF_WORKFLOW_RECEIVING.py --output /absolute/private/receiving --node /absolute/path/to/node`. It operates the original local server through named staff HTTP and browser sessions, then opens the same complete installation in a separate recovered destination. Existing trusted integrations retain the original owner bearer API.

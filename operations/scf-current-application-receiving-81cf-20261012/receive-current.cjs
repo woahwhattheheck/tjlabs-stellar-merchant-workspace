@@ -64,7 +64,7 @@ async function stop(){
   process.env.TMPDIR=cfg.temporaryDirectory||process.env.TMPDIR;
   const req=createRequire(path.join(cfg.nodeModules,'playwright/package.json'));
   const {chromium}=req('playwright');
-  const originalReviewPath=path.join(root,cfg.originalReviewPath);
+  const originalReviewPath=cfg.retainedReviewPath?path.join(path.dirname(root),cfg.retainedReviewPath):path.join(root,cfg.originalReviewPath);
   for(const f of cfg.files){const b=await fs.readFile(path.join(root,f.path));need(b.length===f.bytes&&sha(b)===f.sha256&&git(b)===f.git_blob,'Selected source changed: '+f.path);}
   await stage('complete-source-selected',{files:cfg.files.length,sourceCommit:cfg.sourceCommit,overlay:cfg.overlayBlob});
   const draftCore=await import(pathToFileURL(path.join(dist,'grant-submission-core.mjs')));
@@ -158,10 +158,17 @@ async function stop(){
   await page.locator('#review-save-copy').click();await settle(page,'review');
   const initialReviewRecord=await savedReview(page);
   need(same(initialReviewRecord.input,originalRound),'Original review changed during initial browser receiving');
-  await page.locator('details').filter({has:page.locator('summary').filter({hasText:'Add a named participant'})}).locator('summary').click();
   const participant='TJLabs AI application reviewer 81CF';
-  await page.locator('#review-new-participant').fill(participant);await page.locator('#review-add-person').click();await settle(page,'review');
+  if(!originalView.participants.some(row=>row.label===participant)){
+    await page.locator('details').filter({has:page.locator('summary').filter({hasText:'Add a named participant'})}).locator('summary').click();
+    await page.locator('#review-new-participant').fill(participant);await page.locator('#review-add-person').click();await settle(page,'review');
+  }
   await page.locator('#review-person').selectOption({label:participant});await settle(page,'review');
+  if(originalView.status==='COMPLETE'){
+    await page.locator('#review-finish').click();await settle(page,'review');
+    await page.locator('#review-reopen-note').fill('Receive and review the cumulative published application while retaining the complete earlier review and every authored source edition.');
+    await page.getByRole('button',{name:'Reopen this review',exact:true}).click();await settle(page,'review');
+  }
   await page.locator('[data-review-view="compare"]').click();await settle(page,'review');
   await choose(page,page.getByRole('button',{name:'Open revised full draft',exact:true}),fullDraft,'Current_Complete_Submission.json');await settle(page,'review');
   await page.getByRole('button',{name:'Carry all unchanged decisions forward',exact:true}).click();await settle(page,'review');
@@ -176,7 +183,13 @@ async function stop(){
   // Each supplied judgment was prepared against the full immutable application.
   const judgments=cfg.reviewDecisions;
   need(Array.isArray(judgments)&&judgments.length===currentView.targets.length,'Supply the completed substantive review for every current target');
-  const judgmentKeys=new Set();
+  const judgmentKeys=new Set();let recordedJudgments=0;
+  async function saveCurrentReviewCheckpoint(){
+    const selected=await savedReview(page);
+    need(same(selected.input.events.slice(0,originalRound.events.length),originalRound.events),'Retain the complete preceding review during continuation');
+    await write('review-continuation/Current_Review_Checkpoint.json',await reviewCore.exportReviewRound(selected.input));
+    await write('review-continuation/current-review-checkpoint-record.json',json(selected));
+  }
   for(const judgment of judgments){
     const key=judgment.target.kind+':'+judgment.target.id;
     need(!judgmentKeys.has(key),'Duplicate editorial judgment: '+key);judgmentKeys.add(key);
@@ -196,7 +209,9 @@ async function stop(){
       await reference.getByLabel('What this source shows',{exact:true}).fill(ref.note);
     }
     await decisionForm.getByRole('button',{name:'Record decision',exact:true}).click();await settle(page,'review');
+    if(++recordedJudgments%3===0)await saveCurrentReviewCheckpoint();
   }
+  await saveCurrentReviewCheckpoint();
   currentReviewRecord=await savedReview(page);currentRound=currentReviewRecord.input;
   currentView=await reviewCore.reviewRoundView(currentRound);
   const currentReviewer=currentView.participants.find(row=>row.label===participant);need(currentReviewer,'Retain the named current reviewer');
@@ -205,17 +220,19 @@ async function stop(){
     need(row&&row.decision===judgment.decision&&row.note===judgment.note&&same(row.references,judgment.references||[]),'The recorded current editorial decision differs: '+JSON.stringify(judgment.target));
   }
   const resolutions=cfg.reviewResolutions;
-  need(Array.isArray(resolutions)&&resolutions.length===currentView.changes.filter(row=>row.status!=='resolved').length,'Supply the substantive renewed resolutions for the original requests');
+  need(Array.isArray(resolutions)&&resolutions.length===5,'Supply the substantive renewed resolutions for the five original requests');
   await page.locator('[data-review-view="changes"]').click();await settle(page,'review');
   for(const resolution of resolutions){
     const change=currentView.changes.find(row=>row.id===resolution.changeId);
-    need(change&&change.status!=='resolved'&&resolution.applicationSha256===sourceIndex.application.sha256,'Select the actual reopened original request');
+    need(change&&resolution.applicationSha256===sourceIndex.application.sha256,'Select the actual original request in this source edition');
     const card=page.locator('article[data-change-id="'+resolution.changeId+'"]');
     await card.getByText('Resolve or reopen the request',{exact:true}).click();
     const form=card.locator('form[data-resolve-for="'+resolution.changeId+'"]');
-    await form.getByLabel('Reviewer resolution',{exact:true}).selectOption('resolved');
+    need(await form.locator('select').count()===1&&await form.locator('label > span').first().textContent()==='Reviewer resolution','Select the original reviewer resolution control');
+    await form.locator('select').selectOption('resolved');
     await form.getByLabel('Reviewer’s reason',{exact:true}).fill(resolution.note);
     await form.getByRole('button',{name:'Record review resolution',exact:true}).click();await settle(page,'review');
+    await saveCurrentReviewCheckpoint();
   }
   currentReviewRecord=await savedReview(page);currentRound=currentReviewRecord.input;
   currentView=await reviewCore.reviewRoundView(currentRound);
@@ -229,6 +246,7 @@ async function stop(){
   await page.locator('#review-outcome').selectOption('ready-for-author-check');
   await page.locator('#review-finish-note').fill('The current cumulative SCF #46 application has a recorded editorial decision for all nine answers, the complete application and each original requirement. The author-selected technical revisions, independent-use measurement, six prospective work packages, customer commissioning roles and payment timing are integrated in this exact source edition. The complete original review, source editions, authored versions, working notes and customer/finance companion remain available for the applicant’s final form preparation.');
   await page.getByRole('button',{name:'Finish this review',exact:true}).click();await settle(page,'review');
+  await saveCurrentReviewCheckpoint();
   currentReviewRecord=await savedReview(page);currentRound=currentReviewRecord.input;
   currentView=await reviewCore.reviewRoundView(currentRound);
   need(currentView.status==='COMPLETE'&&currentView.readiness.length===0,'The current substantive editorial review did not finish');

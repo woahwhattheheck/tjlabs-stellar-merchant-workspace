@@ -1,0 +1,10 @@
+{
+  "name": "@tokenjunkielabs/x402api-merchant-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {}
+}

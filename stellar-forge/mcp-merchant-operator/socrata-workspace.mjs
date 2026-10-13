@@ -202,7 +202,7 @@ export class MerchantSocrataWorkspaces {
           const file = await handle.operator.readExport(args.id, args.filename);
           return { bytes: await fileBytes(file.path, 256_000_000), name: args.filename, type: file.contentType };
         }
-        if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review', 'facilitator-review'].includes(args.kind))
+        if (!['draft-csv', 'draft-review', 'buyer-config', 'session-manifest', 'session-csv', 'session-jsonl', 'session-review', 'facilitator-review', 'facilitator-response'].includes(args.kind))
           throw failure('INVALID_PARAMS', 'Choose a supported original publisher file kind.');
         const file = await handle.operator.readPublisherExport(args.kind, args.id);
         return { bytes: file.bytes, name: file.filename, type: file.contentType };

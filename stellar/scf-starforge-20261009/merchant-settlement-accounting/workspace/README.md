@@ -399,6 +399,157 @@ workspace command or existing merchant MCP configuration. Original report,
 period-close, accountant packet and recovered-response APIs then read their
 same retained IDs and verify their same file hashes.
 
+### Receive the same account at a new location
+
+Use an explicit relocation when the receiving host needs a different private
+filesystem location. The encrypted operating backup remains the source. The
+native engine authenticates its complete mapping and captured files, then
+installs the account beneath the new state root. Its workspace identity and
+source identity remain the values already held by configured clients. Original
+invoices, payments, allocations, saved reviews and operation journals retain
+their original records and identifiers.
+
+Create an owner-private receiving state root and keep the complete backup
+outside it. Stop the original account and source writers as for ordinary
+restore. Use the original saved manifest digest; when a customer handover or
+configured client also records the two account identity hashes, supply both:
+
+```sh
+npx --no-install starforge merchant-accounting-workspace restore \
+  --workspace /private/received/accounting-workspace \
+  --state-root /private/received \
+  --bundle /private/backups/accounting-2026-10-11 \
+  --expected-sha256 ORIGINAL_MANIFEST_SHA256 \
+  --expected-workspace-id ORIGINAL_WORKSPACE_ID \
+  --expected-sources-sha256 ORIGINAL_SOURCES_SHA256 \
+  --pass-env STARFORGE_ACCOUNTING_BACKUP_PASSPHRASE \
+  --quiesced --relocate
+```
+
+The workspace must be beneath the new state root. The target and captured
+source destinations use the original create-only recovery rules: matching
+bytes may be reused, while changed or unrelated existing data stays preserved.
+Relocation maps the captured source files into this declared receiving
+location. A buyer account keeps its original issued source inside the new
+workspace's `inputs` directory. Recovery request files, saved reports and
+financial histories remain exact originals; retained source aliases resolve
+their historical input locations.
+
+The receipt returns `ACCOUNTING_WORKSPACE_RESTORED` and `relocated:true`.
+Its `binding` contains the current physical `directory` and `sources`, plus
+the preserved `workspaceId` and `sourcesSha256`. Keep that complete receipt
+with the backup and customer handover. `originalWorkspaceSha256` identifies
+the authenticated state before receiving; `workspaceSha256` identifies the
+installed state containing its current source mapping. The original account
+revision remains visible.
+
+Open the received account at the returned workspace path:
+
+```sh
+npx --no-install starforge merchant-accounting-workspace \
+  --workspace /private/received/accounting-workspace \
+  --expected-workspace-id ORIGINAL_WORKSPACE_ID \
+  --expected-sources-sha256 ORIGINAL_SOURCES_SHA256
+```
+
+The Store reads its installed source paths. If the host also declares explicit
+outbox, proof, terms or recovered-source paths, use the exact current locations
+from the restore receipt. Managed Applications should review those current
+host paths before launching. The original source identities remain the
+comparison values used by its native clients.
+
+For Grant Operations **Customer billing**, reopen the same original native
+receivables service and update the existing configured connection's URL when
+the receiving host or port changes. Retain its connection ID. Configuration
+accepts the URL update after the service returns the same workspace and source
+identity pair. The prepared billings, native invoice links and saved issue
+requests remain in the original case; they continue through their normal
+refresh and recovery controls. Payment plans, Collections and Cash planning
+also retain their account identity and original saved editions.
+
+#### Use the existing recovery page
+
+Start the receiving host with its new workspace/state-root configuration, the
+private backup catalog and `--recovery-start-paused`. Its original account
+files may be absent. In **Backup & recovery**, select the retained backup and
+verify its encrypted files. Choose **This host's new receiving location**,
+review the displayed workspace and operating root, and enter any previously
+recorded account identity pair. Confirm the selected source writers and
+receiving location, then restore.
+
+The completed job shows **Account ready to reopen**, its preserved identities
+and current source locations. **Reopen accounting workspace** continues the
+received account through the same host. The page keeps the selected manifest,
+relocation choice and identity pair when an interrupted restore is reported.
+Use **Continue recovery from this backup** to finish the retained operation.
+
+#### Use the existing Merchant client
+
+The configured Merchant host supplies the receiving `directory`, recovery
+`stateRoot` and `backupRoot`. For an absent receiving account it starts with
+`recovery.startPaused:true`. Its source aliases and source paths should refer
+to the new receiving locations.
+
+The original `merchant_accounting_maintenance_restore` action and
+`createAccountingMaintenanceClient(...).command('restore', body)` accept:
+
+```json
+{
+  "actor": "Receiving operator",
+  "requestId": "RETAINED_REQUEST_UUID",
+  "backupId": "ORIGINAL_CATALOG_BACKUP_ID",
+  "expectedSha256": "ORIGINAL_MANIFEST_SHA256",
+  "externalWritersStopped": true,
+  "relocate": true,
+  "expectedWorkspaceId": "ORIGINAL_WORKSPACE_ID",
+  "expectedSourcesSha256": "ORIGINAL_SOURCES_SHA256"
+}
+```
+
+Replace the displayed identifiers with the exact retained values. The original
+identity pair is optional as a pair; the manifest and external-writer
+acknowledgment remain required. A request does not accept filesystem
+destinations from the remote caller: it uses the host's declared paths.
+
+The maintained `accounting-maintenance-cli.mjs prepare` command supports
+`--relocate true` and the same two `--expected-...` identity options for
+`--action restore`. Its existing **prepare → execute → reconcile** workflow
+keeps one exact request and reads the original native job after a lost reply.
+Changing the relocation choice or either identity requires a separately
+reviewed request. An interrupted native restore still requires the same
+backup, destination and relocation mode.
+
+#### Preserve QuickBooks host sources
+
+An operating backup captured through the configured QuickBooks Merchant host
+also contains its original OAuth configuration, selected company and opaque
+connection files. Reconfigure the receiving host's connections-file location,
+selection-directory location and declared OAuth-directory environment
+references to their captured new locations. Preserve the environment
+variable names and original authorization/configuration file bytes.
+
+The maintained QuickBooks source provider explicitly maps only those declared
+path fields. The recovery engine compares its full projected source profile
+with the current configured provider using authenticated staged reads. Company,
+grant, profile and connection identities, source hashes and all other binding
+values remain unchanged. Provision the original required secret environment
+references through the host's existing mechanism. Reopen the native
+connection normally after restoration; its current authorization state still
+governs provider operations.
+
+#### Continue or relocate a later backup
+
+A stopped relocation leaves the original recovery marker with its manifest,
+destination, relocation mode and account identity. Repeat that same restore
+command to authenticate the same backup and finish its matching published
+files. Normal account opening waits for that original restore to complete.
+
+A later operating backup of a received account can itself be relocated.
+The native mapping retains the original logical identity and maps the files
+actually captured by that later backup into the next destination. A deliberate
+change to the selected source configuration remains visible to the original
+source-identity guard; relocation does not freeze later source choices.
+
 The recovery engine supports up to 10,000 entries, four GiB of plaintext, two
 GiB per file and 16 directory levels; this operating wrapper reserves space for
 its encrypted source mapping. Reads and encryption stream file contents.

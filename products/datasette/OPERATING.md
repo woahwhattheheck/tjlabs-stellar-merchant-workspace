@@ -274,10 +274,14 @@ publisher edition and CC BY 4.0 attribution. Their
 [original source inventory](../../stellar/scf-starforge-20261009/sf30-seller-sdk/datasette-analysis/sources/elite-digital-20261012/README.md)
 records each URL, full byte count and SHA-256.
 
-Use the complete reviewed supplier workspace from the maintained supplier
-application. Its candidate CSV must be exactly the selected original pricing
-file. Preserve its own request ID, comparison, revision and review status.
-The workflow links those native identities to its business request.
+The installed supplier component includes
+examples/published-pricing-intake.workspace.json: the complete native review
+for all 23 original price records entering an explicitly empty initial target.
+Its 23 decisions, original request conapi-elite-initial-import-20261012,
+comparison, revision 23 and reviewed status are retained. Use that workspace
+for this original source family. The workflow links its native identity to the
+new business request. A different customer candidate selects its corresponding
+complete native review workspace and original source together.
 
 The complete configuration command is:
 
@@ -289,7 +293,7 @@ conapi_workflow configure \
   --source-metadata "$CONAPI_ORIGINAL_INPUTS/datapackage.json" \
   --related-metadata "catalog=$CONAPI_ORIGINAL_INPUTS/datapackage.json" \
   --supplier-component "$CONAPI_SUPPLIER_COMPONENT" \
-  --supplier-workspace /srv/starforge/customer/native-supplier-review/workspace.json \
+  --supplier-workspace "$CONAPI_SUPPLIER_COMPONENT/examples/published-pricing-intake.workspace.json" \
   --supplier-table-name supplier_feed_accepted \
   --supplier-pricing "$CONAPI_ORIGINAL_INPUTS/published-pricing.csv" \
   --supplier-catalogue "$CONAPI_ORIGINAL_INPUTS/services-catalogue.csv" \

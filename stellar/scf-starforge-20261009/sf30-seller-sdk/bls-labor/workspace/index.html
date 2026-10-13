@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLS regional labor workspace</title>
+<link rel="stylesheet" href="./style.css">
+<script type="module" src="./browser.mjs"></script>
+</head>
+<body>
+<header>
+<div><p class="eyebrow">Stellar Forge · Regional analysis</p><h1 id="workspace-title">BLS labor workspace</h1><p id="workspace-meta">Opening the original workspace…</p></div>
+<button type="button" id="refresh">Refresh workspace</button>
+</header>
+<nav aria-label="Workspace areas"><a href="#source">Source editions</a><a href="#observations">Observations</a><a href="#reports">Briefings</a><a href="#publication">Publication</a><a href="#handover">Handover</a></nav>
+<main>
+<div id="notice" role="status" aria-live="polite"></div>
+<section id="pending" hidden aria-labelledby="pending-heading">
+<h2 id="pending-heading">Retained operation</h2>
+<p id="pending-message"></p><div class="actions"><button type="button" id="resume-pending">Resume the same operation</button><button type="button" id="download-request">Download request JSON</button></div>
+</section>
+<section id="source">
+<h2>Source editions</h2>
+<p>Keep the original LAUS resident-labor series and QCEW workplace measures together with their source files, dictionaries, release details and separate statistical meanings.</p>
+<details><summary>Receive or capture an original source edition</summary>
+<form id="source-form">
+<div class="grid">
+<label>Source operation<select name="mode" id="source-mode"><option value="import">Import the retained original source ZIP</option><option value="capture">Capture from the official BLS files</option></select></label>
+<label>Edition ID<input name="edition_id" required maxlength="100" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,99}" value="nek-original"></label>
+<label class="wide">Edition title<input name="title" required maxlength="250" value="Northeast Kingdom resident labor and workplace employment"></label>
+</div>
+<fieldset id="import-fields"><legend>Original retained archive</legend>
+<div class="grid">
+<label class="wide">Archive path on this host<input name="archive" id="source-archive" placeholder="/dev/shm/NEK_Vitality_Official_Sources_20261011.zip"></label>
+<label class="wide">Original ZIP SHA-256<input name="archive_sha256" id="source-sha" spellcheck="false" value="3473bd56195b486c41a5042f5d9be4cfbf82bcf0d257528fe724b18caea9a28e"></label>
+<label>Or choose the complete ZIP<input type="file" id="source-file" accept=".zip,application/zip"></label>
+<div class="align-end"><button type="button" id="upload-source">Upload this original ZIP</button></div>
+</div><p id="source-upload" class="meta"></p>
+</fieldset>
+<fieldset id="capture-fields" hidden><legend>Official acquisition</legend><label>Original LAUS state-file URLs, one per line<textarea name="laus_urls" rows="3">https://download.bls.gov/pub/time.series/la/la.data.53.Vermont</textarea></label><p class="meta">The existing capture engine also receives all four LAUS dictionaries and each explicitly selected QCEW county/quarter slice. Continue an interrupted acquisition with its original operation ID.</p></fieldset>
+<label>Exact source selection<textarea name="selection" id="source-selection" rows="14" spellcheck="false"></textarea></label>
+<label class="check"><input type="checkbox" name="activate" checked> Select this completed edition as the active publisher source.</label>
+<button type="submit">Save original source edition</button>
+</form></details>
+<div class="table-wrap"><table><caption>Retained complete source editions</caption><thead><tr><th>Edition</th><th>Captured source</th><th>Resident observations</th><th>Workplace observations</th><th>Actions</th></tr></thead><tbody id="editions-body"></tbody></table></div>
+<div id="source-detail"></div>
+</section>
+<section id="observations">
+<h2>Original observations</h2>
+<form id="observation-form"><div class="grid">
+<label>Source edition<select id="observation-edition" name="edition" required></select></label>
+<label>Projection<select id="observation-projection" name="projection"><option value="laus">LAUS · Resident labor</option><option value="qcew">QCEW · Workplace employment and wages</option></select></label>
+<label class="wide">Exact filters as JSON<textarea id="observation-filters" name="filters" rows="3" spellcheck="false">{}</textarea></label>
+</div><p class="meta" id="filter-help"></p><button type="submit">Read selected observations</button></form>
+<p id="observation-count" class="meta"></p>
+<div class="table-wrap"><table><thead><tr><th>Area</th><th>Measure</th><th>Period</th><th>Original value</th><th>Unit</th><th>Source status</th><th>Source and notes</th></tr></thead><tbody id="observations-body"></tbody></table></div>
+<div class="actions"><button type="button" id="observations-previous">Previous rows</button><button type="button" id="observations-next">Next rows</button></div>
+<details id="note-panel"><summary>Edit an analyst note</summary>
+<form id="note-form"><label>Original edition or observation<input id="note-subject" readonly required></label><p id="note-revision" class="meta"></p><label>Internal analyst note<textarea id="note-text" rows="6"></textarea></label><p class="meta">Notes remain in the editable working project. Write customer-facing commentary in a saved briefing below.</p><button type="submit">Save note revision</button></form><div id="note-history"></div>
+</details>
+</section>
+<section id="reports">
+<h2>Saved county briefings and comparisons</h2>
+<p>Each briefing retains its complete chosen observations, original source identity and customer commentary. Its JSON, CSV and printable HTML include all rows.</p>
+<div class="columns">
+<form id="report-form"><h3>Create a briefing</h3>
+<label>Title<input name="title" required maxlength="250" value="Regional labor briefing"></label>
+<label>Calculation<select name="calculation"><option value="original">Original source values</option><option value="year-change">LAUS · Exact change from the same period one year earlier</option></select></label>
+<label>Customer commentary<textarea name="narrative" rows="5"></textarea></label>
+<p class="meta">Uses the source edition, projection and exact filters selected in Observations. Annual rates use percentage-point differences; changes require comparable original coverage.</p>
+<button type="submit">Save complete briefing</button>
+</form>
+<form id="comparison-form"><h3>Compare complete source editions</h3>
+<label>Before<select name="before" id="comparison-before" required></select></label>
+<label>After<select name="after" id="comparison-after" required></select></label>
+<label>Projection<select name="projection"><option value="laus">LAUS</option><option value="qcew">QCEW</option></select></label>
+<label>Title<input name="title" value="Original BLS release comparison" maxlength="250"></label>
+<p class="meta">Retains added, removed, changed and unchanged original observations. Values, footnotes and original source rows are compared separately from acquisition metadata.</p>
+<button type="submit">Save full comparison</button>
+</form>
+</div>
+<div class="table-wrap"><table><caption>Complete saved outputs</caption><thead><tr><th>Title</th><th>Source and rows</th><th>Download</th></tr></thead><tbody id="reports-body"></tbody></table></div>
+</section>
+<section id="publication">
+<h2>Original native publication</h2>
+<p>Open the existing BLS publisher with this workspace’s active source. It retains its typed plan, candidate inspection, review, version store and customer handoff. Resident observations, workplace observations and complete original files have separate publication targets.</p>
+<div class="actions">
+<button type="button" data-publisher="laus">Open resident-labor publisher</button>
+<button type="button" data-publisher="qcew">Open workplace publisher</button>
+<button type="button" data-publisher="source_files">Open original-file publisher</button>
+<button type="button" id="stop-publishers">Stop publishers</button>
+</div><div id="publisher-links"></div>
+<details><summary>Publish and receive complete original datasets</summary>
+<form id="native-form">
+<fieldset><legend>Original projections</legend>
+<label class="check"><input type="checkbox" name="projections" value="laus" checked> LAUS resident labor</label>
+<label class="check"><input type="checkbox" name="projections" value="qcew" checked> QCEW workplace employment and wages</label>
+<label class="check"><input type="checkbox" name="projections" value="source_files" checked> Complete original source files</label>
+</fieldset>
+<div class="grid"><label>Reviewing operator<input name="reviewer" required maxlength="128"></label>
+<label>Customer receiving<select name="receive"><option value="">Publish selected original datasets</option><option value="sources">Receive original source files</option><option value="vitality">Receive original sources and update the configured Vitality project</option></select></label></div>
+<label>Original review note<textarea name="note" required rows="4" maxlength="2000"></textarea></label>
+<label>Reuse original plan or run IDs by projection<textarea id="native-existing" rows="3" spellcheck="false">{}</textarea></label>
+<p class="meta">Use an original plan number and extraction UUID, for example {"laus":{"plan_id":1}}. Leave empty to reuse matching original publication work or create its first edition.</p>
+<label>Release selected published projections to the configured customer workflow<select name="releases" multiple size="3"><option value="laus">LAUS</option><option value="qcew">QCEW</option><option value="source_files">Original source files</option></select></label>
+<p id="native-connection" class="meta"></p>
+<button type="submit">Run original publication and receiving</button>
+</form><div id="native-result" aria-live="polite"></div>
+</details>
+
+</section>
+<section id="handover">
+<h2>Complete editable handover</h2>
+<p>The full workspace ZIP carries original captures, observations, analyst note revisions, saved reports and local native publication files. Receiving reopens every original source edition in a separate editable workspace.</p>
+<button type="button" id="export-project">Prepare complete workspace ZIP</button>
+<div id="export-results"></div>
+<details><summary>Receive a complete working project on this host</summary>
+<form id="receive-form"><div class="grid">
+<label class="wide">Complete workspace ZIP path<input name="archive" id="receive-archive" required></label>
+<label class="wide">ZIP SHA-256<input name="sha256" id="receive-sha" required spellcheck="false" pattern="[a-f0-9]{64}"></label>
+<label>Or choose the complete ZIP<input id="receive-file" type="file" accept=".zip,application/zip"></label>
+<div class="align-end"><button type="button" id="upload-receive">Upload this workspace ZIP</button></div>
+<label class="wide">Separate receiving workspace directory<input name="destination" required placeholder="/private/bls-customer-workspace"></label>
+</div><p id="receive-upload" class="meta"></p><button type="submit">Receive the complete editable project</button></form>
+</details><div id="receiving-result"></div>
+</section>
+<section><h2>Recent operations</h2><div id="operations"></div><button type="button" id="more-state">Read older editions, reports and operations</button></section>
+</main>
+<footer>Original BLS source files remain attached to their statistical definitions. LAUS resident employment and QCEW workplace jobs are separate measures.</footer>
+</body></html>

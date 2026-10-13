@@ -27,6 +27,20 @@ covers the browser, command, typed client, Merchant Source Workspaces and delive
 workflow. [The complete FCDO receiving programme](receiving/ORGANISATION.md) runs
 those interfaces against the retained original publication.
 
+## Document evidence and publisher URL corrections
+
+[Document evidence](DOCUMENT_EVIDENCE.md) turns the saved organisation document
+register into dated observations, complete named reviews, edition comparisons
+and precise URL corrections. Open **Document evidence** in the same console to
+select the original source or candidate, capture its literal URLs, inspect the
+retained responses and prepare a correction through Organisation planning.
+The browser, native command, streaming connected command, typed client and
+Merchant Source Workspaces all operate the same saved case. Complete reports
+and the portable ZIP retain the original source, observations, decisions and
+history; a recipient can add a local note and continue the editable project.
+[The complete receiving programme](document_evidence/RECEIVING.md) covers that
+customer workflow across the original interfaces and independent receiving.
+
 ## Financial coverage across organisation and activity editions
 
 [Financial reconciliation](ORGANISATION_RECONCILIATION.md) compares explicitly

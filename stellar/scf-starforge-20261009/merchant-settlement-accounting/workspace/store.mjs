@@ -13,6 +13,7 @@ import {AdjustmentWorkspace} from './adjustments-workspace.mjs';
 import {renderAdjustmentCsv,renderAdjustmentHtml} from '../adjustments.mjs';
 
 import {assertAccountingWorkspaceBinding} from './binding.mjs';
+import {accountingRelocation,resolveAccountingSourcePath} from './relocation.mjs';
 import {accountingSourceMode,initializeBuyerStartup,readBuyerStartup,buyerStartupView} from './buyer-startup.mjs';
 const SCHEMA='stellar-forge.merchant-accounting-workspace.v1';
 const now=()=>new Date().toISOString();
@@ -95,6 +96,7 @@ export async function openAccountingWorkspace({directory,outboxDir,proofDir,term
     if(existing){
       state=parse(existing,'workspace');
       check(state.schema===SCHEMA&&Number.isSafeInteger(state.revision)&&object(state.sources)&&Array.isArray(state.runs)&&Array.isArray(state.proofs)&&object(state.notes),'INVALID_WORKSPACE','This directory is not a supported accounting workspace.');
+      accountingRelocation(directory,state);
       const mode=accountingSourceMode(state);
       if(mode==='buyer'){
         check([outboxDir,proofDir,termsFile,recoveredDir].every(value=>value===undefined),'ACCOUNTING_SOURCE_AMBIGUOUS','This buyer workspace retains its issued source. Merchant sources belong to their original configured workspace.');
@@ -198,7 +200,7 @@ class AccountingWorkspace{
     check(this.state.recoveryPreviews.length<2000,'RECOVERY_REVIEW_LIMIT','This workspace retains 2,000 original recovery reviews.');
     const bytes=Buffer.from(content),id=identity(),path=join(this.directory,'inputs',id+'.recovery.json');parse(bytes,'original recovery request');
     await writeNew(path,bytes);
-    let review;try{const {reviewRecoveredSettlement}=await recoveryApi();review=await reviewRecoveredSettlement({configFile:path});}
+    let review;try{const {reviewRecoveredSettlement}=await recoveryApi();review=await reviewRecoveredSettlement({configFile:path,resolveSourcePath:value=>resolveAccountingSourcePath(this.directory,this.state,value)});}
     catch(error){await rm(path,{force:true});throw error;}
     const preview={id,name,createdAt:now(),actor,configSha256:hash(bytes),review};
     this.state.recoveryPreviews.unshift(preview);await this.commit('recovery_sources_reviewed',actor,{previewId:id,recoveryId:review.recoveryId,configSha256:preview.configSha256});
@@ -223,11 +225,12 @@ class AccountingWorkspace{
       await this.serial(async()=>{const job=this.recoveryJob(id);if(job.cancelRequested||this.closing)controller.abort();controller.signal.throwIfAborted();job.status='running';job.startedAt=now();await this.commit('recovery_import_started',job.actor,{jobId:id});});
       const job=structuredClone(this.recoveryJob(id)),preview=this.state.recoveryPreviews.find(item=>item.id===job.previewId),path=join(this.directory,'inputs',preview.id+'.recovery.json');
       const bytes=await readBytes(path,200_000);check(hash(bytes)===preview.configSha256,'RECOVERY_CONFIG_CHANGED','The retained recovery request changed. Review the original file again.',409);
-      const {reviewRecoveredSettlement,importRecoveredSettlement}=await recoveryApi(),review=await reviewRecoveredSettlement({configFile:path});
+      const {reviewRecoveredSettlement,importRecoveredSettlement}=await recoveryApi(),resolveSourcePath=value=>resolveAccountingSourcePath(this.directory,this.state,value),review=await reviewRecoveredSettlement({configFile:path,resolveSourcePath});
       check(hash(json(review))===hash(json(preview.review)),'RECOVERY_SOURCES_CHANGED','The original source files changed after review. Import the request again to review their current binding.',409);
-      const result=await importRecoveredSettlement({configFile:path,recoveredDir:job.recoveredDir,signal:controller.signal});
+      const recoveredDir=resolveSourcePath(job.recoveredDir);
+      const result=await importRecoveredSettlement({configFile:path,recoveredDir,signal:controller.signal,resolveSourcePath});
       await this.serial(async()=>{const current=this.recoveryJob(id);current.status='complete';current.completedAt=now();current.result={status:result.status,recoveryId:result.data.recoveryId,entrySha256:result.fileDigest,verdict:result.proof.data.verdict};
-        if(this.state.sources.recoveredDir===job.recoveredDir){const summary=recoverySummary(result),index=this.state.recoveredEntries.findIndex(item=>item.recoveryId===summary.recoveryId);if(index<0)this.state.recoveredEntries.push(summary);else this.state.recoveredEntries[index]=summary;this.state.recoveryCapturedAt=now();}
+        if(this.state.sources.recoveredDir===recoveredDir){const summary=recoverySummary(result),index=this.state.recoveredEntries.findIndex(item=>item.recoveryId===summary.recoveryId);if(index<0)this.state.recoveredEntries.push(summary);else this.state.recoveredEntries[index]=summary;this.state.recoveryCapturedAt=now();}
         await this.commit('recovery_import_completed',current.actor,{jobId:id,recoveredDir:job.recoveredDir,...current.result});});
     }catch(error){
       await this.serial(async()=>{const job=this.recoveryJob(id);job.status=controller.signal.aborted?(job.cancelRequested?'cancelled':'interrupted'):'failed';job.completedAt=now();job.error=controller.signal.aborted?'Original read-only verification stopped. Retry reuses any completed native import.':String(error.message||error).slice(0,2000);await this.commit('recovery_import_'+job.status,job.actor,{jobId:id,error:job.error});});
@@ -313,7 +316,8 @@ class AccountingWorkspace{
   });}
   async capture(run){
     const root=this.runPath(run.id),sources=join(root,'sources'),outbox=join(sources,'outbox'),proofs=join(sources,'proofs');
-    const sourcePaths=run.sourcePaths??this.state.sources;
+    const sourcePaths=Object.fromEntries(Object.entries(run.sourcePaths??this.state.sources)
+      .map(([field,path])=>[field,resolveAccountingSourcePath(this.directory,this.state,path)]));
     await privateDir(root,{create:true});await privateDir(sources,{create:true});await privateDir(outbox,{create:true});await privateDir(proofs,{create:true});
     const manifest={schema:'stellar-forge.merchant-accounting-inputs.v1',capturedAt:now(),journalOrder:'delivery-prefix-before-event-prefix',files:[],proofs:[],recovered:[],recoveredSource:!!sourcePaths.recoveredDir,
       ...(run.period?{period:structuredClone(run.period)}:{})};

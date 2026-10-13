@@ -14,8 +14,10 @@ service and intent identities as the console.
 
 First initialize each service with the original
 [NATIVE_WORKSPACE.md](NATIVE_WORKSPACE.md) workflow. A service has one exact
-merchant origin, pathname, HTTP method and payment binding. All services in one
-registry must use the same original Bazaar URL.
+merchant origin, HTTP method and payment binding. Its route is the exact configured
+pathname by default. A service explicitly initialized with **--route-template**
+can accept matching concrete paths under that trusted original template. All
+services in one registry must use the same original Bazaar URL.
 
 Create an operator-owned JSON description:
 
@@ -78,7 +80,9 @@ starforge mcp-native-registry serve \
 The startup JSON provides the MCP URL and browser console URL. Open that console
 and connect with the configured access token. Browse or search the catalog and
 inspect the selected offer. Its native request form lists services whose original
-route and payment alternative match the offer.
+route and payment alternative match the offer. For a declared path route, enter
+the original descriptor's required path values; the final concrete URL must match
+the chosen service's configured pathname or trusted template.
 
 The HTTP requests view includes a service selector, each service's request limits,
 and history for one service or all services. Opening a saved request selects its
@@ -264,5 +268,5 @@ Programmatic hosts use
 **initializeNativeRegistry**, **inspectNativeRegistry** and **openNativeRegistry**
 exports. Supply only trusted operator configuration to these host APIs.
 
-See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for request/body semantics,
+See [NATIVE_REQUESTS.md](NATIVE_REQUESTS.md) for path/query/body semantics,
 original approval and complete response handling.

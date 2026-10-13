@@ -21,11 +21,12 @@ reloading or disconnecting requires connecting again. The server adds only its
 exact loopback origin to its original MCP client-origin allowlist. Other clients
 continue to use `MCP_CLIENT_ORIGINS` and the same bearer authentication.
 
-The installed component must include `operator-console.mjs` and all four files
-under `operator-ui/`. The server serves these fixed files; the shell contains no
-token, quote, private configuration or returned data. No external script, font
-or analytics service is loaded. The console uses the original JSON-response MCP
-transport, including initialization and the advertised tools list.
+The installed component includes `operator-console.mjs`,
+`operator-ui/browser-assets.json`, and every source module declared by that
+asset manifest. The server serves the declared local asset routes; the shell
+contains no token, quote, private configuration or returned data. No external
+script, font or analytics service is loaded. The console uses the original
+JSON-response MCP transport, including initialization and the advertised tools list.
 
 ## Discover and review the exact invocation
 

@@ -26,7 +26,9 @@ os.umask(0o077);sys.dont_write_bytecode=True
 original_root=os.environ.get("DATASETTE_DELIVERY_ROOT")
 root=P(original_root).resolve(strict=True) if original_root else P(tempfile.mkdtemp(prefix="datasette-publisher-a49aa-",dir="/dev"))
 if original_root and not (root/"delivery-input.json").is_file():raise RuntimeError("Resume requires the complete retained original delivery directory.")
-tmp=root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
+transfer_root=P(os.environ.get("DATASETTE_TRANSFER_DIRECTORY",str(root)))
+transfer_root.mkdir(mode=0o700,parents=True,exist_ok=True)
+tmp=transfer_root/"private-temp";tmp.mkdir(mode=0o700,exist_ok=True)
 os.environ["TMPDIR"]=str(tmp);tempfile.tempdir=str(tmp)
 os.environ.setdefault("AZCOPY_CONCURRENCY_VALUE","4")
 os.environ["GIT_TERMINAL_PROMPT"]="0"
@@ -140,11 +142,14 @@ def persist_complete_phase(original_outcome,phase):
         if retained_manifest.exists():
             if digest(retained_manifest)!=previous_digest:raise RuntimeError("The preceding checkpoint manifest changed.")
         else:shutil.copy2(prior_manifest,retained_manifest)
-    export=root/"export";export.mkdir(mode=0o700,exist_ok=True)
+    export=transfer_root/"export";export.mkdir(mode=0o700,exist_ok=True)
     archive_path=export/("Datasette_Publisher_Complete_Checkpoint.zip" if phase=="publisher" else "Datasette_Publisher_Installed_Operating_Checkpoint.zip")
     members=[];directories=[];excluded=[]
     with zipfile.ZipFile(archive_path,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
         for folder,dirs,files in os.walk(root,followlinks=False):
+            if P(folder)!=root:
+                info=P(folder).stat()
+                directories.append({"path":P(folder).relative_to(root).as_posix(),"mode":stat.S_IMODE(info.st_mode),"mtime_ns":info.st_mtime_ns})
             dirs.sort();files.sort()
             for name in list(dirs):
                 path=P(folder)/name
@@ -372,7 +377,12 @@ except BaseException as error:
     emit("datasette_original_continuation_preserved",error_type=native_error["type"],message=native_error["message"])
 finally:
     done.set()
-persist_complete_phase(outcome,"installed")
+try:
+    persist_complete_phase(outcome,"installed")
+except Exception as error:
+    if not payload.get("retain_receiver"):raise
+    outcome["complete_save_continuation"]={"type":type(error).__name__,"message":str(error),"traceback":traceback.format_exc()}
+    emit("datasette_complete_save_continuation",root=str(root),**outcome["complete_save_continuation"])
 fcntl.flock(lease.fileno(),fcntl.LOCK_UN);lease.close()
 if payload.get("retain_receiver"):
     if sys.stdin.isatty():

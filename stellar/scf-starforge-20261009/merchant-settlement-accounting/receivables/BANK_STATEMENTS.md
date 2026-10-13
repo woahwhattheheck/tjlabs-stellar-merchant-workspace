@@ -2,7 +2,7 @@
 
 The bank-statement desk completes customer cash collection in the same accounting workspace as invoices, Stellar receiving, customer refunds and paid-credit disposition. Retain an original bank file, review its actual rows and customer matches, then post the selected credits as customer receipts, links to existing receipts or corrections of recorded receipts.
 
-The browser entry is **Receivables → Bank statements**. The same operations are available through the typed receivables HTTP client, the original accounting MCP owner and its durable operation CLI. All mutations retain the original accounting revision, actor and request ID.
+The browser entry is **Receivables → Bank receipts**. **Bank reconciliation** opens the same account's complete cash-matching and close workflow. The same operations are available through the typed receivables HTTP client, the original accounting MCP owner and its durable operation CLI. All mutations retain the original accounting revision, actor and request ID.
 
 ## Source account and file intake
 
@@ -56,7 +56,7 @@ OFX and MT940 use the retained Python bridge and standalone original parser modu
 
 Open the retained statement and page its source rows. Status, direction and text filters apply to the complete original inventory before paging. Each row shows its original bank date and amount, current disposition, source identity matches, possible recorded receipts, invoice candidates and customer matching reasons.
 
-Use **Match payment** to assign the complete bank credit. A single credit can contain several customer splits, and the sum must equal the original bank amount exactly.
+Use **Match payment** to assign the complete bank credit. A single credit can contain several customer splits. Their gross receipt amounts plus any signed adjustments already retained in Bank reconciliation must equal the original bank amount exactly. For a 100.00 customer payment received as 97.00 after a 3.00 fee, link the original 100.00 receipt and retain the saved -3.00 bank adjustment. The editor displays both and preserves the existing invoice allocation.
 
 | Treatment | Result |
 | --- | --- |
@@ -78,7 +78,9 @@ A shared original bank transaction ID identifies the same source payment across 
 
 A distinct-payment reason applies to coincident date, amount or reference matches belonging to separate actual payments without a shared original transaction ID. The original matching facts and the operator's reason remain in the retained posting.
 
-When several original receipt payments share the same date, amount or reference, choose the exact **Original payment coverage** in the editor. The selection retains the native coverageKey with its original bank source and amount. Agent callers can send that same key on a LINK or CORRECT split.
+When several original receipt payments share the same date, amount or reference, choose the exact **Original payment coverage** in the editor. The selection retains the native coverageKey with its original bank source and amount. Agent callers can send that same key on a LINK or CORRECT split. Bank reconciliation's existing RECEIPT posting uses the same coverageKey when choosing the original receipt portion.
+
+Open **Source** for **Posted source replacements** and **Other retained source matches**. Each current original bank-receipt row can be opened directly, including a row outside the visible page. A reconciliation source opens its exact transaction, where **Current replacement**, **Replaced original**, **Prior interpretation** and **Duplicate original** follow the retained correction history. A replaced original row remains visible and directs further matching to its current source.
 
 Ignored credit rows retain their reason and source identity. Restore an ignored row when it needs customer matching. Closing requires every actual cash credit to have a retained disposition; reopening preserves previous postings and permits explicit restoration or correction.
 
@@ -165,9 +167,9 @@ The existing accounting backup preserves workspace state and the private exports
 
 ## Maintained parser lineage
 
-The unchanged original parsers come from woahwhattheheck/smb-showcase-inventory:
+The maintained parsers originate in woahwhattheheck/smb-showcase-inventory:
 
 - apps/ofx_statement_intake/intake.py, Git blob c19b38f228283c31926fe9eae86a6364a7976943.
 - apps/csv_intake_workbench/mt940/engine.py, Git blob ee5a99c5b747e402bfb1f51175e61799859d3121.
 
-They are retained beside the private stdin/stdout bridge under bank-parsers/. The selected product explicitly includes those Python modules and their source documentation. The native matching and accounting layer builds on those original parser results and the existing invoice/receipt/refund journal.
+The maintained OFX edition also preserves the original CLOSING/CCCLOSING aggregates and account-balance DTASOF fields used by the complete bank reconciliation workflow. The MT940 original remains retained with its explicit source conventions. Both parsers are beside the private stdin/stdout bridge under bank-parsers/. The selected product explicitly includes those Python modules and their source documentation. The native matching and accounting layer builds on those original parser results and the existing invoice/receipt/refund journal.

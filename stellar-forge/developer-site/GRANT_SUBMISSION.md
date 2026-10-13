@@ -14,6 +14,36 @@ The first source edition remains in the draft. **Read current source** acquires 
 
 A source/index mismatch leaves the working draft open. Read the current source again after the original composer finishes publishing its same edition.
 
+## Receive a complete source package
+
+Open **Source editions → Open source package** to compare a complete received
+application, source index, budget and product/finance companion with the current
+draft. The same four-file package can come from another operator's existing
+Source editions screen or the maintained `grant-export` command.
+
+Choose **Receive source and keep edited answers** after reviewing the comparison.
+Untouched answers receive the selected source; edited answers keep their full
+text and original baseline. The original draft ID, saved browser binding, issuer
+map, native plan selections, reviews and versions remain in place. A matching
+application with a different bundle can be selected through **Use these four
+reviewer files**, retaining the previous working version.
+
+Each retained source displays **Review these source files** and **Download retained
+source package** for its exact complete bundles. **Download source package** on the
+incoming edition shares that same four-file source. **Download full draft**
+continues to carry all received sources and the application's editorial history.
+The existing Save version and Browser drafts controls persist the received
+edition in the same saved record.
+
+The package opens from complete retained bytes. When the host's application
+source cannot be read, the empty editor still offers **Open source package** and
+opens the existing nine-answer model from that edition. Source URLs, file dates
+and the original application/bundle identities remain visible for the operator.
+
+See [submission handover](GRANT_HANDOVER.md#receive-and-share-a-source-package)
+for the complete source-package API and [native export](GRANT_EXPORT.md#receive-source-into-the-same-saved-draft)
+for the same source receiving from the terminal.
+
 ## Edit the complete answers
 
 Choose one of the nine answers in the sidebar. Edit its full text and, if useful, add a working note. The preview shows the exact text selected for copying.
@@ -157,6 +187,24 @@ The caller retains a full version before a transition and validates the resultin
 
 For the original equipped reviewer Page, continue with the same edited application. Receive the next actual saved revision of its selected native plan, review the original package and answer changes, resolve the affected targets, and retain the full export before reopening that file and the saved browser draft. Restore the preceding version through **Saved versions** to continue either editorial state. Use the saved original plan revisions and their native calculations as the inputs to this journey.
 
+
+## Prepare customer operating work from the selected packages
+
+In **Planning**, use **Customer operating procedure** after choosing the
+original source revision and work packages. Enter the customer, operating owner,
+useful result and receiving instructions. An optional complete Command finder
+catalog lets each package retain an actual command or toolkit registration with
+its original source and runtime.
+
+**Create operating plan from selected work packages** downloads the complete
+editable JSON and keeps a prepared copy in this planning review. Save the
+submission to retain it. Import that JSON into **Command finder → Operating
+plans** to order detailed work, set actual due dates, enter exact command
+arguments and save recorded results as successive operating revisions.
+
+The [complete procedure guide](GRANT_OPERATING_PLANS.md) includes the same
+installed CLI and source-bound handover. It uses the native work-package scope,
+costs and relative windows already selected here.
 
 ## Review the required content
 
