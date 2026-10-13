@@ -845,6 +845,13 @@
     "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/receiving_csv_dag.py",
     "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/report.mjs",
     "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/runtime_bundle.py",
-    "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/sources.json"
+    "../../../scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/airflow/sources.json",
+    "operations_billing_evidence.py",
+    "operations_billing_evidence.mjs",
+    "operations_billing_evidence.css",
+    "operations_billing_evidence_http.py",
+    "operations_billing_evidence_cli.py",
+    "BILLING_EVIDENCE.md",
+    "billing_evidence_course.py"
   ]
 }

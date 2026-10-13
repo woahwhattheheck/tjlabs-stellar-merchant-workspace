@@ -22,6 +22,7 @@ FINANCE_COMMANDS = {
 REVIEW_COMMANDS = {"review", "work.accept", "work.reopen",
                    "implementation.prepare", "cohort.prepare", "completion.prepare", "completion.corrections.save"}
 READ_POSTS = {
+    "billing-evidence/preview", "billing-evidence/inspect",
     "gravitee/inspect", "gravitee/member", "gravitee/template", "gravitee/prepare",
     "airflow/inspect", "airflow/member", "airflow/template", "airflow/prepare",
     "risk-register-seed", "risk-register-preview", "risk-register-request",
@@ -246,7 +247,7 @@ def authorize(handler):
                 fail("A delivery lead or finance operator retains the original source file.")
             bind_actor(handler, body)
             return
-        if (action in READ_POSTS or re.fullmatch(
+        if (action in READ_POSTS or re.fullmatch(r"billing-evidence/billing-evidence-[a-f0-9]{32}/compare", action) or re.fullmatch(
                 r"installation-sources/source-desk-[a-f0-9]{32}/files/input-[a-f0-9]{64}/inspect", action) or re.fullmatch(
                 r"installation-sources/source-desk-[a-f0-9]{32}/editions/(compare|preview)", action) or re.fullmatch(
                 r"installation-sources/source-desk-[a-f0-9]{32}/mappings/(compare|preview|compare-wire|preview-wire|draft-wire)", action)):
@@ -254,7 +255,7 @@ def authorize(handler):
                 bind_actor(handler, body)
             return
         if role == "lead" or role == "finance" and (
-                action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply") or action.startswith(("commercial/", "expense-billing/", "work-billing/"))):
+                action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply") or action.startswith(("commercial/", "expense-billing/", "work-billing/", "billing-evidence/"))):
             # Commercial preview bodies use the original actor where supplied.
             if "actor" in body or action in ("ledger-intake-apply", "cash-correction", "account-reconciliation", "workbook-apply"):
                 bind_actor(handler, body)
