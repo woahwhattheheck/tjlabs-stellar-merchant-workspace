@@ -1,5 +1,6 @@
 // MIT. Native invoice collection shares the original accounting lease and journal.
 import {randomUUID} from 'node:crypto';
+import {collectionAvailability} from './payment-plans/collection.mjs';
 import {constants} from 'node:fs';
 import {open, mkdir, lstat} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -108,7 +109,8 @@ function receiptPlan(data, invoice, request, returned, verification, input, acto
     amountAtomic: proposal.amountAtomic, recipient: proposal.destination, payer: verification.payer,
     memo: clone(proposal.memo), ledger: verification.ledger, closedAt: verification.closedAt,
     verificationScope: verification.verificationScope, valuationNote: proposal.valuationNote,
-    invoiceAmount: proposal.invoiceAmount, verificationSha256: sha(json(verification)), proof: clone(verification.proof)};
+    invoiceAmount: proposal.invoiceAmount, ...(proposal.paymentPlan ? {paymentPlan:clone(proposal.paymentPlan)} : {}),
+    verificationSha256: sha(json(verification)), proof: clone(verification.proof)};
   const receipt = {id: receiptId, customerId: request.customerId, customer: clone(invoice.document.customer),
     currency: clone(currency), amount: money(amountUnits, currency), receivedDate,
     method: 'Stellar invoice payment', reference: invoice.number + ' / ' + returned.transaction,
@@ -207,6 +209,14 @@ export class PaymentRequestsWorkspace {
     const row = requestRows(data).find(item => item.id === id);
     need(row, 'PAYMENT_REQUEST_NOT_FOUND', 'Choose a saved invoice payment request.', 404);
     return paymentRequestSummary(row, data, asOf);
+  }
+  async planCollection(invoiceId, query) {
+    identifier(invoiceId,'invoice');
+    return this.workspace.serial(async()=>{
+      const invoice=this.receivables._invoice(invoiceId);
+      await this.receivables._file(invoiceId,'invoice.json');
+      return {collection:collectionAvailability(invoice,this.data(),query),revision:this.workspace.state.revision};
+    });
   }
   async preview(invoiceId, input) {
     identifier(invoiceId, 'invoice');

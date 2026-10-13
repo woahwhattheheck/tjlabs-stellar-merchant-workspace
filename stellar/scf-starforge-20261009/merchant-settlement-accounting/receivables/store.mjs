@@ -212,6 +212,7 @@ export class ReceivablesWorkspace {
       history: this.workspace.state.history.filter(row => row.action.startsWith('receivables_')).slice(-200).reverse()});
   }
   async state(query = {}) { return this.workspace.serial(async () => this._view(query.asOf ?? today())); }
+  async paymentPlanCollection(invoiceId, query) { return this.paymentRequestWorkspace.planCollection(invoiceId, query); }
   async previewPaymentRequest(invoiceId, value) { return this.paymentRequestWorkspace.preview(invoiceId, value); }
   async createPaymentRequest(invoiceId, value) { return this.paymentRequestWorkspace.create(invoiceId, value); }
   async paymentRequests(query = {}) { return this.paymentRequestWorkspace.list(query); }

@@ -288,7 +288,37 @@ export type StellarNetwork = 'stellar:pubnet' | 'stellar:testnet';
 export type StellarAssetInput = {kind: 'native'} | {kind: 'credit'; code: string; issuer: string};
 export type StellarAsset = {kind: 'native'; code: 'XLM'; issuer: null} | {kind: 'credit'; code: string; issuer: string};
 export interface StellarMemo {type: 'MEMO_TEXT' | 'MEMO_ID' | 'MEMO_HASH' | 'MEMO_RETURN'; value: string}
+export interface PaymentPlanCollectionSelection {
+  planId: string; editionId: string; installments: Array<{id: string; amount: Money}>;
+}
+export interface PaymentPlanCollectionRow {
+  id: string; label: string; dueDate: DateOnly; amount: Money; paid: Money; credited: Money;
+  remaining: Money; status: string; reservedInstructions: Money; availableInstructions: Money;
+  instructionsExceedRemaining: boolean;
+}
+export interface PaymentPlanCollectionSource {
+  schema: 'stellar-forge.payment-plan-collection.v1'; planId: string; editionId: string;
+  scheduleSha256: string; invoiceId: string; invoiceSha256: string; effectiveDate: DateOnly;
+  asOf: DateOnly; currency: Currency; title: string; reference: string; allocationMethod: string;
+  installments: Array<{id:string;label:string;dueDate:DateOnly;scheduledAmount:Money;paid:Money;
+    credited:Money;remaining:Money;reservedInstructions:Money;amount:Money}>; invoiceAmount:Money;
+}
+export interface PaymentPlanCollectionAvailability extends Omit<PaymentPlanCollectionSource,'installments'|'invoiceAmount'> {
+  installments: PaymentPlanCollectionRow[];
+  otherInstructions: Array<{id:string;kind:'INVOICE'|'OTHER_SCHEDULE';invoiceAmount:Money}>;
+  existingInstructionReviewRequired: boolean;
+}
+export interface PaymentPlanCollectionStatus {
+  planId:string; editionId:string; scheduleSha256?:string; asOf:DateOnly; current:boolean;
+  currentEditionId?:string|null; collectionStatus:string; baselineChanged?:boolean; reason?:string;
+  instructionsNeedReview?:boolean; instructionReview?:{code:string;message:string}|null;
+  currentInstallments?:Array<{id:string;sourceAmount:Money;current:Omit<PaymentPlanCollectionRow,
+    'reservedInstructions'|'availableInstructions'|'instructionsExceedRemaining'>|null}>;
+}
+export interface PaymentPlanCollectionArguments {invoiceId:string;planId:string;editionId:string;network:StellarNetwork}
+export interface PaymentPlanCollectionResult {collection:PaymentPlanCollectionAvailability;revision:Revision}
 export interface PaymentPreviewArguments {
+  paymentPlan?: PaymentPlanCollectionSelection;
   invoiceId: string; id?: string; invoiceAmount?: Money; network: StellarNetwork; destination: string;
   asset: StellarAssetInput; stellarAmount: string; memo?: StellarMemo; msg?: string;
   expiresAt?: string | null; valuationNote?: string;
@@ -298,6 +328,7 @@ export interface PaymentInvoiceSnapshot {
   amountDue: Money; asOf: DateOnly; customer: Customer; issuer: Issuer;
 }
 export interface PaymentProposal {
+  paymentPlan?: PaymentPlanCollectionSource;
   schema: 'stellar-forge.invoice-payment-proposal.v1'; id: string; invoice: PaymentInvoiceSnapshot;
   invoiceAmount: Money; network: StellarNetwork; networkPassphrase: string; destination: string;
   asset: StellarAsset; stellarAmount: string; amountAtomic: string; memo: StellarMemo; msg: string;
@@ -347,6 +378,7 @@ export interface PaymentReturnBrief extends Omit<PaymentReturnReference, 'observ
   observationCount: number; lastObservation: PaymentObservation | null;
 }
 export interface PaymentRequestSummary {
+  paymentPlan?: PaymentPlanCollectionStatus;
   id: string; invoiceId: string; invoiceNumber: string; customerId: string; customerName: string;
   status: PaymentRequestStatus; issuedAt: string; expiresAt: string | null; cancelledAt: string | null;
   currency: Currency; invoiceAmount: Money; currentAmountDue: Money; balanceChanged: boolean;
@@ -480,7 +512,7 @@ export interface ReceivablesArgumentsMap extends FinancialControlArgumentsMap,Cu
   invoice_detail: InvoiceDetailArguments; invoice_void: InvoiceVoidArguments; credit: CreditArguments;
   receipt_record: ReceiptInput; receipt_void: ReceiptVoidArguments; settlement_ledger: LedgerQuery;
   settlement_import: SettlementReceiptInput; allocate: AllocateInput; release: ReleaseArguments;
-  customer_export: CustomerExportArguments; payment_preview: PaymentPreviewArguments; payment_create: PaymentCreateArguments;
+  customer_export: CustomerExportArguments; payment_plan_collection: PaymentPlanCollectionArguments; payment_preview: PaymentPreviewArguments; payment_create: PaymentCreateArguments;
   payment_list: PaymentListArguments; payment_detail: PaymentDetailArguments; payment_cancel: PaymentCancelArguments;
   payment_return: PaymentReturnArguments; payment_receive: PaymentReceiveArguments; request_lookup: RequestLookupArguments;
   customer_funds: CustomerFundsQuery; refund_preview: RefundPreviewInput; refund_commit: CommitRefundInput;
@@ -505,7 +537,7 @@ export interface ReceivablesResultsMap extends FinancialControlResultsMap,Custom
   settlement_ledger: LedgerPage; settlement_import: ReceivablesMutationResult & {receipt: Receipt};
   allocate: ReceivablesMutationResult & {allocation: Allocation; invoice: InvoiceSummary; receipt: Receipt};
   release: ReceivablesMutationResult & {allocation: Allocation; invoice: InvoiceSummary; receipt: Receipt};
-  customer_export: CustomerExportSummary; payment_preview: PaymentRequestPreview; payment_create: PaymentRequestMutationResult;
+  customer_export: CustomerExportSummary; payment_plan_collection: PaymentPlanCollectionResult; payment_preview: PaymentRequestPreview; payment_create: PaymentRequestMutationResult;
   payment_list: PaymentList; payment_detail: PaymentDetailSummary | PaymentDetailPage;
   payment_cancel: PaymentRequestMutationResult; payment_return: PaymentReturnMutationResult; payment_receive: PaymentReturnMutationResult;
   request_lookup: RequestLookupResult;
@@ -545,7 +577,7 @@ export const ACCOUNTING_RECEIVABLES_METHODS: Readonly<FinancialControlMethods & 
   invoicePreviewSummary: 'invoice_preview'; issueInvoice: 'invoice_issue'; invoice: 'invoice_detail';
   voidInvoice: 'invoice_void'; issueCredit: 'credit'; recordReceipt: 'receipt_record'; voidReceipt: 'receipt_void';
   settlementLedger: 'settlement_ledger'; importSettlement: 'settlement_import'; allocate: 'allocate';
-  releaseAllocation: 'release'; customerExport: 'customer_export'; previewPaymentRequest: 'payment_preview';
+  releaseAllocation: 'release'; customerExport: 'customer_export'; paymentPlanCollection: 'payment_plan_collection'; previewPaymentRequest: 'payment_preview';
   createPaymentRequest: 'payment_create'; paymentRequests: 'payment_list'; paymentRequest: 'payment_detail';
   cancelPaymentRequest: 'payment_cancel'; reportPaymentReturn: 'payment_return'; receivePaymentRequest: 'payment_receive';
   lookupOperation: 'request_lookup'; customerFunds: 'customer_funds'; previewRefund: 'refund_preview';
@@ -622,6 +654,7 @@ export interface AccountingReceivablesClient extends FinancialControlClient,Cust
   allocate(args: AllocateInput, options?: ReceivablesCallOptions): Promise<ReceivablesResultsMap['allocate']>;
   releaseAllocation(args: ReleaseArguments, options?: ReceivablesCallOptions): Promise<ReceivablesResultsMap['release']>;
   customerExport(args: CustomerExportArguments, options?: ReceivablesCallOptions): Promise<CustomerExportSummary>;
+  paymentPlanCollection(args:PaymentPlanCollectionArguments,options?:ReceivablesCallOptions):Promise<PaymentPlanCollectionResult>;
   previewPaymentRequest(args: PaymentPreviewArguments, options?: ReceivablesCallOptions): Promise<PaymentRequestPreview>;
   createPaymentRequest(args: PaymentCreateArguments, options?: ReceivablesCallOptions): Promise<PaymentRequestMutationResult>;
   paymentRequests(args?: PaymentListArguments, options?: ReceivablesCallOptions): Promise<PaymentList>;

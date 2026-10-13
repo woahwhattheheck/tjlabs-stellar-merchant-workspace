@@ -66,7 +66,13 @@
     "./merchant/accounting-receivables/customer-response-previews": {
       "types": "./source/stellar-forge/mcp-merchant-operator/accounting-customer-response-client.d.mts",
       "default": "./source/stellar-forge/mcp-merchant-operator/accounting-customer-response-client.mjs"
-    }
+    },
+    "./merchant/payment-plans/collection": {
+      "types": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection.d.ts",
+      "default": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection.mjs"
+    },
+    "./merchant/payment-plans/collection-exercise": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection-exercise.mjs",
+    "./merchant/payment-plans/collection-receiving": "./source/stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection-receiving.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/client.d.ts",
@@ -106,7 +112,9 @@
     "stellar-forge/mcp-merchant-operator/accounting-customer-responses.d.mts",
     "stellar-forge/mcp-merchant-operator/accounting-customer-response-client.d.mts",
     "stellar-forge/mcp-merchant-operator/ACCOUNTING_CUSTOMER_RESPONSES.md",
-    "stellar-forge/developer-site/dist/grant-data/financial-native-result.json"
+    "stellar-forge/developer-site/dist/grant-data/financial-native-result.json",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/collection.d.ts",
+    "stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/payment-plans/STELLAR_COLLECTION.md"
   ],
   "browserAssets": [
     {

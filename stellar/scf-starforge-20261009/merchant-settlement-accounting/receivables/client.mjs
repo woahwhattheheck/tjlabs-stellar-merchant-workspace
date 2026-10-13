@@ -122,6 +122,9 @@ export class ReceivablesClient {
   detail(id, query) { return this.request('/invoices/' + segment(id) + queryString(query)); }
   preview(id) { return this.request('/invoices/' + segment(id) + '/preview'); }
 
+  paymentPlanCollection(invoiceId, query, {signal} = {}) {
+    return this.request('/invoices/' + segment(invoiceId) + '/payment-plan-collection' + queryString(query), {signal});
+  }
   previewPaymentRequest(invoiceId, value, {signal} = {}) {
     return this.request('/invoices/' + segment(invoiceId) + '/payment-requests/preview', {method: 'POST', body: value, signal});
   }

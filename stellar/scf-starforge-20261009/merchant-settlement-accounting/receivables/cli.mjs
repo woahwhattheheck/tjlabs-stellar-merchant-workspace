@@ -20,6 +20,7 @@ const HELP = 'Merchant receivables\n\n' +
   'starforge receivables file --directory /private/accounting --id UUID --name invoice.html --out /private/new-file.html\n' +
   'starforge receivables export --directory /private/accounting --customer UUID --out /private/new-account-export [--as-of YYYY-MM-DD]\n\n' +
   'Stellar invoice payment requests:\n' +
+  'starforge receivables payment-plan-collection --directory /private/accounting --invoice UUID --input /private/schedule-selection.json\n' +
   'starforge receivables payment-requests --directory /private/accounting [--invoice UUID] [--customer UUID] [--as-of YYYY-MM-DD] [--offset 0] [--limit 100]\n' +
   'starforge receivables payment-preview --directory /private/accounting --invoice UUID --input /private/payment-terms.json [--out /private/review.json]\n' +
   'starforge receivables payment-create --directory /private/accounting --invoice UUID --input /private/reviewed-payment-request.json\n' +
@@ -284,6 +285,7 @@ export async function runReceivablesCli(argv = process.argv.slice(2)) {
       invoiceId: flags.invoice, customerId: flags.customer, status: flags.status, asOf, offset: flags.offset, limit: flags.limit,
     });
     else if (command === 'payment-request') result = await receivables.paymentRequest(flags.id, {asOf});
+    else if (command === 'payment-plan-collection') result = await receivables.paymentPlanCollection(flags.invoice, await input(flags.input));
     else if (command === 'payment-preview') {
       result = await receivables.previewPaymentRequest(flags.invoice, await input(flags.input));
       if (flags.out) await newFile(flags.out, Buffer.from(json(result)));

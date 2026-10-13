@@ -16,6 +16,56 @@ export function createPaymentRequestUi(host) {
   const {api, openDialog, mutate, getState, getInvoice, saveBlob, showError, setBusy} = host;
   let reviewed = null, selected = null, readVersion = 0;
   let retainedDraft = host.readSession('paymentRequestDraft');
+  let planSelection = null, activeCollection = null;
+  function collectionSelection(form) {
+    if (!form.dataset.plan) return undefined;
+    return {planId:form.dataset.plan,editionId:form.dataset.edition,
+      installments:[...form.querySelectorAll('[data-installment-select]:checked')].map(control=>({
+        id:control.value, amount:form.querySelector('[data-installment-amount][data-index="'+control.dataset.index+'"]').value}))};
+  }
+  function updateCollectionFields() {
+    const form=document.querySelector('#payment-request-form');
+    if(!form?.dataset.plan || !activeCollection) return;
+    const scale=activeCollection.currency.scale; let total=0n, valid=true;
+    for(const control of form.querySelectorAll('[data-installment-select]')) {
+      const input=form.querySelector('[data-installment-amount][data-index="'+control.dataset.index+'"]');
+      input.disabled=!control.checked; input.required=control.checked;
+      if(!control.checked) continue;
+      const value=input.value, parts=value.split('.');
+      if(!/^(0|[1-9][0-9]*)(?:[.][0-9]+)?$/.test(value) || (parts[1]||'').length>scale) {valid=false;continue;}
+      total+=BigInt(parts[0])*10n**BigInt(scale)+BigInt((parts[1]||'').padEnd(scale,'0')||'0');
+    }
+    const digits=total.toString().padStart(scale+1,'0');
+    form.elements.invoiceAmount.value=valid?(scale?digits.slice(0,-scale)+'.'+digits.slice(-scale):digits):'';
+  }
+  function collectionForm(collection,draft) {
+    if(!collection) return '';
+    const chosen=new Map((draft.paymentPlan?.installments||[]).map(row=>[row.id,row.amount]));
+    if(!chosen.size) {const first=collection.installments.find(row=>/[1-9]/.test(row.availableInstructions)); if(first)chosen.set(first.id,first.availableInstructions);}
+    return '<section class="section"><h3>Original schedule collection</h3><p>'+escape(collection.title||collection.reference)+
+      ' · effective '+escape(collection.effectiveDate)+'</p><p class="small-text payment-wrap">Edition '+escape(collection.editionId)+
+      ' · source '+escape(collection.scheduleSha256)+'</p><p>Choose the earliest unreserved outstanding installments. Only the final selected installment may be partial.</p>'+
+      (collection.existingInstructionReviewRequired?'<p class="notice">Existing invoice or superseded schedule instructions need review before a new collection. Open their original requests and withdraw overlapping instructions when appropriate.</p>':'')+
+      (collection.otherInstructions.length?'<ul>'+collection.otherInstructions.map(row=>'<li>'+escape(row.id)+' · '+money(row.invoiceAmount,collection.currency)+' · '+escape(label(row.kind))+'</li>').join('')+'</ul>':'')+
+      '<div class="table-wrap"><table><thead><tr><th>Select / installment</th><th>Due</th><th>Remaining</th><th>Open instructions</th><th>Collect</th></tr></thead><tbody>'+
+      collection.installments.map((row,index)=>'<tr><td><label><input type="checkbox" data-installment-select data-index="'+index+'" value="'+escape(row.id)+'"'+
+        (chosen.has(row.id)?' checked':'')+(!/[1-9]/.test(row.availableInstructions)?' disabled':'')+'>'+escape(row.label||row.id)+'</label></td><td>'+escape(row.dueDate)+
+        '</td><td>'+money(row.remaining,collection.currency)+'</td><td>'+money(row.reservedInstructions,collection.currency)+
+        '</td><td><input aria-label="Collect '+escape(row.label||row.id)+'" data-installment-amount data-index="'+index+'" inputmode="decimal" value="'+
+        escape(chosen.get(row.id)??row.availableInstructions)+'"></td></tr>').join('')+'</tbody></table></div>'+
+      '<p class="hint">This selection retains the original purpose of these instructions. Actual invoice payments continue to cover earliest installments first; credits reduce the latest installments.</p></section>';
+  }
+  function collectionSourceView(source,status) {
+    if(!source) return '';
+    return '<section class="section"><h3>Original schedule selection</h3><p>'+escape(source.title||source.reference)+' · effective '+escape(source.effectiveDate)+
+      '</p><p class="small-text payment-wrap">Edition '+escape(source.editionId)+' · '+escape(source.scheduleSha256)+'</p>'+
+      (status&&!status.current?'<p class="notice">This original selection is historical. Current schedule: '+escape(label(status.collectionStatus))+
+       '. Review the current schedule before delivering these instructions again.</p>':'')+
+      (status?.instructionReview?'<p class="notice">'+escape(status.instructionReview.message)+'</p>':'')+
+      '<div class="table-wrap"><table><thead><tr><th>Installment</th><th>Due</th><th>Selected amount</th></tr></thead><tbody>'+
+      source.installments.map(row=>'<tr><td>'+escape(row.label||row.id)+'</td><td>'+escape(row.dueDate)+'</td><td>'+money(row.amount,source.currency)+'</td></tr>').join('')+
+      '</tbody></table></div><p class="hint">The retained selection is instruction provenance. Current financial allocation follows the original invoice ledger.</p></section>';
+  }
 
   function invoiceById(id) {
     return getState()?.invoices?.find(row => row.id === id) || getInvoice();
@@ -31,6 +81,7 @@ export function createPaymentRequestUi(host) {
     if (!invoice || invoice.status === 'DRAFT') return '';
     const requests = rows(invoice);
     return '<section class="section"><div class="row between"><h3>Stellar payment requests</h3>' +
+      (invoice.status === 'ISSUED' && planSelection?.invoiceId === invoice.id ? button('Collect selected schedule', 'plan', invoice.id, 'data-write') : '') +
       (invoice.status === 'ISSUED' ? button('Create payment request', 'new', invoice.id, 'data-write') : '') + '</div>' +
       (requests.length ? '<div class="table-wrap"><table><thead><tr><th>Request / expiry</th><th class="num">Invoice amount</th><th>Status</th></tr></thead><tbody>' +
       requests.map(row => '<tr><td><button type="button" class="link" data-action="payment-open" data-id="' + escape(row.id) + '">' +
@@ -41,19 +92,35 @@ export function createPaymentRequestUi(host) {
         '<p class="muted small-text">Create a customer wallet request from this issued invoice and retain its collection history here.</p>') +
       '</section>';
   }
-  function createDialog(invoiceId) {
-    readVersion++;
+  async function createDialog(invoiceId, selector) {
+    const version=++readVersion, workspaceId=getState()?.workspaceId;
+    reviewed=null; activeCollection=null;
     const invoice = invoiceById(invoiceId);
     if (!invoice || invoice.status !== 'ISSUED') throw new Error('Choose an issued invoice for this collection.');
-    const draft = retainedDraft?.invoiceId === invoice.id ? retainedDraft : {
+    const draft = structuredClone(retainedDraft?.invoiceId === invoice.id ? retainedDraft : {
       invoiceId: invoice.id, invoiceAmount: invoice.amountDue, network: 'stellar:pubnet', destination: '',
       assetKind: 'native', assetCode: '', assetIssuer: '', stellarAmount: invoice.currency.code === 'XLM' ? invoice.amountDue : '',
       valuationNote: '', expiresAt: new Date(Date.now() + 86400000).toISOString(), msg: 'Invoice ' + invoice.number,
-    };
+    });
+    if(selector===false) delete draft.paymentPlan;
+    const choice=selector===false?null:selector||draft.paymentPlan;
+    if(choice) {
+      setBusy(true);
+      try {
+        const result=await api.paymentPlanCollection(invoice.id,{planId:choice.planId,editionId:choice.editionId,network:draft.network});
+        if(version!==readVersion||workspaceId!==getState()?.workspaceId) return;
+        activeCollection=result.collection;
+        if(selector && (draft.paymentPlan?.planId!==selector.planId||draft.paymentPlan?.editionId!==selector.editionId))
+          draft.paymentPlan={planId:selector.planId,editionId:selector.editionId,installments:[]};
+      } finally {setBusy(false);}
+    }
+    if(version!==readVersion) return;
     openDialog('Stellar collection · ' + (invoice.number || invoice.id),
-      '<form id="payment-request-form" data-invoice="' + escape(invoice.id) + '"><p>Select the invoice value and the exact asset amount the merchant will receive.</p>' +
-      '<div class="form-grid">' +
-      field('Invoice amount · ' + invoice.currency.code, 'invoiceAmount', draft.invoiceAmount, 'required inputmode="decimal"') +
+      '<form id="payment-request-form" data-invoice="' + escape(invoice.id) + '"' +
+      (activeCollection?' data-plan="'+escape(activeCollection.planId)+'" data-edition="'+escape(activeCollection.editionId)+'"':'') + '"><p>Select the invoice value and the exact asset amount the merchant will receive.</p>' +
+      (activeCollection?button('Use invoice-only instructions','invoice',invoice.id,'data-write'):'') +
+      collectionForm(activeCollection,draft) + '<div class="form-grid">' +
+      field('Invoice amount · ' + invoice.currency.code, 'invoiceAmount', draft.invoiceAmount, 'required inputmode="decimal"'+(activeCollection?' readonly':'')) +
       '<label>Stellar network<select name="network"><option value="stellar:pubnet"' + (draft.network === 'stellar:pubnet' ? ' selected' : '') +
         '>Public network</option><option value="stellar:testnet"' + (draft.network === 'stellar:testnet' ? ' selected' : '') + '>Test network</option></select></label>' +
       field('Merchant destination (G account)', 'destination', draft.destination, 'required spellcheck="false" autocomplete="off" maxlength="56"') +
@@ -68,7 +135,7 @@ export function createPaymentRequestUi(host) {
       '<p class="hint">Record the agreed conversion or value basis when the invoice currency and received asset differ. A unique transaction memo links the payment to this request.</p>' +
       '<p class="hint">Test-network receiving is recorded as a test observation. Public-network receiving creates the invoice receipt and allocation.</p>' +
       actions('Review payment request') + '</form>');
-    updateAssetFields();
+    updateAssetFields(); updateCollectionFields(); persistDraft(document.querySelector('#payment-request-form'));
   }
   function updateAssetFields() {
     const form = document.querySelector('#payment-request-form');
@@ -78,10 +145,11 @@ export function createPaymentRequestUi(host) {
   }
   function persistDraft(form) {
     if (form?.id !== 'payment-request-form') return;
-    retainedDraft = {...Object.fromEntries(new FormData(form)), invoiceId: form.dataset.invoice};
+    retainedDraft = {...Object.fromEntries(new FormData(form)), invoiceId: form.dataset.invoice,
+      ...(form.dataset.plan?{paymentPlan:collectionSelection(form)}:{})};
     host.saveSession('paymentRequestDraft', retainedDraft);
   }
-  function proposalView(proposal) {
+  function proposalView(proposal, status) {
     const invoice = proposal.invoice || {}, asset = proposal.asset || {};
     return '<dl class="definition"><dt>Invoice</dt><dd>' + escape(invoice.number || invoice.id) +
       '</dd><dt>Customer</dt><dd>' + escape(invoice.customer?.name || invoice.customer?.displayName || invoice.customer?.id) +
@@ -93,7 +161,7 @@ export function createPaymentRequestUi(host) {
       '<dt>Transaction memo</dt><dd class="mono payment-wrap">' + escape(proposal.memo?.type) + ' · ' + escape(proposal.memo?.value) +
       '</dd><dt>Expiry</dt><dd>' + escape(proposal.expiresAt) +
       '</dd><dt>Valuation basis</dt><dd class="preline">' + escape(proposal.valuationNote || 'Original XLM invoice value') + '</dd></dl>' +
-      (proposal.msg ? '<p class="preline">' + escape(proposal.msg) + '</p>' : '');
+      (proposal.msg ? '<p class="preline">' + escape(proposal.msg) + '</p>' : '') + collectionSourceView(proposal.paymentPlan,status);
   }
   async function preview(form, values) {
     persistDraft(form);
@@ -101,6 +169,7 @@ export function createPaymentRequestUi(host) {
       asset: values.assetKind === 'native' ? {kind: 'native', code: 'XLM', issuer: null} :
         {kind: 'credit', code: values.assetCode, issuer: values.assetIssuer},
       stellarAmount: values.stellarAmount, expiresAt: values.expiresAt, msg: values.msg, valuationNote: values.valuationNote};
+    if(retainedDraft.paymentPlan) input.paymentPlan=structuredClone(retainedDraft.paymentPlan);
     const version = ++readVersion;
     setBusy(true);
     try {
@@ -155,7 +224,7 @@ export function createPaymentRequestUi(host) {
     const row = detail.paymentRequest, proposal = detail.proposal;
     openDialog('Payment request · ' + (row.invoiceNumber || proposal.invoice.number),
       '<div class="row between"><strong>' + escape(label(row.status)) + '</strong><span class="small-text">Issued ' + escape(row.issuedAt || detail.issuedAt) +
-      '</span></div>' + proposalView(proposal) +
+      '</span></div>' + proposalView(proposal,row.paymentPlan) +
       (row.balanceChanged ? '<p class="notice">The invoice balance has changed since this request was issued. Review current allocations before delivering these instructions again.</p>' : '') +
       '<div class="stats"><div class="stat"><span>Received</span><strong>' + money(row.received, row.currency) +
       '</strong></div><div class="stat"><span>Applied</span><strong>' + money(row.applied, row.currency) +
@@ -230,10 +299,14 @@ export function createPaymentRequestUi(host) {
   async function click(control) {
     const action = control.dataset.action, id = control.dataset.id;
     if (!action?.startsWith('payment-')) return false;
-    if (host.isLocked() && ['payment-new','payment-edit','payment-issue','payment-return','payment-correct-payer','payment-receive','payment-cancel'].includes(action)) {
+    if (host.isLocked() && ['payment-plan','payment-invoice','payment-new','payment-edit','payment-issue','payment-return','payment-correct-payer','payment-receive','payment-cancel'].includes(action)) {
       throw new Error('Finish the retained operation before starting another change.');
     }
-    if (action === 'payment-new' || action === 'payment-edit') createDialog(id);
+    if(action==='payment-invoice') {persistDraft(document.querySelector('#payment-request-form')); await createDialog(id,false);}
+    else if (action === 'payment-plan') {
+      if(planSelection?.invoiceId!==id) throw new Error('Open the original schedule selection again.');
+      await createDialog(id,planSelection);
+    } else if (action === 'payment-new' || action === 'payment-edit') await createDialog(id);
     else if (action === 'payment-open') await openRequest(id);
     else if (action === 'payment-issue') {
       if (!reviewed || reviewed.proposal.invoice.id !== id) throw new Error('Review the exact request before issuing.');
@@ -264,7 +337,11 @@ export function createPaymentRequestUi(host) {
     if (id) await openRequest(id).catch(showError);
   }
   return {render, submit, click, afterMutation, methods,
-    input(target) { const form = target.closest('#payment-request-form'); if (form) persistDraft(form); },
-    change(target) { if (target.closest('#payment-request-form')) { updateAssetFields(); persistDraft(target.form); } },
+    setPlanSelection(value) {planSelection=value?structuredClone(value):null;},
+    input(target) { const form = target.closest('#payment-request-form'); if(form){updateCollectionFields();persistDraft(form);} },
+    change(target) { const form=target.closest('#payment-request-form'); if(form){
+      updateAssetFields();updateCollectionFields();persistDraft(form);
+      if(target.name==='network'&&form.dataset.plan) createDialog(form.dataset.invoice).catch(showError);
+    } },
     close() { readVersion++; }};
 }

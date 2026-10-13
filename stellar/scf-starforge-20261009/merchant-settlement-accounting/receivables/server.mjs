@@ -246,6 +246,8 @@ export async function handleReceivablesRequest(receivables, {method, path, query
       const selected = await receivables.refundFile(parts[1], parts[3]);
       return {file: selected, type: selected.type};
     }
+    else if (parts[0] === 'invoices' && parts[2] === 'payment-plan-collection' && parts.length === 3)
+      result = await receivables.paymentPlanCollection(parts[1], {planId:search.get('planId'), editionId:search.get('editionId'), network:search.get('network')});
     else if (route === 'payment-requests') result = await receivables.paymentRequests({
       invoiceId: search.get('invoiceId') || undefined, customerId: search.get('customerId') || undefined,
       status: search.get('status') || undefined, asOf: search.get('asOf') || undefined,
@@ -403,7 +405,7 @@ export async function createReceivablesHandler(receivables, {apiPath = '/api/rec
         if (planRequest && url.pathname === '/payment-plans') { response.writeHead(302, {Location: '/payment-plans/'}); response.end(); return true; }
         if (bankRequest && url.pathname === '/bank-statements') { response.writeHead(302, {Location: '/bank-statements/'}); response.end(); return true; }
         const asset = bankRequest ? await bankStatementAsset(url.pathname, {apiPath: bankApiPath, receivablesApiBase: apiPath, receivablesUi: uiPath + '/', sourcePreparations}) :
-          planRequest ? await paymentPlanAsset(url.pathname, {apiPath: planApiPath}) :
+          planRequest ? await paymentPlanAsset(url.pathname, {apiPath: planApiPath, receivablesUi:uiPath + '/'}) :
           ui ? await receivablesAsset(url.pathname, {apiPath, uiPath}) : customer ? await customerStatementAsset(url.pathname) : null;
         if (asset) {
           response.writeHead(200, {'Content-Type': asset.type, 'Content-Length': asset.bytes.length});

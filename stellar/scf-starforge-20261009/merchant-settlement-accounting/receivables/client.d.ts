@@ -205,7 +205,37 @@ export interface StellarPaymentMemo {
   /** Text, unsigned decimal ID, or canonical base64 of 32 bytes. */
   value: string;
 }
+export interface PaymentPlanCollectionSelection {
+  planId: string; editionId: string; installments: Array<{id: string; amount: Money}>;
+}
+export interface PaymentPlanCollectionRow {
+  id: string; label: string; dueDate: DateOnly; amount: Money; paid: Money; credited: Money;
+  remaining: Money; status: string; reservedInstructions: Money; availableInstructions: Money;
+  instructionsExceedRemaining: boolean;
+}
+export interface PaymentPlanCollectionSource {
+  schema: 'stellar-forge.payment-plan-collection.v1'; planId: string; editionId: string;
+  scheduleSha256: string; invoiceId: string; invoiceSha256: string; effectiveDate: DateOnly;
+  asOf: DateOnly; currency: Currency; title: string; reference: string; allocationMethod: string;
+  installments: Array<{id:string;label:string;dueDate:DateOnly;scheduledAmount:Money;paid:Money;
+    credited:Money;remaining:Money;reservedInstructions:Money;amount:Money}>; invoiceAmount:Money;
+}
+export interface PaymentPlanCollectionAvailability extends Omit<PaymentPlanCollectionSource,'installments'|'invoiceAmount'> {
+  installments: PaymentPlanCollectionRow[];
+  otherInstructions: Array<{id:string;kind:'INVOICE'|'OTHER_SCHEDULE';invoiceAmount:Money}>;
+  existingInstructionReviewRequired: boolean;
+}
+export interface PaymentPlanCollectionStatus {
+  planId:string; editionId:string; scheduleSha256?:string; asOf:DateOnly; current:boolean;
+  currentEditionId?:string|null; collectionStatus:string; baselineChanged?:boolean; reason?:string;
+  instructionsNeedReview?:boolean; instructionReview?:{code:string;message:string}|null;
+  currentInstallments?:Array<{id:string;sourceAmount:Money;current:Omit<PaymentPlanCollectionRow,
+    'reservedInstructions'|'availableInstructions'|'instructionsExceedRemaining'>|null}>;
+}
+export interface PaymentPlanCollectionQuery {planId:string;editionId:string;network:StellarPaymentNetwork}
+export interface PaymentPlanCollectionResult {collection:PaymentPlanCollectionAvailability;revision:Revision}
 export interface PaymentRequestInput {
+  paymentPlan?: PaymentPlanCollectionSelection;
   id?: string; invoiceAmount?: Money; network: StellarPaymentNetwork;
   destination: string; asset: StellarPaymentAssetInput; stellarAmount: string;
   memo?: StellarPaymentMemo; msg?: string; expiresAt?: string | null;
@@ -217,6 +247,7 @@ export interface PaymentInvoiceSnapshot {
   total: Money; amountDue: Money; asOf: DateOnly; customer: Customer; issuer: Issuer;
 }
 export interface PaymentRequestProposal {
+  paymentPlan?: PaymentPlanCollectionSource;
   schema: 'stellar-forge.invoice-payment-proposal.v1'; id: string;
   invoice: PaymentInvoiceSnapshot; invoiceAmount: Money; network: StellarPaymentNetwork;
   networkPassphrase: string; destination: string; asset: StellarPaymentAsset;
@@ -278,6 +309,7 @@ export interface PaymentReturn {
   observations: PaymentObservation[]; receiptId: string | null; allocationId: string | null;
 }
 export interface PaymentRequestSummary {
+  paymentPlan?: PaymentPlanCollectionStatus;
   id: string; invoiceId: string; invoiceNumber: string; customerId: string; customerName: string;
   status: PaymentRequestStatus; issuedAt: string; expiresAt: string | null; cancelledAt: string | null;
   currency: Currency; invoiceAmount: Money; currentAmountDue: Money; balanceChanged: boolean;
@@ -362,6 +394,7 @@ export class ReceivablesClient {
   detail(id: string, query?: {asOf?: DateOnly}): Promise<InvoiceDetail>;
   preview(id: string): Promise<Preview>;
 
+  paymentPlanCollection(invoiceId:string,query:PaymentPlanCollectionQuery,options?:RequestOptions):Promise<PaymentPlanCollectionResult>;
   previewPaymentRequest(invoiceId: string, value: PaymentRequestInput, options?: RequestOptions): Promise<PaymentRequestPreview>;
   createPaymentRequest(invoiceId: string, value: CreatePaymentRequestInput, options?: RequestOptions): Promise<PaymentRequestMutationResult>;
   paymentRequests(query?: PaymentRequestQuery, options?: RequestOptions): Promise<PaymentRequestPage>;

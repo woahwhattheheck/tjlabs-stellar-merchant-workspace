@@ -1,4 +1,5 @@
 import type {
+  PaymentPlanCollectionQuery, PaymentPlanCollectionResult,
   CancelPaymentRequestInput, CreatePaymentRequestInput, DateOnly, PaymentRequestDetail,
   PaymentRequestFileName, PaymentRequestInput, PaymentRequestMutationResult, PaymentRequestPage,
   PaymentRequestPreview, PaymentRequestProposal, PaymentRequestQuery, PaymentRequestSummary,
@@ -17,6 +18,7 @@ export class PaymentRequestsWorkspace {
   data(): PaymentReceivablesData;
   summaries(data?: PaymentReceivablesData, asOf?: DateOnly): PaymentRequestSummary[];
   summary(id: string, data?: PaymentReceivablesData, asOf?: DateOnly): PaymentRequestSummary;
+  planCollection(invoiceId:string,query:PaymentPlanCollectionQuery):Promise<PaymentPlanCollectionResult>;
   preview(invoiceId: string, value: PaymentRequestInput): Promise<PaymentRequestPreview>;
   create(invoiceId: string, value: CreatePaymentRequestInput): Promise<PaymentRequestMutationResult>;
   list(query?: PaymentRequestQuery): Promise<PaymentRequestPage>;

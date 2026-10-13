@@ -328,6 +328,7 @@ export class MerchantReceivables {
       case 'allocate': return this.controller.allocate(input);
       case 'release': return this.controller.release(args.allocationId, payload(args, 'allocationId'));
       case 'customer_export': return this.customerExport(args);
+      case 'payment_plan_collection': return this.controller.paymentPlanCollection(args.invoiceId, payload(args, 'invoiceId'));
       case 'payment_preview': return this.controller.previewPaymentRequest(args.invoiceId, payload(args, 'invoiceId'));
       case 'payment_create': return this.controller.createPaymentRequest(args.invoiceId, payload(args, 'invoiceId'));
       case 'payment_list': return this.controller.paymentRequests(input);
