@@ -1,0 +1,369 @@
+{
+  "schema": "stellar-forge.rumble-customer-operated-case.v1",
+  "operation_id": "RUMBLE-FISH-CUSTOMER-CONSUMPTION-4593-20261012",
+  "status": "COMPLETE",
+  "startedAt": "2026-10-13T01:03:33.068Z",
+  "completedAt": "2026-10-13T06:22:26.383Z",
+  "workspaceId": "workspace-a7132ccfd3667385c848c02b",
+  "customerId": "rumble-wallet-reference-4593",
+  "originalSource": {
+    "url": "https://github.com/rumblefishdev/stellar-prices-api/blob/5109d3937af8cb2211a4ef0cff4c417595be0718/docs/scf/milestone-2-evidence.md",
+    "gitBlob": "6417b5efcf7f15ac473e0a5d90081fde3127cdac",
+    "bytes": 35639,
+    "mode": "provider-published-read-only-review-access",
+    "receiving": "reused exact retained original public source"
+  },
+  "phases": [
+    {
+      "name": "original_source_into_customer_and_wallet",
+      "at": "2026-10-13T01:03:35.039Z",
+      "sourceRunId": "run-mv478w30-0cb5c9620d28",
+      "sourceSha256": "2f65215112b67dc968b50609a50f48656c9930621706a046d052332d13d13939",
+      "positions": 3,
+      "customerRevision": 3,
+      "editionId": "edition-0a4adc9306641fe07c81c20f158bf70b",
+      "totals": {
+        "currency": "USD",
+        "positions": 3,
+        "valuedPositions": 3,
+        "unavailablePositions": 0,
+        "complete": true,
+        "pricedSubtotal": "3485661.18940353526466660623187602076158",
+        "total": "3485661.18940353526466660623187602076158"
+      }
+    },
+    {
+      "name": "later_source_received_by_same_customer",
+      "at": "2026-10-13T01:03:46.342Z",
+      "runId": "run-mv5z9bpt-14b8c0d127b0",
+      "providerStatuses": [
+        200
+      ],
+      "editionId": "edition-7d1b8cd4a2334a7546405e60c9ba6d1a",
+      "sourceTimes": [
+        {
+          "asset": "native",
+          "asOf": "2026-10-13T00:43:00Z",
+          "updatedAt": "2026-10-13T01:03:00Z"
+        },
+        {
+          "asset": "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+          "asOf": "2026-10-13T00:55:00Z",
+          "updatedAt": "2026-10-13T01:03:00Z"
+        },
+        {
+          "asset": "CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN",
+          "asOf": "2026-10-13T00:07:00Z",
+          "updatedAt": "2026-10-13T01:03:00Z"
+        }
+      ],
+      "comparison": {
+        "previousEditionId": "edition-0a4adc9306641fe07c81c20f158bf70b",
+        "previousEditionSha256": "4b98691cc2a30eb3112bb71ab0546979f67c26796f92c7f1c8c54f52a3a00f27",
+        "sameCurrency": true,
+        "previousCurrency": "USD",
+        "currency": "USD",
+        "totalDelta": "-132355.76055454169724383532643609370281",
+        "comparableValueDelta": "-132355.76055454169724383532643609370281",
+        "comparedValuedPositions": 3,
+        "rows": [
+          {
+            "asset": "native",
+            "status": "value_changed",
+            "previousQuantity": "1250.1250000",
+            "quantity": "1250.1250000",
+            "previousValue": "253.36579981548939125",
+            "value": "235.43095331972034625",
+            "quantityDelta": "0",
+            "priceDelta": "-0.01434644255236",
+            "valueDelta": "-17.934846495769045",
+            "quantityEffect": "0",
+            "priceEffect": "-17.934846495769045",
+            "observationChanged": true,
+            "qualityChanged": true,
+            "previousAsOf": "2026-10-11T18:43:00Z",
+            "asOf": "2026-10-13T00:43:00Z"
+          },
+          {
+            "asset": "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+            "status": "value_changed",
+            "previousQuantity": "2500.0000001",
+            "quantity": "2500.0000001",
+            "previousValue": "2502.220810847788832429908",
+            "value": "2502.591418737378656745491",
+            "quantityDelta": "0",
+            "priceDelta": "0.00014824315583",
+            "valueDelta": "0.370607889589824315583",
+            "quantityEffect": "0",
+            "priceEffect": "0.370607889589824315583",
+            "observationChanged": true,
+            "qualityChanged": true,
+            "previousAsOf": "2026-10-11T19:05:00Z",
+            "asOf": "2026-10-13T00:55:00Z"
+          },
+          {
+            "asset": "CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN",
+            "status": "value_changed",
+            "previousQuantity": "42.000000000000000001",
+            "quantity": "42.000000000000000001",
+            "previousValue": "3482905.60279287198644292632387602076158",
+            "value": "3350567.40647693646841977541443992705877",
+            "quantityDelta": "0",
+            "priceDelta": "-3150.90943609370281",
+            "valueDelta": "-132338.19631593551802315090943609370281",
+            "quantityEffect": "0",
+            "priceEffect": "-132338.19631593551802315090943609370281",
+            "observationChanged": true,
+            "qualityChanged": true,
+            "previousAsOf": "2026-10-11T18:42:00Z",
+            "asOf": "2026-10-13T00:07:00Z"
+          }
+        ]
+      },
+      "totals": {
+        "currency": "USD",
+        "positions": 3,
+        "valuedPositions": 3,
+        "unavailablePositions": 0,
+        "complete": true,
+        "pricedSubtotal": "3353305.42884899356742277090543992705877",
+        "total": "3353305.42884899356742277090543992705877"
+      }
+    },
+    {
+      "name": "continued_same_saved_customer",
+      "at": "2026-10-13T06:02:34.420Z",
+      "consumerId": "rumble-wallet-reference-4593",
+      "revision": 5,
+      "bookRevision": 1,
+      "acceptedRunId": "run-mv5z9bpt-14b8c0d127b0",
+      "walletRevision": 5
+    },
+    {
+      "name": "continued_same_saved_customer",
+      "at": "2026-10-13T06:22:05.913Z",
+      "consumerId": "rumble-wallet-reference-4593",
+      "revision": 5,
+      "bookRevision": 1,
+      "acceptedRunId": "run-mv5z9bpt-14b8c0d127b0",
+      "walletRevision": 5
+    },
+    {
+      "name": "expanded_book_preserves_missing_source",
+      "at": "2026-10-13T06:22:10.032Z",
+      "editionId": "edition-ae64aac0476559d435c5b2238030aeb6",
+      "asset": "CB7OOP3VSAWBZOOTOG2YEFANVU45GVWYUUM5HI32DKLHVKUDOFVQ37XP",
+      "flags": [
+        {
+          "code": "NOT_REQUESTED",
+          "message": "This asset was not requested by the selected collection.",
+          "blocking": true
+        }
+      ]
+    },
+    {
+      "name": "customer_and_wallet_checkpoint_before_screens",
+      "at": "2026-10-13T06:22:21.783Z",
+      "consumerId": "rumble-wallet-reference-4593",
+      "customerRevision": 9,
+      "finalRunId": "run-mv6an1ej-6be8e6141cbd",
+      "finalEditionId": "edition-97fb86edb6fa4fdc59bb082426460b45",
+      "walletSha256": "68273512dc3d18886c291db4e783768185d68f5f3f4fd547b37d7e7e0ede7483"
+    },
+    {
+      "name": "browser_customer_book_collection_review_and_wallet",
+      "at": "2026-10-13T06:22:24.378Z",
+      "customerId": "rumble-wallet-reference-4593",
+      "revision": 9,
+      "editions": 4,
+      "sourceRuns": 9,
+      "finalEditionId": "edition-97fb86edb6fa4fdc59bb082426460b45",
+      "finalTotals": {
+        "currency": "USD",
+        "positions": 4,
+        "valuedPositions": 4,
+        "unavailablePositions": 0,
+        "complete": true,
+        "pricedSubtotal": "3433488.48159080132517383340231482746201",
+        "total": "3433488.48159080132517383340231482746201"
+      },
+      "walletReceipts": 2,
+      "screens": 5
+    },
+    {
+      "name": "delivered_source_same_customer_reopen_export",
+      "at": "2026-10-13T06:22:26.383Z",
+      "workspaceId": "workspace-a7132ccfd3667385c848c02b",
+      "files": 83,
+      "bytes": 600540,
+      "feedSha256": "5a41836a79dccfa3e6e6336dd4f02fbafe63c11a9342ce433941df512759cdd6",
+      "walletReplay": "replayed"
+    }
+  ],
+  "finalConsumer": {
+    "consumerId": "rumble-wallet-reference-4593",
+    "revision": 9,
+    "bookRevision": 2,
+    "editions": [
+      {
+        "id": "edition-0a4adc9306641fe07c81c20f158bf70b",
+        "sha256": "4b98691cc2a30eb3112bb71ab0546979f67c26796f92c7f1c8c54f52a3a00f27",
+        "name": "Original delivered production collection",
+        "createdAt": "2026-10-13T01:03:34.838Z",
+        "bookRevision": 1,
+        "sourceRunId": "run-mv478w30-0cb5c9620d28",
+        "currency": "USD",
+        "totals": {
+          "currency": "USD",
+          "positions": 3,
+          "valuedPositions": 3,
+          "unavailablePositions": 0,
+          "complete": true,
+          "pricedSubtotal": "3485661.18940353526466660623187602076158",
+          "total": "3485661.18940353526466660623187602076158"
+        },
+        "previousEditionId": null
+      },
+      {
+        "id": "edition-7d1b8cd4a2334a7546405e60c9ba6d1a",
+        "sha256": "9eadd07741a43848ec02e28b34f94af069ae67c96ab25accf16ab56ab05f5248",
+        "name": "Later production prices / same customer book",
+        "createdAt": "2026-10-13T01:03:46.228Z",
+        "bookRevision": 1,
+        "sourceRunId": "run-mv5z9bpt-14b8c0d127b0",
+        "currency": "USD",
+        "totals": {
+          "currency": "USD",
+          "positions": 3,
+          "valuedPositions": 3,
+          "unavailablePositions": 0,
+          "complete": true,
+          "pricedSubtotal": "3353305.42884899356742277090543992705877",
+          "total": "3353305.42884899356742277090543992705877"
+        },
+        "previousEditionId": "edition-0a4adc9306641fe07c81c20f158bf70b"
+      },
+      {
+        "id": "edition-ae64aac0476559d435c5b2238030aeb6",
+        "sha256": "f7361a2d5b39a2c205d5b0f153a1dfa94051b522499b62dba717d05a8fa89d86",
+        "name": "Expanded book / prior source coverage",
+        "createdAt": "2026-10-13T06:22:10.014Z",
+        "bookRevision": 2,
+        "sourceRunId": "run-mv5z9bpt-14b8c0d127b0",
+        "currency": "USD",
+        "totals": {
+          "currency": "USD",
+          "positions": 4,
+          "valuedPositions": 3,
+          "unavailablePositions": 1,
+          "complete": false,
+          "pricedSubtotal": "3353306.74713050400681277109376585712154",
+          "total": null
+        },
+        "previousEditionId": "edition-7d1b8cd4a2334a7546405e60c9ba6d1a"
+      },
+      {
+        "id": "edition-97fb86edb6fa4fdc59bb082426460b45",
+        "sha256": "a98699340d2e1bf1cbba1e7f60e16891162b871aea47bcc28d6ba10e0e4b9747",
+        "name": "Expanded customer book / complete later source",
+        "createdAt": "2026-10-13T06:22:21.103Z",
+        "bookRevision": 2,
+        "sourceRunId": "run-mv6an1ej-6be8e6141cbd",
+        "currency": "USD",
+        "totals": {
+          "currency": "USD",
+          "positions": 4,
+          "valuedPositions": 4,
+          "unavailablePositions": 0,
+          "complete": true,
+          "pricedSubtotal": "3433488.48159080132517383340231482746201",
+          "total": "3433488.48159080132517383340231482746201"
+        },
+        "previousEditionId": "edition-ae64aac0476559d435c5b2238030aeb6"
+      }
+    ],
+    "finalFeedSha256": "5a41836a79dccfa3e6e6336dd4f02fbafe63c11a9342ce433941df512759cdd6",
+    "walletSha256": "68273512dc3d18886c291db4e783768185d68f5f3f4fd547b37d7e7e0ede7483",
+    "finalSourceTimes": [
+      {
+        "asset": "native",
+        "asOf": "2026-10-13T05:43:00Z",
+        "updatedAt": "2026-10-13T06:22:00Z",
+        "priceStatus": "carried",
+        "unitPrice": "0.19376109264683",
+        "value": "243.58191359364616375019376109264683"
+      },
+      {
+        "asset": "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+        "asOf": "2026-10-13T06:15:00Z",
+        "updatedAt": "2026-10-13T06:22:00Z",
+        "priceStatus": "priced",
+        "unitPrice": "1.00051568397487",
+        "value": "2501.289210037226568397487"
+      },
+      {
+        "asset": "CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN",
+        "asOf": "2026-10-13T03:45:00Z",
+        "updatedAt": "2026-10-13T06:22:00Z",
+        "priceStatus": "priced",
+        "unitPrice": "81684.30418399252055",
+        "value": "3430740.77572768586318168430418399252055"
+      },
+      {
+        "asset": "CB7OOP3VSAWBZOOTOG2YEFANVU45GVWYUUM5HI32DKLHVKUDOFVQ37XP",
+        "asOf": "2026-10-13T05:23:00Z",
+        "updatedAt": "2026-10-13T06:22:00Z",
+        "priceStatus": "carried",
+        "unitPrice": "1.41736974229463",
+        "value": "2.83473948458926000141736974229463"
+      }
+    ]
+  },
+  "browser": {
+    "screens": 5,
+    "pageErrors": [],
+    "httpErrors": [],
+    "phone": {
+      "viewport": 390,
+      "document": 390,
+      "cards": 6
+    }
+  },
+  "independentDecimalPositionChecks": 13,
+  "originalDelivery": {
+    "filename": "Rumble_Fish_Customer_Values_Complete_Delivery.zip",
+    "libraryFileId": "libfile_597b985bc1248191a6a58ee2862d362c",
+    "fileId": "file_00000000da3081f5aa46a9be2c2ec12e",
+    "version": 7,
+    "bytes": 6716369,
+    "sha256": "6c95dd68d4e9653ce58010aba64bb36f7748be1dba83ea223b8fc8876d855764"
+  },
+  "source": {
+    "core": {
+      "repository": "woahwhattheheck/commons",
+      "commit": "1d200771562dd0a39475290b6c0b1a2a0e0c2b3e"
+    },
+    "installed": {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "a0658859d26e7bb1641badcd7ea1518dc7b58ab0"
+    },
+    "directoryCorrection": {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "95ba7bd911a688448fbcc7c27aca704ed57fe75d"
+    },
+    "completePacket": {
+      "bytes": 447585,
+      "sha256": "7e2818d8cbe7c20c6fe815fc152ae032b485a347159a78fadcb3e194e54191df"
+    }
+  },
+  "coordination": {
+    "customer": "https://tokenjunkielabs.slack.com/archives/C0BTTA66TK3/p1791874365750249?thread_ts=1791719171.760769",
+    "installation": "https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791874903260919?thread_ts=1791730668.369819"
+  },
+  "installationContinuation": {
+    "state": "original-native-continuation-retained",
+    "programmeBytes": 645775,
+    "programmeSha256": "c531978010ffe9d866fc114be27166bfab8b29029a8e96c3bc6268f257e54648",
+    "page": "https://chatgpt.com/space/page_c9fe654aeaf0819183a67ae5bc6b7c46"
+  }
+}
