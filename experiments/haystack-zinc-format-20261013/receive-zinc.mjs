@@ -53,7 +53,7 @@ try{
   await writeFile(hostFile,stringifyJson({schema:'stellar-forge.haystack-workspace-host.v1',workspaces:{turnover:{
     workspaceId:initial.workspaceId,connectionFile:join(directory,'connection.json'),inputs:{charlie:{
       kind:'source',path:join(root,'charlie.zinc'),sha256:sha256(derived),format:'zinc',name:'charlie.zinc'
-    }}}})+'\n',{mode:0o600});
+    }}}}})+'\n',{mode:0o600});
   const config=await readHaystackWorkspaceConfiguration(hostFile);
   assert.equal(config.workspaces.turnover.inputs.charlie.format,'zinc');
   merchant=new MerchantHaystackWorkspaces({haystackWorkspaces:config});
