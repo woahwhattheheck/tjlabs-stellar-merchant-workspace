@@ -12,6 +12,9 @@ import json
 import os
 from pathlib import Path
 import stat
+import shutil
+import sqlite3
+import tempfile
 import subprocess
 import sys
 import uuid
@@ -23,6 +26,7 @@ from humanitarian_workspace import (
     HumanitarianWorkspace, InputError, strict_json, canonical_json, MAX_SOURCE,
 )
 from humanitarian_reference import normalized_name
+from humanitarian_handover import _archive, _unpack, _verify_retained_history
 
 OPERATION = "HUMANITARIAN-COMPLETE-RECEIVING-7108-20261013"
 REVIEW = "humanitarian-receiving-example"
@@ -257,6 +261,208 @@ def expected_failure(case, name, operation):
         retained_json(case / "observations" / (name + ".json"), actual)
         return actual
     raise InputError("The original conflicting request unexpectedly changed accepted state")
+
+
+
+def domain_snapshot(ws):
+    """Read the entire destination domain, including immutable objects/reports."""
+    queries = {
+        "human_objects": "SELECT kind,id,body,created,summary FROM human_objects ORDER BY kind,id",
+        "human_reports": "SELECT id,body FROM human_reports ORDER BY id",
+        "human_reviews": "SELECT id,revision,request_id,body FROM human_reviews ORDER BY id,revision",
+        "human_requests": "SELECT id,kind,input_sha256,input,result FROM human_requests ORDER BY id",
+    }
+    return {name: [list(row) for row in ws.db.execute(sql)] for name, sql in queries.items()}
+
+
+def native_database_rows(path):
+    db = sqlite3.connect(Path(path).as_uri() + "?mode=ro", uri=True)
+    try:
+        db.execute("PRAGMA trusted_schema=OFF")
+        check(list(db.execute("PRAGMA integrity_check")) == [("ok",)],
+              "The rejection exercise requires a valid original SQLite database")
+        schema = [list(row) for row in db.execute(
+            "SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY type,name,tbl_name")]
+        rows = [list(row) for row in db.execute(
+            "SELECT ordinal,k,cells,values_json FROM rows ORDER BY ordinal")]
+        return {"schema": schema, "rows": rows}
+    finally:
+        db.close()
+
+
+def rejection_change(original, kind):
+    """Choose one actual retained value; every mutation input/result stays exact."""
+    catalog = strict_json((original / "catalog.json").read_bytes())
+    check(catalog["review"] == REVIEW and catalog["revision"] == 2 and
+          [row["revision"] for row in catalog["reviews"]] == [1, 2],
+          "Rejection exercises must use the same complete r1/r2 source packet")
+    if kind == "later-report-asset":
+        name = "report/outputs/edition_1_donor.csv"
+        rows = list(csv.reader(io.StringIO((original / name).read_text(encoding="utf-8"), newline="")))
+        check(len(rows) > 1 and rows[0].count("People") == 1,
+              "The complete later report requires its original People total")
+        column = rows[0].index("People")
+        before = rows[1][column]
+        check(before.isdecimal(), "The selected engineering People total must be an integer")
+        rows[1][column] = str(int(before) + 1)
+        stream = io.StringIO(newline="")
+        csv.writer(stream, lineterminator="\n").writerows(rows)
+        return {"member": name, "revision": 2, "row": 1, "column": column,
+                "before": before, "after": rows[1][column]}, {name: stream.getvalue().encode("utf-8")}
+    check(kind == "native-sqlite-row", "Choose one of the two original rejection exercises")
+    build_id = catalog["reviews"][-1]["editions"][0]["build"]
+    name = "native/" + build_id + "/rows.sqlite"
+    database = native_database_rows(original / name)
+    check(database["rows"], "The actual native build must contain original rows")
+    before = database["rows"][0]
+    cells, values = strict_json(before[2]), strict_json(before[3])
+    check(isinstance(cells, list) and isinstance(values, list) and cells and
+          len(cells) == len(values) and type(values[0]) is int and cells[0] == str(values[0]),
+          "The selected native row must retain its original source-row cells and typed values")
+    values[0] += 1000000
+    cells[0] = str(values[0])
+    after = [before[0], before[1], encoded(cells).decode(), encoded(values).decode()]
+    return {"member": name, "build": build_id, "ordinal": before[0],
+            "before": before, "after": after, "originalRows": len(database["rows"]),
+            "originalLogicalSha256": digest(encoded(database))}, {}
+
+
+def validate_rejection_packet(original, changed, original_manifest, changed_manifest, kind, mutation, replacement):
+    """Prove hashes/membership are valid and exactly the selected value differs."""
+    original_catalog = strict_json((original / "catalog.json").read_bytes())
+    expected_catalog = copy.deepcopy(original_catalog)
+    if kind == "later-report-asset":
+        changed_members = {mutation["member"]}
+        check((changed / mutation["member"]).read_bytes() == replacement[mutation["member"]],
+              "The rejected report must differ only by the selected one-person total")
+        expected_error = "A complete report asset differs from its reconstructed review: " + mutation["member"]
+    else:
+        prefix = "native/" + mutation["build"] + "/"
+        changed_members = {mutation["member"], "catalog.json", prefix + "review.json"}
+        before = native_database_rows(original / mutation["member"])
+        actual = native_database_rows(changed / mutation["member"])
+        expected_rows = copy.deepcopy(before["rows"])
+        check(expected_rows[0] == mutation["before"], "Original native row selection changed")
+        expected_rows[0] = mutation["after"]
+        check(actual["schema"] == before["schema"] and actual["rows"] == expected_rows,
+              "The rejected native database must change exactly one row and preserve its full schema")
+        matches = [row for row in expected_catalog["builds"] if row["id"] == mutation["build"]]
+        check(len(matches) == 1, "The original selected native build must be unique")
+        matches[0]["files"]["rows.sqlite"].update(identity(changed / mutation["member"]))
+        check((changed / (prefix + "review.json")).read_bytes() == encoded(matches[0]),
+              "The rejection packet must declare the full changed native database descriptor")
+        expected_error = "Received complete native database records differs from its original complete result"
+    check((changed / "catalog.json").read_bytes() == encoded(expected_catalog),
+          "Rejection exercises must preserve every original source, plan, object, review and request")
+    before_files = {row["path"]: row for row in original_manifest["files"]}
+    after_files = {row["path"]: row for row in changed_manifest["files"]}
+    check(set(before_files) == set(after_files) and
+          {name for name in before_files if before_files[name] != after_files[name]} == changed_members,
+          "The rejected packet changed an unselected original member")
+    for name in before_files.keys() - changed_members:
+        check(identity(original / name) == identity(changed / name),
+              "An unrelated original packet member changed")
+    check({k: v for k, v in changed_manifest.items() if k not in {"files", "expandedBytes"}} ==
+          {k: v for k, v in original_manifest.items() if k not in {"files", "expandedBytes"}},
+          "The rejected packet must retain the complete original review/report selection")
+    # This exercises the real catalog and full history checks before dispatch:
+    # a checksum, missing history or mismatched request cannot satisfy the test.
+    _verify_retained_history(changed, expected_catalog, changed_manifest)
+    return expected_error
+
+
+def rejected_packet(case, source, kind):
+    directory = private_directory(case / "rejections" / kind)
+    packet = directory / "Rejected_Engineering_Input.zip"
+    selected = {"schema": "stellar-forge.humanitarian-rejection-input.v1", "operation": OPERATION,
+                "kind": kind, "originalPacket": {"path": str(source), **identity(source)},
+                "purpose": "Deliberately altered engineering input; never an accepted customer review"}
+    retained_json(directory / "selection.json", selected)
+    # Incomplete construction stays in a unique private scratch directory. The
+    # existing archive publisher holds its original output lease and publishes
+    # only a complete ZIP; a retry verifies the retained packet before reuse.
+    with tempfile.TemporaryDirectory(prefix=".construct-", dir=directory) as work:
+        temporary = Path(work)
+        original = temporary / "original"
+        manifest = _unpack(source, original)
+        mutation, replacement = rejection_change(original, kind)
+        if not packet.exists():
+            changed = temporary / "changed"
+            shutil.copytree(original, changed)
+            if kind == "later-report-asset":
+                (changed / mutation["member"]).write_bytes(replacement[mutation["member"]])
+            else:
+                db = sqlite3.connect(changed / mutation["member"])
+                try:
+                    db.execute("PRAGMA trusted_schema=OFF")
+                    cursor = db.execute("UPDATE rows SET cells=?,values_json=? WHERE ordinal=?",
+                                        (mutation["after"][2], mutation["after"][3], mutation["ordinal"]))
+                    check(cursor.rowcount == 1, "The native rejection must update exactly one original row")
+                    db.commit()
+                finally:
+                    db.close()
+                catalog = strict_json((changed / "catalog.json").read_bytes())
+                build = next(row for row in catalog["builds"] if row["id"] == mutation["build"])
+                build["files"]["rows.sqlite"].update(identity(changed / mutation["member"]))
+                (changed / "catalog.json").write_bytes(encoded(catalog))
+                (changed / ("native/" + build["id"] + "/review.json")).write_bytes(encoded(build))
+            _archive(changed, packet, {k: v for k, v in manifest.items() if k not in {"files", "expandedBytes"}})
+        verified = temporary / "verified"
+        changed_manifest = _unpack(packet, verified)
+        error = validate_rejection_packet(original, verified, manifest, changed_manifest, kind, mutation, replacement)
+        check(identity(source) == {k: selected["originalPacket"][k] for k in ("bytes", "sha256")},
+              "Preparing a rejection exercise changed its valid original source packet")
+        details = {**selected, "mutation": mutation, "expectedError": error,
+                   "packet": {"path": str(packet), **identity(packet)},
+                   "originalManifestSha256": digest(encoded(manifest)),
+                   "rejectedManifestSha256": digest(encoded(changed_manifest)),
+                   "fullMemberCount": len(changed_manifest["files"]),
+                   "originalRequestsSha256": digest(encoded(strict_json((original / "catalog.json").read_bytes())["requests"])),
+                   "byteValidation": "Original unpack and full retained-history validation succeeded"}
+        retained_json(directory / "packet.json", details)
+        retained_json(directory / "members.json", verify_zip(packet))
+        return details
+
+
+def receiving_rejections(case, source):
+    results = []
+    for kind in ("later-report-asset", "native-sqlite-row"):
+        selected = rejected_packet(case, source, kind)
+        root = case / "rejection-workspaces" / kind
+        private_directory(root.parent)
+        output = case / "rejections" / kind
+        with HumanitarianWorkspace(root, create=not root.exists()) as receiver:
+            before = domain_snapshot(receiver)
+            check(all(not rows for rows in before.values()),
+                  "A rejected engineering packet previously leaked destination domain history")
+            retained_json(output / "before.json", before)
+            failure = None
+            try:
+                receiver.receive_review(Path(selected["packet"]["path"]))
+            except InputError as error:
+                failure = {"type": type(error).__name__, "message": str(error)}
+            after = domain_snapshot(receiver)
+            retained_json(output / "after.json", after)
+            check(after == before,
+                  "A rejected complete packet published partial destination reviews, requests, reports or objects")
+            check(failure is not None and failure["message"] == selected["expectedError"],
+                  "The rejection must reach its selected semantic check after valid hashes and original history")
+        # Read through a new original Workspace so an uncommitted connection
+        # view cannot conceal a destination-journal change.
+        with HumanitarianWorkspace(root) as reopened:
+            cold = domain_snapshot(reopened)
+            check(cold == before, "Cold reopen found domain history from a rejected complete packet")
+        retained_json(output / "cold-reopen.json", cold)
+        result = {"schema": "stellar-forge.humanitarian-receiving-rejection.v1",
+                  "operation": OPERATION, "kind": kind, "status": "REJECTED_WITHOUT_DOMAIN_CHANGE",
+                  "originalPacket": selected["originalPacket"], "packet": selected["packet"],
+                  "error": failure, "beforeSha256": digest(encoded(before)),
+                  "afterSha256": digest(encoded(after)), "coldSha256": digest(encoded(cold)),
+                  "originalRequestsSha256": selected["originalRequestsSha256"],
+                  "workspace": str(root)}
+        retained_json(output / "result.json", result)
+        results.append(result)
+    return results
 
 
 def receive_prefix(ws, case, archive, source_history, source_requests):
@@ -499,6 +705,7 @@ def operate(args, case, lease):
             ws.export_review(REVIEW, case / "exports" / "Humanitarian_Complete_Receiving.zip", 2))
         check(ws.export_review(REVIEW, Path(full_export["path"]), 2) == full_export,
               "Repeat full export changed the original descriptor or completed bytes")
+    rejections = receiving_rejections(case, Path(full_export["path"]))
     receiver_root = case / "receiver"
     with HumanitarianWorkspace(receiver_root, create=not receiver_root.exists()) as receiver:
         receive_prefix(receiver, case, Path(full_export["path"]), source_history["revisions"], request_rows)
@@ -530,7 +737,7 @@ def operate(args, case, lease):
     cli_history = cli_read(case, "recipient-history", ["--workspace", str(receiver_root), "history", "--id", REVIEW], lease)
     check(cli_history["revisions"][-1] == r3, "The actual CLI did not reopen the recipient practice revision")
     files = []
-    for root in ("originals", "generated", "requests", "observations", "cli", "exports"):
+    for root in ("originals", "generated", "requests", "observations", "cli", "exports", "rejections"):
         for path in sorted((case / root).rglob("*")):
             if path.is_file() and not any(part.startswith(".") for part in path.relative_to(case).parts) and "-attempt-" not in path.name:
                 files.append({"path": path.relative_to(case).as_posix(), **identity(path)})
@@ -542,10 +749,12 @@ def operate(args, case, lease):
         "counts": r2["counts"], "comparison": expected_comparison,
         "exactDecimalExample": {"inputs": ["0.1", "0.2"], "sum": "0.3", "count": 2, "currency": "USD"},
         "sourceWorkspace": str(ws_root), "receiverWorkspace": str(receiver_root),
+        "receivingRejections": rejections,
         "reportArchive": report_export, "receivingArchive": full_export, "recipientArchive": recipient_export,
         "checks": ["original issue coverage", "named correction", "full output paging", "full comparison paging",
                    "original Dataset queries", "exact request replay", "conflicting request refusal",
-                   "complete report and history exports", "independent native receiving",
+                   "complete report and history exports", "rehashed later report asset rejection without domain publication",
+                   "rehashed native SQLite row rejection without domain publication", "independent native receiving",
                    "later recipient revision preservation", "source and recipient cold reopen", "actual CLI reopen"],
         "files": sorted(files, key=lambda row: row["path"]),
     }
