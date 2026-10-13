@@ -398,3 +398,11 @@ Use the original 4BF5/Actions BLS case for its actual native and browser result.
 ## Independent product source contributions
 
 [Product registration and complete receiving](GRANT_PRODUCT_SOURCES.md) describes the default `grant-products/*.json` declarations, optional additional received files, original source-ID continuity and exact measured-edition binding. The existing `grant-compose` command receives these definitions before its current public projection and writes the same four reader outputs. A product author can maintain its own complete source declaration alongside the accepted H2 without adding another block to the shared customer projector.
+
+## IATI customer operating procedures
+
+The maintained customer projection carries the complete IATI operating-procedure introduction into the existing IATI chapter and concise customer, product and funded-installation paragraphs into the original answers. A complete section supplied by the manuscript owner takes precedence. The chapter joins the exact saved document case to the existing Operating Plans application, full source/catalog/plan history, Markdown and HTML, and original native ZIP receiving. Its five source registrations select the merged guide, native reader, pure procedure model, complete installed command and full IATI operator guide at `0110a7fde307112abee5be63a06291855aa72599`.
+
+Continue using the normal `grant-compose` command with the complete current application, companion, reader and index. Omit `--manuscript` when receiving these maintained additions into the already saved cumulative reader. Subsequent full-manuscript composition preserves this introduction when the original customer chapter has not yet received it; a manuscript-owned version is retained. The existing nine answer identities, all other customer chapters and six package/capacity/cash assumptions remain part of the same composition.
+
+Customer procedure creation and editing operate the exact case through the original applications. The separate original FCDO native receiving programme supplies its own dated result; follow its existing case and worker operation when updating demonstration results. The operating-procedure source and chapter describe the implemented customer capability and complete receiving sequence.
