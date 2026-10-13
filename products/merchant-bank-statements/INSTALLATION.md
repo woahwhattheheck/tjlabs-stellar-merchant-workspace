@@ -260,3 +260,9 @@ The maintained source contracts are:
 - [Original bank client and request types](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/client.d.ts).
 - [Original bank source formats](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_FORMATS.md).
 - [Complete financial operating workflow](../merchant-workspace/FINANCIAL_OPERATIONS.md).
+
+## Whole original-file preparation
+
+The installed Bank navigation includes **Statement collections**. The source-owned asset registry includes its original-file model and industrial collection desk. Open several complete original files, preserve a separate interpretation for each, and use the existing financial source editor for their account/statement intake. The full collection can be downloaded and reopened independently.
+
+The native entry point is `starforge bank-statements collection help`. Its `prepare`, `inspect` and `extract` commands receive a complete explicit file manifest, run the original source parser across included files, and recover each exact original in a private create-only directory. See the [complete guide](../../stellar/scf-starforge-20261009/merchant-settlement-accounting/receivables/bank-statements/SOURCE_COLLECTIONS.md) for manifest fields and operating commands. The selected bank package already includes the original source parser, domain and complete source-owned asset tree used by this workflow.
