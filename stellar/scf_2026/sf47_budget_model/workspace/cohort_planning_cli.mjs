@@ -13,7 +13,7 @@ import {
 import { seedCohortPlanFromCalendar } from "./cohort_planning_calendar.mjs";
 import { COHORT_DELIVERY_SCHEDULE_SCHEMA, seedCohortDeliveryScheduling, scheduleCohortDelivery, reopenCohortDeliverySchedule, exportCohortDeliveryScheduleCsv } from "./cohort_planning_scheduling.mjs";
 
-import {COHORT_RECORDED_COST_PLAN_SCHEMA,seedCohortRecordedCostPlan,planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv} from "./cohort_delivery_comparison.mjs";
+import {COHORT_RECORDED_COST_PLAN_SCHEMA,seedCohortRecordedCostPlan,planCohortFromRecordedCosts,reopenCohortRecordedCostPlan,exportCohortRecordedCostPlanCsv,inspectCohortTaskMeasurements,bindCohortRecordedCostMeasurement} from "./cohort_delivery_comparison.mjs";
 
 const EDITION_SCHEMA = "stellar-forge.sf47-cohort-plan-edition.v1";
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
@@ -33,6 +33,8 @@ const HELP = [
   "",
   "  node cohort_planning_cli.mjs recorded-cost-seed --recorded delivery.json --baseline future-plan.json [--output choices.json]",
   "  node cohort_planning_cli.mjs recorded-cost-plan --recorded delivery.json --baseline future-plan.json --choices choices.json [--output cost-plan.json]",
+  "  node cohort_planning_cli.mjs task-measurements --input saved-task-response.json [--output measurements.json]",
+  "  node cohort_planning_cli.mjs recorded-cost-bind --choices choices.json --allocation ID --measurement saved-task-response.json --kind INSTALLED|FOLLOWUP [--observation ID] --service-basis TEXT [--output bound-choices.json]",
   "  node cohort_planning_cli.mjs recorded-cost-reopen --input cost-plan.json [--output verified-cost-plan.json]",
   "",
   "Recorded-cost planning retains complete originals and explicit measured useful outputs; existing funding and purchased prices stay unchanged.",
@@ -83,6 +85,8 @@ function parse(argv) {
     evaluate: ["input", "native-seed", "output"],
     csv: ["input", "output"],
     compare: ["baseline", "candidate", "name", "note", "output"],
+    "task-measurements": ["input","output"],
+    "recorded-cost-bind": ["choices","allocation","measurement","kind","observation","service-basis","output"],
     "recorded-cost-seed": ["recorded","baseline","output"],
     "recorded-cost-plan": ["recorded","baseline","choices","output"],
     "recorded-cost-reopen": ["input","output"],
@@ -99,11 +103,11 @@ function parse(argv) {
     if (i + 1 >= argv.length || argv[i + 1].startsWith("--")) fail("INVALID_ARGUMENT", flag + " requires one value.", flag);
     options[key] = argv[i + 1];
   }
-  const required = command === "recorded-cost-plan" ? ["recorded","baseline","choices"] : command === "recorded-cost-seed" ? ["recorded","baseline"] : command === "calendar" ? ["native-seed", "calendar"] : command === "seed" ? ["native-seed"] : command === "compare" ? ["baseline", "candidate"] : ["input"];
+  const required = command === "recorded-cost-bind" ? ["choices","allocation","measurement","kind","service-basis"] : command === "recorded-cost-plan" ? ["recorded","baseline","choices"] : command === "recorded-cost-seed" ? ["recorded","baseline"] : command === "calendar" ? ["native-seed", "calendar"] : command === "seed" ? ["native-seed"] : command === "compare" ? ["baseline", "candidate"] : ["input"];
   for (const key of required) if (!options[key]) fail("INVALID_ARGUMENT", "--" + key + " is required.", key);
   if (command === "compare" && options.baseline === "-" && options.candidate === "-")
     fail("INVALID_ARGUMENT", "Read at most one comparison source from stdin; use a file for the other.", "input");
-  if (["recorded","baseline","choices"].filter(key=>options[key]==="-").length>1)fail("INVALID_ARGUMENT","Read at most one complete recorded-cost input from stdin.","input");
+  if (["recorded","baseline","choices","measurement"].filter(key=>options[key]==="-").length>1)fail("INVALID_ARGUMENT","Read at most one complete recorded-cost input from stdin.","input");
   if (options.constraints === "-") fail("INVALID_ARGUMENT", "Use a separate file for scheduling constraints.", "constraints");
   if (options["native-seed"] === "-") fail("INVALID_ARGUMENT", "Use a separate file for the native seed.", "native-seed");
   return { command, options };
@@ -188,6 +192,16 @@ async function main(argv) {
   } else if (command === "recorded-cost-seed" || command === "recorded-cost-plan") {
     const recorded=await readJson(options.recorded),baseline=await readJson(options.baseline);
     result=command==="recorded-cost-seed"?seedCohortRecordedCostPlan(recorded,baseline):planCohortFromRecordedCosts(recorded,baseline,await readJson(options.choices));
+  } else if (command === "task-measurements") {
+    result=inspectCohortTaskMeasurements(await readJson(options.input));
+  } else if (command === "recorded-cost-bind") {
+    result=await readJson(options.choices);
+    if(!Array.isArray(result.allocations))fail("INVALID_ARGUMENT","Open the complete recorded-cost choices.","choices");
+    const found=result.allocations.filter(row=>row.id===options.allocation);
+    if(found.length!==1)fail("INVALID_ARGUMENT","Select one original allocation identity.","allocation");
+    const next=bindCohortRecordedCostMeasurement(found[0],await readJson(options.measurement),
+      {kind:options.kind,observationId:options.observation||"",serviceBasis:options["service-basis"]});
+    result.allocations=result.allocations.map(row=>row.id===options.allocation?next:row);
   } else if (command === "recorded-cost-reopen") {
     result=reopenCohortRecordedCostPlan(await readJson(options.input));
   } else if (command === "evaluate") {

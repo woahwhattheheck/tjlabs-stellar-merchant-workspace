@@ -10,6 +10,8 @@ export interface CohortPlanningWorkingState {
   report: Record<string,WorkingJson>|null;
   reportInput: string;
   rowDrafts: Record<string,WorkingJson>;
+  recordedCostMeasurementEditor?:{sourceId:string;source:import('./cohort_delivery_comparison.mjs').CohortTaskMeasurementOriginal|null;
+    kind:'INSTALLED'|'FOLLOWUP';observationId:string;serviceBasis:string};
   tranche: 2|3;
   tab: string;
   editor: Record<string,WorkingJson>|null;
