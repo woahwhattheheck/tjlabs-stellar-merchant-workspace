@@ -105,6 +105,14 @@ equipped producer opens and views the actual screens and downloaded file as part
 of the existing customer receiving operation.
 
 
+#### Reopen a restored workspace as its history grows
+
+A restored customer workspace keeps its original operations, installed-runtime identities, managed homes and Application revisions. The normal overview now reads and validates that receiving identity once for each refresh, then uses the same indexed original selections throughout the displayed history. A large retained project therefore avoids reopening and rescanning the complete receiving record for every row.
+
+Every later refresh opens the current receiving marker again. Applications still hash their complete current head bytes when distinguishing an archived revision from a reviewed successor, and live process and lease observations continue through the original reader. Dispatch, stop, recovery and receiving operations independently check the current records through their existing writers. This gives operators a consistent view while retaining the original histories and current-host review behavior.
+
+The complete installed browser, API and CLI use these same source functions. The original receiving course retains the actual restored-history identities and current runtime bindings while opening the same complete operation, downloads and desktop/phone controls. Its source and guide remain part of the existing customer handover and saved application.
+
 #### Complete maintained source
 
 - [Complete original application files and continuing customer workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/18434e93edd99b5bd0ed7bdf19628112c17e483d/stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUTS.md)
@@ -134,7 +142,7 @@ of the existing customer receiving operation.
 
 
 - [Bounded unchanged original operation records with fresh opened-file admission](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/operation-records.mjs)
-- [Original Runtime model, complete status and compact history API](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs)
+- [Original Runtime model, complete status and compact history API](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/abb216a6ae654471a03028961e64bc4313f44832/stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs)
 - [Authenticated original history/status and installed browser routes](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/server.mjs)
 - [Shared original operation grouping, search and cursor selection](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operation-history-model.mjs)
 - [Desktop and phone history, complete selected record and same-workspace reopening](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/operation-history.mjs)
@@ -142,7 +150,11 @@ of the existing customer receiving operation.
 - [Installed operation history, complete status and original Runtime commands](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/cli.mjs)
 - [Complete installed Runtime browser source registration](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/browser-assets.json)
 - [Readable original Runtime history and full details at desktop and narrow widths](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/public/style.css)
-- [Same native workspace history, complete operation download and desktop/phone receiving](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OPERATION_HISTORY_RECEIVE.mjs)
+- [Same native workspace history, complete operation download and desktop/phone receiving](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/abb216a6ae654471a03028961e64bc4313f44832/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/OPERATION_HISTORY_RECEIVE.mjs)
 - [Original companion folder through native Applications, browser, CLI and backup/restore](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs)
-- [Whole original operation search, read, download, recovery and receiving workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/OPERATION_HISTORY.md)
+- [Whole original operation search, read, download, recovery and receiving workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/abb216a6ae654471a03028961e64bc4313f44832/stellar/scf-starforge-20261009/distribution/runtime-workspace/OPERATION_HISTORY.md)
 - [Complete original Runtime product selection, installation and operating workflow](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/e07ef01647688b04fd4d9e433aa130fe8a03c73f/stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md)
+- [Validated restored-workspace identity, indexed original selections and fresh mutation guards](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/abb216a6ae654471a03028961e64bc4313f44832/stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs)
+- [Original live observation scheduling with one short-lived receiving context](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/abb216a6ae654471a03028961e64bc4313f44832/stellar/scf-starforge-20261009/distribution/runtime-workspace/operation-observations.mjs)
+- [Complete Application overview and history with current original head bytes](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/abb216a6ae654471a03028961e64bc4313f44832/stellar/scf-starforge-20261009/distribution/runtime-workspace/applications-core.mjs)
+- [Retained managed-home selection and current-host review projection](https://github.com/woahwhattheheck/public-commons-sprint-2026/blob/abb216a6ae654471a03028961e64bc4313f44832/stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-workspace.mjs)

@@ -49,6 +49,13 @@ const HELP = [
   '  workspace-download --directory PRIVATE_DIR --request EXPORT_UUID --out WHOLE_WORKSPACE.stwh',
   '  workspace-receive --directory PRIVATE_DIR --archive WHOLE_WORKSPACE.stwh --sha256 SHA --name CHILD_NAME --request UUID',
   '  workspace-received --directory PRIVATE_DIR',
+  "  return-capture --directory PRIVATE_DIR --name RECEIVED_NAME --expected-revision N --request UUID",
+  "  returns --directory PRIVATE_DIR",
+  "  return --directory PRIVATE_DIR --review UUID",
+  "  return-preview --directory PRIVATE_DIR --review UUID [--offset N] [--limit 1..100]",
+  "  return-review --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --choices CHOICES.json --note TEXT --request UUID",
+  "  return-apply --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --request UUID",
+  "  return-export --directory PRIVATE_DIR --review UUID [--revision N] --out FROZEN_REVIEW.json",
   '  identity --directory PRIVATE_DIR',
   '  source-identity [--source-directory INSTALLED_WORKSPACE_SOURCE_DIR]',
   '',
@@ -58,6 +65,9 @@ const HELP = [
   'The browser supplies version review, original publisher and complete original SF82 deployment controls.',
   'Workspace export closes owned publisher/release consoles and freezes all saved private work. Save draft edits first.',
   'Whole workspace receiving preserves original records in an independent named destination. It does not activate sellers or replay external actions.',
+  'Returned-review writes require --request UUID. Keep the exact choices file and preview SHA for retry/recovery.',
+  'Choices replace the whole saved map. Read every preview page, save partial decisions, then refresh preview before apply.',
+  'Apply changes the draft only. Run the original full-row preview and save-version/publication separately.',
   'Whole-workspace writes require an explicit retained --request UUID. Repeat the same command after uncertainty; do not substitute a new UUID.',
   '',
   'Managed serve additionally accepts --source-directory DIR --source-sha256 SHA --workspace-identity SHA',
@@ -67,13 +77,13 @@ const FLAGS = new Set(['--create','--startup-json']);
 const VALUES = new Set(['--directory','--target','--connections','--port','--connection','--base','--table','--view','--where',
   '--selection','--title','--expected-revision','--source','--packet','--capture','--draft','--draft-revision','--preview',
   '--reviewer','--note','--expected-selected-version','--version','--left','--right','--out','--request','--input',
-  '--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--where-file','--seller','--resource','--archive','--sha256','--name']);
+  '--from','--to','--file','--source-directory','--source-sha256','--workspace-identity','--connections-sha256','--where-file','--seller','--resource','--archive','--sha256','--name','--review','--expected-review-revision','--preview-sha256','--choices','--offset','--limit','--revision']);
 const COMMANDS = new Set(['init','serve','status','discover','capture','import-source','import','inspect-capture','attempt',
   'draft','preview','save','select','compare','export','export-capture','packet','operation','resume','publisher',
   'deployment-status','deployment-review','deployment-prepare','deployment-stage','deployment-package',
   'deployment-console','deployment-compare','deployment-file','identity','source-identity',
-  'workspace-export','workspace-exports','workspace-download','workspace-receive','workspace-received']);
-const PATHS = new Set(['--directory','--target','--connections','--selection','--source','--packet','--draft','--out','--input','--source-directory','--where-file','--archive']);
+  'workspace-export','workspace-exports','workspace-download','workspace-receive','workspace-received','return-capture','returns','return','return-preview','return-review','return-apply','return-export']);
+const PATHS = new Set(['--directory','--target','--connections','--selection','--source','--packet','--draft','--out','--input','--source-directory','--where-file','--archive','--choices']);
 function parse(argv) {
   const [command, ...args] = argv, options = {};
   if (!COMMANDS.has(command)) throw fault('COMMAND_REQUIRED', HELP);
@@ -154,6 +164,39 @@ async function saveWorkspaceArchive(file, descriptor) {
     try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT')issues.push(issue);}
     if(issues.length && !primary)throw issues[0];
   }
+}
+
+
+async function returnedChoicesFile(file) {
+  const value=await readJson(file,1024*1024);
+  if(!value||typeof value!=='object'||Array.isArray(value)||
+      Object.entries(value).some(([path,side])=>!path.startsWith('/')||!['local','returned','base'].includes(side)))
+    throw fault('SEATABLE_RETURN_CHOICES_INVALID','Use the complete JSON pointer to local/returned/base choice map, not a preview or local-download envelope.');
+  return value;
+}
+async function saveReturnedReviewFile(file,artifact) {
+  const content=artifact.bytes;
+  const size=content?.length;
+  if(!Number.isSafeInteger(size)||size<1)throw fault('SEATABLE_RETURN_EXPORT_INVALID');
+  const digest=createHash('sha256').update(content).digest('hex');
+  const result={file,bytes:size,sha256:digest};
+  await privateDirectory(dirname(file));
+  async function identical() {
+    let existing;
+    try{existing=await hashPrivate(file,size);}catch(issue){if(issue.code==='ENOENT')return false;throw issue;}
+    if(existing.bytes!==size||existing.hash!==digest)
+      throw fault('SEATABLE_RETURN_OUTPUT_CHANGED','The output already contains different bytes. Keep it and choose a new output for this review revision.');
+    return true;
+  }
+  if(await identical())return result;
+  const temporary=join(dirname(file),'.seatable-return-'+randomUUID()+'.partial');
+  let primary;
+  try{
+    await createFile(temporary,content);
+    try{await link(temporary,file);}catch(issue){if(issue.code!=='EEXIST'||!await identical())throw issue;}
+    await unlink(temporary);await syncDirectory(dirname(file));return result;
+  }catch(issue){primary=issue;throw issue;}
+  finally{try{await unlink(temporary);}catch(issue){if(issue.code!=='ENOENT'&&!primary)throw issue;}}
 }
 
 async function lifetime(service, ready, { compact = false } = {}) {
@@ -239,6 +282,23 @@ export async function main(argv = process.argv.slice(2)) {
       archiveFile:required(o,'--archive'),expectedSha256:required(o,'--sha256'),name:required(o,'--name'),requestId:required(o,'--request')
     });
     else if (command === 'workspace-received') result={received:await workspace.receivedWorkspaces()};
+    else if(command==='return-capture')result=await workspace.captureReturnedReview({
+      name:required(o,'--name'),expectedDraftRevision:number(required(o,'--expected-revision'),'--expected-revision'),requestId:required(o,'--request')});
+    else if(command==='returns')result={returns:await workspace.returnedReviews()};
+    else if(command==='return')result=await workspace.returnedReview(required(o,'--review'));
+    else if(command==='return-preview'){
+      const count=o['--limit']===undefined?100:number(o['--limit'],'--limit');
+      if(count<1||count>100)throw fault('SEATABLE_RETURN_LIMIT_INVALID','Use a limit from 1 through 100.');
+      result=await workspace.previewReturnedReview({reviewId:required(o,'--review'),offset:o['--offset']===undefined?0:number(o['--offset'],'--offset'),limit:count});
+    } else if(command==='return-review')result=await workspace.saveReturnedReview({
+      reviewId:required(o,'--review'),expectedReviewRevision:number(required(o,'--expected-review-revision'),'--expected-review-revision'),
+      previewSha256:required(o,'--preview-sha256'),choices:await returnedChoicesFile(required(o,'--choices')),
+      note:required(o,'--note'),requestId:required(o,'--request')});
+    else if(command==='return-apply')result=await workspace.applyReturnedReview({
+      reviewId:required(o,'--review'),expectedReviewRevision:number(required(o,'--expected-review-revision'),'--expected-review-revision'),
+      previewSha256:required(o,'--preview-sha256'),requestId:required(o,'--request')});
+    else if(command==='return-export')result=await saveReturnedReviewFile(required(o,'--out'),await workspace.exportReturnedReview({
+      reviewId:required(o,'--review'),...(o['--revision']===undefined?{}:{revision:number(o['--revision'],'--revision')})}));
     else if (command === 'init' || command === 'status') result = await workspace.status();
     else if (command === 'discover') result = await workspace.discover({ connectionAlias: required(o, '--connection'),
       baseId: required(o, '--base'), tableId: required(o, '--table'), viewId: o['--view'] ?? null, where: await filterOption(o), requestId: requestId() });

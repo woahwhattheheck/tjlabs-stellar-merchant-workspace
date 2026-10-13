@@ -312,7 +312,7 @@ def main():
     load_bundle(args.source_bundle, work, spec)
     directory(work/"tmp")
     env = {**os.environ, "TMPDIR": str(work/"tmp"), "PATH": str(P(runtime["node"]).parent)+os.pathsep+os.environ.get("PATH",""),
-           "ECONDB_RECEIVING_LEASE_FD": str(LEASE_FD)}
+           "ECONDB_RECEIVING_LEASE_FD": str(LEASE_FD), "ECONDB_RECEIVING_PYTHON": sys.executable}
     # This course does not read or use private Econdb/payment/mail credentials.
     env.pop("ECONDB_TOKEN", None)
     run([runtime["node"], str(work/"receiving-program/receive-econdb-native.mjs"), str(work)], work, "native", env)

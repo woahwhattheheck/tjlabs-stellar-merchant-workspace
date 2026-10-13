@@ -272,6 +272,20 @@ export class MerchantSeaTableWorkspaces {
       });
     }
     switch (name) {
+      case 'merchant_seatable_return_capture': return {workspace,native:view(await original.captureReturnedReview(input))};
+      case 'merchant_seatable_returns': return {workspace,returns:view(original.returnedReviews())};
+      case 'merchant_seatable_return': return {workspace,review:view(original.returnedReview(nativeId(input.reviewId)))};
+      case 'merchant_seatable_return_preview': return {workspace,native:view(await original.previewReturnedReview(input))};
+      case 'merchant_seatable_return_review': return {workspace,native:view(await original.saveReturnedReview(input))};
+      case 'merchant_seatable_return_apply': return {workspace,native:view(await original.applyReturnedReview(input))};
+      case 'merchant_seatable_return_read': {
+        const reviewId=nativeId(input.reviewId),revision=nativeVersion(input.revision);
+        const chunk=await this.#reads.read({scope:this.#scope(workspace),key:'returned-review:'+reviewId+':'+revision,
+          kind:'seatable-returned-review',directory:this.#definition(workspace).directory,readId:input.readId,
+          expectedSha256:input.expectedSha256,offset:input.offset,limit:input.limit,
+          load:async()=>{const file=original.exportReturnedReview({reviewId,revision});return{name:file.filename,type:file.mime,bytes:file.bytes};}});
+        return{workspace,reviewId,revision,...chunk};
+      }
       case 'merchant_seatable_workspace_export': return {workspace,native:view(await original.exportWorkspace(input))};
       case 'merchant_seatable_workspace_exports': return {workspace,exports:view(await original.workspaceExports())};
       case 'merchant_seatable_workspace_transfer': return {workspace,receipt:view(input.kind==='export'?await original.workspaceExportStatus(nativeId(input.requestId)):await original.workspaceReceiveStatus(nativeId(input.requestId)))};

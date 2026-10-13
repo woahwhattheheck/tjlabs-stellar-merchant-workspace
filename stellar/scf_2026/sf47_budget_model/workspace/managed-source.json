@@ -562,6 +562,7 @@
     "../../../scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/working-copies.mjs",
     "../../../scf-starforge-20261009/sf97-merchant-revenue-ops/tariffs/public/review.mjs",
     "../../../scf-starforge-20261009/sf97-merchant-revenue-ops/planning/source-working-copies.mjs",
+    "../../../scf-starforge-20261009/sf74-merchant-support-console/commercial/economics.mjs",
     "supplier_statement_engine.mjs",
     "operations_supplier_statements.py",
     "operations_supplier_statements_http.py",

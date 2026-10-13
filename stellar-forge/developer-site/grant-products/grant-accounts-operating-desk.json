@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
@@ -30,6 +30,11 @@
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "631a51c85f1140184e15af93a010c9ff0752fbdf",
           "bytes": 29252
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "0c374dd9c89a9bc7748d09b993c1caaa8d24ffee",
+          "bytes": 29813
         }
       ]
     },
@@ -119,7 +124,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/scf-statements-original-32c2-20261013/README.md",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
@@ -130,6 +135,11 @@
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "4aa70e570fa4322d278ef8c4659ca6b9f129e5f6",
           "bytes": 13574
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "0f4a82012f792c4a241c5abd9b49e18d39674aa6",
+          "bytes": 14651
         }
       ]
     },
@@ -214,7 +224,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statements.mjs",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
       "editions": [
         {
           "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
@@ -225,6 +235,11 @@
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "7091da9d7c9bf68e7b39dfe5d4d878475ade69bb",
           "bytes": 80794
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "c5dc84cfce3a7a0dde5de4a42d87bc355bd91dd2",
+          "bytes": 89147
         }
       ]
     },
@@ -264,12 +279,47 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/scf-statements-original-32c2-20261013/operate-original-statements.mjs",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
       "editions": [
         {
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "2c2a7c525af74821d595a83d3a2966c4f75e2a4e",
           "bytes": 33996
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "0fdba06e074dde9c287bc6f55eb32799027eb084",
+          "bytes": 39044
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-working-copies-guide",
+      "label": "Named complete statement editions and independent working-copy receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_WORKING_COPIES.md",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+      "editions": [
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "c389b4170431a579995f2e06088939882fa95b5d",
+          "bytes": 11160
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-working-copies-browser",
+      "label": "Complete edition comparison, atomic copies and original archive receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_copies.mjs",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+      "editions": [
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "1d275eba68b499a803d82c6b90db4dccd0e34eff",
+          "bytes": 20945
         }
       ]
     }

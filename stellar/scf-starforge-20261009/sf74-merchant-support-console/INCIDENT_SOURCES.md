@@ -5,6 +5,16 @@ source to review its incidents, run or stop a watcher owned by this console,
 acknowledge the work, manage its original notification queue, and carry retained
 captures into the existing merchant case.
 
+## Complete configuration working copies
+
+The original Incident editor retains unfinished JSON for each registered source,
+including its original full settings and revision. **Configuration working
+copies** saves named browser copies and complete editable downloads, restores
+writing after navigation or reload, compares later settings, and retains the
+exact original apply request through response loss. See
+[Keep and resume Incident configuration writing](INCIDENT_WRITING.md) for the
+complete recovery, file receiving and actual rendered-product workflow.
+
 ## Saved Object buyers
 
 A private incident source may also list named `objectSessions`. In **Watcher

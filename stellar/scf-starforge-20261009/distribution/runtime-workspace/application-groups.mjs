@@ -3,7 +3,7 @@ import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { applicationRunState, reviewApplicationStart } from './applications-core.mjs';
 import { makePrivate, privateDirectory, optionalPrivateEntries, readJSON, saveJSON, recordId, operationId,
-  operationLease, plain, need, digest, json, canonical, now } from './storage.mjs';
+  operationLease, createWorkspaceReceivingReader, plain, need, digest, json, canonical, now } from './storage.mjs';
 
 const GROUP = 'stellar-forge.application-group.v1';
 const RUN = 'stellar-forge.application-group-run.v1';
@@ -98,9 +98,9 @@ function settledOrLaunched(member, operation) {
   if (phase === 'RUNNING' && operation.active && !operation.stop && operation.state?.commandProcess) return true;
   return !operation.active && acceptedFinalPhases.includes(phase) && accepted(member, operation);
 }
-async function observedMembers(root, run, observations = null) {
+async function observedMembers(root, run, observations = null, receiving = null) {
   return Promise.all(run.members.map(async member => {
-    const operation = await applicationRunState(root, originalInput(member), observations);
+    const operation = await applicationRunState(root, originalInput(member), observations, receiving);
     return { ...member, operation, operationPhase: operation ? memberPhase(operation) : null };
   }));
 }
@@ -127,11 +127,12 @@ function progress(run, members) {
     canContinue: !uncertain && !run.stopRequestedAt && Boolean(next) && !waiting && !needsReview,
     started: members.filter(member => member.operation).length, total: members.length };
 }
-async function runView(root, run, observations = null) {
-  const members = await observedMembers(root, run, observations);
+async function runView(root, run, observations = null, receiving = null) {
+  const members = await observedMembers(root, run, observations, receiving);
   return { ...run, ...progress(run, members), members };
 }
-export async function applicationGroupsState(root, { groupId = null, runId = null, limit = 20, cursor = null } = {}, observations = null) {
+export async function applicationGroupsState(root, { groupId = null, runId = null, limit = 20, cursor = null } = {}, observations = null,
+  receiving = createWorkspaceReceivingReader(root)) {
   if (!observations) await initializeApplicationGroups(root);
   need(Number.isInteger(limit) && limit >= 1 && limit <= 50, 'APPLICATION_GROUP_PAGE_INVALID');
   if (cursor) operationId(cursor);
@@ -164,7 +165,7 @@ export async function applicationGroupsState(root, { groupId = null, runId = nul
     history: { items: page.map(item => ({ id: item.id, label: item.label, groupRevision: item.groupRevision,
       createdAt: item.createdAt, updatedAt: item.updatedAt, stopped: Boolean(item.stopRequestedAt), members: item.members.length })),
       total: history.length, nextCursor: start + page.length < history.length ? page.at(-1).id : null },
-    run: selectedRunId ? await runView(root, await runRecord(root, groupId, selectedRunId), observations) : null } };
+    run: selectedRunId ? await runView(root, await runRecord(root, groupId, selectedRunId), observations, receiving) : null } };
 }
 export async function saveApplicationGroup(root, { requestId, groupId = null, expectedRevision = null, label, applicationIds } = {}) {
   operationId(requestId);
