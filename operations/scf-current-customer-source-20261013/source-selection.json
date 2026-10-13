@@ -1,66 +1,59 @@
 {
   "schema": "stellar-forge.grant-current-customer-composition.v1",
   "operation": "SCF-CURRENT-CUMULATIVE-PUBLICATION-05C7-20261013",
-  "composed_at": "2026-10-13T11:12:18.000Z",
+  "edition": "following-authored-chapters",
+  "composed_at": "2026-10-13T11:37:36.000Z",
   "source_repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "input_commit": "bd889168029083c4b7cd50a9f900dc64c1f99726",
-  "publication_base_commit": "9c1b19ff4cbb878a7af85ac8cf1c1bc577b9af52",
-  "output_commit": "82b0f63b057a68eb7f979d83ff44ce9d66a578c1",
+  "input_commit": "27a2714d1f6c2ac0a324c696064ec3fc105b9144",
+  "publication_base_commit": "bd1682ad87575d936c95771f3133a1695b2a98e9",
+  "output_commit": "fb762f4b9e5407bf1156e0a5fbb4f4a62f2ead23",
   "canonical_manuscript": {
     "url": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF",
-    "bytes": 2004329,
-    "sha256": "c5e15a3f65b4ec97c165d98f303ddb35b6e9d37debd2786ed418feae5c80f5c4",
-    "meaning": "Complete frozen original canonical manuscript. Eleven exact paragraph source-link repairs were applied to this source and independently received in the live canonical; later whole published Audit chapter was preserved at the fresh-main integration boundary.",
-    "repaired_selected_manuscript": {
-      "bytes": 2007325,
-      "sha256": "5f46b39206e93cc70892676ce93f6ecb0b86176de2b9e32736585ca87921de28"
-    },
-    "composition_manuscript": {
-      "bytes": 2009184,
-      "sha256": "975701c4803fe1338a2fbecea5b42416753c97ac1c994a96d8dbe4b85c3f9ad7"
+    "bytes": 2131975,
+    "sha256": "da09c770e2cc8c12948a249424afbab4e2e0822b521fb2fbabcb7084635c7320",
+    "initial_source": {
+      "bytes": 2100905,
+      "sha256": "367d144c98e456454bdc75e1253e2aef98fa57341306e769fed99bb23db60247"
     },
     "canonical_edit_preservation": {
-      "previousSections": 2978,
-      "currentSections": 2992,
-      "everyPriorSectionWithExact11ChangesRetained": true,
+      "previousSections": 3138,
+      "currentSections": 3201,
+      "everyPriorSectionWithExact4ChangesRetained": true,
       "priorSectionsInOrder": true,
-      "concurrentSections": 14,
-      "url": "https://tokenjunkielabs.slack.com/docs/T0BRETUB5TK/F0C86PRE5NF"
+      "newSections": 63
     },
-    "concurrent_published_chapter": {
-      "heading": "## Audit Exchange: original building audits, energy review and editable turnover",
-      "from_commit": "9c1b19ff4cbb878a7af85ac8cf1c1bc577b9af52",
-      "source_index_blob": "120944a138315efef5ddfb01b080e96346996bce",
-      "companion_blob": "4be27e90a5673a6f666f2a6ca9e8e8f110bcc1f0",
-      "bytes": 12449,
-      "sha256": "74f51f04894c15ea0b05af187229c90bee90cd15f126f51d8b5bf4700c32a2c8",
-      "reason": "Preserve the already-published complete Audit colleague-correction successor received after the canonical snapshot was frozen."
-    }
+    "meaning": "Complete original canonical after four precise source-link/prospective-scope paragraph edits and the complete original DCAT and Replication authored additions. The earlier Collaborative and Migration authored adoption is retained. Every prior logical section survives in order."
   },
   "inputs": [
     {
-      "path": "stellar-forge/developer-site/dist/grant-data/application.md",
-      "bytes": 53187,
-      "sha256": "2e02c1d95117069bb1b74be3d0ae902503c1ca9b8a2ffbdefbedd7b640019603",
-      "git_blob": "097932e5c8d43be6022f219f2ba0e4a9b47c87c6"
-    },
-    {
-      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "bytes": 1268108,
-      "sha256": "fbf6bb55a2085f43eacd70ca4c60aa9300b50a1fefec6b2483ebac2aa3450626",
-      "git_blob": "4be27e90a5673a6f666f2a6ca9e8e8f110bcc1f0"
-    },
-    {
       "path": "stellar-forge/developer-site/dist/grant.html",
-      "bytes": 105039,
-      "sha256": "0d24cd8cd12759e0e3a2f8c0b20a8149f7ee50b9f1fd12fbd3cf49498ba4369a",
-      "git_blob": "481713b71441d6cf63079a0c3d772fb85e8be6db"
+      "bytes": 105199,
+      "sha256": "d2a6258714da0dcff41e2f67f53d27e7f7a005858713a84c06dab1b5936fcbbe",
+      "git_blob": "3c12884da9389c86f77f8662b6074453c678c1d0"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/application.md",
+      "bytes": 53345,
+      "sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
+      "git_blob": "73814fbcf738c4026d9f33228bca6c82d6fbcbd5"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 1048246,
-      "sha256": "ce713b6d240b1b832f07104ad6028f1b85f27f4d27942cb85b64e7b80292140d",
-      "git_blob": "120944a138315efef5ddfb01b080e96346996bce"
+      "bytes": 1291797,
+      "sha256": "a59828d892d99cc8fefb6a5e6a5de5c5d05510c4a612cbcb4f37dead382ad922",
+      "git_blob": "cc93191a956e6022d475a16b0a5ea4e27f62b727"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+      "bytes": 1454768,
+      "sha256": "c87aaf07459f8416b528a7f643cc69fa561b0885e3254f86e214b174354954fb",
+      "git_blob": "e39b193b4521b9e7e52283dd6fbec5f34a6cce57"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
+      "bytes": 597,
+      "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
+      "git_blob": "c62afa352e881c2cf81fe937649fe63fea3ceab5"
     }
   ],
   "budget": {
@@ -228,9 +221,9 @@
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-product-authoring-core.mjs",
-      "bytes": 17037,
-      "sha256": "7829f5db23bd028fe66e2f45715e90c70cb1155b0e02dda4c38f65b43eb4ac7f",
-      "git_blob": "cb9c401951136dd540c65b49b8f77b8bff52a181"
+      "bytes": 17538,
+      "sha256": "8ed66361a2dc696e73f859034de4bea7b667f1b83d31f8a09984c872dbd24338",
+      "git_blob": "b7c75473378648d104af8449f7749effdede4e41"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-plan-core.mjs",
@@ -308,9 +301,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/canadabuys-bidder-desk.json",
-      "bytes": 3477,
-      "sha256": "161a30a0a2004e0717777f7a77b499465f5d414223ea30118f73d7ab2f3400e4",
-      "git_blob": "9ce68be6c859b8376b9c0bc06d4121ae15ad8471"
+      "bytes": 6146,
+      "sha256": "10bf24e6db62f1e42ebcfdce94b32418c654853634c07604b5142311833e7d50",
+      "git_blob": "c9219888bbee598d818135ab85882da587efb372"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/cfce-givecredit-statements.json",
@@ -356,9 +349,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/dcat-catalogs.json",
-      "bytes": 5565,
-      "sha256": "07c4fa05155815fe52245c656ea58376425a655732d2c08d78b425baa82725f9",
-      "git_blob": "8ddcbd03e9e11a5ab6ec26330d9106bec9272a0d"
+      "bytes": 10457,
+      "sha256": "c564cc9b96d8cd5f6107d478e4c4c45175c975e2a417316f15bd9450d3206e80",
+      "git_blob": "90b9c7be570b33a16c09ce3f4d2022a3c1ed5a18"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/directus-content-data.json",
@@ -386,9 +379,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/facilitator-commissioning.json",
-      "bytes": 11074,
-      "sha256": "7b087d855011c07231f20feb999d4d3c99f9e99db8ad35883d1237f47b9e0e55",
-      "git_blob": "dc690963e994fc211f134f5d18bff1cc55b3e1b9"
+      "bytes": 15188,
+      "sha256": "4686c20c3bbb6eca21f9d6003b68edcf1d16978b76033dc60f00a96d90aec9b5",
+      "git_blob": "329235682a583ebab1c6c0dba8aed6340e747e4a"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/financing-basis.json",
@@ -481,6 +474,12 @@
       "git_blob": "2e4d6854656203f342fdd4762f64842a4ce54962"
     },
     {
+      "path": "stellar-forge/developer-site/grant-products/iati-customer-receiving.json",
+      "bytes": 10443,
+      "sha256": "90cec420b810b4e4d407ccb31d8487f748086ad3cf16a91c15008e4777bbb6db",
+      "git_blob": "882e2f2c2d5044d4552471f6a2ca9f24d38ee1c7"
+    },
+    {
       "path": "stellar-forge/developer-site/grant-products/invoice-settlement.json",
       "bytes": 4100,
       "sha256": "8ce3b5530ae738d9dd48ab5a574577532329633001496204bf68b099d6e201ff",
@@ -503,6 +502,12 @@
       "bytes": 10474,
       "sha256": "8b90a9fac4e40e2ff6fda9e04e901144bee0d1f748b80229aef3ea8cfcb5442c",
       "git_blob": "64476aa348ebe1498f2e6594cae3957882d4fa0b"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/merchant-implementation.json",
+      "bytes": 8547,
+      "sha256": "6c4402a559c6234c25749553b5456abb54d7b730f5af866c8b1d797450da1d27",
+      "git_blob": "35057f15ba25112a07024defb353276455336e01"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/merchant-monitoring.json",
@@ -553,6 +558,12 @@
       "git_blob": "9e34634e495fa15074e3882735cb6414cd6e6b6b"
     },
     {
+      "path": "stellar-forge/developer-site/grant-products/opensearch-material-customer.json",
+      "bytes": 7442,
+      "sha256": "8b6fbb05c739f694942384c2aa70ceead8df477437bd6a99a3d288218013fc82",
+      "git_blob": "8f8360061e6c7f0272e6e4779e2844f6642514be"
+    },
+    {
       "path": "stellar-forge/developer-site/grant-products/operating-plans.json",
       "bytes": 21692,
       "sha256": "1b198ffcb33eac418e1ffd12050d001542cb971c2a6f4f70c00d5a239b40db7c",
@@ -577,10 +588,22 @@
       "git_blob": "82943eff5a09f2baca5070a6970f333c26f60661"
     },
     {
+      "path": "stellar-forge/developer-site/grant-products/property-continuity.json",
+      "bytes": 2564,
+      "sha256": "43cff003bfb3ecf54263c7e62dd879771ecae2d19137eba16777305f096e171a",
+      "git_blob": "c3d89ebf4c969c87268d2891fb9cd7837cfb6c12"
+    },
+    {
       "path": "stellar-forge/developer-site/grant-products/recovery-commissioning.json",
-      "bytes": 20882,
-      "sha256": "de1b59eb18d18f133a5a22346ea73d1b70119ead377f1bb9a8a4acf0de1b14b6",
-      "git_blob": "b903410adabd2ea27523e2b373b856d036e5a04f"
+      "bytes": 26140,
+      "sha256": "2f225d489339b1145b3ebe882e48d24416ecf52dac9aa9a219da40127359ac81",
+      "git_blob": "344120a84087d28a24d91a2aebe925d831fc2624"
+    },
+    {
+      "path": "stellar-forge/developer-site/grant-products/replication-workbench.json",
+      "bytes": 11250,
+      "sha256": "5659f44eeb38c4894538ba239e967d88d1f2fca50217416b3b60b7e2a23bd01b",
+      "git_blob": "7eb18b300c0743414c40febd0b31711977e966eb"
     },
     {
       "path": "stellar-forge/developer-site/grant-products/research-commercial-programme.json",
@@ -680,9 +703,9 @@
     },
     {
       "path": "stellar-forge/developer-site/grant-products/zotero-library-research.json",
-      "bytes": 3928,
-      "sha256": "ff2d9896e246ba45690ebc475d980748cdb1b8edbca33f8fb78c2ae612308b81",
-      "git_blob": "da27b6c51553c3a80bc51d9a287806f15ee0a7c0"
+      "bytes": 6764,
+      "sha256": "e6dd25950d11ac2300ece60c2493b33bf3d2ad9b643eb2c88ad11579233c1a81",
+      "git_blob": "c0a77122efb79b9a2660480cc437d1efb073a95c"
     }
   ],
   "outputs": [
@@ -700,29 +723,30 @@
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/source-index.json",
-      "bytes": 1291797,
-      "sha256": "0f00703c3eacf6a65839540400f45a04296490a6ef14ecd36764639518d98347",
-      "git_blob": "650aeb521de25a4aaf59da1eb51c605d8c278c5b"
+      "bytes": 1401787,
+      "sha256": "093ad1d98305ba2238ab53f32eed05684402cabd40f8ece73721b969a7e9cf7f",
+      "git_blob": "9697b10eb7aea4929a1a22ca732f3b00ef17ffe1"
     },
     {
       "path": "stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-      "bytes": 1454038,
-      "sha256": "d5d5fcccf1c59e3353dd1ba61e341bd43dc71d503e6a6a4d11b2d59ffa2b9861",
-      "git_blob": "7cc07aaa2d555fd217995479717656ebf254abc3"
+      "bytes": 1570657,
+      "sha256": "6acae245bcd3ab478920a9b169ce279bcd29a8ee85be00534f6163f62acb8031",
+      "git_blob": "0500e4725be1c4b525d1200be25a22fc82fa2384"
     }
   ],
   "receiving_package": {
     "path": "operations/scf-current-customer-source-20261013/current-source-package.json",
-    "bytes": 3789942,
-    "sha256": "bc545b7bec6ba474344083f401eee47575544ff2b47ebc629bca86caaf5d2a55",
-    "bundle_id": "577e7d013aa3680722b4956d256e2013e484fac7f18439ae39255b51effec46b",
+    "bytes": 4092090,
+    "sha256": "e8584acfb62ef766d8e9ac6f34e277afd3a831c80ae21afbd0ea277b8f487d69",
+    "git_blob": "2ab1ed90d5336194d5b42f8c0350c991a08bfe67",
+    "bundle_id": "741643df25bd748d40be0fa2613cb51fc65ca663b9e1ecc58a08880dc1d04585",
     "roles": [
       {
         "role": "application",
         "name": "application.md",
         "originalName": "application.md",
         "mediaType": "text/markdown;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/application.md",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fb762f4b9e5407bf1156e0a5fbb4f4a62f2ead23/stellar-forge/developer-site/dist/grant-data/application.md",
         "bytes": 53345,
         "sha256": "39f337bb16c8a9bda3a87036d46ffcbdf687a9feb7ed48bad01d50c212ad558c",
         "identityBasis": "Verified against original source-index application SHA-256, byte count and Git blob."
@@ -732,9 +756,9 @@
         "name": "source-index.json",
         "originalName": "source-index.json",
         "mediaType": "application/json",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/source-index.json",
-        "bytes": 1291797,
-        "sha256": "0f00703c3eacf6a65839540400f45a04296490a6ef14ecd36764639518d98347",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fb762f4b9e5407bf1156e0a5fbb4f4a62f2ead23/stellar-forge/developer-site/dist/grant-data/source-index.json",
+        "bytes": 1401787,
+        "sha256": "093ad1d98305ba2238ab53f32eed05684402cabd40f8ece73721b969a7e9cf7f",
         "identityBasis": "Complete received source-index bytes; its own digest is a receiving identity."
       },
       {
@@ -742,7 +766,7 @@
         "name": "budget.csv",
         "originalName": "budget.csv",
         "mediaType": "text/csv;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/budget.csv",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fb762f4b9e5407bf1156e0a5fbb4f4a62f2ead23/stellar-forge/developer-site/dist/grant-data/budget.csv",
         "bytes": 597,
         "sha256": "4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00",
         "identityBasis": "Complete received budget bytes; this source index declares no independent budget-file digest."
@@ -752,341 +776,411 @@
         "name": "product-and-finance.md",
         "originalName": "product-and-finance.md",
         "mediaType": "text/markdown;charset=utf-8",
-        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/82b0f63b057a68eb7f979d83ff44ce9d66a578c1/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
-        "bytes": 1454038,
-        "sha256": "d5d5fcccf1c59e3353dd1ba61e341bd43dc71d503e6a6a4d11b2d59ffa2b9861",
+        "sourceUrl": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/fb762f4b9e5407bf1156e0a5fbb4f4a62f2ead23/stellar-forge/developer-site/dist/grant-data/product-and-finance.md",
+        "bytes": 1570657,
+        "sha256": "6acae245bcd3ab478920a9b169ce279bcd29a8ee85be00534f6163f62acb8031",
         "identityBasis": "Verified against original source-index product_and_finance SHA-256, byte count and Git blob."
       }
     ]
   },
   "preservation": {
-    "previous_source_count": 814,
-    "current_source_count": 995,
+    "previous_source_count": 995,
+    "current_source_count": 1077,
     "previous_ids_retained": true,
-    "complete_companion_chapters": 93,
-    "selected_declarations": 69,
-    "selected_present_registrations": 67,
-    "absent_registration_chapters": [
-      {
-        "id": "collaborative-documents",
-        "heading": "## Collaborative Document Workbench: native shared editing and independent customer receiving",
-        "present": false
-      },
-      {
-        "id": "migration-acceptance",
-        "heading": "## Migration Acceptance Workbench: complete native migration and independent customer receiving",
-        "present": false
-      }
-    ],
+    "missing": [],
     "added_source_ids": [
-      "x402api-merchant-payment-desk",
-      "x402api-merchant-customer-delivery",
-      "bloccpay-original-application",
-      "bloccpay-complete-operations",
-      "bloccpay-payroll-semantics",
-      "bloccpay-horizon-review",
-      "bloccpay-invoice-sdp-integration",
-      "bloccpay-sdp-event-inbox",
-      "bloccpay-bridge-intake",
-      "bloccpay-original-receiving",
-      "ckan-fresh-datastore-acquisition",
-      "ckan-fresh-acquisition-engine",
-      "directus-customer-agent-setup",
-      "directus-customer-agent-catalog",
-      "directus-customer-operator-client",
-      "directus-customer-agent-operations",
-      "directus-customer-agent-runtime",
-      "directus-customer-agent-distribution",
-      "document-merchant-corrections",
-      "document-merchant-agent",
-      "document-merchant-agent-client",
-      "document-merchant-agent-catalog",
-      "document-merchant-agent-guide",
-      "facilitator-commissioning-guide",
-      "facilitator-commissioning-engine",
-      "facilitator-commissioning-operator",
-      "facilitator-commissioning-server",
-      "facilitator-commissioning-browser",
-      "facilitator-commissioning-browser-recovery",
-      "facilitator-commissioning-portable-receiver",
-      "facilitator-commissioning-command",
-      "facilitator-commissioning-report",
-      "facilitator-commissioning-customer-guide",
-      "facilitator-commissioning-customer-agent",
-      "facilitator-commissioning-customer-provider",
-      "facilitator-commissioning-customer-contracts",
-      "facilitator-commissioning-customer-client",
-      "facilitator-commissioning-customer-command",
-      "grant-statement-batch-browser",
-      "grant-statement-desk-browser",
-      "grant-statement-allocations-guide",
-      "grant-statement-allocations-browser",
-      "grant-statements-browser-controller",
-      "grant-submission-offline-editor-guide",
-      "grant-issuer-form-workbook-guide",
-      "haystack-consumer-operating",
-      "haystack-consumer-domain",
-      "haystack-consumer-actions",
-      "haystack-consumer-cli",
-      "haystack-consumer-types",
-      "haystack-consumer-reports",
-      "haystack-consumer-browser-document",
-      "haystack-consumer-browser-controller",
-      "haystack-consumer-browser-style",
-      "haystack-consumer-native-receiving",
-      "haystack-consumer-browser-receiving",
-      "haystack-consumer-workspace-model",
-      "haystack-consumer-workspace-store",
-      "haystack-consumer-portable-workspace",
-      "haystack-consumer-projection-evidence",
-      "haystack-consumer-projection-reports",
-      "haystack-consumer-action-catalog",
-      "haystack-consumer-command-entry",
-      "haystack-consumer-typed-client",
-      "haystack-consumer-client-declarations",
-      "haystack-consumer-agent-configuration",
-      "haystack-consumer-agent-client",
-      "haystack-consumer-agent-tools",
-      "haystack-consumer-application-provider",
-      "haystack-consumer-installed-contribution",
-      "haystack-consumer-browser-inventory",
-      "haystack-consumer-navigation",
-      "haystack-consumer-package-export",
-      "haystack-consumer-native-guide",
-      "haystack-consumer-agent-guide",
-      "haystack-consumer-workspace-guide",
-      "haystack-consumer-installation-selection",
-      "merchant-bank-source-agent-request-contract",
-      "merchant-bank-source-agent-transforms",
-      "merchant-bank-source-agent-controller",
-      "merchant-bank-source-agent-catalog",
-      "merchant-bank-source-agent-accounting-owner",
-      "merchant-bank-source-agent-accounting-catalog",
-      "merchant-bank-source-agent-provider",
-      "merchant-bank-source-agent-installed-contribution",
-      "merchant-bank-source-agent-client",
-      "merchant-bank-source-agent-types",
-      "merchant-bank-source-agent-command",
-      "merchant-bank-source-agent-workflow",
-      "merchant-economics-operator-guide",
-      "merchant-economics-commercial-history",
-      "merchant-economics-working-copies",
-      "merchant-economics-scenario-planning",
-      "merchant-economics-pricing-workspace",
-      "merchant-economics-supplier-costs",
-      "merchant-economics-tariffs",
-      "merchant-economics-tariff-studies",
-      "merchant-economics-recorded-performance",
-      "merchant-economics-customer-tariffs",
-      "merchant-economics-customer-performance",
-      "merchant-economics-receivables",
-      "merchant-economics-service-agreements",
-      "merchant-economics-financial-operation",
-      "merchant-economics-original-receiving",
-      "merchant-economics-original-engine",
-      "openlineage-prepared-package-guide",
-      "openlineage-prepared-package-receiving",
-      "openlineage-prepared-package-verifier",
-      "openlineage-prepared-package-composition",
-      "openlineage-prepared-package-manifest",
-      "customer-operating-plan-page",
-      "customer-operating-plan-style",
-      "recovery-comparison-guide",
-      "recovery-comparison-app",
-      "recovery-comparison-browser-assets",
-      "recovery-comparison-workspace-cli",
-      "recovery-comparison-workspace-html",
-      "recovery-comparison-agent-catalog",
-      "recovery-comparison-agent-types",
-      "recovery-comparison-agent-client",
-      "recovery-comparison-workspace-model",
-      "recovery-comparison-browser",
-      "recovery-comparison-adapter",
-      "recovery-comparison-session-browser",
-      "recovery-comparison-server",
-      "recovery-comparison-native-types",
-      "recovery-comparison-native-exports",
-      "recovery-comparison-native-cli",
-      "recovery-comparison-core",
-      "runtime-companion-sets-core",
-      "runtime-companion-sets-cli",
-      "runtime-companion-sets-browser",
-      "runtime-companion-sets-manifest",
-      "runtime-companion-sets-types",
-      "runtime-companion-sets-guide",
-      "runtime-companion-sets-receiving",
-      "runtime-companion-sets-layout",
-      "runtime-companion-edition-sources",
-      "runtime-companion-edition-core",
-      "runtime-companion-edition-cli",
-      "runtime-companion-edition-browser",
-      "runtime-companion-edition-types",
-      "runtime-companion-edition-guide",
-      "runtime-companion-edition-receiving",
-      "installation-collection-agent",
-      "installation-collection-agent-types",
-      "installation-collection-store",
-      "installation-collection-store-types",
-      "installation-collection-session",
-      "installation-collection-session-types",
-      "installation-collection-cli",
-      "installation-collection-cli-types",
-      "installation-collection-operation",
-      "installation-collection-mcp-adapter",
-      "installation-collection-mcp-catalogue",
-      "installation-collection-grant-host",
-      "installation-collection-grant-catalogue",
-      "installation-collection-grant-provider",
-      "installation-collection-workspace-selection",
-      "installation-collection-agent-selection",
-      "installation-collection-provider-selection",
-      "webhook-event-agent-contract",
-      "webhook-event-agent-schema",
-      "webhook-event-agent-provider",
-      "webhook-event-agent-client",
-      "webhook-event-agent-client-types",
-      "webhook-event-agent-delivery",
-      "webhook-event-agent-delivery-types",
-      "webhook-event-agent-operating",
-      "webhook-event-agent-installation",
-      "webhook-event-installation-core",
-      "webhook-event-installation-receiver",
-      "webhook-event-installation-types",
-      "webhook-event-installation-profile",
-      "webhook-event-installation-operating",
-      "zotero-library-complete-product",
-      "zotero-customer-agent-setup",
-      "zotero-customer-agent-requests",
-      "zotero-customer-agent-runtime",
-      "zotero-customer-agent-distribution",
-      "zotero-customer-agent-receiving"
+      "canadabuys-complete-source-workshare",
+      "canadabuys-original-apm2-customer",
+      "canadabuys-apm2-response-production",
+      "canadabuys-apm2-capacity-economics",
+      "collaborative-documents-source",
+      "collaborative-documents-original-server",
+      "collaborative-documents-operator",
+      "collaborative-documents-core",
+      "collaborative-documents-authorization",
+      "collaborative-documents-runtime",
+      "collaborative-documents-editor",
+      "collaborative-documents-receiving",
+      "collaborative-documents-runtime-preparation",
+      "collaborative-documents-installer",
+      "collaborative-documents-lockfile",
+      "dcat-semantic-profile-operator",
+      "dcat-semantic-snapshot-comparison",
+      "dcat-semantic-prepared-runtime",
+      "dcat-semantic-customer-programme",
+      "dcat-semantic-comparison-customer-programme",
+      "dcat-semantic-editable-operator-handover",
+      "dcat-semantic-lda-customer-programme",
+      "facilitator-commissioning-installation-guide",
+      "facilitator-commissioning-installation-binding",
+      "facilitator-commissioning-installation-preparation",
+      "facilitator-commissioning-installation-command",
+      "facilitator-commissioning-installation-profile",
+      "iati-financial-case-recovery-guide",
+      "implementation-grafana-guide",
+      "implementation-grafana-cli",
+      "implementation-grafana-service",
+      "implementation-grafana-inspector",
+      "implementation-grafana-project-store",
+      "implementation-offline-review-guide",
+      "implementation-offline-review-model",
+      "implementation-offline-review-native",
+      "implementation-offline-review-recipient",
+      "implementation-offline-review-operator",
+      "implementation-offline-review-cli",
+      "implementation-original-receiving-model",
+      "migration-acceptance-workbench-source",
+      "migration-acceptance-source-manifest",
+      "migration-acceptance-original-cli",
+      "migration-acceptance-original-operator",
+      "migration-acceptance-business-engine",
+      "migration-acceptance-business-contract",
+      "migration-acceptance-chinook-course",
+      "migration-acceptance-chinook-source",
+      "migration-acceptance-chinook-guide",
+      "migration-acceptance-original-runtime",
+      "material-customer-product",
+      "material-customer-operations",
+      "opensearch-source-contract",
+      "opensearch-relevance-workflow",
+      "opensearch-agent-workflow",
+      "material-supplier-agent-workflow",
+      "material-customer-installation",
+      "material-catalogue-source-workflow",
+      "opensearch-saved-workspace",
+      "opensearch-original-native-relevance",
+      "opensearch-original-native-mcp",
+      "recovery-comparison-support-browser",
+      "recovery-comparison-support-agent-guide",
+      "recovery-comparison-support-reader",
+      "recovery-comparison-support-runtime",
+      "recovery-comparison-support-desk",
+      "replication-workbench-source",
+      "replication-workbench-runtime",
+      "replication-workbench-installer",
+      "replication-workbench-worker",
+      "replication-workbench-semantics",
+      "replication-workbench-comparison",
+      "replication-workbench-downstream",
+      "replication-workbench-portable",
+      "replication-workbench-maintained-source",
+      "replication-workbench-maintained-operator-md",
+      "replication-workbench-maintained-source-manifest-json",
+      "replication-workbench-maintained-core-workspace-mjs",
+      "replication-workbench-maintained-receiving-receive-mjs",
+      "replication-workbench-maintained-server-mjs",
+      "zotero-customer-commissioning",
+      "zotero-returned-project-engine"
     ],
     "advanced_source_ids": [
       {
-        "id": "grant-account-statements",
-        "old": "30f213b51bdf28b02a08d03bb3ef26d4518ac392",
-        "next": "c9933933db39a487258f0e52b4b21929ed5420b6"
+        "id": "iati-organisation-financial-workspace",
+        "old": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+        "next": "ce894f4e3c44f572fdb95105bfe84d37d67282ff"
       },
       {
-        "id": "merchant-bank-statements-operation",
-        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
-        "next": "deffacfdcbd8705ccd8b4d32d70214285bbc6035"
+        "id": "iati-complete-financial-receiving",
+        "old": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+        "next": "ce894f4e3c44f572fdb95105bfe84d37d67282ff"
       },
       {
-        "id": "merchant-bank-statements-installation",
-        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
-        "next": "deffacfdcbd8705ccd8b4d32d70214285bbc6035"
+        "id": "recovery-support-guide",
+        "old": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
       },
       {
-        "id": "merchant-bank-statements-handover",
-        "old": "474f1ef945d636217a85fe970c86b18f2b3e2e1b",
-        "next": "deffacfdcbd8705ccd8b4d32d70214285bbc6035"
+        "id": "recovery-support-producer",
+        "old": "57c417495c040e1a37012a3aabc02289ea652973",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
       },
       {
-        "id": "document-merchant-composition-guide",
-        "old": "a887ac9d56b1a0933bf1060bf70bd74ee25c6d16",
-        "next": "aa31a69246b62c015fdeb9c4dfcd1a96d86891cb"
+        "id": "facilitator-commissioning-guide",
+        "old": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+        "next": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4"
       },
       {
-        "id": "document-merchant-composition-service",
-        "old": "a887ac9d56b1a0933bf1060bf70bd74ee25c6d16",
-        "next": "aa31a69246b62c015fdeb9c4dfcd1a96d86891cb"
+        "id": "facilitator-commissioning-customer-guide",
+        "old": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+        "next": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4"
       },
       {
-        "id": "document-merchant-composition-workspace",
-        "old": "a887ac9d56b1a0933bf1060bf70bd74ee25c6d16",
-        "next": "857bb0b0773eecebbf2aebda312454887c82f229"
+        "id": "recovery-comparison-guide",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
       },
       {
-        "id": "haystack-installed-operations",
-        "old": "5ff96cd9c03f2cef99284cd4c96daf0c6e96cc96",
-        "next": "7fec77105fa591f550c10e6407d8d66fa7f7907b"
+        "id": "recovery-comparison-workspace-cli",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
       },
       {
-        "id": "directus-content-data-complete-product",
-        "old": "6bf48482bcde72e03698df3b6bd63cf584ce64df",
-        "next": "b05029e94bd5a309267ad5c2a52ed44d91aa40af"
+        "id": "recovery-comparison-agent-catalog",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
       },
       {
-        "id": "grant-statements-original-receiving",
-        "old": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
-        "next": "c9933933db39a487258f0e52b4b21929ed5420b6"
+        "id": "recovery-comparison-agent-types",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
       },
       {
-        "id": "customer-operating-plan-guide",
-        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
-        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+        "id": "recovery-comparison-workspace-model",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
       },
       {
-        "id": "customer-operating-plan-model",
-        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
-        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+        "id": "zotero-library-complete-product",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
       },
       {
-        "id": "customer-operating-plan-cli",
-        "old": "255f85043ba5d01eff07436b11db5e82dab8af9b",
-        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+        "id": "zotero-customer-agent-setup",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
       },
       {
-        "id": "customer-operating-plan-editor",
-        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
-        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+        "id": "zotero-customer-agent-requests",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
       },
       {
-        "id": "customer-operating-plan-types",
-        "old": "710507fb46d1a401026254bad259a6f4deb88f88",
-        "next": "4ae8645020da8aaf70bff48b3e13126d86b55aaa"
+        "id": "zotero-customer-agent-runtime",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
       },
       {
-        "id": "recovery-object-sdk",
-        "old": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
-        "next": "134640608b6fe4b53b5a2268b02d26207e320f0d"
+        "id": "zotero-customer-agent-distribution",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
       },
       {
-        "id": "recovery-object-workspace-guide",
-        "old": "29d6f97c8411360afd66d8ba8a55a35896fa9bcb",
-        "next": "134640608b6fe4b53b5a2268b02d26207e320f0d"
-      },
-      {
-        "id": "grant-submission-review-complete-source",
-        "old": "02b5fb7b17712fe8acc7079a738d6c356f36d824",
-        "next": "20818fb16490921f31c372442006a52dfacdc89b"
-      },
-      {
-        "id": "merchant-bank-agent-file-reader",
-        "old": "139d5bd5180e075a4734c6d536232e1a937d7ec8",
-        "next": "b133c645ca83fdd8a5e19125eb0285dda5ec28c2"
-      },
-      {
-        "id": "runtime-input-files-distribution",
-        "old": "18434e93edd99b5bd0ed7bdf19628112c17e483d",
-        "next": "a6fdb7ff0fcb8ae0ea73a7f18634636d3eeba0d0"
-      },
-      {
-        "id": "economic-fred-operating-native",
-        "old": "633b4ca8be7c45de188903284181a1338ee1d0fd",
-        "next": "e23751bac6a047b973ad1aca9c241a99f43e5719"
-      },
-      {
-        "id": "worldbank-customer-programmes",
-        "old": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
-        "next": "a6a3c7a8760586ac387d8834af164fbee3f269dd"
-      },
-      {
-        "id": "worldbank-installed-programme",
-        "old": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
-        "next": "a6a3c7a8760586ac387d8834af164fbee3f269dd"
-      },
-      {
-        "id": "worldbank-complete-product",
-        "old": "8baf462fb821f91c8fc2fc7f48db66a8be1c89ab",
-        "next": "a6a3c7a8760586ac387d8834af164fbee3f269dd"
+        "id": "zotero-customer-agent-receiving",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
       }
     ],
+    "financial_fields": {
+      "request": true,
+      "baseline": true,
+      "milestones": true,
+      "capacity": true,
+      "cash": true,
+      "submission": true
+    },
+    "applicationUnchanged": true,
+    "complete_companion_chapters": 98,
+    "selected_declarations": 74,
+    "selected_present_registrations": 73,
+    "absent_registration_chapters": [
+      {
+        "id": "property-continuity",
+        "heading": "## Property continuity: full source reconciliation, rehearsals, cutover and independent receiving",
+        "present": false
+      }
+    ],
+    "row_changes": [
+      {
+        "id": "iati-organisation-financial-workspace",
+        "old": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+        "next": "ce894f4e3c44f572fdb95105bfe84d37d67282ff"
+      },
+      {
+        "id": "iati-complete-financial-receiving",
+        "old": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+        "next": "ce894f4e3c44f572fdb95105bfe84d37d67282ff"
+      },
+      {
+        "id": "iati-fcdo-wadi-original-source",
+        "old": "2854a9f5f0d792dd78497228a1d23d9a69305763",
+        "next": "2854a9f5f0d792dd78497228a1d23d9a69305763"
+      },
+      {
+        "id": "iati-document-evidence-workspace",
+        "old": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+        "next": "3d86d3e30917aad9c34a27718b4bbbc540933334"
+      },
+      {
+        "id": "iati-document-evidence-receiving",
+        "old": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+        "next": "3d86d3e30917aad9c34a27718b4bbbc540933334"
+      },
+      {
+        "id": "iati-document-following-observation",
+        "old": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+        "next": "3d86d3e30917aad9c34a27718b4bbbc540933334"
+      },
+      {
+        "id": "iati-fcdo-document-native-result",
+        "old": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+        "next": "3d86d3e30917aad9c34a27718b4bbbc540933334"
+      },
+      {
+        "id": "iati-fcdo-document-connected-result",
+        "old": "3d86d3e30917aad9c34a27718b4bbbc540933334",
+        "next": "3d86d3e30917aad9c34a27718b4bbbc540933334"
+      },
+      {
+        "id": "iati-geography-workspace",
+        "old": "4424e79ea489f3bcec147aed08171f5c27959f98",
+        "next": "4424e79ea489f3bcec147aed08171f5c27959f98"
+      },
+      {
+        "id": "iati-geography-operator",
+        "old": "4424e79ea489f3bcec147aed08171f5c27959f98",
+        "next": "4424e79ea489f3bcec147aed08171f5c27959f98"
+      },
+      {
+        "id": "iati-geography-native-receiving",
+        "old": "4424e79ea489f3bcec147aed08171f5c27959f98",
+        "next": "4424e79ea489f3bcec147aed08171f5c27959f98"
+      },
+      {
+        "id": "iati-geography-browser-receiving",
+        "old": "4424e79ea489f3bcec147aed08171f5c27959f98",
+        "next": "4424e79ea489f3bcec147aed08171f5c27959f98"
+      },
+      {
+        "id": "iati-aiddata-nigeria-attribution",
+        "old": "4424e79ea489f3bcec147aed08171f5c27959f98",
+        "next": "4424e79ea489f3bcec147aed08171f5c27959f98"
+      },
+      {
+        "id": "iati-aiddata-nigeria-metadata",
+        "old": "4424e79ea489f3bcec147aed08171f5c27959f98",
+        "next": "4424e79ea489f3bcec147aed08171f5c27959f98"
+      },
+      {
+        "id": "iati-aiddata-nigeria-xml",
+        "old": "4424e79ea489f3bcec147aed08171f5c27959f98",
+        "next": "4424e79ea489f3bcec147aed08171f5c27959f98"
+      },
+      {
+        "id": "iati-document-operating-procedures",
+        "old": "0110a7fde307112abee5be63a06291855aa72599",
+        "next": "0110a7fde307112abee5be63a06291855aa72599"
+      },
+      {
+        "id": "iati-document-operating-source",
+        "old": "0110a7fde307112abee5be63a06291855aa72599",
+        "next": "0110a7fde307112abee5be63a06291855aa72599"
+      },
+      {
+        "id": "iati-document-operating-model",
+        "old": "0110a7fde307112abee5be63a06291855aa72599",
+        "next": "0110a7fde307112abee5be63a06291855aa72599"
+      },
+      {
+        "id": "iati-document-operating-cli",
+        "old": "0110a7fde307112abee5be63a06291855aa72599",
+        "next": "0110a7fde307112abee5be63a06291855aa72599"
+      },
+      {
+        "id": "iati-complete-installed-operator",
+        "old": "0110a7fde307112abee5be63a06291855aa72599",
+        "next": "0110a7fde307112abee5be63a06291855aa72599"
+      },
+      {
+        "id": "recovery-support-guide",
+        "old": "8799a5fb7a22d3dd6ee54e74650189ab79a4f7ee",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
+      },
+      {
+        "id": "recovery-support-producer",
+        "old": "57c417495c040e1a37012a3aabc02289ea652973",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
+      },
+      {
+        "id": "facilitator-commissioning-guide",
+        "old": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+        "next": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4"
+      },
+      {
+        "id": "facilitator-commissioning-customer-guide",
+        "old": "6dd3fb24d2871aa2058e5c14a4cd80ff43227273",
+        "next": "7a1c11b9496ae6f63b8bddff6a4b95ecb09891d4"
+      },
+      {
+        "id": "recovery-comparison-guide",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
+      },
+      {
+        "id": "recovery-comparison-workspace-cli",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
+      },
+      {
+        "id": "recovery-comparison-agent-catalog",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
+      },
+      {
+        "id": "recovery-comparison-agent-types",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
+      },
+      {
+        "id": "recovery-comparison-workspace-model",
+        "old": "134640608b6fe4b53b5a2268b02d26207e320f0d",
+        "next": "1f2c02facf68fcebe2a5b3606fb75213ddd7db47"
+      },
+      {
+        "id": "zotero-library-complete-product",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
+      },
+      {
+        "id": "zotero-customer-agent-setup",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
+      },
+      {
+        "id": "zotero-customer-agent-requests",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
+      },
+      {
+        "id": "zotero-customer-agent-runtime",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
+      },
+      {
+        "id": "zotero-customer-agent-distribution",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
+      },
+      {
+        "id": "zotero-customer-agent-receiving",
+        "old": "7203ee09262a316c35f36ccf97bae7cd0a44cc2d",
+        "next": "6899166c0a5d85602a42c7a95190b9acf3d6e180"
+      }
+    ],
+    "metadata_only_source_ids": [
+      "iati-fcdo-wadi-original-source",
+      "iati-document-evidence-workspace",
+      "iati-document-evidence-receiving",
+      "iati-document-following-observation",
+      "iati-fcdo-document-native-result",
+      "iati-fcdo-document-connected-result",
+      "iati-geography-workspace",
+      "iati-geography-operator",
+      "iati-geography-native-receiving",
+      "iati-geography-browser-receiving",
+      "iati-aiddata-nigeria-attribution",
+      "iati-aiddata-nigeria-metadata",
+      "iati-aiddata-nigeria-xml",
+      "iati-document-operating-procedures",
+      "iati-document-operating-source",
+      "iati-document-operating-model",
+      "iati-document-operating-cli",
+      "iati-complete-installed-operator"
+    ],
     "original_budget_and_request_unchanged": true,
+    "application_unchanged": true,
+    "concurrent_audit_source_preserved": true,
     "nine_original_answer_ids_retained": true,
-    "full_composer_replay_identical": true,
     "complete_four_role_package_reopen_equal": true,
+    "full_composer_replay_identical": true,
     "document_sources_selected": [
       "document-merchant-applications",
       "document-merchant-composition-guide",
@@ -1105,134 +1199,92 @@
     ]
   },
   "source_repairs": {
-    "canonical_paragraph_count": 11,
     "canonical_paragraphs": [
       {
         "before": {
+          "bytes": 529,
+          "sha256": "3b6df815b011e774a53d319a776e38b40d462f85fd55a9a8750bfa99097e91e5"
+        },
+        "after": {
+          "bytes": 677,
+          "sha256": "17635d441b253cfea1d31f2d02169d9976ff4d19cec11f20af3bbf9b038cda7c"
+        },
+        "opening": "Applications Review/Save pins the complete private launch configuration and exact source manifest. S"
+      },
+      {
+        "before": {
           "bytes": 685,
-          "sha256": "896aaca37dece9dc987f63b1a234b97c9e4e3293edf8c733a8965f6a2575a84b"
+          "sha256": "d41a551a38b1521049b05fd1310aa1676cd2edc4df0674f0ab1d426d926a8f17"
         },
         "after": {
           "bytes": 685,
-          "sha256": "d41a551a38b1521049b05fd1310aa1676cd2edc4df0674f0ab1d426d926a8f17"
+          "sha256": "ff2fb9c02d169c90065841e6a2b4166724135a8b698fd8b083ccc012896408e9"
         },
         "opening": "The [commissioning operator](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/bl"
       },
       {
         "before": {
-          "bytes": 912,
-          "sha256": "5eedb70e8b67307b74f46f9f9e11ad44c580035108d922e3542864601630866a"
+          "bytes": 569,
+          "sha256": "5549247795001ba2b8daa24725e919aef3fa2149f7aa1aef4253eb47913b31f3"
         },
         "after": {
-          "bytes": 912,
-          "sha256": "44e7f65e975ced542a13b00b90878b6ac86736111b9d9f796bb619da33d9e86f"
+          "bytes": 569,
+          "sha256": "6bb23bbe7f0c1403f040726c1dccc6ac11317216fa5488abd182882a7d8c060c"
         },
-        "opening": "Handover contains the original native job, source blobs, provider reviews, commands/results, seller "
+        "opening": "The complete commissioning application now also has an installable [customer interface and operating"
       },
       {
         "before": {
-          "bytes": 657,
-          "sha256": "e3a070fb7b1b572df512aa710a1ade98223c4f050fc32e563bf80b3ac2e22684"
+          "bytes": 441,
+          "sha256": "a5136b710913bdfc253f3f1b9c38424f2200365e8dca2451f820b7b92d6bfb61"
         },
         "after": {
-          "bytes": 657,
-          "sha256": "5ed6665075d335b50d38a237539a64874c3e72b33060d0447092051a9142ea69"
+          "bytes": 541,
+          "sha256": "459f2014a03bc21d8c37ca75235ecf272051796ddeadfac5ec42fc380ee07483"
         },
-        "opening": "The [complete customer operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-w"
-      },
-      {
-        "before": {
-          "bytes": 1312,
-          "sha256": "0b7e7d73467e196e093d56bbbd999ee99fee0ce2e10b08c09ae25ca3bb805eb3"
-        },
-        "after": {
-          "bytes": 1312,
-          "sha256": "76ec63aa5e82d1fd20206f483fc7da62d04f53454bf487d16c201c91b05f9e2b"
-        },
-        "opening": "The [complete programme receiving implementation](https://github.com/woahwhattheheck/tjlabs-stellar-"
-      },
-      {
-        "before": {
-          "bytes": 2136,
-          "sha256": "cf714bf3b06c65ef830a0e1efd6898e1f5b1f381e3d11347008ef34039282aa2"
-        },
-        "after": {
-          "bytes": 2136,
-          "sha256": "c9260c1e3a9357b4872ab1dd2b1234ab1127a30ce4f974a9f5ec7483b378e88c"
-        },
-        "opening": "* [Original World Bank acquisition, source semantics and portable editions](https://github.com/woahw"
-      },
-      {
-        "before": {
-          "bytes": 751,
-          "sha256": "1965b7e5371b665a1e357d8e7019648dcb7c20249d3fc72057a36ab8cda18c28"
-        },
-        "after": {
-          "bytes": 924,
-          "sha256": "53e123332e6242cdb1d2daa3aed845d33bbb4725e17c31a828082219a6fc2213"
-        },
-        "opening": "The [Merchant provider](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/6d"
-      },
-      {
-        "before": {
-          "bytes": 1129,
-          "sha256": "e9ab2942e0286985c92e3a227b8e9b1b6f8e00b9c7a201234e51e4d38e279ce0"
-        },
-        "after": {
-          "bytes": 1319,
-          "sha256": "ce17beceae28175ad51a0683d38132938b95974ef31ef405fad260f8dadf4de8"
-        },
-        "opening": "**Give the receiving operator an editable procedure.** The delivered FRED Operating Plans workflow c"
-      },
-      {
-        "before": {
-          "bytes": 658,
-          "sha256": "d1b4eef8003c229be19bf4dcd3948ac19c0b217e7754a1120d4589a855d99597"
-        },
-        "after": {
-          "bytes": 1627,
-          "sha256": "92a396631c52e60a842dde730106b4f070e7d1a664c844e61d9946d2c561bf76"
-        },
-        "opening": "A recurring bank delivery often needs the same interpretation across several original files and more"
-      },
-      {
-        "before": {
-          "bytes": 542,
-          "sha256": "f92b643c0605f1380a52d2d4b3af61675c7e0f7eb673eb1b122d08e23c1753bc"
-        },
-        "after": {
-          "bytes": 1290,
-          "sha256": "7685fd280452db409afe4b33972a6d9423b6abbe36c7113bc425dfbca0930dc9"
-        },
-        "opening": "The operator selects the existing configured accounting workspace, reads the complete configured sou"
-      },
-      {
-        "before": {
-          "bytes": 784,
-          "sha256": "56da89a44694f1f7388d7c57bfa87fc2dcf912e34f4200405edc518d7a108819"
-        },
-        "after": {
-          "bytes": 1512,
-          "sha256": "8014ff4e1c064031ad76b9d2f4b8416951092f5b4c94271edbdf7c60b5dd4397"
-        },
-        "opening": "The [typed client](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/b133c64"
-      },
-      {
-        "before": {
-          "bytes": 548,
-          "sha256": "784ce460f4daa65989b34d7bf1849d5715a548680dfc24431bb010e9b975ed71"
-        },
-        "after": {
-          "bytes": 736,
-          "sha256": "ae98dc9df53480018aa29f0fc451e678df07aae8257ce250c0277afcd36a5096"
-        },
-        "opening": "Complete report views page all physical rows, statements, pending entries, exclusions and issues. La"
+        "opening": "The catalogue application, the executed 344-record domain operation, source declarations, recurring "
       }
     ],
-    "fred_guide_selected_commit": "e23751bac6a047b973ad1aca9c241a99f43e5719",
-    "fred_prior_edition_retained": true,
-    "bank_source_chapter_updated": true,
-    "facilitator_source_chapter_owner": "Original REV103D source author; exact canonical corrections returned in the original publisher thread."
+    "authored_dcat_addition": {
+      "bytes": 15001,
+      "sha256": "1f31f030ae51bf77e70c4114e52f8da6f3ce6283f8781b8e255684d2f85c7d51"
+    },
+    "authored_replication_addition": {
+      "bytes": 15120,
+      "sha256": "e576e6be015181868d933fe25810ab29bba964824eaa2f98507109ae9c869f46"
+    },
+    "owned_file_changes": [
+      {
+        "path": "stellar-forge/developer-site/GRANT_COLLABORATIVE_DOCUMENTS.md",
+        "bytes": 13551,
+        "sha256": "b29df81844af2105d16548c2bab2d18b334b21b932012aef7f2408721fdb786c",
+        "preimage_blob": "d93d453a218dfd83103defb186fbb9957f3fa043",
+        "git_blob": "d518d156c9ffd39f266ae1726b7bd86a031b6cf6"
+      },
+      {
+        "path": "stellar-forge/developer-site/GRANT_REPLICATION_WORKBENCH.md",
+        "bytes": 15120,
+        "sha256": "e576e6be015181868d933fe25810ab29bba964824eaa2f98507109ae9c869f46",
+        "preimage_blob": "3ab4b74f41be1bd06bac1b25aa355b8752673bd0",
+        "git_blob": "3f84e20b3f941e75001573948ebc91685f2a056f"
+      },
+      {
+        "path": "stellar-forge/developer-site/grant-products/replication-workbench.json",
+        "bytes": 11250,
+        "sha256": "5659f44eeb38c4894538ba239e967d88d1f2fca50217416b3b60b7e2a23bd01b",
+        "preimage_blob": "bf14c9132171657e1be44015c26a5d4cb96b130f",
+        "git_blob": "7eb18b300c0743414c40febd0b31711977e966eb"
+      },
+      {
+        "path": "products/facilitator-commissioning/GRANT.md",
+        "bytes": 26756,
+        "sha256": "eb52cc1007d6787f6a807cb2cc398276fe1245ca765577864c32fd51af92ba5e",
+        "preimage_blob": "52d102bf8470a0b1c516e80ba829ce1e83b1d480",
+        "git_blob": "b682e66c2792cff6ba1a005071f027b359ce9897"
+      }
+    ],
+    "historical_replication_selection": "The four original d074376c server, operator, workspace and receiving definitions remain present and optional because the complete authored chapter explicitly selects the maintained 6d969651 successors. Their prior editions and all byte witnesses are unchanged.",
+    "concurrent_audit": "Fresh-main 995-source successor cc93191a/e39b193b is the actual initial published source. Its complete Audit chapter is byte-equal to this edition, including the current original 0fd9bfc5 customer Installation guide and authored final-course paragraph."
   },
   "execution": {
     "environment": "Connected V8 execution of complete unchanged original publication and reviewer-source receiving modules",
@@ -1248,8 +1300,8 @@
     "rendered_receiving": "Original Page/Site and 22B7 saved-application owners receive this exact package for the existing outgoing desktop/narrow, controls, attachments and reopen course."
   },
   "ownership": {
-    "canonical_publisher": "Following original composer publication 05C7; original DBC61/BC3D and Page/Site/source-package owners retain their continuing work.",
+    "canonical_publisher": "Following original composer publication 05C7; original DBC61/BC3D, source authors, Page/Site and saved-application owners retain continuing operation.",
     "native_saved_case": "Original 22B7 saved-application and current original native receiving programme.",
-    "following_editions": "Later canonical and declaration edits remain in main and the original Canvas. The two absent authored chapters continue with the original authors and work_scanner; no incomplete chapter was invented or removed."
+    "following_editions": "Property Continuity has its full declaration but no complete authored H2 in this selected manuscript. Exact source request is with original9B23. Later source/declaration changes remain in main and canonical for the following original composer edition."
   }
 }
