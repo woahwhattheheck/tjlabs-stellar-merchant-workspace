@@ -11,9 +11,11 @@ import { parseArgs } from 'node:util';
 import { operationLease } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs';
 import { applicationEnvironment } from '../../stellar/scf-starforge-20261009/distribution/runtime-workspace/application-environment.mjs';
 import { inspectReceivedMerchant, reviewEnvironmentName, reviewEnvironmentValue } from './received-project-review.mjs';
+import { inspectMerchantIntake } from './project-intake.mjs';
 
 const OPERATION = 'SCF-RECEIVED-MERCHANT-APPLICATION-CEDAR-8047-20261013';
 const { values } = parseArgs({ strict: true, options: {
+  archive: { type: 'string' }, 'archive-sha256': { type: 'string' },
   project: { type: 'string' }, runtime: { type: 'string' }, applications: { type: 'string' },
   output: { type: 'string' }, 'environment-file': { type: 'string' }, 'operator-token-env': { type: 'string' },
   python: { type: 'string' }, playwright: { type: 'string' }, chromium: { type: 'string' },
@@ -22,6 +24,8 @@ const { values } = parseArgs({ strict: true, options: {
 for (const name of ['project','runtime','applications','output','environment-file','python','playwright','chromium'])
   assert(typeof values[name] === 'string' && isAbsolute(values[name]) && resolve(values[name]) === values[name],
     'Use the original absolute ' + name + ' selection.');
+assert(Boolean(values.archive) === Boolean(values['archive-sha256']), 'Keep the original archive path and SHA-256 together.');
+if (values.archive) assert(isAbsolute(values.archive) && resolve(values.archive) === values.archive && /^[a-f0-9]{64}$/.test(values['archive-sha256']));
 assert.equal(process.platform, 'linux'); assert(Number(process.versions.node.split('.')[0]) >= 24);
 process.umask(0o077);
 const ROOT = values.output, RUNTIME = values.runtime, APPLICATIONS = values.applications;
@@ -428,19 +432,262 @@ async function receiveBrowser(opening, scenario, reads, { label, review = true }
     await closeBrowser();
   }
 }
+
+async function verifyIntakeOpening(value, inspected, label) {
+  assert.equal(value.selectionSha256, inspected.selectionSha256);
+  assert.equal(value.operationId, value.opening.operationId);
+  const opening = await readJSON(join(ROOT, 'opening-' + label + '.json'));
+  const attempt = opening?.attempts?.find(row => row.operationId === value.operationId);
+  assert(attempt?.completed, 'Keep the original completed intake opening.');
+  const run = await originalRun(value.operationId, opening.applicationId);
+  assert.equal(run.held, false); assert.deepEqual(run.result, value.native);
+  assert.equal(run.result?.state, 'STOPPED'); assert.equal(run.result?.stopped, true);
+  assert.deepEqual(attempt.completed.result, value.opening.result);
+  for (const file of [...value.opening.result.files, ...value.opening.result.images])
+    await originalFile(file.path, { bytes: file.bytes, sha256: file.sha256 });
+  assert.deepEqual(value.opening.result.pageErrors, []);
+  assert.deepEqual(value.opening.result.consoleErrors, []);
+  assert.deepEqual(value.opening.result.inventory, inspected.manifest.files.map(row =>
+    ({ path: row.path, bytes: row.bytes, sha256: row.sha256 })));
+}
+async function receiveIntakeBrowser(opening, inspected, credential) {
+  const root = join(ROOT, 'archive-intake-browser', opening.operationId);
+  await directory(root);
+  const require = createRequire(import.meta.url);
+  const playwright = require(values.playwright);
+  browser = await playwright.chromium.launch({ executablePath: values.chromium, headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  browserContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+  const originalOrigin = new URL(opening.url).origin, requests = [], pageErrors = [], consoleErrors = [];
+  let lostAcknowledgment = false, lostInventoryRead = false;
+  const expectedLostResponses = new Set();
+  try {
+    // Browser network reaches the actual original listener through this same
+    // host's fetch, including the single explicit original receiving POST.
+    await browserContext.route('**/*', async route => {
+      const request = route.request(), selected = new URL(request.url());
+      if (selected.origin !== originalOrigin ||
+          !(request.method() === 'GET' || request.method() === 'POST' && selected.pathname === '/api/receive')) {
+        await route.abort(); throw new Error('The original intake browser attempted an unrelated request.');
+      }
+      if (selected.pathname === '/favicon.ico') { await route.fulfill({ status: 204, body: '' }); return; }
+      const headers = { ...await request.allHeaders() };
+      delete headers.host; delete headers.connection; delete headers['content-length'];
+      const response = await fetch(selected, { method: request.method(), headers, redirect: 'error',
+        ...(request.method() === 'POST' ? { body: request.postDataBuffer() ?? Buffer.alloc(0) } : {}),
+        signal: AbortSignal.timeout(30000) });
+      const body = Buffer.from(await response.arrayBuffer());
+      requests.push({ method: request.method(), path: selected.pathname + selected.search,
+        status: response.status, bytes: body.length, sha256: sha(body) });
+      if (request.method() === 'GET' && selected.pathname === '/api/files' && !lostInventoryRead) {
+        assert.equal(response.status, 200); lostInventoryRead = true;
+        expectedLostResponses.add(selected.href); await route.abort('failed'); return;
+      }
+      if (request.method() === 'POST' && selected.pathname === '/api/receive' && !lostAcknowledgment) {
+        assert([200,202].includes(response.status));
+        lostAcknowledgment = true; expectedLostResponses.add(selected.href);
+        await route.abort('failed'); return;
+      }
+      const returnedHeaders = Object.fromEntries([...response.headers].filter(([name]) =>
+        !['connection','transfer-encoding','content-encoding','content-length'].includes(name.toLowerCase())));
+      await route.fulfill({ status: response.status, headers: returnedHeaders, body });
+    });
+    const page = await browserContext.newPage();
+    page.on('pageerror', error => pageErrors.push(String(error.message)));
+    page.on('console', message => {
+      if (message.type() !== 'error') return;
+      const expected = expectedLostResponses.has(message.location().url) &&
+        message.text() === 'Failed to load resource: net::ERR_FAILED';
+      if (!expected) consoleErrors.push(message.text());
+    });
+    await page.goto(opening.url, { waitUntil: 'domcontentloaded' });
+    await page.locator('#credential').fill(credential);
+    await page.locator('#connect button').click();
+    await page.locator('#desk').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => document.getElementById('notice').textContent.includes('Use Find files to retry.'));
+    assert(lostInventoryRead);
+    assert.equal(await page.locator('#desk').isVisible(), true);
+    assert.equal(await page.locator('#connection').isVisible(), false);
+    await page.locator('#search button').click();
+    await page.waitForFunction(() => document.getElementById('file-count').textContent.length > 0);
+    assert((await page.locator('#identity').innerText()).includes(inspected.selection.storeId));
+    const inventory = [];
+    for (;;) {
+      const rows = await page.locator('#files tr').evaluateAll(items => items.map(row =>
+        [...row.querySelectorAll('td')].map(cell => cell.textContent)));
+      inventory.push(...rows.map(row => ({ path: row[0], bytes: row[1], sha256: row[2] })));
+      if (await page.locator('#next').isDisabled()) break;
+      const prior = await page.locator('#page-position').innerText();
+      await page.locator('#next').click();
+      await page.waitForFunction(previous => document.getElementById('page-position').textContent !== previous, prior);
+    }
+    assert.deepEqual(inventory, inspected.manifest.files.map(row =>
+      ({ path: row.path, bytes: row.bytes, sha256: row.sha256 })));
+    const files = [];
+    async function download(button, filename) {
+      const pending = page.waitForEvent('download');
+      await page.locator(button).click();
+      const selected = await pending, path = join(root, filename);
+      await selected.saveAs(path);
+      const raw = await readFile(path), item = { path, bytes: raw.length, sha256: sha(raw) };
+      files.push(item); return JSON.parse(raw);
+    }
+    const manifest = await download('#manifest', 'original-project-manifest.json');
+    assert.deepEqual(manifest, inspected.manifest);
+    const images = [];
+    async function image(name) {
+      const path = join(root, name); await page.screenshot({ path, fullPage: true });
+      const raw = await readFile(path); images.push({ path, bytes: raw.length, sha256: sha(raw) });
+    }
+    await image('desktop-intake.png');
+    if (!(await page.locator('#receive').isDisabled())) {
+      await page.locator('#receive').click();
+      await page.waitForFunction(() => document.getElementById('notice').textContent.length > 0);
+      assert(lostAcknowledgment, 'The original receiving POST must reach its real listener before its response is lost.');
+      await page.locator('#refresh').click();
+    }
+    const started = Date.now();
+    for (;;) {
+      stopped();
+      const phase = await page.locator('#phase').innerText();
+      if (phase === 'Project received') break;
+      if (phase === 'Resume original receiving') {
+        const failure = await page.locator('#receiving-error').innerText();
+        throw new Error('Continue the actual original receiving condition: ' + failure);
+      }
+      assert(Date.now() - started < 600000, 'Continue the same original receiving operation.');
+      await pause(250);
+    }
+    const receipt = await download('#receipt', 'original-receiving-record.json');
+    assert.equal(receipt.state, 'COMPLETE'); assert.equal(receipt.action, 'receive');
+    assert.equal(receipt.operation, inspected.selection.request.operation);
+    assert.equal(receipt.archive.sha256, inspected.selection.archive.sha256);
+    assert.equal(receipt.manifestSha256, inspected.selection.manifestSha256);
+    assert.deepEqual(receipt.manifest, inspected.manifest);
+    assert.equal(receipt.received.storeId, inspected.selection.storeId);
+    assert.equal(receipt.received.workspaceDirectory, inspected.selection.workspaceDirectory);
+    assert.equal(await page.locator('#open-review').isVisible(), true);
+    const reviewUrl = await page.locator('#open-review').getAttribute('href');
+    const reviewAddress = new URL(reviewUrl);
+    assert.equal(reviewAddress.hostname, '127.0.0.1'); assert.equal(reviewAddress.protocol, 'http:');
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+    await image('phone-received.png');
+    await page.locator('#disconnect').click();
+    assert.equal(await page.locator('#desk').isVisible(), false);
+    await page.locator('#credential').fill(credential); await page.locator('#connect button').click();
+    await page.locator('#desk').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => document.getElementById('phase').textContent === 'Project received');
+    assert((await page.locator('#identity').innerText()).includes(inspected.selection.request.operation));
+    await page.goto('about:blank'); await page.goBack({ waitUntil: 'domcontentloaded' });
+    assert.equal(await page.locator('#connection').isVisible(), true);
+    assert.equal(await page.locator('#desk').isVisible(), false);
+    assert.equal(await page.locator('#credential').inputValue(), '');
+    await page.locator('#credential').fill(credential); await page.locator('#connect button').click();
+    await page.waitForFunction(() => document.getElementById('phase').textContent === 'Project received');
+    assert.deepEqual(pageErrors, []); assert.deepEqual(consoleErrors, []);
+    return { browser: await browser.version(), mode: 'ORIGINAL_MANAGED_INTAKE_HTTP_BRIDGE',
+      originalOperation: inspected.selection.request.operation, lostAcknowledgment, lostInventoryRead,
+      browserBackReconnected: true, inventory, files, images,
+      reviewUrl, requests, pageErrors, consoleErrors };
+  } finally { await closeBrowser(); }
+}
+async function receiveArchiveThroughApplications(inspection, credentialName, credential) {
+  const inspected = await inspectMerchantIntake({ archive: values.archive, archiveSha256: values['archive-sha256'],
+    destination: values.project, python: values.python });
+  selectedProject = inspected; WORKSPACE = inspected.selection.workspaceDirectory;
+  const selection = { selection: inspected.selection, selectionSha256: inspected.selectionSha256,
+    runtime: RUNTIME, sourceCommit: inspection.sourceCommit, applications: APPLICATIONS, output: ROOT,
+    environmentFile: values['environment-file'], credentialName, python: values.python };
+  await save(join(ROOT, 'archive-intake-selection.json'), selection, { original: true });
+  const complete = await readJSON(join(ROOT, 'archive-intake.json'));
+  if (complete) {
+    assert.equal(complete.openings.length, 2);
+    for (const [index, opening] of complete.openings.entries())
+      await verifyIntakeOpening(opening, inspected, ['archive-intake', 'archive-intake-cold'][index]);
+    return complete;
+  }
+  const runtimeModel = await import(pathToFileURL(join(SOURCE,
+    'stellar/scf-starforge-20261009/distribution/runtime-workspace/model.mjs')));
+  model = await runtimeModel.openRuntimeWorkspace({ directory: APPLICATIONS });
+  let attached = await readJSON(join(ROOT, 'runtime-attachment.json'));
+  if (!attached) {
+    attached = await model.attach({ directory: RUNTIME, label: 'Received merchant review runtime' });
+    await save(join(ROOT, 'runtime-attachment.json'), attached, { original: true });
+  }
+  const catalog = await model.applicationsState();
+  assert(catalog.catalog.some(row => row.id === 'x402api-merchant-project-intake' && row.providerId === 'x402api-merchant'));
+  let review = await readJSON(join(ROOT, 'archive-application-review.json'));
+  if (!review) {
+    review = await model.applicationsReview({ runtimeId: attached.runtimeId, kind: 'x402api-merchant-project-intake',
+      providerId: 'x402api-merchant', label: 'Receive the original merchant project',
+      settings: { archiveFile: values.archive, archiveSha256: values['archive-sha256'], receivedDirectory: values.project,
+        port: 0, environmentFile: values['environment-file'], operatorTokenEnv: credentialName,
+        pythonExecutable: values.python, allowLoopback: values['allow-loopback'] } });
+    await save(join(ROOT, 'archive-application-review.json'), review, { original: true });
+  }
+  const saved = await model.applicationsSave({ requestId: identity('archive-save'), reviewId: review.id });
+  await save(join(ROOT, 'archive-application-save.json'), {
+    applicationId: saved.applicationId, revision: saved.revision, saved: saved.saved }, { original: true });
+  const applicationId = saved.applicationId;
+  if (!(await applicationView(applicationId)).release) await model.applicationsConnect({ applicationId });
+  const connectedAt = Date.now();
+  for (;;) {
+    stopped(); const current = await applicationView(applicationId);
+    if (current.release) break;
+    assert(!['FAILED','INTERRUPTED'].includes(current.adoption?.phase), 'Receive the original intake adoption outcome.');
+    assert(Date.now() - connectedAt < 120000, 'Continue the original intake runtime adoption.');
+    await pause(200);
+  }
+  const openings = [];
+  for (const label of ['archive-intake', 'archive-intake-cold']) {
+    const phasePath = join(ROOT, label + '-received.json');
+    let phase = await readJSON(phasePath);
+    if (!phase) {
+      const opening = await beginOpening(label, applicationId);
+      let result, ended;
+      if (opening.completed) { result = opening.completed.result; ended = { result: opening.completed.native }; }
+      else {
+        result = await receiveIntakeBrowser(opening, inspected, credential);
+        ended = await finishOpening(opening, result);
+      }
+      phase = { selectionSha256: inspected.selectionSha256, operationId: opening.operationId,
+        applicationId, revision: saved.revision, opening: { operationId: opening.operationId, result }, native: ended.result };
+      await save(phasePath, phase, { original: true });
+    }
+    await verifyIntakeOpening(phase, inspected, label);
+    if (label === 'archive-intake-cold') assert.equal(phase.opening.result.lostAcknowledgment, false);
+    openings.push(phase);
+    if (label === 'archive-intake') {
+      await model.close(); model = await runtimeModel.openRuntimeWorkspace({ directory: APPLICATIONS });
+    }
+  }
+  const final = { selectionSha256: inspected.selectionSha256, applicationId, revision: saved.revision, openings };
+  await save(join(ROOT, 'archive-intake.json'), final, { original: true });
+  await model.close(); model = null;
+  return final;
+}
+
 async function receive() {
-  selectedProject = await inspectReceivedMerchant(values.project, { python: values.python, allowLoopback: values['allow-loopback'] });
-  WORKSPACE = selectedProject.selection.workspaceDirectory; DATABASE = join(WORKSPACE, 'merchant.sqlite3');
   const installedRuntime = await import(pathToFileURL(join(RUNTIME,
     'package/source/stellar/scf-starforge-20261009/distribution/runtime-install.mjs')));
   const inspection = await installedRuntime.inspectRuntimeInstall({ directory: RUNTIME, load: true, source: true });
   assert.equal(inspection.status, 'READY'); assert.equal(inspection.ready, true); SOURCE = inspection.sourceRoot;
+  let archiveIntake = null;
+  if (values.archive) {
+    const { environment } = await applicationEnvironment(values['environment-file']);
+    const name = reviewEnvironmentName(values['operator-token-env'] ?? 'MERCHANT_REVIEW_OPERATOR_TOKEN');
+    archiveIntake = await receiveArchiveThroughApplications(inspection, name, reviewEnvironmentValue(environment, name));
+  }
+  selectedProject = await inspectReceivedMerchant(values.project, { python: values.python, allowLoopback: values['allow-loopback'] });
+  WORKSPACE = selectedProject.selection.workspaceDirectory; DATABASE = join(WORKSPACE, 'merchant.sqlite3');
   const { environment, sha256: environmentSha256 } = await applicationEnvironment(values['environment-file']);
   const credentialName = reviewEnvironmentName(values['operator-token-env'] ?? selectedProject.selection.operatorTokenEnv);
   const credential = reviewEnvironmentValue(environment, credentialName);
   const selection = { schema: 'stellar-forge.received-merchant-application-receiving.v1', operation: OPERATION,
     project: selectedProject.selection, projectSha256: selectedProject.selectionSha256,
     runtime: RUNTIME, runtimeSource: SOURCE, runtimeSourceCommit: inspection.sourceCommit, applications: APPLICATIONS,
+    ...(values.archive ? { archive: values.archive, archiveSha256: values['archive-sha256'] } : {}),
     output: ROOT, environmentFile: values['environment-file'], environmentSha256, operatorTokenEnv: credentialName,
     python: values.python, playwright: values.playwright, chromium: values.chromium, allowLoopback: values['allow-loopback'] };
   await save(join(ROOT, 'selection.json'), selection, { original: true });
@@ -525,6 +772,7 @@ async function receive() {
     project: selectedProject.selection, projectSha256: selectedProject.selectionSha256, runtimeSourceCommit: inspection.sourceCommit,
     application: { directory: APPLICATIONS, applicationId, reviewId: review.id, revision: saved.revision },
     beforeAllRowsSha256: before.allUserRowsSha256, afterAllRowsSha256: after.allUserRowsSha256,
+    ...(archiveIntake ? { archiveIntake } : {}),
     openings, history, completedAt: new Date().toISOString() };
   await save(join(ROOT, 'complete.json'), result, { original: true });
   return result;
