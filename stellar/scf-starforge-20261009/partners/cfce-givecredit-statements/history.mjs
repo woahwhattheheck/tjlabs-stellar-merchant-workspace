@@ -161,7 +161,7 @@ async function loadBaseline(options){
 }
 function queryOf(options,baseline){
   const network=options.network??baseline.network??'mainnet';
-  const networkPassphrase=options.networkPassphrase??baseline.networkPassphrase??LEDGER_INTERVAL_DEFAULTS.networkPassphrase;
+  const networkPassphrase=options.networkPassphrase??baseline.networkPassphrase??(network==='testnet'?'Test SDF Network ; September 2015':LEDGER_INTERVAL_DEFAULTS.networkPassphrase);
   need(['mainnet','testnet'].includes(network)&&typeof networkPassphrase==='string'&&networkPassphrase.length,'HISTORY_NETWORK','Select the original ledger network and passphrase.');
   need(!baseline.network||baseline.network===network,'HISTORY_NETWORK','The original baseline and archive selection must use the same network.');
   need(!baseline.networkPassphrase||baseline.networkPassphrase===networkPassphrase,'HISTORY_NETWORK','Retain the original baseline network passphrase.');
