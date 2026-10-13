@@ -189,7 +189,7 @@ function renderPublisherScope(){
 }
 $('publisher-resource-scope').addEventListener('change',event=>handle(()=>setPublisherResource(event.target.value)));
 publisherPanel = createPublisherPanel({getState:() => publisherState(),perform:scopedPublisher,download:scopedPublisherDownload,handle,notice,selectSection});
-propertyPanel = createPropertyPanel({getState:()=>state,perform,request,downloadFile:file=>propertyDownload('/api/property/file?file='+encodeURIComponent(file)),handle,notice,selectSection,selectPublisher:setPublisherResource});
+propertyPanel = createPropertyPanel({getState:()=>state,perform,request,downloadFile:file=>propertyDownload('/api/property/file?file='+encodeURIComponent(file)),handle,notice,selectSection,selectPublisher:setPublisherResource,onPendingChange:renderControls});
 
 function factList(entries) {
   const list = node('dl');
