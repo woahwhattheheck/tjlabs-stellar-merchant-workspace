@@ -30,7 +30,8 @@ const merchantExportRoot=join(config.output,'merchant');await mkdir(merchantExpo
 const merchant=new MerchantSourceWorkspaces({exportsDirectory:merchantExportRoot,sourceWorkspaces:{workspaces:{
  receiving:{label:'Original Results receiving',format:'iati',consoleUrlFile:config.connectionFile,files:{}}
 }}});
-let browser;
+let browser,currentPage;
+const errors=[];
 try{
  try{
   const complete=JSON.parse(await readFile(resultFile,'utf8'));
@@ -59,8 +60,8 @@ try{
  const profile=join(config.output,'browser-profile');
  browser=await chromium.launchPersistentContext(profile,{executablePath:config.chromium,headless:true,viewport:{width:1440,height:1000},
   acceptDownloads:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--single-process','--no-zygote']});
- const errors=[];browser.on('page',p=>p.on('pageerror',error=>errors.push(error.message)));
- const p=await browser.newPage();p.on('pageerror',error=>errors.push(error.message));
+ browser.on('page',p=>p.on('pageerror',error=>errors.push(error.message)));
+ const p=await browser.newPage();currentPage=p;p.on('pageerror',error=>errors.push(error.message));
  const ui=p.locator('[data-panel="results"]');
  async function idle(){await p.locator('#main').waitFor();await p.waitForFunction(()=>document.getElementById('main')?.getAttribute('aria-busy')==='false');}
  async function click(name){await ui.getByRole('button',{name,exact:true}).click();await idle();}
@@ -110,7 +111,7 @@ try{
  await p.screenshot({path:join(config.output,'results-original-records.png'),fullPage:true});
  await checkpoint('source-browser',{rows:page.rows.length,total:page.total,originalRecordsVisible:page.rows.length>0});
 
- await click('Compare revisions');await ui.getByLabel('Saved project',{exact:true}).selectOption(original.project);await click('Read existing comparisons');
+ await click('Following edition');await ui.getByLabel('Saved project',{exact:true}).selectOption(original.project);await click('Read existing comparisons');
  if((await client.resultsComparisons(original.project)).comparisons.length){
   await ui.getByRole('button',{name:/^r[0-9]+ → r[0-9]+ · /}).first().click();
   await ui.getByRole('heading',{name:'Retained source / selection changes',exact:true}).waitFor();
@@ -178,4 +179,18 @@ try{
   browserErrors:errors,completedAt:new Date().toISOString(),artifacts,merchantExport:me,
   screenshots:['results-reviewed-desktop.png','results-original-records.png','results-receiving-mobile.png']};
  await writeFile(resultFile,JSON.stringify(result,null,2)+'\n',{mode:0o600});process.stdout.write(JSON.stringify(result)+'\n');
+}catch(error){
+ const clean=value=>String(value??'').split(privateUrl).join('[original private console]');
+ const failure={schema:'stellar-forge.iati-results-browser-failure.v1',operationId:config.operationId,
+  project:original.project,state:'INCOMPLETE',error:clean(error.message),browserErrors:[...new Set(errors.map(clean))],
+  completedStages:Object.keys(progress.stages),recordedAt:new Date().toISOString()};
+ if(currentPage&&!currentPage.isClosed()){
+  failure.status=await currentPage.locator('#status').textContent({timeout:1000}).catch(()=>null);
+  failure.busy=await currentPage.locator('#main').getAttribute('aria-busy',{timeout:1000}).catch(()=>null);
+  try{await currentPage.screenshot({path:join(config.output,'browser-failure.png'),fullPage:true,timeout:5000});failure.screenshot='browser-failure.png';}
+  catch(screenshotError){failure.screenshotError=clean(screenshotError.message);}
+ }
+ await writeFile(join(config.output,'browser-failure.json'),JSON.stringify(failure,null,2)+'\n',{mode:0o600});
+ process.stderr.write(JSON.stringify(failure)+'\n');
+ throw error;
 }finally{await browser?.close();await merchant.close();await client.dispose();}
