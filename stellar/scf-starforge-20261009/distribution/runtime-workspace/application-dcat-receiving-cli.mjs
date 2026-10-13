@@ -1,6 +1,5 @@
 // MIT. The original runtime workspace CLI delegates catalogue receiving to its maintained writers.
-import { prepareDcatApplicationReceiving, saveDcatApplicationReceiving, dcatApplicationReceivingStatus }
-  from './application-dcat-receiving.mjs';
+import { readDistributionSpecification } from '../specification.mjs';
 import { need } from './storage.mjs';
 
 export const dcatReceivingCommands = {
@@ -17,10 +16,20 @@ export const dcatReceivingHelp = `
 `;
 export async function runDcatReceivingCommand(model, command, options) {
   need(options['--operation'],'DCAT_RECEIVING_OPERATION_REQUIRED');
+  need(Object.hasOwn(dcatReceivingCommands,command),'DCAT_RECEIVING_COMMAND_INVALID');
+  // The common CLI retains command discovery without making every product
+  // import the catalogue engine. CKAN selects this complete native receiver
+  // through its original export; no source is synthesized during dispatch.
+  const distribution=await readDistributionSpecification();
+  need(distribution.spec.exports?.['./merchant/runtime/dcat-receiving']===
+    './source/stellar/scf-starforge-20261009/distribution/runtime-workspace/application-dcat-receiving.mjs',
+    'DCAT_RECEIVING_PRODUCT_REQUIRED',
+    'Use the installed CKAN/DCAT product containing the complete catalogue receiving capability.');
+  const {prepareDcatApplicationReceiving,saveDcatApplicationReceiving,dcatApplicationReceivingStatus}=
+    await import('./application-dcat-receiving.mjs');
   const input={operation:options['--operation']};
   if(command==='dcat-receiving-status') return dcatApplicationReceivingStatus(input);
   if(command==='dcat-receiving-save') return saveDcatApplicationReceiving(model,input);
-  need(command==='dcat-receiving-prepare','DCAT_RECEIVING_COMMAND_INVALID');
   const controller=new AbortController();
   const stop=()=>controller.abort();
   process.on('SIGINT',stop);process.on('SIGTERM',stop);
