@@ -1,0 +1,168 @@
+{
+  "schema": "bloccpay.bridge-provider-contract.v1",
+  "operation": "BLOCCPAY-BRIDGE-8F43-20261013",
+  "capturedAt": "2026-10-13T05:25:00Z",
+  "owner": {
+    "commercial": "6BBB",
+    "horizonInvoice": "6BA15",
+    "sdp": "8F43-root",
+    "bridge": "8F43-scout",
+    "parent": {
+      "channel": "C0BTTA66TK3",
+      "ts": "1791867893.470099"
+    },
+    "jointTake": "1791868940.412319"
+  },
+  "applicationBoundary": {
+    "status": "AWAITING_ORIGINAL_SOURCE",
+    "architecture": "Zoho WorkDrive 1ed7accebc449a6457b7e99a93fbe953d55c0daa5cd0221c8bf30db75c7e2c24",
+    "ledger": "Existing Bloccpay ledger and transaction boundary remain authoritative",
+    "moneyMovement": "No provider endpoint configured or fund movement requested"
+  },
+  "observations": [
+    {
+      "id": "bridge-webhook-signature",
+      "source": "https://apidocs.bridge.xyz/platform/additional-information/webhooks/signature",
+      "facts": [
+        "X-Webhook-Signature uses t in milliseconds and v0 strict base64.",
+        "Per-endpoint PEM public RSA key verifies double-SHA256(timestamp + dot + raw body). Node verify('sha256', firstDigest, RSA key, signature) hashes the first digest again.",
+        "Freshness applies to delivery timestamp; retries have newly generated timestamps. Preserve the event timestamp separately."
+      ]
+    },
+    {
+      "id": "bridge-webhook-owner",
+      "source": "https://apidocs.bridge.xyz/platform/additional-information/webhooks/overview",
+      "facts": [
+        "HTTPS endpoint starts disabled, gets its own public key, and can be explicitly tested before activation.",
+        "Return200 promptly after durable acquisition; Bridge retries failed delivery with exponential backoff for up to two days.",
+        "No endpoint registration or activation is included in this source-qualification operation."
+      ]
+    },
+    {
+      "id": "bridge-event-identity",
+      "source": "https://apidocs.bridge.xyz/platform/additional-information/webhooks/structure",
+      "facts": [
+        "event_id is globally unique; event_object_id repeats event_object.id.",
+        "event_category/type, complete event_object, changes, event_created_at and source bytes remain distinct retained fields.",
+        "Current overview examples contain older virtual-account names funding/drain/refund; dedicated activity API documents funds_received/payment_submitted/payment_processed. Preserve unknown original types without inferring settlement."
+      ]
+    },
+    {
+      "id": "bridge-virtual-account",
+      "source": "https://apidocs.bridge.xyz/platform/orchestration/virtual_accounts/virtual-account-events",
+      "facts": [
+        "deposit_id groups distinct transaction-triggered activities for the same original deposit.",
+        "payment_submitted transaction hash can change; payment_processed has finalized hash.",
+        "Microdeposits are not onramped. Account lifecycle events do not imply customer credits."
+      ]
+    },
+    {
+      "id": "bridge-amount-basis",
+      "source": "https://apidocs.bridge.xyz/platform/orchestration/virtual_accounts/virtual-account",
+      "facts": [
+        "amount for payment_processed/payment_submitted uses destination currency; other types use source currency.",
+        "subtotal_amount and developer/exchange fees use source currency; gas_fee uses destination currency.",
+        "Do not compare gross fiat amount to net stablecoin amount or infer an exchange rate without retained provider evidence."
+      ]
+    },
+    {
+      "id": "bridge-activity-pages",
+      "source": "https://apidocs.bridge.xyz/api-reference/virtual-accounts/virtual-account-activity",
+      "facts": [
+        "GET/v0/customers/{customerID}/virtual_accounts/{virtualAccountID}/history.",
+        "data and count are current page, limit1..100, default10.",
+        "starting_after goes older; ending_before goes newer; never combine.",
+        "deposit_id versus deposit_ids are mutually exclusive; tx_hash filter is separate.",
+        "Current original API explicitly serializes deposit_ids as repeated deposit_ids[]=id1&deposit_ids[]=id2. event_type uses the published finite activity enum."
+      ]
+    },
+    {
+      "id": "bridge-transfer-pages",
+      "source": "https://apidocs.bridge.xyz/api-reference/transfers/get-all-transfers",
+      "facts": [
+        "GET/v0/transfers supports updated_after_ms and updated_before_ms, creation-order cursors, tx_hash and state filters.",
+        "Retain all pages and original observations; creation-order high-water alone does not find updates to old transfer objects.",
+        "Record actual source.updated_at and complete response; unsupported or conflicting provider ordering remains an explicit incident."
+      ]
+    },
+    {
+      "id": "bridge-pagination",
+      "source": "https://apidocs.bridge.xyz/api-reference/pagination",
+      "facts": [
+        "Backfill older pages with the last item id until an actual empty data page.",
+        "A short nonempty page is not documented terminal proof.",
+        "Never advance a retained ingestion boundary beyond unprocessed pages."
+      ]
+    },
+    {
+      "id": "bridge-incomplete-log-endpoints",
+      "source": "https://apidocs.bridge.xyz/api-reference/webhooks/list-upcoming-events",
+      "facts": [
+        "Upcoming webhook events returns the next ten pending events; this is not historical backfill."
+      ]
+    },
+    {
+      "id": "bridge-delivery-logs",
+      "source": "https://apidocs.bridge.xyz/api-reference/webhooks/view-logs",
+      "facts": [
+        "Webhook logs are recent delivery reports, separate from complete provider object/activity history."
+      ]
+    },
+    {
+      "id": "bridge-transfer-state",
+      "source": "https://apidocs.bridge.xyz/platform/orchestration/transfers/transfer-states",
+      "facts": [
+        "awaiting_funds/funds_received/payment_submitted are not delivered success.",
+        "payment_processed means delivered; returned/refunded/refund_in_flight/refund_failed and other exception states must remain separate.",
+        "Canceled applies to awaiting_funds; never map a missing callback to successful cancellation."
+      ]
+    },
+    {
+      "id": "bridge-post-retry",
+      "source": "https://apidocs.bridge.xyz/api-reference/introduction/idempotence",
+      "facts": [
+        "POST requires original Idempotency-Key and unchanged complete request body.",
+        "Provider guarantees retry response for24h, then same key yields422; do not replace the key on uncertain outcome.",
+        "GET/PUT/PATCH/DELETE do not use Idempotency-Key per current provider contract."
+      ]
+    },
+    {
+      "id": "bridge-corridor-qualification",
+      "source": "https://apidocs.bridge.xyz/get-started/introduction/what-we-support/payment-routes",
+      "facts": [
+        "Published fiat-rail summary does not establish NGN/KES/GHS off-ramp routes named in Bloccpay roadmap.",
+        "Dynamic Route Explorer and actual account-approved route/asset/currency parameters must establish corridor support before making availability claims.",
+        "Country onboarding support is distinct from a supported payout route."
+      ]
+    },
+    {
+      "id": "bridge-transfer-currency",
+      "source": "https://apidocs.bridge.xyz/api-reference/transfers/get-a-transfer",
+      "facts": [
+        "Transfer amount currency is its explicit currency field; it is not always the source token symbol.",
+        "Receipt values, source/destination routes and original client_reference_id remain whole original fields; a missing receipt is not an all-zero receipt."
+      ]
+    },
+    {
+      "id": "bridge-precision",
+      "source": "https://apidocs.bridge.xyz/platform/additional-information/precision",
+      "facts": [
+        "The current precision page describes whole-cent processing and discarded fractional cents, with fee rounding upward.",
+        "Retain original decimal strings, actual route and provider receipt. Do not silently rewrite original Stellar precision or fabricate a fee/rounding result."
+      ]
+    }
+  ],
+  "originalSourceReferences": {
+    "roadmap": "https://communityfund.stellar.org/submissions/recay7Oe3yuqGc0nn",
+    "existingHorizon": {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "ref": "5b509c7b",
+      "path": "settlement-audit/horizon-native.mjs",
+      "gitBlob": "c3628d5d4fff730091428a8cbe608637e0d5d671"
+    },
+    "existingInvoice": {
+      "path": "invoice-settlement/reconciliation.mjs",
+      "gitBlob": "8f50d92eb0200e7ba3f8489b3a571bc83665bea3"
+    }
+  }
+}

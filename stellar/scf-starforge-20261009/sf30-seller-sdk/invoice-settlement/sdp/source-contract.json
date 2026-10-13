@@ -40,6 +40,10 @@
       {
         "path": "internal/scheduler/jobs/event_delivery_job.go",
         "gitBlob": "ab2e98820410e430ff4f4c70e71b0b952a9d36f6"
+      },
+      {
+        "path": "internal/services/distribution_wallet_management_service.go",
+        "gitBlob": "aa475e531b814b23feb2c3af28db1e0a6d10bf0c"
       }
     ]
   },
@@ -104,7 +108,7 @@
       "sha256": "9d1e6e934a6e16304cfb8a53c659284105ecf2d7c3391c8dc0c18c2c9cf73c35"
     }
   ],
-  "financialBinding": "Existing customer durable mutation admission/outcome writer and atomic event/effect transaction",
+  "financialBinding": "Existing company executeMutation operation writer or durable admitMutation/recordMutation, plus original atomic signed-event/readback transaction",
   "receiving": "Original invoice workspace source journal and complete application package",
   "validation": {
     "course": "Pure contract exercise using constructed documentation records",

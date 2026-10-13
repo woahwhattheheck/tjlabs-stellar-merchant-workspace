@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.invoice-settlement.bridge-receiving.v1.input",
+  "operationId": "REPLACE_OPERATION_UUID",
+  "workspaceId": "REPLACE_ORIGINAL_WORKSPACE_UUID",
+  "expectedRevision": 0,
+  "selection": {
+    "_instruction": "Replace this entire object with the exact complete selection from original bridge.overview."
+  },
+  "sourceWorkspace": "/private/invoice-workspace",
+  "outputDirectory": "/private/bridge-receiving-evidence",
+  "exportDirectory": "/private/bridge-original-export",
+  "receivedDirectory": "/private/bridge-received",
+  "reexportDirectory": "/private/bridge-reexport",
+  "exportRequestId": "REPLACE_EXPORT_UUID",
+  "receiveRequestId": "REPLACE_RECEIVE_UUID",
+  "reexportRequestId": "REPLACE_REEXPORT_UUID"
+}

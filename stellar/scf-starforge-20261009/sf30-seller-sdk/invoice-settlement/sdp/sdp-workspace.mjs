@@ -79,6 +79,7 @@ export function createSDPWorkspace({workspace,programmeId,programmeVersion,scope
   return {bodySourceId:original.sourceId,observationSourceId:outcome.sourceId};
  }
  const client=typeof getToken==="function"?new SDPClient({scope:selectedScope,getToken,onObservation:observation,allowLoopback,
+  executeMutation:typeof transactions?.executeMutation==="function"?transactions.executeMutation.bind(transactions):undefined,
   admitMutation:typeof transactions?.admitMutation==="function"?transactions.admitMutation.bind(transactions):undefined,recordMutation:typeof transactions?.recordMutation==="function"?transactions.recordMutation.bind(transactions):undefined}):null;
  const online=()=>{need(client,"PROVIDER_CONNECTION_REQUIRED","Select the existing SDP connection and original credential getter");return client;};
  async function prepare(input){

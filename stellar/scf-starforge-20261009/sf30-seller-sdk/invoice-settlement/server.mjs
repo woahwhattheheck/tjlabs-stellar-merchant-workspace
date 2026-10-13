@@ -6,13 +6,17 @@ import { fileURLToPath } from 'node:url';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
 import { openInvoiceSettlementOperator } from './operator.mjs';
+import {openSDPDeskOperator,readSDPDeskConfiguration} from './sdp/sdp-operator.mjs';
 import { streamInvoiceDelivery, unpackInvoiceDelivery } from './archive.mjs';
 import { need, plain, integer, identifier, selected, readDescriptor, privateDirectory } from './common.mjs';
 
 const SOURCE_DIRECTORY=dirname(fileURLToPath(import.meta.url));
 const ASSETS={'/':['web/index.html','text/html; charset=utf-8'],
   '/app.mjs':['web/app.mjs','text/javascript; charset=utf-8'],
-  '/styles.css':['web/styles.css','text/css; charset=utf-8']};
+  '/styles.css':['web/styles.css','text/css; charset=utf-8'],
+  '/sdp/desk.mjs':['sdp/sdp-desk.mjs','text/javascript; charset=utf-8'],
+  '/sdp/desk.css':['sdp/sdp-desk.css','text/css; charset=utf-8'],
+  '/sdp/sdp-contract.mjs':['sdp/sdp-contract.mjs','text/javascript; charset=utf-8']};
 const CSP="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 function headers(response,type='application/json; charset=utf-8'){
   response.setHeader('Content-Type',type);response.setHeader('Cache-Control','no-store');
@@ -42,20 +46,50 @@ function attachment(response,name){
   response.setHeader('Content-Disposition','attachment; filename="'+safe+'"');
 }
 export async function startInvoiceSettlementServer({workspaceDirectory,connections={},profile={},expectedWorkspaceId,
-  host='127.0.0.1',port=0,signal,connectionsFile=null,profileFile=null,deliveryDirectory}={}){
+  host='127.0.0.1',port=0,signal,connectionsFile=null,profileFile=null,deliveryDirectory,sdpConfigFile=null,sdpConfiguration=null}={}){
   need(['127.0.0.1','::1'].includes(host),'INVALID_HOST','Bind the private operator to 127.0.0.1 or ::1.');
   integer(port,'port',0,65535);
-  const directory=resolve(workspaceDirectory),controller=new AbortController();
+  const directory=resolve(workspaceDirectory),inboxRoot=resolve(deliveryDirectory??join(dirname(directory),basename(directory)+'.receiving-inbox'));
+  need(inboxRoot!==directory&&!inboxRoot.startsWith(directory+'/'),'INVALID_DIRECTORY','Use an operator receiving inbox outside the active workspace.');
+  const controller=new AbortController();
   const forward=()=>controller.abort(signal?.reason);
   if(signal?.aborted)forward();else signal?.addEventListener('abort',forward,{once:true});
-  const operator=await openInvoiceSettlementOperator({workspaceDirectory:directory,connections,profile,expectedWorkspaceId,signal:controller.signal});
-  const assetBodies=new Map();
-  try{for(const [path,[file,type]] of Object.entries(ASSETS))assetBodies.set(path,{body:await fs.readFile(join(SOURCE_DIRECTORY,file)),type});}
-  catch(error){await operator.close();throw error;}
+  let operator;
+  try{operator=await openInvoiceSettlementOperator({workspaceDirectory:directory,connections,profile,expectedWorkspaceId,signal:controller.signal});}
+  catch(error){signal?.removeEventListener('abort',forward);throw error;}
+  const assetBodies=new Map();let sdp,server=null,startupClosePromise=null,startupStopped=null;
+  function closeStartupOwners(){
+    if(startupClosePromise)return startupClosePromise;
+    controller.abort(new Error('Startup draining'));
+    if(server&&!startupStopped)startupStopped=new Promise(done=>server.close(error=>done(error?.code==='ERR_SERVER_NOT_RUNNING'?null:error??null)));
+    server?.closeIdleConnections?.();
+    const pending=(async()=>{
+      let first=null,sdpClosed=false;
+      try{await sdp?.close();sdpClosed=true;}catch(error){first??=error;}
+      if(sdpClosed)try{await operator.close();}catch(error){first??=error;}
+      server?.closeAllConnections?.();
+      if(startupStopped)first??=await startupStopped;
+      if(first)throw first;
+      signal?.removeEventListener('abort',forward);
+    })();
+    startupClosePromise=pending;pending.catch(()=>{if(startupClosePromise===pending)startupClosePromise=null;});return pending;
+  }
+  async function failStartup(error){
+    sdp??=error.sdpOperator;
+    try{await closeStartupOwners();}catch(cleanup){
+      error.startupCleanupError={code:cleanup.code??cleanup.name,message:cleanup.message};
+      Object.defineProperty(error,'invoiceSettlementOwner',{value:{close:closeStartupOwners},enumerable:false});
+    }
+    throw error;
+  }
+  try{
+    const configuration=sdpConfiguration??await readSDPDeskConfiguration({file:sdpConfigFile,workspaceDirectory:directory});
+    sdp=await openSDPDeskOperator({operator,configuration,connections,signal:controller.signal});
+    for(const [path,[file,type]] of Object.entries(ASSETS))assetBodies.set(path,{body:await fs.readFile(join(SOURCE_DIRECTORY,file)),type});
+  }catch(error){return failStartup(error);}
   const token=randomBytes(32).toString('base64url'),secret=Buffer.from(token),active=new Set();
   let closing=false,closePromise,startup,allowedHosts=new Set(),allowedOrigins=new Set();
-  const inboxRoot=resolve(deliveryDirectory??join(dirname(directory),basename(directory)+'.receiving-inbox'));
-  need(inboxRoot!==directory&&!inboxRoot.startsWith(directory+'/'),'INVALID_DIRECTORY','Use an operator receiving inbox outside the active workspace.');
+
   function authorized(request){
     const value=request.headers.authorization;
     need(typeof value==='string'&&value.startsWith('Bearer '),'UNAUTHORIZED','Open the complete private workspace link.');
@@ -84,16 +118,17 @@ export async function startInvoiceSettlementServer({workspaceDirectory,connectio
     if(path==='/favicon.ico'){response.statusCode=204;response.end();return;}
     authorized(request);
     if(request.method==='GET'&&path==='/api/bootstrap'){
-      json(response,200,{state:await operator.describe(),methods:operator.methods(),
+      json(response,200,{state:await operator.describe(),methods:[...operator.methods(),...sdp.methods()],sdp:sdp.describe(),
         catalog:await operator.invoke({method:'source.catalog'}),
         operator:{workspaceDirectory:directory,sourceDirectory:SOURCE_DIRECTORY,connectionsFile,profileFile,
-          inboxDirectory:inboxRoot,origin:startup.origin}});return;
+          inboxDirectory:inboxRoot,origin:startup.origin,sdpConfigFile}});return;
     }
     if(request.method==='GET'&&path==='/api/state'){json(response,200,await operator.describe());return;}
     if(request.method==='POST'&&path==='/api/invoke'){
       const input=JSON.parse((await bytes(request,512*1024*1024)).toString('utf8'));need(plain(input),'INVALID_ARGUMENT','Supply one operator request.');
-      if(operator.methods().find(entry=>entry.method===input.method)?.mutates)await requireOriginalWorkspace(request);
-      json(response,200,await operator.invoke(input));return;
+      const target=String(input.method??"").startsWith("sdp.")?sdp:operator;
+      if(target.methods().find(entry=>entry.method===input.method)?.mutates)await requireOriginalWorkspace(request);
+      json(response,200,await target.invoke(input));return;
     }
     if(request.method==='POST'&&path==='/api/sources/import'){
       await requireOriginalWorkspace(request);
@@ -152,7 +187,7 @@ export async function startInvoiceSettlementServer({workspaceDirectory,connectio
     }
     json(response,404,{error:{code:'NOT_FOUND',message:'This operator route is unavailable.'}});
   }
-  const server=createServer((request,response)=>{
+  server=createServer((request,response)=>{
     let running;
     running=handle(request,response).catch(error=>{
       if(response.destroyed){request.destroy();return;}
@@ -172,20 +207,27 @@ export async function startInvoiceSettlementServer({workspaceDirectory,connectio
     allowedOrigins=new Set([...allowedHosts].map(value=>'http://'+value));
     startup={url:origin+'/#token='+encodeURIComponent(token),origin,host,port:address.port,workspaceDirectory:directory,
       workspaceId:state.workspaceId,revision:state.revision,pid:process.pid};
-  }catch(error){server.close();await operator.close();signal?.removeEventListener('abort',forward);throw error;}
+  }catch(error){return failStartup(error);}
+  let stoppedServer=null;
   async function close(){
     if(closePromise)return closePromise;
     closing=true;controller.abort(new Error('Server draining'));
-    closePromise=(async()=>{
-      const stopped=new Promise((done,reject)=>server.close(error=>error?reject(error):done()));
-      server.closeIdleConnections?.();
-      await operator.close();
+    if(!stoppedServer)stoppedServer=new Promise(done=>server.close(error=>done(error??null)));
+    server.closeIdleConnections?.();
+    const pending=(async()=>{
+      let first=null;
+      let sdpClosed=false;
+      try{await sdp.close();sdpClosed=true;}catch(error){first??=error;}
+      if(sdpClosed)try{await operator.close();}catch(error){first??=error;}
       server.closeAllConnections?.();
       while(active.size)await Promise.allSettled([...active]);
-      await stopped;signal?.removeEventListener('abort',forward);
-    })();return closePromise;
+      first??=await stoppedServer;
+      if(first)throw first;
+      signal?.removeEventListener('abort',forward);
+    })();
+    closePromise=pending;try{await pending;}catch(error){if(closePromise===pending)closePromise=null;throw error;}
   }
-  return {url:startup.url,host,port:startup.port,startup,operator,server,close};
+  return {url:startup.url,host,port:startup.port,startup,operator,sdp,server,close};
 }
 
 export async function startInvoiceWebhookServer({workspaceDirectory,connections={},profile={},expectedWorkspaceId,
