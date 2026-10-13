@@ -47,6 +47,36 @@
           "git_blob": "4b2d75acbdefa246c6d7dede96e6bbbfe1dbfb42"
         }
       ]
+    },
+    {
+      "id": "invoice-settlement-installation",
+      "label": "Complete Invoice & Settlement commissioning and Installation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/INVOICE_SETTLEMENT.md",
+      "editions": [
+        {
+          "commit": "ee5bc72e41892c7ddc7597946a0bc592920e8a3b",
+          "bytes": 20583,
+          "sha256": "b6a56502b648216b5124dbca3142619e11f3e0e2d90f9a1ac20588535029a202",
+          "git_blob": "81542a43a8e59d0126b756f8299e071ac4b80bc0"
+        }
+      ]
+    },
+    {
+      "id": "invoice-settlement-installation-profile",
+      "label": "Maintained Invoice & Settlement workorder profile",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/invoice-settlement.json",
+      "editions": [
+        {
+          "commit": "ee5bc72e41892c7ddc7597946a0bc592920e8a3b",
+          "bytes": 13227,
+          "sha256": "6f9af1c4de2f7c76f86319b6a1512866ce604f433009fd8bb43ea978205455b2",
+          "git_blob": "f000d005f0f125419d694aae991d12c00e33eef0"
+        }
+      ]
     }
   ]
 }
