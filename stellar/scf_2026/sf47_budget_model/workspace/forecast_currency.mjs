@@ -19,6 +19,11 @@ export function createForecastCurrencyUI({current,field,table,button,usd}){
   const cashById=new Map((current.records?.cash||[]).map(row=>[row.id,row]));
   const invoicesById=new Map((current.records?.invoices||[]).map(row=>[row.id,row]));
   const attachments=new Map((current.sources||[]).map(row=>[row.id,row]));
+  function refreshCurrent(){
+    for(const [map,rows] of [[cashById,current.records?.cash||[]],[invoicesById,current.records?.invoices||[]],[attachments,current.sources||[]]]){
+      map.clear();for(const row of rows)map.set(row.id,row);
+    }
+  }
   const money=(amount,currency)=>esc(formatNativeMoney(amount,currency));
   const valuation=amount=>esc(formatCurrencyValuation(amount));
   const allocation=(amount,currency,known)=>present(amount)?money(amount,currency):'<span class="forecast-unvalued">Unresolved native allocation</span>'+(present(known)?'<small>Known credited portion: '+money(known,currency)+'</small>':'');
@@ -173,14 +178,14 @@ export function createForecastCurrencyUI({current,field,table,button,usd}){
     project.querySelector('[data-forecast-receipt-amount-heading]').textContent=native?'Quoted '+(currencyCode(text(project,'nativePriceCurrency'))||'native amount'):'Quoted USD';
     syncCredits(project,{busy});
   }
-  function readPricing(project){
+  function readPricing(project,{forRecovery=false}={}){
     if(text(project,'pricingMode')!=='NATIVE')return {priceUsd:text(project,'priceUsd'),totalDeliveryCostUsd:text(project,'totalDeliveryCostUsd')};
     const priceCurrency=text(project,'nativePriceCurrency'),costCurrency=text(project,'nativeCostCurrency');
     const priceIds=new Set(selected(project,'cashIds')),costIds=selectedCostKeys(project);
     function completeCredit(row,amountName,noteName,label){
       const amount=text(row,amountName),note=text(row,noteName);
       if(!amount.trim()&&!note.trim())return null;
-      if(!amount.trim()||!note.trim())throw new Error(label+' needs both a native amount and its original allocation basis. Leave both blank if unresolved.');
+      if(!forRecovery&&(!amount.trim()||!note.trim()))throw new Error(label+' needs both a native amount and its original allocation basis. Leave both blank if unresolved.');
       return {amount,note};
     }
     const priceCredits=[],costCredits=[];
@@ -292,5 +297,5 @@ export function createForecastCurrencyUI({current,field,table,button,usd}){
         +'<p>'+esc(c.creditBasis||'')+'</p></details>';
     }).join('');
   }
-  return {ratesEditor,readRates,pricingEditor,receiptFields,creditEditor,syncPricing,readPricing,readReceiptAmount,syncRates,handleAction,handleChange,reportCoverage,nativeSummary,projectReports};
+  return {refreshCurrent,ratesEditor,readRates,pricingEditor,receiptFields,creditEditor,syncPricing,readPricing,readReceiptAmount,syncRates,handleAction,handleChange,reportCoverage,nativeSummary,projectReports};
 }
