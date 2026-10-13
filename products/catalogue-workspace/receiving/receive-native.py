@@ -45,6 +45,8 @@ class Course:
         self.lock_fd = lock_fd
         self.root = Path(self.request["source"]["project_root"]).resolve()
         require(self.root.is_dir(), "The original installed source project is absent.")
+        require(not self.work.is_relative_to(self.root) and not self.root.is_relative_to(self.work),
+                "Keep the original private receiving controls outside the installed project.")
         self.site = self.request["source"]
         require(Path(self.site["php"]).is_absolute(), "Select the original actual PHP wrapper.")
         self.console = installation.within(self.root, self.root / str(installation.relative(self.site.get("console", "bin/console"))))
@@ -121,7 +123,7 @@ class Course:
         calls = original.get("calls", []) if original else []
         number = len(calls) + 1
         pending = original.get("pending") if original else None
-        call = pending or {"number": number, "command": "action-" + self.action_id(label) + "-%04d" % number,
+        call = pending or {"number": number, "command": "action-" + hashlib.sha256(self.action_id(label).encode()).hexdigest() + "-%04d" % number,
                            "output": "outputs/" + self.action_id(label) + "-%04d.json" % number}
         if not original:
             original = {"binding": binding, "calls": []}
@@ -243,7 +245,7 @@ class Course:
         argv = selected.get("argv")
         require(isinstance(argv, list) and argv and all(isinstance(x, str) and x for x in argv), "Select actual original bounded worker argv.")
         self.decide("worker:" + edition_name + ":" + drive, decision)
-        label = "worker-" + self.action_id(edition_name + ":" + drive)
+        label = "worker-" + hashlib.sha256(self.action_id(edition_name + ":" + drive).encode()).hexdigest()
         self.command(label, argv, retry_failed=label in self.retry_failed)
 
     def edition(self, edition, index):
@@ -482,6 +484,11 @@ class Course:
             require(Path(row["work_directory"]).is_absolute(), "Use the original private transfer control directory.")
             require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{7,159}", row["operation_id"]),
                     "Use the original full-project operation identity.")
+            for selected_root in [config["project_root"], *config.get("roots", {}).get("public", {}).values(),
+                                  *config.get("roots", {}).get("private", {}).values()]:
+                selected_root = Path(selected_root).resolve()
+                require(not self.work.is_relative_to(selected_root) and not selected_root.is_relative_to(self.work),
+                        "Receiving controls must remain outside every full native project/storage root.")
             files[role] = {"configuration": config, "sha256": digest(config_file.read_bytes())}
         source, target = files["source"]["configuration"], files["target"]["configuration"]
         require(Path(source["project_root"]).resolve() == self.root and source["php_executable"] == self.site["php"] and
