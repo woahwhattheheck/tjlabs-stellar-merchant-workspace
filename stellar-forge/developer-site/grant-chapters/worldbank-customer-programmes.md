@@ -31,3 +31,45 @@ The [complete programme receiving implementation](https://github.com/woahwhatthe
 This workflow supplies a delivered starting product for a selected economic or operational reporting installation. T1 adapts the actual authorized source, observation meanings, reporting question, merchant route and customer's receiving application, then has another operator perform the agreed change or handover. T2 joins the same useful task to the selected independent deployments, approved purchases and required recovery cases. T3 configures recurring mainnet operation, off-host retention, restore and independent maintainer receiving.
 
 The grant request remains **$38,000 for 400 prospective hours over 150 days from actual award acceptance**, allocated through the same six packages and two independent merchants/two independent buyers. Existing reusable implementation is the foundation. The selected workorder assigns remaining adaptation once and names the paid resource and complete task. Source acquisitions, approved purchases, analytical refreshes and portable deliveries retain their separate original identities and appropriate outcome counts.
+
+### Commission the source population and useful customer output
+
+The complete [customer commissioning and acceptance guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c8f0d4eae25b1138c3af3580bf2fd837162c977c/products/worldbank/CUSTOMER_DELIVERY.md) supplies the actual Workshare decisions: reporting question and audience; database/country/aggregate/indicator/period selection; original definitions and attribution; row-review policy; query/report meaning; worksheet labels and precision; recurrence; destination and receiving; optional paid API terms; and care/correction responsibilities. Its acceptance table ties each choice to the useful customer output. Agreed scope, amounts, hours, dates, contributors and actual acceptance stay in the original commercial and Installation records.
+
+Countries and regional aggregates remain separate source identities. Null is missing rather than zero. The acquisition retains every original page, request/response metadata, numeric token, period, unit, status and footnote. Repeated observation identities require an explicit original-row choice or exclusion. The programme's provider-metadata comparison and its observation comparison let a reviewer explain changes to definitions as well as changes to values.
+
+The running Analysis application's approved ZIP intake retains the complete file, original upload intent and registration result. Missing chunks continue the same intake. A committed source registration is recovered through its existing document/revision; the exact original ZIP remains downloadable after the customer workspace is received elsewhere. The programme source selection uses that exact registered identity.
+
+### Understand the delivered analytical values
+
+The first report supplies reviewed observations and coverage, annual change, and GDP per person when the required GDP/population series are present. Customer SQL and report recipes remain editable. The original analytical contract makes the distinction between source and derived values explicit:
+
+- Original source numeric tokens and their decimal/exponent representation remain text; source nulls stay nullable.
+- Annual change uses consecutive four-digit years with matching source, country, indicator, aggregate and unit. Gaps, duplicate periods, missing values and a zero prior denominator produce explanatory uncalculated results.
+- The GDP/population section divides the matched current-US-dollar GDP value by positive population. It is distinct from constant-price and purchasing-power-parity measures.
+- Derived calculations use the existing SQLite numeric rules and numeric spreadsheet cells. Source codes, periods and value tokens use preserved text cells.
+- The current analytical adapter supports fewer than 100,000 reviewed observations and a handover up to 32 MiB. Commissioning selects complete supported deliveries and retains source coverage.
+
+A report can deliberately pin an earlier saved query revision. A newer SQL edit alone does not silently change that report. Current programme review captures the selected revisions and parameters and preserves the entire workbook definition, including unrelated worksheets. Source, analytical definition and customer interpretation each remain visible.
+
+### Carry the service through the original merchant and agent interfaces
+
+The source adapter operates the existing World Bank browser/model, dataset publisher, release and Buyer. An operator selects the real merchant origin, route, network, asset, atomic amount and recipient; the buyer reviews the actual offer and carries explicit spending/page limits. Original source files travel with the reviewed dataset release. This supplies the existing Stellar merchant architecture with a configurable economic-data service.
+
+The separate programme adapter connects the already running Analysis owner. Its existing Console workflow series carries one period through source preparation, an explicit review pause, publication and complete file retention. The same native operation, workflow calls, review digest and file manifests remain linked. Customer transfer uses the complete handover capture/receive so all original file bytes accompany their recorded identities.
+
+The original installed source/merchant journey completed on October 12: the saved application imported and reviewed all 42 CAN/MEX/USA GDP/population observations, published the edition, started its challenge-only testnet merchant, downloaded all six customer files, reopened the same capture/export and independently received all 42 rows. The [original completed receiving record](https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791785852097869?thread_ts=1791764726.590409) identifies its complete source and retained handover. The later recurring 42-to-41 review keeps its existing original operation and actual receiving outcome.
+
+A local source refresh does not itself issue a paid acquisition. The grant's completed team-operated baseline remains 18 purchases / 0.0411 XLM with fees separately recorded; independent customer adoption remains measured through the funded deployment. The existing day 30 / day 90 / day 150 milestone definitions and six package allocations stay selected.
+
+### Complementary complete source and operating references
+
+- [Original World Bank acquisition, source semantics and portable editions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/stellar/scf-starforge-20261009/sf30-seller-sdk/worldbank/README.md).
+- [Original reviewed dataset release and customer acquisition](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/stellar/scf-starforge-20261009/sf30-seller-sdk/worldbank/NATIVE.md).
+- [Original economic calculations, report/workbook files and native receiving](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/stellar/scf-starforge-20261009/sf30-seller-sdk/worldbank/ANALYSIS.md).
+- [Complete installed World Bank customer operation](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/products/worldbank/OPERATING.md).
+- [Customer-edited query, report and workbook continuation across editions](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/products/worldbank/RECURRING.md).
+- [Approved original ZIP intake and source registration](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/products/worldbank/recurring/OPERATING.md).
+- [Shared source/browser and merchant agent operating contract](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/stellar-forge/mcp-merchant-operator/WORLDBANK-WORKSPACES.md).
+- [Named programme agent, workflow periods and complete customer transfer](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/8baf462fb821f91c8fc2fc7f48db66a8be1c89ab/stellar-forge/mcp-merchant-operator/WORLDBANK_PROGRAMMES.md).
+- [Complete World Bank customer commissioning, acceptance and delivery](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c8f0d4eae25b1138c3af3580bf2fd837162c977c/products/worldbank/CUSTOMER_DELIVERY.md).
