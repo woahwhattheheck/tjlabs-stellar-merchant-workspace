@@ -389,3 +389,67 @@ saving helper before returning failure. Resume the same owning continuation with
 its retained source and output selection. Its successful original supplier phase
 remains in `result.programme`; the workbook stage cannot turn an incomplete
 native receipt into a completed customer result.
+
+## Resume after an actual host binding changes
+
+The original application, source checkout, workspace/output directories, customer
+requests, model/input hashes, and installed workbooks Python remain selected.
+The application programme preserves its original `state.input` unchanged. Its
+separate `executionBindings` records each actual Node/browser/module observation,
+the supplied npm executable/cache paths and changes from the preceding attempt.
+Only `browserExecutable`, `playwrightModule`, `npm` and `npmCache` are
+replaceable input bindings. The installed Python interpreter and installation ID
+remain exact; this continuation does not replace a Python installation with a
+different host interpreter.
+
+An existing Analysis application's Node path is updated through the original
+`applicationsReview` / `applicationsSave` APIs, using the same application ID,
+a retained request ID and the current revision. The programme retains the
+original settings, earlier review and complete binding-change receipts. It drains
+an active run of that same owned application before changing its setting.
+Reopening after a interrupted save reuses that same request and review. A changed
+business setting, source identity, output directory or unrelated revision is
+reported by the original API and is never silently replaced.
+
+The workbook helper keeps `conapi-workbook-selected-input.json` immutable.
+`conapi-workbook-execution-bindings.json` records the actual Node, Chromium,
+Playwright and node_modules paths for each following attempt, including resolved
+files, sizes and modification times. The original installed Python path and
+installation ID, parent programme, source/core/input identities and workbook
+directory remain exact. The existing workbook driver's own source binding
+already excludes these host paths and therefore resumes the same saved workbook
+operation without regenerating its decisions.
+
+The supplier Python programme continues to consume the original business/project
+input. Its interpreter comes from the retained installation receipt; its request,
+edition, comparison, delivery and receiving identities remain unchanged. All
+new binding history is beneath the original programme root and is included by
+the existing complete-delivery saver.
+
+The same-application rebind reads the complete paginated run history with the
+maintained Applications history API. It settles every active or unfinished
+PENDING/QUEUED/RUNNING/INTERRUPTED original run before asking for a settings
+review. Stop uses each existing run ID; an inactive interrupted run then uses
+the original recovery API and its retained stop marker. The original managed
+command checks that marker before preparing or launching a child. Complete
+history, stop/recovery receipts and terminal results remain in the same binding
+change. The full history is read again before the original revision review.
+
+Before choosing a later host binding, the programme reconciles every earlier
+unfinished binding change against the actual original application save request
+and revision. An accepted A-to-B save is reopened using its original request and
+review before the same application is reviewed for host C. A proven unsaved
+obsolete review is retained in history and superseded without issuing its old
+host write. The reconciliation also runs when the new desired binding happens
+to equal the old local setting, so a lost local receipt cannot conceal the
+actual saved application revision.
+
+## Rendered product inspection — owner instruction, 2026-10-13
+
+This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+
+Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+
+Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+
+Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999

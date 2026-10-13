@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MIT. Complete the installed original Conapi supplier project and independent receiver.
-import {readFile,writeFile,mkdir,lstat,realpath,rename,open} from 'node:fs/promises';
-import {createWriteStream} from 'node:fs';
+import {readFile,writeFile,mkdir,lstat,realpath,rename,open,stat,access} from 'node:fs/promises';
+import {createWriteStream,constants} from 'node:fs';
 import {join,dirname,isAbsolute,resolve} from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
@@ -95,6 +95,24 @@ async function availablePort(){
   const port=listener.address().port;await new Promise(done=>listener.close(done));return port;
 }
 
+
+const executionInputKeys=['npm','npmCache','browserExecutable','playwrightModule'];
+const semanticInput=value=>Object.fromEntries(Object.entries(value).filter(([key])=>!executionInputKeys.includes(key)));
+const executionInput=value=>Object.fromEntries(executionInputKeys.filter(key=>Object.hasOwn(value,key)).map(key=>[key,value[key]]));
+async function observeHostBinding(input){
+  const result={node:{path:process.execPath,version:process.versions.node},values:executionInput(input),files:{}};
+  for(const [key,value] of Object.entries({node:process.execPath,python:input.python,
+      browserExecutable:input.browserExecutable,playwrightModule:input.playwrightModule})){
+    absolute(value);const resolved=await realpath(value),info=await stat(resolved);
+    need(info.isFile(),'CONAPI_HOST_BINDING_FILE_REQUIRED',{key,path:value});
+    await access(resolved,key==='playwrightModule'?constants.R_OK:constants.X_OK);
+    result.files[key]={path:value,resolved,bytes:info.size,mtimeMs:info.mtimeMs};
+  }
+  absolute(input.npmCache);await mkdir(input.npmCache,{recursive:true,mode:0o700});
+  need((await stat(input.npmCache)).isDirectory(),'CONAPI_NPM_CACHE_DIRECTORY_REQUIRED');
+  return result;
+}
+
 export async function runConapiDelivery(input){
   for(const key of ['repository','outputDirectory','publisherProgrammeDirectory','completedDatasetteReport',
                     'supplierProgramme','python','npmCache','browserExecutable','playwrightModule'])absolute(input[key]);
@@ -111,11 +129,19 @@ export async function runConapiDelivery(input){
   const {transportProgramme,transportMetadata,...originalInput}=input;
   const retainedInput={...originalInput,sourceRef:REF};
   let state=await exists(stateFile)?await read(stateFile):null;
-  if(state)need(same(state.input,retainedInput),'CONAPI_ORIGINAL_PROGRAMME_INPUT_CHANGED');
+  if(state)need(same(semanticInput(state.input),semanticInput(retainedInput)),'CONAPI_ORIGINAL_PROGRAMME_INPUT_CHANGED');
   else state={schema:'commons.conapi-installed-receiving.v1',operation:'SCF-CONAPI-SUPPLIER-RECEIVING-20261012',
     id:randomUUID(),input:retainedInput,startedAt:stamp(),phase:'CREATED',runtimes:{},applications:{},python:{},runs:[],files:[],checks:{},errors:[]};
   const checkpoint=async phase=>{state.phase=phase;state.updatedAt=stamp();await save(stateFile,state);
     process.stdout.write(JSON.stringify({stage:'conapi_programme',phase,at:state.updatedAt,id:state.id})+'\n');};
+  state.executionBindings??={originalInput:executionInput(state.input),attempts:[]};
+  need(same(state.executionBindings.originalInput,executionInput(state.input)),'CONAPI_ORIGINAL_HOST_HISTORY_CHANGED');
+  const observedBinding=await observeHostBinding(input);
+  const previousBinding=state.executionBindings.attempts.at(-1)?.values??state.executionBindings.originalInput;
+  const bindingAttempt={id:randomUUID(),at:stamp(),...observedBinding,
+    changed:executionInputKeys.filter(key=>previousBinding[key]!==observedBinding.values[key])};
+  state.executionBindings.attempts.push(bindingAttempt);
+  state.updatedAt=stamp();await save(stateFile,state);
   const rememberFile=async path=>{const value=await file(path);state.files=state.files.filter(x=>x.path!==path);state.files.push(value);return value;};
   if(state.phase==='COMPLETE'){
     for(const selected of state.files){const actual=await file(selected.path);need(same(actual,selected),'CONAPI_DELIVERED_FILE_CHANGED');}
@@ -256,11 +282,131 @@ export async function runConapiDelivery(input){
     need(isAbsolute(installedPython.python)&&/^[a-f0-9]{64}$/.test(installedPython.id),'CONAPI_INSTALLED_PYTHON_REQUIRED');
     state.originalPython=installedPython;await checkpoint('ORIGINAL_WORKBOOKS_INSTALLED');
 
+    const unfinishedApplicationRun=value=>value.active||['PENDING','QUEUED','RUNNING','INTERRUPTED'].includes(value.phase);
+    const completeApplicationHistory=async applicationId=>{
+      const runs=[],cursors=new Set();let cursor=null;
+      do{
+        const page=await apps.applicationsHistory({applicationId,limit:100,...(cursor?{cursor}:{})});
+        need(page.applicationId===applicationId&&Array.isArray(page.runs),'CONAPI_APPLICATION_HISTORY_CHANGED');
+        runs.push(...page.runs);cursor=page.nextCursor??null;
+        if(cursor){need(!cursors.has(cursor),'CONAPI_APPLICATION_HISTORY_CURSOR_REPEATED');cursors.add(cursor);}
+      }while(cursor);
+      need(new Set(runs.map(value=>value.id)).size===runs.length,'CONAPI_APPLICATION_HISTORY_DUPLICATED');
+      return runs;
+    };
+    const drainApplicationHistory=async(applicationId,change)=>{
+      const original=await completeApplicationHistory(applicationId);
+      change.runDrains??=[];
+      for(const run of original.filter(unfinishedApplicationRun)){
+        const selected={applicationId,operationId:run.id};
+        const retained={...selected,at:stamp(),bindingAttemptId:bindingAttempt.id,original:run};
+        change.runDrains.push(retained);await checkpoint('APPLICATION_HOST_STOP_RETAINED');
+        retained.stop=await apps.applicationsStop(selected);await checkpoint('APPLICATION_HOST_STOP_REQUESTED');
+        let recovered=false;
+        retained.settled=await wait(async()=>{
+          let rows=await completeApplicationHistory(applicationId);
+          let current=rows.find(value=>value.id===run.id);
+          need(current,'CONAPI_ORIGINAL_APPLICATION_RUN_MISSING',selected);
+          if(!current.active&&unfinishedApplicationRun(current)&&!recovered){
+            // The original Stop has cancelled PENDING, terminalized QUEUED or
+            // retained stop.json. Existing Recover reuses this same run ID;
+            // its native command checks that marker before any child launch.
+            recovered=true;retained.recoveryRequestedAt=stamp();
+            await checkpoint('APPLICATION_HOST_RECOVERY_RETAINED');
+            retained.recovery=await apps.applicationsRecover(selected);
+            await checkpoint('APPLICATION_HOST_RECOVERY_RETURNED');
+            rows=await completeApplicationHistory(applicationId);
+            current=rows.find(value=>value.id===run.id);
+            need(current,'CONAPI_ORIGINAL_APPLICATION_RUN_MISSING',selected);
+          }
+          return current;
+        },value=>!unfinishedApplicationRun(value),'Settle the original application run before rebinding its host.',120000);
+        retained.completedAt=stamp();await checkpoint('APPLICATION_HOST_RUN_DRAINED');
+      }
+      const complete=await completeApplicationHistory(applicationId);
+      need(!complete.some(unfinishedApplicationRun),'CONAPI_APPLICATION_HOST_RUNS_UNFINISHED',complete);
+      change.settledHistory={at:stamp(),runs:complete};await checkpoint('APPLICATION_HOST_HISTORY_DRAINED');
+    };
+
     const ensureApplication=async(role,runtimeId,kind,label,settings)=>{
       let item=state.applications[role];
       if(!item){item=state.applications[role]={role,runtimeId,kind,settings,label,saveRequestId:randomUUID(),createdAt:stamp()};await checkpoint('APPLICATION_INPUT_RETAINED');}
-      need(same({runtimeId:item.runtimeId,kind:item.kind,settings:item.settings,label:item.label},{runtimeId,kind,settings,label}),
+      need(same({runtimeId:item.runtimeId,kind:item.kind,label:item.label},{runtimeId,kind,label}),
         'CONAPI_APPLICATION_INPUT_CHANGED',role);
+      // Reconcile earlier accepted saves before considering this host's desired
+      // binding. An A -> B save may have reached the original application even
+      // when its local checkpoint was lost before a later host selected C.
+      for(const pending of item.executionBindingChanges??[]){
+        if(pending.completedAt)continue;
+        const applicationId=pending.applicationId??item.saved?.applicationId??hash(item.saveRequestId).slice(0,24);
+        const actual=(await apps.applicationsState()).applications.find(value=>value.id===applicationId);
+        if(pending.review&&actual?.saveRequestId===pending.id){
+          const replay=await apps.applicationsSave({applicationId,requestId:pending.id,reviewId:pending.review.id});
+          need(replay.replayed===true&&!replay.superseded&&actual.revision===replay.revision&&
+            same(actual.settings,pending.to),'CONAPI_APPLICATION_HOST_REPLAY_CHANGED',actual);
+          pending.saved=replay;pending.reconciledAt=stamp();pending.completedAt=stamp();
+          pending.state='ACCEPTED_SAVE_RECONCILED';item.saved=replay;item.settings=pending.to;
+          await checkpoint('APPLICATION_HOST_SAVED_RECEIPT_RECONCILED');
+        }else if(!same(pending.to,settings)){
+          if(actual){
+            const knownSaves=new Set([item.saveRequestId,...(item.executionBindingChanges??[])
+              .filter(value=>value.completedAt&&value.saved).map(value=>value.id)]);
+            need(knownSaves.has(actual.saveRequestId)&&same(actual.settings,item.settings)&&
+              (!pending.review||actual.revision===pending.previousRevision),
+              'CONAPI_APPLICATION_HOST_REVISION_CHANGED',actual);
+          }else need(!item.saved&&!pending.review,'CONAPI_ORIGINAL_APPLICATION_MISSING',applicationId);
+          // Complete current state proves this review has not been saved. Retain
+          // it without issuing a now-obsolete host B write.
+          pending.completedAt=stamp();pending.state='SUPERSEDED_BEFORE_SAVE';
+          pending.supersededByBindingAttempt=bindingAttempt.id;
+          await checkpoint('APPLICATION_HOST_UNSAVED_REVIEW_RETAINED');
+        }
+      }
+      if(!same(item.settings,settings)){
+        const withoutNode=value=>Object.fromEntries(Object.entries(value).filter(([key])=>key!=='nodeExecutable'));
+        need(kind==='datasette-analysis'&&same(withoutNode(item.settings),withoutNode(settings))&&
+          settings.nodeExecutable===process.execPath,'CONAPI_APPLICATION_INPUT_CHANGED',role);
+        item.originalSelection??={runtimeId:item.runtimeId,kind:item.kind,label:item.label,settings:item.settings,
+          saveRequestId:item.saveRequestId,review:item.review??null,saved:item.saved??null};
+        item.executionBindingChanges??=[];
+        let change=item.executionBindingChanges.findLast(value=>!value.completedAt&&same(value.to,settings));
+        if(!change){change={id:randomUUID(),at:stamp(),from:item.settings,to:settings};
+          item.executionBindingChanges.push(change);await checkpoint('APPLICATION_HOST_BINDING_RETAINED');}
+        const applicationId=item.saved?.applicationId??hash(item.saveRequestId).slice(0,24);
+        const getExisting=async()=>(await apps.applicationsState()).applications.find(value=>value.id===applicationId);
+        let current=await getExisting();
+        if(!current){
+          need(!item.saved&&!change.review,'CONAPI_ORIGINAL_APPLICATION_MISSING',applicationId);
+          // Complete state enumeration proved the original creation has not saved.
+          // Keep that same creation request; retain the earlier review in history.
+          change.previousReview=item.review??null;
+          item.settings=settings;delete item.review;
+          change.completedAt=stamp();change.state='UNSAVED_INPUT_REBOUND';
+          await checkpoint('APPLICATION_UNSAVED_HOST_BOUND');
+        }else{
+          need(current.settings&&current.runtimeId===runtimeId&&current.kind===kind&&current.label===label&&
+            same(withoutNode(current.settings),withoutNode(settings)),
+            'CONAPI_ORIGINAL_APPLICATION_BINDING_CHANGED',current);
+          change.applicationId=applicationId;
+          if(!change.review){
+            need(same(current.settings,change.from),'CONAPI_APPLICATION_HOST_REVISION_CHANGED',current);
+            await drainApplicationHistory(applicationId,change);
+            current=await getExisting();
+            need(current&&same(current.settings,change.from),'CONAPI_APPLICATION_HOST_REVISION_CHANGED',current);
+            change.previousRevision=current.revision;
+            change.review=await apps.applicationsReview({applicationId,expectedRevision:current.revision,
+              runtimeId,kind,label,settings,homeId:current.homeId,providerId:current.providerId??null});
+            await checkpoint('APPLICATION_HOST_REVIEWED');
+          }
+          change.saved=await apps.applicationsSave({applicationId,requestId:change.id,reviewId:change.review.id});
+          current=await getExisting();
+          need(current&&current.id===applicationId&&same(current.settings,settings)&&
+            current.revision===change.saved.revision,'CONAPI_APPLICATION_HOST_SAVE_CHANGED',current);
+          item.saved=change.saved;item.settings=settings;
+          change.completedAt=stamp();change.state='SAME_APPLICATION_REBOUND';
+          await checkpoint('APPLICATION_HOST_BOUND');
+        }
+      }
       if(!item.review){item.review=await apps.applicationsReview({runtimeId,kind,label,settings});await checkpoint('APPLICATION_REVIEWED');}
       if(!item.saved){item.saved=await apps.applicationsSave({requestId:item.saveRequestId,reviewId:item.review.id});await checkpoint('APPLICATION_SAVED');}
       const get=async()=>(await apps.applicationsState()).applications.find(value=>value.id===item.saved.applicationId);
