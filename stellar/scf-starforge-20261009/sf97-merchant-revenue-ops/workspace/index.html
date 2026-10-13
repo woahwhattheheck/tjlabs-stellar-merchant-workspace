@@ -36,6 +36,27 @@
   <div class="table-scroll"><table><thead><tr><th>Service</th><th>Attempts</th><th>402</th><th>2xx</th><th>Target gross · USD</th><th>Target contribution · USD</th></tr></thead><tbody id="preview-rows"></tbody></table></div><ul id="issues"></ul>
 </section>
 <section class="panel" aria-labelledby="history-title"><div class="section-head"><h2 id="history-title">Saved reviews</h2><span id="history-count" class="muted"></span></div><p class="muted small">Each version keeps the selected source, original payment terms and reports. Reusing assumptions keeps your current operations selection.</p><div id="history"></div></section>
+<details id="commercial-archive" class="panel commercial-archive">
+  <summary><strong>Complete commercial history</strong><span class="muted small">Browse every saved review and prepared price decision</span></summary>
+  <p class="muted small">Choose original records across the full history. Pages keep a fixed saved revision while new work continues. Reusing assumptions or preparing prices uses the same original workspace actions.</p>
+  <form id="archive-form" class="archive-filters">
+    <label>History<select id="archive-kind"><option value="reviews">Pricing reviews</option><option value="decisions">Prepared price decisions</option></select></label>
+    <label class="archive-search">Find label, source or original ID<input id="archive-text" maxlength="300" type="search" placeholder="Review label, route, session or SHA-256"></label>
+    <label>Saved from · UTC<input id="archive-from" type="date"></label>
+    <label>Saved through · UTC<input id="archive-to" type="date"></label>
+    <label>Observation<select id="archive-observation"><option value="">All original observations</option><option value="SESSION">Session</option><option value="DURABLE_HISTORY">Retained history</option></select></label>
+    <label>Source review ID · decisions<input id="archive-source" maxlength="36" placeholder="Original pricing review UUID"></label>
+    <label>Records per page<select id="archive-size"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
+    <div class="button-row"><button type="submit">Apply filters</button><button id="archive-latest" type="button">Include latest saves</button></div>
+  </form>
+  <p id="archive-caption" role="status">Open this section to read the original saved history.</p>
+  <p id="archive-applied" class="muted small"></p>
+  <p id="archive-new" class="muted small"></p>
+  <details class="coverage-detail"><summary>Selected original history revision</summary><code id="archive-revision" class="repricing-hash"></code></details>
+  <div id="archive-results"></div>
+  <div class="table-paging"><button id="archive-previous" type="button" disabled>Previous records</button><button id="archive-next" type="button" disabled>Next records</button></div>
+  <p class="muted small">Accounting handover: download the selected review’s original Report JSON, then open <strong>Pricing decisions</strong> in the accounting workspace. Choose <strong>Review and retain pricing</strong>, inspect its exact alternatives, then <strong>Use these accounting terms</strong> and <strong>Reconcile with these terms</strong>.</p>
+</details>
 <section class="panel" aria-labelledby="comparison-title">
   <div class="section-head"><h2 id="comparison-title">Compare saved reviews</h2><span id="comparison-status" class="muted small">Choose two saved reviews.</span></div>
   <p class="muted small">Compare the original saved values and source coverage. Differences in configuration, commercial terms or observed period are shown alongside the reports.</p>

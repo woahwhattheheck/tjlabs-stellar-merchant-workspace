@@ -13,9 +13,9 @@ const help='Task desk Merchant caller\n\n'+
 'starforge merchant-task-desk --connection PRIVATE_CONNECTIONS.json --exports PRIVATE_EXPORT_ROOT status --desk original\n'+
 'starforge merchant-task-desk --connection PRIVATE_CONNECTIONS.json --exports PRIVATE_EXPORT_ROOT call --tool merchant_task_desk_preview --input PRIVATE_REQUEST.json\n'+
 'starforge merchant-task-desk --connection PRIVATE_CONNECTIONS.json --exports PRIVATE_EXPORT_ROOT download --input PRIVATE_FILE_SELECTION.json --output COMPLETE_FILE\n\n'+
-'Download input selects merchant_task_desk_packet_file fields, or adds kind:"rpc" and the original RPC fields.\n'+
+'Download input selects packet-file fields; kind:"rpc" selects saved RPC bytes, kind:"customer" selects the exact reviewed complete customer/source archive.\n'+
 'Use the original live instance for a first file read; full later chunks retain readId, SHA256 and offset.\n'+
-'Every call sends one original command. Reopen original requestId through merchant_task_desk_operations after uncertainty.\n';
+'Every call sends one original command. Inspect operation requestId or reconcile the exact named customer request and preview after uncertainty.\n';
 async function fileHash(path){
  const h=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);try{
  const before=await h.stat({bigint:true});if(!before.isFile())throw failure('TASK_DESK_OUTPUT_INVALID','The selected output is not a regular file.');
@@ -25,10 +25,10 @@ async function fileHash(path){
  return {bytes:Number(before.size),sha256:hash.digest('hex')};}finally{await h.close();}
 }
 export async function receiveTaskDeskFile(bridge,input,output){
- const selected=structuredClone(input),rpc=selected.kind==='rpc';
- if(rpc)delete selected.kind;
+ const selected=structuredClone(input),rpc=selected.kind==='rpc',customer=selected.kind==='customer';
+ if(rpc||customer)delete selected.kind;
  if(selected.readId!==undefined||selected.offset!==undefined)throw failure('INVALID_PARAMS','A complete local file starts at offset zero; its original SHA may be pinned.');
- const tool=rpc?'merchant_task_desk_rpc_file':'merchant_task_desk_packet_file';
+ const tool=rpc?'merchant_task_desk_rpc_file':customer?'merchant_task_desk_customer_file':'merchant_task_desk_packet_file';
  const destination=resolve(output),temporary=join(dirname(destination),'.task-desk-download-'+randomUUID());
  let file,reading,expected,position=0;const digest=createHash('sha256');
  try{

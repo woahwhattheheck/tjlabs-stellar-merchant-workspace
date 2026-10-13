@@ -25,7 +25,7 @@ def source_bytes(row):
     if not isinstance(content, str):
         raise ValueError("Retain a complete encoded source string: " + row["path"])
     encoding = row.get("encoding", "utf-8")
-    if encoding in (None, "utf-8"):
+    if encoding in (None, "utf-8", "utf8"):
         return content.encode("utf-8")
     if encoding == "base64":
         body = base64.b64decode(content, validate=True)

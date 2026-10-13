@@ -1,0 +1,228 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grant-tracker",
+  "heading": "## Grant source tracking and reviewed customer handover",
+  "sources": [
+    {
+      "id": "grant-tracker-operator",
+      "label": "Complete source tracking and customer handover operator guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/GRANT_TRACKER_OPERATOR.md",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "05f4754357afc79f4e6e998aeff81184654e9ba6",
+          "sha256": "41f50222cc646f58372a07bbcf7e58482936a6be42774c6c415493b2d3d03cc0",
+          "bytes": 7784
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-model",
+      "label": "Exact source, physical row, decision and obligation model",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/grant-tracker.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "dd61ee8c4e8d32db4daddc55984a3a25052f4b59",
+          "sha256": "0efc600729b471ebc985a66fdc943d52bc793e86a329ec8be9f6f971011ca01c",
+          "bytes": 34049
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-original-plan",
+      "label": "Original full OperatingPlan history and writer contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "be138d4a1670058290e7410905c52b1955a40da4",
+          "sha256": "72b7057b643bbc65b54244916a7d8d6d7421844d3e4ae9d6e556cc127ab34a64",
+          "bytes": 28464
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-original-return",
+      "label": "Original OperatingPlanReturn decision and adoption contract",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "8dd299083341fedb1eebc1e0303b297953a0c1a7",
+          "sha256": "fa41752b3a9a34fe2a8d5a517ae9f4dda76868c0b9f9fbd69117ad57947f98d1",
+          "bytes": 28838
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-original-table",
+      "label": "Original complete physical table parser",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/table.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "eac02af3c42592ced0b47d8e07cf82f9985c140c",
+          "sha256": "253ecda179f9c370508452f629dc054d549fc350e5e505f1e5ad5047ed6ce2d2",
+          "bytes": 6893
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-cli",
+      "label": "Complete native tracker and returned-plan CLI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/grant-tracker-cli.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "c5e14dbadd5ab755b698ef5478355136aac7770e",
+          "sha256": "5feb459e4a66bb28fa7005e69fd43f6f5baa62c1fed4f70ca5ea7ad4de6026d8",
+          "bytes": 10086
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-offline-return",
+      "label": "Complete original offline return workbook and selected source inventory",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/operating-plan-return-workbook.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "052e8f5f60a73d61faa4280e263277f706582c61",
+          "sha256": "9074ea4b152d54087260bb75cdac55167f1d14f623325796271db55d5116a3bc",
+          "bytes": 11113
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-preparation",
+      "label": "Complete original six-customer preparation and receiving adapter",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/grant-tracker-preparation.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "6bbccd6919413d4ab59f4ce5cbd530e3b6cf13f7",
+          "sha256": "eb0505c5ea4c609cb8c4f25508e0ccdbff8724cd88aa5e66ecc2e3a4ab16fe20",
+          "bytes": 13610
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-native-receiving",
+      "label": "Complete real CLI source and customer receiving programme",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/grant-tracker-receiving.mjs",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "78cc31f39016f357e6f2bc2794fdb3abf13a9282",
+          "sha256": "30594640e17a6692fadf3b4f7f0cfb215a7d0fe27a32689dccd47cb8e26c7777",
+          "bytes": 7061
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-native-guide",
+      "label": "Native source receiving, repeat and operating instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/discovery/GRANT_TRACKER_NATIVE.md",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "9cea33a2defdd193ef7c2e5e7f477215530d3ec5",
+          "sha256": "89092ad32b26d1dd44a5b6a3017325c60cdea7384dbad7021a6d3d8d6be102d4",
+          "bytes": 5824
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-distribution",
+      "label": "Whole selected application and original parser distribution",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/grant-tracker.json",
+      "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+      "required": true,
+      "editions": [
+        {
+          "commit": "010a2e96c7caf52a4f47ab1c4c8afa72004a35eb",
+          "git_blob": "14011c779235011255a632c073846e6da766c2e1",
+          "sha256": "4ce7389179dda1a170897395a99d75052dc666c20af420ed80536ae80953f9ea",
+          "bytes": 1548
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-original-preparation",
+      "label": "Protected original complete preparation input and customer selections",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "tools/revenue_owner_console_20261010/lead_pack_sources/summitflow-20261013/application/receiving/original-preparation-source.json",
+      "commit": "7228987953b02c68323d50f26d030cdd121e8086",
+      "required": true,
+      "editions": [
+        {
+          "commit": "7228987953b02c68323d50f26d030cdd121e8086",
+          "git_blob": "8fbef7bdc0ae408c8a735cbb09fc3eaab8a8722b",
+          "sha256": "e9ddb0401d7a9c1ab91bd926009a61b5b7ad2e74c3135bad740bbbc58ce3b5e4",
+          "bytes": 312613
+        }
+      ]
+    },
+    {
+      "id": "grant-tracker-labelled-return",
+      "label": "Protected complete labelled source-native return exercise result",
+      "repository": "woahwhattheheck/commons",
+      "kind": "blob",
+      "path": "tools/revenue_owner_console_20261010/lead_pack_sources/summitflow-20261013/application/receiving/complete-labelled-return.json",
+      "commit": "7228987953b02c68323d50f26d030cdd121e8086",
+      "required": true,
+      "editions": [
+        {
+          "commit": "7228987953b02c68323d50f26d030cdd121e8086",
+          "git_blob": "918c6ecf8b3a41ea9cf085de299b47576d6a2d48",
+          "sha256": "bf16b1e1e7eb7011201438ec7a83e6a14c484e0017ebc78f17c89a28ce47ae10",
+          "bytes": 2640189
+        }
+      ]
+    }
+  ]
+}

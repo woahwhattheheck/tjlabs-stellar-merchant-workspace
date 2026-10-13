@@ -8,6 +8,13 @@ The maintained source already corrected both Grist and SeaTable registrations in
 
 This continuation uses the maintained **merchant-receivables selected archive**. Its complete installed manifest owns the declarations, source selection and provider modules before either unchanged original programme is imported. It preserves the failed edition and its complete output records as the predecessor. It does not change the historical hosted receiver or workflow.
 
+
+## Accepted predecessor and current retained customer continuation
+
+The original payment seven-workflow result and corrected original MCP eight-workflow result are complete. The latter ran successfully as [38359117638](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/actions/runs/38359117638); its full twelve-file output is retained in results/run-38359117638.json. Repository and workflow disabled states were independently read back after execution.
+
+For the complete current customer case, selected release and independent operator handover, use [INSTALLED_CUSTOMER_HANDOVER.md](INSTALLED_CUSTOMER_HANDOVER.md). It adds explicit --mode admission to this existing installed continuation, preserving the original default programme mode. Admission verifies the selected archive/provider/commands and returns installed-release.json without replaying the accepted historical programmes. The same retained-customer operation then continues through the source-owned Xero/customer handover programme.
+
 ## Original programmes
 
 `programs/original-programs.json` identifies both complete, byte-for-byte original programmes from capsule `7fcaec7a66deb03c5d9fed00f193138218d8c323`. Their lengths, SHA-256 values and Git blob identities are checked before they are copied beside the selected installed source.

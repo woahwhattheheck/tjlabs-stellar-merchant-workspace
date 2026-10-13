@@ -1,0 +1,107 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "rumble-customer",
+  "heading": "## Stellar price books, customer values and complete downstream receiving",
+  "sources": [
+    {
+      "id": "rumble-customer-operating",
+      "label": "Rumble complete installed customer operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/rumble-fish/OPERATING.md",
+      "editions": [
+        {
+          "commit": "a0658859d26e7bb1641badcd7ea1518dc7b58ab0",
+          "bytes": 16899,
+          "sha256": "a2af50d6786545cc90999604ae1dfd9c165eced2fe0d540723a5aa251801d7e1"
+        }
+      ]
+    },
+    {
+      "id": "rumble-customer-workbench",
+      "label": "Complete Rumble customer Applications, SDK and MCP implementation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "tree",
+      "path": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench",
+      "commit": "95ba7bd911a688448fbcc7c27aca704ed57fe75d"
+    },
+    {
+      "id": "rumble-customer-model",
+      "label": "Customer asset book, source editions, exact values and downstream wallet",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/CONSUMER.md",
+      "editions": [
+        {
+          "commit": "a0658859d26e7bb1641badcd7ea1518dc7b58ab0",
+          "bytes": 13178,
+          "sha256": "16dfa353a7c84a16e3f91a4978df6114dea1dab8accfef83b2b116ae76af564c"
+        }
+      ]
+    },
+    {
+      "id": "rumble-customer-provider-contract",
+      "label": "Complete captured original Stellar Prices OpenAPI",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/sources/provider.openapi.json",
+      "editions": [
+        {
+          "commit": "a0658859d26e7bb1641badcd7ea1518dc7b58ab0",
+          "bytes": 58863,
+          "sha256": "d13b6d1296442d92991cf3323b23aa1b432549f0e49f57fcdcf7711fe22f7378"
+        }
+      ]
+    },
+    {
+      "id": "rumble-customer-provenance",
+      "label": "Original 23-file customer source identity",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/SOURCE_PROVENANCE.json",
+      "editions": [
+        {
+          "commit": "a0658859d26e7bb1641badcd7ea1518dc7b58ab0",
+          "bytes": 4287,
+          "sha256": "5ed576a5d48efd067627a2d7372b7f7285a0c135d391065e9f1735a1106d91e9"
+        }
+      ]
+    },
+    {
+      "id": "rumble-customer-installation-selection",
+      "label": "Whole customer product and maintained runtime dependency selection",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/rumble-customer-workspace.json",
+      "editions": [
+        {
+          "commit": "a0658859d26e7bb1641badcd7ea1518dc7b58ab0",
+          "bytes": 10754,
+          "sha256": "a914e62a6b4a211c36416cb588d3a6267f2f19d0cb81905f258156f59bbdf957"
+        }
+      ]
+    },
+    {
+      "id": "rumble-customer-browser-assets",
+      "label": "Complete original customer browser routes and directory root",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/partners/rumble-fish-prices/workbench/browser-assets.json",
+      "editions": [
+        {
+          "commit": "95ba7bd911a688448fbcc7c27aca704ed57fe75d",
+          "bytes": 648,
+          "sha256": "39cdcf84212f541a9f0bbb7e1eb5cae7ce27da8ddbbdac7b55b74da00c7e56ac"
+        }
+      ]
+    },
+    {
+      "id": "rumble-customer-original-core",
+      "label": "Original Commons discovery, source and customer consumer workbench",
+      "repository": "woahwhattheheck/commons",
+      "kind": "tree",
+      "path": "opportunities/rumble_fish_prices_workshare_2026/workbench",
+      "commit": "1d200771562dd0a39475290b6c0b1a2a0e0c2b3e"
+    }
+  ]
+}

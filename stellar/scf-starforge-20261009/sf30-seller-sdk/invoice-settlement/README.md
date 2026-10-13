@@ -284,3 +284,15 @@ The [Horizon invoice review](HORIZON_INVOICES.md) joins retained original paymen
 The [SDP batch operator](sdp/README.md) prepares original recipient instructions, captures complete SDP batches, compares payment and recipient mappings, receives authenticated events, and saves its HTML receiving report in this workspace. It reuses the maintained SDP reader, source journal, financial projection, and complete application delivery.
 
 Run `node sdp/sdp-cli.mjs help` from this directory. The guide covers the existing named connection, original payroll transaction adapter, provider create/upload/status operations, full receiving, and recovery of an uncertain provider request.
+
+## SDP desk and managed application
+
+Open **SDP batches** to select a configured original payroll programme, preview and retain recipient instructions, inspect a provider draft, capture its complete batches, review amounts and recipient mappings, and download the retained receiving report. The browser keeps the original request and revision through save and recovery. Private transaction adapters attach to the same invoice host and drain before its workspace closes. [Desk setup and complete workflow](sdp/DESK.md) covers browser, HTTP, CLI and managed Applications entry points.
+
+## Bridge treasury intake and incident review
+
+The [Bridge workspace](bridge/BRIDGE_WORKSPACE.md) captures original provider pages and signed deliveries, preserves explicit source selections, prepares complete assessment editions and records incident decisions in this invoice workspace. `stellar-bridge-intake` operates the original provider/capture workflow; `stellar-bridge-receiving` exports and independently receives the complete workspace. Its portable incident desk produces exact commands for the existing operator, and the attached webhook handler borrows the existing host.
+
+## Complete source delivery
+
+The contribution declares the full SDP and Bridge source, guides, examples, commands and named exports. The application source manifest includes all those leaves and the browser assets. The existing package and workspace receiving paths retain their exact bytes alongside programmes, source observations, decisions and reports. The original Horizon invoice review and other registered workflows remain in the same complete application.

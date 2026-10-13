@@ -261,3 +261,103 @@ The complete public implementation and independent source reviews are delivered.
 Name the commissioning payer, source owner, merchant, buyer and receiving engineer in the original customer workorder. Select the actual saved report, its authorized account, reporting window, complete expected output, receiving application and the later change that makes a new edition useful. Review source distribution rights with the edition before publication.
 
 At handover, the second engineer opens the original complete project, inspects both source editions and the acquired baseline, delivers its complete saved output, starts the retained publisher and applies one reviewed source or version change. Reopening the original incoming file preserves that receiving engineer's later state. Keep source and customer approvals, original financial outcomes, complete output and measured receiving effort in the same workorder and Operations case.
+
+## Operate the installed report workspace from a customer agent
+
+The maintained `superset-workspaces` Merchant provider opens this same Superset application. It uses the saved SQLite project, its original report requests and complete response bodies, the original dataset publisher, and the existing buyer and receiving engines. The browser, ordinary CLI and agent share the same source editions, operation history and acquired customer pages.
+
+Install the existing `superset-report` selection and use the source-owned [Merchant setup guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/superset/MERCHANT_SETUP.md). Its connection file names existing private projects, optional original file aliases and independent receiving destinations. `managed` mode attaches to the exact private Applications launch record. `owned` mode starts the original server inside the current Node host. For an owned paid native service, set `runtimeFile` to the existing private merchant runtime JSON used by the original `--runtime` option. The client binds its complete private bytes and passes its original facilitator, local-facilitator permission, port and other native runtime fields unchanged into that same server. The returned attachment includes its runtime SHA256. Managed mode uses the original listener's runtime and does not accept a replacement runtime file. Both modes use the original workspace lease; a second writer must use the existing listener or wait until its original owner has closed.
+
+### Discover the actual project and choose a report
+
+1. Call `merchant_superset_workspaces`, then `merchant_superset_open` with the configured workspace alias. Retain the returned instance ID for closing that exact attachment.
+2. Read `merchant_superset_view` with `view: "state"`. It returns the original project ID, current revision, selected edition and collection counts without loading every source body.
+3. Read `view: "page"` with `query: {kind: "sources", offset: 0, limit: 50}`; follow `range.nextOffset` until null. The same complete paging contract covers captures, editions, reviews, comparisons, merchants, publications, buyers, deliveries and operations. A page holds at most 250 original summaries.
+4. Select the original source and use `view: "inventory"` to list its actual charts or dashboards. `view: "record"` opens a complete saved record; large records can instead use the retained file export below. `view: "capture"` reads native query-result rows with their original query ordinal, offset and limit. `view: "query"` runs the existing edition query.
+
+Source definitions retain their existing authentication environment references. The host resolves them through the original Superset client. Neither the connection file nor a tool call introduces a replacement login or executable command.
+
+### Save, review and continue the exact operation
+
+`merchant_superset_save` accepts `{workspace, request: {action, input}}`. The input contains a stable `operationId`, the displayed `expectedRevision` and the original action's fields. The supported original report actions are `source`, `capture`, `edition`, `review`, `compare`, `select`, `replay`, `prepare-merchant`, `publish`, `prepare-buyer` and `receive-buyer`. Each uses the same original workspace method as the browser and CLI.
+
+For a report already selected from its actual inventory, the complete call has this shape; substitute the saved identifiers and revision:
+
+~~~json
+{
+  "workspace": "reporting",
+  "request": {
+    "action": "capture",
+    "input": {
+      "operationId": "monthly-report-2026-10",
+      "expectedRevision": 1,
+      "sourceId": "source-native-report",
+      "chartId": 12,
+      "label": "October report",
+      "force": true
+    }
+  }
+}
+~~~
+
+The client retains the complete logical request before sending. The server saves its exact accepted request in the same SQLite project before dispatch. Reusing an ID with different customer input fails. `merchant_superset_operation` returns the retained request and the original queued, running, completed, failed, interrupted or cancelled operation. After an uncertain response, use `merchant_superset_resume` with that same ID. A completed operation returns its original result. An unfinished operation continues only with its saved source and workspace binding.
+
+The report course remains source capture → complete edition → explicit review → comparison with its earlier edition → selected output. Use the current revision for each new reviewed action. The original workspace enforces review, source identity and publication rules; the agent does not publish an unreviewed replacement. `merchant_superset_cancel` requests cancellation of one selected original queued or running operation while retaining its request and native progress.
+
+### Publish and receive the original customer acquisition
+
+Call `merchant_superset_merchant` with `action: "start"` and the saved merchant ID to open its original dataset service. `view: "merchant-status"` reads the original version store. `view: "buyer-review"` returns the native review of that running merchant and the selected query. Prepare the buyer through the original `prepare-buyer` action; the accepted request binds the actual listener used at preparation.
+
+The following additional saved actions continue the original SF88 acquisition inside this project:
+
+| Action | Input after operationId and expectedRevision | Behavior |
+| --- | --- | --- |
+| `buyer-session-init` | `buyerId`, `maxPages`, `maxTotalAtomic`; optional `maxRows`, `maxPageBytes` | Creates or reopens that buyer's original native session, bound to its retained configuration, snapshot and exact budgets. |
+| `buyer-session-run` | `buyerId`; optional `retryUnpaid`, `expectedAttemptSha256` | Executes the original page acquisition with its native approval, signer, payment and recovery rules. |
+| `buyer-session-recover` | `buyerId` | Runs the original native session recovery against the same saved pages. |
+| `receive-buyer` | `buyerId`; optional `includeSourceCaptures` | Receives the complete original acquired customer output through the maintained receiving engine. |
+
+The original SF88 limits define the numeric and amount formats. `maxRows` defaults to 1,000,000 and `maxPageBytes` to 1,048,576; the customer explicitly supplies `maxPages` and `maxTotalAtomic`. Inspect `view: "buyer-status"` to see the original session before deciding whether to continue. Cancellation passes the original abort signal to acquisition. Saved pages and native recovery state remain attached to that buyer. A stopped initialization preserves its original guard and any interrupted write bytes before continuing the same native initialization.
+
+Customer-paid use continues to require the original selected payment configuration and buyer approval. The agent reuses those native decisions and budgets. Use `view: "delivery"` to inspect the saved delivery; its individual files can be transferred without regenerating the acquisition. `merchant_superset_merchant` with `action: "stop"` closes that application's selected dataset service.
+
+### Transfer complete source, delivery and project files
+
+`merchant_superset_export` takes a stable `exportId` and a selection. The complete export is pinned to the original request, saved source file, size and SHA256 before receiving. A retry with the same ID returns those exact bytes even after later project work.
+
+| selection.kind | Selection fields | Complete output |
+| --- | --- | --- |
+| `workspace` | `expectedRevision` | The original consistent SQLite receiving file, including native publisher custody and acquired session archives. |
+| `capture`, `comparison`, `csv`, `lineage` | Original `id` | The maintained source or edition export. |
+| `record` | `recordKind`, original `id` | Complete saved JSON, including records larger than the ordinary response limit. |
+| `response` | Capture `id`, original response `sha256` | Exact source response bytes from that capture. |
+| `delivery` | Delivery `id`, exact original member `name` | One complete customer output named by its retained manifest. |
+
+Whole-project export checks the selected revision inside the original serialized snapshot operation. Use a new export ID for a later revision. Complete files may be up to 2 GiB. The private transfer streams the file and checks its whole SHA256; it does not serialize a large archive into a tool response.
+
+Read the exported file with `merchant_superset_file_read`. Each result identifies the original file and byte range. Preserve the returned read ID while the host remains open; continue with its returned next offset until the complete size is received. Chunks are at most 196,608 bytes. After restarting the same configured host, supply the same export ID, expected SHA256 and offset to reopen that retained file. `merchant_superset_file_release` closes its owned reader. Customer receiving verifies the final complete hash.
+
+For independent project receiving, configure a complete source-file alias and a separate destination alias, then use:
+
+~~~json
+{
+  "workspace": "reporting",
+  "sourceFile": "original-project",
+  "destination": "receiving-engineer",
+  "request": {
+    "action": "receive-workspace",
+    "input": {
+      "operationId": "original-project-receive",
+      "expectedRevision": 12
+    }
+  }
+}
+~~~
+
+The source file and destination are selected from the existing private connection. The client binds the original source identity before uploading; the server retains the complete file by size and SHA256 before dispatch. The original `receiveSupersetWorkspace` validates and reopens the full project in the independent destination. Repeat the original operation to recover a lost response; it preserves the original receiving history and native custody described above. Add the received existing directory as another connection entry when it is ready to be operated.
+
+### Close and commission the same application
+
+`merchant_superset_close` requires the instance ID returned when this attachment opened. Managed mode closes this agent's readers and connection while the original Applications listener continues. Owned mode stops accepting work, interrupts its original active acquisition, drains accepted requests, closes its own dataset services and then releases the original workspace. A failed descriptor or native-service close remains available to the same instance's close continuation. If initial open or its first state read fails and cleanup also fails, `merchant_superset_workspaces` retains that exact instance with `cleanupPending: true`; close it before opening the alias again. Direct SDK callers receive the primary error with a `supersetCleanup` handle and `cleanupFailure` detail, and continue `supersetCleanup.close()` on that same owned service.
+
+The original `SCF-SUPERSET-CUSTOMER-A238-20261012` programme remains the native receiving case. Its commissioning engineer can continue the exact retained report with these tools: open the existing workspace; page all original collections; inspect both source editions and their comparison; resume the saved acquisition; export the complete customer delivery and project; receive that same file in an independent destination; reopen, make one reviewed change and export the new revision. Keep the actual original source, selected runtime, native results and receiving file in that existing operation.

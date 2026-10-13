@@ -20,6 +20,7 @@ import operations_support as support
 import operations_buyer as buyer
 import operations_settlement as settlement_sources
 import operations_completion as completion
+import operations_completion_corrections as completion_corrections
 import operations_calendar as calendar_model
 import operations_agenda as agenda_model
 import operations_use_calendar as use_calendar
@@ -30,6 +31,7 @@ import operations_installation_returns as installation_returns
 import operations_company_returns as company_returns
 import operations_dispatch as dispatch
 import operations_statements as statements
+import operations_statement_profiles as statement_profiles
 import operations_performance as performance
 import operations_ledger_intake as ledger_intake
 import operations_payables as payables
@@ -190,6 +192,7 @@ class Operations:
         result = {**context, "sources": list(context["sources"].values()),
                   "report": domain.report(**context)}
         result["awardTerms"] = [award_terms.summary(row) for row in award_terms.heads(award_terms.records(self, program_id))]
+        result["statementSetups"] = [statement_profiles.summary(row) for row in statement_profiles.records(self, program_id)]
         result["completion"] = completion.dashboard(context)
         result["expenseAttribution"] = expenses.dashboard(context)
         result["amendments"] = [amendments.summary(row, context, digest(self._business(context)))
@@ -201,6 +204,7 @@ class Operations:
                               "purpose": row.get("purpose"),
                               **({"completionTranche": row["completion"]["clock"]["tranche"],
                                   "receiptId": row["completion"]["receipt"]["id"]} if row.get("purpose") == "TRANCHE_COMPLETION" else {}),
+                              **(completion_corrections.summary(row) if row.get("purpose") == completion_corrections.PURPOSE else {}),
                               **(cohort.summary(row, context, cohort_history) if row.get("purpose") == "COHORT_EVALUATION" else {}),
                               **(implementation.summary(row, context) if row.get("purpose") == implementation.PURPOSE else {}),
                               **(engagements.summary(row) if row.get("purpose") == engagements.PURPOSE else {}),
@@ -341,6 +345,10 @@ class Operations:
             if command == "source.add":
                 after = self._source_add(program_id, data)
                 kind, record_id = "source", after["id"]
+            elif command == statement_profiles.ACTION:
+                result = statement_profiles.save(self, context, data, actor, next_version, note)
+                before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
+                extra_receipt = {"statementSetup": result["statementSetup"]}
             elif command == "funding.save":
                 result = funding.save(self, context, data, actor, next_version, note)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -369,6 +377,7 @@ class Operations:
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
                 extra_receipt = {"taskOutcomes": result["taskOutcomes"]}
             elif command == "statement.receive":
+                context["statementSetups"] = [statement_profiles.summary(row) for row in statement_profiles.records(self, program_id)]
                 context["cashCorrections"] = cash_accounts.statement_successors(self, context)
                 result = statements.receive(self, context, data, actor, next_version)
                 before, after, kind, record_id = (result[key] for key in ("before", "after", "kind", "recordId"))
@@ -571,7 +580,7 @@ class Operations:
             self.db.execute("UPDATE ops_programs SET version=?,updated_at=? WHERE id=?", (next_version, now(), program_id))
             self._event(program_id, next_version, {**body, "actor": actor, "note": note}, command, before, after, kind, record_id,
                         source_change=source_change)
-            if command in amendments.ACTIONS or command in award_terms.ACTIONS or command in ("funding.save", risks.ACTION):
+            if command in amendments.ACTIONS or command in award_terms.ACTIONS or command in ("funding.save", risks.ACTION, statement_profiles.ACTION):
                 # Reject atomically if these complete decisions would make the
                 # original case impossible to hand over through its native limit.
                 self.export(program_id)
@@ -1044,13 +1053,40 @@ class Operations:
         with self.workspace.mutex:
             return completion.seed(self._completion_context(program_id, body, ("tranche",)), body.get("tranche"))
 
+    def _completion_correction_review(self, program_id, review_id):
+        selected = self.review(program_id, review_id)
+        if selected.get("purpose") != completion_corrections.PURPOSE:
+            domain.fail("Select the original correction review.", "COMPLETION_CORRECTIONS", 409)
+        latest = completion_corrections.head(completion_corrections.reviews(self, program_id),
+                                              selected["corrections"]["inputs"]["roundId"])
+        if not latest or latest["id"] != selected["id"]:
+            domain.fail("This correction round has a newer edition. Review the complete latest findings before re-preparation.",
+                        "COMPLETION_CORRECTIONS_HEAD_CHANGED", 409)
+        return selected
+
+    def seed_completion_corrections(self, program_id, body):
+        with self.workspace.mutex:
+            context = self._completion_context(program_id, body, ("outcomeId", "reviewId"))
+            return completion_corrections.seed(self, context, body.get("outcomeId"), body.get("reviewId"))
+
+    def preview_completion_corrections(self, program_id, body):
+        with self.workspace.mutex:
+            context = self._completion_context(program_id, body, ("inputs", "asOfDate"))
+            return completion_corrections.preview(self, context, body.get("inputs"), body.get("asOfDate"))
+
+    def export_completion_corrections(self, program_id, review_id):
+        with self.workspace.mutex:
+            return completion_corrections.export(self.review(program_id, review_id),
+                lambda source_id: self.source(program_id, source_id))
+
     def preview_completion(self, program_id, body):
         with self.workspace.mutex:
-            context = self._completion_context(program_id, body, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds"))
+            context = self._completion_context(program_id, body, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds", "correctionReviewId"))
             reviews = self._cohort_reviews(program_id, body["cohortReviewIds"]) if "cohortReviewIds" in body else None
             evidence = self._implementation_reviews(program_id, body["implementationReviewIds"]) if "implementationReviewIds" in body else None
             return completion.preview(context, {key: value for key, value in body.items() if key != "expectedVersion"},
-                                      reviews, self._cohort_history(program_id) if reviews is not None else None, evidence)
+                                      reviews, self._cohort_history(program_id) if reviews is not None else None, evidence,
+                                      correction_review=self._completion_correction_review(program_id, body["correctionReviewId"]) if "correctionReviewId" in body else None)
 
     def export_completion(self, program_id, review_id):
         with self.workspace.mutex:
@@ -1106,6 +1142,7 @@ class Operations:
         with self._snapshot():
             context = deepcopy(self._completion_context(program_id, body, ("inputs",)))
             context["cashCorrections"] = cash_accounts.statement_successors(self, context)
+            context["statementSetups"] = [statement_profiles.summary(row) for row in statement_profiles.records(self, program_id)]
             return statements.preview(context, body.get("inputs"))
 
     def preview_support(self, program_id, body):
@@ -1755,6 +1792,7 @@ class Operations:
                 domain.fail("A frozen review differs from its retained business snapshot.")
         cash_accounts.validate_import(context, events, files)
         statements.validate_import(context, events, files)
+        statement_profiles.validate_import(context, events, files)
         has_settlements = settlement_sources.validate_import(context, events, reviews, files)
         if bool(has_settlements) != settlement_sources.DERIVED_FILES.issubset(files):
             domain.fail("The complete merchant source report set is missing or unbound.", "SETTLEMENT_IMPORT_SOURCE")

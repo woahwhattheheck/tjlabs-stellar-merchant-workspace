@@ -492,4 +492,14 @@ $('print').addEventListener('click',()=>{printPacket();window.print();});
 window.addEventListener('beforeprint',printPacket);
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 render();
-void refreshSource({initial:true});
+const requestedSavedProject=new URL(location.href).searchParams.get('draft');
+if(requestedSavedProject){
+  void work(async()=>{
+    const current=await loadDraft(requestedSavedProject);
+    if(!current)throw new Error('This saved submission is absent. Return to Saved projects and refresh the library.');
+    await verifyDraft(current.input);
+    draft=current.input;savedId=current.id;savedRevision=current.revision;dirty=false;
+    $('view').value='answers';render();
+    status('Opened '+current.name+', revision '+current.revision+'. Its complete source and recorded work remain selected.');
+  });
+}else void refreshSource({initial:true});

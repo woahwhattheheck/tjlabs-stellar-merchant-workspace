@@ -596,14 +596,23 @@ The original recipient workflow, independent receiving, offline review and sourc
 
 ## Authenticated Merchant caller
 
-The existing running desk can be selected through the maintained source-owned
-Merchant provider. Its host connection retains the original launch or Applications
-URL record, every operating root and the current instance. The nineteen tools
+The existing running desk can be selected through the source-owned Merchant
+provider. Its host connection retains the original launch or Applications URL
+record, every operating root and the current instance. The twenty-seven tools
 cover original caller-task selection, native review/execute/recover/receive,
-operation history, saved RPC editions and complete packet/response receiving.
-The same desk remains the native controller.
+operation history, saved RPC editions, complete packet/response reads and the
+same named customer-delivery workflow.
+
+For customer delivery, retain the original --delivery selection and exact
+customerDelivery connection root. Merchant tools create the full native source
+census, inspect the original packet, preview a named customer edition, prepare
+the exact request and reconcile it by complete request plus preview hash after
+uncertainty. Complete customer/source NDJSON downloads use the original package
+and manifest SHA256 and the existing retained-file lifecycle. The installed
+CLI's kind:"customer" selection receives and verifies the entire archive.
 
 Use the complete [Merchant task desk guide](../../../../../../stellar-forge/mcp-merchant-operator/TASK_DESK.md)
-for private connection setup, original request recovery, typed imports and
-`starforge merchant-task-desk` full-file downloads. Existing customer-delivery
-and recipient tools remain with their original Collections provider.
+for private connection setup, exact request recovery, typed imports and
+starforge merchant-task-desk full-file downloads. Original Collections
+recipient history, uploads and independent receiving continue with the same
+native customer package.

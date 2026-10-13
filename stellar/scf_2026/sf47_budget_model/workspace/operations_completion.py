@@ -341,8 +341,8 @@ def business_snapshot(context, *, legacy=False, implementation_evidence=False):
     return business
 
 
-def preview(context, data, cohort_reviews=None, cohort_history=None, implementation_reviews=None, *, legacy_source=False):
-    data = object_value(data, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds"), "completion preview")
+def preview(context, data, cohort_reviews=None, cohort_history=None, implementation_reviews=None, *, legacy_source=False, correction_review=None):
+    data = object_value(data, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds", "correctionReviewId"), "completion preview")
     as_of = day(data.get("asOfDate") or today(), "Completion calendar date")
     original = receipt(context, data.get("receiptId"), active=True, as_of=as_of)
     clock = _clock(context, original, as_of)
@@ -415,13 +415,20 @@ def preview(context, data, cohort_reviews=None, cohort_history=None, implementat
         result["implementationEvidence"] = retained
         result["issues"].extend(extra_issues)
         result["ready"] = not result["issues"]
+    if "correctionReviewId" in data:
+        from operations_completion_corrections import evidence as correction_evidence
+        if correction_review is None or correction_review["id"] != data["correctionReviewId"]:
+            domain.fail("Select the complete original correction edition.", "COMPLETION_CORRECTIONS", 409)
+        result["correctionEvidence"] = correction_evidence(context, correction_review, as_of, original["id"])
+        result["issues"].extend(result["correctionEvidence"]["report"]["issues"])
+        result["ready"] = not result["issues"]
     result["previewSha256"] = digest(result)
     return result
 
 
 def _outcome_link(context, value):
     value = object_value(value, ("receiptId", "reviewId", "reviewSha256", "previewSha256", "submittedOn",
-                                 "formReference", "originalDeadlineOn", "deadlineOn", "extensionId"), "completion submission")
+                                 "formReference", "originalDeadlineOn", "deadlineOn", "extensionId", "correction"), "completion submission")
     original = receipt(context, value.get("receiptId"))
     if not re.fullmatch(r"review-[a-f0-9]{32}", str(value.get("reviewId", ""))):
         domain.fail("Retain the original prepared completion identity.", "COMPLETION_REVIEW")
@@ -440,7 +447,15 @@ def _outcome_link(context, value):
             domain.fail("The form must retain its actual issuer-confirmed deadline source.", "COMPLETION_SUBMISSION")
     elif deadline != base:
         domain.fail("A later form deadline needs its retained issuer confirmation.", "COMPLETION_SUBMISSION")
-    return {"receiptId": original["id"], "reviewId": value["reviewId"],
+    correction = {}
+    if "correction" in value:
+        selected = object_value(value["correction"], ("reviewId", "roundId", "revision", "sourceOutcomeId"), "correction submission link")
+        from operations_completion_corrections import ident
+        ident(selected.get("reviewId"), "review"); ident(selected.get("roundId"), "corrections")
+        ident(selected.get("sourceOutcomeId"), "outcome")
+        domain.integer(selected.get("revision"), "Selected correction revision", 1, 100)
+        correction = {"correction": deepcopy(selected)}
+    return {**correction, "receiptId": original["id"], "reviewId": value["reviewId"],
             "reviewSha256": domain.sha(value.get("reviewSha256"), "Frozen completion source", False),
             "previewSha256": domain.sha(value.get("previewSha256"), "Prepared completion identity", False),
             "submittedOn": submitted, "formReference": text(value.get("formReference"), "Original form submission reference", 4000, True),
@@ -464,6 +479,9 @@ def normalize_outcome_link(context, data, previous):
 
 def command(ops, context, name, data, actor, next_version):
     program_id = context["program"]["id"]
+    if name == "completion.corrections.save":
+        from operations_completion_corrections import save
+        return save(ops, context, data, actor, next_version)
     if name == "completion.save":
         object_value(data, ("inputs",), "completion plan save")
         inputs = normalize_inputs(context, data.get("inputs"))
@@ -506,11 +524,12 @@ def command(ops, context, name, data, actor, next_version):
                 "extensionId": extension["id"]}
 
     if name == "completion.prepare":
-        object_value(data, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds", "expectedPreviewSha256"), "completion preparation")
+        object_value(data, ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds", "correctionReviewId", "expectedPreviewSha256"), "completion preparation")
         reviews = ops._cohort_reviews(program_id, data["cohortReviewIds"]) if "cohortReviewIds" in data else None
         evidence = ops._implementation_reviews(program_id, data["implementationReviewIds"]) if "implementationReviewIds" in data else None
-        candidate = preview(context, {key: data[key] for key in ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds") if key in data},
-                            reviews, ops._cohort_history(program_id) if reviews is not None else None, evidence)
+        candidate = preview(context, {key: data[key] for key in ("receiptId", "asOfDate", "summary", "cohortReviewIds", "implementationReviewIds", "correctionReviewId") if key in data},
+                            reviews, ops._cohort_history(program_id) if reviews is not None else None, evidence,
+                            correction_review=ops._completion_correction_review(program_id, data["correctionReviewId"]) if "correctionReviewId" in data else None)
         if candidate["previewSha256"] != domain.sha(data.get("expectedPreviewSha256"), "Reviewed completion preview", False):
             domain.fail("The completion source changed after preview. Reopen and preview the current case.", "COMPLETION_PREVIEW_CONFLICT", 409)
         if not candidate["ready"]:
@@ -538,7 +557,13 @@ def command(ops, context, name, data, actor, next_version):
         if (context["program"]["mode"] != "WALKTHROUGH" and submitted > today()) or submitted < candidate["asOfDate"]:
             domain.fail("Retain the actual form date on or after its preparation.", "COMPLETION_SUBMISSION")
         submission_clock = _clock(context, candidate["receipt"], submitted)
-        link = _outcome_link(context, {
+        correction = candidate.get("correctionEvidence")
+        correction_link = {"correction": {
+            "reviewId": correction["reviewId"],
+            "roundId": correction["review"]["corrections"]["inputs"]["roundId"],
+            "revision": correction["review"]["corrections"]["revision"],
+            "sourceOutcomeId": correction["review"]["corrections"]["sourceOutcome"]["id"]}} if correction else {}
+        link = _outcome_link(context, {**correction_link,
             "receiptId": candidate["receipt"]["id"], "reviewId": review["id"], "reviewSha256": review["businessSha256"],
             "previewSha256": candidate["previewSha256"], "submittedOn": submitted,
             "formReference": data.get("formReference"), "originalDeadlineOn": candidate["clock"]["originalDeadlineOn"],
@@ -612,8 +637,11 @@ def validate_preparation(review):
             domain.fail("The retained implementation evidence is invalid.", "INVALID_COMPLETION")
         implementation_reviews = [x["review"] for x in candidate["implementationEvidence"]]
         values["implementationReviewIds"] = [x["id"] for x in implementation_reviews]
+    correction = candidate.get("correctionEvidence")
+    if correction:
+        values["correctionReviewId"] = correction["reviewId"]
     recalculated = preview(context, values, cohorts, candidate.get("cohortHistory"), implementation_reviews,
-                           legacy_source=legacy_source)
+                           legacy_source=legacy_source, correction_review=correction["review"] if correction else None)
     if recalculated != candidate:
         domain.fail("The original prepared completion differs from its complete frozen source.", "INVALID_COMPLETION")
 
@@ -632,6 +660,8 @@ def validate_import(context, plans, reviews, events, maximum_version, plan_histo
         event = events[row["version"] - 1]
         if event.get("action") not in ("completion.save", "completion.extension") or event.get("after") != row:
             domain.fail("The retained completion plan differs from its original save event.", "INVALID_COMPLETION")
+    from operations_completion_corrections import validate_import as validate_corrections_import
+    validate_corrections_import(reviews, events)
     original_reviews = {row["id"]: row for row in reviews}
     for review in reviews:
         if review.get("purpose") != "TRANCHE_COMPLETION":
@@ -662,6 +692,13 @@ def validate_import(context, plans, reviews, events, maximum_version, plan_histo
                 or link["receiptId"] != candidate["receipt"]["id"]
                 or link["originalDeadlineOn"] != candidate["clock"]["originalDeadlineOn"]):
             domain.fail("The actual form receipt differs from its prepared source.", "INVALID_COMPLETION")
+        correction = candidate.get("correctionEvidence")
+        expected_correction = {"reviewId": correction["reviewId"],
+            "roundId": correction["review"]["corrections"]["inputs"]["roundId"],
+            "revision": correction["review"]["corrections"]["revision"],
+            "sourceOutcomeId": correction["review"]["corrections"]["sourceOutcome"]["id"]} if correction else None
+        if link.get("correction") != expected_correction:
+            domain.fail("The resubmission differs from its exact frozen correction round.", "INVALID_COMPLETION")
 
 
 def review_files(review, read_source):
@@ -726,6 +763,12 @@ def review_files(review, read_source):
             'customer response or issuer decision.</p><table><thead><tr><th>Review</th><th>Observed and recorded through</th>'
             '<th>Separate receiving</th><th>Frozen selection SHA-256</th></tr></thead><tbody>' +
             ''.join(implementation_rows) + '</tbody></table>')
+    correction_section = ""
+    if candidate.get("correctionEvidence"):
+        selected = candidate["correctionEvidence"]
+        correction_section = ('<h2>Original issuer corrections</h2><p>This re-preparation retains the complete '
+            'original finding/response comparison and preceding submitted source. It does not record issuer acceptance.</p>'
+            '<p><a href="corrections/' + e(selected["reviewId"]) + '/corrections.html">Complete correction round</a></p>')
     page = ('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
             '<title>Tranche completion</title><style>body{font:16px system-ui;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#202020}'
             'table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;text-align:left;vertical-align:top;padding:.6rem}'
@@ -736,7 +779,7 @@ def review_files(review, read_source):
             '\nApplicable confirmed deadline: ' + e(candidate["clock"]["deadlineOn"]) +
             '</p><h2>Completed result</h2><p>' + e(candidate["summary"]) +
             '</p><table><thead><tr><th>Package</th><th>Original work</th><th>Success criteria</th><th>Owners</th><th>Completed</th><th>Result</th>'
-            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table>' + cohort_section + implementation_section + '<p><a href="' + e(RULE["sourceUrl"]) +
+            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table>' + cohort_section + implementation_section + correction_section + '<p><a href="' + e(RULE["sourceUrl"]) +
             '">SCF tranche guidelines</a></p><small>Prepared ' + e(review["createdAt"]) + ' · ' + e(review["id"]) +
             ' · original source ' + e(review["businessSha256"]) + '</small></html>')
     files = {"completion.json": (canonical(review) + "\n").encode(),
@@ -759,6 +802,11 @@ def review_files(review, read_source):
         for evidence in candidate["implementationEvidence"]:
             for name, raw in implementation_files(evidence["review"], read_source).items():
                 files["implementation/" + evidence["reviewId"] + "/" + name] = raw
+    if candidate.get("correctionEvidence"):
+        from operations_completion_corrections import file_map as correction_files
+        selected = candidate["correctionEvidence"]
+        for name, raw in correction_files(selected["review"], read_source).items():
+            files["corrections/" + selected["reviewId"] + "/" + name] = raw
     if sum(map(len, files.values())) > MAX_BUNDLE:
         domain.fail("The complete prepared form exceeds the original archive bound.", status=413)
     manifest = {"schema": "stellar-forge.sf47-completion-files.v1", "reviewId": review["id"],

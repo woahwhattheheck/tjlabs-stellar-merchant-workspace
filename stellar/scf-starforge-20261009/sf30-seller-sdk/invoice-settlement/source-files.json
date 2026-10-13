@@ -9,8 +9,8 @@
   "files": [
     {
       "path": "stellar/scf-starforge-20261009/distribution/contributions/invoice-settlement.json",
-      "bytes": 7592,
-      "sha256": "2dd78db9276a66972d1cbdadedfb54fa89414c0143553399a436ed90abb88871",
+      "bytes": 13474,
+      "sha256": "d2b2b879b9aeffa5428620ad3622e153a2194f92ceb96ea510044e45cbdb1e77",
       "contentType": "application/json"
     },
     {
@@ -40,7 +40,7 @@
     {
       "path": "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
       "bytes": 9595,
-      "sha256": "683c241e74d2ef4c6bbf1502a8aa58af40195bb53e70fb0b7731191c53795d5f",
+      "sha256": "ceddd0595a3bb7ff3461119077b40fce1d7d1cffd67b2a29dccbe20f466d38c4",
       "contentType": "text/x-python"
     },
     {
@@ -81,8 +81,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/application.mjs",
-      "bytes": 8505,
-      "sha256": "da5d709092dde38fb29fef187effbbe05a92346ba92cfce5908141df682b6979",
+      "bytes": 9306,
+      "sha256": "26d7988a8d328fdff1ca8b494bdc6c04047f9b583815bba2001baa660e18873f",
       "contentType": "text/javascript"
     },
     {
@@ -98,15 +98,141 @@
       "contentType": "text/javascript"
     },
     {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/BRIDGE_INTEGRATION.md",
+      "bytes": 13447,
+      "sha256": "91abfe4281e28dd6d32e9a4c888545e2174a41677b43c67547f097b885905db2",
+      "contentType": "text/markdown"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/BRIDGE_PROVIDER_CONTRACT.json",
+      "bytes": 8532,
+      "sha256": "a9eeb989c0cedd42295057fb2288a615e1a637ac1abd9b343a6c6b89e9d6d852",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/BRIDGE_WORKSPACE.md",
+      "bytes": 20647,
+      "sha256": "548c005a15ff7c466683a2437441576adf1452f0b9bf2fdd99d61cc381472383",
+      "contentType": "text/markdown"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/bridge-provider.d.mts",
+      "bytes": 4014,
+      "sha256": "ec3c1d675bfdc29862ec247b813a879e384e7daa77ad2e86f9dd2d6a9c13b721",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/bridge-provider.mjs",
+      "bytes": 15764,
+      "sha256": "3e11e81da66e73dc5d0713a31859d4d61d505bb891848b57e8cf04286f97cb30",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/bridge-webhook.d.mts",
+      "bytes": 956,
+      "sha256": "7bdb6a002f3d9966487f60c0079ff5db569df25fb5145c4fa0880420cfe6b6b7",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/bridge-webhook.mjs",
+      "bytes": 7986,
+      "sha256": "488954bb7c2ceda0be4c673930ca3af90162e4a6bdcc287fef9c99a97493b363",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/cli.mjs",
+      "bytes": 6263,
+      "sha256": "10305182612d7d32cca0c5dbc9ead501e22ad63877869ed33513f51956908c86",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/desk.mjs",
+      "bytes": 10045,
+      "sha256": "2f927caa730bf116a62de8663fc0f31cf00a64b60a76f8ad052236a12c91bfc8",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/examples/capture-create.example.json",
+      "bytes": 462,
+      "sha256": "6e217de50dd830a6b28e3f3aecfc79c0c0154255c5da4f096db9c207cae246a1",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/examples/private-connection.example.json",
+      "bytes": 528,
+      "sha256": "1a9eef6043c83382be8a4e89bc51eaad8241372f8af3fe11e232d25633e855a5",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/examples/receiving.example.json",
+      "bytes": 739,
+      "sha256": "1d381427c9dc6e9862bd17c6dca49cfb2fab0298341f3f4e22078f8cf7edfbe0",
+      "contentType": "application/json"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/native.d.mts",
+      "bytes": 806,
+      "sha256": "e4ceeb969f078daed85ec3b317bdbaf37f4da4c9b308fe7a1ab116feea42cc0a",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/native.mjs",
+      "bytes": 12766,
+      "sha256": "253540e37d446cfb49a4771fd32dbfc46ad537f51132de0f86e13e230f999b7f",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/operator.d.mts",
+      "bytes": 4076,
+      "sha256": "209054b2a126f6b91242c48134484e8824188748b01aca93a29db6420e6ce60d",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/operator.mjs",
+      "bytes": 5407,
+      "sha256": "223ba4442d4df547890ccf37c183f5d45ad4e27345e939bad221c9daac620670",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/receiving.d.mts",
+      "bytes": 227,
+      "sha256": "608edf94f5d7d01942dd8579d1b5b41192e8c1e557085619a4a8538487578bec",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/receiving.mjs",
+      "bytes": 18442,
+      "sha256": "a6089878735e23f772570a41d96ce9d7a5c36d464dc8ef878517d0584ddde8c6",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/webhook-handler.d.mts",
+      "bytes": 490,
+      "sha256": "5ca466c5aa7a437eb3e3aa97126b55a1407c6fd5390f83e793a66f88ddb2fc5b",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/webhook-handler.mjs",
+      "bytes": 4866,
+      "sha256": "f4fea42f52cc98684deace2b94c043a640bb386715712356cf0f63e1c8c892a7",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/bridge/workspace.mjs",
+      "bytes": 28278,
+      "sha256": "0a69ec2d44290849cf62b86ec8b472b04f8463b75f3bef0d7e9fc25f1fbb06eb",
+      "contentType": "text/javascript"
+    },
+    {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/browser-assets.json",
-      "bytes": 406,
-      "sha256": "5248300560e27982b74d69e1f82a9aa7335a44f17564091bf1056279a71ef8ab",
+      "bytes": 774,
+      "sha256": "f6274b27e13976ea9de52db440a86bc9bb79134eb77d66df03b9df6ebd70d4ab",
       "contentType": "application/json"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/cli.mjs",
-      "bytes": 19046,
-      "sha256": "fa9240eb61066d5bbf1c46174f805a883eb928535d04550c9d93b98db1148680",
+      "bytes": 19784,
+      "sha256": "c6bbfdccbba2a3d6a8d1717016b54347c8edc10c2749cfb8e9a986ee53fceb14",
       "contentType": "text/javascript"
     },
     {
@@ -177,8 +303,8 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/README.md",
-      "bytes": 22860,
-      "sha256": "08f6d774fc1a6eb0d244857f24bb2857ada23c3457d3be0966c8d1df2e0a843f",
+      "bytes": 24496,
+      "sha256": "b8ad76bed2a7cdb9fa0f3c861aa4572fe3b9ba5cdab35db0af5099bd844caad6",
       "contentType": "text/markdown"
     },
     {
@@ -200,15 +326,21 @@
       "contentType": "text/javascript"
     },
     {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/DESK.md",
+      "bytes": 17501,
+      "sha256": "b0f18dc9848aa5cb9cb7692048beac18b1da64b50567ddc4f09723612d08dc0d",
+      "contentType": "text/markdown"
+    },
+    {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/PROVIDER_CONTRACT.md",
-      "bytes": 7028,
-      "sha256": "910e38478eca4aad5a1c91c28e7d4ab52af2c89be262d41694da5c35ff7fde31",
+      "bytes": 8105,
+      "sha256": "183b976c8423377171b3d86de1ba8c6d391be784751433a233fae697d12b1ceb",
       "contentType": "text/markdown"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/README.md",
-      "bytes": 12671,
-      "sha256": "79c9b6c50c1ef3e7faa1102d60dec56fc132c7f0350efa00c91089fd87092a6d",
+      "bytes": 14473,
+      "sha256": "c9047b18d79a0ba46ca8c0b2253c8ea8b767b4f2e2993fdc464f8c030bc84c61",
       "contentType": "text/markdown"
     },
     {
@@ -224,27 +356,51 @@
       "contentType": "text/javascript"
     },
     {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/sdp-desk.css",
+      "bytes": 5002,
+      "sha256": "42b3fc8c53f2c5fdd4d026b4c07ee8b6c7936c1a5be4aac843b7cb11743aa4e8",
+      "contentType": "text/css"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/sdp-desk.mjs",
+      "bytes": 35773,
+      "sha256": "cac2f30a5968972c1a2c5ddc67bf237fa46c262661d181b5b66453adb4cd0f2c",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/sdp-desks.example.json",
+      "bytes": 824,
+      "sha256": "451098b7f2f954c7ac7c221102e6ff4512823cd711684a92a595d85a9279d16e",
+      "contentType": "application/json"
+    },
+    {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/sdp-native.mjs",
-      "bytes": 25860,
-      "sha256": "fd575cee6cc97192709923395c6040e933c4a4d57242848c4813dcde0c54ff9a",
+      "bytes": 28120,
+      "sha256": "7b5c7534eade50feb07ce1efcf3351cc19d10621a7736548cdd4b7b70c992a40",
+      "contentType": "text/javascript"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/sdp-operator.mjs",
+      "bytes": 16624,
+      "sha256": "dae256345b7508ef42169009d42a48d3e5629019789e3e87ee237b2e59591e78",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/sdp-workspace.mjs",
-      "bytes": 15899,
-      "sha256": "369bdfc831c8a1b8e70950a203448f8975cc1efe718305994326f56a103cdc14",
+      "bytes": 16026,
+      "sha256": "0aaeac649b29c90b6d60593b2f309b67a166f7678926edfcd365d37cc4db57b3",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/sdp/source-contract.json",
-      "bytes": 4734,
-      "sha256": "40347109d99d368fa0dfa7bbf05e8879946198b6864cffce19436236aa23efa6",
+      "bytes": 4942,
+      "sha256": "46fd9721225bb3f8afd86b44161b5a9fd176932c2423225e41cbb6804f9300a7",
       "contentType": "application/json"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/server.mjs",
-      "bytes": 18217,
-      "sha256": "fe8dc2fe027650bb3c38ef1759d500ba1808c791faae2faabc1a39e1a2df7c52",
+      "bytes": 20543,
+      "sha256": "fd31b951e68203bbc53abfa119b5fcf3d5d544b79210e8ec3bd5063ca6f695f9",
       "contentType": "text/javascript"
     },
     {
@@ -267,14 +423,14 @@
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/web/app.mjs",
-      "bytes": 97479,
-      "sha256": "d747547e2d90930b5d88f1b2edbf654550eb32c2b8acd9834f075a567acbde31",
+      "bytes": 97747,
+      "sha256": "b077420d03acb585389571b8264f759ad28052987be347614539ba117a5ff0a8",
       "contentType": "text/javascript"
     },
     {
       "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/web/index.html",
-      "bytes": 24132,
-      "sha256": "f22d67c8b587047943cb1725693c2b15e2e915544473114a467f817abbc3a1ff",
+      "bytes": 24278,
+      "sha256": "1654952ca71622e0ad28b8401aede7003b813d36ac628462d8acad35c28ce71c",
       "contentType": "text/html"
     },
     {

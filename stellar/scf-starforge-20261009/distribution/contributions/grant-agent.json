@@ -7,7 +7,11 @@
       "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/agent-client.d.mts",
       "default": "./source/stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs"
     },
-    "./merchant/grant-workspaces": "./source/stellar-forge/mcp-merchant-operator/grant-workspace.mjs"
+    "./merchant/grant-workspaces": "./source/stellar-forge/mcp-merchant-operator/grant-workspace.mjs",
+    "./grant/installation-source-desk-agent": {
+      "types": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
+      "default": "./source/stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs"
+    }
   },
   "supportFiles": [
     "stellar/scf_2026/sf47_budget_model/workspace/operations_engagements_receiving.py",
@@ -19,6 +23,9 @@
     "stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENTS.md",
     "stellar/scf_2026/sf47_budget_model/workspace/engagement-agent-receiving.mjs",
     "stellar/scf_2026/sf47_budget_model/workspace/ENGAGEMENT_AGENT_RECEIVING.md",
-    "stellar/scf_2026/sf47_budget_model/workspace/engagement-agent-receiving.example.json"
+    "stellar/scf_2026/sf47_budget_model/workspace/engagement-agent-receiving.example.json",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/installation-source-desk-agent.d.mts",
+    "stellar/scf_2026/sf47_budget_model/workspace/INSTALLATION_SOURCE_DESK_AGENT.md"
   ]
 }

@@ -1,0 +1,38 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "merchant-customer-handover",
+  "description": "Retain complete original customer case editions, continue saved follow-up requests, reopen the same account and commission an independent operator from the installed release.",
+  "commands": {
+    "customer-case": "operations/scf-receivables-native-2a51-20261012/durable-customer-case-cli.mjs",
+    "customer-case-followup": "operations/scf-receivables-native-2a51-20261012/retained-customer-followup-cli.mjs",
+    "customer-case-serve": "operations/scf-receivables-native-2a51-20261012/serve-retained-customer-case.mjs",
+    "customer-xero-handover": "operations/scf-receivables-native-2a51-20261012/xero-customer-handover.mjs"
+  },
+  "commandDescriptions": {
+    "customer-case": "Capture, continue and checkpoint the original retained customer case",
+    "customer-case-followup": "Inspect or continue the same saved customer follow-up",
+    "customer-case-serve": "Reopen the original customer accounting owner and loopback endpoint",
+    "customer-xero-handover": "Prepare and independently receive the complete original customer account, selected Xero cycles and encrypted accounting checkpoint"
+  },
+  "exports": {
+    "./merchant/customer-case": "./source/operations/scf-receivables-native-2a51-20261012/durable-customer-case.mjs",
+    "./merchant/customer-case/followup": "./source/operations/scf-receivables-native-2a51-20261012/retained-customer-followup.mjs",
+    "./merchant/customer-case/server": "./source/operations/scf-receivables-native-2a51-20261012/serve-retained-customer-case.mjs",
+    "./merchant/customer-case/xero-handover": "./source/operations/scf-receivables-native-2a51-20261012/xero-customer-handover.mjs"
+  },
+  "supportFiles": [
+    "operations/scf-receivables-native-2a51-20261012/DURABLE_CUSTOMER_CASE.md",
+    "operations/scf-receivables-native-2a51-20261012/INSTALLED_CUSTOMER_HANDOVER.md",
+    "operations/scf-receivables-native-2a51-20261012/continue-installed.mjs",
+    "operations/scf-receivables-native-2a51-20261012/inspect-installed.mjs",
+    "operations/scf-receivables-native-2a51-20261012/receive-installed-customer.mjs",
+    "operations/scf-receivables-native-2a51-20261012/xero-customer-handover.mjs",
+    "operations/scf-receivables-native-2a51-20261012/programs/XERO_CUSTOMER_CASE.mjs",
+    "operations/scf-receivables-native-2a51-20261012/programs/MCP_RECEIVABLES_CUSTOMER_CASE.mjs",
+    "operations/scf-receivables-native-2a51-20261012/programs/original-programs.json",
+    "XERO_CASH_CHECK.mjs",
+    "XERO_CASH_CHECK_MANIFEST.json",
+    "operations/scf-receivables-native-2a51-20261012/XERO_CUSTOMER_HANDOVER.md",
+    "operations/scf-receivables-native-2a51-20261012/programs/XERO_CUSTOMER_CASE_MANIFEST.json"
+  ]
+}

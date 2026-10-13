@@ -69,13 +69,32 @@ If the tab closes between those two saves, open the same saved review and choose
 
 Use **Download complete returned work** to transfer the exact source descriptors, both full histories, decisions, carried files and completion. **Download readable review and files** produces the original readable return with file downloads and its complete Support wrapper. A recipient can open the complete JSON with **Open complete returned-work package**, select the original destination plan, review and finish receiving.
 
-Use **Complete editable JSON** in Operating Plans or **Download current saved plan** to transfer every saved plan revision. Preserve the original native Support companion alongside it; the companion retains the full CaseStore source and native continuation.
+Use **Complete editable JSON** in Operating Plans or **Download current saved plan** to transfer every saved plan revision. For a complete delivery, use the portable handover below to retain the full native companions with those editable documents.
 
 Use the same local listener address to reopen browser work. Saved Support return reviews live in the dedicated browser document store `starforge-support-returned-work-v1`; plan saves and working drafts remain in the existing Operating Plans store. Each review save compares its local version and exact prior value so a second tab cannot silently replace a later review. The complete JSON is the portable copy for another computer or browser.
 
+## 6. Transfer a complete customer handover
+
+Open the saved Support plan, enter the handover ID, title and preparing operator, then use **Add original companion directory** for each full native source export. Choose the directory containing its original SOURCE.json, MANIFEST.json and every listed member. The directory must match the manifest inventory exactly. Repeat for each later source used by the plan or a review.
+
+The currently opened returned-work review is included by default; clear its checkbox when that review belongs to another delivery. **Add complete returned-work reviews** accepts additional complete review JSON files. The package retains every selected review and its source descriptors. Different editions under one review or source identity need an explicit selection; they cannot silently replace each other.
+
+**Create and retain complete package** verifies all saved plan revisions, carried evidence, reviews and source associations. It checks every original companion member against its byte count and SHA-256 and creates one portable TAR containing HANDOVER.json and the complete indexed companion directories. The exact generated archive is reopened and checked before saving.
+
+The full archive Blob, editable document and initial receiving state are committed together in the dedicated browser store `starforge-support-handovers-v1`. A storage error leaves the selected complete archive available for download; **Retain this complete package** retries that same local save. Receiving requires a completed package save. **Request persistent browser storage** asks the browser to protect local data from ordinary eviction; keep a downloaded archive for transfer or independent recovery.
+
+**Open portable handover archive** verifies and saves an incoming archive before changing a plan. **Open saved complete package** reopens the exact retained Blob and verifies its recorded archive identity. Each original file is available to download, with 40 inventory entries shown per page. The complete TAR, exact HANDOVER.json and readable HTML are also downloadable.
+
+**Receive editable plan** retains the original editor's working draft and saves RECEIVE_PENDING before invoking the existing Operating Plans receiving transaction. It reopens the actual result and then records COMPLETE. If the page closes between those steps, open the same saved package and receive it again. A compatible later plan keeps its later saved work; a divergent history returns through the original conflict handling. Concurrent tabs compare the saved package version before changing its receiving state. The immutable archive is written once; phase updates write only compact state.
+
+Native companion bytes remain complete inside the retained archive. To receive the full source into a native CaseStore, use the maintained native Support handover receiver. Browser plan receiving imports the editable procedure; the native receiver performs the original case/history checks and source receiving.
+
+Metadata limits remain separate from native files: source and manifest JSON each allow 32 MiB, returned reviews allow 128 MiB, complete handover metadata allows 256 MiB, original files allow 512 MiB, each original companion allows 4 GiB, and the complete TAR allows 16 GiB. Up to 100 sources and 100 reviews are supported. Headers and SHA-256 are processed in bounded slices; the browser never converts the whole TAR into JSON, Base64 or one ArrayBuffer. The browser's available storage can be smaller than the archive format's limit.
+
+
 ## Maintained integration
 
-The original controller is `public/support-operating-plan.mjs`, with the returned-work interface in `public/support-operating-return.mjs`. The browser-safe source and returned-work models are served through `/support-operating-core/`. That subtree retains the exact adapter, original OperatingPlan and OperatingPlanReturn engines, and import-free catalog at their original relative paths.
+The original controller is `public/support-operating-plan.mjs`, with the returned-work interface in `public/support-operating-return.mjs` and complete handovers in `public/support-operating-handover.mjs`. The browser-safe source and returned-work models are served through `/support-operating-core/`. That subtree retains the exact adapter, original OperatingPlan and OperatingPlanReturn engines, and import-free catalog at their original relative paths.
 
 The original editor supplies its catalog, current saved plan, busy/error boundary, draft retention and existing `addPlan` / `receivePlan` transactions. Returned-work documents have their own saved review and compact index records. Accepted plans continue through the existing plan database and transaction. Toolkit catalog export, Command Finder search, generic plans, customer integrations and revision semantics retain their existing source.
 

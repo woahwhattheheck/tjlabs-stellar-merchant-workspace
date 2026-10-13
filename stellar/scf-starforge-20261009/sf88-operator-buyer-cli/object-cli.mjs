@@ -38,6 +38,8 @@ session-backup --session ABS --state-root ABS --out NEW_BUNDLE --review SHA256 -
                [--include ABS ...] [--pass-env SF88_BACKUP_PASSPHRASE]
 session-backup-verify --bundle ABS [--expect RECORD_SHA256] [--pass-env NAME]
 session-backup-restore --bundle ABS [--expect RECORD_SHA256] [--pass-env NAME]
+session-backup-compare --before-bundle ABS --before-expect SHA256 --after-bundle ABS --after-expect SHA256
+     [--before-pass-env NAME] [--after-pass-env NAME] [--result-file NEW_PRIVATE_JSON]
 analysis-review --state ABS --session SAVED_NAME --name SOURCE --format json|csv
                 [--analysis-python ABS]
 analysis-open --state ABS [--session SAVED_NAME --name SOURCE --format json|csv --review SHA256]
@@ -178,6 +180,7 @@ async function operatorCommand(tokens) {
 }
 
 export async function main(tokens = process.argv.slice(2)) {
+  if(tokens[0]==='session-backup-compare')return sessionComparisonCommand(tokens.slice(1));
   if (tokens.length === 0 || tokens.length === 1 && ['help','--help'].includes(tokens[0])) {
     process.stdout.write(HELP); return;
   }
@@ -319,6 +322,58 @@ async function analysisCommand([command,...tokens]) {
   } finally {
     await model.close(); process.off('SIGINT',interrupt); process.off('SIGTERM',terminate);
     if (interrupted) process.exitCode = interrupted;
+  }
+}
+
+
+async function sessionComparisonCommand(tokens) {
+  const names=['before-bundle','before-expect','before-pass-env','after-bundle','after-expect','after-pass-env','result-file'];
+  need(tokens.length%2===0,'OBJECT_FLAG_VALUE_REQUIRED');
+  const flags={};
+  for(let i=0;i<tokens.length;i+=2){
+    const name=tokens[i].startsWith('--')?tokens[i].slice(2):'';
+    need(names.includes(name)&&!Object.hasOwn(flags,name)&&tokens[i+1]&&!tokens[i+1].startsWith('--'),
+      'OBJECT_FLAG_INVALID_OR_REPEATED');flags[name]=tokens[i+1];
+  }
+  const options={};
+  for(const side of ['before','after']){
+    need(flags[side+'-bundle']&&/^[a-f0-9]{64}$/.test(flags[side+'-expect']??''),
+      'OBJECT_COMPARISON_EXACT_RECORD_REQUIRED');
+    options[side]={bundle:flags[side+'-bundle'],expected:flags[side+'-expect'],passEnv:flags[side+'-pass-env']};
+  }
+  const resultFile=flags['result-file'];
+  if(resultFile!==undefined)need(isAbsolute(resultFile)&&resolve(resultFile)===resultFile,
+    'OBJECT_COMPARISON_RESULT_PATH_INVALID');
+  const controller=new AbortController();let interrupted;
+  const interrupt=()=>{interrupted??=130;controller.abort();};
+  const terminate=()=>{interrupted??=143;controller.abort();};
+  process.on('SIGINT',interrupt);process.on('SIGTERM',terminate);
+  async function output(result){
+    const raw=Buffer.from(JSON.stringify(result)+'\n');
+    need(raw.length<=267386880,'OBJECT_COMPARISON_RESULT_TOO_LARGE');
+    if(resultFile===undefined){process.stdout.write(raw);return;}
+    const parent=dirname(resultFile),stat=await lstat(parent);
+    need(stat.isDirectory()&&!stat.isSymbolicLink()&&!(stat.mode&0o077)&&await realpath(parent)===parent,
+      'OBJECT_COMPARISON_PRIVATE_RESULT_PARENT_REQUIRED');
+    const fd=await open(resultFile,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
+    try{await fd.writeFile(raw);await fd.sync();}finally{await fd.close();}
+    process.stdout.write(JSON.stringify({schema:result.schema,status:result.status,
+      authenticated:result.authenticated===true,comparisonSha256:result.comparisonSha256??null,
+      resultFile,bytes:raw.length})+'\n');
+  }
+  try{
+    const {compareObjectRecoveryBackups}=await import('./object-comparison-core.mjs');
+    const result=await compareObjectRecoveryBackups(options,{signal:controller.signal,
+      onProgress:event=>process.stderr.write(JSON.stringify(event)+'\n')});
+    await output(result);
+  }catch(error){
+    if(error.partialComparison)await output({schema:'stellar-forge.sf88.object-session-comparison.v1',
+      status:'OBJECT_SESSION_COMPARISON_FAILED',authenticated:false,
+      error:{code:typeof error.code==='string'?error.code:'OBJECT_COMPARISON_FAILED'},
+      partialComparison:error.partialComparison});
+    throw error;
+  }finally{
+    process.off('SIGINT',interrupt);process.off('SIGTERM',terminate);if(interrupted)process.exitCode=interrupted;
   }
 }
 

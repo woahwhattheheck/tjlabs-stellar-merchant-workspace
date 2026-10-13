@@ -224,6 +224,7 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
   for (const heading of [
     '## Current alternatives, commercial units and customer value',
     '## Customer value and delivery economics',
+    '## Application review, corrections and complete handover',
   ]) {
     const incoming = section(manuscript, heading);
     if (incoming) companion = installSection(companion, heading, projectGrantMarkdown(incoming.text));
@@ -289,14 +290,24 @@ export function receiveGrantCustomerSources(index, companion) {
     if (!found) return;
     const [url, commit, path] = found, at = index.sources.findIndex(item => item.id === id);
     const previous = at < 0 ? {} : index.sources[at];
+    // A product declaration owns its selected edition and measured file identity.
+    // An older link elsewhere in the narrative must not replace that selection.
+    // The original product receiver applies an intentional owned update afterward.
+    if (previous.source_registration !== undefined) {
+      need(typeof previous.source_registration === 'string' &&
+        /^[a-z0-9][a-z0-9._-]{0,119}$/.test(previous.source_registration),
+        'Retain a valid original product registration for source ' + id + '.');
+      return;
+    }
     const source = { ...previous, id, kind: 'published-source', label: previous.label || title,
       repository: url.split('/').slice(3, 5).join('/'), commit, path, url };
-    // A projected register retains the repository, commit and path even when its
-    // private URL is omitted. Compare those identities before reusing a blob pin.
-    if ((previous.url && previous.url !== url) ||
-        (previous.commit && previous.commit !== commit) ||
-        (previous.path && previous.path !== path) ||
-        (previous.repository && previous.repository !== source.repository)) delete source.git_blob;
+    // A projected register may omit the private URL. File measurements belong to
+    // the repository, commit and path, rather than a public link representation.
+    const identityChanged = at >= 0 &&
+      (previous.repository !== source.repository || previous.commit !== commit || previous.path !== path);
+    if (identityChanged) {
+      for (const key of ['git_blob', 'sha256', 'bytes', 'product_byte_identity']) delete source[key];
+    }
     if (previous.access === 'authenticated-source') {
       delete source.access;
       delete source.reader_url;
@@ -555,6 +566,25 @@ export function receiveGrantCustomerSources(index, companion) {
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/NATIVE_RECEIVING\.md)/, x402apiMerchant);
   receive('x402api-merchant-installed-receiving', 'Installed merchant Applications and completed-workspace receiving',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INSTALLED_RECEIVING\.md)/, x402apiMerchant);
+  receive('x402api-merchant-portable-project', 'Complete merchant project, native reservation recovery and customer activation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PORTABLE_PROJECT\.md)/, x402apiMerchant);
+  receive('x402api-merchant-portable-archive', 'Original merchant browser archive and whole-file receiving',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PORTABLE\.md)/, x402apiMerchant);
+  receive('x402api-merchant-received-review', 'Managed received merchant invoice review and cold reopen',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/RECEIVED_REVIEW\.md)/, x402apiMerchant);
+  receive('x402api-merchant-project-intake', 'Managed complete merchant project intake and recovery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PROJECT_INTAKE\.md)/, x402apiMerchant);
+  receive('x402api-merchant-invoice-register', 'Complete invoice register, original amounts and exports',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_REGISTER\.md)/, x402apiMerchant);
+  receive('x402api-merchant-invoice-intake', 'Original accounting source, retained invoice plan and continuation',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_INTAKE\.md)/, x402apiMerchant);
+  receive('x402api-merchant-operator-client', 'Original typed merchant operator client and CLI',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/OPERATOR_CLIENT\.md)/, x402apiMerchant);
+  receive('x402api-merchant-project-agent', 'Received merchant project agent and retained file delivery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PROJECT_AGENT\.md)/, x402apiMerchant);
+  receive('x402api-merchant-invoice-agent', 'Live merchant invoice agent, original operation and complete delivery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_AGENT\.md)/, x402apiMerchant);
+
   const preparation = section(companion, "## SQL preparation, reusable pipelines and complete analyst receiving")?.text || '';
   receive("preparation-workspace-operating", "Complete installed SQL preparation and managed pipeline operation",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/OPERATING\.md)/, preparation);

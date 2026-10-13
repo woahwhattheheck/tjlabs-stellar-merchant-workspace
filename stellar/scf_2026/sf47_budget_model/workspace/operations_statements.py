@@ -120,7 +120,7 @@ def source_input(value, decode_csv=True):
 def configuration(inputs):
     object_value(inputs, ("source", "accountId", "accountLabel", "currency", "format", "columns",
                          "defaultCategory", "openingBalance", "closingBalance", "decisions", "valuationNote",
-                         "sourceFormat", "statementId", "statementOptions", "sourceReviewNote"),
+                         "sourceFormat", "statementId", "statementOptions", "sourceReviewNote", "statementSetup"),
                  "Statement inputs", ("source", "accountId", "currency", "format", "columns"))
     account = text(inputs["accountId"], "Stable statement account ID", 100, True)
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", account):
@@ -308,6 +308,8 @@ def _preview(context, inputs):
         if unknown:
             fail("A bank decision names an absent original movement: " + ", ".join(map(str, sorted(unknown))))
         bank_controls = bank_formats.row_controls(config, context, bank["details"], reference_key)
+    from operations_statement_profiles import validate_selection
+    selected_setup = validate_selection(context.get("statementSetups", []), inputs, bank["summary"] if bank else None)
     fmt, columns = config["format"], config["columns"]
     edition = digest({"sourceSha256": source["sha256"],
                       "inputs": {key: value for key, value in inputs.items() if key != "source"}})
@@ -530,6 +532,8 @@ def _preview(context, inputs):
                           "importOutflow": amount_string(import_out), "completeAmounts": complete_amounts},
               "balance": balance, "findings": findings, "canImport": not findings,
               "unchanged": unchanged, "retainedSourceId": known_edition["id"] if known_edition else None}
+    if selected_setup is not None:
+        result["statementSetup"] = selected_setup
     if bank:
         result["bank"] = bank["summary"]
     # Account for the retained complete interpretation and original native report.

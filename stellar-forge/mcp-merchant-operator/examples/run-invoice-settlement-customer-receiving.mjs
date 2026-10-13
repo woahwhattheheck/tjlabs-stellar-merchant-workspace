@@ -10,48 +10,105 @@ const ROOT=resolve(process.argv[2]),REPO=join(ROOT,'source'),OUT=join(ROOT,'rece
 const OP='SCF-INVOICE-SETTLEMENT-MCP-CUSTOMER-20261013',DIST='stellar/scf-starforge-20261009/distribution/';
 const sha=x=>createHash('sha256').update(x).digest('hex'),enc=x=>JSON.stringify(x,null,2)+'\n';
 const need=(v,m)=>{if(!v)throw Error(m);};
-async function put(name,value){let p=join(OUT,name),b=Buffer.isBuffer(value)?value:Buffer.from(typeof value==='string'?value:enc(value));await fs.mkdir(dirname(p),{recursive:true,mode:0o700});try{await fs.writeFile(p,b,{flag:'wx',mode:0o600});}catch(e){if(e.code!=='EEXIST')throw e;need((await fs.readFile(p)).equals(b),'Original retained member changed:'+name);}return{path:p,bytes:b.length,sha256:sha(b)};}
-async function saved(name){try{return JSON.parse(await fs.readFile(join(OUT,name),'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw e;}}
-async function retained(name,make){const v=await saved(name);if(v)return v;const next=await make();await put(name,next);return next;}
+async function bytes(name){const p=join(OUT,name),s=await fs.lstat(p);need(s.isFile()&&!s.isSymbolicLink(),'Original retained member is not regular:'+name);return fs.readFile(p);}
+async function syncDirectory(p){const h=await fs.open(p,'r');try{await h.sync();}finally{await h.close();}}
+async function put(name,value){
+ const p=join(OUT,name),b=Buffer.isBuffer(value)?value:Buffer.from(typeof value==='string'?value:enc(value));
+ await fs.mkdir(dirname(p),{recursive:true,mode:0o700});
+ try{need((await bytes(name)).equals(b),'Original retained member changed:'+name);return {path:p,bytes:b.length,sha256:sha(b)};}catch(e){if(e.code!=='ENOENT')throw e;}
+ const temp=p+'.partial-'+randomUUID();let h;
+ try{h=await fs.open(temp,'wx',0o600);await h.writeFile(b);await h.sync();await h.close();h=null;
+  try{await fs.link(temp,p);}catch(e){if(e.code!=='EEXIST')throw e;need((await bytes(name)).equals(b),'Original retained member changed:'+name);}
+  await syncDirectory(dirname(p));
+ }finally{await h?.close();await fs.unlink(temp).catch(e=>{if(e.code!=='ENOENT')throw e;});await syncDirectory(dirname(p));}
+ return {path:p,bytes:b.length,sha256:sha(b)};
+}
+async function saved(name){try{return JSON.parse(await bytes(name));}catch(e){if(e.code==='ENOENT')return null;throw e;}}
+async function retained(name,make){const v=await saved(name);if(v!==null)return v;const next=await make();await put(name,next);return next;}
 await fs.mkdir(OUT,{recursive:true,mode:0o700});
-const phases=[];async function phase(label,work){let result=await saved('phases/'+label+'.json');if(result){phases.push({label,reused:true});return result;}result=await work();await put('phases/'+label+'.json',result);phases.push({label,reused:false});console.log(JSON.stringify({event:'PHASE_PASS',label}));return result;}
-let provider,client,server,sourceServer,sourceRoot,cli,activeFault,sequence=0;const sockets=new Set(),contexts=new AsyncLocalStorage(),owned=new Set();
-const requests=[];let networkRequests=0;const tokenEnv='INVOICE_CUSTOMER_RECEIVING_TOKEN';
+const lockFD=Number(process.env.INVOICE_RECEIVING_LOCK_FD);
+need(Number.isInteger(lockFD)&&lockFD>=3,'Run the complete original guarded Python entry.');
+const lockStat=await fs.stat('/proc/self/fd/'+lockFD);need(lockStat.isFile(),'Original receiving guard is unavailable.');
+const childStdio=()=>{const v=Array.from({length:Math.max(3,lockFD+1)},()=> 'ignore');v[1]='pipe';v[2]='pipe';v[lockFD]=lockFD;return v;};
+const phases=[];
+async function phase(label,work){let result=await saved('phases/'+label+'.json');if(result!==null){phases.push({label,reused:true});return result;}result=await work();await put('phases/'+label+'.json',result);phases.push({label,reused:false});console.log(JSON.stringify({event:'PHASE_PASS',label}));return result;}
+let provider,client,server,sourceServer,sourceRoot,cli,activeFault,sequence=0;
+const sockets=new Set(),contexts=new AsyncLocalStorage(),owned=new Set(),sourceTasks=new Set();
+const requests=[];let networkRequests=0,sourceSequence=0;const tokenEnv='INVOICE_CUSTOMER_RECEIVING_TOKEN';
 function errorView(e){return {code:e.code??null,message:e.message,stack:e.stack};}
 async function subprocess(name,command,args,{env=process.env,allowFailure=false}={}){
- await put('commands/'+name+'.request.json',{command,args});
- const child=spawn(command,args,{env,stdio:['ignore','pipe','pipe'],cwd:ROOT});
- owned.add(child);let stdout='',stderr='';child.stdout.on('data',x=>stdout+=x);child.stderr.on('data',x=>stderr+=x);
- let timer;try{const result=await new Promise((done,reject)=>{child.once('error',reject);child.once('close',(code,signal)=>done({code,signal}));timer=setTimeout(()=>child.kill('SIGTERM'),180000);});
- await put('commands/'+name+'.stdout.log',stdout);await put('commands/'+name+'.stderr.log',stderr);await put('commands/'+name+'.result.json',result);
- need(allowFailure||result.code===0,'Original command failed:'+name+':'+stderr);
- return {...result,stdout,stderr,value:result.code===0&&stdout.trim()?JSON.parse(stdout):null};
- }finally{clearTimeout(timer);owned.delete(child);}
+ need(/^[a-z0-9-]+$/.test(name),'Invalid original command label.');
+ const base='commands/'+name;await put(base+'.request.json',{command,args});
+ const old=await saved(base+'/complete.json');
+ async function resultOf(result){
+  const stdout=await bytes(result.stdout.path),stderr=await bytes(result.stderr.path);
+  need(stdout.length===result.stdout.bytes&&sha(stdout)===result.stdout.sha256&&stderr.length===result.stderr.bytes&&sha(stderr)===result.stderr.sha256,'Original child output changed:'+name);
+  need(allowFailure||result.code===0,'Original command failed:'+name+':'+stderr.toString('utf8').slice(-4000));
+  return {...result,stdout:stdout.toString('utf8'),stderr:stderr.toString('utf8'),value:result.code===0&&stdout.toString('utf8').trim()?JSON.parse(stdout):null};
+ }
+ if(old)return resultOf(old);
+ const attempts=join(OUT,base,'attempts');await fs.mkdir(attempts,{recursive:true,mode:0o700});
+ const names=(await fs.readdir(attempts)).filter(x=>/^[0-9]{6}$/.test(x)).sort();
+ // Recover a supervisor's own returned bytes before considering any same-request retry.
+ for(const id of names){const stem=base+'/attempts/'+id;const returned=await saved(stem+'/return.json');if(!returned){const process=await saved(stem+'/process.json'),entered=await saved(stem+'/entered.json');if(entered){need(process&&Number.isInteger(process.procPid),'Original entered child has no self-reported proc identity; reconcile its original attempt.');need(process.bootId===(await fs.readFile('/proc/sys/kernel/random/boot_id','utf8')).trim()&&process.pidNamespace===await fs.readlink('/proc/self/ns/pid'),'Original child host closure requires reconciliation.');let live=false;try{const raw=await fs.readFile('/proc/'+process.procPid+'/stat','utf8');live=raw.slice(raw.lastIndexOf(')')+1).trim().split(/\s+/)[19]===process.start;}catch(e){if(e.code!=='ENOENT')throw e;}need(!live,'Original child is still active.');}continue;}
+  const raw=await bytes(stem+'/request.json');need(returned.requestSha256===sha(raw),'Original command return bound to different request.');
+  if(returned.exitCode===0||allowFailure){const r={code:returned.exitCode,signal:null,attempt:id,stdout:{path:stem+'/stdout.log',...returned.stdout},stderr:{path:stem+'/stderr.log',...returned.stderr}};
+   await resultOf(r);await put(base+'/complete.json',r);return resultOf(r);}
+ }
+ const id=String(names.length?Number(names.at(-1))+1:1).padStart(6,'0'),stem=base+'/attempts/'+id;
+ await put(stem+'/request.json',{argv:[command,...args],cwd:ROOT,timeoutSeconds:180});
+ const python=process.env.CODEX_PRIMARY_RUNTIME_PYTHON||'python3';
+ const child=spawn(python,[join(ROOT,'invoice-receiving-supervisor.py'),join(OUT,stem,'request.json')],{env,stdio:childStdio(),cwd:ROOT});
+ owned.add(child);
+ try{
+  // Supervisor output is only a receipt; actual command logs are fsynced by that independent process.
+  child.stdout.resume();child.stderr.on('data',x=>process.stderr.write(x));
+  await new Promise((done,reject)=>{child.once('error',reject);child.once('close',done);});
+  const returned=await saved(stem+'/return.json');need(returned,'Original child has no durable return; preserve this attempt.');
+  need(returned.requestSha256===sha(await bytes(stem+'/request.json')),'Original child return changed its request.');
+  const r={code:returned.exitCode,signal:null,attempt:id,stdout:{path:stem+'/stdout.log',...returned.stdout},stderr:{path:stem+'/stderr.log',...returned.stderr}};
+  const value=await resultOf(r);await put(base+'/complete.json',r);return value;
+ }finally{if(!child.pid||child.exitCode!==null||child.signalCode!==null)owned.delete(child);}
 }
 async function drain(){
- for(const child of owned){child.kill('SIGTERM');await new Promise(r=>child.once('close',r));}owned.clear();
- await client?.disconnect();client=null;
- await provider?.close();provider=null;
- if(server){server.closeAllConnections?.();await new Promise(r=>server.close(r));server=null;}
- if(sourceServer){sourceServer.closeAllConnections?.();await new Promise(r=>sourceServer.close(r));sourceServer=null;}
+ const failures=[];
+ const attempt=async(label,close)=>{try{await close();}catch(error){failures.push({label,error:errorView(error)});}};
+ for(const child of [...owned])await attempt('child',async()=>{
+  if(child.exitCode===null&&child.signalCode===null){child.kill('SIGTERM');await new Promise(r=>child.once('close',r));}
+  owned.delete(child);
+ });
+ await attempt('customer',async()=>{if(client){await client.disconnect();client=null;}});
+ await attempt('provider',async()=>{if(provider){await provider.close();provider=null;}});
+ await attempt('mcp',async()=>{if(server){server.closeAllConnections?.();await new Promise((r,j)=>server.close(e=>e&&e.code!=='ERR_SERVER_NOT_RUNNING'?j(e):r()));server=null;}});
+ await attempt('source',async()=>{if(sourceServer){sourceServer.closeAllConnections?.();await new Promise((r,j)=>sourceServer.close(e=>e&&e.code!=='ERR_SERVER_NOT_RUNNING'?j(e):r()));sourceServer=null;}await Promise.all([...sourceTasks]);});
  delete process.env[tokenEnv];
+ if(failures.length){await put('drain-failures/'+randomUUID()+'.json',{failures});throw Object.assign(Error('Original resources did not all close'),{code:'INVOICE_DRAIN_INCOMPLETE',failures});}
  return {ownedChildren:0,customerClosed:true,providerClosed:true,mcpClosed:true,sourceClosed:true,activeFileReads:0};
 }
+async function completeOffline(){
+ const result=await saved('COMPLETE.json');if(!result)return false;
+ need(result.operationId===OP&&result.status==='PASS'&&result.phases?.length===18,'Original completed programme identity differs.');
+ for(const row of result.checkpointFiles||[]){const raw=await bytes(row.path);need(raw.length===row.bytes&&sha(raw)===row.sha256,'Original complete checkpoint differs:'+row.path);}
+ need(result.checkpointFiles?.length>=18,'Complete checkpoint inventory is absent; inspect the original retained completion.');
+ console.log(JSON.stringify({event:'COMPLETE_REOPENED',root:ROOT,phases:18,workspaceId:result.workspaceId,networkRequests:0}));
+ return true;
+}
 try{
+ if(!await completeOffline()){
  const installation=await phase('01-original-build-and-install',async()=>{
   const git=(...args)=>execFileSync('git',args,{cwd:REPO,encoding:'utf8',env:{...process.env,GIT_CONFIG_NOSYSTEM:'1'}}).trim();
   try{git('rev-parse','--verify','HEAD');}catch{
    git('init','-q');git('add','--all');git('-c','user.name=Source receiving','-c','user.email=source-receiving@example.invalid','commit','-q','-m',OP+' complete source snapshot');
   }
   const {buildDistribution}=await import(pathToFileURL(join(REPO,DIST+'build.mjs')));
-  const build=await buildDistribution({repository:REPO,ref:git('rev-parse','HEAD'),output:join(ROOT,'distribution'),selection:'invoice-settlement-customer',offline:true,resume:true,python:process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3'});
+  const build=await retained('build.json',()=>buildDistribution({repository:REPO,ref:git('rev-parse','HEAD'),output:join(ROOT,'distribution'),selection:'invoice-settlement-customer',offline:true,resume:true,python:process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3'}));
   await put('build.json',build);
   const {prepareRuntimeInstall,installRuntime,inspectRuntimeInstall}=await import(pathToFileURL(join(REPO,DIST+'runtime-install.mjs')));
   const directory=join(ROOT,'installed');try{await fs.access(join(directory,'runtime-install.json'));}catch{await prepareRuntimeInstall({directory,archive:build.archive,sha256:build.sha256,python:process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3'});}
   const installed=await installRuntime({directory,offline:true});
   need(installed.status==='READY','The actual runtime was not installed.');
   const checked=await inspectRuntimeInstall({directory,load:true,source:true});
-  await put('installation-inspection.json',checked);
+  await retained('installation-inspection.json',async()=>checked);
   return {sourceCommit:build.sourceCommit,archive:build.archive,archiveSha256:build.sha256,sourceRoot:installed.sourceRoot,packageRoot:join(directory,'package'),directory};
  });
  sourceRoot=installation.sourceRoot;const P=join(sourceRoot,'stellar-forge/mcp-merchant-operator');
@@ -71,19 +128,23 @@ try{
   const toolList=await subprocess('installed-tools',process.execPath,[cli,'tools']);need(toolList.value.tools.length===13,'Installed catalogue incomplete.');
   return {provider:declaration.id,package:pkg.name,types,toolCount:toolList.value.tools.length};
  });
+ async function originalOnline(){
  for(const name of ['workspace','exports','inputs','server','operations'])await fs.mkdir(join(OUT,name),{recursive:true,mode:0o700});
  function account(byte){const payload=Buffer.concat([Buffer.from([48]),Buffer.alloc(32,byte)]);let crc=0;for(const n of payload){crc^=n<<8;for(let j=0;j<8;j++)crc=((crc<<1)^((crc&32768)?0x1021:0))&65535;}const raw=Buffer.concat([payload,Buffer.from([crc&255,crc>>8])]),alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';let out='',acc=0,bits=0;for(const n of raw){acc=(acc<<8)|n;bits+=8;while(bits>=5){bits-=5;out+=alphabet[(acc>>>bits)&31];}}if(bits)out+=alphabet[(acc<<(5-bits))&31];return out;}
  const DEST=account(11),SENDER=account(22),network='Test SDF Network ; September 2015';
  const payment={id:'1001',paging_token:'1001',type:'payment',type_i:1,source_account:SENDER,from:SENDER,to:DEST,amount:'10.0000000',asset_type:'native',transaction_hash:sha('invoice-customer-authored-case'),transaction_successful:true,created_at:'2026-10-13T00:00:00Z',transaction:{hash:sha('invoice-customer-authored-case'),ledger:101,successful:true,memo_type:'text',memo:'INV-ONE'}};
  await put('fixture.json',{scope:'Authored local-only API receiving case; zero external customer/provider/payment operations.',payment,network});
  const sourceEndpoint=await saved('server/source-endpoint.json');
- sourceServer=createServer((req,res)=>{const u=new URL(req.url,'http://127.0.0.1');requests.push({method:req.method,path:u.pathname,query:Object.fromEntries(u.searchParams)});let value,status=200;
+ const sourceNames=(await fs.readdir(join(OUT,'source-http')).catch(e=>{if(e.code!=='ENOENT')throw e;return [];})).filter(x=>/^[0-9]{6}\.json$/.test(x)).sort();
+ for(const name of sourceNames)requests.push(await saved('source-http/'+name));
+ sourceSequence=sourceNames.length?Number(sourceNames.at(-1).slice(0,6)):0;
+ sourceServer=createServer((req,res)=>{const task=(async()=>{const u=new URL(req.url,'http://127.0.0.1');const observed={method:req.method,path:u.pathname,query:Object.fromEntries(u.searchParams)};const ordinal=++sourceSequence;await put('source-http/'+String(ordinal).padStart(6,'0')+'.json',observed);requests.push(observed);let value,status=200;
   if(req.method!=='GET'){value={error:'read only'};status=405;}
   else if(u.pathname==='/')value={network_passphrase:network,history_latest_ledger:500,history_elder_ledger:1};
   else if(u.pathname==='/accounts/'+DEST+'/payments'){const rows=Number(u.searchParams.get('cursor')||0)<1001?[payment]:[];const next=new URL(req.url,'http://127.0.0.1:'+sourceServer.address().port);next.searchParams.set('cursor','1001');value={_embedded:{records:rows},_links:{next:{href:next.href}}};}
   else {status=404;value={error:'unknown authored route'};}
   res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));
- });
+ })();sourceTasks.add(task);task.catch(error=>{res.destroy(error);}).finally(()=>sourceTasks.delete(task)); });
  await new Promise((r,j)=>{sourceServer.once('error',j);sourceServer.listen(sourceEndpoint?.port??0,'127.0.0.1',r);});
  await put('server/source-endpoint.json',{port:sourceServer.address().port});
  const connections={horizon:{provider:'horizon',baseUrl:'http://127.0.0.1:'+sourceServer.address().port,network:'stellar:testnet',allowHttp:true}};
@@ -92,7 +153,7 @@ try{
  const resolved=await declaration.configuration.read(join(OUT,'server/aliases.json'),{hostPath:x=>x});
  provider=await declaration.create(await declaration.load(),{invoiceWorkspaces:resolved,exportsDirectory:join(OUT,'exports')});
  const token=randomUUID()+randomUUID();process.env[tokenEnv]=token;
- sequence=(await fs.readdir(join(OUT,'http')).catch(()=>[])).filter(x=>x.endsWith('.request.json')).length;
+ const priorRequests=(await fs.readdir(join(OUT,'http')).catch(e=>{if(e.code!=='ENOENT')throw e;return [];})).filter(x=>/^[0-9]{6}\.request\.json$/.test(x)).sort();sequence=priorRequests.length?Number(priorRequests.at(-1).slice(0,6)):0;networkRequests=priorRequests.length;
  const protocol={tools:clientModule.invoiceTools(),async call(name,args){const id=String(++sequence).padStart(6,'0'),request={name,args};networkRequests++;
    await put('http/'+id+'.request.json',request);
    try{const value=await provider.call(name,args);await put('http/'+id+'.response.json',{requestSha256:sha(enc(request)),value});
@@ -166,7 +227,26 @@ try{
   need(verified.files===exported.files.length&&verified.files>100,'Complete original export members were not downloaded.');
   return {result,verified};
  });
- const stopped=await drain();await put('drain.json',stopped);await put('source-http.json',requests);
+ return {bound,selection,reviewedSelection,decision,reconciliation,reports,exported,inspected};
+ }
+ async function recoveredOnline(){
+  if(!await saved('phases/16-complete-original-download.json'))return originalOnline();
+  const read=label=>saved('phases/'+label+'.json');
+  const bound=await read('03-authenticated-original-workspace'),programme=(await read('04-programme-response-loss-and-cli-recovery')).value;
+  const selected=(await saved('selected/horizon-decisions.json')).args.args;
+  const reviewedSelection={programmeId:selected.programmeId,programmeVersion:selected.programmeVersion,registerSourceId:selected.registerSourceId,sourceIds:selected.sourceIds};
+  const result={bound,selection:{programmeId:programme.programmeId,programmeVersion:programme.version},reviewedSelection,
+   decision:(await read('10-atomic-decision-response-loss')).value,reconciliation:(await read('11-complete-reconciliation')).value,
+   reports:(await read('12-complete-reports')).value,exported:await read('14-export-response-loss'),inspected:await read('15-complete-publication-inspection')};
+  need(result.bound&&result.inspected&&result.exported,'Original online completion is incomplete.');
+  return result;
+ }
+ const onlineResult=await retained('online-result.json',recoveredOnline);
+ const {bound,selection,reviewedSelection,decision,reconciliation,reports,exported,inspected}=onlineResult;
+ const publicationId=exported.publication.id;
+ const stopped=await drain();await put('drain.json',stopped);
+ const sourceFiles=(await fs.readdir(join(OUT,'source-http')).catch(e=>{if(e.code!=='ENOENT')throw e;return [];})).filter(x=>/^[0-9]{6}\.json$/.test(x)).sort();
+ const completeRequests=[];for(const name of sourceFiles)completeRequests.push(await saved('source-http/'+name));await put('source-http.json',completeRequests);
  const received=await phase('17-offline-native-cold-receive',async()=>{
   const request=await retained('receive-request.json',async()=>({publicationId,requestId:randomUUID(),destination:join(OUT,'received'),directory:join(OUT,'download'),expectedManifestSha256:inspected.manifestSha256}));
   return download.receiveInvoicePackage(request);
@@ -177,9 +257,14 @@ try{
   const childSource="import {openInvoiceSettlementOperator} from "+JSON.stringify(pathToFileURL(join(received.result.application.directory,'stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/operator.mjs')).href)+";const o=await openInvoiceSettlementOperator({workspaceDirectory:"+JSON.stringify(received.result.workspace.directory)+"});try{const s=await o.describe();const r=await o.invoke({method:'horizon.review',args:"+JSON.stringify(reviewedSelection)+"});if(s.workspaceId!=="+JSON.stringify(bound.connection.workspaceId)+"||Object.keys(s.decisions).length!==1||r.summary.blocked!==1)throw Error('Original received state changed');console.log(JSON.stringify({workspaceId:s.workspaceId,decisions:Object.keys(s.decisions).length,review:r.summary}));}finally{await o.close();}";
   await put('cold-reopen.mjs',childSource);const child=await subprocess('cold-reopen',process.execPath,['--max-old-space-size=128',join(OUT,'cold-reopen.mjs')]);return {verification:verify.value,received:child.value};
  });
- const complete={schema:'commons.invoice-settlement-customer-receiving.v1',operationId:OP,status:'PASS',phases,completedAt:new Date().toISOString(),
+ const checkpointNames=(await fs.readdir(join(OUT,'phases'))).filter(x=>x.endsWith('.json')).sort().map(x=>'phases/'+x);
+ need(checkpointNames.length===18,'Original eighteen phases are incomplete.');checkpointNames.push('online-result.json','drain.json','source-http.json');
+ const checkpointFiles=[];for(const path of checkpointNames){const raw=await bytes(path);checkpointFiles.push({path,bytes:raw.length,sha256:sha(raw)});}
+ const authenticatedMcpCalls=(await fs.readdir(join(OUT,'http'))).filter(x=>x.endsWith('.request.json')).length;
+ const complete={schema:'commons.invoice-settlement-customer-receiving.v1',operationId:OP,status:'PASS',phases:checkpointNames.filter(x=>x.startsWith('phases/')).map(x=>({label:x.slice(7,-5)})),checkpointFiles,completedAt:new Date().toISOString(),
   installation,workspaceId:bound.connection.workspaceId,programme:selection,decisionIds:decision.decisionIds,reconciliationId:reconciliation.reconciliationId,reportId:reports.reportId,
-  publicationId,publicationManifestSha256:inspected.manifestSha256,received,authenticatedMcpCalls:networkRequests,localSourceRequests:requests.length,externalProviderRequests:0,ledgerMutations:0,drained:stopped};
- await put('COMPLETE.json',complete);console.log(JSON.stringify({event:'COMPLETE',root:ROOT,phases:phases.length,workspaceId:bound.connection.workspaceId}));
-}catch(error){await fs.writeFile(join(OUT,'failure-'+Date.now()+'.json'),enc({operationId:OP,error:errorView(error),phases}),{mode:0o600});console.error(enc(errorView(error)));process.exitCode=1;}
-finally{try{await drain();}catch(e){console.error(enc(errorView(e)));process.exitCode=1;}console.log(JSON.stringify({event:'OWNED_DRAIN_COMPLETE',exitCode:process.exitCode??0}));}
+  publicationId,publicationManifestSha256:inspected.manifestSha256,received,authenticatedMcpCalls,localSourceRequests:completeRequests.length,externalProviderRequests:0,ledgerMutations:0,drained:stopped};
+ await put('COMPLETE.json',complete);console.log(JSON.stringify({event:'COMPLETE',root:ROOT,phases:18,workspaceId:bound.connection.workspaceId}));
+ }
+}catch(error){await put('failures/'+randomUUID()+'.json',{operationId:OP,error:errorView(error),phases});console.error(enc(errorView(error)));process.exitCode=1;}
+finally{let closed=false;try{await drain();closed=true;}catch(e){console.error(enc(errorView(e)));process.exitCode=1;}console.log(JSON.stringify({event:closed?'OWNED_DRAIN_COMPLETE':'OWNED_DRAIN_INCOMPLETE',exitCode:process.exitCode??0}));}

@@ -1,5 +1,8 @@
 import { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 import {performGrantPlanningSourceOperation} from './source-tables-agent.mjs';
+import {planInstallationSourceOperation, performInstallationSourceOperation,
+  INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES} from './installation-source-desk-agent.mjs';
+export * from './installation-source-desk-agent.mjs';
 export {grantPlanningSourceProfiles,GRANT_PLANNING_SOURCE_SCHEMA,GRANT_PLANNING_SOURCE_ACTIONS} from './source-tables-agent.mjs';
 export { GRANT_AGENT_SCHEMA, GRANT_MAX_BUNDLE_BYTES, GRANT_MAX_SOURCE_BYTES, GRANT_MAX_WORKBOOK_HANDOVER_BYTES, GRANT_CASE_ACTIONS } from './agent-contracts.mjs';
 // MIT. Typed agent access to the original SF47 planning and delivery service.
@@ -275,9 +278,42 @@ const implementationCutoff = value => {
     'GRANT_INVALID_INPUT', 'Use the exact implementation cutoff in UTC with milliseconds.');
   return value;
 };
+// Preserve the complete input; the original case owns source membership,
+// current outcome/head and finding readiness decisions.
+const completionCorrectionInputs = inputs => {
+  const inputKeys=['roundId','previousReviewId','outcomeId','expectedOutcomeSha256','document'];
+  exact(inputs,inputKeys,inputKeys);
+  id(inputs.roundId,'corrections'); id(inputs.outcomeId,'outcome'); sha(inputs.expectedOutcomeSha256);
+  if(inputs.previousReviewId!==null)id(inputs.previousReviewId,'review');
+  exact(inputs.document,['title','findings','note'],['title','findings','note']);
+  text(inputs.document.title,'Correction round title',300);
+  text(inputs.document.note,'Correction note',12000,true);
+  need(Array.isArray(inputs.document.findings)&&inputs.document.findings.length>=1&&
+    inputs.document.findings.length<=100,'GRANT_INVALID_INPUT','Retain one to 100 original issuer findings.');
+  const seen=new Set();
+  for(const finding of inputs.document.findings){
+    const keys=['id','request','basis','costIds','ownerIds','state','dueOn','completedOn',
+      'response','workIds','deploymentIds','sourceIds'];
+    exact(finding,keys,keys);id(finding.id,'finding');
+    need(!seen.has(finding.id),'GRANT_INVALID_INPUT','Retain each original finding once.');seen.add(finding.id);
+    text(finding.request,'Original issuer finding',12000);
+    text(finding.basis,'Original finding source',12000);
+    text(finding.response,'Correction response',12000,true);
+    need(['OPEN','IN_PROGRESS','ADDRESSED','NOT_APPLICABLE'].includes(finding.state),
+      'GRANT_INVALID_INPUT','Use the native correction work state.');
+    for(const key of ['dueOn','completedOn'])if(finding[key]!==null)completionDate(finding[key]);
+    for(const key of ['costIds','ownerIds','workIds','deploymentIds','sourceIds']){
+      need(Array.isArray(finding[key])&&new Set(finding[key]).size===finding[key].length&&
+        finding[key].every(value=>typeof value==='string'&&value.length>0&&!value.includes('\0')),
+      'GRANT_INVALID_INPUT','Retain distinct original '+key+' selections.');
+    }
+  }
+  return inputs;
+};
+
 const COMPLETION_FIELDS = Object.freeze({
   save:{allowed:['inputs'], required:['inputs']},
-  prepare:{allowed:['receiptId','asOfDate','summary','expectedPreviewSha256','cohortReviewIds','implementationReviewIds'],
+  prepare:{allowed:['receiptId','asOfDate','summary','expectedPreviewSha256','cohortReviewIds','implementationReviewIds','correctionReviewId'],
     required:['receiptId','asOfDate','summary','expectedPreviewSha256']},
   extension:{allowed:['receiptId','confirmedOn','deadlineOn','reference','sourceIds','confirmationNote'],
     required:['receiptId','confirmedOn','deadlineOn','reference']},
@@ -295,6 +331,7 @@ function completionCommandBody(action, body) {
   const data=Object.fromEntries(Object.entries(body).filter(([key])=>selected.allowed.includes(key)));
   if (data.receiptId !== undefined) id(data.receiptId,'cash');
   if (data.reviewId !== undefined) id(data.reviewId,'review');
+  if (data.correctionReviewId !== undefined) id(data.correctionReviewId,'review');
   if (data.outcomeId !== undefined) id(data.outcomeId,'outcome');
   if (data.inputs !== undefined) object(data.inputs,'Completion assignments');
   if (data.cohortReviewIds !== undefined) cohortReviewIds(data.cohortReviewIds);
@@ -394,7 +431,10 @@ function originalSource(connection) {
     executionSourceDirectory:record.execution.sourceDirectory};
 }
 function transport(connection, route, {body, contentType = 'application/json', headers = {},
-  originalRequestId, timeoutMs = 30000, mutation = body !== undefined} = {}) {
+  originalRequestId, timeoutMs = 30000, mutation = body !== undefined, maxResponseBytes = MAX_RESPONSE_BYTES} = {}) {
+  need(Number.isSafeInteger(maxResponseBytes) && maxResponseBytes >= 1 &&
+    maxResponseBytes <= INSTALLATION_SOURCE_MAX_ARCHIVE_BYTES, 'GRANT_RESPONSE_LIMIT',
+    'Use the declared complete original response bound.');
   const target = new URL(route, connection.original.url), authorization = new URL(connection.url).hash.slice('#access='.length);
   need(target.origin === new URL(connection.original.url).origin && route.startsWith('/api/'),
     'GRANT_ROUTE_INVALID', 'Use an original declared grant API route.');
@@ -421,8 +461,8 @@ function transport(connection, route, {body, contentType = 'application/json', h
       const chunks = []; let length = 0;
       response.on('data', chunk => {
         length += chunk.length;
-        if (length > MAX_RESPONSE_BYTES) {
-          req.destroy(error('GRANT_RESPONSE_TOO_LARGE', 'The original response exceeds the 64 MiB receiving bound.')); return;
+        if (length > maxResponseBytes) {
+          req.destroy(error('GRANT_RESPONSE_TOO_LARGE', 'The original response exceeds its declared complete receiving bound of ' + maxResponseBytes + ' bytes.')); return;
         }
         chunks.push(chunk);
       });
@@ -792,6 +832,14 @@ export class GrantWorkspaceClient {
     if (body.mapping !== undefined) object(body.mapping,'Original workbook mapping');
     return this.#request('/api/source-tables/workbook/' + action,{body,mutation:false});
   }
+  installationSources(action, input = {}) {
+    const plan = planInstallationSourceOperation(action, input);
+    if (plan.operation?.workspaceDirectory !== undefined)
+      need(plan.operation.workspaceDirectory === this.#binding.directory, 'GRANT_INSTALLATION_SOURCE_CHANGED',
+        'This saved operation belongs to another original workspace directory.');
+    return this.#admit(() => performInstallationSourceOperation(plan,
+      async (route, options) => transport(await this.#readLaunch(), route, options)));
+  }
   planningSources(action, body) {
     return this.#admit(() => performGrantPlanningSourceOperation(this,action,body));
   }
@@ -879,6 +927,32 @@ export class GrantWorkspaceClient {
     const {inputs, expectedPreviewSha256, ...original} = body;
     return this.command(caseId, {...original, action:'statement.receive', data:{inputs, expectedPreviewSha256}});
   }
+  statementSetupSave(caseId, body) {
+    exact(body, ['expectedVersion', 'requestId', 'actor', 'note', 'id', 'expectedRevision', 'name', 'status', 'inputs'],
+      ['expectedVersion', 'requestId', 'actor', 'note', 'expectedRevision', 'name']);
+    const {expectedVersion, requestId, actor, note, ...data} = body;
+    text(actor, 'Recording operator', 300); text(note, 'Statement setup reason', 12000);
+    text(data.name, 'Statement setup name', 160);
+    integer(data.expectedRevision, 'Current statement setup edition', 0);
+    if (data.id !== undefined) {
+      id(data.id, 'statement-setup');
+      need(data.expectedRevision > 0, 'GRANT_INVALID_INPUT', 'Use the selected setup revision.');
+    } else {
+      need(data.expectedRevision === 0, 'GRANT_INVALID_INPUT', 'A new setup starts with revision zero.');
+    }
+    const status = data.status ?? 'ACTIVE';
+    need(status === 'ACTIVE' || status === 'ARCHIVED', 'GRANT_INVALID_INPUT',
+      'Choose an active or archived statement setup.');
+    if (status === 'ARCHIVED') {
+      need(data.id !== undefined && data.inputs === undefined, 'GRANT_INVALID_INPUT',
+        'Archive the existing setup without replacing its saved settings.');
+    } else {
+      object(data.inputs, 'Original statement file and current mapping');
+    }
+    return this.command(caseId, {expectedVersion, requestId, actor, note,
+      action:'statement-setup.save', data});
+  }
+
   workIntakePreview(caseId, body) {
     id(caseId, 'operation');
     exact(body, ['expectedVersion', 'intakeId', 'revision', 'document'], ['expectedVersion', 'intakeId']);
@@ -1437,6 +1511,26 @@ export class GrantWorkspaceClient {
     object(inputs,'Original implementation review inputs'); sha(expectedPreviewSha256);
     return this.command(caseId,{...original,action:'implementation.prepare',data:{inputs,expectedPreviewSha256}});
   }
+  completionCorrectionsSeed(caseId, expectedVersion, outcomeId, reviewId) {
+    id(caseId,'operation'); integer(expectedVersion,'Current case version'); id(outcomeId,'outcome');
+    if(reviewId!==undefined)id(reviewId,'review');
+    return this.#request('/api/operations/'+caseId+'/completion-corrections-seed',
+      {body:{expectedVersion,outcomeId,...(reviewId===undefined?{}:{reviewId})},mutation:false});
+  }
+  completionCorrectionsPreview(caseId, expectedVersion, inputs, asOfDate) {
+    id(caseId,'operation'); integer(expectedVersion,'Current case version'); completionCorrectionInputs(inputs);
+    if(asOfDate!==undefined)completionDate(asOfDate);
+    return this.#request('/api/operations/'+caseId+'/completion-corrections-preview',
+      {body:{expectedVersion,inputs,...(asOfDate===undefined?{}:{asOfDate})},mutation:false});
+  }
+  completionCorrectionsSave(caseId, body) {
+    exact(body,['expectedVersion','requestId','actor','note','inputs','asOfDate','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','inputs','asOfDate','expectedPreviewSha256']);
+    completionCorrectionInputs(body.inputs);completionDate(body.asOfDate);sha(body.expectedPreviewSha256);
+    const {inputs,asOfDate,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'completion.corrections.save',
+      data:{inputs,asOfDate,expectedPreviewSha256}});
+  }
   completionSeed(caseId, expectedVersion, tranche) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version'); integer(tranche,'Completion tranche',1,3);
     return this.#request('/api/operations/'+caseId+'/completion-seed',
@@ -1444,7 +1538,8 @@ export class GrantWorkspaceClient {
   }
   completionPreview(caseId, expectedVersion, inputs) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
-    exact(inputs,['receiptId','asOfDate','summary','cohortReviewIds','implementationReviewIds'],['receiptId','summary']);
+    exact(inputs,['receiptId','asOfDate','summary','cohortReviewIds','implementationReviewIds','correctionReviewId'],['receiptId','summary']);
+    if(inputs.correctionReviewId!==undefined)id(inputs.correctionReviewId,'review');
     if (inputs.cohortReviewIds !== undefined) cohortReviewIds(inputs.cohortReviewIds);
     if (inputs.implementationReviewIds !== undefined) implementationReviewIds(inputs.implementationReviewIds);
     id(inputs.receiptId,'cash');
@@ -1630,6 +1725,7 @@ export class GrantWorkspaceClient {
         deliveryCalendarFormat(args.format) + deliveryAgendaQuery(args, true),
       'delivery-calendar':() => '/api/operations/' + id(args.caseId,'operation') + '/delivery-calendar/export.' +
         deliveryCalendarFormat(args.format) + deliveryCalendarQuery(args),
+      'completion-corrections':() => '/api/operations/' + id(args.caseId,'operation') + '/completion-corrections/' + id(args.reviewId,'review') + '/export.zip',
       completion:() => '/api/operations/' + id(args.caseId,'operation') + '/completion-reviews/' + id(args.reviewId,'review') + '/export.zip',
       cohort:() => '/api/operations/' + id(args.caseId,'operation') + '/cohort-reviews/' + id(args.reviewId,'review') + '/export.zip',
       implementation:() => '/api/operations/' + id(args.caseId,'operation') + '/implementation-reviews/' + id(args.reviewId,'review') + '/export.zip',

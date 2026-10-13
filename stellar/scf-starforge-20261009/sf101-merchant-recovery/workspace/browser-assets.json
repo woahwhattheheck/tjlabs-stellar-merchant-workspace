@@ -43,6 +43,13 @@
         "object-bundles-desk.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/object-comparisons-desk.mjs",
+      [
+        "object-comparisons-desk.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }

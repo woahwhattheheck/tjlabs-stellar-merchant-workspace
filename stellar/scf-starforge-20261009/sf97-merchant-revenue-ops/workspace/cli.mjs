@@ -3,6 +3,8 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { startWorkspace } from './server.mjs';
+import { readCommercialHistory } from './model.mjs';
+import { open } from 'node:fs/promises';
 import { inspectCostWorkspaceRestore, restoreCostWorkspace } from '../economics/archive.mjs';
 export { inspectCostWorkspaceRestore };
 import { readJson, merchantRoutes } from '../analyze.mjs';
@@ -10,15 +12,32 @@ import { readJson, merchantRoutes } from '../analyze.mjs';
 export const PRICING_WORKSPACE_LAUNCH_SCHEMA = 'stellar-forge.merchant-pricing-workspace-launch.v1';
 
 export async function main(argv = process.argv.slice(2)) {
-  const usage = 'node workspace/cli.mjs --config SELLER_JSON --state PRIVATE_DIRECTORY (--snapshot ORIGINAL_TRAFFIC_JSON [--history ORIGINAL_HISTORY_JSON] | --history ORIGINAL_HISTORY_JSON | --ops-url ORIGINAL_LOOPBACK_OPERATIONS_URL) [--native-outbox PRIVATE_SF98_DIRECTORY] [--source-package ORIGINAL_API_MERCHANT_PACKAGE] [--release-store ORIGINAL_SELLER_RELEASE_STORE] [--release-runtime HOST_RUNTIME_JSON] [--supplier-usage ORIGINAL_USAGE_JSON] [--accounting-report ORIGINAL_ACCOUNTING_JSON] [--restore-cost-workspace PRIVATE_BACKUP_TAR [--expected-cost-backup-sha256 SHA256]] [--expected-config-sha256 SHA256] [--port 8457]; inspect a complete backup without opening: --inspect-cost-workspace PRIVATE_BACKUP_TAR --state PRIVATE_DIRECTORY';
+  const usage = 'node workspace/cli.mjs --config SELLER_JSON --state PRIVATE_DIRECTORY (--snapshot ORIGINAL_TRAFFIC_JSON [--history ORIGINAL_HISTORY_JSON] | --history ORIGINAL_HISTORY_JSON | --ops-url ORIGINAL_LOOPBACK_OPERATIONS_URL) [--native-outbox PRIVATE_SF98_DIRECTORY] [--source-package ORIGINAL_API_MERCHANT_PACKAGE] [--release-store ORIGINAL_SELLER_RELEASE_STORE] [--release-runtime HOST_RUNTIME_JSON] [--supplier-usage ORIGINAL_USAGE_JSON] [--accounting-report ORIGINAL_ACCOUNTING_JSON] [--restore-cost-workspace PRIVATE_BACKUP_TAR [--expected-cost-backup-sha256 SHA256]] [--expected-config-sha256 SHA256] [--port 8457]; inspect a complete backup without opening: --inspect-cost-workspace PRIVATE_BACKUP_TAR --state PRIVATE_DIRECTORY; browse original commercial history without opening: --commercial-history reviews|decisions --state PRIVATE_DIRECTORY [--history-query REQUEST_JSON] [--output NEW_JSON]';
   if (argv.length === 1 && ['--help','-h'].includes(argv[0])) { console.log(usage); return; }
   const allowed = new Set(['--config','--state','--snapshot','--history','--ops-url','--native-outbox','--port',
     '--source-package','--release-store','--release-runtime','--supplier-usage','--accounting-report','--restore-cost-workspace',
-    '--inspect-cost-workspace','--expected-cost-backup-sha256','--expected-config-sha256']), args = {};
+    '--inspect-cost-workspace','--expected-cost-backup-sha256','--expected-config-sha256','--commercial-history','--history-query','--output']), args = {};
   for (let i = 0; i < argv.length; i += 2) {
     if (!allowed.has(argv[i]) || !argv[i+1] || Object.hasOwn(args,argv[i])) throw new TypeError(usage);
     args[argv[i]] = argv[i+1];
   }
+  if(args['--commercial-history']) {
+    if(!args['--state']||!['reviews','decisions'].includes(args['--commercial-history'])||
+        Object.keys(args).some(key=>!['--commercial-history','--state','--history-query','--output'].includes(key)))
+      throw new TypeError(usage);
+    const input=args['--history-query']?(await readJson(resolve(args['--history-query']),'commercial history request',2*1024*1024)).value:{};
+    if(!input||typeof input!=='object'||Array.isArray(input)||
+        (input.kind!==undefined&&input.kind!==args['--commercial-history']))
+      throw new TypeError('History request must select the same reviews or decisions as --commercial-history.');
+    const report=await readCommercialHistory({directory:resolve(args['--state']),input:{...input,kind:args['--commercial-history']}});
+    const bytes=JSON.stringify(report,null,2)+'\n';
+    if(args['--output']) {
+      const file=await open(resolve(args['--output']),'wx',0o600);
+      try{await file.writeFile(bytes);await file.sync();}finally{await file.close();}
+    } else console.log(bytes.trimEnd());
+    return report;
+  }
+  if(args['--history-query']||args['--output']) throw new TypeError('--history-query and --output require --commercial-history.');
   if(args['--inspect-cost-workspace']) {
     if(!args['--state']||Object.keys(args).some(key=>!['--inspect-cost-workspace','--state'].includes(key)))
       throw new TypeError(usage);

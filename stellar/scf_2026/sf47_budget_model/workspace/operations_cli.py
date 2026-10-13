@@ -434,11 +434,28 @@ def register(subparsers, common):
     target.add_argument("--format", dest="calendar_format", choices=("ics", "csv", "json"), default="ics")
     target.add_argument("--expected-version", type=int, help="Require the selected original case version")
     target.add_argument("--output", required=True, help="New destination for the complete calendar file")
+    target = command("completion-corrections-seed", "Continue an actual changes-requested issuer outcome in its original correction round", case=True, output=True)
+    target.add_argument("--outcome", required=True, help="Original changes-requested completion outcome ID")
+    target.add_argument("--review", help="Saved correction edition to continue; retain its round and prior review")
+    target.add_argument("--expected-version", type=int, required=True)
+    for verb in ("preview", "save"):
+        target = command("completion-corrections-" + verb, "Review or save the complete original correction inputs", case=True, output=True)
+        target.add_argument("--inputs", required=True, help="Complete correction inputs JSON, retaining all findings and source identities")
+        if verb == "save":
+            mutation(target, version=True)
+            target.add_argument("--as-of-date", required=True, help="Exact asOfDate from the reviewed preview")
+            target.add_argument("--expected-preview-sha256", required=True)
+        else:
+            target.add_argument("--expected-version", type=int, required=True)
+            target.add_argument("--as-of-date", help="Explicit correction review date YYYY-MM-DD")
+    target = command("completion-corrections-export", "Export the immutable correction review, full original preparation and source evidence", case=True)
+    target.add_argument("--review", required=True)
+    target.add_argument("--output", required=True)
     target = command("completion-seed", "Open the original tranche assignments without saving", case=True, output=True)
     target.add_argument("--tranche", type=int, choices=(1, 2, 3), required=True)
     target.add_argument("--expected-version", type=int, required=True)
     target = command("completion-preview", "Preview completed deliverables against their actual previous payment", case=True, output=True)
-    target.add_argument("--data", required=True, help="JSON with receiptId, asOfDate and summary")
+    target.add_argument("--data", required=True, help="JSON with receiptId, asOfDate, summary and optional saved correctionReviewId")
     target.add_argument("--expected-version", type=int, required=True)
     target = command("completion-save", "Save the complete original tranche assignment input", case=True, output=True)
     target.add_argument("--inputs", required=True, help="Original completion-seed inputs JSON, edited by the operator")
@@ -1206,6 +1223,30 @@ def operate(workspace, args):
         return {"caseId": args.case, "format": args.calendar_format,
                 "output": publish(args.output, ops.export_delivery_calendar(
                     args.case, args.as_of, args.calendar_format, args.expected_version))}
+    elif action == "completion-corrections-seed":
+        body = {"expectedVersion": args.expected_version, "outcomeId": args.outcome}
+        if args.review is not None:
+            body["reviewId"] = args.review
+        result = ops.seed_completion_corrections(args.case, body)
+    elif action == "completion-corrections-export":
+        return {"reviewId": args.review, "output": publish(args.output, ops.export_completion_corrections(args.case, args.review))}
+    elif action in ("completion-corrections-preview", "completion-corrections-save"):
+        try:
+            inputs = json.loads(read_bytes(args.inputs, MAX_SOURCE))
+        except (UnicodeError, ValueError) as exc:
+            raise Problem("Correction inputs must be a complete UTF-8 JSON object.", 422, "INVALID_JSON") from exc
+        if not isinstance(inputs, dict):
+            raise Problem("Retain the complete original correction inputs object.", 422, "INVALID_JSON")
+        if action == "completion-corrections-preview":
+            body = {"expectedVersion": args.expected_version, "inputs": inputs}
+            if args.as_of_date is not None:
+                body["asOfDate"] = args.as_of_date
+            result = ops.preview_completion_corrections(args.case, body)
+        else:
+            result = ops.command(args.case, {"expectedVersion": args.expected_version, "actor": args.actor,
+                "requestId": args.request_id, "note": args.note, "action": "completion.corrections.save",
+                "data": {"inputs": inputs, "asOfDate": args.as_of_date,
+                         "expectedPreviewSha256": args.expected_preview_sha256}})
     elif action == "completion-seed":
         result = ops.seed_completion(args.case, {"expectedVersion": args.expected_version, "tranche": args.tranche})
     elif action == "completion-export":

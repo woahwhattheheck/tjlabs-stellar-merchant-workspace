@@ -144,6 +144,8 @@ export function createRecoveryHandler({ workspace, token, origin, connection = n
             query(url, []);
             if (!connection) fail('WORKSPACE_CONNECTION_NOT_AVAILABLE', 'This embedding host did not publish an original listener connection', 409);
             value = { ...connection, identity: await workspace.identity() }; break;
+          case '/api/object-comparison-artifact': {const q=query(url,['profile','id','kind','sha256']);
+            value=await workspace.comparisonArtifact(q.profile,q.id,q.kind,q.sha256);break;}
           case '/api/bundle-attachment': {const q=query(url,['profile','id','sha256']);
             value=await workspace.bundleAttachment({profileId:q.profile,transferId:q.id,archiveSha256:q.sha256});break;}
           case '/api/bundle-inspection': {const q=query(url,['profile','archive']);value=await workspace.bundleInspection(q.profile,q.archive);break;}

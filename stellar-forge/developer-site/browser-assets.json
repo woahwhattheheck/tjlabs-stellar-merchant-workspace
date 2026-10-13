@@ -318,6 +318,13 @@
       ]
     ],
     [
+      "/grant-companion-returns.mjs",
+      [
+        "grant-companion-returns.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/grant-companion-workspace.mjs",
       [
         "grant-companion-workspace.mjs",
@@ -909,6 +916,83 @@
       "/grant-review-working-copy.mjs",
       [
         "grant-review-working-copy.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review.html",
+      [
+        "collection-review.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review.css",
+      [
+        "collection-review.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review.mjs",
+      [
+        "collection-review.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-source.mjs",
+      [
+        "collection-review-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-workspace.mjs",
+      [
+        "collection-review-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-report.mjs",
+      [
+        "collection-review-report.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/collection-review-guide.md",
+      [
+        "collection-review-guide.md",
+        "text/markdown; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.html",
+      [
+        "saved-projects.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.mjs",
+      [
+        "saved-projects.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-projects.css",
+      [
+        "saved-projects.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/saved-project-library.mjs",
+      [
+        "saved-project-library.mjs",
         "text/javascript; charset=utf-8"
       ]
     ]

@@ -9,7 +9,14 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "products/superset-report/OPERATING.md",
-      "commit": "4042d88f2fec313cfde80fff8df05aceaf5708f2"
+      "editions": [
+        {
+          "commit": "b1f1f5883fb088eda5ae6894d5cc2d51fc186f69",
+          "bytes": 36516,
+          "sha256": "0a89b4716d2e8ee91eff350b34274226a0275a2e8e55b17f9d5018807b1b2561",
+          "git_blob": "140d6996afd603a296969cc40210e6e554e72340"
+        }
+      ]
     },
     {
       "id": "superset-report-selection",
@@ -34,6 +41,102 @@
       "kind": "blob",
       "path": "stellar/scf-starforge-20261009/distribution/runtime-install.mjs",
       "commit": "7cde1c2537e038b43388f7286fd9c88a0d12994a"
+    },
+    {
+      "id": "superset-customer-agent-setup",
+      "label": "Complete source-owned Superset customer-agent setup",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/MERCHANT_SETUP.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b1f1f5883fb088eda5ae6894d5cc2d51fc186f69",
+          "bytes": 6946,
+          "sha256": "718524795a3c495208ff44a11ce8f47c08d6f7d45cf077c25cff256266668bd1",
+          "git_blob": "706d5b8c8db5b218eb97e4101110f137b31f7eb3"
+        }
+      ]
+    },
+    {
+      "id": "superset-customer-agent-catalog",
+      "label": "Superset original customer-agent tools",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/catalog.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b1f1f5883fb088eda5ae6894d5cc2d51fc186f69",
+          "bytes": 4533,
+          "sha256": "f627862845260afe3daa9f8ef176df13aeeab52d9b94d08ad33cd25b9ec6e420",
+          "git_blob": "9e91b3f4ecbebb645dcb764bfa643cbcbe47d0d5"
+        }
+      ]
+    },
+    {
+      "id": "superset-customer-operator-client",
+      "label": "Typed durable client for the original Superset operator",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/operator-client.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b1f1f5883fb088eda5ae6894d5cc2d51fc186f69",
+          "bytes": 20963,
+          "sha256": "fde2031bbdd4515b8ddc9c7fa5bd460df340976229b93fa1dc60ff403235c3a1",
+          "git_blob": "591fb998df7c37576d037166c373a87d1522ee32"
+        }
+      ]
+    },
+    {
+      "id": "superset-customer-agent-runtime",
+      "label": "Complete Superset customer-agent operation and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/superset/merchant-agent.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b1f1f5883fb088eda5ae6894d5cc2d51fc186f69",
+          "bytes": 17669,
+          "sha256": "325a9e7091de33d22f49f76be8a06e729346786c5a1828474dcf67c2a46626a7",
+          "git_blob": "5d948cb79fb0efb7c04a552b6fa75610dd415e14"
+        }
+      ]
+    },
+    {
+      "id": "superset-customer-agent-distribution",
+      "label": "Superset Applications and customer-agent product declaration",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/superset-workspace.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "b1f1f5883fb088eda5ae6894d5cc2d51fc186f69",
+          "bytes": 3059,
+          "sha256": "902fce87f6d2188b144b25cc12fce58c7a451795b5b2015203683dbeb9d4e827",
+          "git_blob": "6434a47317bd61b89ede64cfc8d2c8ba35fa9dd6"
+        }
+      ]
+    },
+    {
+      "id": "superset-customer-agent-commissioning",
+      "label": "Complete recurring Superset report commissioning and customer-agent handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/superset-report/GRANT.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "afda2b3e9a44d05cef680fbd32710828a6144fc2",
+          "bytes": 13561,
+          "sha256": "fe61cc4c09354bf7b0e3ce3bd66c4ec51e9b014e1102e3b97f6d7c62270120e3",
+          "git_blob": "098191201e2be48efeb73d9f67633f203346ad32"
+        }
+      ]
     }
   ]
 }

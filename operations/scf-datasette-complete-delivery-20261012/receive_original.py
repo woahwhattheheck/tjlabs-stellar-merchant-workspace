@@ -1808,12 +1808,270 @@ _ENCODED = (
     "tNJriicZqGwZlGcj7HPA41P+85e+/kZ+/w/6yigkxOt1zJJsfMe/IGFZ89Tvv/G5ZvE7f1R6fkNXAdznNOp/2/8xZv/zrfYX/q9flzU+JJj6z7T7t+/Li9/q"
     "6VNf/PHv5P/6X//xv/7/0jg+qzv0BwA="
 )
-def main():
+class _ReceiverOutputTee:
+    """Keep Python receiver output and preserve the original live stream."""
+    def __init__(self, original, saved, errors):
+        self.original, self.saved, self.errors = original, saved, errors
+
+    def write(self, value):
+        try:
+            self.saved.write(value)
+            self.saved.flush()
+        except Exception as error:
+            self.errors.setdefault(self.saved.name, type(error).__name__ + ": " + str(error))
+        return self.original.write(value)
+
+    def flush(self):
+        try:
+            self.saved.flush()
+        except Exception as error:
+            self.errors.setdefault(self.saved.name, type(error).__name__ + ": " + str(error))
+        return self.original.flush()
+
+    def __getattr__(self, name):
+        return getattr(self.original, name)
+
+
+def _artifact_directory(relative):
+    import os
+    from pathlib import Path, PurePosixPath
+    import tempfile
+
+    selected = PurePosixPath(relative)
+    if (not relative or selected.is_absolute() or str(selected) != relative
+            or "\\" in relative or ":" in relative or any(part in ("", ".", "..") for part in selected.parts)
+            or selected == PurePosixPath(".")):
+        raise ValueError("--artifact-directory must be a canonical repo-relative output directory.")
+    project = Path.cwd().resolve(strict=True)
+    target = project
+    for component in selected.parts:
+        target = target / component
+        if target.is_symlink():
+            raise ValueError("The artifact output traverses a symbolic link.")
+        target.mkdir(mode=0o700, exist_ok=True)
+        if not target.is_dir() or target.resolve(strict=True) != target:
+            raise ValueError("The artifact output must stay inside the real project.")
+    # Retain preceding receiving attempts; never overwrite their returned files.
+    return Path(tempfile.mkdtemp(prefix="receiver-", dir=target))
+
+
+def _copy_original_artifact(source, destination):
+    import os
+    from pathlib import Path
+    import stat
+    import tempfile
+
+    source, destination = Path(source), Path(destination)
+    if source.resolve(strict=True) != source:
+        raise ValueError("An original artifact traverses a symbolic link.")
+    descriptor = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    temporary = None
+    try:
+        with os.fdopen(descriptor, "rb") as incoming:
+            before = os.fstat(incoming.fileno())
+            if not stat.S_ISREG(before.st_mode):
+                raise ValueError("An original artifact is not a regular file.")
+            destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            output, temporary_name = tempfile.mkstemp(prefix=".receiving-", dir=destination.parent)
+            temporary = Path(temporary_name)
+            digest, size = hashlib.sha256(), 0
+            with os.fdopen(output, "wb") as received:
+                for block in iter(lambda: incoming.read(256 * 1024), b""):
+                    received.write(block)
+                    digest.update(block)
+                    size += len(block)
+                received.flush()
+                os.fsync(received.fileno())
+            after = os.fstat(incoming.fileno())
+            identity = lambda value: (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+            if identity(before) != identity(after) or size != before.st_size:
+                raise RuntimeError("The original artifact changed during receiving.")
+        observed = hashlib.sha256()
+        with temporary.open("rb") as received:
+            for block in iter(lambda: received.read(256 * 1024), b""):
+                observed.update(block)
+        if observed.hexdigest() != digest.hexdigest():
+            raise RuntimeError("The received original artifact bytes differ.")
+        os.link(temporary, destination, follow_symlinks=False)
+        directory = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+        return {"source": str(source), "path": str(destination), "bytes": size, "sha256": digest.hexdigest()}
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def _export_original_outputs(payload, namespace, destination):
+    from pathlib import Path
+
+    selected = {}
+    errors = []
+    def select(source, relative):
+        source = Path(source)
+        if source.is_file() or source.is_symlink():
+            selected[relative] = source
+    root = namespace.get("root")
+    if root is not None:
+        root = Path(root)
+        try:
+            identity = json.loads((root / "delivery-input.json").read_bytes())
+            if (str(root) != payload["original_root"] or root.resolve(strict=True) != root
+                    or identity.get("operation") != payload["operation"]
+                    or identity.get("capsule_sha256") != payload["capsule_sha256"]):
+                raise ValueError("The original artifact root belongs to another delivery.")
+            for source in sorted(root.iterdir()):
+                if (source.suffix in (".stdout", ".stderr")
+                        or source.name.startswith("Datasette_") and source.name.endswith("_Result.json")
+                        or source.name.startswith("Conapi_") and source.suffix == ".json"
+                        or source.name.startswith("conapi-") and source.suffix == ".json"
+                        or source.name in ("native-result.json", "delivery-input.json", "installed-input.json",
+                                           "host-capacity-at-save.json", "canonical-working-copy.json",
+                                           "original-source-recovery.json", "complete-checkpoint-manifest.json")):
+                    select(source, "original-root/" + source.name)
+            # The same-lifetime Conapi saver has its own actual result, native
+            # invocation receipts, programme reports and complete native logs.
+            select(root / "conapi-native/conapi-operating-programme.json",
+                   "original-root/conapi-native/conapi-operating-programme.json")
+            for folder, patterns in (("conapi-native-invocations", ("*.json",)),
+                                     ("conapi-native/logs", ("*.stdout", "*.stderr")),
+                                     ("conapi-native/project", ("*.json",))):
+                parent = root / folder
+                if parent.is_dir() and not parent.is_symlink():
+                    for pattern in patterns:
+                        for source in sorted(parent.rglob(pattern)):
+                            select(source, "original-root/" + source.relative_to(root).as_posix())
+            workbook_input = root / "conapi-workbook-selected-input.json"
+            if workbook_input.is_file():
+                try:
+                    selection = json.loads(workbook_input.read_bytes())
+                    workbook = Path(selection["outputDirectory"])
+                    if not workbook.is_absolute() or workbook.resolve() != workbook or root not in workbook.parents:
+                        raise ValueError("The original workbook output leaves its retained workspace.")
+                    select(workbook / "COMPLETE.json",
+                           "original-root/" + (workbook / "COMPLETE.json").relative_to(root).as_posix())
+                except Exception as error:
+                    errors.append({"source": str(workbook_input), "error": type(error).__name__ + ": " + str(error)})
+            history = root / "run-history"
+            if history.is_dir() and not history.is_symlink():
+                for source in sorted(history.rglob("*.json")):
+                    relative = source.relative_to(history)
+                    if (source.name.startswith("operating-result-")
+                            or source.name == "complete-checkpoint-manifest.json"
+                            or relative.parts[0] in ("installed-ready-checkpoints", "checkpoint-manifests")):
+                        select(source, "original-root/run-history/" + relative.as_posix())
+        except Exception as error:
+            errors.append({"source": str(root), "error": type(error).__name__ + ": " + str(error)})
+    incoming = namespace.get("incoming")
+    if incoming is not None:
+        incoming = Path(incoming)
+        try:
+            if incoming.resolve(strict=True) != incoming:
+                raise ValueError("The original transfer directory is not canonical.")
+            for folder, patterns in (("private-temp", ("*.stdout", "*.stderr")), ("export", ("*.json",)),
+                                     ("conapi-upload-state", ("*.stdout", "*.stderr")), ("conapi-export", ("*.json",))):
+                parent = incoming / folder
+                if parent.is_dir() and not parent.is_symlink():
+                    for pattern in patterns:
+                        for source in sorted(parent.glob(pattern)):
+                            select(source, "original-transfer/" + folder + "/" + source.name)
+            select(incoming / "original-checkpoint-parts.json", "original-transfer/original-checkpoint-parts.json")
+        except Exception as error:
+            errors.append({"source": str(incoming), "error": type(error).__name__ + ": " + str(error)})
+    for relative, source in sorted(selected.items()):
+        try:
+            received = _copy_original_artifact(source, destination / relative)
+            print(json.dumps({"stage": "datasette_native_artifact_copied", "operation": payload["operation"], **received}), flush=True)
+        except Exception as error:
+            errors.append({"source": str(source), "path": relative, "error": type(error).__name__ + ": " + str(error)})
+    return errors
+
+
+def main(argv=None):
+    import argparse
+    import os
+    import sys
+    import traceback
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--artifact-directory", help="Repo-relative output directory for the original CloudJob artifact collector.")
+    args = parser.parse_args(argv)
     body = gzip.decompress(base64.b64decode(_ENCODED, validate=True))
     if len(body) != 521275 or hashlib.sha256(body).hexdigest() != "2f8d51a742e40605be739ed66e024d8ae99d57a18747b8fd64e440b9f7d67d72":
         raise RuntimeError("The complete original Datasette receiver payload differs.")
     payload = json.loads(body)
-    exec(compile(payload["driver"], "<Datasette complete original continuation>", "exec"), {"payload": payload})
+    namespace = {"payload": payload}
+    if args.artifact_directory is None:
+        exec(compile(payload["driver"], "<Datasette complete original continuation>", "exec"), namespace)
+        return
+    destination = _artifact_directory(args.artifact_directory)
+    original_stdout, original_stderr = sys.stdout, sys.stderr
+    stdout = (destination / "receiver.stdout").open("x", encoding="utf-8")
+    stderr = (destination / "receiver.stderr").open("x", encoding="utf-8")
+    capture_errors = {}
+    sys.stdout = _ReceiverOutputTee(original_stdout, stdout, capture_errors)
+    sys.stderr = _ReceiverOutputTee(original_stderr, stderr, capture_errors)
+    try:
+        print(json.dumps({"stage": "datasette_native_artifact_output", "operation": payload["operation"],
+                          "directory": str(destination), "original_root": payload["original_root"],
+                          "checkpoint_sha256": payload["checkpoint"]["sha256"],
+                          "receiver_payload_sha256": hashlib.sha256(body).hexdigest()}), flush=True)
+        exec(compile(payload["driver"], "<Datasette complete original continuation>", "exec"), namespace)
+    except BaseException as error:
+        try:
+            if isinstance(error, SystemExit):
+                print(json.dumps({"stage": "datasette_native_receiver_exit", "operation": payload["operation"],
+                                  "code": error.code if isinstance(error.code, (str, int, type(None))) else repr(error.code)}), flush=True)
+            else:
+                traceback.print_exc()
+        except Exception:
+            pass
+        raise
+    finally:
+        # The same controller has completed its saves and same-lifetime following
+        # before it returns here. EOF releases only its existing stdin retainer.
+        export_errors = []
+        try:
+            export_errors = _export_original_outputs(payload, namespace, destination)
+        except Exception as error:
+            export_errors.append({"error": type(error).__name__ + ": " + str(error)})
+        try:
+            print(json.dumps({"stage": "datasette_native_artifact_output_finished", "operation": payload["operation"],
+                              "directory": str(destination), "copy_errors": export_errors,
+                              "capture_errors": capture_errors}), flush=True)
+        except Exception:
+            pass
+        sys.stdout, sys.stderr = original_stdout, original_stderr
+        for stream in (stdout, stderr):
+            try:
+                stream.flush()
+                os.fsync(stream.fileno())
+            except Exception as error:
+                capture_errors.setdefault(stream.name, type(error).__name__ + ": " + str(error))
+            finally:
+                try:
+                    stream.close()
+                except Exception:
+                    pass
+        if export_errors or capture_errors:
+            # Report export failures separately and preserve the original result.
+            notice = json.dumps({"stage": "datasette_native_artifact_output_errors",
+                                 "copy_errors": export_errors, "capture_errors": capture_errors}) + "\n"
+            try:
+                with (destination / "artifact-export.stderr").open("x", encoding="utf-8") as report:
+                    report.write(notice)
+                    report.flush()
+                    os.fsync(report.fileno())
+            except Exception:
+                pass
+            try:
+                original_stderr.write(notice)
+                original_stderr.flush()
+            except Exception:
+                pass
+
 
 if __name__ == "__main__":
     main()

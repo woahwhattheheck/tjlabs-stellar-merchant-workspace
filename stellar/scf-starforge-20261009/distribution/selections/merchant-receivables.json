@@ -63,7 +63,8 @@
     "merchant-implementation",
     "merchant-service-operations",
     "receivables-agent",
-    "customer-closing"
+    "customer-closing",
+    "merchant-customer-handover"
   ],
   "components": [
     "stellar/scf-starforge-20261009/distribution",

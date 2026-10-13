@@ -64,3 +64,14 @@
 #repricing-quote-review{border-top:1px solid #d3d3d3;margin-top:18px;padding-top:14px}
 #repricing-quote-review details{min-width:130px;max-width:420px}
 #repricing-quote-review details p{overflow-wrap:anywhere;font-size:.76rem}
+
+/* Complete original commercial history. */
+.commercial-archive > summary { display:flex; flex-wrap:wrap; gap:.65rem 1rem; align-items:baseline; cursor:pointer; }
+.archive-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1rem; margin:1rem 0; }
+.archive-filters label { display:flex; flex-direction:column; gap:.4rem; min-width:0; }
+.archive-search { grid-column:span 2; }
+.archive-filters .button-row { align-self:end; }
+#archive-results .history-item { flex-wrap:wrap; }
+#archive-results .archive-compare { flex-basis:100%; justify-content:flex-start; }
+#archive-caption { font-variant-numeric:tabular-nums; }
+@media (max-width:600px) { .archive-search { grid-column:auto; } .archive-filters { grid-template-columns:1fr; } }

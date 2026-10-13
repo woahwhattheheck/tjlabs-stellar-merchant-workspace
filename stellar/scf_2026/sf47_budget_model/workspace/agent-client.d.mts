@@ -1,3 +1,5 @@
+import type {InstallationSourceInputs,InstallationSourceResponses} from './installation-source-desk-agent.mjs';
+export * from './installation-source-desk-agent.mjs';
 // MIT. TypeScript declarations for the original SF47 client and its saved delivery workflow.
 import type { Buffer } from 'node:buffer';
 
@@ -45,12 +47,13 @@ export type GrantCaseAction =
   | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply' | 'task-outcomes.save' | 'funding.save'
   | 'contributor.save' | 'work.save' | 'work.submit' | 'work.accept' | 'work.reopen' | 'work.void'
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
-  | 'cash.record' | 'cash.void' | 'settlement.receive' | 'settlement.correct' | 'statement.receive' | 'award.save' | 'deployment.save'
+  | 'cash.record' | 'cash.void' | 'settlement.receive' | 'settlement.correct' | 'statement.receive' | 'statement-setup.save' | 'award.save' | 'deployment.save'
   | 'purchase.record' | 'purchase.observe' | 'purchase.void' | 'outcome.save'
   | 'engagement.prepare' | 'engagement.receiving' | 'risk-register.save'
   | 'review' | 'close' | 'reopen' | 'cohort.prepare' | 'installation.save' | 'installation.return' | 'installation.return-stage' | 'implementation.prepare'
   | 'amendment.save' | 'amendment.review' | 'amendment.apply'
   | 'completion.save' | 'completion.prepare' | 'completion.extension' | 'completion.submit' | 'completion.decision'
+  | 'completion.corrections.save'
   | GrantExpenseAction;
 
 /** Original quantities are atomic integer strings. Native asset scale is always explicit. */
@@ -167,6 +170,7 @@ export interface GrantStatementSource {
   sourceUrl?: string;
 }
 export interface GrantStatementCommonInput {
+  statementSetup?: GrantStatementSetupRef;
   source: GrantStatementSource;
   /** Stable nonsecret source account identity; case-sensitive and independent of the filename. */
   accountId: string;
@@ -311,6 +315,7 @@ export interface GrantStatementRow {
   record?: GrantObject;
 }
 export interface GrantStatementPreview {
+  statementSetup?: GrantStatementSetupRef;
   schema: 'stellar-forge.sf47-statements.v1';
   caseId: string;
   expectedVersion: number;
@@ -351,6 +356,38 @@ export interface GrantStatementReceipt {
   unchanged: boolean;
   statementSha256: string;
   previewSha256: string;
+}
+
+export interface GrantStatementSetupRef {
+  id: string; name: string; revision: number; sourceId: string; sourceSha256: string; editionSha256: string;
+}
+export interface GrantStatementSetupAccount {
+  accountId: string; accountLabel: string; currency: string; defaultCategory: GrantStatementCategory;
+}
+export type GrantStatementSetupSettings = GrantStatementSetupAccount & (
+  | {sourceFormat: 'CSV'; format: GrantCsvStatementInput['format']; columns: GrantCsvStatementInput['columns']}
+  | {sourceFormat: 'OFX'}
+  | {sourceFormat: 'MT940'; statementOptions: GrantMt940StatementOptions}
+);
+export interface GrantStatementSetupBasis {
+  sourceSha256: string; filename: string; headers: string[];
+  bank: null | {
+    sourceFormat: 'OFX' | 'MT940'; accountReference: string; bankId: string | null;
+    kind: 'BANK' | 'CREDITCARD'; nativeAccountSha256: string | null; dateBasis: string;
+  };
+}
+export interface GrantStatementSetupSummary extends GrantStatementSetupRef {
+  status: 'ACTIVE' | 'ARCHIVED'; caseVersion: number; savedAt: string; actor: string; note: string;
+  settings: GrantStatementSetupSettings; basis: GrantStatementSetupBasis;
+}
+export type GrantStatementSetupWrite = GrantOperationRequest & {note: string; name: string;} & (
+  | {id?: never; expectedRevision: 0; status?: 'ACTIVE'; inputs: GrantStatementInput}
+  | {id: string; expectedRevision: number; status?: 'ACTIVE'; inputs: GrantStatementInput}
+  | {id: string; expectedRevision: number; status: 'ARCHIVED'; inputs?: never}
+);
+export interface GrantStatementSetupReceipt extends GrantObject {
+  id: string; version: number; action: 'statement-setup.save'; kind: 'source'; recordId: string;
+  statementSetup: GrantStatementSetupSummary;
 }
 
 export type GrantWorkIntakeKind = 'WORK' | 'INVOICES';
@@ -2160,6 +2197,7 @@ export interface GrantInstallationReturnStageReceipt extends Omit<GrantInstallat
 export type GrantInstallationReturnSave<T> = GrantOperationRequest & {note:string; inputs:T; expectedPreviewSha256:string};
 
 export interface GrantCaseView extends GrantObject {
+  statementSetups: GrantStatementSetupSummary[];
   workIntakes: GrantWorkIntakeSummary[];
   workIntakeRefs?: {id: string; revision: number; sha256: string; state: 'DRAFT' | 'APPLIED'}[];
   program: { id: string; name: string; version: number; state: string; [key: string]: unknown };
@@ -3746,6 +3784,100 @@ export interface GrantReadSelection {
 export type GrantOtherReadView =
   | 'plans' | 'plan' | 'plan-history' | 'cases' | 'case-report' | 'case-history' | 'expenses'
   | 'forecasts' | 'forecast' | 'portfolios' | 'portfolio' | 'review' | 'completion';
+/** A saved correction assessment is not an issuer acceptance or a deadline extension. */
+export type GrantCompletionCorrectionState = 'OPEN' | 'IN_PROGRESS' | 'ADDRESSED' | 'NOT_APPLICABLE';
+export interface GrantCompletionCorrectionFinding {
+  id: string;
+  request: string;
+  basis: string;
+  costIds: string[];
+  ownerIds: string[];
+  state: GrantCompletionCorrectionState;
+  dueOn: GrantCivilDate | null;
+  completedOn: GrantCivilDate | null;
+  response: string;
+  workIds: string[];
+  deploymentIds: string[];
+  sourceIds: string[];
+}
+export interface GrantCompletionCorrectionInputs {
+  roundId: string;
+  previousReviewId: string | null;
+  outcomeId: string;
+  expectedOutcomeSha256: string;
+  document: {title: string; findings: GrantCompletionCorrectionFinding[]; note: string};
+}
+export interface GrantCompletionCorrectionsSeed extends GrantObject {
+  schema: 'stellar-forge.sf47-completion-corrections.v1';
+  caseId: string;
+  caseVersion: number;
+  /** A new seed has an empty findings list; enter the actual findings before preview/save. */
+  inputs: GrantCompletionCorrectionInputs;
+  sourceOutcome: GrantObject;
+  originalPreparation: GrantObject;
+  currentOutcome: GrantObject | null;
+  currentHeadReviewId: string | null;
+  packages: GrantObject[];
+}
+export interface GrantCompletionCorrectionsPreview extends GrantObject {
+  schema: 'stellar-forge.sf47-completion-corrections.v1';
+  caseId: string;
+  caseVersion: number;
+  sourceSha256: string;
+  asOfDate: GrantCivilDate;
+  revision: number;
+  inputs: GrantCompletionCorrectionInputs;
+  sourceOutcome: GrantObject;
+  originalPreparation: GrantObject;
+  report: {
+    readyForPreparation: boolean;
+    sourceCurrent: boolean;
+    issues: {code: string; findingId: string | null; costId: string | null; message: string}[];
+    comparison: GrantObject;
+    findingCount: number;
+    addressed: number;
+    notApplicable: number;
+  };
+  previewSha256: string;
+}
+export type GrantCompletionCorrectionsSaveInput = GrantOperationRequest & {
+  inputs: GrantCompletionCorrectionInputs;
+  asOfDate: GrantCivilDate;
+  expectedPreviewSha256: string;
+};
+export interface GrantCompletionCorrectionsReceipt extends GrantObject {
+  id: string;
+  version: number;
+  action: 'completion.corrections.save';
+  kind: 'review';
+  recordId: string;
+  roundId: string;
+  revision: number;
+  previewSha256: string;
+  unchanged: false;
+}
+export interface GrantCompletionCorrectionsReview extends GrantObject {
+  id: string;
+  version: number;
+  createdAt: string;
+  actor: string;
+  note: string;
+  businessSha256: string;
+  purpose: 'TRANCHE_CORRECTIONS';
+  snapshot: GrantObject;
+  report: GrantObject;
+  corrections: GrantCompletionCorrectionsPreview;
+}
+/** Select the current saved correction edition explicitly for re-preparation. */
+export interface GrantCompletionPreviewInput extends GrantObject {
+  receiptId: string;
+  asOfDate?: GrantCivilDate;
+  summary: string;
+  cohortReviewIds?: string[];
+  implementationReviewIds?: string[];
+  correctionReviewId?: string;
+}
+
 export interface GrantDownloadSelections {
   plan: { planId: string; revision?: number };
   'plan-comparison': GrantPlanComparisonExportSelection;
@@ -3778,6 +3910,7 @@ export interface GrantDownloadSelections {
   source: { caseId: string; sourceId: string };
   settlement: { caseId: string; reviewId: string };
   completion: { caseId: string; reviewId: string };
+  'completion-corrections': { caseId: string; reviewId: string };
   cohort: { caseId: string; reviewId: string };
   engagement: { caseId: string; reviewId: string };
   'risk-register': { caseId: string; reviewId: string };
@@ -3789,6 +3922,8 @@ export function inspectGrantAgentBinding(input: GrantBindingInput): Promise<Gran
 export function readGrantAgentFile(filename: string, maximum?: number, privateOnly?: boolean): Promise<Buffer>;
 
 export class GrantWorkspaceClient {
+  /** Complete original Source Desk lifecycle using this client's existing owner and drain. */
+  installationSources<K extends keyof InstallationSourceInputs>(action:K,input:InstallationSourceInputs[K]):Promise<InstallationSourceResponses[K]>;
   constructor(binding: GrantBinding);
   workbook(action: 'inspect', input: GrantWorkbookInspectionInput): Promise<GrantJsonResponse<GrantWorkbookInspection>>;
   workbook(action: 'project', input: GrantWorkbookProjectionInput): Promise<GrantJsonResponse<GrantWorkbookSelection>>;
@@ -3840,6 +3975,7 @@ export class GrantWorkspaceClient {
   statementInspect(caseId: string, expectedVersion: number, inputs: GrantStatementInspectionInput): Promise<GrantJsonResponse<GrantStatementInspection>>;
   statementPreview(caseId: string, expectedVersion: number, inputs: GrantStatementInput): Promise<GrantJsonResponse<GrantStatementPreview>>;
   statementReceive(caseId: string, body: GrantOperationRequest & { inputs: GrantStatementInput; expectedPreviewSha256: string }): Promise<GrantJsonResponse<GrantStatementReceipt>>;
+  statementSetupSave(caseId: string, body: GrantStatementSetupWrite): Promise<GrantJsonResponse<GrantStatementSetupReceipt>>;
   operatingWorkflows(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<GrantOperatingWorkflows>>;
   accountReconciliationPreview(caseId: string, body: GrantAccountReconciliationInput): Promise<GrantJsonResponse<GrantAccountReconciliationPreview>>;
   accountReconciliationApply(caseId: string, body: GrantAccountReconciliationApplyInput): Promise<GrantJsonResponse<GrantAccountReconciliationReceipt>>;
@@ -3917,10 +4053,13 @@ export class GrantWorkspaceClient {
   implementationSource<T = GrantObject>(caseId: string, expectedVersion: number, sourceId: string, asOfAt?: string): Promise<GrantJsonResponse<T>>;
   implementationPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   implementationPrepare<T = GrantObject>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
+  completionCorrectionsSeed<T = GrantCompletionCorrectionsSeed>(caseId: string, expectedVersion: number, outcomeId: string, reviewId?: string): Promise<GrantJsonResponse<T>>;
+  completionCorrectionsPreview<T = GrantCompletionCorrectionsPreview>(caseId: string, expectedVersion: number, inputs: GrantCompletionCorrectionInputs, asOfDate?: GrantCivilDate): Promise<GrantJsonResponse<T>>;
+  completionCorrectionsSave<T = GrantCompletionCorrectionsReceipt>(caseId: string, body: GrantCompletionCorrectionsSaveInput): Promise<GrantJsonResponse<T>>;
   completionSeed<T = GrantObject>(caseId: string, expectedVersion: number, tranche: 1 | 2 | 3): Promise<GrantJsonResponse<T>>;
-  completionPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
+  completionPreview<T = GrantObject>(caseId: string, expectedVersion: number, inputs: GrantObject & {correctionReviewId?: string}): Promise<GrantJsonResponse<T>>;
   completionSave<T = GrantObject>(caseId: string, body: GrantOperationRequest & { inputs: GrantObject }): Promise<GrantJsonResponse<T>>;
-  completionPrepare<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
+  completionPrepare<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject & {correctionReviewId?: string}): Promise<GrantJsonResponse<T>>;
   completionExtension<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
   completionSubmit<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;
   completionDecision<T = GrantObject>(caseId: string, body: GrantOperationRequest & GrantObject): Promise<GrantJsonResponse<T>>;

@@ -81,7 +81,9 @@ def register_static(static):
     static.update({"/operations_commercial.mjs": ("operations_commercial.mjs", "text/javascript; charset=utf-8"),
                    "/operations_commercial.css": ("operations_commercial.css", "text/css; charset=utf-8")})
     static.update({"/operations_statements.mjs": ("operations_statements.mjs", "text/javascript; charset=utf-8"),
-                   "/operations_statements.css": ("operations_statements.css", "text/css; charset=utf-8")})
+                   "/operations_statements.css": ("operations_statements.css", "text/css; charset=utf-8"),
+                   "/operations_statement_profiles.mjs": ("operations_statement_profiles.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_statement_profiles.css": ("operations_statement_profiles.css", "text/css; charset=utf-8")})
     static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
                    "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
                    "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),
@@ -109,6 +111,7 @@ def register_static(static):
                    "/operations_buyer.css": ("operations_buyer.css", "text/css; charset=utf-8"),
                    "/operations_calendar.mjs": ("operations_calendar.mjs", "text/javascript; charset=utf-8"),
                    "/operations_calendar.css": ("operations_calendar.css", "text/css; charset=utf-8"),
+                   "/operations_completion_corrections.mjs": ("operations_completion_corrections.mjs", "text/javascript; charset=utf-8"),
                    "/operations_completion.mjs": ("operations_completion.mjs", "text/javascript; charset=utf-8"),
                    "/operations_completion.css": ("operations_completion.css", "text/css; charset=utf-8"),
                    "/operations_support.mjs": ("operations_support.mjs", "text/javascript; charset=utf-8"),
@@ -144,6 +147,11 @@ def read(handler, parsed):
     if installation_sources.handle(handler, parsed, ops, "GET"):
         return True
     path = parsed.path
+    correction_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/completion-corrections/(review-[a-f0-9]{32})/export.zip", parsed.path)
+    if correction_match:
+        ident, review_id = correction_match.groups()
+        handler.send(200, ops.export_completion_corrections(ident, review_id), "application/zip", review_id + "-corrections.zip")
+        return True
     risk_match = re.fullmatch(
         r"/api/operations/(operation-[a-f0-9]{32})/risk-register(?:/(review-[a-f0-9]{32})(/export.zip)?)?", path)
     if risk_match:
@@ -460,7 +468,7 @@ def write(handler, parsed):
     elif path == "/api/operations":
         result = ops.create(handler.json_body())
     else:
-        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-seed|completion-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
+        match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/(command|settlement/preview|settlement/correction-preview|funding-seed|funding-preview|task-outcomes-seed|task-outcomes-preview|customer-use-calendar|customer-use-calendar-expand|customer-use-calendar-cohort|account-reconciliation-preview|account-reconciliation|engagement-seed|engagement-preview|engagement-forecast|engagement-portfolio|cash-correction-preview|cash-correction|amendment-calendar-export|amendment-preview|installation-return-seed|installation-return-preview|installation-return-review-seed|installation-return-review-preview|work-intake-preview|ledger-intake-inspect|ledger-intake-preview|ledger-intake-apply|statement-inspect|statement-preview|implementation-source|implementation-preview|cohort-seed|cohort-preview|installation-workflows|installation-workflow-seed|installation-commissioning-seed|installation-commissioning-review|installation-commercial|installation-commercial-seed|installation-workshares|installation-workshare-seed|installation-seed|installation-effort-seed|installation-effort-selection|installation-preview|completion-seed|completion-preview|completion-corrections-seed|completion-corrections-preview|support-preview|buyer-preview|expense-preview|expense-request|forecast-preview|portfolio-preview|portfolio-seed|portfolio-selection)", path)
         if not match:
             raise Problem("Operations command not found.", 404, "NOT_FOUND")
         body = handler.json_body()
@@ -496,7 +504,9 @@ def write(handler, parsed):
                    "installation-commercial-seed": ops.seed_commercial_installation,
                    "installation-workshares": ops.installation_workshares,
                    "installation-workshare-seed": ops.seed_workshare_installation,
-                   "installation-preview": ops.preview_installation, "completion-seed": ops.seed_completion, "completion-preview": ops.preview_completion,
+                   "installation-preview": ops.preview_installation, "completion-corrections-seed": ops.seed_completion_corrections,
+                   "completion-corrections-preview": ops.preview_completion_corrections,
+                   "completion-seed": ops.seed_completion, "completion-preview": ops.preview_completion,
                    "support-preview": ops.preview_support, "buyer-preview": ops.preview_buyer,
                    "expense-preview": ops.preview_expense, "expense-request": ops.expense_request,
                    "forecast-preview": ops.preview_forecast,

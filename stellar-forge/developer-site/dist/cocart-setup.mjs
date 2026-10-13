@@ -173,8 +173,8 @@ async function persist(asNew=false){
   draftId=result.id;savedRevision=result.revision;savedAtRevision=currentEdit;metadata();await refreshSaved();$('cocart-saved').value=draftId;
   status('Saved this CoCart draft in the existing local merchant draft store. Download a draft JSON for a portable copy.');
 }
-async function loadSelected(){
-  const id=$('cocart-saved').value;if(!id)throw new Error('Choose a saved CoCart draft.');
+async function loadSelected(selectedId=null){
+  const id=selectedId||$('cocart-saved').value;if(!id)throw new Error('Choose a saved CoCart draft.');
   const result=await loadDraft(id);if(!result)throw new Error('This saved draft is no longer available.');
   const restored=await importDraft(JSON.stringify(result.input));
   input=restored;draftId=result.id;savedRevision=result.revision;editRevision++;savedAtRevision=editRevision;
@@ -227,4 +227,12 @@ $('cocart-plugin-download').addEventListener('click',()=>work(async()=>{
   download(zipWorkspace([{path:'cocart-profile-setup/cocart.mjs',content:tool},{path:'cocart-profile-setup/INSTALL.md',content:guide}]),
     'cocart-profile-setup.zip','application/zip');status('Original profile companion preparation downloaded. Run Plugin with your selected toolkit, then export the saved Woo product profile.');
 }));
-syncFields();renderFiles();renderCommands();refreshSaved();
+syncFields();renderFiles();renderCommands();
+void work(async()=>{
+  const requested=new URL(location.href).searchParams.get('draft');
+  await refreshSaved();
+  if(requested){
+    if(!requested.startsWith('cocart-'))throw new Error('Open this saved project in its original workflow from Saved projects.');
+    await loadSelected(requested);
+  }
+});

@@ -1,0 +1,28 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "grant-tracker",
+  "description": "Complete grant-source intake, physical row review, source-backed obligations and original customer OperatingPlan return.",
+  "components": [
+    "stellar/scf-starforge-20261009/distribution/discovery"
+  ],
+  "commands": {
+    "grant-tracker": "stellar/scf-starforge-20261009/distribution/discovery/grant-tracker-cli.mjs",
+    "grant-tracker-receive": "stellar/scf-starforge-20261009/distribution/discovery/grant-tracker-receiving.mjs"
+  },
+  "commandDescriptions": {
+    "grant-tracker": "Import complete grant sources, review every physical row, preserve award evidence and receive whole returned customer plans",
+    "grant-tracker-receive": "Receive complete original customer source selections through the native CLI, exports and full returned-plan history"
+  },
+  "exports": {
+    "./operator/grant-tracker": {
+      "types": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-tracker.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-tracker.mjs"
+    },
+    "./operator/grant-tracker/preparation": "./source/stellar/scf-starforge-20261009/distribution/discovery/grant-tracker-preparation.mjs"
+  },
+  "supportFiles": [
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/lab-edd/table.mjs",
+    "stellar/scf-starforge-20261009/distribution/discovery/GRANT_TRACKER_OPERATOR.md",
+    "stellar/scf-starforge-20261009/distribution/discovery/GRANT_TRACKER_NATIVE.md"
+  ]
+}

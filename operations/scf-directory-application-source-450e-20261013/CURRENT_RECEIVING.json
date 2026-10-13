@@ -1,0 +1,143 @@
+{
+  "schema": "stellar-forge.directory-current-assembly-receiving.v1",
+  "operation": "SCF-DIRECTORY-ASSEMBLY-450E-20261013",
+  "basis": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "9632fc45da7e438eade401bf268c062c9a9c05a7",
+    "lastMainGuard": "9632fc45da7e438eade401bf268c062c9a9c05a7",
+    "sources": 503,
+    "application": {
+      "bytes": 47684,
+      "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
+      "git_blob": "15c2a09c49fc72e63179e17211ff7395c756955d"
+    },
+    "html": {
+      "bytes": 96785,
+      "sha256": "c34c14204ab3f888dc5614ee62939ee2930e620d4f4d54507984a0e61dd37af0",
+      "git_blob": "bd8173a28dde135abf22b1ffd1d193025fbd5715"
+    },
+    "manuscript": {
+      "bytes": 986634,
+      "sha256": "d330672945a4685fdbc2709b4d95c692a8ca6d5c408e24699a03f067be3ee91b",
+      "git_blob": "b697b2d765ee7e4d9347e11c2f0b0da1e6b607a1"
+    },
+    "index": {
+      "bytes": 617433,
+      "sha256": "f31c9ca572150da2814565ee67160b1b100a6d59406ba65177052927292c118a",
+      "git_blob": "7e598109e671470fcae3806a569c3bd87eaad19a"
+    }
+  },
+  "result": {
+    "sourceRecords": 523,
+    "preservedSourceRecords": 503,
+    "newSourceRecords": 20,
+    "completeChapters": 78,
+    "otherCompleteChaptersUnchanged": 77,
+    "changedHeading": "## Referral implementation: source changes, returned outcomes and complete receiving",
+    "nineAnswersUnchanged": true,
+    "htmlUnchanged": true,
+    "budgetUnchanged": true,
+    "packageTermsUnchanged": true,
+    "selectedDeclarationFiles": 45,
+    "repositoryDeclarationsUntouched": true,
+    "completeComposerReplay": true,
+    "originalPackageReopened": true,
+    "sourcePackage": {
+      "bytes": 2311028,
+      "sha256": "79696a697a0b4056bb6d3783f3d7210c671fe443944739d64a7169ec17dc5e6e",
+      "git_blob": "57c30d657a37afba35342c0ff2d0d31a3e9296c7"
+    },
+    "outputs": [
+      {
+        "path": "grant.html",
+        "bytes": 96785,
+        "sha256": "c34c14204ab3f888dc5614ee62939ee2930e620d4f4d54507984a0e61dd37af0",
+        "git_blob": "bd8173a28dde135abf22b1ffd1d193025fbd5715"
+      },
+      {
+        "path": "grant-data/application.md",
+        "bytes": 47684,
+        "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
+        "git_blob": "15c2a09c49fc72e63179e17211ff7395c756955d"
+      },
+      {
+        "path": "grant-data/product-and-finance.md",
+        "bytes": 996934,
+        "sha256": "7d1ace4a6f403b3c1a497d7606b3ba171732b48a576853e686d85941a1092c25",
+        "git_blob": "56d7bc20b2beafac0e06e3220b6aa3614f0ba3e1"
+      },
+      {
+        "path": "grant-data/source-index.json",
+        "bytes": 650031,
+        "sha256": "35a2e431341a95d3471e2b980bf0e5fed7b4ee4db2718e8b0385a18e1167484a",
+        "git_blob": "f45167b68d7855c83a74809ad07c681eefb657aa"
+      }
+    ]
+  },
+  "chapterReceiving": {
+    "schema": "stellar-forge.directory-grant-chapter-receiving.v1",
+    "parentHeading": "## Referral implementation: source changes, returned outcomes and complete receiving",
+    "heading": "### Service-directory commissioning and referral destinations",
+    "before": {
+      "bytes": 13268,
+      "sha256": "8a4acd8a948f870d7dcaa094c14052a8149a6b85839121995e7436ed3eea15c7"
+    },
+    "after": {
+      "bytes": 23568,
+      "sha256": "50245fa5863919c56fdaa4670b8b0dc09d0abf9b8e97b15e9c368e8d9ee1a5a5"
+    },
+    "prefixSha256": "bf54a0c655df689b8ca2dfbe53a42abef4137a7d33107efdb50475954058b860",
+    "suffixSha256": "e71a589bc387d8b26c58eb51c9cf751f0a556012449304732e76f3691ddb3af0",
+    "reused": false
+  },
+  "unaffectedGrantDataFiles": [
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/application-reviewer.md",
+      "git_blob": "fd608bcf1bb59ba37a040e6e02187e02f7af50a2",
+      "bytes": 26330
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/application.md",
+      "bytes": 47684,
+      "sha256": "5bddff9b185890bd0021ac25642975115095b435108d1c19fa2a7291cd03cb37",
+      "git_blob": "15c2a09c49fc72e63179e17211ff7395c756955d"
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/budget.csv",
+      "git_blob": "c62afa352e881c2cf81fe937649fe63fea3ceab5",
+      "bytes": 597
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/catalog-parameter-evaluation-20261012.json",
+      "git_blob": "84061bf2c7259c8466fbaa575a8cfd1c29b534d7",
+      "bytes": 76641
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/catalog-source-vellar-20261012.json",
+      "git_blob": "b07c1e1546afa5948bf31d892098cdaf4b5140de",
+      "bytes": 45753
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/financial-walkthrough.md",
+      "git_blob": "71beada97de44640ae98227e7351afc2fa14645b",
+      "bytes": 50479
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/reviewer-working-index.json",
+      "git_blob": "d61281c20285242cab2cf76178e2d0683e1d28da",
+      "bytes": 310346
+    },
+    {
+      "path": "stellar-forge/developer-site/dist/grant-data/reviewer-working-source.json",
+      "git_blob": "8dafe8be008cb9728d140e187ae96b91740209de",
+      "bytes": 1281293
+    }
+  ],
+  "execution": "Complete maintained source functions in connected JavaScript. No product/browser/Site/saved-case process was opened.",
+  "publication": "Only the two maintained Directory-containing outputs and this operation's full source package/selection/receipts change. Existing source/current-customer owners remain authoritative.",
+  "concurrentAdoption": {
+    "pullRequest": 1356,
+    "merge": "bc6a7fbdd76e5f1f3bb7751b47dac21600c6780c",
+    "meaning": "The originally reviewed 501-source proposal was not merged after this current Collections intake advanced the maintained assembly. This successor preserves all 503 complete current source records and all actual current application bytes."
+  }
+}

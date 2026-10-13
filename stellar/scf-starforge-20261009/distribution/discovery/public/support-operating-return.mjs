@@ -220,5 +220,5 @@ export function mountSupportOperatingReturn({host,getPlan,getSources,run,receive
   }
   show().catch(e=>{error.hidden=false;error.textContent=e.message;});
   refreshLibrary().catch(e=>{error.hidden=false;error.textContent='Returned-work storage: '+e.message;});
-  return Object.freeze({update});
+  return Object.freeze({update, getReview() { return record ? JSON.parse(JSON.stringify(record.value)) : null; }});
 }
