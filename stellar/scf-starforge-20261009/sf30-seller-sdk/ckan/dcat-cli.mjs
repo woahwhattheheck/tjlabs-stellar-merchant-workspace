@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 // MIT. DCAT catalog operations through the original retained workspace and loopback service.
-import { resolve, dirname, basename } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { verifyDcatManagedSelection } from '../../distribution/runtime-workspace/application-dcat.mjs';
 import { openCkanWorkbench } from './model.mjs';
 import { semanticCliOptions, semanticCliUsage, executeDcatSemanticCommand } from './dcat-semantic-cli.mjs';
+import { openWorkbenchOwner, saveWorkbenchStartup } from './workbench-owner.mjs';
 import { parseCkanJson } from './capture.mjs';
 import { startCkanServer } from './server.mjs';
 import { inspectCkanWorkspaceArchive, receiveCkanWorkspaceArchive } from './archive.mjs';
-import { readPrivate, createFile, atomicJson, privateDirectory, digest, fault } from '../postgres/publisher/files.mjs';
+import { readPrivate, createFile, privateDirectory, digest, fault } from '../postgres/publisher/files.mjs';
 
 const usage = [
   'DCAT catalog migration workspace',
@@ -57,50 +58,10 @@ const optionsByCommand = {
 
 // Operate the current authenticated owner without opening a second project lease.
 async function acquireDueThroughListener(startupFile, directory) {
-  const raw = await readPrivate(startupFile, 65536);
-  let startup;
-  try { startup = JSON.parse(raw.toString('utf8')); } catch { throw fault('DCAT_STARTUP_FILE_INVALID'); }
-  if (startup?.schema !== 'stellar-forge.dcat-workbench-startup.v1' ||
-      startup.directory !== directory || typeof startup.instanceId !== 'string' ||
-      !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(startup.instanceId))
-    throw fault('DCAT_STARTUP_FILE_INVALID', 'Select the private startup record from this project’s current owner.');
-  let url;
-  try { url = new URL(startup.url); } catch { throw fault('DCAT_STARTUP_FILE_INVALID'); }
-  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) ||
-      url.pathname !== '/' || url.search || url.username || url.password || startup.origin !== url.origin ||
-      !/^[A-Za-z0-9_-]{32,128}$/.test(url.hash.slice(1)))
-    throw fault('DCAT_STARTUP_FILE_INVALID', 'Use the original private loopback startup record.');
-  const authorization = 'Bearer ' + url.hash.slice(1);
-  async function api(path, value) {
-    let response;
-    try { response = await fetch(url.origin + '/api/' + path, {
-      method: value === undefined ? 'GET' : 'POST', headers: { authorization,
-        ...(value === undefined ? {} : { 'content-type': 'application/json' }) },
-      ...(value === undefined ? {} : { body: JSON.stringify(value) }),
-      redirect: 'error', signal: AbortSignal.timeout(15000),
-    }); } catch { throw fault('DCAT_LISTENER_UNAVAILABLE', 'The selected project owner did not answer. Read its original lifecycle status.'); }
-    let count = 0; const parts = [];
-    for await (const part of response.body ?? []) {
-      count += part.length;
-      if (count > 33554432) throw fault('DCAT_LISTENER_RESPONSE_TOO_LARGE');
-      parts.push(Buffer.from(part));
-    }
-    let result;
-    try { result = parseCkanJson(Buffer.concat(parts)); }
-    catch { throw fault('DCAT_LISTENER_RESPONSE_INVALID'); }
-    if (!response.ok) throw fault(result.error ?? 'DCAT_LISTENER_REQUEST_FAILED',
-      result.message ?? 'The original project owner rejected the request.', response.status);
-    return result;
-  }
-  const listener = await api('launch');
-  if (listener.schema !== 'stellar-forge.ckan-workbench-listener.v1' ||
-      listener.instanceId !== startup.instanceId || listener.pid !== startup.pid ||
-      listener.directory !== directory || listener.project?.createdAt !== startup.projectCreatedAt ||
-      listener.project?.catalogOrigin !== startup.catalogOrigin || listener.project?.sourceKind !== startup.sourceKind)
-    throw fault('DCAT_LISTENER_IDENTITY_CHANGED', 'Select the current original startup record before dispatching due acquisitions.');
+  const { api, listener, startupSha256 } = await openWorkbenchOwner(startupFile, directory);
   const state = await api('status'), outcomes = [];
   const result = { listener: { instanceId: listener.instanceId, pid: listener.pid, directory },
-    startupSha256: digest(raw), checkedAt: new Date().toISOString(), sources: outcomes };
+    startupSha256, checkedAt: new Date().toISOString(), sources: outcomes };
   if (state.active) return { ...result, deferred: true, reason: 'PROJECT_BUSY' };
   for (const selected of state.dcat?.sources ?? []) {
     let current;
@@ -176,26 +137,12 @@ export async function main(supplied = process.argv.slice(2)) {
           sourceRoot: resolve(fileURLToPath(new URL('../../../../', import.meta.url))) });
       }
       const web = await startCkanServer({ workbench: project, port: Number(options.port ?? 0) });
-      const state = project.status();
-      const startup = { schema: 'stellar-forge.dcat-workbench-startup.v1', pid: process.pid, directory: project.directory,
-        projectCreatedAt: state.createdAt, catalogOrigin: state.catalogOrigin, sourceKind: state.sourceKind,
-        instanceId: web.instanceId, origin: web.origin, url: web.url,
-        dcatRuntime: project.dcatRuntime() };
-      if (options['startup-file'] !== undefined) {
-        try {
-          const path = resolve(required('startup-file'));
-          if (path === project.directory || path.startsWith(project.directory + '/'))
-            throw fault('DCAT_STARTUP_FILE_LOCATION', 'Keep the private listener record outside the portable catalog project.');
-          await privateDirectory(dirname(path));
-          let previous;
-          try { previous = JSON.parse((await readPrivate(path, 65536)).toString('utf8')); }
-          catch (error) { if (error.code !== 'ENOENT') throw error; }
-          if (previous && (previous.schema !== startup.schema || previous.directory !== startup.directory ||
-              previous.projectCreatedAt !== startup.projectCreatedAt))
-            throw fault('DCAT_STARTUP_FILE_CHANGED', 'This startup record belongs to another saved project.');
-          await atomicJson(dirname(path), basename(path), startup);
-        } catch (error) { await web.close(); throw error; }
-      }
+      let startup;
+      try { startup = await saveWorkbenchStartup({ project, web,
+        schema: 'stellar-forge.dcat-workbench-startup.v1',
+        ...(options['startup-file'] !== undefined ? { file: resolve(required('startup-file')) } : {}),
+        extra: { dcatRuntime: project.dcatRuntime() } }); }
+      catch (error) { await web.close(); throw error; }
       process.stdout.write(JSON.stringify(startup) + '\n');
       served = true; let ending = false;
       const shutdown = async () => {

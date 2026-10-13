@@ -17,6 +17,7 @@ const assets = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-json.mjs', ['dcat-json.mjs', 'text/javascript; charset=utf-8']],
   ['/remote-publication.mjs', ['remote-publication.mjs', 'text/javascript; charset=utf-8']],
+  ['/capture-plans.mjs', ['capture-plans.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-sources.mjs', ['dcat-sources.mjs', 'text/javascript; charset=utf-8']],
   ['/dcat-semantic.mjs', ['dcat-semantic.mjs', 'text/javascript; charset=utf-8']],
   ['/migration.mjs', ['migration.mjs', 'text/javascript; charset=utf-8']], ['/style.css', ['style.css', 'text/css; charset=utf-8']]]);
@@ -198,6 +199,28 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
             response.end(await readFile(fileURLToPath(new URL('./SEMANTIC_CATALOGS.md', import.meta.url)))); return;
           }
         }
+        if (parts[0] === 'capture-plans') {
+          if (parts.length === 2 && parts[1] === 'due')
+            return json(response, await workbench.dueCapturePlans(), 200, true);
+          if (parts.length === 2 && parts[1] === 'guide') {
+            response.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8',
+              'content-disposition': 'attachment; filename="CAPTURE_PLANS.md"' });
+            response.end(await readFile(fileURLToPath(new URL('./CAPTURE_PLANS.md', import.meta.url)))); return;
+          }
+          if (parts.length === 2)
+            return json(response, await workbench.capturePlan(parts[1], {
+              offset: Number(url.searchParams.get('offset') ?? 0), limit: Number(url.searchParams.get('limit') ?? 50),
+            }), 200, true);
+          if (parts.length === 3 && parts[2] === 'file')
+            return await downloadWorkspaceArchive(response, await workbench.capturePlanFile(parts[1], 'plan',
+              url.searchParams.get('sha256') ?? undefined));
+        }
+        if (parts[0] === 'capture-plan-runs') {
+          if (parts.length === 2)
+            return json(response, await workbench.capturePlanRun(parts[1]), 200, true);
+          if (parts.length === 3 && parts[2] === 'file')
+            return await downloadWorkspaceArchive(response, await workbench.capturePlanFile(parts[1], 'run'));
+        }
         if (parts[0] === 'dcat') {
           if (parts[1] === 'sources' && parts.length === 3)
             return json(response, await workbench.dcatSource(parts[2]));
@@ -333,13 +356,23 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
       }
       if (request.method === 'POST') {
         if (uploading) throw fault('CKAN_PROJECT_BUSY', 'Finish the current upload before starting another project operation.', 409);
-        const input = await body(request, parts[0] === 'remote' || parts[0] === 'dcat' && parts[1] !== 'semantic', parts[0] === 'remote' ? 4194304 : parts[0] === 'dcat' && parts[1] === 'semantic' ? 50331648 : 131072);
+        const input = await body(request, ['remote', 'capture-plans', 'capture-plan-runs'].includes(parts[0]) || parts[0] === 'dcat' && parts[1] !== 'semantic', ['remote', 'capture-plans', 'capture-plan-runs'].includes(parts[0]) ? 4194304 : parts[0] === 'dcat' && parts[1] === 'semantic' ? 50331648 : 131072);
+        if (parts[0] === 'capture-plans' && parts[1] === 'preview' && parts.length === 2)
+          return json(response, await workbench.previewCapturePlan(input), 200, true);
         if (parts[0] === 'editions' && parts[2] === 'semantics' && parts.length === 3)
           return json(response, await workbench.previewSemantics(parts[1], input.projection));
         if (parts[0] === 'refreshes' && parts[2] === 'preview' && parts.length === 3)
           return json(response, exactPresentation(await workbench.previewRefresh(parts[1], input)));
         let result;
-        if (parts[0] === 'remote' && parts[1] === 'targets' && parts.length === 2)
+        if (parts[0] === 'capture-plans' && parts[1] === 'save' && parts.length === 2)
+          result = workbench.saveCapturePlan(input);
+        else if (parts[0] === 'capture-plans' && parts[1] === 'run' && parts.length === 2)
+          result = workbench.runCapturePlan(input);
+        else if (parts[0] === 'capture-plan-runs' && parts[2] === 'resume' && parts.length === 3)
+          result = workbench.resumeCapturePlanRun(parts[1], input);
+        else if (parts[0] === 'capture-plan-runs' && parts[2] === 'refresh' && parts.length === 3)
+          result = await workbench.prepareCapturePlanRefresh(parts[1], input);
+        else if (parts[0] === 'remote' && parts[1] === 'targets' && parts.length === 2)
           result = workbench.saveRemoteTarget(input);
         else if (parts[0] === 'remote' && parts[1] === 'publications' && parts.length === 2)
           result = workbench.prepareRemotePublication(input);
@@ -385,6 +418,8 @@ export async function startCkanServer({ workbench, port = 0, token = randomBytes
           ...(result.profileId ? { profileId: result.profileId } : {}),
           ...(result.runId ? { runId: result.runId } : {}),
           ...(result.semanticReviewId ? { semanticReviewId: result.semanticReviewId } : {}),
+          ...(result.planId ? { planId: result.planId } : {}),
+          ...(result.refreshId ? { refreshId: result.refreshId } : {}),
           ...(result.targetId ? { targetId: result.targetId } : {}),
           ...(result.releaseId ? { releaseId: result.releaseId } : {}),
           ...(result.editionId ? { editionId: result.editionId } : {}),
