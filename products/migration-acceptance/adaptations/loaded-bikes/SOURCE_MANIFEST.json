@@ -21,8 +21,8 @@
     },
     {
       "path": "app.mjs",
-      "bytes": 32162,
-      "sha256": "0ddee5e937565b50543c775ed094ae4ff4869f98f98cbc4d269901dfabcd6709"
+      "bytes": 32423,
+      "sha256": "a9e19034d7ef4da9d7e8498ffb9dcbaac5ae2afdbe0469b72e21bcaea65d73e4"
     },
     {
       "path": "BROWSER_RECEIVING.md",
