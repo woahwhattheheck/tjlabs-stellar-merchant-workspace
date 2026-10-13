@@ -23,16 +23,18 @@ export function createCatalogRecipientController({container,api,perform,host,not
  '<p class="help">The original request ID and file identity stay in the workspace recovery banner. After reopening, choose the same saved request file and use Retry original request. Read saved outcome first when the result is uncertain.</p>'+
  '<details><summary>Complete original comparison or receiving outcome</summary><pre id="recipient-details"></pre></details>';
  worklist=createAuthorWorklistPanel({container,element,getWorkspaceId:()=>host.workspaceId,getCatalog,
+  previewMatrix:async(raw,catalogId)=>{const file=new File([raw],'Material_Author_Worklist.json',{type:'application/json'}),sha256=await sha256File(file);return api('/api/catalog/author-matrix',{name:file.name,bytes:file.size,sha256,catalogId},false,file);},
   isHeld:()=>working||isBusy()||host.busy||Boolean(host.pending),download:saveFile,report:notice,onReady:buttons,
   getDraft:()=>original&&comparison?{returnText:original.sourceText??original.text,draft:{comparison,choices,actor:$('recipient-actor').value,reason:$('recipient-reason').value}}:null,
   loadDraft(item,draft){
    epoch++;sourceEpoch++;prepared=null;
    const review=openRecipientReview(item.returnText),text=exportRecipientReview(review);
    original={review,text,sourceText:item.returnText,file:new File([text],'Material_Review_'+review.id+'.json',{type:'application/json'})};
-   comparison=draft.comparison;comparisonEpoch=-1;choices=JSON.parse(JSON.stringify(draft.choices));
+   comparison=draft?.comparison??null;comparisonEpoch=-1;choices=JSON.parse(JSON.stringify(draft?.choices??{}));
    $('recipient-return-file').value='';$('recipient-working-file').value='';
-   $('recipient-actor').value=draft.actor;$('recipient-reason').value=draft.reason;
-   dirty=false;render();status('Retained choices reopened without changing the catalogue. Compare with current catalogue before preparing a request; changed comparisons keep this draft in worklist history.');
+   $('recipient-actor').value=draft?.actor??'';$('recipient-reason').value=draft?.reason??'';
+   dirty=false;render();status('Retained return and choices opened without changing the catalogue. Compare with current catalogue before preparing a request; changed comparisons keep this draft in worklist history.');
+   $('recipient-details').textContent=comparison?pretty(comparison):'';buttons();$('recipient-compare').scrollIntoView({block:'center'});
   }});
  const binding=()=>JSON.stringify({workspace:host.workspaceId,id:getCatalog()?.id,revision:getCatalog()?.revision,edition:getCatalog()?.activeEditionId});
  const still=(generation,bound)=>generation===epoch&&bound===binding();
