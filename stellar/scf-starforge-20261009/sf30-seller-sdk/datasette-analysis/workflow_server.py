@@ -22,6 +22,8 @@ from workflow_engine import (SCHEMA, Workflow, WorkflowError, atomic_json, canon
 
 HERE = Path(__file__).resolve().parent
 MAX_BODY = 32 * 1024 * 1024
+MAX_INPUT_CHUNK = 8 * 1024 * 1024
+INPUT_READ_TIMEOUT = 60
 
 
 def configuration_view(configuration):
@@ -184,8 +186,9 @@ class Handler(BaseHTTPRequestHandler):
     def _error(self, error):
         code = getattr(error, "code", type(error).__name__)
         status = 401 if code == "WORKFLOW_CAPABILITY" else 403 if code == "WORKFLOW_ORIGIN" else (
-            404 if code in {"WORKFLOW_NOT_FOUND", "WORKFLOW_FILE_NOT_FOUND", "WORKFLOW_ROUTE"} else 409
-            if code in {"WORKFLOW_RUNNING", "WORKFLOW_REQUEST_CHANGED", "WORKFLOW_CONFIGURATION_CHANGED"} else 400)
+            404 if code in {"WORKFLOW_NOT_FOUND", "WORKFLOW_FILE_NOT_FOUND", "WORKFLOW_ROUTE", "PROVIDER_INPUT_NOT_FOUND"} else 409
+            if code in {"WORKFLOW_RUNNING", "WORKFLOW_REQUEST_CHANGED", "WORKFLOW_CONFIGURATION_CHANGED",
+                     "PROVIDER_INPUT_BUSY", "PROVIDER_INPUT_INTENT_CHANGED", "PROVIDER_INPUT_CHUNK_CHANGED"} else 400)
         self._json({"schema": SCHEMA, "error": code, "message": str(error),
                     "requestId": getattr(error, "request_id", None)}, status)
 
@@ -196,6 +199,7 @@ class Handler(BaseHTTPRequestHandler):
                       "/workflow_app.mjs": ("workflow_app.mjs", "text/javascript; charset=utf-8"),
                       "/workflow_app.css": ("workflow_app.css", "text/css; charset=utf-8"),
                       "/provider_workflows.mjs": ("provider_workflows.mjs", "text/javascript; charset=utf-8"),
+                      "/provider_inputs.mjs": ("provider_inputs.mjs", "text/javascript; charset=utf-8"),
                       "/provider_workflows.css": ("provider_workflows.css", "text/css; charset=utf-8")}
             if path in static:
                 name, kind = static[path]
@@ -256,6 +260,26 @@ class Handler(BaseHTTPRequestHandler):
 
     def _provider_get(self, parts):
         provider = self.server.providers
+        if parts == ["api", "providers", "inputs"]:
+            return self._json(provider.list_inputs())
+        if len(parts) == 4 and parts[:3] == ["api", "providers", "inputs"]:
+            return self._json(provider.input_status(parts[3]))
+        if len(parts) == 5 and parts[:3] == ["api", "providers", "inputs"] and parts[4] == "file":
+            path, selected = provider.input_file(parts[3])
+            descriptor = file_descriptor(path, name=selected["name"],
+                                         expected_sha256=selected["sha256"],
+                                         expected_bytes=selected["bytes"])
+            kind = selected.get("contentType", "application/octet-stream")
+            if not isinstance(kind, str) or not re.fullmatch(r"[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+", kind):
+                kind = "application/octet-stream"
+            self._headers(200, kind, descriptor["bytes"])
+            self.send_header("X-Content-SHA256", descriptor["sha256"])
+            self.send_header("Content-Disposition", "attachment; filename*=UTF-8''" + quote(descriptor["name"], safe=""))
+            self.end_headers()
+            with open(descriptor["path"], "rb") as stream:
+                while block := stream.read(1024 * 1024):
+                    self.wfile.write(block)
+            return
         if parts == ["api", "providers", "catalog"]:
             return self._json(provider.catalog())
         if parts == ["api", "providers", "operations"]:
@@ -280,7 +304,42 @@ class Handler(BaseHTTPRequestHandler):
             return
         raise WorkflowError("WORKFLOW_ROUTE", "Select an original provider workflow route.")
 
+    def _provider_input_chunk(self, ident):
+        # An early rejection or interrupted read must never leave binary bytes
+        # available to be interpreted as a later HTTP request.
+        self.close_connection = True
+        def header(name):
+            values = self.headers.get_all(name, [])
+            if len(values) != 1:
+                raise WorkflowError("PROVIDER_INPUT_CHUNK_HEADERS",
+                                    "Send each original chunk header exactly once.")
+            return values[0]
+        if self.headers.get_all("Transfer-Encoding", []):
+            raise WorkflowError("PROVIDER_INPUT_CHUNK_HEADERS",
+                                "Send one complete fixed-length original chunk.")
+        length, offset, sha256 = header("Content-Length"), header("X-Input-Offset"), header("X-Content-SHA256")
+        if (not re.fullmatch(r"[0-9]{1,8}", length) or not 0 < int(length) <= MAX_INPUT_CHUNK
+                or not re.fullmatch(r"[0-9]{1,16}", offset) or int(offset) > 9007199254740991
+                or not re.fullmatch(r"[a-f0-9]{64}", sha256)):
+            raise WorkflowError("PROVIDER_INPUT_CHUNK_HEADERS",
+                                "Send the exact original chunk length, offset and SHA-256.")
+        previous_timeout = self.connection.gettimeout()
+        try:
+            self.connection.settimeout(INPUT_READ_TIMEOUT)
+            result = self.server.providers.input_chunk(
+                ident, offset=int(offset), length=int(length), sha256=sha256, source=self.rfile)
+        except TimeoutError:
+            raise WorkflowError("PROVIDER_INPUT_CHUNK_TIMEOUT",
+                                "This chunk stopped receiving bytes. Reopen its retained status and resume the same input.") from None
+        finally:
+            self.connection.settimeout(previous_timeout)
+        return self._json(result)
+
     def _provider_post(self, parts, body):
+        if parts == ["api", "providers", "inputs"]:
+            return self._json(self.server.providers.begin_input(body), 201)
+        if len(parts) == 5 and parts[:3] == ["api", "providers", "inputs"] and parts[4] == "complete":
+            return self._json(self.server.providers.complete_input(parts[3], body))
         if parts == ["api", "providers", "operations"]:
             return self._json(self.server.providers.submit(body), 202)
         if len(parts) == 5 and parts[:3] == ["api", "providers", "operations"] and parts[4] == "run":
@@ -303,7 +362,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             self._authorize()
-            body, parts = self._body(), self._parts()
+            parts = self._parts()
+            if len(parts) == 5 and parts[:3] == ["api", "providers", "inputs"] and parts[4] == "chunks":
+                return self._provider_input_chunk(parts[3])
+            body = self._body()
             if parts[:2] == ["api", "providers"]:
                 return self._provider_post(parts, body)
             with Workflow(self.server.workspace) as workflow:
@@ -358,6 +420,7 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             return
         except Exception as error:
+            self.close_connection = True
             self._error(error)
 
 

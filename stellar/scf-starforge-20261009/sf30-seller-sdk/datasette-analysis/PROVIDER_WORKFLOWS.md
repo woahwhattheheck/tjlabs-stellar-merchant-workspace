@@ -237,7 +237,7 @@ Before a POST, the browser retains the complete exact submission. If a reply is 
 - **Continue same request** to submit that same retained body again.
 - **Download original request** to preserve the exact submitted document.
 
-An existing ID cannot be reused with changed inputs. Use **Start a new operation** for a changed source selection or successor. A successful reconciliation checks the returned operation against the complete original submission, including whether a title was originally present.
+An existing ID cannot be reused with changed inputs. While a request is pending, a changed same-ID submission is rejected before the retained body can be overwritten. Reconcile or continue that exact original request before submitting another operation; a separate new draft can remain saved meanwhile. Use **Start a new operation** for a changed source selection or successor. A successful reconciliation checks the returned operation against the complete original submission, including whether a title was originally present.
 
 The controller's full operation record exposes `submission`. The browser uses that exact body for continuation; it does not reconstruct a request from labels or partial results.
 
@@ -329,18 +329,94 @@ A useful receiving course follows the actual original source:
 
 An empty configured catalog exercises installation, capability, mode navigation and responsive rendering. A customer capture and full native receiving use the actual source account, input and request supplied by the original operation owner.
 
-## Rendered product inspection — owner instruction, 2026-10-13
+## Rendered-product inspection — owner directive, 2026-10-13
 
-This applies to every current, future, resumed and delegated worker, across providers and local or cloud runtimes. Before calling any customer/prospect-facing application, website, dashboard, demo, report, presentation or export ready, open/run/render the exact outgoing version, look at the rendered screen or its actual screenshots, and operate the important user controls. Inspect the actual screenshare width and narrow/mobile width where relevant, populated/empty/loading/error states, downloads/exports and reopening. Capturing screenshots without viewing them is insufficient. Code review, DOM counts, HTTP 200, unit checks and another worker's approval do not replace seeing the actual product.
+**Applies to every current and future peer, provider, local session and cloud worker.** Before calling a client/prospect-facing app, website, dashboard, demo, report, presentation or export ready, the producing peer must open, run or render the exact outgoing version, look at its actual rendered screen or real screenshots, and operate its important user controls. Capturing screenshots without viewing them is insufficient. Inspect the actual screenshare width and narrow/mobile width where relevant; inspect populated, empty, loading and error states, downloads, exports and reopening.
 
-Fix broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized work before presenting it. Use plain industrial software design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve real workflows, source data and computations. Inspection must lead directly to repairs and must not replace implementation/integration or become repeated checking. Keep validation focused on the actual remaining risk; do not run broad suites or build a verification product.
+**All attachments are part of this rule.** Literally open, view, play and use the exact final HTML, PDF, report, slides, spreadsheet, map, image, video, audio, archive and project as the recipient would. Extract archives and open their actual contained deliverables and working project; inspect every applicable report/PDF page. Tests, checklists, source/schema inspection and screenshots merely captured are not substitutes. Fix observed defects within the authorized work and continue delivery.
 
-Include this complete instruction in delegated assignments and the active owner-controlled policy, boot, build and receiving guidance those workers actually read. Preserve all other owner controls and original operation identities. Leave historical records and third-party/vendor policies intact. Do not force restarts, create watchers or revive owner-stopped work. When a runtime is unavailable, join the existing equipped receiver with the complete exact version and opening steps, review its actual rendered result, and continue independent implementation while it runs.
+**Final media must be seen and heard.** For videos, use available high-quality generative media and natural voice generation/TTS instead of robotic default voices. Watch and listen to the final export for pronunciation, pacing, timing and audio alignment. Preserve existing spending, voice and attribution controls. This instruction adds no review queue, restart, watcher or new release permission.
 
-Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
+Owner clarification and complete canonical attachment: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949 (operation RENDERED-PRODUCT-POLICY-SWARM-20261013-01, original file F0C8RJVMF54). Carry these attachment and final-media clauses in the instructions actually consumed by delegated workers, alongside the complete standing rule below.
 
-## Current installed receiving continuation
+Fix ugly, broken, unstyled, cramped, clipped, overflowing or unreadable output within the authorized product work before presenting it. Code review, DOM counts, HTTP 200, unit checks and another peer's approval do not replace seeing the actual product. Use plain industrial design: readable tables, clear hierarchy, consistent typography and spacing, restrained controls, useful labels and responsive layouts. Preserve the real workflows, data and computation.
 
-The complete original operator course is retained as native source packet `8c7ffa20` (332,703 bytes; SHA-256 prefix `fd05051a`) and complete one-command entry `d64a1339` (120,712 bytes; SHA-256 prefix `6f0492e6`). It opens the current application with an empty private provider descriptor, exercises actual browser mode navigation, reopening and a 390-pixel viewport, and preserves the original screenshots, page and result through the established receiving helpers. The current owner is the original 9333 installed-provider receiving arm.
+This inspection is part of delivery and leads directly to concrete repairs. It must not replace implementation and integration, become endless rechecking, create a peer-approval gate, launch broad suites or become a separate verification product. Continue useful authorized source and product work while the exact native/rendered receiving operation proceeds; preserve the actual execution state and existing operation identity.
 
-The original invocation 1945 returned `409 environment_offline` before CreateProcess at 2026-10-13 10:41:48 UTC, with no native session or output. Continue this exact source through the existing accepting receiver and retain its actual rendered result. The next customer capture and complete native handover use D156’s actual original account, prepared input and installation when supplied to the existing operation.
+Persist this rule in every active owner-controlled instruction surface that the provider and workers actually read: global/project AGENTS, CLAUDE, GEMINI and rules files, provider boot instructions, Commons source mirrors, cloud repository instruction copies, and current build/receiving guides. Include it in child assignments. Preserve other owner controls, historical evidence and third-party/vendor instructions. Do not force restarts, add watchers or restart owner-stopped work. Existing project-specific owner cutoffs remain in force.
+
+Bryce's placement instruction: “that rule goes in every policy file the agents read not just a slack ping” and “and not just local sessions or ones from this provider”. Original coordination transport: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999 .
+
+## Retained initial installed receiving course
+
+The initial PR1548 operator course is retained as historical native source packet `8c7ffa20` (332,703 bytes; SHA-256 prefix `fd05051a`) and complete one-command entry `d64a1339` (120,712 bytes; SHA-256 prefix `6f0492e6`). It opens the current application with an empty private provider descriptor, exercises actual browser mode navigation, reopening and a 390-pixel viewport, and preserves the original screenshots, page and result through the established receiving helpers. Its receiving ownership remains the original 9333 installed-provider arm.
+
+The original invocation 1945 returned `409 environment_offline` before CreateProcess at 2026-10-13 10:41:48 UTC, with no native session or output. The subsequent original invocation 2005 also returned 409 before CreateProcess, with no native session or output. Neither invocation remains active. These retained pins describe the initial empty-catalog course; they are not the source entrypoint for the browser-input extension below. The original 9333 receiving owner composes the complete current application and input callback into its same whole receiving course and records the new source identity before invocation. The next customer capture and complete native handover use D156’s actual original account, prepared input and installation when supplied to the existing operation.
+
+
+## 12. Receive original files in the browser
+
+The **Original input files** section belongs to the same installed workflow workspace. It accepts a file selected by the operator's browser, retains its complete bytes, and makes a completed input available in the original provider operation selectors. An operator can receive a downloaded handover, original contacts, returned import result, native archive or mapping decisions without editing a server path.
+
+Open **Provider sources**, then **Add or reopen an original file**. Choose **New file**, select the complete original file, choose its purpose and enter a useful title. Enter a supplied original SHA-256 when one accompanies the delivery. The browser calculates the complete selected file's SHA-256 with a streaming hasher before sending source bytes; it holds only the current 8 MiB slice for that calculation.
+
+Choose **Retain original file**. Before the first begin request, the browser saves the exact input ID, filename, byte count, title, kind and expected SHA-256 in its workspace-scoped draft. The server owns that immutable input intent. The browser sends fixed 8 MiB chunks, with a smaller final chunk, and supplies each chunk's exact offset and SHA-256. The original server verifies each received chunk before it advances the retained offset.
+
+Completion verifies the entire file and every accepted chunk again on the server. Only a completed input joins the provider catalog. An empty original file is a valid raw transport selection; its use as a business input remains subject to the original provider's source contract. A transport success says that those bytes were retained, not that the selected file is a valid provider bundle or that an import was accepted.
+
+### Purposes and existing operations
+
+| Input purpose | Original use |
+| --- | --- |
+| Complete provider handover; original handover legacy kind | Receive handover, as `handoverInputId` |
+| Original contacts | Odoo Prepare workflow, as `contactsInputId` |
+| Returned import result | Odoo Reconcile import result, as `nativeResultInputId` |
+| Original native archive | Prepare complete handover, as `nativeDeliveryInputId` |
+| Original mapping decisions | Xero Prepare workflow, as the complete original `decisions` object |
+
+Choose **Use this file in an operation** after completion. Select the intended installed connection first. The desk preserves that account selection and the earlier operation draft. If a different action is needed, or the current draft belongs to an uncertain submitted request, it opens a fresh draft for that same selected connection. Useful same-action selections are copied into that new draft; the original pending body stays unchanged. It selects the new input, clears the mutually exclusive local handover or completed-native-request selection where applicable, and leaves submission to the operator. An unconfigured workspace can retain a file; using it in a provider operation requires the original configured connection.
+
+A mapping decision input is opened as original UTF-8 JSON and its full byte count and SHA-256 are checked before it enters the existing Xero decision field. The browser form accepts a decision document up to 8 MiB; larger original documents remain fully retained and downloadable for the existing CLI preparation. Original source preparation, native receive and target import rules are unchanged.
+
+### Pause, reload and exact reselection
+
+**Pause transfer** stops the browser's next work and aborts its current HTTP transfer. The server may already have accepted that chunk. The browser reads the same input's status to determine the actual retained prefix. It never replaces the input or starts a new transfer ID because a reply was lost.
+
+After a reload, open the retained input and reselect the same original file. Filename and length must agree. The browser computes its complete SHA-256 and checks it against the retained original expectation. It also reads and hashes every accepted chunk from the reselected file before sending the next chunk. A different byte sequence fails at that boundary.
+
+If the original begin reply was interrupted before an intent was published, the server returns `PROVIDER_INPUT_NOT_FOUND` with HTTP 404. **Continue original transfer** replays the same browser-retained begin body and ID. A different selection requires **New file**.
+
+**Download transfer draft** preserves the exact workspace identity and original input intent as JSON. **Import transfer draft** accepts it only for that same workspace and refuses a conflicting intent for an existing input ID. Browser storage contains metadata and source identity, not the file's bytes. The actual original file must be selected again before continuing an incomplete upload.
+
+A fresh browser can select an existing input from the server's retained list without the sending browser's local storage. A completed file can be opened and downloaded without reuploading it. A different workspace's input or draft cannot be rebound under this one.
+
+### Full original downloads and receipts
+
+A completed input offers **Download complete original file** and **Download input receipt**. The receipt contains the original byte identity and chunk inventory. The file download is checked against its complete byte count and SHA-256. Where the browser supports its file-save picker, the download is written incrementally to the selected destination and committed only after those checks. The fallback uses the browser's Blob download mechanism while hashing the response stream; it does not create a whole-file JavaScript ArrayBuffer.
+
+The file list includes interrupted and complete transfers. **Read original status** and **Refresh files** retrieve their actual server records. A failure message preserves the same transfer for inspection and continuation. Refreshing retained file state does not rebuild an active provider operation draft.
+
+### Original input HTTP interface
+
+All input routes retain the existing capability authentication and origin checks. The browser supplies no server path, executable, account or credential value.
+
+| Method and route | Body or result |
+| --- | --- |
+| POST `/api/providers/inputs` | Immutable `{inputId,kind,fileName,title,bytes,sha256}` selection |
+| GET `/api/providers/inputs` | `{schema,workspaceId,inputs,chunkBytes}`; list summaries omit chunk arrays |
+| GET `/api/providers/inputs/{id}` | Complete status with ordered original chunk identities |
+| POST `/api/providers/inputs/{id}/chunks` | Binary body; exact `X-Input-Offset`, `X-Content-SHA256` and browser-supplied Content-Length |
+| POST `/api/providers/inputs/{id}/complete` | `{sha256}`; full original identity verification |
+| GET `/api/providers/inputs/{id}/file` | Complete original retained bytes |
+
+IDs are `received-` followed by 32 lowercase hexadecimal characters. Filenames are plain original names, at most 240 UTF-8 bytes, without path separators or control characters. Titles are 1–300 characters without control characters. The server accepts a nonnegative safe integer byte count. Chunk bodies are exactly 8,388,608 bytes except the final remaining bytes. Chunk replies contain the acknowledged original `chunk` and `replayed` state; full status carries the whole chunk array.
+
+The browser module is `provider_inputs.mjs`, mounted by the original `provider_workflows.mjs`. Its `mountProviderInputs({root,request,workspaceId,onComplete,onUse,notify})` returns `start`, `refresh`, `select`, `show` and `destroy`. The existing server serves this selected module and the installation binds both browser and Python input modules alongside the original provider source.
+
+### Actual receiving course and limits of its result
+
+The original installed-provider receiving owner runs one complete native course with the selected application and its original helpers. The browser callback accepts an actual local file descriptor: `{path,name,bytes,sha256,kind,title}`. It operates file selection, first accepted chunk, pause, reload, exact reselection, completion, full download and a new browser/server reopen. It retains the actual input ID, original returned status, downloaded byte/hash comparison and desktop/narrow screenshots.
+
+When no customer provider bundle has been supplied, the course may use its already acquired, exact original Chrome-for-Testing publisher archive as a file-transport observation. Its title explicitly identifies that runtime source; its bytes and hash remain the original publisher's. The course must not call a provider receiver on that archive or describe it as a customer source-workflow archive. The result proves raw file custody and the operated interface for that actual source. The original customer capture, source preparation and native acceptance remain with the actual supplied account and business input.
+
+Apply the full owner instruction above to this new receiving course: view the exact rendered screenshots, operate its controls, open the complete delivered files and working workspace, and fix observed defects. Retain the actual native outcome separately from source review or compilation; neither is rendered readiness.
