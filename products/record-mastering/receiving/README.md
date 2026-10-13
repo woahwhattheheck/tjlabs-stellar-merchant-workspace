@@ -50,7 +50,7 @@ The original product's operating guide is `../OPERATING.md`. Customer datasets a
 
 Use the same original JSON file and command. Each programme takes a native process lease and records namespace-aware process identity. Inspect that retained owner and its outcome before starting a continuation.
 
-Preparation state is `preparation.json`. Receiving state is `receiving.json`, with complete action inputs and results in `steps/`. Application IDs, accepted operation IDs and URLs are retained in the original ready records. Completed steps are reused; interrupted steps retain their original input and dispatch identity. The original Applications owner handles recovery and stop.
+Preparation state is `preparation.json`. A missing-source result retains the original `sourceCommit` and exact `missingObjects` list; acquire those objects into the same repository and resume the unchanged request. Receiving state is `receiving.json`, with complete action inputs and results in `steps/`. Application IDs, accepted operation IDs and URLs are retained in the original ready records. Completed steps are reused; interrupted steps retain their original input and dispatch identity. The original Applications owner handles recovery and stop.
 
 The programme deliberately requires exact original request bytes on reopen. Change a case only through an explicit separately retained selection after reconciling its original operations. Preserve the private workspace, runtime, download files and step records together.
 
