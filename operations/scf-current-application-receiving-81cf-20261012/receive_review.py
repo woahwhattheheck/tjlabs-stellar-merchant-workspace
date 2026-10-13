@@ -20,6 +20,8 @@ from scf_native_process import (
     preserve_console, record_runtime_selection, retain_runtime_edition, run_receiving_program,
 )
 
+from receive_current import pending_writer_phases
+
 OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 
 def digest(body):
@@ -288,6 +290,13 @@ def main():
         "originalReviewId": result.get("originalReviewId") if result else None,
         "reviewActions": result.get("reviewActions") if result else None,
     })
+    pending = pending_writer_phases(native, "review-continuation")
+    if pending:
+        native.update(state="INCOMPLETE", archiveState="WAITING_FOR_OWNED_PROCESS_EXIT",
+                      pendingWriterPhases=pending, retainedOperationDirectory=str(root))
+        write_json(case / "review-continuation-native.json", native)
+        print("SCF_REVIEW_RESUME_RESULT " + json.dumps(native), flush=True)
+        return 1
     write_json(case / "review-continuation-native.json", native)
     archive = root / ("SCF-Current-Application-and-Review" + ("" if state == "COMPLETE" else "-Partial") + ".zip")
     archive_case(args.case, case, archive, output, retired)

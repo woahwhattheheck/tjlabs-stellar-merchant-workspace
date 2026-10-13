@@ -289,7 +289,10 @@ the original controller to confirm cleanup of every launched native and browser
 phase. If any writer's exit is unconfirmed, it returns incomplete with
 `archiveState: WAITING_FOR_OWNED_PROCESS_EXIT`, the retained operation directory
 and the exact pending phase identities. The equipped owner resumes that
-original operation; the command leaves the current saved case intact.
+original operation; the command leaves the current saved case intact. The same
+check protects the original application and review-continuation receivers. The
+composed wrapper reports this retained operation directly, including its exact
+pending phases, without expecting an archive that has deliberately not been made.
 
 Use the resulting case's actual current version for a continuation. Its
 `browser/RESULT.json`, complete downloads, saved records, browser storage and

@@ -17,6 +17,8 @@ from scf_native_process import (
     preserve_console, record_runtime_selection, retain_runtime_edition, run_receiving_program,
 )
 
+from receive_current import pending_writer_phases
+
 OPERATION = "SCF-GRANT-CURRENT-REVIEW-81CF-20261012"
 PHASE = "SCF-SUBMISSION-SOURCE-PACKAGE-A8CE-20261012"
 
@@ -60,26 +62,6 @@ def copy_source(source, destination):
         shutil.copyfile(source, destination)
     return str(destination)
 
-
-def pending_writer_phases(record, label):
-    """Only the original controller can confirm its complete writer cleanup."""
-    phases = record.get("phases")
-    if not isinstance(phases, dict):
-        return [{"controller": label, "reason": "Original phase record is unavailable."}]
-    pending = []
-    for name, phase in phases.items():
-        if (phase.get("state") in ("NOT_STARTED", "LAUNCH_FAILED") and
-                phase.get("pid") is None and not phase.get("process_identity") and
-                not phase.get("process_group")):
-            continue
-        if (phase.get("group_cleanup_complete") is not True or
-                phase.get("stdout_identity", {}).get("writer_exit_pending") or
-                phase.get("stderr_identity", {}).get("writer_exit_pending")):
-            pending.append({"controller": label, "phase": name,
-                            "pid": phase.get("pid"), "state": phase.get("state"),
-                            "process_identity": phase.get("process_identity"),
-                            "termination": phase.get("termination")})
-    return pending
 
 def receive_source(args, original):
     selected = args.source_input.read_bytes()
