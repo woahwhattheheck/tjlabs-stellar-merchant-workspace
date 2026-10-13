@@ -311,6 +311,128 @@ The listing also distinguishes a directory whose request is still being retained
 Open the resulting `reporting-preparation.json` through **Open preparation JSON** in the existing Operating plans editor to retain its original ID, creation time, files and preview. An optional `grant-procedure.json` continues through the original native save/export/receive sequence above, using the actual returned source ID and case version. The same receiving operator retains the saved procedure and full case archive.
 
 
+## Save and receive a procedure through Merchant
+
+The Merchant procedure tools carry a captured or prepared `grant-procedure.json` through the original native save and complete receiving workflow. They use the same declared Grant workspace, retained-file transport and procedure engine as the native commands.
+
+| Tool | Operation |
+| --- | --- |
+| `merchant_grant_procedure_save` | Verify the complete reviewed procedure, save its original source and independently reopen the exact saved bytes. |
+| `merchant_grant_procedure_open` | Open and verify a saved procedure by its actual case and source IDs; retain the complete procedure, current case and verification. |
+| `merchant_grant_procedure_export` | Publish the original complete delivery directory, including the whole case archive and every procedure member. |
+| `merchant_grant_procedure_receive` | Validate that complete delivery, import the original case and independently reopen its procedure and archive lineage. |
+| `merchant_grant_procedure_inspect` | Reopen the retained request, actual native return and available outputs without changing the native case. |
+| `merchant_grant_procedure_list` | Page the original saved operation identities and select one for complete inspection. |
+
+The generic `merchant_grant_source_attach`, `merchant_grant_export` and `merchant_grant_case_import` remain the original routes for ordinary files. The procedure tools additionally preserve the native procedure's source verification, saved request history and complete delivery manifest.
+
+### Save the reviewed original procedure
+
+Select the complete `grant-procedure.json` output from reporting capture, or select an existing complete native procedure through the original declared input or committed transfer. Use its retained snapshot ID and complete SHA-256 directly. The reviewed procedure already contains its original case ID, case version, actor, note, selected sources, table selections, native editions and creation time.
+
+~~~json
+{
+  "workspace": "original-grant",
+  "requestId": "save-reporting-period-01",
+  "input": {"snapshotId": "<complete grant-procedure.json snapshot ID>"},
+  "expectedInputSha256": "<that snapshot's complete file.sha256>"
+}
+~~~
+
+Call `merchant_grant_procedure_save` with that selection. The original engine checks the selected native case and procedure sources before first dispatch, attaches the complete file through the existing case source writer, then independently reopens its exact bytes. The native source filename remains `grant-procedure-<editionId>.json`.
+
+Keep the actual source ID and new case version returned by that original save. They identify the saved procedure for opening and delivery. The original procedure's actor and note remain part of the reviewed document; changing them creates a new reviewed input and request.
+
+A capture or draft may have been prepared before another operator edited the case. If first-dispatch preflight reports that the reviewed version changed, read the current case and prepare the next complete procedure with its actual sources. Preserve the earlier preparation and operation history alongside the new selection.
+
+### Reopen and export the complete case
+
+Use `merchant_grant_procedure_open` with the original workspace, actual `caseId` and saved `sourceId`. Its original native reader validates the procedure and current selected sources and returns their full retained files. Read complete outputs through the returned file-read references.
+
+For delivery, select the current reviewed case version and call:
+
+~~~json
+{
+  "workspace": "original-grant",
+  "requestId": "deliver-reporting-period-01",
+  "caseId": "<actual original case ID>",
+  "sourceId": "<actual saved procedure source ID>",
+  "expectedVersion": 38
+}
+~~~
+
+Replace the example version with the actual reviewed value. `merchant_grant_procedure_export` uses the native exporter to capture the whole original case ZIP, selected procedure and Operating plan, readable handovers, original source selections, receiving inspection and before/after case records. The native engine checks the case version around its reads and publishes the complete directory only after validating every named member.
+
+The returned `delivery` object contains the original `DELIVERY.json` selection and one complete file reference for every member named by that manifest. Preserve it as returned. Its file hashes, exact names and original source workspace bind the receiving selection to the full published bytes.
+
+The export request retains that frozen selection. Repeating an identical request reopens its original published edition. Review a later case version under a new export request when another complete delivery is required. An interrupted export preserves its original staging data; inspection and the original export's recovery continue that same selection.
+
+### Receive every original member
+
+Choose the actual host-declared receiving workspace. Pass the complete `delivery` object returned by export, a receiving case name, the recording actor and one original request ID:
+
+~~~json
+{
+  "workspace": "receiving-grant",
+  "requestId": "receive-reporting-period-01",
+  "delivery": {
+    "manifest": {
+      "input": {"snapshotId": "<DELIVERY.json snapshot ID>", "sourceWorkspace": "original-grant"},
+      "expectedInputSha256": "<complete manifest SHA-256>"
+    },
+    "files": [
+      {
+        "name": "case.zip",
+        "input": {"snapshotId": "<complete case.zip snapshot ID>", "sourceWorkspace": "original-grant"},
+        "expectedInputSha256": "<complete original archive SHA-256>"
+      }
+    ]
+  },
+  "name": "Period 01 reporting receiving",
+  "actor": "Receiving operator"
+}
+~~~
+
+The example shows the shape of one member. Supply **every** member in the returned delivery selection, including the complete procedure, Operating plan, verification and native case records. The original receiver validates the entire manifest and rejects omitted, renamed or mismatched members.
+
+References with `sourceWorkspace` select original retained files in another declared workspace on the same Merchant host. For a separate receiving host, transfer every complete original file through its existing receive-begin/chunk/commit route, then select the actual committed input references and identical hashes. Keep the original names and manifest bytes.
+
+The native receiver imports the whole case through the original Grant importer and independently reopens the selected procedure. Its return includes the actual destination case and retained source identity, with the original case/archive lineage verified. Use that returned destination identity for subsequent work. The original procedure and complete source chain stay attached to the receiving case.
+
+### Recover the same operation after a lost response
+
+Keep the operation name and request ID for every save, export and receive. If a response is interrupted, use `merchant_grant_procedure_inspect`:
+
+~~~json
+{
+  "workspace": "original-grant",
+  "operation": "save",
+  "requestId": "save-reporting-period-01"
+}
+~~~
+
+Inspection reopens the original request and its retained native intent, dispatch, return and completion records, then recovers available output snapshots. It does not dispatch another business write. List retained operations with `merchant_grant_procedure_list`, optionally selecting `save`, `export` or `receive`; follow `nextOffset` until null.
+
+The result identifies its original `operation`, `requestId` and `requestSha256`, with compact selection metadata and complete `files` snapshots. Its state describes the retained original operation:
+
+| State | Meaning and continuation |
+| --- | --- |
+| `COMPLETE` | The native helper finished and every retained output is available. Continue from its actual receipt and complete files. |
+| `RETENTION_INCOMPLETE` | Native work completed; use the same inspection after restoring retained storage to finish output publication. |
+| `PREPARED` | The original request is staged and has no dispatched native write. Repeat its unchanged save or receive to continue. |
+| `RESUME_REQUIRED` | The native request was dispatched without a retained return. Resume its exact original arguments and request ID. |
+| `NATIVE_REJECTED` | The original native request was definitively rejected. Preserve that return and prepare a new reviewed operation. |
+| `NATIVE_RETURNED` | The actual positive native return is retained; its independent reopening or verification still needs completion. Resume the same operation. |
+| `NATIVE_COMPLETE` | The native `COMPLETE.json` exists; repeat the unchanged original save or receive to finish source reopening and retain its full verification result. The native helper reuses the accepted request. |
+| `PUBLICATION_INCOMPLETE` | The original export's staging or delivery publication is incomplete. Preserve it and continue the same selected export. |
+
+A positive native return is preserved in the adapter's response even if a later local file write or verification fails. Treat its actual accepted case/source IDs and version as the outcome of that request. Restore the original output storage or source access, then continue the same retained operation.
+
+If save or receive was dispatched and needs native recovery, repeat its exact original arguments with `resume:true`. The native engine checks the same frozen request intent and uses the same request ID. Changed file references, content hashes, case selection, receiving name or actor conflict with that retained operation. Review a changed selection as a separate request.
+
+Completed and partially published operations reopen their retained input bytes before consulting input aliases again. Moving a former host input therefore does not discard an already staged procedure or delivery. Complete outputs remain available through their original retained snapshots and paged file readers.
+
+
 ## Attach the complete procedure to the customer case
 
 Open the same Grant case and choose **Operating procedures**. Prepare the complete Operating plan with the actual case sources, Source Tables selections and original Installation or task-outcome editions. Review every selected step link, then save it through the case's original actor, version and request controls.
