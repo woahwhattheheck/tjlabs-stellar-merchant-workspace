@@ -855,6 +855,20 @@
         "grant-financial-walkthrough.html",
         "text/html; charset=utf-8"
       ]
+    ],
+    [
+      "/grant-companion-editions.mjs",
+      [
+        "grant-companion-editions.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-companion-reading.mjs",
+      [
+        "grant-companion-reading.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
