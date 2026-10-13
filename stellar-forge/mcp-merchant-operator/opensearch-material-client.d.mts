@@ -290,6 +290,25 @@ export interface DownloadResult {
   manifestSha256:Sha256;resumed:boolean;resumedBytes:number;files:number;bytes:number;
 }
 
+/** Complete original recipient records; no field-level material projection replaces the source. */
+export interface RecipientProposal {
+  id:Sha256;customerId:string;description:string;material:MaterialRecord;editionId:RecordId;
+  status:'APPROVED'|'REJECTED';note:string;revision:number;at:string;
+  originalDecision:(MaterialDecision&{recordSha256:Sha256})|null;[key:string]:unknown;
+}
+export interface RecipientComparisonRow {
+  id:Sha256;proposal:RecipientProposal;current:(MaterialDecision&{recordSha256:Sha256})|null;
+  currentMaterial:MaterialRecord|null;eligible:boolean;unchanged:boolean;conflict:boolean;reason:string;
+}
+export interface RecipientComparisonPage extends RowsPage<RecipientComparisonRow> {
+  schema:'stellar-forge.material-recipient-comparison.v1';reviewId:RecordId;returnSha256:Sha256;
+  reviewer:string;catalog:Catalog;sha256:Sha256;comparisonSha256:Sha256;inputId:string;inputSha256:Sha256;
+}
+export interface RecipientReceived {
+  schema:'stellar-forge.material-recipient-received.v1';reviewId:RecordId;reviewSha256:Sha256;
+  comparisonSha256:Sha256;receiptSha256:Sha256;anchor:{id:RecordId;revision:number}|null;retainedIn:string;
+  results:Array<{context:Sha256;choice:'keep'|'adopt';decision:MaterialDecision|null}>;
+}
 export interface MaterialClientRequests {
   status:Record<string,never>;
   open:Record<string,never>;
@@ -315,6 +334,8 @@ export interface MaterialClientRequests {
   materialSelect:MaterialSelectRequest;
   materialDecision:MaterialDecisionRequest;
   materialDraft:MaterialDraftRequest;
+  materialRecipientPreview:PageArgs&{inputId:string;expectedInputSha256:Sha256;expectedComparisonSha256?:Sha256};
+  materialRecipientReceive:{requestId:RecordId;inputId:string;expectedInputSha256:Sha256};
   materialReceive:{requestId:RecordId;inputId:string};
   materialExport:MaterialExportRequest;
   supplierTemplates:{target?:XChangeTarget};
@@ -360,6 +381,8 @@ export interface MaterialClientResults {
   materialSelect:NativeOperation<{catalog:Catalog;edition:CatalogEdition}>;
   materialDecision:NativeOperation<{decision:MaterialDecision}>;
   materialDraft:NativeOperation<{draftId:RecordId;revision:number;draft:Record<string,unknown>}>;
+  materialRecipientPreview:RecipientComparisonPage;
+  materialRecipientReceive:NativeOperation<RecipientReceived>;
   materialReceive:NativeOperation;
   materialExport:NativeOperation<RetainedExport>;
   supplierTemplates:SupplierTemplate;
@@ -380,7 +403,7 @@ export interface MaterialClientResults {
   exportFile:ExportFileChunk;
   exportFileRelease:Record<string,unknown>;
 }
-export type PagedMaterialMethod='materialList'|'materialHistory'|'materialRows'|'materialChanges'|'materialFacets'|'materialSuggest'|'supplierList'|'supplierHistory'|'supplierRows'|'supplierRecipientRows';
+export type PagedMaterialMethod='materialRecipientPreview'|'materialList'|'materialHistory'|'materialRows'|'materialChanges'|'materialFacets'|'materialSuggest'|'supplierList'|'supplierHistory'|'supplierRows'|'supplierRecipientRows';
 export declare const OPENSEARCH_MATERIAL_CLIENT_METHODS:Readonly<{
   status:'status';
   open:'open';
@@ -406,6 +429,8 @@ export declare const OPENSEARCH_MATERIAL_CLIENT_METHODS:Readonly<{
   materialSelect:'material_select';
   materialDecision:'material_decision';
   materialDraft:'material_draft';
+  materialRecipientPreview:'material_recipient_preview';
+  materialRecipientReceive:'material_recipient_receive';
   materialReceive:'material_receive';
   materialExport:'material_export';
   supplierTemplates:'supplier_templates';
@@ -455,6 +480,8 @@ export declare class OpenSearchMaterialClient {
   materialSelect(args:MaterialClientRequests['materialSelect'],options?:CallOptions):Promise<MaterialClientResults['materialSelect']>;
   materialDecision(args:MaterialClientRequests['materialDecision'],options?:CallOptions):Promise<MaterialClientResults['materialDecision']>;
   materialDraft(args:MaterialClientRequests['materialDraft'],options?:CallOptions):Promise<MaterialClientResults['materialDraft']>;
+  materialRecipientPreview(args:MaterialClientRequests['materialRecipientPreview'],options?:CallOptions):Promise<MaterialClientResults['materialRecipientPreview']>;
+  materialRecipientReceive(args:MaterialClientRequests['materialRecipientReceive'],options?:CallOptions):Promise<MaterialClientResults['materialRecipientReceive']>;
   materialReceive(args:MaterialClientRequests['materialReceive'],options?:CallOptions):Promise<MaterialClientResults['materialReceive']>;
   materialExport(args:MaterialClientRequests['materialExport'],options?:CallOptions):Promise<MaterialClientResults['materialExport']>;
   supplierTemplates(args?:MaterialClientRequests['supplierTemplates'],options?:CallOptions):Promise<MaterialClientResults['supplierTemplates']>;

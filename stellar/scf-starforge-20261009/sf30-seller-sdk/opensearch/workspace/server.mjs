@@ -1,6 +1,6 @@
 // MIT. Loopback operator interface for retained OpenSearch merchant work.
 import { createServer } from 'node:http';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, timingSafeEqual, createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -13,6 +13,10 @@ const ASSETS = new Map([['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/deployment.mjs', ['deployment.mjs', 'text/javascript; charset=utf-8']],
   ['/catalog.mjs', ['catalog.mjs', 'text/javascript; charset=utf-8']],
+  ['/catalog-recipient.mjs', ['catalog-recipient.mjs', 'text/javascript; charset=utf-8']],
+  ['/recipient/review.mjs', ['../../../../../products/material-catalog/recipient/review.mjs', 'text/javascript; charset=utf-8']],
+  ['/recipient/core.mjs', ['../../../../../products/material-catalog/recipient/core.mjs', 'text/javascript; charset=utf-8']],
+  ['/recipient/sha256.mjs', ['../../../../../products/material-catalog/recipient/sha256.mjs', 'text/javascript; charset=utf-8']],
   ['/supplier.mjs', ['supplier.mjs', 'text/javascript; charset=utf-8']],
   ['/xchange.mjs', ['xchange.mjs', 'text/javascript; charset=utf-8']],
   ['/file-sha256.mjs', ['file-sha256.mjs', 'text/javascript; charset=utf-8']],
@@ -76,6 +80,20 @@ function catalogMetadata(req) {
   if (declared !== undefined && (typeof declared !== 'string' || !/^[0-9]+$/.test(declared) || Number(declared) !== value.bytes))
     throw new WorkspaceError('WORKSPACE_CATALOG_LENGTH_INVALID', 'The upload length differs from its selected file.', 400);
   return value;
+}
+async function recipientFile(req, metadata, maximum) {
+  if (metadata.bytes > maximum || typeof metadata.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(metadata.sha256))
+    throw new WorkspaceError('CATALOG_RECIPIENT_FILE_INVALID', 'Use the exact bounded original review/request file.', 413);
+  const chunks = [], hash = createHash('sha256'); let length = 0;
+  for await (const chunk of req) {
+    length += chunk.length;
+    if (length > metadata.bytes) throw new WorkspaceError('CATALOG_RECIPIENT_FILE_CHANGED', 'The selected file exceeds its declared byte count.', 409);
+    chunks.push(chunk); hash.update(chunk);
+  }
+  if (length !== metadata.bytes || hash.digest('hex') !== metadata.sha256)
+    throw new WorkspaceError('CATALOG_RECIPIENT_FILE_CHANGED', 'The selected original file bytes changed.', 409);
+  try { return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(Buffer.concat(chunks, length)); }
+  catch { throw new WorkspaceError('CATALOG_RECIPIENT_FILE_INVALID', 'Select complete UTF-8 review/request JSON.', 400); }
 }
 async function body(req) {
   if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) throw new WorkspaceError('WORKSPACE_JSON_REQUIRED');
@@ -231,7 +249,7 @@ export async function startOpenSearchWorkspace({ workspace, port = 8447 } = {}) 
           return send(res, 200, comparison);
         }
       }
-      if (req.method === 'POST' && ['/api/catalog/upload', '/api/catalog/import'].includes(path) && !url.search) {
+      if (req.method === 'POST' && ['/api/catalog/upload', '/api/catalog/import', '/api/catalog/recipient-preview', '/api/catalog-recipient-receive'].includes(path) && !url.search) {
         const supplied = req.headers['x-workspace-token'];
         if (req.headers.origin !== origin || typeof supplied !== 'string' || Buffer.byteLength(supplied) !== Buffer.byteLength(token) ||
           !timingSafeEqual(Buffer.from(supplied), Buffer.from(token)))
@@ -239,7 +257,17 @@ export async function startOpenSearchWorkspace({ workspace, port = 8447 } = {}) 
         if (!/^application\/octet-stream(?:;|$)/i.test(req.headers['content-type'] ?? ''))
           throw new WorkspaceError('WORKSPACE_CATALOG_BYTES_REQUIRED', 'Send the selected file as application/octet-stream.', 400);
         const metadata = catalogMetadata(req);
-        operationId = metadata.requestId;
+        operationId = path === '/api/catalog/recipient-preview' ? undefined : metadata.requestId;
+        if (path === '/api/catalog/recipient-preview')
+          return send(res, 200, workspace.catalog.previewRecipientReview(await recipientFile(req, metadata, 4 * 1024 * 1024)));
+        if (path === '/api/catalog-recipient-receive') {
+          const raw = await recipientFile(req, metadata, 8 * 1024 * 1024);
+          let request; try { request = JSON.parse(raw); } catch { throw new WorkspaceError('WORKSPACE_INVALID_JSON'); }
+          if (!request || request.requestId !== metadata.requestId || raw !== JSON.stringify(request, null, 2) + '\n')
+            throw new WorkspaceError('CATALOG_RECIPIENT_REQUEST_CHANGED', 'Use the exact original downloaded request and request ID.', 409);
+          const result = workspace.catalog.receiveRecipientReview(request);
+          return send(res, result.state === 'RUNNING' ? 202 : 200, result);
+        }
         const result = path === '/api/catalog/import' ? await workspace.catalog.importBundle(metadata, req)
           : await workspace.catalog.upload(metadata, req);
         return send(res, result.state === 'RUNNING' ? 202 : 200, result);
@@ -279,7 +307,7 @@ export async function startOpenSearchWorkspace({ workspace, port = 8447 } = {}) 
       return send(res, 404, { error: 'WORKSPACE_ROUTE_NOT_FOUND' });
     }).catch(error => {
       if (res.writableEnded || res.destroyed) return;
-      const known = error instanceof WorkspaceError || /^OPENSEARCH_|^MERCHANT_|^QUERY_|^SELLER_|^SUPPLIER_/.test(error?.code ?? '');
+      const known = error instanceof WorkspaceError || /^OPENSEARCH_|^MERCHANT_|^QUERY_|^SELLER_|^SUPPLIER_|^REVIEW_/.test(error?.code ?? '');
       let requestRecorded;
       if (operationId !== undefined) {
         try { workspace.operation(operationId); requestRecorded = true; }

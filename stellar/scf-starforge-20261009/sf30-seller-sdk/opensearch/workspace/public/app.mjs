@@ -17,6 +17,13 @@ function notice(message, error = false) { $('notice').textContent = message; $('
 function errorMessage(error) { return [error.code, error.message].filter(Boolean).join(' · '); }
 const currentKey = () => 'stellar-forge-opensearch:' + state.workspaceId + ':pending';
 function retainPending(value) {
+  if (value?.kind === 'catalog-recipient-receive') {
+    const exact = JSON.stringify(value);
+    try {
+      localStorage.setItem(currentKey(), exact);
+      if (localStorage.getItem(currentKey()) !== exact) throw new Error('Readback differs.');
+    } catch { throw new Error('The original request identity could not be retained in this browser. Keep the downloaded request and use the original CLI, or restore browser storage before sending. No adoption was dispatched.'); }
+  }
   state.pending = value;
   try { value ? localStorage.setItem(currentKey(), JSON.stringify(value)) : localStorage.removeItem(currentKey()); } catch {}
   renderPending(); buttons();
@@ -164,7 +171,7 @@ async function transmitPending() {
   if (!state.pending) return;
   state.busy = true; buttons();
   try {
-    const result = ['catalog-upload', 'catalog-import'].includes(state.pending.kind)
+    const result = ['catalog-upload', 'catalog-import', 'catalog-recipient-receive'].includes(state.pending.kind)
       ? await catalog.transmitFile(state.pending)
       : await api('/api/' + (state.pending.kind === 'save-draft' ? 'drafts' : state.pending.kind), state.pending.payload);
     await acceptOperation(result); await refresh();
@@ -180,7 +187,8 @@ async function transmitPending() {
 }
 async function perform(kind, values) {
   if (state.pending) { view('operations'); return notice('Read or retry the existing saved request before creating another.', true); }
-  const payload = { ...values, requestId: crypto.randomUUID() };
+  const payload = { ...values, requestId: kind === 'catalog-recipient-receive' ? values.requestId : crypto.randomUUID() };
+  if (kind === 'catalog-recipient-receive' && !/^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$/.test(payload.requestId ?? '')) throw new Error('Retain the original reviewed request ID.');
   if (new TextEncoder().encode(JSON.stringify(payload)).length > 1048576)
     throw new Error('The saved request exceeds 1 MiB. Reduce the editor contents before sending.');
   retainPending({ kind, payload });
