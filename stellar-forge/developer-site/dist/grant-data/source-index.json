@@ -9860,15 +9860,125 @@
       "commit": "2c69f99e2a787a0ff4966e1029c809fc65a8c0c2",
       "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/2c69f99e2a787a0ff4966e1029c809fc65a8c0c2/operations/scf-receivables-native-2a51-20261012/HOSTED_RECEIVING.md",
       "original_source_commit": "94ad1dd33fd1616303d52faa8b1cd98745c6cfc5"
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "1b19665fde7c5fc7fbbe6ebc37557364e3670ba6",
+      "path": "stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/1b19665fde7c5fc7fbbe6ebc37557364e3670ba6/stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md",
+      "source_kind": "source-file",
+      "id": "invoice-settlement-customer-operations",
+      "kind": "published-source",
+      "label": "Invoice & Settlement installed customer operations",
+      "source_registration": "invoice-settlement",
+      "git_blob": "e50c61045e9da50824f99d5cb1e2557c675679c0",
+      "sha256": "bc756487244fd091566bfc4a47099f0798f5344f88780990b638e913244c5cc0",
+      "bytes": 17895,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "1b19665fde7c5fc7fbbe6ebc37557364e3670ba6",
+        "path": "stellar-forge/mcp-merchant-operator/INVOICE_SETTLEMENT_CUSTOMER.md",
+        "git_blob": "e50c61045e9da50824f99d5cb1e2557c675679c0",
+        "sha256": "bc756487244fd091566bfc4a47099f0798f5344f88780990b638e913244c5cc0",
+        "bytes": 17895
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",
+      "source_kind": "source-file",
+      "id": "invoice-settlement-horizon-review",
+      "kind": "published-source",
+      "label": "Original Horizon invoice review and decisions",
+      "source_registration": "invoice-settlement",
+      "git_blob": "2b4dda51afe1b43be9712483cbe43bcffc4b1ae6",
+      "sha256": "b67e5f38b6bebcd9a4275d81056c4518a57fa003ca238e3804a8c02bb4a5f8eb",
+      "bytes": 11639,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/HORIZON_INVOICES.md",
+        "git_blob": "2b4dda51afe1b43be9712483cbe43bcffc4b1ae6",
+        "sha256": "b67e5f38b6bebcd9a4275d81056c4518a57fa003ca238e3804a8c02bb4a5f8eb",
+        "bytes": 11639
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/APPLICATIONS.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67/stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/APPLICATIONS.md",
+      "source_kind": "source-file",
+      "id": "invoice-settlement-applications",
+      "kind": "published-source",
+      "label": "Invoice & Settlement application and full receiving",
+      "source_registration": "invoice-settlement",
+      "git_blob": "4b2d75acbdefa246c6d7dede96e6bbbfe1dbfb42",
+      "sha256": "7c3e1150dd54718a0964d833ea27d0714f47a1197f4fbc6e641e466725ff22d6",
+      "bytes": 17696,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "c1cd32e1d0e8d28ed2c2e40332276c06c7f4ae67",
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/invoice-settlement/APPLICATIONS.md",
+        "git_blob": "4b2d75acbdefa246c6d7dede96e6bbbfe1dbfb42",
+        "sha256": "7c3e1150dd54718a0964d833ea27d0714f47a1197f4fbc6e641e466725ff22d6",
+        "bytes": 17696
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "33f1e1fabbb9db1b80028512064ba973f5e5e580",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/INVOICE_SETTLEMENT.md",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33f1e1fabbb9db1b80028512064ba973f5e5e580/stellar/scf_2026/sf49_data_commissioning/installation-workorders/INVOICE_SETTLEMENT.md",
+      "source_kind": "source-file",
+      "id": "invoice-settlement-installation",
+      "kind": "published-source",
+      "label": "Complete Invoice & Settlement commissioning and Installation",
+      "source_registration": "invoice-settlement",
+      "git_blob": "037b38fc12e73d0c3a6fa0f7dc21d8a205d8732f",
+      "sha256": "0f123d9499d31488517f0d633919227cddcce7d219a25ea6f30a5073843b48cb",
+      "bytes": 20881,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "33f1e1fabbb9db1b80028512064ba973f5e5e580",
+        "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/INVOICE_SETTLEMENT.md",
+        "git_blob": "037b38fc12e73d0c3a6fa0f7dc21d8a205d8732f",
+        "sha256": "0f123d9499d31488517f0d633919227cddcce7d219a25ea6f30a5073843b48cb",
+        "bytes": 20881
+      }
+    },
+    {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "33f1e1fabbb9db1b80028512064ba973f5e5e580",
+      "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/invoice-settlement.json",
+      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/33f1e1fabbb9db1b80028512064ba973f5e5e580/stellar/scf_2026/sf49_data_commissioning/installation-workorders/invoice-settlement.json",
+      "source_kind": "source-file",
+      "id": "invoice-settlement-installation-profile",
+      "kind": "published-source",
+      "label": "Maintained Invoice & Settlement workorder profile",
+      "source_registration": "invoice-settlement",
+      "git_blob": "efcb6c69d170d014f7eba6b24fccc5bed3db62d9",
+      "sha256": "a9a768968f9165b49fc39b399feeb4abc26aa8ba1b786dfbedf87bedc691bd5b",
+      "bytes": 13227,
+      "product_byte_identity": {
+        "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+        "commit": "33f1e1fabbb9db1b80028512064ba973f5e5e580",
+        "path": "stellar/scf_2026/sf49_data_commissioning/installation-workorders/invoice-settlement.json",
+        "git_blob": "efcb6c69d170d014f7eba6b24fccc5bed3db62d9",
+        "sha256": "a9a768968f9165b49fc39b399feeb4abc26aa8ba1b786dfbedf87bedc691bd5b",
+        "bytes": 13227
+      }
     }
   ],
   "product_and_finance": {
     "path": "product-and-finance.md",
-    "git_blob": "b88ca474db07a0d9118a67f078370a739e0529ab",
-    "bytes": 999941,
-    "sha256": "6b08d2066d64a6bfe020745afd91c2369d160cc7acc90293b71f578668b0aed5",
+    "git_blob": "2f4f62b418aa335358da6ffc389378844ed9ead2",
+    "bytes": 1009907,
+    "sha256": "92340ead37a90fe29e6d462cc71491310fd3214d25a5cad902c8d8489776a5d5",
     "basis": "Complete maintained product and finance companion. Accepted customer installations share the existing six funded packages and original cost assumptions. The selected Datasette source editions and editable customer analysis use the same six funded packages. The merchant financial chapter applies the shipped settlement, invoice, collection and accountant foundation to the same prospective customer integration packages.",
-    "prior_git_blob": "9adc345d8a59849d2586898f7a6f0d40454d0b18"
+    "prior_git_blob": "b88ca474db07a0d9118a67f078370a739e0529ab"
   },
   "narrative_source": {
     "basis": "Original manuscript author's complete October 12 reviewer answer",
@@ -10193,6 +10303,7 @@
         "Stellarcarbon customer statements and continuing partner reporting",
         "GiveCredit donor reporting, provider pools and carbon allocation",
         "Original grant accounts and saved operating work",
+        "Invoice reconciliation, reviewed Stellar deposits and independent customer receiving",
         "10. Open the existing work"
       ],
       "previous_cumulative_commit": "1945289c8d39b7850bf3b496c13c7ae5643176bf",
@@ -10714,6 +10825,23 @@
             "bytes": 14063,
             "sha256": "a225c4f51839d23766f84d3d6f5f26c111b07b41726e4a05ee0e6838da7fdb23",
             "git_blob": "2e4d6854656203f342fdd4762f64842a4ce54962"
+          }
+        },
+        {
+          "id": "invoice-settlement",
+          "heading": "## Invoice reconciliation, reviewed Stellar deposits and independent customer receiving",
+          "source_ids": [
+            "invoice-settlement-customer-operations",
+            "invoice-settlement-horizon-review",
+            "invoice-settlement-applications",
+            "invoice-settlement-installation",
+            "invoice-settlement-installation-profile"
+          ],
+          "definition": {
+            "path": "grant-products/invoice-settlement.json",
+            "bytes": 4100,
+            "sha256": "8ce3b5530ae738d9dd48ab5a574577532329633001496204bf68b099d6e201ff",
+            "git_blob": "369fb8d064cc0e5ab49bd1c89fd1a919a39af4ba"
           }
         },
         {
@@ -11465,8 +11593,8 @@
     "route": "/grant-companion.html",
     "source": "/grant-data/product-and-finance.md",
     "source_index": "/grant-data/source-index.json",
-    "source_sha256": "6b08d2066d64a6bfe020745afd91c2369d160cc7acc90293b71f578668b0aed5",
-    "source_bytes": 999941,
+    "source_sha256": "92340ead37a90fe29e6d462cc71491310fd3214d25a5cad902c8d8489776a5d5",
+    "source_bytes": 1009907,
     "assets": [
       "/grant-companion.html",
       "/grant-companion.css",
