@@ -74,6 +74,10 @@ Any other returned integer outside JavaScript's safe range is also a decimal str
 
 Prepare and receive do not require a top-level installation. Their destination is arguments.directory. The public entrypoint's native implementation performs initial materialization. Installed inspect/adopt/snapshot load native/manage.py and native/archive.py from the selected installation.
 
+For installation.receive, arguments.directory is the complete receiving container. It retains receiving-request.json, the verified original payload, receiving-preparation.json and receiving.json. The original receiver creates its independent installation under that container's installation subdirectory. The successful envelope's installation.paths.directory is the authoritative directory for every subsequent installed operation, bound client, MCP workspace and managed service. The complete native result carries the same path at result.installation.paths.directory. Keep the original receiving container and exact archive/Python arguments separately for replaying the same receive request; do not substitute the returned installation path into that original request.
+
+For example, receiving into /PRIVATE/taskerarmy-received returns installation.paths.directory=/PRIVATE/taskerarmy-received/installation. Queue/history/request reads, later snapshots, commands.describe and the operator launcher select the returned directory. An interrupted response is reconciled by replaying the unchanged receive at /PRIVATE/taskerarmy-received, then consuming its returned installation identity. The receiving container itself is not an installed workspace.
+
 database contains schema_sha256, integrity and a complete tables array. Each table record has name, columns, rows and sha256. Original SQLite tables and the named-operation journal are included. Source and archive results carry their complete file manifests and original identifiers.
 
 ## Configuration

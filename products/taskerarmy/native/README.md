@@ -158,6 +158,15 @@ python3 -B native/manage.py receive \
 
 Receiving verifies the complete archive before selecting its independent installation. The received workspace has its own installation ID, interpreter and canonical paths; original source IDs, event/message bytes, configuration and request records remain retained. The original receiving journal makes the exact archive/directory/interpreter selection repeatable.
 
+The --directory value above is the receiving container. Its retained payload and receiving journal surround the independent installation at /PRIVATE/received-taskerarmy/installation. Select installation.paths.directory from the returned native result for all installed operations and service launches. The JSON operation envelope exposes that same canonical directory. Preserve the outer /PRIVATE/received-taskerarmy path and original archive/interpreter inputs for replaying this exact receiving operation.
+
+~~~sh
+python3 -B native/manage.py inspect \
+  --directory /PRIVATE/received-taskerarmy/installation
+~~~
+
+A caller that receives through a client selected on the outer directory must open its installed client on the returned installation.paths.directory before requesting queue/history, named requests, onward export or managed operator services. The original receive client keeps its outer selection for the unchanged receiving replay. If the receive reply is interrupted, repeat those original receive arguments and use the returned installation record; retain the complete original payload and existing journals.
+
 Requests retained in a received database keep their originating installation namespace. Read one with requests.get and its original installation_id. Start a new mutation in the received installation's own namespace, while preserving source event IDs when the intended operation is replaying an original event.
 
 Inspect the received installation, start its own operator/worker/ingress through commands.describe, and reopen the original queue, message and job history. A later handover includes its retained lineage and independently receives through the same native operation.

@@ -137,6 +137,7 @@ export class TaskerInstallation {
     Promise<NativeResult<NativeOperations[K]['result']>>;
   inspect(): Promise<NativeResult<Inspection>>;
   prepare(input: PrepareInput, requestId: string): Promise<NativeResult<JsonObject>>;
+  /** Receives into this outer container; operate result.installation.paths.directory with a new client. */
   receive(input: ReceiveInput, requestId: string): Promise<NativeResult<JsonObject>>;
   snapshot(output: string, requestId: string): Promise<NativeResult<JsonObject>>;
   configuration(): Promise<NativeResult<ConfigurationResult>>;

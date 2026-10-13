@@ -68,7 +68,7 @@ Create a private JSON connection file, for example:
 }
 ~~~
 
-Set the actual absolute paths. The connection file must be owned and private (0600), with canonical source and installation paths. A new installation path is permitted below its existing private parent. transferDirectory must already be private. A receiving alias can select receiveArchive and its separate new destination. Optional binding selects an original installation_id and source_identity.
+Set the actual absolute paths. The connection file must be owned and private (0600), with canonical source and installation paths. A new installation path is permitted below its existing private parent. transferDirectory must already be private. A receiving alias selects receiveArchive and uses directory for the original outer receiving container. The original native receiver creates the usable installation at directory/installation. That alias keeps receive and its replay bound to the outer container, and routes status, configuration, queues, commands and onward snapshots to the actual installation, including after the MCP owner restarts. Optional binding selects an original installation_id and source_identity.
 
 The distribution declares merchant provider tasker-workspaces, family/configuration key taskerWorkspaces, and the host configuration input taskerWorkspaceConnection. The original merchant registry discovers its metadata and loads its native implementation when configured. Its configuration reader is readTaskerWorkspaceConfiguration.
 
@@ -157,7 +157,25 @@ node products/taskerarmy/cli.mjs receive \
   --request-id 95d2cc18-f615-4f1e-bce3-c73f025e4f67
 ~~~
 
-Keep the complete original archive and its returned byte count, digest and native manifest. Receiving creates a new installation identity while preserving the original lineage and database. Inspect the copied operation journal with the originating installation UUID, then open the received operator, inspect the actual queue/history and export the received installation onward. The native receiving request and completed outputs govern retries.
+Keep the complete original archive and its returned byte count, digest and native manifest. Receiving creates a new installation identity while preserving the original lineage and database. The receive command selects the outer container /PRIVATE/tasker-received; its returned installation.paths.directory is /PRIVATE/tasker-received/installation. Use that returned installation path for the standalone client, subsequent CLI operations and all three Applications entries. Repeat the original receive with its unchanged outer directory, archive and request UUID. Inspect the copied operation journal with the originating installation UUID, then open the received operator, inspect the actual queue/history and export the received installation onward. The native receiving request and completed outputs govern retries.
+
+For a standalone client, retain both source-owned roles explicitly:
+
+~~~js
+const receiver = new TaskerInstallation({directory: '/PRIVATE/tasker-received', sourceDirectory, python});
+const result = await receiver.receive({archive_path: archive, python}, originalRequestId);
+const installed = new TaskerInstallation({directory: result.installation.paths.directory, sourceDirectory, python});
+try {
+  const history = await installed.history(tenant, jobId, {limit: 100});
+  const copied = await installed.request(originalEventRequestId, originalInstallationId);
+  console.log(history.result, copied.result);
+} finally {
+  await installed.close();
+  await receiver.close();
+}
+~~~
+
+Use the same receiver and original receive arguments to reconcile a lost receiving response. A host-configured receiveArchive alias manages those two paths automatically.
 
 ## Installation workorder
 

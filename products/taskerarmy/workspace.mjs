@@ -32,8 +32,9 @@ export async function readTaskerWorkspaceConfiguration(path) {
     exact(input, ['label', 'directory', 'sourceDirectory', 'application', 'python', 'configurationFile',
       'manifestPath', 'transferDirectory', 'receiveArchive', 'binding'], ['directory']);
     const directory = await canonicalDirectory(selectedPath(input.directory, base), {missing: true, privateOnly: true});
-    if (seen.has(directory)) throw taskerError('TASKER_CONFIGURATION_ERROR', 'Give each original installation directory one alias.');
-    seen.add(directory);
+    const installedDirectory = input.receiveArchive !== undefined ? join(directory, 'installation') : directory;
+    if (seen.has(installedDirectory)) throw taskerError('TASKER_CONFIGURATION_ERROR', 'Give each original installation directory one alias.');
+    seen.add(installedDirectory);
     const sourceDirectory = await canonicalDirectory(selectedPath(input.sourceDirectory ?? TASKER_SOURCE, base));
     await originalFile(join(sourceDirectory, 'native', 'operations.py'));
     const value = {directory, sourceDirectory, python: selectedPath(input.python ?? '/usr/bin/python3', base),
@@ -110,14 +111,17 @@ export class MerchantTaskerWorkspaces {
       activeCalls: [...this.#clients.values()].reduce((sum, client) => sum + client.activeCalls, 0),
       closing: this.#closing};
   }
-  #selected(workspace) {
+  #selected(workspace, receiving = false) {
     const selected = this.#workspaces[workspace];
     if (!selected) throw taskerError('TASKER_WORKSPACE_NOT_CONFIGURED', 'Choose a host-declared original Tasker alias.');
-    let client = this.#clients.get(workspace);
+    const receiveAlias = Boolean(selected.receiveArchive);
+    const key = workspace + (receiveAlias ? receiving ? ':receiving' : ':installation' : '');
+    const directory = receiveAlias && !receiving ? join(selected.directory, 'installation') : selected.directory;
+    let client = this.#clients.get(key);
     if (!client) {
-      client = new TaskerInstallation({directory: selected.directory, sourceDirectory: selected.sourceDirectory,
+      client = new TaskerInstallation({directory, sourceDirectory: selected.sourceDirectory,
         python: selected.python, ...(selected.binding ? {binding: selected.binding} : {})});
-      this.#clients.set(workspace, client);
+      this.#clients.set(key, client);
     }
     return {selected, client};
   }
@@ -128,11 +132,12 @@ export class MerchantTaskerWorkspaces {
     exact(args, Object.keys(definition.properties), definition.required);
     const workspace = alias(args.workspace), input = structuredClone(args);
     validate(input, name === 'merchant_tasker_request');
-    const {selected, client} = this.#selected(workspace);
     const action = name.slice('merchant_tasker_'.length), id = input.requestId;
+    const {selected, client} = this.#selected(workspace, action === 'receive');
     let result;
     if (action === 'status') result = await client.inspect();
     else if (action === 'prepare') {
+      if (selected.receiveArchive) throw taskerError('TASKER_RECEIVING_ALIAS', 'Receive the selected complete archive through this alias. Use a separate preparation alias for a new application.');
       if (!selected.configurationFile) throw taskerError('TASKER_CONFIGURATION_REQUIRED', 'Select the original configuration file in this host’s connection JSON.');
       result = await client.prepare(keep({application: selected.application, configuration: selected.configurationFile,
         manifest_path: selected.manifestPath, python: selected.python}), id);
@@ -145,6 +150,8 @@ export class MerchantTaskerWorkspaces {
     } else if (action === 'receive') {
       if (!selected.receiveArchive) throw taskerError('TASKER_ARCHIVE_REQUIRED', 'Select the complete original receive archive in this host’s connection JSON.');
       result = await client.receive({archive_path: selected.receiveArchive, python: selected.python}, id);
+      if (result.installation?.paths?.directory !== join(selected.directory, 'installation'))
+        throw taskerError('TASKER_RECEIVING_CHANGED', 'The original receiver returned a different installation directory. Inspect that same saved receiving request.');
     } else if (action === 'configuration') result = await client.configuration();
     else if (action === 'save_configuration') result = await client.saveConfiguration(input.revision, input.configuration, id);
     else if (action === 'queue_status') result = await client.call('queue.status', keep({tenant: input.tenant, limit: input.limit}));
@@ -161,7 +168,7 @@ export class MerchantTaskerWorkspaces {
     else if (action === 'request') result = await client.request(id, input.originInstallationId);
     else if (action === 'commands') result = await client.call('commands.describe', keep({roles: input.roles,
       operator_port: input.operatorPort, ingress_port: input.ingressPort, worker_interval: input.workerInterval,
-      ready_file: join(selected.directory, 'operator-ready.json')}));
+      ready_file: join(client.selection.directory, 'operator-ready.json')}));
     else throw taskerError('TOOL_NOT_FOUND', 'Unknown original Tasker operation.');
     return {...result, workspace};
   }
