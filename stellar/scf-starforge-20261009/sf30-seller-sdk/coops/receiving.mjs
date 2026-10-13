@@ -582,7 +582,10 @@ export async function runCoopsOperatorJourney(initialPage,options={}){
     await input(reviewKey,'subject',review.subject);await input(reviewKey,'status',review.status);
     await input(reviewKey,'note',review.note+'\nReviewer: '+review.reviewer+'\nReviewed source packet SHA-256: '+review.packetSha256+'\nReview performed: '+review.performedAt);
     if(cp.observationInspection.enabled){
-     const selected=cp.phases.inspect_original_observation_window.result.payload,entered=(await browserState()).drafts[reviewKey];
+     const selected=cp.phases.inspect_original_observation_window.result.payload;
+     const note=review.note+'\nReviewer: '+review.reviewer+'\nReviewed source packet SHA-256: '+review.packetSha256+'\nReview performed: '+review.performedAt;
+     await waitUntil(async()=>{const d=(await browserState())?.drafts[reviewKey];return d?.subject===review.subject&&d?.status===review.status&&d?.note===note;},'Retaining the actual independent review fields before inspection attachment');
+     const entered=(await browserState()).drafts[reviewKey];
      const before={subject:entered.subject,status:entered.status,note:entered.note};
      await page.locator('[data-cmd="inspection-review"]').click();
      await page.locator('#dialog[open] [data-cmd="inspection-attach"]').click();
