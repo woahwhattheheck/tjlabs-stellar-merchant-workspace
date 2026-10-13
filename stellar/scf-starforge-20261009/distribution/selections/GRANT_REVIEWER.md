@@ -404,14 +404,17 @@ runtime declarations.
 | `stellar-forge/mcp-paid-agent` | Native Buyer, quote/result stores, computed console assets, browser client and declared MCP runtime inputs |
 | `stellar-forge/mcp-merchant-operator` | Original merchant host, provider registry, retained file readers/downloads and computed operator assets |
 | `stellar/scf-starforge-20261009/sf82-seller-pilot` | Original release-store setup, selection and native release lifecycle |
-| `stellar-forge/developer-site` | Complete reviewed application, budget and companion downloads, retained economic report and shared local source server |
+| `stellar-forge/developer-site` | Complete reviewed application, budget and companion downloads, retained economic report, original catalog reader and shared local source server |
+| `stellar/scf-starforge-20261009/sf61-bazaar-explorer` | Original Atlas capture/search, complete catalog review receiving, request preparation and full workspace transfer |
+| `scf46-stellar-bazaar/src` | Maintained catalog identity, schema-aware ranking and query index |
+| `stellar-forge/route-identity` | Original resource URL and route identity |
 
 The selected command catalog contains `installation`, `runtime-profile`,
 `runtime-install`, `runtime-workspace`, `runtime-transfer`, `grant-application`,
 `grant-compose`, `grant-export`, `grant-operating-plan`, `discover`, `grant-demo`,
-`merchant-mcp`, `merchant-grant-reviewer` and
-`merchant-console-application-receive`.
-Its Applications providers are `grant-reviewer` and `merchant-console`; its
+`merchant-mcp`, `merchant-grant-reviewer`, `merchant-console-application-receive`,
+`atlas`, `atlas-workspace` and `atlas-search-journey`.
+Its Applications providers are `grant-reviewer`, `merchant-console` and `atlas`; its
 merchant provider is `grant-reviewer-workbenches`. Its public workbench import is
 `@tokenjunkielabs/starforge-merchant/grant/reviewer-workbench`. The application
 reader is also available through
@@ -445,3 +448,26 @@ identities with the receiving handover. Private workbenches, access codes,
 customer files and native operation journals remain outside the source package.
 Archive size, installed size and memory use come from the actual original
 build and receiving output; registration counts do not measure them.
+
+## Search the catalog and continue in Atlas
+
+The application's **Search the catalog** opening loads the complete retained
+27-row source and checks its original digest. Search descriptions or declared
+inputs, apply exact payment filters, inspect the full declaration and choose an
+original payment alternative. Prepare and download the complete review file.
+
+Open the existing Atlas application and choose **Receive a catalog review**.
+Inspect the complete source and selected terms before **Receive and open this
+request**. The original editor continues concrete request preparation and native
+buyer handoff. Complete Atlas export and receiving keep the review with its
+source and request revisions.
+
+The selected package includes the original `atlas` and `atlas-workspace` commands
+and `catalog/atlas/review`, `catalog/atlas/search`, `catalog/atlas/workspace` and
+`catalog/atlas/transfer` exports. The maintained `atlas-search-journey` command
+accepts `reviewFile` and continues the same genuine query corpus through source
+receipt, preparation, full transfer and cold reopen.
+
+Read `source/stellar-forge/developer-site/GRANT_CATALOG.md` and
+`source/stellar/scf-starforge-20261009/sf61-bazaar-explorer/CATALOG_REVIEW.md` for
+the full browser, CLI, typed API and original receiving contract.

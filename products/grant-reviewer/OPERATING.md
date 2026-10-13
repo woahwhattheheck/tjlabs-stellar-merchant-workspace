@@ -375,3 +375,28 @@ buyer evidence when those records are available. The
 [Operations guide](../grant-operations/OPERATING.md#frozen-groundwater-report-receiving)
 describes the precise case/deployment/purchase selection. Neither this
 architecture addition nor opening its source creates another purchase.
+
+## Search a retained catalog and receive its original request
+
+The grant application's **Search the catalog** opening operates the complete
+October 12, 2026 Vellar page: 27 resources, original declarations and payment
+alternatives. Load the source, apply a query and exact filters, inspect a result,
+then prepare and download its complete catalog review JSON.
+
+In the installed **Atlas** application, expand **Receive a catalog review**.
+Choose the full file, inspect the original source and selected terms, and select
+**Receive and open this request**. The original Atlas editor continues explicit
+URL, method, header, body/ticket preparation and its maintained buyer handoff.
+The configured buyer remains responsible for its current service and approval.
+
+The saved request can download its original review; complete Atlas workspace
+export and receiving carry that review with the capture and request revisions.
+This source review uses the catalog's own advertised USDC alternatives. The
+original testnet XLM purchase and result described in the preceding sections
+retain their separate operated history.
+
+The focused `grant-reviewer` package includes Atlas, `atlas-workspace` and the
+typed `catalog/atlas/review` and `catalog/atlas/search` exports. See the installed
+`stellar-forge/developer-site/GRANT_CATALOG.md` and
+`stellar/scf-starforge-20261009/sf61-bazaar-explorer/CATALOG_REVIEW.md` guides for the
+complete browser, CLI, API and cold-receiving workflow.

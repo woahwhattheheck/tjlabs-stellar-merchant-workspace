@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "grant-reviewer",
-  "description": "Complete SCF application, editable submission, named review rounds, planning and handover, original grant purchase reviewer and complete receiving.",
+  "description": "Complete SCF application, editable submission, named review rounds, retained catalog selection into Atlas, original grant purchase reviewer and complete receiving",
   "applicationProviders": {
     "grant-reviewer": "stellar/scf_2026/presentation/reviewer/application-provider.mjs"
   },
@@ -54,6 +54,7 @@
     "operations/scf-submission-review-round-7108-20261012/README.md",
     "stellar-forge/developer-site/GRANT_CUSTOMER_CLOSING.md",
     "operations/scf-submission-improvement-1b40-20261012/current-adoption/DEMO_AND_ACCEPTANCE.md",
-    "products/bls-labor/GRANT.md"
+    "products/bls-labor/GRANT.md",
+    "stellar-forge/developer-site/GRANT_CATALOG.md"
   ]
 }

@@ -11,7 +11,7 @@ const MARKUP = `
       <div class="aw-buttons"><button type="button" class="secondary" id="aw-import-folder">Open capture folder</button><button type="button" class="secondary" id="aw-import-page">Open saved page</button><button type="button" class="secondary" id="aw-retain-live">Retain displayed page</button><button type="button" class="secondary" id="aw-refresh">Reload saved workspace</button></div>
       <input id="aw-folder-input" type="file" webkitdirectory multiple hidden><input id="aw-page-input" type="file" accept=".json,application/json" hidden>
     </div>
-    <details id="aw-review-intake" class="aw-review-intake"><summary>Receive a catalog selection</summary>
+    <details id="aw-review-intake" class="aw-review-intake"><summary>Receive a catalog review</summary>
       <p>Open the complete selection downloaded from the grant reader. Review its original page, exact payment option and applied search before saving it in this workspace.</p>
       <label for="aw-review-file">Complete catalog review JSON</label><input id="aw-review-file" type="file" accept=".json,application/json">
       <p id="aw-review-status" class="status" role="status" aria-live="polite">Choose the original complete review file.</p>
