@@ -1,0 +1,72 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "property-continuity-interfaces",
+  "description": "Complete original property continuity commissioning application, managed Applications, authenticated client and merchant tools, customer Installation and exact source chapter.",
+  "components": [
+    "products/property-continuity"
+  ],
+  "supportFiles": [
+    "products/property-continuity/ADOPTION.json",
+    "products/property-continuity/OPERATING.md",
+    "products/property-continuity/SDK.md",
+    "products/property-continuity/app/CONTINUITY_DOMAIN.md",
+    "products/property-continuity/app/OPERATING.md",
+    "products/property-continuity/app/README.md",
+    "products/property-continuity/app/RECEIVING_PROGRAMME.md",
+    "products/property-continuity/app/TRAINING.md",
+    "products/property-continuity/app/bluewave/__init__.py",
+    "products/property-continuity/app/bluewave/cli.py",
+    "products/property-continuity/app/bluewave/common.py",
+    "products/property-continuity/app/bluewave/domain.py",
+    "products/property-continuity/app/bluewave/exchange.py",
+    "products/property-continuity/app/bluewave/receiving_program.py",
+    "products/property-continuity/app/bluewave/server.py",
+    "products/property-continuity/app/bluewave/workspace.py",
+    "products/property-continuity/app/examples/make_training_case.py",
+    "products/property-continuity/app/public/app.js",
+    "products/property-continuity/app/public/guide.html",
+    "products/property-continuity/app/public/index.html",
+    "products/property-continuity/app/public/style.css",
+    "products/property-continuity/app/requirements.txt",
+    "products/property-continuity/app/source-selection.json",
+    "products/property-continuity/app/sources/IDA_PMS_RTP_Extracted_Text.json",
+    "products/property-continuity/app/tools/receiving_browser.cjs",
+    "products/property-continuity/application-provider.mjs",
+    "products/property-continuity/binding.mjs",
+    "products/property-continuity/catalog.mjs",
+    "products/property-continuity/client.d.mts",
+    "products/property-continuity/client.mjs",
+    "products/property-continuity/contract.mjs",
+    "products/property-continuity/managed-host.py",
+    "products/property-continuity/managed.mjs",
+    "products/property-continuity/merchant-provider.mjs",
+    "products/property-continuity/merchant.mjs",
+    "stellar-forge/developer-site/grant-products/property-continuity.json",
+    "stellar/scf-starforge-20261009/distribution/selections/property-continuity.json",
+    "stellar/scf_2026/sf49_data_commissioning/installation-workorders/property-continuity.json",
+    "products/property-continuity/managed-receiving.mjs",
+    "products/property-continuity/run-managed-receiving.py",
+    "products/property-continuity/MANAGED_RECEIVING.md"
+  ],
+  "commands": {
+    "property-continuity": "products/property-continuity/managed.mjs"
+  },
+  "commandDescriptions": {
+    "property-continuity": "Create, bind, serve and operate the original property continuity workspace and complete receiving."
+  },
+  "exports": {
+    "./property-continuity/client": {
+      "types": "./source/products/property-continuity/client.d.mts",
+      "default": "./source/products/property-continuity/client.mjs"
+    },
+    "./property-continuity/binding": "./source/products/property-continuity/binding.mjs",
+    "./property-continuity/application-provider": "./source/products/property-continuity/application-provider.mjs",
+    "./property-continuity/merchant-provider": "./source/products/property-continuity/merchant-provider.mjs"
+  },
+  "applicationProviders": {
+    "property-continuity": "products/property-continuity/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "property-continuity-workspaces": "products/property-continuity/merchant-provider.mjs"
+  }
+}
