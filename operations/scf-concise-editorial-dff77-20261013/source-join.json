@@ -1,0 +1,225 @@
+{
+  "schema": "tjlabs.scf.editorial-contribution.v1",
+  "operation": "SCF-CONCISE-EDITORIAL-DFF77-20261013",
+  "date": "2026-10-13",
+  "original_thread": "https://tokenjunkielabs.slack.com/archives/C0BTB4SUCP9/p1791733597745419",
+  "claim": "1791907901.633309",
+  "preimage": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "commit": "54880f64fcef67e7fb33ac5760a526323557fdc3",
+    "path": "operations/scf-stellar-execution-answer-mi-dff7-20261013/APPLICATION_CONCISE.md",
+    "bytes": 27756,
+    "sha256": "e56b52358256599aff8b74902088bc13bedccffa6fcdc45339f2fedc774c75e0",
+    "git_blob_sha1": "340949d794d5ccef7831c26ae561237730290770"
+  },
+  "candidate": {
+    "file": "APPLICATION_CONCISE.md",
+    "bytes": 19921,
+    "sha256": "df74bb0301f89b8fb29221c45581a127edabfaf41da446de941401cb60a0499c",
+    "git_blob_sha1": "dd58a6595834efad00fcd154fb7f6ec564354cef"
+  },
+  "scope": "Complete following concise working edition; full canonical manuscript and complete financial/source companion remain selected by the original cumulative publisher.",
+  "answers": [
+    {
+      "ordinal": 1,
+      "heading": "Project and requested outcome",
+      "preimage": {
+        "bytes": 1225,
+        "sha256": "b783bcc02b577db5e78a36539988899863f5a8a22b6310175fdb06a90983e752",
+        "git_blob_sha1": "73d0866744c0673a66c3ce91d0c2856607572f10"
+      },
+      "candidate": {
+        "bytes": 1069,
+        "sha256": "601d6faf2ea2a65a0bd05937a09b45dfff9d3d05ac1a4c6724931ed60e59553b",
+        "git_blob_sha1": "bfad976d6fa6bddadc14af2f4c6a5f7179ade15a"
+      }
+    },
+    {
+      "ordinal": 2,
+      "heading": "Customer problem, need and adoption",
+      "preimage": {
+        "bytes": 3034,
+        "sha256": "2debe3298b8e1af9c1202c7b52f7dfe9ab4b6d3a5df61e7cc3c3426e7bfc6d96",
+        "git_blob_sha1": "60c50f60f2c22773f211f13a5e34864ccf536235"
+      },
+      "candidate": {
+        "bytes": 2068,
+        "sha256": "865145d7aae7ae05315d0319a260b5f2e84a823e1ba4c2887a95765664d292be",
+        "git_blob_sha1": "1998c6ab3ca57559f3359b5a1e22b37976ebcc1d"
+      }
+    },
+    {
+      "ordinal": 3,
+      "heading": "Why Stellar and what we contribute",
+      "preimage": {
+        "bytes": 4027,
+        "sha256": "7b9dcf79799692c07b5aacf251750c01dac53e42bb2cb28ae4043447d970439b",
+        "git_blob_sha1": "97f7d651b0ffc983684612c12b0d4c804d60a081"
+      },
+      "candidate": {
+        "bytes": 2375,
+        "sha256": "0822d0d825afef7110b8902bec200feb24530538d1b4a2e589d49ae8b8ef6730",
+        "git_blob_sha1": "53e920fd71c9648290a1f23c1eac8047a0307e33"
+      }
+    },
+    {
+      "ordinal": 4,
+      "heading": "Defined architecture and operating behavior",
+      "preimage": {
+        "bytes": 4540,
+        "sha256": "6cf5c1e8f0ba2f6eec6fda7564c3458b65793811ca232b9fe7435886e23b337d",
+        "git_blob_sha1": "57278f4a82290ea0b7e0c071be3004843a7e350e"
+      },
+      "candidate": {
+        "bytes": 2685,
+        "sha256": "616b63f4f6f749aa36931905c7933e1aee991ccab8e3452b88a5eb4eba2478ef",
+        "git_blob_sha1": "3b440c11895f11de24a9e64812531b7a6fba38cd"
+      }
+    },
+    {
+      "ordinal": 5,
+      "heading": "Working product and demonstrated results",
+      "preimage": {
+        "bytes": 2603,
+        "sha256": "67b2ddca29199d09071d2d5aed7c560e5846e685d2bb26c9032e67397fe308a4",
+        "git_blob_sha1": "2913d43a08977588040b8586371fb9eda5fefe83"
+      },
+      "candidate": {
+        "bytes": 2176,
+        "sha256": "2fd486be1e70e45c7e40942efa4b14203d52c656cd06b8379bd39a8c06bf8a80",
+        "git_blob_sha1": "2a6e101a8b36e5eee3535d7e65d94705f1fd334f"
+      }
+    },
+    {
+      "ordinal": 6,
+      "heading": "Three funded tranches and six priced deliverables",
+      "preimage": {
+        "bytes": 3578,
+        "sha256": "e7d984d437156c22b728ceacf09036616a4f114a513c1e319c071fa4c9c32441",
+        "git_blob_sha1": "0878c55cb948781c839ad13da74d5367752c0735"
+      },
+      "candidate": {
+        "bytes": 3404,
+        "sha256": "b2fae001dd15b30e5e3aa06b028128435362d6f4cf669a77f59f8a4b5aad472e",
+        "git_blob_sha1": "f1515b873ddd0ca788cdb2e0098cffc5f60ec3eb"
+      }
+    },
+    {
+      "ordinal": 7,
+      "heading": "Threat response and outcome measurement",
+      "preimage": {
+        "bytes": 2195,
+        "sha256": "ee3ecd0a4c079379e18f36159f1ee5cc504c8a40beaf90dc7526343d6c9b35c3",
+        "git_blob_sha1": "ace27f9e0f347f831f0105cfd296d8f480007cc9"
+      },
+      "candidate": {
+        "bytes": 1899,
+        "sha256": "c19491ab39e2caeb0576e06be40cf37ee466bd944ccae3c67a3f3beaabf3b8b1",
+        "git_blob_sha1": "7466edaa34f12cd8aafdb5823ce525c5401e601c"
+      }
+    },
+    {
+      "ordinal": 8,
+      "heading": "Delivery capacity, payment timing and sustainability",
+      "preimage": {
+        "bytes": 4417,
+        "sha256": "5cc517e29a859c590bee99dcba3d415253d5c0c083906ba2ac8f071ce613eb02",
+        "git_blob_sha1": "7914b85a08cce64d700def113c181bf5a76d5250"
+      },
+      "candidate": {
+        "bytes": 2288,
+        "sha256": "910021defd1a4350af44cfaecb739d3a54a7f651852c1a523312a8461d7601a4",
+        "git_blob_sha1": "235f39886fcab40e0d52512bbc1be506cf18d404"
+      }
+    },
+    {
+      "ordinal": 9,
+      "heading": "Applicant, experience and submission",
+      "preimage": {
+        "bytes": 1696,
+        "sha256": "3e0e3efe1df130f953086d48ef67e1f79e771644a401f241b5285482f95471f0",
+        "git_blob_sha1": "f1b449e3de5c393ed815eaa99392bb9536404b04"
+      },
+      "candidate": {
+        "bytes": 1579,
+        "sha256": "cd38a0fc3030b082610a21df217efe6880fb8b4cee34d4d6d9364f0dba582710",
+        "git_blob_sha1": "c4da13cca2e3e9eed86be32665b4e88dac564d77"
+      }
+    }
+  ],
+  "funding": {
+    "request_usd": 38000,
+    "hours": 400,
+    "days": 150,
+    "rate_usd_per_hour": 95,
+    "packages": [
+      {
+        "id": "T1-resource",
+        "hours": 80,
+        "cost_usd": 7600
+      },
+      {
+        "id": "T1-handover",
+        "hours": 40,
+        "cost_usd": 3800
+      },
+      {
+        "id": "T2-provider",
+        "hours": 70,
+        "cost_usd": 6650
+      },
+      {
+        "id": "T2-threat",
+        "hours": 50,
+        "cost_usd": 4750
+      },
+      {
+        "id": "T3-mainnet",
+        "hours": 90,
+        "cost_usd": 8550
+      },
+      {
+        "id": "T3-recovery",
+        "hours": 70,
+        "cost_usd": 6650
+      }
+    ],
+    "tranche_costs_usd": [
+      11400,
+      11400,
+      15200
+    ],
+    "payments_usd": [
+      3800,
+      7600,
+      11400,
+      15200
+    ]
+  },
+  "verification": {
+    "word_count_preimage": 3579,
+    "word_count_candidate": 2607,
+    "nine_original_headings": true,
+    "original_soroban_payment_sequence_retained": true,
+    "issuer_field_capture": false,
+    "visual_review": "Continue the existing exact-version producing receiver; no new rendered result is asserted."
+  },
+  "primary_sources": [
+    {
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/submission-criteria",
+      "retrieved": "2026-10-13"
+    },
+    {
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/open-track",
+      "retrieved": "2026-10-13"
+    },
+    {
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/helpful-resources/overall-recommendations-for-submissions",
+      "retrieved": "2026-10-13"
+    },
+    {
+      "url": "https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/budget-and-deliverable-guidelines",
+      "retrieved": "2026-10-13"
+    }
+  ]
+}
