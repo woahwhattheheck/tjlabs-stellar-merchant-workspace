@@ -1,3 +1,4 @@
+import { managedResult } from './managed-result.mjs';
 // MIT. Customer workspace over the original runtime installer and profile authority.
 import { constants } from 'node:fs';
 import { mkdir, readdir, open, unlink } from 'node:fs/promises';
@@ -172,6 +173,8 @@ async function jobView(root, id, observe = null) {
       Boolean(state.commandProcess) && (await managedCommandAlive(state) || active) };
   }
   const { workerActive: active, commandActive } = activity;
+  const outcome = request.operation === 'managed-run' ?
+    managedResult(state, await readJSON(join(directory, 'command-result.json'), true)) : {};
   return { id, operation: request.operation, runtimeId: request.runtimeId ?? request.targetId ?? null,
     homeId: request.homeId ?? null, applicationId: request.applicationId ?? null, terminal: request.terminal === true, commandActive,
     ...(Object.hasOwn(pythonOperationFields, request.operation) ? { python: request.python,
@@ -184,7 +187,7 @@ async function jobView(root, id, observe = null) {
     contextDirectory: request.contextDirectory ?? null, transferDirectory: request.transferDirectory ?? null,
     containerDirectory: request.containerDirectory ?? null, reviewId: request.reviewId ?? null,
     deploymentReviewId: request.deploymentReviewId ?? null,
-    ...state, ...activity,
+    ...state, ...outcome, ...activity,
     displayPhase: state.phase === 'RUNNING' && active !== true && commandActive !== true
       ? activity.observation?.status === 'UNAVAILABLE' ? 'OBSERVATION_UNAVAILABLE' : 'INTERRUPTED'
       : state.phase };

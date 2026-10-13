@@ -358,6 +358,9 @@ def run(args):
                 env={**os.environ, "TMPDIR": str(root)})
             (root / "node-receiving.stdout").write_text(completed.stdout)
             (root / "node-receiving.stderr").write_text(completed.stderr)
+            if completed.returncode != 0:
+                print(json.dumps({"step": "browser_receiving_error", "returncode": completed.returncode,
+                                  "stderr": completed.stderr, "stdout": completed.stdout}), flush=True)
             require(completed.returncode == 0, "Original browser/MCP receiving needs its retained native error")
             browser_and_agent = json.loads((root / "node-receiving.json").read_text())
             keep("browser_and_agent", browser_and_agent)

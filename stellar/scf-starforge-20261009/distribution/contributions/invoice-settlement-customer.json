@@ -1,0 +1,28 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "invoice-settlement-customer",
+  "description": "Original authenticated Invoice & Settlement operator, durable customer requests, whole-file downloads and independent native receiving",
+  "commands": {
+    "invoice-settlement-customer": "stellar-forge/mcp-merchant-operator/invoice-settlement-cli.mjs"
+  },
+  "commandDescriptions": {
+    "invoice-settlement-customer": "Operate the original invoice workspace through authenticated MCP, retain exact requests and receive complete packages offline"
+  },
+  "exports": {
+    "./merchant/invoice-settlement/client": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/invoice-settlement-client.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/invoice-settlement-client.mjs"
+    },
+    "./merchant/invoice-settlement/operations": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/invoice-settlement-operations.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/invoice-settlement-operations.mjs"
+    },
+    "./merchant/invoice-settlement/download": {
+      "types": "./source/stellar-forge/mcp-merchant-operator/invoice-settlement-download.d.mts",
+      "import": "./source/stellar-forge/mcp-merchant-operator/invoice-settlement-download.mjs"
+    }
+  },
+  "merchantProviders": {
+    "invoice-settlement-workspaces": "stellar-forge/mcp-merchant-operator/providers/invoice-settlement-workspaces.mjs"
+  }
+}

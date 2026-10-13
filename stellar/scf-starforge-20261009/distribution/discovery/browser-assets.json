@@ -248,6 +248,27 @@
       ]
     ],
     [
+      "/support-operating-return.mjs",
+      [
+        "support-operating-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/support-operating-return.mjs",
+      [
+        "../support-operating-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/support-operating-core/operating-plan-return.mjs",
+      [
+        "../operating-plan-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
       "/fred-operating-plan.mjs",
       [
         "fred-operating-plan.mjs",
