@@ -60,3 +60,9 @@ Create a [complete frozen comparison handover](../../stellar/scf-starforge-20261
 ## Original producer-output receiving
 
 Use the [complete original-output preparation and receiving guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/OPERATING.md) to bring explicitly mapped CSV/TSV output and its original workbooks, reports and logs into the same comparison. The readable full-row mapping review preserves exact decimal strings, missing reasons and reviewed exclusions. One original dossier course retains every file, saves original requests, exports complete reports and reopens the editable project independently. Scientific calculations and final judgments remain with their original producer and investigator.
+
+## Original risk-study evaluation and comparison
+
+The [complete risk-study operating guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_OPERATING.md) covers original cohort/outcome/prediction inputs, explicit common and pairwise populations, exact weighted error and calibration quantities, subgroup and cost-cap views, patient-cluster bootstrap uncertainty, timing and scaling. The standard-library evaluator preserves every source observation, exclusion and undefined outcome with the complete study plan and original bytes.
+
+Use the [original comparison import guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/RISK_STUDY_IMPORT.md) to bind that complete producer result to an actual saved case, candidate, criterion and source edition. Preparation retains the whole execution receipt and all original files, measures native object and transport capacity, and freezes one complete import request for the existing Research writer. The original scoring model, study investigator and named review remain part of that same research programme.
