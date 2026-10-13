@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // One original research→portfolio→full cold receiving course. No source acquisition or screening.
 import {spawn} from 'node:child_process';
+import {receiveReviewerExchange} from '../../../../../products/source-monitoring/receiving/reviewer-exchange.mjs';
 import {createReadStream} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {join,resolve,dirname,relative,isAbsolute} from 'node:path';
@@ -28,7 +29,44 @@ async function python(command,args){
     });
   });
 }
-export async function receiveMonitoring({gleifWorkspace,monitoringWorkspace,selection,pythonCommand,output,reviewer,note='',refreshSelection=null}) {
+
+async function followingReviewer(receipt, configuration, pythonCommand, originalOutput) {
+  need(configuration&&typeof configuration==='object'&&!Array.isArray(configuration)&&
+    ['connectionFile','output','selection'].every(key=>Object.hasOwn(configuration,key))&&
+    Object.keys(configuration).every(key=>['connectionFile','output','selection'].includes(key)),
+    'GLEIF_REVIEWER_CONTINUATION','Select the complete original reviewer continuation configuration.');
+  const followingOutput=resolve(configuration.output),relativeOutput=relative(originalOutput,followingOutput);
+  need(relativeOutput!==''&&!isAbsolute(relativeOutput)&&relativeOutput!=='..'&&!relativeOutput.startsWith('../'),
+    'GLEIF_REVIEWER_OUTPUT','Use a separate named following directory inside the original receiving output.');
+  need(configuration.selection?.workspace===receipt.originalMonitoringWorkspace,
+    'GLEIF_REVIEWER_WORKSPACE','Continue the original Monitoring workspace in this same programme.');
+  const following=await receiveReviewerExchange({connectionFile:configuration.connectionFile,pythonCommand,
+    output:followingOutput,selection:configuration.selection});
+  return {...receipt,followingReviewerExchange:following};
+}
+async function retainedBaseline(output, basis) {
+  const receiptPath=join(output,'gleif-monitoring-receiving.json');
+  if(!await exists(receiptPath))return null;
+  const receipt=JSON.parse(await readPrivate(receiptPath,256*1024*1024));
+  need(receipt.schema===SCHEMA&&receipt.state==='COMPLETE'&&
+    receipt.originalResearchWorkspace===basis.gleifWorkspace&&receipt.originalMonitoringWorkspace===basis.monitoringWorkspace,
+    'GLEIF_REVIEWER_BASELINE','Select the original complete receiving result.');
+  const intent=JSON.parse(await readPrivate(join(output,'receiving-intent.json')));
+  const expected={schema:SCHEMA,workspaceId:intent.basis.workspaceId,selection:basis.selection,
+    monitoringWorkspace:basis.monitoringWorkspace,reviewer:basis.reviewer,note:basis.note,
+    ...(basis.refreshSelection===null?{}:{refreshSelection:basis.refreshSelection})};
+  need(stable(intent.basis)===stable(expected),'GLEIF_REVIEWER_BASELINE','The original complete baseline selection changed.');
+  const hash=createHash('sha256');let size=0;
+  for await(const part of createReadStream(receipt.archive.path)){size+=part.length;hash.update(part);}
+  need(size===receipt.archive.bytes&&hash.digest('hex')===receipt.archive.sha256,'GLEIF_REVIEWER_BASELINE','The original complete baseline archive changed.');
+  for(const file of receipt.files){
+    const raw=await readPrivate(join(output,file.name),256*1024*1024);
+    need(raw.length===file.bytes&&digest(raw)===(file.sha256??file.id),'GLEIF_REVIEWER_BASELINE','A complete original baseline file changed.');
+  }
+  return receipt;
+}
+
+export async function receiveMonitoring({gleifWorkspace,monitoringWorkspace,selection,pythonCommand,output,reviewer,note='',refreshSelection=null,reviewerExchange=null}) {
   for(const value of [gleifWorkspace,monitoringWorkspace,pythonCommand,output])need(typeof value==='string'&&isAbsolute(value),'GLEIF_RECEIVING_PATH','Use explicit absolute application, workspace, Python and output paths.');
   for(const workspace of [gleifWorkspace,monitoringWorkspace]){
     const below=relative(workspace,output);
@@ -45,6 +83,10 @@ export async function receiveMonitoring({gleifWorkspace,monitoringWorkspace,sele
       'GLEIF_REFRESH_SELECTION','Supply the native authored review fields; the retained course binds original request and comparison IDs.');
   }
   await privateDirectory(output,true);
+  if(reviewerExchange!==null){
+    const completed=await retainedBaseline(output,{gleifWorkspace,monitoringWorkspace,selection,reviewer,note,refreshSelection});
+    if(completed)return followingReviewer(completed,reviewerExchange,pythonCommand,output);
+  }
   const cli=fileURLToPath(new URL('../../ndjson/opensanctions/cli.py',import.meta.url));
   const source=await openGleifWorkspace({directory:gleifWorkspace});
   let intent,result;
@@ -223,14 +265,15 @@ export async function receiveMonitoring({gleifWorkspace,monitoringWorkspace,sele
     ...(refreshResult?{portfolioRefresh:refreshResult}:{}),
     visualAcceptance:'Pending original operator observation of both applications and every outgoing attachment.'};
   await atomicJson(output,'gleif-monitoring-receiving.json',receipt);
-  return receipt;
+  return reviewerExchange===null?receipt:followingReviewer(receipt,reviewerExchange,pythonCommand,output);
 }
 export async function main(args=process.argv.slice(2)){
   const opts={};for(let i=0;i<args.length;i++){need(args[i].startsWith('--')&&!Object.hasOwn(opts,args[i])&&args[i+1]&&!args[i+1].startsWith('--'),'GLEIF_RECEIVING_ARGUMENT');opts[args[i]]=args[++i];}
   const selection=JSON.parse(await readPrivate(resolve(opts['--selection'])));
   const refreshSelection=opts['--refresh-selection']?JSON.parse(await readPrivate(resolve(opts['--refresh-selection']))):null;
+  const reviewerExchange=opts['--reviewer-exchange-selection']?JSON.parse(await readPrivate(resolve(opts['--reviewer-exchange-selection']))):null;
   const result=await receiveMonitoring({gleifWorkspace:resolve(opts['--gleif-workspace']),monitoringWorkspace:resolve(opts['--monitoring-workspace']),
-    selection,pythonCommand:resolve(opts['--python']),output:resolve(opts['--output']),reviewer:opts['--reviewer'],note:opts['--note']??'',refreshSelection});
+    selection,pythonCommand:resolve(opts['--python']),output:resolve(opts['--output']),reviewer:opts['--reviewer'],note:opts['--note']??'',refreshSelection,reviewerExchange});
   process.stdout.write(JSON.stringify(result,null,2)+'\n');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)main().catch(error=>{process.stderr.write(JSON.stringify({error:error.code??'GLEIF_MONITORING_RECEIVING',message:error.message})+'\n');process.exitCode=1;});

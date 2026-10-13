@@ -5,8 +5,9 @@ export const DOMAIN_SCHEMA: 'starforge.opensanctions-workspace.v1';
 export const STARTUP_SCHEMA: 'stellar-forge.opensanctions-workspace-launch.v1';
 export type ReadOperation = 'state' | 'contract' | 'entity' | 'entities' | 'aliases' |
   'changes' | 'impacts' | 'case' | 'statements' | 'response' | 'request' | 'update-plan' |
+  'review-exchanges' | 'review-exchange' | 'review-exchange-request' | 'review-exchange-compare' |
   'cycles' | 'cycle' | 'cycle-request' | 'cycle-report' | 'gleif-intake' | 'portfolio-cycle-reviews' | 'portfolio-refreshes' | 'portfolio-refresh' | 'portfolio-refresh-request' | 'portfolio-refresh-report';
-export type WriteOperation = 'published-edition' | 'edition' | 'portfolio' | 'statement-set' |
+export type WriteOperation = 'review-exchange-issue' | 'review-exchange-command' | 'review-exchange-return-preview' | 'published-edition' | 'edition' | 'portfolio' | 'statement-set' |
   'compare' | 'update' | 'fetch-update' | 'select-update' | 'review' | 'case' | 'profile' |
   'prepare' | 'dispatch' | 'receive-response' | 'query' | 'cycle-command' | 'gleif-preview' | 'gleif-receive' | 'portfolio-refresh-prepare' | 'portfolio-refresh-command';
 export const GET_OPERATIONS: readonly ReadOperation[];
@@ -37,7 +38,8 @@ export interface FileReceiving {
   bytes: number;
   sha256: string;
   reused: boolean;
-  kind?: 'workspace' | 'object' | 'source';
+  kind?: 'workspace' | 'object' | 'source' | 'review-exchange';
+  role?: 'issued_json' | 'issued_html' | 'returned_file';
   id?: string;
 }
 export interface OriginalObject {
@@ -91,8 +93,8 @@ export class MonitoringClient {
     id: string; file: string; status: number; sourceNote: string;
     expected: string; headers?: JsonObject;
   }): Promise<NativeReply>;
-  download(kind: 'workspace' | 'object' | 'source', selection: {
-    id?: string; output: string;
+  download(kind: 'workspace' | 'object' | 'source' | 'review-exchange', selection: {
+    id?: string; output: string; role?: 'issued_json' | 'issued_html' | 'returned_file'; expectedSha256?: string;
   }): Promise<FileReceiving>;
   /** Close this client and finish cleanup; original server operations remain retained. */
   close(): Promise<void>;

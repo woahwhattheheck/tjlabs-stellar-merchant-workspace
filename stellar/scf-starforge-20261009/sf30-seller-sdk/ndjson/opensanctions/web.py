@@ -13,6 +13,8 @@ import updates
 import review_cycles
 import gleif_portfolio
 import portfolio_refresh
+import review_exchange
+import review_exchange_delivery
 
 HERE = Path(__file__).resolve().parent
 
@@ -36,6 +38,7 @@ class Handler(ndjson_application.Handler):
                   "/monitor/gleif-intake.js": ("gleif-intake.js", "text/javascript; charset=utf-8"),
                   "/monitor/portfolio-refresh.js": ("portfolio-refresh.js", "text/javascript; charset=utf-8"),
                   "/monitor/review-cycles.js": ("review-cycles.js", "text/javascript; charset=utf-8"),
+                  "/monitor/review-exchange.js": ("review-exchange.js", "text/javascript; charset=utf-8"),
                   "/monitor/style.css": ("style.css", "text/css; charset=utf-8")}
         if target.path in assets:
             self._gate(api=False)
@@ -51,6 +54,25 @@ class Handler(ndjson_application.Handler):
         q = {k: v[0] for k, v in params.items()}
         path = target.path[len("/api/os/"):]
         d = self.domain
+        if path in {"review-exchanges", "review-exchange", "review-exchange-request",
+                    "review-exchange-compare", "review-exchange-file"}:
+            self._cycle_branch()
+            with d.mutex:
+                if path == "review-exchanges":
+                    return self._json(review_exchange.view(d, offset=int(q.get("offset", "0")), limit=int(q.get("limit", "50"))))
+                if path == "review-exchange":
+                    return self._json(review_exchange.view(d, q["id"], offset=int(q.get("offset", "0")), limit=int(q.get("limit", "50"))))
+                if path == "review-exchange-request":
+                    return self._json(review_exchange.request(d, q["requestId"]))
+                if path == "review-exchange-compare":
+                    return self._json(review_exchange.compare(d, q["returnId"], q["editionId"], q.get("adoptionRequestId")))
+                selected = review_exchange.document(d, q["id"], q["role"])
+                descriptor, raw = selected["descriptor"], selected["bytes"]
+                suffix = ".html" if "html" in descriptor["mediaType"] else ".json"
+                filename = "Reviewer_" + q["role"] + "_" + descriptor["sha256"][:16] + suffix
+                self._headers(200, descriptor["mediaType"], len(raw), filename)
+                self.wfile.write(raw)
+                return
         if path == "cycle-context":
             return self._json({"workspace": str(d.ws.root), "name": d.ws.root.name})
         if path in {"cycles", "cycle", "cycle-request", "cycle-report", "cycle-report-html"}:
@@ -160,6 +182,25 @@ class Handler(ndjson_application.Handler):
         body = load_json(self._body(24 * 1024 * 1024).read())
         if not isinstance(body, dict):
             raise InputError("Expected the selected operation's JSON object")
+        if path in {"review-exchange-issue", "review-exchange-command", "review-exchange-return-preview"}:
+            self._cycle_branch()
+            if path == "review-exchange-return-preview":
+                if set(body) != {"file"}:
+                    raise InputError("Select the complete retained original returned file")
+                return self._json(review_exchange_delivery.preview_return(d, body["file"]))
+            try:
+                with d.mutex:
+                    result = (review_exchange_delivery.issue(d, body) if path == "review-exchange-issue"
+                              else review_exchange.command(d, body))
+                return self._json(result, 201)
+            except InputError as error:
+                absent = False
+                try:
+                    absent = not review_exchange.request(d, body.get("requestId"))["committed"]
+                except InputError:
+                    pass
+                return self._json({"error": str(error), "notCommitted": absent,
+                                   "requestId": body.get("requestId")}, 400)
         if path == "cycle-command":
             self._cycle_branch()
             try:

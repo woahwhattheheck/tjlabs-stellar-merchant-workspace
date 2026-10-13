@@ -27,6 +27,7 @@ const HELP = [
   '  import --file ZIP                            Receive the complete customer workspace',
   '  export --out ZIP                             Download the complete customer workspace',
   '  download object|source --id SHA256 --out FILE Download an original retained file',
+  '  download review-exchange --id ID --role ROLE --out FILE [--sha256 SHA]',
   '',
   'Global: --timeout-ms INTEGER --expected-workspace PATH --expected-binding SHA256',
   'JSON replies: --response-out FILE saves the exact full response bytes.',
@@ -54,7 +55,7 @@ export async function main(argv = process.argv.slice(2)) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true,
     options: Object.fromEntries([
       'connection', 'timeout-ms', 'expected-workspace', 'expected-binding',
-      'params', 'input', 'file', 'name', 'media', 'source-url', 'out', 'id', 'response-out',
+      'params', 'input', 'file', 'name', 'media', 'source-url', 'out', 'id', 'response-out', 'role', 'sha256',
     ].map(name => [name, { type: 'string' }])) });
   need(typeof values.connection === 'string', 'Select the original --connection file.');
   const [command, operation, ...rest] = positionals;
@@ -119,10 +120,13 @@ export async function main(argv = process.argv.slice(2)) {
     execute = () => client.receiveArchive(file);
   } else if (command === 'export' || command === 'download') {
     if (command === 'export') need(operation === undefined, 'export selects the complete workspace.');
-    else need(['object', 'source'].includes(operation), 'download selects object or source.');
+    else need(['object', 'source', 'review-exchange'].includes(operation), 'download selects object, source or review-exchange.');
     const output = take('out', true), id = command === 'download' ? take('id', true) : undefined;
+    const role = operation === 'review-exchange' ? take('role', true) : undefined;
+    const expectedSha256 = take('sha256');
     execute = () => client.download(command === 'export' ? 'workspace' : operation,
-      { output, ...(id === undefined ? {} : { id }) });
+      { output, ...(id === undefined ? {} : { id }), ...(role === undefined ? {} : { role }),
+        ...(expectedSha256 === undefined ? {} : { expectedSha256 }) });
   } else {
     need(false, 'Unknown client command. Use source-monitoring-client help.');
   }

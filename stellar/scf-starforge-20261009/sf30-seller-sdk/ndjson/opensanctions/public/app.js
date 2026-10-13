@@ -2,6 +2,7 @@
 import {mountReviewCycles} from "./review-cycles.js";
 import {mountGleifIntake} from "./gleif-intake.js";
 import {mountPortfolioRefresh} from "./portfolio-refresh.js";
+import {mountReviewExchange} from "./review-exchange.js";
 const $ = (selector, root=document) => root.querySelector(selector);
 const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
 const pretty = value => JSON.stringify(value, null, 2);
@@ -15,7 +16,7 @@ let state, contract, busy = false, view = "overview", selectedUpdate, selectedCh
 let entityOffset=0, counterpartyOffset=0, changeOffset=0;
 let currentChangeRows=[];
 let pendingCandidate=null;
-let portfolioRefresh=null;
+let portfolioRefresh=null,reviewExchange=null;
 const escape = value => String(value ?? "—").replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const p = value => "<pre class='scroll-box'>" + escape(pretty(value)) + "</pre>";
 const message = (text, error=false) => { const n=$("#notice"); n.textContent=text; n.className=error?"error":"success"; };
@@ -76,10 +77,12 @@ function editionLabel(row) {return row.dataset+" · "+row.version;}
 function comparisonLabel(row) {return row.dataset+" · "+(edition(row.before)?.version||short(row.before))+" → "+(edition(row.after)?.version||short(row.after));}
 function navigate(name,{activate=true}={}) {
   if(view==='portfolio-refresh'&&name!==view)portfolioRefresh?.deactivate();
+  if(view==='review-exchange'&&name!==view)reviewExchange?.deactivate();
   view=name;
   $$("nav [data-view]").forEach(el=>el.classList.toggle("selected",el.dataset.view===name));
   $("main>section").forEach(el=>el.hidden=el.id!=="view-"+name);
   if(name==="portfolio-refresh"&&activate)portfolioRefresh?.activate();
+  if(name==="review-exchange"&&activate)reviewExchange?.activate();
 }
 $$("[data-view]").forEach(el=>el.addEventListener("click",()=>navigate(el.dataset.view)));
 function renderState() {
@@ -430,4 +433,5 @@ await mountReviewCycles({api,run,navigate,inspectCase,getState:()=>state,refresh
   openPortfolioRefresh:async(id,entity)=>{navigate("portfolio-refresh",{activate:false});await portfolioRefresh.openComparison(id,entity);}});
 portfolioRefresh=await mountPortfolioRefresh({root:$("#view-portfolio-refresh"),api,getState:()=>state,refresh,
   inspectCase:id=>run("Open original case",()=>inspectCase(id)),message,escape});
+reviewExchange=await mountReviewExchange({root:$("#view-review-exchange"),api,refresh,navigate,inspectCase,message});
 await run("Open retained source workspace",refresh);

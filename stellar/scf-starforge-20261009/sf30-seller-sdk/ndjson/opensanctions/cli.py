@@ -8,7 +8,7 @@ import signal
 import sys
 import threading
 
-from model import Workspace, InputError, json_bytes
+from model import Workspace, InputError, json_bytes, load_json, private_write, MAX_SOURCE
 from web import OperatorServer
 import matching
 import updates
@@ -16,6 +16,24 @@ import review_cycles
 import gleif_portfolio
 import portfolio_refresh
 import portfolio_review_cycles
+import review_exchange
+import review_exchange_delivery
+
+
+def exchange_input(filename):
+    with Path(filename).open("rb") as stream:
+        raw = stream.read(24 * 1024 * 1024 + 1)
+    if len(raw) > 24 * 1024 * 1024:
+        raise InputError("The complete reviewer command exceeds 24 MiB")
+    return load_json(raw)
+
+
+def exchange_file(filename):
+    with Path(filename).open("rb") as stream:
+        raw = stream.read(MAX_SOURCE + 1)
+    if len(raw) > MAX_SOURCE:
+        raise InputError("The complete returned reviewer file exceeds 256 MiB")
+    return raw
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -65,6 +83,30 @@ def main():
     refresh_report = sub.add_parser("portfolio-refresh-report")
     refresh_report.add_argument("--id", required=True); refresh_report.add_argument("--output", required=True)
     refresh_report.add_argument("--html", action="store_true")
+    exchange_list = sub.add_parser("review-exchanges", help="List original reviewer issues and returned work")
+    exchange_list.add_argument("--offset", type=int, default=0)
+    exchange_list.add_argument("--limit", type=int, default=50)
+    exchange_view = sub.add_parser("review-exchange", help="Open the complete selected reviewer record")
+    exchange_view.add_argument("--id", required=True)
+    exchange_view.add_argument("--offset", type=int, default=0)
+    exchange_view.add_argument("--limit", type=int, default=50)
+    for operation in ("review-exchange-issue", "review-exchange-command"):
+        item = sub.add_parser(operation)
+        item.add_argument("--input", required=True, help="The exact original issue selection or compact command JSON")
+    exchange_status = sub.add_parser("review-exchange-request", help="Recover one original reviewer request")
+    exchange_status.add_argument("--request-id", required=True)
+    exchange_compare = sub.add_parser("review-exchange-compare", help="Read the complete original/current/returned comparison")
+    exchange_compare.add_argument("--return-id", required=True)
+    exchange_compare.add_argument("--edition-id", required=True)
+    exchange_compare.add_argument("--adoption-request-id")
+    for operation in ("review-exchange-return-preview", "review-exchange-retain"):
+        item = sub.add_parser(operation)
+        item.add_argument("--input", required=True, help="The complete original returned JSON or HTML")
+        item.add_argument("--media", default="application/octet-stream")
+    exchange_download = sub.add_parser("review-exchange-download", help="Save the exact original issued or returned file")
+    exchange_download.add_argument("--id", required=True)
+    exchange_download.add_argument("--role", required=True, choices=("issued_json", "issued_html", "returned_file"))
+    exchange_download.add_argument("--output", required=True)
     args = p.parse_args()
     if args.action == "binding":
         from application_binding import inspect_binding
@@ -108,19 +150,48 @@ def main():
                     signal.signal(sig, handler)
             return
         matching.recover_interrupted(d)
-        if args.action == "portfolio-refresh-prepare":
+        if args.action == "review-exchanges":
+            result = review_exchange.view(d, offset=args.offset, limit=args.limit)
+        elif args.action == "review-exchange":
+            result = review_exchange.view(d, args.id, offset=args.offset, limit=args.limit)
+        elif args.action == "review-exchange-issue":
+            result = review_exchange_delivery.issue(d, exchange_input(args.input))
+        elif args.action == "review-exchange-command":
+            result = review_exchange.command(d, exchange_input(args.input))
+        elif args.action == "review-exchange-request":
+            result = review_exchange.request(d, args.request_id)
+        elif args.action == "review-exchange-compare":
+            result = review_exchange.compare(d, args.return_id, args.edition_id, args.adoption_request_id)
+        elif args.action in {"review-exchange-return-preview", "review-exchange-retain"}:
+            raw = exchange_file(args.input)
+            preview = review_exchange.prepare_return(d, raw, Path(args.input).name, args.media)
+            if args.action == "review-exchange-retain":
+                descriptor = d.put_object(io.BytesIO(raw), Path(args.input).name, args.media,
+                                          {"kind": "returned-reviewer-file"})
+                result = {"file": {"sha256": descriptor["id"], "bytes": descriptor["bytes"],
+                                   "name": Path(args.input).name, "mediaType": args.media}, "preview": preview}
+            else:
+                result = preview
+        elif args.action == "review-exchange-download":
+            selected = review_exchange.document(d, args.id, args.role)
+            output, raw = Path(args.output), selected["bytes"]
+            if output.exists():
+                if output.read_bytes() != raw:
+                    raise InputError("The selected reviewer output already contains different bytes; choose a new output")
+            else:
+                private_write(output, raw)
+            result = {**selected["descriptor"], "file": str(output)}
+        elif args.action == "portfolio-refresh-prepare":
             result = portfolio_refresh.prepare(d, args.before, args.after)
         elif args.action == "portfolio-refreshes":
             result = portfolio_refresh.view(d)
         elif args.action == "portfolio-refresh":
             result = portfolio_refresh.view(d, args.id, offset=args.offset, limit=args.limit, kind=args.kind, query=args.query)
         elif args.action == "portfolio-refresh-command":
-            from model import load_json
             result = portfolio_refresh.command(d, load_json(Path(args.request).read_bytes()))
         elif args.action == "portfolio-refresh-request":
             result = portfolio_refresh.operation(d, args.request_id)
         elif args.action == "portfolio-refresh-report":
-            from model import private_write
             result = portfolio_refresh.report(d, args.id)
             content = portfolio_refresh.report_html(d, args.id).encode() if args.html else json_bytes(result)
             output = Path(args.output)
@@ -136,7 +207,6 @@ def main():
                 original = d.put_object(stream, Path(args.input).name, "application/json")
             result = gleif_portfolio.preview(d, original["id"], offset=args.offset, limit=args.limit)
         elif args.action == "gleif-receive":
-            from model import load_json
             result = gleif_portfolio.receive(d, load_json(Path(args.request).read_bytes()))
         elif args.action == "gleif-intake":
             result = gleif_portfolio.operation(d, args.request_id)
@@ -147,10 +217,8 @@ def main():
         elif args.action == "cycle":
             result = review_cycles.view(d, args.id)
         elif args.action == "cycle-command":
-            from model import load_json
             result = review_cycles.command(d, load_json(Path(args.input).read_bytes()))
         elif args.action == "cycle-report":
-            from model import private_write
             result = review_cycles.report(d, args.id, args.version)
             content = review_cycles.report_html(d, args.id, args.version).encode() if args.html else json_bytes(result)
             output = Path(args.output)

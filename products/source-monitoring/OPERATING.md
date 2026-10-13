@@ -1,6 +1,6 @@
 # Source monitoring — installation, operation and receiving
 
-This product receives original OpenSanctions editions and complete delta chains, preserves customer counterparties and review history, and operates the customer's native screening requests. The existing SF30 NDJSON workspace owns the data, source projections, requests and decisions. The eight-view monitoring console, Applications and the typed operator client all use that same workspace.
+This product receives original OpenSanctions editions and complete delta chains, preserves customer counterparties and review history, and operates the customer's native screening requests. The existing SF30 NDJSON workspace owns the data, source projections, requests and decisions. The monitoring console, Applications and the typed operator client all use that same workspace.
 
 The selected product is `source-monitoring`. It includes the original monitoring and JSON Lines commands, the original customer/file-job receiving tools, the existing installer and Applications lifecycle, and `source-monitoring-client`. Install a source release; import a complete operating workspace to continue its editions and cases.
 
@@ -339,3 +339,13 @@ An ordinary source/client close does not delete the server's operating state. `M
 - [Customer data licensing and evaluation](https://www.opensanctions.org/licensing/)
 
 The product retains original source observations, provider outcomes and customer review choices with their respective identities. The operating workspace is the complete record the next customer operator receives.
+
+## Independent assigned reviewers
+
+Use **Reviewer exchange** after saving a review cycle and assigning its selected cases. Issue the full editable reviewer HTML and exact issue JSON to the named colleague. They can inspect the original sources, keep unfinished work, save attributed named editions and return the complete file. Receive that exact JSON or HTML in the original workspace, compare the issued/current/returned values, and explicitly choose apply or keep for every case. Identity and relevance remain separate original case decisions.
+
+The complete operating, command and independent receiving instructions are in [REVIEWER_EXCHANGE.md](REVIEWER_EXCHANGE.md). Original issued JSON, issued HTML and received files remain downloadable after full workspace receiving; saved adoption comparisons keep their original reviewed basis after later legitimate case work. The native archive includes the additive exchange events and every original file in its existing object collection. Older complete archives remain readable.
+
+The typed client exposes `review-exchanges`, `review-exchange`, `review-exchange-request` and `review-exchange-compare`; mutations are `review-exchange-issue`, `review-exchange-return-preview` and `review-exchange-command`. `download review-exchange --id ID --role issued_json|issued_html|returned_file --out FILE [--sha256 SHA]` saves the exact selected original. All reviewer operations use the existing physical workspace binding. Full reviewer files are limited to 256 MiB including embedded bytes; JSON commands remain compact and retain the original 24 MiB request limit. Detail responses include complete review metadata and file descriptors, with an explicit 128 MiB limit; full original documents use the file download route.
+
+The complementary [native Workspace archive guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/ndjson/opensanctions/REVIEW_WORKSPACE_ARCHIVES.md) documents complete native ZIP export, scoped snapshot and independent scratch inspection. Those ZIPs remain original evidence; assigned-reviewer adoption uses the attributed reviewer JSON or HTML and its explicit current-case comparison.

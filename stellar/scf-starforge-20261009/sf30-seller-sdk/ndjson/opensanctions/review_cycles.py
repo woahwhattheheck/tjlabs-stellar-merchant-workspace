@@ -5,6 +5,7 @@ their review population and records assignment, completion and supervisor review
 No provider is called and no screening or legal conclusion is inferred.
 """
 from __future__ import annotations
+from contextlib import nullcontext
 import copy
 from datetime import datetime, timezone
 import html
@@ -317,7 +318,9 @@ def replay(domain, rows=None):
     return states
 
 
-def command(domain, value):
+def command(domain, value, *, _commit=True):
+    if not _commit and not domain.db.in_transaction:
+        raise InputError("The internal cycle writer requires its original caller-owned transaction")
     _envelope(value)
     ident = request_id(value["requestId"])
     with domain.mutex:
@@ -362,7 +365,7 @@ def command(domain, value):
                  "previous": current["revision"] if current else None, "command": value,
                  "observations": observations, "result": result}
         event["eventSha256"] = sha(json_bytes(event))
-        with domain.db:
+        with domain.db if _commit else nullcontext():
             domain.db.execute("INSERT INTO os_cycle_events(id,body) VALUES(?,?)", (ident, json_bytes(event).decode()))
         return result
 
