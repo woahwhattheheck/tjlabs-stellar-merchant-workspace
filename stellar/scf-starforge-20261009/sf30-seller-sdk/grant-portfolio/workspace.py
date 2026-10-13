@@ -17,12 +17,18 @@ import zipfile
 
 from domain import *
 from native_sources import file_info, run_projection
+from programme import PROGRAMME_TABLES, apply_programme, derive_programme, programme_objects
 
 HERE = Path(__file__).resolve().parent
 SDK = HERE.parent
 PACKET = "stellar-forge.grant-portfolio-packet.v1"
 WORKSPACE = "stellar-forge.grant-portfolio-workspace.v1"
-ACTIONS = ("source.receive", "portfolio.save", "review.save", "portfolio.export", "portfolio.receive")
+from workspace_extensions import (
+    extension_actions, initialize_extensions, is_extension, requires_commit_revision,
+    validate_extension, prepare_extension, commit_extension, error_details, retryable,
+)
+
+ACTIONS = ("source.receive", "portfolio.save", "review.save", "portfolio.export", "portfolio.receive") + extension_actions()
 
 
 def sync_dir(path):
@@ -133,6 +139,7 @@ class Workspace:
                             "code": "PROCESS_INTERRUPTED", "message": "Resume this saved operation with its retained original input.",
                             "retryable": True})
                         self._store_request(request)
+            initialize_extensions(self)
         except BaseException:
             if hasattr(self, "db"):
                 self.db.close()
@@ -240,6 +247,8 @@ class Workspace:
         require(value["action"] in ACTIONS and isinstance(value["payload"], dict), "Select a supported complete action")
         if "expectedRevision" in value:
             require(type(value["expectedRevision"]) is int and value["expectedRevision"] >= 0, "Invalid workspace revision")
+        if is_extension(value["action"]):
+            validate_extension(self, value)
         input_sha = digest(value)
         with self.transaction():
             row = self.db.execute("SELECT body FROM requests WHERE id=?", (ident,)).fetchone()
@@ -381,7 +390,7 @@ class Workspace:
 
     def _prepare_revision(self, action, payload, request, previous=None, overrides=None):
         if action == "portfolio.save":
-            shape(payload, ("id", "expectedPortfolioRevision", "name", "notes", "sources", "sourceReplacements", "review"),
+            shape(payload, ("id", "expectedPortfolioRevision", "name", "notes", "sources", "sourceReplacements", "review", "programme"),
                   ("name", "sources", "review"))
             ident = identifier(payload["id"]) if payload.get("id") else request["context"]["portfolioId"]
             if previous is None and payload.get("id"):
@@ -392,8 +401,9 @@ class Workspace:
             else:
                 require("expectedPortfolioRevision" not in payload, "A new portfolio has no earlier revision")
             sources = payload["sources"]
-            require(isinstance(sources, list) and 1 <= len(sources) <= MAX_SOURCES
-                    and len(set(sources)) == len(sources), "Select 1–64 distinct complete source editions")
+            local_programme = "programme" in payload or previous is not None and "programme" in previous["definition"]
+            require(isinstance(sources, list) and (0 if local_programme else 1) <= len(sources) <= MAX_SOURCES
+                    and len(set(sources)) == len(sources), "Select distinct complete source editions, up to 64")
             for item in sources:
                 sha(item)
             sources = sorted(sources)
@@ -404,6 +414,8 @@ class Workspace:
             definition = {"name": short(payload["name"], "Portfolio name", 240),
                           "notes": short(payload.get("notes", ""), "Notes", 16000, empty=True),
                           "sources": sources, "review": review}
+            if previous and "programme" in previous["definition"]:
+                definition["programme"] = previous["definition"]["programme"]
             replacements = payload.get("sourceReplacements", [])
             require(isinstance(replacements, list), "Source replacements must be an explicit array")
         else:
@@ -431,6 +443,13 @@ class Workspace:
             require(old_source["standard"] == new_source["standard"], "Following editions must use the same original standard")
         require(len({ref_key(row) for row in entities}) == len(entities), "The original source repeats an entity identity")
         lookup = {ref_key(row): row for row in entities}
+        if action == "portfolio.save" and "programme" in payload:
+            definition["programme"] = apply_programme(
+                previous["definition"].get("programme") if previous else None, payload["programme"],
+                context={"at": request["createdAt"], "operationId": request["id"], "portfolioId": ident,
+                         "portfolioRevision": previous["revision"] + 1 if previous else 1},
+                entities=entities, financial=financial,
+                object_info=lambda object_id: file_info(self.object(object_id)))
         decisions = reconcile_decisions(previous["decisions"], lookup, replace) if previous else []
         edit_payload = dict(payload)
         if action == "review.save":
@@ -491,6 +510,8 @@ class Workspace:
                   "links": [row for row in decisions if row["type"] == "link" and row["status"] == "CURRENT"
                             and row["disposition"] == "confirmed"],
                   "candidates": review_queue(suggest(entity_rows), decisions), "changes": changes}
+        if "programme" in definition:
+            tables.update(derive_programme(definition["programme"], entities, financial))
         for table, rows in tables.items():
             rows.sort(key=lambda row: self._row_key(table, row))
         version = previous["revision"] + 1 if previous else 1
@@ -534,7 +555,8 @@ class Workspace:
         for table, rows in prepared["tables"].items():
             for row in rows:
                 searchable = " ".join(str(row.get(key, "")) for key in
-                                      ("title", "originalId", "name", "label", "rationale", "leftTitle", "rightTitle", "kind"))
+                                      ("title", "originalId", "name", "label", "rationale", "leftTitle", "rightTitle", "kind",
+                                       "code", "owner", "category", "description", "collector"))
                 self.db.execute("INSERT INTO derived VALUES(?,?,?,?,?,?,?,?,?,?)",
                     (body["id"], body["revision"], table, self._row_key(table, row),
                      row.get("entityKey", ""), row.get("sourceId", ""),
@@ -543,7 +565,7 @@ class Workspace:
         return body
 
     def rows(self, ident, version, table, offset=0, limit=50, search="", status="", standard="", entityKey=""):
-        require(table in TABLES, "Select a portfolio table")
+        require(table in (*TABLES, *PROGRAMME_TABLES), "Select a portfolio table")
         require(type(offset) is int and offset >= 0 and type(limit) is int and 1 <= limit <= 250,
                 "Use a nonnegative offset and a 1–250 row page")
         short(search, "Search", 1000, empty=True)
@@ -590,12 +612,16 @@ class Workspace:
                 request.pop("error", None)
                 self._store_request(request)
             try:
-                expected = original.get("expectedRevision")
+                extension = is_extension(original["action"])
+                expected = (original.get("expectedRevision")
+                            if requires_commit_revision(original["action"]) else None)
                 if expected is not None:
                     require(expected == self.current_revision(), "The workspace revision changed",
                             "WORKSPACE_REVISION_CONFLICT", 409)
                 action, payload = original["action"], original["payload"]
-                if action == "source.receive":
+                if extension:
+                    prepared = prepare_extension(self, request)
+                elif action == "source.receive":
                     prepared = self._prepare_source(payload)
                 elif action in {"portfolio.save", "review.save"}:
                     prepared = self._prepare_revision(action, payload, request)
@@ -607,7 +633,9 @@ class Workspace:
                     if expected is not None:
                         require(expected == self.current_revision(self.db), "The workspace revision changed",
                                 "WORKSPACE_REVISION_CONFLICT", 409)
-                    if action == "source.receive":
+                    if extension:
+                        result = commit_extension(self, request, prepared)
+                    elif action == "source.receive":
                         result = self._commit_source(prepared)
                     elif action in {"portfolio.save", "review.save"}:
                         result = self._commit_revision(prepared)
@@ -638,7 +666,9 @@ class Workspace:
                 with self.transaction():
                     request.update(state="FAILED", updatedAt=now(), error={
                         "code": getattr(error, "code", type(error).__name__), "message": str(error),
-                        "retryable": not isinstance(error, InputError) or error.code == "NATIVE_RECEIVING_FAILED"})
+                        "retryable": retryable(error) if is_extension(request["action"]) else
+                            not isinstance(error, InputError) or error.code == "NATIVE_RECEIVING_FAILED",
+                        **(error_details(error) if is_extension(request["action"]) else {})})
                     self._store_request(request)
                 if isinstance(error, (KeyboardInterrupt, SystemExit)):
                     raise
@@ -688,13 +718,17 @@ class Workspace:
                 save(prefix + "descriptor.json", canonical(source))
                 files[prefix + "source-packet.zip"] = self.object(source["object"]["sha256"])
             for item in history:
-                for table in TABLES:
+                for table in item["tableSha256"]:
                     name = "rows/" + str(item["revision"]) + "/" + table + ".jsonl"
                     data = b"".join(row[0].encode() for row in db.execute(
                         "SELECT body FROM derived WHERE portfolio_id=? AND revision=? AND table_name=? ORDER BY row_key",
                         (item["id"], item["revision"], table)))
                     require(digest(data) == item["tableSha256"][table], "Saved portfolio table changed")
                     save(name, data)
+        for object_id, descriptor in programme_objects(history).items():
+            original = self.object(object_id)
+            require(file_info(original) == descriptor, "The original programme document changed")
+            files["programme/documents/" + object_id] = original
         from managed import sourceFileList
         for name in sourceFileList():
             files["runtime/sf30-seller-sdk/" + name] = SDK / name
@@ -789,6 +823,15 @@ class Workspace:
                     "Retain the complete portfolio revision and request sequence")
             source_ids = sorted({source for item in history for source in item["sources"]})
             expected_data = set(required)
+            for object_id, descriptor in programme_objects(history).items():
+                name = "programme/documents/" + object_id
+                expected_data.add(name)
+                require(manifest["files"].get(name) == descriptor,
+                        "The original programme document descriptor differs")
+                with archive.open(name) as stream:
+                    uploaded = self.upload(stream, descriptor["bytes"])
+                require({key: uploaded[key] for key in ("sha256", "bytes")} == descriptor,
+                        "The complete original programme document differs")
             for ident in source_ids:
                 sha(ident)
                 prefix = "sources/" + ident + "/"
@@ -821,7 +864,7 @@ class Workspace:
                            "context": {"portfolioId": edit["portfolioId"], "decisionIds": edit["decisionIds"]}}
                 rebuilt = self._prepare_revision(edit["action"], edit["payload"], request, previous, prepared_sources)
                 require(rebuilt["portfolio"] == original, "The complete source, review and revision history does not reconstruct")
-                for table in TABLES:
+                for table in rebuilt["tables"]:
                     name = "rows/" + str(version) + "/" + table + ".jsonl"
                     expected_data.add(name)
                     require(name in manifest["files"] and digest(b"".join(canonical(row) for row in rebuilt["tables"][table]))
