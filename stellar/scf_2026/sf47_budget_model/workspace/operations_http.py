@@ -50,6 +50,9 @@ def register_static(static):
     static["/operations_funding_requests.mjs"] = ("operations_funding_requests.mjs", "text/javascript; charset=utf-8")
     static.update({"/award-terms.mjs": ("award-terms.mjs", "text/javascript; charset=utf-8"),
                    "/award-terms.css": ("award-terms.css", "text/css; charset=utf-8")})
+    static.update({"/task-outcomes-workbook.mjs": ("task-outcomes-workbook.mjs", "text/javascript; charset=utf-8"),
+                   "/task-outcomes-workbook-desk.mjs": ("task-outcomes-workbook-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/TASK_OUTCOMES_WORKBOOK.md": ("TASK_OUTCOMES_WORKBOOK.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_task_outcomes.mjs": ("operations_task_outcomes.mjs", "text/javascript; charset=utf-8"),
                    "/operations_task_outcomes.css": ("operations_task_outcomes.css", "text/css; charset=utf-8")})
     static.update({"/operations_account_reconciliation.mjs": ("operations_account_reconciliation.mjs", "text/javascript; charset=utf-8"),
