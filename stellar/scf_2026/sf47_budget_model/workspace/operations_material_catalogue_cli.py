@@ -88,7 +88,7 @@ def intake(ops, args, read_bytes, publish):
         fail("The complete selected Material Catalog source changed.", "MATERIAL_CATALOGUE_SOURCE_CHANGED", 409)
     body = {"expectedVersion": args.expected_version, "requestId": args.request_id,
             "actor": args.actor, "note": args.note, "action": transport.ACTION,
-            "data": {"filename": Path(args.file).name, "mediaType": "application/json",
+            "data": {"filename": Path(args.file).name, "mediaType": "application/x-ndjson",
                      "kind": "deployment", "sourceUrl": args.source_url, "observedAt": args.observed_at,
                      "expectedSha256": actual, "contentBase64": base64.b64encode(raw).decode("ascii")}}
     context = ops.read(args.case)["program"]
@@ -140,5 +140,5 @@ def operate(ops, args, read_bytes, publish):
         return result
     if getattr(args, "output", None):
         raw = (canonical(result) + "\n").encode("utf-8")
-        return {"output": exact_output(args.output, raw, read_bytes, publish)}
+        return {"output": exact_output(args.output, raw, read_bytes, publish, material.MAX_OUTPUT)}
     return result

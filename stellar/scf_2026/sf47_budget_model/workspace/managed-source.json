@@ -879,6 +879,7 @@
     "../../../../products/material-catalog/recipient/review.mjs",
     "../../../../products/material-catalog/recipient/review-panel.mjs",
     "../../../../products/material-catalog/recipient/workspace.mjs",
-    "../../../../products/material-catalog/recipient/reader.html"
+    "../../../../products/material-catalog/recipient/reader.html",
+    "MATERIAL_CATALOGUE_OPERATOR.md"
   ]
 }

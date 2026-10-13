@@ -20,7 +20,7 @@ import operations_installations as installations
 import operations_workshare_installations as workshares
 
 ROUTE = re.compile(r"^/api/operations/(operation-[a-f0-9]{32})/material-catalog/(inspect|rows|member|compare|template|prepare|handover)$")
-MAX_OUTPUT = 32 * 1024 * 1024
+MAX_OUTPUT = 512 * 1024 * 1024
 MAX_HANDOVER = 512 * 1024 * 1024
 SOURCE_ID = re.compile(r"source-[a-f0-9]{32}")
 FIELDS = {"expectedVersion", "sourceId", "expectedSourceSha256", "originalSourceId",
@@ -34,7 +34,7 @@ def fail(message, code="MATERIAL_CATALOGUE_INPUT", status=422):
     raise Problem(message, status, code)
 
 
-def _engine(payload):
+def _engine(payload, *, with_identity=False):
     # Temporary output files bound the parent allocation while the original Node
     # reader runs. The subprocess is waited/closed before any case view returns.
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
@@ -51,7 +51,7 @@ def _engine(payload):
             raise Problem("The read-only material preparation did not finish. Its case is unchanged.", 504,
                           "MATERIAL_ENGINE_TIMEOUT") from exc
         if stdout.tell() > MAX_OUTPUT:
-            fail("The original complete response exceeds 32 MiB.", status=413)
+            fail("The original complete response exceeds the complete 512 MiB delivery bound.", status=413)
         stdout.seek(0)
         try:
             result = json.loads(stdout.read(MAX_OUTPUT + 1))
@@ -63,7 +63,9 @@ def _engine(payload):
         fail(str(error.get("message", "The original material reader rejected this edition.")))
     if not isinstance(result.get("result"), dict):
         fail("The original material reader returned no complete result.", status=502)
-    return result["result"]
+    if not isinstance(result.get("resultSha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", result["resultSha256"]):
+        fail("The original material engine returned no result identity.", status=502)
+    return (result["result"], result["resultSha256"]) if with_identity else result["result"]
 
 
 def _source(ops, case_id, source_id, expected_sha):
@@ -90,6 +92,35 @@ def _payload(ops, case_id, action, body, context, raw):
         packet = None
         if binding.get("packetSourceId") is not None:
             _, packet = _source(ops, case_id, binding["packetSourceId"], binding["packetSha256"])
+        excluded = {body["sourceId"], binding["sourceId"], binding.get("packetSourceId")}
+        selected_ids = set()
+        def collect(value):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key == "sourceIds" or key.endswith("SourceIds"):
+                        if isinstance(item, list):
+                            selected_ids.update(ident for ident in item
+                                                if isinstance(ident, str) and SOURCE_ID.fullmatch(ident))
+                    elif key == "sourceId" or key.endswith("SourceId"):
+                        if isinstance(item, str) and SOURCE_ID.fullmatch(item):
+                            selected_ids.add(item)
+                    if isinstance(item, (dict, list)):
+                        collect(item)
+            elif isinstance(value, list):
+                for item in value:
+                    collect(item)
+        collect(document)
+        collect(body.get("bindings"))
+        attachments = []
+        for selected_id in sorted(selected_ids - excluded):
+            descriptor, selected_bytes = ops.source(case_id, selected_id)
+            if len(selected_bytes) > 64 * 1024 * 1024:
+                fail("The complete selected additional source must remain within the original 64 MiB attachment bound: " + selected_id, status=413)
+            attachments.append({"sourceId": selected_id, "filename": selected_id + ".bin",
+                "purpose": "Selected original Installation source " + selected_id + ": " + descriptor["filename"],
+                "bytes": len(selected_bytes), "sha256": descriptor["sha256"],
+                "contentBase64": base64.b64encode(selected_bytes).decode("ascii")})
+        payload["attachments"] = attachments
         payload.update(
             seed={"source": installations._source(context), "document": document,
                   "installationId": None, "expectedRevision": 0},
@@ -146,7 +177,21 @@ def perform(ops, case_id, action, body):
         payload = _payload(ops, case_id, action, body, context, raw)
         if action == "handover":
             payload["action"] = "prepare"
-        result = _engine(payload)
+        result, result_sha256 = _engine(payload, with_identity=True)
+        if action in ("template", "prepare", "handover"):
+            source_bindings = result.get("sourceBindings") if action == "template" else result.get("source", {}).get("sourceBindings")
+            required_sources = {"source/customer-catalog.jsonl": metadata["id"]}
+            required_sources.update({"attachments/" + row["filename"]: row["sourceId"]
+                                     for row in payload.get("attachments", [])})
+            for path, expected_id in required_sources.items():
+                selected_original = next((row for row in (source_bindings or [])
+                                          if row.get("path") == path), None)
+                if not selected_original or selected_original.get("sourceId") != expected_id:
+                    original_id = selected_original.get("sourceId") if selected_original else None
+                    fail("This selected file has another original attachment chosen by the maintained preparer. Review source " +
+                         str(original_id) + " against the selected " + expected_id +
+                         " before preparing its recorded provenance.",
+                         "MATERIAL_SOURCE_BINDING_CONFLICT", 409)
         view = {"schema": SCHEMA,
                 "scope": {"caseId": case_id, "version": context["program"]["version"],
                           "planId": context["program"]["planId"]},
@@ -161,7 +206,7 @@ def perform(ops, case_id, action, body):
                  "MATERIAL_PREPARATION_CHANGED", 409)
         with tempfile.TemporaryDirectory(prefix="sf47-material-handover-") as directory:
             os.chmod(directory, 0o700)
-            payload.update(action="handover", expectedPrepared=result, outputRoot=str(Path(directory).resolve()))
+            payload.update(action="handover", expectedPreparedSha256=result_sha256, outputRoot=str(Path(directory).resolve()))
             receipt = _engine(payload)
             expected = Path(directory) / "handover"
             if receipt.get("directory") != str(expected) or receipt.get("independentReopen", {}).get("complete") is not True:
@@ -179,6 +224,7 @@ def register_static(static):
         "operations_material_catalogue_model.mjs": "text/javascript; charset=utf-8",
         "operations_material_catalogue.css": "text/css; charset=utf-8",
         "MATERIAL_CATALOGUE_SOURCE_DESK.md": "text/markdown; charset=utf-8",
+        "MATERIAL_CATALOGUE_OPERATOR.md": "text/markdown; charset=utf-8",
     }.items():
         static["/" + name] = (name, media)
 

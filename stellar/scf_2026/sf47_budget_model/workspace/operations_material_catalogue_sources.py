@@ -50,9 +50,9 @@ def inspect(raw):
     if not isinstance(raw, bytes) or not 0 < len(raw) <= MAX_SOURCE:
         fail("The complete source must be nonempty and at most 128 MiB.", status=413)
     from operations_material_catalogue import _engine
-    result = _engine({"action": "inspect", "sourceBase64": base64.b64encode(raw).decode("ascii")})
+    result = _engine({"action": "custody", "sourceBase64": base64.b64encode(raw).decode("ascii")})
     summary = result.get("summary") if isinstance(result, dict) else None
-    if (not isinstance(result, dict) or result.get("schema") != "stellar-forge.material-source-desk-inspection.v1" or
+    if (not isinstance(result, dict) or result.get("schema") != "stellar-forge.material-source-desk-custody.v1" or
             result.get("file") != {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()} or
             not isinstance(summary, dict)):
         fail("The original reader returned an unbound complete source.")
