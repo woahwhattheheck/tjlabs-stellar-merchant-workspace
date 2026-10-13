@@ -85,3 +85,7 @@ export {startResearchQuoteProgrammeUpload,inspectResearchQuoteProgrammeUpload,ap
  finishResearchQuoteProgrammeUpload,RESEARCH_QUOTE_PROGRAMME_UPLOAD_CHUNK} from './customer-quotes/programme-upload.mjs';
 
 export {ResearchQuoteProgrammeTransfers} from './customer-quotes/programme-transfer.mjs';
+
+export {ResearchProgrammeOperator,RESEARCH_PROGRAMME_OPERATOR_SCHEMA,RESEARCH_PROGRAMME_OPERATOR_COMMANDS,
+ researchProgrammeOperatorConfiguration,readResearchProgrammeOperatorConfiguration}
+ from '../../../../stellar-forge/mcp-merchant-operator/research-programme-operator.mjs';
