@@ -282,7 +282,11 @@ The original catalogue receiver’s default budget is 8 GiB of unpacked source a
 
 ## Installed source and actual product inspection
 
-The source distribution includes the receiving modules and this guide through the maintained CKAN contribution. The existing runtime-workspace CLI calls the same exported functions. Original engine, archive, provider, Application transaction and setup modules remain the sole product writers.
+The source distribution includes the receiving modules and this guide through the maintained CKAN contribution. Its original `./merchant/runtime/dcat-receiving` export explicitly selects the complete native receiver. The common runtime-workspace CLI retains the three command names and help, and loads that receiver when one of those commands is invoked from a distribution that declares it. A selected Tyk or other product keeps its own dependency closure; ordinary Runtime workspace opening does not import the catalogue engine through these command declarations.
+
+For DCAT receiving, use the installed CKAN product or the complete distribution containing that original export. `DCAT_RECEIVING_PRODUCT_REQUIRED` means the command was invoked through a product whose selected source does not include this capability. Select the existing installed CKAN executable, preserving the same receiving request and operation directory. Do not copy individual engine modules into another installed product or change its manifest. A declared receiver with a missing dependency reports its actual native loader error.
+
+The existing runtime-workspace CLI calls the same exported functions with unchanged arguments, signal handling and receiving operation identity. Original engine, archive, provider, Application transaction and setup modules remain the sole product writers.
 
 Before presenting the result as a completed customer application, its existing equipped owner must run this full receiving course, open and LOOK at the exact rendered product at desktop and narrow widths, use its actual controls, download and reopen the full original report/project, and inspect all outgoing attachments and usable archive contents. Fix concrete failures in those original paths. Source review, parsing or an unaccepted execution request is not a native or visual completion claim.
 
