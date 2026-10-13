@@ -221,6 +221,48 @@ worksheet course below, then receive the original full report, workbook and
 Analysis archive through the same Installation operation. The complete course
 is in [Event programmes](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_PROGRAMMES.md).
 
+## Continue mapping work independently with both original source windows
+
+Open the actual accepted programme and its acquired following source pair in
+Event programmes. After the original comparison, use **Download editable offline
+mapping** or **Download whole working source**. Both contain the complete
+accepted/current NDJSON and manifests, exact native context, original parser,
+current fields/reviewer/reasons and all earlier comparison drafts.
+
+Use the [complete source and operating guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/e971839b16b169ef3bbf2ad664331878fc715062/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_WORKING.md)
+for the whole native/offline course. The recipient can inspect every actual
+population, open full values, change fields and compare them locally. A changed
+comparison retains its preceding full draft and reasons; its new required
+reasons belong to the new comparison. Save the whole HTML/JSON and independently
+reopen the selected edition. Inspect a browser checkpoint or incoming working
+file before explicitly selecting it. Every displaced complete edition remains
+separately downloadable in that open window; save those separate files before
+closing because they are not inserted into the selected document.
+
+The original source export runs in the same private coordinator, rereads all four
+files, checks their exact sizes/digests, and verifies the accepted revision and
+receiver before publication. The saved editor contains no private capability.
+Native return uses the existing complete mapping-review format and **Inspect
+and reopen review**, which recomputes the comparison against the actual retained
+native source. The original Review/Apply remains the acceptance path, followed
+by the existing report, workbook, sixteen-file delivery and full archive.
+
+The installed CLI receives complete source, preserves different existing output
+destinations, creates the full editor/native companion and extracts all four
+exact originals. The full `analysis-events` contribution registers
+`starforge event-mapping-working`; the compact Analysis project includes its
+complete direct source and dependencies. Working JSON/HTML retain a 192 MiB
+allowance; the native-review companion retains the original 32 MiB limit.
+
+Continue this capability inside the existing Mercury/22B7/A66C customer
+receiving operation. Use its actual accepted/current windows and original
+controller. The producing worker opens and LOOKS at the exact normal/narrow
+screens, full original value pages, comparison/history, save/reopen, source
+mismatch, unavailable browser storage and native-return controls. Open every
+downloaded source, working file and resulting attachment. Repair the actual
+output before presenting it. Preserve the current browser tabs, source IDs,
+saved work and all standing owner rules.
+
 ## Continue the customer's saved worksheet after a later source changes
 
 A selected later window can leave one of the customer's existing worksheet
@@ -483,3 +525,22 @@ application and native receiving boundary remain in place.
 Public Merchant PR1898 at 0762b76c074e46db57e681b7851a2ccbe37bfa2f completes the installed command and typed agent course. Its ten full files were read back after merge. Six existing source IDs advance; the original parent service, private source receiver, typed receiving implementation and its declaration add four explicit source identities. All forty-two entries retain their preceding complete editions. The original publisher receives this chapter and declaration in the same application source selection, with the six funded packages and original native commissioning operation preserved.
 
 The owner handoff at https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791906463475599 quotes Bryce's LOCAL Codex in-app browser reservation from 16:00 UTC on 13 October 2026 until explicit release. Preserve that browser without navigation, capture, inspection or control changes. Continue the original source and native shell work and its already authorized isolated cloud browser. Retain the quoted handoff's attribution and the producing maintainer's actual screen, attachment and reopened-file inspection responsibilities.
+
+## Following complete offline mapping source selection
+
+This complete author successor keeps the existing Webhook H2 and every previous
+paragraph, source ID and historical edition. It adds the independent original-pair
+mapping subsection and joins all twelve installed product files at public Merchant
+commit `e971839b16b169ef3bbf2ad664331878fc715062`. Six existing IDs gain measured editions and six complete
+new mapping model/controller/composer/CLI/native-receiver/guide IDs are added:
+48 declared original sources in total. Every actual source link in the whole
+chapter stays tied to its explicit immutable edition.
+
+The cumulative publisher receives this full chapter and declaration into its
+current source union. Keep all other authors' newer chapters and registrations,
+the complete companion, concise application, existing saved-v7/customer/browser
+operation and all four generated role outputs. Preserve the same original
+USD 38,000 / 400 hours / 150 days / six-package budget and both selected
+installations. The complete mapping product is an already delivered foundation;
+its future customer-specific deployment and acceptance remain in those original
+funded packages.
