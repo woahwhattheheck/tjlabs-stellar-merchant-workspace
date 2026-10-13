@@ -123,3 +123,7 @@ merchant-prepare freezes the complete selected review/workshare package before a
 The SOSA importer reads the current 19-column federal schema and retains all original values. The agreement number identifies the instrument. The source field `award-date` is its start date; expiry and file publication remain separate. Legal, operating and standardized supplier names are retained individually. Standardized names group related suppliers for search and never establish a shared legal identity.
 
 The SOSA dictionary calls `commodity` a generic procurement code without naming a classification scheme. Matching code values can produce a candidate with `sourceScheme: unspecified` and `requiresSchemeConfirmation: true`; GSIN and UNSPSC remain separate on tender and award records. Date fields and membership in the published feed never fabricate an explicit instrument status. The original dictionary is included under `examples/source/sosa-dictionary.xml`.
+
+## Separately captured notice evidence
+
+When a notice is absent from a retained CSV feed, [Separately captured notice sources](SOURCE_PROVENANCE.md) defines the explicit one-row import, complete original HTML and field mapping, atomic v3 adoption, and source-preserving export/receiving path. Existing CSV-only workspaces retain their v2 defaults.

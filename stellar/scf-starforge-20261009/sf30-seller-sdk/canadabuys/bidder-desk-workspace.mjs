@@ -487,7 +487,7 @@ export class CanadaBuysBidderDesk {
       context.source.id===source.id&&context.source.sha256===source.sha256&&context.source.bytes===source.bytes&&
       canonical(context.source.columns)===canonical(source.columns)&&
       ['summary','kind','solicitationKey','referenceKey'].every(key=>canonical(context.entry[key])===canonical(entry[key]))&&
-      ['stream','rowCount','bodyKind','coverage'].every(key=>canonical(context.source[key])===canonical(source[key])),'BIDDER_SOURCE_CHANGED','The reviewed notice differs from its retained original source');
+      ['stream','rowCount','bodyKind','coverage','derivationSha256','derivation'].every(key=>canonical(context.source[key])===canonical(source[key])),'BIDDER_SOURCE_CHANGED','The reviewed notice differs from its retained original source');
      const profile=member('profile',edition.profileId,edition.profileRevision);
      requireThat(canonical(profile)===canonical(context.profile),'BIDDER_PROFILE_CHANGED','The reviewed capability profile differs from its saved edition');
      for(const evidence of context.evidence)requireThat(canonical(member('evidence',evidence.id,evidence.revision))===canonical(evidence),
