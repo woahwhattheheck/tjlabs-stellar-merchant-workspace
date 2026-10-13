@@ -1,3 +1,5 @@
+import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
+import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 // Original supplier work, invoice review, observed cash and dated account handover.
 const DESK_SCHEMA='stellar-forge.sf47-supplier-desk.v1';
 const REPORT_SCHEMA='stellar-forge.sf47-supplier-account.v1';
@@ -25,11 +27,14 @@ function field(text,key,value='',{options,multiple=false,area=false,type='text',
     area?'<textarea'+attrs+' rows="3">'+esc(value)+'</textarea>':'<input'+attrs+' type="'+type+'" value="'+esc(value)+'">';
   return '<label'+(wide?' class="supplier-wide"':'')+'>'+esc(text)+control+(help?'<small>'+esc(help)+'</small>':'')+'</label>';
 }
+const payablesStores=new Map();
+function payablesStore(name){
+  if(payablesStores.has(name))return payablesStores.get(name);
 let database;
 function db(){
   if(!database)database=new Promise((resolve,reject)=>{
     if(!globalThis.indexedDB){reject(new Error('Browser draft storage is unavailable.'));return;}
-    const request=indexedDB.open('sf47-supplier-accounts',1);
+    const request=indexedDB.open(name,1);
     request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('desks'))request.result.createObjectStore('desks');};
     request.onerror=()=>{database=null;reject(request.error||new Error('Browser draft storage could not open.'));};
     request.onsuccess=()=>{request.result.onversionchange=()=>{request.result.close();database=null;};resolve(request.result);};
@@ -52,8 +57,12 @@ async function stored(key,value,expectedRevision){
     tx.onerror=tx.onabort=()=>reject(conflict||tx.error||request.error||new Error('Browser draft could not be saved.'));
   });
 }
+  const access={stored};payablesStores.set(name,access);return access;
+}
 
-export function mountPayables({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen}){
+export function mountPayables({container,current,api,saveApi=api,session,mutationId,recordingActor,onCase,onOpen,staffContext=currentStaffContext()}){
+  const pinnedContext=staffContext?{...staffContext}:null;
+  const {stored}=payablesStore(staffDeskStorageKey('sf47-supplier-accounts',pinnedContext));
   const root=document.createElement('section');root.className='supplier-accounts';root.setAttribute('aria-label','Supplier accounts');container.replaceChildren(root);
   if(!document.querySelector('link[data-supplier-accounts-style]')){
     const style=document.createElement('link');style.rel='stylesheet';style.href='/operations_payables.css';style.dataset.supplierAccountsStyle='true';document.head.append(style);
@@ -359,6 +368,7 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     const pending=session.pending;if(!pending)return;
     busy=true;error='';render();
     try{
+      assertStaffRequestActor(pending.body,pinnedContext);
       const result=await saveApi(prefix+'/command',clone(pending.body));
       if(result.id!==caseId||result.action!==pending.body.action)throw new Error('The result differs from the retained original request.');
       session.result=result;session.pending=null;session.reviewed=null;
@@ -375,17 +385,18 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
       if(available()){const next=await api(prefix);await onCase(next,result);}
     }catch(problem){
       pending.problem={message:problem.message||String(problem),status:problem.status||null,code:problem.code||null};
-      pending.rejected=[400,401,403,404,409,413,422].includes(problem.status);
+      pending.rejected=[400,409,413,415,422].includes(problem.status);
       if(session.pending===pending)await persist();
       if(available())error=pending.problem.message;
     }finally{if(available()){busy=false;render();}}
   }
   async function openDesk(file){
     if(file.size>32*1024*1024)throw new Error('Open a complete supplier desk up to 32 MiB.');
-    const value=JSON.parse(await file.text());
+    const value=JSON.parse(await file.text());if(!available())return;
     if(value?.schema!==DESK_SCHEMA||value.caseId!==caseId)throw new Error('Open this case’s complete supplier desk. Import an account ZIP first when receiving a different case.');
     if(value.pending&&(!value.pending.body||typeof value.pending.body.requestId!=='string'||typeof value.pending.body.action!=='string'))
       throw new Error('The desk must retain its complete original pending request.');
+    assertStaffRequestActor(value.pending?.body,pinnedContext);
     download(state(),caseId+'-supplier-desk-before-open-'+Date.now()+'.json');
     const revision=session.storageRevision;restore(value);session.storageRevision=revision;await persist();await loadReport();
     notice='Opened the original desk input and retained request.';
@@ -501,6 +512,12 @@ export function mountPayables({container,current,api,saveApi=api,session,mutatio
     }
     session.startDate||='';session.endDate||=today();session.panel||='summary';render();await loadReport();render();
   }
+  const earlier=mountEarlierStaffDesk({root,staffContext:pinnedContext,title:'Supplier account',
+    readCopy:()=>payablesStore('sf47-supplier-accounts').stored(caseId),isBusy:()=>busy||hostBusy||!session.initialized,setDeskBusy:value=>{busy=value;if(value)controls();else render();},
+    describeCopy:value=>accountName(value.contributorId)+' · '+(value.pending?'original save pending':value.draft?'editable supplier draft':'saved account selection'),
+    filename:caseId+'-supplier-earlier-desk.json',
+    openCopy:async value=>{await openDesk(new File([JSON.stringify(value)],'supplier-earlier-desk.json',{type:'application/json'}));render();}
+  });
   const ready=initialize();
-  return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){active=false;clearTimeout(saveTimer);persist();}};
+  return {ready,setHostBusy(value){hostBusy=!!value;controls();},dispose(){earlier.dispose();active=false;clearTimeout(saveTimer);persist();}};
 }

@@ -2,7 +2,7 @@
 
 This delivery brings the current application, detailed customer chapters, source register and saved-submission tools into the existing grant reader. It keeps the original nine-answer draft, manual edits, issuer fields, review rounds, planning and handover history together with the complete selected source.
 
-The selected edition contains 217 original source records and 61 detailed companion chapters. The maintained product registry selects each contribution's actual source files and editions. The funding remains $38,000 for 400 prospective hours over 150 days, with the original six priced packages and two independent merchant / two independent buyer commitments.
+The selected edition contains 225 original source records and 61 detailed companion chapters. The maintained product registry selects each contribution's actual source files and editions. The funding remains $38,000 for 400 prospective hours over 150 days, with the original six priced packages and two independent merchant / two independent buyer commitments.
 
 ## Complete files in this delivery
 
@@ -14,10 +14,10 @@ The selected edition contains 217 original source records and 61 detailed compan
 | --- | ---: | --- |
 | `dist/grant.html` | 89,739 | `52e0915f8e1223bf3fa647b2e299c48b3ce63500` |
 | `grant-data/application.md` | 40,066 | `cb0164d3f24c413d76f359339fff5f94d2fa4f0f` |
-| `grant-data/product-and-finance.md` | 601,568 | `13c74281fec0837487f7738a3b0d3452d9e7ce1b` |
-| `grant-data/source-index.json` | 232,339 | `90d4c85ad3d540ebdac87542ed0f01fbd354d23d` |
+| `grant-data/product-and-finance.md` | 601,568 | `92559edafa43069c3e87e064d9fc3846b9f61c5a` |
+| `grant-data/source-index.json` | 244,391 | `6299717fcdfb0a74b5af86f26fd776b6f8ff1e56` |
 
-The source selection is based on repository commit `8d3c0a2e2bbb9ca878e68c3cf1a95532abe882b0`. The original canonical input is 1,126,947 UTF-8 bytes, SHA-256 `1c5ba088ad9eb51af83f3bc13ab77815caa934fcf5e5ed9d52539088d4474430`. The source carrier records that captured input and the exact selected manuscript separately. Its selected chapter references receive the source author's maintained scientific-array operating and commissioning links, with the complete chapter body and its Git identity retained in this package. The application owner retains the full manuscript in the original receiving operation.
+The source selection is based on repository commit `d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d`. The original canonical input is 1,126,947 UTF-8 bytes, SHA-256 `1c5ba088ad9eb51af83f3bc13ab77815caa934fcf5e5ed9d52539088d4474430`. The source carrier records that captured input and the exact selected manuscript separately. Its selected chapter references receive the source author's maintained scientific-array operating and commissioning links, with the complete chapter body and its Git identity retained in this package. The application owner retains the full manuscript in the original receiving operation.
 
 ## Receive into the existing saved submission
 

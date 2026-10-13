@@ -406,3 +406,8 @@ starforge document-merchant batch --help
 ## Operate through Applications
 
 Use the [complete Applications guide](APPLICATIONS.md) to review a new document configuration or reopen a prepared one from the saved Document merchant application. Start retains the supplier plan, native price and original factory, starts the existing Jobs seller/customer/operator/worker, and returns the authenticated operator. Stop and later Start use the same merchant and job history. `document-merchant inspect-service` presents the complete read-only selection; `document-merchant launch` operates that setup and service in the foreground.
+
+
+## Ordered invoice and report bundles
+
+After receiving the original PDFs, use the same Document production browser's Ordered PDF bundle step or `document-merchant assemble` to prepare exact customer order, review the original assembly price, fulfill and receive every volume, and export one complete customer archive. The PDFMint-backed `assemblePdfs` function is enabled explicitly with its own native payment terms. Single-PDF volumes retain their original bytes without a merge purchase. See [ASSEMBLY.md](./ASSEMBLY.md) for complete merchant setup, local/batch source intake, CLI commands, continuation, output units and independent customer receiving.

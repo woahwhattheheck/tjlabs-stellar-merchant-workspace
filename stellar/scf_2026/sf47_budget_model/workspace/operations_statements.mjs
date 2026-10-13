@@ -1,3 +1,5 @@
+import {currentStaffContext,staffDeskStorageKey,assertStaffRequestActor} from './staff-session.mjs';
+import {mountEarlierStaffDesk} from './staff-desk-recovery.mjs';
 // Statement source mapping and reviewed cash receiving in the existing Operations case.
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=value=>structuredClone(value);
@@ -86,12 +88,12 @@ const table=(headers,rows)=>'<div class="statement-table"><table><thead><tr>'+he
 const detail=(title,value)=>'<details><summary>'+esc(title)+'</summary><pre>'+esc(json(value))+'</pre></details>';
 const amount=(value,currency)=>esc(value??'—')+(value===null||value===undefined?'':' '+esc(currency));
 
-function draftStore(){
+function draftStore(name='sf47-statement-drafts'){
   let opening;
   function database(){
     if(!opening)opening=new Promise((resolve,reject)=>{
       if(!globalThis.indexedDB){reject(new Error('Browser draft storage is unavailable.'));return;}
-      const request=indexedDB.open('sf47-statement-drafts',1);
+      const request=indexedDB.open(name,1);
       request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('drafts'))request.result.createObjectStore('drafts');};
       request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Could not open browser draft storage.'));
     });
@@ -110,9 +112,11 @@ function draftStore(){
     });
   };
 }
-const storeDraft=draftStore();
+const statementStores=new Map();
+function statementStore(context){const name=staffDeskStorageKey('sf47-statement-drafts',context);if(!statementStores.has(name))statementStores.set(name,draftStore(name));return statementStores.get(name);}
 
-export function mountStatements({container,current,saveApi,session,mutationId,recordingActor,onCase,onCash}){
+export function mountStatements({container,current,saveApi,session,mutationId,recordingActor,onCase,onCash,staffContext=currentStaffContext()}){
+  const pinnedContext=staffContext?{...staffContext}:null,storeDraft=statementStore(pinnedContext);
   const root=document.createElement('section');root.className='statement-desk';root.setAttribute('aria-label','Statement receiving');container.replaceChildren(root);
   if(!document.querySelector('link[data-statement-style]')){
     const link=document.createElement('link');link.rel='stylesheet';link.href='/operations_statements.css';link.dataset.statementStyle='true';document.head.append(link);
@@ -301,6 +305,7 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
   }
   async function sendPending(){
     const pending=session.pending;if(!pending)return;
+    assertStaffRequestActor(pending.payload,pinnedContext);
     await persist(true);
     if(!available())return;
     const work=(async()=>{
@@ -501,10 +506,11 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(!file)return;
     if(session.pending||session.accepted||session.inflight)throw new Error('Finish the retained import before opening another recovery copy.');
     if(file.size>64*1024*1024)throw new Error('Select a complete statement recovery copy up to 64 MiB.');
-    const saved=JSON.parse(await file.text());
+    const saved=JSON.parse(await file.text());if(!available())return;
     if(saved.schema!=='sf47.statement-draft.v1'||saved.caseId!==current.program.id||!draftInput(saved.inputs))throw new Error('Choose a statement recovery copy for this original case.');
     if(saved.inputs.source?.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The recovery copy contains a statement larger than 8 MiB.');
     if(saved.pending&&saved.accepted)throw new Error('The recovery copy contains conflicting import states.');
+    assertStaffRequestActor(saved.pending?.payload,pinnedContext);
     for(const request of [saved.pending?.payload,saved.accepted?.payload].filter(Boolean)){
       if(request.action!=='statement.receive'||typeof request.requestId!=='string'||!request.data?.inputs?.source||!draftInput(request.data.inputs,true)||typeof request.data.expectedPreviewSha256!=='string')throw new Error('The original import request in this recovery copy is invalid.');
       if(request.data.inputs.source.contentBase64?.length>(maximumSource+2)*4/3+16)throw new Error('The retained import contains a statement larger than 8 MiB.');
@@ -590,6 +596,12 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
       else if(action==='remove-allocation')session.allocationDraft.splice(Number(target.dataset.index),1);
     });
   });
+  const earlier=mountEarlierStaffDesk({root,staffContext:pinnedContext,title:'Statement',
+    readCopy:()=>statementStore(null)(current.program.id),isBusy:()=>loading||busy||hostBusy||!!session.inflight,setDeskBusy:value=>{busy=value;if(value)controls();else render();},
+    describeCopy:value=>(value.inputs?.source?.filename||'Original statement')+' · '+(value.pending?'original import pending':value.accepted?'saved import response retained':'editable interpretation'),
+    filename:'statement-earlier-recovery.json',
+    openCopy:async value=>{assertStaffRequestActor(value.pending?.payload,pinnedContext);download(snapshot(),'statement-current-recovery.json');await importDraft(new File([JSON.stringify(value)],'statement-earlier-recovery.json',{type:'application/json'}));render();}
+  });
   render();
   const ready=(async()=>{
     if(!session.loaded){
@@ -614,5 +626,5 @@ export function mountStatements({container,current,saveApi,session,mutationId,re
     if(session.inflight){try{await session.inflight;}catch{}if(available())render();}
     if(available()&&session.accepted)await run(finishAccepted);
   })();
-  return {root,ready,dispose(){active=false;clearTimeout(persistTimer);if(session.loaded)void persist();},setHostBusy(value){hostBusy=!!value;controls();}};
+  return {root,ready,dispose(){earlier.dispose();active=false;clearTimeout(persistTimer);if(session.loaded)void persist();},setHostBusy(value){hostBusy=!!value;controls();}};
 }

@@ -1,6 +1,6 @@
 import {renderIssuerProgrammes} from './grant-issuer-workspace.mjs';
 // MIT. Handover controls for the original submission editor and draft store.
-import {ANSWERS,REQUIREMENTS,MAX_BYTES,retainVersion} from './grant-submission-core.mjs';
+import {ANSWERS,REQUIREMENTS,MAX_BYTES,retainVersion,formSourceReview} from './grant-submission-core.mjs';
 import {emptyHandover,emptySelection,handoverOf,EVIDENCE_KINDS,RETURN_KINDS,canonical,editionFileDescriptors} from './grant-handover-core.mjs';
 import {
   fileBytes,stageOriginal,retainEvidence,prepareSubmission,recordIssuerReturn,
@@ -178,6 +178,13 @@ export function renderHandover(root,context) {
     button('Prepare this exact edition',async()=>{
       const result=await prepareSubmission(current());replace(result.draft,'Prepared edition '+result.edition.id.slice(0,12)+'. Record an actual submission or issuer observation separately.');
     },'primary'));
+  const mapping=formSourceReview(draft),sourceSummary=node('details');
+  sourceSummary.dataset.handoverFieldSources='';
+  sourceSummary.append(node('summary','Issuer-field answer coverage and changed wording'),
+    node('p','Current fields associate '+(ANSWERS.length-mapping.unmappedAnswerIds.length)+' of '+ANSWERS.length+' canonical answer areas. '+mapping.changedFieldIds.length+' fields have changed source answers; '+mapping.unreviewedFieldIds.length+' await their first source comparison.'),
+    table(['Answer area','Mapped fields'],mapping.answers.map(row=>[row.title,row.fieldIds.map(id=>draft.fields.find(field=>field.id===id)?.label||id).join('; ')||'No association entered'])),
+    node('p','Compare or edit the fields in Issuer form fields. Preparation retains this exact mapping with the selected text; it remains available after later source changes.','muted'));
+  prepare.append(sourceSummary);
   root.append(prepare);
 
   const observe=node('section',undefined,'card');observe.append(node('h3','Record an actual issuer observation'),
@@ -217,6 +224,7 @@ export function renderHandover(root,context) {
       details('Complete frozen authoring state',node('pre',JSON.stringify(body.snapshot,null,2),'source-text')));
     if(body.contextIssues.length)card.append(details('Recorded context observations',...body.contextIssues.map(issue=>node('p',issue,'issues'))));
     if(body.fieldIssues.length)card.append(details('Original field counts and observations',node('pre',JSON.stringify(body.fieldIssues,null,2),'source-text')));
+    if(body.fieldSourceReview)card.append(details('Answer mapping and source comparison at preparation',node('pre',JSON.stringify(body.fieldSourceReview,null,2),'source-text')));
     const originalFiles=node('div');
     for(const file of editionFileDescriptors(draft,edition.id).filter(file=>file.role!=='issuer-observation'))
       originalFiles.append(originalButton(draft,file,(file.title||labelOf(file.sourceRole||file.role))+' · '+file.originalName));

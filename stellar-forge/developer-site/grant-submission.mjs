@@ -2,6 +2,9 @@ import {HANDOVER_ROUTES,attachGrantHandover} from './grant-handover.mjs';
 // MIT. Connect the complete submission workspace to the existing grant composer.
 export const SUBMISSION_OPERATION = 'SCF-SUBMISSION-WORKSPACE-22B705-20261012';
 export const SUBMISSION_ROUTES = [
+  ["/grant-data/application-reviewer.md",["grant-data/application-reviewer.md","text/markdown; charset=utf-8"]],
+  ["/grant-data/reviewer-working-index.json",["grant-data/reviewer-working-index.json","application/json; charset=utf-8"]],
+  ["/grant-data/reviewer-working-source.json",["grant-data/reviewer-working-source.json","application/json; charset=utf-8"]],
   ["/grant-product-sources-core.mjs",["grant-product-sources-core.mjs","text/javascript; charset=utf-8"]],
   ["/grant-product-authoring-core.mjs",["grant-product-authoring-core.mjs","text/javascript; charset=utf-8"]],
   ["/grant-product-authoring-source.mjs",["grant-product-authoring-source.mjs","text/javascript; charset=utf-8"]],

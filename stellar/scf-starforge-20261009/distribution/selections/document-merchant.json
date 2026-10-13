@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "document-merchant",
   "title": "Paid document merchant and customer",
-  "description": "Complete document merchant and customer browser with original native payment and job receiving: CSV/JSON datasets, grouped records, full HTML/Markdown templates, saved quotes, PDF/source output and portable Collections.",
+  "description": "Complete document merchant and customer browser with original native payment and job receiving: CSV/JSON datasets, grouped records, full HTML/Markdown templates, saved quotes, PDF/source output and portable Collections. Ordered PDF assembly preserves complete sources and delivers all received volumes in one customer archive.",
   "base": {
     "commands": [
       "installation",
@@ -207,7 +207,10 @@
     "products/document-merchant/composition-workspace.d.mts",
     "products/document-merchant/composition-server.d.mts",
     "products/document-merchant/composition-service.d.mts",
-    "products/document-merchant/GRANT.md"
+    "products/document-merchant/GRANT.md",
+    "products/document-merchant/ASSEMBLY.md",
+    "products/document-merchant/assembly.d.mts",
+    "products/document-merchant/examples/ordered-pdfs.json"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

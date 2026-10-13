@@ -1428,5 +1428,170 @@
         "scope": "Full original workspace/profile/evidence/payment binding, exact-origin merchant/RPC bridge, process environment CAS, owned listener/request/socket drain and processOwner through final status persistence."
       }
     }
+  },
+  "browserOperatorAdoption": {
+    "schema": "starforge.pmtiles-browser-operator-adoption.v1",
+    "sourceRepository": "woahwhattheheck/public-commons-sprint-2026",
+    "sourceCommit": "6c1dd3a671fed183925826e9782b268880fb4026",
+    "sourcePullRequest": "https://github.com/woahwhattheheck/public-commons-sprint-2026/pull/2810",
+    "reviewedHead": "77de0e5a8b1392f38a6bba4159fb06773c2441fd",
+    "targetBaselineCommit": "3b25bc4c8aa180daa448688a714a582a212bbf51",
+    "files": [
+      {
+        "path": "stellar-forge/mcp-merchant-operator/pmtiles-commerce-workbench.mjs",
+        "originalBlob": null,
+        "blob": "7a59bc5d9f63170fdedad84cb8b33f0fe435a656",
+        "bytes": 12986,
+        "sha256": "e2e80d6746718d2bb9d2ab6565afe3b73c0cfec5aa596c7b4fd5e15ce85098b2"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/pmtiles-commerce.mjs",
+        "originalBlob": "51da6a4fc1d1c248cf9114e7a31bb0c437726371",
+        "blob": "6636dd9ac147a3cde9400d810867932f2b8dd429",
+        "bytes": 13553,
+        "sha256": "a509fdf29c88a264dec8e0e1872f411ff3db2f780c9a7b142ea8f215ae4cfccb"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/catalog/pmtiles-commerce.mjs",
+        "originalBlob": "2a138f0dbf2bcc70a748d191d5c53800220e6255",
+        "blob": "bd18f75db840ca04fa5ef62341a6399a8a28ae99",
+        "bytes": 7950,
+        "sha256": "166226034fee266c19070544e2442272d400d8b5ec701e12456e365b47673c62"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/pmtiles-workspace.mjs",
+        "originalBlob": "22e30647eaea012507c91a283db7fc16842a6995",
+        "blob": "b8798653f1c5f4451a8d78791adbd7f4a9033670",
+        "bytes": 29373,
+        "sha256": "9968f73d24e59b415d6fb54371bf847a79d1bbbf7d4610decd2f09170f1c1022"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/server.mjs",
+        "originalBlob": "cb9007c6fc63732e20d227e8a3ab9069a656bc34",
+        "blob": "d892715a12cd66e91f8471620586c3a99bb17329",
+        "bytes": 14697,
+        "sha256": "597acdefabc436378ca50ce5616465da1db0f1a41beddb6b2c7f6ab477fbb932"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/web/commerce.mjs",
+        "originalBlob": null,
+        "blob": "6e4f493f4c98ac8343d5a47d39b94dbb3b73bd92",
+        "bytes": 64015,
+        "sha256": "082855725ec775b20c6337e3c003e14fb80a40e5738764e1e4196013d37cfd71"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/pmtiles-commerce-browser-receiving.mjs",
+        "originalBlob": null,
+        "blob": "b5f5866d266bb9f731670caa85426194c6417bd6",
+        "bytes": 25478,
+        "sha256": "708f505e62973ff40de323b3566bf5b83d54cc768d3ef049b43a046e47f71a0b"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/pmtiles-commerce-native-receiving.mjs",
+        "originalBlob": "97bc568d3c621ed26cd498091c13f138db32941f",
+        "blob": "8eb093f0159a7bed5b6fe4fbe6abd6586da35733",
+        "bytes": 30172,
+        "sha256": "a88b33c9cce58a24ddf1eee24c53c5e186fe15e581355a30ea837f8fe3a3efe2"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/native-receiving.mjs",
+        "originalBlob": "37e984c9da7b47aae6076007d547225a47834e8b",
+        "blob": "66d4cede04b719d40f14382e47c3616d632ae5eb",
+        "bytes": 39475,
+        "sha256": "23bcd0c26160e80ff57179163b97d9cbbbcaf5f364cf9572d568e626545e4410"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/web/commerce.css",
+        "originalBlob": null,
+        "blob": "cc3f4216289b924aac0263dfb94bfe8592739f9f",
+        "bytes": 1423,
+        "sha256": "0af54a031171e0f842f76022baa59dfcae9d993a7beff60c2c74553aaf7e69c0"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/web/index.html",
+        "originalBlob": "02dfc89835f1fd2eb8d1fe78ef356ba7791dfd28",
+        "blob": "7541bd8859115504af6f6b05154efb7d000b5e07",
+        "bytes": 8687,
+        "sha256": "1aeb07dcd63f858c6b68209b76db85e2b0ea6ca2c1fa3f647bbc4ca1c7fef98a"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/web/app.js",
+        "originalBlob": "c722bb42012a23bbbbace5cc303d884fcdb852ec",
+        "blob": "eb5c10d8d252febcfd8cb9468dea71c86e7a85e1",
+        "bytes": 61961,
+        "sha256": "ed820c90b4abd835fbb0d265f28a20f9302b1dc3b04d1bce86ddb87dd8080a65"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/product-files.json",
+        "originalBlob": "f2c7949ecce9317288212efa1a6396d3d481a16b",
+        "blob": "a12c71d2eae299340a6d71062cd7d3511f87d266",
+        "bytes": 1438,
+        "sha256": "077836a5ef96d354179084e2224eb881b58f588865cbcda183db8493dd7d28f8"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/contributions/pmtiles-commerce.json",
+        "originalBlob": "dfcabdb3f81ae6f2baea6be8ab6d73ad7bb7edf9",
+        "blob": "5c057ae4c7d3d51ca7027e255e7fc5c44358c259",
+        "bytes": 1948,
+        "sha256": "abfe4f918310ff7d17aa14d93473ecfe16ec03d4808fa313b26f255c902067d2"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/commerce/BROWSER.md",
+        "originalBlob": null,
+        "blob": "5cd3c330b8b19f26b5dcca774d0dccfc2bd9b826",
+        "bytes": 11849,
+        "sha256": "9ce74f88b81f7ea7d4d52b45c67739f1355cfa8fb8d951fbc2128e8ac9ccfb46"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/commerce/README.md",
+        "originalBlob": "dcfe859c57f80bacad536befd98130d8e956bd98",
+        "blob": "16b5c73189ab7a971e34eb00107aee914b95debd",
+        "bytes": 17349,
+        "sha256": "f03a1307d765b828a0142a99762307272d87378bf1101b2bc92eac925b6a5b15"
+      },
+      {
+        "path": "stellar-forge/mcp-merchant-operator/PMTILES_COMMERCE.md",
+        "originalBlob": "fbc5839cc76c97e6d229eece43c7016139d3ec4f",
+        "blob": "f5b22d97213fdab111081a8d07112873e84a0299",
+        "bytes": 10516,
+        "sha256": "dc900931224c5a32c8cc620f10117e0f0d55919bde9bcabf5bf1dceda0644f82"
+      },
+      {
+        "path": "stellar/scf-starforge-20261009/distribution/selections/PMTILES_OPERATIONS.md",
+        "originalBlob": "3eba90bf4f43a09a6a04abe6d556616e248555e3",
+        "blob": "4ff3cc9399cc143ab95a5e600f7c9f25e88c9549",
+        "bytes": 25371,
+        "sha256": "07a79aa450483419ea77cdacdc45773573241146137a719f717e7f814d48a636"
+      }
+    ],
+    "operatingGuide": {
+      "path": "products/pmtiles-operations/OPERATING.md",
+      "blob": "767fe86db13c5be7d3531796970054f533076924",
+      "bytes": 65459,
+      "sha256": "d8489db3b419a5825002ad41891019c59732e8f023c8df273a2b9b42d5819e99"
+    },
+    "review": {
+      "reviewer": "actions_and_fleet",
+      "complete": true,
+      "scope": "Complete original host queue, authoring close, retained workbench, browser draft/request/range recovery and native browser/caller lifecycle.",
+      "corrections": [
+        "Capture and reassert original workspace/alias/connection before each accounting dispatch.",
+        "Reuse the immutable original browser storage snapshot after interrupted receiving."
+      ],
+      "sourceReadback": {
+        "files": 18,
+        "bytes": 378241,
+        "publicMerge": true
+      }
+    },
+    "nativeReceiving": {
+      "originalOperation": "CAMPT0CAMP-PMTILES-RELEASE-OPERATIONS-20261012",
+      "originalThread": "D0C1U7TUZEC/1791819781.756819",
+      "driver": "stellar/scf-starforge-20261009/sf30-seller-sdk/pmtiles/native-receiving.mjs",
+      "paidPhase": "stellar-forge/mcp-merchant-operator/pmtiles-commerce-native-receiving.mjs",
+      "browserPhase": "stellar-forge/mcp-merchant-operator/pmtiles-commerce-browser-receiving.mjs",
+      "ownership": "Same original producer, persistent browser context, funded environment, two purchased outputs, adoption/receiving IDs and accounting commands.",
+      "sourceDisposition": "Complete source and receiving extension published. Actual original native execution and output are reported separately."
+    }
   }
 }

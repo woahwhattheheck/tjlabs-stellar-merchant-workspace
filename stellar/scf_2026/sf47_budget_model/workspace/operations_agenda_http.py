@@ -32,6 +32,9 @@ def selection(query):
         except (ValueError, TypeError) as exc:
             agenda.domain.fail("Use a JSON object mapping every selected case ID to its version.",
                                "INVALID_AGENDA_VERSIONS")
+    if "expectedVersions" in query and not isinstance(versions, dict):
+        agenda.domain.fail("Use a JSON object mapping every selected case ID to its version.",
+                           "INVALID_AGENDA_VERSIONS")
     identities, versions = agenda.selected_cases(query.get("caseId", []), versions)
     return identities, query.get("asOfDate", [None])[0], versions
 
