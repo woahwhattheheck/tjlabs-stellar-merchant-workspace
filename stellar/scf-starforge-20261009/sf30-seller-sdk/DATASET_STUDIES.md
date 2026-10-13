@@ -205,3 +205,9 @@ The observer does not start another job. Full tool shapes, host setup and typed
 client examples are in
 [`DATASET_STUDIES.md`](../../../stellar-forge/mcp-merchant-operator/DATASET_STUDIES.md)
 in the merchant operator source.
+
+## Comparing complete saved results
+
+The same study owner now retains explicit comparisons of two complete original result exports. Open **Compare saved results** in this workspace, inspect both manifest identities, and choose every field pairing and typed row key before creating the immutable request. Original duplicate and null keys remain complete groups; no rows are paired by position. Browse changed, added, removed, unchanged, ambiguous and moved groups, open every original member, and receive the whole source/report package through the same native CLI or agent client.
+
+[Complete comparison operation](DATASET_COMPARISONS.md) documents browser recovery, field and type meanings, the same request’s restart, complete original CSV/JSONL/report files, and exact native and agent commands. The comparison reads only already completed result files and keeps every original source and study revision intact.

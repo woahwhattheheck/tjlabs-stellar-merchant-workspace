@@ -1,6 +1,7 @@
 /* MIT. Browser client for local operator previews; never fetches a merchant URL. */
 import { createStudy,validateStudy,updateStudy,checkpointStudy,forkStudy,rebindStudy,restoreEdition,
   sourceBinding,emptyDraft,sameSource,queryFromDraft,STUDY_MAX_BYTES } from '/dataset-study-core.mjs';
+import { mountDatasetStudyComparisons } from '/dataset-study-comparison-browser.mjs';
 const $ = id => document.getElementById(id);
 const text = (tag, value, className) => {
   const node = document.createElement(tag); node.textContent = String(value);
@@ -593,6 +594,15 @@ $('export-resume').addEventListener('click',async()=>{
   const selected=exportJob.id,generation=exportGeneration;
   try{const result=await api('/api/studies/exports/'+encodeURIComponent(selected)+'/resume',{});setExport(result.export,generation);}
   catch(error){status(error.message,true);}
+});
+const comparisonDesk=mountDatasetStudyComparisons({
+  root:$('study-comparisons'),api,
+  async downloadFile(path,name){
+    const response=await fetch(path,{headers:{authorization:'Bearer '+token},cache:'no-store',credentials:'omit'});
+    if(!response.ok){const value=await response.json();throw new Error(value.message||value.error||'Comparison download failed.');}
+    const blob=await response.blob(),url=URL.createObjectURL(blob),anchor=document.createElement('a');
+    anchor.href=url;anchor.download=name;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
 });
 window.addEventListener('beforeunload',()=>{clearTimeout(recoveryTimer);persistRecovery();});
 (async()=>{

@@ -3,6 +3,7 @@ import { constants } from 'node:fs';
 import { open, mkdir, lstat, readdir, link, unlink } from 'node:fs/promises';
 import { resolve, join, dirname } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import {openDatasetStudyComparisons} from './dataset-study-comparisons.mjs';
 import { validateStudy, STUDY_MAX_BYTES, sameSource } from './dataset-study-core.mjs';
 import { checkPage, checkCursor, MAX_DATASET_PAGE_BYTES, MAX_DATASET_PAGES } from '../sf100-buyer-dataset-delivery/deliver.mjs';
 
@@ -448,10 +449,15 @@ export async function openDatasetQueryStudies({directory: selectedDirectory,sche
         stream:opened.readonlyFileHandle.createReadStream({start:0,autoClose:true}),contentType:opened.type};
     } catch(error) {await opened.readonlyFileHandle.close();throw error;}
   }
-  return {directory:root,workspaceId:identity.workspaceId,list,get,save,history:async id=>(await history(id)).map(r=>({
+  const comparisons=await openDatasetStudyComparisons({directory:root,workspaceId:identity.workspaceId,exportStatus:status,openExportFile});
+  return {directory:root,workspaceId:identity.workspaceId,list,get,save,
+    comparisonInspect:comparisons.inspect,comparisonList:comparisons.list,comparisonCreate:comparisons.create,
+    comparisonRead:comparisons.read,comparisonMembers:comparisons.members,comparisonResume:comparisons.resume,
+    openComparisonFile:comparisons.openFile,waitComparison:comparisons.wait,
+    history:async id=>(await history(id)).map(r=>({
     storageRevision:r.storageRevision,recordSha256:r.recordSha256,studySha256:r.studySha256,title:r.study.title,
     updatedAt:r.study.updatedAt,editionCount:r.study.editions.length})),
     beginExport:begin,resumeExport:resume,exportStatus:status,listExports:resultList,readExportFile:readFile,openExportFile,openStudyFile,
     waitExport:async id=>{await running.get(jobId(id));return status(id);},
-    close:async()=>{closed=true;await Promise.allSettled([...running.values()]);}};
+    close:async()=>{closed=true;await comparisons.close();await Promise.allSettled([...running.values()]);}};
 }

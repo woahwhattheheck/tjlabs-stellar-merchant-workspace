@@ -22,6 +22,20 @@
         "dataset-study-core.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/dataset-study-comparison-core.mjs",
+      [
+        "dataset-study-comparison-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/dataset-study-comparison-browser.mjs",
+      [
+        "dataset-study-comparison-browser.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
