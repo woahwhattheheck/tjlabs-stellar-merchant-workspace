@@ -108,7 +108,7 @@ function mountCatalogueComparison(host,engine){
   $('comparison-duplicates').checked=v.duplicates===true;$('comparison-note').value=s.note;
   render();if(save)persist();
  }
- async function readFile(file){if(!file)throw Error('Choose a complete original file');if(file.size>limit)throw Error('The complete receiving file exceeds 192 MiB');return new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer());}
+ async function readFile(file){if(!file)throw Error('Choose a complete original file');if(file.size>limit)throw Error('The complete receiving file exceeds 192 MiB');return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer());}
  function subset(){
   const q=$('comparison-search').value.toLowerCase(),status=$('comparison-status').value,type=$('comparison-type').value,duplicates=$('comparison-duplicates').checked;
   return s.result.rows.filter(r=>(!status||r.state===status)&&(!duplicates||r.before.length>1||r.after.length>1)&&(!type||[...r.before,...r.after].some(x=>(x.type??'http')===type))&&(!q||JSON.stringify(r).toLowerCase().includes(q)));

@@ -27,7 +27,7 @@ When an identity has exactly one occurrence in both editions, the table lists th
 
 A resource appearing only in one edition is a statement about these two captured sources. First compare the complete source plans, filters, enumeration flags and reported totals. Different network, type, payTo, pagination or other plan inputs remain visible as a scope difference. Incomplete enumeration and repeated identities remain separate from the added/removed/changed identity counts.
 
-Rialto's offset catalogue has no provider snapshot token. Enumeration complete means the captured sequence reached its reported end; the observation interval and every source finding remain available. Changed source totals or a interrupted capture are part of interpreting the result.
+Rialto's offset catalogue has no provider snapshot token. Enumeration complete means the captured sequence reached its reported end; the observation interval and every source finding remain available. Changed source totals or an interrupted capture are part of interpreting the result.
 
 Payment amounts remain exact atomic-unit strings with their original asset, network, recipient and scheme. The actual merchant challenge and original buyer still determine the terms for a customer request.
 
