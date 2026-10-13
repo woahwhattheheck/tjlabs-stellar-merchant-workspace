@@ -288,11 +288,37 @@ def run_course(*,root,source,restored,opened,archive,payload,node,stop_owned,emi
   from hourly_course import run_hourly_course
   hourly_result=run_hourly_course(root=root,source=source,ops=ops,pid=pid,prepared=prepared,server=server,native_info=native_info,node=node,payload=payload,chrome=chrome,playwright=playwright,stop_owned=stop_owned,checkpoint=checkpoint)
   course["hourlyBilling"]=hourly_result
+  # Continue the same original three-domain customer with a read-only evidence review.
+  from billing_evidence_course import run_billing_evidence_course
+  evidence_root=root/"billing-evidence-receiving";evidence_workspace=Workspace(evidence_root,grant.parent/"sf10_current_candidate.json")
+  try:
+   work_dates=[r for r in ops._context(pid)["records"]["work"] if r["id"]==hourly_result["workId"]]
+   if len(work_dates)!=1:raise RuntimeError("The original hourly source period is missing")
+   evidence_result=run_billing_evidence_course(ops,Operations(evidence_workspace),pid,out/"billing-evidence",
+    period_start=work_dates[0]["startDate"],period_end=work_dates[0]["endDate"],
+    as_of=datetime.datetime.now(datetime.timezone.utc).date().isoformat(),actor=actor,
+    request_prefix="f8c1-original-billing-evidence-v1")
+  finally:evidence_workspace.close()
+  course["billingEvidence"]=evidence_result
+  checkpoint("billing_evidence_saved_and_cold_received",evidence_result)
+  evidence_browser_out=out/"billing-evidence/browser";evidence_browser_out.mkdir(parents=True,exist_ok=True)
+  evidence_config={"origin":server.origin,"token":server.token,"caseId":pid,
+   "reviewId":evidence_result["saved"]["reviewId"],"revision":evidence_result["saved"]["revision"],
+   "chrome":str(chrome),"playwright":str(playwright),"output":str(evidence_browser_out),"actor":actor}
+  evidence_config_path=out/"billing-evidence/browser-config.json";evidence_config_path.write_bytes(packed(evidence_config)+b"\n")
+  with (out/"billing-evidence/browser.stdout").open("wb") as stdout,(out/"billing-evidence/browser.stderr").open("wb") as stderr:
+   child=subprocess.Popen([node,str(root/"course/browser-evidence.cjs"),str(evidence_config_path)],stdout=stdout,stderr=stderr,start_new_session=True,cwd=root)
+   try:code=child.wait(timeout=900)
+   finally:stop_owned(child)
+  evidence_browser=json.loads((evidence_browser_out/"browser-result.json").read_text())
+  course["billingEvidence"]["browser"]=evidence_browser
+  if code or evidence_browser["state"]!="COMPLETE":raise RuntimeError("Retain the original evidence edition and exact browser outcome")
+  checkpoint("billing_evidence_browser",evidence_browser)
   # Retain the first milestone exports and create a complete current composition after expense activity.
   change_export=ops.commercial_changes.export_bundle(pid,final["id"])
   change_raw=base64.b64decode(change_export["contentBase64"],validate=True)
   (out/"complete-change-and-expense-account.zip").write_bytes(change_raw)
-  case_raw=(out/"hourly/browser/complete-operations-case.zip").read_bytes()
+  case_raw=(out/"billing-evidence/browser/complete-operations-case.zip").read_bytes()
   change_inventory=inspect_zip(change_raw,"complete change export");case_inventory=inspect_zip(case_raw,"complete case export")
   with zipfile.ZipFile(io.BytesIO(change_raw)) as z:
    manifest=json.loads(z.read("manifest.json"))
@@ -397,5 +423,5 @@ def run_course(*,root,source,restored,opened,archive,payload,node,stop_owned,emi
  if course["state"]=="NATIVE_BROWSER_EXPORT_RECEIVING_COMPLETE":
   course["fullAccountReceiving"]=cold_receive_account(root=root,source=source,restored=restored,account=account,node=node,out=out,payload=payload,stop_owned=stop_owned,checkpoint=checkpoint,final_change_id=final["id"],prepared_id=prepared_id,case_receipt=receipt,snapshot=course["continuationBackup"],expense_result=expense_result,hourly_result=hourly_result)
   course["state"]="COMPLETE_AWAITING_PIXEL_INSPECTION"
-  checkpoint("full_correction_product_received",{"state":course["state"],"browserViews":len(browser_result["screenshots"])+len(expense_result["browser"]["screenshots"])+len(hourly_result["browser"]["screenshots"]),"paidInvoicePreserved":paid[1]["invoice"]["id"],"originalNativeIdentity":payload["originalIdentity"]})
+  checkpoint("full_correction_product_received",{"state":course["state"],"browserViews":len(browser_result["screenshots"])+len(expense_result["browser"]["screenshots"])+len(hourly_result["browser"]["screenshots"])+len(evidence_browser["screenshots"]),"paidInvoicePreserved":paid[1]["invoice"]["id"],"originalNativeIdentity":payload["originalIdentity"]})
  return course
