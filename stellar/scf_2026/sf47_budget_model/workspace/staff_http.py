@@ -16,6 +16,7 @@ FINANCE_COMMANDS = {
     "cash.record", "cash.void", "statement.receive", "forecast.save", "portfolio.save",
     "work-intake.upload", "work-intake.save", "work-intake.apply",
     "engagement.prepare", "engagement.receiving",
+    "expense.receive", "expense.save", "expense.review", "expense.reopen", "expense.void",
 }
 REVIEW_COMMANDS = {"review", "work.accept", "work.reopen",
                    "implementation.prepare", "cohort.prepare", "completion.prepare"}
@@ -28,6 +29,7 @@ READ_POSTS = {
     "installation-workshare-seed", "installation-seed", "installation-preview",
     "completion-seed", "completion-preview", "support-preview", "buyer-preview",
     "forecast-preview", "portfolio-preview", "portfolio-seed", "portfolio-selection",
+    "expense-preview", "expense-request",
     "engagement-seed", "engagement-preview", "engagement-forecast", "engagement-portfolio",
     "cash-correction-preview", "amendment-preview", "amendment-calendar-export",
     "installation-commercial", "installation-commercial-seed",
