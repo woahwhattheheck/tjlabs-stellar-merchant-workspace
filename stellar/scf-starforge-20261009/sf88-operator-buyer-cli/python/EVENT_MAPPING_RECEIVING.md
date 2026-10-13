@@ -107,7 +107,7 @@ The review directory owns these complete originals:
 | --- | --- |
 | `original-capture-working.json` | Whole captured original, independently reopened before preparation |
 | `mapping-working.json` | Exact returned working-file bytes |
-| `renderer/` | Same four exact original source modules |
+| `renderer/` | Complete selected original renderer source set; see the four-/five-/six-module compatibility rule below. |
 | `mapping-review-request.json` | Full stable context, source identities and native request |
 
 After the preparation marker exists, either external source path may be omitted. If provided again, the full selected source must match. Do not change a prepared directory to a different returned draft or reuse its IDs for a different attributed review.
