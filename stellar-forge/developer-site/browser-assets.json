@@ -1107,6 +1107,27 @@
         "woo.html",
         "text/html; charset=utf-8"
       ]
+    ],
+    [
+      "/grant-application-return-working.mjs",
+      [
+        "grant-application-return-working.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-application-return-workspace.mjs",
+      [
+        "grant-application-return-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-application-return.mjs",
+      [
+        "grant-application-return.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
