@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import crypto from 'node:crypto';
+import {receiveAcquiredWorkflow} from './vgi_workflow_browser.mjs';
 
 const configuration=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const directory=configuration.directory;
@@ -32,6 +33,7 @@ const authHeaders={'X-DuckDB-Capability':capability,
 const requestFile=path.join(directory,'original-requests.json');
 let requests=fs.existsSync(requestFile)?JSON.parse(fs.readFileSync(requestFile,'utf8')):[];
 const pageErrors=[];
+const interruptResponse={armed:null,performed:null};
 const playwright=await import(pathToFileURL(configuration.playwright).href);
 const context=await playwright.chromium.launchPersistentContext(configuration.profile,{
   executablePath:configuration.chromium,headless:true,
@@ -55,6 +57,18 @@ await page.route('**/api/**',async route=>{
     row.status=response.status();row.returned_at=new Date().toISOString();
     try{row.result=JSON.parse(text);}catch{row.result={complete_json:false};}
     row.state=response.ok()?'COMPLETE':'REVIEW_REQUIRED';
+    const armed=interruptResponse.armed;
+    let parsedBody;try{parsedBody=JSON.parse(body);}catch{}
+    if(armed&&url.pathname===armed.path&&parsedBody?.action===armed.action
+        &&parsedBody?.args?.name===armed.name&&row.result?.state==='COMPLETE'){
+      row.response_interrupted={course:armed.course,request_id:parsedBody.request_id,
+        at:new Date().toISOString()};
+      interruptResponse.performed={...row.response_interrupted};
+      interruptResponse.armed=null;
+      save('original-requests.json',requests);
+      await route.abort('connectionreset');
+      return;
+    }
     save('original-requests.json',requests);
     await route.fulfill({response,body:text});
   }else await route.continue();
@@ -78,9 +92,63 @@ const click=async selector=>{
   await page.locator(selector).click();
   await settle();
 };
+
+async function receiveSqlClientHandover(publicationId,label){
+  await click('#vgi-client-tab');
+  await page.locator('#client-publication').selectOption(publicationId);
+  await click('#client-inspect');
+  const before=await current();
+  const publication=await api('/api/vgi/publications/'+publicationId);
+  const selected=before.runtime.catalog.tables.find(row=>row.publication_id===publicationId);
+  require(before.runtime.observed==='RUNNING'&&selected,'Select the original running result');
+  await page.locator('#client-address').fill(before.runtime.address);
+  await page.locator('#client-address-note').fill('');
+  await click('#prepare-client-handover');
+  await page.locator('#download-client-handover').waitFor({state:'visible'});
+  const prepared=requests.findLast(row=>row.path==='/api/vgi/client-handover'&&row.state==='COMPLETE')?.result;
+  require(prepared?.configuration?.publication_id===publicationId
+    &&prepared.configuration.workspace_id===before.workspace_id
+    &&prepared.configuration.listener_request_id===before.runtime.request_id
+    &&prepared.publication.source.export_id===publication.source.export_id
+    &&prepared.configuration.expected_rows===publication.rows,
+    'The complete client handover changed its retained dataset or actual listener');
+  const wanted=['connection.json','publication.json','query.sql','result_sql_client.py','README.md','manifest.json'];
+  require(prepared.files.length===wanted.length&&wanted.every(name=>prepared.files.some(row=>row.name===name)),
+    'The usable SQL client source, query, connection or guide is missing');
+  const [download]=await Promise.all([
+    page.waitForEvent('download'),click('#download-client-handover')]);
+  const destination=path.join(directory,label+'-client.zip');
+  await download.saveAs(destination);
+  const bytes=fs.readFileSync(destination);
+  const sha=crypto.createHash('sha256').update(bytes).digest('hex');
+  require(bytes.length===prepared.zip.bytes&&sha===prepared.zip.sha256,
+    'The actual downloaded client ZIP differs from its prepared complete source');
+  save(label+'-client-selection.json',{configuration:prepared.configuration,
+    publication:prepared.publication,files:prepared.files,
+    zip:{path:destination,bytes:bytes.length,sha256:sha}});
+  await page.screenshot({path:path.join(directory,label+'-client-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:path.join(directory,label+'-client-narrow.png'),fullPage:true});
+  await page.locator('#client-address-note').fill('Original recorded listener; same receiving host.');
+  await click('#prepare-client-handover');
+  require((await current()).revision===before.revision,
+    'Preparing a client package changed the original financial or publication state');
+  await page.setViewportSize({width:1440,height:1050});
+  return {path:destination,bytes:bytes.length,sha256:sha,
+    publication_id:publicationId,source_export_id:publication.source.export_id,
+    workspace_id:before.workspace_id,service_id:before.service_id,
+    listener_request_id:before.runtime.request_id,files:prepared.files,
+    desktop:path.join(directory,label+'-client-desktop.png'),
+    narrow:path.join(directory,label+'-client-narrow.png')};
+}
+
 let result;
 try{
   // Complete only original payloads whose browser reply was interrupted.
+  for(const request of requests.filter(x=>x.state==='PREPARED'&&x.path==='/api/vgi/client-handover')){
+    request.state='OBSERVATION_INTERRUPTED';request.closed_at=new Date().toISOString();
+    save('original-requests.json',requests);
+  }
   for(const request of requests.filter(x=>x.state==='PREPARED')){
     const body=JSON.parse(request.body);
     request.result=await api(request.path,body);
@@ -92,7 +160,11 @@ try{
   await settle();
   let state=await current();
   require(state.workspace_id===configuration.workspace_id,'The original workspace changed');
-  if(configuration.stage==='publish'){
+  if(configuration.stage==='workflow'){
+    result=await receiveAcquiredWorkflow({page,context,configuration,api,requests,
+      save,directory,capability,parsed,interruptResponse});
+    state=await current();
+  }else if(configuration.stage==='publish'){
     const target={catalog_name:'purchased_results',label:'Retained Svenska kraftnät results',
       principals:[configuration.principal],allow_local:false};
     if(state.configuration.catalog_name!==target.catalog_name
@@ -145,10 +217,14 @@ try{
     require(state.runtime.observed==='RUNNING'&&state.runtime.owned===true,
       'The original listener did not retain its actual lifetime');
     await page.screenshot({path:path.join(directory,'listener.png'),fullPage:true});
-    result={publication_id:publication.publication_id,table:head,
+    const client_handover=await receiveSqlClientHandover(publication.publication_id,'published');
+    result={client_handover,publication_id:publication.publication_id,table:head,
       configuration:state.configuration,
       runtime:{request_id:state.runtime.request_id,address:state.runtime.address,
         catalog:state.runtime.catalog}};
+  }else if(configuration.stage==='client'){
+    const client_handover=await receiveSqlClientHandover(configuration.publication_id,'following');
+    result={client_handover};
   }else if(configuration.stage==='handover'){
     await click('#vgi-recovery-tab');
     const original=requests.find(x=>x.path==='/api/handoffs'&&x.state==='COMPLETE');
