@@ -14,11 +14,12 @@ import {connectAccountingBankStatementsClient,accountingBankStatementsCloseArgum
  from '../../../../../stellar-forge/mcp-merchant-operator/accounting-bank-statements-client.mjs';
 import {downloadAccountingBankStatementsFile}
  from '../../../../../stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs';
+import {prepareBankSourceInputs,receiveBankSourceAgent,receiveBankSourceCold} from './BANK_SOURCES_RECEIVE.mjs';
 const execute=promisify(execFile),sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const serial=value=>JSON.parse(JSON.stringify(value));
 const json=value=>JSON.stringify(value,null,2)+'\n';
 const cli=fileURLToPath(new URL('../../../../../stellar-forge/mcp-merchant-operator/accounting-bank-statements-cli.mjs',import.meta.url));
-export async function receiveBankMcp({directory,inputRoot,out,received,retainedCloses,workspaceId}){
+export async function receiveBankMcp({directory,inputRoot,out,received,retainedCloses,workspaceId,profileOutput}){
  await mkdir(out,{mode:0o700});
  const result={schema:'stellar-forge.camt053.account-mcp-receiving.v1',completed:false,startedAt:new Date().toISOString(),workspaceId,
   inventories:{},imports:[],closes:[],originalRequestReplays:[],commands:[],cold:{},files:[]};
@@ -27,9 +28,10 @@ export async function receiveBankMcp({directory,inputRoot,out,received,retainedC
  const inputs=JSON.parse(await readFile(join(inputRoot,'inputs.json'),'utf8'));
  const selected=inputs.find(row=>row.sourceKind==='BUNDESBANK_BANK_ISSUED_EXAMPLE'&&!row.expectedRejection);assert(selected);
  const aliasPath=join(inputRoot,selected.local),s=binding.sources,alias='original';
+ const sourceInputs=await prepareBankSourceInputs({profileOutput,out:join(out,'source-agent-inputs'),workspaceId});
  const accountingFile=join(out,'accounting-workspaces.json');
  await writeFile(accountingFile,json({workspaces:{[alias]:{directory,outboxDir:s.outboxDir,proofDir:s.proofDir,termsFile:s.termsFile,
-  receivablesInputs:{issuer:aliasPath},...(s.recoveredDir?{recoveredSources:{retained:s.recoveredDir}}:{})}}}),{flag:'wx',mode:0o600});
+  receivablesInputs:{issuer:aliasPath,...sourceInputs.aliases},...(s.recoveredDir?{recoveredSources:{retained:s.recoveredDir}}:{})}}}),{flag:'wx',mode:0o600});
  const configured=await initializeAccountingMerchant({directory:join(out,'merchant-host'),accounting:accountingFile,name:'Original issued bank account receiving'});
  const environment={...process.env,MCP_ACCESS_TOKEN:randomBytes(32).toString('base64url'),MCP_CLIENT_ORIGINS:''};
  delete environment.MCP_OAUTH_CONFIG;
@@ -110,6 +112,10 @@ export async function receiveBankMcp({directory,inputRoot,out,received,retainedC
    result.closes.push({closeId:item.id,files,replayed:true});
   }
   assert.equal((await client.status()).revision,initial.revision,'Read, full-file and replay operations preserve the existing original revision');
+  result.sourcePreparation=await receiveBankSourceAgent({url:host.url,workspace:alias,environment,
+   out:join(out,'source-agent'),workspaceId,input:sourceInputs});
+  assert.equal(result.sourcePreparation.completed,true);
+  assert.equal((await client.status()).revision,initial.revision,'Source preparation preserves the original financial revision');
   const originalZero=retainedCloses.find(item=>item.transactionCount===0&&!item.reopened&&item.previousCloseId);assert(originalZero);
   const actor='Original issued account MCP receiving',reopenRequest={workspaceId,revision:initial.revision,actor,requestId:randomUUID(),
    bankStatementCloseId:originalZero.id,reason:'Continue the same original zero-entry issuer statement through its authenticated accounting owner.'};
@@ -139,6 +145,10 @@ export async function receiveBankMcp({directory,inputRoot,out,received,retainedC
   const coldArchive=await client.fileBytes(detail.archive);assert.equal(sha(coldArchive.bytes),result.successorArchive.sha256);
   const currentClose=await client.closeDetail({bankStatementCloseId:successor.id});assert.equal(currentClose.close.previousCloseId,originalZero.id);
   assert.equal((await client.reconcileOperation('reopen',reopenRequest)).found,true);assert.equal((await client.reconcileOperation('close',closeRequest)).found,true);
+  result.cold.sourcePreparation=await receiveBankSourceCold({url:host.url,workspace:alias,environment,
+   out:join(out,'cold/source-agent'),workspaceId,expected:result.sourcePreparation});
+  assert.equal(result.cold.sourcePreparation.completed,true);
+  assert.equal((await client.status()).revision,final.revision,'Cold source receiving preserves the same financial account');
   result.final=cold;result.cold.transactions=await save('cold/transactions.json',transactions);
  }catch(error){failure=error;}
  finally{

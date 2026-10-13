@@ -23,6 +23,7 @@ cfg["bundesbankOriginals"]=json.loads(texts["BUNDESBANK_ORIGINALS.json"])
 cfg["nodeProgram"]=texts["receive-originals.mjs"]
 cfg["application"]["nodeProgram"]=texts["receive-application.mjs"]
 cfg["application"]["mcpProgram"]=texts["receive-account-mcp.mjs"]
+cfg["application"]["bankSourcesProgram"]=texts["receive-bank-sources.mjs"]
 cfg["keepRuntime"]=args.keep_runtime
 cfg["artifactDirectory"]=str(pathlib.Path(args.artifacts).expanduser().resolve())
 if args.temporary_directory:

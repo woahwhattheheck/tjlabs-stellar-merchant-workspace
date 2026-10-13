@@ -240,7 +240,7 @@ try:
   original_manifest=installed_source.parent/"manifest.json"
   source_manifest["installedProductManifest"]={"bytes":original_manifest.stat().st_size,"sha256":sha(original_manifest.read_bytes())}
   source_manifest["executedOverlays"]=[]
-  for name,body in (("CAMT_RECEIVE.mjs",application["nodeProgram"]),("MCP_RECEIVE.mjs",application["mcpProgram"])):
+  for name,body in (("CAMT_RECEIVE.mjs",application["nodeProgram"]),("MCP_RECEIVE.mjs",application["mcpProgram"]),("BANK_SOURCES_RECEIVE.mjs",application["bankSourcesProgram"])):
    target=bank/name;raw=body.encode("utf-8")
    with target.open("x",encoding="utf-8")as stream:stream.write(body)
    actual=target.read_bytes()
@@ -265,7 +265,10 @@ finally:
  native_ready=out.get("exitCode")==0 and out.get("application",{}).get("result",{}).get("completed")is True
  browser_continuation={"retained":keep_runtime,"nativeReady":native_ready,"renderedInspection":"PENDING",
   "root":str(root),"runtimeDirectory":str(root/"installed-runtime"),"accountingDirectory":str(root/"application-result/accounting"),
-  "sourceCommit":cfg.get("application",{}).get("source_commit"),"sourceInterpretations":str(root/"application-result/source-interpretations")}
+  "sourceCommit":cfg.get("application",{}).get("source_commit"),"sourceInterpretations":str(root/"application-result/source-interpretations"),
+  "configuredSourceInputs":str(root/"application-result/account-mcp/source-agent-inputs"),
+  "configuredSourcePreparations":str(root/"application-result/account-mcp/source-agent"),
+  "configuredSourceCold":str(root/"application-result/account-mcp/cold/source-agent")}
  if keep_runtime and native_ready:
   browser_continuation["openingCommand"]=["node",str(root/"application/stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs"),
    "run","--dir",str(root/"installed-runtime"),"--","bank-statements","serve","--directory",str(root/"application-result/accounting"),"--port","8448"]

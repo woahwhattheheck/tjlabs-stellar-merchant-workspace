@@ -1,14 +1,14 @@
 {
   "schema": "stellar-forge.camt053.maintained-receiver.v1",
   "operation": "SCF-BANK-CAMT053-SOURCE-DFF77-20261013",
-  "edition": "NORDEA_GS_BUNDESBANK_PROFILES_ACCOUNT_MCP_20261013",
-  "sourceCommit": "02175e3f0ee1e6ae4605c0b960790f6dd6e10e77",
+  "edition": "NORDEA_GS_BUNDESBANK_PROFILES_CONFIGURED_SOURCES_ACCOUNT_MCP_20261013",
+  "sourceCommit": "80f8a3380a99af55b591d8e254904e4f3cb3ebf3",
   "files": [
     {
       "path": "source-config.json",
-      "bytes": 515488,
-      "sha256": "c04b4b60891c90bc3407259549377291df17d4196461a614380a7f2eaff98cdc",
-      "git_blob_sha1": "fcc1900a626beabdb7d0ce7ee89390dd99170ff2"
+      "bytes": 520508,
+      "sha256": "5be6a1b37d4d0de95558814871dec49cb93f65a18bb2b5a6e01eeacc27b97820",
+      "git_blob_sha1": "88b4ce14fed45b0df7a4584dd477e3e2291a9714"
     },
     {
       "path": "receive-originals.mjs",
@@ -18,21 +18,21 @@
     },
     {
       "path": "receive-application.mjs",
-      "bytes": 24396,
-      "sha256": "2c2691718c16bbca76248a2d8fcfc807a7ea022866984580967b785a3e18f0f6",
-      "git_blob_sha1": "8383f662a96620cc48dc04eb2c68fab1fdb96c9e"
+      "bytes": 24429,
+      "sha256": "1999c83490041b39367a870503ff2d32ef86b5acbc25641cd922518813addb70",
+      "git_blob_sha1": "e94d669b48c3fc808cf7ef8a3e780b0bdea28bf8"
     },
     {
       "path": "producer.py",
-      "bytes": 26389,
-      "sha256": "8148a2d98775b1e54c691340c5240b70bc48cdbdddc107c14b9a3020022cee73",
-      "git_blob_sha1": "de2836fad755fd8724692b14b17ea73fb9b69586"
+      "bytes": 26720,
+      "sha256": "94692a60655aa7876bdaaf355d651123ef76f92879b6ae63c91087222ee8ed77",
+      "git_blob_sha1": "4bf2606c8e10b196a1fbf45325c53154c3ac8476"
     },
     {
       "path": "README.md",
-      "bytes": 18271,
-      "sha256": "416abc21b208db8f3c3196ae700af60e7c377c78c7e3900e182036a4e29ea18a",
-      "git_blob_sha1": "8da442a010cca53ae61b01614316976c91d42b51"
+      "bytes": 24754,
+      "sha256": "c81c8514f041519607407999d8d7941f975733c84636e97d780570372ab7719d",
+      "git_blob_sha1": "7fb5b7f262a1344c58d17b757ff00b409b162375"
     },
     {
       "path": "BUNDESBANK_ORIGINALS.json",
@@ -42,9 +42,15 @@
     },
     {
       "path": "receive-account-mcp.mjs",
-      "bytes": 15527,
-      "sha256": "a2516e1c16025bac34acea76712bc132f2121c9dac259f9a4396a1cb009b99ac",
-      "git_blob_sha1": "77df850a92360a4ca5300e05df276f0e8be45b10"
+      "bytes": 16523,
+      "sha256": "76fcc62a6d5adbfe10283e08da460df7fa631c567a878a11875ccd666142e13c",
+      "git_blob_sha1": "e458f45fbc95df7d5c4f6733dacf1f05ae55ab9f"
+    },
+    {
+      "path": "receive-bank-sources.mjs",
+      "bytes": 19835,
+      "sha256": "3b8ad14d39c103719870eb028d141f48c5c204de86c6f2e7127d17bd46914000",
+      "git_blob_sha1": "7f5a4c789e1265e88232c862bcbf2039721c3fd4"
     }
   ]
 }
