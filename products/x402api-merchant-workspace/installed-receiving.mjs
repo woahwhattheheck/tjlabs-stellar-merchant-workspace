@@ -17,7 +17,7 @@ import { operationLease } from '../../stellar/scf-starforge-20261009/distributio
 
 import { exportProjectFromBrowser, receivePortableProject, verifyPortableReceiving } from './portable-receiving.mjs';
 const ORIGINAL_OPERATION = 'SCF-X402API-MERCHANT-COMMISSIONING-7DE2-20261012';
-const ORIGINAL_SHA = '8275abdb2768178cd10685d3631996ec90f9ec3f41227850921eea54dfea354d';
+const ORIGINAL_SHA = '8275abdb2768178cd10685d3631996ec90f9ec3f41227850921eea54dfea354d1';
 const { values } = parseArgs({ strict: true, options: {
   repo: { type: 'string' }, 'source-commit': { type: 'string' }, original: { type: 'string' },
   root: { type: 'string' }, playwright: { type: 'string' }, chromium: { type: 'string' },
@@ -188,6 +188,23 @@ function databaseSnapshot(databasePath = DATABASE) {
     return { businessSha256: sha(encoding(business)),
       allUserRowsSha256: sha(encoding({ ...business, tables })), business, runtimes, orders };
   } finally { db.close(); }
+}
+function originalAuthorizations(snapshot, expectedInvoices) {
+  // Read the actual retained bytes from the original private database snapshot.
+  // No new authorization is generated; the complete course reuses all five
+  // original settled invoices and verifies that every business row stays equal.
+  const rows = snapshot.business.tables.find(table => table.name === 'merchant_orders').rows.map(row => JSON.parse(row));
+  assert.deepEqual(rows.map(row => row.id).sort(), [...expectedInvoices].sort());
+  return Object.fromEntries(rows.map(row => {
+    assert.equal(row.state, 'COMPLETE'); assert.equal(row.signature_encoding, 'utf8');
+    assert.equal(typeof row.signature?.base64, 'string');
+    const bytes = Buffer.from(row.signature.base64, 'base64');
+    assert.equal(bytes.toString('base64'), row.signature.base64);
+    assert.equal(sha(bytes), row.signature_sha256);
+    const paymentSignature = bytes.toString('utf8');
+    assert(Buffer.from(paymentSignature).equals(bytes)); assert(/^[\x21-\x7e]{1,65536}$/.test(paymentSignature));
+    return [row.id, {paymentSignature, sha256:row.signature_sha256}];
+  }));
 }
 async function originalSnapshot(name) {
   const lease = await operationLease(join(WORKSPACE, 'merchant-owner.lock'));
@@ -658,7 +675,9 @@ async function receive() {
       const agent = values.portable ? await import(pathToFileURL(join(sourceRoot, 'products/x402api-merchant-workspace/invoice-agent-receiving.mjs'))) : null;
       const joined = agent ? await agent.receiveMerchantInvoiceAgent({url:opening.url,operatorToken:scenario.operatorToken,
         tokenEnvironment:'MERCHANT_LOCAL_OPERATOR',directory:join(ROOT,'invoice-agent'),
-        expectedInvoices:completed.orders.map(order=>order.merchantOrderId),operation:identity('invoice-agent-intake'),
+        expectedInvoices:completed.orders.map(order=>order.merchantOrderId),
+        originalAuthorizations:originalAuthorizations(before,completed.orders.map(order=>order.merchantOrderId)),
+        operation:identity('invoice-agent-intake'),
         projectOperation:identity('portable-browser-export'),
         exportProject:()=>receiveBrowser(opening,scenario,reads,{exportProject:true})}) : null;
       const visual = joined ? joined.browser : await receiveBrowser(opening, scenario, reads, { exportProject: values.portable });
