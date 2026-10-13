@@ -1,0 +1,47 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "commercial-unit-economics",
+  "heading": "## Customer value and delivery economics",
+  "sources": [
+    {
+      "id": "commercial-unit-guide",
+      "label": "Commercial service units and care planning",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/README.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c"
+    },
+    {
+      "id": "commercial-unit-inputs",
+      "label": "Editable original commercial planning assumptions",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/inputs.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c"
+    },
+    {
+      "id": "commercial-unit-caller",
+      "label": "Thin caller over the unchanged original SF47 cohort model",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/commercial-economics.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c"
+    },
+    {
+      "id": "commercial-unit-operated",
+      "label": "Operated original model commercial planning result",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/operated-summary.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c"
+    },
+    {
+      "id": "commercial-unit-forecast",
+      "label": "Dated Forecast commercial templates with required cash inputs",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/examples/commercial-economics/forecast-commercial-templates.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "commit": "b564e3c5fadcc9b31f7b37a8b46ab83269a89c2c"
+    }
+  ]
+}
