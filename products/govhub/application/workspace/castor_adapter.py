@@ -288,16 +288,63 @@ def _record(s, name, value, role):
     return _retain(s, path, role)
 
 
+def _state_checkpoint(s):
+    """Keep the complete original state privately; bound UI checkpoints by identity."""
+    raw = (json.dumps(s.state, sort_keys=True, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    sha = hashlib.sha256(raw).hexdigest()
+    path = s.out / ("castor-state-" + sha + ".json")
+    if path.exists():
+        if path.is_symlink() or path.read_bytes() != raw:
+            raise ValueError("An original complete Castor checkpoint changed.")
+    else:
+        _api()._atomic(path, s.state)
+    fields = ("provider", "phase", "intent_sha256", "request_sha256",
+              "pending_command", "command_record", "mutation_started", "launch_failed")
+    value = {key: s.state[key] for key in fields if key in s.state}
+    value["native_state"] = {"path": str(path), "bytes": len(raw), "sha256": sha}
+    return value
+
+
+def _receive_state(s, value):
+    reference = value.get("native_state") if isinstance(value, dict) else None
+    if not reference:
+        return value
+    path = Path(s.private_path(reference["path"]))
+    if (path.parent != s.out or path.name != "castor-state-" + reference["sha256"] + ".json"
+            or path.is_symlink() or not path.is_file()):
+        raise ValueError("Receive the complete original private Castor state member.")
+    raw = path.read_bytes()
+    if len(raw) != reference["bytes"] or hashlib.sha256(raw).hexdigest() != reference["sha256"]:
+        raise ValueError("The original complete Castor state member changed.")
+    return json.loads(raw)
+
+
+def _bounded_result(s, status, observations=None, message=None):
+    checkpoint = _state_checkpoint(s)
+    s.add(checkpoint["native_state"]["path"], "original_native_state")
+    result = s.result(status, observations, message)
+    result.update(checkpoint=checkpoint, resume_checkpoint=checkpoint)
+    return result
+
+
 def _load(s, supplied=None):
     path = s.out / "native-state.json"
     saved = s.read_private_json(path) if path.exists() else supplied or {}
     saved = saved.get("resume_checkpoint", saved.get("state", saved))
+    saved = _receive_state(s, saved)
     s.state = dict(s.resolve_private(saved))
     if s.out.is_relative_to(Path(s.p["site_root"])):
         raise ValueError("Keep the receiving Session outside its selected source project tree.")
     if s.state.get("provider") not in (None, "castor"):
         raise ValueError("This original Session belongs to another provider.")
     s.state["provider"] = "castor"
+    original_notify = s.notify
+
+    def notify(value):
+        checkpoint = _state_checkpoint(s)
+        original_notify({**value, "state": checkpoint, "resume_checkpoint": checkpoint})
+
+    s.notify = notify
 
 
 def _bind(s, operation_id, action, original_config):
@@ -414,8 +461,8 @@ def _working_tree(s, label, root=None, depth=0):
         elif not path.exists():
             entry["kind"] = "absent"
         elif entry["git_mode"] == "160000":
-            if not path.is_dir():
-                raise ValueError("The original submodule is no longer a directory.")
+            if not path.is_dir() or not (path / ".git").exists():
+                raise ValueError("Initialize the original selected submodule before complete source capture.")
             prefix = label + "-sub-" + hashlib.sha256(relative.encode()).hexdigest()[:20]
             nested = _working_tree(s, prefix, path, depth + 1)
             head = _bytes(_command(s, prefix + "-head", command[:1] + ["-C", str(path), "rev-parse", "HEAD"])).decode().strip()
@@ -720,14 +767,14 @@ def _completed(s, value):
             raise ValueError("A retained complete Castor artifact changed.")
         s.add(path, item["role"])
     s.add(s.out / "castor-completed-operation.json", "restored_native_status")
-    return s.result("COMPLETE", value["observations"])
+    return _bounded_result(s, "COMPLETE", value["observations"])
 
 
 def _failure(s, exc):
     waiting = isinstance(exc, _api().NativeWaiting) or s.state.get("phase") in {"native_interrupted", "dispatching"}
     status = "WAITING_NATIVE" if waiting else "CANCELLED" if isinstance(exc, _api().NativeCancelled) else "FAILED"
     s.artifacts = list(s.state.get("retained_artifacts", []))
-    result = s.result(status, message=str(exc))
+    result = _bounded_result(s, status, message=str(exc))
     label = s.state.get("pending_command")
     record = None
     if label and (s.out / (label + ".command.json")).exists():

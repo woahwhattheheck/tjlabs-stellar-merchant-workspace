@@ -323,3 +323,7 @@ database/files, private task output and commercial correspondence belong
 to the operator's original private project and authorized delivery.
 
 Directory recovery inputs declare kind: directory and use the actual output manifest_sha256 as sha256; the manifest is the canonical ordered members array of relative path, bytes and SHA-256. File inputs default to kind: file. The full directory bytes are in the source archive; the directory identity is not a fabricated database backup file. Keep the original restore task arguments and real native directory path.
+
+## Complete private state and bounded operating checkpoints
+
+Every native state remains complete in its original private Session. The operating callback carries an immutable SHA-256/byte-bound `native_state` reference plus the actual phase, original request and pending-command fields, so a large Git inventory does not exceed the existing 1 MiB operation checkpoint boundary. The full state member is retained beside its original command records, included as an original native artifact in returned outcomes and preserved by whole-workspace backup. Receiving resolves only the existing workspace custody relocation and verifies every original byte before reopening the state. No task/source member is omitted or summarized to fit the operating checkpoint. Selected submodules must be initialized; a parent repository cannot stand in for a missing nested checkout.
