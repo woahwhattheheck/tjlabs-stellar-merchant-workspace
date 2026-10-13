@@ -127,3 +127,14 @@ The course selects an actual balanced original task or Installation phase and st
 An existing completed transfer is skipped only when the current exact selected row equals its retained after-assignment. An interrupted course with changed original assignments requires explicit reconciliation; it never transfers the same hours again merely because a reply was lost. The partly typed individual row remains separate from its reviewed batch transfer.
 
 Open and LOOK at the first portfolio-effort-02-review-desktop.png and portfolio-effort-02-review-phone.png images when reported. Inspect actual row state labels, complete table navigation, resource selectors, conflict choices, zero/unknown quantities and downloads. Keep the owner rendered-output requirement above in effect for every outgoing artifact. Source review or this executable course’s presence does not establish a completed browser result.
+
+
+## Optional complete delivery-sequence continuation
+
+Set `portfolioSequence:true` in the same existing Portfolio context. Keep original case/plan/allocation, actor, native clock and all prior source pins. Add portfolio-sequence.mjs, portfolio-sequence-desk.mjs, portfolio-sequence.css and the unchanged availability helper to portfolioSourceSha256. The ordinary CEDAR modes remain unchanged.
+
+The original course retains portfolio-sequence-original-selection.json before mutation: actual source task, existing date/priority and a cycle-free original predecessor. It operates a partial date across reload, empty source search, invalid calendar feedback, complete current source review, actual release/priority/predecessor changes, source-qualified CSV/JSON and complete working-file reopen. Its original native schedule/cash/save/replay/export/cold phases then continue. It preserves original customer source deadlines and quoted data.
+
+The first emitted frames include portfolio-sequence-00-empty-desktop.png, portfolio-sequence-01-invalid-date-phone.png, portfolio-sequence-02-review-desktop.png and portfolio-sequence-02-review-phone.png. Open and LOOK at those actual renders and operate the important controls. Inspect original source/trigger labels, dates, predecessors, paging, every complete download and reopen. A captured image or source review does not replace producing-peer viewing.
+
+An already applied original sequence is skipped only when its complete current selected fields equal the retained after-values; otherwise explicit reconciliation preserves both editions. Full output/source custody remains the existing course's implementation. See [Delivery sequence](PORTFOLIO_SEQUENCE.md) for the complete operator workflow and original native trigger semantics.
