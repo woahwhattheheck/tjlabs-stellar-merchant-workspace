@@ -10,6 +10,16 @@ The maintained source selection is **grant-operations**. Open **Applications →
 
 This guide is also retained at `package/source/products/grant-operations/OPERATING.md` in the selected archive. The relative source links below resolve from that file.
 
+## Find case work and resume the original desk
+
+Open **Delivery and cash operations**, choose a retained case, and use the grouped navigation for Planning and resources, People and work, Cash and accounts, Customers and delivery, or Review and results. **Browse sections** opens the same navigation on narrow screens. Pin frequently used sections; the browser session remembers each case's pins, recent sections and active section.
+
+Use **Find in case**, or **Ctrl+K / Command+K** while focus is inside Operations, to locate a section, native record, retained source or saved workflow summary. Search by an original identifier, reference, filename or saved text. Result filters and pagination cover every matching entry from the complete current case response; **Search coverage** shows which populations are available. Original source metadata includes filenames and SHA-256 identities, and the existing download action opens the retained bytes.
+
+Select a record to inspect its original fields and linked case references. **Open original editor** returns eligible records to their existing editing flow; cash records use the retained correction flow. Saved forecast and portfolio results open in their original desks. A forecast handoff first preserves any open forecast inputs in a complete downloadable file. Moving between sections preserves each child desk's own drafts and request recovery. Escape closes the finder and restores focus to the control that opened it.
+
+For the full navigation, search, source coverage and keyboard workflow, see [Grant Operations operating desk](../../stellar/scf_2026/sf47_budget_model/workspace/OPERATING_DESK.md).
+
 ## 1. What the operator retains
 
 | Work | Retained source and decisions |
