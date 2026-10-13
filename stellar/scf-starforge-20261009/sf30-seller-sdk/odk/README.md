@@ -30,6 +30,13 @@ starforge odk-central-workspace serve \
 
 Applications owns the existing private listener and connection file. Its printed operator URL opens the same workspace in the browser. The host Authorization environment variable remains the credential source for Central requests; connection records retain the variable name.
 
+To open this same operator through an existing remote HTTPS proxy, select its
+actual stable loopback `--port` and `--external-origin`. Applications provides
+the matching **Local port** and **Trusted browser HTTPS origin**
+settings. The returned `browserUrl` is for the remote browser; the original
+`origin` and `url` remain local control addresses. Existing authentication,
+the complete workspace and native client lifetime remain shared.
+
 See [APPLICATIONS_MCP.md](./APPLICATIONS_MCP.md) for Applications, managed-host and MCP configuration. See [native/RECEIVING.md](./native/RECEIVING.md) for the original actual-provider receiving operation.
 
 ## Customer commissioning and portable publishing
