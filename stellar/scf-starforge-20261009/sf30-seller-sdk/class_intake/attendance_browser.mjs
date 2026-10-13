@@ -76,7 +76,7 @@ export async function runAttendanceBrowser(config){
    }finally{clearTimeout(timer);try{await page.unroute("**/api/attendance/save",handler)}finally{await Promise.allSettled([...tasks])}}
   }
   need(body,"Original complete attendance request was not selected");
-  await page.waitForSelector("#pending[hidden]");
+  await page.waitForSelector("#pending[hidden]",{state:"attached"});
   const recorded=await client.request(body.requestId);need(recorded.state==="RECORDED"&&same(recorded.request,body),"Original attendance request did not complete");
   const result=await client.view(recorded.result.id,recorded.result.revision);
   need(result.revision===intent.expectedRevision+1&&same(result.definition,intent.definition),"Original visible attendance decision differs");

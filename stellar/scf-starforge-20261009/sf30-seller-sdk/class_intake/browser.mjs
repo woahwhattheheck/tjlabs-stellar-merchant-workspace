@@ -91,7 +91,7 @@ try{
   if(pending?.kind!=="save"||pending.workspaceId!==intent.workspaceId||!same(pending.body,original))throw new Error("Original pending body was not retained");
   await page.click("#retry");
  }
- await page.waitForSelector("#pending[hidden]");
+ await page.waitForSelector("#pending[hidden]",{state:"attached"});
  const requestReply=await fetch(primary.url+"/api/request?id="+encodeURIComponent(original.requestId));const received=await requestReply.json();
  if(received.state!=="RECORDED"||JSON.stringify(received.request)!==JSON.stringify(original)&&JSON.stringify(sort(received.request))!==JSON.stringify(sort(original)))throw new Error("Recorded request mismatch");
  await save(path.join(root,"request-recovery.json"),received);files.push(path.join(root,"request-recovery.json"));
