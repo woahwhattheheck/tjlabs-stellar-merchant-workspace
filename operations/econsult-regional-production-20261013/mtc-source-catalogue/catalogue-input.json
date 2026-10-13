@@ -1,0 +1,167 @@
+{
+  "schema": "commons.mtc-catalogue-import.v1",
+  "operation": "MTC-PBA2050PLUS-SOURCE-IMPORT-20261013",
+  "maintainedSource": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "merge": "7edb84dd26c6bd425fcdf21f66a084ec3569d67f",
+    "componentSha256": "7ae75dd791fdfd80901d80a7ffee98b0ffe93a28025ca24ffc39e5eb551d2692"
+  },
+  "definitions": [
+    {
+      "entryId": "mtc-pba2050plus-final-2024-12-17",
+      "title": "Plan Bay Area 2050+: Final Regional Growth Forecast",
+      "publisher": "Metropolitan Transportation Commission / Association of Bay Area Governments",
+      "url": "https://mtc.ca.gov/sites/default/files/meetings/attachments/6172/6biv_24_1482_Attachment_C_Final_Regional_Growth_Forecast_5.pdf?cb=2b452fe1",
+      "kind": "REPORT",
+      "topics": [
+        "population",
+        "households",
+        "housing",
+        "employment",
+        "regional forecasts"
+      ],
+      "geographies": [
+        "Nine-county San Francisco Bay Area"
+      ],
+      "cadenceDays": null,
+      "expectedRelease": null,
+      "licence": "Agency public meeting attachment. Retain its original attribution and source document; no additional reuse licence is asserted.",
+      "notes": "Original December 17, 2024 meeting attachment, two pages. Table 1 on page 2 contains four regional series and seven labelled years (2020–2050). It is the published 2050+ forecast background, not an issued 2060 procurement specification. Source notes a 2023 plan base year although the table begins 2020. All nine counties are covered as one aggregate; this table does not supply county allocations. Historical/forecast roles are preserved as published; no blanket assertion that 2020 or 2025 is an observed actual. Original retained PDF: 152,937 bytes.",
+      "retired": false
+    },
+    {
+      "entryId": "mtc-pba2050plus-faq-2026-02-12",
+      "title": "Plan Bay Area 2050+: Regional Growth Forecast FAQ",
+      "publisher": "Metropolitan Transportation Commission / Association of Bay Area Governments",
+      "url": "https://mtc.ca.gov/sites/default/files/meetings/attachments/6502/8aiv_26_0110_After_Meeting_Handout_PBA_2050_Plus_Regional_Growth_Forecast_FAQ_February_2026.pdf?cb=d0e49206",
+      "kind": "METHOD",
+      "topics": [
+        "regional forecasts",
+        "methodology",
+        "population",
+        "employment"
+      ],
+      "geographies": [
+        "Nine-county San Francisco Bay Area"
+      ],
+      "cadenceDays": null,
+      "expectedRelease": null,
+      "licence": "Agency public meeting handout. Retain its original attribution and source document; no additional reuse licence is asserted.",
+      "notes": "Original February 12, 2026 meeting handout, four pages, 777,707 bytes. Explains the adopted 2050+ growth forecast and the next major Plan Bay Area 2060 cycle. Used as published methodological background. The separate 2060 RFP, question deadlines, addenda, evaluation and contract terms must come from the issued procurement documents.",
+      "retired": false
+    },
+    {
+      "entryId": "mtc-pba2050plus-table1-2024-12-17",
+      "title": "Plan Bay Area 2050+: complete published Table 1 transcription",
+      "publisher": "MTC / ABAG (published values); TJLabs (source-labelled transcription)",
+      "url": "https://mtc.ca.gov/sites/default/files/meetings/attachments/6172/6biv_24_1482_Attachment_C_Final_Regional_Growth_Forecast_5.pdf?cb=2b452fe1",
+      "kind": "DATASET",
+      "topics": [
+        "population",
+        "households",
+        "housing",
+        "employment",
+        "regional forecasts"
+      ],
+      "geographies": [
+        "Nine-county San Francisco Bay Area"
+      ],
+      "cadenceDays": null,
+      "expectedRelease": null,
+      "licence": "Source-labelled transcription of the agency public meeting table; original source attribution is retained.",
+      "notes": "Complete 28-value transcription of Table 1/page 2: population/persons, households, housing units and jobs, for 2020, 2025, 2030, 2035, 2040, 2045 and 2050. Full JSON retains source URL, date/page/table, all nine county names, all source limitations and four explicitly derived 2025→2050 comparisons. JSON is a derived transcription; the original PDF is a separate catalogue source. UTF-8 body 3,946 bytes / SHA256 6fce41e3b42febfc38eedb96f79400f7a1745c635d963571349eb50855e81e7c. Publication classification and regional geography are unchanged.",
+      "retired": false
+    }
+  ],
+  "product": {
+    "productId": "mtc-pba2050plus-public-baseline",
+    "title": "Plan Bay Area 2050+ published regional growth baseline",
+    "audience": "Regional economic and planning research staff",
+    "purpose": "Receive the complete original agency forecast attachment and later methodological FAQ alongside the full 28-value source-labelled transcription. Support transparent research-source planning for the next regional-growth exercise while preserving the adopted forecast's date, geography, units and meaning.",
+    "format": "Original PDFs, structured JSON and long-form CSV; source catalogue and complete economic project export",
+    "notes": "The underlying catalogue remains in the existing economic project alongside its QCEW sources. Product requirements distinguish original publication, methodology and derived table. Subsequent issued editions use the existing source review and issue controls after inspecting the actual received documents.",
+    "requirements": [
+      {
+        "id": "published-forecast",
+        "title": "Complete published forecast attachment",
+        "entryIds": [
+          "mtc-pba2050plus-final-2024-12-17"
+        ],
+        "topics": [
+          "regional forecasts"
+        ],
+        "geographies": [
+          "Nine-county San Francisco Bay Area"
+        ],
+        "note": "Two-page original, including all of Table 1."
+      },
+      {
+        "id": "methodological-context",
+        "title": "Complete agency methodological context",
+        "entryIds": [
+          "mtc-pba2050plus-faq-2026-02-12"
+        ],
+        "topics": [
+          "methodology"
+        ],
+        "geographies": [
+          "Nine-county San Francisco Bay Area"
+        ],
+        "note": "Four-page original FAQ; the future 2060 procurement remains a separate source."
+      },
+      {
+        "id": "structured-published-values",
+        "title": "All source-labelled table values",
+        "entryIds": [
+          "mtc-pba2050plus-table1-2024-12-17"
+        ],
+        "topics": [
+          "population",
+          "households",
+          "housing",
+          "employment"
+        ],
+        "geographies": [
+          "Nine-county San Francisco Bay Area"
+        ],
+        "note": "All four original series, seven years, explicit units and full provenance; arithmetic derivatives remain labelled."
+      }
+    ],
+    "retired": false
+  },
+  "sources": [
+    {
+      "entryId": "mtc-pba2050plus-final-2024-12-17",
+      "filename": "MTC_Final_Regional_Growth_Forecast_2024_12_17.pdf",
+      "contentType": "application/pdf",
+      "bytes": 152937,
+      "sha256": null,
+      "originalFileUploadId": "3f8dd772-3100-8190-9a01-00b246b4a2e0",
+      "sourceUrl": "https://mtc.ca.gov/sites/default/files/meetings/attachments/6172/6biv_24_1482_Attachment_C_Final_Regional_Growth_Forecast_5.pdf?cb=2b452fe1",
+      "sourceDate": "2024-12-17",
+      "stableReference": "notion-file-block://b66609bf-66b3-4d39-b82a-38fe8bc75da8/43025ffc-fc9a-46f9-8c16-76472aa9094f?space_id=cb7dd772-3100-81c5-a704-000397aad4c6&name=MTC_Final_Regional_Growth_Forecast_2024_12_17.pdf"
+    },
+    {
+      "entryId": "mtc-pba2050plus-faq-2026-02-12",
+      "filename": "MTC_Regional_Growth_Forecast_FAQ_2026_02_12.pdf",
+      "contentType": "application/pdf",
+      "bytes": 777707,
+      "sha256": null,
+      "originalFileUploadId": "3f8dd772-3100-81d9-bce3-00b2891ade4b",
+      "sourceUrl": "https://mtc.ca.gov/sites/default/files/meetings/attachments/6502/8aiv_26_0110_After_Meeting_Handout_PBA_2050_Plus_Regional_Growth_Forecast_FAQ_February_2026.pdf?cb=d0e49206",
+      "sourceDate": "2026-02-12",
+      "stableReference": "notion-file-block://c28ec26e-66f9-4bdf-ae6c-98e62aea4e4f/a2bff0c3-4427-4559-8b14-50d4d7561fdc?space_id=cb7dd772-3100-81c5-a704-000397aad4c6&name=MTC_Regional_Growth_Forecast_FAQ_2026_02_12.pdf"
+    },
+    {
+      "entryId": "mtc-pba2050plus-table1-2024-12-17",
+      "filename": "MTC_PBA2050Plus_Full_Published_Growth_Table_2024_12_17.json",
+      "contentType": "application/json",
+      "bytes": 3946,
+      "sha256": "6fce41e3b42febfc38eedb96f79400f7a1745c635d963571349eb50855e81e7c",
+      "originalFileUploadId": "3f8dd772-3100-8133-be49-00b2f0365632",
+      "sourceUrl": "https://mtc.ca.gov/sites/default/files/meetings/attachments/6172/6biv_24_1482_Attachment_C_Final_Regional_Growth_Forecast_5.pdf?cb=2b452fe1",
+      "sourceDate": "2024-12-17",
+      "stableReference": "notion-file-block://3e0c3bb2-72cb-44fe-9000-55695941b7e7/57eb85eb-580a-4b6f-8321-e57471cd7017?space_id=cb7dd772-3100-81c5-a704-000397aad4c6&name=MTC_PBA2050Plus_Full_Published_Growth_Table_2024_12_17.json"
+    }
+  ]
+}
