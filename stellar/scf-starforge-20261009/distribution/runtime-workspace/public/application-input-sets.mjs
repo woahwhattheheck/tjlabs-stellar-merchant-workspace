@@ -6,6 +6,10 @@ const button=(text,fn)=>{const n=node('button',text);n.type='button';n.addEventL
 const digest=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
 const human=value=>new Intl.NumberFormat().format(value);
 export function createApplicationInputSetsView({root,api,getToken,getWorkspaceId,getTarget,clearTarget,onError,onMessage,readSaved,saveSaved}) {
+  if(!document.querySelector('link[data-application-input-sets]')) {
+    const css=document.createElement('link');css.rel='stylesheet';css.href='/application-input-sets.css';
+    css.setAttribute('data-application-input-sets','');document.head.append(css);
+  }
   let workspace=getWorkspaceId(),epoch=0,listing=0,busy=false,selected=[],directories=[],offset=0,workingOffset=0,opened=null;
   const panel=node('details',undefined,'panel');panel.id='application-input-sets';
   panel.append(node('summary','Companion file sets'));

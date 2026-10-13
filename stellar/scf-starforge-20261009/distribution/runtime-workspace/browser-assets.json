@@ -260,6 +260,13 @@
         "application-input-set-format.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/application-input-sets.css",
+      [
+        "application-input-sets.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

@@ -32,6 +32,7 @@
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-set-format.mjs",
     "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_INPUT_SETS.md",
-    "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs"
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/receiving/APPLICATION_INPUT_SETS_RECEIVE.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/public/application-input-sets.css"
   ]
 }
