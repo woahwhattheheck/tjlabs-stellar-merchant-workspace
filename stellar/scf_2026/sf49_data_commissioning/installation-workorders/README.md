@@ -1,6 +1,6 @@
 # Complete customer installation workorders
 
-This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained customer programme, including CoCart, Blockscout, Query.Farm, ARS air-quality, Lutra QGIS migration, supplier catalogue onboarding, supplier order integration, Stellarcarbon and CFCE/GiveCredit. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
+This preparation tool turns a fresh original SF47 Installation seed into a complete customer workorder for the maintained customer programme, including CoCart, Blockscout, Query.Farm, ARS air-quality, Lutra QGIS migration, supplier catalogue onboarding, supplier order integration, Stellarcarbon, CFCE/GiveCredit and industrial reconciliation. The original **Customer installations** desk receives the resulting full document through **Load input file**, then previews, saves and exports it in the same operating case.
 
 The profiles describe the whole useful customer task, the actual source contract, merchant-priced unit, receiving application, maintenance and interruption recovery. Customer selections stay in local bindings: original merchant/buyer IDs, approved source edition and rights, actual receiving host/engineer and original payment terms.
 
@@ -25,6 +25,8 @@ The maintained commercial importer remains the entry for an original customer Wo
 | LUTRA_QGIS.md | Full Lutra source, commercial phases, native operation, correction, complete receiving and handover |
 | georobotix-csapi.json | Complete selected Connected Systems source window → reviewed native editions → useful queries/comparison → independent customer receiving and original Installation |
 | GEOROBOTIX_CSAPI.md | Full GeoRobotix commissioning scope, exact selected archive/reference, operator/runtime setup, recovery and complete source/Installation handover |
+| industrial-reconciliation.json | Native historian or retained local sources → reviewed immutable editions → explicit normalization/tolerances → complete accounting, engineer decisions and editable customer receiving |
+| INDUSTRIAL_RECONCILIATION.md | Whole source/meaning intake, original Workshare phases and fee, Installation setup, operator/CLI/MCP workflow and independent complete receiving |
 | supplier-catalogues.json | Complete supplier editions → selected customer import → full current recipient catalogue → customer receiving |
 | supplier-orders.json | Complete original order/profile/adapter → fulfilment and declared HTTPS → portable editable customer receiving |
 | source-inputs.py | Complete original packets and explicit effort sources → original native commissioning/packet formats |
@@ -45,7 +47,7 @@ node stellar/scf_2026/sf49_data_commissioning/installation-workorders/prepare.mj
 
 The catalogue returns each installed profile's ID, title and complete-file source identity. Both commands use the same profile loader. A complete new customer profile JSON and guide join this directory; matching packaged profiles are discovered by the preparer and receiver. Each profile's schema and ID must match its regular source file. The loader retains the existing 2 MiB source-file limit and reads the selected complete JSON before preparation or native customer receiving.
 
-Choose the actual customer programme from that installed catalogue. [LUTRA_QGIS.md](LUTRA_QGIS.md) gives the full original migration scope and native operating route.
+Choose the actual customer programme from that installed catalogue. [LUTRA_QGIS.md](LUTRA_QGIS.md) gives the full original migration scope and native operating route. [INDUSTRIAL_RECONCILIATION.md](INDUSTRIAL_RECONCILIATION.md) covers reviewed historian and local-data commissioning through complete paired reconciliation and editable customer receiving.
 
 ## 1. Receive the original commercial case
 
@@ -74,7 +76,7 @@ The [original Installation guide](../../sf47_budget_model/workspace/INSTALLATION
 
 ## 2. Prepare customer bindings
 
-Choose the original customer's installed profile, such as cocart, blockscout, queryfarm, ars-air-quality, lutra-qgis, supplier-catalogues, supplier-orders, stellarcarbon or cfce-givecredit for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys. The [complete carbon reporting guide](CARBON_REPORTING.md) covers both reporting installations and their original commercial/source bindings.
+Choose the original customer's installed profile, such as cocart, blockscout, queryfarm, ars-air-quality, lutra-qgis, supplier-catalogues, supplier-orders, stellarcarbon, cfce-givecredit or industrial-reconciliation for the selected actual product. The [customer programmes guide](CUSTOMER_PROGRAMMES.md) carries the complete Query.Farm and air-quality operating journeys. The [complete carbon reporting guide](CARBON_REPORTING.md) covers both reporting installations and their original commercial/source bindings.
 
 ~~~sh
 node prepare.mjs template --profile cocart \
