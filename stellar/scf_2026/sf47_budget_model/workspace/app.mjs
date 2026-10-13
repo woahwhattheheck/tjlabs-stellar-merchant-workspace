@@ -42,7 +42,7 @@ const caseDraftDialog=document.createElement('dialog');
 caseDraftDialog.className='case-planning-drafts';caseDraftDialog.setAttribute('aria-label','Retained case planning work');
 $('#workbench').append(caseDraftDialog);
 let casePlanningRoute=null;
-const casePlanningPointer=()=>state.principal?.id?'sf47.case-planning.'+state.principal.id:null;
+const casePlanningPointer=()=>state.principal?.id?staffDeskStorageKey('sf47.case-planning',state.staffContext):null;
 const casePlanning=createCasePlanningController({
   api,principal:()=>state.principal,
   confirmWorkingDraftReplacement:()=>confirm('Discard the unsaved planning draft and open this retained case draft?'),
