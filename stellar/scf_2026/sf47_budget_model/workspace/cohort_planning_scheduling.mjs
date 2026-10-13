@@ -47,8 +47,16 @@ function compatible(before, beforeDate, after, afterDate, edge) {
     before.schedule.id.localeCompare(after.schedule.id) || before.sourceDate.localeCompare(after.sourceDate)) < 0;
 }
 export function scheduleCohortDelivery(document, rawConstraints = undefined, options = {}) {
-  if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => !['name'].includes(key)))
-    fail('SCHEDULING_OPTIONS', 'Use the editable successor name.');
+  if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => !['name', 'method', 'maxSearchSteps'].includes(key)))
+    fail('SCHEDULING_OPTIONS', 'Use the successor name, allocation method and optional search effort.');
+  const allocationMethod = options.method ?? 'FIRST_FIT';
+  if (!['FIRST_FIT', 'RESOLVE_CONFLICTS'].includes(allocationMethod))
+    fail('SCHEDULING_OPTIONS', 'Choose FIRST_FIT or RESOLVE_CONFLICTS.', 'method');
+  if (options.maxSearchSteps !== undefined && allocationMethod !== 'RESOLVE_CONFLICTS')
+    fail('SCHEDULING_OPTIONS', 'Search effort applies to RESOLVE_CONFLICTS.', 'maxSearchSteps');
+  const maxSearchSteps = options.maxSearchSteps ?? 100000;
+  if (!Number.isSafeInteger(maxSearchSteps) || maxSearchSteps < 1 || maxSearchSteps > 1000000)
+    fail('SCHEDULING_OPTIONS', 'Search effort must be a whole number from 1 to 1000000.', 'maxSearchSteps');
   const input = normalizeCohortPlan(planFrom(document));
   const supplied = rawConstraints === undefined ? seedCohortDeliveryScheduling(input) : normalizeCohortScheduling(rawConstraints, input.schedules);
   const suppliedById = new Map(supplied.schedules.map(row => [row.scheduleId, row]));
@@ -202,6 +210,144 @@ export function scheduleCohortDelivery(document, rawConstraints = undefined, opt
       }
     }
   }
+  let resolution = null;
+  if (allocationMethod === 'RESOLVE_CONFLICTS') {
+    // Revisit a complete set of linked services sharing potential capacity.
+    // Unplaceable/unknown work stays reserved, and a partial search is never
+    // applied. The original first-fit pass is retained for every unsolved set.
+    const candidates = groupOrder.filter(group => {
+      const movable = group.filter(job => !job.fixedReason);
+      return movable.length && movable.every(job => job.domains.length) &&
+        group.filter(job => job.fixedReason).every(job => !job.issues.length);
+    });
+    const componentParents = candidates.map((_, index) => index);
+    function componentRoot(index) {
+      let at = index;
+      while (componentParents[at] !== at) at = componentParents[at];
+      while (componentParents[index] !== index) {
+        const previous = componentParents[index]; componentParents[index] = at; index = previous;
+      }
+      return at;
+    }
+    const resourceOwner = new Map();
+    for (let index = 0; index < candidates.length; index++) {
+      for (const job of candidates[index].filter(row => !row.fixedReason && row.effort > 0n)) {
+        for (const date of new Set([job.date, ...job.domains])) {
+          const key = capacityKey(job.schedule.capacityPoolId, date);
+          if (resourceOwner.has(key)) componentParents[componentRoot(index)] = componentRoot(resourceOwner.get(key));
+          else resourceOwner.set(key, index);
+        }
+      }
+    }
+    const components = new Map();
+    for (let index = 0; index < candidates.length; index++) {
+      const key = componentRoot(index);
+      if (!components.has(key)) components.set(key, []);
+      components.get(key).push(candidates[index]);
+    }
+    resolution = {method: 'RESOLVE_CONFLICTS', maxSearchSteps, visitedSteps: 0,
+      reconsideredGroups: 0, resolvedGroups: 0, revisedDates: 0, components: []};
+    function needsResolution(job) {
+      if (job.issues.length) return true;
+      if (job.effort > 0n && job.schedule.capacityPoolId) {
+        const bucket = capacity.get(capacityKey(job.schedule.capacityPoolId, job.date));
+        if (bucket.available === null || bucket.unknown || bucket.used > bucket.available) return true;
+      }
+      return job.predecessors.some(link => {
+        const previous = byId.get(link.before);
+        return !compatible(previous, previous.date, job, job.date, link);
+      });
+    }
+    for (const component of components.values()) {
+      const members = component.flat(), movable = members.filter(job => !job.fixedReason);
+      if (!movable.some(needsResolution)) continue;
+      const originalDates = new Map(movable.map(job => [job.id, job.date]));
+      const result = {groupIds: component.map(group => group[0].id),
+        occurrenceIds: movable.map(job => job.id), status: 'RETAINED', visitedSteps: 0, revisedDates: []};
+      resolution.reconsideredGroups += component.length;
+      resolution.components.push(result);
+      if (resolution.visitedSteps >= maxSearchSteps) { result.status = 'SEARCH_LIMIT'; continue; }
+
+      // Fixed members remain in capacity. Every movable member is released
+      // together; each search prefix owns only the dates it has selected.
+      for (const job of movable) reserve(job, job.date, -1);
+      const dates = movable.map(job => [...job.domains].sort((a, b) =>
+        constraints.strategy === 'EARLIEST' ? a.localeCompare(b) :
+          Math.abs(distance(a, job.sourceDate)) - Math.abs(distance(b, job.sourceDate)) || a.localeCompare(b)));
+      const next = movable.map(() => 0), chosen = movable.map(() => null), placed = new Map();
+      let position = 0, limited = false;
+      while (position >= 0 && position < movable.length) {
+        const job = movable[position];
+        let found = false;
+        while (next[position] < dates[position].length && resolution.visitedSteps < maxSearchSteps) {
+          const date = dates[position][next[position]++];
+          resolution.visitedSteps++; result.visitedSteps++;
+          if (capacityIssues(job, date).length) continue;
+          if (job.predecessors.some(link => {
+            const previous = byId.get(link.before);
+            return !previous.fixedReason && !placed.has(previous.id) ||
+              !compatible(previous, placed.get(previous.id) || previous.date, job, date, link);
+          })) continue;
+          if (job.successors.some(link => {
+            const following = byId.get(link.after);
+            const possible = following.fixedReason ? [following.date] :
+              placed.has(following.id) ? [placed.get(following.id)] : following.domains;
+            return !possible.some(followingDate => compatible(job, date, following, followingDate, link));
+          })) continue;
+          chosen[position] = date; job.date = date; placed.set(job.id, date); reserve(job, date, 1);
+          position++;
+          if (position < movable.length) { next[position] = 0; chosen[position] = null; }
+          found = true; break;
+        }
+        if (found) continue;
+        if (resolution.visitedSteps >= maxSearchSteps) { limited = true; break; }
+        next[position] = 0;
+        position--;
+        if (position >= 0) {
+          const previous = movable[position];
+          reserve(previous, chosen[position], -1); chosen[position] = null;
+          previous.date = originalDates.get(previous.id); placed.delete(previous.id);
+        }
+      }
+      if (position === movable.length) {
+        result.status = 'RESOLVED'; resolution.resolvedGroups += component.length;
+        for (const job of movable) {
+          const previousDate = originalDates.get(job.id);
+          if (job.date !== previousDate) result.revisedDates.push({occurrenceId: job.id, before: previousDate, after: job.date});
+          job.issues = job.issues.filter(row => !['NO_AVAILABLE_PLACEMENT', 'LINKED_SERVICE_UNRESOLVED'].includes(row.code));
+        }
+        resolution.revisedDates += result.revisedDates.length;
+        // Explain alternatives against the complete accepted placement. A
+        // selected occurrence's own reservation is excluded from this view.
+        for (const job of movable) {
+          reserve(job, job.date, -1);
+          job.rejected = before.days.flatMap(day => {
+            const date = day.date, reasons = dateIssues(job, date);
+            if (!reasons.length) reasons.push(...capacityIssues(job, date));
+            for (const link of job.predecessors) {
+              const previous = byId.get(link.before);
+              if (!compatible(previous, previous.date, job, date, link))
+                reasons.push(issue('ORIGINAL_SEQUENCE', 'Retain the original prepaid order and entered spacing.',
+                  {relatedOccurrenceId: previous.id, relatedDate: previous.date, minimumGapDays: link.gapDays}));
+            }
+            for (const link of job.successors) {
+              const following = byId.get(link.after);
+              if (!compatible(job, date, following, following.date, link))
+                reasons.push(issue('FOLLOWING_SERVICE_WINDOW', 'Retain the following occurrence in the accepted complete allocation.',
+                  {relatedOccurrenceId: following.id, relatedDate: following.date, minimumGapDays: link.gapDays}));
+            }
+            return reasons.length ? [{date, reasons}] : [];
+          });
+          reserve(job, job.date, 1);
+        }
+      } else {
+        // Only a complete component can replace the first-fit allocation.
+        for (const job of movable) if (placed.has(job.id)) reserve(job, placed.get(job.id), -1);
+        for (const job of movable) { job.date = originalDates.get(job.id); reserve(job, job.date, 1); }
+        result.status = limited ? 'SEARCH_LIMIT' : 'NO_COMPLETE_PLACEMENT';
+      }
+    }
+  }
   const candidate = copy(input);
   candidate.deliveryScheduling = copy(constraints);
   if (options.name !== undefined) candidate.name = options.name;
@@ -250,7 +396,8 @@ export function scheduleCohortDelivery(document, rawConstraints = undefined, opt
   const unresolved = assignments.filter(row => row.status === 'UNRESOLVED');
   return {schema: COHORT_DELIVERY_SCHEDULE_SCHEMA, sourceDocument: copy(document), constraints,
     candidate: report.input, report,
-    method: 'Deterministic first-fit allocation, ordered by descending service priority, earliest end of a permitted occurrence window and original occurrence order. Linked prepaid/spacing sequences are placed together. Fixed and unresolved work retain their original capacity reservations. Unresolved rows retain the remaining constraints under this allocation order; priorities and date preferences remain editable.',
+    ...(resolution ? {resolution} : {}),
+    method: resolution ? 'Deterministic conflict resolution over complete linked service groups sharing possible capacity dates. Fixed, past, unknown and unplaceable work remain reserved. Priority, service order and date preference order each search; only a complete component placement replaces its first-fit allocation. Components without an accepted complete placement retain their full previous dates and constraints. Reassigned-date explanations use the complete accepted placement.' : 'Deterministic first-fit allocation, ordered by descending service priority, earliest end of a permitted occurrence window and original occurrence order. Linked prepaid/spacing sequences are placed together. Fixed and unresolved work retain their original capacity reservations. Unresolved rows retain the remaining constraints under this allocation order; priorities and date preferences remain editable.',
     summary: {status: unresolved.length ? 'UNRESOLVED' : 'COMPLETE', occurrences: assignments.length,
       moved: assignments.filter(row => row.moved).length, fixed: assignments.filter(row => row.fixedReason).length,
       unresolved: unresolved.length, capacityBefore: before.capacity.status, capacityAfter: report.capacity.status,
@@ -261,7 +408,8 @@ export function scheduleCohortDelivery(document, rawConstraints = undefined, opt
 export function reopenCohortDeliverySchedule(document) {
   if (document?.schema !== COHORT_DELIVERY_SCHEDULE_SCHEMA)
     fail('SCHEDULING_REPORT_REQUIRED', 'Open the complete delivery scheduling result.');
-  const recomputed = scheduleCohortDelivery(document.sourceDocument, document.constraints, {name: document.candidate?.name});
+  const recomputed = scheduleCohortDelivery(document.sourceDocument, document.constraints, {name: document.candidate?.name,
+    ...(document.resolution ? {method: document.resolution.method, maxSearchSteps: document.resolution.maxSearchSteps} : {})});
   if (canonical(document) !== canonical(recomputed))
     fail('SCHEDULING_REPORT_CHANGED', 'The saved schedule differs from its complete original input and constraints.');
   return copy(document);
@@ -275,5 +423,17 @@ export function exportCohortDeliveryScheduleCsv(document) {
   const report = reopenCohortDeliverySchedule(document);
   const keys = ['occurrenceId','scheduleId','label','sourceDate','originalDate','date','scheduledAt','plannedCompleteAt',
     'scheduledTasks','scheduledRequests','requiredHours','capacityPoolId','fundingGroupIds','priority','status','fixedReason','moved','permittedDates','rejectedDates','issues'];
+  if (report.resolution) {
+    const components = new Map(report.resolution.components.flatMap(row => row.occurrenceIds.map(id => [id, row])));
+    const extra = ['allocationMethod', 'maxSearchSteps', 'componentStatus', 'componentVisitedSteps', 'previousAllocationDate'];
+    return [[...keys, ...extra].map(csv).join(','), ...report.assignments.map(row => {
+      const component = components.get(row.occurrenceId);
+      const before = component?.revisedDates.find(change => change.occurrenceId === row.occurrenceId)?.before ?? row.date;
+      return [...keys.map(key => csv(row[key])), ...[
+        report.resolution.method, report.resolution.maxSearchSteps, component?.status ?? '',
+        component?.visitedSteps ?? null, before
+      ].map(csv)].join(',');
+    })].join('\r\n') + '\r\n';
+  }
   return [keys.map(csv).join(','), ...report.assignments.map(row => keys.map(key => csv(row[key])).join(','))].join('\r\n') + '\r\n';
 }
