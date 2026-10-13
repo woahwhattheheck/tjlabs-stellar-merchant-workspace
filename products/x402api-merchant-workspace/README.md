@@ -264,3 +264,9 @@ integration guide and the live hosted API documentation:
 protocol.mjs attributes the retained canonical JSON implementation to its
 original wallet source. The original SF31 writer, SF88 reader and runtime
 lease remain in their existing repository paths.
+
+## Read-only incident and customer Support workflow
+
+The original running owner exposes authenticated GET /api/observation. Review it with support-watch review-x402, register the exact returned merchant identity, and use the existing Incident desk to retain an issue and prepare a customer Support case. Original receipt verification, unresolved payment age and fulfillment outcomes remain separate. The monitor reads complete bounded operational metadata and performs no payment or fulfillment.
+
+See [Merchant payment and delivery support](../../stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md) for the complete source registration, paged order review, before/after case, frozen HTML handover and fresh receiving workflow.

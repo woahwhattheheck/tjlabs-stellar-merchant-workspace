@@ -14,14 +14,20 @@
   "exports": {
     "./merchant/x402api": "./source/products/x402api-merchant-workspace/workspace.mjs",
     "./merchant/x402api/server": "./source/products/x402api-merchant-workspace/server.mjs",
-    "./merchant/x402api/protocol": "./source/products/x402api-merchant-workspace/protocol.mjs"
+    "./merchant/x402api/protocol": "./source/products/x402api-merchant-workspace/protocol.mjs",
+    "./merchant/x402api/observation": "./source/products/x402api-merchant-workspace/observation.mjs",
+    "./merchant/x402api/incident-source": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-source.mjs",
+    "./merchant/x402api/incident-capture": "./source/stellar/scf-starforge-20261009/sf93-seller-support-bundle/x402-observation.mjs"
   },
   "supportFiles": [
     "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",
     "stellar/scf-starforge-20261009/sf31-buyer-client/response-stream.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/result.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/node/store.mjs",
-    "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs"
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-desk.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/x402-render.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/X402_MERCHANT_SUPPORT.md"
   ],
   "excludeFiles": [
     "products/x402api-merchant-workspace/native-receiving.mjs",
