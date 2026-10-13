@@ -205,6 +205,17 @@ function paragraph(manuscript, prefix) {
 }
 
 /** Update complete accepted customer text while retaining every other chapter and table. */
+/** Retain original source links under the companion's existing registered heading. */
+export function grantCustomerSourceManuscript(manuscript) {
+  const source = clean(manuscript);
+  const incoming = section(source, '# 7. Threat response, privacy and measurement');
+  if (!incoming) return source;
+  const heading = '## 7. Threat response and useful-outcome measurement';
+  need(!section(source, heading), 'Select one original threat chapter for source receiving.');
+  const received = incoming.text.replace('# 7. Threat response, privacy and measurement', heading);
+  return source.slice(0, incoming.start) + received + '\n' + source.slice(incoming.end);
+}
+
 export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscript) {
   let companion = clean(productAndFinanceMarkdown);
   for (const incoming of acceptedCustomerSections(manuscript)) {
@@ -227,6 +238,16 @@ export function receiveGrantCustomerSections(productAndFinanceMarkdown, manuscri
       updated = prior ? updated.replace(prior, next) : clean(updated) + '\n' + next + '\n';
     }
     companion = installSection(companion, OPENFN, updated);
+  }
+  // Receive the complete canonical threat/monitoring chapter through the same
+  // original companion heading. Independently headed recovery products remain
+  // separate chapters and keep their own ordinary source receiving.
+  const threatMonitoring = section(manuscript, '# 7. Threat response, privacy and measurement');
+  if (threatMonitoring) {
+    const threatHeading = '## 7. Threat response and useful-outcome measurement';
+    need(section(companion, threatHeading), 'Retain the existing threat-response and measurement chapter.');
+    const received = threatMonitoring.text.replace('# 7. Threat response, privacy and measurement', threatHeading);
+    companion = installSection(companion, threatHeading, projectGrantMarkdown(received));
   }
   // Receive the complete accepted finance chapter through the ordinary manuscript
   // path, preserving its original reader heading and the other customer chapters.

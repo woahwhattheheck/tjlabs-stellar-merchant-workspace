@@ -10,7 +10,7 @@ import { attachGrantReviewRounds } from './grant-review-round.mjs';
 import { attachGrantCompanion } from './grant-companion.mjs';
 import { attachCustomerClosingSources, attachCustomerClosingOpening } from './grant-customer-closing.mjs';
 import { receiveFinancialApplication, attachFinancialSources } from './grant-financial-operations.mjs';
-import { projectGrantHtml, projectGrantMarkdown, receiveGrantCustomerSections, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
+import { projectGrantHtml, projectGrantMarkdown, receiveGrantCustomerSections, grantCustomerSourceManuscript, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
 import { receiveDatasetteApplication, datasetteSourceSelection, addDatasetteGrantSources, receiveDatasetteExistingWork } from './grant-datasette.mjs';
 import { validateGrantProductRegistrations, receiveGrantProductSources } from './grant-product-sources.mjs';
 
@@ -374,7 +374,7 @@ export async function runGrantComposition(argv = process.argv.slice(2)) {
   // from the full manuscript before receiving its accepted customer sections.
   if (manuscript) {
     receiveGrantCustomerSources(index, manuscript);
-    receiveGrantProductSources(index, manuscript, productRegistrations);
+    receiveGrantProductSources(index, grantCustomerSourceManuscript(manuscript), productRegistrations);
   }
   const coopsCommit = options['--coops-commit'] || index.narrative_source?.coastal_product_commit || null;
   const financeCommit = options['--finance-commit'] || index.narrative_source?.financial_product_commit || null;
