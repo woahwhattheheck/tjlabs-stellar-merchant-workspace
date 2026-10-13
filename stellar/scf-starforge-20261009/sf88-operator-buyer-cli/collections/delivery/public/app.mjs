@@ -31,8 +31,8 @@ function controls(){
  $('#pending-description').textContent=state.storageError?'The retained request has not been read. Retry that read before making a new delivery.':state.pending?.kind==='receive'?'The original package upload/receiving operation is retained. Reselect the same file if its bytes are still needed.':state.pending?'The exact reviewed delivery request is retained. Continue it to observe or finish the original package.':'';
  $('#resume-file-label').hidden=state.pending?.kind!=='receive';
  $('#prepare-tab').disabled=!state.canPrepare;
- for(const e of $('#open-received input,#open-received button,#refresh-received,[data-received-open]'))e.disabled=!ready;
- for(const e of $('#received-view button'))e.disabled=!ready;
+ for(const e of $$('#open-received input,#open-received button,#refresh-received,[data-received-open]'))e.disabled=!ready;
+ for(const e of $$('#received-view button'))e.disabled=!ready;
 }
 async function request(path,{method='GET',body,raw=false}={}){
  const response=await fetch(path,{method,headers:{Authorization:'Bearer '+state.token,...(body!==undefined?{'Content-Type':'application/json'}:{})},body:body===undefined?undefined:JSON.stringify(body)});
@@ -193,7 +193,7 @@ function wireForm(selector,fn){$(selector).addEventListener('submit',event=>{eve
 wireForm('#login-form',login);wireForm('#prepare-form',preview);wireForm('#receive-form',startReceive);wireForm('#open-received',()=>openReceived($('#received-sha').value));
 $('#prepare-package').onclick=()=>busy(prepare).catch(()=>{});$('#retry').onclick=()=>busy(continuePending).catch(()=>{});$('#read-storage').onclick=()=>busy(async()=>{await readState();await refreshReceived({restore:true});}).catch(()=>{});$('#refresh').onclick=()=>busy(refresh).catch(()=>{});$('#collection').onchange=()=>busy(selectCollection).catch(()=>{});
 $('#refresh-received').onclick=()=>busy(()=>refreshReceived()).catch(()=>{});
-for(const e of $('[data-tab]'))e.onclick=()=>tab(e.dataset.tab);
+for(const e of $$('[data-tab]'))e.onclick=()=>tab(e.dataset.tab);
 $('#archive-request').onclick=()=>busy(async()=>{
  if(!state.storageReady||!state.pending)throw new Error('Read the original request first.');
  if(!confirm('Archive this browser request? The original named delivery or upload remains on the server, including any uncertain completed result. A different selection requires a new explicit delivery ID.'))return;
