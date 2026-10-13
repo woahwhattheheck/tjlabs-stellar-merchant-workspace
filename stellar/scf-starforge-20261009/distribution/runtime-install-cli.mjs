@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { prepareRuntimeInstall, installRuntime, inspectRuntimeInstall, upgradeRuntime,
-  recoverRuntime, compareRuntimeInstalls, launchRuntime } from './runtime-install.mjs';
+  recoverRuntime, compareRuntimeInstalls, launchRuntime, retainRuntimeLock } from './runtime-install.mjs';
 
 const HELP = `Starforge customer runtime installation (Linux, Node 22.16+, Python 3.11+, npm, flock)
 
@@ -14,11 +14,14 @@ runtime-install install --dir DIRECTORY [--adopt-existing] [--offline] [--cache 
 runtime-install resume --dir DIRECTORY [--adopt-existing] [--offline] [--cache CACHE_DIRECTORY] [--node-headers NODE_HEADER_PREFIX]
 runtime-install inspect --dir DIRECTORY [--load] [--source]
 runtime-install run --dir DIRECTORY -- ORIGINAL_STARFORGE_COMMAND [ARGUMENTS...]
-runtime-install upgrade --from PREVIOUS_DIRECTORY --dir NEW_DIRECTORY
+runtime-install upgrade --from PREVIOUS_DIRECTORY --dir NEW_DIRECTORY [--prepare-only]
   --archive ORIGINAL.tgz --sha256 HASH [--native] [--feature NAME ...]
   [--operator] [--pins EXACT_PINS.json] [--offline] [--cache CACHE_DIRECTORY] [--node-headers NODE_HEADER_PREFIX]
-runtime-install recover --from PREVIOUS_DIRECTORY --dir NEW_DIRECTORY
+runtime-install recover --from PREVIOUS_DIRECTORY --dir NEW_DIRECTORY [--prepare-only]
   [--offline] [--cache CACHE_DIRECTORY] [--node-headers NODE_HEADER_PREFIX]
+runtime-install retain-lock --dir PREPARED_DIRECTORY --lock ORIGINAL_LOCK.json --sha256 LOCK_SHA256
+  --profile-id PROFILE_SHA256 --source-manifest-sha256 MANIFEST_SHA256 --archive-sha256 ARCHIVE_SHA256
+  --source-receipt ORIGINAL_RECEIPT.json --source-receipt-sha256 RECEIPT_SHA256 --operation-id STABLE_ID
 runtime-install compare --before DIRECTORY --after DIRECTORY
 
 Preparation unpacks and matches one original source archive, selects exact native
@@ -32,6 +35,9 @@ local Node headers (--node-headers prefix containing include/node) and a compile
 Each SQLite readiness check executes an isolated in-memory database transaction.
 The original source stays in package/ and dependencies live beside it in node_modules/.
 Upgrade/recovery prepare a new runtime and keep the previous runtime available.
+Use --prepare-only on recovery/upgrade when the original source must be prepared before importing a retained transitive lock.
+retain-lock verifies the exact prepared archive, profile, original lock and source receipt under install.lock; it does not run npm.
+The same completed lock request can be read back after installation. Copied absolute installation metadata is source history, not a live runtime.
 Use the resulting sourceRoot and dependencyRoot in the original host/container plan.`;
 
 const COMMON_SELECTION = ['--native', '--feature', '--operator', '--pins'];
@@ -41,11 +47,12 @@ const OPTIONS = {
   resume: ['--dir', '--offline', '--cache', '--node-headers', '--adopt-existing'],
   inspect: ['--dir', '--load', '--source'],
   run: ['--dir'],
-  upgrade: ['--from', '--dir', '--archive', '--sha256', ...COMMON_SELECTION, '--offline', '--cache', '--node-headers'],
-  recover: ['--from', '--dir', '--offline', '--cache', '--node-headers'],
+  upgrade: ['--from', '--dir', '--archive', '--sha256', ...COMMON_SELECTION, '--offline', '--cache', '--node-headers','--prepare-only'],
+  recover: ['--from', '--dir', '--offline', '--cache', '--node-headers','--prepare-only'],
+  'retain-lock':['--dir','--lock','--sha256','--profile-id','--source-manifest-sha256','--archive-sha256','--source-receipt','--source-receipt-sha256','--operation-id'],
   compare: ['--before', '--after'],
 };
-const FLAGS = new Set(['--native', '--operator', '--offline', '--load', '--source', '--adopt-existing']);
+const FLAGS = new Set(['--native', '--operator', '--offline', '--load', '--source', '--adopt-existing','--prepare-only']);
 
 export async function main(args = process.argv.slice(2)) {
   if (!args.length || args.length === 1 && args[0] === '--help') { console.log(HELP); return 0; }
@@ -80,6 +87,11 @@ export async function main(args = process.argv.slice(2)) {
     if (command === 'install' || command === 'resume') {
       result = await installRuntime({ directory, offline: !!values['--offline'], cache: values['--cache'],
         nodeHeaders: values['--node-headers'], adoptExisting: !!values['--adopt-existing'] });
+    } else if (command === 'retain-lock') {
+      result=await retainRuntimeLock({directory,lockFile:requireValue('--lock'),expectedLockSha256:requireValue('--sha256'),
+        expectedProfileId:requireValue('--profile-id'),expectedSourceManifestSha256:requireValue('--source-manifest-sha256'),
+        expectedArchiveSha256:requireValue('--archive-sha256'),sourceReceipt:requireValue('--source-receipt'),
+        expectedSourceReceiptSha256:requireValue('--source-receipt-sha256'),operationId:requireValue('--operation-id')});
     } else if (command === 'inspect') {
       result = await inspectRuntimeInstall({ directory, load: !!values['--load'], source: !!values['--source'] });
     } else {
@@ -92,10 +104,10 @@ export async function main(args = process.argv.slice(2)) {
       if (command === 'prepare') result = await prepareRuntimeInstall({ directory,
         archive: requireValue('--archive'), sha256: requireValue('--sha256'), ...selection });
       else if (command === 'recover') result = await recoverRuntime({ from: requireValue('--from'), directory,
-        offline: !!values['--offline'], cache: values['--cache'], nodeHeaders: values['--node-headers'] });
+        offline: !!values['--offline'], cache: values['--cache'], nodeHeaders: values['--node-headers'],install:!values['--prepare-only'] });
       else result = await upgradeRuntime({ from: requireValue('--from'), directory, ...selection,
         ...(command === 'upgrade' ? { archive: requireValue('--archive'), sha256: requireValue('--sha256') } : {}),
-        offline: !!values['--offline'], cache: values['--cache'], nodeHeaders: values['--node-headers'] });
+        offline: !!values['--offline'], cache: values['--cache'], nodeHeaders: values['--node-headers'],install:!values['--prepare-only'] });
     }
   }
   console.log(JSON.stringify(result, null, 2));
