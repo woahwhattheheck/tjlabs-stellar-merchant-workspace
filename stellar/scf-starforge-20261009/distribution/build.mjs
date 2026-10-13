@@ -25,15 +25,21 @@ const supported = /\.(?:mjs|js|cjs|ts|mts|py|pyi|rb|rbs|erb|php|go|rs|java|dmn|d
 const excludedName = /(?:^test[_.-]|[.]test[.]|[.]spec[.]|(?:^|[-_])acceptance(?:[-_.]|$)|(?:^|[-_])focused[-_]?check[.]|_check[.])/i;
 const excludedDirs = new Set(['test', 'tests', 'fixtures', 'snapshots', 'node_modules', '__pycache__']);
 
-function isRuntimeFile(path, explicitRuntime = false, sourceFormat) {
+function isRuntimeFile(path, explicitRuntime = false, sourceFormat, explicitSource = false) {
+  // A supportFiles/sourceFormats entry selects one complete original Git file,
+  // including upstream test sources and hidden configuration such as .dlt.
+  // This does not expand a directory or authorize its siblings. The caller
+  // still applies recipe/excludeFiles selection; readEntries retains the
+  // regular-blob, identity and byte-limit checks for every selected file.
+  if (explicitSource) return true;
   const parts = path.split('/');
   // Retained source data can have an original fixtures path. Only explicitly
   // declared data and native XML/DMN/CMMN models get this exception; executable fixtures stay excluded.
   const declaredData = explicitRuntime && (sourceFormat === 'json' || /\.(?:csv|json|txt|parquet|xml|dmn|dmn11|cmmn)$/i.test(path));
   // An explicit original file is an exact source selection, not a directory
   // expansion hint. Its extension cannot override that declaration. Keep the
-  // heuristic format list for automatic component/import discovery; all paths
-  // still pass the same directory, exclusion, Git type/hash and byte limits.
+  // heuristic format list and directory rules for this runtime discovery path;
+  // exact support/data selections have already returned above.
   return !parts.some(part => part.startsWith('.') ||
     (excludedDirs.has(part) && !(part === 'fixtures' && declaredData))) &&
     (explicitRuntime || !excludedName.test(parts.at(-1))) &&
@@ -151,6 +157,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   for (const path of moduleTemplates) if (required.includes(path))
     throw new TypeError('A module template cannot be a packaged entrypoint: ' + path);
   const sourceFormats = spec.sourceFormats ?? {}, dataSources = new Set(Object.keys(sourceFormats));
+  const explicitSources = new Set([...spec.supportFiles, ...dataSources]);
   const explicitRuntime = new Set([...managedPaths, ...spec.supportFiles, ...moduleTemplates, ...dataSources, ...specificationPaths,
     ...Object.values(spec.applicationProviders ?? {}), ...Object.values(spec.merchantProviders ?? {}),
     ...(recipe ? [...required, ...Object.values(spec.runtimePackageManifests ?? {}),
@@ -165,11 +172,11 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
     originalInputs.has(path);
   // A selected archive carries only its original declarations, even when its
   // complete distribution component contains other product contribution files.
-  // Explicit support files include maintained ZIP data and text .conf files, and can override a
-  // test-like filename. Undeclared archives remain outside source selection;
-  // directory, explicit exclusion and regular-file checks still apply.
+  // Exact support/data files may retain original hidden/test/fixture paths and
+  // extensions. Automatic component/import discovery keeps its exclusions;
+  // explicit excludeFiles and regular Git file checks apply to both paths.
   const selected = tree.filter(item => selectionIncludes(item.path) &&
-    isRuntimeFile(item.path, explicitRuntime.has(item.path), sourceFormats[item.path]) && !excluded.has(item.path) &&
+    isRuntimeFile(item.path, explicitRuntime.has(item.path), sourceFormats[item.path], explicitSources.has(item.path)) && !excluded.has(item.path) &&
     (spec.components.some(root => item.path.startsWith(root + '/')) || explicitRuntime.has(item.path)));
   for (const root of spec.components)
     if (!selected.some(item => item.path.startsWith(root + '/'))) throw new TypeError('Missing component: ' + root);
@@ -219,7 +226,7 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
       throw new TypeError('Executable source cannot import JSON data: ' + importer + ' -> ' + target);
     if (names.has(target)) return;
     const item = byPath.get(target);
-    if (!item || excluded.has(target) || !selectionIncludes(target) || !isRuntimeFile(target, explicitRuntime.has(target) || declaredRuntime.has(target))) {
+    if (!item || excluded.has(target) || !selectionIncludes(target) || !isRuntimeFile(target, explicitRuntime.has(target) || declaredRuntime.has(target), sourceFormats[target], explicitSources.has(target))) {
       missingModules.push(importer + ' -> ' + target);
       return;
     }

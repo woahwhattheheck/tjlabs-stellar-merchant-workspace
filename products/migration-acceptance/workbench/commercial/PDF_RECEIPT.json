@@ -1,0 +1,12 @@
+{
+  "schema": "definian.proposal-rendering.v1",
+  "status": "provider-rendered",
+  "source": "commercial/PROPOSAL.md",
+  "provider": "Adobe",
+  "assetId": "urn:aaid:sc:US:27669845-5186-43b4-abed-193b7eefc8e0",
+  "downloadUrl": "https://to.adobe.com/wH4SCKNURpuIXeyXu15DEO2TYLve",
+  "localBytesVerified": false,
+  "librarySaved": false,
+  "meaning": "The PDF provider returned a completed artifact. Exact local byte and page inspection remain pending the original native route.",
+  "observedAt": "2026-10-13T08:03:31.157Z"
+}
