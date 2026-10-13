@@ -596,6 +596,9 @@ export function receiveGrantCustomerSources(index, companion) {
   receive('x402api-merchant-invoice-agent', 'Live merchant invoice agent, original operation and complete delivery',
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/INVOICE_AGENT\.md)/, x402apiMerchant);
 
+  receive('x402api-merchant-payment-desk', 'Original invoice payment desk and private work recovery',
+    /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/x402api-merchant-workspace\/PAYMENTS\.md)/, x402apiMerchant);
+
   const preparation = section(companion, "## SQL preparation, reusable pipelines and complete analyst receiving")?.text || '';
   receive("preparation-workspace-operating", "Complete installed SQL preparation and managed pipeline operation",
     /https:\/\/github\.com\/woahwhattheheck\/tjlabs-stellar-merchant-workspace\/blob\/([a-f0-9]{40})\/(products\/data-preparation\/OPERATING\.md)/, preparation);
