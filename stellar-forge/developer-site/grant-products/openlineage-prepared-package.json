@@ -347,8 +347,15 @@
           "git_blob": "9a2b7d26bacd02c9a3f71ce0b7cc1f6ca921edbf",
           "bytes": 21834,
           "sha256": "483f125d44251f32acafd385ec6c65b3993ac091c8bea5fc0507e36f0fc150c3"
+        },
+        {
+          "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+          "git_blob": "2c5b3d384f8d514d67085dd82c9bac1e201515fe",
+          "bytes": 22125,
+          "sha256": "4e454c397a87db1cb6a8fa4848031400214cb54cc8bf640c2759fd781de059b2"
         }
-      ]
+      ],
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158"
     },
     {
       "id": "openlineage-review-workflow-customer-service-review-mjs",
@@ -523,8 +530,15 @@
           "git_blob": "1fa5854d7bbc27822f9394d274c487bbfd8bae3f",
           "bytes": 10415,
           "sha256": "50d33b480c0a2fe92d6524db0f41513a0d328e369935f6e6ae08e93d1f19eed4"
+        },
+        {
+          "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+          "git_blob": "0e96e28140e2e9a7e008700421e449791ee77d22",
+          "bytes": 10193,
+          "sha256": "d4f6767487ea4fe782c8fb3a529cfe44a34570e94b5876e174eff6ef111a12bd"
         }
-      ]
+      ],
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158"
     },
     {
       "id": "openlineage-review-workflow-readme-md",
@@ -765,6 +779,57 @@
           "sha256": "1153d25c04fe06d225fa48f9b926a4cb6642acaa8517483e7ab6998712280a1a"
         }
       ]
+    },
+    {
+      "id": "openlineage-installed-canonical-contribution",
+      "label": "Canonical selected-package customer review and recipient-return interfaces",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/openlineage-workspace.json",
+      "required": false,
+      "editions": [
+        {
+          "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+          "git_blob": "505d416f801088cc59169ef35f2840f6a7c5c366",
+          "bytes": 7343,
+          "sha256": "b01d1c527dd0448d3cbdbf13081d2443e7088ea325b3f4b1f97f76c664e891ea"
+        }
+      ],
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158"
+    },
+    {
+      "id": "openlineage-installed-operating-guide",
+      "label": "Complete installed OpenLineage customer and recipient operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/openlineage/OPERATING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+          "git_blob": "3b401c0dd801e2ced104a1d5e7c54c944adaec7f",
+          "bytes": 36931,
+          "sha256": "3099028ecd9e2ecb577e65b145acb107f9c4b24bfd1fec0ddf6c67c6797fe820"
+        }
+      ],
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158"
+    },
+    {
+      "id": "openlineage-installed-selected-package-guide",
+      "label": "Complete selected OpenLineage installation and source closure guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/openlineage/SELECTED_PACKAGE.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "58cb1940e175b180e26f89785e489c06cc437158",
+          "git_blob": "ecfa1d9ba4f70e8c8cd63ce057241fb461a204ef",
+          "bytes": 9130,
+          "sha256": "23d7231fa479658e7e50eb2bb40d53a0cf3c411027f78ce10e6b37b01ba0fc8c"
+        }
+      ],
+      "commit": "58cb1940e175b180e26f89785e489c06cc437158"
     }
   ]
 }
