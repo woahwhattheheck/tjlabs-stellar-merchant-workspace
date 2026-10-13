@@ -287,3 +287,9 @@ The installed contribution includes `fred/ui/customer-work.mjs`. The original me
 ### Continuing an interrupted project receive
 
 A receiving directory retains the complete original project bundle identity before its first source or customer write. Resume that directory with the same complete bundle, including every publication's prepared requests and receiving selections. A different bundle uses another receiving directory. Each publication also retains its complete customer inventory before the first request write, including an empty inventory. These receiving checkpoints remain private to the receiving directory and do not change the exported project or its original customer request identities. Completed earlier receiving receipts keep their original replay path.
+
+### Retained forms and browser storage recovery
+
+Open or continue one retained form at a time. The customer and publication forms stay fixed while the selected complete draft is reopened, and the original request's returned result stays bound to that selected context. Later edits during an ordinary running customer request remain available as their own draft.
+
+Download the current complete form directly when browser storage cannot open. This file retains the same original draft schema, project, fields and working context without requiring IndexedDB. Receive that same file through **Receive retained work**, then open its complete form from the preserved history once browser storage is available. The complete customer-work export continues to include the full acquired history; native actions still retain their exact original request durably before dispatch.
