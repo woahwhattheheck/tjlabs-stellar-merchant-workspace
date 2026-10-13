@@ -633,7 +633,7 @@ export class MerchantGrantWorkspaces {
       case_report:'case-report', operating_workflows:'operating-workflows', case_history:'case-history', amendments:'amendments', amendment:'amendment', forecasts:'forecasts', forecast:'forecast',
       portfolios:'portfolios', portfolio:'portfolio', review:'review', completion:'completion',
       settlements:'settlements',settlement:'settlement',
-      risks:'risks', risk_register:'risk-register', risk_history:'risk-history',
+      risks:'risks', risk_register:'risk-register', risk_history:'risk-history', risk_comparison:'risk-comparison',
       engagements:'engagements', engagement:'engagement', delivery_calendar:'delivery-calendar', delivery_agenda:'delivery-agenda',
       work_intakes:'work-intakes',work_intake:'work-intake',task_outcomes:'task-outcomes',task_outcome:'task-outcome',
       cost_funding:'cost-funding',funding_edition:'funding-edition',funding_request:'funding-request',
@@ -1006,7 +1006,7 @@ export class MerchantGrantWorkspaces {
     } else throw failure('GRANT_TOOL_UNKNOWN', 'Choose an original grant operation.');
     return this.#snapshot(alias, original, {tool:name, ...Object.fromEntries(Object.entries(rest).filter(([key]) =>
       ['planId','caseId','intakeId','forecastId','portfolioId','alternativeId','sourceId','reviewId','reviewSha256','installationId','revision','after','before','limit','kind','format',
-        'requestId','riskId','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
+        'requestId','riskId','beforeReviewId','beforeReviewSha256','afterReviewId','afterReviewSha256','expectedComparisonSha256','expectedRevision','expectedVersion','input','inputPointer','expectedInputSha256',
         'workshareCaseId','expectedSourceSha256','packetSourceId','expectedPacketSha256','installationRefs','groupId',
         'expectedPreparedSha256','parentSourceId','expectedParentSha256','planSourceId','expectedPlanSha256','expectedReviewBusinessSha256',
         'filename','expectedPreviewSha256','deploymentId','tranche','asOfDate','asOfAt','receiptId','cohortReviewIds','implementationReviewIds','sha256',

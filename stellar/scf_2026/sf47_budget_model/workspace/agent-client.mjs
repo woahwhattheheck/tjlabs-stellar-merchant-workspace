@@ -150,6 +150,28 @@ const completionDate = value => {
     'GRANT_INVALID_INPUT', 'Use the native calendar date in YYYY-MM-DD form.');
   return value;
 };
+function riskComparisonQuery(args, kind = null) {
+  const fields = ['caseId','beforeReviewId','beforeReviewSha256','afterReviewId','afterReviewSha256'];
+  const required = [...fields];
+  if (kind !== null) {
+    fields.push('kind','expectedComparisonSha256'); required.push('expectedComparisonSha256');
+    if (kind === 'risk-comparison') { fields.push('expectedVersion'); required.push('expectedVersion'); }
+  }
+  exact(args, fields, required);
+  if (Object.hasOwn(args, 'kind'))
+    need(args.kind === kind, 'GRANT_INVALID_INPUT', 'Keep the selected native comparison export kind.');
+  id(args.caseId, 'operation');
+  const values = new URLSearchParams({
+    beforeReviewId:id(args.beforeReviewId,'review'),
+    beforeReviewSha256:sha(args.beforeReviewSha256),
+    afterReviewId:id(args.afterReviewId,'review'),
+    afterReviewSha256:sha(args.afterReviewSha256),
+  });
+  if (kind !== null) values.set('expectedComparisonSha256',sha(args.expectedComparisonSha256));
+  if (kind === 'risk-comparison')
+    values.set('expectedVersion',String(integer(args.expectedVersion,'Selected comparison case version')));
+  return '?' + values.toString();
+}
 function forecastComparisonQuery(args, exported = false) {
   const values = new URLSearchParams({beforeId:id(args.beforeId,'forecast'),afterId:id(args.afterId,'forecast')});
   if(args.expectedComparisonSha256 !== undefined || exported)
@@ -842,6 +864,7 @@ export class GrantWorkspaceClient {
       portfolio:() => '/api/operations/' + cid() + '/portfolios/' + id(args.portfolioId, 'portfolio'),
       risks:() => '/api/operations/' + cid() + '/risk-register',
       'risk-register':() => '/api/operations/' + cid() + '/risk-register/' + id(args.reviewId,'review'),
+      'risk-comparison':() => '/api/operations/' + cid() + '/risk-register-comparison' + riskComparisonQuery(args),
       'risk-history':() => {
         need(typeof args.riskId === 'string' && /^[a-z][a-z0-9-]{1,99}$/.test(args.riskId),
           'GRANT_INVALID_INPUT','Use the original stable risk ID.');
@@ -1779,6 +1802,12 @@ export class GrantWorkspaceClient {
     const routes = {
       plan:() => '/api/plans/' + id(args.planId, 'plan') + '/export.zip' +
         (args.revision === undefined ? '' : '?revision=' + integer(args.revision,'Selected plan revision',1,1000000)),
+      'risk-comparison':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register-comparison/export.zip' + riskComparisonQuery(args,'risk-comparison'),
+      'risk-comparison-json':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register-comparison/export.json' + riskComparisonQuery(args,'risk-comparison-json'),
+      'risk-comparison-report':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register-comparison/export.html' + riskComparisonQuery(args,'risk-comparison-report'),
+      'risk-comparison-risks':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register-comparison/risks.csv' + riskComparisonQuery(args,'risk-comparison-risks'),
+      'risk-comparison-actions':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register-comparison/actions.csv' + riskComparisonQuery(args,'risk-comparison-actions'),
+      'risk-comparison-context':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register-comparison/context.csv' + riskComparisonQuery(args,'risk-comparison-context'),
       'forecast-comparison':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/export.zip' + forecastComparisonQuery(args,true),
       'forecast-comparison-report':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/report.html' + forecastComparisonQuery(args,true),
       'forecast-comparison-json':() => '/api/operations/' + id(args.caseId,'operation') + '/forecast-comparison/comparison.json' + forecastComparisonQuery(args,true),

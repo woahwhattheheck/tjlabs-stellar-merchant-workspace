@@ -45,6 +45,7 @@ import operations_workflows as operating_workflows
 import operations_implementation as implementation
 import operations_engagements as engagements
 import operations_risks as risks
+import operations_risk_comparison as risk_comparison
 import engagement_handover
 import operations_amendments as amendments
 import operations_amendment_calendar as amendment_calendar
@@ -816,6 +817,24 @@ class Operations:
                 risks.fail("The accepted original risk request differs from its case history.", "RISK_REQUEST_CHANGED", 409)
             return {"found": True, "requestId": request_id, "fingerprint": row[0], "result": result}
 
+    def compare_risks(self, program_id, selection):
+        with self._snapshot():
+            return risk_comparison.compare(self, self._context(identifier(program_id, "operation")), selection)
+
+    def export_risk_comparison(self, program_id, selection, expected_comparison_sha256, *,
+                               kind="export.zip", expected_version=None):
+        with self._snapshot():
+            context = self._context(identifier(program_id, "operation"))
+            value = risk_comparison.compare(self, context, selection)["comparison"]
+            risk_comparison.require_digest(value, expected_comparison_sha256)
+            if kind == "export.zip":
+                if domain.integer(expected_version, "Reviewed case version", 1, 10000000) != context["program"]["version"]:
+                    raise Problem("Reopen the current case before exporting its complete comparison.", 409, "OPERATIONS_CONFLICT")
+                return self.export(program_id, risk_comparison_selection=selection)
+            if expected_version is not None:
+                raise Problem("The case version condition is only available for the complete ZIP.", 422, "INVALID_RISK_COMPARISON")
+            return risk_comparison.export_file(value, kind)
+
     def export_risks(self, program_id, review_id):
         return self.export(identifier(program_id, "operation"), risk_register_id=identifier(review_id, "review"))
 
@@ -1552,7 +1571,7 @@ class Operations:
                 if own:
                     self.db.execute("ROLLBACK")
 
-    def export(self, program_id, installation_id=None, installation_revision=None, installation_return_review_id=None, engagement_id=None, task_outcome_id=None, task_outcome_revision=None, award_terms_id=None, award_terms_revision=None, risk_register_id=None):
+    def export(self, program_id, installation_id=None, installation_revision=None, installation_return_review_id=None, engagement_id=None, task_outcome_id=None, task_outcome_revision=None, award_terms_id=None, award_terms_revision=None, risk_register_id=None, risk_comparison_selection=None):
         with self._snapshot():
             context = self._context(program_id)
             program = context["program"]
@@ -1612,6 +1631,8 @@ class Operations:
                 files.update(installations.selected_files(context, saved_installations, installation_id, installation_revision, files))
             if risk_register_id is not None:
                 files.update(risks.selected_files(context, reviews, risk_register_id))
+            if risk_comparison_selection is not None:
+                files.update(risk_comparison.selected_files(context, reviews, risk_comparison_selection))
             if engagement_id is not None:
                 files.update(engagements.selected_files(context, reviews, engagement_id))
             if task_outcome_id is not None or task_outcome_revision is not None:
@@ -1692,6 +1713,8 @@ class Operations:
             expected.update(award_terms.SELECTION_FILES)
         if risks.SELECTION_FILES.intersection(files):
             expected.update(risks.SELECTION_FILES)
+        if risk_comparison.SELECTION_FILES.intersection(files):
+            expected.update(risk_comparison.SELECTION_FILES)
         engagement_names = {"engagement-selection.json", "engagement.html"}
         if engagement_names.intersection(files):
             expected.update(engagement_names)
@@ -1923,6 +1946,7 @@ class Operations:
         if {row.get("recordId") for row in events if row.get("action") == "portfolio.save"} != portfolio_ids:
             domain.fail("The complete operations history is missing a saved portfolio.", "INVALID_PORTFOLIO")
         selected_risks = risks.validate_import(context, reviews, events, files, selected_plan_at)
+        selected_risk_comparison = risk_comparison.validate_import(context, reviews, files)
         selected_engagement = engagements.validate_import(
             context, reviews, events, saved_forecasts, saved_portfolios, files)
         payload = {"domain": SCHEMA, "action": "import", "sha256": hashlib.sha256(raw).hexdigest(),
@@ -2004,6 +2028,7 @@ class Operations:
                     **({"selectedFunding": selected_funding} if selected_funding else {}),
                     **({"selectedAwardTerms": selected_award_terms} if selected_award_terms else {}),
                     **({"selectedRisks": selected_risks} if selected_risks else {}),
+                    **({"selectedRiskComparison": selected_risk_comparison} if selected_risk_comparison else {}),
                     **({"selectedEngagement": selected_engagement} if selected_engagement else {}),
                     **({"selectedInstallationReturn": selected_installation_return} if selected_installation_return else {}),
                     **({"deliveryQueue": {"asOfDate": delivery_queue["asOfDate"], "sha256": delivery_queue["sha256"]}} if delivery_queue else {}),
