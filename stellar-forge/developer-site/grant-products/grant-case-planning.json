@@ -1,0 +1,157 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "grant-case-planning",
+  "heading": "## Editable grant planning, amendments and delivery agenda",
+  "sources": [
+    {
+      "id": "grant-case-planning",
+      "label": "Complete case-linked workbook, original save and amendment operation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/CASE_PLANNING.md",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "772b2b62180cbb89afb0059ec6a9756dc8856903",
+          "bytes": 13721
+        }
+      ]
+    },
+    {
+      "id": "grant-planning-source-tables",
+      "label": "Original workbook and source-table review into the native planner",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/SOURCE_TABLES.md",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "0686a9708631124526d854efe4451b59fa279e40",
+          "bytes": 33714
+        }
+      ]
+    },
+    {
+      "id": "grant-planning-workbook-handover",
+      "label": "Complete editable workbook kit and returned-workbook receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/WORKBOOK_HANDOVER.md",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "af0cdee2bccc3941ab60f61975cf73880bd32380",
+          "bytes": 14474
+        }
+      ]
+    },
+    {
+      "id": "grant-planning-source-agent",
+      "label": "Typed client and Merchant MCP original source-to-saved-plan workflow",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/SOURCE_TABLES_AGENT.md",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "b54868b84ceaec276effb7477a2dc170e392a877",
+          "bytes": 16079
+        }
+      ]
+    },
+    {
+      "id": "grant-case-amendment-operation",
+      "label": "Original saved amendment preview, review, application and receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/AMENDMENTS.md",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "e51323e19e27b767d802f977993acd8f1b505d24",
+          "bytes": 23778
+        }
+      ]
+    },
+    {
+      "id": "grant-amendment-calendar",
+      "label": "Saved grant amendment and complete paired calendar receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/AMENDMENT_CALENDAR.md",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "e0703244c8623353ada5585a659da2cde2dacc63",
+          "bytes": 7763
+        }
+      ]
+    },
+    {
+      "id": "grant-multi-case-delivery-agenda",
+      "label": "Complete multi-case delivery agenda and original source navigation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/DELIVERY_AGENDA.md",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "39bfa2d563a84f1c351f79decca92d2b949538fc",
+          "bytes": 9699
+        }
+      ]
+    },
+    {
+      "id": "grant-case-planning-native-receiving",
+      "label": "Whole original-case workbook, amendment and installation receiving controller",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/case_planning_receiving.py",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "3adc938fc755a2face692c90ff2ed6d1074770ba",
+          "bytes": 24412
+        }
+      ]
+    },
+    {
+      "id": "grant-case-planning-browser-receiving",
+      "label": "Original desktop, phone and cold reopened case operating course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/case_planning_browser.mjs",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "64159441f09f7e52b409f5cb2ad502eca678f823",
+          "bytes": 43614
+        }
+      ]
+    },
+    {
+      "id": "grant-case-agenda-native-receiving",
+      "label": "Managed typed-client, Merchant MCP and CLI complete agenda receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/case_planning_agenda_receiving.mjs",
+      "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+      "editions": [
+        {
+          "commit": "25f629f5fd0d02efbe800b3db7d5160818bf09b6",
+          "git_blob": "a0f79521928f94a31b78e488d99d1df374798b5b",
+          "bytes": 7865
+        }
+      ]
+    }
+  ]
+}
