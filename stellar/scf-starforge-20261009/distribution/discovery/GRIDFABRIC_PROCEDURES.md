@@ -4,6 +4,23 @@ Use one saved procedure to carry a customer's Plaid configuration, measurement s
 
 The procedure uses the existing Operating Plans model and browser. Its native capture reads the original authenticated GridFabric SDK and retains the complete selected responses, dependent pages and file bytes. The original GridFabric application continues to own SQLite, callbacks, dispatch, export and restoration.
 
+## Browser workspace
+
+Open **Customer procedures** from the existing GridFabric console. The screen uses that application's private connection and the same Operating Plans model. Its four sections carry the work from preparation through customer receiving:
+
+1. **Plan and steps** prepares the nine-step procedure, saves customer edits as revisions, attaches complete output files, and exports editable JSON or readable HTML/Markdown. Earlier revisions remain available.
+2. **Original records and files** pages through the native collections, shows complete records and selects their retained files. Review the workspace revision explicitly before capturing.
+3. **Capture and saved requests** saves the exact input, catalog, complete plan, request UUID and capture time in the browser before dispatch. It receives the full capture through an SDK connection to the running application. The application keeps its own durable request and attempt history.
+4. **Receive and return** reopens a complete capture archive or receives a returned editable plan. Compatible histories extend the same plan; divergent histories can be received as separate copies. Save or download an edited draft before receiving another history.
+
+After a lost response, open the saved request and choose **Read this original outcome**. A retained incomplete request offers explicit continuation with the same UUID and frozen body. A separate capture receives a new UUID after the earlier attempt has been reviewed. The native request history is paginated: list pages show compact saved metadata, and opening an individual request reads and checks the complete capture.
+
+The browser saves complete drafts, requests and imported archives in IndexedDB for its current origin. If saving fails or another page has advanced the same record, the entered work stays on screen with a backup download option. The backup retains plan histories, entered drafts, raw command text, original requests and prior bindings. Small archives can travel in the backup; larger ones retain explicit original-file declarations so the other entered work can still be saved. Keep each declared archive file alongside the backup.
+
+Receive a browser-work backup to preview its same-workspace join. Compatible work can merge; conflicting drafts, histories or request bodies remain separate. A separate recovery journal preserves both versions and can be selected again later. Reselect any externally declared archive file before resuming its import. Restored requests require reading their original native outcome before another POST. The connection token stays in the current browser session.
+
+A capture archive includes the original selected workspace identity and full plan history. Receiving it permits inspection and plan continuation; live capture still requires an explicitly selected input for the connected source and workspace. Native device actions and dispatch remain available in the main GridFabric console.
+
 ## Install and open
 
 Build the maintained merchant workspace with the `gridfabric-plaid` source selection, following [Energy operations](../../../../products/energy-operations/OPERATING.md). This selection includes the original GridFabric product, Command finder, Operating Plans and the procedure command.
@@ -130,6 +147,35 @@ starforge gridfabric-procedure render \
   --out /private/customer/gridfabric-plan.md
 ```
 
+## Transfer one complete capture archive
+
+The browser can download a complete capture as `.gridprocedure.jsonl.gz`. The archive contains every declared capture member, its complete file bytes, source material and plan revisions. Each file is streamed in chunks, and the receiver checks the compressed file identity, member lengths and hashes, archive footer and original capture graph.
+
+The same archive operations are available from the installed command:
+
+```sh
+starforge gridfabric-procedure archive \
+  --directory /private/customer/capture-2026-10-13 \
+  --out /private/customer/GridFabric_Procedure.gridprocedure.jsonl.gz
+
+starforge gridfabric-procedure receive \
+  --archive /private/customer/GridFabric_Procedure.gridprocedure.jsonl.gz \
+  --sha256 ARCHIVE_SHA256 \
+  --bytes ARCHIVE_BYTES \
+  --out /private/customer/received-gridfabric-procedure
+
+starforge gridfabric-procedure show \
+  --directory /private/customer/received-gridfabric-procedure
+```
+
+Use the archive's returned `sha256` and `bytes` as the receiving declaration. Keep those values with the delivered file. Export and receiving use new private destinations; an incomplete destination remains available for inspection. They use the same native capture reader and do not need a running GridFabric workspace.
+
+The command streams file content and supports archives larger than the browser's in-memory import allowance. Expanded receiving defaults to 16 GiB. For a larger known customer delivery, supply `--maximum-expanded-bytes` with an explicit positive byte allowance. The running server's compressed upload allowance follows its existing `maximumPortableBytes` setting, which defaults to 4 GiB.
+
+Where the browser supports choosing a writable destination, archive download streams to that file. Its length is checked before the file is committed, and the sender's SHA-256 remains available with the download. The in-memory browser download fallback and local import hashing use a 64 MiB allowance. For a larger browser import, enter the sender's full SHA-256: the browser retains the selected File and frozen request before streaming it to the existing server importer, which verifies the entire archive. This preserves the server's configured upload allowance without allocating a whole-file browser buffer. If browser storage cannot retain the file, use the installed `receive` command above, then open the received readable plan or its complete editable JSON. The native archive receiver checks the full file and capture contents during receiving.
+
+The procedure archive's member layout and receiving rules are distinct from GridFabric's database export. Use the main product's native workspace export and restore when transferring the operating database itself.
+
 ## Application API
 
 Import the pure procedure model from `@tokenjunkielabs/starforge-merchant/operator/gridfabric-procedure` and native capture from `@tokenjunkielabs/starforge-merchant/operator/gridfabric-procedure/native`.
@@ -139,6 +185,11 @@ Import the pure procedure model from `@tokenjunkielabs/starforge-merchant/operat
 - `recordGridFabricProcedure(plan,capture,{input,savedAt})` returns that plan with a new saved revision.
 - `captureGridFabricProcedure({client,catalog,input,outputDirectory,savedAt,plan})` reads an already connected original SDK client and returns the complete capture and plan.
 - `readGridFabricProcedureCapture(directory)` receives a frozen capture.
+
+Import streaming archive operations from `@tokenjunkielabs/starforge-merchant/seller/gridfabric-plaid/procedure-archive`:
+
+- `exportGridProcedureArchive({directory,outputFile})` streams a checked capture to a new gzip archive and returns its complete byte count and SHA-256.
+- `receiveGridProcedureArchive({file,outputDirectory,expectedSha256,expectedBytes,maximumExpanded,maximumMembers})` receives a new private capture directory and returns the original complete capture result plus the archive identity. The optional limits default to 16 GiB expanded bytes and 1,000,000 members.
 
 The application embedding capture owns its client lifecycle. The capture function borrows that client and leaves its original owner running. The CLI creates and closes only its own SDK connection.
 
