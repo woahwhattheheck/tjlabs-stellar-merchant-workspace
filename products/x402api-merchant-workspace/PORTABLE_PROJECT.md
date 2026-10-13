@@ -224,3 +224,14 @@ remain readable with their original selected source. Run the command through the
 existing Node entrypoint, which passes its actual executable to the native
 reservation bridge; a direct Python invocation can select that same executable
 with `MERCHANT_PORTABLE_NODE`.
+
+
+### Complete retained result state and interrupted selection
+
+New project ZIPs retain every original file beneath the private results directory in `retainedResultFiles`. That includes the native window where a final response exists and its lock is already retired while fulfillment remains RETURNED, and an empty-lock interruption with an unreferenced partial file. The original database, reservation mappings, file bytes and history remain unchanged.
+
+The export freezes the full file identities and native mappings in its original control directory before copying result files. The selection belongs to that same request and retained SQLite snapshot. A resumed export reuses that selection and every already-retained file; it cannot silently replace it with newer partials or reservation bytes.
+
+Receiving validates the complete extracted inventory, carries all of it into the original private preparation, and relocates only native lock paths. Complete originals and the prepared copy stay available after publication; repeated receive preserves subsequent native recovery. Earlier ZIPs retain their original inventory contract.
+
+The native bridge re-inspects the staged locks against the unchanged original database before restoration. It compares all mapping values while preserving each original native record's serialized field order, including across the Python manifest encoder. Native byte, prefix, final-file, tag and ownership validation remains unchanged.
