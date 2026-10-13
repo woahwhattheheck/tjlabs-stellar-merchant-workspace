@@ -8,6 +8,7 @@ import { normalizeTrafficHistoryReport } from '../../sf30-seller-sdk/operations/
 import { resolveSellerConfigPaths, validateSellerServiceConfig } from '../../sf30-seller-sdk/serve.mjs';
 import { openEconomics } from '../economics/model.mjs';
 import { requireCompletedRestore } from '../economics/archive.mjs';
+import { selectCommercialHistory } from './history.mjs';
 
 const MAX_BYTES = 64 * 1024 * 1024;
 const REVISION = /^[a-f0-9]{64}$/;
@@ -89,6 +90,78 @@ function calendarDay(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
     Number.isFinite(Date.parse(value+'T00:00:00.000Z')) &&
     new Date(value+'T00:00:00.000Z').toISOString().slice(0,10) === value;
+}
+
+async function pricingHistory(directory) {
+  const entries = []; let previous = null;
+  for (;;) {
+    let bytes;
+    try { bytes = await privateBytes(join(directory, 'successors', (previous ?? 'root') + '.json')); }
+    catch (error) { if (error.code === 'ENOENT') return entries; throw error; }
+    const revision = digest(bytes), value = JSON.parse(bytes.toString('utf8'));
+    if (value.schema !== 'stellar-forge.merchant-pricing-version.v1' ||
+        value.previousRevision !== previous || !VERSION.test(value.version) ||
+        !value.files || typeof value.files !== 'object')
+      throw fault('INVALID_SAVED_VERSION', 'A saved version has an invalid predecessor or manifest.');
+    await privateDirectory(join(directory,'versions',value.version));
+    const original = await privateBytes(join(directory,'versions',value.version,'manifest.json'));
+    if (!original.equals(bytes)) throw fault('SAVED_MANIFEST_CHANGED', 'The saved manifest has changed.');
+    entries.push({revision,value}); previous = revision;
+  }
+}
+
+function decisionSummary(entry) {
+  const value = entry.value;
+  return {decision:value.decision,revision:entry.revision,requestId:value.requestId,label:value.label,savedAt:value.savedAt,
+    sourceVersion:value.sourceVersion,sourceLabel:value.sourceLabel,sourceRevision:value.sourceRevision,
+    sellerSha256:value.sellerSha256,proposedSellerSha256:value.proposedSellerSha256,
+    reviewSha256:value.reviewSha256,changes:value.changes,sourcePackageAvailable:Boolean(value.sourcePackage),
+    sourcePackage:value.sourcePackage,files:[...Object.keys(value.files),'manifest.json']};
+}
+
+async function priceDecisionHistory(directory) {
+  const entries = []; let previous = null;
+  for (;;) {
+    let bytes;
+    try { bytes = await privateBytes(join(directory,'decision-successors',(previous ?? 'root')+'.json')); }
+    catch (error) { if (error.code === 'ENOENT') return entries; throw error; }
+    const revision = digest(bytes), value = JSON.parse(bytes.toString('utf8'));
+    if (value.schema !== 'stellar-forge.merchant-repricing-decision.v1' ||
+        value.previousRevision !== previous || !VERSION.test(value.decision) ||
+        !VERSION.test(value.sourceVersion) || !REVISION.test(value.reviewSha256) ||
+        !value.files || typeof value.files !== 'object')
+      throw fault('INVALID_PRICE_DECISION','A saved price decision has an invalid predecessor or manifest.');
+    await privateDirectory(join(directory,'decisions',value.decision));
+    const original = await privateBytes(join(directory,'decisions',value.decision,'manifest.json'));
+    if (!original.equals(bytes)) throw fault('PRICE_MANIFEST_CHANGED','The saved price decision manifest has changed.');
+    entries.push({revision,value}); previous = revision;
+  }
+}
+
+export async function readCommercialHistory({directory,input={}}={}) {
+  if (!isAbsolute(directory??'') || resolve(directory)!==directory || directory==='/')
+    throw fault('ABSOLUTE_WORKSPACE_REQUIRED','Workspace must be an absolute, normalized private directory.');
+  await privateDirectory(directory);
+  await requireCompletedRestore(directory);
+  const kind=input?.kind??'reviews';
+  if(!['reviews','decisions'].includes(kind)) throw fault('INVALID_HISTORY_SELECTION','Choose saved reviews or price decisions.');
+  await privateDirectory(join(directory,kind==='reviews'?'successors':'decision-successors'));
+  await privateDirectory(join(directory,kind==='reviews'?'versions':'decisions'));
+  if(kind==='decisions') await privateDirectory(join(directory,'staged-releases'));
+  const entries=kind==='reviews'?await pricingHistory(directory):await priceDecisionHistory(directory);
+  // The immutable manifests own history. Mutable release receipts are read only
+  // for the selected page and are explicitly current release state.
+  const rows=entries.map(entry=>({revision:entry.revision,row:kind==='reviews'?summary(entry):decisionSummary(entry)}));
+  const report=selectCommercialHistory(rows,input,digest(Buffer.from(directory)));
+  if(kind==='decisions') report.rows=await Promise.all(report.rows.map(async row=>{
+    let receipt=null;
+    try{receipt=JSON.parse((await privateBytes(join(directory,'staged-releases',row.decision+'.json'))).toString('utf8'));}
+    catch(error){if(error.code!=='ENOENT')throw error;}
+    const {changes,...saved}=row;
+    return {...saved,changedPaymentOptions:changes.length,changedRoutes:new Set(changes.map(change=>change.routeId)).size,
+      release:receipt?.release??null};
+  }));
+  return report;
 }
 
 export async function openWorkspace({config, directory, snapshot, history:historyFile, opsUrl, nativeOutbox,
@@ -190,23 +263,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
   // Every committed revision has one create-only successor. Publishing its hard
   // link is an atomic compare-and-swap, so processes/tabs cannot overwrite a save.
   // No PID lock survives a crash, and incomplete reports never become the head.
-  async function history() {
-    const entries = []; let previous = null;
-    for (;;) {
-      let bytes;
-      try { bytes = await privateBytes(join(directory, 'successors', (previous ?? 'root') + '.json')); }
-      catch (error) { if (error.code === 'ENOENT') return entries; throw error; }
-      const revision = digest(bytes), value = JSON.parse(bytes.toString('utf8'));
-      if (value.schema !== 'stellar-forge.merchant-pricing-version.v1' ||
-          value.previousRevision !== previous || !VERSION.test(value.version) ||
-          !value.files || typeof value.files !== 'object')
-        throw fault('INVALID_SAVED_VERSION', 'A saved version has an invalid predecessor or manifest.');
-      await privateDirectory(join(directory,'versions',value.version));
-      const original = await privateBytes(join(directory,'versions',value.version,'manifest.json'));
-      if (!original.equals(bytes)) throw fault('SAVED_MANIFEST_CHANGED', 'The saved manifest has changed.');
-      entries.push({revision,value}); previous = revision;
-    }
-  }
+  const history = () => pricingHistory(directory);
   async function savedFile(entry, name) {
     const expected = entry.value.files[name];
     if (!expected || name.split('/').some(part => !part || part === '.' || part === '..'))
@@ -351,32 +408,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
       sameObservationKind:left.value.observationKind === right.value.observationKind,
       sameRange:canonical(range(left)) === canonical(range(right))}};
   }
-  function decisionSummary(entry) {
-    const value = entry.value;
-    return {decision:value.decision,revision:entry.revision,requestId:value.requestId,label:value.label,savedAt:value.savedAt,
-      sourceVersion:value.sourceVersion,sourceLabel:value.sourceLabel,sourceRevision:value.sourceRevision,
-      sellerSha256:value.sellerSha256,proposedSellerSha256:value.proposedSellerSha256,
-      reviewSha256:value.reviewSha256,changes:value.changes,sourcePackageAvailable:Boolean(value.sourcePackage),
-      sourcePackage:value.sourcePackage,files:[...Object.keys(value.files),'manifest.json']};
-  }
-  async function decisionHistory() {
-    const entries = []; let previous = null;
-    for (;;) {
-      let bytes;
-      try { bytes = await privateBytes(join(directory,'decision-successors',(previous ?? 'root')+'.json')); }
-      catch (error) { if (error.code === 'ENOENT') return entries; throw error; }
-      const revision = digest(bytes), value = JSON.parse(bytes.toString('utf8'));
-      if (value.schema !== 'stellar-forge.merchant-repricing-decision.v1' ||
-          value.previousRevision !== previous || !VERSION.test(value.decision) ||
-          !VERSION.test(value.sourceVersion) || !REVISION.test(value.reviewSha256) ||
-          !value.files || typeof value.files !== 'object')
-        throw fault('INVALID_PRICE_DECISION','A saved price decision has an invalid predecessor or manifest.');
-      await privateDirectory(join(directory,'decisions',value.decision));
-      const original = await privateBytes(join(directory,'decisions',value.decision,'manifest.json'));
-      if (!original.equals(bytes)) throw fault('PRICE_MANIFEST_CHANGED','The saved price decision manifest has changed.');
-      entries.push({revision,value}); previous = revision;
-    }
-  }
+  const decisionHistory = () => priceDecisionHistory(directory);
   async function decisionFile(entry,name) {
     const expected = entry.value.files[name];
     if (!expected || name.split('/').some(part => !part || part === '.' || part === '..'))
@@ -654,6 +686,7 @@ export async function openWorkspace({config, directory, snapshot, history:histor
   const economics=await openEconomics({directory,pricingSource:economicsSource,
     listPricing:async()=>[...(await history())].reverse().map(summary),
     savePricing:saveCostPricing,previewPricing:previewCostPricing,pricingBackup,supplierUsage,accountingReport});
-  return {launch,state,preview,save,download,loadVersion,compare,planningSource,repricingSource,previewRepricing,
+  const commercialHistory = input => readCommercialHistory({directory,input});
+  return {launch,state,commercialHistory,preview,save,download,loadVersion,compare,planningSource,repricingSource,previewRepricing,
     saveRepricing,downloadRepricing,stageRepricing,economics};
 }

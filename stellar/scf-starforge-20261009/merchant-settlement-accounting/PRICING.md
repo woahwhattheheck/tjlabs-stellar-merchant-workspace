@@ -16,7 +16,21 @@ Select the original report, not `terms.json`. Both pricing files use the SF97
 schema name, but the report contains the normalized payment options, source
 hashes and calculated route values needed by this import.
 
-## Create the accounting import
+## Review directly in an existing accounting workspace
+
+Open **Pricing decisions**, select the original pricing **Report JSON**, and
+choose **Review and retain pricing**. Inspect its exact alternatives, quote
+context and unknown costs, compare retained terms, then choose **Use these
+accounting terms** and **Reconcile with these terms**. The run captures the
+original pricing report and selected terms with its native merchant inputs.
+Use [the complete pricing review flow](workspace/PRICING.md) for original
+downloads, reference labels and source-inclusive exports.
+
+The merchant pricing workspace's **Complete commercial history** also exposes
+older committed reviews and prepared price decisions. Choose the exact saved
+review and download its original report from that history.
+
+## Create the accounting import from the CLI
 
 From a source checkout:
 
@@ -61,7 +75,7 @@ the generated terms. Text is never shortened or silently substituted.
 
 ## Use the original accounting workspace
 
-For an existing workspace, open **Sources & imports**, select
+When starting from an already generated CLI import, open **Sources & imports**, select
 `accounting-terms.json` under **Merchant accounting terms**, and choose
 **Import & select terms**. Capture a new reconciliation from **Reconcile &
 review**. Earlier runs keep their own original terms and source snapshots, so

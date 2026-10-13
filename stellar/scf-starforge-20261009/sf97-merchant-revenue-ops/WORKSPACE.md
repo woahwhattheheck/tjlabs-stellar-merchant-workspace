@@ -183,7 +183,14 @@ coverage, monthly plan and service values side by side. Configuration, commercia
 terms, observation kind and interval identity show whether the two reviews use
 the same inputs. Comparison displays the maintained report values without
 recalculating, interpolating days or treating unlike periods as equal. Full
-committed history remains on disk, including versions older than the recent list.
+committed history is available through **Complete commercial history**, including
+versions older than the recent list. Search original labels and sources, filter
+saved UTC dates and observation kinds, and page through a fixed original revision.
+Use **Use as first comparison** and **Use as second comparison** to retain any two
+original reviews while browsing. **Include latest saves** refreshes the selected
+history without changing working assumptions. Prepared price decisions have the
+same full-history navigation. The [complete history guide](HISTORY.md) covers the
+customer flow, original accounting handover and read-only native API/CLI.
 
 **Use assumptions** copies a saved review's commercial values into a new review
 against the current seller configuration. It asks before replacing unsaved form
@@ -217,10 +224,19 @@ native merchant services.
 
 ## Use a saved pricing decision in accounting
 
-Download **Report JSON** from the saved version. The original accounting
-[pricing import](../merchant-settlement-accounting/PRICING.md) converts that
-report into validated merchant accounting terms and retains the exact report
-bytes alongside them:
+Download **Report JSON** from the selected saved version, including an older
+version in **Complete commercial history**. In the existing accounting
+workspace, open **Pricing decisions**, select the exact file, and choose
+**Review and retain pricing**. Inspect and compare its full payment alternatives
+and source context, then choose **Use these accounting terms** and **Reconcile
+with these terms**. The reconciliation retains the original pricing report and
+its selected accounting terms alongside the merchant's native inputs. The
+[accounting review guide](../merchant-settlement-accounting/workspace/PRICING.md)
+covers this complete original workflow.
+
+For a new workspace or CLI handover, the original accounting
+[pricing import](../merchant-settlement-accounting/PRICING.md) also converts the
+same report into a private directory with the exact original bytes:
 
 ```sh
 node stellar/scf-starforge-20261009/merchant-settlement-accounting/pricing-cli.mjs \
