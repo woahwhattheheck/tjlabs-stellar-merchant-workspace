@@ -132,7 +132,9 @@
     "./buyer/research-dossiers/customer-quotes/programme-desk": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-desk.mjs",
     "./buyer/research-dossiers/customer-quotes/programme-job": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-job.mjs",
     "./buyer/research-dossiers/customer-quotes/programme-archive": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-archive.mjs",
-    "./buyer/research-dossiers/customer-quotes/programme-upload": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-upload.mjs"
+    "./buyer/research-dossiers/customer-quotes/programme-upload": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-upload.mjs",
+    "./merchant/mcp/research-programmes": "./source/stellar-forge/mcp-merchant-operator/research-programmes.mjs",
+    "./buyer/research-dossiers/customer-quotes/programme-transfer": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-transfer.mjs"
   },
   "components": [
     "stellar/scf-starforge-20261009/sf30-seller-sdk/europe-pmc",
@@ -420,7 +422,9 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/programme-session.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/programmes/index.html",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/programmes/browser.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/programmes/style.css"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/public/programmes/style.css",
+    "stellar-forge/mcp-merchant-operator/RESEARCH_PROGRAMMES.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/customer-quotes/programme-transfer.d.mts"
   ],
   "browserAssets": [
     {
