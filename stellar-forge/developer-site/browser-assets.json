@@ -722,6 +722,27 @@
         "grant-product-sources-core.mjs",
         "text/javascript; charset=utf-8"
       ]
+    ],
+    [
+      "/grant-issuer-core.mjs",
+      [
+        "grant-issuer-core.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-issuer-source.mjs",
+      [
+        "grant-issuer-source.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/grant-issuer-workspace.mjs",
+      [
+        "grant-issuer-workspace.mjs",
+        "text/javascript; charset=utf-8"
+      ]
     ]
   ]
 }
