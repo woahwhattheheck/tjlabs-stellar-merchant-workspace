@@ -752,6 +752,13 @@ export class GrantWorkspaceClient {
       forecast:() => '/api/operations/' + cid() + '/forecasts/' + id(args.forecastId, 'forecast'),
       portfolios:() => '/api/operations/' + cid() + '/portfolios',
       portfolio:() => '/api/operations/' + cid() + '/portfolios/' + id(args.portfolioId, 'portfolio'),
+      risks:() => '/api/operations/' + cid() + '/risk-register',
+      'risk-register':() => '/api/operations/' + cid() + '/risk-register/' + id(args.reviewId,'review'),
+      'risk-history':() => {
+        need(typeof args.riskId === 'string' && /^[a-z][a-z0-9-]{1,99}$/.test(args.riskId),
+          'GRANT_INVALID_INPUT','Use the original stable risk ID.');
+        return '/api/operations/' + cid() + '/risk-register-history/' + args.riskId;
+      },
       engagements:() => '/api/operations/' + cid() + '/engagements',
       engagement:() => '/api/operations/' + cid() + '/engagements/' + id(args.reviewId, 'review'),
       review:() => '/api/operations/' + cid() + '/reviews/' + id(args.reviewId, 'review'),
@@ -1049,6 +1056,38 @@ export class GrantWorkspaceClient {
       'The restored workspace lacks this accepted original funding save. Restore matching state before continuing.');
     // The unchanged native command recovers its original result before its case CAS.
     return this.command(caseId,command);
+  }
+  riskSeed(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','reviewId'],['expectedVersion']);
+    integer(body.expectedVersion,'Current case version');
+    if(body.reviewId!==undefined)id(body.reviewId,'review');
+    return this.#request('/api/operations/'+caseId+'/risk-register-seed',{body,mutation:false});
+  }
+  riskPreview(caseId, body) {
+    id(caseId,'operation'); exact(body,['expectedVersion','document'],['expectedVersion','document']);
+    integer(body.expectedVersion,'Current case version'); object(body.document,'Complete delivery risk register');
+    return this.#request('/api/operations/'+caseId+'/risk-register-preview',{body,mutation:false});
+  }
+  riskSave(caseId, body) {
+    id(caseId,'operation');
+    exact(body,['expectedVersion','requestId','actor','note','document','expectedPreviewSha256'],
+      ['expectedVersion','requestId','actor','note','document','expectedPreviewSha256']);
+    sha(body.expectedPreviewSha256); object(body.document,'Complete delivery risk register');
+    text(body.note,'Delivery risk review note',12000);
+    const {document,expectedPreviewSha256,...original}=body;
+    return this.command(caseId,{...original,action:'risk-register.save',data:{document,expectedPreviewSha256}});
+  }
+  riskRequest(caseId, body) {
+    id(caseId,'operation'); exact(body,['command'],['command']);
+    const command=body.command;
+    exact(command,['expectedVersion','requestId','actor','note','action','data'],
+      ['expectedVersion','requestId','actor','note','action','data']);
+    need(command.action==='risk-register.save','GRANT_INVALID_INPUT','Use the complete original risk-register.save command.');
+    integer(command.expectedVersion,'Original reviewed case version'); requestId(command.requestId);
+    text(command.actor,'Original recorded operator',300); text(command.note,'Original delivery risk review note',12000);
+    exact(command.data,['document','expectedPreviewSha256'],['document','expectedPreviewSha256']);
+    object(command.data.document,'Complete original delivery risk register'); sha(command.data.expectedPreviewSha256);
+    return this.#request('/api/operations/'+caseId+'/risk-register-request',{body,mutation:false});
   }
   taskOutcomesSeed(caseId, expectedVersion) {
     id(caseId,'operation'); integer(expectedVersion,'Current case version');
@@ -1538,6 +1577,7 @@ export class GrantWorkspaceClient {
       performance:() => '/api/operations/' + id(args.caseId,'operation') + '/performance/export.zip' + performanceQuery(args,true),
       'cash-account':() => '/api/operations/' + id(args.caseId,'operation') + '/cash-account/export.zip' + cashAccountQuery(args,true),
       'account-reconciliation':() => '/api/operations/' + id(args.caseId,'operation') + '/account-reconciliation/export.zip' + accountReconciliationQuery(args,true),
+      'risk-register':() => '/api/operations/' + id(args.caseId,'operation') + '/risk-register/' + id(args.reviewId,'review') + '/export.zip',
       engagement:() => '/api/operations/' + id(args.caseId, 'operation') + '/engagements/' + id(args.reviewId, 'review') + '/export.zip',
       forecast:() => '/api/operations/' + id(args.caseId, 'operation') + '/forecasts/' + id(args.forecastId, 'forecast') + '/export.zip',
       portfolio:() => '/api/operations/' + id(args.caseId, 'operation') + '/portfolios/' + id(args.portfolioId, 'portfolio') + '/export.zip',

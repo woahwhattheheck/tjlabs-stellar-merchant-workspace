@@ -359,6 +359,9 @@ function selectedPreparedPurchase() {
   return preparedPurchase;
 }
 function syncCustomerResource() {
+  const navigating=Boolean(customerWork?.isNavigating());
+  for(const panel of [document.querySelector('[data-panel="customer"]'),document.querySelector('[data-panel="publication"]')])
+    panel.inert=adoptingCustomerWork||navigating;
   const known=Boolean(customerPublication?.plan.publicationId===$('customer-publication').value);
   const current=Boolean(known&&!customerCatalogLoading&&!adoptingCustomerWork&&customerWork?.isReady()&&!customerWork.isBusy());
   const county=known&&customerPublication.kind==='QCEW',prepared=known&&selectedPreparedPurchase();

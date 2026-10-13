@@ -16,6 +16,9 @@ from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/operations_risks.mjs": ("operations_risks.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_risks.css": ("operations_risks.css", "text/css; charset=utf-8"),
+                   "/RISK_REGISTER_OPERATOR.md": ("RISK_REGISTER_OPERATOR.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_navigation.mjs": ("operations_navigation.mjs", "text/javascript; charset=utf-8"),
                    "/operations_navigation_ui.mjs": ("operations_navigation_ui.mjs", "text/javascript; charset=utf-8"),
                    "/operations_navigation.css": ("operations_navigation.css", "text/css; charset=utf-8")})
@@ -131,6 +134,22 @@ def read(handler, parsed):
     if installation_sources.handle(handler, parsed, ops, "GET"):
         return True
     path = parsed.path
+    risk_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/risk-register(?:/(review-[a-f0-9]{32})(/export.zip)?)?", path)
+    if risk_match:
+        ident, review_id, export = risk_match.groups()
+        if review_id is None:
+            handler.send(200, ops.list_risks(ident))
+        elif export:
+            handler.send(200, ops.export_risks(ident, review_id), "application/zip", review_id + "-risks.zip")
+        else:
+            handler.send(200, ops.risk_register(ident, review_id))
+        return True
+    risk_history_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/risk-register-history/([a-z][a-z0-9-]{1,99})", path)
+    if risk_history_match:
+        handler.send(200, ops.risk_history(*risk_history_match.groups()))
+        return True
     funding_match = re.fullmatch(r"/api/operations/(operation-[a-f0-9]{32})/cost-funding(?:/(edition|request|export.zip))?", path)
     if funding_match:
         ident, action = funding_match.groups()
@@ -393,6 +412,13 @@ def write(handler, parsed):
     if commercial_http(handler, parsed, ops, "POST"):
         return True
     if installation_sources.handle(handler, parsed, ops, "POST"):
+        return True
+    risk_match = re.fullmatch(
+        r"/api/operations/(operation-[a-f0-9]{32})/(risk-register-seed|risk-register-preview|risk-register-request)", path)
+    if risk_match:
+        methods = {"risk-register-seed": ops.seed_risks, "risk-register-preview": ops.preview_risks,
+                   "risk-register-request": ops.risk_request}
+        handler.send(200, methods[risk_match.group(2)](risk_match.group(1), handler.json_body()))
         return True
     if path == "/api/operations/import":
         query = parse_qs(parsed.query)

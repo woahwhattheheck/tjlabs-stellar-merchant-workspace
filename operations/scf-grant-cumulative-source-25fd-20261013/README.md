@@ -2,22 +2,22 @@
 
 This delivery brings the current application, detailed customer chapters, source register and saved-submission tools into the existing grant reader. It keeps the original nine-answer draft, manual edits, issuer fields, review rounds, planning and handover history together with the complete selected source.
 
-The selected edition contains 225 original source records and 61 detailed companion chapters. The maintained product registry selects each contribution's actual source files and editions. The funding remains $38,000 for 400 prospective hours over 150 days, with the original six priced packages and two independent merchant / two independent buyer commitments.
+The selected edition contains 276 original source records and 64 detailed companion chapters. The maintained product registry selects each contribution's actual source files and editions. The funding remains $38,000 for 400 prospective hours over 150 days, with the original six priced packages and two independent merchant / two independent buyer commitments.
 
 ## Complete files in this delivery
 
 `source-package.json` is the existing submission application's complete four-file source package. It contains the application, source index, six-package budget and full companion. The original `openReviewerSourcePackage` reopened these bytes and reproduced the same complete native source bundle before publication.
 
-`source-files.json` contains the complete selected source bodies in their maintained repository paths, including the composer, customer projector, product registry and declarations, browser modules/assets, operating guides and original source-package/export APIs. Every file carries its exact UTF-8 byte count, SHA-256 and Git blob identity. Its `outputs` list identifies the four emitted reader files. The six-package `budget.csv` is also retained verbatim in both source representations.
+`source-files.json` contains the complete selected source bodies in their maintained repository paths, including the composer, customer projector, product registry and declarations, browser modules/assets, operating guides and original source-package/export APIs. Every file carries its exact decoded byte count, SHA-256 and Git blob identity. Text retains complete UTF-8 in `content`; the original binary FRED example ZIP uses canonical `encoding: "base64"` in that same field. Both `gitBlob` and the original receiver's `git_blob` carry the same decoded-file identity. Its `outputs` list identifies the four emitted reader files. The six-package `budget.csv` is also retained verbatim in both source representations.
 
 | Reader file | UTF-8 bytes | Git blob |
 | --- | ---: | --- |
-| `dist/grant.html` | 89,739 | `52e0915f8e1223bf3fa647b2e299c48b3ce63500` |
-| `grant-data/application.md` | 40,066 | `cb0164d3f24c413d76f359339fff5f94d2fa4f0f` |
-| `grant-data/product-and-finance.md` | 601,568 | `92559edafa43069c3e87e064d9fc3846b9f61c5a` |
-| `grant-data/source-index.json` | 244,391 | `6299717fcdfb0a74b5af86f26fd776b6f8ff1e56` |
+| `dist/grant.html` | 92,026 | `cc0bb4b1e25f8c972d2fddf1b1f1cb4ba8feda51` |
+| `grant-data/application.md` | 43,002 | `7351da5bea0924c4f9bb7b45bccaefab0ae65233` |
+| `grant-data/product-and-finance.md` | 645,994 | `ead8b67e14aea39c325a31fba4ee52a8054133bd` |
+| `grant-data/source-index.json` | 318,551 | `2562e448c0e91d5abefa6513b003f24096e2d31d` |
 
-The source selection is based on repository commit `d49f7be36d3cf06ccb85e0eb6d6fcb410a46e02d`. The original canonical input is 1,126,947 UTF-8 bytes, SHA-256 `1c5ba088ad9eb51af83f3bc13ab77815caa934fcf5e5ed9d52539088d4474430`. The source carrier records that captured input and the exact selected manuscript separately. Its selected chapter references receive the source author's maintained scientific-array operating and commissioning links, with the complete chapter body and its Git identity retained in this package. The application owner retains the full manuscript in the original receiving operation.
+The following edition is composed against the actual current repository source at `7cf68a3029360242c13c45aa8132d710968fd01f`. It retains all 267 source records already present there, including the complete concurrently received OECD chapter and eleven exact source records, and adds nine registered sources from the maintained product declarations, preserving the complete earlier 225-record edition. Its 201 supplied files contain 6,014,772 decoded bytes: all 122 declared browser routes (121 unique assets), the 22 selected product declarations in this receiving edition, the original composer and its imports, and the existing eleven-file source-receiving runtime. The four narrow binary-receiving overlays retain the owners' current browser-save recovery and are recorded against exact preimages. The public application and HTML are identical to that selected main source; the complete companion and source index advance together. The original canonical input is 1,192,051 UTF-8 bytes, SHA-256 `2f4b6757580bcded3b36b963cb8a28a0a8ca2a3ebee6413b7d270709d5eadb5a`. The original source-package APIs created and reopened the complete four-file package. The application owner retains the full accepted manuscript and original saved submission; the source carrier retains the complete public output and original operators.
 
 ## Receive into the existing saved submission
 
@@ -33,6 +33,24 @@ The existing four reader downloads remain:
 - `/grant-data/product-and-finance.md`
 
 The same original Page and Site receive these complete outputs together. Preserve the selected project's existing audience and the complete application assets. Their receiving owner records the actual saved version, deployment and readback.
+
+## Materialize the complete supplied source
+
+Use the existing `operations/scf-current-application-receiving-81cf-20261012/prepare-source-selection.py` included in this carrier. Its source preparation, original composer and case receiver preserve canonical binary members alongside the existing text members. They check the same decoded byte count, SHA-256 and Git identity before materializing.
+
+```sh
+python -B operations/scf-current-application-receiving-81cf-20261012/prepare-source-selection.py \
+  --source-packet /absolute/received/source-files.json \
+  --source-packet-sha256 ACTUAL_FULL_SOURCE_CARRIER_SHA256 \
+  --source-package /absolute/received/source-package.json \
+  --source-package-sha256 a214a5cbcadff92ac3a683d5d464d47b5dcfbf4f4a14203d37d529872c9ae483 \
+  --original-source-commit ACTUAL_ORIGINAL_CASE_SOURCE_COMMIT \
+  --runtime-source-commit ACTUAL_SELECTED_RECEIVING_RUNTIME_COMMIT \
+  --application-source-commit ACTUAL_MERGED_SOURCE_COMMIT \
+  --output /absolute/new/complete-source-selection
+```
+
+The result supplies the exact `source/` root and its complete `source-selection.json`. The original `SOURCE_RECEIVING.md` beside that helper continues the same saved application through `compose-current-source.py`, retaining the preceding draft, review and browser binding. Select the actual original case and runtime commits from that existing operation. Current source preparation adds no grant decisions or browser saves.
 
 ## Use the maintained composer
 
@@ -59,7 +77,16 @@ node stellar-forge/developer-site/grant.mjs --port 8787
 
 Open the exact local URL printed by the original server. In an installed selected runtime, use the existing `starforge grant-application`, `grant-compose` and `grant-export` commands.
 
-The exporter consumes the original complete saved draft and writes a new output directory:
+To deliver a standalone static reader, run the original launcher export from the materialized complete source root:
+
+```sh
+node stellar-forge/developer-site/grant.mjs export \
+  --out /absolute/new/scf-static-reader
+```
+
+This exports every declared asset, including original route aliases and the complete binary example, and writes `starforge-static-reader.json` after the full export. Publish its `/grant.html` and all accompanying paths through the existing Site owner; the manifest retains its explicit root route. The original exporter checks all source files before creating the new output.
+
+The submission exporter consumes the original complete saved draft and writes a separate new output directory:
 
 ```sh
 node stellar-forge/developer-site/grant-export.mjs \

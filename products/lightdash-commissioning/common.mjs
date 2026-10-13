@@ -27,7 +27,8 @@ export const TOKEN_ENV='LIGHTDASH_PROJECT_MCP_TOKEN';
 export const productFiles=['common.mjs','project.mjs','mcp.mjs','catalog.mjs','merchant-provider.mjs',
  'client.mjs','client.d.mts','cli.mjs','application.mjs','application-provider.mjs',
  'receive.mjs','receive.py','receive-open.mjs','installed-receiving.mjs','README.md',
- 'RECEIVING.md','SOURCE_LINEAGE.json','browser-assets.json','examples/project.json'];
+ 'RECEIVING.md','SOURCE_LINEAGE.json','browser-assets.json','examples/project.json',
+ 'operating-plan.mjs','operating-plan.d.mts','operating-store.mjs','operating-catalog.mjs','operating-server.mjs','operating-cli.mjs','operating-web/index.html','operating-web/app.js','operating-web/style.css','operating-browser-assets.json','OPERATING_PLANS.md','OPERATING_APPLICATION.md','OPERATING_SOURCE.json'];
 export function fault(code,message,details={}){const e=new Error(message??code);e.code=code;e.details=details;return e;}
 export function need(value,code,message){if(!value)throw fault(code,message);}
 export const plain=value=>Boolean(value)&&typeof value==='object'&&!Array.isArray(value);
@@ -104,7 +105,7 @@ export async function installedSource(runtimeDirectory){
  const runtime=await inspectMerchantRuntime(runtimeDirectory,{load:false});
  const manifestFile=path.join(runtimeDirectory,'package/manifest.json'),content=await readBytes(manifestFile,{maximum:32*1024*1024});
  const manifest=decode(content),files=new Map((manifest.files??[]).map(x=>[x.path,x]));
- const required=[...productFiles.map(p=>PRODUCT+'/'+p),...['config.mjs','operator.mjs','serve.mjs',
+ const required=[...["discovery/catalog.mjs","discovery/operating-plan.mjs","discovery/operating-plan-return.mjs","discovery/load.mjs","specification.mjs","source-selection.mjs","product-package.mjs"].map(p=>'stellar/scf-starforge-20261009/distribution/'+p),...productFiles.map(p=>PRODUCT+'/'+p),...['config.mjs','operator.mjs','serve.mjs',
  'provider-contract.mjs','retained-file-reads.mjs','retained-file-contracts.mjs','retained-download.mjs'].map(p=>MCP+'/'+p),
  'stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs'];
  const sourceRoot=absolute(runtime.sourceRoot);

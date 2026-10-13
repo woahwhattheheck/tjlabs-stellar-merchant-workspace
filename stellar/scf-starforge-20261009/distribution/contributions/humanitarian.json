@@ -1,0 +1,20 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "humanitarian",
+  "description": "Original humanitarian tables, administrative references, reporting layouts and complete review history",
+  "commands": {
+    "dataset-humanitarian": "stellar/scf-starforge-20261009/sf30-seller-sdk/humanitarian/cli.mjs"
+  },
+  "commandDescriptions": {
+    "dataset-humanitarian": "Retain original tables and administrative references, map typed columns and reporting layouts, review geographic matches, row coverage and edition changes, and export or receive complete source and review history."
+  },
+  "exports": {
+    "./seller/humanitarian/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/humanitarian/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/humanitarian/client.mjs"
+    }
+  },
+  "applicationProviders": {
+    "humanitarian": "stellar/scf-starforge-20261009/distribution/runtime-workspace/providers/humanitarian.mjs"
+  }
+}

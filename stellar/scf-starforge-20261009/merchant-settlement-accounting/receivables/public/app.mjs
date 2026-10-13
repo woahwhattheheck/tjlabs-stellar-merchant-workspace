@@ -1,4 +1,6 @@
 import {createReceivablesClient} from './client.mjs';
+import {createCustomerAccountResponseClient} from './customer-account-client.mjs';
+import {createCustomerAccountResponseUi} from './customer-account-response.mjs';
 import {createPaymentRequestUi} from './payment-requests.mjs';
 import {createRefundUi} from './refunds.mjs';
 import {createCollectionsUi} from './collections.mjs';
@@ -14,7 +16,7 @@ const config = await fetch(new URL('./config.json', import.meta.url), {cache:'no
   if (!response.ok) throw new Error('The local workspace configuration could not be read.');
   return response.json();
 });
-const api = createReceivablesClient({baseUrl:config.apiPath});
+const api = Object.assign(createReceivablesClient({baseUrl:config.apiPath}),createCustomerAccountResponseClient({baseUrl:config.apiPath}));
 const storageKey = 'merchant-receivables:' + location.origin + config.apiPath + ':';
 function readSession(key, fallback = null) { try { const text = sessionStorage.getItem(storageKey + key); return text ? JSON.parse(text) : fallback; } catch { return fallback; } }
 function saveSession(key, value) { try { value === null ? sessionStorage.removeItem(storageKey + key) : sessionStorage.setItem(storageKey + key, JSON.stringify(value)); } catch { /* The open form remains in memory when browser storage is unavailable. */ } }
@@ -33,6 +35,9 @@ const cashPlanningUi = createCashPlanningUi({api,openDialog,closeDialog,mutate,g
 const creditControlUi = createCreditControlUi({api,openDialog,closeDialog,mutate,getState:()=>ui.state,
   getCustomer:()=>ui.customer,getSearch:()=>ui.search,saveBlob,setBusy,showError,readSession,saveSession,setMessage,render,
   openInvoice:async invoiceId=>{if(ui.editor){ui.parkedEditor=ui.editor;persistEditor();ui.editor=null;}ui.view='invoices';await selectInvoice(invoiceId);},isLocked:()=>ui.busy || Boolean(ui.pending)});
+const customerAccountUi = createCustomerAccountResponseUi({api,getState:()=>ui.state,getAsOf:()=>ui.asOf,
+  getCustomer:()=>ui.customer,getSearch:()=>ui.search,openDialog,closeDialog,mutate,saveBlob,readSession,saveSession,
+  setMessage,showError,render,isLocked:()=>ui.busy || Boolean(ui.pending)});
 const bankUi = createBankUi({api, openDialog, mutate, getState:()=>ui.state, getAsOf:()=>ui.asOf, showBank:()=>{ui.view='bank';},
   units, amount, render, saveBlob, showError, setBusy, readSession, saveSession, setMessage,
   isLocked:()=>ui.busy || Boolean(ui.pending)});
@@ -127,7 +132,7 @@ async function runPending() {
   if (!ui.pending || ui.busy) return;
   const current=ui.pending; setBusy(true); dialogMessage('');
   try {
-    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...collectionsUi.methods,...cashPlanningUi.methods,...creditControlUi.methods,...bankUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
+    if (typeof api[current.method] !== 'function' || !['settings','saveDraft','importQuote','issue','voidInvoice','credit','receipt','importSettlement','allocate','release','voidReceipt',...paymentUi.methods,...refundUi.methods,...collectionsUi.methods,...cashPlanningUi.methods,...creditControlUi.methods,...customerAccountUi.methods,...bankUi.methods].includes(current.method)) throw new Error('This retained operation is not supported by the client.');
     const result=await api[current.method](...current.args);
     if (current.method === 'saveDraft' || current.method === 'importQuote') {
       ui.selected=result.invoice?.id || current.args.at(-1).id || ui.selected;
@@ -144,6 +149,7 @@ async function runPending() {
     await collectionsUi.afterMutation(result,current);
     await cashPlanningUi.afterMutation(result,current);
     await creditControlUi.afterMutation(result,current);
+    await customerAccountUi.afterMutation(result,current);
     await bankUi.afterMutation(result,current);
   } catch(error) {
     if (ui.pending?.requestId === current.requestId) {
@@ -169,6 +175,7 @@ async function refresh({quiet=false}={}) {
     await collectionsUi.loadList();
     await cashPlanningUi.loadList();
     await creditControlUi.loadList();
+    await customerAccountUi.loadList();
     if(ui.view==='bank')await bankUi.load({quiet:true});
     if(ui.refreshVersion!==version||ui.asOf!==asOf)return;
     render();
@@ -197,7 +204,7 @@ function render() {
   $('#customer-filter').closest('.filters').hidden=ui.view==='bank';
   if(!ui.state)return;
   $('#revision').textContent='Revision '+ui.state.revision+(ui.view==='bank'?'':' · As of '+ui.asOf);
-  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():ui.view==='credit-control'?creditControlUi.render():ui.view==='bank'?bankUi.render():renderActivity();
+  $('#content').innerHTML=ui.view==='invoices'?renderInvoices():ui.view==='receipts'?renderReceipts():ui.view==='aging'?renderAging():ui.view==='collections'?collectionsUi.render():ui.view==='cash-planning'?cashPlanningUi.render():ui.view==='credit-control'?creditControlUi.render():ui.view==='customer-accounts'?customerAccountUi.render():ui.view==='bank'?bankUi.render():renderActivity();
   renderPending(); setBusy(ui.busy);
 }
 function renderInvoices() {
@@ -684,12 +691,14 @@ document.addEventListener('input',event=>{
   collectionsUi.input(event.target);
   cashPlanningUi.input(event.target);
   creditControlUi.input(event.target);
+  customerAccountUi.input(event.target);
   bankUi.input(event.target);
   if(event.target.closest('#draft-form'))updateDraft(event.target);
   else if(event.target.id==='operator')saveSession('actor',event.target.value);
   else if(event.target.id==='search'){
     ui.search=event.target.value;
-    if(ui.view==='credit-control'){
+    if(ui.view==='customer-accounts'){clearTimeout(ui.customerAccountSearchTimer);ui.customerAccountSearchTimer=setTimeout(()=>customerAccountUi.loadList().then(()=>{if(ui.view==='customer-accounts')render();}).catch(showError),200);}
+    else if(ui.view==='credit-control'){
       clearTimeout(ui.creditSearchTimer);
       ui.creditSearchTimer=setTimeout(()=>creditControlUi.loadList().then(()=>{if(ui.view==='credit-control')render();}),200);
     } else render();
@@ -702,9 +711,10 @@ document.addEventListener('change',event=>{
   collectionsUi.change(target);
   cashPlanningUi.change(target).catch(showError);
   creditControlUi.change(target);
+  customerAccountUi.change(target).catch(showError);
   bankUi.change(target);
   if(target.closest('#draft-form'))updateDraft(target);
-  else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});collectionsUi.loadList().then(()=>{if(ui.view==='collections')render();});creditControlUi.loadList().then(()=>{if(ui.view==='credit-control')render();});if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
+  else if(target.id==='customer-filter'){ui.customer=target.value;ui.customerReport=null;render();refundUi.loadList({customerId:ui.customer,date:ui.asOf}).then(()=>{if(ui.view==='receipts')render();});collectionsUi.loadList().then(()=>{if(ui.view==='collections')render();});creditControlUi.loadList().then(()=>{if(ui.view==='credit-control')render();});customerAccountUi.loadList().then(()=>{if(ui.view==='customer-accounts')render();}).catch(showError);if(ui.view==='aging'&&ui.customer)loadCustomerReport();}
   else if(target.id==='status-filter'){ui.status=target.value;render();}
   else if(target.id==='as-of'){ui.asOf=target.value||today();refresh({quiet:true});}
   else if(target.id==='quote-scope'){const recurring=target.value==='RECURRING';$('#quote-period-count').disabled=!recurring;$('#quote-period-label').disabled=!recurring;$('#quote-period-label').required=recurring;}
@@ -727,6 +737,7 @@ document.addEventListener('submit',async event=>{
     if(await collectionsUi.submit(form,values))return;
     if(await cashPlanningUi.submit(form,values))return;
     if(await creditControlUi.submit(form,values))return;
+    if(await customerAccountUi.submit(form,values))return;
     if(await bankUi.submit(form,values))return;
     if(form.id==='draft-form'){
       if(!ui.editor.lines.length)throw new Error('Add an invoice line.');
@@ -766,8 +777,9 @@ document.addEventListener('click',async event=>{
     if(await collectionsUi.click(button))return;
     if(await cashPlanningUi.click(button))return;
     if(await creditControlUi.click(button))return;
+    if(await customerAccountUi.click(button))return;
     if(await bankUi.click(button))return;
-    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='bank')await bankUi.load();if(ui.view==='credit-control'){await creditControlUi.loadList();render();}if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
+    if(action==='view'){ui.view=button.dataset.view;render();if(ui.view==='bank')await bankUi.load();if(ui.view==='credit-control'){await creditControlUi.loadList();render();}if(ui.view==='customer-accounts'){await customerAccountUi.loadList();render();}if(ui.view==='aging'&&ui.customer)await loadCustomerReport();}
     else if(action==='refresh')await refresh();
     else if(action==='dismiss-message')setMessage('');
     else if(action==='new-invoice'){

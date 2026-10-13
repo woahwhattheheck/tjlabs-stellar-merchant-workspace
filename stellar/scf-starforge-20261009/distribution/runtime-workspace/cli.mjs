@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createRuntimeWorkspace, openRuntimeWorkspace } from './model.mjs';
 import { startRuntimeWorkspace } from './server.mjs';
+import { workspaceBackupCommands, workspaceBackupHelp, runWorkspaceBackupCommand } from './workspace-backup-cli.mjs';
 import { readJSON } from './storage.mjs';
 import { fail, json, saveJSON } from './storage.mjs';
 import { inspectApplicationSetup, exportApplicationSetup, prepareApplicationSetup,
@@ -81,6 +82,8 @@ const HELP = `Starforge customer runtime workspace
   runtime-workspace application-group-member --workspace DIRECTORY --request PRIVATE_JSON
   runtime-workspace application-group-stop --workspace DIRECTORY --group-id ID --run-id UUID
 
+${workspaceBackupHelp}
+
 The private browser receives an original archive or reuses an existing runtime,
 reviews exact dependency profiles, prepares and resumes original installations,
 compares upgrades, recovers into a new directory and exports the original
@@ -89,6 +92,7 @@ Install workers retain progress and continue across browser/server restarts.
 Linux, Node22.16+, Python3.11+, npm and flock are the original installer requirements.
 `;
 const allowed = {
+  ...workspaceBackupCommands,
   'source-plans': ['--workspace', '--query', '--limit', '--cursor', '--receiving-query', '--receiving-status', '--receiving-limit', '--receiving-cursor'],
   'source-plan-inspect': ['--document'],
   'source-plan-save': ['--workspace', '--request'],
@@ -187,7 +191,8 @@ export async function main(argv = process.argv.slice(2)) {
   }
   const model = await openRuntimeWorkspace({ directory });
   let result;
-  if (command === 'application-setup-export') {
+  if (Object.hasOwn(workspaceBackupCommands, command)) result = await runWorkspaceBackupCommand(model, command, options);
+  else if (command === 'application-setup-export') {
     if (!options['--application-id'] || !options['--output']) fail('APPLICATION_SETUP_EXPORT_SELECTION_REQUIRED');
     result = await exportApplicationSetup(model, { applicationId: options['--application-id'], output: options['--output'], name: options['--name'] ?? '' });
   } else if (command === 'application-setup-prepare') {

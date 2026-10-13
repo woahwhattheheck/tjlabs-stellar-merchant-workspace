@@ -1,0 +1,37 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "allium-managed-customer",
+  "heading": "## Allium query products, managed operation and complete customer receiving",
+  "sources": [
+    {
+      "id": "allium-customer-commissioning",
+      "label": "Allium complete customer commissioning, saved workspace and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/allium/GRANT.md",
+      "editions": [
+        {
+          "commit": "44f1af09a544c72e6fa7d447d109c97d1a3e75e0",
+          "bytes": 12418,
+          "sha256": "7107f614f0ca7f18ff4313b0f8ef856dc074fcca036a60bf336cb3cf4d26f1ed",
+          "git_blob": "31ec0af197efc3f3f5d328c956ee2e538d806c1d"
+        }
+      ]
+    },
+    {
+      "id": "allium-managed-operating",
+      "label": "Allium maintained installation, Applications, typed tools and native operating guide",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/allium/OPERATING.md",
+      "editions": [
+        {
+          "commit": "44f1af09a544c72e6fa7d447d109c97d1a3e75e0",
+          "bytes": 15669,
+          "sha256": "fbc59beb7f193ad4af738eb3a30e7b31d4f307f50c6f6a2ab8823ab5f04d07d7",
+          "git_blob": "cbe6dbb701fd7c6f6eb4680c6779b2809c2b8119"
+        }
+      ]
+    }
+  ]
+}
