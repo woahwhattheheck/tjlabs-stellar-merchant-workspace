@@ -9,7 +9,7 @@ import {inspectMerchantRuntime} from '../../stellar/scf-starforge-20261009/sf46-
 import {createPropertyContinuityClient} from './client.mjs';
 import {MerchantPropertyContinuity,readPropertyContinuityConfiguration} from './merchant.mjs';
 import {inspectSource,readConnection} from './binding.mjs';
-import {canonical,sha,need,absolute,UUID,SOURCE_SHA256,bytes,jsonFile} from './contract.mjs';
+import {canonical,sha,need,absolute,UUID,SOURCE_SHA256,ORIGINAL_SOURCE_SHA256,bytes,jsonFile} from './contract.mjs';
 const HERE=dirname(fileURLToPath(import.meta.url)),ROOT=resolve(HERE,'../..');
 const wait=ms=>new Promise(done=>setTimeout(done,ms));
 const digest=v=>sha(canonical(v));
@@ -118,11 +118,11 @@ export async function runManagedReceiving(input){
  const native=await jsonFile(join(operation,'native-result.json'),32*1024*1024,{privateOnly:true});
  const journal=await jsonFile(join(operation,'completed-journal.json'),32*1024*1024,{privateOnly:true});
  const nativeResultSha256=sha(await bytes(join(operation,'native-result.json'),32*1024*1024,{privateOnly:true})),completedJournalSha256=sha(await bytes(join(operation,'completed-journal.json'),32*1024*1024,{privateOnly:true}));
- need(plan.operationId===input.operationId&&plan.sourceSha256===SOURCE_SHA256&&native.operationId===input.operationId&&native.inputSha256===originalInputSha256&&native.state==='COMPLETE'&&native.allOwnedResourcesClosed===true&&journal.state==='COMPLETE'&&journal.operationId===input.operationId&&journal.nativeResultSha256===nativeResultSha256,'ORIGINAL_PROGRAMME_INCOMPLETE');
+ need(plan.operationId===input.operationId&&plan.sourceSha256===ORIGINAL_SOURCE_SHA256&&native.operationId===input.operationId&&native.inputSha256===originalInputSha256&&native.state==='COMPLETE'&&native.allOwnedResourcesClosed===true&&journal.state==='COMPLETE'&&journal.operationId===input.operationId&&journal.nativeResultSha256===nativeResultSha256,'ORIGINAL_PROGRAMME_INCOMPLETE');
  need(plan.workspace.id===input.workspaceId&&plan.workspace.directory===input.settings.workspaceDirectory,'ORIGINAL_BRANCH');
  need(input.settings.receivingDirectory===join(directory,'workspaces')&&input.settings.connectionFile===join(plan.workspace.directory,'property-continuity-connection.json'),'MANAGED_PATHS');
  await retain(join(directory,'input.json'),input);
- await retain(join(directory,'original-completion.json'),{operationId:plan.operationId,inputSha256:originalInputSha256,nativeResultSha256,completedJournalSha256,originalSourceSha256:SOURCE_SHA256});
+ await retain(join(directory,'original-completion.json'),{operationId:plan.operationId,inputSha256:originalInputSha256,nativeResultSha256,completedJournalSha256,originalSourceSha256:ORIGINAL_SOURCE_SHA256});
  const reportInventory=await jsonFile(join(directory,'reports-inventory.json'),32*1024*1024,{privateOnly:true});
  need(reportInventory.schema==='stellar-forge.property-continuity-report-inventory.v1'&&reportInventory.operationId===input.operationId&&Array.isArray(reportInventory.files),'REPORT_INVENTORY');
  const expectedReports=[...native.originalReports.files.map(x=>({...x,label:'original',workspace:plan.workspace.directory})),...native.receivedReports.files.map(x=>({...x,label:'received',workspace:plan.receiving.directory}))];

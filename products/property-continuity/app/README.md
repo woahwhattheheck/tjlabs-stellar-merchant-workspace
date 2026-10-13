@@ -32,3 +32,9 @@ Read **TRAINING.md** to generate and operate the clearly labelled authored train
 ## Current validation
 
 The application sources are assembled from the reviewed store, original-history receiver and domain contracts. Actual customer source intake and end-to-end commissioned runs require the supplied original input files and their actual independent target/load evidence. See the delivery record for the exact source review and execution status.
+
+## Assigned independent discrepancy review
+
+**Assigned reviews** extends this same application with complete source-bound reviewer copies, unfinished drafts, attributed named editions, exact returned-file receiving, explicit issued/current/proposed decision choices and original atomic finding adoption. Read **REVIEW_EXCHANGE_DOMAIN.md** for document and command contracts, **REVIEW_EXCHANGE_RECEIVING.md** for the original same-operation receiving course, and the Assigned discrepancy reviews section of **OPERATING.md** for ordinary staff controls. All evidence travels in the original full workspace export.
+
+The source review and connected JavaScript boundary checks are distinct from native or browser acceptance. The existing original commissioning operation remains the only native owner; its accepted input and earlier source hashes are retained as historical editions.

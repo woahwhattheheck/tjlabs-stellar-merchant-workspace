@@ -177,7 +177,7 @@ function databaseSnapshot(databasePath = DATABASE) {
     }
     const business = { applicationId: db.prepare('PRAGMA application_id').get().application_id,
       userVersion: db.prepare('PRAGMA user_version').get().user_version,
-      tables: tables.filter(table => table.name !== 'merchant_runtimes') };
+      tables: tables.filter(table => !['merchant_runtimes','merchant_customer_reviews','merchant_customer_review_requests'].includes(table.name)) };
     const runtimes = tables.find(table => table.name === 'merchant_runtimes');
     assert.equal(business.applicationId, 0x58344d31); assert.equal(business.userVersion, 1);
     const orders = db.prepare('SELECT id,state FROM merchant_orders ORDER BY id').all();
@@ -185,7 +185,7 @@ function databaseSnapshot(databasePath = DATABASE) {
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_events WHERE state='PENDING'").get().count, 0);
     assert.equal(db.prepare("SELECT COUNT(*) AS count FROM merchant_fulfillments WHERE state!='COMPLETE'").get().count, 0);
     db.exec('ROLLBACK');
-    return { businessSha256: sha(encoding(business)),
+    return { customerReviewSha256:sha(encoding(tables.filter(table=>['merchant_customer_reviews','merchant_customer_review_requests'].includes(table.name)))),businessSha256: sha(encoding(business)),
       allUserRowsSha256: sha(encoding({ ...business, tables })), business, runtimes, orders };
   } finally { db.close(); }
 }
@@ -656,10 +656,12 @@ async function receive() {
     assert.equal(previous.state, 'COMPLETE'); assert.equal(previous.operation, OPERATION);
     assert.equal(previous.sourceCommit, selection.sourceCommit); assert.equal(previous.originalArchiveSha256, ORIGINAL_SHA);
     const lease = await operationLease(join(WORKSPACE, 'merchant-owner.lock'));
-    try { const current = databaseSnapshot(); assert.equal(current.businessSha256, previous.afterBusinessSha256); }
+    try { const current = databaseSnapshot(); assert.equal(current.businessSha256, previous.afterBusinessSha256);if(previous.customerReviewSha256)assert.equal(current.customerReviewSha256,previous.customerReviewSha256); }
     finally { await lease.close(); }
+    for(const file of [...(previous.customerReview?.course.files??[]),...(previous.customerReview?.course.images??[])])await originalFile(file.path,file);
     for (const file of [...previous.browser.images, ...previous.browser.downloads]) await originalFile(file.path, file);
     if (values.portable) await verifyPortableReceiving(previous.portable, { originalFile });
+    if(previous.customerReviewPortable){await verifyPortableReceiving(previous.customerReviewPortable,{originalFile});for(const received of [previous.customerReviewPortable.receiving.received,previous.customerReviewPortable.onward.receiving.received])assert.equal(databaseSnapshot(join(received.workspaceDirectory,'merchant.sqlite3')).customerReviewSha256,previous.customerReviewSha256);}
     if (previous.invoiceAgent) {
       const agent=await import(pathToFileURL(join(previous.runtime.sourceRoot,'products/x402api-merchant-workspace/invoice-agent-receiving.mjs')));
       await agent.verifyMerchantInvoiceAgent(previous.invoiceAgent,{expectedInvoices:previous.invoices.map(order=>order.merchantOrderId),
@@ -788,6 +790,27 @@ async function receive() {
       operation:identity('invoice-agent-intake'),projectOperation:identity('portable-browser-export')});
   }
   assert.equal(sentinel.requests.length, 0);
+  let customerReview=await readJSON(join(ROOT,'customer-review-opening.json'));
+  if(!customerReview){
+    const opening=await beginOpening('customer-review',applicationId);
+    if(opening.completed)customerReview={...opening.completed.result,operationId:opening.operationId,originalProcess:opening.completed.native};
+    else{
+      const require=createRequire(import.meta.url),loaded=require(values.playwright),chromium=loaded.chromium??loaded.default?.chromium;
+      browser=await chromium.launch({executablePath:values.chromium,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+      let course;
+      try{const module=await import('./customer-review-receiving.mjs');
+        course=await module.receiveCustomerReviewCourse({browser,opening,scenario,reads:first.reads,delivery:first.browser.customerDelivery,
+          root:ROOT,repository:values.repo,identity,directory,save,originalFile,stopped,
+          exportProject:values.portable?({page,capture})=>exportProjectFromBrowser({page,opening,scenario,
+            root:join(ROOT,'customer-review-whole-project'),identity:label=>identity('customer-review-'+label),
+            get,save,directory,originalFile,capture,stopped,retainCompleted}):null});
+      }finally{await browser.close();browser=null;}
+      const ended=await finishOpening(opening,{course});
+      customerReview={course,operationId:opening.operationId,originalProcess:ended.result};
+    }
+    await retainCompleted('customer-review-opening',()=>save(join(ROOT,'customer-review-opening.json'),customerReview,{original:true}));
+  }
+  for(const file of [...customerReview.course.files,...customerReview.course.images])await originalFile(file.path,file);
   const afterFirst = await originalSnapshot('after-first');
   assert.equal(afterFirst.businessSha256, before.businessSha256);
   stopped();
@@ -804,11 +827,24 @@ async function receive() {
     await retainCompleted('original-reopen-completion', () => save(secondPath, second, { original: true }));
   }
   const after = await originalSnapshot('after-reopen');
-  assert.equal(after.businessSha256, before.businessSha256); assert.equal(sentinel.requests.length, 0);
+  assert.equal(after.businessSha256, before.businessSha256);assert.equal(after.customerReviewSha256,afterFirst.customerReviewSha256); assert.equal(sentinel.requests.length, 0);
   assert.equal(first.reads.apiStateSha256, second.reads.apiStateSha256);
   const portable = values.portable ? await receivePortableProject({ root: ROOT, sourceRoot, scenario, completed,
     exported: first.browser.project, firstReads: first.reads, identity, get, save, directory, originalFile,
     databaseSnapshot, receiveReads, receiveBrowser, runCommand, stopped, retainCompleted }) : null;
+  const customerReviewPortable=values.portable?await receivePortableProject({
+    root:join(ROOT,'customer-review-whole-project'),sourceRoot,scenario,completed,
+    exported:customerReview.course.project,firstReads:first.reads,
+    identity:label=>identity('customer-review-'+label),get,save,directory,originalFile,databaseSnapshot,
+    receiveReads:(opening,selectedScenario,selectedCompleted,label)=>receiveReads(opening,selectedScenario,selectedCompleted,'customer-review-'+label),
+    receiveBrowser:(opening,selectedScenario,selectedReads,options)=>receiveBrowser(opening,selectedScenario,selectedReads,{...options,label:'customer-review-'+options.label}),
+    runCommand:(label,command)=>runCommand('customer-review-'+label,command),stopped,retainCompleted}):null;
+  if(customerReviewPortable){
+    assert.equal(customerReviewPortable.originalExportOperation,customerReview.course.project.operation);
+    for(const received of [customerReviewPortable.receiving.received,customerReviewPortable.onward.receiving.received])
+      assert.equal(databaseSnapshot(join(received.workspaceDirectory,'merchant.sqlite3')).customerReviewSha256,after.customerReviewSha256,
+        'Whole received Merchant projects must retain all original customer review/request rows.');
+  }
   assert.equal(sentinel.requests.length, 0);
   const history = []; let cursor = null;
   do {
@@ -821,7 +857,8 @@ async function receive() {
       host: profile.host, lockSha256: inspection.lockSha256, dependencies: profile.dependencies },
     applications: { directory: APPLICATIONS, applicationId, reviewId: review.id, revision: saved.revision,
       openingId: first.operationId, reopenedId: second.operationId, history: history.map(run => ({ id: run.id, phase: run.phase, result: run.result })) },
-    beforeBusinessSha256: before.businessSha256, afterBusinessSha256: after.businessSha256,
+    customerReview,...(customerReviewPortable?{customerReviewPortable}:{}),beforeBusinessSha256: before.businessSha256, afterBusinessSha256: after.businessSha256,
+    customerReviewSha256:after.customerReviewSha256,
     businessTables: after.business.tables.map(table => ({ name: table.name, rows: table.rows.length })),
     runtimeHistory: after.runtimes, invoices: second.reads.invoices, browser: first.browser,
     providerCalls: sentinel.requests, createdInvoices: 0, submittedPayments: 0, completedAt: new Date().toISOString(),

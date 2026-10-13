@@ -2,7 +2,7 @@
 
 Use this product to retain complete source and target editions, review the exact mappings between them, reconcile an actual load, record two rehearsals and the cutover outcome, and hand an independently editable case to the receiving team. The property, finance, document and spatial reviewers work in the same original application and history.
 
-The SCF integration supplies a managed application, authenticated customer/agent access, a complete Installation profile and the original source chapter. The original Python application remains under **app/** with its own unchanged source selection. Its SQLite store, reconciliation engine, original requests, portable archives and browser remain the business implementation.
+The SCF integration supplies a managed application, authenticated customer/agent access, a complete Installation profile and the original source chapter. The maintained Python application remains under **app/** with its current complete source selection. Its original source selection remains the historical basis of the original commissioning input. Its SQLite store, reconciliation engine, original requests, portable archives and browser remain the business implementation.
 
 ## 1. Choose the original case and source
 
@@ -272,7 +272,7 @@ A later source edition, mapping convention, cohort or platform field change is r
 
 ## Source editions
 
-This integration adopts the complete original application from **woahwhattheheck/commons**, PR 37640, merge **a64e69c1bc6cb30685865e49ef98e2428b29f6e8**, under **opportunities/bluewave_property_continuity_20261013/**. Its 22-file source packet is **192f44431c54d37307edf6c82cca730764adfeeb**; the unchanged **app/source-selection.json** is the authority for its complete selected native files.
+This integration adopts the complete original application from **woahwhattheheck/commons**, PR 37640, merge **a64e69c1bc6cb30685865e49ef98e2428b29f6e8**, under **opportunities/bluewave_property_continuity_20261013/**. Its historical 22-file source packet is **192f44431c54d37307edf6c82cca730764adfeeb**. The current **app/source-selection.json** identifies the complete review-enabled installed edition; **ADOPTION.json** preserves the original inventory and records the maintained edition separately.
 
 Original publication: https://github.com/woahwhattheheck/commons/pull/37640
 
@@ -280,4 +280,13 @@ Original company and operating thread: https://tokenjunkielabs.slack.com/archive
 
 Public requirements source: https://www.etenders.gov.ie/epps/cft/downloadContractDocument.do?documentId=8912599&resourceId=8912550
 
-The SCF Applications provider contract and Installation preparation guide supply this integration’s lifecycle. The original operator, exact domain, training and receiving guides travel unchanged with the app and are registered as complete source editions in the Product and financing reader.
+The SCF Applications provider contract and Installation preparation guide supply this integration’s lifecycle. The original source editions remain preserved. Current operator, domain, training and receiving guides travel with the maintained app; the reviewer exchange and its following receiving course have their own complete guides.
+
+
+## Assigned discrepancy-review continuation
+
+The installed application includes **Assigned reviews**: complete reconciliation/source issuance to a named independent reviewer; a standalone editable HTML copy with unfinished drafts, named attributed editions and local conflict recovery; exact complete return receiving; explicit issued/current/proposed decision comparison; and atomic adoption through the original finding engine. Original rehearsal, release and cutover rules remain in force.
+
+Use the existing saved Applications record, private connection and selected physical workspace. This feature borrows the same service and SQLite history. It does not start an additional server, write into a connected tenant, dispatch customer communication or accept a cutover for the user. Read [the application operating steps](app/OPERATING.md#assigned-discrepancy-reviews), [document/domain contracts](app/REVIEW_EXCHANGE_DOMAIN.md), and [the same-operation receiving continuation](app/REVIEW_EXCHANGE_RECEIVING.md).
+
+The installed app source selection advances as one complete edition. The prior source identity and original commissioning input remain historical evidence; a new source selection does not authorize re-running an accepted original programme. The managed continuation separately identifies its original native source and current installed source. Complete source and blob archives remain independently editable after receiving.

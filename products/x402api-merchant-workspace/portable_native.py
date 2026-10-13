@@ -52,6 +52,9 @@ REQUIRED_PRODUCT = (
     "invoice-register.mjs", "INVOICE_REGISTER.md",
     "operator-client.mjs", "operator-client.d.mts", "operator-cli.mjs", "OPERATOR_CLIENT.md",
     "invoice-intake.mjs", "web/invoice-intake.mjs", "INVOICE_INTAKE.md",
+    "customer-review-core.mjs", "customer-review.mjs", "web/customer-review-desk.mjs",
+    "web/customer-review-offline.js", "web/customer-review-offline.html", "web/customer-review-offline.css",
+    "CUSTOMER_REVIEWS.md",
     "fulfillment/file-delivery.mjs", "web/index.html", "web/app.mjs", "web/style.css",
 )
 EXPECTED_TABLES = {

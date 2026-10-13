@@ -6,7 +6,7 @@ import {sha256Utf8,sha256Bytes} from './sha256.mjs';
 
 import {base64Decode,sourcePath,parseRecovery,workingHTML,completeFiles,zipBytes,json} from './portable.mjs';
 
-export const SOURCE_FILES=['engine.mjs','sha256.mjs','portable.mjs','app.mjs','style.css','template.html','build.mjs','cli.mjs','README.md','BROWSER_OPERATING.md','API.md','CORE_OPERATING.md','templates/observations.csv','run_browser_receiving.mjs'];
+export const SOURCE_FILES=['engine.mjs','sha256.mjs','portable.mjs','app.mjs','style.css','template.html','build.mjs','cli.mjs','README.md','BROWSER_OPERATING.md','API.md','CORE_OPERATING.md','templates/observations.csv','run_browser_receiving.mjs',"agent-io.mjs","agent-client.mjs","agent-tools.mjs","merchant-provider.mjs","agent-merchant.mjs","agent-setup.mjs","agent-client.d.mts","agent-receiving.mjs","AGENT_OPERATING.md","AGENT_RECEIVING.md"];
 export async function loadSource(root=dirname(fileURLToPath(import.meta.url))){
   const source={};
   for(const path of SOURCE_FILES){const full=join(root,path),stat=await lstat(full);if(!stat.isFile()||stat.isSymbolicLink())throw Error('Use the complete regular source file '+path+'.');source[path]=await readFile(full,'utf8');}

@@ -42,7 +42,7 @@ export function createAuthorWorklistPanel({container,element,getWorkspaceId,getC
   const result=retainAuthorReturn(value,draft.returnText),item=result.worklist.items.find(x=>x.id===result.id);
   if(!same(item.draft,draft.draft)){
    value=retainAuthorDraft(result.worklist,result.id,draft.draft,{archivePrevious});unsaved=true;generation++;
-  }else value=result.worklist;
+  }
   active=result.id;
  }
  function schedule(){

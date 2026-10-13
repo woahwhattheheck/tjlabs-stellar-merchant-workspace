@@ -3,7 +3,8 @@
 import argparse,fcntl,hashlib,json,os,pathlib,stat,subprocess,sys,zipfile
 ROOT=pathlib.Path(__file__).resolve().parent
 SCHEMA="stellar-forge.property-continuity-managed-receiving.v1"
-SOURCE="cf5e60ed049ee7584d389cc8d09b2a2e361c0fa37cf00fc41af496652f641b3a"
+ORIGINAL_SOURCE="cf5e60ed049ee7584d389cc8d09b2a2e361c0fa37cf00fc41af496652f641b3a"
+SOURCE="8ea12615ad1428412a8ae254193bd4c283d26bd9411d5b76e959d0357ae7164b"
 MAXIMUM=1024*1024*1024
 def require(value,message):
     if not value:raise RuntimeError(message)
@@ -136,7 +137,7 @@ def main():
         fcntl.flock(owner,fcntl.LOCK_EX|fcntl.LOCK_NB)
         plan=load(operation/"input.json");native=load(operation/"native-result.json");journal=load(operation/"completed-journal.json")
         require(native["operationId"]==plan["operationId"] and native["inputSha256"]==digest(read(operation/"input.json")) and native["state"]=="COMPLETE" and native["allOwnedResourcesClosed"] is True and journal["state"]=="COMPLETE","Finish the original native programme before this managed continuation.")
-        require(plan["sourceSha256"]==SOURCE,"Keep the original selected native app.")
+        require(plan["sourceSha256"]==ORIGINAL_SOURCE,"Keep the original selected native app.")
         runtime_workspace=pathlib.Path(a.runtime_workspace);node=pathlib.Path(a.node);python=pathlib.Path(a.python)
         require(runtime_workspace.is_absolute() and runtime_workspace.resolve()==runtime_workspace and runtime_workspace.is_dir(),"Use the actual existing Runtime workspace.")
         require(node.is_absolute() and node.is_file() and os.access(node,os.X_OK) and python.is_absolute() and python.is_file() and os.access(python,os.X_OK),"Select actual installed Node and Python executables.")

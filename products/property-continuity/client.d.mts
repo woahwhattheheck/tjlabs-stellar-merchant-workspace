@@ -12,7 +12,10 @@ export interface Command {
 }
 export interface PageOptions {offset?:number;limit?:number}
 export interface FileDescriptor {bytes:number;sha256:string}
+export interface ReviewFileDescriptor extends FileDescriptor {name:string;mediaType:string}
+export type ReviewFileRole='issued_json'|'issued_html'|'returned_file';
 export type DownloadSelection=
+ |{kind:'review';id:string;role:ReviewFileRole;expectedSha256:string;expectedBytes:number}
  |{kind:'blob';id:string;expectedSha256?:string;expectedBytes?:number}
  |{kind:'archive';id:string;expectedSha256:string;expectedBytes:number}
  |{kind:'report';id:string;format?:'json'|'html'|'csv';expectedSha256?:string;expectedBytes?:number};
@@ -31,6 +34,12 @@ export class PropertyContinuityClient {
  reportRows(reconciliationId:string,options?:PageOptions&{status?:'MATCHED'|'MISSING'|'EXTRA'|'CONFLICT'|'DUPLICATE'|'UNVERIFIED'}):Promise<NativeRecord>;
  findings(reconciliationId:string,options?:PageOptions&{severity?:'BLOCKING'|'REVIEW'}):Promise<NativeRecord>;
  pages(kind:'history'|'sourceRows'|'reportRows'|'findings',recordId?:string,options?:PageOptions&{status?:string;severity?:string}):AsyncGenerator<NativeRecord>;
+ reviewExchanges(exchangeId?:string):Promise<NativeRecord>;
+ reviewCompare(returnId:string,editionId:string,adoptionId?:string):Promise<NativeRecord>;
+ prepareReviewIssue(command:Command,expectedRevision:number):Promise<NativeRecord>;
+ prepareReviewReturn(descriptor:ReviewFileDescriptor,expectedRevision:number):Promise<NativeRecord>;
+ prepareReviewReturnBytes(data:Buffer,descriptor:ReviewFileDescriptor,expectedRevision:number):Promise<NativeRecord>;
+ prepareReviewReturnFile(file:string,descriptor:ReviewFileDescriptor,expectedRevision:number):Promise<NativeRecord>;
  command(command:Command,expectedRevision:number):Promise<NativeRecord>;
  exportWorkspace(publicationId:string,revision:number):Promise<NativeRecord>;
  receive(input:{operationId:string;sha256:string;bytes:number;name:string}):Promise<NativeRecord>;

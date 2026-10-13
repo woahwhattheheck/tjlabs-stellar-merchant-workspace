@@ -3,7 +3,7 @@ import {open} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readConnection} from './binding.mjs';
-import {absolute,branch,plain,need,HASH,UUID,SOURCE_SHA256,MAX_BLOB,MAX_ARCHIVE,localUrl,canonical,sha} from './contract.mjs';
+import {bytes as fileBytes,absolute,branch,plain,need,HASH,UUID,SOURCE_SHA256,MAX_BLOB,MAX_ARCHIVE,localUrl,canonical,sha} from './contract.mjs';
 export class PropertyContinuityError extends Error{
  constructor(code,message,{status=null,result=null,uncertain=false,operation=null}={}){
   super(message);this.name='PropertyContinuityError';Object.assign(this,{code,status,result,uncertain,operation});
@@ -12,6 +12,14 @@ export class PropertyContinuityError extends Error{
 const integer=(n,max=Number.MAX_SAFE_INTEGER)=>{need(Number.isSafeInteger(n)&&n>=0&&n<=max,'INTEGER');return n;};
 const id=value=>{need(UUID.test(value??''),'ID');return value;};
 const hash=value=>{need(HASH.test(value??''),'HASH');return value;};
+function reviewDescriptor(value){
+ const d=JSON.parse(canonical(value));
+ need(plain(d)&&Object.keys(d).length===4&&['sha256','bytes','name','mediaType'].every(k=>Object.hasOwn(d,k)),'REVIEW_DESCRIPTOR');
+ hash(d.sha256);integer(d.bytes,MAX_BLOB);
+ need(typeof d.name==='string'&&d.name.length>=1&&d.name.length<=240&&!/[\\/\x00-\x1f]/.test(d.name)&&!['.','..'].includes(d.name),'REVIEW_FILENAME');
+ need(typeof d.mediaType==='string'&&d.mediaType.length>=1&&d.mediaType.length<=160&&!/[\x00\r\n]/.test(d.mediaType),'REVIEW_MEDIA');
+ return d;
+}
 const signature=s=>[s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs].join(':');
 async function readResponse(response,maximum,onChunk){
  const declared=response.headers.get('content-length');if(declared!==null)need(/^\d+$/.test(declared)&&Number(declared)<=maximum,'RESPONSE_CAPACITY');
@@ -89,6 +97,33 @@ export class PropertyContinuityClient{
    yield page;const next=page.nextOffset;need(next===null||Number.isSafeInteger(next)&&next>offset&&next<page.total,'PAGE_CHANGED');offset=next;
   }while(offset!==null);
  }
+ reviewExchanges(exchangeId){const query=exchangeId===undefined?{}:{id:id(exchangeId)};return this.#track(()=>this.#perform('/api/review-exchanges',{query,maximum:MAX_BLOB}));}
+ reviewCompare(returnId,editionId,adoptionId){
+  const query={returnId:id(returnId),editionId:id(editionId),...(adoptionId===undefined?{}:{adoptionId:id(adoptionId)})};
+  return this.#track(()=>this.#perform('/api/review-compare',{query,maximum:MAX_BLOB}));
+ }
+ prepareReviewIssue(command,expectedRevision){
+  need(plain(command)&&command.kind==='review.issue'&&UUID.test(command.requestId??''),'COMMAND');integer(expectedRevision);
+  const body=JSON.parse(canonical(this.#selectedBody({command,expectedRevision})));
+  return this.#track(()=>this.#perform('/api/review-prepare-issue',{method:'POST',body,operation:{kind:'review-prepare-issue',requestId:body.command.requestId,expectedRevision},maximum:MAX_BLOB}));
+ }
+ prepareReviewReturn(descriptor,expectedRevision){
+  integer(expectedRevision);const body=JSON.parse(canonical(this.#selectedBody({file:reviewDescriptor(descriptor),expectedRevision})));
+  return this.#track(()=>this.#perform('/api/review-prepare-return',{method:'POST',body,operation:{kind:'review-prepare-return',file:body.file,expectedRevision},maximum:MAX_BLOB}));
+ }
+ prepareReviewReturnBytes(data,descriptor,expectedRevision){
+  need(Buffer.isBuffer(data),'REVIEW_RETURN');const frozen=Buffer.from(data),d=reviewDescriptor(descriptor);integer(expectedRevision);
+  hash(d.sha256);integer(d.bytes,MAX_BLOB);need(frozen.length===d.bytes&&sha(frozen)===d.sha256,'FILE_CHANGED');
+  return this.#track(()=>this.#returnBytes(frozen,d,expectedRevision));
+ }
+ prepareReviewReturnFile(file,descriptor,expectedRevision){
+  absolute(file);const d=JSON.parse(canonical(descriptor));hash(d.sha256);integer(d.bytes,MAX_BLOB);integer(expectedRevision);
+  return this.#track(async()=>{const data=await fileBytes(file,MAX_BLOB);need(data.length===d.bytes&&sha(data)===d.sha256,'FILE_CHANGED');return this.#returnBytes(data,d,expectedRevision);});
+ }
+ #returnBytes(data,descriptor,expectedRevision){
+  need(typeof descriptor.name==='string'&&typeof descriptor.mediaType==='string','REVIEW_DESCRIPTOR');
+  return this.#perform('/api/review-return/'+descriptor.sha256,{method:'PUT',query:{name:descriptor.name,mediaType:descriptor.mediaType,expectedRevision},raw:{body:data,bytes:data.length},maximum:MAX_BLOB,operation:{kind:'review-prepare-return',file:descriptor,expectedRevision}});
+ }
  command(command,expectedRevision){
   need(plain(command)&&UUID.test(command.requestId??''),'COMMAND');integer(expectedRevision);
   // Freeze the complete original envelope before dispatch; the server remains its memoization authority.
@@ -125,13 +160,14 @@ export class PropertyContinuityClient{
    need(result.sha256===expected.sha256&&result.bytes===expected.bytes,'UPLOAD_CHANGED');return result;
   }finally{await handle.close();}
  });}
- download({kind,id:recordId,format='json',expectedSha256,expectedBytes},onChunk){
+ download({kind,id:recordId,format='json',role,expectedSha256,expectedBytes},onChunk){
   need(typeof onChunk==='function','DOWNLOAD','Consume and retain the complete streamed file.');
   let path,query={};if(kind==='blob'){hash(recordId);path='/api/blob/'+recordId;expectedSha256=recordId;}
   else if(kind==='archive'){path='/api/export/'+id(recordId);hash(expectedSha256);integer(expectedBytes,MAX_ARCHIVE);}
+  else if(kind==='review'){id(recordId);need(['issued_json','issued_html','returned_file'].includes(role),'REVIEW_ROLE');hash(expectedSha256);integer(expectedBytes,MAX_BLOB);path='/api/review-file';query={id:recordId,role};}
   else{need(kind==='report'&&['json','html','csv'].includes(format),'DOWNLOAD_KIND');path='/api/report/'+id(recordId);query={format};}
   return this.#track(async()=>{
-   const result=await this.#perform(path,{query,onChunk,maximum:kind==='blob'?MAX_BLOB:MAX_ARCHIVE});
+   const result=await this.#perform(path,{query,onChunk,maximum:['blob','review'].includes(kind)?MAX_BLOB:MAX_ARCHIVE});
    need(expectedSha256===undefined||result.sha256===expectedSha256,'DOWNLOAD_CHANGED');
    need(expectedBytes===undefined||result.bytes===expectedBytes,'DOWNLOAD_CHANGED');return result;
   });

@@ -37,3 +37,12 @@ label select{display:block;margin-top:6px;font-weight:400}
 #create-panel details{margin:1rem 0}#create-panel summary{cursor:pointer;font-weight:600}
 #draft-identity{overflow-wrap:anywhere}#draft-editor>label{display:block;margin:1rem 0}
 @media(max-width:420px){#create-panel .form-grid{grid-template-columns:1fr}}
+
+/* Complete customer-review comparisons retain their exact source at narrow widths. */
+#customer-review-desk{min-width:0;overflow-wrap:anywhere}
+#customer-review-desk>div,#customer-review-desk form,#customer-review-desk details{min-width:0;max-width:100%}
+#customer-review-desk form{display:grid;gap:12px;margin-top:18px}
+#customer-review-desk label{margin-top:12px}
+#customer-review-desk button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#customer-review-desk summary{cursor:pointer;font-weight:600;margin:12px 0}
+#customer-review-desk pre{max-width:100%;max-height:28rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border:1px solid #c9cdd1;background:#f5f6f7;color:#202428;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}

@@ -20,7 +20,7 @@ const emptyState = () => ({name:'Merchant case',inputs:{resource:'',catalog:'',o
 
 export function mountCaseDesk({root,readState,applyState,onNameChange = ()=>{},
   readSupport=()=>null,prepareSupport=async()=>null,applySupport=()=>{},onDraftChange=()=>{},
-  applySavedCommissioning=async()=>true,applySavedService=async()=>true,onCurrentCaseChange=()=>{}}) {
+  applySavedCommissioning=async()=>true,applySavedService=async()=>true,applySavedCustomerReview=async()=>true,onCurrentCaseChange=()=>{}}) {
   const abort = new AbortController();
   let enabled=false, busy=false, dirty=false, active=null, candidateId=crypto.randomUUID();
   let generation=0, identity=0, applying=false, listSequence=0, offset=0, nextOffset=null;
@@ -246,6 +246,10 @@ export function mountCaseDesk({root,readState,applyState,onNameChange = ()=>{},
         await applySavedService(result.service,{canReplace:()=>!destroyed&&identity===token&&generation===stamp});
         if(destroyed||identity!==token)return false;
         dirty=generation!==stamp;
+      }
+      if(!dirty&&Object.hasOwn(result,'customerReview')){
+        await applySavedCustomerReview(result.customerReview,{canReplace:()=>!destroyed&&identity===token&&generation===stamp});
+        if(destroyed||identity!==token)return false;dirty=generation!==stamp;
       }
       say(dirty?'Saved the captured draft. Newer edits are still unsaved.':'Case saved. '+STATUS[active.metadata.status]+(active.metadata.followUpOn?' · follow-up '+active.metadata.followUpOn:''));
       await reload();return !dirty;
