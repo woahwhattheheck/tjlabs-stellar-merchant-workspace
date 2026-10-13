@@ -32,8 +32,8 @@ const PAGED=new Set(['status','transactions']);
 export function accountingBankStatementsArguments(kind,value){
  need(Object.hasOwn(ACTIONS,kind),'Choose an original bank mutation.');
  const args=wire(value);revision(args.revision);
- need(UUID.test(args.workspaceId??'')&&REQUEST_ID.test(args.requestId??'')&&typeof args.actor==='string'&&args.actor.trim()&&args.actor.length<=1000,
-  'Preserve the actual workspace UUID, original request ID and responsible operator.');
+ need(SHA.test(args.workspaceId??'')&&REQUEST_ID.test(args.requestId??'')&&typeof args.actor==='string'&&args.actor.trim()&&args.actor.length<=1000,
+  'Preserve the actual workspace identity SHA256, original request ID and responsible operator.');
  need(args.sourceAlias===undefined,'Resolved original bytes belong in mutations; do not reread a host alias.');
  if(['match','receipt','undo','resolve'].includes(kind))need(UUID.test(args.bankTransactionId??''),'Select the original transaction.');
  if(kind==='reopen')need(UUID.test(args.bankStatementCloseId??''),'Select the original close.');
@@ -48,7 +48,7 @@ export function accountingBankStatementsArguments(kind,value){
  return args;
 }
 export function accountingBankStatementsImportArguments(inspection,selection){
- need(plain(inspection)&&plain(inspection.sourceInput)&&plain(inspection.file)&&UUID.test(inspection.workspaceId??'')&&SHA.test(inspection.reviewSha256??''),
+ need(plain(inspection)&&plain(inspection.sourceInput)&&plain(inspection.file)&&SHA.test(inspection.workspaceId??'')&&SHA.test(inspection.reviewSha256??''),
   'Retain the complete original inspection and resolved sourceInput.');
  const bytes=Buffer.from(inspection.sourceInput.file?.dataBase64??'','base64');
  need(bytes.length===inspection.file.bytes&&createHash('sha256').update(bytes).digest('hex')===inspection.file.sha256,
@@ -61,7 +61,7 @@ export function accountingBankStatementsImportArguments(inspection,selection){
   source:wire({source:inspection.sourceInput}).source,reviewSha256:inspection.reviewSha256});
 }
 export function accountingBankStatementsCloseArguments(preview,operation){
- need(plain(preview)&&preview.ready===true&&plain(preview.closeInput)&&SHA.test(preview.reviewSha256??'')&&UUID.test(preview.workspaceId??''),
+ need(plain(preview)&&preview.ready===true&&plain(preview.closeInput)&&SHA.test(preview.reviewSha256??'')&&SHA.test(preview.workspaceId??''),
   'Retain a complete ready native close preview and its exact closeInput.');
  const selected=wire(operation);
  need(Object.keys(selected).every(k=>['actor','requestId','name','note'].includes(k)),'Add only the original operation identity and close label.');
@@ -118,7 +118,7 @@ export function createAccountingBankStatementsClient({workspace, call} = {}) {
       need(OPERATIONS.has(kind), 'Choose a declared bank-statements operation.');
       const selected=Object.hasOwn(ACTIONS,kind)?accountingBankStatementsArguments(kind,args):wire(args);
       return invoke(PREFIX+kind,selected,options).then(result=>{
-        need(result.workspace===workspace&&UUID.test(result.workspaceId??''),'The bank reply lost its original workspace binding.','REPLY');
+        need(result.workspace===workspace&&SHA.test(result.workspaceId??''),'The bank reply lost its original workspace binding.','REPLY');
         if(selected.workspaceId)need(result.workspaceId===selected.workspaceId,'The reply belongs to another accounting workspace.','REQUEST_BINDING');
         return result;
       });

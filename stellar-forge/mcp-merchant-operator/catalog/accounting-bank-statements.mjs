@@ -10,7 +10,7 @@ const array=(items,maxItems)=>({type:'array',items,maxItems});
 const original=obj({},[],true);
 const currency=obj({code:text(12,1),scale:{type:'integer',minimum:0,maximum:18}},['code','scale']);
 const base={workspace:alias},revision={type:'integer',minimum:1};
-const change={...base,workspaceId:uuid,revision,requestId:stable,actor:text(1000,1)};
+const change={...base,workspaceId:hash,revision,requestId:stable,actor:text(1000,1)};
 const required=['workspace','workspaceId','revision','requestId','actor'];
 const paging={offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:500}};
 const date={type:'string',pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'};
@@ -24,7 +24,7 @@ export const bankStatementsDefinitions=[
  read('status','Read the original Bank reconciliation summary or page every saved account, import, close, reopening, customer, period close or complete bank operation history. This is the existing accounting workspace.',{view:{type:'string',enum:['summary','accounts','imports','closes','reopenings','customers','periodCloses','history']},accountId:uuid,search:text(300),...paging}),
  read('source_preview','Inspect complete original CSV/OFX/QFX/CAMT bytes and explicit interpretation through the maintained parser. A declared receivablesInputs sourceAlias resolves once into returned sourceInput; retain those exact bytes for source_import.',{source:original,sourceAlias:alias},['source']),
  mutate('account_save','Bind one original bank source account and exact currency to the existing ledger. Retain request identity before dispatch.',{account:obj({name:text(160,1),currency,sourceIdentitySha256:hash,sourceIdentity:original,note:text(4000)},['name','currency','sourceIdentitySha256'])},['account']),
- mutate('source_import','Receive one reviewed original source statement and interpretation. Keep the returned sourceInput, reviewSha256, actual workspace UUID and chosen statement/account. No live aliases on mutations.',{accountId:uuid,statementId:text(240,1),source:original,reviewSha256:hash,supersedesImportId:uuid,receiptIntakeAccountId:uuid},['accountId','statementId','source','reviewSha256']),
+ mutate('source_import','Receive one reviewed original source statement and interpretation. Keep the returned sourceInput, reviewSha256, actual workspace identity SHA256 and chosen statement/account. No live aliases on mutations.',{accountId:uuid,statementId:text(240,1),source:original,reviewSha256:hash,supersedesImportId:uuid,receiptIntakeAccountId:uuid},['accountId','statementId','source','reviewSha256']),
  read('transactions','Page all original physical bank transactions, matching and source-review dispositions at one revision.',{accountId:uuid,status:text(40),search:text(300),...paging}),
  read('transaction','Read the complete original transaction, source copies, exact matching candidates, receipts/refunds and invoices.',{bankTransactionId:uuid},['bankTransactionId']),
  read('import','Read complete retained import and parsed source report with original-file selectors; no original rows are truncated.',{bankStatementImportId:uuid},['bankStatementImportId']),

@@ -15,7 +15,7 @@ starforge merchant-accounting-bank-statements open --url ORIGINAL_MCP_URL --work
 starforge merchant-accounting-bank-statements status --url ORIGINAL_MCP_URL --workspace ORIGINAL_ALIAS
 ~~~
 
-Authentication stays in MCP_ACCESS_TOKEN, or the explicitly selected --token-env variable. Keep actual workspaceId and revision returned by status. Every mutation requires that original UUID, actor and requestId in addition to the optimistic revision.
+Authentication stays in MCP_ACCESS_TOKEN, or the explicitly selected --token-env variable. Keep actual workspaceId and revision returned by status. Every mutation requires that original identity SHA256, actor and requestId in addition to the optimistic revision.
 
 ## Receive the complete original statement
 
@@ -72,7 +72,7 @@ The adapter never calculates replacement balances or infers cash acceptance. Ori
 
 Use assembly-preview with the actual accountId and every selected original importId. Review the complete sequence, page count, gaps, boundaries, source amounts and assembly sourceClosing. Carry that exact sourceClosing into close-preview with the reviewed original account period. Operator-entered balances require their explicit original balanceNote.
 
-close-preview returns the full original report plus closeInput. The typed accountingBankStatementsCloseArguments helper preserves that complete input, actual revision, workspace UUID and reviewSha256, adding only the original actor/requestId/name/note. Native close refuses unresolved source rows, posting differences or bank-balance differences.
+close-preview returns the full original report plus closeInput. The typed accountingBankStatementsCloseArguments helper preserves that complete input, actual revision, workspace identity SHA256 and reviewSha256, adding only the original actor/requestId/name/note. Native close refuses unresolved source rows, posting differences or bank-balance differences.
 
 A close retains its original statement files, complete transactions/postings, related customer source, editable JSON, readable HTML, CSVs and manifest. close-detail returns full current comparison and exact file selectors. Its account.tar is the selected account-close handover. Whole-accounting-directory continued editing and operating recovery remain the original accounting maintenance backup/restore workflow.
 
@@ -87,7 +87,7 @@ starforge merchant-accounting-bank-statements execute --dir ORIGINAL_OPERATION
 starforge merchant-accounting-bank-statements reconcile --dir ORIGINAL_OPERATION
 ~~~
 
-prepare writes the complete request and source bytes before dispatch. execute first looks up the original stable request. If absent it sends at most one mutation call, recording SENDING first. A lost reply causes an original journal lookup. The recovered operation must match native action, actor, workspace UUID and exact original intent SHA, including the native insertion of transaction/close selectors. Revision remains in the prepared request; native replay excludes it from the original intent exactly as the engine does.
+prepare writes the complete request and source bytes before dispatch. execute first looks up the original stable request. If absent it sends at most one mutation call, recording SENDING first. A lost reply causes an original journal lookup. The recovered operation must match native action, actor, workspace identity SHA256 and exact original intent SHA, including the native insertion of transaction/close selectors. Revision remains in the prepared request; native replay excludes it from the original intent exactly as the engine does.
 
 A rejected stale business choice needs an explicit new review and new request ID. outcomeUnknown, reopenRequired and commitUncertainty remain with the original saved request. Reopen that same owner through its existing maintenance controls, then reconcile. An absent lookup alone does not authorize a different intent or a second accounting workspace.
 
