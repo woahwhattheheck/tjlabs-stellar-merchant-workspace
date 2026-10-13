@@ -6,6 +6,7 @@ import { createOperatingPlan, createOperatingStep, inspectOperatingPlan, receive
 export const GRANT_OPERATING_SELECTION_SCHEMA = 'stellar-forge.grant-operating-selection.v1';
 export const GRANT_OPERATING_PREPARATION_SCHEMA = 'stellar-forge.grant-operating-preparation.v1';
 export const GRANT_OPERATING_CONTINUATION_SCHEMA = 'stellar-forge.grant-operating-continuation.v1';
+export const GRANT_OPERATING_RETURN_REVIEW_SCHEMA = 'stellar-forge.grant-operating-return-review.v1';
 export const GRANT_OPERATING_RETURN_COMPARISON_SCHEMA = 'stellar-forge.grant-operating-return-comparison.v1';
 const copy = value => JSON.parse(JSON.stringify(value));
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -48,6 +49,7 @@ export function validateGrantOperatingSelection(value, source, revision) {
     need(Array.isArray(item.packageIds) && item.packageIds.every(id => packageIds.has(id)) &&
       new Set(item.packageIds).size === item.packageIds.length, 'Retain the original selected work-package identities.');
   }
+  if (value.pendingReturn !== undefined) validatePendingReturn(value.pendingReturn, value, source, revision);
   return value;
 }
 /** Read the native summary; prices, scope and relative dates are never recalculated here. */
@@ -177,17 +179,75 @@ function returnContext(source, review, incoming) {
   });
   return { selection, index, prepared, received, existing, merged, packages };
 }
+
+function validatePendingReturn(pending, selection, source, revision) {
+  need(plain(pending) && pending.schema === GRANT_OPERATING_RETURN_REVIEW_SCHEMA &&
+    pending.sourceSha256 === source.sha256 && pending.nativeRevision === revision,
+  'Keep the complete opened return with its original planning source and native revision.');
+  receivingTime(pending.openedAt); text(pending.filename, 'Returned procedure filename', 300);
+  text(pending.note, 'Procedure receiving note');
+  const incoming = inspectOperatingPlan(pending.incoming);
+  const prepared = selection.prepared.find(item => item.plan.id === incoming.id);
+  need(prepared, 'Keep the opened return with its original prepared procedure.');
+  const current = grantOperatingContinuationPlan(prepared);
+  receiveOperatingPlan(incoming, current);
+  need(Number.isSafeInteger(pending.comparedRevision) &&
+    pending.comparedRevision >= prepared.plan.revisions.length &&
+    pending.comparedRevision <= current.revisions.length,
+  'Retain the selected operating revision from the original return comparison.');
+}
+/** Retain unfinished review in the same durable planning review as its preparation. */
+export function openGrantOperatingReturn(source, review, incoming, {
+  filename = '', note = '', openedAt = new Date().toISOString(),
+} = {}) {
+  receivingTime(openedAt); text(filename, 'Returned procedure filename', 300);
+  text(note, 'Procedure receiving note');
+  const comparison = compareGrantOperatingReturn(source, review, incoming);
+  const next = copy(review), selection = grantOperatingSelectionOf(next, source);
+  selection.pendingReturn = { schema: GRANT_OPERATING_RETURN_REVIEW_SCHEMA,
+    sourceSha256: source.sha256, nativeRevision: review.revision, openedAt,
+    incoming: inspectOperatingPlan(incoming), filename, note,
+    comparedRevision: comparison.previousRevision };
+  next.operatingSelection = validateGrantOperatingSelection(selection, source, review.revision);
+  return { review: next, comparison };
+}
+function operatingStepOrder(original, previous, returned, packages) {
+  const packageByStep = new Map(packages.map(item => [item.stepId, item.packageId]));
+  const describe = revision => revision.steps.map((step, index) => ({
+    stepId: step.id, title: step.title, packageId: packageByStep.get(step.id) ?? null, position: index + 1,
+  }));
+  const prepared = describe(original), before = describe(previous), next = describe(returned);
+  const ids = [...new Set([...next, ...before, ...prepared].map(step => step.stepId))];
+  const positions = ids.map(stepId => {
+    const a = prepared.find(step => step.stepId === stepId), b = before.find(step => step.stepId === stepId),
+      c = next.find(step => step.stepId === stepId);
+    return { stepId, packageId: packageByStep.get(stepId) ?? null,
+      prepared: a?.position ?? null, previous: b?.position ?? null, returned: c?.position ?? null,
+      movedFromPrepared: Boolean(a && c && a.position !== c.position),
+      movedFromPrevious: Boolean(b && c && b.position !== c.position),
+      addedFromPrepared: !a && Boolean(c), removedFromPrepared: Boolean(a) && !c,
+      addedFromPrevious: !b && Boolean(c), removedFromPrevious: Boolean(b) && !c };
+  });
+  return { prepared, previous: before, returned: next, positions,
+    changedFromPrepared: !sameValue(prepared.map(item => item.stepId), next.map(item => item.stepId)),
+    changedFromPrevious: !sameValue(before.map(item => item.stepId), next.map(item => item.stepId)) };
+}
+
 /** Inspect the whole incoming history before receiving it into the original planning review. */
 export function compareGrantOperatingReturn(source, review, incoming) {
   const context = returnContext(source, review, incoming);
   const { prepared, received, existing, merged } = context;
   const original = prepared.plan.revisions.at(-1), previous = existing.revisions.at(-1), next = received.revisions.at(-1);
+  const stepOrder = operatingStepOrder(original, previous, next, context.packages);
   const packages = context.packages.map(item => {
     const before = previous.steps.find(step => step.id === item.stepId) ?? null;
     const returned = next.steps.find(step => step.id === item.stepId) ?? null;
-    return { ...item, previous: copy(before), returned: copy(returned), status: returned?.status ?? 'missing',
-      changedFromPrepared: STEP_COMPARISON_FIELDS.filter(field => !sameValue(item.original[field], returned?.[field])),
-      changedFromPrevious: STEP_COMPARISON_FIELDS.filter(field => !sameValue(before?.[field], returned?.[field])) };
+    const positions = stepOrder.positions.find(step => step.stepId === item.stepId);
+    return { ...item, previous: copy(before), returned: copy(returned), positions: copy(positions), status: returned?.status ?? 'missing',
+      changedFromPrepared: [...STEP_COMPARISON_FIELDS.filter(field => !sameValue(item.original[field], returned?.[field])),
+        ...(positions.prepared !== positions.returned ? ['position'] : [])],
+      changedFromPrevious: [...STEP_COMPARISON_FIELDS.filter(field => !sameValue(before?.[field], returned?.[field])),
+        ...(positions.previous !== positions.returned ? ['position'] : [])] };
   });
   const originalIds = new Set(packages.map(item => item.stepId));
   return { schema: GRANT_OPERATING_RETURN_COMPARISON_SCHEMA,
@@ -198,7 +258,7 @@ export function compareGrantOperatingReturn(source, review, incoming) {
     originalTitle: original.title, previousTitle: previous.title, incomingTitle: next.title,
     planChanges: PLAN_COMPARISON_FIELDS.filter(field => !sameValue(previous[field], next[field])).map(field =>
       ({ field, original: copy(original[field]), previous: copy(previous[field]), returned: copy(next[field]) })),
-    packages, additionalSteps: copy(next.steps.filter(step => !originalIds.has(step.id))),
+    stepOrder, packages, additionalSteps: copy(next.steps.filter(step => !originalIds.has(step.id))),
     counts: Object.fromEntries(['planned', 'in-progress', 'completed', 'skipped', 'missing'].map(status =>
       [status, packages.filter(item => item.status === status).length])) };
 }
@@ -219,6 +279,8 @@ export function receiveGrantOperatingReturn(source, review, incoming, {
     receipts: [...copy(prepared.continuation?.receipts ?? []), {
       at, filename, note, fromRevision: comparison.previousRevision, toRevision: comparison.incomingRevision,
     }] };
+  if (selection.pendingReturn && sameValue(selection.pendingReturn.incoming, inspectOperatingPlan(incoming)))
+    delete selection.pendingReturn;
   validateGrantOperatingSelection(selection, source, next.revision);
   next.operatingSelection = selection;
   return { review: next, comparison, reused: false, addedRevisions: received.addedRevisions };
