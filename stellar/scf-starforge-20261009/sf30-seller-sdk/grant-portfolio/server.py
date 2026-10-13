@@ -117,6 +117,8 @@ class Console:
                     static = {"/": ("index.html", "text/html; charset=utf-8"),
                               "/app.js": ("app.js", "text/javascript; charset=utf-8"),
                               "/programme.js": ("programme.js", "text/javascript; charset=utf-8"),
+                              "/recipient-project.js": ("recipient-project.js", "text/javascript; charset=utf-8"),
+                              "/recipient-project.css": ("recipient-project.css", "text/css; charset=utf-8"),
                               "/programme.css": ("programme.css", "text/css; charset=utf-8"),
                               "/awards.js": ("awards.js", "text/javascript; charset=utf-8"),
                               "/awards-exchange.js": ("awards-exchange.js", "text/javascript; charset=utf-8"),
@@ -124,6 +126,7 @@ class Console:
                               "/style.css": ("style.css", "text/css; charset=utf-8")}
                     extra_static = extension_static_routes()
                     extra_static["/awards-exchange-core.mjs"] = ("awards-exchange-core.mjs", "text/javascript; charset=utf-8")
+                    extra_static["/recipient-project-core.mjs"] = ("recipient-project-core.mjs", "text/javascript; charset=utf-8")
                     if path in static or path in extra_static:
                         if path in static:
                             filename, content_type = static[path]
