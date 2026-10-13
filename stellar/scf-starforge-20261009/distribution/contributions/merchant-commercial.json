@@ -17,7 +17,8 @@
     "stellar/scf_2026/sf47_budget_model/workspace/commercial_installation_source.mjs",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/ECONOMICS.md",
     "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/ECONOMICS_RECEIVING.md",
-    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving-journey.mjs"
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving-journey.mjs",
+    "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs"
   ],
   "commands": {
     "merchant-commercial": "stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial-cli.mjs"
@@ -49,6 +50,7 @@
     },
     "./merchant/commercial-performance-desk": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/performance-desk.mjs",
     "./merchant/commercial-economics": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics.mjs",
-    "./merchant/commercial-economics-receiving": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving.mjs"
+    "./merchant/commercial-economics-receiving": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-receiving.mjs",
+    "./merchant/commercial-economics-example": "./source/stellar/scf-starforge-20261009/sf74-merchant-support-console/commercial/economics-example.mjs"
   }
 }
