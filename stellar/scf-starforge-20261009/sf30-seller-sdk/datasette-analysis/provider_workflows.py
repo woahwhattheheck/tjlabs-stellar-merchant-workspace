@@ -252,6 +252,8 @@ class ProviderWorkflows:
             row = db.execute("SELECT value FROM workflow_meta WHERE key='workspaceId'").fetchone()
         need(row, "PROVIDER_WORKSPACE", "Open the original workflow workspace first.")
         self.workspace_id = row[0]
+        from provider_inputs import ProviderInputs
+        self.inputs = ProviderInputs(self.workspace, self.workspace_id)
         if configuration_file is not None:
             if isinstance(configuration_file, dict):
                 configuration_file = verify(configuration_file["path"], configuration_file)
@@ -314,8 +316,44 @@ class ProviderWorkflows:
     def _selected(self, group, ident):
         need(self.configuration is not None, "PROVIDER_NOT_CONFIGURED", "Open with the installed private provider descriptor to start new work.")
         rows = [x for x in self.configuration[group] if x["id"] == ident]
+        if group == "inputs" and not rows:
+            return self.inputs.selected(ident)
         need(len(rows) == 1, "PROVIDER_SELECTION", "Select an existing installed " + group + " ID.")
         return rows[0]
+
+    def begin_input(self, request):
+        need(isinstance(request, dict), "PROVIDER_INPUT", "Select the complete original file.")
+        configured = (self.configuration or {}).get("inputs", [])
+        need(not any(x["id"] == request.get("inputId") for x in configured),
+             "PROVIDER_INPUT_COLLISION", "Retain the configured original input and use a new received input ID.")
+        return self.inputs.begin(request)
+
+    def list_inputs(self):
+        return self.inputs.list()
+
+    def input_status(self, ident):
+        return self.inputs.status(ident)
+
+    def input_chunk(self, ident, *, offset, length, sha256, source):
+        return self.inputs.chunk(ident, offset=offset, length=length, sha256=sha256, source=source)
+
+    def complete_input(self, ident, request=None):
+        return self.inputs.complete(ident, request)
+
+    def input_file(self, ident):
+        return self.inputs.file(ident)
+
+    def _catalog_inputs(self, configured):
+        rows = [{"id": x["id"], "title": x.get("title", x["id"]), "kind": x["kind"],
+                 "available": Path(x["path"]).is_file(), "origin": "installed"}
+                for x in configured]
+        seen = {x["id"] for x in rows}
+        for item in self.inputs.list()["inputs"]:
+            need(item["id"] not in seen, "PROVIDER_INPUT_COLLISION",
+                 "A received input ID conflicts with the installed configuration.")
+            if item["status"] == "COMPLETE":
+                rows.append(item)
+        return rows
 
     def catalog(self):
         cfg = self.configuration or {"connections": [], "inputs": [], "installations": []}
@@ -323,8 +361,7 @@ class ProviderWorkflows:
                 "connections": [{"id": x["id"], "title": x.get("title", x["id"]), "provider": x["provider"],
                                  "credential": {"reference": x["tokenEnv"], "available": bool(os.environ.get(x["tokenEnv"]))},
                                  "selection": x["capture"], "actions": ACTIONS[x["provider"]]} for x in cfg["connections"]],
-                "inputs": [{"id": x["id"], "title": x.get("title", x["id"]), "kind": x["kind"],
-                            "available": Path(x["path"]).is_file()} for x in cfg["inputs"]],
+                "inputs": self._catalog_inputs(cfg["inputs"]),
                 "installations": [{"id": x["id"], "title": x.get("title", x["id"]),
                                    "available": all(Path(x[k]).exists() for k in ("analysisWorkspace", "parser", "sourceArchive"))}
                                   for x in cfg["installations"]],
@@ -394,7 +431,7 @@ class ProviderWorkflows:
         for name in names:
             p = HERE / "partner-workflows" / name
             rows.append({"path": str(p), **descriptor(p)})
-        for name in ("workflow_cli.py", "workflow_engine.py", "provider_workflows.py"):
+        for name in ("workflow_cli.py", "workflow_engine.py", "provider_workflows.py", "provider_inputs.py"):
             p = HERE / name
             rows.append({"path": str(p), **descriptor(p)})
         return rows
@@ -430,7 +467,9 @@ class ProviderWorkflows:
         need(selected["kind"] in kinds, "PROVIDER_INPUT_KIND", "Select an original input of kind " + ", ".join(kinds) + ".")
         dest = input_root / name
         receipt = copy_original(selected["path"], dest)
-        return {"id": ident, "kind": selected["kind"], "path": str(dest), "originalName": Path(selected["path"]).name, **receipt}
+        return {"id": ident, "kind": selected["kind"], "path": str(dest),
+                "originalName": selected.get("fileName") or Path(selected["path"]).name,
+                **({"sourceInput": selected["inputRecord"]} if selected.get("inputRecord") else {}), **receipt}
 
     def _bind(self, body, connection, directory):
         action, inp, provider = body["action"], body["inputs"], connection["provider"]

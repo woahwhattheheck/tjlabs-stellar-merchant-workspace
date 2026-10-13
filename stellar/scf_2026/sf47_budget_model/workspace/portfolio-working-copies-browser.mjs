@@ -11,6 +11,7 @@ export async function operatePortfolioWorkingCopies(host){
  await mkdir(folder,{recursive:true,mode:0o700});
  assert.match(input.portfolioId||'',/^portfolio-[a-f0-9]{32}$/,'Select the original saved allocation explicitly.');
  const sourcePaths=['portfolio-working-copies.mjs','portfolio-working-copy-store.mjs','portfolio.mjs','portfolio.css'];
+ if(input.portfolioAvailability)sourcePaths.push('portfolio-availability.mjs','portfolio-availability-desk.mjs','portfolio-availability.css');
  assert.ok(input.portfolioSourceSha256&&sourcePaths.every(name=>/^[a-f0-9]{64}$/.test(input.portfolioSourceSha256[name]||'')),'Pin every served Portfolio source in the original context.');
  const original=await native('/api/operations/'+input.caseId+'/portfolios/'+input.portfolioId);
  assert.equal(original.id,input.portfolioId);
@@ -76,14 +77,32 @@ export async function operatePortfolioWorkingCopies(host){
   function copy(c){session(c.head);for(const h of c.checkpoints)session(h.session);for(const l of c.lineage)copy(l.sourceCopy);}
   copy(value.copy);return {value,sessions,attachments};
  }
+ async function verifyRetainedArtifacts(record,directory,label){
+  for(const [name,expected]of Object.entries(record.files||{})){
+   assert.ok(expected&&typeof expected.path==='string'&&Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&/^[a-f0-9]{64}$/.test(expected.sha256||''),'Retain the complete original file identity: '+label+' / '+name);
+   let actual;try{actual=await fileIdentity(expected.path);}catch(error){throw new Error('Recover the exact retained Portfolio output '+expected.path+' before continuing '+label+'. Prior phase and file identity remain unchanged. '+error.message);}
+   assert.equal(actual.bytes,expected.bytes,'Retained Portfolio output size changed: '+expected.path);
+   assert.equal(actual.sha256,expected.sha256,'Retained Portfolio output bytes changed: '+expected.path);
+  }
+  for(const [name,expected]of Object.entries(record.visualReview||{})){
+   assert.ok(expected&&typeof expected.filename==='string'&&Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&/^[a-f0-9]{64}$/.test(expected.sha256||''),'Retain the original rendered image identity: '+label+' / '+name);
+   const path=join(directory,expected.filename);let actual;
+   try{actual=await fileIdentity(path);}catch(error){throw new Error('Recover the exact original rendered Portfolio image '+path+' before continuing '+label+'. Prior visual review remains unchanged. '+error.message);}
+   assert.equal(actual.bytes,expected.bytes,'Original Portfolio image size changed: '+path);
+   assert.equal(actual.sha256,expected.sha256,'Original Portfolio image bytes changed: '+path);
+  }
+ }
  // Re-read actual served bytes on every continuation; completed phase data is not a source check.
  const actual={};
  for(const name of sourcePaths){const bytes=await native('/'+name,{binary:true});actual[name]=createHash('sha256').update(bytes).digest('hex');assert.equal(actual[name],input.portfolioSourceSha256[name],'Receive the exact selected source: '+name);}
  progress.phases['portfolio-exact-installed-source']={complete:true,completedAt:stamp(),result:actual};
  await saveProgress();
+ await verifyRetainedArtifacts(progress,out,'the same receiving continuation');
  await open(page);
  if(cold){
   const previous=JSON.parse(await readFile(join(input.directory,'browser-portfolio-result.json'),'utf8'));
+  assert.equal(previous.operationId,input.operationId);assert.equal(previous.caseId,input.caseId);
+  await verifyRetainedArtifacts(previous,join(input.directory,'browser-portfolio'),'the original completed receiving result');
   await phase('portfolio-cold-original-case-and-copy',async()=>{
    await chooseCopy(page,previous.selectedCopyId);const copy=await selected(page);assert.equal(copy.head.state.pending,null);assert.equal(copy.head.state.savedChoice,previous.savedPortfolioId);
    const saved=await native('/api/operations/'+input.caseId+'/portfolios/'+previous.savedPortfolioId);assert.equal(saved.sha256,previous.savedPortfolioSha256);
@@ -91,6 +110,7 @@ export async function operatePortfolioWorkingCopies(host){
    return {copyId:copy.id,portfolioId:saved.id,sha256:saved.sha256};
   });
   await saveDownload(page,()=>action(page,'working-export'),'portfolio-cold-working-copy.json');await verifyFile(join(folder,'portfolio-cold-working-copy.json'));
+  await verifyRetainedArtifacts(progress,out,'the cold receiving result');
   return {schema:'stellar-forge.portfolio-working-copy-browser.v1',operationId:input.operationId,caseId:input.caseId,mode:'cold',completedAt:stamp(),phases:progress.phases,files:progress.files,visualReview:progress.visualReview};
  }
  const baseline=await phase('portfolio-original-source-and-first-images',async()=>{
@@ -173,6 +193,56 @@ export async function operatePortfolioWorkingCopies(host){
  });
  await open(page);
  await chooseCopy(page,concurrent.secondCopyId);
+ if(input.portfolioAvailability)await phase('portfolio-resource-availability-complete-review',async()=>{
+  await editSelected(page);let current=await selected(page);
+  const resource=current.head.state.draft.resources[0],calendar=current.head.state.draft.calendar;
+  assert.ok(resource,'Continue the original populated resource.');
+  const start=calendar.startDate,last=new Date(Date.parse(start+'T00:00:00Z')+2*86400000).toISOString().slice(0,10);
+  assert.ok(calendar.horizonDays>=3,'The selected original course uses at least three program dates.');
+  const tab=()=>page.locator('[data-portfolio-action=tab][data-id=availability]').click();
+  const av=async name=>{await page.locator('[data-av-action="'+name+'"]').click();await idle(page);};
+  await tab();await page.locator('[data-av-field=profile]').selectOption('base');await page.locator('[data-av-field=resource]').selectOption(resource.id);await page.locator('[data-av-field=kind]').selectOption('RANGE');
+  await page.locator('[data-av-field=hours]').fill('0.');
+  await page.locator('[data-av-field=from]').fill(start.slice(0,-2));
+  await page.locator('[data-av-field=note]').fill(requestedNote('three-day capacity planning review'));
+  await retained(page,c=>Object.values(c.head.state.availabilityDesk.drafts).some(d=>d.resourceId===resource.id&&d.hours==='0.'&&d.from===start.slice(0,-2)),'Retain incomplete original calendar controls');
+  await open(page);await tab();
+  assert.equal(await page.locator('[data-av-field=hours]').inputValue(),'0.');
+  assert.equal(await page.locator('[data-av-field=from]').inputValue(),start.slice(0,-2));
+  await capture('portfolio-availability-01-unfinished-desktop.png');
+  await page.locator('[data-av-field=kind]').selectOption('RANGE');
+  await page.locator('[data-av-field=operation]').selectOption('SET');
+  await page.locator('[data-av-field=from]').fill(start);await page.locator('[data-av-field=to]').fill(last);
+  await page.locator('[data-av-field=hours]').fill('0');
+  for(const box of await page.locator('[data-av-weekday]').all())await box.check();
+  await page.locator('[data-av-field=includeClosed]').check();await av('prepare');
+  await retained(page,c=>Object.values(c.head.state.availabilityDesk.drafts).some(d=>d.proposal?.rows.length===3),'Retain every original/current/proposed date');
+  await capture('portfolio-availability-02-review-desktop.png');await capture('portfolio-availability-02-review-phone.png',{width:390,height:844});await page.setViewportSize({width:1440,height:1000});
+  process.stdout.write(json({phase:'portfolio-availability-first-images',images:['portfolio-availability-02-review-desktop.png','portfolio-availability-02-review-phone.png'],instruction:'Open and LOOK at these exact resource-calendar screens before continuing the outgoing product review.'}));
+  const reviewFile=await saveDownload(page,()=>av('review-json'),'portfolio-resource-availability-before.json');
+  const review=JSON.parse(await readFile(reviewFile.path,'utf8'));assert.equal(review.rows.length,3);assert.ok(review.rows.every(r=>r.proposed.hours==='0'));
+  const already=(await selected(page)).head.state.availabilityDesk.history.find(h=>h.proposal.command.kind==='RANGE'&&h.proposal.command.operation==='SET'&&h.proposal.command.hours==='0'&&h.proposal.command.from===start&&h.proposal.command.to===last&&h.proposal.command.note===requestedNote('three-day capacity planning review'));
+  const rangeDates=Array.from({length:3},(_,i)=>new Date(Date.parse(start+'T00:00:00Z')+i*86400000).toISOString().slice(0,10));
+  const alreadyCurrent=(await selected(page)).head.state.draft.resources.find(r=>r.id===resource.id);
+  if(already&&rangeDates.every(d=>String(alreadyCurrent.hoursByDate[d])==='0'))await av('clear-review');else await av('apply');
+  current=await retained(page,c=>c.head.state.availabilityDesk.history.some(h=>h.proposal.command.note===requestedNote('three-day capacity planning review'))&&rangeDates.every(d=>String(c.head.state.draft.resources.find(r=>r.id===resource.id).hoursByDate[d])==='0'),'Retain complete applied resource review');
+  assert.equal(current.head.state.draft.resources[0].hoursByDate[start],'0');
+  const appliedHistory=structuredClone(current.head.state.availabilityDesk.history);
+  await saveDownload(page,()=>av('csv'),'portfolio-resource-availability-calendar.csv');
+  await saveDownload(page,()=>av('json'),'portfolio-resource-availability-calendar.json');
+  const working=await saveDownload(page,()=>action(page,'working-export'),'portfolio-availability-complete-working-copy.json');
+  const received=await verifyFile(working.path);assert.deepEqual(received.value.copy.head.state.availabilityDesk.history,appliedHistory);
+  await open(page);current=await selected(page);assert.deepEqual(current.head.state.availabilityDesk.history,appliedHistory);assert.equal(current.head.state.draft.resources[0].hoursByDate[start],'0');
+  await tab();await page.locator('[data-av-field=kind]').selectOption('WEEKLY');
+  await page.locator('[data-av-field="value:0"]').fill('');
+  await av('prepare');
+  const weeklyFile=await saveDownload(page,()=>av('review-json'),'portfolio-resource-availability-weekly-review.json');
+  const weekly=JSON.parse(await readFile(weeklyFile.path,'utf8'));assert.equal(weekly.rows.length,calendar.horizonDays);
+  assert.equal(weekly.proposal.command.values[0],'');assert.equal(weekly.proposal.nextResource.hoursByWeekday[0],null);
+  await av('clear-review');
+  await page.locator('[data-portfolio-action=tab][data-id=inputs]').click();
+  return {copyId:current.id,resourceId:resource.id,from:start,to:last,dates:3,explicitHours:'0',repeatingReviewDates:weekly.rows.length,completeAppliedReviews:appliedHistory.length,weeklyUnknownReviewedOnly:true,sourceForecastId:current.head.state.draft.forecastId};
+ });
  await phase('portfolio-native-preview',async()=>{
   const pattern='**/api/operations/'+input.caseId+'/portfolio-preview';
   await page.route(pattern,async route=>{
@@ -239,5 +309,6 @@ export async function operatePortfolioWorkingCopies(host){
   await capture('portfolio-05-final-desktop.png');await capture('portfolio-05-final-phone.png',{width:390,height:844});
   return {copyId:saved.copyId,portfolioId:saved.portfolioId};
  });
+ await verifyRetainedArtifacts(progress,out,'the complete receiving result');
  return {schema:'stellar-forge.portfolio-working-copy-browser.v1',operationId:input.operationId,caseId:input.caseId,mode:'operate',completedAt:stamp(),selectedCopyId:saved.copyId,savedPortfolioId:saved.portfolioId,savedPortfolioSha256:saved.sha256,phases:progress.phases,files:progress.files,visualReview:progress.visualReview,sourcePortfolioId:original.id,sourcePortfolioSha256:original.sha256};
 }

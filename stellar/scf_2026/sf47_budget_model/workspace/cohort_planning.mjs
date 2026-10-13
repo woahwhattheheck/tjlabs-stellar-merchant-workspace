@@ -1506,3 +1506,50 @@ export function exportCohortPlanComparisonCsv(comparison) {
     add("FINDING_" + kind.toUpperCase(), row.id ?? "", row.code, { before: kind === "removed" ? row.message : null, after: kind === "added" ? row.message : null }, "", row.scope);
   return rows.map(row => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
+
+/**
+ * Evaluate one quoted workshare through the original exact-decimal engine.
+ * This has no cohort admission, purchase, Forecast or cash-record side effect.
+ */
+export function evaluateWorkshareEconomics(raw, options = {}) {
+  const label = "workshare";
+  const row = fields(object(raw, label), ["id", "label", "currency", "fee", "hours", "hourlyCost", "otherCosts", "sourceIds", "sourceNote"], label);
+  const normalized = {id:id(row.id,label+".id"),label:textValue(row.label,label+".label",true,500),
+    currency:moneyCurrency(row.currency,label+".currency"),...evidence(row,label)};
+  for (const key of ["fee","hours","hourlyCost","otherCosts"])
+    normalized[key] = nullableDecimal(row[key],label+"."+key);
+  fields(object(options,"workshare options"),["effortIncreasesPct","costs","costCoverage","availableHours","committedHours"],"workshare options");
+  const increases = [...new Set(["0",...array(options.effortIncreasesPct ?? ["0","20","25"],"effortIncreasesPct",30)
+    .map(value=>decimalText(decimal(value,"Effort increase")))])];
+  let otherCostCoverage = null;
+  if (options.costs !== undefined) {
+    const costs = array(options.costs,"costs",500).map((value,i)=>nullableDecimal(value,"costs["+i+"]"));
+    const coverage = enumValue(options.costCoverage,["INCOMPLETE","COMPLETE"],"costCoverage");
+    let known = ZERO;
+    for (const value of costs) if (value !== null) known = decimalAdd(known,decimal(value,"cost"));
+    const unknownCount = costs.filter(value=>value===null).length;
+    const complete = coverage === "COMPLETE" && unknownCount === 0;
+    otherCostCoverage = {knownSubtotal:decimalText(known),unknownCount,complete};
+    normalized.otherCosts = complete ? decimalText(known) : null;
+  }
+  const result = workshareResult(normalized,increases);
+  const available = nullableDecimal(options.availableHours,"availableHours");
+  const committed = nullableDecimal(options.committedHours,"committedHours");
+  function capacityFor(hoursValue) {
+    const capacity={availableHours:available,committedHours:committed,remainingHours:null,maxWholeWorkshares:null,status:"UNKNOWN"};
+    if (available !== null && committed !== null) {
+      const remaining=decimalSubtract(decimal(available,"availableHours"),decimal(committed,"committedHours"));
+      capacity.remainingHours=decimalText(remaining);
+      if (remaining.n<0n) {capacity.maxWholeWorkshares="0";capacity.status="OVERCOMMITTED";}
+      else if (hoursValue!==null) {
+        const hours=computedDecimal(hoursValue,"hours");
+        if(hours.n===0n)capacity.status="ZERO_HOURS_UNBOUNDED";
+        else{capacity.maxWholeWorkshares=String(remaining.n*power(hours.s)/(hours.n*power(remaining.s)));capacity.status="CALCULATED";}
+      }
+    }
+    return capacity;
+  }
+  const capacity=capacityFor(normalized.hours);
+  const capacityCases=result.cases.map(row=>({effortIncreasePct:row.effortIncreasePct,hours:row.hours,...capacityFor(row.hours)}));
+  return {...result,otherCostCoverage,capacity,capacityCases};
+}

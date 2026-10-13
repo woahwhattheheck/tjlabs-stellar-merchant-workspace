@@ -471,3 +471,11 @@ The **Workspace handover** view prepares a streamed private `.stwh` archive of t
 Receive the exact archive into a named independent workspace. Host paths are rebound separately while original source and deployment identities remain in the saved history. The receiving project can be opened, edited, published and handed over again through the same original application and merchant tools. Original source/version packets remain available for narrower source-only intake.
 
 Use [Workspace handover](HANDOVER.md) for browser, streamed CLI, recovery and receiving controls. The complete [customer commissioning course](../../../../products/seatable/COMMISSIONING.md) joins source review, independent receiving, original publisher/SF82 operation and delivery in the existing SeaTable programme.
+
+## Review a customer's returned working draft
+
+Receive the customer's complete progressed workspace as a named independent child, then use **Returned customer review** in the original author's workspace. Capture freezes that child's complete draft and retained source/history at the current author draft revision. The comparison identifies the actual common saved record by original request, source, values and field order; equal numeric revisions do not establish ancestry. Review all changed fields, retain explicit local/returned/base choices for conflicts, and save the complete review before applying it.
+
+Apply changes only the original author's draft in one saved operation. It preserves the prior selected source version, publisher, native deployment and full independent child. Run the ordinary full-row preview and reviewed version/publication course explicitly afterward. The original operation UUID resolves a lost save/apply reply; refreshed source or draft identities require a new deliberate review. Complete reviewed return JSON and the subsequent whole-workspace archive retain incoming ancestry and prior review revisions for another customer round.
+
+[HANDOVER.md](HANDOVER.md) contains the browser, CLI and seven customer-agent return tools. The [commissioning course](../../../../products/seatable/COMMISSIONING.md) covers both original customer review rounds, source/value decisions, full delivery and independent reopening.

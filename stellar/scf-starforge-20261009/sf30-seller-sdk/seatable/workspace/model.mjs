@@ -23,6 +23,7 @@ import {createSeaTableWorkspaceHandover,seaTableWorkspaceHandoverFile,receiveSea
 import {startWorkspaceUpload,appendWorkspaceUpload,finishWorkspaceUpload,workspaceUploadStatus,completedWorkspaceUpload} from './uploads.mjs';
 import {acquireDatasetLease} from '../../dataset-refresh/writer-lease.mjs';
 import {withStoppedReleaseCopy} from '../../../sf82-seller-pilot/releases.mjs';
+import {seaTableDraftIdentity,seaTableDraftRecord,seaTableReturnSnapshot,compareSeaTableReturn,seaTableReturnSummary} from './returns.mjs';
 const SCHEMA = 'stellar-forge.seatable-authoring.v1';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const decode = value => { try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(value)); }
@@ -111,6 +112,8 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
       CREATE TABLE IF NOT EXISTS versions(id INTEGER PRIMARY KEY,request_id TEXT NOT NULL UNIQUE,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS operations(id TEXT PRIMARY KEY,kind TEXT NOT NULL,payload_hash TEXT NOT NULL,
         input TEXT NOT NULL,status TEXT NOT NULL,created TEXT NOT NULL,updated TEXT NOT NULL,result TEXT,error TEXT);
+      CREATE TABLE IF NOT EXISTS returned_reviews(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS returned_review_versions(id TEXT NOT NULL,revision INTEGER NOT NULL,data TEXT NOT NULL,PRIMARY KEY(id,revision));
       CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY,created TEXT NOT NULL,kind TEXT NOT NULL,operation TEXT,data TEXT NOT NULL);`);
     const transaction = fn => { db.exec('BEGIN IMMEDIATE'); try { const value = fn(); db.exec('COMMIT'); return value; }
       catch (issue) { try { db.exec('ROLLBACK'); } catch {} throw issue; } };
@@ -945,11 +948,161 @@ export async function openSeaTableAuthoring({ directory, create = false, connect
       });
     }
 
+
+    // Returned projects remain original independent workspaces. Only reviewed draft decisions merge.
+    const returnRecord=(reviewId,revision)=>{
+      id(reviewId);const row=revision===undefined?db.prepare('SELECT data FROM returned_reviews WHERE id=?').get(reviewId):
+        db.prepare('SELECT data FROM returned_review_versions WHERE id=? AND revision=?').get(reviewId,integer(revision,'Use a saved review revision.'));
+      if(!row)throw fault('SEATABLE_RETURN_NOT_FOUND','Select a saved returned review.',404);
+      return JSON.parse(row.data);
+    };
+    function storeReturn(record){
+      const data=JSON.stringify(record);
+      db.prepare('INSERT INTO returned_review_versions(id,revision,data) VALUES(?,?,?)').run(record.id,record.revision,data);
+      db.prepare('INSERT INTO returned_reviews(id,data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(record.id,data);
+      return seaTableReturnSummary(record);
+    }
+    function returnReplay(kind,input,request){
+      assertOpen();id(request);const old=db.prepare('SELECT * FROM operations WHERE id=?').get(request);if(!old)return null;
+      if(old.kind!==kind||old.payload_hash!==identity(input))throw fault('SEATABLE_REQUEST_REUSED','Replay the exact original request.',409);
+      if(old.status!=='complete')throw fault('SEATABLE_OPERATION_RETAINED','Retain the original operation for recovery.',409);
+      return{value:JSON.parse(old.result)};
+    }
+    function returnCommit(kind,input,request,change){
+      return transaction(()=>{
+        const old=returnReplay(kind,input,request);if(old)return old.value;
+        const result=change(),time=stamp();
+        db.prepare('INSERT INTO operations(id,kind,payload_hash,input,status,created,updated,result,error) VALUES(?,?,?,?,?,?,?,?,?)')
+          .run(request,kind,identity(input),JSON.stringify(input),'complete',time,time,JSON.stringify(result),null);
+        event('COMPLETED',request,{kind});return result;
+      });
+    }
+    const sourceIdentity=draft=>{
+      const row=captureRecord(draft.captureId);
+      return{captureId:row.id,manifestSha256:row.manifestSha256,selectionSha256:row.selectionSha256,
+        schemaSha256:row.schemaSha256,rowCount:row.rowCount};
+    };
+    async function returnSnapshot(){
+      const state=current();if(!state.draft)throw fault('SEATABLE_RETURN_DRAFT_REQUIRED','Save an original source draft first.',409);
+      await capture(state.draft.captureId);
+      const history=[],add=(kind,requestId,draftRevision,draft)=>{
+        if(draft)history.push(seaTableDraftRecord({kind,requestId,draftRevision,draft,source:sourceIdentity(draft)}));
+      };
+      for(const row of db.prepare('SELECT data FROM captures ORDER BY rowid').all()){
+        const value=JSON.parse(row.data);if(value.adoption?.draftSaved)add('CAPTURE',value.id,value.adoption.draftRevision,value.draft);
+      }
+      for(const row of db.prepare('SELECT * FROM versions ORDER BY id').all()){
+        const value=JSON.parse(row.data);add('VERSION',row.request_id,value.draftRevision,value.draft);
+      }
+      for(const row of db.prepare("SELECT * FROM operations WHERE status='complete' ORDER BY rowid").all()){
+        const value=JSON.parse(row.result??'null');
+        if(row.kind==='DRAFT')add('DRAFT',row.id,value?.draftRevision,value?.draft);
+        if(row.kind==='RETURN_APPLY'){
+          const applied=returnRecord(JSON.parse(row.input).reviewId,value.review.revision);
+          history.push(...applied.incoming.history);
+          add('RETURN_APPLY',row.id,applied.applied.draftRevision,applied.applied.draft);
+        }
+      }
+      return seaTableReturnSnapshot({workspace:identity({schema:SCHEMA,createdAt:settings.createdAt}),
+        source:sourceIdentity(state.draft),state,history});
+    }
+    function returnedReviewSnapshot(){return transfer('RETURN_SNAPSHOT','read',returnSnapshot);}
+    async function captureReturnedReview(options){
+      const input=structuredClone(options);only(input,['name','expectedDraftRevision','requestId'],'SEATABLE_RETURN_INPUT');
+      const {requestId,...payload}=input;id(requestId);workspaceName(payload.name);integer(payload.expectedDraftRevision,'Use the current author draft revision.');
+      const old=returnReplay('RETURN_CAPTURE',payload,requestId);if(old)return old.value;
+      return withReceivedWorkspace(payload.name,async child=>{
+        const replay=returnReplay('RETURN_CAPTURE',payload,requestId);if(replay)return replay.value;
+        const local=await returnSnapshot();
+        if(local.state.draftRevision!==payload.expectedDraftRevision)throw fault('SEATABLE_DRAFT_CHANGED','Refresh the current author draft.',409);
+        const incoming=await child.model.returnedReviewSnapshot();
+        const record={schema:'stellar-forge.seatable-return-review.v1',id:requestId,revision:1,status:'received',createdAt:stamp(),
+          received:structuredClone(child.record),localAtCapture:local,incoming,choices:{},note:'',review:null,applied:null};
+        returnCommit('RETURN_CAPTURE',payload,requestId,()=>storeReturn(record));
+        return seaTableReturnSummary(record);
+      });
+    }
+    function currentReturn(reviewId,expectedRevision){
+      const record=returnRecord(reviewId);
+      if(expectedRevision!==undefined&&record.revision!==expectedRevision)throw fault('SEATABLE_RETURN_CHANGED','Reopen the latest saved review.',409);
+      return record;
+    }
+    async function returnPreview(record){
+      const local=await returnSnapshot(),comparison=compareSeaTableReturn({record,local});
+      if(!comparison.issues.length&&!comparison.unresolved){
+        try{await normalizeDraft(comparison.merged);}
+        catch(e){comparison.issues.push({code:e.code??'SEATABLE_RETURN_DRAFT_INVALID',message:e.message});comparison.canApply=false;}
+      }
+      // Include native normalization outcomes in the exact reviewed preview.
+      const {previewSha256,...body}=comparison;comparison.previewSha256=identity(body);
+      return{local,comparison};
+    }
+    function previewReturnedReview(options){
+      const input=structuredClone(options);only(input,['reviewId','offset','limit'],'SEATABLE_RETURN_INPUT');
+      const {reviewId,offset=0,limit=100}=input;integer(offset,'Use a nonnegative offset.');
+      if(!Number.isSafeInteger(limit)||limit<1||limit>100)throw fault('SEATABLE_PAGE_LIMIT_INVALID');
+      return transfer('RETURN_PREVIEW',reviewId,async()=>{
+        const record=currentReturn(reviewId),{comparison}=await returnPreview(record);
+        const {merged,rows,...rest}=comparison;
+        return{...rest,review:seaTableReturnSummary(record),rows:rows.slice(offset,offset+limit),offset,
+          nextOffset:offset+limit<rows.length?offset+limit:null};
+      });
+    }
+    function saveReturnedReview(options){
+      const input=structuredClone(options);only(input,['reviewId','expectedReviewRevision','previewSha256','choices','note','requestId'],'SEATABLE_RETURN_INPUT');
+      const {requestId,...payload}=input;id(requestId);id(payload.reviewId);integer(payload.expectedReviewRevision,'Use the saved review revision.');
+      hashValue(payload.previewSha256);if(!object(payload.choices)||Array.isArray(payload.choices)||Object.keys(payload.choices).length>100000)
+        throw fault('SEATABLE_RETURN_CHOICES_INVALID');
+      for(const [path,choice]of Object.entries(payload.choices))if(typeof path!=='string'||!['local','returned','base'].includes(choice))throw fault('SEATABLE_RETURN_CHOICE_INVALID');
+      if(typeof payload.note!=='string'||payload.note.length>16000||payload.note.includes('\0'))throw fault('SEATABLE_RETURN_NOTE_INVALID');
+      const old=returnReplay('RETURN_REVIEW',payload,requestId);if(old)return Promise.resolve(old.value);
+      return transfer('RETURN_REVIEW',requestId,async()=>{
+        const record=currentReturn(payload.reviewId,payload.expectedReviewRevision);
+        if(record.status==='applied')throw fault('SEATABLE_RETURN_ALREADY_APPLIED',undefined,409);
+        const {local,comparison}=await returnPreview(record);
+        if(comparison.previewSha256!==payload.previewSha256)throw fault('SEATABLE_RETURN_PREVIEW_CHANGED','Compare the current author draft again.',409);
+        if(Object.keys(payload.choices).some(path=>!comparison.rows.some(row=>row.path===path)))throw fault('SEATABLE_RETURN_CHOICE_INVALID');
+        const candidate={...record,revision:record.revision+1,status:'reviewed',choices:payload.choices,note:payload.note,
+          review:{createdAt:stamp(),local,basisSha256:identity({local:local.sha256,incoming:record.incoming.sha256,
+            base:comparison.base?.id??null,choices:payload.choices})}};
+        return returnCommit('RETURN_REVIEW',payload,requestId,()=>storeReturn(candidate));
+      });
+    }
+    function applyReturnedReview(options){
+      const input=structuredClone(options);only(input,['reviewId','expectedReviewRevision','previewSha256','requestId'],'SEATABLE_RETURN_INPUT');
+      const {requestId,...payload}=input;id(requestId);id(payload.reviewId);integer(payload.expectedReviewRevision,'Use the saved review revision.');hashValue(payload.previewSha256);
+      const old=returnReplay('RETURN_APPLY',payload,requestId);if(old)return Promise.resolve(old.value);
+      return transfer('RETURN_APPLY',requestId,async()=>{
+        const record=currentReturn(payload.reviewId,payload.expectedReviewRevision),{local,comparison}=await returnPreview(record);
+        if(comparison.previewSha256!==payload.previewSha256)throw fault('SEATABLE_RETURN_PREVIEW_CHANGED','Compare and review the current draft again.',409);
+        if(!comparison.canApply)throw fault('SEATABLE_RETURN_REVIEW_REQUIRED','Resolve issues and conflicts, then save the complete review.',409);
+        const normalized=await normalizeDraft(comparison.merged);
+        return returnCommit('RETURN_APPLY',payload,requestId,()=>{
+          const state=current();
+          if(identity(state)!==identity(local.state)||seaTableDraftIdentity(state.draft)!==seaTableDraftIdentity(local.state.draft))throw fault('SEATABLE_DRAFT_CHANGED','The author draft changed after review.',409);
+          state.draft=normalized;state.draftRevision++;setState(state);
+          const next={...record,revision:record.revision+1,status:'applied',applied:{requestId,createdAt:stamp(),
+            draftRevision:state.draftRevision,draft:normalized,basis:comparison,localBefore:local}};
+          const review=storeReturn(next);
+          return{review,draft:normalized,draftRevision:state.draftRevision};
+        });
+      });
+    }
+    function returnedReview(reviewId){assertOpen();return seaTableReturnSummary(returnRecord(reviewId));}
+    function returnedReviews(){assertOpen();return db.prepare('SELECT data FROM returned_reviews ORDER BY rowid DESC').all().map(r=>seaTableReturnSummary(JSON.parse(r.data)));}
+    function exportReturnedReview({reviewId,revision}){
+      assertOpen();const record=returnRecord(reviewId,revision);
+      const history=db.prepare('SELECT data FROM returned_review_versions WHERE id=? AND revision<=? ORDER BY revision').all(reviewId,record.revision).map(row=>JSON.parse(row.data));
+      const value={schema:'stellar-forge.seatable-return-delivery.v1',review:record,history};
+      return{filename:'seatable-return-'+reviewId+'-r'+record.revision+'.json',mime:'application/json; charset=utf-8',bytes:bytes(value)};
+    }
+
     // Reopening never repeats a provider call or starts a publication/service.
     db.prepare("UPDATE operations SET status='interrupted',updated=? WHERE status='pending'").run(stamp());
     for (const row of db.prepare("SELECT id FROM operations WHERE status='interrupted' AND kind IN ('VERSION','SELECT')").all())
       await resume(row.id).catch(() => {});
     return {
+      captureReturnedReview,returnedReviews,returnedReview,previewReturnedReview,saveReturnedReview,applyReturnedReview,exportReturnedReview,returnedReviewSnapshot,
       directory, settings, exportWorkspace,receiveWorkspace,receiveWorkspaceFile,openReceivedWorkspace,closeReceivedWorkspace,withReceivedWorkspace,
       workspaceExports:async()=> (await workspaceTransferList(directory,'exports')).filter(r=>r.status==='complete').map(r=>r.result),
       exportWorkspaceFile:id=>seaTableWorkspaceHandoverFile(directory,id),

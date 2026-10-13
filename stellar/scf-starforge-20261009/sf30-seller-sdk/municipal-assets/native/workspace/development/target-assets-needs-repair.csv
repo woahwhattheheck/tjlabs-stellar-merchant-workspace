@@ -1,0 +1,4 @@
+external_id,display_name,state,container_key,location_key,shape
+DEV-A100,Development drainage network,active,,DEV-L01,"{""coordinates"":[[-97.666,38.371],[-97.665,38.372]],""type"":""LineString""}"
+DEV-A101,Development culvert,active,DEV-A100,DEV-L01,"{""coordinates"":[-97.6657,38.3714],""type"":""Point""}"
+DEV-A102,Development chamber — label pending correction,active,DEV-A100,DEV-L02,"{""coordinates"":[-97.6651,38.3719],""type"":""Point""}"

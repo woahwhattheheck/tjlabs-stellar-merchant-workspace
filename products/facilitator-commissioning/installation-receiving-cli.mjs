@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {GrantWorkspaceClient,inspectGrantAgentBinding} from '../../stellar/scf_2026/sf47_budget_model/workspace/agent-client.mjs';
 import {readWorkflowSeriesPrivateFile,workflowSeriesPrivateDirectory} from '../../stellar-forge/mcp-merchant-operator/workflow-series-connection.mjs';
 import {writeConsoleWorkflowFile} from '../../stellar-forge/mcp-merchant-operator/console/client-files.mjs';
-import {openInstallationReceiving,RECEIVING_SCHEMA} from './installation-receiving.mjs';
+import {openInstallationReceiving,RECEIVING_SCHEMA,MAX_SNAPSHOT_BYTES} from './installation-receiving.mjs';
 
 export const HOST_SCHEMA='stellar-forge.facilitator-installation-receiving-host.v1';
 const HASH=/^[a-f0-9]{64}$/,ALIAS=/^[a-z0-9][a-z0-9_-]{0,63}$/;
@@ -19,6 +19,9 @@ const usage=[
 'facilitator-installation-receive --connection HOST.json save|export|receive|show --operation UUID [--output NEW_FILE.json]',
 'facilitator-installation-receive --connection HOST.json file --operation UUID --file DECLARED_NAME --output NEW_COMPLETE_FILE',
 'facilitator-installation-receive --connection HOST.json list [--output NEW_FILE.json]',
+'facilitator-installation-receive --connection HOST.json snapshot --operation UUID --output NEW_COMPLETE_SNAPSHOT.json',
+'facilitator-installation-receive --connection HOST.json restore --input ORIGINAL_COMPLETE_SNAPSHOT.json [--output NEW_RESULT.json]',
+'Snapshot and restore retain the complete original journal and preparations. They do not dispatch native work or change the selected host bindings.',
 'The host configuration selects existing source and receiving services only. It cannot authorize another service start.'
 ].join('\n');
 
@@ -53,9 +56,9 @@ export async function readInstallationReceivingHost(filename){
 }
 function parse(argv){
   if(argv.length===1&&['--help','help','-h'].includes(argv[0]))return{help:true};
-  const values={},commands=['preview','save','export','receive','show','list','file'];
+  const values={},commands=['preview','save','export','receive','show','list','file','snapshot','restore'];
   let action;
-  const fields=['connection','preparation','operation','actor','note','receiving-name','file','output'];
+  const fields=['connection','preparation','operation','actor','note','receiving-name','file','output','input'];
   for(let i=0;i<argv.length;i++){
     const arg=argv[i];
     if(commands.includes(arg)&&!action){action=arg;continue;}
@@ -67,10 +70,12 @@ function parse(argv){
   const allowed={preview:['connection','preparation','operation','actor','note','receiving-name','output'],
     save:['connection','operation','output'],export:['connection','operation','output'],
     receive:['connection','operation','output'],show:['connection','operation','output'],
-    list:['connection','output'],file:['connection','operation','file','output']}[action];
+    list:['connection','output'],file:['connection','operation','file','output'],
+    snapshot:['connection','operation','output'],restore:['connection','input','output']}[action];
   need(Object.keys(values).every(x=>allowed.includes(x)),usage);
   const required=action==='preview'?['preparation','operation','actor','note','receiving-name']:
-    action==='list'?[]:action==='file'?['operation','file','output']:['operation'];
+    action==='list'?[]:action==='file'?['operation','file','output']:
+    action==='snapshot'?['operation','output']:action==='restore'?['input']:['operation'];
   need(required.every(x=>typeof values[x]==='string'&&values[x].length>0),usage);
   return{action,...values};
 }
@@ -87,6 +92,11 @@ export async function installationReceivingCLI(argv){
   const host=await readInstallationReceivingHost(args.connection);
   const destination=args.output?outputPath(args.output,host,args.connection):null;
   if(destination)await workflowSeriesPrivateDirectory(dirname(destination));
+  let snapshot;
+  if(args.action==='restore'){
+    const original=await readWorkflowSeriesPrivateFile(resolve(args.input),MAX_SNAPSHOT_BYTES);
+    snapshot=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(original));
+  }
   const sourceClient=new GrantWorkspaceClient(host.source),receivingClient=new GrantWorkspaceClient(host.receiving);
   let bridge,result,primary;
   try{
@@ -101,11 +111,13 @@ export async function installationReceivingCLI(argv){
     }else if(args.action==='show')result=await bridge.read(args.operation);
     else if(args.action==='list')result=await bridge.list();
     else if(args.action==='file')result=await bridge.file(args.operation,args.file);
+    else if(args.action==='restore')result=await bridge.restore(snapshot);
     else result=await bridge[args.action](args.operation);
     if(args.output){
       const bytes=args.action==='file'?result.body:Buffer.from(JSON.stringify(result,null,2)+'\n');
+      if(args.action==='snapshot')need(bytes.length<=MAX_SNAPSHOT_BYTES,'The complete snapshot exceeds its original envelope bound.');
       const saved=await writeConsoleWorkflowFile(destination,bytes);
-      result={schema:RECEIVING_SCHEMA,action:args.action,...(args.operation?{operationId:args.operation}:{}),
+      result={schema:RECEIVING_SCHEMA,action:args.action,...(args.operation?{operationId:args.operation}:result.operationId?{operationId:result.operationId}:{}),
         output:saved,...(args.action==='file'?{filename:result.filename,contentType:result.contentType}:{})};
     }
   }catch(error){primary=error;}

@@ -69,6 +69,21 @@ node stellar/scf-starforge-20261009/distribution/build.mjs \
 
 Use the returned archive and SHA-256 with the original runtime installer. The [material installation guide](https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/main/stellar/scf-starforge-20261009/distribution/selections/MATERIAL_CATALOG.md) follows source selection, installation, private browser/MCP startup and complete customer receiving. The full Merchant Workspace package also exposes this command family through `starforge-materials`.
 
+
+## Open a complete handover without a server
+
+Use the [offline catalogue recipient](./recipient/README.md) when a customer needs to inspect a complete material handover directly in a browser. [Material_Catalog_Reader.html](./recipient/Material_Catalog_Reader.html) is the complete built reader; save the file, open it and choose the original catalog-bundle.jsonl. It includes all retained editions, full changes, customer-decision history, supplier records and exact source downloads.
+
+To deliver one HTML containing the original bundle, build it into a new private file:
+
+```sh
+node products/material-catalog/recipient/build.mjs \
+  --bundle /private/materials/handover/catalog-bundle.jsonl \
+  --output /private/materials/handover/Material_Catalog_Complete.html
+```
+
+The reader keeps the original bundle and every contained record. Continue editable work with the original browser/CLI/MCP importer described above. The selected material-catalog distribution includes the complete reader source, ready-built blank HTML and receiving course.
+
 ## Source and licenses
 
 TokenJunkieLabs maintains this product. Native catalog, OpenSearch and merchant source is retained from its recorded source commit with original relative imports and runtime inputs. The selected product source inventory identifies each original file. The SAP SHINE examples retain their Apache-2.0 license and source index; the WANDS query example retains its original MIT license. Their original publisher records are included beside the files. The ETIM schema, sample data and original license notices remain with the xChange source. The original 2BA parameter XML and ZIP retain their publisher bytes and acquisition record.

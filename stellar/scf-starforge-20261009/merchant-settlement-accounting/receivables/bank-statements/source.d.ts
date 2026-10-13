@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { Buffer } from 'node:buffer';
+import type {PdfReviewSelection,PdfRetainedReview} from './bank-pdf/model.mjs';
 
 export declare const BANK_STATEMENT_SOURCE_SCHEMA: 'stellar-forge.bank-statement-source.v1';
 export declare class BankStatementSourceError extends Error {
@@ -9,12 +10,18 @@ export declare class BankStatementSourceError extends Error {
 }
 export type OriginalStatementFile = { name: string; dataBase64: string; content?: never; encoding?: never }
   | { name: string; content: string; encoding: 'utf8' | 'base64'; dataBase64?: never };
-export type BankStatementFormat = 'OFX' | 'QFX' | 'CSV' | 'CAMT053';
+export type BankStatementFormat = 'OFX' | 'QFX' | 'CSV' | 'CAMT053' | 'PDF_REVIEW';
 export type TextEncoding = 'utf-8' | 'us-ascii' | 'windows-1252' | 'iso-8859-1' | 'utf-16le' | 'utf-16be';
 export type Column = string | number;
 export interface SourceLocation {
   pointer: string;
-  pointerSyntax: 'OFX_PATH' | 'CSV_RECORD' | 'CSV_ACCOUNT_GROUP' | 'CSV_BALANCE_PAIR' | 'CAMT_XML_PATH' | 'CAMT_BALANCE_PAIR';
+  pointerSyntax: 'OFX_PATH' | 'CSV_RECORD' | 'CSV_ACCOUNT_GROUP' | 'CSV_BALANCE_PAIR' | 'CAMT_XML_PATH' | 'CAMT_BALANCE_PAIR' | 'PDF_REVIEW_ROW' | 'PDF_REVIEW_ACCOUNT' | 'PDF_REVIEW_BALANCE_PAIR';
+  pdfSha256?:string;
+  extractionSha256?:string;
+  page?:number;
+  box?:[number,number,number,number];
+  itemIds?:string[];
+  derivedCsv?:SourceLocation&{sha256:string};
   namespace?: string;
   valueCharStart?: number;
   valueCharEnd?: number;
@@ -120,6 +127,8 @@ export interface BankStatementSourceInput {
   accountNamespace?: string;
   csv?: CsvStatementOptions;
   camt?: CamtStatementOptions;
+  /** Complete dedicated PDF working copy, with its binary retained only in file. */
+  pdfReview?:PdfReviewSelection;
 }
 export interface BankSourceAccount {
   kind: 'BANK' | 'CREDIT_CARD';
@@ -160,7 +169,7 @@ export interface SourceBalance {
 }
 export interface SourceClosing {
   id: string;
-  kind: 'CLOSING' | 'CCCLOSING' | 'CSV_MAPPED_BALANCES' | 'CAMT_BOOKED_BALANCES';
+  kind: 'CLOSING' | 'CCCLOSING' | 'CSV_MAPPED_BALANCES' | 'CAMT_BOOKED_BALANCES' | 'PDF_REVIEWED_BALANCES';
   providerId: string | null;
   providerKey: string | null;
   currency: string | null;
@@ -223,10 +232,10 @@ export interface StatementSummary {
 }
 export interface BankSourceStatement {
   id: string;
-  kind: 'TRANSACTION_DOWNLOAD' | 'CLOSING_INFORMATION' | 'CSV_TRANSACTIONS' | 'CAMT_STATEMENT';
+  kind: 'TRANSACTION_DOWNLOAD' | 'CLOSING_INFORMATION' | 'CSV_TRANSACTIONS' | 'CAMT_STATEMENT' | 'PDF_REVIEWED_CASH';
   account: BankSourceAccount;
   period: {
-    kind: 'DOWNLOAD_COVERAGE' | 'CLOSING_INFORMATION' | 'ROW_DATE_RANGE' | 'STATEMENT_COVERAGE';
+    kind: 'DOWNLOAD_COVERAGE' | 'CLOSING_INFORMATION' | 'ROW_DATE_RANGE' | 'STATEMENT_COVERAGE' | 'OPERATOR_REVIEWED_STATEMENT';
     from: string | null;
     until: string | null;
     rawFrom: string;
@@ -243,7 +252,7 @@ export interface BankSourceStatement {
   };
   rows: BankStatementRow[];
   pendingRows: BankStatementRow[];
-  excludedRows: Array<{ reason: string; operatorSelected?: boolean; source: SourceLocation; original: { cells: string[] } | CamtSourceNode; row?: BankStatementRow }>;
+  excludedRows: Array<{ reason: string; operatorSelected?: boolean; source: SourceLocation; original: { cells: string[] } | CamtSourceNode | {pdfRow:import('./bank-pdf/model.mjs').PdfRow}; row?: BankStatementRow }>;
   source: SourceLocation;
   issues: BankSourceIssue[];
   summary: StatementSummary;
@@ -252,17 +261,25 @@ export interface BankSourceStatement {
 export interface BankStatementSourceReport {
   schema: typeof BANK_STATEMENT_SOURCE_SCHEMA;
   format: BankStatementFormat;
-  file: { name: string; bytes: number; sha256: string; type: string; textEncoding: TextEncoding };
+  file: { name: string; bytes: number; sha256: string; type: string; textEncoding: TextEncoding | null };
   /** Exact original bytes. Retain separately before compacting the report into workspace state. */
   bytes: Buffer;
   interpretation: {
-    textEncoding: TextEncoding;
+    textEncoding: TextEncoding | null;
     declaredEncoding: TextEncoding | null;
     byteOrderMark: TextEncoding | null;
     amountBasis: 'SIGNED_CUSTOMER_ACCOUNT';
     dateBasis: 'SOURCE_CALENDAR';
     nativeIdScope: 'FINANCIAL_INSTITUTION_AND_ACCOUNT';
-    sourceOffsets: 'ORIGINAL_BYTES_AND_DECODED_UTF16_CHARACTERS';
+    sourceOffsets: 'ORIGINAL_BYTES_AND_DECODED_UTF16_CHARACTERS' | 'ORIGINAL_PDF_PAGE_GEOMETRY_AND_TEXT_ITEMS';
+    automaticTextRecognition?:false;
+    automaticCashInference?:false;
+    operatorReviewed?:true;
+    csvSha256?:string;
+    mappingSha256?:string;
+    extractionSha256?:string;
+    workingCopyId?:string;
+    workingRevision?:number;
     automaticCurrencyConversion: false;
     automaticRowDeduplication: false;
     closingBalancesInferred: false;
@@ -278,6 +295,7 @@ export interface BankStatementSourceReport {
     nodeCount: number;
   };
   camt?: CamtSourceMetadata;
+  pdfReview?:PdfRetainedReview;
   csv?: {
     delimiter: string;
     headerRow: number;

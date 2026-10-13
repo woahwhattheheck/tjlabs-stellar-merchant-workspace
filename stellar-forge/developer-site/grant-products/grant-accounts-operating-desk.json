@@ -9,7 +9,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENTS.md",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
@@ -30,6 +30,11 @@
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "631a51c85f1140184e15af93a010c9ff0752fbdf",
           "bytes": 29252
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "0c374dd9c89a9bc7748d09b993c1caaa8d24ffee",
+          "bytes": 29813
         }
       ]
     },
@@ -119,7 +124,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/scf-statements-original-32c2-20261013/README.md",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
       "editions": [
         {
           "commit": "913b8afb2da5ed9cc54bb7ff9389b6d84b13aa29",
@@ -130,6 +135,16 @@
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "4aa70e570fa4322d278ef8c4659ca6b9f129e5f6",
           "bytes": 13574
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "0f4a82012f792c4a241c5abd9b49e18d39674aa6",
+          "bytes": 14651
+        },
+        {
+          "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
+          "git_blob": "ab9b5631982280b69cd42bbcf698b1b85249b305",
+          "bytes": 15450
         }
       ]
     },
@@ -214,7 +229,7 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statements.mjs",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
       "editions": [
         {
           "commit": "91d6e552f7152c26dc0ae47ecdb9f8c414a6723f",
@@ -225,6 +240,11 @@
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "7091da9d7c9bf68e7b39dfe5d4d878475ade69bb",
           "bytes": 80794
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "c5dc84cfce3a7a0dde5de4a42d87bc355bd91dd2",
+          "bytes": 89147
         }
       ]
     },
@@ -264,12 +284,233 @@
       "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
       "kind": "blob",
       "path": "operations/scf-statements-original-32c2-20261013/operate-original-statements.mjs",
-      "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
+      "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
       "editions": [
         {
           "commit": "c9933933db39a487258f0e52b4b21929ed5420b6",
           "git_blob": "2c2a7c525af74821d595a83d3a2966c4f75e2a4e",
           "bytes": 33996
+        },
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "0fdba06e074dde9c287bc6f55eb32799027eb084",
+          "bytes": 39044
+        },
+        {
+          "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
+          "git_blob": "bdaccc4a6db2b69841e9431dd2f4a02422d34799",
+          "bytes": 42745
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-working-copies-guide",
+      "label": "Named complete statement editions and independent working-copy receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/STATEMENT_WORKING_COPIES.md",
+      "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
+      "editions": [
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "c389b4170431a579995f2e06088939882fa95b5d",
+          "bytes": 11160
+        },
+        {
+          "commit": "eefacbbfe118707b709abab37035ca4236ad764b",
+          "git_blob": "b9f7bd67587ee14a0939aa4922fc0d6369368a6d",
+          "bytes": 11943
+        }
+      ]
+    },
+    {
+      "id": "grant-statement-working-copies-browser",
+      "label": "Complete edition comparison, atomic copies and original archive receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_statement_copies.mjs",
+      "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+      "editions": [
+        {
+          "commit": "9945b93d79deea6865f9928b949e7d007bdaf8f0",
+          "git_blob": "1d275eba68b499a803d82c6b90db4dccd0e34eff",
+          "bytes": 20945
+        }
+      ]
+    },
+    {
+      "id": "grant-work-invoice-workbook-guide",
+      "label": "Complete editable work and invoice workbook, native review and case handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/WORK_INVOICE_WORKBOOK.md",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "d7be44b19a22cf876e9cad20fce9ef71c89cfaf5",
+          "sha256": "38ebd8c697063b14b8fb20e6dad33e95b4246585e89887eedc78c29da60a96c1",
+          "bytes": 11683
+        }
+      ]
+    },
+    {
+      "id": "grant-work-invoice-workbook-native",
+      "label": "Original/current/returned comparison and atomic native work/invoice application",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_workbook.py",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "e029a0946f6eb441ac041c2bc7c97a6421dfd937",
+          "sha256": "ed6f52ccc1b080a46336e58705f0104625638ee2d9bae5e05bf95ccf25c494a1",
+          "bytes": 31629
+        }
+      ]
+    },
+    {
+      "id": "grant-work-invoice-workbook-browser",
+      "label": "Complete operator workbook, row drafts and original request recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_workbook.mjs",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "490427a7e0c3239334f68bd9fb7577e1abf19cf8",
+          "sha256": "b853467f26fb65805dfc1623c485d7e3c05c663b83b2d335d6a0048cd331a02a",
+          "bytes": 26149
+        }
+      ]
+    },
+    {
+      "id": "grant-work-invoice-workbook-native-receiving",
+      "label": "Original XLSX return, concurrent native edit and independent case receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/work_invoice_workbook_receiving.py",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "b1ee175edf89cfe5f786595b5f01538213600bab",
+          "sha256": "739bf581a4791230ceed93102b51a20eee7d486a393f4df75ed808aa71f3cacf",
+          "bytes": 12921
+        }
+      ]
+    },
+    {
+      "id": "grant-work-invoice-workbook-browser-receiving",
+      "label": "Existing-host workbook operation, full downloads and unfinished row reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/work_invoice_workbook_browser.mjs",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "93a883c597bba0a43ddf251aa743c20d1a319332",
+          "sha256": "fcda60110713e1259eb237c0288b7bc437fb2996c5fd092d1ea8186aea595732",
+          "bytes": 9241
+        }
+      ]
+    },
+    {
+      "id": "grant-supplier-statement-reconciliation-guide",
+      "label": "Complete supplier statement comparison, reviewed editions and original account handover",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/SUPPLIER_STATEMENTS.md",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "8dd2eec9dc2a13789e5bae4664eefa0b09ca8ce4",
+          "sha256": "a54580270094a2340e1b01914833063b771ad081f9c6ac9533abd588d84d76c3",
+          "bytes": 14194
+        }
+      ]
+    },
+    {
+      "id": "grant-supplier-statement-reconciliation-native",
+      "label": "Source-bound supplier/payable snapshots and immutable reconciliation reviews",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_supplier_statements.py",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "852e02cead8024d8e391bbfaaf6300e65376008e",
+          "sha256": "ead84d14181e715e3dbcf090d7c8b7dae324610d0feda6560c3409a36e64bf05",
+          "bytes": 43188
+        }
+      ]
+    },
+    {
+      "id": "grant-supplier-statement-reconciliation-browser",
+      "label": "Supplier statement mapping, row decisions, following editions and working copies",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_supplier_statements.mjs",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "e1d06ac86159fbeed43f8a3c1a08b9e25968754a",
+          "sha256": "857dde26e4e4396a446214a9a1adf9c1b4ff128415a63b834058fc1b63463d51",
+          "bytes": 25831
+        }
+      ]
+    },
+    {
+      "id": "grant-supplier-statement-reconciliation-engine",
+      "label": "Original unchanged supplier reconciliation engine source and identity",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/supplier_statement_engine/ORIGINAL.json",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "388271813e57fdd64cc4a7afd1aabfecf67cdec7",
+          "sha256": "8232fb77754e0a834b2193ca8a8245b2bd5377e8092f2ea49e8069e10e78d816",
+          "bytes": 2677
+        }
+      ]
+    },
+    {
+      "id": "grant-supplier-statement-reconciliation-native-receiving",
+      "label": "Original complete supplier review, following edition, export and independent receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/supplier_statements_receiving.py",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "4cd019a1ff525123f1324cbe2ffb6b5ed8a3d652",
+          "sha256": "ec85977b5453db676052f791d596ce8529d4edc1c80ab036800ac1d4060c81ea",
+          "bytes": 18084
+        }
+      ]
+    },
+    {
+      "id": "grant-supplier-statement-reconciliation-browser-receiving",
+      "label": "Existing supplier desk operation and full HTML, CSV, JSON and source reopening",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/supplier_statements_browser.mjs",
+      "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+      "editions": [
+        {
+          "commit": "df10549626c175e56990f6b0fb86c4da8df0f097",
+          "git_blob": "6736e6628bd2d27d82e65a08510e21380b13a66a",
+          "sha256": "4098fb4f87d0d3835211cee44db80071a35149d99b5cfd897552f614c3d124f1",
+          "bytes": 13100
         }
       ]
     }

@@ -1,0 +1,3 @@
+id,asset_id,request_id,summary,status,revision,updated_at
+DEV-WO001,DEV-A101,DEV-RQ001,Development inspect culvert,open,1,2026-10-11T12:10:00Z
+DEV-WO002,DEV-A102,,Development chamber maintenance,in_progress,3,2026-10-11T12:15:00Z

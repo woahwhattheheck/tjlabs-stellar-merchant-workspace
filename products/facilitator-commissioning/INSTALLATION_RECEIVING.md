@@ -184,6 +184,58 @@ Keep the entire private receiving directory with its complete input preparation,
 
 An application embedding the bridge can pass already borrowed source and receiving clients. Those clients remain owned by their existing caller.
 
+## 8. Carry the complete receiving journal with the operator handover
+
+The complete case ZIP carries the native operating case and selected Installation. The receiving journal also retains the exact preparation, operator choices, pending requests, observations and original source/receiving bindings needed to continue an interrupted operation. Include both in a complete operator handover.
+
+Use the original bridge snapshot command to retain the whole selected operation:
+
+~~~sh
+facilitator-installation-receive --connection /absolute/private/HOST.json snapshot \
+  --operation ORIGINAL_OPERATION_UUID \
+  --output /absolute/private/customer-delivery/installation-journal.json
+~~~
+
+The snapshot contains the original OWNER.json, the complete selected operation directory and every declared preparation member. Its file inventory carries complete original bytes, lengths and SHA-256 identities. It retains original requests, successful response envelopes, error observations, exported case bytes and any returned response whose immutable publication was interrupted. Observed returns remain observations until the original phase validates them; copying a file does not turn an uncertain result into accepted native state.
+
+The complete formatted snapshot envelope is limited to 512 MiB; each retained original journal file keeps its existing 128 MiB bound. The full source preparation and native case also retain their existing individual and cumulative limits. A refusal returns no truncated substitute. Preserve the complete original operation and choose a supported complete handover route.
+
+### Restore the same operation and selected bindings
+
+Receive the complete snapshot through the bridge's validated method:
+
+~~~sh
+facilitator-installation-receive --connection /absolute/private/HOST.json restore \
+  --input /absolute/private/customer-delivery/installation-journal.json \
+  --output /absolute/private/customer-delivery/restored-operation.json
+~~~
+
+Use the host configuration for the original inspected source and receiving selections. Restoring an operation restores its original binding; it does not adopt another host or workspace as evidence of an earlier acceptance. A different selected binding, changed existing member or earlier snapshot that would omit retained later work is refused without overwriting those originals.
+
+Snapshot and restore operate on the original private receiving journal under its existing queue and lock. Neither opens a Grant client or sends preview, save, export or import work. After restore, inspect the returned complete operation and continue through the original explicit phase. The normal phase checks still require the accepted original native record to exist. A missing accepted result in an older restored service cannot become a new save or import.
+
+### Continue an interrupted restore
+
+The bridge retains an original restore-intent marker before copying operation members and its matching completion marker last. While that restoration is incomplete, native phases cannot treat its partially copied files as a fresh operation. Retry restore with the exact same complete snapshot to finish equal missing members. Keep all original markers and files; do not remove them or start another request to get around the interrupted restoration.
+
+Historical restore markers remain part of the complete journal. The existing private publisher preserves identical complete outputs and refuses conflicting ones. This supports continuation of one original operation across process interruption without silently losing a known return.
+
+### Join the existing operator TAR
+
+An embedding application calls the additive methods on its existing receiving instance:
+
+~~~javascript
+const snapshot = await receiver.snapshot(originalOperationUUID);
+// Retain every full snapshot member in the original operator content store.
+// Include the complete snapshot and originals in the existing operator transfer.
+const restored = await receiver.restore(snapshot);
+// Inspect restored operation; dispatch only from the original explicit control.
+~~~
+
+The snapshot uses schema `stellar-forge.facilitator-installation-receiving.v1.snapshot` and retains `operationId`, `owner`, `preparation`, `files` and `contentSha256`. Each member has its original relative `path`, `bytes`, `sha256`, `encoding: "base64"` and full `content_base64`. The digest identifies the complete retained inventory; it does not replace the bytes. Retain the exact envelope rather than rebuilding one from a displayed summary.
+
+The operator remains the owner of its content-addressed inputs, whole TAR format, client lifetime and user interface. It imports the journal through the bridge's restore method on the matching selected binding. The bridge supplies validation and complete original publication; the host does not copy selected journal fragments or reinterpret a historical response as a new request.
+
 ## Save complete files for the recipient
 
 The export action retains the native ZIP inside the operation. Use file to publish that complete original archive or another declared member to a new private output location:
@@ -250,7 +302,7 @@ try {
 
 The example shows the whole sequence; a UI preserves separate preview, save, export and receive controls. It must retain the selected operation and reopen it after navigation or reload. It must not turn viewing a preview into an implicit save.
 
-The module requires both sourceBinding and receivingBinding from the original inspectGrantAgentBinding inspector. Each binds the selected absolute workspace directory and selectionSha256; the caller must open its supplied original clients with those exact inspected selections and allowStart:false. The bridge borrows those clients without closing them. Its read(operationId), list() and file(operationId,name) methods expose the retained operation and complete declared files. File names come from the original operation's inventory; a browser does not supply arbitrary host paths.
+The module requires both sourceBinding and receivingBinding from the original inspectGrantAgentBinding inspector. Each binds the selected absolute workspace directory and selectionSha256; the caller must open its supplied original clients with those exact inspected selections and allowStart:false. The bridge borrows those clients without closing them. Its read(operationId), list() and file(operationId,name) methods expose the retained operation and complete declared files. The additive snapshot(operationId) and restore(snapshot) methods carry the whole original journal and preparation through the same selected binding; see section 8. File names come from the original operation's inventory; a browser does not supply arbitrary host paths.
 
 Display the actual source and receiving case, native revision and unresolved phase to the operator. Keep errors and interrupted actions attached to their original operation. Avoid hiding them by opening a new blank operation.
 
@@ -267,7 +319,8 @@ Carry out this course on the exact delivered source and the actual retained cust
 7. Receive that exact archive independently. Open the actual resulting case, original source and selected Installation.
 8. Close and reopen the receiving application through its original owner. Reopen the same imported case and retained edition.
 9. Review the customer's actual original service outputs and source alongside the Installation handover. Preserve all existing purchase and accounting records; receiving an Installation does not perform another acquisition.
-10. Deliver the complete editable job, source, operating-case export, usable handover, original operation outputs and support ownership together.
+10. Snapshot the complete receiving journal and include every original member in the existing operator transfer. Receive that complete transfer on its matching selected bindings, restore through the original bridge, and reopen the exact operation without dispatching another native request.
+11. Deliver the complete editable job, source, operating-case export, usable handover, receiving-journal snapshot, original operation outputs and support ownership together.
 
 An already retained interrupted operation continues from its original phase and request. Do not restart completed service, provider or customer execution to manufacture a fresh receiving course.
 

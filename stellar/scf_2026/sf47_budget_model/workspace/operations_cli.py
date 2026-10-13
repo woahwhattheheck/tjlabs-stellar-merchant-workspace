@@ -11,6 +11,7 @@ import tempfile
 from model import Problem, MAX_BUNDLE, canonical
 from operations import Operations, MAX_SOURCE
 import operations_commercial_cli as commercial_cli
+import operations_expense_billing_cli as expense_billing_cli
 import operations_installation_returns_cli as installation_returns_cli
 import operations_company_returns_cli as company_returns_cli
 import operations_ledger_intake as ledger_intake
@@ -19,6 +20,8 @@ import award_terms_cli
 import operations_agenda_cli as agenda_cli
 import operations_installation_editions_cli as editions_cli
 import operations_risks_cli as risks_cli
+import operations_workbook_cli as workbook_cli
+import operations_supplier_statements_cli as supplier_statements_cli
 
 
 def register(subparsers, common):
@@ -45,6 +48,8 @@ def register(subparsers, common):
         target.add_argument("--name", required=True)
         target.add_argument("--calendar-start", help="Explicit operational YYYY-MM-DD anchor; does not record an award")
 
+    supplier_statements_cli.register(command, mutation)
+    workbook_cli.register(command, mutation)
     funding_cli.register(command, mutation)
     risks_cli.register(command, mutation)
     agenda_cli.register(command)
@@ -555,6 +560,7 @@ def register(subparsers, common):
 
     award_terms_cli.register(command, mutation)
     commercial_cli.register(command)
+    expense_billing_cli.register(command)
     installation_returns_cli.register(command, mutation)
     company_returns_cli.register(command, mutation)
 
@@ -739,6 +745,10 @@ def publish(filename, raw):
 
 def operate(workspace, args):
     ops, action = Operations(workspace), args.operation
+    if supplier_statements_cli.operates(action):
+        return supplier_statements_cli.operate(ops, args, read_bytes, publish)
+    if workbook_cli.operates(action):
+        return workbook_cli.operate(ops, args, read_bytes, publish)
     if editions_cli.operates(action):
         return editions_cli.operate(ops, args, read_bytes, publish)
     if risks_cli.operates(action):
@@ -753,6 +763,8 @@ def operate(workspace, args):
         return company_returns_cli.operate(ops, args, read_bytes, publish)
     if action == "installation-returns" or action.startswith("installation-return-"):
         return installation_returns_cli.operate(ops, args, read_bytes, publish)
+    if action.startswith("expense-billing-"):
+        return expense_billing_cli.operate(ops, args, read_bytes, publish)
     if action.startswith("commercial-"):
         return commercial_cli.operate(ops, args, read_bytes, publish)
     if action == "list":

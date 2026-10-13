@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "material-catalog",
   "title": "Material catalogues and supplier delivery",
-  "description": "Complete original material intake, exact customer matching, supplier correction and BMEcat delivery, ETIM xChange and 2BA upload packages, private browser/CLI/MCP operation and portable customer receiving.",
+  "description": "Complete original material intake, exact customer matching, supplier correction and BMEcat delivery, ETIM xChange and 2BA upload packages, private browser/CLI/MCP operation and portable customer receiving and a complete offline browser recipient.",
   "base": {
     "commands": [
       "installation",
@@ -76,7 +76,8 @@
     "stellar/scf-starforge-20261009/sf99-merchant-deploy",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli",
     "stellar/scf-starforge-20261009/sf103-native-buyer-signer",
-    "stellar/scf-starforge-20261009/native-facilitator"
+    "stellar/scf-starforge-20261009/native-facilitator",
+    "products/material-catalog/recipient"
   ],
   "supportFiles": [
     "LICENSE",

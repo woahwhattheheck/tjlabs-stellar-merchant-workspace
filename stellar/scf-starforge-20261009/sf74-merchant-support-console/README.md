@@ -4,6 +4,10 @@ Keep a merchant case queue, diagnose each route, inspect its runtime and deliver
 
 The [Implementation and receiving desk](IMPLEMENTATION.md) continues the same workorder through assigned tasks, original deliverables, technical and customer receiving, measured effort, source updates and complete case handover. The browser, installed `merchant-implementation` CLI and original merchant MCP share the same retained case.
 
+The Incident desk's [complete configuration working copies](INCIDENT_WRITING.md)
+retain unfinished settings, original source/revision, named copies and exact
+apply recovery through the same original watcher controls.
+
 ## Open the workspace
 
 From the repository root, with Node 22 or newer:

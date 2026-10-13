@@ -71,6 +71,41 @@ const commercialPath = (caseId, billingId, milestoneId) => {
   return route;
 };
 
+
+const EXPENSE_BILLING_FIELDS=['requestId','actor','expectedVersion','previousId','mode','endpointId','customerId','currency','sourceIds','authorization','authorizedOn','creditReviewNote','reason','issueDate','dueDate','effectiveDate','resolution','purchaseOrder','note','lines','expectedPreviewSha256'];
+function expenseBillingInput(body,prepare=false){
+  exact(body,EXPENSE_BILLING_FIELDS,['requestId','actor','expectedVersion','mode','sourceIds','authorization','authorizedOn','creditReviewNote','reason','lines',...(prepare?['expectedPreviewSha256']:[])]);
+  requestId(body.requestId);text(body.actor,'Original recording operator',300);integer(body.expectedVersion,'Current case version');
+  need(['NEW','DRAFT_EDIT','CREDIT','VOID','REPLACE'].includes(body.mode),'GRANT_INVALID_INPUT','Choose the original expense charge or reviewed correction.');
+  if(body.previousId!==undefined&&body.previousId!==null)id(body.previousId,'expense-billing');
+  need(body.mode==='NEW'?!body.previousId:!!body.previousId,'GRANT_INVALID_INPUT','A new charge has no previous ID; a correction retains its original charge ID.');
+  for(const [key,max] of [['authorization',12000],['creditReviewNote',6000],['reason',3000]])text(body[key],key,max);
+  need(Array.isArray(body.sourceIds)&&body.sourceIds.length>0&&new Set(body.sourceIds).size===body.sourceIds.length,'GRANT_INVALID_INPUT','Select distinct retained original authority sources.');
+  body.sourceIds.forEach(value=>id(value,'source'));
+  for(const key of ['authorizedOn','issueDate','dueDate','effectiveDate'])if(body[key]!==undefined)completionDate(body[key]);
+  if(body.endpointId!==undefined)text(body.endpointId,'Original accounting endpoint',200);
+  if(body.customerId!==undefined)text(body.customerId,'Original native customer',100);
+  if(body.mode==='NEW'){text(body.endpointId,'Original accounting endpoint',200);text(body.customerId,'Original native customer',100);object(body.currency,'Original currency');}
+  if(body.currency!==undefined){
+    exact(body.currency,['code','scale'],['code','scale']);
+    need(typeof body.currency.code==='string'&&/^[A-Z]{3}$/.test(body.currency.code),'GRANT_INVALID_INPUT','Keep the native currency code.');
+    integer(body.currency.scale,'Original currency precision',0,6);
+  }
+  if(body.resolution!==undefined)need(['CREDIT','VOID'].includes(body.resolution),'GRANT_INVALID_INPUT','Choose the reviewed original invoice treatment.');
+  for(const [key,max] of [['purchaseOrder',300],['note',6000]])if(body[key]!==undefined)text(body[key],key,max,true);
+  if(body.expectedPreviewSha256!==undefined)sha(body.expectedPreviewSha256);
+  need(Array.isArray(body.lines)&&body.lines.length>=1&&body.lines.length<=200,'GRANT_INVALID_INPUT','Retain one through 200 original expense portions.');
+  for(const line of body.lines){
+    exact(line,['attributionId','expectedContentSha256','costId','nativeAmount','amountBasis','amount','description'],['attributionId','expectedContentSha256','costId','nativeAmount','amountBasis','amount','description']);
+    id(line.attributionId,'expense-attribution');sha(line.expectedContentSha256);text(line.costId,'Original work-package cost',300);
+    need(typeof line.nativeAmount==='string'&&/^(?:0|[1-9][0-9]{0,99})$/.test(line.nativeAmount),'GRANT_INVALID_INPUT','Retain exact integer native units as a string.');
+    need(['REVIEWED_USD','AGREED_AMOUNT'].includes(line.amountBasis),'GRANT_INVALID_INPUT','Choose the retained valuation basis.');
+    text(line.amount,'Exact reviewed customer decimal amount',100);text(line.description,'Native invoice line description',3000);
+  }
+}
+const expenseBillingPath=(caseId,chargeId)=>'/api/operations/'+encodeURIComponent(id(caseId,'operation'))+'/expense-billing'+
+  (chargeId===undefined?'':'/'+encodeURIComponent(id(chargeId,'expense-billing')));
+
 const CHANGE_FIELDS=['expectedVersion','previousChangeId','actor','sourceIds','mode','resolution','targetAmount','issueDate','dueDate','effectiveDate','authorizedOn','description','reason','authorization','purchaseOrder','note'];
 function commercialChangeSource(body, prepare=false){
   const fields=prepare?[...CHANGE_FIELDS,'requestId','expectedPreviewSha256']:CHANGE_FIELDS;
@@ -1480,6 +1515,48 @@ export class GrantWorkspaceClient {
       body:{...original,action:'installation.save',data:{installationId,expectedRevision,document,expectedPreviewSha256,
         ...(returnReview===undefined?{}:{returnReview})}}});
   }
+  expenseBillingCatalog(caseId){
+    return this.#request(expenseBillingPath(caseId),{});
+  }
+  expenseBilling(caseId,chargeId){
+    id(chargeId,'expense-billing');
+    return this.#request(expenseBillingPath(caseId,chargeId),{});
+  }
+  expenseBillingPreview(caseId,body){
+    expenseBillingInput(body);
+    return this.#request(expenseBillingPath(caseId)+'/preview',{body,mutation:false});
+  }
+  expenseBillingPrepare(caseId,body){
+    expenseBillingInput(body,true);
+    return this.#request(expenseBillingPath(caseId)+'/prepare',{body,originalRequestId:body.requestId});
+  }
+  expenseBillingApply(caseId,chargeId,body){
+    id(chargeId,'expense-billing');
+    exact(body,['actor','expectedProposalSha256'],['actor','expectedProposalSha256']);
+    text(body.actor,'Original recording operator',300);sha(body.expectedProposalSha256);
+    return this.#request(expenseBillingPath(caseId,chargeId)+'/apply',{body,recovery:'Reopen this same expense charge and resume its exact apply body. The retained native requests remain authoritative; do not prepare a replacement for an uncertain response.'});
+  }
+  expenseBillingCancel(caseId,chargeId,body){
+    id(chargeId,'expense-billing');
+    exact(body,['requestId','actor','expectedProposalSha256','reason'],['requestId','actor','expectedProposalSha256','reason']);
+    requestId(body.requestId);text(body.actor,'Recording operator',300);sha(body.expectedProposalSha256);text(body.reason,'Cancellation reason',6000);
+    return this.#request(expenseBillingPath(caseId,chargeId)+'/cancel',{body,originalRequestId:body.requestId});
+  }
+  expenseBillingPreviewIssue(caseId,chargeId){
+    id(chargeId,'expense-billing');
+    return this.#request(expenseBillingPath(caseId,chargeId)+'/preview-issue',{body:{},mutation:false});
+  }
+  expenseBillingIssue(caseId,chargeId,body){
+    id(chargeId,'expense-billing');
+    exact(body,['actor','expectedIssuePreviewSha256','creditDecisionId'],['actor','expectedIssuePreviewSha256']);
+    text(body.actor,'Original recording operator',300);sha(body.expectedIssuePreviewSha256);
+    if(body.creditDecisionId!==undefined)text(body.creditDecisionId,'Original native credit decision',100);
+    return this.#request(expenseBillingPath(caseId,chargeId)+'/issue',{body,recovery:'Read the same expense charge and recover its exact retained issue review and credit decision. Reuse this original body; do not create another invoice or request.'});
+  }
+  expenseBillingRefresh(caseId,chargeId){
+    id(chargeId,'expense-billing');
+    return this.#request(expenseBillingPath(caseId,chargeId)+'/refresh',{body:{},mutation:false});
+  }
   commercialChanges(caseId,billingId,milestoneId){
     return this.#request(commercialPath(caseId,billingId,milestoneId)+'/changes',{});
   }
@@ -1827,6 +1904,7 @@ export class GrantWorkspaceClient {
       'cost-funding':() => '/api/operations/' + id(args.caseId,'operation') + '/cost-funding/export.zip?revision=' +
         integer(args.revision,'Funding edition',1,1000000) + '&expectedVersion=' +
         integer(args.expectedVersion,'Reviewed case version') + '&expectedReportSha256=' + sha(args.expectedReportSha256),
+      'expense-billing':() => expenseBillingPath(args.caseId,id(args.chargeId,'expense-billing'))+'/export.zip',
       'expense-attributions':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attributions.csv',
       'expense-sources':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-sources.csv',
       'expense-html':() => '/api/operations/' + id(args.caseId,'operation') + '/expense-attribution.html',

@@ -47,3 +47,19 @@
 .cq-transfer-scope{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;min-width:180px}
 
 .commercial-desk .cq-transfer-link-button{border:0;background:transparent;padding:0;border-radius:0;font-weight:400;text-align:left}.commercial-desk .cq-transfer-link-button:hover{background:transparent;text-decoration-thickness:2px}
+
+/* Private delivery and care economics use the same responsive industrial desk. */
+.cq-economics-section{margin:24px 0;padding-top:20px;border-top:1px solid var(--cq-line)}
+.cq-economics h5{font-size:14px;margin:20px 0 8px}
+.cq-economics-costs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
+.cq-economics-costs .cq-grid{grid-template-columns:1fr;margin-bottom:16px}
+.cq-economics .cq-source .cq-section-heading{gap:12px;margin-bottom:12px}
+.cq-economics .cq-source h4{margin:6px 0}
+.cq-economics-import{margin:20px 0}
+.cq-economics [role=alert]{border-left:3px solid #555;background:#f3f3f2;padding:12px;overflow-wrap:anywhere}
+.cq-economics caption{text-align:left;padding:10px;font-weight:600;background:var(--cq-panel)}
+.cq-economics td{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cq-economics-review{margin-top:24px}
+.cq-economics .cq-table-wrap:focus-visible{outline:2px solid #333}
+@media(max-width:800px){.cq-economics-costs{grid-template-columns:1fr}}
+@media(max-width:620px){.cq-economics .cq-actions>button{width:100%}.cq-economics .cq-section-heading{flex-direction:column}}

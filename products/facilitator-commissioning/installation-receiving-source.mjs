@@ -85,35 +85,54 @@ function exact(raw,expected,label){
   need(raw.equals(bytes),'The complete prepared '+label+' differs from its original inputs and maintained compiler.');
 }
 
-/**
- * Read only a completed, externally pinned original preparation.
- * files contains every full byte buffer, including INSTALLATION_PREPARATION.json last.
- * Outputs are recomputed by the existing compiler before any native use.
- */
-export async function readPreparedInstallation(directory,expectedSha256){
-  need(sha(expectedSha256),'Bind the exact original INSTALLATION_PREPARATION.json SHA256.');
-  const root=await workflowSeriesPrivateDirectory(resolve(directory));
-  const manifestRaw=await readWorkflowSeriesPrivateFile(join(root,'INSTALLATION_PREPARATION.json'),MAX_FILE);
-  const manifestIdentity=identity(manifestRaw);
-  need(manifestIdentity.sha256===expectedSha256,'The selected complete preparation receipt differs.');
-  const original=parse(manifestRaw);
-  need(record(original)&&original.schema===INSTALLATION_SCHEMA&&original.mode==='prepare'&&Array.isArray(original.files),
-    'Use a complete original mode=prepare result; inputs and templates are not native Installation input.');
-  const rows=original.files.map(descriptor),names=new Set();
-  for(const row of rows){need(row.path!=='INSTALLATION_PREPARATION.json'&&!names.has(row.path),
-    'The original preparation repeats or self-lists a member.');names.add(row.path);}
-  const receiptRow={path:'INSTALLATION_PREPARATION.json',...manifestIdentity},allRows=[...rows,receiptRow];
-  await inventory(root,allRows);
-  const inspected=await inspectCommissioningInstallation(root);
-  need(inspected.receipt.bytes===manifestIdentity.bytes&&inspected.receipt.sha256===manifestIdentity.sha256,
-    'The original preparation changed during its maintained inspection.');
-  const files=[];for(const row of rows)files.push(await pinned(root,row));
+/** Validate a complete portable original preparation without touching a filesystem or native host. */
+export function validatePreparedInstallationMembers(inputFiles,expectedSha256){
+  need(sha(expectedSha256)&&Array.isArray(inputFiles)&&inputFiles.length>0&&inputFiles.length<=10000,'Select the complete original preparation and its externally retained receipt identity.');
+  const supplied=new Map();let total=0;
+  for(const input of inputFiles){
+    const row=descriptor(input);need(Buffer.isBuffer(input.raw)&&input.raw.length===row.bytes&&hash(input.raw)===row.sha256,'A complete portable preparation member differs: '+row.path+'.');
+    need(!supplied.has(row.path),'The complete portable preparation repeats a member.');
+    total+=row.bytes;need(total<=512*1024*1024,'The complete portable preparation exceeds its bounded full-source intake.');
+    supplied.set(row.path,{...row,raw:Buffer.from(input.raw)});
+  }
+  const receipt=supplied.get('INSTALLATION_PREPARATION.json');need(receipt&&receipt.sha256===expectedSha256,'The portable preparation receipt is missing or changed.');
+  const manifestRaw=receipt.raw,manifestIdentity=identity(manifestRaw),original=parse(manifestRaw);
+  need(record(original)&&original.schema===INSTALLATION_SCHEMA&&original.mode==='prepare'&&Array.isArray(original.files),'Use the complete original prepare receipt.');
+  const files=original.files.map(input=>{const row=descriptor(input),member=supplied.get(row.path);need(row.path!=='INSTALLATION_PREPARATION.json'&&member&&member.bytes===row.bytes&&member.sha256===row.sha256,'The portable preparation roster differs from its original receipt.');return member;});
+  need(new Set(files.map(file=>file.path)).size===files.length&&supplied.size===files.length+1,'The portable preparation includes unlisted or duplicate original members.');
   const byName=new Map(files.map(file=>[file.path,file]));
   function raw(name){const file=byName.get(name);need(file,'The full original preparation is missing '+name+'.');return file.raw;}
   const seed=parse(raw('inputs/original-seed.json')),caseSnapshot=parse(raw('inputs/original-case.json')),
     profile=parse(raw('inputs/profile.json')),bindings=parse(raw('inputs/original-bindings.json')),
     job=parse(raw('commissioning-source/job.json')),selection=parse(raw('commissioning-source/selection.json')),
     transfer=parse(raw('commissioning-source/TRANSFER.json')),transferIdentity=identity(raw('commissioning-source/TRANSFER.json'));
+
+  need(record(transfer)&&transfer.schema==='stellar-forge.facilitator-commissioning-transfer.v1'&&Array.isArray(transfer.files),
+    'Select the complete original commissioning transfer.');
+  const transferred=new Set();
+  for(const file of transfer.files){
+    need(record(file)&&typeof file.path==='string'&&/^(?:blobs\/[a-f0-9]{64}|(?:commands|results)\/[a-f0-9-]{36}\.json|reviews\/[a-f0-9-]{36}(?:\.buyer)?\.json|runs\/[a-f0-9-]{36}(?:\.(?:selection|started|stopped|failed))?\.json|buyers\/[a-f0-9-]{36}-[a-z0-9_-]{1,64}\.(?:json|body)|job\.json|selection\.json)$/.test(file.path)&&!transferred.has(file.path),
+      'Keep every unique original commissioning transfer path.');
+    transferred.add(file.path);
+    const body=raw('commissioning-source/'+file.path);
+    need(body.length===file.bytes&&hash(body)===file.sha256,'An original commissioning transfer member changed: '+file.path+'.');
+  }
+  need(transferred.has('job.json')&&transferred.has('selection.json')&&job.id===transfer.jobId&&job.selectionSha256===transfer.selectionSha256,
+    'The portable transfer lost its original commissioning job or selection.');
+  for(const ref of [job.service.scope,job.service.schema,job.service.acceptance,
+    ...job.providers.flatMap(provider=>[provider.authority,...(provider.supportedResponse?[provider.supportedResponse]:[])]),
+    ...job.requests.flatMap(request=>[request.output,...(request.body?[request.body]:[])])]){
+    need(record(ref)&&sha(ref.sha256)&&Number.isSafeInteger(ref.bytes),'Retain each complete original commissioning blob identity.');
+    const body=raw('commissioning-source/blobs/'+ref.sha256);
+    need(body.length===ref.bytes&&hash(body)===ref.sha256,'The complete original commissioning blob changed.');
+  }
+  for(const path of transferred){
+    if(/^(commands|results)\/[a-f0-9-]{36}\.json$/.test(path)){
+      const value=parse(raw('commissioning-source/'+path));
+      need(value!==null,'The original commissioning command or result is null.');
+      void value.operationId;
+    }else if(path.startsWith('runs/'))parse(raw('commissioning-source/'+path));
+  }
   need(hash(Buffer.from(JSON.stringify(ordered(selection))))===job.selectionSha256,
     'The complete original selection no longer matches its original commissioning job.');
   const result=prepareCommissioningInstallation({seed,caseSnapshot,profile,bindings,job,transfer,transferIdentity});
@@ -140,15 +159,43 @@ export async function readPreparedInstallation(directory,expectedSha256){
   const expectedFiles=expectedOrder.map(path=>({path,...identity(raw(path))}));
   exact(manifestRaw,{...intent,files:expectedFiles,basis:result.basis,selections:prepared.selections??[],
     missingSources:result.missingSources??[],continuation:CONTINUATION},'completion receipt');
+
+  files.push(receipt);
+  return {identity:manifestIdentity,files,directories:[...parentsOf(files.map(file=>file.path))],seed,caseSnapshot,profile,bindings,job,transfer,
+    document:parse(raw('installation-input.json')),previewInput:parse(raw('installation-preview-input.json')),
+    binding:parse(raw('installation-source-binding.json')),preparation:parse(raw('preparation.json'))};
+}
+
+/**
+ * Read only a completed, externally pinned original preparation.
+ * files contains every full byte buffer, including INSTALLATION_PREPARATION.json last.
+ * Outputs are recomputed by the existing compiler before any native use.
+ */
+export async function readPreparedInstallation(directory,expectedSha256){
+  need(sha(expectedSha256),'Bind the exact original INSTALLATION_PREPARATION.json SHA256.');
+  const root=await workflowSeriesPrivateDirectory(resolve(directory));
+  const manifestRaw=await readWorkflowSeriesPrivateFile(join(root,'INSTALLATION_PREPARATION.json'),MAX_FILE);
+  const manifestIdentity=identity(manifestRaw);
+  need(manifestIdentity.sha256===expectedSha256,'The selected complete preparation receipt differs.');
+  const original=parse(manifestRaw);
+  need(record(original)&&original.schema===INSTALLATION_SCHEMA&&original.mode==='prepare'&&Array.isArray(original.files),
+    'Use a complete original mode=prepare result; inputs and templates are not native Installation input.');
+  const rows=original.files.map(descriptor),names=new Set();
+  for(const row of rows){need(row.path!=='INSTALLATION_PREPARATION.json'&&!names.has(row.path),
+    'The original preparation repeats or self-lists a member.');names.add(row.path);}
+  const receiptRow={path:'INSTALLATION_PREPARATION.json',...manifestIdentity},allRows=[...rows,receiptRow];
+  await inventory(root,allRows);
+  const inspected=await inspectCommissioningInstallation(root);
+  need(inspected.receipt.bytes===manifestIdentity.bytes&&inspected.receipt.sha256===manifestIdentity.sha256,
+    'The original preparation changed during its maintained inspection.');
+  const files=[];for(const row of rows)files.push(await pinned(root,row));
+  const selected=validatePreparedInstallationMembers([...files,{...receiptRow,raw:manifestRaw}],expectedSha256);
   // Full returned Buffers are the individually hash-verified original snapshot.
   // Recheck its selected receipt and roster before returning; a later copy rereads
   // every source through this same authority rather than trusting mutable results.
   exact(await readWorkflowSeriesPrivateFile(join(root,receiptRow.path),MAX_FILE),manifestRaw,'receipt bytes');
   await inventory(root,allRows);
-  files.push({...receiptRow,raw:manifestRaw});
-  return {directory:root,identity:manifestIdentity,receipt:inspected,files,seed,caseSnapshot,profile,bindings,
-    job,transfer,document:parse(raw('installation-input.json')),previewInput:parse(raw('installation-preview-input.json')),
-    binding:parse(raw('installation-source-binding.json')),preparation:parse(raw('preparation.json'))};
+  return {directory:root,receipt:inspected,...selected};
 }
 function contains(a,b){const rel=relative(a,b);return rel===''||rel!=='..'&&!rel.startsWith('..'+sep)&&!isAbsolute(rel);}
 /** Copy every original member create-only, then cold-read the copy through the same authority. */

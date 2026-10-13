@@ -125,3 +125,26 @@ Open the exact installed outgoing version and look at its actual desktop and nar
 6. Download the complete working copy with unfinished edition fields and reopen it through the existing working-copy controls. Inspect the restored raw mapping, decisions, comparison, preview, selected revisions and original request state. Reopen the accepted draft and prepared package independently through the original native client or existing receiver.
 
 Inspect populated, empty, loading, stale and error views, readable tables, control labels, focus and desktop/narrow layout. Retain the actual images and complete downloads with the same customer operation, return them to the producing owner for viewing, and correct any visible or workflow defects before handing over that outgoing edition. The source and native receiving receipts identify what actually ran; source checks alone do not establish a rendered customer result.
+
+
+## Existing customer receiving programme
+
+The maintained `installation-source-desk-receiving.py` programme continues to own the original workspace, complete source selection, native server and browser lifetime. Its existing browser programme, `installation-source-desk-receiving.mjs`, invokes `installation-source-editions-receiving.mjs` after the original intake, mapping, preparation, attachment, Installation and source-history operations.
+
+The same actual customer selection supplies both the native prepared source and the browser's editable target. Each has the same complete original file bytes, metadata and customer mapping. The edition course selects each file individually: retain when its full metadata is already identical, otherwise replace it with the exact matching target original. The recorded successor carries the source mapping forward, with the entire customer selection checked against the original input. This course does not author new customer quantities or commercial choices.
+
+The continuation operates five complete stages:
+
+| Stage | Retained result |
+| --- | --- |
+| Compare exact customer editions | Both complete draft identities, source and target preparation IDs, full comparison, all original files and prepared outputs downloaded from both sides, populated and empty search views, and all available table pages. |
+| Compose and reopen unfinished work | Every explicit file choice, complete source mapping, an actual unfinished mapping download and reopen, full preview, and the visible stale-preview state after changing and restoring a choice. |
+| Save and recover the original request | One complete `edition.apply` request, its response retained before the browser response is interrupted, recovery of that same request through the existing journal, and the complete accepted transition. |
+| Prepare the successor | One original native preparation for the accepted revision, every output and the complete archive, original customer plan/profile/effort checks, and independent readback of both earlier preparations. |
+| Reopen history and the complete review | The exact pre-successor target revision, complete accepted working-copy download, reopening that actual file through the installed controls, full review download, and the original request/preparation lineage. |
+
+The browser report's final stage is `14-edition-history-and-final-working-reopen`. The report retains these results under `customerEditions`; the original selection interruption and the edition interruption have separate records. Every mutation comes from the installed controls and remains attached to its original request. The parent programme verifies the actual final draft and includes the complete browser artifacts in the original native delivery.
+
+Keep the current receiving source selected with the whole installed application. An earlier complete report or backup retains its original source identity; it does not establish completion of these additional stages. Resume a partial current run through its original input, report, persistent browser profile and requests. A following source edition of an already completed operation needs its own explicitly retained continuation binding and output directory in that same case.
+
+The producing operator opens the saved desktop and narrow-screen images and the actual downloaded attachments, inspects the displayed content, and reopens the complete outputs. The report identifies the controls and files actually operated; the operator's observations accompany the customer delivery.

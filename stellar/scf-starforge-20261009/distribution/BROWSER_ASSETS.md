@@ -85,6 +85,40 @@ product commands. A conflicting declaration for an unrelated, unselected
 server does not affect this product. Conflicting declarations for a reached
 server are a source error and must be corrected at that original declaration.
 
+## Installed declaration admission
+
+The installed specification reader keeps two distinct inventories.
+`distributionInputs` contains the selected base, contribution and recipe
+documents that define enabled product capabilities. `browserAssetDeclarations`
+contains the original declaration documents used by reached browser servers,
+including a donor contribution outside the recipe. A donor may also already be
+a selected input; that does not duplicate or expand its enabled registrations.
+
+On reopening an installed source package, the reader verifies every recorded
+browser declaration against its complete original bytes, SHA-256, Git blob,
+byte count and ordinary `source/` member identity. It reconstructs the exact
+server/manifest pairs from those original documents using the same declaration
+reader as the builder. Each referenced server and manifest must be present in
+the retained source inventory. Missing, altered, duplicate or invented donor
+evidence is rejected, as is any extra contribution that has no authenticated
+browser dependency. Unrelated registrations in a retained donor remain
+unselected.
+
+For example, `merchant-commissioning-collections` selects
+`merchant-receivables`, which includes the service-agreements server in its
+complete component. Both the receivables and service-agreements declarations
+register that original server/manifest pair. The installed package retains and
+authenticates both declaration files, while its composed commands, providers
+and `distributionInputs` still follow the original recipe. Reopening therefore
+accepts the builder's complete browser source without enabling the unselected
+service-agreements contribution.
+
+Earlier archives without the browser-dependency field retain their original
+selected-only admission rule. A repaired source edition uses a new immutable
+build output and the existing customer's explicit source-adoption workflow;
+it does not change a retained build's commit, recipe, manifest or operation.
+This admission check performs no application execution.
+
 ## Shared modules and complete dependency errors
 
 One physical module may be served at several URLs in one server, or by several

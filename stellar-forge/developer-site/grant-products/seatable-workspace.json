@@ -16,6 +16,12 @@
           "bytes": 33214,
           "sha256": "3a1577c5d6f5c75ab8073a391742889a5bc63d5740bd17ad00e5ba5174d77356",
           "git_blob": "c9647ea934545dc8b70b77a54843fd3508711bbe"
+        },
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 51105,
+          "sha256": "69174cd018128ff55479865e7d934d566c1bf1d8547230919053f9903d36ed0c",
+          "git_blob": "836145665a705bb752490a959a639f94d66c0ae0"
         }
       ]
     },
@@ -32,6 +38,12 @@
           "bytes": 38219,
           "sha256": "dcfe5c53eeed23b925983ea24ebdb0bd97f003145bf00d8a587c60de0d21f163",
           "git_blob": "abfa19d3c7d9f37dda4c58f5dc1470951748493a"
+        },
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 39666,
+          "sha256": "3802062ffa3b5d67dcb350bb99c283500433c53b7c5af7393203ee1b01fb0f8f",
+          "git_blob": "d12aac75d0e29d0bfa8cf04e85aeaf7b649b3e1f"
         }
       ]
     },
@@ -48,6 +60,12 @@
           "bytes": 12784,
           "sha256": "09b9b9639cc128e3c1c4f8aa5e5859e5ed024d2d4741ebc16f53df7c74b96ad4",
           "git_blob": "271aee4920f05c026ebb0638c9eb6422ec7c1f18"
+        },
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 19715,
+          "sha256": "13b3d2604088aaf699a61575313a50772c8d9676d1a6cdbe0c2a0d893d153557",
+          "git_blob": "563333569cef673a3d7f0d07be279ab76bdc1929"
         }
       ]
     },
@@ -64,6 +82,12 @@
           "bytes": 74579,
           "sha256": "c39609f90fcfb75e5b2f125e279805e12f2f1e46bfdc7de20120da9a9966d44c",
           "git_blob": "7586dedf17d7a843fbce69abeb84417591db4e8f"
+        },
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 86463,
+          "sha256": "601b1306b8a294e75a35111ecdfc1868c3036a1996a5f0f3b835df0be7eac7a0",
+          "git_blob": "4ba23cf9891faa475a927aed7ed08c95074fd913"
         }
       ]
     },
@@ -80,6 +104,12 @@
           "bytes": 21681,
           "sha256": "9b00e1a66d61dd49b1e3e6933f6183fba5a4e83cd7d7af796f8d6feefdfacaae",
           "git_blob": "189a2457c65c7a36382f2db1a2c5fb1b75a3db26"
+        },
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 23201,
+          "sha256": "6e9ff702cde09b764f6be6bcd21faa6a70a3c7c7c70e5800a25e1a48490f1c9b",
+          "git_blob": "a049ace69fd1a4b5c6cc60ac64ad07b258ad8a3f"
         }
       ]
     },
@@ -96,6 +126,12 @@
           "bytes": 1586,
           "sha256": "67ce6d5272fac851496d5def54d336c866693756919e8677c4e394b67e6cb62c",
           "git_blob": "1e113e6c07eb5c11eea616c1e4e660f14377af92"
+        },
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 1732,
+          "sha256": "052b73a9123a93f37d6baa1435b6d4ac98d6ac50277bf816dc4081f80610d796",
+          "git_blob": "3cd35407954f1658335215e3567405525984aa12"
         }
       ]
     },
@@ -112,6 +148,28 @@
           "bytes": 26192,
           "sha256": "e0cfbb5af1da684b2d7fc4bce5f60e3aaa3032508ab655d6e2aabc03cf831262",
           "git_blob": "d40c42ad1c29e7df926c04d650ab3e8930c9ce2d"
+        },
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 26192,
+          "sha256": "e0cfbb5af1da684b2d7fc4bce5f60e3aaa3032508ab655d6e2aabc03cf831262",
+          "git_blob": "d40c42ad1c29e7df926c04d650ab3e8930c9ce2d"
+        }
+      ]
+    },
+    {
+      "id": "seatable-returned-customer-review-engine",
+      "label": "Source-bound SeaTable customer draft return and concurrent author reconciliation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/returns.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "90425103abd9d045cc6cfae20430f396130fd8b1",
+          "bytes": 7280,
+          "sha256": "87168a7ba4f215843282a77edb1a33e741313244160e3e716d08aecd9051c715",
+          "git_blob": "f1c637b2c306e074c59eadea6726a947b230b9c4"
         }
       ]
     }

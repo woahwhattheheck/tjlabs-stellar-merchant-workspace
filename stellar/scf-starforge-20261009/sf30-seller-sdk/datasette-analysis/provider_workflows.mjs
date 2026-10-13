@@ -1,3 +1,4 @@
+import {mountProviderInputs} from './provider_inputs.mjs';
 /** Installed provider source desk. Uses the original workflow capability and provider CLI engines. */
 const PROVIDERS = {
   'shopify-payments': {title: 'Shopify Payments', purpose: 'Complete selected payouts, their original balance transactions and retail reconciliation.'},
@@ -79,7 +80,56 @@ export function mountProviderWorkflows({root, api, request, notify = () => {}, o
   side.append(sideHeading, searchLabel, search, filter, count, list);
   const notice = node('div', null, 'pw-notice'); notice.hidden = true; notice.setAttribute('role', 'status'); notice.setAttribute('aria-live', 'polite');
   const pendingHost = node('section'), formHost = node('section'), detailHost = node('section'), previewHost = node('section', null, 'pw-preview');
-  main.append(notice, pendingHost, formHost, detailHost, previewHost); shell.append(side, main); root.replaceChildren(shell);
+  const inputHost = node('details', null, 'pi-host'), inputRoot = node('div');
+  inputHost.append(node('summary', 'Original input files'), inputRoot);
+  let inputDesk = null;
+  const filesButton = button('Add or reopen an original file', () => openInputs());
+  side.append(filesButton);
+  main.append(notice, inputHost, pendingHost, formHost, detailHost, previewHost); shell.append(side, main); root.replaceChildren(shell);
+  function openInputs() {
+    inputHost.open = true;
+    inputHost.scrollIntoView({block: 'start', behavior: 'auto'});
+    inputRoot.querySelector('input[type=file]:not(.pw-file-input)')?.focus();
+  }
+  async function useInput(row) {
+    const catalog = await api('/api/providers/catalog');
+    if (catalog.workspaceId !== state.catalog.workspaceId) throw new Error('Reopen the original workspace before selecting this file.');
+    state.catalog = catalog;
+    const current = state.draft, c = connection(current?.connectionId);
+    const mapping = {
+      contacts: {provider: 'odoo-target', action: 'prepare', field: 'contactsInputId'},
+      'native-result': {provider: 'odoo-target', action: 'reconcile', field: 'nativeResultInputId'},
+      'native-delivery': {action: 'handover', field: 'nativeDeliveryInputId'},
+      'provider-handover': {action: 'receive', field: 'handoverInputId'},
+      handover: {action: 'receive', field: 'handoverInputId'},
+      decisions: {provider: 'xero-contacts', action: 'prepare', field: 'decisions'}
+    };
+    const selected = mapping[row.kind];
+    if (!selected || !c || selected.provider && c.provider !== selected.provider) {
+      message('The complete file is retained. Choose its original installed connection and operation, then use this file.'); return;
+    }
+    let value = row.inputId;
+    if (row.kind === 'decisions') {
+      if (row.bytes > 8 * 1024 * 1024) throw new Error('This decision document exceeds the browser form limit. Download the complete original and retain its existing CLI preparation.');
+      const response = await request('/api/providers/inputs/' + encodeURIComponent(row.inputId) + '/file');
+      if (!response.ok) throw new Error('The original mapping decisions could not be opened.');
+      const raw = await response.arrayBuffer();
+      const sha = [...new Uint8Array(await crypto.subtle.digest('SHA-256', raw))].map(x => x.toString(16).padStart(2, '0')).join('');
+      if (raw.byteLength !== row.bytes || sha !== row.sha256) throw new Error('The original decision document identity changed.');
+      value = new TextDecoder('utf-8', {fatal: true}).decode(raw);
+      if (!object(JSON.parse(value))) throw new Error('Select the complete original decision object.');
+    }
+    const fields = current.action === selected.action ? {...current.fields} : {};
+    fields[selected.field] = value;
+    if (selected.field === 'handoverInputId') delete fields.handoverOperationId;
+    if (selected.field === 'nativeDeliveryInputId') delete fields.nativeRequestId;
+    if (current.action !== selected.action || state.pending?.body?.operationId === current.operationId)
+      openDraft(c.id, selected.action, fields, true);
+    else { current.fields = fields; updateDraft(); state.formOpen = true; renderForm(); }
+    inputHost.open = false;
+    formHost.scrollIntoView({block: 'start', behavior: 'auto'});
+    message(row.fileName + ' selected in the retained original operation draft. Review the remaining source selections before submitting.');
+  }
   function message(text, error = false) {
     notice.hidden = false; notice.textContent = text; notice.dataset.error = String(error); notify(text, error);
   }
@@ -185,6 +235,17 @@ export function mountProviderWorkflows({root, api, request, notify = () => {}, o
   }
   async function dispatch(body) {
     if (state.busy.has('submit')) return;
+    if (state.pending) {
+      const canonical = value => Array.isArray(value) ? value.map(canonical) : object(value) ?
+        Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
+      const submission = value => { const copy = {...value}; delete copy.recoverLockId; return JSON.stringify(canonical(copy)); };
+      if (state.pending.body.operationId !== body.operationId) {
+        message('Read or continue the retained pending request before submitting another operation. Your new draft remains saved.', true); return;
+      }
+      if (submission(state.pending.body) !== submission(body)) {
+        message('This changes the original pending request. Read or continue its exact original body, then use Start a new operation for changed inputs.', true); return;
+      }
+    }
     state.pending = {body: JSON.parse(JSON.stringify(body)), createdAt: state.pending?.createdAt || new Date().toISOString()};
     persist(); state.busy.add('submit'); renderPending();
     try {
@@ -330,15 +391,15 @@ export function mountProviderWorkflows({root, api, request, notify = () => {}, o
     }
     if (d.action === 'receive') {
       selectField(fields, 'handoverOperationId', 'Retained handover operation',
-        operationChoices(provider, ['handover']), 'Select either an original operation here or a host-supplied complete handover file below.', false);
+        operationChoices(provider, ['handover']), 'Select either an original operation here or a complete uploaded or configured handover file below.', false);
       selectField(fields, 'handoverInputId', 'Complete handover file from another operator',
-        inputChoices(['provider-handover', 'handover']), 'The host supplies the original downloaded bundle. Its existing provider receiver verifies and restores the complete source.', false);
+        inputChoices(['provider-handover', 'handover']), 'Upload the original downloaded bundle in Original input files or select a configured file. Its existing receiver verifies and restores the complete source.', false);
     }
     if (d.action === 'configure') {
       const box = node('div', null, 'pw-wide'); jsonField(box, 'request', 'Original business request',
         'Use the complete existing request, profile, correlation and parameters. Its source is bound to this preparation.'); fields.append(box);
     }
-    form.append(fields);
+    form.append(fields, button('Add or reopen an original file', () => openInputs()));
     const controls = node('div', null, 'pw-actions'), submit = node('button', actionTitle(d.action));
     submit.type = 'submit'; submit.disabled = !c || !d.action || state.busy.has('submit') ||
       (d.action === 'capture' && !c.credential?.available);
@@ -612,10 +673,15 @@ export function mountProviderWorkflows({root, api, request, notify = () => {}, o
       if (!state.catalog.workspaceId) state.catalog.workspaceId = (await api('/api/health')).workspaceId;
       if (!state.catalog.workspaceId) throw new Error('The original workflow workspace identity is required to retain a provider draft.');
       state.storageKey = 'source-provider-workflow:' + location.origin + ':' + state.catalog.workspaceId;
+      if (!inputDesk) {
+        inputDesk = mountProviderInputs({root: inputRoot, request, workspaceId: state.catalog.workspaceId,
+          notify, onComplete: async () => { await refresh(false); }, onUse: useInput});
+        await inputDesk.start();
+      }
       restore(); createButton.disabled = !(state.catalog.connections || []).length; renderPending();
       await refresh(false); if (!state.selected) renderEmpty();
       state.timer = setInterval(() => { if (!state.closed && !document.hidden && !root.hidden) refresh(true); }, 5000);
     } catch (e) { state.started = false; createButton.disabled = true; message(e.message, true); }
   }
-  return {start, refresh, show: start, destroy() { state.closed = true; clearInterval(state.timer); }};
+  return {start, refresh, show: start, destroy() { state.closed = true; clearInterval(state.timer); inputDesk?.destroy(); }};
 }

@@ -9,3 +9,16 @@
 #handover-opened a{display:inline-block;border:1px solid #676763;padding:.6rem .8rem;background:#fff;color:#171717;font-weight:bold}
 button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:1;background:#e4e4df;color:#5b5b56;border-color:#b6b6af}
 @media(max-width:600px){section[data-panel=handover] .actions>button{width:100%}#handover-recovery .actions>button{width:100%}.handover-check{font-size:.9rem}}
+
+/* Returned drafts compare complete values with vertical cards at narrow widths. */
+.return-identities,.return-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.return-identity{border:1px solid #c8c8bf;padding:.8rem;min-width:0}
+.return-identity p{margin:.35rem 0}.return-identity code{display:block;overflow-wrap:anywhere;font-size:.75rem}
+.return-row{border:1px solid #b9b9b0;margin:1rem 0;padding:1rem;background:#fff}
+.return-row h4{margin:0 0 .8rem;overflow-wrap:anywhere}
+.return-values>div{min-width:0}.return-values pre{max-height:24rem}
+.return-row label{max-width:32rem;margin-bottom:0}
+#return-issues:empty{display:none}#return-stale{margin:1rem 0}
+#return-title,#return-summary{overflow-wrap:anywhere}
+@media(max-width:700px){.return-identities,.return-values{grid-template-columns:1fr}.return-row{padding:.75rem}
+section[data-panel=returned] .actions>button{width:100%}.return-row pre{max-height:18rem}}

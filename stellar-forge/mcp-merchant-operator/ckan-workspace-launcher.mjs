@@ -28,6 +28,7 @@ const SOURCE_FILES = [
     'dcat-semantic.mjs', 'dcat-semantic-native.mjs', 'dcat_semantic_prepare.py',
     'dcat-semantic-cli.mjs', 'SEMANTIC_CATALOGS.md', 'public/dcat-semantic.mjs',
     'dcat-semantic-runtime.mjs', 'dcat_semantic_runtime.py', 'SEMANTIC_RUNTIME.md',
+    'dcat-semantic-runtime-transfer.mjs', 'dcat_semantic_runtime_transfer.py', 'SEMANTIC_RUNTIME_TRANSFER.md',
     'dcat-semantic-comparison.mjs', 'dcat-semantic-comparison-cli.mjs', 'SEMANTIC_COMPARISONS.md',
     'public/dcat-semantic-comparison.mjs', 'public/dcat-semantic-view.mjs', 'dcat-semantic-files.mjs',
     'semantic-profiles/dcat-us-faithful-current.json', 'semantic-profiles/dcat-us-observed-current.json',

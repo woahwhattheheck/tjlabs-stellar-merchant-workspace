@@ -1,12 +1,12 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "openlineage-workspace",
-  "description": "OpenLineage operations with original synchronous and asynchronous producers, schema and quality review, service levels and complete customer receiving",
+  "description": "OpenLineage operations with original synchronous and asynchronous producers, schema and quality review, service levels and complete customer receiving, saved-evaluation comparison and versioned follow-up, with reviewed multi-job policy rollouts",
   "commands": {
     "openlineage": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/cli.mjs"
   },
   "commandDescriptions": {
-    "openlineage": "Operate original lineage and native producers, review schema and dataset quality, manage service levels, retain staff decisions and deliver complete editable workspaces"
+    "openlineage": "Operate original lineage and native producers, review schema and dataset quality, manage service levels, retain staff decisions and deliver complete editable workspaces; review and apply atomic multi-job policy rollouts"
   },
   "exports": {
     "./seller/openlineage": {
@@ -36,7 +36,15 @@
       "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-client.mjs"
     },
     "./seller/openlineage/async-producer": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/async-producer.mjs",
-    "./seller/openlineage/java-runtime-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs"
+    "./seller/openlineage/java-runtime-receiving": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs",
+    "./seller/openlineage/quality-followup": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-followup-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/quality-followup-client.mjs"
+    },
+    "./seller/openlineage/policy-rollout": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/service-policy-rollout-client.mjs"
+    }
   },
   "applicationProviders": {
     "openlineage-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/application-provider.mjs"
@@ -54,6 +62,7 @@
     "openlineage-workspaces": "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/merchant-provider.mjs"
   },
   "supportFiles": [
-    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs"
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/JAVA_RUNTIME_RECEIVING.mjs",
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/openlineage-workspace/SERVICE_POLICY_ROLLOUT.md"
   ]
 }

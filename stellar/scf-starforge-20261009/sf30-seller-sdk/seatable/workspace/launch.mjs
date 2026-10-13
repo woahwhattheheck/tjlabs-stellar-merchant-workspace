@@ -11,7 +11,7 @@ import { normalizeConnections } from './provider.mjs';
 export const SEATABLE_STARTUP_SCHEMA = 'stellar-forge.seatable-authoring-startup.v1';
 const WORKSPACE = 'stellar-forge.seatable-authoring.v1';
 const HASH = /^[a-f0-9]{64}$/;
-const SOURCE_FILES = ["launch.mjs","model.mjs","cli.mjs","server.mjs","provider.mjs","packet.mjs","browser.mjs","index.html","style.css","mcp.mjs","catalog.mjs","merchant-provider.mjs","application.mjs","application-provider.mjs","handover.mjs","uploads.mjs","placement.mjs"];
+const SOURCE_FILES = ["launch.mjs","model.mjs","cli.mjs","server.mjs","provider.mjs","packet.mjs","browser.mjs","index.html","style.css","mcp.mjs","catalog.mjs","merchant-provider.mjs","application.mjs","application-provider.mjs","handover.mjs","uploads.mjs","placement.mjs","returns.mjs"];
 const SOURCE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const changed = () => fault('SEATABLE_MANAGED_INPUT_CHANGED',
   'Review the current source workspace, connection file and installed runtime before starting.', 409);

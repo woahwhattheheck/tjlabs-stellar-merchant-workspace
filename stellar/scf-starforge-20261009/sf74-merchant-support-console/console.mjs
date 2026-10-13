@@ -704,8 +704,10 @@ async function openLinkedCase() {
   if (selected.length !== 1 ||
       !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(selected[0]))
     throw new TypeError('The case link must name one saved case UUID.');
-  const id = selected[0];
-  const opened = await caseDesk.openSavedCase(id);
+  const id = selected[0], revisions = url.searchParams.getAll('revision');
+  if(revisions.length>1||revisions.length===1&&!/^[a-f0-9]{64}$/.test(revisions[0]))
+    throw new TypeError('The case link must retain one complete saved revision.');
+  const opened = await caseDesk.openSavedCase(id,revisions[0]??null);
   if (!opened || caseDesk.currentCase()?.id !== id) return;
   const destination = url.hash === '#implementation' ? commissioningRoot :
     url.hash === '#case-packages' ? casePackageRoot : url.hash === '#service-operations' ? serviceRoot : null;

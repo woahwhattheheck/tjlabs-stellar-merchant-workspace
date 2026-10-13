@@ -43,6 +43,17 @@ const desk=mountCommercialDesk({root:$('quotation-root'),services:{
   receivingStatus:args=>call('receiving-status',args),receivingCapture:args=>call('receiving-capture',args),
   receivingInspect:args=>call('receiving-inspect',args),receivingAttach:args=>call('receiving-attach',args),
   receivingCase:args=>call('receiving-case',args),receivingRestore:args=>call('receiving-restore',args),
+  previewEconomics:args=>call('economics-preview',args),
+  saveEconomics:args=>call('economics-save',args),
+  async downloadEconomics(args){
+    const id=current(),token=selectionEpoch,scope={...args.scope};
+    const result=await response('/api/cases/'+id+'/commercial/economics-download',checked(args,id));
+    if(token!==selectionEpoch)throw new Error('The selected case changed during its assessment download.');
+    const encoded=result.headers.get('x-sf74-file-name'),bytes=result.headers.get('x-sf74-file-bytes');
+    if(!encoded||!/^(0|[1-9]\d*)$/.test(bytes??''))throw new Error('The complete assessment file descriptor is missing.');
+    return {scope,descriptor:{filename:decodeURIComponent(encoded),bytes:Number(bytes),
+      sha256:result.headers.get('x-content-sha256'),mediaType:result.headers.get('content-type')},response:result};
+  },
   previewPerformance:args=>call('performance-preview',args),
   receivePerformance:args=>call('performance-receive',args),
   preparePerformanceRevision:args=>call('performance-revision',args),

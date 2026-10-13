@@ -467,6 +467,102 @@
           "sha256": "bd458e99d99dab13f6f8af52bf1d0ccdc6a0002f8c51328bf935b7b29eeaaa07"
         }
       ]
+    },
+    {
+      "id": "webhook-publisher-working-browser",
+      "label": "Complete publisher source/feed/merchant drafts and native save recovery",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/webhook-feed/public/app.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "c29e21b87cf42da52546763bda9598f640351446",
+          "bytes": 37437,
+          "sha256": "9a8ac7c53ffe169eb1c70741571890de8f74def2ffce922fe35e0813244726fc"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-document",
+      "label": "Original publisher working-copy browser document and controls",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/webhook-feed/public/index.html",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "59aa1295b51d343cd7361989ae3619ae92142154",
+          "bytes": 11878,
+          "sha256": "38b7ecc62255a24a52451dcb890dbeeb330ac70efd7fc676722348d914cbcd69"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-style",
+      "label": "Responsive original publisher operating presentation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/webhook-feed/public/style.css",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "32363ef88dbf39a63abe64a24b0359415c9a4171",
+          "bytes": 5089,
+          "sha256": "2475b0c595bcff69be88da2c94b8994221eb40f4ba009676949d48390c3c49c5"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-operating",
+      "label": "Complete publisher working-copy and independent editable receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/webhook-feed/WORKING_COPIES.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "87d547d74cb7f81228c0b75c518d755c09dfbce4",
+          "bytes": 11212,
+          "sha256": "570362aabf2b65490e04e6142f77df588ade93ec07cd5ef3955b15a008ba2c03"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-operator-operating",
+      "label": "Original publisher managed operation, private snapshot and customer receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/webhook-feed/OPERATING.md",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "2be45f830332c0bfec95897138da0900b9001baf",
+          "bytes": 16789,
+          "sha256": "7e408dcbee48760bd775f20f7e0af15d2f36307459610ac583515bd3f8bb9598"
+        }
+      ]
+    },
+    {
+      "id": "webhook-publisher-working-receiving",
+      "label": "Same-customer publisher working-copy native browser receiving continuation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/webhook-feed/receiving/working-copies.mjs",
+      "required": false,
+      "editions": [
+        {
+          "commit": "0d33ab17665a4fca9f51d36838abee62ca149513",
+          "git_blob": "e788461343cff78756584cd6f26f148cb002d2d7",
+          "bytes": 10035,
+          "sha256": "6f37f7c2576086eb60485bafff0495f0b57ca5675bf4cdd7023910ab7428f934"
+        }
+      ]
     }
   ]
 }

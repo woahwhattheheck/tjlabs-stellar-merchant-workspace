@@ -1,7 +1,7 @@
 {
   "schema": "stellar-forge.merchant-distribution-contribution.v1",
   "id": "seatable-authoring",
-  "description": "Complete SeaTable source authoring, whole editable workspace handover/independent receiving, original publisher/SF82 and managed browser/MCP lifecycle.",
+  "description": "Complete SeaTable source authoring, whole editable workspace handover and returned customer draft review, original publisher/SF82 and managed browser/MCP lifecycle.",
   "commands": {
     "seatable-workspace": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/cli.mjs",
     "seatable-receive": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/receiving.mjs"
@@ -12,7 +12,8 @@
     "./seller/seatable/workspace/launch": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/launch.mjs",
     "./seller/seatable/workspace/packet": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/packet.mjs",
     "./seller/seatable/workspace/mcp": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/mcp.mjs",
-    "./seller/seatable/workspace/handover": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/handover.mjs"
+    "./seller/seatable/workspace/handover": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/handover.mjs",
+    "./seller/seatable/workspace/returns": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/returns.mjs"
   },
   "applicationProviders": {
     "seatable-authoring": "stellar/scf-starforge-20261009/sf30-seller-sdk/seatable/workspace/application-provider.mjs"

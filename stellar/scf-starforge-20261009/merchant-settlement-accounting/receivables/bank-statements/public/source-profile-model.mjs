@@ -16,6 +16,7 @@ const defaults=Object.freeze({format:'OFX',textEncoding:'',accountNamespace:'',c
 const columnNames=new Set(['postedDate','amount','debit','credit','providerId','payee','memo','reference','checkNumber','type','balance','currency','status','correctsProviderId','correctionAction','valueDate','accountId','bankId','branchId','accountType']);
 const enums={format:['OFX','QFX','CSV','CAMT053'],textEncoding:['','utf-8','windows-1252','iso-8859-1','utf-16le','utf-16be','us-ascii'],camtMessageVersion:['','camt.053.001.02','camt.053.001.08'],camtNamespaceMode:['DECLARED','UNQUALIFIED'],camtReferencePolicy:['ACCOUNT_SERVICER_REFERENCE','SOURCE_ENTRY'],camtDetailPolicy:['PRESERVE_ONLY','ENTRY_CURRENCY_TX_AMT'],delimiter:[',',';','\t','|'],dateFormat:['YMD','DMY','MDY'],decimalSeparator:['.',','],groupSeparator:['',',','.',' '],amountMode:['SIGNED','DEBIT_CREDIT']};
 export function reusableMapping(value){
+ if(value?.format==='PDF_REVIEW')fail('SOURCE_PROFILE_PDF_REVIEW','Use the dedicated PDF desk and its full working copy; reusable source profiles do not retain PDF page mappings.');
  if(!object(value)||!object(value.columns))fail('SOURCE_PROFILE_MAPPING','Save the complete source interpretation and column mapping.');
  const result={};for(const[key,fallback]of Object.entries(defaults)){const selected=value[key]??fallback;result[key]=text(typeof selected==='number'?String(selected):selected,key,4000);}
  for(const[key,choices]of Object.entries(enums))if(!choices.includes(result[key]))fail('SOURCE_PROFILE_MAPPING','Choose the supported '+key+' interpretation.');

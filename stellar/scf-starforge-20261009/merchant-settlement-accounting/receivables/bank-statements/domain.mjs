@@ -77,7 +77,7 @@ export function compactExcludedRow(row) {
 }
 export function sourcePreview(report) {
   return {schema:report.schema,format:report.format,file:clone(report.file),interpretation:clone(report.interpretation),
-    camt:camtMessageSummary(report.camt),
+    camt:camtMessageSummary(report.camt),pdfReview:report.pdfReview?clone(report.pdfReview):undefined,
     issues:clone(report.issues),csv:report.csv?{...clone(report.csv),preamble:report.csv.preamble?.map(row=>({source:row.source,cells:row.cells}))}:undefined,
     statements:report.statements.map(row=>({id:row.id,kind:row.kind,account:clone(row.account),period:clone(row.period),
       balances:clone(row.balances),issues:clone(row.issues),summary:clone(row.summary),camt:clone(row.camt),
@@ -89,6 +89,7 @@ export function previewIdentity(report,input) {
   return sha(json({fileSha256:report.file.sha256,format:report.format,textEncoding:report.file.textEncoding,
     accountNamespace:input.accountNamespace??null,csv:input.csv??null,
     ...(report.format==='CAMT053'?{camt:input.camt??null,interpretation:report.interpretation}:{}),
+    ...(report.format==='PDF_REVIEW'?{pdfReview:input.pdfReview,interpretation:report.interpretation}:{}),
     statements:report.statements.map(row=>({id:row.id,account:row.account.identitySha256,summary:row.summary,period:row.period}))}));
 }
 export function targetUsed(bank,kind,id,exceptMatchId=null) {

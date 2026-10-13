@@ -10,7 +10,7 @@
 <section id="handover-recovery" class="recovery" hidden aria-labelledby="handover-recovery-title"><h2 id="handover-recovery-title">Original whole-workspace request</h2><p><code id="handover-request"></code></p><p id="handover-recovery-message"></p>
 <label id="handover-reselect-label" hidden>Reselect the same complete workspace file<input id="handover-reselect" type="file" accept=".stwh,application/octet-stream"></label>
 <div class="actions"><button id="handover-check" type="button">Check original handover receipt</button><button id="handover-retry" type="button">Retry original request</button><button id="handover-pause" type="button" hidden>Pause local upload</button></div></section>
-<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button><button data-view="handover">Workspace handover</button></nav>
+<nav aria-label="Workspace"><button data-view="overview" aria-current="page">Overview</button><button data-view="acquire">Capture source</button><button data-view="review">Review columns</button><button data-view="versions">Saved versions</button><button data-view="deploy">Publish &amp; operate</button><button data-view="handover">Workspace handover</button><button data-view="returned">Returned review</button></nav>
 <main id="main">
 <fieldset id="workspace-controls" disabled><legend class="visually-hidden">Source workspace controls</legend>
 <section data-panel="overview">
@@ -71,6 +71,32 @@
 <button id="handover-receive" type="submit" disabled>Receive independent workspace</button></form>
 <h3>Saved independent receiving</h3><div id="handover-received" class="table-wrap"></div><div id="handover-opened" class="note" hidden></div>
 </section>
+<section data-panel="returned" hidden>
+<div class="section-title"><h2>Returned customer review</h2><button id="returns-refresh" type="button">Refresh returned reviews</button></div>
+<p>Bring reviewed changes from an already received independent workspace into this author draft. Each comparison keeps the common original, the current author draft and the frozen returned draft. Source versions, publication and running releases stay under their existing controls.</p>
+<form id="return-capture-form"><label>Received independent workspace<select id="return-child" required><option value="">Loading saved receiving…</option></select></label>
+<p class="help">Receive the customer's complete file in Workspace handover first. Save any unsaved column edits before capturing this return. Capture retains that child's exact draft and source ancestry for this review.</p>
+<button type="submit">Capture returned draft</button></form>
+<h3>Saved returned reviews</h3><div id="return-inventory" class="table-wrap"></div>
+<section id="return-detail" hidden>
+<div class="section-title"><h3 id="return-title"></h3><button id="return-refresh" type="button">Refresh comparison</button></div>
+<div id="return-identities" class="return-identities"></div>
+<details id="return-source"></details>
+<div id="return-issues" class="note" role="status"></div>
+<div id="return-stale" class="recovery" hidden><h4>Local decisions need reconciliation</h4><p id="return-stale-message"></p>
+<div class="actions"><button id="return-use-saved" type="button">Use saved review</button><button id="return-carry" type="button">Carry local choices to current comparison</button></div>
+<p class="help">Both actions preserve the prior local map in this browser's history. Carry uses only fields still present in the complete current comparison; inspect those choices before saving.</p></div>
+<p id="return-summary"></p><p id="return-review-state" role="status"></p>
+<div id="return-rows"></div>
+<div class="pager"><button id="return-prev" type="button">Previous changes</button><span id="return-page"></span><button id="return-next" type="button">Next changes</button></div>
+<label>Review note<textarea id="return-note" rows="4" maxlength="4000" placeholder="Explain the customer decisions and any retained source limitations."></textarea></label>
+<p class="help">An absent value means the field is not present. An explicit empty or null value remains different. Choosing the common original may restore or remove a field. Order rows select the full original, current or returned order.</p>
+<div class="actions"><button id="return-save" type="button">Save review decisions</button><button id="return-apply" type="button" disabled>Apply reviewed draft</button><button id="return-export" type="button">Download frozen review</button><button id="return-local-download" type="button">Download local choices</button></div>
+<p id="return-apply-help" class="help"></p>
+<p>After applying, open Review columns to preview the complete original rows, save a new source version and use the existing publisher when that version is ready. Applying this draft does not publish, activate a release or send a customer delivery.</p>
+</section>
+</section>
+
 </fieldset>
 </main><footer>Private local operator · Node 24 · Original SeaTable v2 source and Stellar Forge publication engines</footer>
 <script type="module" src="/browser.mjs"></script>

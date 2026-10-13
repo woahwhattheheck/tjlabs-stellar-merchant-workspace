@@ -142,6 +142,21 @@ Keep the original receiving request when retrying a lost reply. Repeating that e
 
 The portable catalog bundle covers the retained catalog workflow. Keep the receiver's private connection configuration and prepared merchant deployment in their own original operating paths.
 
+
+## Open a complete handover without a server
+
+Use the [offline catalogue recipient](./recipient/README.md) when a customer needs to inspect a complete material handover directly in a browser. [Material_Catalog_Reader.html](./recipient/Material_Catalog_Reader.html) is the complete built reader; save the file, open it and choose the original catalog-bundle.jsonl. It includes all retained editions, full changes, customer-decision history, supplier records and exact source downloads.
+
+To deliver one HTML containing the original bundle, build it into a new private file:
+
+```sh
+node products/material-catalog/recipient/build.mjs \
+  --bundle /private/materials/handover/catalog-bundle.jsonl \
+  --output /private/materials/handover/Material_Catalog_Complete.html
+```
+
+The reader keeps the original bundle and every contained record. Continue editable work with the original browser/CLI/MCP importer described above. The selected material-catalog distribution includes the complete reader source, ready-built blank HTML and receiving course.
+
 ## Continue with supplier orders and fulfilment
 
 The [supplier order desk](../../stellar/scf-starforge-20261009/distribution/selections/SUPPLIER_ORDERS.md) carries original openTRANS 1.0 ORDER, ORDERRESPONSE, DISPATCHNOTIFICATION and INVOICE documents through a private order workspace. Use it when the supplier/customer handover proceeds to order confirmations, cancellations, dispatches and invoices. It retains complete XML, exact original order and line identifiers, numeric values, supplier and customer parties, prepared documents and the operator's selected revisions.

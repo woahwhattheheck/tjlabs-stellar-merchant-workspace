@@ -1,3 +1,4 @@
+import {readPdfReviewSource} from './source-pdf.mjs';
 // SPDX-License-Identifier: MIT
 // Original bank statement intake. Node built-ins only; no network or workspace mutation.
 import { createHash } from 'node:crypto';
@@ -811,8 +812,9 @@ function csvStatements(decoded,file,config) {
 export function readBankStatementSource(value) {
   object(value,'statement source input');
   const format=String(value.format||'').toUpperCase();
-  if (!['OFX','QFX','CSV','CAMT053'].includes(format)) fail('INVALID_FORMAT','Choose original OFX, QFX, CAMT053 or explicitly mapped CSV');
+  if (!['OFX','QFX','CSV','CAMT053','PDF_REVIEW'].includes(format)) fail('INVALID_FORMAT','Choose original OFX, QFX, CAMT053, explicitly mapped CSV, or the complete reviewed PDF working copy');
   const input=readFile(value.file);
+  if(format==='PDF_REVIEW')return readPdfReviewSource(input,value,{readCsv:source=>readBankStatementSource(source)});
   const decoded=decodeText(input.bytes,format,value.textEncoding,input.transport);
   const parsed=format==='CSV'?csvStatements(decoded,input.file,value.csv):format==='CAMT053'?readCamt053Statements(decoded,input.file,value,{fail,object,issue,attempt,strictString,decimal,currency,calendarDate,addDecimals,makeLocator,entities,finishAccount,candidateFingerprint,statementSummary,markDuplicates,jsonHash}):nativeStatements(decoded,input.file,value.accountNamespace);
   return {

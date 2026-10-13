@@ -23,6 +23,7 @@ const CORE = ['cli.mjs', 'cli.py', 'model.py', 'source.py', 'recipes.py',
   'bdnb_source.py', 'bdnb_adapter.py', 'bdnb_dictionary.json', 'bdnb_contract.json', 'BDNB_SOURCE.md',
   'bdnb_products.py', 'bdnb_workflow.py', 'bdnb_receiving.py', 'bdnb_operator.mjs',
   'provider_workflows.py', 'provider_workflows.mjs', 'provider_workflows.css', 'PROVIDER_WORKFLOWS.md',
+  'provider_inputs.py', 'provider_inputs.mjs',
   'partner-workflows/preparation.mjs', 'partner-workflows/profiles.mjs',
   'partner-workflows/prepare_cli.mjs', 'partner-workflows/README.md',
   'partner-workflows/SOURCE_CONTRACTS.md',
@@ -110,7 +111,7 @@ export async function inspectDatasetteAnalysisInstallation(root, {
   for (const path of files.keys()) {
     if (typeof path !== 'string' || !path.startsWith(DATASETTE_ANALYSIS_SOURCE)) continue;
     const name = path.slice(DATASETTE_ANALYSIS_SOURCE.length);
-    if (!/^(?:workflow_[^/]+|WORKFLOW[^/]*\.(?:md|json)|provider_workflows\.[^/]+|PROVIDER_WORKFLOWS\.md|partner-workflows\/.+|kestra\/.+)$/.test(name)) continue;
+    if (!/^(?:workflow_[^/]+|WORKFLOW[^/]*\.(?:md|json)|provider_(?:workflows|inputs)\.[^/]+|PROVIDER_WORKFLOWS\.md|partner-workflows\/.+|kestra\/.+)$/.test(name)) continue;
     need(!name.includes('\\') && name.split('/').every(part => part && part !== '.' && part !== '..'),
       'DATASETTE_ANALYSIS_SOURCE_CHANGED');
     required.add(path);

@@ -29,7 +29,7 @@ async function save() {
   }
   console.log(JSON.stringify({stage, status:result.browserContinuation?.status, memory:process.memoryUsage()}));
 }
-if (result.browser?.status === 'completed' && result.browser.renderedDelivery?.status === 'captured') {
+if (result.browser?.status === 'completed' && result.browser.renderedDelivery?.status === 'captured' && result.responseReview?.status === 'completed') {
   console.log(JSON.stringify({stage:'original-browser-complete', status:'completed-retained', directory:result.browser.directory}));
 } else try {
   const attempts = join(root, 'original-case-attempts');
@@ -40,6 +40,7 @@ if (result.browser?.status === 'completed' && result.browser.renderedDelivery?.s
   const {startCanadaBuysServer} = await load('server.mjs');
   const {operateCanadaBuysDesk} = await load('operator/OPERATING_JOURNEY.mjs');
   const {renderCanadaBuysDelivery} = await load('operator/RENDERED_DELIVERY.mjs');
+  const {continueApm2ResponseReview} = await load('response-review/APM2_JOURNEY.mjs');
   server = await startCanadaBuysServer({directory:join(root,'operator-workspace'),operator:'TJLabs browser receiving',title:'CanadaBuys procurement desk'});
   receiving = await startCanadaBuysServer({directory:join(root,'receiving-workspace'),operator:'TJLabs browser receiving',title:'CanadaBuys receiving desk'});
   const expectedOperatorId=result.operator.saved.workshare.workspaceId ||
@@ -84,11 +85,13 @@ if (result.browser?.status === 'completed' && result.browser.renderedDelivery?.s
     journey,bidderResponse,outputDirectory:join(root,'rendered-delivery')});
   result.browser.renderedDelivery=rendered;
   await save();
+  stage='original-response-review-and-return';result.browserContinuation.stage=stage;await save();
+  result.responseReview=await continueApm2ResponseReview({page,server,receiving,bidderResponse,root});await save();
   const inspectionDirectory = join('/workspace/scratch/9fcdd28e6390/canadabuys-original-native-artifacts','browser-inspection');
   const inspections = [];
   try {
     await mkdir(inspectionDirectory, {recursive:true, mode:0o700});
-    for (const screenshot of [...journey.screenshots,...rendered.screenshots]) {
+    for (const screenshot of [...journey.screenshots,...rendered.screenshots,...result.responseReview.journey.views.map(value=>({...value,file:basename(value.path)}))]) {
       const destination = join(inspectionDirectory, basename(screenshot.file));
       await copyFile(screenshot.path, destination);
       inspections.push({...screenshot, path:destination});

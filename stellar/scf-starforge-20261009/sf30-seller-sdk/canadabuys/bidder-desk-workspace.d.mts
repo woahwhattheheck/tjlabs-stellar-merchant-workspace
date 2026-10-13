@@ -1,3 +1,4 @@
+import type { ResponseDocument, ResponseComparison, ReviewReset } from './response-review/workspace.mjs';
 import type { CanadaBuysWorkspace, WorkspaceMetadata } from './workspace.mjs';
 import type { CapabilityProfile, CapabilityProfileInput, EvidenceDocument, EvidenceDocumentInput,
  RequirementAssessment, RequirementAssessmentInput, DecisionChoice, DecisionContext,
@@ -61,7 +62,7 @@ export interface BidderDeskPackage {
  schema:typeof BIDDER_DESK_SCHEMA;packageSha256:string;
  records:Array<{kind:BidderKind;id:string;headRevision:number;editions:BidderRecord[]}>;
  bodies:Array<{sha256:string;bytes:number;base64:string}>;
- commands:Array<{id:string;fingerprint:string;result:{record:BidderRecord}}>;
+ commands:Array<{id:string;fingerprint:string;result:{record:BidderRecord}|{record:BidderRecordMap['evidence'];document:ResponseDocument}|{record:BidderRecordMap['evidence'];document:ResponseDocument;returnedRecord:BidderRecordMap['evidence'];comparison:ResponseComparison&{reviewResets:ReviewReset[]}}}>;
 }
 export interface BidderReceiveResult {
  schema:typeof BIDDER_DESK_SCHEMA;status:'RECEIVED'|'REVIEW_REQUIRED';packageSha256?:string;

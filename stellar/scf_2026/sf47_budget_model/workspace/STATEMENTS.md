@@ -316,3 +316,8 @@ The Statements desk now provides **Use a saved statement setup**. Save the actua
 ## Supplier payment allocation review
 
 The invoice allocation editor now joins supplier/invoice search, original reference suggestions, current native paid/open balances, explicit partial and multiple-invoice allocations, original invoice source downloads, and a full before/after review. Each row keeps its own unfinished working copy in the same Staff-scoped statement draft and recovery file. Apply the reviewed allocation proposal, then preview the full statement again before importing. See [STATEMENT_ALLOCATIONS.md](STATEMENT_ALLOCATIONS.md) for the complete operator workflow, incoming refund treatment, current-position interpretation and recovery steps.
+
+
+## Prepare several account statements
+
+**Statement working copies** retains named complete editions for separate banks, accounts and periods. Search the whole list, compare an earlier edition before opening it, preserve the current work automatically when switching sources, and download/import every complete edition with its original file and request. The native case, cash writer and original preview remain unchanged. See [STATEMENT_WORKING_COPIES.md](STATEMENT_WORKING_COPIES.md) for the full workflow, independent receiving and concurrent-tab handling.

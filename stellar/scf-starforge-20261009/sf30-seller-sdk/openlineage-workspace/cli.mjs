@@ -9,9 +9,11 @@ import { serveStdio } from "./protocol.mjs";
 import { LineageClient } from "./client.mjs";
 import { producerConfiguration } from "./producer.mjs";
 import { qualityCommand, QUALITY_HELP } from "./quality-cli.mjs";
+import { qualityFollowupCommand, QUALITY_FOLLOWUP_HELP } from "./quality-followup-cli.mjs";
 
 const HELP = [
   ...QUALITY_HELP,
+  ...QUALITY_FOLLOWUP_HELP,
   "OpenLineage operations workspace",
   "",
   "  scf-lineage init --workspace DIR [--title TITLE]",
@@ -28,6 +30,7 @@ const HELP = [
   "  scf-lineage native-java runtime-verify --input PACKAGE",
   "  scf-lineage native-java runtime-receive --input PACKAGE --runtime NEW_DIR",
   "  scf-lineage service-levels status|policy|evaluate|record|incident|report ...",
+  "  scf-lineage policy-rollout status|preview|prepare|request|apply|resume|show|report ...",
   "  scf-lineage import --workspace DIR --input EVENTS [--name NAME] [--source URL] --operation-id ID [--revision N] [--content-encoding identity|gzip]",
   "  scf-lineage status --workspace DIR [--edition ID]",
   "  scf-lineage action ACTION --workspace DIR --input ARGUMENTS.json",
@@ -78,6 +81,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "native-java") {
     print(await (await import("./JAVA_PRODUCER.mjs")).javaProducerCommand(args)); return 0;
   }
+  if (command === "policy-rollout") return (await import("./service-policy-rollout-cli.mjs")).policyRolloutMain(args);
   if (command === "service-levels") return (await import("./service-levels-cli.mjs")).serviceLevelMain(args);
   const { result: options, positional } = parse(args);
   if (command === "producer") {
@@ -156,6 +160,7 @@ export async function main(argv = process.argv.slice(2)) {
     check(options, ["workspace", "id"]); print(await workspace.recoverLock(need(options.id, "--id"))); return 0;
   }
   await workspace.read();
+  if (command === "quality-followup") { print(await qualityFollowupCommand(workspace, positional, options)); return 0; }
   if (command === "quality") { print(await qualityCommand(workspace, positional, options)); return 0; }
   if (command === "status") {
     check(options, ["workspace", "edition"]); print(await workspace.view({ edition: options.edition ?? null })); return 0;

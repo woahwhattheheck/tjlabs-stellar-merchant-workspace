@@ -18,6 +18,7 @@ import {openCasePackageOperations} from './case-package-operations.mjs';
 import {createCasePackageHttp} from './case-package-http.mjs';
 import {createGrafanaDeliveryRoutes} from './case-grafana-http.mjs';
 import {createImplementationReviewHttp} from './implementation-review-http.mjs';
+import {createImplementationPortfolioHttp} from './implementation-portfolio-http.mjs';
 import {createSourceEditionDeliveryRoutes} from '../../scf_2026/sf49_data_commissioning/source-edition-http.mjs';
 import {openIncidentSources, incidentProblem} from './incident-sources.mjs';
 import {inspectSupportSelection, supportSelectionSha256, createSupportLaunch, supportListenerIdentity} from './managed-launch.mjs';
@@ -32,6 +33,11 @@ import {openCommercialReceivingController} from './commercial/operator.mjs';
 import {openCommercialTariffController} from './commercial/tariff-controller.mjs';
 
 const ASSETS = Object.freeze({
+  '/implementation-portfolio': ['implementation-portfolio.html', 'text/html; charset=utf-8'],
+  '/implementation-portfolio/app.mjs': ['implementation-portfolio.mjs', 'text/javascript; charset=utf-8'],
+  '/implementation-portfolio/model.mjs': ['implementation-portfolio-model.mjs', 'text/javascript; charset=utf-8'],
+  '/implementation-portfolio/style.css': ['implementation-portfolio.css', 'text/css; charset=utf-8'],
+  '/implementation-portfolio/guide': ['IMPLEMENTATION_PORTFOLIO.md', 'text/markdown; charset=utf-8'],
   '/implementation-review': ['implementation-review.html', 'text/html; charset=utf-8'],
   '/implementation-review/app.mjs': ['implementation-review.mjs', 'text/javascript; charset=utf-8'],
   '/implementation-review/model.mjs': ['implementation-review-model.mjs', 'text/javascript; charset=utf-8'],
@@ -51,6 +57,7 @@ const ASSETS = Object.freeze({
   '/commercial': ['commercial.html', 'text/html; charset=utf-8'],
   '/commercial/receiving-desk.mjs': ['commercial/receiving-desk.mjs', 'text/javascript; charset=utf-8'],
   '/commercial/receiving-desk.css': ['commercial/receiving-desk.css', 'text/css; charset=utf-8'],
+  '/commercial/economics-desk.mjs': ['commercial/economics-desk.mjs', 'text/javascript; charset=utf-8'],
   '/commercial/performance-desk.mjs': ['commercial/performance-desk.mjs', 'text/javascript; charset=utf-8'],
   '/commercial/performance-client.mjs': ['commercial/performance-client.mjs', 'text/javascript; charset=utf-8'],
   '/commercial/performance.css': ['commercial/performance.css', 'text/css; charset=utf-8'],
@@ -87,6 +94,8 @@ const ASSETS = Object.freeze({
   '/OAUTH_SUPPORT.md': ['OAUTH_SUPPORT.md', 'text/markdown; charset=utf-8'],
   '/handoff-desk.mjs': ['handoff-desk.mjs', 'text/javascript; charset=utf-8'],
   '/incident-desk.mjs': ['incident-desk.mjs', 'text/javascript; charset=utf-8'],
+  '/incident-writing.mjs': ['incident-writing.mjs', 'text/javascript; charset=utf-8'],
+  '/INCIDENT_WRITING.md': ['INCIDENT_WRITING.md', 'text/markdown; charset=utf-8'],
   '/incident-recovery-desk.mjs': ['incident-recovery-desk.mjs', 'text/javascript; charset=utf-8'],
   '/incident-desk.css': ['incident-desk.css', 'text/css; charset=utf-8'],
   '/renewals': ['renewals.html', 'text/html; charset=utf-8'],
@@ -172,7 +181,7 @@ function compareUploadedSources(input) {
 export {workorderFromSources} from './workorder-source.mjs';
 
 // Injection is only for the focused loopback HTTP-contract check, not for deployed usage.
-export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, renewalDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, grafanaDelivery = null, implementationReview = null, providerExtension = null, launchRecord = () => null} = {}) {
+export function createConsoleServer({runCapture = capture, allowLoopback = false, caseStore = null, handoffDesk = null, incidentDesk = null, commercialDesk = null, renewalDesk = null, commercialReceivingDesk = null, commercialTariffDesk = null, adjustmentDesk = null, sourceDelivery = null, casePackages = null, grafanaDelivery = null, implementationReview = null, implementationPortfolio = null, providerExtension = null, launchRecord = () => null} = {}) {
   let active = false;
   const sourceRoutes=sourceDelivery?createSourceEditionDeliveryRoutes({service:sourceDelivery.service}):null;
   const packageRoutes=createCasePackageHttp(casePackages);
@@ -188,7 +197,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
     }
     const route = (req.url || '').split('?')[0];
     if (req.method === 'GET' && route === '/health') {
-      json(res, 200, {status: 'LOCAL_READY', originalIntake: 'SF70', providerCallsOnPageLoad: 0, paidCalls: 0, casesEnabled:Boolean(caseStore),commercialEnabled:Boolean(commercialDesk),renewalsEnabled:Boolean(renewalDesk),commercialReceivingEnabled:Boolean(commercialReceivingDesk),commercialTariffEnabled:Boolean(commercialTariffDesk),adjustmentsEnabled:Boolean(adjustmentDesk),handoffsEnabled:Boolean(handoffDesk),incidentsEnabled:Boolean(incidentDesk),sourceBundlesEnabled:Boolean(sourceDelivery),casePackagesEnabled:Boolean(casePackages),grafanaDeliveryEnabled:Boolean(grafanaDelivery),implementationReviewEnabled:Boolean(implementationReview)}); return;
+      json(res, 200, {status: 'LOCAL_READY', originalIntake: 'SF70', providerCallsOnPageLoad: 0, paidCalls: 0, casesEnabled:Boolean(caseStore),commercialEnabled:Boolean(commercialDesk),renewalsEnabled:Boolean(renewalDesk),commercialReceivingEnabled:Boolean(commercialReceivingDesk),commercialTariffEnabled:Boolean(commercialTariffDesk),adjustmentsEnabled:Boolean(adjustmentDesk),handoffsEnabled:Boolean(handoffDesk),incidentsEnabled:Boolean(incidentDesk),sourceBundlesEnabled:Boolean(sourceDelivery),casePackagesEnabled:Boolean(casePackages),grafanaDeliveryEnabled:Boolean(grafanaDelivery),implementationReviewEnabled:Boolean(implementationReview),implementationPortfolioEnabled:Boolean(implementationPortfolio)}); return;
     }
     if (route === '/api/support-launch') {
       if (req.method !== 'GET') {json(res,405,{error:'METHOD_NOT_ALLOWED'});return;}
@@ -208,6 +217,10 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
       } catch { json(res, 500, {error: 'STATIC_ASSET_UNAVAILABLE'}); }
       return;
     }
+    if(!implementationPortfolio&&(route==='/api/implementation-portfolio'||route.startsWith('/api/implementation-portfolio/'))){
+      json(res,503,{error:'IMPLEMENTATION_PORTFOLIO_DISABLED',detail:'Open the original Support workspace with its saved-case directory.'});return;
+    }
+    if(implementationPortfolio&&await implementationPortfolio.handle(req,res,{origin:ownOrigin}))return;
     if(!implementationReview&&(route==='/api/implementation-review'||route.startsWith('/api/implementation-review/'))){
       json(res,503,{error:'IMPLEMENTATION_REVIEW_DISABLED',detail:'Open the original Support workspace with its saved-case directory.'});return;
     }
@@ -472,7 +485,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
           }
           json(res,200,result);return;
         }
-        const commercial=/^\/api\/cases\/([a-f0-9-]+)\/commercial(?:\/(preview|preview-implementation|adopt-implementation|save-draft|publish|receive|receive-pricing|compare|download|receiving-status|receiving-capture|receiving-inspect|receiving-attach|receiving-case|receiving-restore|tariff-status|tariff-catalog|tariff-selection|tariff-capture|tariff-inspect|tariff-attach|tariff-case|tariff-restore|tariff-download|performance-preview|performance-receive|performance-revision|performance-download))?$/.exec(route);
+        const commercial=/^\/api\/cases\/([a-f0-9-]+)\/commercial(?:\/(preview|preview-implementation|adopt-implementation|save-draft|publish|receive|receive-pricing|compare|download|receiving-status|receiving-capture|receiving-inspect|receiving-attach|receiving-case|receiving-restore|tariff-status|tariff-catalog|tariff-selection|tariff-capture|tariff-inspect|tariff-attach|tariff-case|tariff-restore|tariff-download|performance-preview|performance-receive|performance-revision|performance-download|economics-preview|economics-save|economics-download))?$/.exec(route);
         if(commercial) {
           if(!commercialDesk){json(res,503,{error:'COMMERCIAL_DISABLED',detail:'Open the original merchant workspace with its private case directory.'});return;}
           if(req.method==='GET'&&!commercial[2]) {
@@ -505,11 +518,12 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
             json(res,200,await commercialReceivingDesk.call(action,{id:commercial[1],...input}));return;
           }
           const method={'save-draft':'saveDraft','receive-pricing':'receivePricing',
+            'economics-preview':'previewEconomics','economics-save':'saveEconomics','economics-download':'downloadEconomics',
             'performance-preview':'previewPerformance','performance-receive':'receivePerformance',
             'performance-revision':'preparePerformanceRevision','performance-download':'downloadPerformance',
             'preview-implementation':'previewImplementation','adopt-implementation':'adoptImplementation'}[commercial[2]]??commercial[2];
           const result=await commercialDesk[method]({id:commercial[1],...input});
-          if(method==='download'||method==='downloadPerformance') {
+          if(method==='download'||method==='downloadPerformance'||method==='downloadEconomics') {
             const file=result.descriptor;
             res.writeHead(200,{'content-type':file.mediaType,'content-length':file.bytes,
               'content-disposition':'attachment; filename="'+file.filename+'"',
@@ -677,7 +691,7 @@ export function createConsoleServer({runCapture = capture, allowLoopback = false
   server.closeCasePackages=()=>casePackages?.close()??Promise.resolve();
   server.closeCommercialReceiving=()=>commercialReceivingDesk?.close()??Promise.resolve();
   server.closeCommercialTariffs=()=>commercialTariffDesk?.close()??Promise.resolve();
-  server.once('close',()=>{void Promise.allSettled([implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>server.closeSourceDelivery()).catch(()=>{});});
+  server.once('close',()=>{void Promise.allSettled([implementationPortfolio?.close(),implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>server.closeSourceDelivery()).catch(()=>{});});
   return server;
 }
 
@@ -702,7 +716,7 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
   const commercialReceivingDesk=caseStore?openCommercialReceivingController({store:caseStore,casesDirectory:resolve(casesDir),environment}):null;
   const commercialTariffDesk=caseStore?openCommercialTariffController({store:caseStore,casesDirectory:resolve(casesDir)}):null;
   const handoffDesk = handoffSources === null ? null : await (await import('./handoff-store.mjs')).openHandoffDesk({configPath:handoffSources,casesDir,environment});
-  let incidentDesk,sourceDelivery,casePackages,grafanaDelivery,implementationReview,serviceConnections,adjustmentDesk,providerExtension,selection=null,launch=null;
+  let incidentDesk,sourceDelivery,casePackages,grafanaDelivery,implementationReview,implementationPortfolio,serviceConnections,adjustmentDesk,providerExtension,selection=null,launch=null;
   const closeAdjustments=async()=>{
     const errors=[];try{await adjustmentDesk?.close();}catch(error){errors.push(error);}
     try{await serviceConnections?.close();}catch(error){errors.push(error);}
@@ -722,6 +736,8 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
     grafanaDelivery=grafanaSource===null?null:await createGrafanaDeliveryRoutes({store:caseStore,sourceDelivery,
       grafanaSource:resolve(grafanaSource),casesDirectory:resolve(casesDir),casePackages,
       python:environment.SCF_PYTHON??'python3',environment});
+    implementationPortfolio=caseStore?createImplementationPortfolioHttp({store:caseStore,
+      workspaceId:commercialWorkspaceId(resolve(casesDir))}):null;
     implementationReview=caseStore?createImplementationReviewHttp({store:caseStore,sourceDelivery,
       workspaceId:commercialWorkspaceId(resolve(casesDir))}):null;
     incidentDesk = incidentSources === null ? null : await openIncidentSources({configPath:incidentSources,environment});
@@ -739,26 +755,26 @@ export async function start({port = 0, allowLoopback = false, runCapture = captu
         throw Object.assign(new Error('The selected support configuration changed; review the current application before starting.'),
           {code:'SUPPORT_APPLICATION_SELECTION_CHANGED'});
     }
-  } catch(error) {await Promise.allSettled([implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
+  } catch(error) {await Promise.allSettled([implementationPortfolio?.close(),implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   let server;
-  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,renewalDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,grafanaDelivery,implementationReview,providerExtension,launchRecord:()=>launch});}
-  catch(error){await Promise.allSettled([implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
+  try{server=createConsoleServer({allowLoopback,runCapture,caseStore,handoffDesk,incidentDesk,commercialDesk,renewalDesk,commercialReceivingDesk,commercialTariffDesk,adjustmentDesk,sourceDelivery,casePackages,grafanaDelivery,implementationReview,implementationPortfolio,providerExtension,launchRecord:()=>launch});}
+  catch(error){await Promise.allSettled([implementationPortfolio?.close(),implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([casePackages?.close(),commercialReceivingDesk?.close(),commercialTariffDesk?.close()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),sourceDelivery?.close(),closeAdjustments()]);throw error;}
   try {await new Promise((resolveListen, reject) => {
     server.once('error', reject);server.listen(port, '127.0.0.1', resolveListen);
-  });}catch(error){await Promise.allSettled([implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]);throw error;}
+  });}catch(error){await Promise.allSettled([implementationPortfolio?.close(),implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]);throw error;}
   const url='http://127.0.0.1:'+server.address().port+'/';
   if(selection)launch=createSupportLaunch(selection,url);
   let closing;
   const close=()=>closing??=(async()=>{
     if(launch)launch.state='STOPPING';
-    const providerResults=await Promise.allSettled([implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);
+    const providerResults=await Promise.allSettled([implementationPortfolio?.close(),implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]);
     const packageResults=await Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()]);
     const results=providerResults.concat(packageResults,await Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()]));
     await new Promise((done,reject)=>{server.close(error=>error?reject(error):done());server.closeAllConnections();});
     const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;
   })();
-  server.once('close',()=>{if(launch)launch.state='STOPPED';void Promise.allSettled([implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()])).catch(()=>{});});
-  return {server,url,close,launch,adjustmentDesk,grafanaDelivery,implementationReview,providerExtension};
+  server.once('close',()=>{if(launch)launch.state='STOPPED';void Promise.allSettled([implementationPortfolio?.close(),implementationReview?.close(),grafanaDelivery?.close(),providerExtension?.close()]).then(()=>Promise.allSettled([server.closeCasePackages(),server.closeCommercialReceiving(),server.closeCommercialTariffs()])).then(()=>Promise.allSettled([handoffDesk?.close(),incidentDesk?.close(),server.closeSourceDelivery(),closeAdjustments()])).catch(()=>{});});
+  return {server,url,close,launch,adjustmentDesk,grafanaDelivery,implementationReview,implementationPortfolio,providerExtension};
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

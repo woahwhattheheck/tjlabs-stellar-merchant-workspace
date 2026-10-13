@@ -17,7 +17,7 @@ import {BANK_SCHEMA,BANK_CLOSE_SCHEMA,BANK_REQUEST_BYTES,BANK_SOURCE_BYTES,BANK_
   accountSummary,importSummary,closePreview,closeDocuments} from './domain.mjs';
 export {BANK_REQUEST_BYTES};
 
-const EXT={OFX:'ofx',QFX:'qfx',CSV:'csv',CAMT053:'xml'};
+const EXT={OFX:'ofx',QFX:'qfx',CSV:'csv',CAMT053:'xml',PDF_REVIEW:'pdf'};
 const selectedFilters=query=>({accountId:query.accountId??'',status:query.status??'',search:String(query.search??'').toLowerCase().slice(0,300)});
 async function privateDirectory(path) {
   await mkdir(path,{mode:0o700});

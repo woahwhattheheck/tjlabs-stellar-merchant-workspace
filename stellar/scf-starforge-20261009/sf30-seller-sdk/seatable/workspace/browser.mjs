@@ -101,6 +101,7 @@ async function finish(result, marker) {
   if (marker.path?.startsWith('/api/deployment/')) await refreshDeployment();
   if (marker.path === '/api/deployment/prepare') { $('stage-package').value = result.packageRequestId; $('stage-sha').value = result.sourceSha256; }
   if (marker.path === '/api/publisher/start') { tab('deploy'); renderPublisher(); }
+  await finishReturnedMutation(result,marker);
   if (pending?.requestId === marker.requestId) forget();
   notice('Saved. Original request ' + marker.requestId + '.');
 }
@@ -129,7 +130,7 @@ async function mutate(path, body, label, file = null) {
       if (reply) {
         known = reply.operation; showRecovery();
         if (known?.status === 'complete') await finish(known.result, marker);
-        else if (known === null && issue.status) { forget(); notice(errorMessage(issue), true); }
+        else if (known === null && issue.status) { if(!rejectReturnedMutation(issue))forget(); notice(errorMessage(issue), true); }
       } else showRecovery('The request response is uncertain. Keep this identifier and read its original receipt.');
     }
   } catch (issue) { notice(errorMessage(issue), true); }
@@ -467,7 +468,7 @@ $('retry-operation').addEventListener('click',async()=>{
   try{const body=retryPayload??pending.small;
     if(!body||await bodyHash(body)!==pending.bodySha256)throw new Error('The identical input is not available. Reselect its original packet or inspect the receipt.');
     const marker=pending,result=await api(marker.path,{body});await finish(result,marker);
-  }catch(issue){notice(errorMessage(issue),true);if(pending){const r=await api('/api/operation?id='+pending.requestId).catch(()=>null);if(r){known=r.operation;showRecovery();}}}
+  }catch(issue){notice(errorMessage(issue),true);if(pending){const marker=pending,r=await api('/api/operation?id='+pending.requestId).catch(()=>null);if(r){known=r.operation;showRecovery();if(known?.status==='complete')await finish(known.result,marker);else if(known===null&&issue.status)rejectReturnedMutation(issue);}}}
   finally{recovering=false;lock();}
 });
 $('dismiss-operation').addEventListener('click',async()=>{
@@ -698,9 +699,240 @@ async function restoreHandoverState() {
   await refreshHandovers();
 }
 
+
+// Source-bound review of a complete, already received independent workspace.
+// Only exact review identities, field choices and notes enter local storage.
+let returnedSelection=null, returnedPreview=null, returnedRecord=null;
+let returnedChoices=Object.create(null), returnedNote='', returnedOffset=0;
+let returnedDirty=false, returnedStale=null;
+const returnedLimit=100;
+const returnedKey=id=>'stellar.seatable.return-review.v1:'+state.directory+':'+id;
+const returnedEqual=(a,b)=>JSON.stringify(stable(a))===JSON.stringify(stable(b));
+
+const returnedStaleCodes=new Set(['SEATABLE_RETURN_CHANGED','SEATABLE_RETURN_PREVIEW_CHANGED','SEATABLE_DRAFT_CHANGED']);
+function rejectReturnedMutation(issue) {
+  if(!pending?.path?.startsWith('/api/return/')||!returnedStaleCodes.has(issue.code))return false;
+  localStorage.setItem(markerPrefix(pending.directory)+'rejected:'+pending.requestId,JSON.stringify({
+    ...clone(pending),rejectedAt:new Date().toISOString(),error:{code:issue.code,message:issue.message}}));
+  forget();return true;
+}
+
+function returnedSavedState() {
+  return {schema:'stellar-forge.seatable-local-return-review.v1',reviewId:returnedSelection,
+    revision:returnedPreview.review.revision,previewSha256:returnedPreview.previewSha256,
+    choices:clone(returnedChoices),note:returnedNote,updatedAt:new Date().toISOString()};
+}
+function retainReturnedEdits() {
+  if(!returnedSelection||!returnedPreview||returnedStale)return;
+  // Persist before permitting a save or apply. Storage failures remain visible.
+  localStorage.setItem(returnedKey(returnedSelection),JSON.stringify(returnedSavedState()));
+}
+function updateReturnedDirty() {
+  returnedDirty=!returnedEqual(returnedChoices,returnedRecord?.choices??{})||returnedNote!==(returnedRecord?.note??'');
+}
+function returnedGuardDraft() {
+  if(dirty)throw new Error('Save the unsaved column edits in Review columns before capturing, reviewing or applying a returned draft. They remain in this editor.');
+}
+async function refreshReturnedInventory() {
+  const [reviews,received]=await Promise.all([api('/api/returns'),api('/api/workspace/received')]);
+  const selector=$('return-child'),old=selector.value;
+  selector.replaceChildren(node('option','Select a received independent workspace'));
+  selector.firstChild.value='';
+  for(const child of received.received??[]){
+    const option=node('option',child.name+' · '+short(child.archiveSha256)+' · '+short(child.workspaceIdentity));
+    option.value=child.name;selector.append(option);
+  }
+  if((received.received??[]).some(item=>item.name===old))selector.value=old;
+  table($('return-inventory'),['Saved review','Incoming workspace','Status','Action'],(reviews.returns??[]).map(item=>[
+    description(item.id,'Revision '+item.revision),
+    description(item.received?.name??'Original received workspace',short(item.received?.archiveSha256)),
+    item.status,button('Open returned review',()=>readAction(()=>openReturnedReview(item.id)))
+  ]));
+}
+async function readReturnedEdition(id,offset=0) {
+  const query=new URLSearchParams({id,offset,limit:returnedLimit});
+  const [record,view]=await Promise.all([api('/api/return?id='+encodeURIComponent(id)),api('/api/return/preview?'+query)]);
+  if(record.id!==id||view.review?.id!==id||record.revision!==view.review.revision)
+    throw new Error('The saved review changed while it was read. Refresh this same review.');
+  return {record,view};
+}
+async function openReturnedReview(id,offset=0) {
+  const {record,view}=await readReturnedEdition(id,offset);
+  let saved=null;const original=localStorage.getItem(returnedKey(id));
+  if(original){
+    try{saved=JSON.parse(original);}catch{throw new Error('The retained local choices cannot be decoded. Preserve this browser storage before continuing.');}
+    if(saved.reviewId!==id||!saved.choices||typeof saved.choices!=='object'||Array.isArray(saved.choices)||typeof saved.note!=='string')
+      throw new Error('The retained local choices have an invalid identity. Preserve them before continuing.');
+  }
+  returnedSelection=id;returnedRecord=record;returnedPreview=view;returnedOffset=offset;
+  returnedChoices=Object.assign(Object.create(null),record.choices??{});returnedNote=record.note??'';returnedStale=null;
+  if(saved){
+    if(saved.revision===view.review.revision&&saved.previewSha256===view.previewSha256){
+      returnedChoices=Object.assign(Object.create(null),saved.choices);returnedNote=saved.note;
+    }else returnedStale=saved;
+  }
+  updateReturnedDirty();renderReturnedReview();tab('returned');
+}
+function renderReturnedReview() {
+  const view=returnedPreview;
+  $('return-detail').hidden=!view;
+  if(!view)return;
+  $('return-title').textContent='Returned review '+view.review.id+' · revision '+view.review.revision+' · '+view.review.status;
+  $('return-identities').replaceChildren();
+  for(const side of ['base','local','returned']){
+    const identity=view[side];
+    const box=node('div',null,'return-identity');
+    box.append(node('strong',side==='base'?'Common original draft':side==='local'?'Current author draft':'Frozen returned draft'),
+      node('p',identity?'Draft revision '+identity.draftRevision:'No common draft'),
+      node('code',identity?.draftSha256??'Unavailable'));
+    $('return-identities').append(box);
+  }
+  $('return-source').replaceChildren(node('summary','Exact source and incoming workspace'),jsonView({
+    source:view.source,received:view.review.received,previewSha256:view.previewSha256}));
+  const issues=$('return-issues');issues.replaceChildren();
+  for(const issue of view.issues??[])issues.append(node('p',[issue.code,issue.message].filter(Boolean).join(': '),'error'));
+  $('return-stale').hidden=!returnedStale;
+  $('return-stale-message').textContent=returnedStale?
+    'Local choices belong to saved revision '+returnedStale.revision+' and preview '+returnedStale.previewSha256+
+    '. The current source, local draft or saved review has changed. Your local choices remain retained; save and apply are blocked until you choose how to continue.':'';
+  $('return-note').value=returnedNote;
+  $('return-note').disabled=Boolean(returnedStale);
+  $('return-review-state').textContent=returnedStale?'Retained local choices need reconciliation':
+    returnedDirty?'Unsaved review choices or note': 'Showing saved review choices';
+  $('return-summary').textContent=view.total+' changed fields · '+view.unresolved+' unresolved · '+Object.keys(returnedChoices).length+' explicit choices';
+  const cards=$('return-rows');cards.replaceChildren();
+  for(const row of view.rows??[]){
+    const card=node('article',null,'return-row'),heading=node('h4',row.path||'Whole draft');
+    heading.append(node('span',row.status,'badge'));card.append(heading);
+    const values=node('div',null,'return-values');
+    for(const side of ['base','local','returned']){
+      const entry=row[side],cell=node('div');
+      cell.append(node('strong',side==='base'?'Common original':side==='local'?'Current author':'Returned'),
+        entry?.present?jsonView(entry.value):node('p','Absent','help'));values.append(cell);
+    }
+    card.append(values);
+    const label=node('label','Field decision'),choice=node('select');
+    const empty=node('option',row.status==='conflict'?'Choose explicitly to resolve this conflict':'Use automatic comparison');
+    empty.value='';choice.append(empty);
+    for(const [side,title]of [['local','Keep current author value'],['returned','Use returned value'],['base','Use common original value']]){
+      const option=node('option',title);option.value=side;choice.append(option);
+    }
+    choice.value=returnedChoices[row.path]??'';choice.disabled=Boolean(returnedStale);
+    choice.addEventListener('change',()=>{
+      if(returnedStale||busy||pending||handoverPending)return;
+      if(choice.value)returnedChoices[row.path]=choice.value;else delete returnedChoices[row.path];
+      updateReturnedDirty();
+      try{retainReturnedEdits();}catch(issue){notice('Local choices could not be saved: '+errorMessage(issue),true);}
+      renderReturnedReview();
+    });
+    label.append(choice);card.append(label);cards.append(card);
+  }
+  if(!view.rows?.length)cards.append(node('p',view.total?'No changes on this page.':'No changed fields in this comparison.','help'));
+  $('return-page').textContent=(view.total?returnedOffset+1:0)+'–'+Math.min(returnedOffset+(view.rows?.length??0),view.total)+' of '+view.total;
+  $('return-prev').disabled=returnedOffset===0;
+  $('return-next').disabled=view.nextOffset==null;
+  $('return-save').disabled=Boolean(returnedStale)||dirty||view.review.status==='applied';
+  $('return-apply').disabled=Boolean(returnedStale)||returnedDirty||dirty||!view.canApply||view.review.status==='applied';
+  $('return-apply-help').textContent=dirty?'Save the column editor before continuing.':
+    returnedStale?'Resolve the retained local review first.':
+    returnedDirty?'Save these choices and refresh the preview before applying.':
+    view.canApply?'Applying changes only the author draft. Preview all rows and save a version separately.':
+    'Resolve the conflicts and source/ancestry issues, save the review, then inspect the refreshed preview.';
+}
+async function returnedPage(offset) {
+  retainReturnedEdits();
+  await openReturnedReview(returnedSelection,offset);
+}
+function downloadReturnedChoices() {
+  if(!returnedPreview)return;
+  const content=JSON.stringify(returnedStale??returnedSavedState(),null,2)+'\n';
+  const url=URL.createObjectURL(new Blob([content],{type:'application/json'})),a=node('a');
+  a.href=url;a.download='seatable-return-'+returnedSelection+'-local-choices.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function archiveReturnedLocal(value) {
+  // Keep a recoverable local copy before an explicit replacement/carry operation.
+  localStorage.setItem(returnedKey(returnedSelection)+':history:'+uuid(),JSON.stringify(value));
+}
+async function useSavedReturnedReview() {
+  const id=returnedSelection,saved=returnedStale??returnedSavedState();
+  archiveReturnedLocal(saved);localStorage.removeItem(returnedKey(id));
+  await openReturnedReview(id,0);
+}
+async function carryReturnedChoices() {
+  if(!returnedStale)return;
+  const saved=clone(returnedStale),id=returnedSelection,first=await readReturnedEdition(id,0);
+  const hash=first.view.previewSha256,version=first.view.review.revision,paths=new Set(first.view.rows.map(row=>row.path));
+  let next=first.view.nextOffset;
+  while(next!=null){
+    const page=await api('/api/return/preview?'+new URLSearchParams({id,offset:next,limit:returnedLimit}));
+    if(page.previewSha256!==hash||page.review.revision!==version)throw new Error('This review changed while its pages were read. Refresh and try again.');
+    for(const row of page.rows)paths.add(row.path);
+    if(page.nextOffset!=null&&page.nextOffset<=next)throw new Error('The return preview did not advance.');
+    next=page.nextOffset;
+  }
+  const choices=Object.fromEntries(Object.entries(saved.choices).filter(([path,side])=>paths.has(path)&&['local','returned','base'].includes(side)));
+  archiveReturnedLocal(saved);
+  const adopted={...saved,revision:version,previewSha256:hash,choices,updatedAt:new Date().toISOString()};
+  localStorage.setItem(returnedKey(id),JSON.stringify(adopted));
+  await openReturnedReview(id,0);
+  notice('Carried '+Object.keys(choices).length+' explicit choices to the current comparison. '+(Object.keys(saved.choices).length-Object.keys(choices).length)+
+    ' choices no longer match changed fields; their complete original map remains in local history. Review every page and save explicitly.');
+}
+async function finishReturnedMutation(result,marker) {
+  if(!marker.path?.startsWith('/api/return/'))return;
+  const id=marker.path==='/api/return/apply'?result.review?.id:result.id;
+  if(!id)throw new Error('The original returned-review result is missing its saved identity.');
+  if(marker.path==='/api/return/review'||marker.path==='/api/return/apply'){
+    // Only clear choices after an observed durable save. Exact marker remains if a later read fails.
+    localStorage.removeItem(returnedKey(id));
+  }
+  if(marker.path==='/api/return/apply'&&!dirty&&state.draft)await loadDraft(state.draft,state.draftRevision);
+  await refreshReturnedInventory();await openReturnedReview(id,0);
+}
+$('returns-refresh').addEventListener('click',guarded(()=>readAction(async()=>{
+  await refresh();await refreshReturnedInventory();
+  if(returnedSelection)await returnedPage(returnedOffset);
+})));
+$('return-capture-form').addEventListener('submit',guarded(()=>{
+  returnedGuardDraft();const name=$('return-child').value;
+  if(!name)throw new Error('Select an existing received independent workspace.');
+  return mutate('/api/return/capture',{name,expectedDraftRevision:state.draftRevision},'Capture returned customer draft');
+}));
+$('return-refresh').addEventListener('click',guarded(()=>readAction(()=>returnedPage(returnedOffset))));
+$('return-prev').addEventListener('click',guarded(()=>readAction(()=>returnedPage(Math.max(0,returnedOffset-returnedLimit)))));
+$('return-next').addEventListener('click',guarded(()=>readAction(()=>returnedPage(returnedPreview.nextOffset))));
+$('return-note').addEventListener('input',()=>{
+  if(returnedStale||busy||pending||handoverPending)return;
+  returnedNote=$('return-note').value;updateReturnedDirty();
+  try{retainReturnedEdits();}catch(issue){notice('Local note could not be saved: '+errorMessage(issue),true);}
+  // Do not rebuild the focused textarea while typing.
+  $('return-review-state').textContent=returnedDirty?'Unsaved review choices or note':'Showing saved review choices';
+  $('return-apply').disabled=returnedDirty||dirty||!returnedPreview.canApply;
+});
+$('return-save').addEventListener('click',guarded(()=>{
+  returnedGuardDraft();if(returnedStale||!returnedPreview)throw new Error('Open and reconcile the current saved review first.');
+  retainReturnedEdits();
+  return mutate('/api/return/review',{reviewId:returnedSelection,expectedReviewRevision:returnedPreview.review.revision,
+    previewSha256:returnedPreview.previewSha256,choices:clone(returnedChoices),note:returnedNote},'Save returned draft decisions');
+}));
+$('return-apply').addEventListener('click',guarded(()=>{
+  returnedGuardDraft();
+  if(returnedStale||returnedDirty||!returnedPreview?.canApply)throw new Error('Save the resolved choices and inspect the current preview before applying.');
+  return mutate('/api/return/apply',{reviewId:returnedSelection,expectedReviewRevision:returnedPreview.review.revision,
+    previewSha256:returnedPreview.previewSha256},'Apply reviewed return to author draft');
+}));
+$('return-export').addEventListener('click',guarded(()=>readAction(()=>download('/api/return/export?'+new URLSearchParams({
+  id:returnedSelection,revision:returnedPreview.review.revision
+})))));
+$('return-local-download').addEventListener('click',guarded(downloadReturnedChoices));
+$('return-use-saved').addEventListener('click',guarded(()=>readAction(useSavedReturnedReview)));
+$('return-carry').addEventListener('click',guarded(()=>readAction(carryReturnedChoices)));
+
 try{
   await refresh();
   await restoreHandoverState();
+  await refreshReturnedInventory();
   const active=sessionStorage.getItem(activeKey(state.directory));
   if(active){try{pending=JSON.parse(localStorage.getItem(markerPrefix(state.directory)+active));}catch{}}
   if(pending){retryPayload=pending.file?null:pending.small;showRecovery();await checkReceipt();}

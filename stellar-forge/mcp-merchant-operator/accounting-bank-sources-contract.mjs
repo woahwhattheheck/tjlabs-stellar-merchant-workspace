@@ -26,7 +26,8 @@ export function inputReference(v){
  else{uuid(v.preparationId);basename(v.file);}
  return clone(v);
 }
-function mapping(v){need(isObject(v)&&isObject(v.columns)&&['OFX','QFX','CAMT053','CSV'].includes(v.format),'Keep the original full format and column interpretation.');need(jsonBytes(v).length<=131072,'The complete mapping exceeds the native limit.');return clone(v);}
+function mapping(v){
+need(v?.format!=='PDF_REVIEW','Use the dedicated PDF statement desk and complete working copy; configured source preparations do not retain PDF page mappings.');need(isObject(v)&&isObject(v.columns)&&['OFX','QFX','CAMT053','CSV'].includes(v.format),'Keep the original full format and column interpretation.');need(jsonBytes(v).length<=131072,'The complete mapping exceeds the native limit.');return clone(v);}
 function identities(values){need(Array.isArray(values)&&values.length>=1&&values.length<=1000,'Select one to 1,000 original item IDs.');const s=new Set();for(const v of values){uuid(v);need(!s.has(v),'Select each original once.');s.add(v);}return values;}
 export function validateBankSourceRequest(value){
  exact(value,['workspaceId','requestId','actor','kind','inputs','parameters'],['workspaceId','requestId','actor','kind','inputs','parameters']);

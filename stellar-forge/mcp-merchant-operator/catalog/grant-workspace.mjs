@@ -331,6 +331,29 @@ const buyerJobs = {type:'array',minItems:1,maxItems:100,uniqueItems:true,
     properties:{jobId:digest,purchaseId:{anyOf:[id('purchase'),{type:'null'}]}},
     required:['jobId','purchaseId']}};
 const commercialIdentifier = {type:'string', pattern:'^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$'};
+
+const expenseBillingSelection={caseId:id('operation'),chargeId:id('expense-billing')};
+const expenseBillingFields={
+  requestId:requestIdentifier,actor:nonempty(300),expectedVersion:integer,
+  previousId:{anyOf:[id('expense-billing'),{type:'null'}]},mode:{enum:['NEW','DRAFT_EDIT','CREDIT','VOID','REPLACE']},
+  endpointId:nonempty(200),customerId:nonempty(100),
+  currency:{type:'object',additionalProperties:false,properties:{code:{type:'string',pattern:'^[A-Z]{3}$'},scale:{type:'integer',minimum:0,maximum:6}},required:['code','scale']},
+  sourceIds:{type:'array',items:id('source'),minItems:1,uniqueItems:true},
+  authorization:nonempty(12000),authorizedOn:supportDate,creditReviewNote:nonempty(6000),reason:nonempty(3000),
+  issueDate:supportDate,dueDate:supportDate,effectiveDate:supportDate,resolution:{enum:['CREDIT','VOID']},
+  purchaseOrder:str(300),note:str(6000),expectedPreviewSha256:digest,
+  lines:{type:'array',minItems:1,maxItems:200,items:{type:'object',additionalProperties:false,
+    properties:{attributionId:id('expense-attribution'),expectedContentSha256:digest,costId:nonempty(300),
+      nativeAmount:{type:'string',pattern:'^(?:0|[1-9][0-9]{0,99})$'},amountBasis:{enum:['REVIEWED_USD','AGREED_AMOUNT']},
+      amount:nonempty(100),description:nonempty(3000)},
+    required:['attributionId','expectedContentSha256','costId','nativeAmount','amountBasis','amount','description']}}
+};
+const expenseBillingRequired=['workspace','caseId','requestId','actor','expectedVersion','mode','sourceIds','authorization','authorizedOn','creditReviewNote','reason','lines'];
+const expenseBillingRules={allOf:[
+  {if:{properties:{mode:{const:'NEW'}},required:['mode']},then:{required:['endpointId','customerId','currency'],properties:{previousId:{type:'null'}}},
+   else:{required:['previousId'],properties:{previousId:id('expense-billing')}}}
+]};
+
 const commercialChangeSelection = {caseId:id('operation'),billingId:commercialIdentifier,milestoneId:commercialIdentifier};
 const commercialChangeFields = {expectedVersion:{type:'integer',minimum:0},previousChangeId:{anyOf:[commercialIdentifier,{type:'null'}]},
   actor:nonempty(300),sourceIds:{type:'array',items:id('source'),minItems:1,uniqueItems:true},
@@ -688,6 +711,27 @@ export const grantWorkspaceTools = [
   tool('installation_save', 'Append the exact reviewed customer installation edition in the original case journal. Retain the original request ID, operator, save reason, case version, installation selection and reviewed preview SHA.',
     {...ws,...caseSelection,...installationSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest,returnReview:installationReviewRef},
     ['workspace','caseId','expectedVersion','installationId','expectedRevision','requestId','actor','note','expectedPreviewSha256']),
+  tool('expense_billing_catalog','Read reviewed original CUSTOMER expense portions, exact native-unit reservations, retained buyer credits and source-backed customer charge histories. This reads existing original case data; it creates no accounting effect.',
+    {...ws,caseId:id('operation')},['workspace','caseId'],true),
+  tool('expense_billing','Read one complete retained expense charge: reviewed attribution editions, original authority bytes, customer terms, and immutable native command/response history.',
+    {...ws,...expenseBillingSelection},['workspace','caseId','chargeId'],true),
+  tool('expense_billing_preview','Review original expense portions and customer-authorized billing or correction against current case and native invoice state. Keep decimal and native-unit strings unchanged. Preview retains no financial effect; preserve this exact requestId/body for prepare.',
+    {...ws,caseId:id('operation'),...expenseBillingFields},expenseBillingRequired,true,expenseBillingRules),
+  tool('expense_billing_prepare','Retain the exact reviewed expense billing proposal and full original sources after preview. This preparation creates no native invoice or cash entry. On response loss reuse this complete body and original requestId.',
+    {...ws,caseId:id('operation'),...expenseBillingFields},[...expenseBillingRequired,'expectedPreviewSha256'],false,expenseBillingRules),
+  tool('expense_billing_apply','Apply or recover the same retained native expense draft, credit or void plan. Preserve chargeId, actor and proposal SHA. Each effect keeps its original immutable native request; a lost response must not create another preparation.',
+    {...ws,...expenseBillingSelection,actor:nonempty(300),expectedProposalSha256:digest},
+    ['workspace','caseId','chargeId','actor','expectedProposalSha256']),
+  tool('expense_billing_cancel','Cancel the unused reviewed expense preparation with its original request and reason. Pending or acknowledged native accounting commands remain in their original recovery.',
+    {...ws,...expenseBillingSelection,requestId:requestIdentifier,actor:nonempty(300),expectedProposalSha256:digest,reason:nonempty(6000)},
+    ['workspace','caseId','chargeId','requestId','actor','expectedProposalSha256','reason']),
+  tool('expense_billing_preview_issue','Read the exact retained expense invoice issue review, terms hash and native credit-control decision. Pending or acknowledged issue reopens its original review; this action issues no invoice.',
+    {...ws,...expenseBillingSelection},['workspace','caseId','chargeId'],true),
+  tool('expense_billing_issue','Issue or recover the original reviewed expense invoice. Reuse the same charge, original actor, issue preview and credit decision on every retry. Native numbering, invoice, payment and allocation records remain authoritative.',
+    {...ws,...expenseBillingSelection,actor:nonempty(300),expectedIssuePreviewSha256:digest,creditDecisionId:nonempty(100)},
+    ['workspace','caseId','chargeId','actor','expectedIssuePreviewSha256']),
+  tool('expense_billing_refresh','Read current linked original and replacement invoices, credits, payments and allocations without changing the retained expense proposal or making a financial command.',
+    {...ws,...expenseBillingSelection},['workspace','caseId','chargeId'],true),
   tool('commercial_changes', 'Read the complete original milestone-change history summaries. Open commercial_change for its immutable customer authorization, native requests and current state.',
     {...ws,...commercialChangeSelection},['workspace','caseId','billingId','milestoneId'],true),
   tool('commercial_change', 'Open one complete source-backed milestone correction, original authorization files and native command journal.',
@@ -825,16 +869,17 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Delivery risk-comparison exports require caseId, beforeReviewId, beforeReviewSha256, afterReviewId, afterReviewSha256 and expectedComparisonSha256 from the complete native read. risk-comparison is the full case ZIP and additionally requires current expectedVersion. risk-comparison-json/report/risks/actions/context return complete comparison JSON, HTML or CSV and reject expectedVersion. The original native comparison digest is authoritative. Delivery risk-register exports select caseId and reviewId, retaining the complete original case, all saved register editions, selected JSON, CSV and offline HTML. Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar, the full explicitly selected multi-case delivery agenda and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','delivery-agenda','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','commercial-change','engagement','task-outcomes','cost-funding','risk-register','risk-comparison','risk-comparison-json','risk-comparison-report','risk-comparison-risks','risk-comparison-actions','risk-comparison-context']},
+  tool('export', 'Expense-billing exports select caseId and chargeId and retain the complete original case, reviewed expense source bytes, native command history and linked current accounting observations. Delivery risk-comparison exports require caseId, beforeReviewId, beforeReviewSha256, afterReviewId, afterReviewSha256 and expectedComparisonSha256 from the complete native read. risk-comparison is the full case ZIP and additionally requires current expectedVersion. risk-comparison-json/report/risks/actions/context return complete comparison JSON, HTML or CSV and reject expectedVersion. The original native comparison digest is authoritative. Delivery risk-register exports select caseId and reviewId, retaining the complete original case, all saved register editions, selected JSON, CSV and offline HTML. Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar, the full explicitly selected multi-case delivery agenda and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, original settlement review and its source archive, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','settlement','delivery-calendar','delivery-agenda','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','commercial-change','expense-billing','engagement','task-outcomes','cost-funding','risk-register','risk-comparison','risk-comparison-json','risk-comparison-report','risk-comparison-risks','risk-comparison-actions','risk-comparison-context']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:{anyOf:[id('review'),id('settlement')]},
       beforeReviewId:id('review'),beforeReviewSha256:digest,afterReviewId:id('review'),afterReviewSha256:digest,
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
-      installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,changeId:commercialIdentifier,revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
+      installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,changeId:commercialIdentifier,chargeId:id('expense-billing'),revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
       installationRefs:customerUseInstallationRefs,caseIds:deliveryAgendaCases,expectedVersions:deliveryAgendaVersions,
       format:{enum:['ics','csv','json'],description:'Grant delivery calendar and multi-case delivery agenda default to ICS; customer-use calendar defaults to JSON.'},
       reconciliationId:id('reconciliation'),contributorId:id('person'),network:str(200),currency:str(40),asset:str(500),startDate:supportDate,endDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000},expectedReportSha256:digest},
     ['workspace','kind'], true, {allOf:[
+      {if:{properties:{kind:{const:'expense-billing'}},required:['kind']},then:{required:['caseId','chargeId']}},
       {if:{properties:{kind:{enum:["risk-comparison","risk-comparison-json","risk-comparison-report","risk-comparison-risks","risk-comparison-actions","risk-comparison-context"]}},required:['kind']},
        then:{required:['caseId','beforeReviewId','beforeReviewSha256','afterReviewId','afterReviewSha256','expectedComparisonSha256']}},
       {if:{properties:{kind:{const:'risk-comparison'}},required:['kind']},then:{required:['expectedVersion']}},

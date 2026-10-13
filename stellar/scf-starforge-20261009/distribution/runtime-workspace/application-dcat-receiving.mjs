@@ -7,6 +7,9 @@ import { inspectCkanWorkspaceArchive, receiveCkanWorkspaceArchive, assertCkanWor
   from '../../sf30-seller-sdk/ckan/archive.mjs';
 import { inspectDcatSemanticRuntime, writeDcatSemanticRuntimeEnvironment }
   from '../../sf30-seller-sdk/ckan/dcat-semantic-runtime.mjs';
+import { inspectDcatSemanticRuntimeTransfer, receiveDcatSemanticRuntimeTransfer,
+  prepareDcatSemanticRuntimeFromTransfer }
+  from '../../sf30-seller-sdk/ckan/dcat-semantic-runtime-transfer.mjs';
 import { inspectApplicationSetup, prepareApplicationSetup, saveApplicationSetup, applicationSetupStatus }
   from './application-setup-operations.mjs';
 import { readSetupFile, setupDocumentFamily, setupConfiguration } from './public/application-setup-codec.mjs';
@@ -15,6 +18,7 @@ import { absolute, privateDirectory, makePrivate, regular, readJSON, saveJSON, o
 
 export const DCAT_APPLICATION_RECEIVING_SCHEMA = 'stellar-forge.dcat-application-receiving.v1';
 export const DCAT_APPLICATION_RECEIVING_REQUEST = 'stellar-forge.dcat-application-receiving-request.v1';
+export const DCAT_APPLICATION_TRANSFER_REQUEST = 'stellar-forge.dcat-application-receiving-request.v2';
 const MAX = 2 * 1024 * 1024, MAX_RECORD = 32 * 1024 * 1024, SHA = /^[a-f0-9]{64}$/;
 const hash = value => digest(json(canonical(value)));
 const copy = value => JSON.parse(JSON.stringify(value));
@@ -23,7 +27,7 @@ const files = root => join(root, 'selection');
 const requiredPath = value => { absolute(value); need(value !== '/', 'DCAT_RECEIVING_PATH_INVALID'); return value; };
 const overlaps = (a, b) => a === b || [relative(a, b), relative(b, a)].some(p => p && p !== '..' && !p.startsWith('../') && !isAbsolute(p));
 function checkedRequest(value) {
-  need(plain(value) && value.schema === DCAT_APPLICATION_RECEIVING_REQUEST &&
+  need(plain(value) && [DCAT_APPLICATION_RECEIVING_REQUEST,DCAT_APPLICATION_TRANSFER_REQUEST].includes(value.schema) &&
     Object.keys(value).every(k => ['schema','requestId','setup','archive','catalogueDirectory',
       'runtimeId','semanticRuntime','environmentInput','label','port'].includes(k)),
     'DCAT_RECEIVING_REQUEST_INVALID');
@@ -33,9 +37,17 @@ function checkedRequest(value) {
       SHA.test(value[key].sha256 ?? ''), 'DCAT_RECEIVING_SOURCE_REQUIRED');
     requiredPath(value[key].file);
   }
-  need(plain(value.semanticRuntime) && Object.keys(value.semanticRuntime).every(k => ['directory','sha256'].includes(k)) &&
-    SHA.test(value.semanticRuntime.sha256 ?? ''), 'DCAT_RECEIVING_RUNTIME_REQUIRED');
+  need(plain(value.semanticRuntime),'DCAT_RECEIVING_RUNTIME_REQUIRED');
   requiredPath(value.semanticRuntime.directory);
+  if(value.semanticRuntime.transfer !== undefined) {
+    const transfer=value.semanticRuntime.transfer;
+    need(value.schema===DCAT_APPLICATION_TRANSFER_REQUEST &&
+      Object.keys(value.semanticRuntime).every(k=>['directory','transfer'].includes(k)) &&
+      plain(transfer) && Object.keys(transfer).every(k=>['file','sha256','directory','python'].includes(k)) &&
+      SHA.test(transfer.sha256 ?? ''),'DCAT_RECEIVING_TRANSFER_REQUIRED');
+    for(const key of ['file','directory','python'])requiredPath(transfer[key]);
+  } else need(Object.keys(value.semanticRuntime).every(k=>['directory','sha256'].includes(k)) &&
+    SHA.test(value.semanticRuntime.sha256 ?? ''),'DCAT_RECEIVING_RUNTIME_REQUIRED');
   if (value.environmentInput !== undefined) {
     need(plain(value.environmentInput) && Object.keys(value.environmentInput).every(k => ['file','sha256'].includes(k)) &&
       SHA.test(value.environmentInput.sha256 ?? ''), 'DCAT_RECEIVING_ENVIRONMENT_INVALID');
@@ -159,24 +171,46 @@ async function readSelection(root) {
   const dir = files(root); await privateDirectory(dir);
   const record = JSON.parse(decode(await privateBytes(join(dir, 'operation.json'), MAX_RECORD)));
   need(record?.schema === DCAT_APPLICATION_RECEIVING_SCHEMA && record.operationDirectory === root &&
-    ['SELECTED','CATALOGUE_RECEIVED','REVIEWED','SAVED'].includes(record.phase),
+    ['SELECTED','RUNTIME_INPUTS_RECEIVED','RUNTIME_READY','CATALOGUE_RECEIVED','REVIEWED','SAVED'].includes(record.phase),
     'DCAT_RECEIVING_OPERATION_INVALID');
   const request = checkedRequest(record.request);
   need(record.requestSha256 === hash(request) && record.id === request.requestId,
     'DCAT_RECEIVING_REQUEST_CHANGED');
   for (const [name, selected] of Object.entries(record.inputs ?? {})) {
-    need(['request','setup','environment','semanticReceipt','archiveManifest'].includes(name) &&
-      plain(selected) && ({request:'request.json',setup:'source-setup.json',environment:'source-environment.json',semanticReceipt:'semantic-runtime.json',archiveManifest:'archive-manifest.json'})[name] === selected.file &&
+    need(['request','setup','environment','semanticReceipt','archiveManifest','runtimeTransferManifest','runtimeTransferReceipt'].includes(name) &&
+      plain(selected) && ({request:'request.json',setup:'source-setup.json',environment:'source-environment.json',semanticReceipt:'semantic-runtime.json',archiveManifest:'archive-manifest.json',runtimeTransferManifest:'runtime-transfer-manifest.json',runtimeTransferReceipt:'runtime-transfer-inputs.json'})[name] === selected.file &&
       Number.isSafeInteger(selected.bytes) && selected.bytes >= 0 &&
-      selected.bytes <= ({request:MAX,setup:MAX,environment:65536,semanticReceipt:16*1024*1024,archiveManifest:MAX_RECORD})[name] && SHA.test(selected.sha256 ?? ''),
+      selected.bytes <= ({request:MAX,setup:MAX,environment:65536,semanticReceipt:16*1024*1024,archiveManifest:MAX_RECORD,runtimeTransferManifest:16*1024*1024,runtimeTransferReceipt:16*1024*1024})[name] && SHA.test(selected.sha256 ?? ''),
       'DCAT_RECEIVING_SOURCE_INVALID');
     const raw = await privateBytes(join(dir, selected.file), Math.max(MAX, selected.bytes));
     need(raw.length === selected.bytes && digest(raw) === selected.sha256, 'DCAT_RECEIVING_SOURCE_CHANGED');
   }
-  need(record.inputs?.request && record.inputs?.setup && record.inputs?.environment && record.inputs?.semanticReceipt && record.inputs?.archiveManifest,
+  need(record.inputs?.request && record.inputs?.setup && record.inputs?.environment && record.inputs?.archiveManifest,
     'DCAT_RECEIVING_SOURCE_INCOMPLETE');
-  need(record.inputs.setup.sha256 === request.setup.sha256 &&
-    record.inputs.semanticReceipt.sha256 === request.semanticRuntime.sha256,
+  need(record.inputs.setup.sha256 === request.setup.sha256,'DCAT_RECEIVING_SOURCE_CHANGED');
+  if(request.semanticRuntime.transfer) {
+    const selection=request.semanticRuntime.transfer;
+    need(record.inputs.runtimeTransferManifest && plain(record.runtimeTransfer) &&
+      hash(record.runtimeTransfer.selection)===hash(selection),'DCAT_RECEIVING_TRANSFER_CHANGED');
+    const manifest=JSON.parse(decode(await privateBytes(join(dir,'runtime-transfer-manifest.json'),16*1024*1024)));
+    need(manifest.schema==='stellar-forge.dcat-semantic-runtime-transfer.v1' &&
+      manifest.sourceRuntimeReceiptSha256===record.runtimeTransfer.sourceRuntimeReceiptSha256 &&
+      manifest.lockSha256===record.runtimeTransfer.lockSha256,'DCAT_RECEIVING_TRANSFER_CHANGED');
+    if(record.inputs.runtimeTransferReceipt) {
+      const received=JSON.parse(decode(await privateBytes(join(dir,'runtime-transfer-inputs.json'),16*1024*1024)));
+      checkReceivedTransfer(record,received);
+      need(record.runtimeTransfer.receiptSha256===record.inputs.runtimeTransferReceipt.sha256,
+        'DCAT_RECEIVING_TRANSFER_CHANGED');
+    } else need(record.phase==='SELECTED' && !record.runtime,'DCAT_RECEIVING_TRANSFER_INCOMPLETE');
+    if(record.runtime) {
+      need(record.runtime.directory===request.semanticRuntime.directory &&
+        SHA.test(record.runtime.sha256 ?? '') && record.inputs.semanticReceipt?.sha256===record.runtime.sha256,
+        'DCAT_RECEIVING_RUNTIME_CHANGED');
+      const receipt=JSON.parse(decode(await privateBytes(join(dir,'semantic-runtime.json'),16*1024*1024)));
+      checkPreparedTransfer(record,receipt);
+    } else need(['SELECTED','RUNTIME_INPUTS_RECEIVED'].includes(record.phase) &&
+      !record.inputs.semanticReceipt,'DCAT_RECEIVING_RUNTIME_INCOMPLETE');
+  } else need(record.inputs.semanticReceipt?.sha256 === request.semanticRuntime.sha256,
     'DCAT_RECEIVING_SOURCE_CHANGED');
   const archiveManifest = JSON.parse(decode(await privateBytes(join(dir,'archive-manifest.json'),MAX_RECORD)));
   need(hash(archiveManifest.source) === hash(record.archive.source) &&
@@ -216,9 +250,17 @@ function report(root, record) {
   return {schema:record.schema,operationDirectory:root,operationId:record.id,phase:record.phase,
     workspaceId:record.workspaceId,workspaceDirectory:record.workspaceDirectory,
     request:record.request,inputs:record.inputs,archive:record.archive,variant:record.variant,
+    runtime:record.runtime ?? (record.request.semanticRuntime.transfer ? null : record.request.semanticRuntime),
+    runtimeTransfer:record.runtimeTransfer ?? null,
     catalogue:record.catalogue ?? null,environment:record.environment ?? null,
     setup:record.setup ?? null,lastError:record.lastError ?? null,
     createdAt:record.createdAt,updatedAt:record.updatedAt,
+    applicationStarted:false,
+    runtimePreparation:record.request.semanticRuntime.transfer ? {
+      mode:'received-inputs',phase:record.runtime?'READY':record.inputs.runtimeTransferReceipt?'READY_INPUTS':'SELECTED'
+    } : {mode:'selected-ready',phase:'READY'},
+    // Historical API field refers to catalogue operations, not the native
+    // receiving/install helpers used for the selected semantic runtime.
     nativeOperationStarted:false};
 }
 async function initialize(model, root, requestFile, signal) {
@@ -233,6 +275,14 @@ async function initialize(model, root, requestFile, signal) {
     !overlaps(model.directory,request.catalogueDirectory) && !overlaps(request.catalogueDirectory,request.semanticRuntime.directory),
     'DCAT_RECEIVING_DIRECTORIES_OVERLAP',
     'Keep the receiving operation, catalogue, Runtime workspace and prepared Python in distinct private directories.');
+  const transfer=request.semanticRuntime.transfer;
+  if(transfer) {
+    const directories=[root,model.directory,request.catalogueDirectory,request.semanticRuntime.directory,transfer.directory];
+    need(directories.every((a,i)=>directories.every((b,j)=>i===j||!overlaps(a,b))) &&
+      directories.every(directory=>!overlaps(directory,transfer.file) && !overlaps(directory,transfer.python)),
+      'DCAT_RECEIVING_TRANSFER_DIRECTORIES_OVERLAP',
+      'Keep original incoming runtime ZIP, receiving inputs, installed runtime, catalogue and application operation separately selected.');
+  }
   // A first request must select an absent destination. Subsequent resumes use
   // the original archive receiver's durable marker and retained source identity.
   try { await lstat(request.catalogueDirectory); need(false,'DCAT_RECEIVING_NEW_CATALOGUE_REQUIRED'); }
@@ -254,9 +304,23 @@ async function initialize(model, root, requestFile, signal) {
     'DCAT_RECEIVING_SOURCE_PROJECT_CHANGED',
     'The original setup and complete archive must select the same original catalogue path.');
   abort(signal);
-  await inspectDcatSemanticRuntime(request.semanticRuntime.directory,{expectedSha256:request.semanticRuntime.sha256});
-  const semanticRaw = await privateBytes(join(request.semanticRuntime.directory,'runtime.json'),16*1024*1024);
-  need(digest(semanticRaw) === request.semanticRuntime.sha256, 'DCAT_RECEIVING_RUNTIME_CHANGED');
+  let semanticRaw=null,runtimeTransfer=null,transferManifestRaw=null;
+  if(transfer) {
+    const selected=await inspectDcatSemanticRuntimeTransfer(
+      {file:transfer.file,expectedSha256:transfer.sha256,python:transfer.python},{signal});
+    need(selected.status==='VERIFIED_BYTES' && selected.sha256===transfer.sha256 &&
+      SHA.test(selected.manifestSha256 ?? '') && SHA.test(selected.manifest?.sourceRuntimeReceiptSha256 ?? '') &&
+      SHA.test(selected.manifest?.lockSha256 ?? ''),'DCAT_RECEIVING_TRANSFER_INVALID');
+    transferManifestRaw=Buffer.from(json(selected.manifest));
+    need(transferManifestRaw.length<=16*1024*1024,'DCAT_RECEIVING_TRANSFER_TOO_LARGE');
+    runtimeTransfer={selection:copy(transfer),bundleBytes:selected.bytes,manifestSha256:selected.manifestSha256,
+      sourceRuntimeReceiptSha256:selected.manifest.sourceRuntimeReceiptSha256,
+      lockSha256:selected.manifest.lockSha256};
+  } else {
+    await inspectDcatSemanticRuntime(request.semanticRuntime.directory,{expectedSha256:request.semanticRuntime.sha256});
+    semanticRaw=await privateBytes(join(request.semanticRuntime.directory,'runtime.json'),16*1024*1024);
+    need(digest(semanticRaw)===request.semanticRuntime.sha256,'DCAT_RECEIVING_RUNTIME_CHANGED');
+  }
   const environmentRaw = request.environmentInput ? await privateBytes(request.environmentInput.file,65536) : Buffer.from('{}\n');
   if(request.environmentInput) need(digest(environmentRaw) === request.environmentInput.sha256,'DCAT_RECEIVING_ENVIRONMENT_CHANGED');
   // Values are retained only in the private original file, never stdout.
@@ -270,8 +334,11 @@ async function initialize(model, root, requestFile, signal) {
     operationDirectory:root,workspaceId:workspace.workspaceId,workspaceDirectory:model.directory,
     request,requestSha256:hash(request),inputs:{
       request:descriptor('request.json',raw),setup:descriptor('source-setup.json',setupRaw),
-      environment:descriptor('source-environment.json',environmentRaw),semanticReceipt:descriptor('semantic-runtime.json',semanticRaw),
+      environment:descriptor('source-environment.json',environmentRaw),
+      ...(semanticRaw?{semanticReceipt:descriptor('semantic-runtime.json',semanticRaw)}:{}),
+      ...(transferManifestRaw?{runtimeTransferManifest:descriptor('runtime-transfer-manifest.json',transferManifestRaw)}:{}),
       archiveManifest:descriptor('archive-manifest.json',Buffer.from(json(archive.manifest)))},
+    ...(runtimeTransfer?{runtimeTransfer}:{}),
     variant:{id:variant.id,kind:variant.kind,applicationId:variant.applicationId,sha256:hash(variant)},
     archive:{file:archive.file,bytes:archive.bytes,sha256:archive.sha256,manifestSha256:archive.manifestSha256,
       files:archive.files,unpackedBytes:archive.unpackedBytes,source:archive.source},
@@ -280,7 +347,9 @@ async function initialize(model, root, requestFile, signal) {
   const staging = join(root,'selection.pending-'+randomUUID()); await makePrivate(staging);
   try {
     for(const [name,bytes] of [['request.json',raw],['source-setup.json',setupRaw],
-      ['source-environment.json',environmentRaw],['semantic-runtime.json',semanticRaw],
+      ['source-environment.json',environmentRaw],
+      ...(semanticRaw?[['semantic-runtime.json',semanticRaw]]:[]),
+      ...(transferManifestRaw?[['runtime-transfer-manifest.json',transferManifestRaw]]:[]),
       ['archive-manifest.json',Buffer.from(json(archive.manifest))]]) await retain(join(staging,name),bytes);
     await saveJSON(join(staging,'operation.json'),record);
     await rename(staging,files(root));
@@ -289,6 +358,65 @@ async function initialize(model, root, requestFile, signal) {
   } finally {await rm(staging,{recursive:true,force:true});}
   return {record,document,variant};
 }
+
+function checkReceivedTransfer(record,received) {
+  const transfer=record.request.semanticRuntime.transfer, selected=record.runtimeTransfer;
+  need(received.schema==='stellar-forge.dcat-semantic-runtime-transfer-received.v1' &&
+    received.status==='READY_INPUTS' && received.directory===transfer.directory &&
+    received.bundle?.sha256===transfer.sha256 && received.bundle.bytes===selected.bundleBytes &&
+    received.bundle.manifestSha256===selected.manifestSha256 &&
+    received.sourceRuntimeReceiptSha256===selected.sourceRuntimeReceiptSha256 &&
+    received.lockSha256===selected.lockSha256,'DCAT_RECEIVING_TRANSFER_CHANGED');
+}
+function checkPreparedTransfer(record,receipt) {
+  const selected=record.runtimeTransfer,transfer=receipt.transfer;
+  need(receipt.status==='READY' && receipt.directory===record.request.semanticRuntime.directory &&
+    transfer?.directory===record.request.semanticRuntime.transfer.directory &&
+    transfer.receiptSha256===selected.receiptSha256 &&
+    transfer.bundleSha256===record.request.semanticRuntime.transfer.sha256 &&
+    transfer.sourceRuntimeReceiptSha256===selected.sourceRuntimeReceiptSha256 &&
+    transfer.lockSha256===selected.lockSha256 && receipt.lockSha256===selected.lockSha256,
+    'DCAT_RECEIVING_RUNTIME_TRANSFER_CHANGED');
+}
+async function prepareSelectedRuntime(root,record,signal) {
+  const requested=record.request.semanticRuntime,transfer=requested.transfer;
+  if(!transfer)return requested;
+  if(record.runtime)return record.runtime;
+  abort(signal);
+  if(!record.inputs.runtimeTransferReceipt) {
+    // The complete original operation/ZIP/path selection is already durable.
+    // Lost helper replies resume the same native received-input directory.
+    const received=await receiveDcatSemanticRuntimeTransfer({
+      file:transfer.file,expectedSha256:transfer.sha256,directory:transfer.directory,python:transfer.python},{signal});
+    checkReceivedTransfer(record,received);
+    const raw=await privateBytes(join(transfer.directory,'received-transfer.json'),16*1024*1024);
+    need(raw.length===received.receiptBytes && digest(raw)===received.receiptSha256,
+      'DCAT_RECEIVING_TRANSFER_CHANGED');
+    checkReceivedTransfer(record,JSON.parse(decode(raw)));
+    await retain(join(files(root),'runtime-transfer-inputs.json'),raw);
+    record.inputs.runtimeTransferReceipt=descriptor('runtime-transfer-inputs.json',raw);
+    record.runtimeTransfer.receiptSha256=received.receiptSha256;
+    record.runtimeTransfer.receiptBytes=received.receiptBytes;
+    record.phase='RUNTIME_INPUTS_RECEIVED';await persist(root,record);
+  }
+  abort(signal);
+  // The original API verifies the complete received source/wheels/lock before
+  // resuming its final private environment. It never resolves another wheel.
+  const prepared=await prepareDcatSemanticRuntimeFromTransfer({
+    transferDirectory:transfer.directory,expectedTransferSha256:record.runtimeTransfer.receiptSha256,
+    directory:requested.directory,python:transfer.python},{signal});
+  checkPreparedTransfer(record,prepared);
+  const raw=await privateBytes(join(requested.directory,'runtime.json'),16*1024*1024);
+  need(raw.length===prepared.receiptBytes && digest(raw)===prepared.receiptSha256,
+    'DCAT_RECEIVING_RUNTIME_CHANGED');
+  checkPreparedTransfer(record,JSON.parse(decode(raw)));
+  await retain(join(files(root),'semantic-runtime.json'),raw);
+  record.inputs.semanticReceipt=descriptor('semantic-runtime.json',raw);
+  record.runtime={directory:requested.directory,sha256:prepared.receiptSha256};
+  record.phase='RUNTIME_READY';await persist(root,record);
+  return record.runtime;
+}
+
 export async function dcatApplicationReceivingStatus({operation}) {
   return withOperation(operation,false,async root => {
     const {record}=await readSelection(root);
@@ -319,6 +447,7 @@ export async function prepareDcatApplicationReceiving(model,{operation,request:r
     const {record,document,variant}=selected, request=record.request;
     if(['REVIEWED','SAVED'].includes(record.phase)) return report(root,record);
     try {
+      const semanticRuntime=await prepareSelectedRuntime(root,record,signal);
       abort(signal);
       if(!record.catalogue) {
         record.catalogue=await receiveCkanWorkspaceArchive({file:request.archive.file,directory:request.catalogueDirectory,
@@ -332,7 +461,7 @@ export async function prepareDcatApplicationReceiving(model,{operation,request:r
       need(current.createdAt===record.archive.source.projectCreatedAt && current.catalogOrigin===record.archive.source.catalogOrigin &&
         current.sourceKind==='dcat-us','DCAT_RECEIVING_CATALOGUE_CHANGED');
       abort(signal);
-      await inspectDcatSemanticRuntime(request.semanticRuntime.directory,{expectedSha256:request.semanticRuntime.sha256});
+      await inspectDcatSemanticRuntime(semanticRuntime.directory,{expectedSha256:semanticRuntime.sha256});
       // Let the maintained writer produce the whole environment in a private
       // staging file, then publish atomically; an interrupted source export never
       // leaves a partial file at the selected application path.
@@ -340,9 +469,9 @@ export async function prepareDcatApplicationReceiving(model,{operation,request:r
       const temporaryEnvironment=join(files(root),'environment.pending-'+randomUUID()+'.json');
       let environment;
       try {
-        const generated=await writeDcatSemanticRuntimeEnvironment({directory:request.semanticRuntime.directory,
+        const generated=await writeDcatSemanticRuntimeEnvironment({directory:semanticRuntime.directory,
           input:join(files(root),'source-environment.json'),out:temporaryEnvironment});
-        need(generated.runtimeReceiptSha256===request.semanticRuntime.sha256,'DCAT_RECEIVING_RUNTIME_CHANGED');
+        need(generated.runtimeReceiptSha256===semanticRuntime.sha256,'DCAT_RECEIVING_RUNTIME_CHANGED');
         const raw=await privateBytes(temporaryEnvironment,65536);
         need(raw.length===generated.bytes && digest(raw)===generated.sha256,'DCAT_RECEIVING_ENVIRONMENT_CHANGED');
         await retain(environmentOutput,raw);

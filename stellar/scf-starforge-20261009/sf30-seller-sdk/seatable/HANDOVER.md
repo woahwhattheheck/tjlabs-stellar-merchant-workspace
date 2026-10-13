@@ -114,3 +114,58 @@ Include this complete instruction in delegated assignments and the active owner-
 Owner instruction and coordinated propagation: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791881496221999
 Canonical attachment/media clarification: https://tokenjunkielabs.slack.com/archives/C0BU51F1PL3/p1791885532614949
 
+
+
+## Review a customer's returned draft
+
+Use the existing complete workspace handover for both directions. A customer edits its independent received workspace, exports that saved workspace, and the author receives the returned file under a new named child. The original author and child may both have advanced independently. A draft revision number by itself does not establish shared ancestry.
+
+The **Returned review** tab compares the exact common original draft, the current author draft and the frozen returned draft. It retains the original source/capture identity. A different source edition, missing common ancestry or an invalid combined schema stays visible as a blocking issue. Do not replace that evidence with a fresh capture merely to make the comparison pass.
+
+### Browser course
+
+1. In **Review columns**, save any unsaved author edits. In **Workspace handover**, receive the customer's complete file under its own independent name. The child remains independently editable; the original author is not overwritten.
+2. Open **Returned review** and select that saved child. **Capture returned draft** freezes this particular return under an original request UUID. Further edits in the child do not silently change the captured review.
+3. Use **Open returned review**. Check the common/current/returned revision and SHA identities, the exact source details and any blocking issue. **Previous changes** and **Next changes** page through every changed field, at most 100 per page.
+4. Each change displays the full original/current/returned value and whether a value is absent. For conflicts choose **Keep current author value**, **Use returned value** or **Use common original value**. Nonconflicting rows may retain automatic comparison. An empty selector removes an explicit choice. Order rows select the full saved order, without silently sorting columns.
+5. Add a review note and choose **Save review decisions**. This sends the complete choices map, including choices made on other pages; omitted entries remove prior explicit choices. Partial review is allowed. The browser then reads the new saved revision and preview digest.
+6. **Apply reviewed draft** is available only when the current comparison is applicable, review choices are saved and the author editor has no unsaved changes. The operation checks the original review and local draft again. It changes the author draft only. Open **Review columns**, run the original complete-row preview, save a new source version and use existing publication controls separately.
+7. **Download frozen review** selects the exact displayed saved review revision, including incoming ancestry and decisions. This is private review material. Keep the complete workspace archive for editable full-workspace continuation.
+
+The browser keeps only review IDs, revision/digest, field choices and notes in local storage. It does not store the incoming workspace or source rows there. Choices persist across pages and reopening. If the saved review, source or local draft has changed, the browser blocks save/apply and shows **Local decisions need reconciliation**. **Download local choices** preserves the complete local envelope. **Use saved review** explicitly replaces the local editor with saved decisions. **Carry local choices to current comparison** reads all current change pages and retains choices only for fields that still appear; it reports exclusions and preserves the full prior map in local history. Review the carried map and save it explicitly.
+
+A local-storage failure is an error, not a saved decision. Do not clear browser storage while recovering a pending request or unsaved review. The download envelope contains a choices property; the CLI expects that property's map, not the entire envelope.
+
+### CLI
+
+The existing workspace CLI supplies the same original methods:
+
+```text
+return-capture --directory PRIVATE_DIR --name RECEIVED_NAME --expected-revision N --request UUID
+returns --directory PRIVATE_DIR
+return --directory PRIVATE_DIR --review UUID
+return-preview --directory PRIVATE_DIR --review UUID [--offset N] [--limit 1..100]
+return-review --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --choices CHOICES.json --note TEXT --request UUID
+return-apply --directory PRIVATE_DIR --review UUID --expected-review-revision N --preview-sha256 SHA --request UUID
+return-export --directory PRIVATE_DIR --review UUID [--revision N] --out FROZEN_REVIEW.json
+```
+
+Choose each write UUID once and retain the exact command inputs. The original operation/resume commands with --directory DIR --request UUID recover the same saved action. An unknown network/process outcome never authorizes a replacement request UUID.
+
+A choices file contains the complete JSON-pointer map, for example:
+
+```json
+{"/title":"returned","/queries/catalog/columns/customer_name/type":"local"}
+```
+
+Use the actual paths returned by your preview; the example does not assert any particular captured field. Values are exactly local, returned or base. Read all pages using nextOffset, then write the complete chosen map. Saving returns a new review revision; read return-preview again and use its new digest and revision for apply. A map with zero entries is {}. Include a meaningful --note.
+
+The CLI's return-export publishes a private complete JSON file without overwriting different existing bytes. An identical repeated export returns the same byte/hash result; use --revision to pin the reviewed edition. A different saved revision requires a different output path.
+
+### Original request and conflict recovery
+
+Capture, review and apply use the existing operation journal. The browser retains the exact request before dispatch, including the complete choices map for review. **Check original receipt**, **Resume retained request** and **Retry identical request** keep that identity after a lost response. The saved action result is reconciled before stale guards.
+
+SEATABLE_RETURN_CHANGED, SEATABLE_RETURN_PREVIEW_CHANGED and SEATABLE_DRAFT_CHANGED indicate definite preaccept conflicts only when the host confirms there is no saved operation for that UUID. Refresh the same review, preserve/reconcile local choices and deliberately issue a new reviewed action. A failed receipt read remains uncertain and keeps the original request.
+
+This course supports the original proposed consolidated review rounds. It does not assert a paid order, an accepted commercial proposal or a completed native receiving result. Continue the same original 14F5 programme with its actual source, private host and full rendering instruction already included above. Operate and inspect this exact new tab at desktop and narrow widths, with populated and empty comparisons, a conflict, partial choices, stale author edits, interrupted-response recovery, frozen review download and whole-workspace reopening. Return the actual rendered results to that existing case.

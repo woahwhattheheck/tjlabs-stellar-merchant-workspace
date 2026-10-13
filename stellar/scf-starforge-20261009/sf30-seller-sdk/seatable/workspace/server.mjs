@@ -72,6 +72,12 @@ export async function serveSeaTableAuthoring({ workspace, port = 8481 } = {}) {
         return send(200,await workspace.appendWorkspaceUpload(url.searchParams.get('id'),Number(url.searchParams.get('offset')),Buffer.concat(chunks,size)));
       }
       if (req.method === 'GET') {
+        if(path==='/api/returns')return send(200,{returns:workspace.returnedReviews()});
+        if(path==='/api/return')return send(200,workspace.returnedReview(url.searchParams.get('id')));
+        if(path==='/api/return/preview')return send(200,await workspace.previewReturnedReview({reviewId:url.searchParams.get('id'),
+          offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??100)}));
+        if(path==='/api/return/export'){const file=workspace.exportReturnedReview({reviewId:url.searchParams.get('id'),
+          ...(url.searchParams.has('revision')?{revision:Number(url.searchParams.get('revision'))}:{})});return send(200,file.bytes,file.mime,file.filename);}
         if(path==='/api/workspace/exports')return send(200,{exports:await workspace.workspaceExports()});
         if(path==='/api/workspace/export-status')return send(200,await workspace.workspaceExportStatus(url.searchParams.get('id')));
         if(path==='/api/workspace/receive-status')return send(200,await workspace.workspaceReceiveStatus(url.searchParams.get('id')));
@@ -114,6 +120,9 @@ export async function serveSeaTableAuthoring({ workspace, port = 8481 } = {}) {
       if (req.method !== 'POST') throw fault('NOT_FOUND', 'Action not found.', 404);
       const input = await body(req);
       if(closing)throw fault('SEATABLE_WORKSPACE_CLOSING',undefined,409);
+      if(path==='/api/return/capture')return send(201,await workspace.captureReturnedReview(input));
+      if(path==='/api/return/review')return send(200,await workspace.saveReturnedReview(input));
+      if(path==='/api/return/apply')return send(200,await workspace.applyReturnedReview(input));
       if(path==='/api/workspace/export')return send(201,await workspace.exportWorkspace(input));
       if(path==='/api/workspace/receive')return send(201,await workspace.receiveWorkspace(input));
       if(path==='/api/workspace/open')return send(200,await workspace.openReceivedWorkspace(input.name));

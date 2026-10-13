@@ -9,16 +9,30 @@ import json
 from model import Problem
 from operations import Operations, decoded
 import operations_calendar as calendar_model
+import operations_workbook_http as workbook_http
+from operations_supplier_statements_http import handle as supplier_statements_http
 import forecast_comparison
 import operations_agenda_http as agenda_http
 import operations_use_calendar as use_calendar
 import operations_workflows as operating_workflows
 from operations_commercial_http import handle as commercial_http
+from operations_expense_billing_http import handle as expense_billing_http
 import operations_installation_sources as installation_sources
 from award_terms_http import handle as award_terms_http
 
 
 def register_static(static):
+    static.update({"/operations_expense_billing.mjs": ("operations_expense_billing.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_expense_billing.css": ("operations_expense_billing.css", "text/css; charset=utf-8"),
+                   "/EXPENSE_BILLING.md": ("EXPENSE_BILLING.md", "text/markdown; charset=utf-8")})
+    workbook_http.register_static(static)
+    static.update({"/operations_supplier_statements.mjs": ("operations_supplier_statements.mjs", "text/javascript; charset=utf-8"),
+                   "/operations_supplier_statements.css": ("operations_supplier_statements.css", "text/css; charset=utf-8"),
+                   "/SUPPLIER_STATEMENTS.md": ("SUPPLIER_STATEMENTS.md", "text/markdown; charset=utf-8")})
+    static.update({"/portfolio-availability.mjs": ("portfolio-availability.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio-availability-desk.mjs": ("portfolio-availability-desk.mjs", "text/javascript; charset=utf-8"),
+                   "/portfolio-availability.css": ("portfolio-availability.css", "text/css; charset=utf-8"),
+                   "/PORTFOLIO_AVAILABILITY.md": ("PORTFOLIO_AVAILABILITY.md", "text/markdown; charset=utf-8")})
     static.update({"/operations_risk_comparison.mjs": ("operations_risk_comparison.mjs", "text/javascript; charset=utf-8"),
                    "/operations_risk_comparison.css": ("operations_risk_comparison.css", "text/css; charset=utf-8"),
                    "/RISK_COMPARISON.md": ("RISK_COMPARISON.md", "text/markdown; charset=utf-8")})
@@ -104,7 +118,8 @@ def register_static(static):
                    "/operations_statement_batch.mjs": ("operations_statement_batch.mjs", "text/javascript; charset=utf-8"),
                    "/operations_statement_batch.css": ("operations_statement_batch.css", "text/css; charset=utf-8"),
                    "/operations_statement_allocations.mjs": ("operations_statement_allocations.mjs", "text/javascript; charset=utf-8"),
-                   "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8")})
+                   "/operations_statement_allocations.css": ("operations_statement_allocations.css", "text/css; charset=utf-8"),
+                   "/operations_statement_copies.mjs": ("operations_statement_copies.mjs", "text/javascript; charset=utf-8")})
     static.update({"/operations_payables.mjs": ("operations_payables.mjs", "text/javascript; charset=utf-8"),
                    "/operations_payables.css": ("operations_payables.css", "text/css; charset=utf-8"),
                    "/operations_ledger_intake.mjs": ("operations_ledger_intake.mjs", "text/javascript; charset=utf-8"),
@@ -160,6 +175,10 @@ def read(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, query = store(handler), parse_qs(parsed.query)
+    if supplier_statements_http(handler, parsed, ops, "GET"):
+        return True
+    if workbook_http.handle(handler, parsed, ops, "GET"):
+        return True
     if risk_comparison.read_http(handler, parsed, ops):
         return True
     if forecast_comparison.read_http(handler, parsed, ops):
@@ -167,6 +186,8 @@ def read(handler, parsed):
     if agenda_http.read(handler, parsed.path, parse_qs(parsed.query, keep_blank_values=True), ops):
         return True
     if award_terms_http(handler, parsed, ops, "GET"):
+        return True
+    if expense_billing_http(handler, parsed, ops, "GET"):
         return True
     if commercial_http(handler, parsed, ops, "GET"):
         return True
@@ -463,7 +484,13 @@ def write(handler, parsed):
     if not parsed.path.startswith("/api/operations"):
         return False
     ops, path = store(handler), parsed.path
+    if supplier_statements_http(handler, parsed, ops, "POST"):
+        return True
+    if workbook_http.handle(handler, parsed, ops, "POST"):
+        return True
     if award_terms_http(handler, parsed, ops, "POST"):
+        return True
+    if expense_billing_http(handler, parsed, ops, "POST"):
         return True
     if commercial_http(handler, parsed, ops, "POST"):
         return True

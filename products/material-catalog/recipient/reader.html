@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Material catalogue recipient · Stellar Forge</title>
+<style>
+:root{color-scheme:light;font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#202020;background:#f5f5f4}*{box-sizing:border-box}body{margin:0}#app{max-width:1440px;margin:auto;padding:24px}h1,h2,h3,p{margin-top:0}h1{font-size:27px;letter-spacing:-.6px;margin-bottom:0}h2{font-size:21px}h3{font-size:17px}button,input,select{font:inherit}button,input,select{border:1px solid #999;border-radius:3px;background:#fff;color:inherit;padding:8px 11px}button{cursor:pointer;min-height:40px}button:hover{background:#eee}button:disabled{cursor:default;opacity:.5}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #222;outline-offset:3px}label{display:flex;flex-direction:column;gap:5px;font-size:13px}label input,label select{font-size:15px}input[type=search]{width:min(440px,100%)}.mast{display:flex;justify-content:space-between;align-items:center;gap:24px;border-bottom:2px solid #333;padding-bottom:20px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:2px;margin-bottom:5px}.picker input{max-width:340px}.summary,.toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:10px}.summary{align-items:center;margin-bottom:18px}.summary button{margin-left:auto}.summary span{color:#555}nav{display:flex;gap:5px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid #ccc}nav button[aria-current=page]{background:#292929;color:#fff;border-color:#292929}main>section,section.detail,#app>section{background:#fff;border:1px solid #ccc;padding:24px;margin-top:20px}.toolbar{margin:14px 0}.toolbar h2{margin:0;flex:1}.hint{color:#555;max-width:1000px}.facts{display:grid;grid-template-columns:220px minmax(0,1fr);gap:9px 20px;margin:22px 0}.facts dt{color:#555}.facts dd{margin:0;overflow-wrap:anywhere}.table-wrap{overflow:auto;border:1px solid #ccc;margin:15px 0}table{border-collapse:collapse;min-width:100%;font-size:14px}th,td{text-align:left;vertical-align:top;padding:11px 13px;border-bottom:1px solid #ddd;max-width:430px;overflow-wrap:anywhere}th{background:#f0f0ef;white-space:nowrap}tr:last-child td{border-bottom:0}.link{border:0;text-decoration:underline;text-underline-offset:3px;padding:0;min-height:28px;text-align:left;background:transparent}.source{border-top:1px solid #ddd;padding:20px 0 4px}.mono,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}pre{white-space:pre-wrap;background:#f5f5f4;padding:16px;border:1px solid #ccc;max-height:65vh;overflow:auto}.error{border:2px solid #333;padding:16px;font-weight:600;background:#fff}footer{color:#666;font-size:12px;padding:22px 0}select{max-width:100%} @media(max-width:700px){#app{padding:12px}.mast{display:block}.picker{margin-top:18px}.picker input{max-width:100%}.facts{grid-template-columns:1fr;gap:3px}.facts dd{margin-bottom:12px}main>section,section.detail,#app>section{padding:16px}.summary{display:block}.summary span{display:block;margin:6px 0}.summary button{margin:5px 0}h1{font-size:23px}.toolbar>label{width:100%}.toolbar input{width:100%}nav{gap:6px}nav button{flex:1 0 auto}th,td{padding:9px;min-width:120px}button{min-height:44px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script id="catalog-payload" type="application/json"></script>
+<script type="module" id="catalog-application">
+import {mount} from './workspace.mjs';
+mount(document);
+</script>
+</body>
+</html>

@@ -308,7 +308,7 @@ export function mountCaseDesk({root,readState,applyState,onNameChange = ()=>{},
     deliveryContext(){return active?{id:active.id,revision:active.revision,dirty,busy,actor:owner.value.trim()}:null;},
     importWorkspace,
     saveForDelivery(){return save();},
-    openSavedCase(id){return transition(()=>openCase(id),'open the received case');},
+    openSavedCase(id,revision=null){return transition(()=>openCase(id,revision),'open the selected saved case');},
     async exportSnapshot(){
       if(busy)throw new Error('Finish the current case operation before preparing a handoff.');
       const caseName=name.value,meta=metadata(),epoch=generation;

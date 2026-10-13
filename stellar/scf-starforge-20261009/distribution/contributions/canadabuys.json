@@ -7,7 +7,7 @@
     "canadabuys-customer": "stellar-forge/mcp-merchant-operator/canadabuys-cli.mjs"
   },
   "commandDescriptions": {
-    "canadabuys": "Capture official CanadaBuys CSVs, retain bidder capabilities/evidence/decisions, plan partner delivery and receive complete workspaces",
+    "canadabuys": "Capture official CanadaBuys CSVs, retain bidder capabilities/evidence/decisions, plan partner delivery and receive complete workspaces; prepare standalone supplier responses and receive complete reviewed changes",
     "canadabuys-customer": "Use original CanadaBuys MCP operations, retain exact requests, download complete publication files and receive original workspaces offline"
   },
   "exports": {
@@ -48,6 +48,14 @@
     "./merchant/canadabuys/operations": {
       "types": "./source/stellar-forge/mcp-merchant-operator/canadabuys-operations.d.mts",
       "import": "./source/stellar-forge/mcp-merchant-operator/canadabuys-operations.mjs"
+    },
+    "./seller/canadabuys/response-review": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/workspace.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/workspace.mjs"
+    },
+    "./seller/canadabuys/response-review/client": {
+      "types": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/client.d.mts",
+      "import": "./source/stellar/scf-starforge-20261009/sf30-seller-sdk/canadabuys/response-review/client.mjs"
     }
   },
   "applicationProviders": {

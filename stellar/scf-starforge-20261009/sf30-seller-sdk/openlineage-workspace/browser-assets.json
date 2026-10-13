@@ -71,6 +71,55 @@
         "quality.css",
         "text/css; charset=utf-8"
       ]
+    ],
+    [
+      "/quality-followup-ui.mjs",
+      [
+        "quality-followup-ui.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/quality-followup-drafts.mjs",
+      [
+        "quality-followup-drafts.mjs",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/quality-followup.css",
+      [
+        "quality-followup.css",
+        "text/css; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-policy-rollout",
+      [
+        "service-policy-rollout.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-policy-rollout.html",
+      [
+        "service-policy-rollout.html",
+        "text/html; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-policy-rollout.js",
+      [
+        "service-policy-rollout.js",
+        "text/javascript; charset=utf-8"
+      ]
+    ],
+    [
+      "/service-policy-rollout.css",
+      [
+        "service-policy-rollout.css",
+        "text/css; charset=utf-8"
+      ]
     ]
   ]
 }

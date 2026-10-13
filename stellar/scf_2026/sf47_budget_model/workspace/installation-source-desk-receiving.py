@@ -32,6 +32,13 @@ import zipfile
 
 HERE = Path(__file__).resolve().parent
 SCHEMA = "stellar-forge.installation-source-desk-receiving.v1"
+BROWSER_EDITION_PHASES = (
+    "10-customer-edition-comparison-and-original-downloads",
+    "11-explicit-successor-and-unfinished-working-reopen",
+    "12-original-edition-apply-and-request-recovery",
+    "13-successor-native-preparation-and-complete-downloads",
+    "14-edition-history-and-final-working-reopen",
+)
 MAX_FILE = 192 * 1024 * 1024
 CANCELLED = False
 CHILDREN = {}
@@ -42,6 +49,12 @@ LEASE = None
 def need(value, message):
     if not value:
         raise ValueError(message)
+
+
+def complete_edition_browser(value):
+    return (isinstance(value, dict) and value.get("state") == "COMPLETE" and
+            value.get("lifetimes") == "CLOSED" and isinstance(value.get("phases"), dict) and
+            all(isinstance(value["phases"].get(name), dict) for name in BROWSER_EDITION_PHASES))
 
 
 def emit(value):
@@ -1077,7 +1090,7 @@ class Receiving:
                   "directory": str(self.browser_root), "output": str(output_path),
                   "originalFiles": self.original_files}
         retain(input_path, encoded(frozen)); self.remember(input_path)
-        if not output_path.exists() or object_file(output_path).get("state") != "COMPLETE":
+        if not output_path.exists() or not complete_edition_browser(object_file(output_path)):
             service = self.start_server()
             access_path = self.browser_root / ("access-" + uuid.uuid4().hex + ".json")
             retain(access_path, encoded(service))
@@ -1089,7 +1102,7 @@ class Receiving:
                 self.close_server()
         self.open()
         result = object_file(output_path)
-        need(result.get("schema") == SCHEMA and result.get("state") == "COMPLETE" and result.get("lifetimes") == "CLOSED" and
+        need(result.get("schema") == SCHEMA and complete_edition_browser(result) and
              result.get("operationId") == self.args.operation_id and result.get("caseId") == self.case_id and
              result.get("selectionSha256") == value_sha(self.selection) and
              result.get("inputSha256") == file_receipt(input_path)["sha256"],
@@ -1126,7 +1139,8 @@ class Receiving:
         browser = self.report["phases"].get("12-actual-desktop-and-phone-operator")
         if browser is not None:
             actual = object_file(self.browser_root / "report.json")
-            need(actual == browser and actual.get("selectionSha256") == value_sha(self.selection) and
+            need(actual == browser and complete_edition_browser(actual) and
+                 actual.get("selectionSha256") == value_sha(self.selection) and
                  actual.get("inputSha256") == file_receipt(self.browser_root / "input.json")["sha256"] and
                  actual.get("operationId") == self.args.operation_id and actual.get("caseId") == self.case_id,
                  "The completed original browser report changed source, runtime or operation.")
@@ -1301,7 +1315,7 @@ def run_program(args):
             for receipt in run.report["artifacts"].values():
                 need(file_receipt(receipt["path"]) == receipt, "An original complete output changed before closure.")
             run.report["state"] = "PASS"
-            run.report["resultScope"] = "Complete original-source preparation, native planned Installations, browser receiving and full workspace reopen."
+            run.report["resultScope"] = "Complete original-source preparation, native planned Installations, customer-edition comparison and apply, successor preparation, browser receiving and full workspace reopen."
             run.report["commissioning"] = "Original customer acceptance, payment, funding and commissioning state remain unchanged."
             if args.commissioning_receiving is not None:
                 run.report["resultScope"] += " Saved merchant capture, explicit original phase receiving and full receipt replay."
