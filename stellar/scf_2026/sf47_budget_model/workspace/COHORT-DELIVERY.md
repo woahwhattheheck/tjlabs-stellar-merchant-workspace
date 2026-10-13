@@ -362,3 +362,74 @@ The existing `merchant_grant_cohort_delivery_edit` tool adds three actions:
 The existing source refresh carries all commercial choices with the original associations and placements. If a retained transaction, cost component, refund or actual-date constraint no longer fits the new source, it returns complete editable input and the exact finding. Correct the whole selection through the existing edit operation. It never silently discards a now-invalid transaction allocation or cost source.
 
 Continue through the original **review → prepare → save → request recovery → open → export** operation documented above. Preparation still binds the complete original saved plan and frozen review. The same source attachment and request journal save the full successor; the same desk and command reopen it. JSON, CSV and readable HTML include all transactions, allocations, valuations, costs, adjustments, original refund rows, shared-service sources, coverage and actionable findings.
+
+## Receive original Work and supplier invoice costs
+
+The commercial desk can now select the current case's original Work and supplier invoice lines directly from the complete frozen Cohort review. Each selection retains its full original record, contributor, linked Work and source-attachment metadata. This joins original operational costs to the recorded service result without copying quantities into an unrelated ledger.
+
+### Select the complete original source and actual portion
+
+Open **Cohort delivery → Commercial reconciliation**, start commercial reconciliation if necessary, and use **Original Work and supplier invoice costs**. The source table lists all original Work and invoice lines, including invoice-linked Work. Read the complete original context, select a portion, and enter:
+
+- A stable selection ID, or leave it blank to create one.
+- The actual selected hours for Work or actual selected USD amount for an invoice line.
+- The existing complete shared service component, or the whole comparison for shared overhead.
+- The reporting-currency value per original unit: currency per hour for Work, or currency per original USD for an invoice.
+- The actual valuation time and source for a known hourly cost or non-USD currency conversion.
+- The selected original date interval and an explanation of the actual portion and service allocation.
+
+Work retains its recorded civil-date interval. An explicitly selected partial interval must stay inside that original interval, the frozen review window and its cutoff date. Enter the actual corresponding hours; the calculator does not infer daily proration from the length of an interval. Invoice lines retain their original issue date, native USD amount and original line identity. An invoice valued in USD uses a unit cost of one. A different reporting currency requires an explicit dated conversion. An empty rate stays unknown; an entered zero is a known zero.
+
+The calculator adds exact decimal portions across all selections of the same original record. Their total cannot exceed the original recorded hours or invoice-line USD amount. The report and export show selected and unselected quantities side by side. Several portions can serve different original shared service components while preserving all purchased funding groups and useful results.
+
+A supplier invoice records an original liability. Its issue-date cost selection is distinct from cash settlement. Original Work state and hours likewise retain their native meanings. This operation keeps the original Work, Invoice, Cash, Cost funding and Buyer Expenses records with their current owners. The original cost ID and funding basis are retained as source context; selecting a cost does not establish funding eligibility.
+
+### Resolve linked Work and invoice coverage
+
+A native supplier invoice line can reference original Work. If both that Work and that invoice line contribute selected costs, the desk shows their exact association in **Invoice-linked Work review**. Their selected portions remain visible together.
+
+Remove a duplicated portion, or retain the actual source explanation showing that the two portions represent distinct costs. For example, a supplier's retained detail can distinguish invoiced materials from separately paid assembly labor. The complete cost and contribution remain unknown while any selected association lacks that review; the known recorded subtotal remains visible. Previously entered reviews are preserved when an overlap is no longer active, with their current inactive status shown.
+
+This source review is also available through the same complete agent document and CSV/HTML export. It applies to each original Work/invoice-line association, including a Work record linked by several invoice lines.
+
+### Refresh sources while preserving authored choices
+
+Select the new full saved adoption plan and frozen review, then choose **Refresh selected sources and keep choices**. The editor retains the complete predecessor input and carries all explicit identity associations, original intent placements, selected portions, unit costs, valuation sources and overlap reviews into the successor.
+
+A changed original Work record, invoice, contributor, linked Work or attachment metadata produces an editable successor with the actual source constraint. The comparison retains the old source witness and all authored quantities and rates. **Retained and current original source** displays both complete versions. Edit the selected portion, review its source, and explicitly choose **I reviewed and accept the complete current original source** only for that selection. Accepting one source does not silently accept other changed records. An invoice-linked Work change also requires review of the affected invoice selection's linked source context.
+
+The editor can retain several unresolved source changes while the operator fixes them one at a time. Download the full editable successor and predecessor at any point. The same browser-session recovery restores the selection and form drafts. A complete calculated successor is saved through the existing comparison edition operation. Unknown hourly values and unreviewed overlap are represented in the calculated report; a missing, void, changed, overallocated or out-of-period selected original requires correction before that edition can be calculated.
+
+### Use the same original-cost intake through CLI and agents
+
+```sh
+starforge grant-cohort-delivery original-costs \
+  --input cohort-delivery.json \
+  --output original-cost-catalog.json
+
+starforge grant-cohort-delivery original-costs-receive \
+  --input cohort-delivery.json \
+  --choices selected-original-costs.json \
+  --output editable-successor.json
+
+starforge grant-cohort-delivery compare \
+  --input editable-successor.json \
+  --output original-cost-comparison.json
+```
+
+The catalog contains the complete original records, the current `selection`, and `sourceReviews` identifying unchanged, changed and missing original context. Build the receive object from its selection's `selections`, `overlapReviews` and `note`; omit the selection's schema property. Each selected portion carries `id`, `sourceKey`, `serviceId`, `quantity`, nullable `unitCost`, `valuationAt`, `valuationSource`, `periodStart`, `periodEnd`, `allocationNote`, and its retained `source` witness.
+
+The complete source key is supplied by the catalog. Existing selection IDs keep their previous source witness even if the caller omits the `source` field. Add only the reviewed selection IDs to `acceptSourceIds` to rebind those rows to their complete current originals. New selections receive their original source directly. Quantities, dates, rates and overlap reviews are always supplied explicitly; source acceptance does not replace them.
+
+`original-costs-receive` writes the full editable successor. `compare` then calculates it or reports the specific remaining constraint. This permits several changed records to be repaired independently. `reopen`, `csv` and `html` retain the same full source and original-cost report.
+
+The existing `merchant_grant_cohort_delivery_edit` operation adds two actions:
+
+| Action | Complete operation |
+| --- | --- |
+| `RECEIVE_ORIGINAL_COSTS` with `originalCosts` | Apply the complete selected portions, overlap reviews, note and explicit source acceptances to the current document |
+| `REMOVE_ORIGINAL_COSTS` | Remove this successor's original-cost selection while retaining the complete predecessor document |
+
+The existing refresh operation carries this selection inside the complete commercial choices. It returns `EDITABLE_INPUT` with the precise original-source, quantity, date or valuation finding while the operator repairs it. The original nine-tool **review → prepare → save → request recovery → open → export** path remains the native persistence operation.
+
+The exported source API provides `inspectCohortOriginalCosts(document)`, `selectCohortOriginalCosts(document, selection)` for the full editable input, and `receiveCohortOriginalCosts(document, selection)` for its calculated comparison. The optional original-cost selection uses schema `stellar-forge.sf47-cohort-original-costs.v1`. Comparisons without that field retain the prior commercial report exactly.
